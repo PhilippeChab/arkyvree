@@ -1,9 +1,9 @@
-import { Box, Chip, MenuItem, TextField } from "@mui/material";
+import { Box, MenuItem, TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { DeleteDialog, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
+import { DeleteDialog, type SectionTab, SectionTabs, TagChip } from "@/client/src/components/common/index.ts";
 import {
   FeatPoolsIcon,
   LevelsIcon,
@@ -30,6 +30,7 @@ import {
   EntityDetailLayout,
   EntityDetailsCard,
   EntityPageError,
+  hitDieTag,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   type ClassDetail,
@@ -242,12 +243,12 @@ export default function ClassDetailsPage() {
               description={classData.description}
               chips={
                 <>
-                  <Chip label={`Hit Die: d${classData.hd || 8}`} color="secondary" sx={{ fontWeight: 600 }} />
+                  <TagChip tag={hitDieTag(classData.hd || 8)} />
                   {bonusSpellAbility && (
-                    <Chip label={`Bonus Spells: ${bonusSpellAbility.name}`} color="info" variant="outlined" />
+                    <TagChip tag={{ label: bonusSpellAbility.name, color: "info", tooltip: "Bonus spells ability" }} />
                   )}
                   {classData.casterTypeValue && (
-                    <Chip label={`Caster Type: ${classData.casterTypeValue}`} color="info" variant="outlined" />
+                    <TagChip tag={{ label: classData.casterTypeValue, color: "info", tooltip: "Caster type" }} />
                   )}
                 </>
               }

@@ -1,4 +1,8 @@
-import { Chip, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
+
+import { TagChip } from "@/client/src/components/common/index.ts";
+
+import { aptitudeTag } from "./entityTags.ts";
 
 interface AptitudeChipsCellProps {
   links: AptitudeLink[] | null | undefined;
@@ -27,13 +31,7 @@ export function AptitudeChipsCell({ links }: AptitudeChipsCellProps) {
   return (
     <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
       {links.toSorted(byListName).map((link) => (
-        <Chip
-          key={link.aptitudeId}
-          label={link.aptitudesInRule?.name || "Unknown"}
-          size="small"
-          color="primary"
-          variant="outlined"
-        />
+        <TagChip key={link.aptitudeId} tag={aptitudeTag(link.aptitudesInRule?.name || "Unknown")} />
       ))}
     </Stack>
   );

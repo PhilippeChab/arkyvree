@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Container, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 
@@ -12,6 +12,7 @@ import {
   PageHeader,
   PageTransition,
   PasswordField,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
@@ -283,7 +284,7 @@ export default function ProfilePage() {
           >
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
               <Typography>Google</Typography>
-              {isGoogleLinked && <Chip label="Linked" size="small" color="success" />}
+              {isGoogleLinked && <TagChip tag={{ label: "Linked", color: "success" }} />}
             </Stack>
             <Box sx={{ width: { xs: "100%", sm: 200 } }}>
               {isGoogleLinked ? (

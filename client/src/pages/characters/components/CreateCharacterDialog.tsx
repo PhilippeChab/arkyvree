@@ -1,4 +1,4 @@
-import { Chip, IconButton, MenuItem, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { IconButton, MenuItem, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { keepPreviousData, skipToken, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
 import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
@@ -14,6 +14,7 @@ import {
   NameField,
   RulesetPicker,
   SelectField,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
 import { AddIcon, DecrementIcon, DiceIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -663,10 +664,11 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
             const spent = rulesetAbilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[scores[a.id]] ?? 0), 0);
             const remaining = POINT_BUY_TOTAL - spent;
             return (
-              <Chip
-                label={`${remaining} / ${POINT_BUY_TOTAL} pts`}
-                color={remaining < 0 ? "error" : remaining === 0 ? "success" : "default"}
-                size="small"
+              <TagChip
+                tag={{
+                  label: `${remaining} / ${POINT_BUY_TOTAL} pts`,
+                  color: remaining < 0 ? "error" : remaining === 0 ? "success" : "default",
+                }}
               />
             );
           })()}

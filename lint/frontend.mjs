@@ -72,7 +72,8 @@
  * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
  *   "This action cannot be undone."
  * - `page-errors`: a page that couldn't load says why in `loadFailureMessage`'s words.
- * - `tag-chips`: a role, a status or a fact is a `TagChip`, and a chip's color is its `color` prop.
+ * - `tag-chips`: a chip is a `TagChip` (a role, a status, a fact, a pick to remove), a `ChoiceChip` (one of several to
+ *   choose), or an Autocomplete's picked value, MUI's own small chip (`{...getItemProps({ index })}`).
  * - `expand-arrows`: a row or a header that shows or hides what's under it is the toggle (`toggleProps`) and shows
  *   its state with `ExpandArrow`; a component's own arrow (`expandIcon`) stays its own. A toggle is a button, but a
  *   table row keeps its role (`toggleProps(open, onToggle, "row")`).
@@ -1192,15 +1193,28 @@ function createSxStyles(context) {
 }
 
 function createTagChips(context) {
-  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/TagChip.tsx") return {};
+  const file = repoPath(context.filename);
+  if (!inClient(context) || file === "client/src/components/common/TagChip.tsx") return {};
+  const choices = file === "client/src/components/common/ChoiceChip.tsx";
   return {
     JSXElement(node) {
-      if (elementName(node) !== "Chip") return;
-      const attributes = node.openingElement.attributes.filter((a) => a.type === "JSXAttribute");
-      if (attributes.some((a) => a.name.name === "icon")) {
+      if (elementName(node) !== "Chip" || choices) return;
+      const picked = node.openingElement.attributes.some((a) => a.type === "JSXSpreadAttribute");
+      if (!picked) {
         context.report({
           node: node.openingElement,
-          message: "A role, a status or a fact is a `TagChip` (`components/common`): its icon, its words, its color.",
+          message:
+            "A chip is a `TagChip` (a role, a status, a fact, a pick to remove: its words, its color), a " +
+            "`ChoiceChip` (one of several to choose), or an Autocomplete's picked value (`{...getItemProps({ index })}`).",
+        });
+      } else if (
+        ["color", "variant", "icon"].some((name) => hasAttribute(node, name)) ||
+        attributeText(node, "size") !== "small"
+      ) {
+        context.report({
+          node: node.openingElement,
+          message:
+            "An Autocomplete's picked value is MUI's own chip: `size=\"small\"`, no color, variant or icon of its own.",
         });
       }
     },

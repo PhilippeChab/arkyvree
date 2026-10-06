@@ -1,4 +1,4 @@
-import { Alert, Card, CardContent, Chip, IconButton, Stack, Typography } from "@mui/material";
+import { Alert, Card, CardContent, IconButton, Stack, Typography } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import type { InferResponseType } from "hono/client";
@@ -11,6 +11,7 @@ import {
   DiceSpinner,
   EditDialog,
   SectionContent,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_REQUIREMENT,
@@ -290,18 +291,14 @@ export function RequirementsSection({
           >
             <CardContent sx={{ py: 1.5, px: 2, "&:last-child": { pb: 1.5 } }}>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-                <Chip
-                  label={requirement.level}
-                  size="small"
-                  sx={{ fontWeight: 700, minWidth: 32, fontFamily: "monospace" }}
-                />
+                <TagChip tag={{ label: requirement.level ?? "—", color: "default", tooltip: "Level" }} />
 
                 {requirementIsChaining ? (
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
                       Chaining:
                     </Typography>
-                    <Chip label={requirement.chainingOperator} size="small" color="warning" variant="outlined" />
+                    <TagChip tag={{ label: requirement.chainingOperator ?? "—", color: "warning" }} />
                   </Stack>
                 ) : (
                   <>
@@ -313,11 +310,11 @@ export function RequirementsSection({
                       </Typography>
                     )}
                     {requirement.operator && (
-                      <Chip
-                        label={REQUIREMENT_OPERATOR_LABELS[requirement.operator] || requirement.operator}
-                        size="small"
-                        color="secondary"
-                        variant="outlined"
+                      <TagChip
+                        tag={{
+                          label: REQUIREMENT_OPERATOR_LABELS[requirement.operator] || requirement.operator,
+                          color: "secondary",
+                        }}
                       />
                     )}
                     <Typography variant="body2">{requirement.valueLabel || requirement.value || "—"}</Typography>

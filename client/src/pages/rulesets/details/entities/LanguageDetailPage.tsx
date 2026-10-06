@@ -1,6 +1,6 @@
-import { Chip } from "@mui/material";
 import { useParams } from "react-router-dom";
 
+import { TagChip } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_LANGUAGE,
   type LanguageFormData,
@@ -35,7 +35,7 @@ export default function LanguageDetailPage() {
         renderFields: (form) => <LanguageFormFields form={form} />,
       }}
       renderChips={(language) =>
-        language.type && <Chip label={language.type} color="secondary" sx={{ fontWeight: 600 }} />
+        language.type && <TagChip tag={{ label: language.type, color: "secondary", tooltip: "Type" }} size="medium" />
       }
     />
   );

@@ -1,12 +1,13 @@
-import { Chip } from "@mui/material";
 import { useParams } from "react-router-dom";
 
+import { TagChip } from "@/client/src/components/common/index.ts";
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import {
   EMPTY_SKILL,
   type SkillFormData,
   SkillFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { abilityTag, TRAINED_ONLY } from "@/client/src/pages/rulesets/components/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 import { skillQuery } from "./entityDetailQueries.ts";
@@ -43,17 +44,18 @@ export default function SkillDetailPage() {
         const primaryAbilityName = abilities.find((a) => a.id === skill.primaryAbilityId)?.name;
         return (
           <>
-            {primaryAbilityName && <Chip label={primaryAbilityName} color="secondary" sx={{ fontWeight: 600 }} />}
-            {!skill.usableWithoutTraining && <Chip label="Trained Only" color="warning" />}
+            {primaryAbilityName && <TagChip tag={abilityTag(primaryAbilityName)} size="medium" />}
+            {!skill.usableWithoutTraining && <TagChip tag={TRAINED_ONLY} size="medium" />}
             {skill.impactedByWeight && (
-              <Chip
-                label={
-                  skill.checkPenaltyMultiplier > 1
-                    ? `Weight Penalty ×${skill.checkPenaltyMultiplier}`
-                    : "Weight Penalty"
-                }
-                color="info"
-                variant="outlined"
+              <TagChip
+                tag={{
+                  label:
+                    skill.checkPenaltyMultiplier > 1
+                      ? `Weight Penalty ×${skill.checkPenaltyMultiplier}`
+                      : "Weight Penalty",
+                  color: "info",
+                }}
+                size="medium"
               />
             )}
           </>

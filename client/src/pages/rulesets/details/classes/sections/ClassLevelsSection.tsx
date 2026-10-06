@@ -1,11 +1,12 @@
-import { Box, Button, Chip, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
+import { TagChip } from "@/client/src/components/common/index.ts";
 import { AddIcon, LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { levelTag, RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { CreateLevelDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import type { Level } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -68,7 +69,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
 
     switch (columnKey) {
       case "level":
-        return <Chip label={level.level} size="small" color="primary" />;
+        return <TagChip tag={levelTag(level.level)} />;
       case "bab":
         return <Typography variant="body2">{formatSigned(level.bab)}</Typography>;
       case "skills":
@@ -81,15 +82,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
                 const suffix = className ? ` (${className})` : "";
                 const label = suffix && feat.name.endsWith(suffix) ? feat.name.slice(0, -suffix.length) : feat.name;
                 return (
-                  <Tooltip
-                    describeChild
-                    key={feat.id}
-                    title={feat.description || ""}
-                    placement="top"
-                    slotProps={{ tooltip: { sx: { maxWidth: 400 } } }}
-                  >
-                    <Chip label={label} size="small" variant="outlined" sx={{ typography: "caption" }} />
-                  </Tooltip>
+                  <TagChip key={feat.id} tag={{ label, color: "default", tooltip: feat.description || undefined }} />
                 );
               })
             ) : (

@@ -12,13 +12,16 @@ interface TagChipProps {
 
 /** A role, a status or a fact, as a chip shows it: its icon, its words, its color, and what it does */
 export interface Tag {
-  icon: SvgIconComponent;
+  /** What kind of thing it is, when an icon says it (a role, a status); a plain fact has none */
+  icon?: SvgIconComponent;
   label: string;
   color: ChipProps["color"];
   /** What it means, on hover */
   tooltip?: string;
   /** The page it opens */
   to?: string;
+  /** Opens its page in a new tab, as a character sheet's links do, so the sheet keeps its place */
+  newTab?: boolean;
   /** Loads what it opens, as the pointer rests on it */
   prefetch?: () => void;
   onClick?: (event: MouseEvent<HTMLElement>) => void;
@@ -27,9 +30,9 @@ export interface Tag {
 
 /** A role, a status or a fact: an outlined chip with its icon, the same everywhere. */
 export function TagChip({ tag, size = "small" }: TagChipProps) {
-  const { icon: Icon, label, color, tooltip, to, prefetch, onClick, onDelete } = tag;
+  const { icon: Icon, label, color, tooltip, to, newTab, prefetch, onClick, onDelete } = tag;
   const props = {
-    icon: <Icon fontSize={size === "medium" ? "small" : "tiny"} />,
+    icon: Icon && <Icon fontSize={size === "medium" ? "small" : "tiny"} />,
     label,
     size,
     color,
@@ -47,7 +50,7 @@ export function TagChip({ tag, size = "small" }: TagChipProps) {
       }),
   } as const;
   const chip = to ? (
-    <Chip {...props} component={Link} to={to} clickable />
+    <Chip {...props} component={Link} to={to} target={newTab ? "_blank" : undefined} clickable />
   ) : (
     <Chip {...props} onClick={onClick} clickable={!!onClick} />
   );

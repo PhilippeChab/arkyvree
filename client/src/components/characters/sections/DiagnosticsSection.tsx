@@ -2,7 +2,6 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Chip,
   Collapse,
   Paper,
   Stack,
@@ -16,9 +15,10 @@ import {
 } from "@mui/material";
 import { Fragment, type ReactNode, useMemo } from "react";
 
-import { CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
+import { CLICKABLE_SX, ExpandArrow, TagChip, toggleProps } from "@/client/src/components/common/index.ts";
 import { ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 interface DiagnosticsGroupProps {
@@ -141,7 +141,7 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
                 </TableCell>
                 <TableCell sx={{ ...tableCellSx, fontWeight: 600 }}>{source}</TableCell>
                 <TableCell sx={tableCellSx} colSpan={4}>
-                  <Chip label={rules.length} size="tiny" variant="outlined" />
+                  {formatCount(rules.length, "rule")}
                 </TableCell>
               </TableRow>
               <TableRow>
@@ -276,10 +276,8 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             <Typography component="h2" variant="h6">
               Diagnostics
             </Typography>
-            <Chip
-              label={validation.valid ? "Valid" : "Invalid"}
-              color={validation.valid ? "success" : "error"}
-              size="small"
+            <TagChip
+              tag={{ label: validation.valid ? "Valid" : "Invalid", color: validation.valid ? "success" : "error" }}
             />
           </Stack>
         </AccordionSummary>
@@ -306,25 +304,12 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
                   Requirements
                 </Typography>
                 <Stack direction="row" spacing={1}>
-                  <Chip
-                    label={`Fulfilled: ${requirements.fulfilledRequirementGroups.length}`}
-                    color="success"
-                    size="small"
-                    variant="outlined"
+                  <TagChip
+                    tag={{ label: `Fulfilled: ${requirements.fulfilledRequirementGroups.length}`, color: "success" }}
                   />
-                  <Chip
-                    label={`Unmet: ${requirements.unmetRequirementGroups.length}`}
-                    color="error"
-                    size="small"
-                    variant="outlined"
-                  />
+                  <TagChip tag={{ label: `Unmet: ${requirements.unmetRequirementGroups.length}`, color: "error" }} />
                   {requirements.invalidRequirements.length > 0 && (
-                    <Chip
-                      label={`Invalid: ${requirements.invalidRequirements.length}`}
-                      color="warning"
-                      size="small"
-                      variant="outlined"
-                    />
+                    <TagChip tag={{ label: `Invalid: ${requirements.invalidRequirements.length}`, color: "warning" }} />
                   )}
                 </Stack>
               </Stack>
@@ -340,30 +325,15 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
                   Modifiers
                 </Typography>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-                  <Chip
-                    label={`Applied: ${modifiers.appliedModifiers.length}`}
-                    color="success"
-                    size="small"
-                    variant="outlined"
-                  />
+                  <TagChip tag={{ label: `Applied: ${modifiers.appliedModifiers.length}`, color: "success" }} />
                   {modifiers.unappliedModifiers.length > 0 && (
-                    <Chip
-                      label={`Unapplied: ${modifiers.unappliedModifiers.length}`}
-                      color="error"
-                      size="small"
-                      variant="outlined"
-                    />
+                    <TagChip tag={{ label: `Unapplied: ${modifiers.unappliedModifiers.length}`, color: "error" }} />
                   )}
                   {modifiers.inactiveModifiers.length > 0 && (
-                    <Chip label={`Inactive: ${modifiers.inactiveModifiers.length}`} size="small" variant="outlined" />
+                    <TagChip tag={{ label: `Inactive: ${modifiers.inactiveModifiers.length}`, color: "default" }} />
                   )}
                   {modifiers.skippedModifiers.length > 0 && (
-                    <Chip
-                      label={`Skipped: ${modifiers.skippedModifiers.length}`}
-                      color="warning"
-                      size="small"
-                      variant="outlined"
-                    />
+                    <TagChip tag={{ label: `Skipped: ${modifiers.skippedModifiers.length}`, color: "warning" }} />
                   )}
                 </Stack>
               </Stack>

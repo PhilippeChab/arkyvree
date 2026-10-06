@@ -2,6 +2,7 @@ export { ActionMenuItem } from "./ActionMenuItem.tsx";
 export { AnimatedAlert } from "./AnimatedAlert.tsx";
 export { AttachmentField } from "./AttachmentField.tsx";
 export { BlankState, NoMatchesState } from "./BlankState.tsx";
+export { ChoiceChip } from "./ChoiceChip.tsx";
 export { CLICKABLE_SX, clickableProps, toggleProps } from "./clickable.ts";
 export { DataTable, type DataTableColumn, type DataTableEmpty, type RowAction } from "./DataTable.tsx";
 export { Crossfade } from "./Crossfade.tsx";

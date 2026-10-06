@@ -1,6 +1,5 @@
 import {
   Box,
-  Chip,
   Collapse,
   Link as MuiLink,
   Stack,
@@ -16,7 +15,7 @@ import { Fragment, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
+import { CLICKABLE_SX, ExpandArrow, TagChip, toggleProps } from "@/client/src/components/common/index.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
@@ -147,14 +146,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
               spell.name
             )}
             {spell.tags?.map((tag) => (
-              <Chip
-                key={tag.name}
-                label={tag.name}
-                variant="outlined"
-                color={tag.joinsClassList ? "secondary" : "primary"}
-                size="tiny"
-                sx={{ ml: 0.5 }}
-              />
+              <TagChip key={tag.name} tag={{ label: tag.name, color: tag.joinsClassList ? "secondary" : "primary" }} />
             ))}
           </Stack>
         </TableCell>

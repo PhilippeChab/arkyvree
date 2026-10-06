@@ -1,4 +1,4 @@
-import { Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Button, IconButton, Stack, TextField, Typography } from "@mui/material";
 import type { Ref } from "react";
 
 import { DiceIcon } from "@/client/src/components/icons/index.ts";
@@ -39,7 +39,9 @@ export function HpGainField({
         <IconButton onClick={onRoll} disabled={rolling} color="primary" size="small" aria-label={`Roll d${hd}`}>
           <DiceIcon />
         </IconButton>
-        <Chip label="MAX" size="small" variant="outlined" onClick={() => onChange(hd)} disabled={rolling} />
+        <Button size="small" onClick={() => onChange(hd)} disabled={rolling}>
+          Max
+        </Button>
       </Stack>
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
         Enter HP gain (1 to {hd}). Average: {Math.ceil(hd / 2)}, Maximum: {hd}

@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Chip,
   Paper,
   Skeleton,
   Stack,
@@ -32,6 +31,7 @@ import {
   TABLE_CONTAINER_LOADING_STYLE,
   TABLE_CONTAINER_STYLE,
   TABLE_STYLE,
+  TagChip,
   toggleProps,
 } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
@@ -141,7 +141,7 @@ function GroupedRow({
             </Stack>
           </TableCell>
           <TableCell>
-            <Chip label={formatCount(row.variantCount, "variant")} size="small" variant="outlined" />
+            <TagChip tag={{ label: formatCount(row.variantCount, "variant"), color: "default" }} />
           </TableCell>
         </TableRow>
         {isExpanded && variantQuery.isLoading && (

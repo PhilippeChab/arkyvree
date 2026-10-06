@@ -1,7 +1,6 @@
-import { Autocomplete, Box, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 
-import { BlankState, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { CloseIcon } from "@/client/src/components/icons/index.ts";
+import { BlankState, ScrollSafeListbox, TagChip } from "@/client/src/components/common/index.ts";
 import { RemoveSkillDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { useClassSkills, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
@@ -113,13 +112,13 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         <Paper sx={{ p: 2, borderRadius: 2 }}>
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
             {classSkills.map((classSkill) => (
-              <Chip
+              <TagChip
                 key={classSkill.skillId}
-                label={classSkill.skillsInRule.name}
-                variant="outlined"
-                color="primary"
-                deleteIcon={canEdit ? <CloseIcon fontSize="compact" /> : undefined}
-                onDelete={canEdit ? () => handleRemoveSkill(classSkill.skillId) : undefined}
+                tag={{
+                  label: classSkill.skillsInRule.name,
+                  color: "primary",
+                  onDelete: canEdit ? () => handleRemoveSkill(classSkill.skillId) : undefined,
+                }}
               />
             ))}
           </Stack>

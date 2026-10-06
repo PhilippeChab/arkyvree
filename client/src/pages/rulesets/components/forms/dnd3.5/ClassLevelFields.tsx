@@ -127,8 +127,8 @@ export function ClassLevelFields({
             <Chip
               {...getItemProps({ index })}
               key={featKey(option)}
-              variant="outlined"
               label={option.label}
+              size="small"
               onDelete={() => setFeats(selectedFeats.filter((_, i) => i !== index))}
             />
           ))

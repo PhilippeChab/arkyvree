@@ -1,9 +1,15 @@
-import { Chip, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useCallback } from "react";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  CreateDialog,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+  TagChip,
+} from "@/client/src/components/common/index.ts";
 import { ClassesIcon } from "@/client/src/components/icons/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
@@ -11,7 +17,12 @@ import {
   ClassFormFields,
   EMPTY_CLASS,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  DescriptionCell,
+  hitDieTag,
+  RulesetSectionTable,
+  SectionActions,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import {
   classDetailQuery,
   prefetchClassSection,
@@ -72,8 +83,6 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
     [queryClient, ruleset.id],
   );
 
-  const formatHitDie = (hitDie: number) => `d${hitDie}`;
-
   const renderCell = (klass: Class, columnKey: string) => {
     switch (columnKey) {
       case "name":
@@ -83,7 +92,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
           </Typography>
         );
       case "hitDie":
-        return <Chip label={formatHitDie(klass.hd || 8)} size="small" color="secondary" variant="outlined" />;
+        return <TagChip tag={hitDieTag(klass.hd || 8)} />;
       case "description":
         return <DescriptionCell text={klass.description} />;
       default:

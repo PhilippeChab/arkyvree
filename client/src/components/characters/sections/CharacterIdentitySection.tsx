@@ -3,7 +3,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useController } from "react-hook-form";
 
-import { AttachmentField, DiceSpinner, FormTextField, SelectField } from "@/client/src/components/common/index.ts";
+import {
+  AttachmentField,
+  DiceSpinner,
+  FormTextField,
+  SelectField,
+  TagChip,
+} from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { type RulesetLanguage, useFormWith, useRulesetLanguages } from "@/client/src/hooks/index.ts";
 import { useDirtyForm, useFormSync } from "@/client/src/hooks/index.ts";
@@ -368,7 +374,9 @@ export function CharacterIdentitySection({
                       None
                     </Typography>
                   ) : (
-                    selectedLanguages.map((lang) => <Chip key={lang.id} label={lang.name} size="small" />)
+                    selectedLanguages.map((lang) => (
+                      <TagChip key={lang.id} tag={{ label: lang.name, color: "default" }} />
+                    ))
                   )}
                 </Stack>
               ) : (

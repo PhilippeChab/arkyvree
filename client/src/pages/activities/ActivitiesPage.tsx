@@ -1,4 +1,4 @@
-import { Chip, Container, Tooltip, Typography } from "@mui/material";
+import { Container, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
 import {
@@ -11,6 +11,7 @@ import {
   PageTransition,
   SearchBar,
   type SortOption,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
 import { ActivityIcon } from "@/client/src/components/icons/index.ts";
 import { isNavigableTarget, useListParams, useOpenActivityTarget, usePageTitle } from "@/client/src/hooks/index.ts";
@@ -90,17 +91,13 @@ export default function ActivitiesPage() {
                     {formatDateTime(activity.createdAt)}
                   </Typography>
                 ) : (
-                  <Tooltip
-                    describeChild
-                    title={formatActivityDetails(activity.data) ?? ""}
-                    slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
-                  >
-                    <Chip
-                      label={formatActivityType(activity.type, activity.data)}
-                      size="small"
-                      sx={{ fontWeight: 500 }}
-                    />
-                  </Tooltip>
+                  <TagChip
+                    tag={{
+                      label: formatActivityType(activity.type, activity.data),
+                      color: "default",
+                      tooltip: formatActivityDetails(activity.data) ?? undefined,
+                    }}
+                  />
                 )
               }
               onRowClick={(activity) => openTarget(activity.targetTable, activity.targetId)}

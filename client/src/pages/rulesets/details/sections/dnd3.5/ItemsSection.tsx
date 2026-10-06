@@ -1,8 +1,14 @@
-import { Chip, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  CreateDialog,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+  TagChip,
+} from "@/client/src/components/common/index.ts";
 import { ItemsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
@@ -157,7 +163,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       case "name":
         return item.name;
       case "template":
-        if (item.isTemplate) return <Chip label="Template" size="small" color="info" />;
+        if (item.isTemplate) return <TagChip tag={{ label: "Template", color: "info" }} />;
         if (item.templateName)
           return (
             <Typography variant="body2" sx={{ color: "text.secondary" }}>

@@ -1,6 +1,7 @@
-import { Chip, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
+import { TagChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import {
@@ -86,14 +87,14 @@ export function ClassLevelEditor({
       chips={level.saves.map(
         (save) =>
           saveName(save.saveId) && (
-            <Chip key={save.saveId} label={`${saveName(save.saveId)}: +${save.base}`} size="small" variant="outlined" />
+            <TagChip key={save.saveId} tag={{ label: `${saveName(save.saveId)}: +${save.base}`, color: "default" }} />
           ),
       )}
       readOnlyBody={
         level.feats.length > 0 ? (
           <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
             {sortedFeats(level).map((feat) => (
-              <Chip key={featKey(asLevelFeat(feat))} label={featLabel(feat)} size="small" variant="outlined" />
+              <TagChip key={featKey(asLevelFeat(feat))} tag={{ label: featLabel(feat), color: "default" }} />
             ))}
           </Stack>
         ) : (

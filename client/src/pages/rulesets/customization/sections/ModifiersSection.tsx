@@ -1,15 +1,25 @@
-import { Chip, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CreateDialog, DeleteDialog, EditDialog, SectionContent } from "@/client/src/components/common/index.ts";
-import { EMPTY_MODIFIER, ModifierForm, TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
+import {
+  CreateDialog,
+  DeleteDialog,
+  EditDialog,
+  SectionContent,
+  TagChip,
+} from "@/client/src/components/common/index.ts";
+import {
+  EMPTY_MODIFIER,
+  ModifierForm,
+  modifierOperatorTag,
+  TargetPathBreadcrumbs,
+} from "@/client/src/components/customization/index.ts";
 import { ModifiersIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
-import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
@@ -217,14 +227,7 @@ export function ModifiersSection({
         return <Typography variant="body2">{modifier.valueLabel || modifier.value}</Typography>;
       }
       case "operator":
-        return (
-          <Chip
-            label={MODIFIER_OPERATOR_LABELS[modifier.operator] || modifier.operator}
-            size="small"
-            color="secondary"
-            variant="outlined"
-          />
-        );
+        return <TagChip tag={modifierOperatorTag(modifier.operator)} />;
       case "createdAt":
         return (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>

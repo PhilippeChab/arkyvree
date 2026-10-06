@@ -1,9 +1,9 @@
-import { Avatar, Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Button, Card, CardContent, Container, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { DiceSpinner, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, PageTransition, TagChip } from "@/client/src/components/common/index.ts";
 import { CheckIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
@@ -201,11 +201,7 @@ export function InviteLandingPage({
 
   if (!isAnswering && invite.status !== "Pending") {
     return (
-      <InviteStateCard
-        icon={<Chip label={invite.status} color={invite.status === "Rejected" ? "error" : "default"} sx={{ mb: 2 }} />}
-        title={`Invitation ${invite.status}`}
-        action={goToDashboard}
-      >
+      <InviteStateCard icon={stateIcon} title={`Invitation ${invite.status}`} action={goToDashboard}>
         This invitation to {joinVerb} <strong>{name}</strong> is no longer pending.
       </InviteStateCard>
     );
@@ -229,7 +225,7 @@ export function InviteLandingPage({
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
                       Invited as
                     </Typography>
-                    <Chip label={invite.role} size="small" variant="outlined" />
+                    <TagChip tag={{ label: invite.role, color: "default" }} />
                   </Stack>
                 )}
                 {invite.invitedAt && (

@@ -1,5 +1,4 @@
 import {
-  Chip,
   Link as MuiLink,
   Stack,
   Table,
@@ -13,6 +12,7 @@ import {
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
+import { TagChip } from "@/client/src/components/common/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { capitalize } from "@/shared/text.ts";
 
@@ -133,10 +133,11 @@ export function EquipmentTable<T extends EquipmentTableRow>({
             Heavy: {encumbrance.heavyload ?? 0}
           </Typography>
           {encumbrance.load && encumbrance.load !== "light" && (
-            <Chip
-              label={capitalize(encumbrance.load)}
-              size="small"
-              color={encumbrance.load === "overloaded" ? "error" : encumbrance.load === "heavy" ? "warning" : "info"}
+            <TagChip
+              tag={{
+                label: capitalize(encumbrance.load),
+                color: encumbrance.load === "overloaded" ? "error" : encumbrance.load === "heavy" ? "warning" : "info",
+              }}
             />
           )}
         </Stack>

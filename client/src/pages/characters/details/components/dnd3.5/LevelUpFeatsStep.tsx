@@ -1,21 +1,11 @@
-import {
-  Box,
-  Chip,
-  Collapse,
-  List,
-  ListItemButton,
-  ListItemText,
-  Skeleton,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Collapse, List, ListItemButton, ListItemText, Skeleton, Stack, Tooltip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useController } from "react-hook-form";
 
 import {
   BlankState,
+  ChoiceChip,
   CLICKABLE_SX,
   DiceSpinner,
   ExpandArrow,
@@ -24,6 +14,7 @@ import {
   NextPageSpinner,
   NoMatchesState,
   SearchField,
+  TagChip,
   toggleProps,
 } from "@/client/src/components/common/index.ts";
 import { FeatsIcon } from "@/client/src/components/icons/index.ts";
@@ -262,11 +253,10 @@ export function LevelUpFeatsStep({
                   const isSelected = selectedAptitude === pool.id;
 
                   return (
-                    <Chip
+                    <ChoiceChip
                       key={pool.id}
                       label={`${pool.name} ${currentPoolFeats.length}/${pool.available}${pool.shared ? " (optional)" : ""}`}
-                      variant={isSelected ? "filled" : "outlined"}
-                      color={isSelected ? "primary" : "default"}
+                      selected={isSelected}
                       onClick={() => {
                         if (isSelected) return;
                         // A search typed for the last pool would filter this one.
@@ -309,9 +299,12 @@ export function LevelUpFeatsStep({
                           }
                           placement="right"
                         >
-                          <Chip
-                            label={feat.name}
-                            onDelete={() => feats.onChange(withoutPick(selectedFeats, selectedAptitude, feat.id))}
+                          <TagChip
+                            tag={{
+                              label: feat.name,
+                              color: "primary",
+                              onDelete: () => feats.onChange(withoutPick(selectedFeats, selectedAptitude, feat.id)),
+                            }}
                           />
                         </Tooltip>
                       ))

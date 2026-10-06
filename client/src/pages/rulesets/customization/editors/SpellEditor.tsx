@@ -1,5 +1,4 @@
-import { Chip } from "@mui/material";
-
+import { TagChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import {
@@ -9,7 +8,7 @@ import {
   SpellFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { byName } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
+import { aptitudeTag, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Power } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
@@ -71,14 +70,11 @@ export function SpellEditor({
       chips={
         <>
           {linkedAptitudes(power).map((apt) => (
-            <Chip key={apt.id} label={apt.name} size="small" color="primary" variant="outlined" />
+            <TagChip key={apt.id} tag={aptitudeTag(apt.name)} />
           ))}
           {saveName && (
-            <Chip
-              label={`Save: ${saveName}${power.saveEffect ? ` (${power.saveEffect})` : ""}`}
-              size="small"
-              color="warning"
-              variant="outlined"
+            <TagChip
+              tag={{ label: `Save: ${saveName}${power.saveEffect ? ` (${power.saveEffect})` : ""}`, color: "warning" }}
             />
           )}
         </>

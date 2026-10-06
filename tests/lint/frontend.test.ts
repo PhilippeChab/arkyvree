@@ -799,7 +799,7 @@ describe("frontend rules", () => {
     ).toEqual(["page-errors client/src/branched.tsx", "page-errors client/src/written.tsx"]);
   });
 
-  test("a role, a status or a fact is a TagChip, and a chip's color is its color prop", async () => {
+  test("a chip is a TagChip, a ChoiceChip or an Autocomplete's picked value, and its color is its color prop", async () => {
     expect(
       await lintRepo(
         {
@@ -811,10 +811,21 @@ describe("frontend rules", () => {
           "client/src/plain.tsx":
             'export const c = <Chip label={count} size="tiny" color="primary" sx={{ ml: 1 }} />;\n',
           "client/src/components/common/TagChip.tsx": "export const x = <Chip icon={<Icon />} label={label} />;\n",
+          "client/src/components/common/ChoiceChip.tsx": 'export const y = <Chip label={label} variant="filled" />;\n',
+          "client/src/picked.tsx":
+            'export const k = <Chip {...getItemProps({ index })} key={id} label={name} size="small" />;\n',
+          "client/src/outlined.tsx":
+            'export const o = <Chip {...getItemProps({ index })} key={id} label={name} variant="outlined" />;\n',
         },
         ["tag-chips"],
       ),
-    ).toEqual(["tag-chips client/src/iconed.tsx", "tag-chips client/src/painted.tsx"]);
+    ).toEqual([
+      "tag-chips client/src/iconed.tsx",
+      "tag-chips client/src/outlined.tsx",
+      "tag-chips client/src/painted.tsx",
+      "tag-chips client/src/painted.tsx",
+      "tag-chips client/src/plain.tsx",
+    ]);
   });
 
   test("a dialog's header is its DialogTitle, and it closes with its Close button", async () => {

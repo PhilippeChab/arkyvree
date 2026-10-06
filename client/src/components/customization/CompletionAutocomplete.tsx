@@ -1,8 +1,8 @@
-import { Autocomplete, Chip, ListItem, ListItemText, Stack, TextField } from "@mui/material";
+import { Autocomplete, ListItem, ListItemText, Stack, TextField } from "@mui/material";
 import { keepPreviousData, type QueryKey } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import { DiceSpinner, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, ScrollSafeListbox, TagChip } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 
 /** A suggestion of the customization completion endpoints. */
@@ -96,12 +96,7 @@ export function CompletionAutocomplete<T extends Completion>({
               primary={
                 <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
                   {option.label}
-                  <Chip
-                    label={option.kind}
-                    size="small"
-                    variant="outlined"
-                    color={option.kind === "engine" ? "primary" : "default"}
-                  />
+                  <TagChip tag={{ label: option.kind, color: option.kind === "engine" ? "primary" : "default" }} />
                 </Stack>
               }
               secondary={option.detail}

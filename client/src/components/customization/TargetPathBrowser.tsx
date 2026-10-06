@@ -1,6 +1,5 @@
 import {
   Box,
-  Chip,
   IconButton,
   List,
   ListItemButton,
@@ -19,6 +18,7 @@ import {
   NextPageSpinner,
   NoMatchesState,
   SearchField,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
 import { ChevronRightIcon, ClearIcon, FilterIcon, PublicIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
@@ -178,12 +178,12 @@ export function TargetPathBrowser({
         {breadcrumbSegments.map((segment, index) => (
           <Stack key={index} direction="row" sx={{ alignItems: "center" }}>
             {index > 0 && <ChevronRightIcon fontSize="compact" sx={{ color: "text.secondary", mx: 0.25 }} />}
-            <Chip
-              label={segmentLabels[segment] || formatSegment(segment)}
-              size="small"
-              color={isComplete ? "success" : "info"}
-              onClick={disabled ? undefined : () => handleBreadcrumbClick(index)}
-              sx={{ cursor: disabled ? "default" : "pointer" }}
+            <TagChip
+              tag={{
+                label: segmentLabels[segment] || formatSegment(segment),
+                color: isComplete ? "success" : "info",
+                onClick: disabled ? undefined : () => handleBreadcrumbClick(index),
+              }}
             />
           </Stack>
         ))}

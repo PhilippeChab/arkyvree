@@ -1,4 +1,4 @@
-import { Button, Chip, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
+import { Button, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
@@ -11,17 +11,18 @@ import {
   EditDialog,
   HelpLabel,
   Modal,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_MODIFIER,
   ModifierForm,
   type ModifierFormData,
+  modifierOperatorTag,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
 import { AddIcon, DeleteIcon, DuplicateIcon, EditIcon, ModifiersIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
-import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -187,14 +188,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                 if (column === "target")
                   return <TargetPathBreadcrumbs target={mod.target} targetLabels={mod.targetLabels} />;
                 if (column === "operator") {
-                  return (
-                    <Chip
-                      label={MODIFIER_OPERATOR_LABELS[mod.operator] || mod.operator}
-                      size="small"
-                      color="secondary"
-                      variant="outlined"
-                    />
-                  );
+                  return <TagChip tag={modifierOperatorTag(mod.operator)} />;
                 }
                 const templatePath = extractTemplatePath(mod.value);
                 return templatePath ? (

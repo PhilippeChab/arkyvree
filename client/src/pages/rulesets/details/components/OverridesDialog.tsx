@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Chip,
   Collapse,
   DialogActions,
   DialogContent,
@@ -20,7 +19,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { Link } from "react-router-dom";
 
-import { BlankState, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { BlankState, DiceSpinner, Modal, TagChip } from "@/client/src/components/common/index.ts";
 import { CompareIcon, RestoreIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -117,9 +116,8 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                     sx={{ px: 2, py: 1, bgcolor: "action.hover", alignItems: "center" }}
                   >
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      {entityTypeLabel(entityType, baseRules, true)}
+                      {entityTypeLabel(entityType, baseRules, true)} ({items.length})
                     </Typography>
-                    <Chip label={items.length} size="tiny" />
                   </Stack>
                   <List dense disablePadding>
                     {items.map((change) => {
@@ -131,13 +129,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                       const rowContent = (
                         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                           <ListItemText primary={change.name} sx={{ my: 0, flexGrow: 0 }} />
-                          <Chip
-                            label={change.status}
-                            color={chipColor}
-                            variant="outlined"
-                            size="tiny"
-                            sx={{ flexShrink: 0 }}
-                          />
+                          <TagChip tag={{ label: change.status, color: chipColor }} />
                         </Stack>
                       );
                       return (

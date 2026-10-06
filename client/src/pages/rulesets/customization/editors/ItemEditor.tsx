@@ -1,5 +1,4 @@
-import { Chip } from "@mui/material";
-
+import { TagChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -54,10 +53,10 @@ export function ItemEditor({
       description={item.description}
       chips={
         <>
-          {item.type && <Chip label={item.type} size="small" color="secondary" sx={{ fontWeight: 600 }} />}
-          {item.slot && <Chip label={item.slot} size="small" color="info" variant="outlined" />}
-          {cost && <Chip label={cost} size="small" variant="outlined" />}
-          {weight && <Chip label={weight} size="small" variant="outlined" />}
+          {item.type && <TagChip tag={{ label: item.type, color: "secondary", tooltip: "Type" }} />}
+          {item.slot && <TagChip tag={{ label: item.slot, color: "info", tooltip: "Slot" }} />}
+          {cost && <TagChip tag={{ label: cost, color: "default", tooltip: "Cost" }} />}
+          {weight && <TagChip tag={{ label: weight, color: "default", tooltip: "Weight" }} />}
         </>
       }
       edit={

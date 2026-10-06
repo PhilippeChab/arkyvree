@@ -1,7 +1,8 @@
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { type ElementType, useMemo } from "react";
 
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { TagChip } from "@/client/src/components/common/index.ts";
+import { levelTag, RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 
 interface ClassLevelCountsTableProps<L extends { id: string; level: number }> {
   title: string;
@@ -49,7 +50,7 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
 
   const renderCell = (level: L, columnKey: string) => {
     if (columnKey === "level") {
-      return <Chip label={level.level} size="small" color="primary" />;
+      return <TagChip tag={levelTag(level.level)} />;
     }
     const value = countOf(level, columnKey.replace("count_", ""));
     return (

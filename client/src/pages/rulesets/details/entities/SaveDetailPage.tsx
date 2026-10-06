@@ -1,8 +1,9 @@
-import { Chip } from "@mui/material";
 import { useParams } from "react-router-dom";
 
+import { TagChip } from "@/client/src/components/common/index.ts";
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { EMPTY_SAVE, type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { abilityTag } from "@/client/src/pages/rulesets/components/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 import { saveQuery } from "./entityDetailQueries.ts";
@@ -34,7 +35,7 @@ export default function SaveDetailPage() {
       }}
       renderChips={(save) => {
         const linkedAbilityName = abilities.find((a) => a.id === save.abilityId)?.name;
-        return linkedAbilityName && <Chip label={linkedAbilityName} color="secondary" sx={{ fontWeight: 600 }} />;
+        return linkedAbilityName && <TagChip tag={abilityTag(linkedAbilityName)} size="medium" />;
       }}
     />
   );

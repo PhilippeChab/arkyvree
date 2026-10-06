@@ -1,13 +1,24 @@
-import { Chip, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useCallback } from "react";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  CreateDialog,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+  TagChip,
+} from "@/client/src/components/common/index.ts";
 import { RacesIcon } from "@/client/src/components/icons/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_RACE, type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  DescriptionCell,
+  raceSizeTag,
+  RulesetSectionTable,
+  SectionActions,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useEntityFilters } from "@/client/src/pages/rulesets/details/entityFilters.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
@@ -70,7 +81,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       case "name":
         return race.name;
       case "size":
-        return <Chip label={race.size} size="small" color="primary" variant="outlined" />;
+        return <TagChip tag={raceSizeTag(race.size)} />;
       case "speed":
         return <Typography variant="body2">{race.baseSpeed} ft</Typography>;
       case "description":

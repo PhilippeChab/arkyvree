@@ -1,4 +1,4 @@
-import { Chip, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { Controller } from "react-hook-form";
 
@@ -8,6 +8,7 @@ import {
   DescriptionField,
   EditDialog,
   SectionContent,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
 import { PropertyTypeInput, PropertyValueInput } from "@/client/src/components/customization/index.ts";
 import { PropertiesIcon } from "@/client/src/components/icons/index.ts";
@@ -137,7 +138,7 @@ export function PropertiesSection({
         );
       case "type":
         return property.type ? (
-          <Chip label={property.type} size="small" color="primary" variant="outlined" />
+          <TagChip tag={{ label: property.type, color: "primary" }} />
         ) : (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             —

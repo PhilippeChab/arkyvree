@@ -2,7 +2,6 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Chip,
   IconButton,
   Link as MuiLink,
   Stack,
@@ -12,7 +11,7 @@ import {
 import type React from "react";
 import { Link } from "react-router-dom";
 
-import { BlankState } from "@/client/src/components/common/index.ts";
+import { BlankState, TagChip } from "@/client/src/components/common/index.ts";
 import { AddIcon, DecrementIcon, EditIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
 
@@ -71,23 +70,10 @@ export function ClassesSection({
             // Levels can only be edited on a class the sheet carries in full.
             if (!klass || levels.length === 0 || !onEditLevel) {
               return (
-                <Chip
+                <TagChip
                   key={className}
-                  label={
-                    classLink ? (
-                      <MuiLink component={Link} to={classLink} target="_blank" underline="hover">
-                        {className} {currentLevel}
-                      </MuiLink>
-                    ) : (
-                      `${className} ${currentLevel}`
-                    )
-                  }
-                  variant="outlined"
-                  sx={{
-                    typography: "body2",
-                    height: "auto",
-                    "& .MuiChip-label": { px: 2, py: 1 },
-                  }}
+                  tag={{ label: `${className} ${currentLevel}`, color: "default", to: classLink, newTab: true }}
+                  size="medium"
                 />
               );
             }

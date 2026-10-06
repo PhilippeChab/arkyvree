@@ -12,13 +12,6 @@ declare module "@mui/material/SvgIcon" {
   }
 }
 
-declare module "@mui/material/Chip" {
-  /** A count or a tag beside a title, smaller than MUI's small */
-  interface ChipPropsSizeOverrides {
-    tiny: true;
-  }
-}
-
 declare module "@mui/material/styles" {
   interface Palette {
     /** The color of the app's own shadows (the sidebar's, a banner's): deeper on the dark theme. */
@@ -361,11 +354,10 @@ export function createAppTheme(darkMode: boolean): Theme {
         },
         MuiChip: {
           styleOverrides: {
-            root: ({ theme }) => ({
+            root: {
               borderRadius: 4,
               border: darkMode ? "1px solid rgba(210, 180, 140, 0.4)" : "1px solid rgba(141, 30, 30, 0.2)",
-              variants: [{ props: { size: "tiny" }, style: { height: 20, ...theme.typography.caption } }],
-            }),
+            },
           },
         },
         MuiCollapse: {
@@ -418,6 +410,8 @@ export function createAppTheme(darkMode: boolean): Theme {
           defaultProps: { arrow: true, enterDelay: 300 },
           styleOverrides: {
             tooltip: {
+              // A tooltip's text keeps its lines (an activity's details)
+              whiteSpace: "pre-line",
               fontSize: "0.85rem",
               lineHeight: 1.6,
               padding: "8px 12px",

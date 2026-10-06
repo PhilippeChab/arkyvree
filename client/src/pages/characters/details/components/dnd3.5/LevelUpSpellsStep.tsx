@@ -1,13 +1,15 @@
-import { Box, Chip, List, ListItemButton, ListItemText, Skeleton, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, List, ListItemButton, ListItemText, Skeleton, Stack, Tooltip, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
 import {
   BlankState,
+  ChoiceChip,
   DiceSpinner,
   LoadError,
   NextPageSpinner,
   NoMatchesState,
   SearchField,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
 import { SpellsIcon } from "@/client/src/components/icons/index.ts";
 
@@ -124,11 +126,10 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                         const levelLabel = level === "0" ? "Cantrips" : `Level ${level}`;
 
                         return (
-                          <Chip
+                          <ChoiceChip
                             key={`${pool.id}-${level}`}
                             label={`${pool.name} - ${levelLabel} ${powersInLevel}/${levelAvailable}`}
-                            variant={isSelected ? "filled" : "outlined"}
-                            color={isSelected ? "primary" : "default"}
+                            selected={isSelected}
                             onClick={() => openPool(pool.id, Number(level))}
                           />
                         );
@@ -141,11 +142,10 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                   const isSelected = selectedPowerAptitude === pool.id && selectedPowerLevel === null;
 
                   return [
-                    <Chip
+                    <ChoiceChip
                       key={pool.id}
                       label={`${pool.name} ${currentPoolPowers.length}/${poolAvailable}`}
-                      variant={isSelected ? "filled" : "outlined"}
-                      color={isSelected ? "primary" : "default"}
+                      selected={isSelected}
                       onClick={() => openPool(pool.id, null)}
                     />,
                   ];
@@ -203,11 +203,13 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                           }
                           placement="right"
                         >
-                          <Chip
-                            label={power.name}
-                            onDelete={() =>
-                              powers.onChange(withoutPick(selectedPowers, selectedPowerAptitude, power.id))
-                            }
+                          <TagChip
+                            tag={{
+                              label: power.name,
+                              color: "primary",
+                              onDelete: () =>
+                                powers.onChange(withoutPick(selectedPowers, selectedPowerAptitude, power.id)),
+                            }}
                           />
                         </Tooltip>
                       ))
