@@ -961,7 +961,8 @@ describe("frontend rules", () => {
           "client/src/panels.tsx":
             'export const p = (\n  <Stack spacing={3}>\n    <Section title="A">a</Section>\n    <Section title="B">b</Section>\n  </Stack>\n);\n',
           "client/src/padded.tsx": "export const d = <Box sx={{ py: 1.5, px: 2 }} />;\n",
-          "client/src/constant.tsx": "export const k = <Box sx={{ p: PAD }} />;\n",
+          "client/src/constant.tsx":
+            "export const k = <Box sx={[{ p: PAD }, (theme) => ({ px: theme.spacing(2.5) })]} />;\n",
           "client/src/icons.tsx":
             'export const i = (\n  <Stack direction="row" spacing={3}>\n    <IconButton size="small" aria-label="Edit" />\n    <IconButton size="small" aria-label="Delete" />\n  </Stack>\n);\n',
           "client/src/derived.tsx": "export const v = <Box sx={{ pr: actions.length * 5 }} />;\n",
@@ -981,6 +982,7 @@ describe("frontend rules", () => {
       "spacing client/src/buttons.tsx",
       "spacing client/src/chips.tsx",
       "spacing client/src/computed.tsx",
+      "spacing client/src/constant.tsx",
       "spacing client/src/constant.tsx",
       "spacing client/src/grid.tsx",
       "spacing client/src/icons.tsx",

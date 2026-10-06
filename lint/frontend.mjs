@@ -1871,8 +1871,9 @@ function onPaddingLadder(key, value) {
   if (value.type === "Literal") {
     return GAPS.has(value.value) || value.value === 0 || (value.value === 6 && (key === "pl" || key === "paddingLeft"));
   }
-  // A value derived from data (`actions.length * 5`) is the data's; a constant or a template hides a step
-  if (value.type !== "ObjectExpression") return value.type === "BinaryExpression" || value.type === "CallExpression";
+  // A value derived from data (`actions.length * 5`) is the data's; a constant, a template or a call
+  // (`theme.spacing(2.5)`) hides a step
+  if (value.type !== "ObjectExpression") return value.type === "BinaryExpression";
   const steps = Object.fromEntries(
     value.properties.map((p) => [p.key?.name, p.value?.type === "Literal" ? p.value.value : null]),
   );
