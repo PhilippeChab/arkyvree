@@ -1,10 +1,10 @@
 /** A magic item reference's seeds: its ItemDef[], by category. */
 
 import { checkedValue, checkOneOf } from "@/database/packages/dnd35-from-parser/tools/checks.ts";
+import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/scraper/armorStats.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/scraper/weaponStats.ts";
-import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import {
   type MagicItemCategory,
   type MagicItemReference,

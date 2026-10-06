@@ -4,6 +4,7 @@ import {
   lookupWithPluralVariants,
   matchesWithPluralVariants,
 } from "@/database/packages/dnd35-from-parser/tools/names.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { CHOICE_PATTERN } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/aptitudePicks.ts";
 import {
   buildFeatureMap,
@@ -15,7 +16,6 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/features.ts";
 import { detectWAPModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/proficiencies.ts";
 import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { type NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { stripSeparators } from "@/shared/text.ts";
