@@ -1,12 +1,11 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { AuthPage, AuthSubmitButton, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { emailRules } from "@/client/src/lib/validation.ts";
@@ -24,11 +23,9 @@ export default function SignIn() {
   const navigate = useNavigate();
   const redirect = safeRedirectPath(searchParams.get("redirect"));
 
-  const { control, handleSubmit } = useForm<SignInFormData>({
-    defaultValues: {
-      emailAddress: "",
-      password: "",
-    },
+  const { control, handleSubmit } = useFormWith<SignInFormData>({
+    emailAddress: "",
+    password: "",
   });
 
   const onSubmit = async (data: SignInFormData) => {

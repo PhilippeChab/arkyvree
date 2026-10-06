@@ -104,4 +104,20 @@ describe("frontend rules", () => {
       "controlled-inputs client/src/watched.tsx",
     ]);
   });
+
+  test("a form is made with useFormWith, whose values are whole, never react-hook-form's useForm", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/hooks/useFormWith.ts":
+            'import { useForm } from "react-hook-form";\nexport function useFormWith(values) {\n  return useForm({ defaultValues: values });\n}\n',
+          "client/src/made.tsx":
+            'import { useFormWith } from "@/client/src/hooks/index.ts";\nexport function Made() {\n  useFormWith({ name: "" });\n  return null;\n}\n',
+          "client/src/partial.tsx":
+            'import { useForm } from "react-hook-form";\nexport function Partial() {\n  useForm();\n  return null;\n}\n',
+        },
+        ["controlled-inputs"],
+      ),
+    ).toEqual(["controlled-inputs client/src/partial.tsx"]);
+  });
 });

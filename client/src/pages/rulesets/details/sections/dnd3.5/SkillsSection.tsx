@@ -7,7 +7,11 @@ import { useCallback } from "react";
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { type SkillFormData, SkillFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import {
+  EMPTY_SKILL,
+  type SkillFormData,
+  SkillFormFields,
+} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { skillQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
@@ -34,7 +38,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Skill, SkillFormData>({
     rulesetId: ruleset.id,
     sectionName: "skills",
-    createDefaults: { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: false },
+    createDefaults: EMPTY_SKILL,
     label: "Skill",
     createFn: async (data) => {
       return parseResponse(

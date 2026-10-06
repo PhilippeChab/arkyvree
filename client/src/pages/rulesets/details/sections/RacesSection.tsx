@@ -6,7 +6,7 @@ import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { EMPTY_RACE, type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useEntityFilters } from "@/client/src/pages/rulesets/details/entityFilters.ts";
@@ -34,7 +34,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Race, RaceFormData>({
     rulesetId: ruleset.id,
     sectionName: "races",
-    createDefaults: { size: "Medium", baseSpeed: 30 },
+    createDefaults: EMPTY_RACE,
     label: "Race",
     createFn: async (data) => {
       return parseResponse(

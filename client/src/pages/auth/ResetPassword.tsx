@@ -1,5 +1,5 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
-import { Controller, useForm } from "react-hook-form";
+import { Controller } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
 import {
@@ -10,7 +10,7 @@ import {
   VerificationCodeInput,
 } from "@/client/src/components/auth/index.ts";
 import { PasswordField } from "@/client/src/components/common/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { confirmPasswordRules, newPasswordRules } from "@/client/src/lib/validation.ts";
 import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
@@ -30,8 +30,10 @@ export default function ResetPassword() {
   const isLoading = useAuthStore((s) => s.isLoading);
   const navigate = useNavigate();
 
-  const form = useForm<ResetPasswordFormData>({
-    defaultValues: { digits: EMPTY_VERIFICATION_CODE, newPassword: "", newPasswordConfirmation: "" },
+  const form = useFormWith<ResetPasswordFormData>({
+    digits: EMPTY_VERIFICATION_CODE,
+    newPassword: "",
+    newPasswordConfirmation: "",
   });
   const digits = form.watch("digits");
 

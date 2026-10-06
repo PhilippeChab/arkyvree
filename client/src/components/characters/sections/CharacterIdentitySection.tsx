@@ -1,11 +1,11 @@
 import { Autocomplete, Box, Button, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { useController, useForm } from "react-hook-form";
+import { useController } from "react-hook-form";
 
 import { AttachmentField, DiceSpinner, FormTextField, SelectField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { type RulesetLanguage, useRulesetLanguages } from "@/client/src/hooks/index.ts";
+import { type RulesetLanguage, useFormWith, useRulesetLanguages } from "@/client/src/hooks/index.ts";
 import { useDirtyForm, useFormSync } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -76,20 +76,18 @@ export function CharacterIdentitySection({
   const canEditName = !readOnly;
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const form = useForm<CharacterIdentityFormData>({
-    defaultValues: {
-      race: "",
-      alignment: "",
-      experience: 0,
-      age: "",
-      gender: "",
-      height: "",
-      weight: "",
-      deity: "",
-      description: "",
-      notes: "",
-      languageIds: [],
-    },
+  const form = useFormWith<CharacterIdentityFormData>({
+    race: "",
+    alignment: "",
+    experience: 0,
+    age: "",
+    gender: "",
+    height: "",
+    weight: "",
+    deity: "",
+    description: "",
+    notes: "",
+    languageIds: [],
   });
 
   const sync = useFormSync(form, toIdentityForm(character), { key: characterId, updatedAt: character.updatedAt });

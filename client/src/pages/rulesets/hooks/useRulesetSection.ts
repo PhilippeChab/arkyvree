@@ -1,8 +1,9 @@
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { type DefaultValues, type FieldValues, useForm } from "react-hook-form";
+import { type DefaultValues, type FieldValues } from "react-hook-form";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { useFormWith } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 
 interface RulesetSectionConfig<
@@ -26,7 +27,8 @@ interface RulesetSectionConfig<
   onUpdateSuccess?: (data: TUpdated) => void;
   onDeleteSuccess?: (data: TDeleted) => void;
   onEditDialogClose?: () => void;
-  createDefaults?: DefaultValues<TFormData>;
+  /** Every field's value in an empty form: the create form's, and the edit form's until a row's values replace them */
+  createDefaults: TFormData & DefaultValues<TFormData>;
 }
 
 export function useRulesetSection<
@@ -61,8 +63,8 @@ export function useRulesetSection<
   const [selectedItem, setSelectedItem] = useState<TData | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-  const createForm = useForm<TFormData>({ defaultValues: createDefaults });
-  const editForm = useForm<TFormData>();
+  const createForm = useFormWith<TFormData>(createDefaults);
+  const editForm = useFormWith<TFormData>(createDefaults);
 
   // Data query (only when queryFn is provided and no external data)
   const {

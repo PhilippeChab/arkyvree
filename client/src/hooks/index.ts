@@ -3,6 +3,7 @@ export { useDebouncedValue } from "./useDebouncedValue.ts";
 export { useDirtyForm } from "./useDirtyForm.ts";
 export { useDetachAttachment, useDirectUpload } from "./useDirectUpload.ts";
 export { useFormSync, type FormSync } from "./useFormSync.ts";
+export { useFormWith } from "./useFormWith.ts";
 export { useDemoTimeRemaining } from "./useDemoTimeRemaining.ts";
 export { useGoogleSignIn } from "./useGoogleSignIn.ts";
 export { useIsMobile } from "./useIsMobile.ts";

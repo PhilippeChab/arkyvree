@@ -12,7 +12,8 @@
  *   `DiceSpinner`, never MUI's `CircularProgress`.
  * - `controlled-inputs`: every input is controlled, and a form's field is bound one way: through `useController` (the
  *   shared fields, `FormTextField`, `Controller`), never `register` (uncontrolled), and never a value `watch` reads
- *   with a `setValue` for its change.
+ *   with a `setValue` for its change. A form starts every field with a value: it's made with `useFormWith` (a whole
+ *   `defaultValues`), never react-hook-form's `useForm`, which takes some.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -184,6 +185,16 @@ function createControlledInputs(context) {
   // What a file reads with `watch`, held in a variable
   const watched = new Set();
   return {
+    ImportSpecifier(node) {
+      if (node.parent.source.value !== "react-hook-form" || node.imported.name !== "useForm") return;
+      if (repoPath(context.filename) === "client/src/hooks/useFormWith.ts") return;
+      context.report({
+        node,
+        message:
+          "A form starts every field with a value: make it with `useFormWith(defaultValues)` (`client/src/hooks`), " +
+          "whose values TypeScript checks are whole, not `useForm`.",
+      });
+    },
     CallExpression(node) {
       const callee = node.callee;
       const isRegister =

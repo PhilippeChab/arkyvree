@@ -2,7 +2,7 @@ import { Chip } from "@mui/material";
 import { useParams } from "react-router-dom";
 
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
-import { type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { EMPTY_SAVE, type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 import { saveQuery } from "./entityDetailQueries.ts";
@@ -22,6 +22,7 @@ export default function SaveDetailPage() {
       label="Save"
       query={(id) => saveQuery(rulesetId, id)}
       editing={{
+        empty: EMPTY_SAVE,
         toFormValues: (save): SaveFormData => ({
           name: save.name,
           description: save.description ?? "",

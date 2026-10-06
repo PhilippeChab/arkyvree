@@ -2,16 +2,16 @@ import { Construction as ItemsIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { useForm } from "react-hook-form";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useSearchText } from "@/client/src/hooks/index.ts";
+import { useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
 import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { RulesetItem } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import {
+  EMPTY_ITEM,
   ItemFormFields,
   type ItemFormInternal,
   toItemForm,
@@ -49,6 +49,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     Item,
     ItemFormInternal
   >({
+    createDefaults: EMPTY_ITEM,
     rulesetId: ruleset.id,
     sectionName: "items",
     label: "Item",
@@ -99,7 +100,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const snackbar = useSnackbar();
   const [bulkItem, setBulkItem] = useState<Item | null>(null);
-  const bulkForm = useForm<BulkVariantsFormValues>();
+  const bulkForm = useFormWith<BulkVariantsFormValues>({ variants: [] });
 
   const duplicateMutation = useMutation({
     mutationFn: async ({ sourceId, data }: { sourceId: string; data: ItemFormInternal }) => {

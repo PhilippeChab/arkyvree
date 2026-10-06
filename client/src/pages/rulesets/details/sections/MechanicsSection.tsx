@@ -6,7 +6,11 @@ import { useCallback } from "react";
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { type MechanicFormData, MechanicFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  EMPTY_MECHANIC,
+  type MechanicFormData,
+  MechanicFormFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { mechanicQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
@@ -29,6 +33,7 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Mechanic, MechanicFormData>({
+    createDefaults: EMPTY_MECHANIC,
     rulesetId: ruleset.id,
     sectionName: "mechanics",
     label: "Mechanic",

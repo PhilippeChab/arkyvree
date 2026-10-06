@@ -35,7 +35,7 @@ import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { EMPTY_FEAT, type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   AptitudeChipsCell,
   DescriptionCell,
@@ -224,6 +224,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const [expandedFamilies, toggleFamily, collapseFamilies] = useToggleSet();
 
   const { setCreateDialogOpen, createForm, createDialogProps } = useRulesetSection<Feat, FeatFormData>({
+    createDefaults: EMPTY_FEAT,
     rulesetId: ruleset.id,
     sectionName: "feats",
     label: "Feat",

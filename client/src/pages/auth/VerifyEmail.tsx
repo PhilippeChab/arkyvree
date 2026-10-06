@@ -1,5 +1,5 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
-import { Controller, useForm } from "react-hook-form";
+import { Controller } from "react-hook-form";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -9,7 +9,7 @@ import {
   useResendCode,
   VerificationCodeInput,
 } from "@/client/src/components/auth/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
@@ -30,7 +30,7 @@ export default function VerifyEmail() {
   const redirect = safeRedirectPath(location.state?.redirect);
   const navigate = useNavigate();
 
-  const form = useForm<VerifyEmailFormData>({ defaultValues: { digits: EMPTY_VERIFICATION_CODE } });
+  const form = useFormWith<VerifyEmailFormData>({ digits: EMPTY_VERIFICATION_CODE });
   const digits = form.watch("digits");
 
   const { error, setError, handleResend, notice } = useResendCode(() =>

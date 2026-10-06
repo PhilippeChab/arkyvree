@@ -6,7 +6,7 @@ import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { CreateDialog, DeleteDialog, EditDialog, SectionContent } from "@/client/src/components/common/index.ts";
-import { ModifierForm, TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
+import { EMPTY_MODIFIER, ModifierForm, TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
@@ -82,6 +82,7 @@ export function ModifiersSection({
     handleDelete,
     confirmDelete,
   } = useRulesetSection({
+    createDefaults: EMPTY_MODIFIER,
     rulesetId: ruleset.id,
     sectionName: `customization-${entityType}-${entityId}-modifiers`,
     label: "Modifier",

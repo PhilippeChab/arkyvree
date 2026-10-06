@@ -1,12 +1,11 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 
 import { AuthPage, AuthSubmitButton } from "@/client/src/components/auth/index.ts";
 import { EmailField } from "@/client/src/components/common/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { emailRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -21,10 +20,8 @@ export default function ForgotPassword() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const { control, handleSubmit } = useForm<ForgotPasswordFormData>({
-    defaultValues: {
-      emailAddress: "",
-    },
+  const { control, handleSubmit } = useFormWith<ForgotPasswordFormData>({
+    emailAddress: "",
   });
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
