@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import {
   assertEntityNameAvailable,
@@ -19,7 +19,6 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 interface PowerBody {
@@ -56,26 +55,6 @@ const SPELL_FIELDS = [
 ] as const satisfies (keyof PowerBody)[];
 
 class PowersService {
-  /**
-   * The ids a page of powers is drawn from: those on a class's spell list (none when its levels give slots in none) or
-   * on a list, at a level when one is given, or at a level on any list; every power when none of these is given.
-   */
-  private getListedPowerIds(
-    baseRules: BaseRules,
-    rulesetData: CachedRulesetData,
-    rulesetId: string,
-    where: { aptitudeId?: string; classId?: string; level?: number },
-  ) {
-    if (where.classId !== undefined) {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, where.classId, rulesetId, sourceChain, "Class");
-      const listId = RulesetFactory.fromBaseRules(baseRules).hooks.classLevels.getSpellListId(rulesetData, klass.id);
-      return listId === undefined ? [] : getListPowerIds(rulesetData, { aptitudeId: listId, level: where.level });
-    }
-    if (where.aptitudeId === undefined && where.level == null) return undefined;
-    return getListPowerIds(rulesetData, where);
-  }
-
   /** Replaces a power's aptitude links with these. */
   private async replaceAptitudes(tx: Db, powerId: string, aptitudes: NonNullable<PowerBody["aptitudes"]>) {
     await PowersAptitudes.delete(tx, { powerId });
@@ -153,13 +132,12 @@ class PowersService {
     });
   }
 
-  /** A page of the ruleset's powers, as its composed view has them: all of them, a list's or a class's (at a level). */
+  /** A page of the ruleset's powers, as its composed view has them: all of them, or a list's (at a level). */
   async getPowers(
     rulesetId: string,
     where: {
       childOnly?: boolean;
       aptitudeId?: string;
-      classId?: string;
       level?: number;
       search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
@@ -167,10 +145,11 @@ class PowersService {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const { aptitudeId, classId, level, ...filters } = where;
-      const ids = this.getListedPowerIds(ruleset.baseRules, rulesetData, rulesetId, { aptitudeId, classId, level });
+      const { aptitudeId, level, ...filters } = where;
+      const ids =
+        aptitudeId !== undefined || level != null ? getListPowerIds(rulesetData, { aptitudeId, level }) : undefined;
       const result = await Powers.findPage(
         db,
         { rulesetId, ancestorRulesetIds: sourceChain, ...filters, ids },

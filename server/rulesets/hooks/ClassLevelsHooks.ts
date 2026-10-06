@@ -16,16 +16,16 @@ export interface ClassLevelsHooks {
   readCurrentValues(properties: { type: string; value: string }[]): { bab: number; skills: number };
 
   /**
-   * The spell list a class's levels give slots in, by its aptitude's id: the one named for the class when they give
-   * slots in several, else the first by level; none when they give none.
+   * The spell lists a class's levels give slots in, by their aptitudes' ids: the one named for the class first, then
+   * the others by level; none when they give none.
    */
-  getSpellListId(
+  getSpellListIds(
     rulesetData: Pick<
       CachedRulesetData,
       "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug"
     >,
     klassId: string,
-  ): string | undefined;
+  ): string[];
 
   enrichWithSpellsPerDay<T extends { id: string; level: number }>(
     levels: T[],
