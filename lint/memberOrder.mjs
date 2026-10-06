@@ -1,7 +1,7 @@
 /**
- * One member order for every class, every file's functions and every router: sync before async, then the lifecycle
- * (load, preload, initialize, build, apply, in that order), reads, creates, updates, deletes, then the other actions,
- * by name within each group. `oxlint --fix` puts a file in order.
+ * One member order for every class and every file's functions: sync before async, then the lifecycle (load, preload,
+ * initialize, build, apply, in that order), reads, creates, updates, deletes, then the other actions, by name within
+ * each group. A router's routes sort by HTTP method and path. `oxlint --fix` puts a file in order.
  *
  * - A class's methods group by their leading verb (`findOne` reads, `archiveCharacter` deletes): its private and
  *   protected methods first, then its public ones, the sync ones before the async ones in each. The constructor,
