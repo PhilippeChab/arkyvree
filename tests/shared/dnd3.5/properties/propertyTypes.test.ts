@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { sortProperties } from "@/server/rulesets/dnd3.5/PropertyTypes.ts";
 import {
   DAMAGE_TYPE,
+  sortProperties,
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
   SPELL_COMPONENT,

@@ -261,8 +261,6 @@ export interface TargetPathsInterface extends TargetPathsTraverser {
 export interface PropertyTypesProvider {
   getStaticPropertyTypes(entityType?: PropertyEntityType): Record<string, string>;
   getStaticPropertyValues(type: string): string[] | null;
-  /** Properties in the order the ruleset shows them: by type, then by the type's options. */
-  sortProperties<T extends { type: string; value: string }>(properties: readonly T[]): T[];
 }
 
 export type DetailedCharacterWithSheet = {

@@ -1,0 +1,356 @@
+/**
+ * The D&D 3.5 property types: each entity type's, in the order a stat block shows them, with what each means, and the
+ * values each takes. The ruleset cache orders every entity's properties by them (`sortProperties`).
+ */
+
+import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
+import {
+  SPELL_COMPONENTS,
+  SPELL_DESCRIPTORS,
+  SPELL_DURATION_TYPES,
+  SPELL_RANGE_TYPES,
+  SPELL_RESISTANCE_OPTIONS,
+  SPELL_SAVING_THROWS,
+  SPELL_SCHOOLS,
+  SPELL_SUBSCHOOLS,
+} from "@/shared/dnd3.5/spells.ts";
+
+import { ARMOR_AC_BONUS, ARMOR_CHECK_PENALTY, ARMOR_MAX_DEX, ARMOR_PROFICIENCY, ARMOR_TYPE } from "./armor.ts";
+import {
+  FEAT_FAMILY,
+  FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
+  FEAT_WEAPON_FINESSE,
+  WIZARD_PROHIBITED_SCHOOL,
+} from "./feat.ts";
+import {
+  DAMAGE_TYPE,
+  ITEM_HAS_CHARGES,
+  ITEM_MADE_OF,
+  ITEM_MASTERWORK,
+  ITEM_SPELL_FAILURE,
+  MAGIC_AURA,
+  MAGIC_CASTER_LEVEL,
+} from "./item.ts";
+import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "./klass.ts";
+import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "./klassLevel.ts";
+import {
+  SPELL_AREA_OF_EFFECT,
+  SPELL_CASTING_TIME,
+  SPELL_COMPONENT,
+  SPELL_DESCRIPTOR,
+  SPELL_DURATION,
+  SPELL_DURATION_TYPE,
+  SPELL_LEVEL,
+  SPELL_MATERIAL,
+  SPELL_RANGE_TYPE,
+  SPELL_RESISTANCE,
+  SPELL_SAVING_THROW,
+  SPELL_SCHOOL,
+  SPELL_SUBSCHOOL,
+  SPELL_TARGET,
+} from "./power.ts";
+import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "./race.ts";
+import { RULESET_SKILL_POINT_ABILITY_ID } from "./ruleset.ts";
+import { SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE } from "./shield.ts";
+import { SKILL_CHECK_PENALTY_MULTIPLIER, SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "./skill.ts";
+import {
+  WEAPON_BASE_DAMAGE,
+  WEAPON_CRITICAL_MULTIPLIER,
+  WEAPON_CRITICAL_RANGE,
+  WEAPON_DOUBLE_DAMAGE,
+  WEAPON_FAMILY,
+  WEAPON_FINESSABLE,
+  WEAPON_MIGHTY,
+  WEAPON_ONE_HAND_TRAINING,
+  WEAPON_ONE_HANDED_PENALTY,
+  WEAPON_PROFICIENCY,
+  WEAPON_RANGE,
+  WEAPON_RANGED,
+  WEAPON_REACH,
+  WEAPON_SIZE,
+  WEAPON_STRENGTH_DAMAGE,
+  WEAPON_TYPE,
+} from "./weapon.ts";
+
+/** Static autocomplete hints for property value dropdowns */
+const WEAPON_TYPE_NAMES = [
+  "Bastard Sword",
+  "Battleaxe",
+  "Bolas",
+  "Club",
+  "Composite Longbow",
+  "Composite Shortbow",
+  "Dagger",
+  "Dart",
+  "Dire Flail",
+  "Dwarven Urgrosh",
+  "Dwarven Waraxe",
+  "Falchion",
+  "Flail",
+  "Gauntlet",
+  "Glaive",
+  "Gnome Hooked Hammer",
+  "Greataxe",
+  "Greatclub",
+  "Greatsword",
+  "Guisarme",
+  "Halberd",
+  "Hand Crossbow",
+  "Handaxe",
+  "Heavy Crossbow",
+  "Heavy Flail",
+  "Heavy Mace",
+  "Heavy Pick",
+  "Javelin",
+  "Kama",
+  "Kukri",
+  "Lance",
+  "Light Crossbow",
+  "Light Hammer",
+  "Light Mace",
+  "Light Pick",
+  "Longbow",
+  "Longspear",
+  "Longsword",
+  "Morningstar",
+  "Net",
+  "Nunchaku",
+  "Orc Double Axe",
+  "Punching Dagger",
+  "Quarterstaff",
+  "Ranseur",
+  "Rapier",
+  "Repeating Heavy Crossbow",
+  "Repeating Light Crossbow",
+  "Sai",
+  "Sap",
+  "Scimitar",
+  "Scythe",
+  "Shortbow",
+  "Shortspear",
+  "Shortsword",
+  "Shuriken",
+  "Siangham",
+  "Sickle",
+  "Sling",
+  "Spear",
+  "Spiked Chain",
+  "Spiked Gauntlet",
+  "Throwing Axe",
+  "Trident",
+  "Two-Bladed Sword",
+  "Warhammer",
+  "Whip",
+];
+
+const ARMOR_TYPE_NAMES = [
+  "Banded Mail",
+  "Breastplate",
+  "Chain Mail",
+  "Chain Shirt",
+  "Full Plate",
+  "Half-Plate",
+  "Hide Armor",
+  "Leather Armor",
+  "Padded Armor",
+  "Scale Mail",
+  "Splint Mail",
+  "Studded Leather",
+];
+
+const SHIELD_TYPE_NAMES = [
+  "Buckler",
+  "Heavy Steel Shield",
+  "Heavy Wooden Shield",
+  "Light Steel Shield",
+  "Light Wooden Shield",
+  "Tower Shield",
+];
+
+const ITEM_PROPERTY_TYPES: Record<string, string> = {
+  [WEAPON_PROFICIENCY]: "Weapon proficiency classification (Simple, Martial, Exotic)",
+  [WEAPON_FAMILY]: "Weapon family grouping (Sword, Axe, Bow, etc.)",
+  [WEAPON_BASE_DAMAGE]: "Base damage dice for weapons",
+  [WEAPON_CRITICAL_RANGE]: "Critical threat count (1 = 20, 2 = 19-20, 3 = 18-20, etc.)",
+  [WEAPON_CRITICAL_MULTIPLIER]: "Critical hit damage multiplier",
+  [WEAPON_STRENGTH_DAMAGE]: "Strength to damage: Slot (the hand's share; default), Rating (bows: up to Mighty), None",
+  [WEAPON_MIGHTY]:
+    "A composite bow's Strength rating: the most Strength bonus it adds to damage; below it, -2 to attack",
+  [WEAPON_DOUBLE_DAMAGE]: "A double weapon's other end's damage dice: in two hands, it fights as two weapons",
+  [WEAPON_ONE_HAND_TRAINING]:
+    "Whether it's too large for one hand without training (a bastard sword): there, only its proficiency lets it be used",
+  [WEAPON_ONE_HANDED_PENALTY]:
+    "Penalty to attack in one hand, when it takes two to load: a crossbow's (-2 light, -4 heavy; absent = none)",
+  [WEAPON_RANGE]: "Range increment in feet: a ranged weapon's, or a thrown melee weapon's (0 or absent = none)",
+  [WEAPON_RANGED]: "Whether it's a ranged weapon (thrown or projectile, not used in melee): its attacks use Dexterity",
+  [WEAPON_REACH]: "Melee reach in feet (0 or absent = 5 ft.)",
+  [WEAPON_SIZE]:
+    "The weapon's effort, as the table gives it for a Medium wielder: Tiny or Small light, Medium one-handed, Large two-handed",
+  [ARMOR_PROFICIENCY]: "Armor proficiency classification (Light, Medium, Heavy)",
+  [ARMOR_TYPE]: "Base armor type for feat/modifier targeting (e.g. Leather Armor, Full Plate)",
+  [ARMOR_MAX_DEX]: "Maximum dexterity bonus allowed",
+  [ARMOR_AC_BONUS]: "Armor class bonus from armor",
+  [ARMOR_CHECK_PENALTY]: "Penalty to Str/Dex-based skill checks",
+  [ITEM_SPELL_FAILURE]: "Arcane spell failure chance percentage",
+  [SHIELD_PROFICIENCY]: "Shield proficiency classification (Light, Heavy, Tower)",
+  [SHIELD_TYPE]: "Base shield type for feat/modifier targeting (e.g. Buckler, Tower Shield)",
+  [SHIELD_AC_BONUS]: "Armor class bonus from shield",
+  [DAMAGE_TYPE]: "Type of damage dealt",
+  [ITEM_MADE_OF]: "Material composition",
+  [ITEM_HAS_CHARGES]: "Default number of charges for this item",
+  [ITEM_MASTERWORK]: "Whether this item is masterwork quality (reduces armor check penalty by 1)",
+  [WEAPON_FINESSABLE]:
+    "Whether a feat with FEAT_WEAPON_FINESSE (Weapon Finesse) lets this weapon attack with Dexterity",
+  [WEAPON_TYPE]: "Base weapon type for feat/modifier targeting (e.g. Longsword, Shortsword)",
+  [MAGIC_AURA]: "Magic aura strength and school (e.g. Moderate transmutation)",
+  [MAGIC_CASTER_LEVEL]: "Caster level required to create this magic item",
+};
+
+const RULESET_PROPERTY_TYPES: Record<string, string> = {
+  [RULESET_SKILL_POINT_ABILITY_ID]: "Ability used for skill point calculation",
+};
+
+const SKILL_PROPERTY_TYPES: Record<string, string> = {
+  [SKILL_IMPACTED_BY_WEIGHT]: "Whether the skill is impacted by armor check penalty",
+  [SKILL_CHECK_PENALTY_MULTIPLIER]: "How many times over the skill takes the armor check penalty (2 for Swim)",
+  [SKILL_USABLE_WITHOUT_TRAINING]: "Whether the skill can be used without training",
+};
+
+const KLASS_LEVEL_PROPERTY_TYPES: Record<string, string> = {
+  [KLASS_LEVEL_BAB]: "Base attack bonus at this class level",
+  [KLASS_LEVEL_SKILL_POINTS]: "Skill points gained per level",
+};
+
+const RACE_PROPERTY_TYPES: Record<string, string> = {
+  [RACE_SPEED_IGNORES_ENCUMBRANCE]:
+    "Whether the race keeps its speed in medium or heavy armor and under a medium or heavy load (the dwarf)",
+  [RACE_QUADRUPED]: "Whether the race walks on four legs, which carries more: x1 1/2 when Medium, x3 when Large (SRD)",
+};
+
+const KLASS_PROPERTY_TYPES: Record<string, string> = {
+  [KLASS_BONUS_SPELL_ABILITY_ID]: "Ability score used for bonus spells per day",
+  [KLASS_CASTER_TYPE]: "Whether this class casts arcane or divine spells",
+};
+
+const FEAT_PROPERTY_TYPES: Record<string, string> = {
+  [FEAT_FAMILY]: "Feat family grouping (Weapon Focus, Spell Focus, etc.)",
+  [FEAT_WEAPON_FINESSE]:
+    "Whether the feat lets its owner attack with Dexterity with a finessable weapon (Weapon Finesse)",
+  [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING]:
+    "Whether the feat makes a one-handed off-hand weapon count as light in two-weapon fighting (Oversized Two-Weapon Fighting)",
+  [WIZARD_PROHIBITED_SCHOOL]: "School of magic prohibited by wizard specialization",
+};
+
+/** A spell's property types, in the order a 3.5 stat block shows them. */
+const POWER_PROPERTY_TYPES: Record<string, string> = {
+  [SPELL_SCHOOL]: "Spell school (Abjuration, Conjuration, etc.)",
+  [SPELL_SUBSCHOOL]: "Spell subschool (Calling, Charm, Creation, etc.)",
+  [SPELL_DESCRIPTOR]: "Spell descriptor (Fire, Cold, Mind-Affecting, etc.)",
+  [SPELL_LEVEL]: 'Spell level for a class (e.g., "Wizard 3", "Cleric 2")',
+  [SPELL_COMPONENT]: "Required component (Verbal, Somatic, Material, Focus, Divine Focus, XP Cost)",
+  [SPELL_MATERIAL]: "Material component description",
+  [SPELL_CASTING_TIME]: 'Time to cast (e.g., "1 standard action", "1 round")',
+  [SPELL_RANGE_TYPE]: "Range category (Personal, Touch, Close, Medium, Long, Unlimited)",
+  [SPELL_TARGET]: 'Valid targets (e.g., "One creature", "You")',
+  [SPELL_AREA_OF_EFFECT]: 'Area of effect (e.g., "20-ft. radius", "Cone")',
+  [SPELL_DURATION_TYPE]: "Duration category (Instantaneous, Concentration, Sustained, Permanent, etc.)",
+  [SPELL_DURATION]: 'Duration description (e.g., "1 round/level", "Instantaneous")',
+  [SPELL_SAVING_THROW]: "Saving throw type and effect (None, Fortitude negates, Reflex half, etc.)",
+  [SPELL_RESISTANCE]: "Whether spell resistance applies (Yes/No)",
+};
+
+const PROPERTY_VALUES: Record<string, string[]> = {
+  [WEAPON_PROFICIENCY]: ["Simple", "Martial", "Exotic"],
+  [WEAPON_FAMILY]: [
+    "Axe",
+    "Bow",
+    "Close",
+    "Club",
+    "Crossbow",
+    "Dagger",
+    "Flail",
+    "Hammer",
+    "Mace",
+    "Monk",
+    "Pick",
+    "Polearm",
+    "Sickle",
+    "Sling",
+    "Spear",
+    "Staff",
+    "Sword",
+    "Thrown",
+  ],
+  [DAMAGE_TYPE]: ["Slashing", "Piercing", "Bludgeoning"],
+  [ARMOR_PROFICIENCY]: ["Light", "Medium", "Heavy"],
+  [ARMOR_TYPE]: [...ARMOR_TYPE_NAMES],
+  [SHIELD_PROFICIENCY]: ["Light", "Heavy", "Tower"],
+  [SHIELD_TYPE]: [...SHIELD_TYPE_NAMES],
+  [SPELL_SCHOOL]: [...SPELL_SCHOOLS],
+  [SPELL_SUBSCHOOL]: [...SPELL_SUBSCHOOLS],
+  [SPELL_DESCRIPTOR]: [...SPELL_DESCRIPTORS],
+  [SPELL_COMPONENT]: [...SPELL_COMPONENTS],
+  [SPELL_RANGE_TYPE]: [...SPELL_RANGE_TYPES],
+  [SPELL_DURATION_TYPE]: [...SPELL_DURATION_TYPES],
+  [SPELL_RESISTANCE]: [...SPELL_RESISTANCE_OPTIONS],
+  [SPELL_SAVING_THROW]: [...SPELL_SAVING_THROWS],
+  [ITEM_MADE_OF]: ["Adamantine", "Mithral", "Cold Iron", "Silver", "Darkwood"],
+  [SKILL_IMPACTED_BY_WEIGHT]: ["true", "false"],
+  [SKILL_USABLE_WITHOUT_TRAINING]: ["true", "false"],
+  [ITEM_MASTERWORK]: ["true", "false"],
+  [WEAPON_FINESSABLE]: ["true", "false"],
+  [WEAPON_RANGED]: ["true", "false"],
+  [WEAPON_STRENGTH_DAMAGE]: ["Slot", "Rating", "None"],
+  [FEAT_WEAPON_FINESSE]: ["true", "false"],
+  [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING]: ["true", "false"],
+  [WEAPON_ONE_HAND_TRAINING]: ["true", "false"],
+  [WEAPON_TYPE]: [...WEAPON_TYPE_NAMES],
+  [KLASS_CASTER_TYPE]: ["Arcane", "Divine"],
+  [FEAT_FAMILY]: [...FEAT_FAMILIES],
+  [RACE_SPEED_IGNORES_ENCUMBRANCE]: ["true", "false"],
+  [RACE_QUADRUPED]: ["true", "false"],
+};
+
+export const ENTITY_PROPERTY_TYPES: Partial<Record<PropertyEntityType, Record<string, string>>> = {
+  feats: FEAT_PROPERTY_TYPES,
+  items: ITEM_PROPERTY_TYPES,
+  klasses: KLASS_PROPERTY_TYPES,
+  klass_levels: KLASS_LEVEL_PROPERTY_TYPES,
+  powers: POWER_PROPERTY_TYPES,
+  races: RACE_PROPERTY_TYPES,
+  rulesets: RULESET_PROPERTY_TYPES,
+  skills: SKILL_PROPERTY_TYPES,
+};
+
+/** A property type's options: the values the engine knows for it, in their order. None for a free-text type. */
+export function getStaticPropertyValues(type: string): string[] | null {
+  return PROPERTY_VALUES[type] ?? null;
+}
+
+/**
+ * Properties as a stat block shows them: by type, in the ruleset's order of types (a spell's school, then its
+ * descriptors, components, range…; a type it doesn't know after those, by name), each type's values in its options'
+ * order, then by value. Never in the order their rows come in, which seeded rows, made together, can't give.
+ */
+export function sortProperties<T extends { type: string; value: string }>(properties: readonly T[]): T[] {
+  // Each type's place: its entity type's types in their order, as a stat block shows them
+  const typeRanks = new Map(
+    Object.values(ENTITY_PROPERTY_TYPES)
+      .flatMap((types) => Object.keys(types))
+      .map((type, rank) => [type, rank]),
+  );
+  const typeRank = (type: string) => typeRanks.get(type) ?? typeRanks.size;
+  const valueRank = ({ type, value }: T) => {
+    const options = getStaticPropertyValues(type) ?? [];
+    const rank = options.indexOf(value);
+    return rank === -1 ? options.length : rank;
+  };
+  return properties.toSorted(
+    (a, b) =>
+      typeRank(a.type) - typeRank(b.type) ||
+      a.type.localeCompare(b.type) ||
+      valueRank(a) - valueRank(b) ||
+      a.value.localeCompare(b.value),
+  );
+}

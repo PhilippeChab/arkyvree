@@ -7,7 +7,6 @@ import { cowCustomizationForMutation, cowEntityForCustomization } from "@/server
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
@@ -33,12 +32,11 @@ class PropertiesService {
   }
 
   async getProperties(rulesetId: string, entityType: string, entityId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const effectiveEntityId = rulesetData.canonicalize(entityId);
       await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
       const all = rulesetData.propertiesByEntity.get(effectiveEntityId) ?? [];
-      const propertyTypes = RulesetFactory.fromBaseRules(ruleset.baseRules).createPropertyTypes();
-      return propertyTypes.sortProperties(all.filter((p) => p.entityType === entityType));
+      return all.filter((p) => p.entityType === entityType);
     });
   }
 

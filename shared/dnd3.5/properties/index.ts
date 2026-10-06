@@ -9,3 +9,4 @@ export * from "./ruleset.ts";
 export * from "./skill.ts";
 export * from "./klass.ts";
 export * from "./race.ts";
+export * from "./propertyTypes.ts";

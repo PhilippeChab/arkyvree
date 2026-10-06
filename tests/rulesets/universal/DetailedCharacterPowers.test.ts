@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { Powers, Properties } from "@/server/repositories/index.ts";
-import Dnd35PropertyTypes from "@/server/rulesets/dnd3.5/PropertyTypes.ts";
 import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
+import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
 import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_TARGET } from "@/shared/dnd3.5/properties/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
@@ -19,7 +19,7 @@ describe("DetailedCharacterPowers.addPowerEntries", () => {
       { ...stored[0], type: SPELL_COMPONENT, value: "Chanting" },
       { ...stored[0], type: SPELL_TARGET, value: "One creature" },
     ];
-    const powers = new DetailedCharacterPowers(new Dnd35PropertyTypes());
+    const powers = new DetailedCharacterPowers(getStaticPropertyValues);
     powers.addPowerEntries([{ ...enthrall, properties }]);
 
     // Each type's values a list, which a requirement asks one of, and a sheet's line joined

@@ -3,9 +3,9 @@ import type { InferSelectModel } from "drizzle-orm";
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import type Dnd35DetailedCharacterBonded from "@/server/rulesets/dnd3.5/DetailedCharacterBonded.ts";
-import { getStaticPropertyValues, sortProperties } from "@/server/rulesets/dnd3.5/PropertyTypes.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
+import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /** The modifiers, applied, unapplied and inactive, each with the name of its source. */
@@ -86,7 +86,7 @@ export function buildVirtualEntities(dc: Dnd35DetailedCharacter) {
       level: entry.level,
       dc: entry.dc,
       properties: formatPropertyValues(
-        groupPropertyValues(sortProperties(entry.properties), getStaticPropertyValues),
+        groupPropertyValues(entry.properties, getStaticPropertyValues),
         getStaticPropertyValues,
       ),
     })),

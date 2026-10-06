@@ -1,4 +1,3 @@
-import type { PropertyTypesProvider } from "@/server/rulesets/types.ts";
 import type { PowerDc, PowerDcsByClass } from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
 import { formatPropertyType, formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
@@ -35,10 +34,8 @@ type DetailedCharacterComprehensivePowers = {
 };
 
 export default class DetailedCharacterPowers {
-  /** `propertyTypes`: the ruleset's order of a spell's property types, and each type's options, which a sheet lists them in. */
-  constructor(
-    private readonly propertyTypes: Pick<PropertyTypesProvider, "getStaticPropertyValues" | "sortProperties">,
-  ) {}
+  /** `propertyValues`: a property type's options in their order (the ruleset's), which a spell lists its values in. */
+  constructor(private readonly propertyValues: (type: string) => readonly string[] | null) {}
 
   static getSegmentLabels(): Record<string, string> {
     return { properties: "Properties", known: "Known" };
@@ -153,12 +150,7 @@ export default class DetailedCharacterPowers {
     for (const [key, value] of Object.entries(this.detailedCharacterPowers)) {
       if ("power" in value) {
         const entry = value as PowerEntry;
-        result[key] = {
-          ...entry,
-          properties: formatPropertyValues(entry.properties, (type) =>
-            this.propertyTypes.getStaticPropertyValues(type),
-          ),
-        };
+        result[key] = { ...entry, properties: formatPropertyValues(entry.properties, this.propertyValues) };
       }
     }
     return result;
@@ -179,9 +171,7 @@ export default class DetailedCharacterPowers {
 
   addPowerEntries(powers: (Power & { properties: Property[] })[]) {
     for (const power of powers) {
-      const propertiesMap = groupPropertyValues(this.propertyTypes.sortProperties(power.properties), (type) =>
-        this.propertyTypes.getStaticPropertyValues(type),
-      );
+      const propertiesMap = groupPropertyValues(power.properties, this.propertyValues);
 
       // A spell already listed keeps what's on its entry: its known flags and its DCs by class
       const slug = stripSeparators(power.name);
