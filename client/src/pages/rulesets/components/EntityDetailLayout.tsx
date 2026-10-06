@@ -1,10 +1,10 @@
-import { Box, IconButton, Menu, MenuItem, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, IconButton, Menu, Skeleton, Stack, Typography } from "@mui/material";
 import type { ComponentProps, ReactNode } from "react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { PageError } from "@/client/src/components/common/index.ts";
-import { BackIcon, MoreIcon } from "@/client/src/components/icons/index.ts";
+import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
+import { BackIcon, DeleteIcon, MoreIcon } from "@/client/src/components/icons/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
@@ -123,15 +123,15 @@ export function EntityDetailLayout({
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               transformOrigin={{ vertical: "top", horizontal: "right" }}
             >
-              <MenuItem
+              <ActionMenuItem
+                icon={DeleteIcon}
+                label="Delete"
+                intent="destructive"
                 onClick={() => {
                   setAnchorEl(null);
                   onDelete();
                 }}
-                sx={{ color: "error.main" }}
-              >
-                Delete
-              </MenuItem>
+              />
             </Menu>
           </>
         )}

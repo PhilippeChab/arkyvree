@@ -231,7 +231,7 @@ test.describe("Characters", () => {
     const manager = page.locator('[role="dialog"][aria-modal="true"]').filter({ hasText: "Manage Modifiers" });
     await expect(manager.getByText("No modifiers")).toBeVisible();
 
-    await manager.getByRole("button", { name: /^Add$/ }).click();
+    await manager.getByRole("button", { name: /^Add Modifier$/ }).click();
     const dialog = page.getByRole("dialog", { name: "Add Modifier" });
     await fillStrengthModifier(dialog, 1);
     const added = apiResponse(page, "POST", /\/api\/characters\/modifiers\/[a-f0-9-]+\/modifiers(?:\?|$)/);

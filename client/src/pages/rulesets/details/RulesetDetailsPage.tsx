@@ -9,7 +9,6 @@ import {
   Divider,
   IconButton,
   Menu,
-  MenuItem,
   Popover,
   Stack,
   Typography,
@@ -41,6 +40,7 @@ import {
   ExtensionIcon,
   FeatsIcon,
   ForkIcon,
+  HelpIcon,
   ItemsIcon,
   LanguagesIcon,
   MechanicsIcon,
@@ -406,19 +406,13 @@ export default function RulesetDetailsPage() {
             ruleset.rulesetId &&
             ruleset.status !== "Archived" && [
               <Divider key="sync-divider" />,
-              <MenuItem
+              <ActionMenuItem
                 key="faq-link"
-                component="a"
+                icon={HelpIcon}
+                label="Help Center"
                 href={externalLinks.help}
-                target="_blank"
-                rel="noopener noreferrer"
                 onClick={() => setAnchorEl(null)}
-                sx={{ justifyContent: "center" }}
-              >
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  Learn more in Help Center
-                </Typography>
-              </MenuItem>,
+              />,
             ]}
           {canEditRuleset &&
             ruleset.status !== "Archived" && [

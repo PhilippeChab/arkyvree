@@ -713,4 +713,20 @@ describe("frontend rules", () => {
       ),
     ).toEqual(["tag-chips client/src/iconed.tsx", "tag-chips client/src/painted.tsx"]);
   });
+
+  test("a dialog's header is its DialogTitle, and it closes with its Close button", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/toolbar.tsx":
+            "export const t = <Modal open><Toolbar><Typography>Manage</Typography></Toolbar></Modal>;\n",
+          "client/src/icon.tsx": 'export const i = <IconButton aria-label="Close" onClick={onClose} />;\n',
+          "client/src/titled.tsx":
+            'export const d = <Modal open><DialogTitle>Manage</DialogTitle><DialogActions><Button variant="outlined" color="inherit">Close</Button></DialogActions></Modal>;\n',
+          "client/src/page.tsx": "export const p = <AppBar><Toolbar /></AppBar>;\n",
+        },
+        ["dialog-conventions"],
+      ),
+    ).toEqual(["dialog-conventions client/src/icon.tsx", "dialog-conventions client/src/toolbar.tsx"]);
+  });
 });

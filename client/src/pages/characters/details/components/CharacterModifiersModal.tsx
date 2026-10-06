@@ -1,4 +1,4 @@
-import { Button, Chip, DialogContent, IconButton, Stack, Toolbar, Typography } from "@mui/material";
+import { Button, Chip, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
@@ -18,14 +18,7 @@ import {
   type ModifierFormData,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
-import {
-  AddIcon,
-  CloseIcon,
-  DeleteIcon,
-  DuplicateIcon,
-  EditIcon,
-  ModifiersIcon,
-} from "@/client/src/components/icons/index.ts";
+import { AddIcon, DeleteIcon, DuplicateIcon, EditIcon, ModifiersIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
@@ -166,33 +159,27 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       <Modal
         open={open}
         onClose={onClose}
-        aria-labelledby="character-modifiers-title"
         maxWidth="md"
         slotProps={{
           paper: { sx: { minHeight: { sm: "50vh" } } },
         }}
       >
-        <Toolbar sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flex: 1 }}>
-            <Typography component="h2" id="character-modifiers-title" variant="h6" sx={{ fontWeight: 600 }}>
-              Manage Modifiers
-            </Typography>
+        <DialogTitle>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+            <span>Manage Modifiers</span>
             <FaqHelpIcon
               text="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc."
               size={18}
             />
           </Stack>
-          <Stack direction="row" spacing={1}>
-            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleAdd}>
-              Add
-            </Button>
-            <IconButton edge="end" aria-label="Close" onClick={onClose}>
-              <CloseIcon />
-            </IconButton>
-          </Stack>
-        </Toolbar>
+        </DialogTitle>
 
-        <DialogContent sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
+        <DialogContent dividers sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
+          <Stack direction="row" sx={{ justifyContent: "flex-end", mb: 2 }}>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
+              Add Modifier
+            </Button>
+          </Stack>
           <DataTable
             rows={modifiers}
             isLoading={isLoading}
@@ -240,6 +227,11 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
             }}
           />
         </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose} variant="outlined" color="inherit">
+            Close
+          </Button>
+        </DialogActions>
       </Modal>
       <CreateDialog
         open={createOpen}

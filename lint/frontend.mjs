@@ -619,6 +619,22 @@ function createDialogConventions(context) {
           message: "A `Dialog` goes full screen on a phone: `fullScreen={isMobile}`.",
         });
       }
+      const parent = parentElement(node);
+      if (name === "Toolbar" && /(Dialog|^Modal)$/.test(elementName(parent) ?? "")) {
+        context.report({
+          node: node.openingElement,
+          message: "A dialog's header is its `DialogTitle`, and its actions sit in its content or its `DialogActions`.",
+        });
+      }
+      const closeLabel = node.openingElement.attributes.find(
+        (a) => a.type === "JSXAttribute" && a.name.name === "aria-label" && a.value?.value === "Close",
+      );
+      if (name === "IconButton" && closeLabel) {
+        context.report({
+          node: node.openingElement,
+          message: 'A dialog closes with its Close button in `DialogActions` (`variant="outlined" color="inherit"`).',
+        });
+      }
       // component="form", or component={"form"}
       const valueOf = (a) => (a.value?.type === "JSXExpressionContainer" ? a.value.expression.value : a.value?.value);
       const isForm =
