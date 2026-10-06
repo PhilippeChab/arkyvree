@@ -8,8 +8,9 @@
  *   order (a field's initializer may read an earlier one).
  * - A router's routes group by HTTP method (GET, POST, PUT, PATCH, DELETE), then sort by path: a fixed segment
  *   before a parameter, which Hono needs anyway (it matches overlapping routes in the order they're registered).
- *   Its sub-routers (`.route()`) come first, in their own order: a sub-router's routes, the more specific, match
- *   before its parent's. A run of routes ends at a `.use()` or anything else: middleware applies to what follows it.
+ *   Its sub-routers (`.route()`) come first, in their own order, then its routes, which must not overlap theirs:
+ *   Hono would run the sub-router's first (tests/routers/application.test.ts checks every route answers its own
+ *   requests). A run of routes ends at a `.use()` or anything else: middleware applies to what follows it.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
