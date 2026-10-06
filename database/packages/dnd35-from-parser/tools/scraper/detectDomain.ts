@@ -7,8 +7,8 @@ import {
   validateModifiers,
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** Every Knowledge skill, which "Add all Knowledge skills" names. */

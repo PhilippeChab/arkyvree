@@ -637,6 +637,6 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | `server/rulesets/hooks/*.ts` | Universal hook interfaces (`LevelsHooks`, `ClassesHooks`, …) |
 | `server/rulesets/dnd3.5/*.ts` | 3.5 implementation (DetailedCharacter, LevelUpProjector, TargetPaths, hooks, properties, buildCharacterResponse) |
 | `server/rulesets/dnd3.5/DetailedCharacter.ts` | Character builder — reads sibling requirements and modifiers already merged into `rulesetData` by the compose step |
-| `database/packages/dnd35/seed/cow.ts` | Seed-time COW: copies the core feats and spells an extension changes |
+| `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts` | Seed-time COW: copies the core feats and spells an extension changes |
 | `tests/services/rulesets/Extensions.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |
 | `tests/services/rulesets/Sibling*.test.ts`, `tests/services/rulesets/customization/Sibling*.test.ts`, `tests/cache/aptitudeDedup.test.ts` | Siblings: what the composed view shows, edits and customization writes on a sibling-merged entity, aptitude deduplication |

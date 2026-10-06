@@ -86,21 +86,19 @@ const GENERATED_HEADER = [
 /** The builders an item file can import, in the order its import lists them. */
 const ITEM_IMPORTS: ImportTable = [
   [
-    "@/database/packages/dnd35/content/items.ts",
+    "@/database/packages/dnd35/content/proficiencies.ts",
     [
       "simple",
       "martial",
       "exotic",
-      "weaponProperties",
-      "armorProperties",
       "HEAVY_ARMOR_PROF",
       "LIGHT_ARMOR_PROF",
       "MEDIUM_ARMOR_PROF",
-      "shieldProperties",
       "SHIELD_PROF",
       "TOWER_SHIELD_PROF",
     ],
   ],
+  ["@/database/packages/dnd35/content/properties.ts", ["weaponProperties", "armorProperties", "shieldProperties"]],
 ];
 
 /** The repo's linter and its config, whose `member-order` sorts a generated tree's declarations. */
@@ -1032,7 +1030,7 @@ function writeGenerated(out: Output, path: string, code: string) {
 
 /**
  * Writes a file of items, `constName`: each its name and description, then the lines `fields` gives. `uses` are the
- * builders it takes from content/items.ts.
+ * builders it takes from content/proficiencies.ts and content/properties.ts.
  */
 function writeItemFile<T extends { name: string; description: string }>(
   out: Output,

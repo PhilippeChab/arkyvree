@@ -5,7 +5,7 @@ import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scra
 import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/scraper/weaponStats.ts";
 import { checkedValue, checkOneOf, normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { type MagicItemCategory, type MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { armorProperties } from "@/database/packages/dnd35/content/items.ts";
+import { armorProperties } from "@/database/packages/dnd35/content/properties.ts";
 import { type ItemDef, type Modifier, type Property } from "@/database/packages/dnd35/content/types.ts";
 import { MAGIC_AURA, MAGIC_CASTER_LEVEL } from "@/shared/dnd3.5/properties/index.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";

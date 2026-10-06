@@ -17,11 +17,11 @@ import {
 } from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
 import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races/data.ts";
 import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/spells/index.ts";
-import { ANIMAL_COMPANIONS } from "@/database/packages/dnd35/content/animalCompanions.ts";
-import { FAMILIARS } from "@/database/packages/dnd35/content/familiars.ts";
-import { SPECIAL_MOUNTS } from "@/database/packages/dnd35/content/mounts.ts";
+import { ANIMAL_COMPANIONS } from "@/database/packages/dnd35/data/bonds/animalCompanions.ts";
+import { FAMILIARS } from "@/database/packages/dnd35/data/bonds/familiars.ts";
+import { SPECIAL_MOUNTS } from "@/database/packages/dnd35/data/bonds/mounts.ts";
+import { TEMPLATE_ITEMS } from "@/database/packages/dnd35/data/templateItems.ts";
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
-import { TEMPLATE_ITEMS } from "@/database/packages/dnd35/seed/items.ts";
 import { registry } from "@/database/packages/registry.ts";
 import {
   entitySnapshotsInRules,

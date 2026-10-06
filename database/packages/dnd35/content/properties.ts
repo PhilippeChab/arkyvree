@@ -1,10 +1,6 @@
-/**
- * Builders the generated items are written with: their proficiency requirements and their weapon, armor or shield
- * properties.
- */
+/** Builders the generated items are written with: their weapon, armor or shield properties. */
 
-import { eq, feat } from "@/database/packages/dnd35/content/requirements.ts";
-import type { Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import type { Property } from "@/database/packages/dnd35/content/types.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
 import { getWeaponDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/weaponGenerator.ts";
 import {
@@ -35,14 +31,6 @@ import {
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
 } from "@/shared/dnd3.5/properties/index.ts";
-
-export const HEAVY_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Heavy)"))];
-export const LIGHT_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Light)"))];
-export const MEDIUM_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Medium)"))];
-export const SHIELD_PROF: RequirementEntry[] = [eq(feat("Shield Proficiency"))];
-export const TOWER_SHIELD_PROF: RequirementEntry[] = [eq(feat("Tower Shield Proficiency"))];
-
-export { simple, martial, exotic } from "@/database/packages/dnd35/content/weapons.ts";
 
 export function armorProperties(armorTypeName: string): Property[] {
   const def = getArmorDefinition(armorTypeName);

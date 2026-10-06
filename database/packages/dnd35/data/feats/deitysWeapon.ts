@@ -4,7 +4,7 @@
  */
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
-import { ALL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
+import { ALL_WEAPONS } from "@/database/packages/dnd35/data/weapons.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

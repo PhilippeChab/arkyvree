@@ -1,7 +1,7 @@
 /** Path validation — reuses actual server components to stay in sync */
 
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { buildValidPaths } from "./validPaths.ts";

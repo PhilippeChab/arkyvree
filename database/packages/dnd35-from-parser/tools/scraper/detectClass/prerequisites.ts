@@ -15,9 +15,9 @@ import {
   skillSlug,
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { proficiencyRequirements } from "@/database/packages/dnd35/content/proficiencies.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { type RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
-import { proficiencyRequirements } from "@/database/packages/dnd35/content/weapons.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 
 const RACE_NAMES: Record<string, string> = {

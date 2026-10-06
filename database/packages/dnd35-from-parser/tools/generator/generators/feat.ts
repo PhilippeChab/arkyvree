@@ -24,7 +24,6 @@ import {
   toCamelCase,
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { favoredEnemyFeats } from "@/database/packages/dnd35/content/creatureTypes.ts";
 import { feat } from "@/database/packages/dnd35/content/requirements.ts";
 import type {
   FeatSeed,
@@ -33,8 +32,9 @@ import type {
   RequirementEntry,
   WizardSchoolDefinition,
 } from "@/database/packages/dnd35/content/types.ts";
-import { spellWeaponFocusFeats, weaponProficiencyFeats } from "@/database/packages/dnd35/content/weapons.ts";
 import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchools.ts";
+import { favoredEnemyFeats } from "@/database/packages/dnd35/data/feats/favoredEnemy.ts";
+import { spellWeaponFocusFeats, weaponProficiencyFeats } from "@/database/packages/dnd35/data/feats/weapons.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -108,23 +108,16 @@ const CORE_SYSTEM_FEATS: {
 const IMPORTS: ImportTable = [
   ...REQUIREMENT_IMPORTS,
   [
-    "@/database/packages/dnd35/content/weapons.ts",
-    [
-      "ALL_WEAPONS",
-      "SIMPLE_WEAPONS",
-      "MARTIAL_WEAPONS",
-      "EXOTIC_WEAPONS",
-      "CROSSBOW_WEAPONS",
-      "proficiencyRequirements",
-      "spellWeaponFocusFeats",
-      "weaponProficiencyFeats",
-    ],
+    "@/database/packages/dnd35/data/weapons.ts",
+    ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS"],
   ],
-  ["@/database/packages/dnd35/content/skills.ts", ["SKILL_NAMES"]],
+  ["@/database/packages/dnd35/content/proficiencies.ts", ["proficiencyRequirements"]],
+  ["@/database/packages/dnd35/data/feats/weapons.ts", ["spellWeaponFocusFeats", "weaponProficiencyFeats"]],
+  ["@/database/packages/dnd35/data/skills.ts", ["SKILL_NAMES"]],
   ["@/shared/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
   ["@/shared/text.ts", ["stripSeparators"]],
   ["@/database/packages/dnd35/content/wizardSchools.ts", ["wizardSchoolFeats"]],
-  ["@/database/packages/dnd35/content/creatureTypes.ts", ["favoredEnemyFeats"]],
+  ["@/database/packages/dnd35/data/feats/favoredEnemy.ts", ["favoredEnemyFeats"]],
   ["@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts", ["WIZARD_SCHOOLS"]],
 ];
 

@@ -60,7 +60,7 @@ Each reference JSON stores:
 
 Loading a reference (`tools/references.ts`) derives the rest: **`detected`** (BAB, saves, requirements, modifiers… parsed from `raw`) and **`mapping`** (the entities to generate). Items and magic items have only `detected`; spells and wizard schools, neither. The overrides win over both. A correction takes effect at the next `parser:generate`, without re-scraping. See `reference/README.md`.
 
-`generated/` holds only what the generator writes: hand-written content goes in `database/packages/dnd35/content/`.
+`generated/` holds only what the generator writes: hand-written content goes in `database/packages/dnd35/data/`, and what content is written with (its types and builders) in `database/packages/dnd35/content/`.
 
 ## Supported entity types
 
