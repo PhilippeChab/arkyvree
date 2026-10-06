@@ -2,13 +2,16 @@ import { afterEach, expect, test } from "bun:test";
 
 import { RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
   Abilities,
   Aptitudes,
   Feats,
   FeatsAptitudes,
+  KlassLevelFeats,
+  KlassLevelPowers,
+  KlassLevels,
   Modifiers,
   Powers,
   PowersAptitudes,
@@ -59,6 +62,7 @@ function customizationsOf(data: RulesetData, id: string) {
 function typeOf(data: RulesetData, id: string): RulesetEntityType | undefined {
   if (data.featsById.has(id)) return "feats";
   if (data.powersById.has(id)) return "powers";
+  if (data.aptitudesById.has(id)) return "aptitudes";
   return data.itemsById.has(id) ? "items" : undefined;
 }
 
@@ -82,11 +86,14 @@ async function compareCopies(
       const edit = await editRuleset(ruleset);
       const { id: copyId } = await edit.cowToEdit(tx, type, { id: winnerId, rulesetId: "inherited" });
       RulesetCache.invalidate(ruleset.id);
-      const actual = customizationsOf(await RulesetCache.getData(ruleset), copyId);
+      const after = await RulesetCache.getData(ruleset);
+      const actual = customizationsOf(after, copyId);
       for (const kind of ["modifiers", "properties", "requirements", "links"] as const) {
         if (JSON.stringify(actual[kind]) === JSON.stringify(expected[kind])) continue;
         mismatches.push(`${type} ${winnerId} ${kind}: view ${expected[kind]} copy ${actual[kind]}`);
       }
+      const stale = await findStaleAptitudeIds(tx, after, type, copyId);
+      if (stale.length > 0) mismatches.push(`${type} ${winnerId} stores links to losing lists: ${stale}`);
       throw new Rollback();
     }).catch((error) => {
       if (!(error instanceof Rollback)) throw error;
@@ -94,6 +101,24 @@ async function compareCopies(
     RulesetCache.invalidate(ruleset.id);
   }
   return { compared, mismatches };
+}
+
+/**
+ * The aptitudes a copy's links store that its ruleset's view resolves to another (a losing copy of a list), read by
+ * their stored ids: a feat's or a power's lists, a class's levels' granted feats' and powers'. None, for a right copy.
+ */
+async function findStaleAptitudeIds(tx: Db, view: RulesetData, type: RulesetEntityType, copyId: string) {
+  const links = await withCowContext(undefined, async () => {
+    if (type === "feats") return await FeatsAptitudes.findMany(tx, { featId: copyId });
+    if (type === "powers") return await PowersAptitudes.findMany(tx, { powerId: copyId });
+    if (type !== "klasses") return [];
+    const klassLevelIds = (await KlassLevels.findMany(tx, { klassId: copyId })).map((level) => level.id);
+    return [
+      ...(await KlassLevelFeats.findMany(tx, { klassLevelIds })),
+      ...(await KlassLevelPowers.findMany(tx, { klassLevelIds })),
+    ];
+  });
+  return links.map((link) => link.aptitudeId).filter((id) => view.canonicalize(id) !== id);
 }
 
 /** Every page of a list, by its size and its ids. */
@@ -199,7 +224,11 @@ for (const [chainingOperator, reverseOrder] of [
     const copies: string[] = [];
     const { session, host } = await setup(async (rulesetId, baseId, index) => {
       const source = (await Feats.findOne(db, { rulesetId: baseId, name: "Toughness" }))!;
-      const copy = await copyEntity(db, "feats", source.id, rulesetId, [baseId], []);
+      const copy = await copyEntity(db, "feats", source.id, {
+        id: rulesetId,
+        extensionRulesetIds: [],
+        ancestorRulesetIds: [baseId],
+      });
       copies.push(copy.id);
       const owner = { entityId: copy.id, entityType: "feats" };
       const conditionA = {
@@ -261,6 +290,28 @@ test("a sibling winner's copy holds what the view showed of it, for every winner
   expect(mismatches).toEqual([]);
 }, 600_000);
 
+test("a copied class's levels store the lists that stand for their granted feats' and powers' lists", async () => {
+  const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
+  const view = await RulesetCache.getData(fork);
+  const klassIds = [...new Set([...view.klassesById.values()].map((klass) => klass.id))].sort();
+  const stale: string[] = [];
+  for (const klassId of klassIds) {
+    await withTransaction(async (tx) => {
+      const edit = await editRuleset(fork);
+      const { id: copyId } = await edit.cowToEdit(tx, "klasses", { id: klassId, rulesetId: "inherited" });
+      RulesetCache.invalidate(fork.id);
+      const ids = await findStaleAptitudeIds(tx, await RulesetCache.getData(fork), "klasses", copyId);
+      if (ids.length > 0) stale.push(`${view.klassesById.get(klassId)?.name}: ${ids}`);
+      throw new Rollback();
+    }).catch((error) => {
+      if (!(error instanceof Rollback)) throw error;
+    });
+    RulesetCache.invalidate(fork.id);
+  }
+  expect(klassIds.length).toBeGreaterThan(50);
+  expect(stale).toEqual([]);
+}, 600_000);
+
 // Three books copy Toughness and Fireball: the first's copies win; the other two give theirs equal rows that differ
 // otherwise: a modifier with a requirement of its own, a property with a description of its own, a condition and a
 // group of conditions, and Fireball's link to Cleric Spells at a level of its own
@@ -270,8 +321,16 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
     async (rulesetId, baseId, index) => {
       const feat = (await Feats.findOne(db, { rulesetId: baseId, name: "Toughness" }))!;
       const power = (await Powers.findOne(db, { rulesetId: baseId, name: "Fireball" }))!;
-      const featCopy = await copyEntity(db, "feats", feat.id, rulesetId, [baseId], []);
-      const powerCopy = await copyEntity(db, "powers", power.id, rulesetId, [baseId], []);
+      const featCopy = await copyEntity(db, "feats", feat.id, {
+        id: rulesetId,
+        extensionRulesetIds: [],
+        ancestorRulesetIds: [baseId],
+      });
+      const powerCopy = await copyEntity(db, "powers", power.id, {
+        id: rulesetId,
+        extensionRulesetIds: [],
+        ancestorRulesetIds: [baseId],
+      });
       const owner = { entityId: featCopy.id, entityType: "feats" };
       const description = index === 0 ? "the winner's" : `sibling ${index}'s`;
       await Properties.create(db, { ...owner, type: "AUDIT", value: "shared", description });

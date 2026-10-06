@@ -187,7 +187,7 @@ describe("CharactersService", () => {
         ancestorRulesetIds: [ctx.rulesetId],
       });
       const character = await createCharacterAs(session, { rulesetId: fork.id });
-      const copy = (await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork.id, [], [])).id as string;
+      const copy = (await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork)).id as string;
       RulesetCache.invalidate(fork.id);
 
       await CharactersService.updateAbilities(session, character.id, { [copy]: 17 });

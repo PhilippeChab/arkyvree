@@ -30,7 +30,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
   const sourceIds: string[] = [];
   for (let i = 0; i < 2; i++) {
     const extension = await createSeededTestRuleset(session.userId);
-    const copy = await copyEntity(db, entityType, source.id, extension.id, extension.ancestorRulesetIds, []);
+    const copy = await copyEntity(db, entityType, source.id, extension);
     await Properties.create(db, { entityId: copy.id, entityType, type: "SIBLING_MARKER", value: String(i) });
     // Classes have modifiers on their levels, not directly on the class.
     if (entityType !== "klasses")

@@ -75,10 +75,10 @@ test("bulk item variants with a renamed override's original name keep the overri
 // the fork's renamed copy. Neither is visible, so the name is free and no
 // snapshot moves.
 test("the original name of a renamed extension copy is available", async () => {
-  const { session, fork, baseId, general, baseFeat } = await setup();
+  const { session, fork, general, baseFeat } = await setup();
   const source = await baseFeat("Toughness");
   const extension = await createSeededTestRuleset(session.userId);
-  const extensionCopy = await copyEntity(db, "feats", source.id, extension.id, [baseId], []);
+  const extensionCopy = await copyEntity(db, "feats", source.id, extension);
   await Rulesets.update(
     db,
     { kind: "extension", status: "Published", private: false, userId: null },

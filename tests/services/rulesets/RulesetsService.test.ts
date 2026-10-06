@@ -294,7 +294,7 @@ describe("RulesetsService", () => {
       const created = await fork(session, { id: rulesetId }, { private: true });
       const feats = await Feats.findPage(db, { rulesetId }, { limit: 26, page: 1 });
       for (const feat of feats.items) {
-        expect((await copyEntity(db, "feats", feat.id, created.id, [rulesetId], [])).id).not.toBe(feat.id);
+        expect((await copyEntity(db, "feats", feat.id, created)).id).not.toBe(feat.id);
       }
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toHaveLength(26);
     });
@@ -565,7 +565,7 @@ describe("RulesetsService", () => {
         const { klass, skill } = await addPlayableContent(parent.id);
         await KlassLevels.create(db, { klassId: klass.id, level: 1 });
         await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
-        const copy = await copyEntity(db, "klasses", klass.id, fork.id, [parent.id], []);
+        const copy = await copyEntity(db, "klasses", klass.id, fork);
 
         await RulesetChangesService.revertOverride(session, fork.id, "klasses", klass.id);
 
@@ -581,7 +581,7 @@ describe("RulesetsService", () => {
       test("points the items made from a copied template back at the original", async () => {
         const { session, parent, fork } = await setupChanges();
         const [template] = await Items.create(db, { name: "Longsword", rulesetId: parent.id, isTemplate: true });
-        const copy = await copyEntity(db, "items", template.id, fork.id, [parent.id], []);
+        const copy = await copyEntity(db, "items", template.id, fork);
         const [made] = await Items.create(db, {
           name: "Longsword +1",
           rulesetId: fork.id,
@@ -594,7 +594,7 @@ describe("RulesetsService", () => {
 
       test("is refused for a copy a character picked, and for an entity the fork didn't change", async () => {
         const { user, session, fork, aptitude, modified, untouched } = await setupChanges();
-        const copy = await copyEntity(db, "feats", modified.id, fork.id, [fork.rulesetId!], []);
+        const copy = await copyEntity(db, "feats", modified.id, fork);
         const character = await createTestCharacter(user.id, { rulesetId: fork.id });
         const { klassLevel } = await createTestKlassLevel(fork.id);
         await addCharacterLevel(character.id, klassLevel.id, {

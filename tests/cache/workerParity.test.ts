@@ -24,7 +24,7 @@ test("worker familiar HP matches web after customizing an inherited master feat"
   await Characters.update(db, { rulesetId: fork.id }, { id: masterId });
   await Characters.update(db, { rulesetId: fork.id }, { id: familiarId });
   const source = (await Feats.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Toughness" }))!;
-  const copy = await copyEntity(db, "feats", source.id, fork.id, fork.ancestorRulesetIds, []);
+  const copy = await copyEntity(db, "feats", source.id, fork);
   const [modifier] = await Modifiers.findMany(db, { sourceIds: [copy.id], sourceType: "feats" });
   await Modifiers.update(db, { value: "7" }, { id: modifier.id });
   RulesetCache.invalidate(fork.id);

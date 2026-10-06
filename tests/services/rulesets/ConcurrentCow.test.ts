@@ -18,10 +18,10 @@ test("COW waits for a competing copy transaction and continues after rollback", 
   const copied = await runWhileLocked(
     pool,
     (blockerDb) => EntitySnapshots.lock(blockerDb, { rulesetId: fork.id, sourceEntityId: sourceId }),
-    () => copyEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []),
+    () => copyEntity(db, "feats", sourceId, fork),
   );
   expect(copied.id).not.toBe(sourceId);
-  expect((await copyEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], [])).id).toBe(copied.id);
+  expect((await copyEntity(db, "feats", sourceId, fork)).id).toBe(copied.id);
   expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toHaveLength(1);
   expect((await Feats.findOne(db, { id: sourceId }))?.rulesetId).toBe(seed.rulesetId);
 });
@@ -47,9 +47,9 @@ test("a tombstoned copy can be recreated without duplicating snapshots", async (
   const seed = await getSeedCtx();
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const sourceId = seed.featMap.Toughness;
-  const first = await copyEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
+  const first = await copyEntity(db, "feats", sourceId, fork);
   await Feats.delete(db, { id: first.id });
-  const second = await copyEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
+  const second = await copyEntity(db, "feats", sourceId, fork);
   expect(second.id).not.toBe(first.id);
   const snapshots = await EntitySnapshots.findMany(db, { rulesetId: fork.id });
   expect(snapshots).toHaveLength(1);

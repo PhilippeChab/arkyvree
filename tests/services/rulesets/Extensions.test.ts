@@ -180,8 +180,7 @@ async function setupSiblings(entityType: EntityType) {
   const extensions = [];
   for (const ability of ["strength", "wisdom"]) {
     const extension = await createExtension();
-    const copyId = (await copyEntity(db, entityType, baseId, extension.id, extension.ancestorRulesetIds, []))
-      .id as string;
+    const copyId = (await copyEntity(db, entityType, baseId, extension)).id as string;
     const [aptitude] = await Aptitudes.create(db, {
       name: `${ability} aptitude ${uniqueId()}`,
       rulesetId: extension.id,
@@ -391,7 +390,7 @@ describe("subscribing to an extension", () => {
         await Aptitudes.create(db, { name: "Shared Aptitude", rulesetId: id });
       }
       // A copy of a base feat has the base feat's name.
-      await copyEntity(db, "feats", featMap["Toughness"], c.id, c.ancestorRulesetIds, []);
+      await copyEntity(db, "feats", featMap["Toughness"], c);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id, c.id]);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [d.id]);
 
@@ -430,8 +429,8 @@ describe("subscribing to an extension", () => {
       const { featMap } = await getSeedCtx();
       const toughness = featMap["Toughness"];
       const [a, b] = [await createExtension(user.id), await createExtension(user.id)];
-      const extensionCopy = (await copyEntity(db, "feats", toughness, a.id, a.ancestorRulesetIds, [])).id as string;
-      await copyEntity(db, "feats", toughness, b.id, b.ancestorRulesetIds, []);
+      const extensionCopy = (await copyEntity(db, "feats", toughness, a)).id as string;
+      await copyEntity(db, "feats", toughness, b);
       await Modifiers.create(db, {
         sourceType: "feats",
         sourceId: extensionCopy,
@@ -458,8 +457,7 @@ describe("subscribing to an extension", () => {
       const { user, session, draft } = await setupFork();
       const { featMap } = await getSeedCtx();
       const [a, b] = [await createExtension(user.id), await createExtension(user.id)];
-      for (const extension of [a, b])
-        await copyEntity(db, "feats", featMap["Toughness"], extension.id, extension.ancestorRulesetIds, []);
+      for (const extension of [a, b]) await copyEntity(db, "feats", featMap["Toughness"], extension);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id]);
       await FeatsService.updateFeat(session, draft.id, featMap["Toughness"], {
         name: "Toughness",
@@ -554,7 +552,7 @@ describe("unsubscribing from an extension", () => {
     ] as const;
 
     for (const [type, id] of [...fromBase, ...fromExtension])
-      await copyEntity(db, type, id, draft.id, draft.ancestorRulesetIds, [extension.id]);
+      await copyEntity(db, type, id, { ...draft, extensionRulesetIds: [extension.id] });
     const copies = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
     const ofBase = copies.filter((copy) => fromBase.some(([, id]) => copy.sourceEntityId === id));
     expect(new Set(ofBase.map((copy) => copy.entityType))).toEqual(new Set(fromBase.map(([type]) => type)));

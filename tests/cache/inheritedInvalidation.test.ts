@@ -24,7 +24,7 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
   const source = (await Feats.findOne(db, { rulesetId: extension.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
   const before = await RulesetCache.getCowData(updatedHost);
   await RulesetCache.getData(updatedHost);
-  const copy = await copyEntity(db, "feats", source.id, extension.id, extension.ancestorRulesetIds, []);
+  const copy = await copyEntity(db, "feats", source.id, extension);
   await Feats.update(db, { description: "Updated extension feat" }, { id: copy.id });
   RulesetCache.invalidate(extension.id);
   const after = await RulesetCache.getCowData(updatedHost);
@@ -59,7 +59,7 @@ test("a nested base scope clears the fork mapping and restores it afterward", as
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const source = (await Feats.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
-  const copy = await copyEntity(db, "feats", source.id, fork.id, fork.ancestorRulesetIds, []);
+  const copy = await copyEntity(db, "feats", source.id, fork);
   RulesetCache.invalidateAll();
   await withRulesetScope(db, fork.id, async () => {
     expect((await Feats.findOne(db, { id: source.id }))?.id).toBe(copy.id);

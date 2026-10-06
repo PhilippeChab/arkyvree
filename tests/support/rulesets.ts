@@ -3,7 +3,7 @@ import { eq, type InferInsertModel } from "drizzle-orm";
 import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { aptitudesInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, type RulesetSources } from "@/server/cache/rulesetCache/index.ts";
 import { EntityCopy, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db } from "@/server/database/index.ts";
 import { Properties, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
@@ -38,12 +38,9 @@ export async function copyEntity(
   database: Db,
   entityType: RulesetEntityType,
   entityId: string,
-  rulesetId: string,
-  sourceChain: string[],
-  extensionRulesetIds: string[],
+  ruleset: RulesetSources,
 ) {
-  return (await EntityCopy.create(database, entityType, entityId, { rulesetId, sourceChain, extensionRulesetIds }))
-    .entity;
+  return (await EntityCopy.create(database, entityType, entityId, ruleset)).entity;
 }
 
 /** A new seeded fork of the seed user's with an aptitude of its own: the fork's `id` and the `aptitudeId`. */
