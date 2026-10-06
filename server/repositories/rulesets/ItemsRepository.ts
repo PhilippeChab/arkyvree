@@ -101,7 +101,7 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       return await db.query.itemsInRules.findMany({
         where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions, templateFilter]),
-        orderBy: this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
+        orderBy: this.pageOrder(this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir))),
         limit,
         offset,
       });

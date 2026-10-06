@@ -192,7 +192,7 @@ describe("conventions", () => {
     ]);
   });
 
-  test("the server sorts through the repository's orderBy", async () => {
+  test("the server sorts through the repository's orderBy, and a page by pageOrder", async () => {
     expect(
       await lintRepo(
         {
@@ -201,12 +201,25 @@ describe("conventions", () => {
           "server/repositories/Feats.ts": 'import { desc, eq } from "drizzle-orm";\nexport const o = [desc, eq];\n',
           "scripts/report.ts": 'import { asc } from "drizzle-orm";\nexport const o = asc;\n',
           "server/repositories/Orm.ts": 'import * as orm from "drizzle-orm";\nexport const o = [orm.desc, orm.eq];\n',
+          "server/repositories/Paged.ts":
+            "export class R {\n  findPage(db, p) {\n    return this.withPagination(p, () => db.select().orderBy(...this.pageOrder(this.orderBy(n))));\n  }\n}\n",
+          "server/repositories/Unordered.ts":
+            "export class R {\n  findPage(db, p) {\n    return this.withPagination(p, () => db.select().orderBy(this.orderBy(n)));\n  }\n}\n",
+          "server/repositories/Raw.ts":
+            "export class R {\n  findPage(db, p) {\n    const { limit } = this.paginate(p);\n    return db.select().limit(limit);\n  }\n}\n",
+          "server/repositories/Sliced.ts":
+            "export class R {\n  async findPage(db, p) {\n    return this.paginated(await db.select().offset(p.page), p);\n  }\n}\n",
+          "server/repositories/concerns/Paginates.ts":
+            "export class P {\n  withPagination(q, f) {\n    return f(this.paginate(q));\n  }\n}\n",
         },
         ["order-through-repository"],
       ),
     ).toEqual([
       "order-through-repository server/repositories/Feats.ts",
       "order-through-repository server/repositories/Orm.ts",
+      "order-through-repository server/repositories/Raw.ts",
+      "order-through-repository server/repositories/Sliced.ts",
+      "order-through-repository server/repositories/Unordered.ts",
     ]);
   });
 

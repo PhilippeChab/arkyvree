@@ -109,7 +109,7 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
         campaignsInCampaign.updatedAt,
         playerCountSubquery.count,
       )
-      .orderBy(this.orderBy(this.table[orderBy], orderDir))
+      .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))
       .limit(limit)
       .offset(offset);
 

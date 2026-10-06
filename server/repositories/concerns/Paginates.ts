@@ -1,4 +1,4 @@
-import type { Table } from "drizzle-orm";
+import type { Column, SQL, Table } from "drizzle-orm";
 
 import type { Constructor } from "@/server/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
@@ -12,6 +12,15 @@ export type Paginated<T> = {
 /** A list a page at a time: a query fetches one row past the page to know whether another follows. */
 export function Paginates<B extends Constructor<BaseRepository<Table>>>(Base: B) {
   abstract class Paginating extends Base {
+    /**
+     * A page's order: `keys`, then a key no two rows share (the table's id, or a group's own), so rows that tie on every
+     * key (two feats named alike) keep one order from one page's query to the next: OFFSET paging needs it, or a row
+     * can show on two pages and another on none.
+     */
+    protected pageOrder(keys: SQL | SQL[], unique: Column | SQL = this.column("id")): SQL[] {
+      return [...(Array.isArray(keys) ? keys : [keys]), this.orderBy(unique)];
+    }
+
     protected paginate(query: { limit: number; page: number }) {
       return {
         limit: query.limit + 1,

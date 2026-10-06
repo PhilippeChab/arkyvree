@@ -46,7 +46,7 @@ class RacesRepository extends RulesetEntityRepository<typeof racesInRules> {
           kind !== undefined && eq(this.table.kind, kind),
           searchConditions,
         ]),
-        orderBy: this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
+        orderBy: this.pageOrder(this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir))),
         limit,
         offset,
       });

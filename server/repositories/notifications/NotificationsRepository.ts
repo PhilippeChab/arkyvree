@@ -60,7 +60,7 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       return await db.query.notificationsInAccount.findMany({
         where: whereConditions,
-        orderBy: orderByClause,
+        orderBy: this.pageOrder(orderByClause),
         limit,
         offset,
       });
