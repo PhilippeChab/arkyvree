@@ -1,4 +1,4 @@
-import { Box, Button } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 
 import { AddIcon } from "@/client/src/components/icons/index.ts";
 
@@ -10,10 +10,10 @@ interface SectionAddButtonProps {
 /** A customization section's add button, right-aligned above its list. */
 export function SectionAddButton({ label, onClick }: SectionAddButtonProps) {
   return (
-    <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
+    <Stack direction="row" sx={{ mb: 2, justifyContent: "flex-end" }}>
       <Button variant="contained" startIcon={<AddIcon />} onClick={onClick}>
         {label}
       </Button>
-    </Box>
+    </Stack>
   );
 }

@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Card, CardContent, Chip, Container, Typography } from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 
@@ -209,7 +209,7 @@ export default function ProfilePage() {
             severity="info"
             sx={{ mb: 3 }}
             action={
-              <Box sx={{ display: "flex", gap: 1 }}>
+              <Stack direction="row" spacing={1}>
                 <Button size="small" variant="contained" onClick={() => setVerifyDialogOpen(true)}>
                   Verify
                 </Button>
@@ -221,7 +221,7 @@ export default function ProfilePage() {
                 >
                   Cancel
                 </Button>
-              </Box>
+              </Stack>
             }
           >
             Pending email change to <strong>{userData.pendingEmailAddress}</strong>
@@ -229,13 +229,10 @@ export default function ProfilePage() {
         )}
 
         <ProfileCard title="Basic Information">
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              alignItems: { xs: "center", sm: "flex-start" },
-              gap: { xs: 2, sm: 4 },
-            }}
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={{ xs: 2, sm: 4 }}
+            sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
           >
             <AttachmentField recordType="User" recordId={userData?.id} name="avatar" variant="avatar" size={140} />
 
@@ -272,17 +269,19 @@ export default function ProfilePage() {
                 </Button>
               </form>
             </Box>
-          </Box>
+          </Stack>
         </ProfileCard>
 
         <ProfileCard title="Linked Accounts">
-          <Box
-            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
               <Typography variant="body1">Google</Typography>
               {isGoogleLinked && <Chip label="Linked" size="small" color="success" />}
-            </Box>
+            </Stack>
             <Box sx={{ width: { xs: "100%", sm: 200 } }}>
               {isGoogleLinked ? (
                 <Button
@@ -300,7 +299,7 @@ export default function ProfilePage() {
                 <GoogleSignInButton overlayRef={overlayRef} label="Link Google" />
               ) : null}
             </Box>
-          </Box>
+          </Stack>
           {isGoogleLinked && !hasPassword && (
             <Typography variant="caption" sx={{ color: "text.secondary", mt: 1, display: "block" }}>
               Set a password before unlinking Google

@@ -1,4 +1,4 @@
-import { Box, IconButton, Tab, Tabs, Typography, useTheme } from "@mui/material";
+import { Box, IconButton, Stack, Tab, Tabs, Typography, useTheme } from "@mui/material";
 import { type ElementType, type MouseEvent, type ReactNode, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
@@ -49,16 +49,9 @@ export function DetailPageHeader({
   const cornerButtonSx = { position: "absolute", "&:hover": { bgcolor: "action.hover" } } as const;
 
   return (
-    <Box
-      sx={{
-        mb: 4,
-        display: "flex",
-        alignItems: "center",
-        py: 2,
-        borderBottom: 1,
-        borderColor: "divider",
-        position: "relative",
-      }}
+    <Stack
+      direction="row"
+      sx={{ mb: 4, alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
     >
       <IconButton component={Link} to={backTo} size="large" aria-label="Back" sx={{ ...cornerButtonSx, left: 0 }}>
         <BackIcon />
@@ -69,21 +62,23 @@ export function DetailPageHeader({
         </IconButton>
       )}
       <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, md: 8 } }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 1 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center", mb: 1 }}>
           <Typography component="h1" sx={{ fontWeight: 700, typography: { xs: "h4", md: "h3" } }}>
             {title}
           </Typography>
           {titleAdornment}
-        </Box>
+        </Stack>
         {chips && (
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>{chips}</Box>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: "center", mb: 2, flexWrap: "wrap" }}>
+            {chips}
+          </Stack>
         )}
         <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>
           {description}
         </Typography>
         {children}
       </Box>
-    </Box>
+    </Stack>
   );
 }
 

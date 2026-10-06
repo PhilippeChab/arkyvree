@@ -1,21 +1,21 @@
-import { Box, Link as MuiLink, Typography } from "@mui/material";
+import { Link as MuiLink, Stack, Typography } from "@mui/material";
 
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 
 export function Footer() {
   return (
-    <Box
+    <Stack
       component="footer"
+      direction="row"
+      spacing={2}
       sx={{
         width: "100%",
         py: 2,
         px: { xs: 2, md: 3 },
         mt: 2,
-        display: "flex",
         flexWrap: "wrap",
         alignItems: "center",
         justifyContent: "center",
-        gap: 2,
         color: "text.secondary",
       }}
     >
@@ -31,6 +31,6 @@ export function Footer() {
       >
         Source
       </MuiLink>
-    </Box>
+    </Stack>
   );
 }

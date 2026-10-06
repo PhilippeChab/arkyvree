@@ -6,6 +6,7 @@ import {
   Container,
   Link as MuiLink,
   Paper,
+  Stack,
   type Theme,
   Typography,
 } from "@mui/material";
@@ -161,9 +162,10 @@ export default function DashboardPage() {
             }}
           />
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, position: "relative" }}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 2, position: "relative" }}>
             {/* Icon with radial glow */}
-            <Box
+            <Stack
+              direction="row"
               sx={{
                 position: "relative",
                 display: { xs: "none", sm: "flex" },
@@ -193,7 +195,7 @@ export default function DashboardPage() {
                   filter: `drop-shadow(0 4px 12px ${brandGoldTint(false, 0.35)})`,
                 }}
               />
-            </Box>
+            </Stack>
             <Typography
               component="h1"
               sx={{
@@ -204,7 +206,7 @@ export default function DashboardPage() {
             >
               Welcome to Arkyvree
             </Typography>
-          </Box>
+          </Stack>
           <Typography
             sx={{
               opacity: 0.9,
@@ -238,7 +240,7 @@ export default function DashboardPage() {
 
         <GoldDivider />
 
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, mb: 4 }}>
+        <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap", mb: 4 }}>
           <StatCard
             icon={CharactersIcon}
             count={dashboardStats?.totalCharacters ?? 0}
@@ -266,7 +268,7 @@ export default function DashboardPage() {
             colors={(theme) => [theme.palette.primary.dark, theme.palette.primary.dark]}
             animationIndex={2}
           />
-        </Box>
+        </Stack>
 
         <GoldDivider />
 

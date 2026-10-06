@@ -1,4 +1,4 @@
-import { Alert, Box, Card, CardContent, Link as MuiLink, Typography, useTheme } from "@mui/material";
+import { Alert, Box, Card, CardContent, Link as MuiLink, Stack, Typography, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom";
@@ -26,9 +26,9 @@ function AuthFooterLinks() {
   // The demo is for newcomers, so only sign-up offers it.
   const showDemo = useLocation().pathname === "/sign-up";
   return (
-    <Box
+    <Stack
+      direction="row"
       sx={{
-        display: "flex",
         flexWrap: "wrap",
         columnGap: { xs: 1, sm: 2 },
         rowGap: 0.5,
@@ -67,7 +67,7 @@ function AuthFooterLinks() {
       >
         Source
       </MuiLink>
-    </Box>
+    </Stack>
   );
 }
 
@@ -89,12 +89,10 @@ function DesktopBranding() {
   });
 
   return (
-    <Box
+    <Stack
       sx={{
         position: "relative",
         width: "45%",
-        display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         background: `linear-gradient(160deg, ${theme.palette.backdrop.top} 0%, ${theme.palette.backdrop.middle} 50%, ${theme.palette.backdrop.bottom} 100%)`,
@@ -204,7 +202,7 @@ function DesktopBranding() {
       >
         A programmable engine for tabletop rulesets
       </Typography>
-    </Box>
+    </Stack>
   );
 }
 
@@ -213,11 +211,11 @@ function MobileBranding() {
   const theme = useTheme();
 
   return (
-    <Box
+    <Stack
+      direction="row"
+      spacing={2}
       sx={{
-        display: "flex",
         alignItems: "center",
-        gap: 2,
         px: 2,
         py: 2.5,
         background: `linear-gradient(135deg, ${theme.palette.backdrop.top}, ${theme.palette.backdrop.middle})`,
@@ -249,7 +247,7 @@ function MobileBranding() {
           A programmable engine for tabletop rulesets
         </Typography>
       </Box>
-    </Box>
+    </Stack>
   );
 }
 
@@ -289,9 +287,7 @@ export function AuthLayoutRoute() {
 
   if (isMobile) {
     return (
-      <Box
-        sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}
-      >
+      <Stack sx={{ minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}>
         <Card sx={{ width: "100%", maxWidth: 450, mx: "auto", overflow: "hidden" }}>
           <MobileBranding />
           <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
@@ -299,30 +295,21 @@ export function AuthLayoutRoute() {
           </Suspense>
         </Card>
         <AuthFooterLinks />
-      </Box>
+      </Stack>
     );
   }
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+    <Stack direction="row" sx={{ minHeight: "100vh" }}>
       <DesktopBranding />
 
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          px: 4,
-        }}
-      >
+      <Stack sx={{ flex: 1, alignItems: "center", justifyContent: "center", px: 4 }}>
         <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
           <Outlet />
         </Suspense>
         <AuthFooterLinks />
-      </Box>
-    </Box>
+      </Stack>
+    </Stack>
   );
 }
 

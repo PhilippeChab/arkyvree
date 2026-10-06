@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -130,12 +130,12 @@ function describe(
         title: modifier.sourceName,
         pageTitle: `${modifier.target} ${modifier.operator} ${modifier.value}`,
         subtitle: (
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center" }}>
             <TargetPathBreadcrumbs target={modifier.target} targetLabels={modifier.targetLabels} />
             <Typography sx={{ typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}>
               {MODIFIER_OPERATOR_LABELS[modifier.operator]} {modifier.value}
             </Typography>
-          </Box>
+          </Stack>
         ),
         backPath: modifierSourcePath(rulesetId, modifier.sourceType, modifier.sourceId),
       };

@@ -1,4 +1,4 @@
-import { Box, Button, Container, Tooltip, Typography } from "@mui/material";
+import { Button, Container, Stack, Tooltip, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
@@ -138,14 +138,14 @@ export default function NotificationsPage() {
                     enterDelay={300}
                     slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                       {!notification.readAt && (
                         <UnreadIcon titleAccess="Unread" fontSize="dot" sx={{ color: "primary.main", flexShrink: 0 }} />
                       )}
                       <Typography variant="body2">
                         {formatNotificationMessage(notification.type, notification.data)}
                       </Typography>
-                    </Box>
+                    </Stack>
                   </Tooltip>
                 );
               }}

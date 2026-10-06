@@ -33,7 +33,7 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
 
   return (
     <SheetSection title="Combat & Saves">
-      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3 }}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         {/* Left column: Combat Stats */}
         <Box sx={{ flex: 1, minWidth: { md: 350 } }}>
           <Typography sx={{ fontWeight: 600, mb: 2, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}>
@@ -81,7 +81,7 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
                     <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary", mb: 1 }}>
                       {displayName}: {formatSigned(total)}
                     </Typography>
-                    <Box sx={{ ml: 2, display: "flex", gap: 3 }}>
+                    <Stack direction="row" spacing={3} sx={{ ml: 2 }}>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         Base: {formatSigned(saveData?.base)}
                       </Typography>
@@ -91,7 +91,7 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         Misc: {formatSigned(saveData?.misc)}
                       </Typography>
-                    </Box>
+                    </Stack>
                   </Box>
                 );
               })}
@@ -100,7 +100,7 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
             <BlankState title="No saving throws available" />
           )}
         </Box>
-      </Box>
+      </Stack>
     </SheetSection>
   );
 }

@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Card, CardContent, Chip, Container, Typography } from "@mui/material";
+import { Avatar, Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -225,19 +225,19 @@ export function InviteLandingPage({
       <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
         <Card>
           <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+            <Stack direction="row" sx={{ alignItems: "center", mb: 3 }}>
               <Avatar sx={{ width: 56, height: 56, mr: 2 }}>
                 <Icon />
               </Avatar>
               <Box>
                 <Typography variant="h5">{name}</Typography>
                 {invite.role && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center", mt: 0.5 }}>
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
                       Invited as
                     </Typography>
                     <Chip label={invite.role} size="small" variant="outlined" />
-                  </Box>
+                  </Stack>
                 )}
                 {invite.invitedAt && (
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -245,7 +245,7 @@ export function InviteLandingPage({
                   </Typography>
                 )}
               </Box>
-            </Box>
+            </Stack>
 
             <Typography variant="body1" sx={{ mb: 4 }}>
               {description}

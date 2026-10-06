@@ -1,4 +1,4 @@
-import { Box, Button, ThemeProvider, Typography } from "@mui/material";
+import { Button, Stack, ThemeProvider, Typography } from "@mui/material";
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 
@@ -42,9 +42,9 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.isChunkError) {
       return (
         <ThemeProvider theme={FALLBACK_THEME}>
-          <Box
+          <Stack
+            direction="row"
             sx={{
-              display: "flex",
               alignItems: "center",
               justifyContent: "center",
               minHeight: "100vh",
@@ -53,7 +53,7 @@ export class ErrorBoundary extends Component<Props, State> {
             }}
           >
             <Typography variant="body1">Updating — please refresh if this persists.</Typography>
-          </Box>
+          </Stack>
         </ThemeProvider>
       );
     }
@@ -61,14 +61,12 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <ThemeProvider theme={FALLBACK_THEME}>
-          <Box
+          <Stack
+            spacing={3}
             sx={{
-              display: "flex",
-              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               minHeight: "100vh",
-              gap: 3,
               p: 4,
               textAlign: "center",
               bgcolor: "background.default",
@@ -86,7 +84,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <br />
               Something broke unexpectedly.
             </Typography>
-            <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
+            <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
               <Button
                 variant="outlined"
                 onClick={() => {
@@ -105,8 +103,8 @@ export class ErrorBoundary extends Component<Props, State> {
               >
                 Return to Camp
               </Button>
-            </Box>
-          </Box>
+            </Stack>
+          </Stack>
         </ThemeProvider>
       );
     }

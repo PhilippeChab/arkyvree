@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   DialogActions,
   DialogContent,
@@ -72,7 +71,7 @@ export function BulkVariantsDialog({
             </Typography>
             <Stack spacing={3}>
               {fields.map((field, index) => (
-                <Box key={field.id} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                <Stack key={field.id} direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
                   <Stack spacing={1} sx={{ flex: 1 }}>
                     <FormTextField
                       control={form.control}
@@ -107,7 +106,7 @@ export function BulkVariantsDialog({
                       </IconButton>
                     </span>
                   </Tooltip>
-                </Box>
+                </Stack>
               ))}
             </Stack>
             <Button

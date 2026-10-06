@@ -1,7 +1,7 @@
 import {
-  Box,
   Chip,
   Link as MuiLink,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -108,10 +108,10 @@ export function EquipmentTable<T extends EquipmentTableRow>({
       </TableContainer>
       {encumbrance && (
         // Each figure wraps as a whole on narrow screens.
-        <Box
+        <Stack
+          direction="row"
           sx={{
             mt: 2,
-            display: "flex",
             flexWrap: "wrap",
             justifyContent: "flex-end",
             alignItems: "center",
@@ -139,7 +139,7 @@ export function EquipmentTable<T extends EquipmentTableRow>({
               color={encumbrance.load === "overloaded" ? "error" : encumbrance.load === "heavy" ? "warning" : "info"}
             />
           )}
-        </Box>
+        </Stack>
       )}
     </>
   );

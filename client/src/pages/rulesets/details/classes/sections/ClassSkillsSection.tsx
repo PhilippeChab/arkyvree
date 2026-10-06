@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Chip, Paper, Skeleton, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 
 import { BlankState, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { CloseIcon } from "@/client/src/components/icons/index.ts";
@@ -31,15 +31,10 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
 
   return (
     <Box>
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          mb: 2,
-          gap: 2,
-        }}
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{ flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}
       >
         <Typography variant="h6">Class Skills</Typography>
         {canEdit && (
@@ -96,7 +91,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
             />
           </Box>
         )}
-      </Box>
+      </Stack>
       {isLoading ? (
         <Box>
           {[...Array(3)].map((_, index) => (
@@ -114,7 +109,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         />
       ) : (
         <Paper sx={{ p: 2, borderRadius: 2 }}>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
             {classSkills.map((classSkill) => (
               <Chip
                 key={classSkill.skillId}
@@ -125,7 +120,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
                 onDelete={canEdit ? () => handleRemoveSkill(classSkill.skillId) : undefined}
               />
             ))}
-          </Box>
+          </Stack>
         </Paper>
       )}
       <RemoveSkillDialog

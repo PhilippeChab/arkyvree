@@ -361,6 +361,10 @@ export function createAppTheme(darkMode: boolean): Theme {
             }),
           },
         },
+        MuiStack: {
+          // `spacing` is a gap, so wrapped children keep it too
+          defaultProps: { useFlexGap: true },
+        },
         MuiSvgIcon: {
           styleOverrides: {
             root: ({ theme }) => ({

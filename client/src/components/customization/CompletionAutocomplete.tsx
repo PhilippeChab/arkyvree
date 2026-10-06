@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Chip, ListItem, ListItemText, TextField } from "@mui/material";
+import { Autocomplete, Chip, ListItem, ListItemText, Stack, TextField } from "@mui/material";
 import { keepPreviousData, type QueryKey } from "@tanstack/react-query";
 import { useMemo } from "react";
 
@@ -94,7 +94,7 @@ export function CompletionAutocomplete<T extends Completion>({
           ) : (
             <ListItemText
               primary={
-                <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
                   {option.label}
                   <Chip
                     label={option.kind}
@@ -102,7 +102,7 @@ export function CompletionAutocomplete<T extends Completion>({
                     variant="outlined"
                     color={option.kind === "engine" ? "primary" : "default"}
                   />
-                </Box>
+                </Stack>
               }
               secondary={option.detail}
             />

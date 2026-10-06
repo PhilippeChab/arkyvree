@@ -1,4 +1,4 @@
-import { Box, IconButton, Menu, MenuItem, Skeleton, Typography } from "@mui/material";
+import { Box, IconButton, Menu, MenuItem, Skeleton, Stack, Typography } from "@mui/material";
 import type { ComponentProps, ReactNode } from "react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -45,23 +45,16 @@ export function EntityDetailLayout({
   if (isLoading) {
     return (
       <Box sx={PAGE_SX}>
-        <Box
-          sx={{
-            mb: 4,
-            display: "flex",
-            alignItems: "center",
-            py: 2,
-            borderBottom: 1,
-            borderColor: "divider",
-            position: "relative",
-          }}
+        <Stack
+          direction="row"
+          sx={{ mb: 4, alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
         >
           <Skeleton variant="circular" width={40} height={40} sx={{ position: "absolute", left: 0 }} />
           <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, sm: 8 } }}>
             <Skeleton variant="text" width={200} height={40} sx={{ mx: "auto" }} />
             <Skeleton variant="text" width={150} height={24} sx={{ mx: "auto" }} />
           </Box>
-        </Box>
+        </Stack>
         <Skeleton variant="rounded" height={200} sx={{ borderRadius: 2 }} />
       </Box>
     );
@@ -75,16 +68,9 @@ export function EntityDetailLayout({
         [prefersReducedMotion]: { animation: "none" },
       }}
     >
-      <Box
-        sx={{
-          mb: 4,
-          display: "flex",
-          alignItems: "center",
-          py: 2,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "relative",
-        }}
+      <Stack
+        direction="row"
+        sx={{ mb: 4, alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
       >
         <IconButton
           aria-label="Back"
@@ -147,7 +133,7 @@ export function EntityDetailLayout({
             </Menu>
           </>
         )}
-      </Box>
+      </Stack>
       {children}
     </Box>
   );

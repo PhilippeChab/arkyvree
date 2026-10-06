@@ -51,7 +51,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
     <Box sx={{ mt: 1.5 }}>
       <Stack sx={{ mb: 2, minWidth: 0 }}>{nameNode}</Stack>
 
-      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3 }}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         <Box sx={{ flex: "0 0 auto" }}>
           <Typography sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}>Abilities</Typography>
           <Box
@@ -90,7 +90,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
           {featNames.length > 0 && (
             <Box>
               <Typography sx={{ fontWeight: 600, mb: 1, color: "text.secondary" }}>Features</Typography>
-              <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75 }}>
+              <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
                 {featNames.map((n) => (
                   <Box
                     key={n}
@@ -110,7 +110,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
             </Box>
           )}
         </Stack>
-      </Box>
+      </Stack>
     </Box>
   );
 }

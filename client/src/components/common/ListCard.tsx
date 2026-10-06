@@ -62,7 +62,7 @@ export function ListCard({
           </Typography>
         </Stack>
         {pills && (
-          <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: 1, mb: 2 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", mb: 2 }}>
             {pills}
           </Stack>
         )}

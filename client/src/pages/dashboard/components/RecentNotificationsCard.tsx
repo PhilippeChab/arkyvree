@@ -1,4 +1,4 @@
-import { Box, Button, Paper, Typography } from "@mui/material";
+import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
@@ -24,7 +24,7 @@ export function RecentNotificationsCard() {
 
   return (
     <Paper sx={{ p: { xs: 2, sm: 4 }, borderRadius: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 3 }}>
         <Typography component="h2" sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }}>
           Notifications
         </Typography>
@@ -33,7 +33,7 @@ export function RecentNotificationsCard() {
             View All
           </Button>
         )}
-      </Box>
+      </Stack>
       {isLoading ? (
         <DiceSpinner sx={{ py: 4 }} />
       ) : items.length === 0 ? (
@@ -43,20 +43,20 @@ export function RecentNotificationsCard() {
           description="Notifications from your campaigns and collaborators will appear here."
         />
       ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Stack spacing={1.5}>
           {items.map((notification, index) => {
             const actionable = actions.isActionable(notification);
             const openable = actions.isOpenable(notification);
             const details = formatActivityDetails(notification.data);
             return (
-              <Box
+              <Stack
                 key={notification.id}
                 {...(openable && clickableProps(() => actions.open(notification)))}
+                direction="row"
+                spacing={2}
                 sx={{
-                  display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  gap: 2,
                   p: 2,
                   borderRadius: 2,
                   bgcolor: notification.readAt ? "transparent" : "action.hover",
@@ -89,10 +89,10 @@ export function RecentNotificationsCard() {
                 <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0 }}>
                   {formatRelativeTime(notification.createdAt)}
                 </Typography>
-              </Box>
+              </Stack>
             );
           })}
-        </Box>
+        </Stack>
       )}
     </Paper>
   );

@@ -178,7 +178,8 @@ export default function CharacterDetailsPage() {
         <Paper sx={{ p: 2, mb: 2 }}>
           <Stack
             direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}
+            spacing={1}
+            sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
           >
             <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
               <IconButton

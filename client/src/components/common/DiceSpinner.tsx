@@ -1,4 +1,4 @@
-import { Box, type SxProps, type Theme, Typography } from "@mui/material";
+import { Box, Stack, type SxProps, type Theme, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 
@@ -59,40 +59,42 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
   // position-relative dance at every Save button.
   if (children !== undefined) {
     return (
-      <Box
+      <Stack
         component="span"
+        direction="row"
         sx={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
       >
         {loading && (
-          <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Stack
+            direction="row"
+            sx={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}
+          >
             {dice}
-          </Box>
+          </Stack>
         )}
         {/* "inherit", not "visible": a button hidden with visibility must hide its label too. */}
         <Box component="span" sx={{ visibility: loading ? "hidden" : "inherit" }}>
           {children}
         </Box>
-      </Box>
+      </Stack>
     );
   }
 
   if (size === "small" && overlay)
     return (
-      <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Stack direction="row" sx={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}>
         {dice}
-      </Box>
+      </Stack>
     );
 
   if (size === "small") return dice;
 
   return (
-    <Box
-      sx={[
-        { display: "flex", justifyContent: "center", alignItems: "center", py: 2 },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
+    <Stack
+      direction="row"
+      sx={[{ justifyContent: "center", alignItems: "center", py: 2 }, ...(Array.isArray(sx) ? sx : [sx])]}
     >
       {dice}
-    </Box>
+    </Stack>
   );
 }

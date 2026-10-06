@@ -1,4 +1,4 @@
-import { Box, type CSSObject } from "@mui/material";
+import { Box, type CSSObject, Stack } from "@mui/material";
 import { type ReactNode, Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
@@ -69,7 +69,7 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
   }, [pathname]);
 
   return (
-    <Box
+    <Stack
       ref={mainRef}
       component="main"
       sx={(theme) => ({
@@ -81,8 +81,6 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
         bgcolor: "background.default",
         overflow: "auto",
         scrollbarGutter: "stable",
-        display: "flex",
-        flexDirection: "column",
         alignItems: "center",
       })}
     >
@@ -94,6 +92,6 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
         </Suspense>
       </Box>
       <Footer />
-    </Box>
+    </Stack>
   );
 }

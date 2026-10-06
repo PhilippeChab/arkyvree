@@ -35,7 +35,7 @@ function FeatRow({ name, label, description, extra }: FeatRowProps) {
 
   return (
     <Box sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
-      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
         <Typography sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}>
           {name}
         </Typography>
@@ -68,9 +68,10 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
 
   return (
     <Box>
-      <Box
+      <Stack
         onClick={() => setOpen((prev) => !prev)}
-        sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", mb: 2 }}
+        direction="row"
+        sx={{ alignItems: "center", justifyContent: "space-between", cursor: "pointer", mb: 2 }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Granted ({feats.length})
@@ -83,7 +84,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
         >
           {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
         </IconButton>
-      </Box>
+      </Stack>
       <Collapse in={open} timeout="auto" unmountOnExit>
         <Stack spacing={3}>
           {feats.map((feat) => {

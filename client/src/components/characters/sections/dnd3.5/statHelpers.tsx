@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 
 interface StatFieldProps {
   label: string;
@@ -7,7 +7,7 @@ interface StatFieldProps {
 
 export function StatField({ label, value }: StatFieldProps) {
   return (
-    <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+    <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
       <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary", whiteSpace: "nowrap" }}>
         {label}:
       </Typography>
@@ -17,6 +17,6 @@ export function StatField({ label, value }: StatFieldProps) {
       >
         {value ?? "—"}
       </Typography>
-    </Box>
+    </Stack>
   );
 }

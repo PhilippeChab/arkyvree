@@ -187,46 +187,44 @@ export function AttachmentField({
 
           {/* Hover overlay over an existing image */}
           {url && interactive && (
-            <Box
+            <Stack
               className="attachment-overlay"
               onClick={(e) => {
                 e.stopPropagation();
                 pick();
               }}
+              spacing={0.75}
               sx={{
                 position: "absolute",
                 inset: 0,
-                display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 bgcolor: (theme) => alpha(theme.palette.common.black, 0.55),
                 color: "common.white",
                 cursor: "pointer",
-                gap: 0.75,
-                flexDirection: "column",
               }}
             >
               <PhotoIcon sx={{ fontSize: dimension * 0.22 }} />
               <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: 0.5 }}>
                 Change
               </Typography>
-            </Box>
+            </Stack>
           )}
 
           {/* Loading spinner — covers everything */}
           {busy && (
-            <Box
+            <Stack
+              direction="row"
               sx={{
                 position: "absolute",
                 inset: 0,
-                display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 bgcolor: (theme) => alpha(theme.palette.common.black, 0.5),
               }}
             >
               <DiceSpinner size={dimension < 80 ? "small" : dimension < 160 ? "medium" : "large"} />
-            </Box>
+            </Stack>
           )}
         </Box>
 

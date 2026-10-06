@@ -2,7 +2,6 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Box,
   Chip,
   IconButton,
   Link as MuiLink,
@@ -60,7 +59,7 @@ export function ClassesSection({
       }
     >
       {classes && Object.keys(classes).length > 0 ? (
-        <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 1 }}>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
           {Object.values(classes).map((cls) => {
             const { klass } = cls;
             const levels = cls.levels ?? [];
@@ -169,7 +168,7 @@ export function ClassesSection({
               </Accordion>
             );
           })}
-        </Box>
+        </Stack>
       ) : (
         <BlankState title="No classes available" />
       )}

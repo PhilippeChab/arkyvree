@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Chip, TextField, Typography } from "@mui/material";
+import { Autocomplete, Chip, Stack, TextField, Typography } from "@mui/material";
 import { Controller, useController, type UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
@@ -71,12 +71,12 @@ function TagsField({ form, name, label, options }: TagsFieldProps) {
 function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
   return (
     <>
-      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <SelectField control={form.control} name="school" label="School" options={[NONE, ...SPELL_SCHOOLS]} />
         <SelectField control={form.control} name="subschool" label="Subschool" options={[NONE, ...SPELL_SUBSCHOOLS]} />
-      </Box>
+      </Stack>
       <TagsField form={form} name="descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
-      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <FormTextField
           control={form.control}
           name="castingTime"
@@ -85,8 +85,8 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
           placeholder='e.g., "1 standard action"'
         />
         <SelectField control={form.control} name="rangeType" label="Range" options={[NONE, ...SPELL_RANGE_TYPES]} />
-      </Box>
-      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
+      </Stack>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <FormTextField
           control={form.control}
           name="target"
@@ -101,8 +101,8 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
           fullWidth
           placeholder='e.g., "20-ft. radius"'
         />
-      </Box>
-      <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
+      </Stack>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <FormTextField
           control={form.control}
           name="duration"
@@ -116,7 +116,7 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
           label="Spell Resistance"
           options={[NONE, ...SPELL_RESISTANCE_OPTIONS]}
         />
-      </Box>
+      </Stack>
       <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />
     </>
   );
@@ -159,13 +159,13 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
         }}
       />
       {selectedAptitudes.length > 0 && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Stack spacing={1.5}>
           <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>
             Aptitude Settings
           </Typography>
           {selectedAptitudes.map((apt) => {
             return (
-              <Box key={apt.id} sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+              <Stack key={apt.id} direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                 <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0 }}>
                   {apt.name}
                 </Typography>
@@ -181,10 +181,10 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
                   }}
                   sx={{ width: 80 }}
                 />
-              </Box>
+              </Stack>
             );
           })}
-        </Box>
+        </Stack>
       )}
     </>
   );

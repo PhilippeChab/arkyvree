@@ -16,7 +16,7 @@ export function CharacterDetailSkeleton() {
   return (
     <Container maxWidth="xl" sx={{ py: 2 }}>
       {/* Themed header with pulsing icon */}
-      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 4, mb: 2 }}>
+      <Stack sx={{ alignItems: "center", py: 4, mb: 2 }}>
         <DiceSpinner size="large" />
         <Typography
           variant="body2"
@@ -28,7 +28,7 @@ export function CharacterDetailSkeleton() {
         >
           Loading character sheet...
         </Typography>
-      </Box>
+      </Stack>
       <Stack spacing={3}>
         {/* Header bar */}
         <Section index={0}>
@@ -41,7 +41,7 @@ export function CharacterDetailSkeleton() {
         {/* Identity section */}
         <Section index={1}>
           <Skeleton variant="text" width="30%" height={32} sx={{ mb: 2 }} />
-          <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", gap: 2 }}>
+          <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
             {[1, 2, 3, 4].map((i) => (
               <Skeleton key={i} variant="rounded" width={160} height={40} />
             ))}
@@ -51,7 +51,7 @@ export function CharacterDetailSkeleton() {
         {/* Ability scores — 6 blocks */}
         <Section index={2}>
           <Skeleton variant="text" width="20%" height={28} sx={{ mb: 2 }} />
-          <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", gap: 2 }}>
+          <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Skeleton key={i} variant="rounded" sx={{ width: { xs: 70, sm: 90 }, height: { xs: 70, sm: 90 } }} />
             ))}

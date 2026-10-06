@@ -184,15 +184,10 @@ export function CharacterIdentitySection({
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
       <form onSubmit={sync.handleSubmit((formData) => saveIdentity.mutate(formData))}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-            flexWrap: "wrap",
-            gap: 1,
-          }}
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ justifyContent: "space-between", alignItems: "center", mb: 3, flexWrap: "wrap" }}
         >
           {nameEditing ? (
             <TextField
@@ -255,15 +250,12 @@ export function CharacterIdentitySection({
               Save
             </DiceSpinner>
           </Button>
-        </Box>
+        </Stack>
 
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { xs: "center", sm: "flex-start" },
-            gap: { xs: 2, sm: 4 },
-          }}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={{ xs: 2, sm: 4 }}
+          sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
         >
           <AttachmentField
             recordType="Character"
@@ -379,7 +371,7 @@ export function CharacterIdentitySection({
             {!partial && (
               <Box sx={{ mb: 2 }}>
                 {readOnly ? (
-                  <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
                     <Typography variant="body2" sx={{ color: "text.secondary", mr: 1 }}>
                       Languages:
                     </Typography>
@@ -390,7 +382,7 @@ export function CharacterIdentitySection({
                     ) : (
                       selectedLanguages.map((lang) => <Chip key={lang.id} label={lang.name} size="small" />)
                     )}
-                  </Box>
+                  </Stack>
                 ) : (
                   <Autocomplete
                     multiple
@@ -452,7 +444,7 @@ export function CharacterIdentitySection({
               </>
             )}
           </Box>
-        </Box>
+        </Stack>
       </form>
     </Paper>
   );

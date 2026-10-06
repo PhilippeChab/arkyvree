@@ -1,4 +1,4 @@
-import { Alert, Box, Card, CardContent, Chip, IconButton, Stack, Typography } from "@mui/material";
+import { Alert, Card, CardContent, Chip, IconButton, Stack, Typography } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import type { InferResponseType } from "hono/client";
@@ -348,7 +348,7 @@ export function RequirementsSection({
             }}
           >
             <CardContent sx={{ py: 1.5, px: 2, "&:last-child": { pb: 1.5 } }}>
-              <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
                 <Chip
                   label={requirement.level}
                   size="small"
@@ -385,7 +385,7 @@ export function RequirementsSection({
                   </>
                 )}
 
-                <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
+                <Stack direction="row" spacing={0.5} sx={{ ml: "auto", alignItems: "center", flexShrink: 0 }}>
                   <Typography
                     variant="caption"
                     sx={{
@@ -436,8 +436,8 @@ export function RequirementsSection({
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   )}
-                </Box>
-              </Box>
+                </Stack>
+              </Stack>
             </CardContent>
           </Card>
         }

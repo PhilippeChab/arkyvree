@@ -1,4 +1,4 @@
-import { Box, Button } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 
 import { DiceSpinner } from "./DiceSpinner.tsx";
 
@@ -22,7 +22,7 @@ export function LoadMoreButton({
   if (!hasNextPage) return null;
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+    <Stack direction="row" sx={{ justifyContent: "center", mt: 2 }}>
       <Button
         variant="outlined"
         size={size}
@@ -38,6 +38,6 @@ export function LoadMoreButton({
           {label}
         </DiceSpinner>
       </Button>
-    </Box>
+    </Stack>
   );
 }

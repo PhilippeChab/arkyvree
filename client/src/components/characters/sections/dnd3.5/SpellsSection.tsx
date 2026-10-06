@@ -4,6 +4,7 @@ import {
   Collapse,
   IconButton,
   Link as MuiLink,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -52,7 +53,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
         sx={{ cursor: "pointer", "& > td": { borderBottom: open ? "none" : undefined } }}
       >
         <TableCell>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
             <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${spell.name}'s details`} sx={{ p: 0 }}>
               {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
             </IconButton>
@@ -79,7 +80,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
                 sx={{ ml: 0.5 }}
               />
             ))}
-          </Box>
+          </Stack>
         </TableCell>
         <TableCell>{spell.school}</TableCell>
         <TableCell>{spell.save}</TableCell>
@@ -124,9 +125,11 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
 
   return (
     <Box sx={{ mb: 1, "&:last-child": { mb: 0 } }}>
-      <Box
+      <Stack
         onClick={() => setOpen((prev) => !prev)}
-        sx={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 0.5, mb: 0.5 }}
+        direction="row"
+        spacing={0.5}
+        sx={{ alignItems: "center", cursor: "pointer", mb: 0.5 }}
       >
         <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${label} spells`} sx={{ p: 0 }}>
           {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
@@ -139,7 +142,7 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
             </Typography>
           )}
         </Typography>
-      </Box>
+      </Stack>
       <Collapse in={open} timeout="auto" unmountOnExit>
         <TableContainer sx={{ overflowX: "auto" }}>
           <Table size="small">
@@ -175,9 +178,11 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
 
   return (
     <Box sx={{ mb: 3, "&:last-child": { mb: 0 } }}>
-      <Box
+      <Stack
         onClick={() => setOpen((prev) => !prev)}
-        sx={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 0.5, mb: 1 }}
+        direction="row"
+        spacing={0.5}
+        sx={{ alignItems: "center", cursor: "pointer", mb: 1 }}
       >
         <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${apt.aptitudeName}`} sx={{ p: 0 }}>
           {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -185,7 +190,7 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
           {apt.aptitudeName} ({totalSpells})
         </Typography>
-      </Box>
+      </Stack>
       <Collapse in={open} timeout="auto" unmountOnExit>
         <Box sx={{ pl: 1 }}>
           {apt.levels.map((group) => (

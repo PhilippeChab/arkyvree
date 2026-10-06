@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 
 /** An entity's link to an aptitude, as the feats and spells lists include it. */
 interface AptitudeLink {
@@ -20,7 +20,7 @@ export function AptitudeChipsCell({ links }: AptitudeChipsCellProps) {
     );
   }
   return (
-    <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+    <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
       {links.map((link) => (
         <Chip
           key={link.aptitudeId}
@@ -30,6 +30,6 @@ export function AptitudeChipsCell({ links }: AptitudeChipsCellProps) {
           variant="outlined"
         />
       ))}
-    </Box>
+    </Stack>
   );
 }

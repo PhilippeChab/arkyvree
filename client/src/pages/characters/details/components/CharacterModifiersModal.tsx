@@ -1,4 +1,4 @@
-import { Box, Button, Chip, DialogContent, IconButton, Stack, Toolbar, Typography } from "@mui/material";
+import { Button, Chip, DialogContent, IconButton, Stack, Toolbar, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
@@ -173,7 +173,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         }}
       >
         <Toolbar sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: 1 }}>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flex: 1 }}>
             <Typography id="character-modifiers-title" variant="h6" sx={{ fontWeight: 600 }}>
               Manage Modifiers
             </Typography>
@@ -181,7 +181,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
               text="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc."
               size={18}
             />
-          </Box>
+          </Stack>
           <Stack direction="row" spacing={1}>
             <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleAdd}>
               Add

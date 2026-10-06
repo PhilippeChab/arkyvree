@@ -1,4 +1,4 @@
-import { Box, Chip } from "@mui/material";
+import { Chip, Stack } from "@mui/material";
 
 import { ChevronRightIcon } from "@/client/src/components/icons/index.ts";
 import { formatSegment } from "@/shared/customization/target.ts";
@@ -12,9 +12,9 @@ export function TargetPathBreadcrumbs({ target, targetLabels }: TargetPathBreadc
   const segments = target.split(".").filter(Boolean);
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "nowrap", overflow: "hidden" }}>
+    <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexWrap: "nowrap", overflow: "hidden" }}>
       {segments.map((segment, index) => (
-        <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
+        <Stack key={index} direction="row" sx={{ alignItems: "center" }}>
           {index > 0 && <ChevronRightIcon fontSize="compact" sx={{ color: "text.secondary", mx: 0.25 }} />}
           <Chip
             label={targetLabels?.[segment] ?? formatSegment(segment)}
@@ -22,8 +22,8 @@ export function TargetPathBreadcrumbs({ target, targetLabels }: TargetPathBreadc
             variant="outlined"
             color="primary"
           />
-        </Box>
+        </Stack>
       ))}
-    </Box>
+    </Stack>
   );
 }

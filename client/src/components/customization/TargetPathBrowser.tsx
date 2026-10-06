@@ -6,6 +6,7 @@ import {
   ListItemButton,
   ListItemText,
   Skeleton,
+  Stack,
   TextField,
   Tooltip,
   Typography,
@@ -166,11 +167,11 @@ export function TargetPathBrowser({
   const breadcrumbSegments = segments;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <Stack spacing={1}>
       {/* Breadcrumbs */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.5, minHeight: 32 }}>
+      <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", alignItems: "center", minHeight: 32 }}>
         {breadcrumbSegments.map((segment, index) => (
-          <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
+          <Stack key={index} direction="row" sx={{ alignItems: "center" }}>
             {index > 0 && <ChevronRightIcon fontSize="compact" sx={{ color: "text.secondary", mx: 0.25 }} />}
             <Chip
               label={segmentLabels[segment] || formatSegment(segment)}
@@ -180,7 +181,7 @@ export function TargetPathBrowser({
               onClick={disabled ? undefined : () => handleBreadcrumbClick(index)}
               sx={{ cursor: disabled ? "default" : "pointer" }}
             />
-          </Box>
+          </Stack>
         ))}
         {breadcrumbSegments.length > 0 && !disabled && (
           <IconButton size="small" aria-label="Clear path" onClick={handleClear} sx={{ ml: 0.5 }}>
@@ -188,11 +189,11 @@ export function TargetPathBrowser({
           </IconButton>
         )}
         {breadcrumbSegments.length === 0 && <Skeleton variant="rounded" width={100} height={24} />}
-      </Box>
+      </Stack>
       {/* Search + List */}
       {!disabled && (
         <>
-          <Box sx={{ position: "relative", display: "flex", gap: 0.5, alignItems: "center" }}>
+          <Stack direction="row" spacing={0.5} sx={{ position: "relative", alignItems: "center" }}>
             <TextField
               size="small"
               placeholder="Search..."
@@ -224,7 +225,7 @@ export function TargetPathBrowser({
                 <DiceSpinner size="small" />
               </Box>
             )}
-          </Box>
+          </Stack>
           {completions.length === 0 && !isLoading ? (
             debouncedSearch ? (
               <NoMatchesState search={debouncedSearch} sx={{ height: 250, py: 4 }} />
@@ -273,12 +274,12 @@ export function TargetPathBrowser({
                               {flatBreadcrumb}
                             </Typography>
                           ) : (
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                               <Typography variant="body2" sx={{ fontWeight: isGroup || isSelected ? 600 : 400 }}>
                                 {segmentLabels[option.label] || formatSegment(option.label)}
                               </Typography>
                               {isGroup && <ChevronRightIcon fontSize="compact" sx={{ color: "text.secondary" }} />}
-                            </Box>
+                            </Stack>
                           )
                         }
                       />
@@ -291,6 +292,6 @@ export function TargetPathBrowser({
           )}
         </>
       )}
-    </Box>
+    </Stack>
   );
 }

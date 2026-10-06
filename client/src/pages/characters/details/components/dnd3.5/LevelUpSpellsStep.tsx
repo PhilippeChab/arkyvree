@@ -1,4 +1,15 @@
-import { Box, Chip, List, ListItemButton, ListItemText, Skeleton, TextField, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Chip,
+  List,
+  ListItemButton,
+  ListItemText,
+  Skeleton,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { useController } from "react-hook-form";
 
 import {
@@ -67,7 +78,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+    <Stack sx={{ flex: 1, minHeight: 0 }}>
       <Box sx={{ flexShrink: 0 }}>
         <Typography variant="h6" gutterBottom>
           Select Spells by Aptitude
@@ -104,7 +115,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
             <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
               Choose an aptitude to select spells from:
             </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
               {powerAptitudePools
                 .filter((pool) => getPowerPoolAvailable(pool) > 0)
                 .flatMap((pool) => {
@@ -149,7 +160,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                     />,
                   ];
                 })}
-            </Box>
+            </Stack>
           </>
         )}
       </Box>
@@ -180,14 +191,14 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
             selectedPowerLevel != null ? (selectedPowerLevel === 0 ? "Cantrip" : `Level ${selectedPowerLevel}`) : "";
 
           return (
-            <Box sx={{ display: "flex", flexDirection: "column", mt: 3, flex: 1, minHeight: 0 }}>
+            <Stack sx={{ mt: 3, flex: 1, minHeight: 0 }}>
               {/* Selected Spells (always reserve space) */}
               <Box sx={{ flexShrink: 0, mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   Selected {currentPool?.name}
                   {levelLabel ? ` ${levelLabel}` : ""} Spells ({levelPowers.length}/{poolAvailable}):
                 </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                   {levelPowers.length > 0
                     ? levelPowers.map((power) => (
                         <Tooltip
@@ -215,12 +226,12 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                     : Array.from({ length: poolAvailable }, (_, i) => (
                         <Skeleton key={i} variant="rounded" width={100} height={32} />
                       ))}
-                </Box>
+                </Stack>
               </Box>
 
               {/* Add Spell List */}
               {levelPowers.length < poolAvailable && (
-                <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+                <Stack sx={{ flex: 1, minHeight: 0 }}>
                   <TextField
                     label={`Search ${currentPool?.name}${levelLabel ? ` ${levelLabel}` : ""} Spells`}
                     placeholder="Search spells..."
@@ -270,11 +281,11 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                       <NextPageSpinner loading={isFetchingNextPowersPage} />
                     </List>
                   )}
-                </Box>
+                </Stack>
               )}
-            </Box>
+            </Stack>
           );
         })()}
-    </Box>
+    </Stack>
   );
 }

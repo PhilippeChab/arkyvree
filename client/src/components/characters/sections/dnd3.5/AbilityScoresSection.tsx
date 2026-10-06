@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -83,7 +83,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
   return (
     <SheetSection title="Ability Scores">
       {sortedEntries.length > 0 ? (
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "center" }}>
+        <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
           {sortedEntries.map(([ability, abilityData]) => {
             const total = abilityData.total || abilityData.base || 10;
             const modifier = computeAbilityModifier(total);
@@ -100,7 +100,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
               </Box>
             );
           })}
-        </Box>
+        </Stack>
       ) : (
         <BlankState title="No ability scores available" />
       )}

@@ -11,6 +11,7 @@ import {
   ListItemIcon,
   ListItemText,
   Menu,
+  Stack,
   Toolbar,
   Typography,
   useTheme,
@@ -228,7 +229,7 @@ export function Layout() {
   };
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Stack direction="row">
       {/* App Bar */}
       <AppBar
         position="fixed"
@@ -274,7 +275,7 @@ export function Layout() {
             <AppBrand />
           </Typography>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 2 }, flexShrink: 0 }}>
+          <Stack direction="row" spacing={{ xs: 0.5, sm: 2 }} sx={{ alignItems: "center", flexShrink: 0 }}>
             {!isDemo && <FeedbackButton />}
             {!isDemo && <NotificationBell />}
             {!isDemo && (
@@ -284,7 +285,7 @@ export function Layout() {
                 </Avatar>
               </IconButton>
             )}
-          </Box>
+          </Stack>
 
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
             <ActionMenuItem icon={AccountIcon} label="Profile" onClick={handleProfile} />
@@ -323,7 +324,7 @@ export function Layout() {
         onClose={() => setMobileDrawerOpen(false)}
       >
         <Toolbar />
-        <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, position: "relative" }}>
+        <Stack sx={{ flex: 1, minHeight: 0, position: "relative" }}>
           <List sx={{ flex: 1, pt: 2, px: 1 }}>
             {sidebarItems.map((item) => (
               <ListItem key={item.id} disablePadding sx={{ mb: 1 }}>
@@ -452,11 +453,11 @@ export function Layout() {
 
           {/* Toggle button at the bottom — hidden on mobile and during popover steps */}
           {!isMobile && !isPopoverStep && (
-            <Box
+            <Stack
+              direction="row"
               sx={{
                 p: 2,
                 pt: 3,
-                display: "flex",
                 justifyContent: "center",
                 borderTop: 1,
                 borderColor: "divider",
@@ -487,9 +488,9 @@ export function Layout() {
                   <ChevronRightIcon sx={{ transition: transitionOf(["transform"]) }} />
                 )}
               </IconButton>
-            </Box>
+            </Stack>
           )}
-        </Box>
+        </Stack>
       </Drawer>
       <AppMain banner={isDemo && <DemoBanner />} railWidth={isMobile ? 0 : drawerWidth} />
       <Onboarding
@@ -500,6 +501,6 @@ export function Layout() {
         anchorEl={onboardingHighlightId ? (sidebarItemEls[onboardingHighlightId] ?? null) : null}
         isMobile={isMobile}
       />
-    </Box>
+    </Stack>
   );
 }

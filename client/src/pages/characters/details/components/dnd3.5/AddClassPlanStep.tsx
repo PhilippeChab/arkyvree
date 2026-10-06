@@ -75,7 +75,7 @@ export function AddClassPlanStep({
 
   return (
     <Stack spacing={0.5}>
-      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
         <Button startIcon={<AddIcon />} onClick={onAddLevel} size="small">
           Add Level
         </Button>
@@ -90,10 +90,10 @@ export function AddClassPlanStep({
             {klass.name} {klass.nextLevel + (queuedCounts.get(klass.id) ?? 0)}
           </Button>
         ))}
-      </Box>
+      </Stack>
       {levels.map((selectedKlass, index) =>
         selectedKlass ? (
-          <Box key={slotKeys[index]} sx={{ height: 56, display: "flex", alignItems: "center" }}>
+          <Stack key={slotKeys[index]} direction="row" sx={{ height: 56, alignItems: "center" }}>
             <Chip
               label={`${selectedKlass.name} — Level ${selectedKlass.nextLevel}`}
               onDelete={() => onRemoveLevel(index)}
@@ -106,9 +106,9 @@ export function AddClassPlanStep({
                 "& .MuiChip-deleteIcon": { position: "absolute", right: 8 },
               }}
             />
-          </Box>
+          </Stack>
         ) : (
-          <Box key={slotKeys[index]} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Stack key={slotKeys[index]} direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
             <Autocomplete<AvailableKlass>
               sx={{ flex: 1 }}
               options={availableKlasses}
@@ -172,7 +172,7 @@ export function AddClassPlanStep({
             <IconButton size="small" aria-label={`Remove level ${index + 1}`} onClick={() => onRemoveLevel(index)}>
               <CloseIcon fontSize="small" />
             </IconButton>
-          </Box>
+          </Stack>
         ),
       )}
     </Stack>

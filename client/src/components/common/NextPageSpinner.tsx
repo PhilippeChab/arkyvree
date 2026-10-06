@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import { DiceSpinner } from "./DiceSpinner.tsx";
 
@@ -10,8 +10,8 @@ interface NextPageSpinnerProps {
 export function NextPageSpinner({ loading }: NextPageSpinnerProps) {
   if (!loading) return null;
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
+    <Stack direction="row" sx={{ justifyContent: "center", py: 1 }}>
       <DiceSpinner size="small" />
-    </Box>
+    </Stack>
   );
 }

@@ -3,6 +3,7 @@ import {
   IconButton,
   Paper,
   Skeleton,
+  Stack,
   type SxProps,
   Table,
   TableBody,
@@ -77,16 +78,16 @@ export interface DataTableEmpty {
 /** A row's actions, laid over its last cell. */
 function RowActions({ actions }: RowActionsProps) {
   return (
-    <Box
+    <Stack
       className="row-actions"
+      direction="row"
+      spacing={0.5}
       sx={{
         position: "absolute",
         right: 8,
         top: "50%",
         transform: "translateY(-50%)",
         ...ROW_ACTIONS_SX,
-        display: "flex",
-        gap: 0.5,
         bgcolor: "background.paper",
         borderRadius: 1,
         boxShadow: 1,
@@ -111,7 +112,7 @@ function RowActions({ actions }: RowActionsProps) {
           </span>
         </Tooltip>
       ))}
-    </Box>
+    </Stack>
   );
 }
 

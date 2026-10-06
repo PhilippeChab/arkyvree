@@ -1,4 +1,4 @@
-import { Box, Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Typography } from "@mui/material";
+import { Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 
 import { DiceSpinner, LoadError, Modal } from "@/client/src/components/common/index.ts";
@@ -35,9 +35,9 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
             the application code or designate independent user-created content as Open Game Content.
           </Typography>
           {isPending && (
-            <Box role="status" aria-label="Loading license" sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <Stack role="status" aria-label="Loading license" direction="row" sx={{ justifyContent: "center", py: 4 }}>
               <DiceSpinner />
-            </Box>
+            </Stack>
           )}
           {isError && <LoadError what="License text" error={error} onRetry={() => void refetch()} />}
           {text !== undefined && (

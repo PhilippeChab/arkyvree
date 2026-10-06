@@ -12,6 +12,7 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -111,15 +112,15 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
           </Typography>
         </Collapse>
         <Collapse in={!isLoading && !!changes && changes.length > 0} timeout={300} unmountOnExit>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+          <Stack spacing={2} sx={{ pt: 1 }}>
             {[...grouped.entries()].map(([entityType, items]) => (
               <Paper key={entityType} variant="outlined" sx={{ overflow: "hidden" }}>
-                <Box sx={{ px: 2, py: 1, bgcolor: "action.hover", display: "flex", alignItems: "center", gap: 1 }}>
+                <Stack direction="row" spacing={1} sx={{ px: 2, py: 1, bgcolor: "action.hover", alignItems: "center" }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                     {entityTypeLabel(entityType, baseRules, true)}
                   </Typography>
                   <Chip label={items.length} size="tiny" />
-                </Box>
+                </Stack>
                 <List dense disablePadding>
                   {items.map((change) => {
                     const key = change.status === "deleted" ? change.sourceEntityId : change.entityId;
@@ -128,7 +129,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                     const url = getEntityUrl(rulesetId, change);
                     const showRevert = canEdit && change.status !== "added";
                     const rowContent = (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                         <ListItemText primary={change.name} sx={{ my: 0, flexGrow: 0 }} />
                         <Chip
                           label={change.status}
@@ -137,7 +138,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                           size="tiny"
                           sx={{ flexShrink: 0 }}
                         />
-                      </Box>
+                      </Stack>
                     );
                     return (
                       <ListItem key={key} disablePadding sx={{ pr: showRevert ? 1 : 0 }}>
@@ -171,7 +172,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                 </List>
               </Paper>
             ))}
-          </Box>
+          </Stack>
         </Collapse>
       </DialogContent>
       <DialogActions>

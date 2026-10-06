@@ -505,4 +505,32 @@ describe("frontend rules", () => {
       "borders client/src/templated.tsx",
     ]);
   });
+
+  test("a flex container is a Stack, its direction and spacing props", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/boxed.tsx": 'export const b = <Box sx={{ display: "flex", gap: 1 }} />;\n',
+          "client/src/arrayed.tsx": 'export const a = <Box sx={[{ display: "inline-flex" }, sx]} />;\n',
+          "client/src/called.tsx":
+            'export const c = <Box sx={(theme) => ({ display: { xs: "none", sm: "flex" } })} />;\n',
+          "client/src/gapped.tsx":
+            'export const g = <Stack direction="row" sx={{ gap: 2, alignItems: "center" }} />;\n',
+          "client/src/turned.tsx": 'export const t = <Stack sx={{ flexDirection: "row" }} />;\n',
+          "client/src/stacked.tsx":
+            'export const s = <Stack direction="row" spacing={2} sx={{ alignItems: "center" }} />;\n',
+          "client/src/gridded.tsx":
+            'export const r = <Box sx={{ display: "grid", gap: 2, "& .row": { display: "flex" } }} />;\n',
+          "client/src/toolbar.tsx": 'export const o = <Toolbar sx={{ display: "flex", gap: 1 }} />;\n',
+        },
+        ["flex-layout"],
+      ),
+    ).toEqual([
+      "flex-layout client/src/arrayed.tsx",
+      "flex-layout client/src/boxed.tsx",
+      "flex-layout client/src/called.tsx",
+      "flex-layout client/src/gapped.tsx",
+      "flex-layout client/src/turned.tsx",
+    ]);
+  });
 });

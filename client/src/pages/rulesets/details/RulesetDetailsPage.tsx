@@ -12,6 +12,7 @@ import {
   Menu,
   MenuItem,
   Popover,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -360,7 +361,7 @@ export default function RulesetDetailsPage() {
                     anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
                     transformOrigin={{ vertical: "top", horizontal: "center" }}
                   >
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1.5, maxWidth: 360 }}>
+                    <Stack spacing={1} sx={{ p: 1.5, maxWidth: 360 }}>
                       {subscribedExtensions.map((ext) => (
                         <Chip
                           key={ext.extensionId}
@@ -384,7 +385,7 @@ export default function RulesetDetailsPage() {
                           }
                         />
                       ))}
-                    </Box>
+                    </Stack>
                   </Popover>
                 </>
               )}

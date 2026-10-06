@@ -4,6 +4,7 @@ import {
   Chip,
   Paper,
   Skeleton,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -131,12 +132,12 @@ function GroupedRow({
           sx={{ ...CLICKABLE_SX, ...fadeInUpSx(rowIndex) }}
         >
           <TableCell>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {row.displayName}
               </Typography>
-            </Box>
+            </Stack>
           </TableCell>
           <TableCell>
             <Chip label={formatCount(row.variantCount, "variant")} size="small" variant="outlined" />

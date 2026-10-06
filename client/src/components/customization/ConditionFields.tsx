@@ -1,4 +1,4 @@
-import { Box, FormControlLabel, Switch, Tooltip } from "@mui/material";
+import { FormControlLabel, Stack, Switch, Tooltip } from "@mui/material";
 import { useRef, useState } from "react";
 import type { FieldError } from "react-hook-form";
 
@@ -134,15 +134,10 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
         error={!!errors.operator}
         operators={pathInfo?.operators || []}
       />
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 1,
-          mb: -1,
-          flexWrap: "wrap",
-        }}
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ alignItems: "center", justifyContent: "space-between", mb: -1, flexWrap: "wrap" }}
       >
         <FormControlLabel
           control={
@@ -155,7 +150,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
             />
           }
           label={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
               Template
               <Tooltip
                 title="Compute the value from another path or an expression. Wrap paths in [brackets] and use floor/ceil/min/max plus +-*/ for arithmetic. Examples: [abilities.charisma.modifier], floor([classes.ranger.level] / 2), max(0, [classes.beastmaster.level] + 3)."
@@ -163,11 +158,11 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
               >
                 <HelpIcon fontSize="compact" sx={{ color: "text.secondary", cursor: "help" }} />
               </Tooltip>
-            </Box>
+            </Stack>
           }
         />
         {templateMode && <TemplateExpressionToolbar inputRef={expressionInputRef} disabled={!templateMode} />}
-      </Box>
+      </Stack>
       <Crossfade
         showFirst={!templateMode}
         first={

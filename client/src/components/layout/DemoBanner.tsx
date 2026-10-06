@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 import { DemoIcon } from "@/client/src/components/icons/index.ts";
@@ -21,16 +21,15 @@ export function DemoBanner() {
         : `Demo mode — ${hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`} left`;
 
   return (
-    <Box sx={{ position: "sticky", top: 0, zIndex: 1, display: "flex", justifyContent: "center", pt: 1.5, px: 2 }}>
-      <Box
+    <Stack direction="row" sx={{ position: "sticky", top: 0, zIndex: 1, justifyContent: "center", pt: 1.5, px: 2 }}>
+      <Stack
+        direction="row"
+        spacing={1.5}
         sx={{
-          display: "flex",
           alignItems: "center",
-          gap: 1.5,
           py: 0.75,
           px: 2.5,
-          borderRadius: 6,
-          // The bright gold on both themes: the pill reads as a highlight.
+          borderRadius: 6, // The bright gold on both themes: the pill reads as a highlight.
           bgcolor: (theme) => brandGoldTint(true, theme.palette.mode === "dark" ? 0.12 : 0.15),
           border: 1,
           borderColor: (theme) => brandGoldTint(theme.palette.mode === "dark", 0.3),
@@ -70,7 +69,7 @@ export function DemoBanner() {
         >
           Sign up
         </Button>
-      </Box>
-    </Box>
+      </Stack>
+    </Stack>
   );
 }

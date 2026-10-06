@@ -6,6 +6,7 @@ import {
   ListItemButton,
   ListItemText,
   Skeleton,
+  Stack,
   TextField,
   Tooltip,
   Typography,
@@ -58,16 +59,17 @@ function AutoGrantedFeats({ feats, defaultCollapsed }: AutoGrantedFeatsProps) {
   const [open, setOpen] = useState(!defaultCollapsed);
   return (
     <Box sx={{ mb: 1 }}>
-      <Box
+      <Stack
         {...clickableProps(() => setOpen(!open))}
         aria-expanded={open}
-        sx={{ display: "flex", alignItems: "center", ...CLICKABLE_SX }}
+        direction="row"
+        sx={{ alignItems: "center", ...CLICKABLE_SX }}
       >
         <Typography variant="subtitle1" sx={{ flex: 1 }}>
           Auto-Granted Feats ({feats.length})
         </Typography>
         {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-      </Box>
+      </Stack>
       <Collapse in={open}>
         <List dense>
           {feats.map((feat, i) => (
@@ -239,7 +241,7 @@ export function LevelUpFeatsStep({
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+    <Stack sx={{ flex: 1, minHeight: 0 }}>
       <Box sx={{ flexShrink: 0 }}>
         <Typography variant="h6" gutterBottom>
           Select Feats by Aptitude
@@ -254,7 +256,7 @@ export function LevelUpFeatsStep({
             <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
               Choose an aptitude to select feats from:
             </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
               {aptitudePools
                 .filter((pool) => pool.available > 0)
                 .map((pool) => {
@@ -276,7 +278,7 @@ export function LevelUpFeatsStep({
                     />
                   );
                 })}
-            </Box>
+            </Stack>
           </>
         )}
       </Box>
@@ -288,13 +290,13 @@ export function LevelUpFeatsStep({
           const currentPoolFeats = selectedFeats[selectedAptitude] || [];
 
           return (
-            <Box sx={{ display: "flex", flexDirection: "column", mt: 3, flex: 1, minHeight: 0 }}>
+            <Stack sx={{ mt: 3, flex: 1, minHeight: 0 }}>
               {/* Selected Feats (always reserve space) */}
               <Box sx={{ flexShrink: 0, mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   Selected {currentPool?.name} Feats ({currentPoolFeats.length}/{currentPool?.available || 0}):
                 </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                   {currentPoolFeats.length > 0
                     ? currentPoolFeats.map((feat) => (
                         <Tooltip
@@ -320,12 +322,12 @@ export function LevelUpFeatsStep({
                     : Array.from({ length: currentPool?.available || 0 }, (_, i) => (
                         <Skeleton key={i} variant="rounded" width={100} height={32} />
                       ))}
-                </Box>
+                </Stack>
               </Box>
 
               {/* Add Feat List (Grouped) */}
               {currentPoolFeats.length < (currentPool?.available || 0) && (
-                <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+                <Stack sx={{ flex: 1, minHeight: 0 }}>
                   <TextField
                     label={`Search ${currentPool?.name} Feats`}
                     placeholder="Search feats..."
@@ -430,11 +432,11 @@ export function LevelUpFeatsStep({
                       <NextPageSpinner loading={isFetchingNextFeatsPage} />
                     </List>
                   )}
-                </Box>
+                </Stack>
               )}
-            </Box>
+            </Stack>
           );
         })()}
-    </Box>
+    </Stack>
   );
 }

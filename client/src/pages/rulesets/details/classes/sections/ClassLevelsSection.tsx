@@ -1,4 +1,4 @@
-import { Box, Button, Chip, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Chip, Stack, Tooltip, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
@@ -75,7 +75,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
         return <Typography variant="body2">{level.skills}</Typography>;
       case "feats":
         return (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+          <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
             {level.feats && level.feats.length > 0 ? (
               level.feats.map((feat) => {
                 const suffix = className ? ` (${className})` : "";
@@ -99,7 +99,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
                 —
               </Typography>
             )}
-          </Box>
+          </Stack>
         );
       default:
         return null;
@@ -108,14 +108,14 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Typography variant="h6">Class Levels</Typography>
         {canEdit && (
           <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
             Add Level
           </Button>
         )}
-      </Box>
+      </Stack>
 
       <RulesetSectionTable
         data={levels && [...levels].sort((a, b) => a.level - b.level)}

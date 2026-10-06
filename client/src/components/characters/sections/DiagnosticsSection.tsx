@@ -339,7 +339,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Modifiers
                 </Typography>
-                <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 0.5 }}>
+                <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
                   <Chip
                     label={`Applied: ${modifiers.appliedModifiers.length}`}
                     color="success"

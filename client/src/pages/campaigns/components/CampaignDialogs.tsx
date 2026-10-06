@@ -1,4 +1,4 @@
-import { Alert, Box, TextField, Typography } from "@mui/material";
+import { Alert, Stack, TextField, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { type ElementType, useState } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
@@ -105,10 +105,10 @@ function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
 
 function RoleLabel({ icon: Icon, label }: RoleLabelProps) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
       <Icon fontSize="small" />
       {label}
-    </Box>
+    </Stack>
   );
 }
 

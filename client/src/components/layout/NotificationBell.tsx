@@ -1,4 +1,4 @@
-import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
+import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useEffect, useRef, useState } from "react";
@@ -22,12 +22,12 @@ interface NotificationSummaryProps {
 
 function NotificationSummary({ notification }: NotificationSummaryProps) {
   return (
-    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 1, width: "100%" }}>
+    <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "baseline", width: "100%" }}>
       <Typography variant="body2">{formatNotificationMessage(notification.type, notification.data)}</Typography>
       <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0 }}>
         {formatRelativeTime(notification.createdAt)}
       </Typography>
-    </Box>
+    </Stack>
   );
 }
 
@@ -95,9 +95,10 @@ export function NotificationBell() {
           </Box>
         ) : (
           [
-            <Box
+            <Stack
               key="header"
-              sx={{ px: 2, py: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}
+              direction="row"
+              sx={{ px: 2, py: 1, justifyContent: "space-between", alignItems: "center" }}
             >
               <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>
                 Notifications
@@ -109,7 +110,7 @@ export function NotificationBell() {
               >
                 Mark all read
               </Button>
-            </Box>,
+            </Stack>,
             <Divider key="divider" />,
             ...notifications.map((notification) =>
               actions.isActionable(notification) ? (

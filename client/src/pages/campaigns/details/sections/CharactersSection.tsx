@@ -237,7 +237,7 @@ function CharacterCard({
         <Stack
           direction="row"
           spacing={1}
-          sx={{ alignItems: "center", justifyContent: "flex-start", flexWrap: "wrap", gap: 1, mb: 2 }}
+          sx={{ alignItems: "center", justifyContent: "flex-start", flexWrap: "wrap", mb: 2 }}
         >
           <Chip
             label={character.race}

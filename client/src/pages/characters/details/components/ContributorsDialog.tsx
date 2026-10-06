@@ -1,4 +1,4 @@
-import { Box, Button, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
+import { Button, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
@@ -94,7 +94,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
         <DialogTitle>Contributors</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
-            <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", gap: 1 }}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 Contributors can edit this character and download its PDF.
               </Typography>
@@ -115,7 +115,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
               ) : null}
             </Stack>
 
-            <Box sx={{ minHeight: { xs: 280, sm: 360 }, display: "flex", flexDirection: "column" }}>
+            <Stack sx={{ minHeight: { xs: 280, sm: 360 } }}>
               {error ? (
                 <LoadError what="Contributors" error={error} />
               ) : (
@@ -156,7 +156,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                   />
                 </>
               )}
-            </Box>
+            </Stack>
           </Stack>
         </DialogContent>
         <DialogActions>

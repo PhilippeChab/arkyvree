@@ -7,6 +7,7 @@ import {
   Link as MuiLink,
   Paper,
   Popper,
+  Stack,
   Tooltip,
   Typography,
   useTheme,
@@ -179,10 +180,8 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   );
 
   const stepContent = (
-    <Box
+    <Stack
       sx={{
-        display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         textAlign: "center",
@@ -191,18 +190,16 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         minHeight: effectiveMode === "dialog" ? { xs: "auto", sm: 380 } : "auto",
       }}
     >
-      <Box
+      <Stack
         key={activeStep}
         sx={{
-          display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} both`,
           [prefersReducedMotion]: { animation: "none" },
         }}
       >
         {/* Icon circle */}
-        <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", mb: 3 }}>
+        <Stack direction="row" sx={{ position: "relative", alignItems: "center", justifyContent: "center", mb: 3 }}>
           <Box
             sx={{
               position: "absolute",
@@ -213,12 +210,12 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
               pointerEvents: "none",
             }}
           />
-          <Box
+          <Stack
+            direction="row"
             sx={{
               width: effectiveMode === "dialog" ? 88 : 64,
               height: effectiveMode === "dialog" ? 88 : 64,
               borderRadius: "50%",
-              display: "flex",
               alignItems: "center",
               justifyContent: "center",
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
@@ -246,8 +243,8 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
                 }}
               />
             ) : null}
-          </Box>
-        </Box>
+          </Stack>
+        </Stack>
 
         <Typography
           id="onboarding-step-title"
@@ -294,12 +291,13 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
 
         {step.tooltip && (
           <Tooltip describeChild title={step.tooltip} arrow placement="top">
-            <Box
+            <Stack
+              direction="row"
+              spacing={0.5}
               sx={{
                 typography: "body2",
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 0.5,
                 mt: 2,
                 color: gold,
                 cursor: "help",
@@ -309,11 +307,11 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
               <Typography variant="caption" sx={{ color: "inherit", fontWeight: 500 }}>
                 Forking & Extensions
               </Typography>
-            </Box>
+            </Stack>
           </Tooltip>
         )}
-      </Box>
-    </Box>
+      </Stack>
+    </Stack>
   );
 
   const stepperDots = (
@@ -335,7 +333,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   );
 
   const navButtons = (
-    <Box sx={{ display: "flex", alignItems: "center", px: 3, pb: 3, pt: 2 }}>
+    <Stack direction="row" sx={{ alignItems: "center", px: 3, pb: 3, pt: 2 }}>
       <Button onClick={onClose} color="inherit" sx={{ opacity: 0.7 }}>
         Skip
       </Button>
@@ -348,7 +346,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
       <Button onClick={handleNext} variant="contained">
         {isLastStep ? "Get Started" : "Next"}
       </Button>
-    </Box>
+    </Stack>
   );
 
   if (effectiveMode === "dialog" || !anchorEl) {

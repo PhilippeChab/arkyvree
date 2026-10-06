@@ -50,6 +50,8 @@
  *   the theme's (`theme.zIndex`); a `zIndex` number orders siblings only (`0`, `1`).
  * - `borders`: a border is the theme's shorthand (`border: 1`), its color `borderColor`, its style `borderStyle`; a
  *   `Paper` or `Card` takes its elevation and its outline as props (`elevation`, `variant="outlined"`).
+ * - `flex-layout`: a flex container is a `Stack`, its `direction` and `spacing` props (`useFlexGap`, the theme's
+ *   default, makes `spacing` a gap), never a `Box` with a flex `display`.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -736,6 +738,14 @@ function createComponentProps(context) {
   };
 }
 
+/** Whether a `display` value lays out as flex: `"flex"`, `"inline-flex"`, or one of a responsive object's. */
+function showsFlex(value) {
+  if (value.type === "Literal") return value.value === "flex" || value.value === "inline-flex";
+  if (value.type === "ObjectExpression")
+    return value.properties.some((p) => p.type === "Property" && showsFlex(p.value));
+  return false;
+}
+
 /** Whether `name`, spread at `node`, is a form's field taken whole: bound by the nearest function or declaration that binds it. */
 function spreadsWholeField(node, name) {
   for (let scope = node.parent; scope; scope = scope.parent) {
@@ -861,6 +871,53 @@ function createBorders(context) {
           message:
             'A `Paper` or a `Card` is outlined by `variant="outlined"` (or the theme\'s card), never an `sx` border.',
         });
+      }
+    },
+  };
+}
+
+/**
+ * The JSX element whose own `sx` a style object is: right in the attribute, in its array, a branch of a condition, or
+ * what its theme callback returns. A nested selector's object (`"&:hover": {…}`) styles something else.
+ */
+function sxOwner(object) {
+  let node = object;
+  for (let parent = node.parent; parent; node = parent, parent = parent.parent) {
+    if (parent.type === "JSXExpressionContainer") {
+      const attribute = parent.parent;
+      return attribute?.type === "JSXAttribute" && attribute.name.name === "sx"
+        ? elementName(attribute.parent.parent)
+        : null;
+    }
+    const passes =
+      parent.type === "ArrayExpression" ||
+      parent.type === "ConditionalExpression" ||
+      parent.type === "LogicalExpression" ||
+      parent.type === "ReturnStatement" ||
+      parent.type === "BlockStatement" ||
+      (parent.type === "ArrowFunctionExpression" && parent.body === node);
+    if (!passes) return null;
+  }
+  return null;
+}
+
+function createFlexLayout(context) {
+  if (!inClient(context)) return {};
+  return {
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      if (key !== "display" && key !== "gap" && key !== "flexDirection") return;
+      const owner = node.parent.type === "ObjectExpression" ? sxOwner(node.parent) : null;
+      if (owner === "Box" && key === "display" && showsFlex(node.value)) {
+        context.report({
+          node,
+          message:
+            "A flex container is a `Stack` (`direction`, `spacing`; the rest in `sx`), never a `Box` with a flex " +
+            "`display`.",
+        });
+      }
+      if (owner === "Stack" && key !== "display") {
+        context.report({ node, message: "A `Stack` takes its `direction` and `spacing` as props, never `sx`." });
       }
     },
   };
@@ -993,4 +1050,5 @@ export default {
   "type-scale": { meta: { type: "suggestion" }, create: createTypeScale },
   shape: { meta: { type: "suggestion" }, create: createShape },
   borders: { meta: { type: "suggestion" }, create: createBorders },
+  "flex-layout": { meta: { type: "suggestion" }, create: createFlexLayout },
 };

@@ -1,4 +1,4 @@
-import { alpha, Box, Tooltip, Typography } from "@mui/material";
+import { alpha, Stack, Tooltip, Typography } from "@mui/material";
 import type { ElementType, ReactNode } from "react";
 
 type PillColor = "default" | "info" | "success" | "warning" | "secondary";
@@ -13,13 +13,13 @@ interface InfoPillProps {
 /** Small tinted label with an icon, for status and metadata on cards. */
 export function InfoPill({ icon: Icon, label, color = "default", tooltip }: InfoPillProps) {
   const pill = (
-    <Box
+    <Stack
+      direction="row"
+      spacing={0.5}
       sx={(theme) => {
         const main = color === "default" ? theme.palette.grey[600] : theme.palette[color].main;
         return {
-          display: "flex",
           alignItems: "center",
-          gap: 0.5,
           px: 1,
           py: 0.25,
           borderRadius: 1,
@@ -37,7 +37,7 @@ export function InfoPill({ icon: Icon, label, color = "default", tooltip }: Info
       <Typography variant="caption" noWrap sx={{ color: "inherit", fontWeight: 500 }}>
         {label}
       </Typography>
-    </Box>
+    </Stack>
   );
 
   return tooltip ? (

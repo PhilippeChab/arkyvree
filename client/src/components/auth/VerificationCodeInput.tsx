@@ -1,4 +1,4 @@
-import { Box, FormHelperText, TextField } from "@mui/material";
+import { Box, FormHelperText, Stack, TextField } from "@mui/material";
 import { useRef } from "react";
 
 import { VERIFICATION_CODE_LENGTH } from "@/client/src/lib/verificationCode.ts";
@@ -48,7 +48,7 @@ export function VerificationCodeInput({ digits, onChange, error }: VerificationC
 
   return (
     <Box sx={{ mb: 3 }}>
-      <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+      <Stack direction="row" spacing={1} sx={{ justifyContent: "center" }}>
         {digits.map((digit, index) => (
           <TextField
             key={index}
@@ -72,7 +72,7 @@ export function VerificationCodeInput({ digits, onChange, error }: VerificationC
             }}
           />
         ))}
-      </Box>
+      </Stack>
       {error && (
         <FormHelperText error sx={{ textAlign: "center" }}>
           {error}

@@ -4,6 +4,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Stack,
   Step,
   StepLabel,
   Stepper,
@@ -141,7 +142,7 @@ export function LevelWizardDialog({
         </Stepper>
 
         {/* Step content */}
-        <Box sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", minHeight: 0 }}>{children}</Box>
+        <Stack sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>{children}</Stack>
       </DialogContent>
       <DialogActions sx={{ flexShrink: 0 }}>
         <Button onClick={wizard.handleCancel} disabled={isSaving} variant="outlined" color="inherit">

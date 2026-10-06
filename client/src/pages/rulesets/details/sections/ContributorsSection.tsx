@@ -1,4 +1,4 @@
-import { Box, Button } from "@mui/material";
+import { Box, Button, Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
@@ -139,7 +139,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   return (
     <Box>
       {(canLeave || canInvite) && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2 }}>
+        <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end", mb: 2 }}>
           {canLeave && (
             <Button
               variant="outlined"
@@ -156,7 +156,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
               Invite
             </Button>
           )}
-        </Box>
+        </Stack>
       )}
       <ContributorsTable
         owner={owner}

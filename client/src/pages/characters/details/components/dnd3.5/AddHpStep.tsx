@@ -15,14 +15,14 @@ export function AddHpStep({ wizard }: AddHpStepProps) {
   } = wizard;
   return (
     <Stack spacing={3}>
-      <Box sx={{ display: "flex", gap: 1 }}>
+      <Stack direction="row" spacing={1}>
         <Button startIcon={<DiceIcon />} onClick={onRollAll} size="small">
           Roll All
         </Button>
         <Button onClick={onMaxAll} size="small">
           Max All
         </Button>
-      </Box>
+      </Stack>
       {levels.map((level, index) => (
         <Box key={index}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
