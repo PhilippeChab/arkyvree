@@ -40,7 +40,7 @@ export async function waitForDatabase(attempts = 4, delayMs = 500) {
 }
 
 export { getCowContext, withCowContext } from "./cowContext.ts";
-export type { CowData, IdResolveMap, OverrideMap } from "./cowContext.ts";
+export { default as CowData } from "./CowData.ts";
 export { addJob } from "./jobQueue.ts";
 export { notifyChannel } from "./notify.ts";
 export { clearRequestCache, memoizeRequest, runWithRequestCache } from "./requestCache.ts";

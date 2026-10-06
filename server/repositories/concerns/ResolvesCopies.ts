@@ -34,13 +34,9 @@ export function ResolvesCopies<B extends Constructor<BaseRepository<Table>>>(Bas
      */
     protected idMatches(column: Column, id: string): SQL {
       const cow = getCowContext();
-      if (!cow || cow.idResolveMap.size === 0) return eq(column, id);
-      const target = cow.idResolveMap.get(id) ?? id;
-      const candidates = new Set<string>([target]);
-      for (const [pre, post] of cow.idResolveMap) {
-        if (post === target) candidates.add(pre);
-      }
-      return candidates.size === 1 ? eq(column, target) : inArray(column, [...candidates]);
+      if (!cow || cow.isEmpty()) return eq(column, id);
+      const candidates = cow.getEquivalentIds(id);
+      return candidates.length === 1 ? eq(column, candidates[0]) : inArray(column, candidates);
     }
   }
   return ResolvingCopies;

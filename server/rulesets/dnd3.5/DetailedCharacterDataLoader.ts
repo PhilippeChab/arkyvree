@@ -1,6 +1,6 @@
-import type { CachedCowData, CachedRulesetData } from "@/server/cache/index.ts";
-import { refreshEntityData, resolveOverrides } from "@/server/cache/rulesetCache/index.ts";
-import { db, type Db } from "@/server/database/index.ts";
+import type { CachedRulesetData } from "@/server/cache/index.ts";
+import { refreshEntityData } from "@/server/cache/rulesetCache/index.ts";
+import { type CowData, db, type Db } from "@/server/database/index.ts";
 import {
   Campaigns,
   CharacterAbilities,
@@ -55,7 +55,7 @@ interface SharedCharacterData {
   ruleset: Ruleset;
   player: Player | undefined;
   campaign: Campaign | undefined;
-  cowData: CachedCowData;
+  cowData: CowData;
   rulesetData: CachedRulesetData;
   characterAbilityRecords: Awaited<ReturnType<typeof CharacterAbilities.findMany>>;
   race: Race;
@@ -645,8 +645,7 @@ export default class DetailedCharacterDataLoader {
         ? (preloaded._shared as SharedCharacterData)
         : await this.loadSharedData(database, preloaded);
     const { ruleset, player, campaign, cowData, rulesetData, race } = shared;
-    const overrideMap = cowData.idResolveMap;
-    const resolve: Resolve = (rows) => (overrideMap.size > 0 ? resolveOverrides(rows, overrideMap) : rows);
+    const resolve: Resolve = (rows) => cowData.resolveRows(rows);
     const abilityLookup = new Map(rulesetData.abilities.map((a) => [a.id, a.name]));
     const levels = this.levelsOf(shared.rawCharacterLevels, projectedData, resolve);
 
@@ -701,7 +700,7 @@ export default class DetailedCharacterDataLoader {
       player,
       campaign,
       ...this.rulesetFields(rulesetData),
-      ...this.interpretProperties(rulesetData, (id) => overrideMap.get(id) ?? id),
+      ...this.interpretProperties(rulesetData, (id) => cowData.resolve(id)),
       characterAbilityScores: resolve(shared.characterAbilityRecords).map((ca) => this.abilityScore(ca, abilityLookup)),
       race: parts.race,
       languages,

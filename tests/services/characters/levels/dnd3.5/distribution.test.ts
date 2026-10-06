@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { getOrBuildCowData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Modifiers, Rulesets } from "@/server/repositories/index.ts";
 import { computePerLevelAptitudeSlots } from "@/server/services/characters/levels/dnd3.5/distribution.ts";
@@ -24,7 +23,7 @@ async function clericWithLaterAdd() {
   });
   invalidateSeededRuleset(ctx.rulesetId);
   const ruleset = (await Rulesets.findOne(db, { id: ctx.rulesetId }))!;
-  const rulesetData = await RulesetCache.getData(ruleset.id, await getOrBuildCowData(ruleset));
+  const rulesetData = await RulesetCache.getData(ruleset);
   return { rulesetData, levels, clericSpells: rulesetData.aptitudeIdBySlug.get("clericspells")! };
 }
 

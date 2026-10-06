@@ -1,7 +1,7 @@
 import type { FC } from "react";
 
-import type { CachedCowData, CachedRulesetData } from "@/server/cache/index.ts";
-import type { Db } from "@/server/database/index.ts";
+import type { CachedRulesetData } from "@/server/cache/index.ts";
+import type { CowData, Db } from "@/server/database/index.ts";
 import type { ValidationResult } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
@@ -48,7 +48,7 @@ type ProjectedFeat = Feat & {
 
 export interface PreloadedRulesetData {
   ruleset: Ruleset;
-  cowData: CachedCowData;
+  cowData: CowData;
   rulesetData: CachedRulesetData;
 }
 

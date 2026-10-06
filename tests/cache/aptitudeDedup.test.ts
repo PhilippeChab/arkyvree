@@ -16,7 +16,6 @@ import {
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { getOrBuildCowData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -29,9 +28,8 @@ import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.
  */
 async function setup() {
   const ruleset = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
-  const cowData = await getOrBuildCowData(ruleset);
-  const rulesetData = await RulesetCache.getData(ruleset.id, cowData);
-  return { ruleset, cowData, rulesetData };
+  const rulesetData = await RulesetCache.getData(ruleset);
+  return { ruleset, cowData: rulesetData.cow, rulesetData };
 }
 
 describe("aptitude deduplication across sibling extensions", () => {
@@ -88,7 +86,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     }
   });
 
-  test("loser aptitude IDs are in idResolveMap pointing to winner", async () => {
+  test("loser aptitude IDs resolve to the winner", async () => {
     const { ruleset, cowData, rulesetData } = await setup();
     // Fetch all raw "Assassin Spells" aptitudes across extensions
     const extIds = ruleset.extensionRulesetIds;
@@ -104,7 +102,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     // All non-winner IDs should map to the winner in the override map
     for (const apt of allAssassinApts) {
       if (apt.id === winnerApt!.id) continue;
-      expect(cowData.idResolveMap.get(apt.id)).toBe(winnerApt!.id);
+      expect(cowData.resolve(apt.id)).toBe(winnerApt!.id);
     }
   });
 

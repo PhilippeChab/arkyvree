@@ -150,9 +150,9 @@ The child's own entities are always included. Ancestor entities are included onl
 
 ### Override Map
 
-`buildOverrideMap()` creates a mapping of `sourceEntityId → forkedEntityId` across the full snapshot chain. Used for:
-- **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies
-- **Detail views**: `resolveOverrides()` applies the map to remap ID references in query results
+`CowDataBuilder` builds a ruleset's `CowData`: a mapping of `sourceEntityId → forkedEntityId` across the full snapshot chain, and of each sibling loser to its winner. Used for:
+- **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies (`CowDataBuilder.buildForCopy`, `CowData.resolve`)
+- **Detail views**: `CowData.resolveRows()` remaps ID references in query results
 
 ### Snapshots
 
@@ -168,7 +168,7 @@ Every entity create (and bulk item variants) checks the name with
 `assertEntityNameAvailable` / `assertAncestorNamesHidden` against the fork's
 composed view. A local entity, or an inherited one that is still visible, with
 the same name blocks it. Inherited entities hidden by an override
-(`cow.overrideMap` or `cow.siblingIds`) do not. If a hidden ancestor's local
+(`cow.isHidden`: overridden, or a sibling loser) do not. If a hidden ancestor's local
 copy was deleted, its snapshot is a tombstone, and `repointTombstoneSnapshot`
 moves it to the new entity. A live local copy keeps its snapshot even after a
 rename, so picks of the source keep resolving to that copy.
@@ -197,7 +197,7 @@ User's Fork (subscribed to A, then B)
 
 **How it works:**
 
-1. `buildOverrideMap()` detects when multiple extension snapshots share the same `sourceEntityId`. It builds a `siblingMap: Map<string, string[]>` mapping the winner's `forkedEntityId` → sibling `forkedEntityId`s. Feats and powers that several rulesets in the source chain define natively under the same name (reprints, `NAME_FALLBACK_ENTITY_TYPES`) are paired the same way, closest ruleset first.
+1. `CowDataBuilder` detects when multiple extension snapshots share the same `sourceEntityId`. It pairs the winner's `forkedEntityId` with the sibling `forkedEntityId`s (`CowData.getSiblings(winnerId)`, `getWinner(loserId)`). Feats and powers that several rulesets in the source chain define natively under the same name (reprints, `NAME_FALLBACK_ENTITY_TYPES`) are paired the same way, closest ruleset first.
 
 2. **Entity list filtering**: Sibling entities are filtered out of query results (only the winner is returned), so the user never sees duplicate feats.
 
@@ -238,13 +238,13 @@ Before COW (runtime view):
 
 User edits Power Attack → cowEntity triggers:
   1. Copies the winner (A's Power Attack) + all its customizations
-  2. Detects siblings via siblingMap → finds B's Power Attack
+  2. Detects siblings via its CowData (getSiblings) → finds B's Power Attack
   3. Calls mergeSiblingData() to bake sibling data into the new local copy
   4. User's local copy now contains the full merged result
 
 After COW:
   User's fork has its own "Power Attack" with the merged customizations of both extensions
-  The siblingMap no longer applies — local fork wins completely
+  The sibling pairing no longer applies — local fork wins completely
 ```
 
 `mergeSiblingData()` merges four types of customizations, using the same rules as the read-time merge above:
@@ -621,7 +621,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 
 | File | Purpose |
 |---|---|
-| `server/cache/rulesetCache/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `buildOverrideMap` (+ `siblingMap`), `resolveOverrides`: copy-on-write's read side. |
+| `server/cache/rulesetCache/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `CowDataBuilder` (the overrides and sibling pairs), `RulesetCache.getCowData`: copy-on-write's read side. `CowData` itself (`server/database/CowData.ts`) is what a scope resolves ids through. |
 | `server/cow/` | `cowEntity`, `cowEntityForCustomization`: copy-on-write's write side. `mergeSiblingData` (`siblingMerge.ts`) runs on the COW write path to bake sibling data into newly COW'd local copies. Sibling read-time merging lives in the cache compose step (`server/cache/rulesetCache/compose.ts`). |
 | `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
 | `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getExtensions` |
