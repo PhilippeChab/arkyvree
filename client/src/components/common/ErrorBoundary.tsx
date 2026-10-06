@@ -29,8 +29,7 @@ export class ErrorBoundary extends Component<Props, State> {
       reloadForStaleChunks();
       return;
     }
-    // eslint-disable-next-line no-console -- ErrorBoundary must log unrecoverable errors
-    console.error("Uncaught error:", error, info.componentStack);
+    // React logs it (its default onCaughtError); Sentry gets its component stack too
     Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
   }
 

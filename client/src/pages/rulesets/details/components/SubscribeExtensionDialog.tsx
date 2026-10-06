@@ -10,10 +10,10 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { DiceSpinner, Modal, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useListboxQuery, useOnChange } from "@/client/src/hooks/index.ts";
 import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 import type { RulesetListItem } from "@/client/src/lib/queries.ts";
 
@@ -38,13 +38,12 @@ export function SubscribeExtensionDialog({
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
 
-  useEffect(() => {
-    if (!open) {
-      // oxlint-disable-next-line react/set-state-in-effect -- closing the dialog clears its selection and search
-      setSelected([]);
-      setSearch("");
-    }
-  }, [open]);
+  // Closing the dialog clears its selection and search
+  useOnChange(open, (isOpen) => {
+    if (isOpen) return;
+    setSelected([]);
+    setSearch("");
+  });
 
   const {
     items: extensions,

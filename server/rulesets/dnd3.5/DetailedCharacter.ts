@@ -27,6 +27,7 @@ import DetailedCharacterPowerGroupings from "@/server/rulesets/universal/Detaile
 import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
+import { readHolder } from "@/server/rulesets/universal/readHolder.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import {
   FEAT_FAMILY,
@@ -36,6 +37,7 @@ import {
   SPELL_SCHOOL,
 } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import type {
   Character,
   CharacterLevel,
@@ -59,6 +61,11 @@ import { Dnd35LevelsHooks } from "./hooks/index.ts";
 import { getStaticPropertyValues } from "./PropertyTypes.ts";
 import TargetPaths from "./TargetPaths.ts";
 import type { Dnd35ProjectedCharacterData } from "./types.ts";
+
+/** Whether `value` is the spellcasting holder's caster levels: its highest arcane and divine spell levels. */
+function isCasterLevels(value: unknown): value is { arcane: number; divine: number } {
+  return isRecord(value) && typeof value.arcane === "number" && typeof value.divine === "number";
+}
 
 export default class DetailedCharacter extends AbstractDetailedCharacter {
   constructor(character: Character) {
@@ -486,7 +493,8 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
 
   getSpellcasting(): { arcane: number; divine: number } {
     const holder = this.holders?.["spellcasting"];
-    return holder ? holder.getSpellcasting() : { arcane: 0, divine: 0 };
+    const spellcasting = holder ? readHolder(holder, "getSpellcasting") : undefined;
+    return isCasterLevels(spellcasting) ? spellcasting : { arcane: 0, divine: 0 };
   }
 
   getVirtuallyPossessedPowerIds() {

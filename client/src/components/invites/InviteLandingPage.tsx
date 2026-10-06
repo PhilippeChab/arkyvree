@@ -5,7 +5,7 @@ import type { ElementType, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { DiceSpinner, PageTransition } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";

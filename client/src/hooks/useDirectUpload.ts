@@ -1,6 +1,6 @@
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";

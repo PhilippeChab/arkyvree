@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { ApiError, type ApiValidationIssue } from "@/client/src/services/rpc.ts";
 
 /**

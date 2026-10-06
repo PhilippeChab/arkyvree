@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { ApiError } from "@/client/src/services/rpc.ts";
 
 /** Queues a PDF export; the user is notified when it's ready. */

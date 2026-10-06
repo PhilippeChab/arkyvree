@@ -17,10 +17,19 @@ export interface DemoTimeRemaining {
 const WARNING_THRESHOLD_MS = 30 * 60 * 1000;
 const CRITICAL_THRESHOLD_MS = 5 * 60 * 1000;
 
+/** What the hook returns for a user who isn't a demo's. */
+const NOT_A_DEMO: DemoTimeRemaining = {
+  isDemo: false,
+  expiresAt: null,
+  msRemaining: 0,
+  hours: 0,
+  minutes: 0,
+  seconds: 0,
+  urgency: "normal",
+};
+
 function compute(expiresAt: string | null | undefined): DemoTimeRemaining {
-  if (!expiresAt) {
-    return { isDemo: false, expiresAt: null, msRemaining: 0, hours: 0, minutes: 0, seconds: 0, urgency: "normal" };
-  }
+  if (!expiresAt) return NOT_A_DEMO;
   const msRemaining = Math.max(0, new Date(expiresAt).getTime() - Date.now());
   const totalSeconds = Math.floor(msRemaining / 1000);
   const hours = Math.floor(totalSeconds / 3600);
@@ -38,11 +47,7 @@ export function useDemoTimeRemaining(): DemoTimeRemaining {
   const [state, setState] = useState(() => compute(expiresAt));
 
   useEffect(() => {
-    if (!expiresAt) {
-      // oxlint-disable-next-line react/set-state-in-effect -- no expiry clears the countdown
-      setState(compute(null));
-      return;
-    }
+    if (!expiresAt) return;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const tick = () => {
       const next = compute(expiresAt);
@@ -57,5 +62,6 @@ export function useDemoTimeRemaining(): DemoTimeRemaining {
     };
   }, [expiresAt]);
 
-  return state;
+  // No expiry, no countdown
+  return expiresAt ? state : NOT_A_DEMO;
 }

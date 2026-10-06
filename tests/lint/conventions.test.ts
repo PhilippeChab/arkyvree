@@ -236,19 +236,22 @@ describe("conventions", () => {
     ]);
   });
 
-  test("a comment that turns a rule off says why", async () => {
+  test("no comment turns a rule off, whatever its reason", async () => {
     expect(
       await lintRepo(
         {
           "server/why.ts": "// oxlint-disable-next-line no-console -- startup logs go to stdout\nconsole.log(1);\n",
-          "client/src/wrapped.ts":
-            "/* eslint-disable no-console --\n   a block comment's reason may wrap */\nconsole.log(1);\n",
-          "server/bare.ts": "// oxlint-disable-next-line no-console\nconsole.log(1);\n",
-          "tests/empty.ts": "console.log(1); // eslint-disable-line no-console --\n",
+          "client/src/wrapped.ts": "/* eslint-disable no-console */\nconsole.log(1);\n",
+          "tests/line.ts": "console.log(1); // eslint-disable-line no-console\n",
+          "server/clean.ts": "// Logs go to stdout\nconsole.log(1);\n",
         },
-        ["directive-reasons"],
+        ["no-disable-comments"],
       ),
-    ).toEqual(["directive-reasons server/bare.ts", "directive-reasons tests/empty.ts"]);
+    ).toEqual([
+      "no-disable-comments client/src/wrapped.ts",
+      "no-disable-comments server/why.ts",
+      "no-disable-comments tests/line.ts",
+    ]);
   });
 
   test("the server reads its environment in server/environment.ts only", async () => {

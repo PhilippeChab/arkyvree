@@ -2,7 +2,8 @@ import { DarkMode, LightMode, SettingsBrightness } from "@mui/icons-material";
 import { Card, CardContent, Container, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 
 import { PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
-import { type ThemeMode, useTheme } from "@/client/src/contexts/ThemeContext.tsx";
+import { type ThemeMode } from "@/client/src/contexts/themeContext.ts";
+import { useTheme } from "@/client/src/contexts/useTheme.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 
 const themeModeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [

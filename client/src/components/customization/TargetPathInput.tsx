@@ -1,11 +1,11 @@
-/** What the input reports about a completed path. */
-
 import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { skipToken, useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useLatest } from "@/client/src/hooks/index.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import type { PathCompletion, PathValidationResult, TargetPath } from "@/shared/customization/target.ts";
+import type { PathCompletion, TargetPath } from "@/shared/customization/target.ts";
 
 import { TargetPathBrowser } from "./TargetPathBrowser.tsx";
 
@@ -24,6 +24,7 @@ interface TargetPathInputProps {
   onPathInfoChange?: (pathInfo: PathInfo | null) => void;
 }
 
+/** What the input reports about a completed path. */
 export type PathInfo = Pick<
   TargetPath,
   "path" | "valueType" | "operators" | "possibleValues" | "setValues" | "literalOnly"
@@ -43,7 +44,6 @@ export function TargetPathInput({
   fullWidth = true,
   onPathInfoChange,
 }: TargetPathInputProps) {
-  const [validationResult, setValidationResult] = useState<PathValidationResult | null>(null);
   const [selectedCompletion, setSelectedCompletion] = useState<PathCompletion | null>(null);
   const [userChanged, setUserChanged] = useState(false);
   const onPathInfoChangeRef = useLatest(onPathInfoChange);
@@ -53,37 +53,21 @@ export function TargetPathInput({
   // A path is complete when the browser reports a selected leaf completion
   const isComplete = selectedCompletion?.kind === "property" && selectedCompletion?.path === value;
 
-  // Validate when path becomes complete
-  const validatePath = useCallback(
-    async (path: string) => {
-      if (!path) {
-        setValidationResult(null);
-        return;
-      }
-      try {
-        setValidationResult(
-          await parseResponse(
+  // A complete path the user changed is validated as it is
+  const validating = isComplete && userChanged && value !== "";
+  const { data: validation } = useQuery({
+    queryKey: queryKeys.rulesets.targetPathValidation(rulesetId, kind, value),
+    queryFn: validating
+      ? () =>
+          parseResponse(
             rpc.api.rulesets[":id"].customization["target"].paths.validate.$post({
               param: { id: rulesetId },
-              json: { path, kind },
+              json: { path: value, kind },
             }),
-          ),
-        );
-      } catch {
-        setValidationResult(null);
-      }
-    },
-    [rulesetId, kind],
-  );
-
-  useEffect(() => {
-    if (isComplete && userChanged) {
-      // oxlint-disable-next-line react/set-state-in-effect -- a complete path the user changed is validated as it is
-      validatePath(value);
-    } else {
-      setValidationResult(null);
-    }
-  }, [isComplete, userChanged, value, validatePath]);
+          )
+      : skipToken,
+  });
+  const validationResult = validating ? (validation ?? null) : null;
 
   // Fire onPathInfoChange exactly once per path change. The browser produces
   // a new selectedCompletion reference on every completions refetch, and

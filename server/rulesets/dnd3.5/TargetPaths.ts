@@ -26,6 +26,7 @@ import DetailedCharacterPowerGroupings from "@/server/rulesets/universal/Detaile
 import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
 import { isTraversable } from "@/server/rulesets/universal/isTraversable.ts";
+import { readHolder } from "@/server/rulesets/universal/readHolder.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
@@ -39,6 +40,7 @@ import {
   WEAPON_TYPE,
 } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { Dnd35LevelsHooks } from "./hooks/index.ts";
@@ -388,7 +390,7 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     if (!mapping) return failed(null, target, `Unknown category: ${category}`);
     const holder = holders[mapping.holderKey];
     if (!holder) return failed(null, target, `${CATEGORY_LABELS[category]} holder not found`);
-    const data = typeof holder[mapping.getter] === "function" ? holder[mapping.getter]() : undefined;
+    const data = readHolder(holder, mapping.getter);
     if (!data) return failed(holder, target, `${CATEGORY_LABELS[category]} not found`);
     return this.traversePath(holder, rest, data, category, 0, [category]);
   }
@@ -416,14 +418,16 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     const pathParts = ["items", subcategory, stripSeparators(grouping)];
 
     if (subcategory === "weapons") {
-      const group = holder.getWeapons()[stripSeparators(grouping)];
-      if (!group) return [];
+      const groups = readHolder(holder, "getWeapons");
+      const group = isRecord(groups) ? groups[stripSeparators(grouping)] : undefined;
+      if (!isRecord(group)) return [];
       return Object.entries(group).flatMap(([key, weapon]) =>
         this.traversePath(holder, subPath, weapon, key, 0, pathParts),
       );
     }
     const getterMap = { armors: "getArmors", shields: "getShields" } as const;
-    const group = holder[getterMap[subcategory]]()[stripSeparators(grouping)];
+    const groups = readHolder(holder, getterMap[subcategory]);
+    const group = isRecord(groups) ? groups[stripSeparators(grouping)] : undefined;
     if (!group) return [];
     return this.traversePath(holder, subPath, group, grouping, 0, pathParts);
   }
@@ -498,7 +502,8 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     const weaponsHolder = holders["weapons"];
     if (!weaponsHolder) return [];
 
-    const combat = combatHolder.getCombat();
+    const combat = readHolder(combatHolder, "getCombat");
+    if (!isRecord(combat) || !isRecord(combat.weaponsets)) return [];
     const results: TraversePathResult[] = [];
     for (const weaponSet of Object.values(combat.weaponsets)) {
       for (const [, weapon] of Object.entries(weaponSet as Record<string, unknown>)) {
@@ -579,7 +584,7 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
       if (category === "skills" && rest[0] === "budget") {
         const holder = holders["skills"];
         if (!holder) return failed(null, target, "Skills holder not found");
-        const budgetData = holder.getSkillBudget();
+        const budgetData = readHolder(holder, "getSkillBudget");
         return this.traversePath(holder, rest.slice(1), budgetData, "budget", 0, [category, "budget"]);
       }
       return this.traverseCategory(target, category, rest, holders);

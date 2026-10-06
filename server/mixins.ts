@@ -7,7 +7,7 @@
 
 type Module<B extends Constructor, R extends Constructor> = (Base: B) => R;
 
-// oxlint-disable-next-line typescript/no-explicit-any -- TypeScript requires a mixin's constructor to take `any[]` (TS2545)
+/** A class a mixin extends: TypeScript requires its constructor to take `any[]` (TS2545). */
 export type Constructor<I = object> = abstract new (...args: any[]) => I;
 
 export function include<B extends Constructor, M1 extends Constructor>(base: B, m1: Module<B, M1>): M1 & B;

@@ -24,7 +24,7 @@ import {
   PageError,
   PageTransition,
 } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { DURATION } from "@/client/src/lib/animations.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";

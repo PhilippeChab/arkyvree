@@ -1,9 +1,9 @@
 import { Autocomplete, Chip, ListItem, ListItemText, TextField } from "@mui/material";
 import { keepPreviousData, type QueryKey } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { DiceSpinner, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useListboxQuery, useOnChange } from "@/client/src/hooks/index.ts";
 
 /** A suggestion of the customization completion endpoints. */
 interface Completion {
@@ -56,10 +56,8 @@ export function CompletionAutocomplete<T extends Completion>({
   const [inputValue, setInputValue] = useState(value);
   const debouncedInputValue = useDebouncedValue(inputValue);
 
-  useEffect(() => {
-    // oxlint-disable-next-line react/set-state-in-effect -- the input follows its controlled value
-    setInputValue(value);
-  }, [value]);
+  // The input follows its controlled value
+  useOnChange(value, (next) => setInputValue(next));
 
   const { items, isLoading, onScroll } = useListboxQuery({
     queryKey: queryKey(debouncedInputValue),

@@ -1,10 +1,5 @@
 import { randomUUID } from "node:crypto";
 
-/* eslint-disable react-hooks/rules-of-hooks, no-empty-pattern --
- * `use` is Playwright's fixture callback (not a React hook), and the
- * empty `{}` destructure is the documented signature for fixtures that
- * don't depend on other fixtures.
- */
 import { test as base, type Page } from "@playwright/test";
 
 import { recordCoverage } from "@/tests/e2e/coverage.ts";
@@ -24,30 +19,30 @@ export const test = base.extend<
   { ownerUser: E2EUser; inviteeUser: E2EUser; seedUser: typeof TEST_USERS.seedUser }
 >({
   // The client code each test's page runs, when the run records coverage
-  page: async ({ page }, use) => {
-    await recordCoverage(page, () => use(page));
+  page: async ({ page }, provide) => {
+    await recordCoverage(page, () => provide(page));
   },
-  user: async ({}, use) => {
+  user: async ({}, provide) => {
     const id = randomUUID().slice(0, 8);
-    await use(await createUser(`e2e-user-${id}@example.com`, `E2E user ${id}`));
+    await provide(await createUser(`e2e-user-${id}@example.com`, `E2E user ${id}`));
   },
   ownerUser: [
-    async ({}, use, { workerIndex }) =>
-      use(await createUser(`e2e-owner-${workerIndex}@example.com`, `E2E owner ${workerIndex}`)),
+    async ({}, provide, { workerIndex }) =>
+      provide(await createUser(`e2e-owner-${workerIndex}@example.com`, `E2E owner ${workerIndex}`)),
     { scope: "worker" },
   ],
   inviteeUser: [
-    async ({}, use, { workerIndex }) =>
-      use(await createUser(`e2e-invitee-${workerIndex}@example.com`, `E2E invitee ${workerIndex}`)),
+    async ({}, provide, { workerIndex }) =>
+      provide(await createUser(`e2e-invitee-${workerIndex}@example.com`, `E2E invitee ${workerIndex}`)),
     { scope: "worker" },
   ],
   seedUser: [
-    async ({}, use) => {
+    async ({}, provide) => {
       await queryDatabase(
         "UPDATE account.users SET onboarding_completed_at = now() WHERE email_address = $1 AND onboarding_completed_at IS NULL",
         [TEST_USERS.seedUser.email],
       );
-      await use(TEST_USERS.seedUser);
+      await provide(TEST_USERS.seedUser);
     },
     { scope: "worker" },
   ],

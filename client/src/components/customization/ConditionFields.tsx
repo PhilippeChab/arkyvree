@@ -1,9 +1,10 @@
 import { HelpOutlined } from "@mui/icons-material";
 import { Box, FormControlLabel, Switch, Tooltip } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { FieldError } from "react-hook-form";
 
 import { Crossfade } from "@/client/src/components/common/index.ts";
+import { useOnChange } from "@/client/src/hooks/index.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/client/src/lib/templateValues.ts";
 
 import { OperatorSelect } from "./OperatorSelect.tsx";
@@ -46,33 +47,26 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
   );
   const [literalValue, setLiteralValue] = useState(() => (isTemplateValue(value) ? "" : value));
 
-  // Distinguishes parent-driven value resets (e.g. form.reset on edit open) from
-  // our own internal sync writes — without it the writes would loop back through
-  // the watcher and clobber in-progress UI state.
-  const internalSync = useRef(false);
+  // The value this field last wrote: it comes back as `value`, which mustn't reset what the user is typing. Any other
+  // change (a form reset on edit open) resets the field, a template value switching it to template mode.
+  const [written, setWritten] = useState<string | null>(null);
   const expressionInputRef = useRef<TemplateExpressionInputRef | null>(null);
 
-  useEffect(() => {
-    if (internalSync.current) {
-      internalSync.current = false;
+  useOnChange(value, (next) => {
+    if (next === written) {
+      setWritten(null);
       return;
     }
-    if (isTemplateValue(value)) {
-      // oxlint-disable-next-line react/set-state-in-effect -- a template value switches the field to template mode
-      setTemplateMode(true);
-      setTemplateExpression(extractTemplateExpression(value) ?? "");
-      setLiteralValue("");
-    } else {
-      setTemplateMode(false);
-      setTemplateExpression("");
-      setLiteralValue(value);
-    }
-  }, [value]);
+    const template = isTemplateValue(next);
+    setTemplateMode(template);
+    setTemplateExpression(template ? (extractTemplateExpression(next) ?? "") : "");
+    setLiteralValue(template ? "" : next);
+  });
 
   const writeFormValue = (next: string) => {
-    // Only a change reaches the effect above, so only a change is marked as ours.
+    // Only a change comes back as `value`, so only a change is marked as written.
     if (next === value) return;
-    internalSync.current = true;
+    setWritten(next);
     onChange("value", next);
   };
 

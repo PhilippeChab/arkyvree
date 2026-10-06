@@ -21,8 +21,7 @@ export function ResolvesCopies<B extends Constructor<BaseRepository<Table>>>(Bas
       if (!ids) return false;
       const arr = Array.isArray(ids) ? ids : [...ids];
       if (arr.length === 0) return false;
-      // @ts-expect-error all ruleset tables have id
-      return notInArray(this.table.id, arr);
+      return notInArray(this.column("id"), arr);
     }
 
     /**

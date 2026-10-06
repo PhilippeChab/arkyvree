@@ -2,7 +2,7 @@ import { keepPreviousData, skipToken, useMutation, useQuery } from "@tanstack/re
 import type { InferRequestType } from "hono/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
 import { rollDie } from "@/client/src/lib/dice.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
@@ -122,17 +122,14 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   // Only non-null entries matter for downstream steps
   const validClassPlan = useMemo(() => classPlan.filter((k): k is SelectedKlass => k !== null), [classPlan]);
 
-  // Sync hpValues length with valid (non-null) class plan entries
-  useEffect(() => {
-    // oxlint-disable-next-line react/set-state-in-effect -- the HP list follows the class plan's length
-    setHpValues((prev) => {
-      if (prev.length === validClassPlan.length) return prev;
-      if (prev.length < validClassPlan.length) {
-        return [...prev, ...Array(validClassPlan.length - prev.length).fill(null)];
-      }
-      return prev.slice(0, validClassPlan.length);
-    });
-  }, [validClassPlan.length]);
+  // The HP list follows the valid (non-null) class plan's length: a level added gets no HP yet, one removed drops its
+  if (hpValues.length !== validClassPlan.length) {
+    setHpValues(
+      hpValues.length < validClassPlan.length
+        ? [...hpValues, ...Array(validClassPlan.length - hpValues.length).fill(null)]
+        : hpValues.slice(0, validClassPlan.length),
+    );
+  }
 
   const handleHpChange = useCallback((index: number, value: number | null) => {
     setHpValues((prev) => {

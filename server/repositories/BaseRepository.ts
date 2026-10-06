@@ -31,6 +31,16 @@ abstract class BaseRepository<T extends Table> {
     return this.where([...keys, ...rest]);
   }
 
+  /**
+   * The table's column `name`, one every table a concern reads has (`deletedAt`, `updatedAt`, `id`, `rulesetId`,
+   * `campaignId`), which the table's generic type can't promise: a table without it throws.
+   */
+  protected column(name: string): Column {
+    const column: Column | undefined = getTableColumns(this.table)[name];
+    if (!column) throw new Error(`${this.constructor.name}: its table has no ${name} column`);
+    return column;
+  }
+
   protected orderBy(column: Column | SQL, direction: "asc" | "desc" = "asc"): SQL {
     return direction === "asc" ? asc(column) : desc(column);
   }
@@ -40,11 +50,9 @@ abstract class BaseRepository<T extends Table> {
       case Visibility.All:
         return false;
       case Visibility.UnarchivedOnly:
-        // @ts-expect-error All tables have a deletedAt column
-        return isNull(this.table.deletedAt);
+        return isNull(this.column("deletedAt"));
       case Visibility.ArchivedOnly:
-        // @ts-expect-error All tables have a deletedAt column
-        return not(isNull(this.table.deletedAt));
+        return not(isNull(this.column("deletedAt")));
       default:
         return false;
     }

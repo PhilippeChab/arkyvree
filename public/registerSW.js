@@ -5,9 +5,7 @@
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((err) => {
-      // oxlint-disable-next-line no-console -- registration failures need to be diagnosable in the browser.
-      console.warn("Service worker registration failed", err);
-    });
+    // A failure is reported as an uncaught error is: in the console, where it can be diagnosed
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(reportError);
   });
 }

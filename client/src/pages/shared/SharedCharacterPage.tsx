@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 
 import { CharacterSheetBody, downloadPdf } from "@/client/src/components/characters/index.ts";
 import { DiceSpinner, PageError, PageTransition } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";

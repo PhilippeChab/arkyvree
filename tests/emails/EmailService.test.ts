@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { APP_URL } from "@/emails/EmailLayout.tsx";
+import { APP_URL } from "@/emails/emailStyles.ts";
 import emailService from "@/server/emails/EmailService.ts";
 import { renderEmail } from "@/server/emails/templates.ts";
 import { queuedJobs } from "@/tests/support/jobs.ts";

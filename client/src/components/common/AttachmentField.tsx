@@ -5,7 +5,7 @@ import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import { Avatar, Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { useRef, useState } from "react";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAttachment, useDemoTimeRemaining, useDetachAttachment, useDirectUpload } from "@/client/src/hooks/index.ts";
 import { ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
 

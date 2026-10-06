@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { DeleteDialog, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";

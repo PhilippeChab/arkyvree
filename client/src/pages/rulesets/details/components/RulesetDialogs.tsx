@@ -8,7 +8,7 @@ import {
 } from "@mui/icons-material";
 import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { type UseFormReturn } from "react-hook-form";
 
 import {
@@ -18,6 +18,7 @@ import {
   EditDialog,
   NameField,
 } from "@/client/src/components/common/index.ts";
+import { useOnChange } from "@/client/src/hooks/index.ts";
 import { nameRules } from "@/client/src/lib/validation.ts";
 import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -247,10 +248,10 @@ export function PublishRulesetDialog({
 }: PublishRulesetDialogProps) {
   const [kind, setKind] = useState<PublishKind>(initialKind);
 
-  useEffect(() => {
-    // oxlint-disable-next-line react/set-state-in-effect -- opening the dialog resets its kind to the caller's
-    if (open) setKind(initialKind);
-  }, [open, initialKind]);
+  // Opening the dialog resets its kind to the caller's
+  useOnChange(open ? initialKind : null, (openedAs) => {
+    if (openedAs) setKind(openedAs);
+  });
 
   return (
     <ConfirmDialog

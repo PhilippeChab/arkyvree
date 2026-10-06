@@ -43,7 +43,7 @@ import {
   type ModifierFormData,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";

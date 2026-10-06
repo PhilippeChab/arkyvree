@@ -8,10 +8,14 @@
   },
   "ignorePatterns": ["node_modules", "dist", "drizzle/generated"],
   "rules": {
+    // A parameter's empty `{}` is the shape its caller sets (a Playwright fixture that depends on no other).
+    "no-empty-pattern": ["error", { "allowObjectPatternsAsParameters": true }],
+
     // TypeScript
-    "typescript/no-explicit-any": "error",
-    // A @ts-expect-error says why; @ts-ignore and @ts-nocheck hide errors without one.
-    "typescript/ban-ts-comment": ["error", { "ts-expect-error": "allow-with-description", "ts-ignore": true, "ts-nocheck": true }],
+    // A rest parameter may be `any[]`, which TypeScript requires of a mixin's constructor (TS2545); nothing else is `any`.
+    "typescript/no-explicit-any": ["error", { "ignoreRestArgs": true }],
+    // TypeScript's errors are fixed, never silenced: no @ts-expect-error, @ts-ignore or @ts-nocheck.
+    "typescript/ban-ts-comment": ["error", { "ts-expect-error": true, "ts-ignore": true, "ts-nocheck": true }],
     "typescript/consistent-type-imports": ["error", { "fixStyle": "inline-type-imports" }],
     "typescript/no-unused-vars": [
       "error",
@@ -24,14 +28,10 @@
 
     // React
     "react/rules-of-hooks": "error",
-    "react/exhaustive-deps": "warn",
-    "react/only-export-components": [
-      "warn",
-      { "allowConstantExport": true, "allowExportNames": ["useTheme", "useSnackbar"] }
-    ],
-    // React Compiler rules. The compiler isn't enabled, so APIs it can't
-    // memoize (react-hook-form's watch()) are fine. Existing effects that sync
-    // state from props or query data opt out line by line.
+    "react/exhaustive-deps": "error",
+    "react/only-export-components": ["error", { "allowConstantExport": true }],
+    // React Compiler rules. The compiler isn't enabled, so APIs it can't memoize (react-hook-form's watch()) are fine.
+    // State a prop drives is reset in the render that sees it change (`useOnChange`), never by an effect.
     "react/incompatible-library": "off",
     "react/set-state-in-effect": "error",
 
@@ -65,7 +65,7 @@
     "arkyvree/shared-runtime": "error",
     "arkyvree/session-param": "error",
     "arkyvree/environment": "error",
-    "arkyvree/directive-reasons": "error",
+    "arkyvree/no-disable-comments": "error",
     "arkyvree/writes-in-transactions": "error",
     "arkyvree/test-placement": "error",
     "arkyvree/concern-shape": "error",

@@ -1,6 +1,7 @@
 import { Button, Heading, Section, Text } from "@react-email/components";
 
-import { APP_URL, EmailLayout, styles } from "./EmailLayout.tsx";
+import { EmailLayout } from "./EmailLayout.tsx";
+import { APP_URL, styles } from "./emailStyles.ts";
 
 interface CampaignInvitationEmailProps {
   inviteeName?: string;

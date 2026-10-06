@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { ApiError, parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 /** Activities about accounts and sessions have no page to open. */
