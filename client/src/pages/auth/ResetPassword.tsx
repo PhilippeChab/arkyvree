@@ -26,7 +26,7 @@ export default function ResetPassword() {
   usePageTitle("Reset Password");
   const pendingPasswordResetEmail = useAuthStore((s) => s.pendingPasswordResetEmail);
   const navigate = useNavigate();
-  const auth = useAuthRequests({ onPasswordReset: () => navigate("/sign-in") });
+  const auth = useAuthRequests();
 
   const form = useFormWith<ResetPasswordFormData>({
     digits: EMPTY_VERIFICATION_CODE,
@@ -52,7 +52,10 @@ export default function ResetPassword() {
         newPassword: data.newPassword,
         newPasswordConfirmation: data.newPasswordConfirmation,
       },
-      { onError: (error) => setError(errorMessage(error, "Failed to reset password")) },
+      {
+        onSuccess: () => navigate("/sign-in"),
+        onError: (error) => setError(errorMessage(error, "Failed to reset password")),
+      },
     );
   };
 

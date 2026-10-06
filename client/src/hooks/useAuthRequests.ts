@@ -5,17 +5,15 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { type AuthUser, toAuthUser } from "@/client/src/stores/authUser.ts";
 
-/** What follows a request whose store update moves the page away (an auth page leaves once signed in). */
-interface AuthNextSteps {
-  /** After signing in, with a password or Google, or by verifying an email */
-  onSignedIn?: () => void;
-  onPasswordReset?: () => void;
-  onSignedOut?: () => void;
-}
-
 /** The server signed the user in: the store keeps them, and no email waits for its code any more. */
 function signedIn(user: AuthUser) {
-  useAuthStore.setState({ user: toAuthUser(user), isAuthenticated: true, pendingVerificationEmail: null });
+  useAuthStore.setState({
+    user: toAuthUser(user),
+    isAuthenticated: true,
+    signedOutByUser: false,
+    pendingVerificationEmail: null,
+    pendingPasswordResetEmail: null,
+  });
 }
 
 /**
@@ -38,11 +36,12 @@ export function checkSession(queryClient: QueryClient): Promise<void> {
  * The auth requests, each a mutation the store follows: sign in (with a password or Google), sign up, verify an email,
  * resend its code, ask for and make a password reset, sign out. They share one mutation key, so `pending` says whether
  * any is in flight, whichever page sent it, and the query client leaves their 401s to them (a wrong password, a session
- * already gone). A page shows a request's error through its `onError`. A request whose store update moves the page away
- * takes what follows as an option, run in the same turn as the update: a `mutate` callback would come after the page
- * has gone.
+ * already gone). A page shows a request's error through its `onError`. Where the user goes once the store changes is
+ * the routes' to say, never the page's (React Router applies a navigation in a transition, which the store's render
+ * would run ahead of): a signed-in user leaves the auth pages for where they were going (`AuthLayoutRoute`), and a
+ * signed-out one leaves the private pages for sign in (`PrivateRoute`).
  */
-export function useAuthRequests({ onSignedIn, onPasswordReset, onSignedOut }: AuthNextSteps = {}) {
+export function useAuthRequests() {
   const mutationKey = queryKeys.auth.requests;
   const pending = useIsMutating({ mutationKey }) > 0;
 
@@ -50,10 +49,7 @@ export function useAuthRequests({ onSignedIn, onPasswordReset, onSignedOut }: Au
     mutationKey,
     mutationFn: (json: { emailAddress: string; password: string }) =>
       parseResponse(rpc.auth["sign-in"].$post({ json })),
-    onSuccess: (user) => {
-      signedIn(user);
-      onSignedIn?.();
-    },
+    onSuccess: signedIn,
     // An unverified email waits for its code
     onError: (error, { emailAddress }) => {
       const isUnverified = error instanceof Error && error.message === "Email not verified";
@@ -68,10 +64,7 @@ export function useAuthRequests({ onSignedIn, onPasswordReset, onSignedOut }: Au
   const signInWithGoogle = useMutation({
     mutationKey,
     mutationFn: (idToken: string) => parseResponse(rpc.auth.google.$post({ json: { idToken } })),
-    onSuccess: (user) => {
-      signedIn(user);
-      onSignedIn?.();
-    },
+    onSuccess: signedIn,
   });
 
   const signUp = useMutation({
@@ -85,10 +78,7 @@ export function useAuthRequests({ onSignedIn, onPasswordReset, onSignedOut }: Au
     mutationKey,
     mutationFn: (json: { emailAddress: string; code: string }) =>
       parseResponse(rpc.auth["verify-email"].$post({ json })),
-    onSuccess: (user) => {
-      signedIn(user);
-      onSignedIn?.();
-    },
+    onSuccess: signedIn,
   });
 
   const resendVerification = useMutation({
@@ -107,20 +97,14 @@ export function useAuthRequests({ onSignedIn, onPasswordReset, onSignedOut }: Au
     mutationKey,
     mutationFn: (json: { emailAddress: string; code: string; newPassword: string; newPasswordConfirmation: string }) =>
       parseResponse(rpc.auth["reset-password"].$post({ json })),
-    onSuccess: () => {
-      useAuthStore.setState({ pendingPasswordResetEmail: null });
-      onPasswordReset?.();
-    },
+    // Its email waits until the user signs in: the reset page stays to send them there
   });
 
   // Signed out locally whatever the server says: one that failed (a session already gone, a network blip) ends there
   const signOut = useMutation({
     mutationKey,
     mutationFn: () => parseResponse(rpc.auth["sign-out"].$post()),
-    onSettled: () => {
-      useAuthStore.getState().clearSession();
-      onSignedOut?.();
-    },
+    onSettled: () => useAuthStore.getState().clearSession({ byUser: true }),
   });
 
   return {

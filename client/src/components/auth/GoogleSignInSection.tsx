@@ -7,13 +7,12 @@ import { GoogleSignInButton } from "./GoogleSignInButton.tsx";
 interface GoogleSignInSectionProps {
   label?: string;
   disabled?: boolean;
-  onSuccess: () => void;
   onError: (error: unknown) => void;
 }
 
 /** "or" divider plus the Google button, rendered only once Google Sign-In has loaded. */
-export function GoogleSignInSection({ label, disabled, onSuccess, onError }: GoogleSignInSectionProps) {
-  const { signInWithGoogle } = useAuthRequests({ onSignedIn: onSuccess });
+export function GoogleSignInSection({ label, disabled, onError }: GoogleSignInSectionProps) {
+  const { signInWithGoogle } = useAuthRequests();
   const { overlayRef, isAvailable } = useGoogleSignIn((idToken) => signInWithGoogle.mutate(idToken, { onError }));
 
   if (!isAvailable) return null;

@@ -192,7 +192,7 @@ export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { signOut } = useAuthRequests({ onSignedOut: () => navigate("/sign-in") });
+  const { signOut } = useAuthRequests();
   // Sidebar item of the first path segment ("rulesets" for /rulesets/123);
   // pages outside the sidebar (profile, invites) keep Dashboard highlighted.
   const pathSection = location.pathname.split("/")[1];
@@ -208,7 +208,7 @@ export function Layout() {
     setAnchorEl(null);
   };
 
-  // Clearing the session clears the cache (`createQueryClient`)
+  // Clearing the session clears the cache (`createQueryClient`), and the private route sends the user to sign in
   const handleSignOut = () => {
     handleMenuClose();
     void queryClient.cancelQueries();

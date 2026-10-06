@@ -14,9 +14,9 @@ import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
 import { createQueryClient } from "@/client/src/lib/queryClient.ts";
 import SignIn from "@/client/src/pages/auth/SignIn.tsx";
 import DashboardPage from "@/client/src/pages/dashboard/DashboardPage.tsx";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 import "./App.css";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 const ActivitiesPage = lazy(() => import("@/client/src/pages/activities/ActivitiesPage.tsx"));
 const RulesetContributorInvitePage = lazy(
@@ -65,6 +65,7 @@ let authProbe: Promise<void> | null = null;
 function PrivateRoute() {
   const location = useLocation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const signedOutByUser = useAuthStore((s) => s.signedOutByUser);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
@@ -92,8 +93,9 @@ function PrivateRoute() {
   }
   if (demoExpired) return <Navigate to="/demo-expired" replace />;
 
+  // Back to the page once signed in, unless the user signed out of it
   const target = location.pathname + location.search;
-  const redirectParam = target !== "/" ? `?redirect=${encodeURIComponent(target)}` : "";
+  const redirectParam = target !== "/" && !signedOutByUser ? `?redirect=${encodeURIComponent(target)}` : "";
   return <Navigate to={`/sign-in${redirectParam}`} replace />;
 }
 

@@ -1,7 +1,8 @@
 /**
  * A level's picks as the slots its pools give have room for. The form keeps what was picked; the wizards read it
  * through these, so a pool that shrinks (another class planned, a feat that granted slots removed) drops its later
- * picks, and a step's change, made from what it shows, keeps them dropped.
+ * picks, and a step's change, made from what it shows, keeps them dropped. Until then they wait unshown: a pool that
+ * grows back (the class planned again) shows them again.
  */
 
 import { computeMaxPointsForSkill } from "@/shared/dnd3.5/skills.ts";

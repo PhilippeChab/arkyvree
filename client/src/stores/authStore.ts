@@ -11,7 +11,9 @@ interface AuthState {
   isAuthenticated: boolean;
   pendingVerificationEmail: string | null;
   pendingPasswordResetEmail: string | null;
-  clearSession: () => void;
+  /** The user signed out (rather than the server ending the session): their private pages send them to sign in afresh */
+  signedOutByUser: boolean;
+  clearSession: (options?: { byUser?: boolean }) => void;
   /** Merge fields into the signed-in user, e.g. after a profile update. */
   updateUser: (patch: Partial<AuthUser>) => void;
 }
@@ -21,6 +23,7 @@ const signedOut = {
   isAuthenticated: false,
   pendingVerificationEmail: null,
   pendingPasswordResetEmail: null,
+  signedOutByUser: false,
 } as const;
 
 export const useAuthStore = create<AuthState>()(
@@ -28,8 +31,8 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       ...signedOut,
 
-      clearSession: () => {
-        set(signedOut);
+      clearSession: ({ byUser = false } = {}) => {
+        set({ ...signedOut, signedOutByUser: byUser });
       },
 
       updateUser: (patch) => {

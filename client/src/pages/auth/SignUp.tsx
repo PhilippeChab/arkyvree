@@ -61,7 +61,6 @@ export default function SignUp() {
       <GoogleSignInSection
         label="Sign up with Google"
         disabled={auth.pending}
-        onSuccess={() => navigate(redirect ?? "/dashboard")}
         onError={(error) => setError(errorMessage(error, "Failed to sign up with Google"))}
       />
       <Box sx={{ mt: 2, textAlign: "center" }}>

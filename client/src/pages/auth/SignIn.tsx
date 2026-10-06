@@ -19,7 +19,7 @@ export default function SignIn() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const redirect = safeRedirectPath(searchParams.get("redirect"));
-  const auth = useAuthRequests({ onSignedIn: () => navigate(redirect ?? "/dashboard") });
+  const auth = useAuthRequests();
 
   const { control, handleSubmit } = useFormWith<SignInFormData>({
     emailAddress: "",
@@ -63,7 +63,6 @@ export default function SignIn() {
       </form>
       <GoogleSignInSection
         disabled={auth.pending}
-        onSuccess={() => navigate(redirect ?? "/dashboard")}
         onError={(error) => setError(errorMessage(error, "Failed to sign in with Google"))}
       />
       <Box sx={{ mt: 2, textAlign: "center" }}>

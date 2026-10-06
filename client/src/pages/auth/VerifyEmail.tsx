@@ -1,6 +1,6 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
 import { Controller } from "react-hook-form";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 
 import {
   AuthPage,
@@ -11,7 +11,6 @@ import {
 } from "@/client/src/components/auth/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
@@ -24,9 +23,7 @@ export default function VerifyEmail() {
   const pendingVerificationEmail = useAuthStore((s) => s.pendingVerificationEmail);
   const location = useLocation();
   const fromSignIn = location.state?.from === "sign-in";
-  const redirect = safeRedirectPath(location.state?.redirect);
-  const navigate = useNavigate();
-  const auth = useAuthRequests({ onSignedIn: () => navigate(redirect ?? "/dashboard") });
+  const auth = useAuthRequests();
 
   const form = useFormWith<VerifyEmailFormData>({ digits: EMPTY_VERIFICATION_CODE });
   const digits = form.watch("digits");

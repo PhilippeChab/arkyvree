@@ -1,7 +1,6 @@
 import { Button, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import { AnimatedAlert, DiceSpinner, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -22,7 +21,6 @@ interface DeleteAccountFormData {
 
 export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccountDialogProps) {
   const snackbar = useSnackbar();
-  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
   const form = useFormWith<DeleteAccountFormData>({ password: "", confirmText: "" });
@@ -44,10 +42,10 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
         }),
       );
     },
+    // The private route sends the user to sign in
     onSuccess: () => {
-      useAuthStore.getState().clearSession();
+      useAuthStore.getState().clearSession({ byUser: true });
       snackbar.success("Account deleted successfully");
-      navigate("/sign-in");
     },
     onError: (error) => setError(error.message),
   });
