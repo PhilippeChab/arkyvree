@@ -32,7 +32,8 @@
  *   query (`if (where.ids.length === 0) return [];` first), and its callers read without checking: no
  *   `ids.length > 0 ? Repo.findMany(db, { ids }) : []`, no `if (!ids.length) return []` before reads of `ids` alone. A
  *   check that skips other queries too (a write, a read of something else) is the caller's to keep: an insert of no rows
- *   throws, and a read of something else would run for nothing.
+ *   throws, and a read of something else would run for nothing. The rule sees a repository's calls only: a check that
+ *   skips a helper, whose queries it can't see, is left to review.
  * - `no-disable-comments`: no comment turns a lint rule off (`oxlint-disable…`, `eslint-disable…`): a case a rule gets
  *   wrong changes the rule, its options or its definition, never one line.
  * - `environment`: the server reads its environment in `server/environment.ts` only (`readEnv`, `isProduction`…),
@@ -298,6 +299,7 @@ function createEmptyListReads(context) {
     if ((node.type === "Identifier" || node.type === "MemberExpression") && textOf(node) === list) return true;
     return Object.entries(node).some(([key, value]) => {
       if (key === "parent" || (key === "key" && node.type === "Property" && !node.computed)) return false;
+      if (key === "property" && node.type === "MemberExpression" && !node.computed) return false;
       return (Array.isArray(value) ? value : [value]).some(
         (child) => typeof child?.type === "string" && uses(child, list),
       );

@@ -293,6 +293,9 @@ describe("conventions", () => {
           "server/services/key.ts": reading(
             "  if (ids.length === 0) return [];\n  return await Feats.findMany(db, { ids: otherIds });",
           ),
+          "server/services/member.ts": reading(
+            "  if (ids.length === 0) return [];\n  return await Feats.findMany(db, { ids: other.ids });",
+          ),
           "server/services/more.ts": reading(
             "  if (ids.length === 0) return [];\n  const ruleset = await Rulesets.findOne(db, { id });\n  return await Feats.findMany(db, { ids });",
           ),
