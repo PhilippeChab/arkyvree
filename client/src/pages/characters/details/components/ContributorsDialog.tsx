@@ -79,7 +79,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
   const leaveMutation = useMutation({
     mutationFn: () => rpc.api.characters[":id"].contributors.leave.$post({ param: { id: characterId } }),
     onSuccess: () => {
-      snackbar.success("You have left this character");
+      snackbar.success("You left the character");
       queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists });
       setLeaveConfirmOpen(false);
       onClose();

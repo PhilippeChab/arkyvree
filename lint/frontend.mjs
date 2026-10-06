@@ -60,6 +60,8 @@
  *   (Delete, Archive, Publish, Cancel…) picks its variant and color.
  * - `headings`: a `Typography` sized as a heading (`variant="h6"`, `typography: { xs: "h6" }`) declares its element
  *   (`component="h2"`, `"p"`), so the page's outline is a hierarchy.
+ * - `toast-wording`: a toast is a phrase ("Ruleset archived"), no final period, "!" or "successfully"; an error's
+ *   fallback names what failed ("Failed to remove item").
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -1195,6 +1197,44 @@ function createMotion(context) {
   };
 }
 
+/** The texts a toast's argument can show: a string, a template's text, a condition's branches. */
+function toastTexts(argument) {
+  if (!argument) return [];
+  if (argument.type === "Literal" && typeof argument.value === "string") return [argument.value];
+  if (argument.type === "TemplateLiteral") return [argument.quasis.map((quasi) => quasi.value.cooked).join("…")];
+  if (argument.type === "ConditionalExpression")
+    return [...toastTexts(argument.consequent), ...toastTexts(argument.alternate)];
+  return [];
+}
+
+function createToastWording(context) {
+  if (!inClient(context)) return {};
+  return {
+    CallExpression(node) {
+      const callee = node.callee;
+      const isToast =
+        callee.type === "MemberExpression" &&
+        callee.object.type === "Identifier" &&
+        callee.object.name === "snackbar" &&
+        ["error", "info", "success", "warning"].includes(callee.property.name);
+      if (!isToast) return;
+      const errorFallback = callee.property.name === "error" && node.arguments.length > 1;
+      const texts = node.arguments.flatMap(toastTexts);
+      const bad = texts.find(
+        (text) => /[.!]$/.test(text.trim()) || /\bsuccessfully\b/i.test(text) || /^Please\b/.test(text),
+      );
+      const unnamed = errorFallback && toastTexts(node.arguments[1]).some((text) => !/^Failed to\b/.test(text));
+      if (!bad && !unnamed) return;
+      context.report({
+        node,
+        message:
+          'A toast is a phrase: "Ruleset archived", "This export expired: generate a new one", no final period ' +
+          'or "!", no "successfully"; an error\'s fallback names what failed ("Failed to remove item").',
+      });
+    },
+  };
+}
+
 /** Whether a style value is a size written out: `14`, `"0.75rem"`, `{ xs: 48, sm: 64 }` (not `"inherit"`, not computed). */
 function writtenSize(value) {
   if (value.type === "Literal")
@@ -1291,4 +1331,5 @@ export default {
   "search-fields": { meta: { type: "suggestion" }, create: createSearchFields },
   "button-intents": { meta: { type: "suggestion" }, create: createButtonIntents },
   headings: { meta: { type: "suggestion" }, create: createHeadings },
+  "toast-wording": { meta: { type: "suggestion" }, create: createToastWording },
 };

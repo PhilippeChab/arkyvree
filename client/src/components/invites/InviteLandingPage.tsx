@@ -98,7 +98,7 @@ export function InviteLandingPage({
   const acceptMutation = useMutation({
     mutationFn: acceptFn,
     onSuccess: () => {
-      snackbar.success("Invitation accepted!");
+      snackbar.success("Invitation accepted");
       queryClient.invalidateQueries({ queryKey: invalidateOnAccept });
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     },

@@ -220,7 +220,7 @@ test.describe("Characters", () => {
     );
     await openActionsMenu(page, /^Download PDF$/);
     expect((await queued).status()).toBe(202);
-    await expect(page.locator("text=/Your PDF is being generated/i")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("text=/Generating your PDF/i")).toBeVisible({ timeout: 10_000 });
   });
 
   test("a modifier added at runtime can be removed", async ({ page, ownerUser }) => {

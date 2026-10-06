@@ -639,4 +639,27 @@ describe("frontend rules", () => {
       ),
     ).toEqual(["headings client/src/styled.tsx", "headings client/src/variant.tsx"]);
   });
+
+  test("a toast is a phrase, and an error's fallback names what failed", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/success.ts": 'export const s = () => snackbar.success("Ruleset archived successfully");\n',
+          "client/src/bang.ts": "export const b = () => snackbar.success(`${label} accepted!`);\n",
+          "client/src/sentence.ts":
+            'export const w = () => snackbar.warning(ok ? "Saved" : "This export has expired.");\n',
+          "client/src/fallback.ts":
+            'export const f = (error: unknown) => snackbar.error(error, "Could not remove the item");\n',
+          "client/src/phrases.ts":
+            'export const p = (error: unknown) => { snackbar.success("Ruleset archived"); snackbar.error(error, "Failed to remove item"); snackbar.warning("This export expired: generate a new one"); };\n',
+        },
+        ["toast-wording"],
+      ),
+    ).toEqual([
+      "toast-wording client/src/bang.ts",
+      "toast-wording client/src/fallback.ts",
+      "toast-wording client/src/sentence.ts",
+      "toast-wording client/src/success.ts",
+    ]);
+  });
 });

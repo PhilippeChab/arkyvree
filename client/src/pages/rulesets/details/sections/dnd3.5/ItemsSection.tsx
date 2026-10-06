@@ -112,7 +112,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       );
     },
     onSuccess: (created) => {
-      snackbar.success("Item created successfully");
+      snackbar.success("Item created");
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(ruleset.id, "items") });
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.changes(ruleset.id) });
       setCreateDialogOpen(false);

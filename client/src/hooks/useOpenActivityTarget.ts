@@ -40,7 +40,7 @@ export function useOpenActivityTarget() {
           snackbar.warning(
             error instanceof ApiError && error.status === 403
               ? error.message
-              : "This item has been deleted and is no longer available.",
+              : "This item was deleted",
           ),
       );
   };

@@ -123,7 +123,7 @@ export default function CharacterDetailsPage() {
   const unarchiveMutation = useMutation({
     mutationFn: () => rpc.api.characters[":id"].unarchive.$post({ param: { id } }),
     onSuccess: () => {
-      snackbar.success("Character unarchived successfully");
+      snackbar.success("Character unarchived");
       return invalidateCharacter();
     },
     onError: (err) => snackbar.error(err, "Failed to unarchive character"),

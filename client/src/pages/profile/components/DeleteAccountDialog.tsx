@@ -43,7 +43,7 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
     // The private route sends the user to sign in
     onSuccess: () => {
       useAuthStore.getState().clearSession({ byUser: true });
-      snackbar.success("Account deleted successfully");
+      snackbar.success("Account deleted");
     },
     // A wrong password shows on its field
     onError: (error) => {

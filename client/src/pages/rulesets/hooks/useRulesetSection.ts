@@ -96,7 +96,7 @@ export function useRulesetSection<
   const createMutation = useMutation({
     mutationFn: createFn,
     onSuccess: (data) => {
-      snackbar.success(`${label} created successfully`);
+      snackbar.success(`${label} created`);
       invalidateOnMutation();
       setCreateDialogOpen(false);
       createForm.reset(createDefaults);
@@ -111,7 +111,7 @@ export function useRulesetSection<
     mutationFn: ({ id, data }: { id: string; data: TFormData }) =>
       updateFn ? updateFn(id, data) : Promise.reject(new Error(`${label} can't be updated here`)),
     onSuccess: (data) => {
-      snackbar.success(`${label} updated successfully`);
+      snackbar.success(`${label} updated`);
       invalidateOnMutation();
       closeEditDialog();
       onUpdateSuccess?.(data);
@@ -126,7 +126,7 @@ export function useRulesetSection<
     onSuccess: (data) => {
       invalidateOnMutation();
       setDeleteDialogOpen(false);
-      snackbar.success(`${label} deleted successfully`);
+      snackbar.success(`${label} deleted`);
       setItemToDelete(null);
       onDeleteSuccess?.(data);
     },

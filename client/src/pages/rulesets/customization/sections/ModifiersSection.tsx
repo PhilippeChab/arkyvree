@@ -176,7 +176,7 @@ export function ModifiersSection({
       );
     },
     onSuccess: (data) => {
-      snackbar.success("Modifier created successfully");
+      snackbar.success("Modifier created");
       queryClient.invalidateQueries({
         queryKey: queryKeys.rulesets.section(ruleset.id, `customization-${entityType}-${entityId}-modifiers`),
       });

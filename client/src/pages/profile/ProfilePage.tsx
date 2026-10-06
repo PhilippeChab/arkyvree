@@ -145,7 +145,7 @@ export default function ProfilePage() {
         setVerifyDialogOpen(true);
         snackbar.success("Verification code sent to your new email");
       } else {
-        snackbar.success("Profile updated successfully");
+        snackbar.success("Profile updated");
       }
     },
     onError: (error) => snackbar.error(error, "Failed to update profile"),
@@ -161,7 +161,7 @@ export default function ProfilePage() {
     onSuccess: () => {
       passwordForm.reset();
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
-      snackbar.success(hasPassword ? "Password updated successfully" : "Password set successfully");
+      snackbar.success(hasPassword ? "Password updated" : "Password set");
     },
     // A wrong current password shows on its field
     onError: (error) => {

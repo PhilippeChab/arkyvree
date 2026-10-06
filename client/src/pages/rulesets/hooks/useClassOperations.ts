@@ -41,7 +41,7 @@ export function useClassLevels(rulesetId: string, classId: string) {
       );
     },
     onSuccess: () => {
-      snackbar.success("Level created successfully");
+      snackbar.success("Level created");
       queryClient.invalidateQueries({
         queryKey: classLevelsQuery(rulesetId, classId).queryKey,
       });
@@ -165,7 +165,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
       return { previousClassSkills };
     },
     onSuccess: () => {
-      snackbar.success("Skill added to class successfully");
+      snackbar.success("Skill added to class");
     },
     onError: (err, _skillId, context) => {
       snackbar.error(err, "Failed to add skill to class");
@@ -207,7 +207,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
       return { previousClassSkills };
     },
     onSuccess: () => {
-      snackbar.success("Skill removed from class successfully");
+      snackbar.success("Skill removed from class");
     },
     onError: (err, _skillId, context) => {
       snackbar.error(err, "Failed to remove skill from class");

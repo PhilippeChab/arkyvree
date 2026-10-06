@@ -115,7 +115,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       );
     },
     onSuccess: () => {
-      snackbar.success("Player added successfully");
+      snackbar.success("Player added");
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(campaign.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.section(campaign.id, "players") });
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.lists });
@@ -137,7 +137,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       );
     },
     onSuccess: () => {
-      snackbar.success("Player updated successfully");
+      snackbar.success("Player updated");
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(campaign.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.section(campaign.id, "players") });
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.lists });
@@ -158,7 +158,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     },
     onSuccess: () => {
       const removedSelf = selectedPlayer?.userId === currentUserId;
-      snackbar.success(removedSelf ? "You left the campaign" : "Player removed successfully");
+      snackbar.success(removedSelf ? "You left the campaign" : "Player removed");
       if (removedSelf) {
         navigate("/campaigns", { replace: true });
         queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.lists });
@@ -184,7 +184,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       );
     },
     onSuccess: () => {
-      snackbar.success("Invitation revoked successfully");
+      snackbar.success("Invitation revoked");
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.section(campaign.id, "players") });
       setRevokeDialogOpen(false);
       setSelectedInviteId(null);

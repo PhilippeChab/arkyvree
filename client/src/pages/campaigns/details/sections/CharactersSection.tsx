@@ -317,7 +317,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
       );
     },
     onSuccess: () => {
-      snackbar.success("Character linked successfully");
+      snackbar.success("Character linked");
       queryClient.invalidateQueries({
         queryKey: queryKeys.campaigns.section(campaignId, "characters"),
       });

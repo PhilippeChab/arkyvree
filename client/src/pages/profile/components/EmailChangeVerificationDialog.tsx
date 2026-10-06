@@ -40,7 +40,7 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
       updateUser({ emailAddress: data.emailAddress, pendingEmailAddress: data.pendingEmailAddress });
-      snackbar.success("Email address updated successfully");
+      snackbar.success("Email address updated");
       handleClose();
     },
     // A wrong or expired code shows on its field
@@ -54,7 +54,7 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
     mutationFn: () => rpc.auth["resend-email-change"].$post(),
     onSuccess: () => {
       form.clearErrors("digits");
-      snackbar.success("A new code has been sent to your email.");
+      snackbar.success("New code sent to your email");
     },
     onError: (error) => snackbar.error(error, "Failed to resend code"),
   });

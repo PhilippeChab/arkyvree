@@ -118,7 +118,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   const leaveMutation = useMutation({
     mutationFn: () => rpc.api.rulesets[":id"].contributors.leave.$post({ param: { id: ruleset.id } }),
     onSuccess: () => {
-      snackbar.success("You have left this ruleset");
+      snackbar.success("You left the ruleset");
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.lists });
       setLeaveDialogOpen(false);
       onLeave?.();

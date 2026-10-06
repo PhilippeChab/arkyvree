@@ -24,7 +24,7 @@ export function useCampaignOperations() {
   const createMutation = useMutation({
     mutationFn: (data: CreateCampaignFormData) => parseResponse(rpc.api.campaigns.$post({ json: data })),
     onSuccess: (data) => {
-      snackbar.success("Campaign created successfully");
+      snackbar.success("Campaign created");
       queryClient.invalidateQueries({
         queryKey: queryKeys.campaigns.lists,
       });

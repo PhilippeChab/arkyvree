@@ -120,7 +120,7 @@ export function useNotificationActions() {
     },
     // Answering marks the invite's notification read server-side.
     onSuccess: (_, { type }) => {
-      snackbar.success(`${INVITES[type].label} accepted!`);
+      snackbar.success(`${INVITES[type].label} accepted`);
       queryClient.invalidateQueries({ queryKey: INVITES[type].listKey });
       void invalidateNotifications();
     },
@@ -166,7 +166,7 @@ export function useNotificationActions() {
     onSuccess: (blob, { fileName }) => saveBlob(blob, fileName),
     onError: (error) => {
       if (error instanceof ApiError && error.status === 404) {
-        snackbar.warning("This export has expired. Please generate a new one.");
+        snackbar.warning("This export expired: generate a new one");
       } else {
         snackbar.error(error, "Failed to download export");
       }

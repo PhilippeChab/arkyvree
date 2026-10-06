@@ -79,7 +79,7 @@ export default function CampaignDetailsPage() {
   const updateMutation = useMutation({
     mutationFn: (data: EditCampaignFormData) => rpc.api.campaigns[":id"].$put({ param: { id }, json: data }),
     onSuccess: () => {
-      snackbar.success("Campaign updated successfully");
+      snackbar.success("Campaign updated");
       invalidateCampaign();
       setEditDialogOpen(false);
       editForm.reset();
@@ -90,7 +90,7 @@ export default function CampaignDetailsPage() {
   const archiveMutation = useMutation({
     mutationFn: () => rpc.api.campaigns[":id"].$delete({ param: { id } }),
     onSuccess: () => {
-      snackbar.success("Campaign archived successfully");
+      snackbar.success("Campaign archived");
       invalidateCampaign();
       navigate("/campaigns");
     },
@@ -100,7 +100,7 @@ export default function CampaignDetailsPage() {
   const unarchiveMutation = useMutation({
     mutationFn: () => rpc.api.campaigns[":id"].unarchive.$post({ param: { id } }),
     onSuccess: () => {
-      snackbar.success("Campaign unarchived successfully");
+      snackbar.success("Campaign unarchived");
       invalidateCampaign();
     },
     onError: (error) => snackbar.error(error, "Failed to unarchive campaign"),
