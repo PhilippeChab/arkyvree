@@ -11,7 +11,7 @@ import notifications from "./notifications/index.ts";
 import rulesets from "./rulesets/index.ts";
 import shared from "./shared/index.tsx";
 
-const api = new Hono()
+export default new Hono()
   // Mount API routes with proper chaining for type safety
   .route("/shared", shared)
   .route("/activities", activities)
@@ -23,5 +23,3 @@ const api = new Hono()
   .route("/notifications", notifications)
   .route("/rulesets", rulesets)
   .route("/campaigns", campaigns);
-
-export default api;

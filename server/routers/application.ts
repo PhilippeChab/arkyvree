@@ -10,14 +10,14 @@ import { runWithRequestCache } from "@/server/database/index.ts";
 import { isProduction, isTest, readEnv } from "@/server/environment.ts";
 import { toJson } from "@/server/errors/index.ts";
 import { requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
-import apiRouter from "@/server/routers/api.tsx";
+import apiRouter from "@/server/routers/api/index.ts";
 import authenticationRouter from "@/server/routers/authentication/index.ts";
 import healthRouter from "@/server/routers/health.ts";
 import staticRouter from "@/server/routers/static.ts";
 import wsRouter from "@/server/routers/ws.ts";
 import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
 
-export type Application = typeof app;
+export type Application = typeof application;
 
 const isDev = !isProduction();
 
@@ -40,7 +40,7 @@ const enforceCanonicalHost = isProduction() && !!readEnv("APP_URL");
 const canonicalHost = enforceCanonicalHost ? new URL(readEnv("APP_URL")!).host : null;
 
 /** The session is set only on the routes behind the session middleware. */
-const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
+export const application = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
   // First, so whatever any later middleware or route throws reaches onError as an Error.
   .use("*", wrapNonErrors)
   .use("*", async (c, next) => {
@@ -111,4 +111,3 @@ const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
     const [error, code] = toJson(err);
     return c.json(error, code);
   });
-export const application = app;

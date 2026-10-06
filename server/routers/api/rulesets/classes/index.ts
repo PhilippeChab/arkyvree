@@ -10,7 +10,7 @@ import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import classLevels from "./levels/index.ts";
 import classSkills from "./skills/index.ts";
 
-const hdSchema = z.union([z.literal(4), z.literal(6), z.literal(8), z.literal(10), z.literal(12)], {
+const hitDie = z.union([z.literal(4), z.literal(6), z.literal(8), z.literal(10), z.literal(12)], {
   error: () => "Hit die must be one of: 4, 6, 8, 10, 12",
 });
 
@@ -56,7 +56,7 @@ export default new Hono<SessionContext>()
           .string()
           .optional()
           .transform((v) => v || null),
-        hd: hdSchema.optional(),
+        hd: hitDie.optional(),
       }),
     ),
     async (c) => {
@@ -76,7 +76,7 @@ export default new Hono<SessionContext>()
           .string()
           .optional()
           .transform((v) => v || null),
-        hd: hdSchema.optional(),
+        hd: hitDie.optional(),
         updatedAt: z.string().optional(),
       }),
     ),

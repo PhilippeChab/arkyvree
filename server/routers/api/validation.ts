@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { sanitizeEmail } from "./sanitize.ts";
+import { sanitizeEmail, sanitizeText } from "@/shared/text.ts";
+
 import { limitDefaultingTo } from "./schemaBuilders.ts";
 
 /** Standard page parameter: positive integer, defaults to 1 */
@@ -22,8 +23,11 @@ export const orderDirDesc = z.enum(["asc", "desc"]).default("desc");
 /** Ruleset entity sorting (name/createdAt/updatedAt, ascending) */
 export const entityOrderBy = z.enum(["name", "createdAt", "updatedAt"]).default("name");
 
-/** An email address, sanitized as it's stored. */
-export const sanitizedEmail = z.string().email().transform(sanitizeEmail);
+/** Text, sanitized as it's stored: a check chained to it (`sanitizedText.min(3)`) reads the sanitized text. */
+export const sanitizedText = z.string().overwrite(sanitizeText);
+
+/** An email address, sanitized as it's stored, then checked. */
+export const sanitizedEmail = z.string().overwrite(sanitizeEmail).email();
 
 /** Standard limit: 1–100, defaults to 10 */
 export const limit = limitDefaultingTo(10);

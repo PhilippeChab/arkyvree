@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { z } from "zod";
 
 import {
   authEmailRateLimit,
@@ -10,28 +11,27 @@ import {
   setSessionCookie,
   validate,
 } from "@/server/middlewares/index.ts";
+import { sanitizedEmail, sanitizedText } from "@/server/routers/api/validation.ts";
 import account from "@/server/routers/authentication/account/index.ts";
 import linkedAccounts from "@/server/routers/authentication/linkedAccounts/index.ts";
-import {
-  ForgotPasswordJson,
-  GoogleSignInJson,
-  ResendVerificationJson,
-  ResetPasswordJson,
-  SignInJson,
-  SignUpJson,
-  VerifyEmailJson,
-} from "@/server/routers/authentication/validation.ts";
+import { checkPasswordConfirmation, sanitizedPassword } from "@/server/routers/authentication/validation.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
 
 export default new Hono()
-  .post("/forgot-password", authRateLimit, authEmailRateLimit, validate("json", ForgotPasswordJson), async (c) => {
-    const body = c.req.valid("json");
-    await AuthenticationService.forgotPassword(body.emailAddress);
-    return c.json({ success: true }, 200);
-  })
-  .post("/google", authRateLimit, validate("json", GoogleSignInJson), async (c) => {
-    const body = c.req.valid("json");
-    const { session, user } = await AuthenticationService.signInWithGoogle(body.idToken, getSessionCookie(c));
+  .post(
+    "/forgot-password",
+    authRateLimit,
+    authEmailRateLimit,
+    validate("json", z.object({ emailAddress: sanitizedEmail })),
+    async (c) => {
+      const { emailAddress } = c.req.valid("json");
+      await AuthenticationService.forgotPassword(emailAddress);
+      return c.json({ success: true }, 200);
+    },
+  )
+  .post("/google", authRateLimit, validate("json", z.object({ idToken: z.string().min(1) })), async (c) => {
+    const { idToken } = c.req.valid("json");
+    const { session, user } = await AuthenticationService.signInWithGoogle(idToken, getSessionCookie(c));
     setSessionCookie(c, session.id);
     return c.json(user, 200);
   })
@@ -39,39 +39,71 @@ export default new Hono()
     "/resend-verification",
     authRateLimit,
     authEmailRateLimit,
-    validate("json", ResendVerificationJson),
+    validate("json", z.object({ emailAddress: sanitizedEmail })),
     async (c) => {
-      const body = c.req.valid("json");
-      await AuthenticationService.resendVerification(body.emailAddress);
+      const { emailAddress } = c.req.valid("json");
+      await AuthenticationService.resendVerification(emailAddress);
       return c.json({ success: true }, 200);
     },
   )
-  .post("/reset-password", authRateLimit, validate("json", ResetPasswordJson), async (c) => {
-    const body = c.req.valid("json");
-    await AuthenticationService.resetPassword(body.emailAddress, body.code, body.newPassword);
-    return c.json({ success: true }, 200);
-  })
-  .post("/sign-in", authRateLimit, validate("json", SignInJson), async (c) => {
-    const body = c.req.valid("json");
-    const { session, user } = await AuthenticationService.signIn(body.emailAddress, body.password, getSessionCookie(c));
-    setSessionCookie(c, session.id);
-    return c.json(user, 200);
-  })
-  .post("/sign-up", authRateLimit, authEmailRateLimit, validate("json", SignUpJson), async (c) => {
-    const body = c.req.valid("json");
-    await AuthenticationService.signUp(body.emailAddress, body.password);
-    return c.json({ message: "Verification email sent" }, 201);
-  })
-  .post("/verify-email", authRateLimit, validate("json", VerifyEmailJson), async (c) => {
-    const body = c.req.valid("json");
-    const { session, user } = await AuthenticationService.verifyEmail(
-      body.emailAddress,
-      body.code,
-      getSessionCookie(c),
-    );
-    setSessionCookie(c, session.id);
-    return c.json(user, 200);
-  })
+  .post(
+    "/reset-password",
+    authRateLimit,
+    validate(
+      "json",
+      z
+        .object({
+          emailAddress: sanitizedEmail,
+          code: sanitizedText,
+          newPassword: sanitizedPassword,
+          newPasswordConfirmation: sanitizedPassword,
+        })
+        .check(checkPasswordConfirmation("newPassword")),
+    ),
+    async (c) => {
+      const { emailAddress, code, newPassword } = c.req.valid("json");
+      await AuthenticationService.resetPassword(emailAddress, code, newPassword);
+      return c.json({ success: true }, 200);
+    },
+  )
+  .post(
+    "/sign-in",
+    authRateLimit,
+    validate("json", z.object({ emailAddress: sanitizedEmail, password: sanitizedText })),
+    async (c) => {
+      const { emailAddress, password } = c.req.valid("json");
+      const { session, user } = await AuthenticationService.signIn(emailAddress, password, getSessionCookie(c));
+      setSessionCookie(c, session.id);
+      return c.json(user, 200);
+    },
+  )
+  .post(
+    "/sign-up",
+    authRateLimit,
+    authEmailRateLimit,
+    validate(
+      "json",
+      z
+        .object({ emailAddress: sanitizedEmail, password: sanitizedPassword, passwordConfirmation: sanitizedPassword })
+        .check(checkPasswordConfirmation("password")),
+    ),
+    async (c) => {
+      const { emailAddress, password } = c.req.valid("json");
+      await AuthenticationService.signUp(emailAddress, password);
+      return c.json({ message: "Verification email sent" }, 201);
+    },
+  )
+  .post(
+    "/verify-email",
+    authRateLimit,
+    validate("json", z.object({ emailAddress: sanitizedEmail, code: sanitizedText })),
+    async (c) => {
+      const { emailAddress, code } = c.req.valid("json");
+      const { session, user } = await AuthenticationService.verifyEmail(emailAddress, code, getSessionCookie(c));
+      setSessionCookie(c, session.id);
+      return c.json(user, 200);
+    },
+  )
   .use(authSessionRateLimit)
   .use(sessionMiddleware)
   .route("/", account)

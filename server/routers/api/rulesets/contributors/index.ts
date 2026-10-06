@@ -13,8 +13,6 @@ import {
 } from "@/server/routers/api/validation.ts";
 import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 
-const contributorRoleSchema = z.enum(contributorRole.enumValues);
-
 export default new Hono<SessionContext>()
   .get("/contributors/invites/me", async (c) => {
     return c.json(await ContributorsService.getUserInvites(c.var.requestSession.userId), 200);
@@ -66,7 +64,7 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         email: sanitizedEmail,
-        role: contributorRoleSchema.default("Editor"),
+        role: z.enum(contributorRole.enumValues).default("Editor"),
       }),
     ),
     async (c) => {
@@ -85,7 +83,7 @@ export default new Hono<SessionContext>()
     validate(
       "json",
       z.object({
-        role: contributorRoleSchema,
+        role: z.enum(contributorRole.enumValues),
       }),
     ),
     async (c) => {

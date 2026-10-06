@@ -7,7 +7,7 @@ import { ActivitiesService } from "@/server/services/activities/index.ts";
 
 const targetParams = z.object({ targetTable: z.string(), targetId: z.string().uuid() });
 
-const activities = new Hono()
+export default new Hono()
   .use(sessionMiddleware)
   .get(
     "/",
@@ -24,19 +24,18 @@ const activities = new Hono()
       }),
     ),
     async (c) => {
-      const query = c.req.valid("query");
-
+      const { search, targetTable, type, orderBy, orderDir, limit, page } = c.req.valid("query");
       return c.json(
         await ActivitiesService.getActivities(
           c.var.requestSession,
           {
-            search: query.search,
-            targetTable: query.targetTable,
-            type: query.type,
-            orderBy: query.orderBy,
-            orderDir: query.orderDir,
+            search,
+            targetTable,
+            type,
+            orderBy,
+            orderDir,
           },
-          { limit: query.limit, page: query.page },
+          { limit, page },
         ),
         200,
       );
@@ -66,5 +65,3 @@ const activities = new Hono()
 
     return c.json({ url: value }, 200);
   });
-
-export default activities;

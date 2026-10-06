@@ -3,6 +3,7 @@ import { createMiddleware } from "hono/factory";
 
 import { isTest } from "@/server/environment.ts";
 import { TooManyRequestsError } from "@/server/errors/index.ts";
+import { sanitizeEmail } from "@/shared/text.ts";
 
 type KeyGenerator = NonNullable<Parameters<typeof rateLimiter>[0]["keyGenerator"]>;
 
@@ -22,7 +23,7 @@ async function emailKey(c: Parameters<KeyGenerator>[0]): Promise<string> {
   try {
     const body = await c.req.json();
     if (body && typeof body.emailAddress === "string") {
-      return `email:${body.emailAddress.toLowerCase()}`;
+      return `email:${sanitizeEmail(body.emailAddress)}`;
     }
   } catch {
     // no JSON body
