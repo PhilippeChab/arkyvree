@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { buildEntityTypeSchema } from "@/server/routers/api/validation.ts";
+import { buildEntityTypeSchema } from "@/server/routers/api/schemaBuilders.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES, CUSTOMIZATION_OWNER_TYPES } from "@/shared/customization/entities.ts";
 import { CHAINING_OPERATORS, MODIFIER_OPERATORS, REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 

@@ -1,4 +1,5 @@
 import { formatWithArticle } from "@/database/packages/dnd35/content/articles.ts";
+import { grantFeat } from "@/database/packages/dnd35/content/modifiers.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/content/raceProperties.ts";
 import { gte, lt } from "@/database/packages/dnd35/content/requirements.ts";
 import type { BondContent, ClassSeed, FeatSeed, RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
@@ -155,15 +156,6 @@ const ANIMAL_COMPANION_CLASS: ClassSeed = {
     [15, "Improved Evasion (Animal Companion)"],
   ],
 };
-
-function grantFeat(slug: string) {
-  return {
-    target: `feats.${slug}.possessed`,
-    operator: "set",
-    value: "true",
-    valueType: "boolean",
-  };
-}
 
 const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
   {

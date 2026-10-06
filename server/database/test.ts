@@ -13,8 +13,9 @@ import { Pool as PgPool } from "pg";
 import * as relations from "@/drizzle/relations.ts";
 import * as schema from "@/drizzle/schema.ts";
 import { clearRequestCache } from "@/server/database/requestCache.ts";
-import { readEnv } from "@/server/environment.ts";
 import { instrumentQueries } from "@/server/timing.ts";
+
+import { readTestDatabaseUrl } from "./testDatabaseUrl.ts";
 
 declare global {
   var __getTestDb: (() => Db | null) | undefined;
@@ -28,22 +29,8 @@ type Transaction = PgTransaction<
 
 type Db = typeof db | Transaction;
 
-// Safety check, before anything here connects (imports load first wherever they sit)
-if (!readEnv("DATABASE_URL")?.includes("test")) {
-  throw new Error(
-    "FATAL: Test database module loaded with non-test DATABASE_URL. " +
-      "This is a safety violation. Ensure DATABASE_URL contains 'test'.",
-  );
-}
-
-instrumentQueries();
-
-// Route to the per-worker DB when running under `bun test --parallel`.
-// BUN_TEST_WORKER_ID is 1-based. Falls back to the base URL for direct
-// single-file test runs (no --parallel, no worker ID set).
-const baseUrl = readEnv("DATABASE_URL")!;
-const workerId = readEnv("BUN_TEST_WORKER_ID");
-const connectionString = workerId ? baseUrl.replace(/\/([^/?]+)(\?|$)/, `/$1_w${workerId}$2`) : baseUrl;
+// Read first: anything but a test database stops the run before the pool below is built.
+const connectionString = readTestDatabaseUrl();
 const schemaWithRelations = { ...schema, ...relations };
 
 // Test database setup - use pg for manual transaction control
@@ -52,9 +39,6 @@ const _db = drizzlePg(pool as NodePgClient, { schema: schemaWithRelations });
 
 // Test database override state
 let _testDb: Db | null = null;
-
-// Register getter on global for index.ts to use
-globalThis.__getTestDb = () => _testDb;
 
 // DATABASE IMPLEMENTATION (used by index.ts in test env)
 export const db = new Proxy(_db, {
@@ -84,3 +68,8 @@ export async function withTransaction<T>(callback: (tx: Transaction) => Promise<
   clearRequestCache();
   return result;
 }
+
+instrumentQueries();
+
+// Register getter on global for index.ts to use
+globalThis.__getTestDb = () => _testDb;

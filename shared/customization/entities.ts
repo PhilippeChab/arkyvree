@@ -12,8 +12,6 @@ export type PropertyEntityType = (typeof PROPERTY_ENTITY_TYPES)[number];
 /** The ruleset entities a user customizes: their modifiers, requirements and properties. */
 export const CUSTOMIZABLE_ENTITY_TYPES = ["klass_levels", "klasses", "feats", "items", "powers", "races"] as const;
 
-const customizableEntityTypes = new Set<string>(CUSTOMIZABLE_ENTITY_TYPES);
-
 /** What a customization can belong to: a customizable entity, or a modifier, which has requirements of its own. */
 export const CUSTOMIZATION_OWNER_TYPES = [...CUSTOMIZABLE_ENTITY_TYPES, "modifiers"] as const;
 
@@ -31,7 +29,7 @@ export function buildCustomizationPath(entityType: CustomizationPageType, entity
 
 /** Whether entities of this type are customizable: they own modifiers (sourced by their own type), not only rows. */
 export function isCustomizableEntityType(entityType: string): entityType is CustomizableEntityType {
-  return customizableEntityTypes.has(entityType);
+  return CUSTOMIZABLE_ENTITY_TYPES.some((type) => type === entityType);
 }
 
 /** The entity type a customization page's URL segment names: "class-levels" a class level's, never "klass_levels". */

@@ -10,13 +10,11 @@ export function frameHeading(...extra: string[]): RegExp {
   return new RegExp(`^(${[...SITE_FRAME, ...extra].map(RegExp.escape).join("|")})`, "i");
 }
 
-const FRAME_HEADING = frameHeading();
-
 /**
  * A page's title heading: its first short h2 outside the site's frame (`frame`), else its second h2. None when it
  * has neither, so a page carrying only the site's heading isn't read as an entry.
  */
-export function contentHeading($: cheerio.CheerioAPI, frame = FRAME_HEADING) {
+export function contentHeading($: cheerio.CheerioAPI, frame = frameHeading()) {
   const h2s = $("h2").toArray();
   const title =
     h2s.find((el) => {
@@ -27,7 +25,7 @@ export function contentHeading($: cheerio.CheerioAPI, frame = FRAME_HEADING) {
 }
 
 /** A page's title: its content heading's text (`contentHeading`), or "" for a page without one. */
-export function pageTitle($: cheerio.CheerioAPI, frame = FRAME_HEADING): string {
+export function pageTitle($: cheerio.CheerioAPI, frame = frameHeading()): string {
   return contentHeading($, frame)?.text().trim() ?? "";
 }
 

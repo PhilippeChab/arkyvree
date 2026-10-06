@@ -3,30 +3,19 @@ import { persist } from "zustand/middleware";
 
 import { isRecord } from "@/shared/isRecord.ts";
 
-interface WarningPreference {
-  enabled: boolean;
-  suppressedThisSession: boolean;
-}
+import {
+  updateWarning,
+  WARNING_DEFAULTS,
+  WARNING_KEYS,
+  type WarningKey,
+  type WarningPreference,
+} from "./warningPreferences.ts";
 
 interface UserPreferencesState {
   warnings: Record<WarningKey, WarningPreference>;
   shouldWarn: (key: WarningKey) => boolean;
   setWarningEnabled: (key: WarningKey, enabled: boolean) => void;
   suppressWarningForSession: (key: WarningKey) => void;
-}
-
-export type WarningKey = (typeof WARNING_KEYS)[number];
-
-const WARNING_KEYS = ["abilityDecrease"] as const;
-
-const WARNING_DEFAULTS: Record<WarningKey, WarningPreference> = {
-  abilityDecrease: { enabled: true, suppressedThisSession: false },
-};
-
-function updateWarning(key: WarningKey, patch: Partial<WarningPreference>) {
-  return (state: UserPreferencesState): Pick<UserPreferencesState, "warnings"> => ({
-    warnings: { ...state.warnings, [key]: { ...state.warnings[key], ...patch } },
-  });
 }
 
 export const useUserPreferencesStore = create<UserPreferencesState>()(

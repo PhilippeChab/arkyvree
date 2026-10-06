@@ -15,6 +15,7 @@ export { LoadMoreButton } from "./LoadMoreButton.tsx";
 export { Modal } from "./Modal.tsx";
 export { faqTooltip } from "./faqTooltip.tsx";
 export { FaqHelpIcon } from "./FaqHelpIcon.tsx";
+export { HelpLabel } from "./HelpLabel.tsx";
 export { GoldDivider } from "./GoldDivider.tsx";
 export { PageActionButton } from "./PageActionButton.tsx";
 export { PageError } from "./PageError.tsx";

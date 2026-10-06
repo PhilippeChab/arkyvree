@@ -4,13 +4,13 @@ import { sql } from "drizzle-orm";
 
 import {
   COMPARED_TABLES,
-  CONTENT_TABLES,
   LABELLED_COLUMNS,
   pullTable,
   type Query,
   UNCOMPARED_TABLES,
 } from "@/scripts/ops/diff/content.ts";
 import { collectDiff, diffIsEmpty, renderSql } from "@/scripts/ops/diff/rows.ts";
+import { CONTENT_TABLES } from "@/scripts/ops/diff/tables.ts";
 import { db } from "@/server/database/index.ts";
 
 /** The columns that aren't content: a row's bookkeeping, and what scopes it (its ruleset, a user's own data). */

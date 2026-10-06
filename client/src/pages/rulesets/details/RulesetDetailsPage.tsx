@@ -48,7 +48,7 @@ import {
   ActionMenuItem,
   DetailPageHeader,
   DiceSpinner,
-  FaqHelpIcon,
+  HelpLabel,
   Modal,
   PageError,
   PageTransition,
@@ -108,15 +108,6 @@ function getStatusChip(status: RulesetDetail["status"]) {
         }
       />
     </Tooltip>
-  );
-}
-
-function HelpLabel({ label, help }: { label: string; help: string }) {
-  return (
-    <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-      {label}
-      <FaqHelpIcon text={help} />
-    </Box>
   );
 }
 

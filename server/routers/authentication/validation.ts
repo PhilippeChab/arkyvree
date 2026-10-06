@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { sanitizeEmail, sanitizeText } from "@/server/routers/api/validation.ts";
+import { sanitizeEmail, sanitizeText } from "@/server/routers/api/sanitize.ts";
 import { PASSWORD_MIN_LENGTH } from "@/shared/auth.ts";
 
 export const SignUpJson = z

@@ -2,25 +2,15 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import react from "@vitejs/plugin-react";
-import { createLogger, defineConfig, loadEnv, type UserConfig } from "vite";
+import { defineConfig, loadEnv, type UserConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+
+import { createQuietLogger } from "./scripts/vite/quietLogger.ts";
 
 // https://vitejs.dev/config/
 const apiPort = process.env.API_PORT || "8000";
 
-// Filter out the noisy /ws-proxy disconnect lines vite emits when a
-// playwright tab tears down: "ws proxy error: ... ECONNRESET" and
-// "ws proxy socket error: ... ECONNRESET". They are expected on
-// abrupt client disconnect, not actionable, and clutter the test
-// log. Anything else still surfaces normally.
-// https://github.com/vitejs/vite/issues/2974
-// https://github.com/vitejs/vite/issues/4794
-const filteredLogger = createLogger();
-const originalError = filteredLogger.error.bind(filteredLogger);
-filteredLogger.error = (msg, options) => {
-  if (/ws proxy (?:error|socket error)|ECONNRESET|EPIPE/.test(msg)) return;
-  originalError(msg, options);
-};
+const filteredLogger = createQuietLogger();
 
 const baseConfig: UserConfig = {
   root: "./client",

@@ -19,8 +19,8 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { confirmPasswordRules, emailRules, newPasswordRules } from "@/client/src/lib/validation.ts";
 import { DeleteAccountDialog, EmailChangeVerificationDialog } from "@/client/src/pages/profile/components/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import type { AuthUser } from "@/client/src/stores/authStore.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import type { AuthUser } from "@/client/src/stores/authUser.ts";
 
 interface ProfileFormData {
   username: string;

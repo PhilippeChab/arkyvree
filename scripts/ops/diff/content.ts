@@ -2,9 +2,8 @@
 // by a business key built from names, since every seed draws new ids. tests/scripts/ops/diff/content.test.ts changes
 // every column of every table below and checks the comparison sees it.
 
-import { collectDiff, diffIsEmpty, type IdentifiedRow, stripVolatile, type TableDiff } from "./rows.ts";
-
-type ContentTable = (typeof CONTENT_TABLES)[number];
+import { collectDiff, diffIsEmpty, type IdentifiedRow, keyed, stripVolatile, type TableDiff } from "./rows.ts";
+import { CONTENT_TABLES, type ContentTable } from "./tables.ts";
 
 /** Runs a query with positional parameters ($1…) and gives its rows, as pg's client does. */
 export type Query = <R extends Record<string, unknown>>(text: string, params?: unknown[]) => Promise<R[]>;
@@ -51,65 +50,11 @@ const OWNERS = `
              where k.ruleset_id = $1
                and klf.deleted_at is null and kl.deleted_at is null and k.deleted_at is null and f.deleted_at is null`;
 
-/** The tables scoped by their ruleset_id, compared field by field. */
-export const CONTENT_TABLES = [
-  "abilities",
-  "aptitudes",
-  "feats",
-  "items",
-  "klasses",
-  "languages",
-  "mechanics",
-  "powers",
-  "races",
-  "saves",
-  "skills",
-] as const;
-
-/** The columns compared by the names of the rows they reference, which SQL can't set back from a name. */
-export const LABELLED_COLUMNS: Record<string, string[]> = {
-  "rules.rulesets": RULESET_LISTS,
-  ...Object.fromEntries(Object.entries(REFERENCES).map(([table, columns]) => [`rules.${table}`, Object.keys(columns)])),
-};
-
-/** The tables nothing compares, and why. */
-export const UNCOMPARED_TABLES: Record<string, string> = {
-  "rules.content_packages": "its versions are compared as the package drift",
-  "rules.contributors": "who edits a ruleset is user data, which no seed writes",
-};
-
 /** Every entity a snapshot can name, as `<ruleset>: <name>`. */
 const ENTITY_LABELS = CONTENT_TABLES.map(
   (table) =>
     `select e.id, rs.name || ': ' || e.name as label from rules.${table} e join rules.rulesets rs on rs.id = e.ruleset_id`,
 ).join("\n  union all ");
-
-/** Rows read as their business keys alone: a link compared by what it joins. */
-function keyed<T>(rows: T[], key: (row: T) => string): IdentifiedRow[] {
-  return rows.map((row) => ({ bk: key(row), id: "", row: {} }));
-}
-
-/** A content table's rows in the ruleset, its references as `<ruleset>: <name>`. */
-async function pullContent(query: Query, table: ContentTable, rulesetId: string): Promise<IdentifiedRow[]> {
-  const rows = await query(`select * from rules.${table} where ruleset_id = $1 and deleted_at is null`, [rulesetId]);
-  for (const [column, referenced] of Object.entries(REFERENCES[table] ?? {})) {
-    const ids = [...new Set(rows.map((row) => row[column]).filter((id) => typeof id === "string"))];
-    const labels = new Map(
-      (
-        await query<{ id: string; label: string }>(
-          `select e.id, rs.name || ': ' || e.name as label
-             from rules.${referenced} e join rules.rulesets rs on rs.id = e.ruleset_id
-            where e.id = any($1)`,
-          [ids],
-        )
-      ).map((r) => [r.id, r.label]),
-    );
-    for (const row of rows) {
-      if (typeof row[column] === "string") row[column] = labels.get(row[column]) ?? "<unresolved>";
-    }
-  }
-  return rows.map((row) => ({ bk: String(row.name ?? row.id), id: String(row.id), row: stripVolatile(row) }));
-}
 
 /**
  * The tables compared by business key alone, each built from names on both sides: a link by what it joins (an
@@ -339,6 +284,47 @@ const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => 
   },
 ];
 
+/** The columns compared by the names of the rows they reference, which SQL can't set back from a name. */
+export const LABELLED_COLUMNS: Record<string, string[]> = {
+  "rules.rulesets": RULESET_LISTS,
+  ...Object.fromEntries(Object.entries(REFERENCES).map(([table, columns]) => [`rules.${table}`, Object.keys(columns)])),
+};
+
+/** The tables nothing compares, and why. */
+export const UNCOMPARED_TABLES: Record<string, string> = {
+  "rules.content_packages": "its versions are compared as the package drift",
+  "rules.contributors": "who edits a ruleset is user data, which no seed writes",
+};
+
+/** Every table compared, schema-qualified. */
+export const COMPARED_TABLES = [
+  "rules.rulesets",
+  ...CONTENT_TABLES.map((table) => `rules.${table}`),
+  ...KEYED_TABLES.map(({ table }) => table),
+];
+
+/** A content table's rows in the ruleset, its references as `<ruleset>: <name>`. */
+async function pullContent(query: Query, table: ContentTable, rulesetId: string): Promise<IdentifiedRow[]> {
+  const rows = await query(`select * from rules.${table} where ruleset_id = $1 and deleted_at is null`, [rulesetId]);
+  for (const [column, referenced] of Object.entries(REFERENCES[table] ?? {})) {
+    const ids = [...new Set(rows.map((row) => row[column]).filter((id) => typeof id === "string"))];
+    const labels = new Map(
+      (
+        await query<{ id: string; label: string }>(
+          `select e.id, rs.name || ': ' || e.name as label
+             from rules.${referenced} e join rules.rulesets rs on rs.id = e.ruleset_id
+            where e.id = any($1)`,
+          [ids],
+        )
+      ).map((r) => [r.id, r.label]),
+    );
+    for (const row of rows) {
+      if (typeof row[column] === "string") row[column] = labels.get(row[column]) ?? "<unresolved>";
+    }
+  }
+  return rows.map((row) => ({ bk: String(row.name ?? row.id), id: String(row.id), row: stripVolatile(row) }));
+}
+
 /** The ruleset's own row, the rulesets it lists (its ancestors, its extensions) by name. */
 async function pullRulesetRow(query: Query, rulesetId: string): Promise<IdentifiedRow[]> {
   const rows = await query(`select * from rules.rulesets where id = $1`, [rulesetId]);
@@ -353,13 +339,6 @@ async function pullRulesetRow(query: Query, rulesetId: string): Promise<Identifi
     return { bk: String(row.name), id: String(row.id), row: stripVolatile(row) };
   });
 }
-
-/** Every table compared, schema-qualified. */
-export const COMPARED_TABLES = [
-  "rules.rulesets",
-  ...CONTENT_TABLES.map((table) => `rules.${table}`),
-  ...KEYED_TABLES.map(({ table }) => table),
-];
 
 /** The system rulesets (the base rulesets and the published extensions), which seeds write, by name and base rules. */
 async function systemRulesets(query: Query) {

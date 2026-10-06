@@ -10,7 +10,7 @@ import { Pool } from "pg";
 import * as relations from "@/drizzle/relations.ts";
 import * as schema from "@/drizzle/schema.ts";
 import { clearRequestCache } from "@/server/database/requestCache.ts";
-import { readEnv } from "@/server/environment.ts";
+import { readEnv, readRequiredEnv } from "@/server/environment.ts";
 import { instrumentQueries } from "@/server/timing.ts";
 
 export type Db = typeof db | Transaction;
@@ -21,17 +21,9 @@ export type Transaction = PgTransaction<
   ExtractTablesWithRelations<typeof schemaWithRelations>
 >;
 
-instrumentQueries();
-
-const connectionString = readEnv("DATABASE_URL");
-
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not set");
-}
-
 const schemaWithRelations = { ...schema, ...relations };
 const pool = new Pool({
-  connectionString,
+  connectionString: readRequiredEnv("DATABASE_URL"),
   max: parseInt(readEnv("DB_POOL_MAX") || "20", 10),
   // Set DB_POOL_MIN to keep a floor of connections warm (character reads
   // dispatch 4+ parallel queries; a warm pool avoids paying ~200-300ms per
@@ -48,10 +40,6 @@ const pool = new Pool({
   query_timeout: 10000,
 });
 
-pool.on("error", (err) => {
-  console.error("[db] Unexpected pool client error:", err.message);
-});
-
 export const db = drizzle(pool as NodePgClient, { schema: schemaWithRelations });
 
 export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
@@ -61,3 +49,10 @@ export async function withTransaction<T>(callback: (tx: Transaction) => Promise<
   clearRequestCache();
   return result;
 }
+
+// Times every query, the pool's and its clients' (it patches their prototypes).
+instrumentQueries();
+
+pool.on("error", (err) => {
+  console.error("[db] Unexpected pool client error:", err.message);
+});

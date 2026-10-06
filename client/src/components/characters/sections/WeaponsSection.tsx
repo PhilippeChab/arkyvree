@@ -6,8 +6,8 @@ import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { buildAttackRows, describeWeaponSlot } from "@/shared/dnd3.5/weaponAttacks.ts";
 
 import type { SheetCombat } from "./dnd3.5/index.ts";
-import { shownWeaponSet } from "./equipment.ts";
 import { SheetSection } from "./SheetSection.tsx";
+import { shownWeaponSet } from "./weaponSets.ts";
 
 type WeaponSet = CharacterDetail["combat"]["weaponsets"][string];
 type WeaponSlot = NonNullable<WeaponSet["mainhand"]>;

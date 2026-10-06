@@ -52,61 +52,9 @@ import { onImports, targetOf } from "./imports.mjs";
 import { startsWithVerb } from "./memberOrder.mjs";
 import { isToolWritten, repoPath, rootOf } from "./paths.mjs";
 
-const noParentImports = {
-  meta: { type: "suggestion", fixable: "code" },
-  create(context) {
-    const file = repoPath(context.filename);
-    // Node loads lint/'s plugins as they are, without the `@/` alias the app's bundlers resolve.
-    if (file.startsWith("lint/")) return {};
-    return onImports((node, spec) => {
-      if (!spec.startsWith("../")) return;
-      const fixed = `@/${targetOf(file, spec)}`;
-      context.report({
-        node: node.source,
-        message: `Import another folder's module through \`@/\`: \`${fixed}\`, not \`${spec}\`.`,
-        fix: (fixer) => fixer.replaceText(node.source, JSON.stringify(fixed)),
-      });
-    });
-  },
-};
-
 const HELPER_TREES = ["server/", "shared/", "client/", "tests/"];
 /** A module or folder named for no particular thing: `helpers.ts`, `utils/`. */
 const GRAB_BAG = /(^|\/)(helpers|utils?)(\.tsx?$|\/)/;
-
-const noHelpersModules = {
-  meta: { type: "suggestion" },
-  create(context) {
-    const file = repoPath(context.filename);
-    if (!HELPER_TREES.some((t) => file.startsWith(t)) || !GRAB_BAG.test(file)) return {};
-    return {
-      Program(node) {
-        context.report({
-          node,
-          message:
-            "A helper is a module named for what it does (`editableCharacter.ts`, `text.ts`), never a `helpers` or `utils`.",
-        });
-      },
-    };
-  },
-};
-
-const repositoryInstances = {
-  meta: { type: "problem" },
-  create(context) {
-    if (repoPath(context.filename) === "server/repositories/index.ts") return {};
-    return {
-      NewExpression(node) {
-        if (node.callee.type === "Identifier" && node.callee.name.endsWith("Repository")) {
-          context.report({
-            node,
-            message: `Use the shared instance from \`@/server/repositories/index.ts\`, which the request cache wraps: never \`new ${node.callee.name}()\`.`,
-          });
-        }
-      },
-    };
-  },
-};
 
 const ROUTE_METHODS = new Set(["get", "post", "put", "patch", "delete", "route"]);
 const CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
@@ -123,100 +71,6 @@ const CONCURRENT = new Set(["all", "allSettled", "any", "race"]);
 // An `eslint-disable` / `oxlint-disable` comment's text: its rules, then its reason after `--`.
 const DIRECTIVE = /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
 
-const directiveReasons = {
-  meta: { type: "suggestion" },
-  create(context) {
-    return {
-      Program(program) {
-        const text = context.sourceCode.text;
-        for (const comment of context.sourceCode.getAllComments()) {
-          if (!DIRECTIVE.test(comment.value)) continue;
-          // A block comment's reason may wrap to its next line.
-          if (/--\s*\S/.test(comment.value)) continue;
-          const line = text.slice(0, comment.start).split("\n").length;
-          context.report({
-            node: program,
-            message: `Line ${line}: a comment that turns a rule off says why, after \`--\` (\`// oxlint-disable-next-line rule -- why\`).`,
-          });
-        }
-      },
-    };
-  },
-};
-
-const environment = {
-  meta: { type: "problem" },
-  create(context) {
-    const file = repoPath(context.filename);
-    if (!/^(server|shared)\//.test(file) || file === "server/environment.ts") return {};
-    return {
-      MemberExpression(node) {
-        const { object, property } = node;
-        if (object.type !== "Identifier" || property.type !== "Identifier" || property.name !== "env") return;
-        if (object.name !== "process" && object.name !== "Bun") return;
-        context.report({
-          node,
-          message: `Read the environment through \`@/server/environment.ts\` (\`readEnv\`, \`isProduction\`…), which lists every variable: not \`${object.name}.env\`.`,
-        });
-      },
-    };
-  },
-};
-
-const orderThroughRepository = {
-  meta: { type: "suggestion" },
-  create(context) {
-    const file = repoPath(context.filename);
-    if (!file.startsWith("server/") || file === "server/repositories/BaseRepository.ts") return {};
-    const message = "Sort with the repository's `this.orderBy(column, direction)`, not drizzle's `asc` / `desc`.";
-    const namespaces = new Set();
-    return {
-      ImportDeclaration(node) {
-        if (node.source.value !== "drizzle-orm") return;
-        for (const s of node.specifiers ?? []) {
-          if (s.type === "ImportSpecifier" && ["asc", "desc"].includes(s.imported.name))
-            context.report({ node: s, message });
-          if (s.type === "ImportNamespaceSpecifier") namespaces.add(s.local.name);
-        }
-      },
-      // import * as orm from "drizzle-orm"; orm.desc(…)
-      MemberExpression(node) {
-        if (
-          node.object.type === "Identifier" &&
-          namespaces.has(node.object.name) &&
-          ["asc", "desc"].includes(node.property.name)
-        ) {
-          context.report({ node, message });
-        }
-      },
-    };
-  },
-};
-
-const sharedRuntime = {
-  meta: { type: "problem" },
-  create(context) {
-    if (!repoPath(context.filename).startsWith("shared/")) return {};
-    return {
-      ...onImports((node, spec) => {
-        if (spec === "bun" || spec.startsWith("bun:") || isBuiltin(spec)) {
-          context.report({ node, message: `\`shared/\` runs in the client too: it doesn't import \`${spec}\`.` });
-        }
-      }),
-      // Bun.file(…) needs no import.
-      Identifier(node) {
-        const parent = node.parent;
-        const isName =
-          (parent?.type === "MemberExpression" && parent.property === node && !parent.computed) ||
-          (parent?.type === "Property" && parent.key === node && !parent.computed);
-        if (node.name === "Bun" && !isName) {
-          context.report({ node, message: "`shared/` runs in the client too: it doesn't use `Bun`." });
-        }
-      },
-    };
-  },
-};
-
 /** Each test area and the source tree it mirrors. */
 const TEST_MIRRORS = [
   ["tests/services/", "server/services/"],
@@ -232,146 +86,195 @@ const TEST_MIRRORS = [
   ["tests/scripts/", "scripts/"],
 ];
 
-// What a tool writes keeps the tool's code: the parser's output, drizzle's schema and relations
-
-const includeOrder = {
-  meta: { type: "suggestion", fixable: "code" },
-  create(context) {
-    return {
-      CallExpression(call) {
-        if (call.callee.type !== "Identifier" || call.callee.name !== "include") return;
-        const concerns = call.arguments.slice(1);
-        if (concerns.length < 2 || concerns.some((c) => c.type !== "Identifier")) return;
-        const names = concerns.map((c) => c.name);
-        const sorted = [...names].sort((a, b) => a.localeCompare(b));
-        if (names.every((name, i) => name === sorted[i])) return;
+function createDirectiveReasons(context) {
+  return {
+    Program(program) {
+      const text = context.sourceCode.text;
+      for (const comment of context.sourceCode.getAllComments()) {
+        if (!DIRECTIVE.test(comment.value)) continue;
+        // A block comment's reason may wrap to its next line.
+        if (/--\s*\S/.test(comment.value)) continue;
+        const line = text.slice(0, comment.start).split("\n").length;
         context.report({
-          node: concerns[names.findIndex((name, i) => name !== sorted[i])],
-          message: `A class includes its concerns by name, after its base: \`${sorted.join(", ")}\`.`,
-          fix: (fixer) => concerns.map((c, i) => fixer.replaceText(c, sorted[i])),
+          node: program,
+          message: `Line ${line}: a comment that turns a rule off says why, after \`--\` (\`// oxlint-disable-next-line rule -- why\`).`,
         });
-      },
-    };
-  },
-};
-
-const policyShape = {
-  meta: { type: "problem" },
-  create(context) {
-    const file = repoPath(context.filename);
-    if (!file.startsWith("server/")) return {};
-    const inPolicies = file.startsWith("server/services/policies/");
-    return {
-      MethodDefinition(node) {
-        if (!inPolicies || node.key.type !== "Identifier" || node.key.name === "for") return;
-        if (node.static) {
-          context.report({
-            node: node.key,
-            message: "A policy's only static is `for`, which builds it: a check is the policy's (`policy.canRead()`).",
-          });
-        } else if (node.value.async) {
-          context.report({
-            node: node.key,
-            message:
-              "A policy's check is sync: `for` loads the standing it reads, and the service passes it the rest " +
-              "(`canDeleteEntity({ inUse })`).",
-          });
-        }
-      },
-      NewExpression(node) {
-        if (inPolicies || node.callee.type !== "Identifier" || !node.callee.name.endsWith("Policy")) return;
-        context.report({
-          node,
-          message: `Build a policy with \`${node.callee.name}.for(db, session, entity)\`: it loads the session's standing on it.`,
-        });
-      },
-    };
-  },
-};
-
-/** A route's path, written as a string or a template literal (its fixed parts). */
-function pathOf(node) {
-  if (node?.type === "Literal" && typeof node.value === "string") return node.value;
-  if (node?.type === "TemplateLiteral") return node.quasis.map((q) => q.value.cooked).join("");
-  return null;
+      }
+    },
+  };
 }
 
-const routeConventions = {
-  meta: { type: "problem" },
-  create(context) {
-    const file = repoPath(context.filename);
-    if (!file.startsWith("server/")) return {};
-    const inRouters = file.startsWith("server/routers/");
-    const inApi = file.startsWith("server/routers/api/");
-    return {
-      // .get("/:id/feats/:featId", …)
-      CallExpression(node) {
-        if (!inRouters) return;
-        const callee = node.callee;
-        // zValidator("param", featParams): the params a route's path names, by a name, never a schema written there.
-        if (
-          callee.type === "Identifier" &&
-          callee.name === "zValidator" &&
-          node.arguments[0]?.value === "param" &&
-          node.arguments[1]?.type !== "Identifier"
-        ) {
-          context.report({
-            node: node.arguments[1],
-            message:
-              "A route's params are a named schema (`idParam`, `featParams`): from a `validation.ts` when several " +
-              "routers use it, declared at the top of the router otherwise.",
-          });
-          return;
-        }
-        if (callee.type !== "MemberExpression") return;
-        // c.json(body) → c.json(body, 200): a route says its status, which its types list.
-        if (
-          callee.object.type === "Identifier" &&
-          callee.object.name === "c" &&
-          callee.property.name === "json" &&
-          node.arguments.length < 2
-        ) {
-          context.report({ node, message: "A route answers with its status: `c.json(body, status)`." });
-          return;
-        }
-        // .get("/:id", …), .route("/:id", sub), .on("GET", "/:id", …)
-        const route = ROUTE_METHODS.has(callee.property.name)
-          ? node.arguments[0]
-          : callee.property.name === "on"
-            ? node.arguments[1]
-            : null;
-        const routePath = pathOf(route);
-        if (!routePath?.startsWith("/")) return;
-        for (const segment of routePath.split("/")) {
-          if (segment === "") continue;
-          const param = segment.startsWith(":") ? segment.slice(1).replace(/[{?].*$/, "") : null;
-          if (param !== null && !CAMEL_CASE.test(param)) {
-            context.report({ node: route, message: `A path param is camelCase: \`:${param}\` isn't.` });
-          } else if (param === null && !FIXED_SEGMENT.test(segment)) {
-            context.report({ node: route, message: `A path's fixed segment is kebab-case: \`${segment}\` isn't.` });
-          }
-        }
-      },
-      // A try that only cleans up (`finally`) lets the error through.
-      TryStatement(node) {
-        if (!inApi || !node.handler) return;
+function createEnvironment(context) {
+  const file = repoPath(context.filename);
+  if (!/^(server|shared)\//.test(file) || file === "server/environment.ts") return {};
+  return {
+    MemberExpression(node) {
+      const { object, property } = node;
+      if (object.type !== "Identifier" || property.type !== "Identifier" || property.name !== "env") return;
+      if (object.name !== "process" && object.name !== "Bun") return;
+      context.report({
+        node,
+        message: `Read the environment through \`@/server/environment.ts\` (\`readEnv\`, \`isProduction\`…), which lists every variable: not \`${object.name}.env\`.`,
+      });
+    },
+  };
+}
+
+function createNoHelpersModules(context) {
+  const file = repoPath(context.filename);
+  if (!HELPER_TREES.some((t) => file.startsWith(t)) || !GRAB_BAG.test(file)) return {};
+  return {
+    Program(node) {
+      context.report({
+        node,
+        message:
+          "A helper is a module named for what it does (`editableCharacter.ts`, `text.ts`), never a `helpers` or `utils`.",
+      });
+    },
+  };
+}
+
+function createNoParentImports(context) {
+  const file = repoPath(context.filename);
+  // Node loads lint/'s plugins as they are, without the `@/` alias the app's bundlers resolve.
+  if (file.startsWith("lint/")) return {};
+  return onImports((node, spec) => {
+    if (!spec.startsWith("../")) return;
+    const fixed = `@/${targetOf(file, spec)}`;
+    context.report({
+      node: node.source,
+      message: `Import another folder's module through \`@/\`: \`${fixed}\`, not \`${spec}\`.`,
+      fix: (fixer) => fixer.replaceText(node.source, JSON.stringify(fixed)),
+    });
+  });
+}
+
+function createOrderThroughRepository(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("server/") || file === "server/repositories/BaseRepository.ts") return {};
+  const message = "Sort with the repository's `this.orderBy(column, direction)`, not drizzle's `asc` / `desc`.";
+  const namespaces = new Set();
+  return {
+    ImportDeclaration(node) {
+      if (node.source.value !== "drizzle-orm") return;
+      for (const s of node.specifiers ?? []) {
+        if (s.type === "ImportSpecifier" && ["asc", "desc"].includes(s.imported.name))
+          context.report({ node: s, message });
+        if (s.type === "ImportNamespaceSpecifier") namespaces.add(s.local.name);
+      }
+    },
+    // import * as orm from "drizzle-orm"; orm.desc(…)
+    MemberExpression(node) {
+      if (
+        node.object.type === "Identifier" &&
+        namespaces.has(node.object.name) &&
+        ["asc", "desc"].includes(node.property.name)
+      ) {
+        context.report({ node, message });
+      }
+    },
+  };
+}
+
+function createRepositoryInstances(context) {
+  if (repoPath(context.filename) === "server/repositories/index.ts") return {};
+  return {
+    NewExpression(node) {
+      if (node.callee.type === "Identifier" && node.callee.name.endsWith("Repository")) {
         context.report({
           node,
-          message: "A route lets an error reach the app's `onError`, which answers in the API's envelope: no try.",
+          message: `Use the shared instance from \`@/server/repositories/index.ts\`, which the request cache wraps: never \`new ${node.callee.name}()\`.`,
         });
-      },
-      ...onImports((node, spec) => {
-        if (spec === "@hono/zod-validator" && !file.startsWith("server/middlewares/")) {
-          context.report({
-            node,
-            message:
-              "Validate with `zValidator` from `@/server/middlewares/index.ts`: it answers in the API's envelope.",
-          });
-        }
-      }),
-    };
-  },
-};
+      }
+    },
+  };
+}
+
+function createSharedRuntime(context) {
+  if (!repoPath(context.filename).startsWith("shared/")) return {};
+  return {
+    ...onImports((node, spec) => {
+      if (spec === "bun" || spec.startsWith("bun:") || isBuiltin(spec)) {
+        context.report({ node, message: `\`shared/\` runs in the client too: it doesn't import \`${spec}\`.` });
+      }
+    }),
+    // Bun.file(…) needs no import.
+    Identifier(node) {
+      const parent = node.parent;
+      const isName =
+        (parent?.type === "MemberExpression" && parent.property === node && !parent.computed) ||
+        (parent?.type === "Property" && parent.key === node && !parent.computed);
+      if (node.name === "Bun" && !isName) {
+        context.report({ node, message: "`shared/` runs in the client too: it doesn't use `Bun`." });
+      }
+    },
+  };
+}
+
+// What a tool writes keeps the tool's code: the parser's output, drizzle's schema and relations
+
+/** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
+function isConcern(fn) {
+  return (
+    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
+    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
+  );
+}
+
+/** Whether a type is `Session`, or a union with it (`Session | null`). */
+function isSessionType(type) {
+  if (type?.type === "TSUnionType") return type.types.some(isSessionType);
+  return type?.type === "TSTypeReference" && type.typeName.type === "Identifier" && type.typeName.name === "Session";
+}
+
+function createIncludeOrder(context) {
+  return {
+    CallExpression(call) {
+      if (call.callee.type !== "Identifier" || call.callee.name !== "include") return;
+      const concerns = call.arguments.slice(1);
+      if (concerns.length < 2 || concerns.some((c) => c.type !== "Identifier")) return;
+      const names = concerns.map((c) => c.name);
+      const sorted = [...names].sort((a, b) => a.localeCompare(b));
+      if (names.every((name, i) => name === sorted[i])) return;
+      context.report({
+        node: concerns[names.findIndex((name, i) => name !== sorted[i])],
+        message: `A class includes its concerns by name, after its base: \`${sorted.join(", ")}\`.`,
+        fix: (fixer) => concerns.map((c, i) => fixer.replaceText(c, sorted[i])),
+      });
+    },
+  };
+}
+
+function createPolicyShape(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("server/")) return {};
+  const inPolicies = file.startsWith("server/services/policies/");
+  return {
+    MethodDefinition(node) {
+      if (!inPolicies || node.key.type !== "Identifier" || node.key.name === "for") return;
+      if (node.static) {
+        context.report({
+          node: node.key,
+          message: "A policy's only static is `for`, which builds it: a check is the policy's (`policy.canRead()`).",
+        });
+      } else if (node.value.async) {
+        context.report({
+          node: node.key,
+          message:
+            "A policy's check is sync: `for` loads the standing it reads, and the service passes it the rest " +
+            "(`canDeleteEntity({ inUse })`).",
+        });
+      }
+    },
+    NewExpression(node) {
+      if (inPolicies || node.callee.type !== "Identifier" || !node.callee.name.endsWith("Policy")) return;
+      context.report({
+        node,
+        message: `Build a policy with \`${node.callee.name}.for(db, session, entity)\`: it loads the session's standing on it.`,
+      });
+    },
+  };
+}
 
 /** The calls in `node`'s subtree, itself included. */
 function* callsIn(node) {
@@ -383,211 +286,6 @@ function* callsIn(node) {
     }
   }
 }
-
-/** A parameter's binding: `session: Session`, a constructor's `private session: Session`, or one with a default. */
-function parameter(param) {
-  let binding = param.type === "TSParameterProperty" ? param.parameter : param;
-  if (binding.type === "AssignmentPattern") binding = binding.left;
-  return binding.type === "Identifier" ? binding : null;
-}
-
-/** Whether `name` is a parameter of a function `node` sits in: a handle it's given, which may be a transaction. */
-function isParameterOf(node, name) {
-  for (let p = node.parent; p; p = p.parent) {
-    if (p.params?.some((param) => parameter(param)?.name === name)) return true;
-  }
-  return false;
-}
-
-const writesInTransactions = {
-  meta: { type: "problem" },
-  create(context) {
-    const file = repoPath(context.filename);
-    if (!file.startsWith("server/") || /^server\/(repositories|database)\//.test(file)) return {};
-    // The repositories' shared instances this file imports.
-    const repositories = new Set();
-    return {
-      ImportDeclaration(node) {
-        if (!String(node.source.value).startsWith("@/server/repositories/")) return;
-        for (const specifier of node.specifiers) {
-          if (specifier.type === "ImportSpecifier") repositories.add(specifier.local.name);
-        }
-      },
-      CallExpression(node) {
-        const callee = node.callee;
-        if (callee.type !== "MemberExpression" || callee.object.type !== "Identifier") return;
-        if (callee.object.name === "Promise" && CONCURRENT.has(callee.property.name) && node.arguments[0]) {
-          const onTransaction = [...callsIn(node.arguments[0])].some((call) => {
-            const handle = call.arguments[0];
-            if (handle?.type !== "Identifier") return false;
-            if (handle.name === "tx") return true;
-            const isRepository = call.callee.type === "MemberExpression" && repositories.has(call.callee.object.name);
-            return isRepository && isParameterOf(call, handle.name);
-          });
-          if (onTransaction) {
-            context.report({
-              node,
-              message:
-                "A transaction runs one query at a time, on its one connection: await these in turn, not in `Promise.all` (pg queues them, and pg@9 throws).",
-            });
-          }
-          return;
-        }
-        if (!repositories.has(callee.object.name) || callee.property.type !== "Identifier") return;
-        const method = callee.property.name;
-        if (!WRITE_VERBS.some((verb) => startsWithVerb(method, verb))) return;
-        const handle = node.arguments[0];
-        if (handle?.type === "Identifier" && handle.name === "tx") return;
-        context.report({
-          node: handle ?? node,
-          message: `\`${callee.object.name}.${method}\` writes: give it a transaction's handle, \`tx\` (\`withTransaction(async (tx) => …)\`), not the shared \`db\`.`,
-        });
-      },
-    };
-  },
-};
-
-/** Whether a type is `Session`, or a union with it (`Session | null`). */
-function isSessionType(type) {
-  if (type?.type === "TSUnionType") return type.types.some(isSessionType);
-  return type?.type === "TSTypeReference" && type.typeName.type === "Identifier" && type.typeName.name === "Session";
-}
-
-const sessionParam = {
-  meta: { type: "suggestion" },
-  create(context) {
-    if (!repoPath(context.filename).startsWith("server/")) return {};
-    const check = (fn) => {
-      for (const param of fn.params) {
-        const binding = parameter(param);
-        if (isSessionType(binding?.typeAnnotation?.typeAnnotation) && !["session", "_session"].includes(binding.name)) {
-          context.report({
-            node: binding,
-            message: `A \`Session\` parameter is named \`session\`, not \`${binding.name}\`.`,
-          });
-        }
-      }
-    };
-    return {
-      FunctionDeclaration: check,
-      FunctionExpression: check,
-      ArrowFunctionExpression: check,
-      // An abstract method's or an overload's signature.
-      TSEmptyBodyFunctionExpression: check,
-      TSDeclareFunction: check,
-    };
-  },
-};
-
-/**
- * Every module under `tree` (a repo path), by its name without the extension: `FeatsService` → its paths. Read again
- * for each test file, not cached: an editor's language server lints for as long as it runs, and a module added since
- * must count.
- */
-function modulesIn(root, tree) {
-  const byName = new Map();
-  const walk = (dir) => {
-    if (!fs.existsSync(path.join(root, dir))) return;
-    for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
-      const rel = `${dir}${entry.name}`;
-      if (entry.isDirectory()) walk(`${rel}/`);
-      else if (/\.(tsx?|mjs)$/.test(entry.name) && !/\.d\.m?ts$/.test(entry.name)) {
-        const name = entry.name.replace(/\.(tsx?|mjs)$/, "");
-        byName.set(name, [...(byName.get(name) ?? []), rel]);
-      }
-    }
-  };
-  walk(tree);
-  return byName;
-}
-
-const testPlacement = {
-  meta: { type: "suggestion" },
-  create(context) {
-    const file = repoPath(context.filename);
-    const mirror = TEST_MIRRORS.find(([tests]) => file.startsWith(tests));
-    const extension = /\.test\.tsx?$/.exec(file)?.[0];
-    if (!mirror || !extension) return {};
-    const [tests, tree] = mirror;
-    const name = path.posix.basename(file, extension);
-    const mirrored = `${tree}${path.posix.dirname(file.slice(tests.length))}/`.replace(/\/\.\/$/, "/");
-    const modules = modulesIn(rootOf(context.filename), tree).get(name);
-    return {
-      Program(node) {
-        if (modules) {
-          if (modules.some((m) => path.posix.dirname(m) + "/" === mirrored)) return;
-          const at = modules.map((m) =>
-            `${tests}${path.posix.dirname(m.slice(tree.length))}/${name}.test.ts`.replace("/./", "/"),
-          );
-          context.report({
-            node,
-            message: `A test named after \`${name}\` sits at its module's mirror: ${at.join(" or ")}.`,
-          });
-        } else if (/(Service|Policy|Repository)$/.test(name)) {
-          context.report({
-            node,
-            message: `\`${name}.test.ts\` is named after a module, but there's no \`${name}\` in ${tree}.`,
-          });
-        }
-      },
-    };
-  },
-};
-
-/** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
-function isConcern(fn) {
-  return (
-    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
-    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
-  );
-}
-
-/**
- * The `-ing` forms a third-person verb can take: `Archives` → `Archiving`, `Stars` → `Starring`, `Scopes` → `Scoping`,
- * `Applies` → `Applying`.
- */
-function gerunds(verb) {
-  // Applies → Applying
-  if (verb.endsWith("ies")) return [`${verb.slice(0, -3)}ying`];
-  const base = /(ch|sh|ss|x|z)es$/.test(verb) ? verb.slice(0, -2) : verb.slice(0, -1);
-  return [`${base}ing`, `${base.replace(/e$/, "")}ing`, `${base}${base.at(-1)}ing`];
-}
-
-const concernShape = {
-  meta: { type: "suggestion" },
-  create(context) {
-    const file = repoPath(context.filename);
-    return {
-      FunctionDeclaration(fn) {
-        if (!fn.id || !isConcern(fn) || fn.parent?.type !== "ExportNamedDeclaration") return;
-        const name = fn.id.name;
-        if (path.posix.basename(file).replace(/\.tsx?$/, "") !== name) {
-          context.report({ node: fn.id, message: `A concern sits in a file of its name: \`${name}.ts\`.` });
-        }
-        const [verb, rest] = [/^[A-Z][a-z]*/.exec(name)?.[0] ?? name, name.replace(/^[A-Z][a-z]*/, "")];
-        const allowed = [`With${name}`, ...(verb.endsWith("s") ? gerunds(verb).map((g) => g + rest) : [])];
-        for (const statement of fn.body.body) {
-          if (statement.type !== "ClassDeclaration") continue;
-          if (!allowed.includes(statement.id.name)) {
-            context.report({
-              node: statement.id,
-              message: `A concern's class is named for what it adds: \`${allowed.slice(1).join("` or `") || allowed[0]}\` (a verb, \`Archives\` → \`Archiving\`) or \`With${name}\` (a noun, \`ArmorClass\` → \`WithArmorClass\`), not \`${statement.id.name}\`.`,
-            });
-          }
-          for (const member of statement.body.body) {
-            if (member.type === "PropertyDefinition" && !member.declare) {
-              context.report({
-                node: member,
-                message:
-                  "A concern adds methods, never state: its class holds no field (the state goes in a base it builds on).",
-              });
-            }
-          }
-        }
-      },
-    };
-  },
-};
 
 /** A const's arrow or function expression written as the function declaration it is. */
 function declarationText(text, statement, declarator) {
@@ -626,6 +324,265 @@ function declarationText(text, statement, declarator) {
   };
 }
 
+/**
+ * The `-ing` forms a third-person verb can take: `Archives` → `Archiving`, `Stars` → `Starring`, `Scopes` → `Scoping`,
+ * `Applies` → `Applying`.
+ */
+function gerunds(verb) {
+  // Applies → Applying
+  if (verb.endsWith("ies")) return [`${verb.slice(0, -3)}ying`];
+  const base = /(ch|sh|ss|x|z)es$/.test(verb) ? verb.slice(0, -2) : verb.slice(0, -1);
+  return [`${base}ing`, `${base.replace(/e$/, "")}ing`, `${base}${base.at(-1)}ing`];
+}
+
+function createConcernShape(context) {
+  const file = repoPath(context.filename);
+  return {
+    FunctionDeclaration(fn) {
+      if (!fn.id || !isConcern(fn) || fn.parent?.type !== "ExportNamedDeclaration") return;
+      const name = fn.id.name;
+      if (path.posix.basename(file).replace(/\.tsx?$/, "") !== name) {
+        context.report({ node: fn.id, message: `A concern sits in a file of its name: \`${name}.ts\`.` });
+      }
+      const [verb, rest] = [/^[A-Z][a-z]*/.exec(name)?.[0] ?? name, name.replace(/^[A-Z][a-z]*/, "")];
+      const allowed = [`With${name}`, ...(verb.endsWith("s") ? gerunds(verb).map((g) => g + rest) : [])];
+      for (const statement of fn.body.body) {
+        if (statement.type !== "ClassDeclaration") continue;
+        if (!allowed.includes(statement.id.name)) {
+          context.report({
+            node: statement.id,
+            message: `A concern's class is named for what it adds: \`${allowed.slice(1).join("` or `") || allowed[0]}\` (a verb, \`Archives\` → \`Archiving\`) or \`With${name}\` (a noun, \`ArmorClass\` → \`WithArmorClass\`), not \`${statement.id.name}\`.`,
+          });
+        }
+        for (const member of statement.body.body) {
+          if (member.type === "PropertyDefinition" && !member.declare) {
+            context.report({
+              node: member,
+              message:
+                "A concern adds methods, never state: its class holds no field (the state goes in a base it builds on).",
+            });
+          }
+        }
+      }
+    },
+  };
+}
+
+/**
+ * Every module under `tree` (a repo path), by its name without the extension: `FeatsService` → its paths. Read again
+ * for each test file, not cached: an editor's language server lints for as long as it runs, and a module added since
+ * must count.
+ */
+function modulesIn(root, tree) {
+  const byName = new Map();
+  const walk = (dir) => {
+    if (!fs.existsSync(path.join(root, dir))) return;
+    for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
+      const rel = `${dir}${entry.name}`;
+      if (entry.isDirectory()) walk(`${rel}/`);
+      else if (/\.(tsx?|mjs)$/.test(entry.name) && !/\.d\.m?ts$/.test(entry.name)) {
+        const name = entry.name.replace(/\.(tsx?|mjs)$/, "");
+        byName.set(name, [...(byName.get(name) ?? []), rel]);
+      }
+    }
+  };
+  walk(tree);
+  return byName;
+}
+
+function createTestPlacement(context) {
+  const file = repoPath(context.filename);
+  const mirror = TEST_MIRRORS.find(([tests]) => file.startsWith(tests));
+  const extension = /\.test\.tsx?$/.exec(file)?.[0];
+  if (!mirror || !extension) return {};
+  const [tests, tree] = mirror;
+  const name = path.posix.basename(file, extension);
+  const mirrored = `${tree}${path.posix.dirname(file.slice(tests.length))}/`.replace(/\/\.\/$/, "/");
+  const modules = modulesIn(rootOf(context.filename), tree).get(name);
+  return {
+    Program(node) {
+      if (modules) {
+        if (modules.some((m) => path.posix.dirname(m) + "/" === mirrored)) return;
+        const at = modules.map((m) =>
+          `${tests}${path.posix.dirname(m.slice(tree.length))}/${name}.test.ts`.replace("/./", "/"),
+        );
+        context.report({
+          node,
+          message: `A test named after \`${name}\` sits at its module's mirror: ${at.join(" or ")}.`,
+        });
+      } else if (/(Service|Policy|Repository)$/.test(name)) {
+        context.report({
+          node,
+          message: `\`${name}.test.ts\` is named after a module, but there's no \`${name}\` in ${tree}.`,
+        });
+      }
+    },
+  };
+}
+
+/** A parameter's binding: `session: Session`, a constructor's `private session: Session`, or one with a default. */
+function parameter(param) {
+  let binding = param.type === "TSParameterProperty" ? param.parameter : param;
+  if (binding.type === "AssignmentPattern") binding = binding.left;
+  return binding.type === "Identifier" ? binding : null;
+}
+
+/** Whether `name` is a parameter of a function `node` sits in: a handle it's given, which may be a transaction. */
+function isParameterOf(node, name) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (p.params?.some((param) => parameter(param)?.name === name)) return true;
+  }
+  return false;
+}
+
+function createSessionParam(context) {
+  if (!repoPath(context.filename).startsWith("server/")) return {};
+  const check = (fn) => {
+    for (const param of fn.params) {
+      const binding = parameter(param);
+      if (isSessionType(binding?.typeAnnotation?.typeAnnotation) && !["session", "_session"].includes(binding.name)) {
+        context.report({
+          node: binding,
+          message: `A \`Session\` parameter is named \`session\`, not \`${binding.name}\`.`,
+        });
+      }
+    }
+  };
+  return {
+    FunctionDeclaration: check,
+    FunctionExpression: check,
+    ArrowFunctionExpression: check,
+    // An abstract method's or an overload's signature.
+    TSEmptyBodyFunctionExpression: check,
+    TSDeclareFunction: check,
+  };
+}
+
+function createWritesInTransactions(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("server/") || /^server\/(repositories|database)\//.test(file)) return {};
+  // The repositories' shared instances this file imports.
+  const repositories = new Set();
+  return {
+    ImportDeclaration(node) {
+      if (!String(node.source.value).startsWith("@/server/repositories/")) return;
+      for (const specifier of node.specifiers) {
+        if (specifier.type === "ImportSpecifier") repositories.add(specifier.local.name);
+      }
+    },
+    CallExpression(node) {
+      const callee = node.callee;
+      if (callee.type !== "MemberExpression" || callee.object.type !== "Identifier") return;
+      if (callee.object.name === "Promise" && CONCURRENT.has(callee.property.name) && node.arguments[0]) {
+        const onTransaction = [...callsIn(node.arguments[0])].some((call) => {
+          const handle = call.arguments[0];
+          if (handle?.type !== "Identifier") return false;
+          if (handle.name === "tx") return true;
+          const isRepository = call.callee.type === "MemberExpression" && repositories.has(call.callee.object.name);
+          return isRepository && isParameterOf(call, handle.name);
+        });
+        if (onTransaction) {
+          context.report({
+            node,
+            message:
+              "A transaction runs one query at a time, on its one connection: await these in turn, not in `Promise.all` (pg queues them, and pg@9 throws).",
+          });
+        }
+        return;
+      }
+      if (!repositories.has(callee.object.name) || callee.property.type !== "Identifier") return;
+      const method = callee.property.name;
+      if (!WRITE_VERBS.some((verb) => startsWithVerb(method, verb))) return;
+      const handle = node.arguments[0];
+      if (handle?.type === "Identifier" && handle.name === "tx") return;
+      context.report({
+        node: handle ?? node,
+        message: `\`${callee.object.name}.${method}\` writes: give it a transaction's handle, \`tx\` (\`withTransaction(async (tx) => …)\`), not the shared \`db\`.`,
+      });
+    },
+  };
+}
+
+/** A route's path, written as a string or a template literal (its fixed parts). */
+function pathOf(node) {
+  if (node?.type === "Literal" && typeof node.value === "string") return node.value;
+  if (node?.type === "TemplateLiteral") return node.quasis.map((q) => q.value.cooked).join("");
+  return null;
+}
+
+function createRouteConventions(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("server/")) return {};
+  const inRouters = file.startsWith("server/routers/");
+  const inApi = file.startsWith("server/routers/api/");
+  return {
+    // .get("/:id/feats/:featId", …)
+    CallExpression(node) {
+      if (!inRouters) return;
+      const callee = node.callee;
+      // zValidator("param", featParams): the params a route's path names, by a name, never a schema written there.
+      if (
+        callee.type === "Identifier" &&
+        callee.name === "zValidator" &&
+        node.arguments[0]?.value === "param" &&
+        node.arguments[1]?.type !== "Identifier"
+      ) {
+        context.report({
+          node: node.arguments[1],
+          message:
+            "A route's params are a named schema (`idParam`, `featParams`): from a `validation.ts` when several " +
+            "routers use it, declared at the top of the router otherwise.",
+        });
+        return;
+      }
+      if (callee.type !== "MemberExpression") return;
+      // c.json(body) → c.json(body, 200): a route says its status, which its types list.
+      if (
+        callee.object.type === "Identifier" &&
+        callee.object.name === "c" &&
+        callee.property.name === "json" &&
+        node.arguments.length < 2
+      ) {
+        context.report({ node, message: "A route answers with its status: `c.json(body, status)`." });
+        return;
+      }
+      // .get("/:id", …), .route("/:id", sub), .on("GET", "/:id", …)
+      const route = ROUTE_METHODS.has(callee.property.name)
+        ? node.arguments[0]
+        : callee.property.name === "on"
+          ? node.arguments[1]
+          : null;
+      const routePath = pathOf(route);
+      if (!routePath?.startsWith("/")) return;
+      for (const segment of routePath.split("/")) {
+        if (segment === "") continue;
+        const param = segment.startsWith(":") ? segment.slice(1).replace(/[{?].*$/, "") : null;
+        if (param !== null && !CAMEL_CASE.test(param)) {
+          context.report({ node: route, message: `A path param is camelCase: \`:${param}\` isn't.` });
+        } else if (param === null && !FIXED_SEGMENT.test(segment)) {
+          context.report({ node: route, message: `A path's fixed segment is kebab-case: \`${segment}\` isn't.` });
+        }
+      }
+    },
+    // A try that only cleans up (`finally`) lets the error through.
+    TryStatement(node) {
+      if (!inApi || !node.handler) return;
+      context.report({
+        node,
+        message: "A route lets an error reach the app's `onError`, which answers in the API's envelope: no try.",
+      });
+    },
+    ...onImports((node, spec) => {
+      if (spec === "@hono/zod-validator" && !file.startsWith("server/middlewares/")) {
+        context.report({
+          node,
+          message: "Validate with `zValidator` from `@/server/middlewares/index.ts`: it answers in the API's envelope.",
+        });
+      }
+    }),
+  };
+}
+
 /** Whether a function's body reads `this`, which a declaration would rebind. */
 function readsThis(node) {
   if (!node || typeof node !== "object") return false;
@@ -637,55 +594,52 @@ function readsThis(node) {
   );
 }
 
-const functionDeclarations = {
-  meta: { type: "suggestion", fixable: "code" },
-  create(context) {
-    if (isToolWritten(context.filename)) return {};
-    const text = context.sourceCode.text;
-    return {
-      Program(program) {
-        for (const statement of program.body) {
-          const declaration = statement.type === "ExportNamedDeclaration" ? statement.declaration : statement;
-          if (declaration?.type !== "VariableDeclaration" || declaration.kind !== "const") continue;
-          if (declaration.declarations.length !== 1) continue;
-          const [declarator] = declaration.declarations;
-          const fn = declarator.init;
-          if (fn?.type !== "ArrowFunctionExpression" && fn?.type !== "FunctionExpression") continue;
-          // A function type types it (`const run: Task = …`): its parameters take their types from it
-          if (declarator.id.type !== "Identifier" || declarator.id.typeAnnotation) continue;
-          const fixable = !(fn.type === "ArrowFunctionExpression" && readsThis(fn.body));
-          context.report({
-            node: declarator.id,
-            message:
-              "A file's own function is a `function` declaration, not a const holding an arrow: an arrow is for a " +
-              "callback, or a function a function type types (`const run: Task = …`). `oxlint --fix` declares it.",
-            ...(fixable && {
-              fix: (fixer) => {
-                const { range, text: replacement } = declarationText(text, statement, declarator);
-                return fixer.replaceTextRange(range, replacement);
-              },
-            }),
-          });
-        }
-      },
-    };
-  },
-};
+function createFunctionDeclarations(context) {
+  if (isToolWritten(context.filename)) return {};
+  const text = context.sourceCode.text;
+  return {
+    Program(program) {
+      for (const statement of program.body) {
+        const declaration = statement.type === "ExportNamedDeclaration" ? statement.declaration : statement;
+        if (declaration?.type !== "VariableDeclaration" || declaration.kind !== "const") continue;
+        if (declaration.declarations.length !== 1) continue;
+        const [declarator] = declaration.declarations;
+        const fn = declarator.init;
+        if (fn?.type !== "ArrowFunctionExpression" && fn?.type !== "FunctionExpression") continue;
+        // A function type types it (`const run: Task = …`): its parameters take their types from it
+        if (declarator.id.type !== "Identifier" || declarator.id.typeAnnotation) continue;
+        const fixable = !(fn.type === "ArrowFunctionExpression" && readsThis(fn.body));
+        context.report({
+          node: declarator.id,
+          message:
+            "A file's own function is a `function` declaration, not a const holding an arrow: an arrow is for a " +
+            "callback, or a function a function type types (`const run: Task = …`). `oxlint --fix` declares it.",
+          ...(fixable && {
+            fix: (fixer) => {
+              const { range, text: replacement } = declarationText(text, statement, declarator);
+              return fixer.replaceTextRange(range, replacement);
+            },
+          }),
+        });
+      }
+    },
+  };
+}
 
-export const rules = {
-  "no-parent-imports": noParentImports,
-  "no-helpers-modules": noHelpersModules,
-  "repository-instances": repositoryInstances,
-  "route-conventions": routeConventions,
-  environment,
-  "directive-reasons": directiveReasons,
-  "writes-in-transactions": writesInTransactions,
-  "order-through-repository": orderThroughRepository,
-  "shared-runtime": sharedRuntime,
-  "session-param": sessionParam,
-  "test-placement": testPlacement,
-  "policy-shape": policyShape,
-  "concern-shape": concernShape,
-  "include-order": includeOrder,
-  "function-declarations": functionDeclarations,
+export default {
+  "no-parent-imports": { meta: { type: "suggestion", fixable: "code" }, create: createNoParentImports },
+  "no-helpers-modules": { meta: { type: "suggestion" }, create: createNoHelpersModules },
+  "repository-instances": { meta: { type: "problem" }, create: createRepositoryInstances },
+  "route-conventions": { meta: { type: "problem" }, create: createRouteConventions },
+  environment: { meta: { type: "problem" }, create: createEnvironment },
+  "directive-reasons": { meta: { type: "suggestion" }, create: createDirectiveReasons },
+  "writes-in-transactions": { meta: { type: "problem" }, create: createWritesInTransactions },
+  "order-through-repository": { meta: { type: "suggestion" }, create: createOrderThroughRepository },
+  "shared-runtime": { meta: { type: "problem" }, create: createSharedRuntime },
+  "session-param": { meta: { type: "suggestion" }, create: createSessionParam },
+  "test-placement": { meta: { type: "suggestion" }, create: createTestPlacement },
+  "policy-shape": { meta: { type: "problem" }, create: createPolicyShape },
+  "concern-shape": { meta: { type: "suggestion" }, create: createConcernShape },
+  "include-order": { meta: { type: "suggestion", fixable: "code" }, create: createIncludeOrder },
+  "function-declarations": { meta: { type: "suggestion", fixable: "code" }, create: createFunctionDeclarations },
 };

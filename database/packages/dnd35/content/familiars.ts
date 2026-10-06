@@ -1,4 +1,5 @@
 import { formatWithArticle } from "@/database/packages/dnd35/content/articles.ts";
+import { bonus } from "@/database/packages/dnd35/content/modifiers.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/content/raceProperties.ts";
 import type {
   BondContent,
@@ -177,15 +178,6 @@ const FAMILIAR_CLASS: ClassSeed = {
     [13, "Scry on Familiar (Familiar)"],
   ],
 };
-
-function bonus(target: string, value: number): Modifier {
-  return {
-    target,
-    operator: "add",
-    value: String(value),
-    valueType: "number",
-  };
-}
 
 /**
  * What each familiar gives its master (the SRD's familiar table), on the master's pick of it: the master's sheet, not

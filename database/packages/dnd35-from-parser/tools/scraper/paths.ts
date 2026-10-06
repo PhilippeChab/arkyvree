@@ -1,28 +1,12 @@
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
-import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
-import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
-import DetailedCharacterWeapons from "@/server/rulesets/dnd3.5/DetailedCharacterWeapons.ts";
-import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
-import DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
-import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { buildValidPaths } from "./validPaths.ts";
 
 // ---------------------------------------------------------------------------
 // Path validation — reuses actual server components to stay in sync
 // ---------------------------------------------------------------------------
-
-const ABILITY_NAMES = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
-const SAVE_NAMES = ["Fortitude", "Reflex", "Will"];
-const stubAbilities = ABILITY_NAMES.map((name) => ({ name })) as Parameters<
-  typeof DetailedCharacterAbilities.generateTargetPaths
->[0];
-const stubSaves = SAVE_NAMES.map((name) => ({ name })) as Parameters<
-  typeof DetailedCharacterSavingThrows.generateTargetPaths
->[0];
-const stubSkills = SKILL_NAMES.map((name) => ({ name })) as Parameters<
-  typeof DetailedCharacterSkills.generateTargetPaths
->[0];
 
 // Base slugs for skill groups with subtypes (e.g. "knowledge", "craft", "perform", "profession").
 // Paths like "skills.knowledge.rank" are valid — the runtime resolves them as an OR across all subtypes.
@@ -32,19 +16,6 @@ const SKILL_GROUP_SLUGS = new Set([
   "perform",
   "profession",
 ]);
-
-function buildValidPaths(kind: "modifier" | "requirement"): Set<string> {
-  return new Set(
-    [
-      ...DetailedCharacterAbilities.generateTargetPaths(stubAbilities, kind),
-      ...DetailedCharacterCombat.generateTargetPaths(kind),
-      ...DetailedCharacterWeapons.generateItemWeaponPaths(kind),
-      ...DetailedCharacterSavingThrows.generateTargetPaths(stubSaves, kind),
-      ...DetailedCharacterSkills.generateTargetPaths(stubSkills, kind),
-      ...DetailedCharacterIdentity.generateTargetPaths(kind),
-    ].map((tp) => tp.path),
-  );
-}
 
 const VALID_MODIFIER_PATHS = buildValidPaths("modifier");
 const VALID_REQUIREMENT_PATHS = buildValidPaths("requirement");

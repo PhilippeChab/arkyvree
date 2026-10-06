@@ -6,6 +6,8 @@ import { ITEM_HAS_CHARGES } from "@/shared/dnd3.5/properties/index.ts";
 import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { findSlotConflict, HAND_LOCATIONS, isHandLocation, type SlotConflictReason } from "@/shared/equipment.ts";
 
+import { shownWeaponSet } from "./weaponSets.ts";
+
 type InventoryEntry = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>[number];
 
 type ItemProperties = { type: string; value: string }[];
@@ -55,20 +57,6 @@ const SLOT_CONFLICT_WARNINGS: Record<
 /** A slot, or not equipped. */
 export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 
-/** A weapon set as the user sees it: stored from 0, shown from 1 ("Set 1"), as on the sheet and the PDF. */
-export function shownWeaponSet(stored: number) {
-  return stored + 1;
-}
-
-/** Where an entry is worn ("Main Hand (Set 1)"), or a dash when it's carried. */
-export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "location" | "weaponSet">): string {
-  if (!entry.equipped || !entry.location) return "—";
-  if (isHandLocation(entry.location) && entry.weaponSet !== null) {
-    return `${entry.location} (Set ${shownWeaponSet(entry.weaponSet)})`;
-  }
-  return entry.location;
-}
-
 export const EMPTY_INVENTORY_FORM: InventoryFormData = {
   selectedItem: null,
   quantity: 1,
@@ -104,6 +92,15 @@ export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
   if (item.type === "Armor") return "Torso";
   if (item.type === "Shield") return "Off Hand";
   return LOCATION_OPTIONS.find((v) => v.toLowerCase() === item.slot.toLowerCase()) ?? null;
+}
+
+/** Where an entry is worn ("Main Hand (Set 1)"), or a dash when it's carried. */
+export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "location" | "weaponSet">): string {
+  if (!entry.equipped || !entry.location) return "—";
+  if (isHandLocation(entry.location) && entry.weaponSet !== null) {
+    return `${entry.location} (Set ${shownWeaponSet(entry.weaponSet)})`;
+  }
+  return entry.location;
 }
 
 /** The placement as the inventory endpoints take it: a slot equips the item, charges only for items that have them. */

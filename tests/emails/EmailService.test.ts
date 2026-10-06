@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { APP_URL } from "@/emails/EmailLayout.tsx";
-import { emailService } from "@/server/emails/EmailService.ts";
+import emailService from "@/server/emails/EmailService.ts";
 import { renderEmail } from "@/server/emails/templates.ts";
 import { queuedJobs } from "@/tests/support/jobs.ts";
 import { uniqueId } from "@/tests/support/seed.ts";

@@ -44,6 +44,22 @@ const COMPANION_GRANT_PATTERNS: {
   { pattern: /^Special Mount \((.+)\)$/, aptitudeSlug: "specialmountbond", bondedKind: "mount" },
 ];
 
+// ---------------------------------------------------------------------------
+// SAVE_MAP — used by detectFeat
+// ---------------------------------------------------------------------------
+
+const SAVE_NAMES = ["Fortitude", "Reflex", "Will"];
+
+// ---------------------------------------------------------------------------
+// Ordinal suffix — used by scraper/parsers, detectFeat, detectClass
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Template description expansion — used by buildSeeds, generator/feat
+// ---------------------------------------------------------------------------
+
+const WEAPON_DESC_PATTERNS = [/the selected weapon/gi, /selected weapon/gi, /the weapon you selected/gi];
+
 export const NUMBER_WORDS: Record<string, number> = {
   one: 1,
   two: 2,
@@ -68,7 +84,18 @@ export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
 // SKILL_MAP — used by detectFeat, detectDomain
 // ---------------------------------------------------------------------------
 
-export const SKILL_MAP: Record<string, string> = {};
+export const SKILL_MAP: Record<string, string> = Object.fromEntries(
+  SKILL_NAMES.map((name) => [name.toLowerCase(), stripSeparators(name)]),
+);
+
+export const SAVE_MAP: Record<string, string> = Object.fromEntries(
+  SAVE_NAMES.flatMap((name) => [
+    [name.toLowerCase(), stripSeparators(name)],
+    [`${name.toLowerCase()} saving`, stripSeparators(name)],
+  ]),
+);
+
+export const MAX_DESC = 2000;
 
 /**
  * Extract the bonded-level contribution formula from a grant feat's SRD
@@ -182,6 +209,20 @@ export function toCamelCase(name: string): string {
 // stripClassSuffix — used by buildSeeds, generator/class
 // ---------------------------------------------------------------------------
 
+/** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
+export function anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
+  if (!/\(any\)/i.test(name)) return undefined;
+  const baseName = name
+    .replace(/\s*\(any\)/i, "")
+    .trim()
+    .toLowerCase();
+  const checks = SKILL_NAMES.filter((s) => s.toLowerCase().startsWith(baseName)).map((s) =>
+    gte(`skills.${stripSeparators(s)}.rank`, ranks),
+  );
+  if (checks.length <= 1) return checks[0];
+  return or(...checks);
+}
+
 /** The reference files under `refDir`: each book's. */
 export function discoverRefs(
   refDir = REFERENCE_DIR,
@@ -207,30 +248,6 @@ export function referenceBooks(): string[] {
     .sort();
 }
 
-/** Strip class suffix: "Track (Ranger)" → "Track" */
-export function stripClassSuffix(name: string, className: string): string | undefined {
-  const suffix = ` (${className})`;
-  if (name.endsWith(suffix)) return name.slice(0, -suffix.length);
-  return undefined;
-}
-for (const name of SKILL_NAMES) {
-  SKILL_MAP[name.toLowerCase()] = stripSeparators(name);
-}
-
-/** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
-export function anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
-  if (!/\(any\)/i.test(name)) return undefined;
-  const baseName = name
-    .replace(/\s*\(any\)/i, "")
-    .trim()
-    .toLowerCase();
-  const checks = SKILL_NAMES.filter((s) => s.toLowerCase().startsWith(baseName)).map((s) =>
-    gte(`skills.${stripSeparators(s)}.rank`, ranks),
-  );
-  if (checks.length <= 1) return checks[0];
-  return or(...checks);
-}
-
 /**
  * A skill's slug: its own ("Knowledge (arcana)" → "knowledgearcana"), else its base skill's, for a specialization the
  * skill list doesn't name ("Perform (dance)" → "perform").
@@ -243,6 +260,13 @@ export function skillSlug(name: string): string {
     .toLowerCase()
     .trim();
   return SKILL_MAP[baseName] ?? stripSeparators(baseName);
+}
+
+/** Strip class suffix: "Track (Ranger)" → "Track" */
+export function stripClassSuffix(name: string, className: string): string | undefined {
+  const suffix = ` (${className})`;
+  if (name.endsWith(suffix)) return name.slice(0, -suffix.length);
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -349,29 +373,6 @@ export function validateModifiers<M extends ModifierEffect>(
   return { validated, errors };
 }
 
-// ---------------------------------------------------------------------------
-// SAVE_MAP — used by detectFeat
-// ---------------------------------------------------------------------------
-
-const SAVE_NAMES = ["Fortitude", "Reflex", "Will"];
-
-export const SAVE_MAP: Record<string, string> = {};
-for (const name of SAVE_NAMES) {
-  const slug = stripSeparators(name);
-  SAVE_MAP[name.toLowerCase()] = slug;
-  SAVE_MAP[`${name.toLowerCase()} saving`] = slug;
-}
-
-// ---------------------------------------------------------------------------
-// Ordinal suffix — used by scraper/parsers, detectFeat, detectClass
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Template description expansion — used by buildSeeds, generator/feat
-// ---------------------------------------------------------------------------
-
-const WEAPON_DESC_PATTERNS = [/the selected weapon/gi, /selected weapon/gi, /the weapon you selected/gi];
-
 export function expandTemplateDescription(description: string, type: string, item: string): string {
   if (type === "weapon" || type === "crossbow") {
     return WEAPON_DESC_PATTERNS.reduce((text, pattern) => text.replace(pattern, item), description);
@@ -389,6 +390,11 @@ export function expandTemplateDescription(description: string, type: string, ite
 // normalizeDescription — used by buildSeeds, codegen
 // ---------------------------------------------------------------------------
 
+export function normalizeDescription(text: string, maxLen = MAX_DESC): string {
+  const clean = normalizeWs(sanitizeText(text));
+  return clean.length > maxLen ? clean.substring(0, maxLen - 3).trim() + "..." : clean;
+}
+
 /**
  * Capitalize the first letter of each word inside parentheses.
  * e.g. "Armor Proficiency (heavy)" → "Armor Proficiency (Heavy)"
@@ -398,13 +404,6 @@ export function normalizeName(name: string): string {
     const capitalized = inner.replace(/\b[a-z]/g, (c) => c.toUpperCase());
     return `(${capitalized})`;
   });
-}
-
-export const MAX_DESC = 2000;
-
-export function normalizeDescription(text: string, maxLen = MAX_DESC): string {
-  const clean = normalizeWs(sanitizeText(text));
-  return clean.length > maxLen ? clean.substring(0, maxLen - 3).trim() + "..." : clean;
 }
 
 // ---------------------------------------------------------------------------

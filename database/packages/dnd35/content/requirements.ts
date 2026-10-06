@@ -5,22 +5,28 @@ import type {
 } from "@/database/packages/dnd35/content/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-function check(operator: string, valueType: string) {
-  return (target: string, value: string | number): RequirementCondition => ({
-    target,
-    operator,
-    value: String(value),
-    valueType,
-  });
+/** A check of `target` against `value`, by `operator`, `value` read as `valueType`. */
+function condition(target: string, operator: string, value: string | number, valueType: string): RequirementCondition {
+  return { target, operator, value: String(value), valueType };
 }
 
 // Numeric
-export const eqNum = check("equal", "number");
-export const gte = check("greater_than_or_equal", "number");
-export const lt = check("less_than", "number");
+export function eqNum(target: string, value: string | number): RequirementCondition {
+  return condition(target, "equal", value, "number");
+}
 
 // String
-export const eqStr = check("equal", "string");
+export function eqStr(target: string, value: string | number): RequirementCondition {
+  return condition(target, "equal", value, "string");
+}
+
+export function gte(target: string, value: string | number): RequirementCondition {
+  return condition(target, "greater_than_or_equal", value, "number");
+}
+
+export function lt(target: string, value: string | number): RequirementCondition {
+  return condition(target, "less_than", value, "number");
+}
 
 // Builders the content's requirements are written with: `or(eq(feat("Dodge")), gte("combat.bab", 4))`. The
 // generator writes a check with the builder that makes exactly that check (`builderOf` in generator/codegen.ts), and
@@ -32,7 +38,7 @@ export function and(...children: RequirementEntry[]): RequirementGroup {
 
 // Boolean
 export function eq(target: string) {
-  return check("equal", "boolean")(target, "true");
+  return condition(target, "equal", "true", "boolean");
 }
 
 /** The path of having a feat. */

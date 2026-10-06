@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
 import { toJson } from "@/server/errors/index.ts";
-import { buildEntityTypeSchema, sanitizedEmail, sanitizeText } from "@/server/routers/api/validation.ts";
+import { sanitizeText } from "@/server/routers/api/sanitize.ts";
+import { buildEntityTypeSchema } from "@/server/routers/api/schemaBuilders.ts";
+import { sanitizedEmail } from "@/server/routers/api/validation.ts";
 import { application } from "@/server/routers/application.ts";
 import { api, expectOk, expectStatus, SEED_SESSION_ID } from "@/tests/support/api.ts";
 

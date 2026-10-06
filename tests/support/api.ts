@@ -6,6 +6,7 @@ import { db } from "@/server/database/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
 import { Sessions } from "@/server/repositories/index.ts";
 import { application, type Application } from "@/server/routers/application.ts";
+import { apiAs } from "@/tests/support/clients.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 /** The seeded session of the seeded user (`SEED_USER_ID`, LocalUser). */
@@ -13,13 +14,6 @@ export const SEED_SESSION_ID = "00000000-0000-4000-8000-000000000123";
 
 /** Signed out. */
 export const guestApi = testClient<Application>(application);
-
-/** An API client whose requests carry `sessionId`'s cookie. */
-export function apiAs(sessionId: string) {
-  return testClient<Application>(application, {}, undefined, {
-    headers: { cookie: `${SESSION_COOKIE_NAME}=${sessionId}` },
-  });
-}
 
 /** Signed in as the seeded user, who owns most seeded content. */
 export const api = apiAs(SEED_SESSION_ID);

@@ -50,6 +50,11 @@ export function diffIsEmpty(d: TableDiff) {
   return d.onlyInRef.length === 0 && d.onlyInTgt.length === 0 && d.fieldChanges.length === 0;
 }
 
+/** Rows read as their business keys alone: a link compared by what it joins. */
+export function keyed<T>(rows: T[], key: (row: T) => string): IdentifiedRow[] {
+  return rows.map((row) => ({ bk: key(row), id: "", row: {} }));
+}
+
 /** A diff, line by line, for a person. */
 export function renderHuman(d: TableDiff): string[] {
   return [

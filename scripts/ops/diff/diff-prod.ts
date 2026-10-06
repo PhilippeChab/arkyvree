@@ -30,12 +30,6 @@ import { planPackages } from "@/database/packages/runner.ts";
 import { diffContent, LABELLED_COLUMNS, type Query } from "./content.ts";
 import { renderHuman, renderSql } from "./rows.ts";
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  console.error("DATABASE_URL not set — run with --env-file=.env.production");
-  process.exit(1);
-}
-
 const referenceConnectionString = process.env.REFERENCE_DATABASE_URL;
 const emitSql = process.argv.includes("--emit-sql");
 
@@ -88,130 +82,140 @@ async function reportContentDrift(target: Query, reference: Query): Promise<bool
   return drift;
 }
 
-const pool = new Pool({ connectionString });
-const client = await pool.connect();
-let hasDrift = false;
-let failed = false;
+async function main() {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    console.error("DATABASE_URL not set — run with --env-file=.env.production");
+    process.exit(1);
+  }
 
-try {
-  if (!emitSql) {
-    // ── 1. Schema drift ──
-    console.log("## Schema drift\n");
+  const pool = new Pool({ connectionString });
+  const client = await pool.connect();
+  let hasDrift = false;
+  let failed = false;
 
-    const journal = JSON.parse(readFileSync("./drizzle/meta/_journal.json", "utf8")) as {
-      entries: { idx: number; tag: string; when: number }[];
-    };
-    const codeMigrations = journal.entries.map((e) => ({ tag: e.tag, when: e.when }));
+  try {
+    if (!emitSql) {
+      // ── 1. Schema drift ──
+      console.log("## Schema drift\n");
 
-    const { rows: applied } = await client.query<{ created_at: string }>(
-      `select created_at from drizzle.__drizzle_migrations order by created_at`,
-    );
+      const journal = JSON.parse(readFileSync("./drizzle/meta/_journal.json", "utf8")) as {
+        entries: { idx: number; tag: string; when: number }[];
+      };
+      const codeMigrations = journal.entries.map((e) => ({ tag: e.tag, when: e.when }));
 
-    const appliedWhens = new Set(applied.map((r) => Number(r.created_at)));
-    const codeWhens = new Set(codeMigrations.map((m) => m.when));
+      const { rows: applied } = await client.query<{ created_at: string }>(
+        `select created_at from drizzle.__drizzle_migrations order by created_at`,
+      );
 
-    const missingOnRemote = codeMigrations.filter((m) => !appliedWhens.has(m.when));
-    const extraOnRemote = applied.map((r) => Number(r.created_at)).filter((w) => !codeWhens.has(w));
+      const appliedWhens = new Set(applied.map((r) => Number(r.created_at)));
+      const codeWhens = new Set(codeMigrations.map((m) => m.when));
 
-    console.log(`Code migrations:   ${codeMigrations.length}`);
-    console.log(`Remote migrations: ${applied.length}`);
+      const missingOnRemote = codeMigrations.filter((m) => !appliedWhens.has(m.when));
+      const extraOnRemote = applied.map((r) => Number(r.created_at)).filter((w) => !codeWhens.has(w));
 
-    if (missingOnRemote.length === 0 && extraOnRemote.length === 0) {
-      console.log(`Status: in sync`);
-    } else {
-      hasDrift = true;
-      if (missingOnRemote.length > 0) {
-        console.log(`\nIn code but not applied on remote (${missingOnRemote.length}):`);
-        for (const m of missingOnRemote) console.log(`  - ${m.tag}`);
-      }
-      if (extraOnRemote.length > 0) {
-        console.log(`\nApplied on remote but not in code (${extraOnRemote.length}):`);
-        for (const w of extraOnRemote) console.log(`  - ${new Date(w).toISOString()}`);
-      }
-    }
-    console.log();
+      console.log(`Code migrations:   ${codeMigrations.length}`);
+      console.log(`Remote migrations: ${applied.length}`);
 
-    // ── 2. Package drift ──
-    console.log("## Package drift\n");
-
-    const { rows: remotePackages } = await client.query<{
-      name: string;
-      type: string;
-      version: number;
-      applied_at: string;
-    }>(`select name, type, version, applied_at from rules.content_packages order by name`);
-
-    const remoteMap = new Map(remotePackages.map((p) => [p.name, p]));
-    // What the next deploy's runner does: it applies no package while one has a problem.
-    const { plans, problems } = planPackages(registry, new Map(remotePackages.map((p) => [p.name, p.version])));
-    const codeMap = new Map([
-      ...registry.map((p): [string, number | undefined] => [p.name, undefined]),
-      ...plans.map((p): [string, number | undefined] => [p.pkg.name, p.version]),
-    ]);
-    const blocked = problems.size > 0;
-    const allNames = [...new Set([...remoteMap.keys(), ...codeMap.keys()])].sort();
-
-    const pad = Math.max(...allNames.map((n) => n.length), 4);
-    console.log(`${"name".padEnd(pad)}  remote  code  status`);
-    console.log(`${"-".repeat(pad)}  ------  ----  ------`);
-
-    for (const name of allNames) {
-      const r = remoteMap.get(name);
-      const codeVersion = codeMap.get(name);
-      const problem = problems.get(name);
-      const rv = r ? `v${r.version}` : "—";
-      const cv = codeVersion !== undefined ? `v${codeVersion}` : "—";
-      let status: string;
-      if (problem) {
-        status = `next deploy will be REFUSED (${problem.join("; ")})`;
-        hasDrift = true;
-      } else if (!r) {
-        status = blocked
-          ? "missing on remote (blocked: the next deploy applies no package)"
-          : "missing on remote (next deploy will install)";
-        hasDrift = true;
-      } else if (codeVersion === undefined) {
-        status = "on remote but not in code";
-        hasDrift = true;
-      } else if (r.version === codeVersion) {
-        status = "in sync";
-      } else if (r.version < codeVersion) {
-        status = blocked
-          ? "behind (blocked: the next deploy applies no package)"
-          : `next deploy will upgrade (v${r.version} -> v${codeVersion})`;
-        hasDrift = true;
+      if (missingOnRemote.length === 0 && extraOnRemote.length === 0) {
+        console.log(`Status: in sync`);
       } else {
-        status = `remote ahead of code (v${r.version} > v${codeVersion})`;
         hasDrift = true;
+        if (missingOnRemote.length > 0) {
+          console.log(`\nIn code but not applied on remote (${missingOnRemote.length}):`);
+          for (const m of missingOnRemote) console.log(`  - ${m.tag}`);
+        }
+        if (extraOnRemote.length > 0) {
+          console.log(`\nApplied on remote but not in code (${extraOnRemote.length}):`);
+          for (const w of extraOnRemote) console.log(`  - ${new Date(w).toISOString()}`);
+        }
       }
-      console.log(`${name.padEnd(pad)}  ${rv.padEnd(6)}  ${cv.padEnd(4)}  ${status}`);
+      console.log();
+
+      // ── 2. Package drift ──
+      console.log("## Package drift\n");
+
+      const { rows: remotePackages } = await client.query<{
+        name: string;
+        type: string;
+        version: number;
+        applied_at: string;
+      }>(`select name, type, version, applied_at from rules.content_packages order by name`);
+
+      const remoteMap = new Map(remotePackages.map((p) => [p.name, p]));
+      // What the next deploy's runner does: it applies no package while one has a problem.
+      const { plans, problems } = planPackages(registry, new Map(remotePackages.map((p) => [p.name, p.version])));
+      const codeMap = new Map([
+        ...registry.map((p): [string, number | undefined] => [p.name, undefined]),
+        ...plans.map((p): [string, number | undefined] => [p.pkg.name, p.version]),
+      ]);
+      const blocked = problems.size > 0;
+      const allNames = [...new Set([...remoteMap.keys(), ...codeMap.keys()])].sort();
+
+      const pad = Math.max(...allNames.map((n) => n.length), 4);
+      console.log(`${"name".padEnd(pad)}  remote  code  status`);
+      console.log(`${"-".repeat(pad)}  ------  ----  ------`);
+
+      for (const name of allNames) {
+        const r = remoteMap.get(name);
+        const codeVersion = codeMap.get(name);
+        const problem = problems.get(name);
+        const rv = r ? `v${r.version}` : "—";
+        const cv = codeVersion !== undefined ? `v${codeVersion}` : "—";
+        let status: string;
+        if (problem) {
+          status = `next deploy will be REFUSED (${problem.join("; ")})`;
+          hasDrift = true;
+        } else if (!r) {
+          status = blocked
+            ? "missing on remote (blocked: the next deploy applies no package)"
+            : "missing on remote (next deploy will install)";
+          hasDrift = true;
+        } else if (codeVersion === undefined) {
+          status = "on remote but not in code";
+          hasDrift = true;
+        } else if (r.version === codeVersion) {
+          status = "in sync";
+        } else if (r.version < codeVersion) {
+          status = blocked
+            ? "behind (blocked: the next deploy applies no package)"
+            : `next deploy will upgrade (v${r.version} -> v${codeVersion})`;
+          hasDrift = true;
+        } else {
+          status = `remote ahead of code (v${r.version} > v${codeVersion})`;
+          hasDrift = true;
+        }
+        console.log(`${name.padEnd(pad)}  ${rv.padEnd(6)}  ${cv.padEnd(4)}  ${status}`);
+      }
+      console.log();
     }
-    console.log();
+
+    // ── 3. Content drift ──
+    if (referenceConnectionString) {
+      const refPool = new Pool({ connectionString: referenceConnectionString });
+      const refClient = await refPool.connect();
+      try {
+        if (await reportContentDrift(queryOf(client), queryOf(refClient))) hasDrift = true;
+      } finally {
+        refClient.release();
+        await refPool.end();
+      }
+    } else if (emitSql) {
+      console.error("--emit-sql requires REFERENCE_DATABASE_URL");
+      failed = true;
+    } else {
+      console.log("## Content drift\n");
+      console.log("Skipped — set REFERENCE_DATABASE_URL to a freshly-seeded DB");
+      console.log("(e.g. run `bun test:db:reset` then point at arkyvree_test).");
+      console.log();
+    }
+  } finally {
+    client.release();
+    await pool.end();
   }
 
-  // ── 3. Content drift ──
-  if (referenceConnectionString) {
-    const refPool = new Pool({ connectionString: referenceConnectionString });
-    const refClient = await refPool.connect();
-    try {
-      if (await reportContentDrift(queryOf(client), queryOf(refClient))) hasDrift = true;
-    } finally {
-      refClient.release();
-      await refPool.end();
-    }
-  } else if (emitSql) {
-    console.error("--emit-sql requires REFERENCE_DATABASE_URL");
-    failed = true;
-  } else {
-    console.log("## Content drift\n");
-    console.log("Skipped — set REFERENCE_DATABASE_URL to a freshly-seeded DB");
-    console.log("(e.g. run `bun test:db:reset` then point at arkyvree_test).");
-    console.log();
-  }
-} finally {
-  client.release();
-  await pool.end();
+  // In SQL-emit mode, drift is the expected output, not a failure: only an error exits non-zero
+  process.exit(failed || (!emitSql && hasDrift) ? 1 : 0);
 }
 
-// In SQL-emit mode, drift is the expected output, not a failure: only an error exits non-zero
-process.exit(failed || (!emitSql && hasDrift) ? 1 : 0);
+await main();

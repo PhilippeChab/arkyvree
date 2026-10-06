@@ -115,8 +115,21 @@ const TYPE_SUFFIX = /\s*\((?:Ex|Su|Sp|Su or Sp)\)$/i;
 
 const ORDINAL_PREFIX = /^\d+(st|nd|rd|th)\s+/i;
 
-// Build weapon name → proficiency slug lookup
-const WEAPON_PROF_MAP = new Map<string, string>();
+// Weapon name → proficiency slug lookup: a later list's name replaces an earlier one's
+const WEAPON_PROF_MAP = new Map<string, string>([
+  ...SIMPLE_WEAPONS.map((w) => [w.toLowerCase(), `simpleweaponproficiency${stripSeparators(w)}`] as const),
+  ...MARTIAL_WEAPONS.map((w) => [w.toLowerCase(), `martialweaponproficiency${stripSeparators(w)}`] as const),
+  ...EXOTIC_WEAPONS.map((w) => [w.toLowerCase(), `exoticweaponproficiency${stripSeparators(w)}`] as const),
+]);
+
+// Aliases for description text → canonical weapon names
+const WEAPON_ALIASES: Record<string, string[]> = {
+  "crossbow (light or heavy)": ["Light Crossbow", "Heavy Crossbow"],
+  "crossbow (hand, light, or heavy)": ["Hand Crossbow", "Light Crossbow", "Heavy Crossbow"],
+  "dagger (any type)": ["Dagger", "Punching Dagger"],
+  "shortbow (normal and composite)": ["Shortbow", "Composite Shortbow"],
+  "hand axe": ["Handaxe"],
+};
 
 // ---------------------------------------------------------------------------
 // BAB detection
@@ -1174,49 +1187,6 @@ function PROF(slug: string) {
   };
 }
 
-export function buildDetected(raw: ClassReference["raw"]): ClassReference["detected"] {
-  const levels = raw.progression.length;
-  const featureOccurrences = detectFeatureOccurrences(raw.progression);
-  const { requirements, featNameMap, errors, unresolvedPrereqs } = parseRequirements(raw.prerequisites.parsed);
-
-  const spellsPerDay = detectSpellsPerDay(raw.progression);
-  const spellsKnown = detectSpellsKnown(raw);
-  const hasOwnSpells = spellsPerDay !== undefined;
-
-  return {
-    hd: parseHd(raw.hitDie),
-    levels,
-    skillPoints: parseSkillPoints(raw.skillPointsPerLevel),
-    bab: detectBab(raw.progression),
-    saves: detectSaves(raw.progression),
-    casterLevelAdvancement: detectCasterAdvancement(raw.progression),
-    requirements,
-    featNameMap,
-    featureOccurrences,
-    ...detectAptitudePicks(raw, featureOccurrences),
-    ...detectBonusFeatLists(raw, featureOccurrences),
-    ...detectLockedFavoredEnemies(raw, featureOccurrences),
-    ...(spellsPerDay ? { spellsPerDay } : {}),
-    ...(spellsKnown ? { spellsKnown } : {}),
-    ...(hasOwnSpells ? { hasOwnSpells } : {}),
-    ...(hasOwnSpells ? detectCasterType(raw) : {}),
-    ...(errors.length > 0 ? { errors } : {}),
-    ...(unresolvedPrereqs.length > 0 ? { unresolvedPrereqs } : {}),
-  };
-}
-for (const w of SIMPLE_WEAPONS) WEAPON_PROF_MAP.set(w.toLowerCase(), `simpleweaponproficiency${stripSeparators(w)}`);
-for (const w of MARTIAL_WEAPONS) WEAPON_PROF_MAP.set(w.toLowerCase(), `martialweaponproficiency${stripSeparators(w)}`);
-for (const w of EXOTIC_WEAPONS) WEAPON_PROF_MAP.set(w.toLowerCase(), `exoticweaponproficiency${stripSeparators(w)}`);
-
-// Aliases for description text → canonical weapon names
-const WEAPON_ALIASES: Record<string, string[]> = {
-  "crossbow (light or heavy)": ["Light Crossbow", "Heavy Crossbow"],
-  "crossbow (hand, light, or heavy)": ["Hand Crossbow", "Light Crossbow", "Heavy Crossbow"],
-  "dagger (any type)": ["Dagger", "Punching Dagger"],
-  "shortbow (normal and composite)": ["Shortbow", "Composite Shortbow"],
-  "hand axe": ["Handaxe"],
-};
-
 function detectSpecificWeapons(desc: string): string[] {
   const slugs: string[] = [];
   const seen = new Set<string>();
@@ -1320,6 +1290,37 @@ function detectWAPModifiers(desc: string): ModifierSeed[] {
   }
 
   return mods;
+}
+
+export function buildDetected(raw: ClassReference["raw"]): ClassReference["detected"] {
+  const levels = raw.progression.length;
+  const featureOccurrences = detectFeatureOccurrences(raw.progression);
+  const { requirements, featNameMap, errors, unresolvedPrereqs } = parseRequirements(raw.prerequisites.parsed);
+
+  const spellsPerDay = detectSpellsPerDay(raw.progression);
+  const spellsKnown = detectSpellsKnown(raw);
+  const hasOwnSpells = spellsPerDay !== undefined;
+
+  return {
+    hd: parseHd(raw.hitDie),
+    levels,
+    skillPoints: parseSkillPoints(raw.skillPointsPerLevel),
+    bab: detectBab(raw.progression),
+    saves: detectSaves(raw.progression),
+    casterLevelAdvancement: detectCasterAdvancement(raw.progression),
+    requirements,
+    featNameMap,
+    featureOccurrences,
+    ...detectAptitudePicks(raw, featureOccurrences),
+    ...detectBonusFeatLists(raw, featureOccurrences),
+    ...detectLockedFavoredEnemies(raw, featureOccurrences),
+    ...(spellsPerDay ? { spellsPerDay } : {}),
+    ...(spellsKnown ? { spellsKnown } : {}),
+    ...(hasOwnSpells ? { hasOwnSpells } : {}),
+    ...(hasOwnSpells ? detectCasterType(raw) : {}),
+    ...(errors.length > 0 ? { errors } : {}),
+    ...(unresolvedPrereqs.length > 0 ? { unresolvedPrereqs } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------

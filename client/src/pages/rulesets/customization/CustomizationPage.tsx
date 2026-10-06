@@ -7,7 +7,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   DeleteDialog,
   DiceSpinner,
-  FaqHelpIcon,
+  HelpLabel,
   type SectionTab,
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
@@ -67,38 +67,35 @@ interface CustomizationViewProps {
 // Entities with an editor on this page, which can also be deleted from it.
 const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
 
-function tabLabel(label: string, help: string) {
-  return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-      {label}
-      <FaqHelpIcon text={help} />
-    </Box>
-  );
-}
-
 const TABS: SectionTab<TabSection>[] = [
   {
     key: "properties",
     icon: PropertiesIcon,
-    label: tabLabel(
-      "Properties",
-      "Properties are additional attributes that can be applied to entities, providing extra characteristics or metadata.",
+    label: (
+      <HelpLabel
+        label="Properties"
+        help="Properties are additional attributes that can be applied to entities, providing extra characteristics or metadata."
+      />
     ),
   },
   {
     key: "modifiers",
     icon: ModifiersIcon,
-    label: tabLabel(
-      "Modifiers",
-      "Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc.",
+    label: (
+      <HelpLabel
+        label="Modifiers"
+        help="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc."
+      />
     ),
   },
   {
     key: "requirements",
     icon: RequirementsIcon,
-    label: tabLabel(
-      "Requirements",
-      "Requirements are conditions that entities must meet to be usable/available. Examples include character level requirements, feat prerequisites, etc.",
+    label: (
+      <HelpLabel
+        label="Requirements"
+        help="Requirements are conditions that entities must meet to be usable/available. Examples include character level requirements, feat prerequisites, etc."
+      />
     ),
   },
 ];

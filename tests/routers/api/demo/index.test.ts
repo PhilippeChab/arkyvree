@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { apiAs, expectOk, expectStatus, guestApi, sessionIdFrom } from "@/tests/support/api.ts";
+import { expectOk, expectStatus, guestApi, sessionIdFrom } from "@/tests/support/api.ts";
+import { apiAs } from "@/tests/support/clients.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
 /** Starts a demo and returns a client signed in as the demo user. */

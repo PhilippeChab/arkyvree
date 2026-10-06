@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type SessionContext, zValidator } from "@/server/middlewares/index.ts";
-import { buildEntityTypeSchema, idParam } from "@/server/routers/api/validation.ts";
+import { buildEntityTypeSchema } from "@/server/routers/api/schemaBuilders.ts";
+import { idParam } from "@/server/routers/api/validation.ts";
 import { RESTORABLE_ENTITY_TYPES, RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 
 const restorableEntityParams = idParam.extend({
