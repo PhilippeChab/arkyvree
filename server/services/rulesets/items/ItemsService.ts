@@ -1,17 +1,13 @@
 import { getTableName } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import {
-  assertEntityNameAvailable,
   copyEntityCustomizations,
-  cowEntityToDelete,
-  cowEntityToEdit,
   fetchEntityCustomizations,
-  findScopedEntity,
   hasCharacterPicks,
-  repointTombstoneSnapshot,
+  RulesetEdit,
 } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -58,13 +54,8 @@ class ItemsService extends include(Object, Variants) {
           : undefined;
         if (!source) this.validateTemplateSource(body.isTemplate ?? false, body.sourceItemId);
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "items",
-          body.name,
-        );
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "items", body.name);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const rows = await Items.create(tx, {
@@ -81,12 +72,12 @@ class ItemsService extends include(Object, Variants) {
         const item = rows[0];
 
         if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "items", tombstoneAncestorId, item.id);
+          await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
         }
 
         if (source && !source.isTemplate) {
           const cust = (await fetchEntityCustomizations(tx, [source.id], "items", "items")).get(source.id);
-          if (cust) await copyEntityCustomizations(tx, source.id, item.id, "items", cust);
+          if (cust) await copyEntityCustomizations(tx, item.id, "items", cust);
         }
 
         await createActivityWithNotifications(tx, {
@@ -126,7 +117,8 @@ class ItemsService extends include(Object, Variants) {
           }
         }
 
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "items", item);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "items", item);
 
         // The database deletes its customizations with it.
         const rows = await Items.delete(tx, { id: targetId });
@@ -211,7 +203,8 @@ class ItemsService extends include(Object, Variants) {
 
         this.validateTemplateSource(item.isTemplate, body.sourceItemId);
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "items", item);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "items", item);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;

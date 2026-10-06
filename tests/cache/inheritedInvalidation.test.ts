@@ -3,10 +3,9 @@ import { afterEach, expect, test } from "bun:test";
 import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 afterEach(() => {
@@ -25,7 +24,7 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
   const source = (await Feats.findOne(db, { rulesetId: extension.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
   const before = await RulesetCache.getCowData(updatedHost);
   await RulesetCache.getData(updatedHost);
-  const copy = await cowEntity(db, "feats", source.id, extension.id, extension.ancestorRulesetIds, []);
+  const copy = await copyEntity(db, "feats", source.id, extension.id, extension.ancestorRulesetIds, []);
   await Feats.update(db, { description: "Updated extension feat" }, { id: copy.id });
   RulesetCache.invalidate(extension.id);
   const after = await RulesetCache.getCowData(updatedHost);
@@ -60,7 +59,7 @@ test("a nested base scope clears the fork mapping and restores it afterward", as
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const source = (await Feats.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
-  const copy = await cowEntity(db, "feats", source.id, fork.id, fork.ancestorRulesetIds, []);
+  const copy = await copyEntity(db, "feats", source.id, fork.id, fork.ancestorRulesetIds, []);
   RulesetCache.invalidateAll();
   await withRulesetScope(db, fork.id, async () => {
     expect((await Feats.findOne(db, { id: source.id }))?.id).toBe(copy.id);

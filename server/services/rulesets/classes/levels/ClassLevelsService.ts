@@ -1,9 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { type CachedRulesetData, findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntityForCustomization, cowEntityToEdit, findScopedEntity, hasCharacterPicks } from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { include } from "@/server/mixins.ts";
@@ -120,7 +120,8 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
         // Copy an inherited class: the new level row would otherwise belong to the parent ruleset's class.
-        const { id: targetKlassId } = await cowEntityToEdit(tx, ruleset, sourceChain, "klasses", klass);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const { feats, saves, bab, skills, ...levelData } = body;
@@ -195,10 +196,11 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
 
         // COW the parent klass if the level is inherited — without this, hard-delete
-        // would wipe the parent ruleset's row. cowEntityForCustomization on
+        // would wipe the parent ruleset's row. RulesetEdit.cowOwner on
         // "klass_levels" duplicates the entire klass into the user's ruleset and
         // returns the level id in the new copy.
-        const resolvedLevelId = await cowEntityForCustomization(tx, rulesetId, "klass_levels", level.id);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
 
         // FK CASCADE on klass_level_feats / klass_level_powers / klass_level_saves
         // wipes those join rows when the level row is deleted.
@@ -312,7 +314,8 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
 
         // COW the parent klass if inherited so writes don't corrupt the parent.
-        const resolvedLevelId = await cowEntityForCustomization(tx, rulesetId, "klass_levels", level.id);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const { feats, saves, bab, skills } = body;

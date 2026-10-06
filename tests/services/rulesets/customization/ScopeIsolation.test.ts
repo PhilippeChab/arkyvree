@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import { cowEntityForCustomization } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
@@ -8,7 +7,7 @@ import { ModifiersService } from "@/server/services/rulesets/customization/modif
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
-import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, editRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 async function createModifier(sourceId: string) {
@@ -84,7 +83,7 @@ describe("ruleset customization isolation", () => {
 
   test("COW itself refuses unrelated entities", async () => {
     const { own, feat } = await setup();
-    await expect(cowEntityForCustomization(db, own.id, "feats", feat.id)).rejects.toThrow(NotFoundError);
+    await expect((await editRuleset(own)).cowOwner(db, "feats", feat.id)).rejects.toThrow(NotFoundError);
   });
 
   test("inherited customizations still copy their source", async () => {
@@ -167,7 +166,7 @@ describe("modifier requirement ownership", () => {
         chainingOperator: "and",
       }),
     ).rejects.toThrow(NotFoundError);
-    await expect(cowEntityForCustomization(db, own.id, "modifiers", modifier.id)).rejects.toThrow(NotFoundError);
+    await expect((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id)).rejects.toThrow(NotFoundError);
     expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(0);
   });
 
@@ -175,9 +174,9 @@ describe("modifier requirement ownership", () => {
     const { own, feat } = await setup();
     const modifier = await createModifier(feat.id);
     await Modifiers.update(db, { sourceType: "modifiers", sourceId: modifier.id }, { id: modifier.id });
-    await expect(cowEntityForCustomization(db, own.id, "modifiers", modifier.id)).rejects.toThrow(NotFoundError);
+    await expect((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id)).rejects.toThrow(NotFoundError);
     await Modifiers.update(db, { sourceType: "feats", sourceId: crypto.randomUUID() }, { id: modifier.id });
-    await expect(cowEntityForCustomization(db, own.id, "modifiers", modifier.id)).rejects.toThrow(NotFoundError);
+    await expect((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id)).rejects.toThrow(NotFoundError);
   });
 });
 

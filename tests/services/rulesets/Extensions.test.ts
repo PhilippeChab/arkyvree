@@ -11,7 +11,6 @@ import {
 } from "@/database/packages/dnd35/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
@@ -47,7 +46,7 @@ import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel, pickFeat } from "@/tests/support/levels.ts";
-import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -181,7 +180,7 @@ async function setupSiblings(entityType: EntityType) {
   const extensions = [];
   for (const ability of ["strength", "wisdom"]) {
     const extension = await createExtension();
-    const copyId = (await cowEntity(db, entityType, baseId, extension.id, extension.ancestorRulesetIds, []))
+    const copyId = (await copyEntity(db, entityType, baseId, extension.id, extension.ancestorRulesetIds, []))
       .id as string;
     const [aptitude] = await Aptitudes.create(db, {
       name: `${ability} aptitude ${uniqueId()}`,
@@ -392,7 +391,7 @@ describe("subscribing to an extension", () => {
         await Aptitudes.create(db, { name: "Shared Aptitude", rulesetId: id });
       }
       // A copy of a base feat has the base feat's name.
-      await cowEntity(db, "feats", featMap["Toughness"], c.id, c.ancestorRulesetIds, []);
+      await copyEntity(db, "feats", featMap["Toughness"], c.id, c.ancestorRulesetIds, []);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id, c.id]);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [d.id]);
 
@@ -431,8 +430,8 @@ describe("subscribing to an extension", () => {
       const { featMap } = await getSeedCtx();
       const toughness = featMap["Toughness"];
       const [a, b] = [await createExtension(user.id), await createExtension(user.id)];
-      const extensionCopy = (await cowEntity(db, "feats", toughness, a.id, a.ancestorRulesetIds, [])).id as string;
-      await cowEntity(db, "feats", toughness, b.id, b.ancestorRulesetIds, []);
+      const extensionCopy = (await copyEntity(db, "feats", toughness, a.id, a.ancestorRulesetIds, [])).id as string;
+      await copyEntity(db, "feats", toughness, b.id, b.ancestorRulesetIds, []);
       await Modifiers.create(db, {
         sourceType: "feats",
         sourceId: extensionCopy,
@@ -460,7 +459,7 @@ describe("subscribing to an extension", () => {
       const { featMap } = await getSeedCtx();
       const [a, b] = [await createExtension(user.id), await createExtension(user.id)];
       for (const extension of [a, b])
-        await cowEntity(db, "feats", featMap["Toughness"], extension.id, extension.ancestorRulesetIds, []);
+        await copyEntity(db, "feats", featMap["Toughness"], extension.id, extension.ancestorRulesetIds, []);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id]);
       await FeatsService.updateFeat(session, draft.id, featMap["Toughness"], {
         name: "Toughness",
@@ -555,7 +554,7 @@ describe("unsubscribing from an extension", () => {
     ] as const;
 
     for (const [type, id] of [...fromBase, ...fromExtension])
-      await cowEntity(db, type, id, draft.id, draft.ancestorRulesetIds, [extension.id]);
+      await copyEntity(db, type, id, draft.id, draft.ancestorRulesetIds, [extension.id]);
     const copies = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
     const ofBase = copies.filter((copy) => fromBase.some(([, id]) => copy.sourceEntityId === id));
     expect(new Set(ofBase.map((copy) => copy.entityType))).toEqual(new Set(fromBase.map(([type]) => type)));

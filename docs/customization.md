@@ -379,7 +379,7 @@ Modifier, property, and requirement updates and deletes follow one pattern. The
 row must be shown on the entity in the composed ruleset: its own rows plus
 visible contributions from sibling extensions, and for a derived item, the
 properties of its template. Editing a template property creates an override on
-the item; deleting one is rejected. `cowCustomizationForMutation` then copies the
+the item; deleting one is rejected. `RulesetEdit.cowCustomization` then copies the
 owning entity if it is inherited and resolves the row to its copy, so a sibling
 contribution is written through the local copy, never the stored sibling. After a
 COW copy, clients must use the returned `resolvedEntityId` and reload its customizations;

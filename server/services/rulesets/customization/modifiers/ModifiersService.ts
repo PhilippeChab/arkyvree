@@ -3,12 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  copyEntityCustomizations,
-  cowCustomizationForMutation,
-  cowEntityForCustomization,
-  fetchEntityCustomizations,
-} from "@/server/cow/index.ts";
+import { copyEntityCustomizations, fetchEntityCustomizations, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
@@ -65,7 +60,8 @@ class ModifiersService {
           }
         }
 
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
 
         const inferredValueType = await resolvePathValueType(
           rulesetId,
@@ -88,7 +84,7 @@ class ModifiersService {
 
         if (sourceModifierId) {
           const cust = (await fetchEntityCustomizations(tx, [sourceModifierId], "modifiers")).get(sourceModifierId);
-          if (cust) await copyEntityCustomizations(tx, sourceModifierId, modifier.id, "modifiers", cust);
+          if (cust) await copyEntityCustomizations(tx, modifier.id, "modifiers", cust);
         }
 
         await createActivityWithNotifications(tx, {
@@ -129,9 +125,9 @@ class ModifiersService {
 
         await checkCustomizedEntity(modifier);
 
-        const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await cowCustomizationForMutation(
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await edit.cowCustomization(
           tx,
-          rulesetId,
           entityType,
           effectiveEntityId,
           "modifier",
@@ -247,9 +243,9 @@ class ModifiersService {
         await checkCustomizedEntity(modifier);
 
         // COW the owning entity if this modifier is inherited
-        const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await cowCustomizationForMutation(
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await edit.cowCustomization(
           tx,
-          rulesetId,
           entityType,
           effectiveEntityId,
           "modifier",

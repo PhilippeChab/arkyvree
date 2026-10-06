@@ -87,7 +87,7 @@ export default class CowDataBuilder {
   }
 
   /**
-   * What a copy made in `tx` remaps its references and merges its siblings by (`cowEntity`): the snapshot and name
+   * What a copy made in `tx` remaps its references and merges its siblings by (`EntityCopy`): the snapshot and name
    * passes only, which see the transaction's own copies. A chain of ancestors only pairs the same namesakes: the name
    * pass adds the extensions to it.
    */
@@ -264,7 +264,7 @@ export default class CowDataBuilder {
    * sharing a sourceEntityId (e.g. a spell reprinted in two D&D sourcebooks,
    * or a user extension that re-introduces a spell from another extension to
    * attach it to a custom class list), pair them as siblings so compose merges
-   * them and `cowEntity` bakes their data into a child fork's COW. Last-resort
+   * them and `EntityCopy` bakes their data into a child fork's COW. Last-resort
    * only — rows already paired via entitySnapshotsInRules are excluded so the
    * snapshot-based pass always wins. Worst-case for an unwanted merge between
    * unrelated user extensions: the merged entity looks weird; the user can COW

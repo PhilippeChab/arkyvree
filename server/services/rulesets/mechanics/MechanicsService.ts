@@ -1,15 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { mechanicsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  assertEntityNameAvailable,
-  cowEntityToDelete,
-  cowEntityToEdit,
-  findScopedEntity,
-  repointTombstoneSnapshot,
-} from "@/server/cow/index.ts";
+import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Mechanics } from "@/server/repositories/index.ts";
@@ -30,19 +24,14 @@ class MechanicsService {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "mechanics",
-          body.name,
-        );
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "mechanics", body.name);
 
         const rows = await Mechanics.create(tx, { ...body, rulesetId });
         const mechanic = rows[0];
 
         if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "mechanics", tombstoneAncestorId, mechanic.id);
+          await edit.repointTombstone(tx, "mechanics", tombstoneAncestorId, mechanic.id);
         }
 
         await createActivityWithNotifications(tx, {
@@ -70,7 +59,8 @@ class MechanicsService {
 
         const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
 
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "mechanics", mechanic);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "mechanics", mechanic);
 
         const rows = await Mechanics.delete(tx, { id: targetId });
         const deletedMechanic = rows[0];
@@ -132,7 +122,8 @@ class MechanicsService {
 
         const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "mechanics", mechanic);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "mechanics", mechanic);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...mechanicData } = body;

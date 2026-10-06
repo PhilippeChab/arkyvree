@@ -3,7 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowCustomizationForMutation, cowEntityForCustomization } from "@/server/cow/index.ts";
+import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
@@ -49,7 +49,8 @@ class PropertiesService {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
 
         const rows = await Properties.create(tx, {
           entityId: resolvedEntityId,
@@ -96,9 +97,9 @@ class PropertiesService {
 
         await checkCustomizedEntity(property);
 
-        const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await cowCustomizationForMutation(
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await edit.cowCustomization(
           tx,
-          rulesetId,
           entityType,
           effectiveEntityId,
           "property",
@@ -162,9 +163,10 @@ class PropertiesService {
 
         await checkCustomizedEntity(property);
 
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
         if (fromTemplate) {
           // Template property: create an override on the derived item
-          const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
+          const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
           const rows = await Properties.create(tx, {
             entityId: resolvedEntityId,
             entityType,
@@ -187,9 +189,8 @@ class PropertiesService {
         }
 
         // COW the owning entity if this property is inherited
-        const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await cowCustomizationForMutation(
+        const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await edit.cowCustomization(
           tx,
-          rulesetId,
           entityType,
           effectiveEntityId,
           "property",
