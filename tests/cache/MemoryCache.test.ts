@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import MemoryCache from "@/server/cache/MemoryCache.ts";
+import MemoryCache, { MAX_ENTRIES } from "@/server/cache/MemoryCache.ts";
+
+/** Sets `count` entries, `fill0`…, each expiring after `ttl` and a millisecond later than the one before. */
+function fill(cache: MemoryCache<string>, count: number, ttl: number) {
+  for (let i = 0; i < count; i++) cache.set(`fill${i}`, String(i), ttl + i);
+}
 
 describe("MemoryCache", () => {
   test("returns undefined for missing keys", () => {
@@ -21,30 +26,15 @@ describe("MemoryCache", () => {
     expect(cache.get("obj")).toBe(data); // same reference
   });
 
-  test("invalidate removes a specific key", () => {
+  test("invalidateWhere removes the matching entries", () => {
     const cache = new MemoryCache<string>();
     cache.set("a", "1");
     cache.set("b", "2");
 
-    cache.invalidate("a");
+    cache.invalidateWhere((value) => value === "1");
 
     expect(cache.get("a")).toBeUndefined();
     expect(cache.get("b")).toBe("2");
-  });
-
-  test("invalidateByPrefix removes matching keys", () => {
-    const cache = new MemoryCache<string>();
-    cache.set("ruleset:abc", "1");
-    cache.set("ruleset:abc:camp1", "2");
-    cache.set("ruleset:abc:camp2", "3");
-    cache.set("ruleset:xyz", "4");
-
-    cache.invalidateByPrefix("ruleset:abc:");
-
-    expect(cache.get("ruleset:abc")).toBe("1"); // exact key, not a prefix match
-    expect(cache.get("ruleset:abc:camp1")).toBeUndefined();
-    expect(cache.get("ruleset:abc:camp2")).toBeUndefined();
-    expect(cache.get("ruleset:xyz")).toBe("4");
   });
 
   test("invalidateAll clears everything", () => {
@@ -73,12 +63,6 @@ describe("MemoryCache", () => {
     expect(cache.get("fresh")).toBe("value");
   });
 
-  test("custom default TTL is respected", () => {
-    const cache = new MemoryCache<string>(-1); // negative default TTL = already expired
-    cache.set("key", "value"); // uses default TTL of -1
-    expect(cache.get("key")).toBeUndefined(); // already expired
-  });
-
   test("overwriting a key updates the value", () => {
     const cache = new MemoryCache<string>();
     cache.set("key", "old");
@@ -86,38 +70,26 @@ describe("MemoryCache", () => {
     expect(cache.get("key")).toBe("new");
   });
 
-  test("evicts oldest entry when maxSize is exceeded", () => {
-    const cache = new MemoryCache<string>({ maxSize: 3 });
+  test("evicts the entry that expires first once full", () => {
+    const cache = new MemoryCache<string>();
+    cache.set("first", "1", 10_000);
+    fill(cache, MAX_ENTRIES - 1, 20_000);
 
-    cache.set("a", "1", 10_000); // expires at now+10s
-    cache.set("b", "2", 20_000); // expires at now+20s
-    cache.set("c", "3", 30_000); // expires at now+30s
+    cache.set("last", "2", 40_000);
 
-    // Cache is full (3/3). Adding a 4th should evict "a" (earliest expiry).
-    cache.set("d", "4", 40_000);
-
-    expect(cache.get("a")).toBeUndefined(); // evicted
-    expect(cache.get("b")).toBe("2");
-    expect(cache.get("c")).toBe("3");
-    expect(cache.get("d")).toBe("4");
+    expect(cache.get("first")).toBeUndefined(); // evicted
+    expect(cache.get("fill0")).toBe("0");
+    expect(cache.get("last")).toBe("2");
   });
 
   test("overwriting an existing key does not trigger eviction", () => {
-    const cache = new MemoryCache<string>({ maxSize: 2 });
+    const cache = new MemoryCache<string>();
+    fill(cache, MAX_ENTRIES, 10_000);
 
-    cache.set("a", "1");
-    cache.set("b", "2");
-    // Overwrite "a" — should NOT evict "b"
-    cache.set("a", "updated");
+    cache.set("fill0", "updated");
 
-    expect(cache.get("a")).toBe("updated");
-    expect(cache.get("b")).toBe("2");
-  });
-
-  test("options object constructor works with custom defaults", () => {
-    const cache = new MemoryCache<string>({ defaultTtl: -1, maxSize: 10 });
-    cache.set("key", "value"); // uses default TTL of -1
-    expect(cache.get("key")).toBeUndefined(); // already expired
+    expect(cache.get("fill0")).toBe("updated");
+    expect(cache.get("fill1")).toBe("1");
   });
 
   test("pinned entries survive TTL expiry", () => {
@@ -127,39 +99,29 @@ describe("MemoryCache", () => {
     expect(cache.get("pinned")).toBe("value");
   });
 
-  test("pinned entries are not evicted when maxSize is exceeded", () => {
-    const cache = new MemoryCache<string>({ maxSize: 3 });
+  test("pinned entries are not evicted once full", () => {
+    const cache = new MemoryCache<string>();
     cache.set("pinned", "p", 10_000);
     cache.pin("pinned");
-    cache.set("b", "2", 20_000);
-    cache.set("c", "3", 30_000);
-    // Adding a 4th would normally evict "pinned" (earliest expiry), but it's pinned.
-    cache.set("d", "4", 40_000);
+    fill(cache, MAX_ENTRIES - 1, 20_000);
+    // Adding one more would evict "pinned" (earliest expiry), but it's pinned
+    cache.set("last", "4", 40_000);
 
     expect(cache.get("pinned")).toBe("p");
-    expect(cache.get("b")).toBeUndefined(); // evicted instead
-    expect(cache.get("c")).toBe("3");
-    expect(cache.get("d")).toBe("4");
+    expect(cache.get("fill0")).toBeUndefined(); // evicted instead
+    expect(cache.get("fill1")).toBe("1");
+    expect(cache.get("last")).toBe("4");
   });
 
-  test("unpin restores normal TTL expiry", () => {
+  test("invalidateWhere removes pin state so re-setting does not stay pinned", () => {
     const cache = new MemoryCache<string>();
-    cache.set("key", "value", -1);
-    cache.pin("key");
-    expect(cache.get("key")).toBe("value");
-    cache.unpin("key");
-    expect(cache.get("key")).toBeUndefined();
-  });
-
-  test("invalidate removes pin state so re-setting does not stay pinned", () => {
-    const cache = new MemoryCache<string>({ maxSize: 2 });
     cache.set("a", "1", 10_000);
     cache.pin("a");
-    cache.invalidate("a");
+    cache.invalidateWhere((value) => value === "1");
     // Re-set without pinning
     cache.set("a", "1", 10_000);
-    cache.set("b", "2", 20_000);
-    cache.set("c", "3", 30_000); // should evict "a" since it's no longer pinned
+    fill(cache, MAX_ENTRIES - 1, 20_000);
+    cache.set("last", "2", 40_000); // evicts "a", no longer pinned
     expect(cache.get("a")).toBeUndefined();
   });
 

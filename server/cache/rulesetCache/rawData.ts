@@ -108,9 +108,7 @@ async function fetchCustomizations(rulesetId: string, entities: RawEntities, kla
   ];
   const propertyEntityIds = [...customizationEntityIds, rulesetId];
   const [properties, modifiers, klassLevelFeats, klassLevelPowers, klassLevelSaves] = await Promise.all([
-    propertyEntityIds.length > 0
-      ? Properties.findMany(db, { entityIds: propertyEntityIds })
-      : Promise.resolve<Property[]>([]),
+    Properties.findMany(db, { entityIds: propertyEntityIds }),
     customizationEntityIds.length > 0
       ? Modifiers.findMany(db, { sourceIds: customizationEntityIds })
       : Promise.resolve<Modifier[]>([]),
