@@ -1,7 +1,5 @@
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
-import { idOf, idsByName } from "@/database/packages/dnd35/seed/context.ts";
-import { propertyRows, requirementRows } from "@/database/packages/dnd35/seed/customizationRows.ts";
-import type { SeederState } from "@/database/packages/dnd35/seed/SeederState.ts";
+import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   featsAptitudesInRules,
   featsInRules,
@@ -11,13 +9,13 @@ import {
 import type { Constructor } from "@/server/mixins.ts";
 
 /** Seeding feats. */
-export function SeedsFeats<B extends Constructor<SeederState>>(Base: B) {
+export function SeedsFeats<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingFeats extends Base {
     /** Seeds feats with their aptitudes, requirements, modifiers and properties, and adds them to the context. */
     async seedFeats(feats: FeatSeed[]) {
       if (feats.length === 0) return;
 
-      const ids = idsByName(
+      const ids = BaseSeeder.idsByName(
         await this.db
           .insert(featsInRules)
           .values(
@@ -39,17 +37,17 @@ export function SeedsFeats<B extends Constructor<SeederState>>(Base: B) {
         feats.flatMap((f) =>
           f.aptitudes.map((aptitude) => ({
             featId: ids[f.name],
-            aptitudeId: idOf(this.ctx.aptMap, aptitude, `${f.name}'s aptitude`),
+            aptitudeId: this.idOf(this.ctx.aptMap, aptitude, `${f.name}'s aptitude`),
           })),
         ),
       );
       await this.insertAll(
         requirementsInCustomization,
-        feats.flatMap((f) => requirementRows(ids[f.name], "feats", f.requirements)),
+        feats.flatMap((f) => this.requirementRows(ids[f.name], "feats", f.requirements)),
       );
       await this.insertAll(
         propertiesInCustomization,
-        feats.flatMap((f) => propertyRows(ids[f.name], "feats", f.properties)),
+        feats.flatMap((f) => this.propertyRows(ids[f.name], "feats", f.properties)),
       );
 
       await this.insertModifiers(

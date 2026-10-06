@@ -1,17 +1,16 @@
-import { idsByName } from "@/database/packages/dnd35/seed/context.ts";
-import type { SeederState } from "@/database/packages/dnd35/seed/SeederState.ts";
+import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { aptitudesInRules } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
 /** Seeding aptitudes. */
-export function SeedsAptitudes<B extends Constructor<SeederState>>(Base: B) {
+export function SeedsAptitudes<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingAptitudes extends Base {
     /** Seeds aptitudes and adds them to the context. */
     async seedAptitudes(names: string[]) {
       if (names.length === 0) return;
       Object.assign(
         this.ctx.aptMap,
-        idsByName(
+        BaseSeeder.idsByName(
           await this.db
             .insert(aptitudesInRules)
             .values(names.map((name) => ({ rulesetId: this.ctx.rulesetId, name })))

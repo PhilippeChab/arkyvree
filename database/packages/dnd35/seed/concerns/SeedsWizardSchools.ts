@@ -1,15 +1,14 @@
 import { and, eq } from "drizzle-orm";
 
 import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
-import { spellListSlots } from "@/database/packages/dnd35/seed/customizationRows.ts";
-import type { SeederState } from "@/database/packages/dnd35/seed/SeederState.ts";
+import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { powersAptitudesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** Seeding the wizard's schools. */
-export function SeedsWizardSchools<B extends Constructor<SeederState>>(Base: B) {
+export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingWizardSchools extends Base {
     /**
      * Gives each school's specialist feat a slot at each spell level of its spell list ("X Specialist Spells"), once
@@ -20,7 +19,7 @@ export function SeedsWizardSchools<B extends Constructor<SeederState>>(Base: B) 
         schools
           .filter((s) => this.ctx.featMap[`${s.name} Specialist`])
           .flatMap((s) =>
-            spellListSlots(
+            this.spellListSlots(
               this.ctx.featMap[`${s.name} Specialist`],
               "feats",
               `${stripSeparators(s.name)}specialistspells`,

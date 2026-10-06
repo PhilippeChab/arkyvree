@@ -4,9 +4,7 @@ import { eq, inArray } from "drizzle-orm";
 
 import * as r from "@/database/packages/dnd35/content/requirements.ts";
 import type { ClassSeed, ItemDef, RaceDefinition, SpellSeed } from "@/database/packages/dnd35/content/types.ts";
-import type { SeedContext } from "@/database/packages/dnd35/seed/context.ts";
-import { requirementRows } from "@/database/packages/dnd35/seed/customizationRows.ts";
-import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
+import type { SeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   entitySnapshotsInRules,
   featsAptitudesInRules,
@@ -19,6 +17,7 @@ import {
   powersAptitudesInRules,
   powersInRules,
   racesInRules,
+  requirementsInCustomization,
 } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -29,7 +28,7 @@ import {
   KLASS_LEVEL_SKILL_POINTS,
 } from "@/shared/dnd3.5/properties/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
-import { describeCustomizations, freshExtensionContext, freshSeedContext, namesOf } from "@/tests/seeds/freshSeed.ts";
+import { describeCustomizations, freshExtensionSeeder, freshSeeder, namesOf } from "@/tests/seeds/freshSeed.ts";
 
 /** The class level each spell level opens at, the first at the first: 1, 3, 5… */
 const SPELL_LEVELS = Object.fromEntries(Array.from({ length: 10 }, (_, level) => [level, Math.max(1, 2 * level - 1)]));
@@ -88,11 +87,6 @@ function race(name: string, fields: Partial<RaceDefinition> = {}): RaceDefinitio
     baseSpeed: 30,
     ...fields,
   };
-}
-
-/** A seeder writing to the context's ruleset. */
-function seeder(ctx: SeedContext) {
-  return new RulesetSeeder(db, ctx);
 }
 
 function spell(name: string, level: number, fields: Partial<SpellSeed> = {}): SpellSeed {
@@ -154,28 +148,39 @@ async function spellListsOf(ctx: SeedContext, powerId: string) {
 }
 
 describe("Seeding", () => {
-  test("numbers an entity's requirements by their place in the tree", () => {
-    const rows = requirementRows("feat-id", "feats", [
-      r.eq(r.feat("Dodge")),
-      r.or(r.gte("combat.bab", 4), r.and(r.eq(r.feat("Mobility")), r.gte("skills.tumble.ranks", 5))),
+  test("numbers an entity's requirements by their place in the tree", async () => {
+    const seeder = await freshSeeder();
+    await seeder.seedFeats([
+      {
+        name: "Test Spring Attack",
+        description: "",
+        aptitudes: [],
+        requirements: [
+          r.eq(r.feat("Dodge")),
+          r.or(r.gte("combat.bab", 4), r.and(r.eq(r.feat("Mobility")), r.gte("skills.tumble.ranks", 5))),
+        ],
+      },
     ]);
-    expect(
-      rows.map((row) => `${row.entityId} ${row.entityType} ${row.level} ${row.target ?? row.chainingOperator}`),
-    ).toEqual([
-      "feat-id feats 1 feats.dodge.possessed",
-      "feat-id feats 2 or",
-      "feat-id feats 2.1 combat.bab",
-      "feat-id feats 2.2 and",
-      "feat-id feats 2.2.1 feats.mobility.possessed",
-      "feat-id feats 2.2.2 skills.tumble.ranks",
+    const rows = await db
+      .select()
+      .from(requirementsInCustomization)
+      .where(eq(requirementsInCustomization.entityId, seeder.ctx.featMap["Test Spring Attack"]));
+    expect(rows.map((row) => `${row.entityType} ${row.level} ${row.target ?? row.chainingOperator}`).sort()).toEqual([
+      "feats 1 feats.dodge.possessed",
+      "feats 2 or",
+      "feats 2.1 combat.bab",
+      "feats 2.2 and",
+      "feats 2.2.1 feats.mobility.possessed",
+      "feats 2.2.2 skills.tumble.ranks",
     ]);
   });
 
   describe("feats", () => {
     test("seeds them with their defaults, aptitudes and customizations, a modifier's requirements its own, and names them", async () => {
-      const ctx = await freshSeedContext();
-      await seeder(ctx).seedAptitudes(["General", "Fighter Bonus Feat"]);
-      await seeder(ctx).seedFeats([
+      const seeder = await freshSeeder();
+      const ctx = seeder.ctx;
+      await seeder.seedAptitudes(["General", "Fighter Bonus Feat"]);
+      await seeder.seedFeats([
         {
           name: "Test Dodge",
           description: "Dodge",
@@ -228,19 +233,20 @@ describe("Seeding", () => {
     });
 
     test("refuses an aptitude that isn't seeded", async () => {
-      const ctx = await freshSeedContext();
-      await expect(
-        seeder(ctx).seedFeats([{ name: "Test Feat", description: "", aptitudes: ["Nope"] }]),
-      ).rejects.toThrow(`Test Feat's aptitude: "Nope" isn't seeded`);
+      const seeder = await freshSeeder();
+      await expect(seeder.seedFeats([{ name: "Test Feat", description: "", aptitudes: ["Nope"] }])).rejects.toThrow(
+        `Test Feat's aptitude: "Nope" isn't seeded`,
+      );
     });
   });
 
   describe("a class", () => {
     test("seeds its levels: base attack, saves, skill points, spell slots, picks, modifiers, granted feats and what it takes to reach each", async () => {
-      const ctx = await freshSeedContext({ named: true });
-      await seeder(ctx).seedAptitudes(["Test Class Feature", "Test Bonus Feat"]);
-      await seeder(ctx).seedFeats(feats("Test Evasion", "Test Proficiency", "Test Bonus"));
-      const { klassId, levelIds } = await seeder(ctx).seedClass(
+      const seeder = await freshSeeder({ named: true });
+      const ctx = seeder.ctx;
+      await seeder.seedAptitudes(["Test Class Feature", "Test Bonus Feat"]);
+      await seeder.seedFeats(feats("Test Evasion", "Test Proficiency", "Test Bonus"));
+      const { klassId, levelIds } = await seeder.seedClass(
         klass("Test Mage", {
           description: "A mage",
           hd: 6,
@@ -351,8 +357,9 @@ describe("Seeding", () => {
     });
 
     test("that knows every spell it casts can prepare any at each spell level it opens, from the first when it has no cantrips", async () => {
-      const ctx = await freshSeedContext({ named: true });
-      const { klassId, levelIds } = await seeder(ctx).seedClass(
+      const seeder = await freshSeeder({ named: true });
+      const ctx = seeder.ctx;
+      const { klassId, levelIds } = await seeder.seedClass(
         klass("Test Healer", {
           levels: 3,
           bab: "good",
@@ -385,13 +392,13 @@ describe("Seeding", () => {
     });
 
     test("refuses a class skill or a granted feat that isn't seeded", async () => {
-      const ctx = await freshSeedContext({ named: true });
-      await seeder(ctx).seedAptitudes(["Test Class Feature"]);
-      await expect(seeder(ctx).seedClass(klass("Test Skilled", { classSkills: ["Nope"] }))).rejects.toThrow(
+      const seeder = await freshSeeder({ named: true });
+      await seeder.seedAptitudes(["Test Class Feature"]);
+      await expect(seeder.seedClass(klass("Test Skilled", { classSkills: ["Nope"] }))).rejects.toThrow(
         `Test Skilled's class skill: "Nope" isn't seeded`,
       );
       await expect(
-        seeder(ctx).seedClass(
+        seeder.seedClass(
           klass("Test Featured", {
             levels: 2,
             classFeatureAptitude: "Test Class Feature",
@@ -403,9 +410,10 @@ describe("Seeding", () => {
   });
 
   test("seeds items as templates, and the items made from them", async () => {
-    const ctx = await freshSeedContext();
-    expect(await seeder(ctx).seedItems([])).toEqual({});
-    const templates = await seeder(ctx).seedItems(
+    const seeder = await freshSeeder();
+    const ctx = seeder.ctx;
+    expect(await seeder.seedItems([])).toEqual({});
+    const templates = await seeder.seedItems(
       [
         item("Test Blade", {
           type: "Weapon",
@@ -416,7 +424,7 @@ describe("Seeding", () => {
       ],
       { isTemplate: true },
     );
-    const made = await seeder(ctx).seedItems(
+    const made = await seeder.seedItems(
       [
         item("Test Flaming Blade", {
           sourceItem: "Test Blade",
@@ -457,10 +465,11 @@ describe("Seeding", () => {
   });
 
   test("seeds spells with their saving throw, once in each spell list the ruleset has, and adds them to more", async () => {
-    const ctx = await freshSeedContext({ named: true });
-    await seeder(ctx).seedAptitudes(["Test Arcane Spells", "Test Divine Spells"]);
+    const seeder = await freshSeeder({ named: true });
+    const ctx = seeder.ctx;
+    await seeder.seedAptitudes(["Test Arcane Spells", "Test Divine Spells"]);
     const school = { type: SPELL_SCHOOL, value: "Evocation" };
-    await seeder(ctx).seedPowers([
+    await seeder.seedPowers([
       spell("Test Bolt", 3, {
         aptitudes: ["Test Arcane Spells", "Test Divine Spells", "Test Unknown Spells"],
         aptitudeLevels: { "Test Divine Spells": 4 },
@@ -498,7 +507,7 @@ describe("Seeding", () => {
     expect(await spellListsOf(ctx, ctx.powerMap["Test Charm"])).toEqual(["Test Arcane Spells 1"]);
     expect((await describeCustomizations(ctx.powerMap["Test Bolt"])).properties).toEqual([`${SPELL_SCHOOL} Evocation`]);
 
-    await seeder(ctx).linkPower(ctx.powerMap["Test Charm"], [
+    await seeder.linkPower(ctx.powerMap["Test Charm"], [
       { aptitudeId: ctx.aptMap["Test Arcane Spells"], level: 5 },
       { aptitudeId: ctx.aptMap["Test Divine Spells"], level: 2 },
       { aptitudeId: ctx.aptMap["Test Divine Spells"], level: 7 },
@@ -510,10 +519,11 @@ describe("Seeding", () => {
   });
 
   test("seeds races of their own kind, else of the kind given, else a character's", async () => {
-    const ctx = await freshSeedContext();
+    const seeder = await freshSeeder();
+    const ctx = seeder.ctx;
     const dexterity = { target: "abilities.dexterity.score", operator: "add", value: "2", valueType: "number" };
-    await seeder(ctx).seedRaces([race("Test Elf", { modifiers: [dexterity] })]);
-    await seeder(ctx).seedRaces(
+    await seeder.seedRaces([race("Test Elf", { modifiers: [dexterity] })]);
+    await seeder.seedRaces(
       [race("Test Hawk", { size: "Tiny", baseSpeed: 10 }), race("Test Steed", { size: "Large", kind: "mount" })],
       "familiar",
     );
@@ -534,11 +544,12 @@ describe("Seeding", () => {
   });
 
   test("seeds a cleric domain: a feat in Cleric Domain whose spell list opens as the cleric casts each level and joins the cleric's, with the domain's spells", async () => {
-    const ctx = await freshSeedContext();
-    await seeder(ctx).seedAptitudes(["Cleric Domain"]);
-    await seeder(ctx).seedPowers([spell("Test Bless", 1), spell("Test Aid", 2)]);
+    const seeder = await freshSeeder();
+    const ctx = seeder.ctx;
+    await seeder.seedAptitudes(["Cleric Domain"]);
+    await seeder.seedPowers([spell("Test Bless", 1), spell("Test Aid", 2)]);
     const classSkill = { target: "skills.spot.innate", operator: "set", value: "true", valueType: "boolean" };
-    await seeder(ctx).seedDomains(
+    await seeder.seedDomains(
       [
         {
           name: "Test Luck",
@@ -573,24 +584,23 @@ describe("Seeding", () => {
   });
 
   test("gives a wizard school's specialist feat its spell list, of the school's wizard spells", async () => {
-    const ctx = await freshSeedContext();
-    await seeder(ctx).seedAptitudes([
+    const seeder = await freshSeeder();
+    const ctx = seeder.ctx;
+    await seeder.seedAptitudes([
       "Wizard Spells",
       "Wizard Specialization",
       "Evocation Specialist Spells",
       "Universal Specialist Spells",
     ]);
-    await seeder(ctx).seedFeats([
-      { name: "Evocation Specialist", description: "", aptitudes: ["Wizard Specialization"] },
-    ]);
+    await seeder.seedFeats([{ name: "Evocation Specialist", description: "", aptitudes: ["Wizard Specialization"] }]);
     const school = (value: string) => [{ type: SPELL_SCHOOL, value }];
-    await seeder(ctx).seedPowers([
+    await seeder.seedPowers([
       spell("Test Bolt", 3, { aptitudes: ["Wizard Spells"], properties: school("Evocation") }),
       spell("Test Flame", 2, { properties: school("Evocation") }),
       spell("Test Mirror", 2, { aptitudes: ["Wizard Spells"], properties: school("Illusion") }),
       spell("Test Detect", 0, { aptitudes: ["Wizard Spells"], properties: school("Universal") }),
     ]);
-    await seeder(ctx).seedWizardSchools(
+    await seeder.seedWizardSchools(
       [
         { name: "Evocation", description: "", prohibitedSchoolCount: 1 },
         { name: "Illusion", description: "", prohibitedSchoolCount: 1 },
@@ -615,8 +625,9 @@ describe("Seeding", () => {
   });
 
   test("seeds a bonded creature: its aptitudes, feats, races and class, all of its kind", async () => {
-    const ctx = await freshSeedContext({ named: true });
-    await seeder(ctx).seedBond({
+    const seeder = await freshSeeder({ named: true });
+    const ctx = seeder.ctx;
+    await seeder.seedBond({
       kind: "familiar",
       aptitudes: ["Test Familiar Feature"],
       feats: [{ name: "Test Alertness", description: "", aptitudes: ["Test Familiar Feature"] }],
@@ -645,10 +656,11 @@ describe("Seeding", () => {
 
   describe("an extension", () => {
     test("copies the inherited feats it changes, each recorded, and adds its class levels to their `or` of requirements", async () => {
-      const core = await freshSeedContext();
-      await seeder(core).seedAptitudes(["General"]);
+      const coreSeeder = await freshSeeder();
+      const core = coreSeeder.ctx;
+      await coreSeeder.seedAptitudes(["General"]);
       const dodge = r.eq(r.feat("Dodge"));
-      await seeder(core).seedFeats([
+      await coreSeeder.seedFeats([
         {
           name: "Test Grouped",
           description: "Grouped",
@@ -665,9 +677,10 @@ describe("Seeding", () => {
       const original = { ...core.featMap };
       const before = await describeCustomizations(original["Test Grouped"]);
 
-      const ctx = await freshExtensionContext(core);
-      await seeder(ctx).seedAptitudes(["Test Class Feature"]);
-      await seeder(ctx).cowFeatsIntoExtension([
+      const seeder = await freshExtensionSeeder(core);
+      const ctx = seeder.ctx;
+      await seeder.seedAptitudes(["Test Class Feature"]);
+      await seeder.cowFeatsIntoExtension([
         {
           feat: "Test Grouped",
           requirements: [
@@ -747,10 +760,11 @@ describe("Seeding", () => {
     });
 
     test("copies the inherited spells it adds to its spell lists, which keep the originals' spell lists", async () => {
-      const core = await freshSeedContext();
-      await seeder(core).seedAptitudes(["Wizard Spells", "Cleric Spells", "Test Source"]);
+      const coreSeeder = await freshSeeder();
+      const core = coreSeeder.ctx;
+      await coreSeeder.seedAptitudes(["Wizard Spells", "Cleric Spells", "Test Source"]);
       const school = { type: SPELL_SCHOOL, value: "Evocation" };
-      await seeder(core).seedPowers([
+      await coreSeeder.seedPowers([
         spell("Test Bolt", 3, {
           aptitudes: ["Wizard Spells", "Test Source"],
           savingThrow: "See text",
@@ -760,11 +774,12 @@ describe("Seeding", () => {
         spell("Test Light", 0, { aptitudes: ["Cleric Spells"] }),
       ]);
 
-      const ctx = await freshExtensionContext(core);
-      await seeder(ctx).seedAptitudes(["Arcane Spells"]);
-      await seeder(ctx).seedPowers([spell("Test Ward", 2, { aptitudes: ["Arcane Spells"] })]);
+      const seeder = await freshExtensionSeeder(core);
+      const ctx = seeder.ctx;
+      await seeder.seedAptitudes(["Arcane Spells"]);
+      await seeder.seedPowers([spell("Test Ward", 2, { aptitudes: ["Arcane Spells"] })]);
       const ownWard = ctx.powerMap["Test Ward"];
-      await seeder(ctx).cowSpellsIntoExtension([
+      await seeder.cowSpellsIntoExtension([
         {
           spell: "Test Bolt",
           aptitudes: [
@@ -800,8 +815,9 @@ describe("Seeding", () => {
       expect(await spellListsOf(ctx, core.powerMap["Test Bolt"])).toEqual(["Test Source 3", "Wizard Spells 3"]);
 
       // An extension of the extension copies the core's spells too
-      const grandchild = await freshExtensionContext(ctx);
-      await seeder(grandchild).cowSpellsIntoExtension([
+      const grandchildSeeder = await freshExtensionSeeder(ctx);
+      const grandchild = grandchildSeeder.ctx;
+      await grandchildSeeder.cowSpellsIntoExtension([
         { spell: "Test Light", aptitudes: [{ aptitude: "Arcane Spells", level: 1 }] },
       ]);
       const light = grandchild.powerMap["Test Light"];

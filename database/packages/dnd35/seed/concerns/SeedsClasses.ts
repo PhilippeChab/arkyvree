@@ -1,8 +1,11 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
-import { BAB, CASTER_LEVEL_APTITUDES, SAVE, spellSlots } from "@/database/packages/dnd35/seed/classTables.ts";
-import { idOf } from "@/database/packages/dnd35/seed/context.ts";
-import { requirementRows } from "@/database/packages/dnd35/seed/customizationRows.ts";
-import type { SeederState } from "@/database/packages/dnd35/seed/SeederState.ts";
+import type {
+  BabType,
+  ClassSeed,
+  ModifierSeed,
+  RequirementEntry,
+  SaveType,
+} from "@/database/packages/dnd35/content/types.ts";
+import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   klassesInRules,
   klassLevelFeatsInRules,
@@ -24,15 +27,93 @@ import { stripSeparators } from "@/shared/text.ts";
 /** A class's levels, as seeded: each level's id and number. */
 type Levels = { id: string; level: number }[];
 
+/** A level's base attack bonus, by the class's progression. */
+const BAB: Record<BabType, (level: number) => number> = {
+  good: (level) => level,
+  medium: (level) => Math.floor((level * 3) / 4),
+  poor: (level) => Math.floor(level / 2),
+};
+
+/** The aptitudes a level that advances spellcasting gives a pick in, by the kind of caster it advances. */
+const CASTER_LEVEL_APTITUDES = {
+  divine: ["Bonus Divine Caster Level"],
+  arcane: ["Bonus Arcane Caster Level"],
+  any: ["Bonus Caster Level"],
+  dual: ["Bonus Arcane Caster Level", "Bonus Divine Caster Level"],
+};
+
+/** A level's base save, by how good the class's save is. */
+const SAVE: Record<SaveType, (level: number) => number> = {
+  good: (level) => Math.floor(level / 2) + 2,
+  poor: (level) => Math.floor(level / 3),
+};
+
+/** A spellcaster's slots in one of its lists, gated by its requirements. */
+function listSlots(
+  spells: NonNullable<ClassSeed["spells"]>,
+  list: { slug: string; requirements: RequirementEntry[] },
+): (ModifierSeed & { level: number })[] {
+  const slot = (spellLevel: number, kind: string) =>
+    `aptitudes.${list.slug}.${spellLevel + (spells.noCantrips ? 1 : 0)}.${kind}`;
+  const modifier = (level: number, target: string, value: string, operator: string) => ({
+    level,
+    target,
+    value,
+    valueType: "number",
+    operator,
+    ...(list.requirements.length > 0 && { requirements: list.requirements }),
+  });
+  return [
+    ...tableGains(spells.perDay).map((g) => modifier(g.level, slot(g.spellLevel, "uses"), String(g.delta), "add")),
+    ...tableGains(spells.known ?? []).map((g) =>
+      modifier(g.level, slot(g.spellLevel, "allowed"), String(g.delta), "add"),
+    ),
+    ...(spells.knowAll
+      ? tableOpenings(spells.perDay).map((o) => modifier(o.level, slot(o.spellLevel, "allowed"), "-1", "set"))
+      : []),
+  ];
+}
+
+/**
+ * A spellcaster's slots, by class level: its spells a day, and the spells it knows (`known`) or can prepare,
+ * all of each level it can cast (`knowAll`). They go to its list, or to each of its `lists` while that one's
+ * requirements are met.
+ */
+function spellSlots(spells: NonNullable<ClassSeed["spells"]>): (ModifierSeed & { level: number })[] {
+  const lists = spells.lists ?? [{ slug: spells.slug, requirements: [] }];
+  return lists.flatMap((list) => listSlots(spells, list));
+}
+
+/** What a table (by class level, then spell level) adds at each class level: `delta` more at `spellLevel`. */
+function tableGains(table: number[][]) {
+  return table.flatMap((row, i) =>
+    row.flatMap((count, spellLevel) => {
+      const delta = count - (table[i - 1]?.[spellLevel] ?? 0);
+      return delta > 0 ? [{ level: i + 1, spellLevel, delta }] : [];
+    }),
+  );
+}
+
+/** The spell levels a table opens at each class level. */
+function tableOpenings(table: number[][]) {
+  return table.flatMap((row, i) => {
+    const opened = table[i - 1]?.length ?? 0;
+    return Array.from({ length: Math.max(row.length - opened, 0) }, (_, j) => ({
+      level: i + 1,
+      spellLevel: opened + j,
+    }));
+  });
+}
+
 /** Seeding classes. */
-export function SeedsClasses<B extends Constructor<SeederState>>(Base: B) {
+export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingClasses extends Base {
     /** The feats its levels grant: its class features, its proficiencies and its free feats. */
     private async insertGrantedFeats(def: ClassSeed, levelIds: Record<number, string>) {
       const granted = (level: number, feat: string, aptitude: string, what: string) => ({
         klassLevelId: levelIds[level],
-        featId: idOf(this.ctx.featMap, feat, `${def.name}'s ${what}`),
-        aptitudeId: idOf(this.ctx.aptMap, aptitude, `${def.name}'s ${what}`),
+        featId: this.idOf(this.ctx.featMap, feat, `${def.name}'s ${what}`),
+        aptitudeId: this.idOf(this.ctx.aptMap, aptitude, `${def.name}'s ${what}`),
         free: true,
       });
       const featureAptitude = def.classFeatureAptitude;
@@ -90,7 +171,7 @@ export function SeedsClasses<B extends Constructor<SeederState>>(Base: B) {
             valueType: "number",
             operator: "greater_than",
           })),
-        ...requirementRows(levelIds[1], "klass_levels", def.requirements),
+        ...this.requirementRows(levelIds[1], "klass_levels", def.requirements),
       ]);
     }
 
@@ -136,7 +217,7 @@ export function SeedsClasses<B extends Constructor<SeederState>>(Base: B) {
         klassSkillsInRules,
         def.classSkills.map((name) => ({
           klassId,
-          skillId: idOf(this.ctx.skillMap, name, `${def.name}'s class skill`),
+          skillId: this.idOf(this.ctx.skillMap, name, `${def.name}'s class skill`),
         })),
       );
     }
