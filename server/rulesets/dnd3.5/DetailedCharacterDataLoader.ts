@@ -605,10 +605,9 @@ export default class DetailedCharacterDataLoader {
     // Round 6: Requirements — cache covers ruleset modifiers (including those on virtually possessed feats/powers,
     // since the unified `feats` and `powers` arrays pull from `rulesetData.modifiersBySource`). Only
     // character-direct modifiers can have requirements the cache misses.
-    const extraRequirements =
-      characterSourcedModifiers.length > 0
-        ? await Requirements.findMany(database, { entityIds: characterSourcedModifiers.map((m) => m.id) })
-        : [];
+    const extraRequirements = await Requirements.findMany(database, {
+      entityIds: characterSourcedModifiers.map((m) => m.id),
+    });
     return { characterSourcedModifiers, baseModifiers, extraRequirements };
   }
 

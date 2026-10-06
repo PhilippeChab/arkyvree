@@ -13,6 +13,7 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
   protected readonly entityType = "aptitudes";
 
   async findLeveledIds(db: Db, where: { aptitudeIds: string[] }) {
+    if (where.aptitudeIds.length === 0) return new Set<string>();
     const rows = await db
       .selectDistinct({ aptitudeId: powersAptitudesInRules.aptitudeId })
       .from(powersAptitudesInRules)
@@ -24,6 +25,8 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
   }
 
   async findMany(db: Db, where: { ids: string[] } | { rulesetIds: string[] }) {
+    if ("ids" in where && where.ids.length === 0) return [];
+    if ("rulesetIds" in where && where.rulesetIds.length === 0) return [];
     return await db.query.aptitudesInRules.findMany({
       where: this.branchWhere(
         [

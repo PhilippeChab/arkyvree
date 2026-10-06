@@ -91,6 +91,7 @@ class PlayerCharactersRepository extends include(
     },
     pagination: { limit: number; page: number },
   ) {
+    if ("playerIds" in where && where.playerIds.length === 0) return this.paginated([], pagination);
     const { search, orderBy = "createdAt", orderDir = "desc" } = where;
     // Not correlated: the relational query aliases the table, which a subquery
     // referencing `this.table` would miss.

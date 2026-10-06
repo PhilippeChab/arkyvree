@@ -44,18 +44,16 @@ class CharactersService extends include(Object, Archives) {
     rulesetData: { cow: { sourceChain: string[] } },
     languageIds: string[],
   ): Promise<void> {
-    if (languageIds.length > 0) {
-      // Proxy auto-canonicalizes the `ids` input through cowContext, so
-      // Languages.findMany returns the post-COW rows regardless of which
-      // form the client sent.
-      const languages = await Languages.findMany(tx, { ids: languageIds });
-      if (languages.length !== languageIds.length) {
-        throw new BadRequestError("Some languages were not found");
-      }
-      const validRulesetIds = new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain]);
-      if (languages.some((l) => !validRulesetIds.has(l.rulesetId))) {
-        throw new BadRequestError("Some languages do not belong to the character's ruleset");
-      }
+    // Proxy auto-canonicalizes the `ids` input through cowContext, so
+    // Languages.findMany returns the post-COW rows regardless of which
+    // form the client sent.
+    const languages = await Languages.findMany(tx, { ids: languageIds });
+    if (languages.length !== languageIds.length) {
+      throw new BadRequestError("Some languages were not found");
+    }
+    const validRulesetIds = new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain]);
+    if (languages.some((l) => !validRulesetIds.has(l.rulesetId))) {
+      throw new BadRequestError("Some languages do not belong to the character's ruleset");
     }
 
     const existing = await CharacterLanguages.findMany(tx, { characterId: characterRecord.id });
@@ -288,7 +286,7 @@ class CharactersService extends include(Object, Archives) {
     const charactersList = result.items;
     const characterIds = charactersList.map((char) => char.id);
 
-    const levels = characterIds.length > 0 ? await CharacterLevels.findMany(db, { characterIds }) : [];
+    const levels = await CharacterLevels.findMany(db, { characterIds });
 
     // Resolve race / klass names via each character's composed ruleset cache
     // so COW'd or renamed entities render their post-COW names (the detail

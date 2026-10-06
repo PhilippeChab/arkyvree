@@ -60,6 +60,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
     },
     pagination: { limit: number; page: number },
   ) {
+    if (where.ids !== undefined && where.ids.length === 0) return this.paginated([], pagination);
     const { search } = where;
     const searchCondition = this.search(search, [this.table.name]);
     const { limit, offset } = this.paginate(pagination);
@@ -104,6 +105,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
   }
 
   async findMany(db: Db, where: { ids: string[] }) {
+    if (where.ids.length === 0) return [];
     return await db.query.featsInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
       orderBy: [this.orderBy(this.table.name)],
@@ -251,6 +253,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
     where: RulesetEntityFilters<{ ids?: string[]; family?: string }>,
     pagination: { limit: number; page: number },
   ) {
+    if (where.ids !== undefined && where.ids.length === 0) return this.paginated([], pagination);
     const { search, orderBy = "name", orderDir = "asc" } = where;
     const searchColumns = [this.table.name, this.table.description];
     const searchConditions = this.fuzzySearch(search, searchColumns);
@@ -300,6 +303,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
 
   /** The picks of these character levels, by the picked entity's name, ties broken to a fixed order. */
   async findPicks(db: Db, where: { characterLevelIds: string[] }) {
+    if (where.characterLevelIds.length === 0) return [];
     return await db
       .select({
         ...getTableColumns(featsInRules),

@@ -27,7 +27,7 @@ class ModifiersRepository extends CustomizationRepository<typeof modifiersInCust
   }
 
   async findMany(db: Db, where: { sourceIds: string[]; sourceType: string } | { sourceIds: string[] }) {
-    if (!("sourceType" in where) && where.sourceIds.length === 0) return [];
+    if (where.sourceIds.length === 0) return [];
     return await db.query.modifiersInCustomization.findMany({
       where: this.branchWhere(
         [inArray(this.table.sourceId, where.sourceIds)],

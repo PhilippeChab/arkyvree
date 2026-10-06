@@ -10,6 +10,7 @@ import { ENTITY_TABLES, type RulesetEntityType } from "./entityTables.ts";
 class RulesetEntitiesRepository {
   /** An entity type's ids and names: a ruleset's own rows, or the rows with these ids. */
   async findNames(db: Db, entityType: RulesetEntityType, where: { rulesetId: string } | { ids: string[] }) {
+    if ("ids" in where && where.ids.length === 0) return [];
     const table = ENTITY_TABLES[entityType];
     return await db
       .select({ id: table.id, name: table.name })
@@ -22,6 +23,7 @@ class RulesetEntitiesRepository {
    * ruleset itself, not a campaign's, and not a copy-on-write copy (a copy keeps its source's name).
    */
   async findNativeNames(db: Db, where: { rulesetIds: string[]; entityTypes: RulesetEntityType[] }) {
+    if (where.rulesetIds.length === 0) return [];
     const subqueries = where.entityTypes.map((entityType) => {
       const table = ENTITY_TABLES[entityType];
       return db

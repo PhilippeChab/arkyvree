@@ -262,6 +262,55 @@ describe("conventions", () => {
     ]);
   });
 
+  test("an empty list is checked in its repository's read, which answers it without a query, never by a caller", async () => {
+    const reading = (body: string) =>
+      lines(
+        'import { Feats } from "@/server/repositories/index.ts";',
+        `export async function f(db: Db, ids: string[], rows: R[]) {`,
+        body,
+        "}",
+      );
+    const repository = (body: string) =>
+      lines("export class XRepository {", "  async findMany(db: Db, where: { ids: string[] }) {", body, "  }", "}");
+    expect(
+      await lintRepo(
+        {
+          "server/services/ternary.ts": reading("  return ids.length > 0 ? await Feats.findMany(db, { ids }) : [];"),
+          "server/services/resolved.ts": reading(
+            "  return ids.length === 0 ? Promise.resolve([]) : Feats.findMany(db, { ids: ids.map(canonical) });",
+          ),
+          "server/services/early.ts": reading(
+            "  if (!ids.length) return [];\n  return await Feats.findMany(db, { ids });",
+          ),
+          "server/services/block.ts": reading(
+            "  if (ids.length > 0) {\n    await Feats.findPicks(db, { characterLevelIds: ids });\n  }",
+          ),
+          "server/services/plain.ts": reading("  return await Feats.findMany(db, { ids });"),
+          "server/services/write.ts": reading(
+            "  if (rows.length === 0) return [];\n  return await Feats.createMany(tx, rows);",
+          ),
+          "server/services/other.ts": reading("  return ids.length > 0 ? describe(ids) : [];"),
+          "server/repositories/unchecked.ts": repository(
+            "    return await db.select().from(t).where(and(inArray(t.id, where.ids), isNull(t.deletedAt)));",
+          ),
+          "server/repositories/checked.ts": repository(
+            "    if (where.ids.length === 0) return [];\n    return await db.select().from(t).where(inArray(t.id, where.ids));",
+          ),
+          "server/repositories/optional.ts": repository(
+            "    return await db.select().from(t).where(or(eq(t.own, true), inArray(t.id, where.ids)));",
+          ),
+        },
+        ["empty-list-reads"],
+      ),
+    ).toEqual([
+      "empty-list-reads server/repositories/unchecked.ts",
+      "empty-list-reads server/services/block.ts",
+      "empty-list-reads server/services/early.ts",
+      "empty-list-reads server/services/resolved.ts",
+      "empty-list-reads server/services/ternary.ts",
+    ]);
+  });
+
   test("a transaction's queries run one at a time, never in a Promise.all", async () => {
     expect(
       await lintRepo(

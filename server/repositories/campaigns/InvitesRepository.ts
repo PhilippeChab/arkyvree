@@ -83,6 +83,7 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
       | { userId: string; playerIds: string[]; status: string }
       | { email: string; playerIds: string[]; status: string },
   ) {
+    if ("playerIds" in where && where.playerIds.length === 0) return undefined;
     return await db.query.invitesInCampaign.findFirst({
       where: this.branchWhere(
         [

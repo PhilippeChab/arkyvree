@@ -110,6 +110,7 @@ class CharacterLevelsRepository extends include(
   }
 
   async findMany(db: Db, where: { characterId: string } | { characterIds: string[] }) {
+    if ("characterIds" in where && where.characterIds.length === 0) return [];
     return await db.query.levelsInCharacter.findMany({
       where: this.branchWhere(
         [

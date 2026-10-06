@@ -168,7 +168,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     const parentRulesetIds = [
       ...new Set(rulesets.items.map((r) => r.rulesetId).filter((id): id is string => id !== null)),
     ];
-    const parentRulesets = parentRulesetIds.length > 0 ? await Rulesets.findMany(db, { ids: parentRulesetIds }) : [];
+    const parentRulesets = await Rulesets.findMany(db, { ids: parentRulesetIds });
     const parentNameMap = new Map(parentRulesets.map((r) => [r.id, r.name]));
 
     const items = rulesets.items.map((ruleset) => ({

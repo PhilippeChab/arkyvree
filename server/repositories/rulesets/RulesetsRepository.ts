@@ -256,6 +256,7 @@ class RulesetsRepository extends include(
 
   /** Rulesets by id, those subscribing to an extension (`extensionRulesetId`), or the system's own (`system`). */
   async findMany(db: Db, where: { ids: string[] } | { extensionRulesetId: string } | { system: true }) {
+    if ("ids" in where && where.ids.length === 0) return [];
     return await db.query.rulesetsInRules.findMany({
       where: this.branchWhere(
         [
