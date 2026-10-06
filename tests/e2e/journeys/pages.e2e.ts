@@ -52,10 +52,10 @@ async function firstOf(
   return items[0];
 }
 
-/** Opens `path` and waits for `content` and for the calls the page makes, then checks nothing went wrong. */
+/** Opens `path` and waits for `content` in the page (not the sidebar) and for the calls it makes, then checks nothing went wrong. */
 async function visit(page: Page, errors: string[], path: string, content: string | RegExp) {
   await page.goto(path);
-  await expect(page.getByText(content).first(), path).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("main").getByText(content).first(), path).toBeVisible({ timeout: 15_000 });
   await page.waitForLoadState("networkidle");
   expect(errors, path).toEqual([]);
 }

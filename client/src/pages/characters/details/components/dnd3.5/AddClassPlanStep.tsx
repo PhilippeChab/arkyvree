@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Button, Chip, IconButton, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Autocomplete, Box, Button, IconButton, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useMemo } from "react";
 
 import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
@@ -91,23 +91,16 @@ export function AddClassPlanStep({
           </Button>
         ))}
       </Stack>
-      {levels.map((selectedKlass, index) =>
-        selectedKlass ? (
-          <Stack key={slotKeys[index]} direction="row" sx={{ height: 56, alignItems: "center" }}>
-            <Chip
-              label={`${selectedKlass.name} — Level ${selectedKlass.nextLevel}`}
-              onDelete={() => onRemoveLevel(index)}
-              sx={{
-                typography: "body1",
-                height: 46,
-                width: "100%",
-                "& .MuiChip-label": { flex: 1, textAlign: "center" },
-                "& .MuiChip-deleteIcon": { position: "absolute", right: 8 },
-              }}
+      {levels.map((selectedKlass, index) => (
+        <Stack key={slotKeys[index]} direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+          {selectedKlass ? (
+            <TextField
+              label={`Level ${index + 1}`}
+              value={`${selectedKlass.name} — Level ${selectedKlass.nextLevel}`}
+              fullWidth
+              slotProps={{ htmlInput: { readOnly: true } }}
             />
-          </Stack>
-        ) : (
-          <Stack key={slotKeys[index]} direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+          ) : (
             <Autocomplete<AvailableKlass>
               sx={{ flex: 1 }}
               options={availableKlasses}
@@ -166,12 +159,12 @@ export function AddClassPlanStep({
                 },
               }}
             />
-            <IconButton size="small" aria-label={`Remove level ${index + 1}`} onClick={() => onRemoveLevel(index)}>
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Stack>
-        ),
-      )}
+          )}
+          <IconButton size="small" aria-label={`Remove level ${index + 1}`} onClick={() => onRemoveLevel(index)}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+      ))}
     </Stack>
   );
 }
