@@ -233,7 +233,7 @@ export function LevelUpFeatsStep({
   const hasSelectableFeats = aptitudePools.some((pool) => pool.available > 0);
 
   if (!hasSelectableFeats && featData.autoGrantedFeats.length === 0) {
-    return <BlankState icon={FeatsIcon} title="No feats to select" description="This level gives no feats to pick." />;
+    return <BlankState icon={FeatsIcon} title="No feats to select at this level" />;
   }
 
   return (

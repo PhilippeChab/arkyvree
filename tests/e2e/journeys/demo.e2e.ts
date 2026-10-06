@@ -49,14 +49,14 @@ test.describe("Demo", () => {
 
   test("that expired sends the user to the demo-expired page, which leads to sign-up", async ({ page }) => {
     await startDemo(page);
-    // The server answers an expired demo with a 401. Every API call gets one but the auth probe, whose failure
-    // would send the user to sign in instead.
+    // The server answers an expired demo with a `SessionError` (a 401). Every API call gets one but the auth probe,
+    // whose failure would send the user to sign in instead.
     await page.route("**/api/**", async (route) => {
       if (route.request().url().includes("/auth/me")) return route.continue();
       await route.fulfill({
         status: 401,
         contentType: "application/json",
-        body: JSON.stringify({ error: "UnauthenticatedError", message: "" }),
+        body: JSON.stringify({ error: "SessionError", message: "Session expired" }),
       });
     });
     await page.goto("/rulesets");

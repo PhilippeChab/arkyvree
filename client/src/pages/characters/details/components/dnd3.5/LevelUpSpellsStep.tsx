@@ -57,9 +57,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   );
 
   if (totalPowersToSelect === 0 && autoGrantedFree.length === 0 && autoGrantedNonFree.length === 0) {
-    return (
-      <BlankState icon={PowersIcon} title="No spells to select" description="This level gives no spells to pick." />
-    );
+    return <BlankState icon={PowersIcon} title="No spells to select at this level" />;
   }
 
   return (
