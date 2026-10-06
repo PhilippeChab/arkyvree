@@ -255,7 +255,7 @@ The sibling merge (`EntityCopy`'s `mergeSiblings`) merges four types of customiz
 | **Properties** | `mergeSiblingProperties`: inserts sibling properties | `type + value` |
 | **Aptitude links** | `mergeSiblingAptitudeLinks`: inserts sibling `feats_aptitudes` / `powers_aptitudes` rows, on the aptitude the copy's `CowData` resolves each to, as the copy's own links | resolved `aptitudeId` |
 
-The customizations are copied whole, as the winner's own (`copyEntityCustomizations`), and each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later unsubscribe from one of the extensions, their fork retains the full merged data since it's baked into their own copy.
+The customizations are copied whole, as the winner's own (`copyEntityCustomizations`), and each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later unsubscribe from one of the extensions, their fork retains the full merged data since it's baked into their own copy, its links to the extension's lists moved to the lists of the same names its other books have (see Unsubscribe below).
 
 ## Extensions
 
@@ -280,11 +280,12 @@ No entities are copied. They become visible immediately via the source chain.
 ### Unsubscribe (`unsubscribeExtension`)
 
 1. Validates: user is owner, extension is subscribed, ruleset not archived
-2. **In-use check** (`isExtensionInUseByHost`) — blocks with `ConflictError` if any character on the host has picked an extension-owned entity, either directly or via a host-side COW shadow of one. The shadow case matters because step 3 below hard-deletes those shadows; without this guard the character pick would silently dangle. (Scoped to the host only; fork-of-fork is blocked at policy time so descendant forks aren't a concern. If that ever changes, the character repos' `exists` extension branch (`{ hostRulesetId, extensionRulesetId, shadow…Ids }`) would need to widen the join.)
+2. **In-use check** (`isExtensionInUseByHost`) — blocks with `ConflictError` if any character on the host has picked an extension-owned entity, either directly or via a host-side COW shadow of one. The shadow case matters because step 5 below hard-deletes those shadows; without this guard the character pick would silently dangle. (Scoped to the host only; fork-of-fork is blocked at policy time so descendant forks aren't a concern. If that ever changes, the character repos' `exists` extension branch (`{ hostRulesetId, extensionRulesetId, shadow…Ids }`) would need to widen the join.)
 3. Finds snapshots whose `sourceEntityId` belongs to the extension (COW copies of extension entities)
-4. Deletes those COW copies and their snapshots
-5. Removes `extensionId` from the array
-6. Soft-deletes the tracking row
+4. **Repoints what the host keeps that names the extension's lists** (`repointDepartingReferences`, `extensions/departingReferences.ts`): its feats' and powers' links, and its classes' level grants, to the extension's lists (and to its copies of them) move to the list of the same name the host keeps, as its view will show it (`CowDataBuilder.build` without the extension); a list's name is its identity, as the namesakes pair. A link to a list no other book of the host has, or a host row naming another of the extension's entities (an item's template, a class's or a race's parent, a spell's save, a save's or a skill's ability, a class's skill or its levels' saves, granted feats and powers: `RulesetEntities.findReferences`), refuses the unsubscribe with a `ConflictError` naming them, before anything changes
+5. Deletes those COW copies and their snapshots
+6. Removes `extensionId` from the array
+7. Soft-deletes the tracking row
 
 ### Fork Inheritance
 

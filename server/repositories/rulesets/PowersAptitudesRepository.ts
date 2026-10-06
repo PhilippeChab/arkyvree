@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
-import { powersAptitudesInRules } from "@/drizzle/schema.ts";
+import { powersAptitudesInRules, powersInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
@@ -41,15 +41,31 @@ class PowersAptitudesRepository extends BaseRepository<typeof powersAptitudesInR
     return rows.map((r) => r.aptitudeId);
   }
 
-  async findMany(db: Db, where: { powerIds: string[] } | { powerId: string }) {
+  /** Links of powers, or a ruleset's powers' links to lists (`aptitudeIds`). */
+  async findMany(
+    db: Db,
+    where: { powerIds: string[] } | { powerId: string } | { rulesetId: string; aptitudeIds: string[] },
+  ) {
     if ("powerIds" in where && where.powerIds.length === 0) return [];
+    if ("aptitudeIds" in where && where.aptitudeIds.length === 0) return [];
     return await db.query.powersAptitudesInRules.findMany({
       where: this.branchWhere(
         [
           "powerIds" in where && inArray(this.table.powerId, where.powerIds),
           "powerId" in where && eq(this.table.powerId, where.powerId),
+          "aptitudeIds" in where && inArray(this.table.aptitudeId, where.aptitudeIds),
         ],
-        [isNull(this.table.deletedAt)],
+        [
+          "rulesetId" in where &&
+            inArray(
+              this.table.powerId,
+              db
+                .select({ id: powersInRules.id })
+                .from(powersInRules)
+                .where(eq(powersInRules.rulesetId, where.rulesetId)),
+            ),
+          isNull(this.table.deletedAt),
+        ],
       ),
       with: {
         aptitudesInRule: true,
@@ -67,7 +83,14 @@ class PowersAptitudesRepository extends BaseRepository<typeof powersAptitudesInR
     });
   }
 
-  // Exception to soft-delete: disposable configuration data — intentional removal
+  /** Repoints a power's link to another list. */
+  async update(db: Db, values: { aptitudeId: string }, where: { powerId: string; aptitudeId: string }) {
+    return await db
+      .update(this.table)
+      .set(values)
+      .where(and(eq(this.table.powerId, where.powerId), eq(this.table.aptitudeId, where.aptitudeId)))
+      .returning();
+  }
 }
 
 export default PowersAptitudesRepository;

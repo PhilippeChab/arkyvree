@@ -26,6 +26,8 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { repointDepartingReferences } from "./departingReferences.ts";
+
 class RulesetExtensionsService {
   // Rejects a subscribe action that would surface two entities of the same name in
   // the host's source chain. Compares locally-owned (non-shadow) rows in the host,
@@ -295,6 +297,16 @@ class RulesetExtensionsService {
           extensionSnapshots.push(snap);
         }
       }
+
+      // What the fork keeps that names the book's lists moves to its lists of the same name, or the unsubscribe
+      // refuses: before the copies go, links to the fork's copies of the book's lists included
+      const copies = new Map(
+        [...Map.groupBy(extensionSnapshots, (snap) => snap.entityType)].map(([type, snaps]) => [
+          type,
+          snaps.map((snap) => snap.forkedEntityId),
+        ]),
+      );
+      await repointDepartingReferences(tx, ruleset, extensionId, copies);
 
       // Delete COW copies and their snapshots
       for (const snap of extensionSnapshots) {

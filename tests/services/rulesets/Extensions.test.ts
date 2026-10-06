@@ -11,10 +11,11 @@ import {
 } from "@/database/packages/dnd35/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { db } from "@/server/database/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
+  Abilities,
   Aptitudes,
   Characters,
   EntitySnapshots,
@@ -22,7 +23,10 @@ import {
   FeatsAptitudes,
   Items,
   Klasses,
+  KlassLevelFeats,
+  KlassLevelPowers,
   KlassLevels,
+  KlassSkills,
   Languages,
   Mechanics,
   Modifiers,
@@ -37,6 +41,7 @@ import {
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { getListPowerIds } from "@/server/services/rulesets/aptitudes/listMembers.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
@@ -45,8 +50,14 @@ import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { addCharacterLevel, pickFeat } from "@/tests/support/levels.ts";
-import { copyEntity, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { addCharacterLevel, createTestKlassLevel, pickFeat } from "@/tests/support/levels.ts";
+import {
+  copyEntity,
+  createSeededTestRulesetWithExtensions,
+  createTestRuleset,
+  editRuleset,
+  invalidateSeededRuleset,
+} from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -492,6 +503,114 @@ describe("unsubscribing from an extension", () => {
       { id: monkeyGrip.id, rulesetId: extension.id },
     ]);
     expect(await RulesetExtensions.findMany(db, { rulesetId: draft.id })).toHaveLength(1);
+  });
+
+  test("repoints the fork's links and class grants from its lists to the lists of their names it keeps", async () => {
+    const { session, extension: warrior, draft } = await setupFork();
+    const dmg = await findSeededRuleset(DND35_DMG_NAME);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id, dmg.id]);
+    const subscribed = await RulesetCache.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+    const lists = [...subscribed.aptitudesById.values()];
+    const warriorAssassin = lists.find((list) => list.name === "Assassin Spells")!;
+    expect(warriorAssassin.rulesetId).toBe(warrior.id);
+    const wizard = lists.find((list) => list.name === "Wizard Spells")!;
+    const [spell] = await Powers.create(db, { name: `Probe ${uniqueId()}`, rulesetId: draft.id });
+    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: warriorAssassin.id, level: 2 });
+    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: wizard.id, level: 3 });
+    const { klassLevel } = await createTestKlassLevel(draft.id);
+    await KlassLevelPowers.createMany(db, [
+      { klassLevelId: klassLevel.id, powerId: spell.id, aptitudeId: warriorAssassin.id, free: false },
+    ]);
+    RulesetCache.invalidate(draft.id);
+
+    await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id);
+    const after = await RulesetCache.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+    const dmgAssassin = [...after.aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
+    expect(dmgAssassin.rulesetId).toBe(dmg.id);
+    expect(
+      (await PowersAptitudes.findMany(db, { powerId: spell.id })).map(({ aptitudeId, level }) => ({
+        aptitudeId,
+        level,
+      })),
+    ).toEqual(
+      expect.arrayContaining([
+        { aptitudeId: dmgAssassin.id, level: 2 },
+        { aptitudeId: wizard.id, level: 3 },
+      ]),
+    );
+    expect(getListPowerIds(after, { aptitudeId: dmgAssassin.id })).toContain(spell.id);
+    expect(await KlassLevelPowers.findMany(db, { klassLevelIds: [klassLevel.id] })).toMatchObject([
+      { powerId: spell.id, aptitudeId: dmgAssassin.id },
+    ]);
+  });
+
+  test("repoints a copied spell's merged links to the lists of their names the fork's other books have", async () => {
+    const { user, session } = await createTestUser();
+    const fork = await createSeededTestRulesetWithExtensions(user.id);
+    const warrior = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+    const view = await RulesetCache.getData(fork);
+    // Alter Self's copies merge in Complete Warrior's lists, its Assassin Spells the winner of the books' namesakes
+    const alterSelf = [...view.powersById.values()].find((power) => power.name === "Alter Self")!;
+    const { id: copyId } = await withTransaction(async (tx) =>
+      (await editRuleset(fork)).cowToEdit(tx, "powers", alterSelf),
+    );
+
+    await RulesetExtensionsService.unsubscribeExtension(session, fork.id, warrior.id);
+    const after = await RulesetCache.getData((await Rulesets.findOne(db, { id: fork.id }))!);
+    const links = await PowersAptitudes.findMany(db, { powerId: copyId });
+    expect(links.filter((link) => !after.aptitudesById.has(link.aptitudeId))).toEqual([]);
+    const assassin = [...after.aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
+    expect(assassin.rulesetId).not.toBe(warrior.id);
+    expect(getListPowerIds(after, { aptitudeId: assassin.id })).toContain(copyId);
+  });
+
+  test("refuses to leave a link to a list no other book has, naming it, and changes nothing", async () => {
+    const { session, extension: warrior, draft } = await setupFork();
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
+    const subscribed = await RulesetCache.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+    const lists = [...subscribed.aptitudesById.values()];
+    const warriorOnly = lists.find(
+      (list) => list.rulesetId === warrior.id && !lists.some((other) => other !== list && other.name === list.name),
+    )!;
+    const [spell] = await Powers.create(db, { name: `Probe ${uniqueId()}`, rulesetId: draft.id });
+    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: warriorOnly.id, level: 1 });
+
+    await expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id)).rejects.toThrow(
+      `${warriorOnly.name}, a list no other book of this ruleset has`,
+    );
+    expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([warrior.id]);
+    expect(await PowersAptitudes.findMany(db, { powerId: spell.id })).toMatchObject([{ aptitudeId: warriorOnly.id }]);
+  });
+
+  test("refuses to leave a class's grant of the extension's feat", async () => {
+    const { session, extension: warrior, draft } = await setupFork();
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
+    const monkeyGrip = await warriorFeat("Monkey Grip");
+    const { klassLevel } = await createTestKlassLevel(draft.id);
+    const general = (await Aptitudes.findOne(db, { rulesetId: draft.ancestorRulesetIds[0], name: "General" }))!;
+    await KlassLevelFeats.create(db, { klassLevelId: klassLevel.id, featId: monkeyGrip.id, aptitudeId: general.id });
+
+    await expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id)).rejects.toThrow(
+      /, which uses Monkey Grip/,
+    );
+  });
+
+  test("refuses to leave a row naming another of the extension's entities: a class's skill", async () => {
+    const { user, session, draft } = await setupFork();
+    const extension = await createExtension(user.id);
+    const strength = (await Abilities.findOne(db, { rulesetId: draft.ancestorRulesetIds[0], name: "Strength" }))!;
+    const [skill] = await Skills.create(db, {
+      name: `Probe Skill ${uniqueId()}`,
+      rulesetId: extension.id,
+      primaryAbilityId: strength.id,
+    });
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
+    const [klass] = await Klasses.create(db, { name: `Probe Class ${uniqueId()}`, rulesetId: draft.id, hd: 8 });
+    await KlassSkills.createMany(db, [{ klassId: klass.id, skillId: skill.id }]);
+
+    await expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
+      `${klass.name}, which uses ${skill.name}`,
+    );
   });
 
   test("keeps the other extensions and the fork's copies of theirs", async () => {
