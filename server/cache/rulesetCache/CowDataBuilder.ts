@@ -1,4 +1,4 @@
-import { CowData, type Db, db } from "@/server/database/index.ts";
+import { CowData, type Db, db, withCowContext } from "@/server/database/index.ts";
 import { Aptitudes, EntitySnapshots, KlassLevels, RulesetEntities } from "@/server/repositories/index.ts";
 
 type SnapshotsByRuleset = Map<string, Awaited<ReturnType<typeof EntitySnapshots.findMany>>>;
@@ -61,8 +61,9 @@ export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ances
  *      snapshot pass didn't catch them (e.g. a spell reprinted in two D&D sourcebooks).
  *   4. A local copy's siblings become overrides of it.
  *
- * A copy (`buildForCopy`) stops there. A scope's (`build`) goes on: a copied class's levels, then the aptitudes'
- * namesakes. Every override is also an alias (`override` writes both maps): an id compose skips always resolves.
+ * Then the aptitudes' namesakes, for a scope (`build`) and a copy (`buildForCopy`) alike, so that a copy's links name
+ * the lists its view shows; a scope's also pairs a copied class's levels first. Every override is also an alias
+ * (`override` writes both maps): an id compose skips always resolves.
  */
 export default class CowDataBuilder {
   constructor(rulesetId: string, sourceChain: string[], extensionRulesetIds: string[]) {
@@ -82,14 +83,15 @@ export default class CowDataBuilder {
       await builder.load(db);
       await builder.pairKlassLevels();
     }
-    if (ruleset.extensionRulesetIds.length > 0) await builder.pairAptitudes();
+    if (ruleset.extensionRulesetIds.length > 0) await builder.pairAptitudes(db);
     return builder.toCowData();
   }
 
   /**
    * What a copy made in `tx` remaps its references and merges its siblings by (`EntityCopy`): the snapshot and name
-   * passes only, which see the transaction's own copies. A chain of ancestors only pairs the same namesakes: the name
-   * pass adds the extensions to it.
+   * passes, which see the transaction's own copies, and the aptitudes' namesakes, so that its links name the lists the
+   * view shows (an extension's own copy of a list another book's wins resolves to that one). A chain of ancestors only
+   * pairs the same namesakes: the name pass adds the extensions to it.
    */
   static async buildForCopy(
     tx: Db,
@@ -99,6 +101,7 @@ export default class CowDataBuilder {
   ): Promise<CowData> {
     const builder = new CowDataBuilder(rulesetId, sourceChain, extensionRulesetIds);
     await builder.load(tx);
+    if (extensionRulesetIds.length > 0) await builder.pairAptitudes(tx);
     return builder.toCowData();
   }
 
@@ -226,8 +229,11 @@ export default class CowDataBuilder {
    * (compose filters them) and aliases (so FK refs to a loser remap to the winner). Intentionally not overrides —
    * compose-skip is for true overrides only.
    */
-  private async pairAptitudes() {
-    const allAptitudes = await Aptitudes.findMany(db, { rulesetIds: this.sourceChain });
+  private async pairAptitudes(database: Db) {
+    // Stored ids: a copy builds its data in a scope, whose reads would resolve them
+    const allAptitudes = await withCowContext(undefined, () =>
+      Aptitudes.findMany(database, { rulesetIds: this.sourceChain }),
+    );
     for (const { winner, losers } of rankNamesakes(allAptitudes, (apt) => apt.name, this.sourceChain)) {
       // Aliases must point directly to the visible copy, including a local COW.
       const resolvedWinnerId = this.aliases.get(winner.id) ?? winner.id;
