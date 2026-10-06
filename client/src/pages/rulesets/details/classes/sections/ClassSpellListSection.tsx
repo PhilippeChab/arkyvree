@@ -41,10 +41,11 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...spellsQuery,
     queryFn: listId === undefined ? skipToken : spellsQuery.queryFn,
-    placeholderData: keepPreviousData,
+    placeholderData: listId === undefined ? undefined : keepPreviousData,
   });
 
-  const spells = pageItems(data);
+  // Without a list the key is the ruleset's own "all lists" one, whose cached spells aren't this class's
+  const spells = listId === undefined ? [] : pageItems(data);
 
   const handleRowClick = (spell: Spell) => {
     openEntity(`powers/${spell.id}/customization`);
@@ -103,7 +104,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
         emptyTitle="No spells"
         emptyDescription={
           lists.length === 0 && !isLoadingLists
-            ? "This class casts no spells."
+            ? "This class has no spell list of its own."
             : "No spells found for this class at the selected level."
         }
       />
