@@ -148,7 +148,7 @@ export default class DetailedCharacterDataLoader {
   /**
    * Ruleset-scoped rows read from the composed cache's pre-built Maps: the character's languages, class levels and
    * their saves, and classes and their skills (one per level), and its classes once each. languagesById is wrapped by
-   * cowResolvingMap — stored pre-COW language ids auto-resolve on lookup.
+   * RulesetComposition — stored pre-COW language ids auto-resolve on lookup.
    */
   private cachedRows(shared: SharedCharacterData, klassLevelIds: string[]) {
     const { rulesetData } = shared;
@@ -727,7 +727,7 @@ export default class DetailedCharacterDataLoader {
     const { ruleset, cowData, rulesetData } = preloaded;
 
     // Character's race — read from the composed ruleset cache.
-    // racesById auto-resolves stored pre-COW ids via cowResolvingMap.
+    // racesById auto-resolves stored pre-COW ids (RulesetComposition).
     const race = rulesetData.racesById.get(this.character.raceId);
     if (!race) {
       throw new Error("Race not found");
