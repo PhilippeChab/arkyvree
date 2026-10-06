@@ -7,7 +7,7 @@
  * - `withCowContext` is wrapped by `withRulesetScope` (the public entry).
  * - `getCowContext` is read by the repo Proxy + `idMatches` (`ResolvesCopies`).
  *
- * Services should use `withRulesetScope` / `withRulesetScopes` from `server/services/rulesets/cow/` instead. Importing
+ * Services should use `withRulesetScope` / `withRulesetScopes` from `server/cache/rulesetCache/` instead. Importing
  * from this file directly bypasses the rulesetData loading / invariant checking that the scope helpers provide.
  *
  * The async-local store dies with the callback — zero cross-request leakage.
@@ -65,7 +65,7 @@ export function getCowContext(): CowData | undefined {
  * `undefined` clears the ambient context. An empty map is still a scope:
  * nested reads must never inherit a different ruleset's resolution map.
  *
- * @internal — Use `withRulesetScope` from `server/services/rulesets/cow/` from application code.
+ * @internal — Use `withRulesetScope` from `server/cache/rulesetCache/` from application code.
  */
 export function withCowContext<T>(cowData: CowData | null | undefined, fn: () => Promise<T>): Promise<T> {
   return storage.run(cowData ?? undefined, fn);

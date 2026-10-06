@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
+import { denyDemoUser, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { CampaignsService } from "@/server/services/campaigns/index.ts";
 
@@ -16,7 +16,7 @@ export default new Hono()
   .route("/", playerCharacters)
   .get(
     "/",
-    zValidator(
+    validate(
       "query",
       z.object({
         limit,
@@ -40,7 +40,7 @@ export default new Hono()
       );
     },
   )
-  .get("/:id", zValidator("param", idParam), async (c) => {
+  .get("/:id", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     return c.json(await CampaignsService.getCampaign(c.var.requestSession, id), 200);
@@ -48,7 +48,7 @@ export default new Hono()
   .post(
     "/",
     denyDemoUser,
-    zValidator(
+    validate(
       "json",
       z.object({
         name: z.string().min(1).max(255),
@@ -62,7 +62,7 @@ export default new Hono()
       return c.json(await CampaignsService.createCampaign(c.var.requestSession, data), 201);
     },
   )
-  .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
+  .post("/:id/unarchive", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     await CampaignsService.unarchiveCampaign(c.var.requestSession, id);
@@ -70,8 +70,8 @@ export default new Hono()
   })
   .put(
     "/:id",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         name: z.string().min(1).max(255).optional(),
@@ -85,13 +85,13 @@ export default new Hono()
       return c.json(await CampaignsService.updateCampaign(c.var.requestSession, id, data), 200);
     },
   )
-  .delete("/:id", zValidator("param", idParam), async (c) => {
+  .delete("/:id", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     await CampaignsService.archiveCampaign(c.var.requestSession, id);
     return c.json({ message: "Campaign archived successfully" }, 200);
   })
-  .delete("/:id/permanent", zValidator("param", idParam), async (c) => {
+  .delete("/:id/permanent", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     await CampaignsService.hardDeleteCampaign(c.var.requestSession, id);

@@ -2,10 +2,11 @@ import { afterAll, afterEach, expect, test } from "bun:test";
 
 import { featsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { lockEntityForMutation } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
-import { lockEntityForMutation, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";

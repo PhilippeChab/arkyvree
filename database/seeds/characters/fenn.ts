@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/database/seeds/helpers.ts";
+import { type CharacterSeed } from "@/database/seeds/seedCharacter.ts";
 
 /** Half-Elf Ranger 3 — Skills: (6+1)*4 + (6+1) + (6+1) = 42 */
 export default {

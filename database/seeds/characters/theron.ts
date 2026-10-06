@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/database/seeds/helpers.ts";
+import { type CharacterSeed } from "@/database/seeds/seedCharacter.ts";
 
 /** Human Cleric 3 — Skills: (2+1+1)*4 + (2+1+1)*2 = 24 */
 export default {

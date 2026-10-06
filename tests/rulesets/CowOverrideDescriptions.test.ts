@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { addClassLevels, addFeats, addPowers } from "@/database/seeds/helpers.ts";
+import { addClassLevels, addFeats, addPowers } from "@/database/seeds/seedCharacter.ts";
+import { refreshEntityData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
-import { refreshEntityData } from "@/server/services/rulesets/cow/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { createSeedCharacter } from "@/tests/support/levelFixtures.ts";

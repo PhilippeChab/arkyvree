@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import { buildEntityTypeSchema } from "@/server/routers/api/schemaBuilders.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { PropertyTypesService } from "@/server/services/rulesets/customization/properties/types/index.ts";
@@ -14,8 +14,8 @@ const propertyTypes = new Hono()
    */
   .get(
     "/:id/customization/properties/types",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         entityType: buildEntityTypeSchema(PROPERTY_ENTITY_TYPES).optional(),
@@ -33,8 +33,8 @@ const propertyTypes = new Hono()
    */
   .get(
     "/:id/customization/properties/types/completions",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         query: z.string().default(""),
@@ -58,8 +58,8 @@ const propertyTypes = new Hono()
    */
   .get(
     "/:id/customization/properties/types/search",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         query: z.string().min(1),
@@ -78,8 +78,8 @@ const propertyTypes = new Hono()
    */
   .get(
     "/:id/customization/properties/values/completions",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         type: z.string().min(1),

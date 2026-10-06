@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { location } from "@/drizzle/schema.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
@@ -40,8 +40,8 @@ const itemBodySchema = z.object({
 export default new Hono<SessionContext>()
   .get(
     "/:id/items",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -65,14 +65,14 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get("/:id/items/:itemId", zValidator("param", itemParams), async (c) => {
+  .get("/:id/items/:itemId", validate("param", itemParams), async (c) => {
     const { id, itemId } = c.req.valid("param");
     return c.json(await ItemsService.getItem(id, itemId), 200);
   })
   .get(
     "/:id/templates",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         type: z.enum(["Weapon", "Armor", "Shield"]).optional(),
@@ -84,25 +84,20 @@ export default new Hono<SessionContext>()
       return c.json(await ItemsService.getTemplates(id, type), 200);
     },
   )
-  .post("/:id/items", zValidator("param", idParam), zValidator("json", itemBodySchema), async (c) => {
+  .post("/:id/items", validate("param", idParam), validate("json", itemBodySchema), async (c) => {
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
     return c.json(await ItemsService.createItem(c.var.requestSession, id, body), 200);
   })
-  .post(
-    "/:id/items/:itemId/duplicate",
-    zValidator("param", itemParams),
-    zValidator("json", itemBodySchema),
-    async (c) => {
-      const { id, itemId } = c.req.valid("param");
-      const body = c.req.valid("json");
-      return c.json(await ItemsService.duplicateItem(c.var.requestSession, id, itemId, body), 200);
-    },
-  )
+  .post("/:id/items/:itemId/duplicate", validate("param", itemParams), validate("json", itemBodySchema), async (c) => {
+    const { id, itemId } = c.req.valid("param");
+    const body = c.req.valid("json");
+    return c.json(await ItemsService.duplicateItem(c.var.requestSession, id, itemId, body), 200);
+  })
   .post(
     "/:id/items/:itemId/variants",
-    zValidator("param", itemParams),
-    zValidator(
+    validate("param", itemParams),
+    validate(
       "json",
       z.object({
         variants: z
@@ -125,12 +120,12 @@ export default new Hono<SessionContext>()
       return c.json(await ItemsService.createVariants(c.var.requestSession, id, itemId, variants), 200);
     },
   )
-  .put("/:id/items/:itemId", zValidator("param", itemParams), zValidator("json", itemBodySchema), async (c) => {
+  .put("/:id/items/:itemId", validate("param", itemParams), validate("json", itemBodySchema), async (c) => {
     const { id, itemId } = c.req.valid("param");
     const body = c.req.valid("json");
     return c.json(await ItemsService.updateItem(c.var.requestSession, id, itemId, body), 200);
   })
-  .delete("/:id/items/:itemId", zValidator("param", itemParams), async (c) => {
+  .delete("/:id/items/:itemId", validate("param", itemParams), async (c) => {
     const { id, itemId } = c.req.valid("param");
     return c.json(await ItemsService.deleteItem(c.var.requestSession, id, itemId), 200);
   });

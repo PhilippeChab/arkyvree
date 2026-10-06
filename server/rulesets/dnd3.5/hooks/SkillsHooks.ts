@@ -1,10 +1,10 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { cowEntityForCustomization, hasCharacterPicks } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Aptitudes, Feats, FeatsAptitudes, Modifiers, Properties } from "@/server/repositories/index.ts";
 import { NO_SKILL_FLAGS, normalizeSkillFlags, readSkillFlags } from "@/server/rulesets/dnd3.5/skillFlags.ts";
 import type { PropertyRecord, SkillFlags, SkillsHooks } from "@/server/rulesets/hooks/index.ts";
-import { cowEntityForCustomization, hasCharacterPicks } from "@/server/services/rulesets/cow/index.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,

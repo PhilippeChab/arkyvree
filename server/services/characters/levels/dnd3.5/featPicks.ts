@@ -3,6 +3,7 @@
  */
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Feats } from "@/server/repositories/index.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
@@ -11,7 +12,6 @@ import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
 import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import { getListFeatIds } from "@/server/services/rulesets/aptitudes/index.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Character, Ruleset, Session } from "@/shared/relations.ts";
 
 import { getKlassLevel } from "./classes.ts";

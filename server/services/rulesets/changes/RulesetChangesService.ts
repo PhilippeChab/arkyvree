@@ -1,4 +1,5 @@
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { type EntityType, hasCharacterPicks } from "@/server/cow/index.ts";
 import { db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -10,7 +11,6 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { type EntityType, hasCharacterPicks } from "@/server/services/rulesets/cow/index.ts";
 import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";

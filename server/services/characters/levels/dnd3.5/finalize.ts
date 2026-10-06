@@ -10,6 +10,7 @@ import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -28,7 +29,6 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { PreloadedRulesetData, RulesetModule } from "@/server/rulesets/types.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
 import { reconcileAllBondedKinds } from "./bondedReconcile.ts";

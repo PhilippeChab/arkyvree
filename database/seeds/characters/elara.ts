@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/database/seeds/helpers.ts";
+import { type CharacterSeed } from "@/database/seeds/seedCharacter.ts";
 
 /** Elf Wizard 3 — Skills: (2+4)*4 + (2+4)*2 = 36 */
 export default {

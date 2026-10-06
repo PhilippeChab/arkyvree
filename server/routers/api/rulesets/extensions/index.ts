@@ -1,19 +1,19 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { type SessionContext, zValidator } from "@/server/middlewares/index.ts";
+import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 
 export default new Hono<SessionContext>()
-  .get("/:id/extensions", zValidator("param", idParam), async (c) => {
+  .get("/:id/extensions", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await RulesetExtensionsService.getExtensions(c.var.requestSession, id), 200);
   })
   .post(
     "/:id/subscribe",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         extensionIds: z.array(z.string().uuid()).min(1),
@@ -30,8 +30,8 @@ export default new Hono<SessionContext>()
   )
   .post(
     "/:id/unsubscribe",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         extensionId: z.string().uuid(),

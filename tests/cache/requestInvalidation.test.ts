@@ -1,10 +1,10 @@
 import { afterEach, expect, test } from "bun:test";
 
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";

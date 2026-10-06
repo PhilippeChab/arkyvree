@@ -1,9 +1,4 @@
-import {
-  type CowData,
-  type IdResolveMap,
-  mergeSiblingRequirements,
-  resolveOverrides,
-} from "@/server/services/rulesets/cow/index.ts";
+import type { CowData, IdResolveMap } from "@/server/database/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
   Aptitude,
@@ -28,7 +23,9 @@ import type {
 } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import { resolveOverrides } from "./overrideMap.ts";
 import { type RulesetRawData } from "./rawData.ts";
+import { mergeSiblingRequirements } from "./siblingRequirements.ts";
 
 type Chain = RulesetRawData[];
 

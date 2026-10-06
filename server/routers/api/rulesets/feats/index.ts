@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -11,8 +11,8 @@ const featParams = idParam.extend({ featId: z.string().uuid() });
 export default new Hono<SessionContext>()
   .get(
     "/:id/feats",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -36,8 +36,8 @@ export default new Hono<SessionContext>()
   )
   .get(
     "/:id/feats/grouped",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -53,14 +53,14 @@ export default new Hono<SessionContext>()
       return c.json(await FeatsService.getFeatGroups(id, { search, childOnly, aptitudeId }, { limit, page }), 200);
     },
   )
-  .get("/:id/feats/:featId", zValidator("param", featParams), async (c) => {
+  .get("/:id/feats/:featId", validate("param", featParams), async (c) => {
     const { id, featId } = c.req.valid("param");
     return c.json(await FeatsService.getFeat(id, featId), 200);
   })
   .post(
     "/:id/feats",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         name: z.string().min(1),
@@ -79,8 +79,8 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/feats/:featId",
-    zValidator("param", featParams),
-    zValidator(
+    validate("param", featParams),
+    validate(
       "json",
       z.object({
         name: z.string().min(1),
@@ -98,7 +98,7 @@ export default new Hono<SessionContext>()
       return c.json(await FeatsService.updateFeat(c.var.requestSession, id, featId, body), 200);
     },
   )
-  .delete("/:id/feats/:featId", zValidator("param", featParams), async (c) => {
+  .delete("/:id/feats/:featId", validate("param", featParams), async (c) => {
     const { id, featId } = c.req.valid("param");
     return c.json(await FeatsService.deleteFeat(c.var.requestSession, id, featId), 200);
   });

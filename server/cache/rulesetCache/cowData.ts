@@ -1,15 +1,6 @@
-import { DependentCache } from "@/server/cache/index.ts";
-import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import {
-  type CowData,
-  db,
-  type Db,
-  type IdResolveMap,
-  type OverrideMap,
-  withCowContext,
-} from "@/server/database/index.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
-import { Aptitudes, EntitySnapshots, KlassLevels, Rulesets } from "@/server/repositories/index.ts";
+import DependentCache from "@/server/cache/DependentCache.ts";
+import { type CowData, db, type IdResolveMap, type OverrideMap, withCowContext } from "@/server/database/index.ts";
+import { Aptitudes, EntitySnapshots, KlassLevels } from "@/server/repositories/index.ts";
 
 import {
   assertCowMapsConsistent,
@@ -142,62 +133,4 @@ export async function getOrBuildCowData(ruleset: {
   return cowDataCache.getOrFetch(JSON.stringify(dependencies), dependencies, async () => ({
     data: await withCowContext(undefined, () => buildCowData(ruleset)),
   }));
-}
-
-/**
- * Scope helper: loads the ruleset, builds cowData, and runs `fn` inside a
- * cowContext so every repository read inside auto-resolves pre-COW ids to
- * post-COW (output Proxy) AND every entity-id WHERE-clause input is
- * auto-canonicalized (input Proxy). Services call this once at the top of
- * a character-scoped operation; downstream code stops caring about COW.
- *
- * Throws `NotFoundError("Ruleset not found")` if `rulesetId` doesn't exist,
- * so the callback always receives non-null `{ ruleset, cowData }` and
- * doesn't have to branch or add defensive sourceChain fallbacks.
- */
-export async function withRulesetScope<T>(
-  tx: Db,
-  rulesetId: string,
-  fn: (ctx: {
-    ruleset: NonNullable<Awaited<ReturnType<typeof Rulesets.findOne>>>;
-    rulesetData: CachedRulesetData;
-  }) => Promise<T>,
-): Promise<T> {
-  const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-  if (!ruleset) throw new NotFoundError("Ruleset not found");
-  const cowData = await getOrBuildCowData(ruleset);
-  const rulesetData = await RulesetCache.getData(rulesetId, cowData);
-  return await withCowContext(cowData, () => fn({ ruleset, rulesetData }));
-}
-
-/**
- * Multi-ruleset variant: preload `rulesetData` for every unique id and hand
- * the map to `fn`. Used for list operations that enrich rows from many
- * rulesets at once (the characters and campaign characters lists) where a single
- * `cowContext` would have to pick one ruleset, excluding the others.
- *
- * No `cowContext` is activated — the composed `rulesetData.*` Maps already
- * wrap stored ids through their own per-ruleset overrideMap, so lookups
- * work without ambient context. Services that need character-scoped repo
- * auto-resolution for a specific character should use `withRulesetScope`
- * inside their per-character enrichment path.
- *
- * Missing rulesets are silently skipped (rare: a character row referencing
- * a deleted ruleset); the map just won't have that key.
- */
-export async function withRulesetScopes<T>(
-  tx: Db,
-  rulesetIds: Iterable<string>,
-  fn: (rulesetDataByRulesetId: Map<string, CachedRulesetData>) => Promise<T>,
-): Promise<T> {
-  const unique = [...new Set(rulesetIds)];
-  const map = new Map<string, CachedRulesetData>();
-  for (const rulesetId of unique) {
-    const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-    if (!ruleset) continue;
-    const cowData = await getOrBuildCowData(ruleset);
-    const rulesetData = await RulesetCache.getData(rulesetId, cowData);
-    map.set(rulesetId, rulesetData);
-  }
-  return fn(map);
 }

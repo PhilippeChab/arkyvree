@@ -1,3 +1,4 @@
+import { ENTITY_REPOS, type EntityType } from "@/server/cow/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import {
   FeatsAptitudes,
@@ -8,8 +9,6 @@ import {
   KlassSkills,
   PowersAptitudes,
 } from "@/server/repositories/index.ts";
-
-import { ENTITY_REPOS, type EntityType } from "./cow/index.ts";
 
 /**
  * Hard-deletes an entity along with its junctions and customizations (and, for klasses, its klass_levels). Used by

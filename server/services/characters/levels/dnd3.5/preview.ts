@@ -5,6 +5,7 @@
  */
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
 import type { Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
@@ -12,7 +13,6 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { RulesetModule } from "@/server/rulesets/types.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { getPlannedClassSkills, getPlannedKlassLevels } from "./classes.ts";

@@ -14,6 +14,11 @@ export const db = dbModule.db;
 export const withTransaction = dbModule.withTransaction;
 export type { Db } from "./production.ts";
 
+/** Whether the database answers: throws when it doesn't. */
+export async function pingDatabase() {
+  await db.execute(sql`SELECT 1`);
+}
+
 /**
  * Waits for the database to answer before a process starts serving: a few tries, each waiting longer, then the
  * process exits (a fresh deploy can come up before the database accepts connections).
@@ -21,7 +26,7 @@ export type { Db } from "./production.ts";
 export async function waitForDatabase(attempts = 4, delayMs = 500) {
   for (let i = 1; i <= attempts; i++) {
     try {
-      await db.execute(sql`SELECT 1`);
+      await pingDatabase();
       console.log("[db] Connection pool warmed up");
       return;
     } catch (err) {
@@ -36,4 +41,6 @@ export async function waitForDatabase(attempts = 4, delayMs = 500) {
 
 export { getCowContext, withCowContext } from "./cowContext.ts";
 export type { CowData, IdResolveMap, OverrideMap } from "./cowContext.ts";
+export { addJob } from "./jobQueue.ts";
+export { notifyChannel } from "./notify.ts";
 export { clearRequestCache, memoizeRequest, runWithRequestCache } from "./requestCache.ts";

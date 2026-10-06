@@ -1,9 +1,20 @@
 import type { Db, IdResolveMap, OverrideMap } from "@/server/database/index.ts";
 import { EntitySnapshots, RulesetEntities } from "@/server/repositories/index.ts";
 
-import { NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
-
 type SnapshotsByRuleset = Map<string, Awaited<ReturnType<typeof EntitySnapshots.findMany>>>;
+
+/**
+ * Tables that participate in the name-based sibling fallback. Limited to feats and powers because those are the entity
+ * types D&D sourcebooks commonly reprint (e.g. a spell appearing in CA + CD). For other entity types (races, classes,
+ * abilities, saves, skills, items, languages, mechanics) a same-name match across extensions is more likely a genuine
+ * collision than a reprint — auto-merging "Human" or "Fighter" between two homebrew packages would silently corrupt
+ * content. Aptitudes are also excluded; they have their own name-grouping pass since name = identity universally for
+ * them.
+ *
+ * `NAME_FALLBACK_ENTITY_TYPES` is the canonical list: `RulesetExtensionsService.assertExtensionsNameCompatible` reads it
+ * too, so the runtime pairing and the subscribe-time block agree on which types pair.
+ */
+export const NAME_FALLBACK_ENTITY_TYPES = ["feats", "powers"] as const;
 
 export function newOverrideMap(entries?: Iterable<readonly [string, string]>): OverrideMap {
   return new Map<string, string>(entries) as OverrideMap;

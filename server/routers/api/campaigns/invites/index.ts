@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
@@ -12,14 +12,14 @@ export default new Hono<SessionContext>()
   .get("/invites/me", async (c) => {
     return c.json(await CampaignInvitesService.getUserInvites(c.var.requestSession.userId), 200);
   })
-  .get("/invites/:inviteId", zValidator("param", inviteIdParam), async (c) => {
+  .get("/invites/:inviteId", validate("param", inviteIdParam), async (c) => {
     const { inviteId } = c.req.valid("param");
     return c.json(await CampaignInvitesService.getInvite(c.var.requestSession, inviteId), 200);
   })
   .get(
     "/:id/invites",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -43,15 +43,15 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .post("/invites/:inviteId/accept", zValidator("param", inviteIdParam), async (c) => {
+  .post("/invites/:inviteId/accept", validate("param", inviteIdParam), async (c) => {
     const { inviteId } = c.req.valid("param");
     return c.json(await CampaignInvitesService.acceptInvite(c.var.requestSession, inviteId), 200);
   })
-  .post("/invites/:inviteId/reject", zValidator("param", inviteIdParam), async (c) => {
+  .post("/invites/:inviteId/reject", validate("param", inviteIdParam), async (c) => {
     const { inviteId } = c.req.valid("param");
     return c.json(await CampaignInvitesService.rejectInvite(c.var.requestSession, inviteId), 200);
   })
-  .post("/invites/:inviteId/revoke", zValidator("param", inviteIdParam), async (c) => {
+  .post("/invites/:inviteId/revoke", validate("param", inviteIdParam), async (c) => {
     const { inviteId } = c.req.valid("param");
 
     return c.json(await CampaignInvitesService.revokeInvite(c.var.requestSession, inviteId), 200);

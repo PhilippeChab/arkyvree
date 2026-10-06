@@ -2,6 +2,8 @@ import { getTableName } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { cowEntityForCustomization, cowEntityToEdit, findScopedEntity, hasCharacterPicks } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { include } from "@/server/mixins.ts";
@@ -15,13 +17,6 @@ import {
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import {
-  cowEntityForCustomization,
-  cowEntityToEdit,
-  findScopedEntity,
-  hasCharacterPicks,
-  withRulesetScope,
-} from "@/server/services/rulesets/cow/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import type { KlassLevel, KlassLevelFeat, Modifier, Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";

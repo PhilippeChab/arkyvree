@@ -16,5 +16,5 @@ export {
   setSessionCookie,
 } from "./session.ts";
 export type { SessionContext } from "./session.ts";
-export { zValidator } from "./zValidator.ts";
+export { validate } from "./validate.ts";
 export { default as wrapNonErrors } from "./wrapNonErrors.ts";

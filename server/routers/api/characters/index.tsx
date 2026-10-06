@@ -6,7 +6,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { denyDemoUser, exportRateLimit, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
+import { denyDemoUser, exportRateLimit, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { characterIdParam, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { buildBondedMap, buildBondedResponse, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
@@ -28,7 +28,7 @@ const characters = new Hono()
   .route("/", sharing)
   .get(
     "/",
-    zValidator(
+    validate(
       "query",
       z.object({
         limit,
@@ -63,7 +63,7 @@ const characters = new Hono()
   // Get available races for character creation (annotated with eligibility)
   .get(
     "/available-races",
-    zValidator(
+    validate(
       "query",
       z.object({
         rulesetId: z.string().uuid(),
@@ -85,8 +85,8 @@ const characters = new Hono()
   // Get characters not in a campaign
   .get(
     "/unlinked/:campaignId",
-    zValidator("param", campaignIdParam),
-    zValidator(
+    validate("param", campaignIdParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -108,7 +108,7 @@ const characters = new Hono()
       );
     },
   )
-  .get("/:id", zValidator("param", idParam), async (c) => {
+  .get("/:id", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     // Use the service to get character data with session for activity logging
@@ -127,7 +127,7 @@ const characters = new Hono()
   })
   .post(
     "/",
-    zValidator(
+    validate(
       "json",
       z.object({
         rulesetId: z.string().uuid(),
@@ -169,13 +169,13 @@ const characters = new Hono()
     },
   )
   // Enqueue async PDF generation
-  .post("/:characterId/pdf", denyDemoUser, exportRateLimit, zValidator("param", characterIdParam), async (c) => {
+  .post("/:characterId/pdf", denyDemoUser, exportRateLimit, validate("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
 
     await CharactersService.enqueuePdf(c.var.requestSession, characterId);
     return c.json({ message: "PDF generation started" }, 202);
   })
-  .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
+  .post("/:id/unarchive", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     await CharactersService.unarchiveCharacter(c.var.requestSession, id);
@@ -183,8 +183,8 @@ const characters = new Hono()
   })
   .put(
     "/:id",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         name: z.string().min(1).max(255).optional(),
@@ -223,8 +223,8 @@ const characters = new Hono()
   )
   .put(
     "/:id/abilities",
-    zValidator("param", idParam),
-    zValidator("json", z.record(z.string().uuid(), z.number().int().min(1).max(100))),
+    validate("param", idParam),
+    validate("json", z.record(z.string().uuid(), z.number().int().min(1).max(100))),
     async (c) => {
       const { id } = c.req.valid("param");
       const abilities = c.req.valid("json");
@@ -235,8 +235,8 @@ const characters = new Hono()
   )
   .put(
     "/:id/languages",
-    zValidator("param", idParam),
-    zValidator("json", z.object({ languageIds: z.array(z.string().uuid()) })),
+    validate("param", idParam),
+    validate("json", z.object({ languageIds: z.array(z.string().uuid()) })),
     async (c) => {
       const { id } = c.req.valid("param");
       const { languageIds } = c.req.valid("json");
@@ -245,14 +245,14 @@ const characters = new Hono()
       return c.json({ success: true }, 200);
     },
   )
-  .delete("/:id", zValidator("param", idParam), async (c) => {
+  .delete("/:id", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     await CharactersService.archiveCharacter(c.var.requestSession, id);
     return c.json({ message: "Character archived successfully" }, 200);
   })
   // Permanently delete an archived character
-  .delete("/:id/permanent", zValidator("param", idParam), async (c) => {
+  .delete("/:id/permanent", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     await CharactersService.hardDeleteCharacter(c.var.requestSession, id);

@@ -10,14 +10,8 @@ import {
   DND35_RULESET_NAME,
 } from "@/database/packages/dnd35/names.ts";
 import { seedClass } from "@/database/packages/dnd35/seed/classes.ts";
-import {
-  addClassLevels,
-  addFeats,
-  addPowers,
-  addSkills,
-  createCharacter,
-  SEED_USER_ID,
-} from "@/database/seeds/helpers.ts";
+import { addClassLevels, addFeats, addPowers, addSkills, createCharacter } from "@/database/seeds/seedCharacter.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import {
   aptitudesInRules,
   characterAbilitiesInCharacter,

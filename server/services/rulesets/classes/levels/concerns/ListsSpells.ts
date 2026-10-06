@@ -1,7 +1,8 @@
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { findScopedEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { findRulesetPowers } from "@/server/services/rulesets/powers/index.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";

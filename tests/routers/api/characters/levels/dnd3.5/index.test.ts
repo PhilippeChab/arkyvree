@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { addClassLevels, addPowers, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
+import { addClassLevels, addPowers } from "@/database/seeds/seedCharacter.ts";
+import { type SeedContext } from "@/database/seeds/seedContext.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCharacter } from "@/tests/support/characters.ts";

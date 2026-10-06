@@ -89,9 +89,6 @@ const FUNCTION_VERBS = [
   "with", "on", "to", "new",
 ];
 
-/** Names a library gave them, kept: Hono's validator, which `zValidator` wraps. */
-const FUNCTION_EXCEPTIONS = new Set(["zValidator"]);
-
 /** A function a field holds: written there, or another one's (`readonly finalizeLevelUp = finalizeLevelUp`). */
 const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "Identifier", "MemberExpression"];
 
@@ -151,7 +148,7 @@ function createFunctionNames(context) {
   const file = repoPath(context.filename);
   if (!/^(server|shared)\//.test(file) || !/\.tsx?$/.test(file)) return {};
   const report = (id) => {
-    if (/^[A-Z]/.test(id.name) || FUNCTION_EXCEPTIONS.has(id.name)) return;
+    if (/^[A-Z]/.test(id.name)) return;
     if (FUNCTION_VERBS.some((verb) => startsWithVerb(id.name, verb))) return;
     context.report({
       node: id,

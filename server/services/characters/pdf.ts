@@ -1,8 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
-import { addJob, pingWorker } from "@/server/queue.ts";
+import { addJob, db, withTransaction } from "@/server/database/index.ts";
+import { pingWorker } from "@/server/queue.ts";
 import { Activities, Campaigns, Characters, PlayerCharacters, Visibility } from "@/server/repositories/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Character, Session } from "@/shared/relations.ts";

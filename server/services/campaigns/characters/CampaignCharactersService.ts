@@ -1,6 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import { withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -21,7 +22,6 @@ import {
   loadBondedByKind,
 } from "@/server/services/characters/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
-import { withRulesetScopes } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 type VisibilityType = "Private" | "Public" | "Partial";

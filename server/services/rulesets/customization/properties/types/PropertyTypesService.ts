@@ -1,8 +1,8 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { type Paginated, paginateItems } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type {
   PropertyType,

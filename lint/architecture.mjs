@@ -1,13 +1,14 @@
 /**
  * The architecture, as rules: what each layer may import, where queries are built, and how a folder is entered.
  *
- * - `layers`: a layer imports only what's below it (database < repositories < cache, the engine < services < jobs <
- *   routers; the middlewares sit on the repositories, beside the services). The cache and the engine use copy-on-write
- *   from `services/rulesets/cow/`, its one exception. The server reads the content packages, never the seeders.
+ * - `layers`: a layer imports only what's below it (database < repositories < cache < copy-on-write's writes <
+ *   the engine < services < jobs < routers; the middlewares sit on the repositories, beside the services). The cache
+ *   holds copy-on-write's read side (the view a ruleset's reads see), `cow/` its write side. The server reads the
+ *   content packages, never the seeders.
  *   `shared/` imports nothing app-specific (the schema's types only), and the client takes only types from the server.
- * - `queries-in-repositories`: a query is built in `server/repositories/` or `server/database/`, nowhere else in the
- *   server, but for the infrastructure that talks to Postgres itself (the job queue, websocket notifications, health
- *   checks). A transaction's handle is named `tx`, the name it knows a query by.
+ * - `queries-in-repositories`: a query is built in `server/repositories/` or `server/database/` (what talks to Postgres
+ *   itself: the job queue, a channel's notifications, its health), nowhere else in the server. A transaction's handle
+ *   is named `tx`, the name it knows a query by.
  * - `folder-index`: code outside a folder that has an `index.ts` imports it through that index (the service folders,
  *   `cow/`, `policies/`, the client's component folders). Files within the folder import each other directly, and a
  *   test may reach a folder's own modules (a pure module's unit test).
@@ -24,6 +25,7 @@ import { repoPath, rootOf } from "./paths.mjs";
 /** Each layer and what it must not import. `types`: imported for its types only, it's allowed. */
 const ABOVE_REPOSITORIES = [
   "server/cache/",
+  "server/cow/",
   "server/services/",
   "server/rulesets/",
   "server/jobs/",
@@ -35,14 +37,20 @@ const LAYERS = [
   { layer: "server/repositories/", deny: ABOVE_REPOSITORIES },
   {
     layer: "server/cache/",
-    deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
-    allow: ["server/services/rulesets/cow/"],
+    deny: [
+      "server/cow/",
+      "server/rulesets/",
+      "server/services/",
+      "server/jobs/",
+      "server/middlewares/",
+      "server/routers/",
+    ],
   },
   {
-    layer: "server/rulesets/",
-    deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
-    allow: ["server/services/rulesets/cow/"],
+    layer: "server/cow/",
+    deny: ["server/rulesets/", "server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
   },
+  { layer: "server/rulesets/", deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"] },
   { layer: "server/services/", deny: ["server/jobs/", "server/middlewares/", "server/routers/"] },
   { layer: "server/jobs/", deny: ["server/middlewares/", "server/routers/"] },
   { layer: "server/middlewares/", deny: ["server/services/", "server/jobs/", "server/routers/"] },
@@ -52,9 +60,8 @@ const LAYERS = [
   { layer: "client/", deny: ["server/", "database/", "drizzle/"], types: ["server/", "drizzle/"] },
 ];
 
-/** Where a query may be built: the repositories, the database layer, and the infrastructure that talks to Postgres. */
+/** Where a query may be built: the repositories, and the database layer (what talks to Postgres itself). */
 const QUERY_HOMES = ["server/repositories/", "server/database/"];
-const QUERY_INFRASTRUCTURE = new Set(["server/queue.ts", "server/websockets/events.ts", "server/routers/health.ts"]);
 const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "delete", "execute"]);
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
 
@@ -137,8 +144,7 @@ function createLayers(context) {
 
 function createQueriesInRepositories(context) {
   const file = repoPath(context.filename);
-  if (!file.startsWith("server/") || QUERY_HOMES.some((h) => file.startsWith(h)) || QUERY_INFRASTRUCTURE.has(file))
-    return {};
+  if (!file.startsWith("server/") || QUERY_HOMES.some((h) => file.startsWith(h))) return {};
   const message = "A query is built in a repository (server/repositories/): call its method instead.";
   return {
     // db.select(…), tx.update(…), db.execute(…)

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 

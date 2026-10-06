@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { rulesetKind } from "@/drizzle/schema.ts";
-import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
+import { denyDemoUser, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import abilities from "@/server/routers/api/rulesets/abilities/index.ts";
 import aptitudes from "@/server/routers/api/rulesets/aptitudes/index.ts";
 import changes from "@/server/routers/api/rulesets/changes/index.ts";
@@ -46,7 +46,7 @@ const authenticatedRulesets = new Hono()
   .route("/", changes)
   .get(
     "/",
-    zValidator(
+    validate(
       "query",
       z.object({
         scope: z
@@ -90,18 +90,18 @@ const authenticatedRulesets = new Hono()
       );
     },
   )
-  .get("/:id", zValidator("param", idParam), async (c) => {
+  .get("/:id", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await RulesetsService.getRuleset(c.var.requestSession, id), 200);
   })
-  .post("/:id/archive", zValidator("param", idParam), async (c) => {
+  .post("/:id/archive", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await RulesetsService.archiveRuleset(c.var.requestSession, id), 200);
   })
   .post(
     "/:id/fork",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         name: z.string(),
@@ -118,8 +118,8 @@ const authenticatedRulesets = new Hono()
   .post(
     "/:id/publish",
     denyDemoUser,
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         kind: z.enum(rulesetKind.enumValues).optional(),
@@ -131,20 +131,20 @@ const authenticatedRulesets = new Hono()
       return c.json(await RulesetsService.publishRuleset(c.var.requestSession, id, body), 200);
     },
   )
-  .post("/:id/star", zValidator("param", idParam), async (c) => {
+  .post("/:id/star", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     await RulesetsService.starRuleset(c.var.requestSession, id);
     return c.json({ message: "Ruleset starred" }, 201);
   })
-  .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
+  .post("/:id/unarchive", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     await RulesetsService.unarchiveRuleset(c.var.requestSession, id);
     return c.json({ message: "Ruleset unarchived successfully" }, 200);
   })
   .put(
     "/:id",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         name: z.string(),
@@ -160,7 +160,7 @@ const authenticatedRulesets = new Hono()
       return c.json(await RulesetsService.updateRuleset(c.var.requestSession, id, body), 200);
     },
   )
-  .delete("/:id/star", zValidator("param", idParam), async (c) => {
+  .delete("/:id/star", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     await RulesetsService.unstarRuleset(c.var.requestSession, id);
     return c.json({ message: "Ruleset unstarred" }, 200);

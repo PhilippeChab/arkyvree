@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/database/seeds/helpers.ts";
+import { type CharacterSeed } from "@/database/seeds/seedCharacter.ts";
 
 /** Dwarf Fighter 3/Barbarian 1 — Skills: Fighter (2*4+2+2)=12, Barbarian (4)=4 → 16 */
 export default {

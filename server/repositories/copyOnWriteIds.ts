@@ -2,7 +2,7 @@
  * Copy-on-write ids at a repository's edges. A ruleset's scope (`withRulesetScope`) maps every stale id (a copied
  * entity's source, a book's copy that lost to another's) to the one that wins there, its `idResolveMap`: a query gets
  * the winners' ids it's given, and a row it reads refers to winners, so no caller maps an id itself. Outside a scope,
- * or in one without copies, nothing changes. Read here rather than through `services/rulesets/cow/`, which imports the
+ * or in one without copies, nothing changes. Read here rather than through the cache (`cache/rulesetCache/`), which imports the
  * repositories: a cycle at load.
  */
 

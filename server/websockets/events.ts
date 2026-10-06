@@ -1,6 +1,4 @@
-import { sql } from "drizzle-orm";
-
-import { db } from "@/server/database/index.ts";
+import { db, notifyChannel } from "@/server/database/index.ts";
 
 export type WsEvent =
   | { type: "activities:updated" }
@@ -19,5 +17,5 @@ export const BROADCAST_CHANNEL = "ws_broadcast";
  */
 export async function publishWsEvent(userId: string, event: WsEvent) {
   const payload = JSON.stringify({ userId, event });
-  await db.execute(sql`SELECT pg_notify(${BROADCAST_CHANNEL}, ${payload})`);
+  await notifyChannel(db, BROADCAST_CHANNEL, payload);
 }

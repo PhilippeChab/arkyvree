@@ -1,10 +1,10 @@
+import { mergeSiblingRequirements } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { FeatsAptitudes, Modifiers, PowersAptitudes, Properties, Requirements } from "@/server/repositories/index.ts";
 
 import { copyEntityCustomizations } from "./copy.ts";
 import { fetchSiblingCustomizations } from "./customizations.ts";
 import type { EntityType } from "./hashing.ts";
-import { mergeSiblingRequirements } from "./requirements.ts";
 
 type SiblingCustomizations = Awaited<ReturnType<typeof fetchSiblingCustomizations>>;
 

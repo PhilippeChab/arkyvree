@@ -2,9 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { and, eq } from "drizzle-orm";
 
-import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -27,7 +28,6 @@ import {
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
-import { cowEntity } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { createCharacterAs } from "@/tests/support/characters.ts";

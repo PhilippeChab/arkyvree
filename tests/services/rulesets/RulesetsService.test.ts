@@ -10,6 +10,7 @@ import {
   type rulesetsInRules,
   starredRulesetsInAccount,
 } from "@/drizzle/schema.ts";
+import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   BadRequestError,
@@ -38,7 +39,6 @@ import {
   StarredRulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
-import { cowEntity } from "@/server/services/rulesets/cow/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";

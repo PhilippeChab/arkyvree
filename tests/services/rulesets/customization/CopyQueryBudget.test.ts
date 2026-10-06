@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 
 import { featsInRules } from "@/drizzle/schema.ts";
+import { copyEntityCustomizations, fetchEntityCustomizations } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Modifiers, Requirements } from "@/server/repositories/index.ts";
-import { copyEntityCustomizations, fetchEntityCustomizations } from "@/server/services/rulesets/cow/index.ts";
 import { insertRows, measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";

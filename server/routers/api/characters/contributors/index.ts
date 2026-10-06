@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
+import { denyDemoUser, type SessionContext, validate } from "@/server/middlewares/index.ts";
 import {
   contributorParams,
   idParam,
@@ -16,14 +16,14 @@ export default new Hono<SessionContext>()
   .get("/contributors/invites/me", async (c) => {
     return c.json(await CharacterContributorsService.getUserInvites(c.var.requestSession.userId), 200);
   })
-  .get("/contributors/invites/:id", zValidator("param", idParam), async (c) => {
+  .get("/contributors/invites/:id", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await CharacterContributorsService.getInvite(c.var.requestSession, id), 200);
   })
   .get(
     "/:id/contributors",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -47,19 +47,19 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .post("/contributors/invites/:id/accept", zValidator("param", idParam), async (c) => {
+  .post("/contributors/invites/:id/accept", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await CharacterContributorsService.acceptInvite(c.var.requestSession, id), 200);
   })
-  .post("/contributors/invites/:id/reject", zValidator("param", idParam), async (c) => {
+  .post("/contributors/invites/:id/reject", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await CharacterContributorsService.rejectInvite(c.var.requestSession, id), 200);
   })
   .post(
     "/:id/contributors",
     denyDemoUser,
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         email: sanitizedEmail,
@@ -71,11 +71,11 @@ export default new Hono<SessionContext>()
       return c.json(await CharacterContributorsService.inviteContributor(c.var.requestSession, id, email), 201);
     },
   )
-  .post("/:id/contributors/leave", zValidator("param", idParam), async (c) => {
+  .post("/:id/contributors/leave", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await CharacterContributorsService.leaveCharacter(c.var.requestSession, id), 200);
   })
-  .delete("/:id/contributors/:contributorId", denyDemoUser, zValidator("param", contributorParams), async (c) => {
+  .delete("/:id/contributors/:contributorId", denyDemoUser, validate("param", contributorParams), async (c) => {
     const { contributorId } = c.req.valid("param");
     return c.json(await CharacterContributorsService.revokeContributor(c.var.requestSession, contributorId), 200);
   });

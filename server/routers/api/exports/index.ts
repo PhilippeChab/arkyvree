@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 
-import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
+import { sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import { ExportsService } from "@/server/services/exports/index.ts";
 
-const exports = new Hono().use(sessionMiddleware).get("/:id/download", zValidator("param", idParam), async (c) => {
+const exports = new Hono().use(sessionMiddleware).get("/:id/download", validate("param", idParam), async (c) => {
   const { id } = c.req.valid("param");
 
   const exportRecord = await ExportsService.getExport(c.var.requestSession, id);

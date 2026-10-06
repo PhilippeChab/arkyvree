@@ -1,6 +1,9 @@
 import { sessionsInAccount, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 
+/** The seed user's id: the user who owns the seeded characters. */
+export const SEED_USER_ID = "00000000-0000-4000-8000-000000000456";
+
 /** The seeded users' password digest ("LocalTest123!"), which the e2e run's users share. */
 export const PASSWORD_DIGEST = "6fc914e8107f52a500ae8d6f5fd9b7ca677440c2fea38b2a9ec6b3143eb91c2b";
 
@@ -13,7 +16,7 @@ export default async function seed(db: Db) {
   // run's journeys create users of their own (tests/e2e/fixtures.ts).
   const seeded: Array<{ id: string; email: string; username: string; sessionId: string }> = [
     {
-      id: "00000000-0000-4000-8000-000000000456",
+      id: SEED_USER_ID,
       email: "localuser@example.com",
       username: "LocalUser",
       sessionId: "00000000-0000-4000-8000-000000000123",

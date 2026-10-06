@@ -340,7 +340,7 @@ entityId, rulesetId)` and is reused by every entity-delete service and
 
 ## Entity Services Pattern
 
-Every entity service works in the ruleset's scope (`withRulesetScope`): reads come from its composed view, and writes to an inherited entity go to the fork's copy, made on its first edit (`server/services/rulesets/cow/cowEntity.ts`):
+Every entity service works in the ruleset's scope (`withRulesetScope`): reads come from its composed view, and writes to an inherited entity go to the fork's copy, made on its first edit (`server/cow/cowEntity.ts`):
 
 ```ts
 // Read (list): the repository reads the ruleset and its source chain
@@ -621,7 +621,8 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 
 | File | Purpose |
 |---|---|
-| `server/services/rulesets/cow/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `cowEntity`, `cowEntityForCustomization`, `buildOverrideMap` (+ `siblingMap`), `resolveOverrides`. `mergeSiblingData` (`siblingMerge.ts`) runs on the COW write path to bake sibling data into newly COW'd local copies. Sibling read-time merging lives in the cache compose step (`server/cache/rulesetCache/compose.ts`). |
+| `server/cache/rulesetCache/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `buildOverrideMap` (+ `siblingMap`), `resolveOverrides`: copy-on-write's read side. |
+| `server/cow/` | `cowEntity`, `cowEntityForCustomization`: copy-on-write's write side. `mergeSiblingData` (`siblingMerge.ts`) runs on the COW write path to bake sibling data into newly COW'd local copies. Sibling read-time merging lives in the cache compose step (`server/cache/rulesetCache/compose.ts`). |
 | `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
 | `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getExtensions` |
 | `server/services/rulesets/changes/RulesetChangesService.ts` | `getChanges`, `revertOverride` |

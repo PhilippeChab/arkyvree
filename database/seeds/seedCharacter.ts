@@ -1,48 +1,35 @@
+/**
+ * Seeds a character: its row, its classes' levels with their skills, feats and powers, its inventory, and its bonded
+ * creatures.
+ */
+
 import { and, eq } from "drizzle-orm";
 
-import {
-  coreRulesetId,
-  idsByName,
-  loadSeedContext,
-  type SeedContext as RulesetSeedContext,
-} from "@/database/packages/dnd35/seed/context.ts";
+import { type SeedContext } from "@/database/seeds/seedContext.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import {
   characterAbilitiesInCharacter,
   charactersInCharacter,
   inventoryInCharacter,
-  itemsInRules,
-  klassesInRules,
   klassLevelsInRules,
   languagesInCharacter,
-  languagesInRules,
   levelFeatsInCharacter,
   levelPowersInCharacter,
   levelsInCharacter,
   levelSkillsInCharacter,
-  racesInRules,
 } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { reconcileAllBondedKinds } from "@/server/services/characters/levels/index.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
-import type { Alignment, Gender, ItemLocation } from "@/shared/enums.ts";
+import { type Alignment, type Gender, type ItemLocation } from "@/shared/enums.ts";
 
 type CharacterData = Parameters<typeof createCharacter>[2];
 
 type Picks<K extends string> = { levelIndex: number } & Record<K, string>;
-
-/** The seeded core rules' ids by name: its seed context, and the languages, races, classes and items characters name. */
-export type SeedContext = RulesetSeedContext & {
-  langMap: Record<string, string>;
-  /** Race id by kind, then name. Use `raceMap.pc["Human"]`, `raceMap.familiar["Owl"]`. */
-  raceMap: Record<string, Record<string, string>>;
-  /** Klass id by kind, then name. Use `klassMap.pc["Fighter"]`, `klassMap.familiar["Familiar"]`. */
-  klassMap: Record<string, Record<string, string>>;
-  itemMap: Record<string, string>;
-};
 
 /**
  * A character of the seed user's: who it is, its levels (each class's in order, from the first, by the hit points
@@ -55,22 +42,6 @@ export type CharacterSeed = Omit<CharacterData, "rulesetId"> & {
   powers?: (Picks<"powerName"> & { aptitude: string })[];
   inventory: Parameters<typeof addInventory>[3];
 };
-
-export const SEED_USER_ID = "00000000-0000-4000-8000-000000000456";
-
-/**
- * Group kinded rows (races, klasses) by kind, then by name. Callers spell out
- * which kind they want (`ctx.raceMap.pc["Human"]`, `ctx.raceMap.familiar["Owl"]`)
- * so name collisions between e.g. familiar-kind and animalcompanion-kind rows
- * resolve unambiguously at the call site.
- */
-function buildKindMap(rows: { name: string; id: string; kind: string }[]): Record<string, Record<string, string>> {
-  const out: Record<string, Record<string, string>> = {};
-  for (const row of rows) {
-    (out[row.kind] ??= {})[row.name] = row.id;
-  }
-  return out;
-}
 
 async function addInventory(
   db: Db,
@@ -109,35 +80,6 @@ async function reconcileBondedForCharacter(tx: Db, characterId: string): Promise
     await detailed.build(tx, undefined, { ruleset, cowData: rulesetData.cow, rulesetData });
     await reconcileAllBondedKinds(tx, master, detailed, rulesetData);
   });
-}
-
-export async function getSeedContext(db: Db): Promise<SeedContext> {
-  const rulesetId = await coreRulesetId(db, "The test data");
-  // One after the other: a transaction runs one query at a time.
-  const names = await loadSeedContext(db, rulesetId);
-  const langs = await db
-    .select({ id: languagesInRules.id, name: languagesInRules.name })
-    .from(languagesInRules)
-    .where(eq(languagesInRules.rulesetId, rulesetId));
-  const races = await db
-    .select({ id: racesInRules.id, name: racesInRules.name, kind: racesInRules.kind })
-    .from(racesInRules)
-    .where(eq(racesInRules.rulesetId, rulesetId));
-  const klasses = await db
-    .select({ id: klassesInRules.id, name: klassesInRules.name, kind: klassesInRules.kind })
-    .from(klassesInRules)
-    .where(eq(klassesInRules.rulesetId, rulesetId));
-  const items = await db
-    .select({ id: itemsInRules.id, name: itemsInRules.name })
-    .from(itemsInRules)
-    .where(eq(itemsInRules.rulesetId, rulesetId));
-  return {
-    ...names,
-    langMap: idsByName(langs),
-    raceMap: buildKindMap(races),
-    klassMap: buildKindMap(klasses),
-    itemMap: idsByName(items),
-  };
 }
 
 export async function addClassLevels(

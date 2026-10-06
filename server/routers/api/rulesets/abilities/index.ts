@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { AbilitiesService } from "@/server/services/rulesets/abilities/index.ts";
@@ -11,8 +11,8 @@ const abilityParams = idParam.extend({ abilityId: z.string().uuid() });
 export default new Hono<SessionContext>()
   .get(
     "/:id/abilities",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -32,7 +32,7 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get("/:id/abilities/:abilityId", zValidator("param", abilityParams), async (c) => {
+  .get("/:id/abilities/:abilityId", validate("param", abilityParams), async (c) => {
     const { id, abilityId } = c.req.valid("param");
     return c.json(await AbilitiesService.getAbility(id, abilityId), 200);
   });

@@ -1,11 +1,11 @@
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { buildSourceChain, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
 import { isTemplateValue } from "@/server/rulesets/universal/templateExpression.ts";
-import { buildSourceChain, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { PathCompletion, PathError, PathValidationResult, TargetPath } from "@/shared/customization/target.ts";
 
 /** Why a modifier's or requirement's operator and value don't suit the path, or null when they do. */

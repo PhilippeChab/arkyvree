@@ -2,18 +2,18 @@ import { getTableName } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Modifiers } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import {
   copyEntityCustomizations,
   cowCustomizationForMutation,
   cowEntityForCustomization,
   fetchEntityCustomizations,
-  withRulesetScope,
-} from "@/server/services/rulesets/cow/index.ts";
+} from "@/server/cow/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
+import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { Modifiers } from "@/server/repositories/index.ts";
+import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   checkCustomizedEntity,
   getCustomizableEntityName,
