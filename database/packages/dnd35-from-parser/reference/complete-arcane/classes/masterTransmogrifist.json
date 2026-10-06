@@ -61,24 +61,14 @@
         "type": "(Su)"
       }
     ],
-    "classSkills": [
-      "Bluff",
-      "Concentration",
-      "Craft",
-      "Disguise",
-      "Knowledge (Arcana)",
-      "Profession",
-      "Spellcraft"
-    ],
+    "classSkills": ["Bluff", "Concentration", "Craft", "Disguise", "Knowledge (Arcana)", "Profession", "Spellcraft"],
     "description": "The master transmogrifist is a sorcerer or wizard who has chosen to specialize in spells that change his form.",
     "hitDie": "d4",
     "name": "Master Transmogrifist",
     "prerequisites": {
       "parsed": {
         "alignment": "any nonlawful",
-        "feats": [
-          "Eschew Materials"
-        ],
+        "feats": ["Eschew Materials"],
         "skills": [
           {
             "name": "Bluff",
@@ -98,10 +88,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Extended change",
-          "favored shape"
-        ],
+        "special": ["Extended change", "favored shape"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -110,9 +97,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Manifest senses"
-        ],
+        "special": ["Manifest senses"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -121,9 +106,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Battle master +2"
-        ],
+        "special": ["Battle master +2"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -132,9 +115,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Effortless change"
-        ],
+        "special": ["Effortless change"],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -143,9 +124,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Shapechanger"
-        ],
+        "special": ["Shapechanger"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 4
       },
@@ -154,9 +133,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Battle master +4"
-        ],
+        "special": ["Battle master +4"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 5
       },
@@ -165,9 +142,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Reflexive change"
-        ],
+        "special": ["Reflexive change"],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -176,9 +151,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Manifest qualities"
-        ],
+        "special": ["Manifest qualities"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 6
       },
@@ -187,9 +160,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Battle master +6"
-        ],
+        "special": ["Battle master +6"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 6
       },
@@ -198,9 +169,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Infinite variety"
-        ],
+        "special": ["Infinite variety"],
         "spellsPerDay": "-",
         "willSave": 7
       }

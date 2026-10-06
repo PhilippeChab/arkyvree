@@ -116,10 +116,7 @@
             "type": "divine"
           }
         ],
-        "feats": [
-          "Exotic Weapon Proficiency (kukri)",
-          "Iron Will"
-        ],
+        "feats": ["Exotic Weapon Proficiency (kukri)", "Iron Will"],
         "skills": [
           {
             "name": "Hide",
@@ -146,10 +143,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Death attack",
-          "zealous heart"
-        ],
+        "special": ["Death attack", "zealous heart"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -158,9 +152,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Poison use"
-        ],
+        "special": ["Poison use"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 3
       },
@@ -169,9 +161,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Sneak attack +1d6"
-        ],
+        "special": ["Sneak attack +1d6"],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -189,9 +179,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Fateful stride"
-        ],
+        "special": ["Fateful stride"],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -200,9 +188,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Sneak attack +2d6"
-        ],
+        "special": ["Sneak attack +2d6"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 5
       },
@@ -211,9 +197,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Sacred flame"
-        ],
+        "special": ["Sacred flame"],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -231,9 +215,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Sneak attack +3d6"
-        ],
+        "special": ["Sneak attack +3d6"],
         "spellsPerDay": "-",
         "willSave": 6
       },
@@ -242,9 +224,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Unholy immolation"
-        ],
+        "special": ["Unholy immolation"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 7
       }

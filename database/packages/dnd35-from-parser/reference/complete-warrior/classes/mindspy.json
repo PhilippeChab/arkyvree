@@ -68,14 +68,7 @@
         "type": "(Su)"
       }
     ],
-    "classSkills": [
-      "Bluff",
-      "Concentration",
-      "Craft",
-      "Intimidate",
-      "Profession",
-      "Sense Motive"
-    ],
+    "classSkills": ["Bluff", "Concentration", "Craft", "Intimidate", "Profession", "Sense Motive"],
     "description": "By reading the minds of her enemies, a mindspy knows exactly what they're going to do a fraction of a second before they do it.",
     "hitDie": "d8",
     "name": "Mindspy",
@@ -88,9 +81,7 @@
             "ranks": 8
           }
         ],
-        "special": [
-          "Able to cast the detect thoughts spell or to use detect thoughts as a spell-like ability."
-        ]
+        "special": ["Able to cast the detect thoughts spell or to use detect thoughts as a spell-like ability."]
       },
       "text": "Base Attack Bonus: +3 Skills: Concentration 8 ranks Special: Able to cast the detect thoughts spell or to use detect thoughts as a spell-like ability."
     },
@@ -100,11 +91,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Anticipate",
-          "combat telepathy",
-          "spherical detect thoughts"
-        ],
+        "special": ["Anticipate", "combat telepathy", "spherical detect thoughts"],
         "willSave": 2
       },
       {
@@ -112,9 +99,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Faster mindscan"
-        ],
+        "special": ["Faster mindscan"],
         "willSave": 3
       },
       {
@@ -122,9 +107,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Multiple surface thoughts (two)"
-        ],
+        "special": ["Multiple surface thoughts (two)"],
         "willSave": 3
       },
       {
@@ -132,9 +115,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Instant mindscan"
-        ],
+        "special": ["Instant mindscan"],
         "willSave": 4
       },
       {
@@ -142,9 +123,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Multiple surface thoughts (four)"
-        ],
+        "special": ["Multiple surface thoughts (four)"],
         "willSave": 4
       }
     ],

@@ -41,9 +41,7 @@
         "description": "A dwarven defender has proficiency with all simple weapons, all martial weapons, every category of armor, and shields."
       }
     },
-    "reviewed": [
-      "AC Bonus"
-    ]
+    "reviewed": ["AC Bonus"]
   },
   "raw": {
     "classFeatures": [
@@ -86,12 +84,7 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": [
-      "Craft",
-      "Listen",
-      "Sense Motive",
-      "Spot"
-    ],
+    "classSkills": ["Craft", "Listen", "Sense Motive", "Spot"],
     "description": "The defender is a sponsored champion of a dwarven cause",
     "hitDie": "d12",
     "name": "Dwarven Defender",
@@ -99,14 +92,8 @@
       "parsed": {
         "alignment": "Any lawful",
         "bab": 7,
-        "feats": [
-          "Dodge",
-          "Endurance",
-          "Toughness"
-        ],
-        "special": [
-          "Race: Dwarf"
-        ]
+        "feats": ["Dodge", "Endurance", "Toughness"],
+        "special": ["Race: Dwarf"]
       },
       "text": "Base Attack Bonus: +7 Alignment: Any lawful Race: Dwarf Feats: Dodge, Endurance, Toughness"
     },
@@ -119,9 +106,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Defensive stance 1/day"
-        ],
+        "special": ["Defensive stance 1/day"],
         "willSave": 2
       },
       {
@@ -132,9 +117,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Uncanny dodge"
-        ],
+        "special": ["Uncanny dodge"],
         "willSave": 3
       },
       {
@@ -145,9 +128,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Defensive stance 2/day"
-        ],
+        "special": ["Defensive stance 2/day"],
         "willSave": 3
       },
       {
@@ -158,9 +139,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Trap sense +1"
-        ],
+        "special": ["Trap sense +1"],
         "willSave": 4
       },
       {
@@ -171,9 +150,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Defensive stance 3/day"
-        ],
+        "special": ["Defensive stance 3/day"],
         "willSave": 4
       },
       {
@@ -184,10 +161,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Damage reduction 3/-",
-          "improved uncanny dodge"
-        ],
+        "special": ["Damage reduction 3/-", "improved uncanny dodge"],
         "willSave": 5
       },
       {
@@ -198,9 +172,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Defensive stance 4/day"
-        ],
+        "special": ["Defensive stance 4/day"],
         "willSave": 5
       },
       {
@@ -211,10 +183,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Mobile defense",
-          "trap sense +2"
-        ],
+        "special": ["Mobile defense", "trap sense +2"],
         "willSave": 6
       },
       {
@@ -225,9 +194,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Defensive stance 5/day"
-        ],
+        "special": ["Defensive stance 5/day"],
         "willSave": 6
       },
       {
@@ -238,9 +205,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Damage reduction 6/-"
-        ],
+        "special": ["Damage reduction 6/-"],
         "willSave": 7
       }
     ],

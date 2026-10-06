@@ -68,16 +68,7 @@
         "type": "(Su)"
       }
     ],
-    "classSkills": [
-      "Climb",
-      "Diplomacy",
-      "Handle Animal",
-      "Intimidate",
-      "Jump",
-      "Knowledge (Local)",
-      "Ride",
-      "Swim"
-    ],
+    "classSkills": ["Climb", "Diplomacy", "Handle Animal", "Intimidate", "Jump", "Knowledge (Local)", "Ride", "Swim"],
     "description": "Purple Dragon knights develop uncanny skills related to coordinating and leading soldiers.",
     "hitDie": "d10",
     "name": "Purple Dragon Knight",
@@ -85,10 +76,7 @@
       "parsed": {
         "alignment": "Lawful good, neutral good, lawful neutral, or neutral",
         "bab": 5,
-        "feats": [
-          "Mounted Combat",
-          "Negotiator"
-        ],
+        "feats": ["Mounted Combat", "Negotiator"],
         "skills": [
           {
             "name": "Diplomacy",
@@ -111,9 +99,7 @@
             "ranks": 2
           }
         ],
-        "special": [
-          "Membership in the Purple Dragons"
-        ]
+        "special": ["Membership in the Purple Dragons"]
       },
       "text": "Base Attack Bonus: +5 Alignment: Lawful good, neutral good, lawful neutral, or neutral Skills: Diplomacy 1 ranks or Intimidate 1 ranks, Listen 2 ranks, Ride 2 ranks, Spot 2 ranks Feats: Mounted Combat, Negotiator Special: Membership in the Purple Dragons"
     },
@@ -123,10 +109,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Heroic shield",
-          "rallying cry"
-        ],
+        "special": ["Heroic shield", "rallying cry"],
         "willSave": 0
       },
       {
@@ -134,9 +117,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Inspire courage 1/day"
-        ],
+        "special": ["Inspire courage 1/day"],
         "willSave": 0
       },
       {
@@ -144,9 +125,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Fear"
-        ],
+        "special": ["Fear"],
         "willSave": 1
       },
       {
@@ -154,10 +133,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Inspire courage 2/day",
-          "oath of wrath"
-        ],
+        "special": ["Inspire courage 2/day", "oath of wrath"],
         "willSave": 1
       },
       {
@@ -165,9 +141,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Final stand"
-        ],
+        "special": ["Final stand"],
         "willSave": 1
       }
     ],

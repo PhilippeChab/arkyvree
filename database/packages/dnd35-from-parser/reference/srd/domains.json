@@ -71,10 +71,7 @@
       "featPool": {
         "aptitude": "War Domain Weapon",
         "description": "You gain proficiency with ${w} and Weapon Focus with ${w} as granted by the War domain.",
-        "grants": [
-          "Weapon Focus",
-          "Martial Weapon Proficiency"
-        ],
+        "grants": ["Weapon Focus", "Martial Weapon Proficiency"],
         "items": "martial",
         "namePrefix": "War Domain Weapon"
       },

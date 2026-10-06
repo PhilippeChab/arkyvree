@@ -11,7 +11,7 @@ Steps:
 1. **Pick a ruleset.** **Core SRD 3.5** is available to everyone; any forks you own or have access to via campaigns are also listed.
 2. **Identity.** Name, gender, age, height, weight, alignment, deity, description, notes.
 3. **Race.** Picking a race seeds size, base speed, and racial modifiers automatically.
-4. **Ability scores.** Roll them (4d6 drop lowest or 3d6 straight), use the standard array, or point-buy. What you enter is the *base* score — racial modifiers stack on top.
+4. **Ability scores.** Roll them (4d6 drop lowest or 3d6 straight), use the standard array, or point-buy. What you enter is the _base_ score — racial modifiers stack on top.
 5. **First level.** The [level-up wizard](#what-is-the-level-up-wizard) takes over: pick a class, roll HP, allocate skill points within the rank cap, pick feats from the available pools, pick spells if your class has them, review and confirm.
 
 The engine refuses illegal choices at every step: prestige classes you don't qualify for are greyed out, skill ranks above the level-1 cap are blocked, feats whose prerequisites you don't meet are greyed out, with a tooltip saying what's missing.
@@ -45,11 +45,11 @@ Campaigns are a character / ruleset organization layer. They aren't a virtual ta
 
 When you link a character to a campaign, you choose how much other players can see. Change it any time from the visibility chip on the campaign roster.
 
-| Visibility | What other players see |
-|---|---|
-| **Private** | Nothing — the character doesn't appear in their roster. |
+| Visibility  | What other players see                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------------------------ |
+| **Private** | Nothing — the character doesn't appear in their roster.                                                |
 | **Partial** | Physical traits only — race, class, level, name, public notes. Stats, feats, spells, equipment hidden. |
-| **Public** | The full sheet. |
+| **Public**  | The full sheet.                                                                                        |
 
 The GM always sees the full sheet of every linked character, including private notes. Visibility controls player-to-player privacy only.
 
@@ -79,7 +79,7 @@ A feat you expected isn't offered — three reasons, in this order:
 
 For mid-campaign characters joining at higher levels, add several levels to the class plan (**Add Level**, or a class's quick-add button): the wizard plans the full path up front and saves it in one go.
 
-The engine validates the *base, permanent character sheet*. Temporary buffs, conditional bonuses (Dodge's `+1`, Mobility's `+4` vs AoO) and activated abilities (Power Attack, Combat Expertise, Smite Evil, Rage) aren't auto-applied. Apply them at the table.
+The engine validates the _base, permanent character sheet_. Temporary buffs, conditional bonuses (Dodge's `+1`, Mobility's `+4` vs AoO) and activated abilities (Power Attack, Combat Expertise, Smite Evil, Rage) aren't auto-applied. Apply them at the table.
 
 Each weapon on the sheet lists a row per way to attack with it: its own attack, a thrown one for a melee weapon you can throw (a dagger, a spear), and, when a weapon set holds a weapon in each hand, the same with two-weapon fighting's penalties. The Two-Weapon Fighting feats and a light off-hand weapon lessen them, and Improved and Greater Two-Weapon Fighting add off-hand attacks. Range-increment penalties depend on the distance, so they aren't on the sheet.
 

@@ -80,9 +80,7 @@
             "type": "arcane"
           }
         ],
-        "feats": [
-          "Scribe Scroll"
-        ],
+        "feats": ["Scribe Scroll"],
         "skills": [
           {
             "name": "Decipher Script",
@@ -110,10 +108,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Glyph of warding",
-          "draw spellglyph"
-        ],
+        "special": ["Glyph of warding", "draw spellglyph"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 2
       },
@@ -122,9 +117,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Book of geometry"
-        ],
+        "special": ["Book of geometry"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -133,9 +126,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Sigilsight"
-        ],
+        "special": ["Sigilsight"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -144,9 +135,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Pass sigil"
-        ],
+        "special": ["Pass sigil"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 4
       },
@@ -155,10 +144,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Powerful spellglyph",
-          "greater glyph of warding"
-        ],
+        "special": ["Powerful spellglyph", "greater glyph of warding"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 4
       }

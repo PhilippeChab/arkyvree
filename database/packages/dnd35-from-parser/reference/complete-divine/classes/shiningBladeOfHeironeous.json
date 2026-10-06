@@ -51,15 +51,7 @@
         "type": "(Su)"
       }
     ],
-    "classSkills": [
-      "Concentration",
-      "Craft",
-      "Diplomacy",
-      "Heal",
-      "Knowledge (Religion)",
-      "Profession",
-      "Spellcraft"
-    ],
+    "classSkills": ["Concentration", "Craft", "Diplomacy", "Heal", "Knowledge (Religion)", "Profession", "Spellcraft"],
     "description": "The shining blade of Heironeous is a member of an order of knights dedicated to prowess in melee combat.",
     "hitDie": "d10",
     "name": "Shining Blade of Heironeous",
@@ -85,10 +77,7 @@
             "ranks": 7
           }
         ],
-        "special": [
-          "Must have Heironeous as a patron deity.",
-          "Heironeous as a patron deity"
-        ]
+        "special": ["Must have Heironeous as a patron deity.", "Heironeous as a patron deity"]
       },
       "text": "Base Attack Bonus: +7 Alignment: Lawful good Skills: Knowledge (religion) 7 ranks Base Save Bonus: Will +3.Spells: Able to cast 1st-level divine spellsSpecial: Must have Heironeous as a patron deity."
     },
@@ -98,9 +87,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Shock blade 2/day"
-        ],
+        "special": ["Shock blade 2/day"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -118,9 +105,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Shock blade 3/day"
-        ],
+        "special": ["Shock blade 3/day"],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -138,9 +123,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Holy blade 4/day"
-        ],
+        "special": ["Holy blade 4/day"],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -158,9 +141,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Holy blade 5/day"
-        ],
+        "special": ["Holy blade 5/day"],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -178,9 +159,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Brilliant blade 6/day"
-        ],
+        "special": ["Brilliant blade 6/day"],
         "spellsPerDay": "-",
         "willSave": 6
       },

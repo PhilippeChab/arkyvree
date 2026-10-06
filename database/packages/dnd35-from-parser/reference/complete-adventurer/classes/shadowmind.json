@@ -101,9 +101,7 @@
             "ranks": 3
           }
         ],
-        "special": [
-          "Manifester level 3rd, Able to manifest concealing amorpha."
-        ]
+        "special": ["Manifester level 3rd, Able to manifest concealing amorpha."]
       },
       "text": "Base Attack Bonus: +3 Skills: Hide 5 ranks, Move Silently 5 ranks, Sleight of Hand 3 ranks Special: Manifester level 3rd, Able to manifest concealing amorpha."
     },
@@ -113,9 +111,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Read thoughts"
-        ],
+        "special": ["Read thoughts"],
         "spellsPerDay": "+1 level of existing manifesting class",
         "willSave": 2
       },
@@ -124,9 +120,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Sneak attack +1d6"
-        ],
+        "special": ["Sneak attack +1d6"],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -135,9 +129,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Cloud mind"
-        ],
+        "special": ["Cloud mind"],
         "spellsPerDay": "+1 level of existing manifesting class",
         "willSave": 3
       },
@@ -155,9 +147,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Sneak attack +2d6"
-        ],
+        "special": ["Sneak attack +2d6"],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -184,9 +174,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Sneak attack +3d6"
-        ],
+        "special": ["Sneak attack +3d6"],
         "spellsPerDay": "-",
         "willSave": 6
       },
@@ -195,9 +183,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Mass cloud mind"
-        ],
+        "special": ["Mass cloud mind"],
         "spellsPerDay": "+1 level of existing manifesting class",
         "willSave": 6
       },
@@ -206,9 +192,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Mind stab"
-        ],
+        "special": ["Mind stab"],
         "spellsPerDay": "+1 level of existing manifesting class",
         "willSave": 7
       }

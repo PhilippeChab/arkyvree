@@ -69,9 +69,7 @@
     "prerequisites": {
       "parsed": {
         "bab": 3,
-        "feats": [
-          "Any luck feat"
-        ]
+        "feats": ["Any luck feat"]
       },
       "text": "Base Attack Bonus: +3 Skills: Any skill 8 ranks.Feats: Any luck feat."
     },
@@ -81,11 +79,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Easy luck",
-          "extra fortune",
-          "more luck than skill"
-        ],
+        "special": ["Easy luck", "extra fortune", "more luck than skill"],
         "spellsPerDay": "-",
         "willSave": 0
       },
@@ -94,9 +88,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Bonus luck feat"
-        ],
+        "special": ["Bonus luck feat"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 0
       },
@@ -105,10 +97,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Extra fortune",
-          "fortune's favorite"
-        ],
+        "special": ["Extra fortune", "fortune's favorite"],
         "spellsPerDay": "-",
         "willSave": 1
       },
@@ -117,9 +106,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Bonus luck feat"
-        ],
+        "special": ["Bonus luck feat"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 1
       },
@@ -128,10 +115,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Extra fortune",
-          "lucky strike"
-        ],
+        "special": ["Extra fortune", "lucky strike"],
         "spellsPerDay": "-",
         "willSave": 1
       }

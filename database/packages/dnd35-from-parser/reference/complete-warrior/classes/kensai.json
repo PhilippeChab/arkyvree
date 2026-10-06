@@ -31,9 +31,7 @@
         "description": "At 5th level and beyond, whenever a kensai must attempt a Reflex save against an area-effect spell (such as fireball), he may substitute a Concentration check in place of the Reflex save to avoid taking full damage. If the kensai possesses evasion or improved evasion, those abilities function normally with this Concentration check."
       }
     },
-    "reviewed": [
-      "Signature Weapon"
-    ]
+    "reviewed": ["Signature Weapon"]
   },
   "raw": {
     "classFeatures": [
@@ -90,10 +88,7 @@
       "parsed": {
         "alignment": "Any lawful",
         "bab": 5,
-        "feats": [
-          "Combat Expertise",
-          "Weapon Focus (any weapon)"
-        ],
+        "feats": ["Combat Expertise", "Weapon Focus (any weapon)"],
         "skills": [
           {
             "name": "Concentration",
@@ -108,9 +103,7 @@
             "ranks": 5
           }
         ],
-        "special": [
-          "Must complete an other of service sidebar) to either an overlord or an ideal."
-        ]
+        "special": ["Must complete an other of service sidebar) to either an overlord or an ideal."]
       },
       "text": "Base Attack Bonus: +5 Alignment: Any lawful Skills: Concentration 5 ranks, Diplomacy 5 ranks, Ride 5 ranks Feats: Combat Expertise, Weapon Focus (any weapon) Special: Must complete an other of service sidebar) to either an overlord or an ideal."
     },
@@ -120,9 +113,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Signature weapon"
-        ],
+        "special": ["Signature weapon"],
         "willSave": 2
       },
       {
@@ -130,9 +121,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Power surge"
-        ],
+        "special": ["Power surge"],
         "willSave": 3
       },
       {
@@ -148,9 +137,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Ki projection"
-        ],
+        "special": ["Ki projection"],
         "willSave": 4
       },
       {
@@ -158,9 +145,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Withstand"
-        ],
+        "special": ["Withstand"],
         "willSave": 4
       },
       {
@@ -176,9 +161,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Ki projection"
-        ],
+        "special": ["Ki projection"],
         "willSave": 5
       },
       {
@@ -186,9 +169,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Instill"
-        ],
+        "special": ["Instill"],
         "willSave": 6
       },
       {
@@ -204,9 +185,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Ki warlord"
-        ],
+        "special": ["Ki warlord"],
         "willSave": 7
       }
     ],

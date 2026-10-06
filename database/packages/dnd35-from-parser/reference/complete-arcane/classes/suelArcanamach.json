@@ -8,15 +8,8 @@
   "overrides": {
     "spells": {
       "inheritsFrom": {
-        "classes": [
-          "Sorcerer"
-        ],
-        "schools": [
-          "Abjuration",
-          "Divination",
-          "Illusion",
-          "Transmutation"
-        ]
+        "classes": ["Sorcerer"],
+        "schools": ["Abjuration", "Divination", "Illusion", "Transmutation"]
       }
     }
   },
@@ -80,10 +73,7 @@
     "prerequisites": {
       "parsed": {
         "bab": 6,
-        "feats": [
-          "Combat Casting",
-          "Iron Will Language: Ancient Suloise"
-        ],
+        "feats": ["Combat Casting", "Iron Will Language: Ancient Suloise"],
         "skills": [
           {
             "name": "Concentration",
@@ -115,10 +105,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Ignore spell failure chance 5%",
-          "tenacious spells"
-        ],
+        "special": ["Ignore spell failure chance 5%", "tenacious spells"],
         "spellsPerDay": "1,-,-,-,-",
         "willSave": 2
       },
@@ -127,9 +114,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Dispelling strike 1/day"
-        ],
+        "special": ["Dispelling strike 1/day"],
         "spellsPerDay": "1,0,-,-,-",
         "willSave": 3
       },
@@ -138,9 +123,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Extended spellstrength"
-        ],
+        "special": ["Extended spellstrength"],
         "spellsPerDay": "2,1,-,-,-",
         "willSave": 3
       },
@@ -149,9 +132,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Ignore spell failure chance 10%"
-        ],
+        "special": ["Ignore spell failure chance 10%"],
         "spellsPerDay": "2,2,0,-,-",
         "willSave": 4
       },
@@ -169,9 +150,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Dispelling strike 2/day"
-        ],
+        "special": ["Dispelling strike 2/day"],
         "spellsPerDay": "3,3,2,0,-",
         "willSave": 5
       },
@@ -180,9 +159,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Ignore spell failure chance 15%"
-        ],
+        "special": ["Ignore spell failure chance 15%"],
         "spellsPerDay": "3,3,2,1,-",
         "willSave": 5
       },
@@ -209,10 +186,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Dispelling strike 3/day",
-          "ignore spell failure chance 20%"
-        ],
+        "special": ["Dispelling strike 3/day", "ignore spell failure chance 20%"],
         "spellsPerDay": "4,4,3,3,2",
         "willSave": 7
       }

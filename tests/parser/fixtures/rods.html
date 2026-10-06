@@ -1,90 +1,138 @@
-<!DOCTYPE html>
+<!doctype html>
 <!-- https://www.d20srd.org/srd/magicItems/rods.htm, trimmed to what the parser reads -->
 <html>
-<body>
-<h4 id="rodDescriptions">Rod Descriptions</h4>
-<p>
-	Although all rods are generally scepterlike, their configurations and abilities run the magical gamut. Standard rods are described below.
-</p>
+  <body>
+    <h4 id="rodDescriptions">Rod Descriptions</h4>
+    <p>
+      Although all rods are generally scepterlike, their configurations and abilities run the magical gamut. Standard
+      rods are described below.
+    </p>
 
+    <h5 id="absorption">Absorption</h5>
+    <p>
+      This rod acts as a magnet, drawing spells or
+      <a href="/srd/specialAbilities.htm#spellLikeAbilities">spell-like abilities</a> into itself. The magic absorbed
+      must be a single-target spell or a ray directed at either the character possessing the rod or her gear. The rod
+      then nullifies the spell's effect and stores its potential until the wielder releases this energy in the form of
+      spells of her own. She can instantly detect a spell's level as the rod absorbs that spell's energy. Absorption
+      requires no action on the part of the user if the rod is in hand at the time.
+    </p>
+    <p>
+      A running total of absorbed (and used) spell levels should be kept. The wielder of the rod can use captured spell
+      energy to cast any spell she has prepared, without expending the preparation itself. The only restrictions are
+      that the levels of spell energy stored in the rod must be equal to or greater than the level of the spell the
+      wielder wants to cast, that any material components required for the spell be present, and that the rod be in hand
+      when casting. For casters such as <a href="/srd/classes/bard.htm">bards</a> or
+      <a href="/srd/classes/sorcererWizard.htm#sorcerer">sorcerers</a> who do not prepare spells, the rod's energy can
+      be used to cast any spell of the appropriate level or levels that they know.
+    </p>
+    <p>
+      A rod of absorption absorbs a maximum of fifty spell levels and can thereafter only discharge any remaining
+      potential it might have. The rod cannot be recharged. The wielder knows the rod's remaining absorbing potential
+      and current amount of stored energy.
+    </p>
+    <p>
+      To determine the absorption potential remaining in a newly found rod, roll
+      <a href="javascript:void(0);" class="diceRoller" onclick="rollValue('Total', '1d100')" title="Roll the dice!"
+        >d%</a
+      >
+      and divide the result by 2. Then roll
+      <a href="javascript:void(0);" class="diceRoller" onclick="rollValue('Total', '1d100')" title="Roll the dice!"
+        >d%</a
+      >
+      again: On a result of 71-100, half the levels already absorbed by the rod are still stored within.
+    </p>
+    <p>
+      Strong abjuration; CL 15th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>,
+      <a class="spell" href="/srd/spells/spellTurning.htm">spell turning</a>; Price 50,000 gp.
+    </p>
 
-<h5 id="absorption">Absorption</h5>
-<p>
-	This rod acts as a magnet, drawing spells or <a href="/srd/specialAbilities.htm#spellLikeAbilities">spell-like abilities</a> into itself. The magic absorbed must be a single-target spell or a ray directed at either the character possessing the rod or her gear. The rod then nullifies the spell's effect and stores its potential until the wielder releases this energy in the form of spells of her own. She can instantly detect a spell's level as the rod absorbs that spell's energy. Absorption requires no action on the part of the user if the rod is in hand at the time.
-</p>
-<p>
-	A running total of absorbed (and used) spell levels should be kept. The wielder of the rod can use captured spell energy to cast any spell she has prepared, without expending the preparation itself. The only restrictions are that the levels of spell energy stored in the rod must be equal to or greater than the level of the spell the wielder wants to cast, that any material components required for the spell be present, and that the rod be in hand when casting. For casters such as <a href="/srd/classes/bard.htm">bards</a> or <a href="/srd/classes/sorcererWizard.htm#sorcerer">sorcerers</a> who do not prepare spells, the rod's energy can be used to cast any spell of the appropriate level or levels that they know.
-</p>
-<p>
-	A rod of absorption absorbs a maximum of fifty spell levels and can thereafter only discharge any remaining potential it might have. The rod cannot be recharged. The wielder knows the rod's remaining absorbing potential and current amount of stored energy.
-</p>
-<p>
-	To determine the absorption potential remaining in a newly found rod, roll <a href="javascript:void(0);" class="diceRoller" onclick="rollValue('Total','1d100');" title="Roll the dice!">d%</a> and divide the result by 2. Then roll <a href="javascript:void(0);" class="diceRoller" onclick="rollValue('Total','1d100');" title="Roll the dice!">d%</a> again: On a result of 71-100, half the levels already absorbed by the rod are still stored within.
-</p>
-<p>
-	Strong abjuration; CL 15th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>, <a class="spell" href="/srd/spells/spellTurning.htm">spell turning</a>; Price 50,000 gp.
-</p>
+    <h5 id="metamagicRods">Metamagic Rods</h5>
+    <p>
+      Metamagic rods hold the essence of a metamagic feat but do not change the spell slot of the altered spell. All the
+      rods described here are <a href="/srd/magicItems/magicItemBasics.htm#useActivated">use-activated</a> (but casting
+      spells in a threatened area still draws an
+      <a href="/srd/combat/attacksOfOpportunity.htm">attack of opportunity</a>). A caster may only use one metamagic rod
+      on any given spell, but it is permissible to combine a rod with metamagic feats possessed by the rod's wielder. In
+      this case, only the feats possessed by the wielder adjust the spell slot of the spell being cast.
+    </p>
+    <p>
+      Possession of a metamagic rod does not confer the associated feat on the owner, only the ability to use the given
+      feat a specified number of times per day. A <a href="/srd/classes/sorcererWizard.htm#sorcerer">sorcerer</a> still
+      must take a <a href="/srd/combat/actionsInCombat.htm#fullRoundActions">full-round action</a> when using a
+      metamagic rod, just as if using a metamagic feat he possesses.
+    </p>
 
+    <h6 id="lesserandGreaterMetamagicRods">Lesser and Greater Metamagic Rods</h6>
+    <p>
+      Normal metamagic rods can be used with spells of 6th level or lower. Lesser rods can be used with spells of 3rd
+      level or lower, while greater rods can be used with spells of 9th level or lower.
+    </p>
 
-<h5 id="metamagicRods">Metamagic Rods</h5>
-<p>
-	Metamagic rods hold the essence of a metamagic feat but do not change the spell slot of the altered spell. All the rods described here are <a href="/srd/magicItems/magicItemBasics.htm#useActivated">use-activated</a> (but casting spells in a threatened area still draws an <a href="/srd/combat/attacksOfOpportunity.htm">attack of opportunity</a>). A caster may only use one metamagic rod on any given spell, but it is permissible to combine a rod with metamagic feats possessed by the rod's wielder. In this case, only the feats possessed by the wielder adjust the spell slot of the spell being cast.
-</p>
-<p>
-	Possession of a metamagic rod does not confer the associated feat on the owner, only the ability to use the given feat a specified number of times per day. A <a href="/srd/classes/sorcererWizard.htm#sorcerer">sorcerer</a> still must take a <a href="/srd/combat/actionsInCombat.htm#fullRoundActions">full-round action</a> when using a metamagic rod, just as if using a metamagic feat he possesses.
-</p>
+    <h6 id="metamagicEmpower">Metamagic, Empower</h6>
+    <p>
+      The wielder can cast up to three spells per day that are empowered as though using the
+      <a href="/srd/feats.htm#empowerSpell">Empower Spell</a> feat.
+    </p>
+    <p>
+      Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>,
+      <a href="/srd/feats.htm#empowerSpell">Empower Spell</a>; Price 9,000 gp (lesser), 32,500 gp (normal), 73,000 gp
+      (greater).
+    </p>
 
-<h6 id="lesserandGreaterMetamagicRods">Lesser and Greater Metamagic Rods</h6>
-<p>
-	Normal metamagic rods can be used with spells of 6th level or lower. Lesser rods can be used with spells of 3rd level or lower, while greater rods can be used with spells of 9th level or lower.
-</p>
+    <h6 id="metamagicEnlarge">Metamagic, Enlarge</h6>
+    <p>
+      The wielder can cast up to three spells per day that are enlarged as though using the
+      <a href="/srd/feats.htm#enlargeSpell">Enlarge Spell</a> feat.
+    </p>
+    <p>
+      Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>,
+      <a href="/srd/feats.htm#enlargeSpell">Enlarge Spell</a>; Price 3,000 gp (lesser), 11,000 gp (normal), 24,500 gp
+      (greater).
+    </p>
 
-<h6 id="metamagicEmpower">Metamagic, Empower</h6>
-<p>
-	The wielder can cast up to three spells per day that are empowered as though using the <a href="/srd/feats.htm#empowerSpell">Empower Spell</a> feat.
-</p>
-<p>
-	Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>, <a href="/srd/feats.htm#empowerSpell">Empower Spell</a>; Price 9,000 gp (lesser), 32,500 gp (normal), 73,000 gp (greater).
-</p>
+    <h6 id="metamagicExtend">Metamagic, Extend</h6>
+    <p>
+      The wielder can cast up to three spells per day that are extended as though using the
+      <a href="/srd/feats.htm#extendSpell">Extend Spell</a> feat.
+    </p>
+    <p>
+      Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>,
+      <a href="/srd/feats.htm#extendSpell">Extend Spell</a>; Price 3,000 gp (lesser), 11,000 gp (normal), 24,500 gp
+      (greater).
+    </p>
 
-<h6 id="metamagicEnlarge">Metamagic, Enlarge</h6>
-<p>
-	The wielder can cast up to three spells per day that are enlarged as though using the <a href="/srd/feats.htm#enlargeSpell">Enlarge Spell</a> feat.
-</p>
-<p>
-	Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>, <a href="/srd/feats.htm#enlargeSpell">Enlarge Spell</a>; Price 3,000 gp (lesser), 11,000 gp (normal), 24,500 gp (greater).
-</p>
+    <h6 id="metamagicMaximize">Metamagic, Maximize</h6>
+    <p>
+      The wielder can cast up to three spells per day that are maximized as though using the
+      <a href="/srd/feats.htm#maximizeSpell">Maximize Spell</a> feat.
+    </p>
+    <p>
+      Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>,
+      <a href="/srd/feats.htm#maximizeSpell">Maximize Spell</a> feat; Price 14,000 gp (lesser), 54,000 gp (normal),
+      121,500 gp (greater).
+    </p>
 
-<h6 id="metamagicExtend">Metamagic, Extend</h6>
-<p>
-	The wielder can cast up to three spells per day that are extended as though using the <a href="/srd/feats.htm#extendSpell">Extend Spell</a> feat.
-</p>
-<p>
-	Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>, <a href="/srd/feats.htm#extendSpell">Extend Spell</a>; Price 3,000 gp (lesser), 11,000 gp (normal), 24,500 gp (greater).
-</p>
+    <h6 id="metamagicQuicken">Metamagic, Quicken</h6>
+    <p>
+      The wielder can cast up to three spells per day that are quickened as though using the
+      <a href="/srd/feats.htm#quickenSpell">Quicken Spell</a> feat.
+    </p>
+    <p>
+      Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>,
+      <a href="/srd/feats.htm#quickenSpell">Quicken Spell</a>; Price 35,000 gp (lesser), 75,500 gp (normal), 170,000 gp
+      (greater).
+    </p>
 
-<h6 id="metamagicMaximize">Metamagic, Maximize</h6>
-<p>
-	The wielder can cast up to three spells per day that are maximized as though using the <a href="/srd/feats.htm#maximizeSpell">Maximize Spell</a> feat.
-</p>
-<p>
-	Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>, <a href="/srd/feats.htm#maximizeSpell">Maximize Spell</a> feat; Price 14,000 gp (lesser), 54,000 gp (normal), 121,500 gp (greater).
-</p>
-
-<h6 id="metamagicQuicken">Metamagic, Quicken</h6>
-<p>
-	The wielder can cast up to three spells per day that are quickened as though using the <a href="/srd/feats.htm#quickenSpell">Quicken Spell</a> feat.
-</p>
-<p>
-	Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>, <a href="/srd/feats.htm#quickenSpell">Quicken Spell</a>; Price 35,000 gp (lesser), 75,500 gp (normal), 170,000 gp (greater).
-</p>
-
-<h6 id="metamagicSilent">Metamagic, Silent</h6>
-<p>
-	The wielder can cast up to three spells per day without verbal components as though using the <a href="/srd/feats.htm#silentSpell">Silent Spell</a> feat.
-</p>
-<p>
-	Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>, <a href="/srd/feats.htm#silentSpell">Silent Spell</a>; Price 3,000 gp (lesser), 11,000 gp (normal), 24,500 gp (greater).
-</p>
-</body>
+    <h6 id="metamagicSilent">Metamagic, Silent</h6>
+    <p>
+      The wielder can cast up to three spells per day without verbal components as though using the
+      <a href="/srd/feats.htm#silentSpell">Silent Spell</a> feat.
+    </p>
+    <p>
+      Strong (no school); CL 17th; <a href="/srd/feats.htm#craftRod">Craft Rod</a>,
+      <a href="/srd/feats.htm#silentSpell">Silent Spell</a>; Price 3,000 gp (lesser), 11,000 gp (normal), 24,500 gp
+      (greater).
+    </p>
+  </body>
 </html>

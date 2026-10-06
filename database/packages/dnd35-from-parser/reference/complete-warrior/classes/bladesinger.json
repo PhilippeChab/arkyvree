@@ -6,14 +6,7 @@
     "type": "class"
   },
   "overrides": {
-    "classSkills": [
-      "Balance",
-      "Concentration",
-      "Jump",
-      "Perform",
-      "Spellcraft",
-      "Tumble"
-    ],
+    "classSkills": ["Balance", "Concentration", "Jump", "Perform", "Spellcraft", "Tumble"],
     "description": "Bladesingers are elven warriors who seamlessly weave together artistry, sword technique, and arcane spellcasting into a unified fighting discipline.",
     "features": {
       "Bladesong Style": {
@@ -165,18 +158,7 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": [
-      "1st",
-      "2nd",
-      "3rd",
-      "4th",
-      "5th",
-      "6th",
-      "7th",
-      "8th",
-      "9th",
-      "10th"
-    ],
+    "classSkills": ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th"],
     "description": "Bladesingers are elves who have blended art, swordplay, and arcane magic into a harmonious whole.",
     "hitDie": "d8",
     "name": "Bladesinger",
@@ -189,12 +171,7 @@
             "type": "arcane"
           }
         ],
-        "feats": [
-          "Combat Casting",
-          "Combat Expertise",
-          "Dodge",
-          "Weapon Focus (Longsword or Rapier)"
-        ],
+        "feats": ["Combat Casting", "Combat Expertise", "Dodge", "Weapon Focus (Longsword or Rapier)"],
         "skills": [
           {
             "name": "Balance",
@@ -217,9 +194,7 @@
             "ranks": 2
           }
         ],
-        "special": [
-          "Race: Half-elf"
-        ]
+        "special": ["Race: Half-elf"]
       },
       "text": "Base Attack Bonus: +5 Race: Half-elf or Elf Skills: Balance 2 ranks, Concentration 4 ranks, Perform (Dance) 2 ranks, Perform (Sing) 2 ranks, Tumble 2 ranks Feats: Combat Casting, Combat Expertise, Dodge, Weapon Focus (Longsword or Rapier) Spells: Able to cast arcane spells of 1st level."
     },
@@ -229,9 +204,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Bladesong style"
-        ],
+        "special": ["Bladesong style"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 2
       },
@@ -240,9 +213,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Lesser spellsong"
-        ],
+        "special": ["Lesser spellsong"],
         "spellsPerDay": "?",
         "willSave": 3
       },
@@ -260,9 +231,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Song of celerity (2nd)"
-        ],
+        "special": ["Song of celerity (2nd)"],
         "spellsPerDay": "?",
         "willSave": 4
       },
@@ -280,9 +249,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Greater spellsong"
-        ],
+        "special": ["Greater spellsong"],
         "spellsPerDay": "?",
         "willSave": 5
       },
@@ -300,9 +267,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Song of celerity (4th)"
-        ],
+        "special": ["Song of celerity (4th)"],
         "spellsPerDay": "?",
         "willSave": 6
       },
@@ -320,9 +285,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Song of fury"
-        ],
+        "special": ["Song of fury"],
         "spellsPerDay": "?",
         "willSave": 7
       }

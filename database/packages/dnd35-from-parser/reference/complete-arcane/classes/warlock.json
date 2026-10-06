@@ -6,9 +6,7 @@
     "type": "class"
   },
   "overrides": {
-    "reviewed": [
-      "Invocations Known"
-    ]
+    "reviewed": ["Invocations Known"]
   },
   "raw": {
     "classFeatures": [
@@ -159,10 +157,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Eldritch blast 1d6",
-          "invocation (least)"
-        ],
+        "special": ["Eldritch blast 1d6", "invocation (least)"],
         "willSave": 2
       },
       {
@@ -173,9 +168,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Detect magic"
-        ],
+        "special": ["Detect magic"],
         "willSave": 3
       },
       {
@@ -186,10 +179,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Damage reduction 1/cold iron",
-          "eldritch blast 2d6"
-        ],
+        "special": ["Damage reduction 1/cold iron", "eldritch blast 2d6"],
         "willSave": 3
       },
       {
@@ -200,9 +190,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Deceive item"
-        ],
+        "special": ["Deceive item"],
         "willSave": 4
       },
       {
@@ -213,9 +201,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Eldritch blast 3d6"
-        ],
+        "special": ["Eldritch blast 3d6"],
         "willSave": 4
       },
       {
@@ -226,9 +212,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "New invocation (least or lesser)"
-        ],
+        "special": ["New invocation (least or lesser)"],
         "willSave": 5
       },
       {
@@ -239,10 +223,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Damage reduction 2/cold iron",
-          "eldritch blast 4d6"
-        ],
+        "special": ["Damage reduction 2/cold iron", "eldritch blast 4d6"],
         "willSave": 5
       },
       {
@@ -253,9 +234,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Fiendish relisience"
-        ],
+        "special": ["Fiendish relisience"],
         "willSave": 6
       },
       {
@@ -266,9 +245,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Eldritch blast 5d6"
-        ],
+        "special": ["Eldritch blast 5d6"],
         "willSave": 6
       },
       {
@@ -279,9 +256,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Energy resistance 5"
-        ],
+        "special": ["Energy resistance 5"],
         "willSave": 7
       },
       {
@@ -292,11 +267,7 @@
         "fortSave": 3,
         "level": 11,
         "refSave": 3,
-        "special": [
-          "Damage reduction 3/cold iron",
-          "eldritch blast 6d6",
-          "new invocation (least, lesser or greater)"
-        ],
+        "special": ["Damage reduction 3/cold iron", "eldritch blast 6d6", "new invocation (least, lesser or greater)"],
         "willSave": 7
       },
       {
@@ -307,9 +278,7 @@
         "fortSave": 4,
         "level": 12,
         "refSave": 4,
-        "special": [
-          "Imbue item"
-        ],
+        "special": ["Imbue item"],
         "willSave": 8
       },
       {
@@ -320,9 +289,7 @@
         "fortSave": 4,
         "level": 13,
         "refSave": 4,
-        "special": [
-          "Fiendish resilience 2"
-        ],
+        "special": ["Fiendish resilience 2"],
         "willSave": 8
       },
       {
@@ -333,9 +300,7 @@
         "fortSave": 4,
         "level": 14,
         "refSave": 4,
-        "special": [
-          "Eldritch blast 7d6"
-        ],
+        "special": ["Eldritch blast 7d6"],
         "willSave": 9
       },
       {
@@ -346,9 +311,7 @@
         "fortSave": 5,
         "level": 15,
         "refSave": 5,
-        "special": [
-          "Damage reduction 4/cold iron"
-        ],
+        "special": ["Damage reduction 4/cold iron"],
         "willSave": 9
       },
       {
@@ -359,9 +322,7 @@
         "fortSave": 5,
         "level": 16,
         "refSave": 5,
-        "special": [
-          "New invocation (least, lesser, greater, or dark)"
-        ],
+        "special": ["New invocation (least, lesser, greater, or dark)"],
         "willSave": 10
       },
       {
@@ -372,9 +333,7 @@
         "fortSave": 5,
         "level": 17,
         "refSave": 5,
-        "special": [
-          "Eldritch blast 8d6"
-        ],
+        "special": ["Eldritch blast 8d6"],
         "willSave": 10
       },
       {
@@ -385,9 +344,7 @@
         "fortSave": 6,
         "level": 18,
         "refSave": 6,
-        "special": [
-          "Fiendish resilience 5"
-        ],
+        "special": ["Fiendish resilience 5"],
         "willSave": 11
       },
       {
@@ -398,9 +355,7 @@
         "fortSave": 6,
         "level": 19,
         "refSave": 6,
-        "special": [
-          "Damage reduction 5/cold iron"
-        ],
+        "special": ["Damage reduction 5/cold iron"],
         "willSave": 11
       },
       {
@@ -411,10 +366,7 @@
         "fortSave": 6,
         "level": 20,
         "refSave": 6,
-        "special": [
-          "Eldritch blast 9d6",
-          "energy resistance 10"
-        ],
+        "special": ["Eldritch blast 9d6", "energy resistance 10"],
         "willSave": 12
       }
     ],

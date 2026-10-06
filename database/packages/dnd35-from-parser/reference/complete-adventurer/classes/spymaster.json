@@ -94,9 +94,7 @@
     "name": "Spymaster",
     "prerequisites": {
       "parsed": {
-        "feats": [
-          "Skill Focus (bluff)"
-        ],
+        "feats": ["Skill Focus (bluff)"],
         "skills": [
           {
             "name": "Bluff",
@@ -132,10 +130,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Cover identity",
-          "undetectable alignment"
-        ],
+        "special": ["Cover identity", "undetectable alignment"],
         "willSave": 0
       },
       {
@@ -143,10 +138,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Quick change",
-          "scrying defense"
-        ],
+        "special": ["Quick change", "scrying defense"],
         "willSave": 0
       },
       {
@@ -154,10 +146,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Magic aura",
-          "sneak attack +1d6"
-        ],
+        "special": ["Magic aura", "sneak attack +1d6"],
         "willSave": 1
       },
       {
@@ -165,10 +154,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Cover identity",
-          "slippery mind"
-        ],
+        "special": ["Cover identity", "slippery mind"],
         "willSave": 1
       },
       {
@@ -176,9 +162,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Dispel scrying"
-        ],
+        "special": ["Dispel scrying"],
         "willSave": 1
       },
       {
@@ -186,9 +170,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Sneak attack +2d6"
-        ],
+        "special": ["Sneak attack +2d6"],
         "willSave": 2
       },
       {
@@ -196,10 +178,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Cover identity",
-          "deep cover"
-        ],
+        "special": ["Cover identity", "deep cover"],
         "willSave": 2
       }
     ],

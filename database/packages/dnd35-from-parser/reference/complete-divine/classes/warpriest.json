@@ -120,9 +120,7 @@
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": [
-          "Combat Casting"
-        ],
+        "feats": ["Combat Casting"],
         "skills": [
           {
             "name": "Diplomacy",
@@ -133,9 +131,7 @@
             "ranks": 5
           }
         ],
-        "special": [
-          "Ability to turn or rebuke undead."
-        ]
+        "special": ["Ability to turn or rebuke undead."]
       },
       "text": "Base Attack Bonus: +5 Skills: Diplomacy 8 ranks, Sense Motive 5 ranks Feats: Combat Casting Spells: Able to cast at least one divine spell from one of the following domains' spell lists: Destruction, Protection, Strength, or War. A character who can cast at least one spell from a domain counts as having access for this purpose.Special: Ability to turn or rebuke undead."
     },
@@ -145,11 +141,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Bonus domain",
-          "rally",
-          "turn or rebuke undead"
-        ],
+        "special": ["Bonus domain", "rally", "turn or rebuke undead"],
         "spellsPerDay": "-",
         "willSave": 0
       },
@@ -158,9 +150,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Inflame +2"
-        ],
+        "special": ["Inflame +2"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 0
       },
@@ -169,9 +159,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Mass cure light wounds"
-        ],
+        "special": ["Mass cure light wounds"],
         "spellsPerDay": "-",
         "willSave": 1
       },
@@ -180,9 +168,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Inflame +4"
-        ],
+        "special": ["Inflame +4"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 1
       },
@@ -191,9 +177,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Fear aura"
-        ],
+        "special": ["Fear aura"],
         "spellsPerDay": "-",
         "willSave": 1
       },
@@ -202,10 +186,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Heroes' feast",
-          "inflame +6"
-        ],
+        "special": ["Heroes' feast", "inflame +6"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 2
       },
@@ -214,9 +195,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Haste"
-        ],
+        "special": ["Haste"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -234,9 +213,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Mass heal"
-        ],
+        "special": ["Mass heal"],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -245,10 +222,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Implacable foe",
-          "inflame +8"
-        ],
+        "special": ["Implacable foe", "inflame +8"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 3
       }

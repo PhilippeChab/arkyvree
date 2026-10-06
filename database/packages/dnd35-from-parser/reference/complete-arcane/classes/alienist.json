@@ -86,9 +86,7 @@
     "prerequisites": {
       "parsed": {
         "alignment": "any nonlawful",
-        "feats": [
-          "Augment Summoning"
-        ],
+        "feats": ["Augment Summoning"],
         "skills": [
           {
             "name": "Knowledge (the planes)",
@@ -108,10 +106,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Familiar abilities",
-          "summon alien"
-        ],
+        "special": ["Familiar abilities", "summon alien"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 2
       },
@@ -120,9 +115,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Alien blessing"
-        ],
+        "special": ["Alien blessing"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -131,9 +124,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Metamagic secret"
-        ],
+        "special": ["Metamagic secret"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -142,9 +133,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Mad certainty"
-        ],
+        "special": ["Mad certainty"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -153,9 +142,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Pseudonatural familiar"
-        ],
+        "special": ["Pseudonatural familiar"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -164,9 +151,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Extra summoning"
-        ],
+        "special": ["Extra summoning"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 5
       },
@@ -175,9 +160,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Metamagic secret"
-        ],
+        "special": ["Metamagic secret"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 5
       },
@@ -186,9 +169,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Insane certainty"
-        ],
+        "special": ["Insane certainty"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 6
       },
@@ -197,9 +178,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Timeless body"
-        ],
+        "special": ["Timeless body"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 6
       },
@@ -208,9 +187,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Alien transcendence"
-        ],
+        "special": ["Alien transcendence"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 7
       }

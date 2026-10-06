@@ -131,13 +131,7 @@
             "type": "arcane"
           }
         ],
-        "feats": [
-          "Proficiency with all simple",
-          "martial weapons",
-          "with all armor (heavy",
-          "medium",
-          "light)"
-        ],
+        "feats": ["Proficiency with all simple", "martial weapons", "with all armor (heavy", "medium", "light)"],
         "skills": [
           {
             "name": "Knowledge (arcana)",
@@ -157,9 +151,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Ignore spell failure 10%"
-        ],
+        "special": ["Ignore spell failure 10%"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 2
       },
@@ -168,9 +160,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Bonus feat"
-        ],
+        "special": ["Bonus feat"],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -179,9 +169,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Ignore spell failure 15%"
-        ],
+        "special": ["Ignore spell failure 15%"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -190,9 +178,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Channel spell 3/day"
-        ],
+        "special": ["Channel spell 3/day"],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -201,9 +187,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Ignore spell failure 20%"
-        ],
+        "special": ["Ignore spell failure 20%"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 4
       },
@@ -212,9 +196,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Channel spell 4/day"
-        ],
+        "special": ["Channel spell 4/day"],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -223,9 +205,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Ignore spell failure 25%"
-        ],
+        "special": ["Ignore spell failure 25%"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 5
       },
@@ -234,9 +214,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Channel spell 5/day"
-        ],
+        "special": ["Channel spell 5/day"],
         "spellsPerDay": "-",
         "willSave": 6
       },
@@ -245,9 +223,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Ignore spell failure 30%"
-        ],
+        "special": ["Ignore spell failure 30%"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 6
       },
@@ -256,9 +232,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Multiple channel spell"
-        ],
+        "special": ["Multiple channel spell"],
         "spellsPerDay": "-",
         "willSave": 7
       }

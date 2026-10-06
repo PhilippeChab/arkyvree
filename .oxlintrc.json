@@ -109,7 +109,14 @@
     // tables point their foreign keys both ways.
     "no-use-before-define": [
       "error",
-      { "functions": true, "classes": false, "variables": false, "enums": false, "typedefs": false, "ignoreTypeReferences": true }
+      {
+        "functions": true,
+        "classes": false,
+        "variables": false,
+        "enums": false,
+        "typedefs": false,
+        "ignoreTypeReferences": true
+      }
     ],
     // The names inside an import, alphabetically. The formatter orders the imports themselves.
     "sort-imports": ["error", { "ignoreCase": true, "ignoreDeclarationSort": true }],
@@ -226,11 +233,7 @@
                 "message": "Import services from the barrel index (e.g., @/server/services/campaigns/index.ts)."
               },
               {
-                "group": [
-                  "@/server/middlewares/*",
-                  "!@/server/middlewares/index",
-                  "!@/server/middlewares/index.ts"
-                ],
+                "group": ["@/server/middlewares/*", "!@/server/middlewares/index", "!@/server/middlewares/index.ts"],
                 "message": "Import middlewares from the barrel index (@/server/middlewares/index.ts)."
               }
             ]
@@ -263,20 +266,470 @@
     },
     // Page isolation: each page domain cannot import from other page domains.
     // Keep this list in sync with the folders under client/src/pages.
-    { "files": ["client/src/pages/activities/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/auth/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/campaign-invite/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/campaigns/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/character-contributor-invite/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/characters/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/dashboard/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/demo-expired/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/legal/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/notifications/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/profile/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/ruleset-contributor-invite/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/rulesets/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/settings/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/settings/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/shared/**"], "message": "Pages must not import from other page domains." } ]} ]}},
-    { "files": ["client/src/pages/shared/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaign-invite/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/character-contributor-invite/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/ruleset-contributor-invite/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." } ]} ]}}
+    {
+      "files": ["client/src/pages/activities/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/auth/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/campaign-invite/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/campaigns/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/character-contributor-invite/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/characters/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/dashboard/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/demo-expired/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/legal/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/notifications/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/profile/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/ruleset-contributor-invite/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/rulesets/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/settings/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/settings/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/shared/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["client/src/pages/shared/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/client/src/pages/activities/**",
+                  "@/client/src/pages/auth/**",
+                  "@/client/src/pages/campaign-invite/**",
+                  "@/client/src/pages/campaigns/**",
+                  "@/client/src/pages/character-contributor-invite/**",
+                  "@/client/src/pages/characters/**",
+                  "@/client/src/pages/dashboard/**",
+                  "@/client/src/pages/demo-expired/**",
+                  "@/client/src/pages/legal/**",
+                  "@/client/src/pages/notifications/**",
+                  "@/client/src/pages/profile/**",
+                  "@/client/src/pages/ruleset-contributor-invite/**",
+                  "@/client/src/pages/rulesets/**",
+                  "@/client/src/pages/settings/**"
+                ],
+                "message": "Pages must not import from other page domains."
+              }
+            ]
+          }
+        ]
+      }
+    }
   ]
 }

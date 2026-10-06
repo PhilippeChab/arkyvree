@@ -59,26 +59,15 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": [
-      "Climb",
-      "Intimidate",
-      "Jump",
-      "Swim"
-    ],
+    "classSkills": ["Climb", "Intimidate", "Jump", "Swim"],
     "description": "Hulking hurlers belong to those races of generously proportioned creatures who enjoy nothing more than wrenching boulders, trees, and even buildings free of their earthly bonds and throwing them at their foes.",
     "hitDie": "d10",
     "name": "Hulking Hurler",
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": [
-          "Point Blank Shot",
-          "Power Attack",
-          "Weapon Focus ((any thrown weapon))"
-        ],
-        "special": [
-          "Large size or larger."
-        ]
+        "feats": ["Point Blank Shot", "Power Attack", "Weapon Focus ((any thrown weapon))"],
+        "special": ["Large size or larger."]
       },
       "text": "Base Attack Bonus: +5 Feats: Point Blank Shot, Power Attack, Weapon Focus ((any thrown weapon)) Special: Large size or larger."
     },
@@ -88,10 +77,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Catch weapon",
-          "really throw anything"
-        ],
+        "special": ["Catch weapon", "really throw anything"],
         "willSave": 0
       },
       {
@@ -99,9 +85,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Two-handed hurl trick"
-        ],
+        "special": ["Two-handed hurl trick"],
         "willSave": 0
       },
       {
@@ -109,9 +93,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Two-handed hurl trick"
-        ],
+        "special": ["Two-handed hurl trick"],
         "willSave": 1
       }
     ],

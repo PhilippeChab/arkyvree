@@ -129,10 +129,7 @@
       "parsed": {
         "alignment": "Any lawful",
         "bab": 6,
-        "feats": [
-          "Skill Focus (Gather Information)",
-          "Track"
-        ],
+        "feats": ["Skill Focus (Gather Information)", "Track"],
         "skills": [
           {
             "name": "Gather Information",
@@ -156,10 +153,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Bring 'em back alive",
-          "nonlethal strike +1d6"
-        ],
+        "special": ["Bring 'em back alive", "nonlethal strike +1d6"],
         "willSave": 2
       },
       {
@@ -167,10 +161,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Improved grapple",
-          "crippling strike"
-        ],
+        "special": ["Improved grapple", "crippling strike"],
         "willSave": 3
       },
       {
@@ -178,10 +169,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Exotic Weapon Proficiency (manacles)",
-          "street savvy +2"
-        ],
+        "special": ["Exotic Weapon Proficiency (manacles)", "street savvy +2"],
         "willSave": 3
       },
       {
@@ -189,9 +177,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Nonlethal strike +2d6"
-        ],
+        "special": ["Nonlethal strike +2d6"],
         "willSave": 4
       },
       {
@@ -199,9 +185,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Hog-tie"
-        ],
+        "special": ["Hog-tie"],
         "willSave": 4
       },
       {
@@ -209,9 +193,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Street savvy +4"
-        ],
+        "special": ["Street savvy +4"],
         "willSave": 5
       },
       {
@@ -219,9 +201,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Nonlethal strike +3d6"
-        ],
+        "special": ["Nonlethal strike +3d6"],
         "willSave": 5
       },
       {
@@ -229,9 +209,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Improved hog-tie"
-        ],
+        "special": ["Improved hog-tie"],
         "willSave": 6
       },
       {
@@ -239,9 +217,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Street savvy +6"
-        ],
+        "special": ["Street savvy +6"],
         "willSave": 6
       },
       {
@@ -249,10 +225,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Intuition",
-          "nonlethal strike +4d6"
-        ],
+        "special": ["Intuition", "nonlethal strike +4d6"],
         "willSave": 7
       }
     ],

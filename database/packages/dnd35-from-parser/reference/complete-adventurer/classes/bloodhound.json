@@ -6,9 +6,7 @@
     "type": "class"
   },
   "overrides": {
-    "reviewed": [
-      "Bring 'em Back Alive"
-    ]
+    "reviewed": ["Bring 'em Back Alive"]
   },
   "raw": {
     "classFeatures": [
@@ -124,10 +122,7 @@
     "prerequisites": {
       "parsed": {
         "bab": 4,
-        "feats": [
-          "Endurance",
-          "Track"
-        ],
+        "feats": ["Endurance", "Track"],
         "skills": [
           {
             "name": "Gather Information",
@@ -151,10 +146,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Mark (1)",
-          "swift tracker"
-        ],
+        "special": ["Mark (1)", "swift tracker"],
         "willSave": 0
       },
       {
@@ -162,10 +154,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Nonlethal force",
-          "ready and waiting"
-        ],
+        "special": ["Nonlethal force", "ready and waiting"],
         "willSave": 0
       },
       {
@@ -173,10 +162,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Bring 'em back alive",
-          "tenacious pursuit (speed +10 ft.)"
-        ],
+        "special": ["Bring 'em back alive", "tenacious pursuit (speed +10 ft.)"],
         "willSave": 1
       },
       {
@@ -184,11 +170,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Hunter's dedication",
-          "mark (2)",
-          "move like the wind"
-        ],
+        "special": ["Hunter's dedication", "mark (2)", "move like the wind"],
         "willSave": 1
       },
       {
@@ -196,10 +178,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Crippling strike",
-          "track the trackless"
-        ],
+        "special": ["Crippling strike", "track the trackless"],
         "willSave": 1
       },
       {
@@ -207,11 +186,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "See invisibility",
-          "shielded mind",
-          "tenacious pursuit (speed +20ft.)"
-        ],
+        "special": ["See invisibility", "shielded mind", "tenacious pursuit (speed +20ft.)"],
         "willSave": 2
       },
       {
@@ -219,10 +194,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Locate creature",
-          "mark (3)"
-        ],
+        "special": ["Locate creature", "mark (3)"],
         "willSave": 2
       },
       {
@@ -230,9 +202,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Freedom of movement"
-        ],
+        "special": ["Freedom of movement"],
         "willSave": 2
       },
       {
@@ -240,10 +210,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Scent",
-          "tenacious pursuit (speed +30ft.)"
-        ],
+        "special": ["Scent", "tenacious pursuit (speed +30ft.)"],
         "willSave": 3
       },
       {
@@ -251,10 +218,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Find the path",
-          "mark (4)"
-        ],
+        "special": ["Find the path", "mark (4)"],
         "willSave": 3
       }
     ],

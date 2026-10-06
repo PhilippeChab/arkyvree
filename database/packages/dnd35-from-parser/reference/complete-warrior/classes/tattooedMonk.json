@@ -160,11 +160,7 @@
       "parsed": {
         "alignment": "Any lawful",
         "bab": 3,
-        "feats": [
-          "Endurance",
-          "Improved Grapple",
-          "Improved Unarmed Strike"
-        ],
+        "feats": ["Endurance", "Improved Grapple", "Improved Unarmed Strike"],
         "skills": [
           {
             "name": "Knowledge (religion)",
@@ -180,10 +176,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Monk abilities",
-          "tattoo"
-        ],
+        "special": ["Monk abilities", "tattoo"],
         "willSave": 2
       },
       {
@@ -199,9 +192,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Tattoo"
-        ],
+        "special": ["Tattoo"],
         "willSave": 3
       },
       {
@@ -217,9 +208,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Tattoo"
-        ],
+        "special": ["Tattoo"],
         "willSave": 4
       },
       {
@@ -235,9 +224,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Tattoo"
-        ],
+        "special": ["Tattoo"],
         "willSave": 5
       },
       {
@@ -253,9 +240,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Tattoo"
-        ],
+        "special": ["Tattoo"],
         "willSave": 6
       },
       {

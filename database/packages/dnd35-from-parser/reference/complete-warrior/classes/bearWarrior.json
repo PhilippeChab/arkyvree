@@ -44,26 +44,15 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": [
-      "Climb",
-      "Handle Animal",
-      "Intimidate",
-      "Ride",
-      "Survival",
-      "Swim"
-    ],
+    "classSkills": ["Climb", "Handle Animal", "Intimidate", "Ride", "Survival", "Swim"],
     "description": "Bear warriors, through a special relationship with bear spirits, literally adopt a bear's strength in the rage of battle, actually transforming into bears while they fight.",
     "hitDie": "d12",
     "name": "Bear Warrior",
     "prerequisites": {
       "parsed": {
         "bab": 7,
-        "feats": [
-          "Power Attack"
-        ],
-        "special": [
-          "Rage or frenzy ability."
-        ]
+        "feats": ["Power Attack"],
+        "special": ["Rage or frenzy ability."]
       },
       "text": "Base Attack Bonus: +7 Feats: Power Attack Special: Rage or frenzy ability."
     },
@@ -73,9 +62,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Bear form (black)"
-        ],
+        "special": ["Bear form (black)"],
         "willSave": 0
       },
       {
@@ -91,9 +78,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Scent"
-        ],
+        "special": ["Scent"],
         "willSave": 1
       },
       {
@@ -109,9 +94,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Bear form (brown)"
-        ],
+        "special": ["Bear form (brown)"],
         "willSave": 1
       },
       {
@@ -127,9 +110,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Rage +1/day"
-        ],
+        "special": ["Rage +1/day"],
         "willSave": 2
       },
       {
@@ -153,9 +134,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Bear form (dire)"
-        ],
+        "special": ["Bear form (dire)"],
         "willSave": 3
       }
     ],

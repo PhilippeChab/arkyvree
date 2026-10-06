@@ -68,26 +68,14 @@
         "type": "(Su)"
       }
     ],
-    "classSkills": [
-      "Balance",
-      "Climb",
-      "Concentration",
-      "Craft",
-      "Disguise",
-      "Escape Artist",
-      "Jump",
-      "Swim"
-    ],
+    "classSkills": ["Balance", "Climb", "Concentration", "Craft", "Disguise", "Escape Artist", "Jump", "Swim"],
     "description": "The warshaper grows and evolves her own weapons and armor to suit the threat at hand.",
     "hitDie": "d8",
     "name": "Warshaper",
     "prerequisites": {
       "parsed": {
         "bab": 4,
-        "special": [
-          "Race: Any (but see below)",
-          "Must be able to change shape in one of the following five ways:"
-        ]
+        "special": ["Race: Any (but see below)", "Must be able to change shape in one of the following five ways:"]
       },
       "text": "Base Attack Bonus: +4 Race: Any (but see below).Special: Must be able to change shape in one of the following five ways: Change shape supernatural ability (aranea, hound archon, barghest, doppelganger, rakshasa, slaad). Shapechanger subtype (lycanthropes, phasm). Polymorph as a spell-like ability (astral deva, planetar, solar, couatl, marilith, bronze dragon, gold dragon, silver dragon, efreeti, leonal guardinal, night hag, ogre mage, pixie). Able to cast the Polymorph spell. Wild shape or similar class feature (bear warrior, druid). The alternate form ability (possesed by quasits, vampires, and others) is insufficient to become a warshaper."
     },
@@ -97,10 +85,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Morphic immunities",
-          "morphic weapons"
-        ],
+        "special": ["Morphic immunities", "morphic weapons"],
         "willSave": 0
       },
       {
@@ -108,9 +93,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 1,
-        "special": [
-          "Morphic body"
-        ],
+        "special": ["Morphic body"],
         "willSave": 1
       },
       {
@@ -118,9 +101,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Morphic reach"
-        ],
+        "special": ["Morphic reach"],
         "willSave": 1
       },
       {
@@ -128,9 +109,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Morphic healing"
-        ],
+        "special": ["Morphic healing"],
         "willSave": 1
       },
       {
@@ -138,9 +117,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Flashmorph/multimorph"
-        ],
+        "special": ["Flashmorph/multimorph"],
         "willSave": 1
       }
     ],

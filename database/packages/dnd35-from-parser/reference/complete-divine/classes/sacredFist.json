@@ -94,9 +94,7 @@
         "description": "This prestige class does not grant proficiency with any weapons, armor, or shields."
       }
     },
-    "reviewed": [
-      "AC Bonus"
-    ]
+    "reviewed": ["AC Bonus"]
   },
   "raw": {
     "classFeatures": [
@@ -139,16 +137,7 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": [
-      "Balance",
-      "Concentration",
-      "Escape Artist",
-      "Heal",
-      "Jump",
-      "Profession",
-      "Spellcraft",
-      "Tumble"
-    ],
+    "classSkills": ["Balance", "Concentration", "Escape Artist", "Heal", "Jump", "Profession", "Spellcraft", "Tumble"],
     "description": "Sacred fists are independent organizations found within many temples.",
     "hitDie": "d8",
     "name": "Sacred Fist",
@@ -161,12 +150,7 @@
             "type": "divine"
           }
         ],
-        "feats": [
-          "Combat Casting",
-          "Combat Reflexes",
-          "Improved Unarmed Strike",
-          "Stunning Fist"
-        ],
+        "feats": ["Combat Casting", "Combat Reflexes", "Improved Unarmed Strike", "Stunning Fist"],
         "skills": [
           {
             "name": "Knowledge (religion)",
@@ -186,9 +170,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Unarmed damage"
-        ],
+        "special": ["Unarmed damage"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 0
       },
@@ -227,9 +209,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Sacred flames 1/day"
-        ],
+        "special": ["Sacred flames 1/day"],
         "spellsPerDay": "-",
         "willSave": 1
       },
@@ -255,9 +235,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Blindsense 10 ft."
-        ],
+        "special": ["Blindsense 10 ft."],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 2
       },
@@ -283,9 +261,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Sacred flames 2/day"
-        ],
+        "special": ["Sacred flames 2/day"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -311,9 +287,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Inner armor"
-        ],
+        "special": ["Inner armor"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 3
       }

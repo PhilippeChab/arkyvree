@@ -87,13 +87,7 @@
         "name": "Supreme Power Attack"
       }
     ],
-    "classSkills": [
-      "Climb",
-      "Intimidate",
-      "Jump",
-      "Ride",
-      "Swim"
-    ],
+    "classSkills": ["Climb", "Intimidate", "Jump", "Ride", "Swim"],
     "description": "The frenzied berserker is constantly seeking out more conflict to feed her craving for battle.",
     "hitDie": "d12",
     "name": "Frenzied Berserker",
@@ -101,12 +95,7 @@
       "parsed": {
         "alignment": "Any nonlawful",
         "bab": 6,
-        "feats": [
-          "Cleave",
-          "Destructive Rage",
-          "Intimidating Rage",
-          "Power Attack"
-        ]
+        "feats": ["Cleave", "Destructive Rage", "Intimidating Rage", "Power Attack"]
       },
       "text": "Base Attack Bonus: +6 Alignment: Any nonlawful. Feats: Cleave, Destructive Rage, Intimidating Rage, Power Attack"
     },
@@ -116,10 +105,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Frenzy 1/day",
-          "Diehard"
-        ],
+        "special": ["Frenzy 1/day", "Diehard"],
         "willSave": 0
       },
       {
@@ -127,9 +113,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Supreme cleave"
-        ],
+        "special": ["Supreme cleave"],
         "willSave": 0
       },
       {
@@ -137,9 +121,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Frenzy 2/day"
-        ],
+        "special": ["Frenzy 2/day"],
         "willSave": 1
       },
       {
@@ -147,9 +129,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Deathless frenzy"
-        ],
+        "special": ["Deathless frenzy"],
         "willSave": 1
       },
       {
@@ -157,10 +137,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Frenzy 3/day",
-          "improved power attack"
-        ],
+        "special": ["Frenzy 3/day", "improved power attack"],
         "willSave": 1
       },
       {
@@ -168,9 +145,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Inspire frenzy 1/day"
-        ],
+        "special": ["Inspire frenzy 1/day"],
         "willSave": 2
       },
       {
@@ -178,9 +153,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Frenzy 4/day"
-        ],
+        "special": ["Frenzy 4/day"],
         "willSave": 2
       },
       {
@@ -188,10 +161,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Greater frenzy",
-          "inspire frenzy 2/day"
-        ],
+        "special": ["Greater frenzy", "inspire frenzy 2/day"],
         "willSave": 2
       },
       {
@@ -199,9 +169,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Frenzy 5/day"
-        ],
+        "special": ["Frenzy 5/day"],
         "willSave": 3
       },
       {
@@ -209,11 +177,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Inspire frenzy 3/day",
-          "tireless frenzy",
-          "supreme power attack"
-        ],
+        "special": ["Inspire frenzy 3/day", "tireless frenzy", "supreme power attack"],
         "willSave": 3
       }
     ],

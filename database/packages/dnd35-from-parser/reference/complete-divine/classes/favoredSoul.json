@@ -8,15 +8,11 @@
   "overrides": {
     "aptitudePicks": [
       {
-        "levels": [
-          3
-        ],
+        "levels": [3],
         "target": "aptitudes.deitysweaponfocus.allowed"
       },
       {
-        "levels": [
-          12
-        ],
+        "levels": [12],
         "target": "aptitudes.deitysweaponspecialization.allowed"
       }
     ],
@@ -60,15 +56,10 @@
         "description": "At 17th level, a favored soul sprouts wings and gains a fly speed of 60 feet with good maneuverability. A good-aligned favored soul develops feathered wings, while an evil-aligned favored soul grows bat-like wings. A favored soul who is neither good nor evil may choose either wing type."
       }
     },
-    "reviewed": [
-      "Deity's Weapon Focus",
-      "Deity's Weapon Specialization"
-    ],
+    "reviewed": ["Deity's Weapon Focus", "Deity's Weapon Specialization"],
     "spells": {
       "inheritsFrom": {
-        "classes": [
-          "Cleric"
-        ]
+        "classes": ["Cleric"]
       }
     }
   },
@@ -150,9 +141,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Deity's weapon focus"
-        ],
+        "special": ["Deity's weapon focus"],
         "spellsPerDay": "6,5,-,-,-,-,-,-,-,-",
         "willSave": 3
       },
@@ -170,9 +159,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Energy resistance (1st type)"
-        ],
+        "special": ["Energy resistance (1st type)"],
         "spellsPerDay": "6,6,4,-,-,-,-,-,-,-",
         "willSave": 4
       },
@@ -217,9 +204,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Energy resistance (2nd type)"
-        ],
+        "special": ["Energy resistance (2nd type)"],
         "spellsPerDay": "6,6,6,6,5,3,-,-,-,-",
         "willSave": 7
       },
@@ -237,9 +222,7 @@
         "fortSave": 8,
         "level": 12,
         "refSave": 8,
-        "special": [
-          "Deity's weapon specialization"
-        ],
+        "special": ["Deity's weapon specialization"],
         "spellsPerDay": "6,6,6,6,6,5,3,-,-,-",
         "willSave": 8
       },
@@ -266,9 +249,7 @@
         "fortSave": 9,
         "level": 15,
         "refSave": 9,
-        "special": [
-          "Energy resistance (3rd type)"
-        ],
+        "special": ["Energy resistance (3rd type)"],
         "spellsPerDay": "6,6,6,6,6,6,6,4,-,-",
         "willSave": 9
       },
@@ -286,9 +267,7 @@
         "fortSave": 10,
         "level": 17,
         "refSave": 10,
-        "special": [
-          "Wings"
-        ],
+        "special": ["Wings"],
         "spellsPerDay": "6,6,6,6,6,6,6,6,4,-",
         "willSave": 10
       },
@@ -315,9 +294,7 @@
         "fortSave": 12,
         "level": 20,
         "refSave": 12,
-        "special": [
-          "Damage reduction"
-        ],
+        "special": ["Damage reduction"],
         "spellsPerDay": "6,6,6,6,6,6,6,6,6,6",
         "willSave": 12
       }

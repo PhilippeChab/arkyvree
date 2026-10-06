@@ -6,22 +6,11 @@
     "type": "class"
   },
   "overrides": {
-    "reviewed": [
-      "Absorb Spell",
-      "Discover Spells"
-    ],
+    "reviewed": ["Absorb Spell", "Discover Spells"],
     "spells": {
       "inheritsFrom": {
-        "classes": [
-          "Sorcerer"
-        ],
-        "schools": [
-          "Abjuration",
-          "Divination",
-          "Enchantment",
-          "Illusion",
-          "Transmutation"
-        ]
+        "classes": ["Sorcerer"],
+        "schools": ["Abjuration", "Divination", "Enchantment", "Illusion", "Transmutation"]
       }
     }
   },
@@ -146,11 +135,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Sneak attack +1d6",
-          "steal spell (0 or 1st)",
-          "trapfinding"
-        ],
+        "special": ["Sneak attack +1d6", "steal spell (0 or 1st)", "trapfinding"],
         "spellsPerDay": "-,-,-,-",
         "willSave": 2
       },
@@ -159,11 +144,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Detect magic",
-          "spellgrace +1",
-          "steal spell effect"
-        ],
+        "special": ["Detect magic", "spellgrace +1", "steal spell effect"],
         "spellsPerDay": "-,-,-,-",
         "willSave": 3
       },
@@ -172,9 +153,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Steal energy resistance 10"
-        ],
+        "special": ["Steal energy resistance 10"],
         "spellsPerDay": "-,-,-,-",
         "willSave": 3
       },
@@ -183,9 +162,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Steal spell (2nd)"
-        ],
+        "special": ["Steal spell (2nd)"],
         "spellsPerDay": "0,-,-,-",
         "willSave": 4
       },
@@ -194,10 +171,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Sneak attack +2d6",
-          "steal spell-like ability"
-        ],
+        "special": ["Sneak attack +2d6", "steal spell-like ability"],
         "spellsPerDay": "0,-,-,-",
         "willSave": 4
       },
@@ -206,9 +180,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Steal spell (3rd)"
-        ],
+        "special": ["Steal spell (3rd)"],
         "spellsPerDay": "1,-,-,-",
         "willSave": 5
       },
@@ -217,9 +189,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Absorb spell"
-        ],
+        "special": ["Absorb spell"],
         "spellsPerDay": "1,-,-,-",
         "willSave": 5
       },
@@ -228,9 +198,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Steal spell (4th)"
-        ],
+        "special": ["Steal spell (4th)"],
         "spellsPerDay": "1,0,-,-",
         "willSave": 6
       },
@@ -239,10 +207,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Arcane sight",
-          "sneak attack +3d6"
-        ],
+        "special": ["Arcane sight", "sneak attack +3d6"],
         "spellsPerDay": "1,0,-,-",
         "willSave": 6
       },
@@ -251,9 +216,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Steal spell (5th)"
-        ],
+        "special": ["Steal spell (5th)"],
         "spellsPerDay": "1,1,-,-",
         "willSave": 7
       },
@@ -262,10 +225,7 @@
         "fortSave": 3,
         "level": 11,
         "refSave": 3,
-        "special": [
-          "Spellgrace +2",
-          "steal energy resistance 20"
-        ],
+        "special": ["Spellgrace +2", "steal energy resistance 20"],
         "spellsPerDay": "1,1,0,-",
         "willSave": 7
       },
@@ -274,9 +234,7 @@
         "fortSave": 4,
         "level": 12,
         "refSave": 4,
-        "special": [
-          "Steal spell (6th)"
-        ],
+        "special": ["Steal spell (6th)"],
         "spellsPerDay": "1,1,1,-",
         "willSave": 8
       },
@@ -285,10 +243,7 @@
         "fortSave": 4,
         "level": 13,
         "refSave": 4,
-        "special": [
-          "Discover spells",
-          "sneak attack +4d6"
-        ],
+        "special": ["Discover spells", "sneak attack +4d6"],
         "spellsPerDay": "1,1,1,-",
         "willSave": 8
       },
@@ -297,9 +252,7 @@
         "fortSave": 4,
         "level": 14,
         "refSave": 4,
-        "special": [
-          "Steal spell (7th)"
-        ],
+        "special": ["Steal spell (7th)"],
         "spellsPerDay": "2,1,1,0",
         "willSave": 9
       },
@@ -308,9 +261,7 @@
         "fortSave": 5,
         "level": 15,
         "refSave": 5,
-        "special": [
-          "Steal spell resistance"
-        ],
+        "special": ["Steal spell resistance"],
         "spellsPerDay": "2,1,1,1",
         "willSave": 9
       },
@@ -319,9 +270,7 @@
         "fortSave": 5,
         "level": 16,
         "refSave": 5,
-        "special": [
-          "Steal spell (8th)"
-        ],
+        "special": ["Steal spell (8th)"],
         "spellsPerDay": "2,2,1,1",
         "willSave": 10
       },
@@ -330,9 +279,7 @@
         "fortSave": 5,
         "level": 17,
         "refSave": 5,
-        "special": [
-          "Sneak attack +5d6"
-        ],
+        "special": ["Sneak attack +5d6"],
         "spellsPerDay": "2,2,2,1",
         "willSave": 10
       },
@@ -341,9 +288,7 @@
         "fortSave": 6,
         "level": 18,
         "refSave": 6,
-        "special": [
-          "Steal spell (9th)"
-        ],
+        "special": ["Steal spell (9th)"],
         "spellsPerDay": "3,2,2,1",
         "willSave": 11
       },
@@ -352,9 +297,7 @@
         "fortSave": 6,
         "level": 19,
         "refSave": 6,
-        "special": [
-          "Steal energy resistance 30"
-        ],
+        "special": ["Steal energy resistance 30"],
         "spellsPerDay": "3,3,3,2",
         "willSave": 11
       },
@@ -363,10 +306,7 @@
         "fortSave": 6,
         "level": 20,
         "refSave": 6,
-        "special": [
-          "Absorb spell (immediate casting)",
-          "spellgrace +3"
-        ],
+        "special": ["Absorb spell (immediate casting)", "spellgrace +3"],
         "spellsPerDay": "3,3,3,3",
         "willSave": 12
       }

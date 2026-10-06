@@ -6,12 +6,7 @@
     "type": "class"
   },
   "overrides": {
-    "classSkills": [
-      "Concentration",
-      "Craft",
-      "Knowledge (Religion)",
-      "Spellcraft"
-    ],
+    "classSkills": ["Concentration", "Craft", "Knowledge (Religion)", "Spellcraft"],
     "description": "When an evil lycanthrope transmits the curse of lycanthropy to a victim, the afflicted individual must either seek a swift cure or gradually fall under the savage, malevolent influence of their bestial side. However, good or neutral divine spellcasters who maintain powerful bonds with their patron deities or chosen divine forces can sometimes leverage those spiritual connections to resist the descent into evil. Those who manage this feat become known as moon guardians.",
     "features": {
       "Instantaneous Change": {
@@ -64,13 +59,7 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": [
-      "Concentration",
-      "Control Shape",
-      "Craft",
-      "Knowledge (Religion)",
-      "Spellcraft"
-    ],
+    "classSkills": ["Concentration", "Control Shape", "Craft", "Knowledge (Religion)", "Spellcraft"],
     "description": "When a werewolf or other evil lycanthrope passes on the curse of lycanthropy, the victim must either find a cure quickly or succumb slowly to the ravening evil of a bestial nature. But good or neutral divine spellcasters who have strong connections to their deities or to the divine powers they choose to represent can sometimes use their divine connections to stave off the slide into evil. Those who succeed are known as moon guardians.",
     "hitDie": "d8",
     "name": "Moon Guardian",
@@ -83,9 +72,7 @@
             "type": "divine"
           }
         ],
-        "special": [
-          "an afflicted lycanthrope aware of his condition"
-        ]
+        "special": ["an afflicted lycanthrope aware of his condition"]
       },
       "text": "Alignment: Any good Spells: Ability to cast 3rd-level divine spells.Other: The candidate must be an afflicted lycanthrope aware of his condition."
     },
@@ -95,10 +82,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Natural spell",
-          "voluntary change"
-        ],
+        "special": ["Natural spell", "voluntary change"],
         "spellsPerDay": "-",
         "willSave": 0
       },
@@ -116,9 +100,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Rapid change"
-        ],
+        "special": ["Rapid change"],
         "spellsPerDay": "-",
         "willSave": 1
       },
@@ -136,9 +118,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Instantaneous change"
-        ],
+        "special": ["Instantaneous change"],
         "spellsPerDay": "-",
         "willSave": 1
       }

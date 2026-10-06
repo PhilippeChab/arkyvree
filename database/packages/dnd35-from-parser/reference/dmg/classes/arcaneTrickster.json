@@ -118,9 +118,7 @@
             "ranks": 4
           }
         ],
-        "special": [
-          "Sneak attack +2d6."
-        ]
+        "special": ["Sneak attack +2d6."]
       },
       "text": "Alignment: any nonlawful Skills: Decipher Script 7 ranks, Disable Device 7 ranks, Escape Artist 7 ranks, Knowledge (arcana) 4 ranks Spells: Ability to cast mage hand and at least one arcane spell of 3rd level or higher. Special: Sneak attack +2d6."
     },
@@ -130,9 +128,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Ranged Legerdemain 1/day"
-        ],
+        "special": ["Ranged Legerdemain 1/day"],
         "spellsPerDay": "+1 Level of Existing Class",
         "willSave": 2
       },
@@ -141,9 +137,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Sneak Attack +1d6"
-        ],
+        "special": ["Sneak Attack +1d6"],
         "spellsPerDay": "+1 Level of Existing Class",
         "willSave": 3
       },
@@ -152,9 +146,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Impromptu Sneak Attack 1/day"
-        ],
+        "special": ["Impromptu Sneak Attack 1/day"],
         "spellsPerDay": "+1 Level of Existing Class",
         "willSave": 3
       },
@@ -163,9 +155,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Sneak Attack +2d6"
-        ],
+        "special": ["Sneak Attack +2d6"],
         "spellsPerDay": "+1 Level of Existing Class",
         "willSave": 4
       },
@@ -174,9 +164,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Ranged Legerdemain 2/day"
-        ],
+        "special": ["Ranged Legerdemain 2/day"],
         "spellsPerDay": "+1 Level of Existing Class",
         "willSave": 4
       },
@@ -185,9 +173,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Sneak Attack +3d6"
-        ],
+        "special": ["Sneak Attack +3d6"],
         "spellsPerDay": "+1 Level of Existing Class",
         "willSave": 5
       },
@@ -196,9 +182,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Impromptu Sneak Attack 2/day"
-        ],
+        "special": ["Impromptu Sneak Attack 2/day"],
         "spellsPerDay": "+1 Level of Existing Class",
         "willSave": 5
       },
@@ -207,9 +191,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Sneak Attack +4d6"
-        ],
+        "special": ["Sneak Attack +4d6"],
         "spellsPerDay": "+1 Level of Existing Class",
         "willSave": 6
       },
@@ -218,9 +200,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Ranged Legerdemain 3/day"
-        ],
+        "special": ["Ranged Legerdemain 3/day"],
         "spellsPerDay": "+1 Level of Existing Class",
         "willSave": 6
       },
@@ -229,9 +209,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Sneak Attack +5d6"
-        ],
+        "special": ["Sneak Attack +5d6"],
         "spellsPerDay": "+1 Level of Existing Class",
         "willSave": 7
       }

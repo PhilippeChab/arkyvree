@@ -81,10 +81,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Enhanced capacity",
-          "improved range"
-        ],
+        "special": ["Enhanced capacity", "improved range"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 2
       },
@@ -93,9 +90,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Extra teleportation"
-        ],
+        "special": ["Extra teleportation"],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -104,9 +99,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Enhanced accuracy"
-        ],
+        "special": ["Enhanced accuracy"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       }

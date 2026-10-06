@@ -11,15 +11,15 @@ This doc categorizes every table by which primitive its services use, and what's
 
 Rows whose disappearance leaves no observable history a user would expect to find, or where the row's identity isn't durable across edits.
 
-| Category | Tables |
-|---|---|
-| Customizations | `Modifiers`, `Properties`, `Requirements` |
-| Aptitude links | `FeatsAptitudes`, `PowersAptitudes` |
-| Class structure | `KlassSkills`, `KlassLevelFeats`, `KlassLevelPowers`, `KlassLevelSaves` |
-| Character state | `CharacterLevels`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterInventory`, `CharacterLanguages`, `CharacterAbilities` |
-| Internal forking metadata | `EntitySnapshots` |
-| Ruleset entities | `Feats`, `Items`, `Races`, `Klasses`, `KlassLevels`, `Skills`, `Powers`, `Aptitudes`, `Saves`, `Languages`, `Mechanics` |
-| Status-driven lifecycle | `Contributors` (Pending/Active/Rejected/Revoked enum) |
+| Category                  | Tables                                                                                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Customizations            | `Modifiers`, `Properties`, `Requirements`                                                                                                                  |
+| Aptitude links            | `FeatsAptitudes`, `PowersAptitudes`                                                                                                                        |
+| Class structure           | `KlassSkills`, `KlassLevelFeats`, `KlassLevelPowers`, `KlassLevelSaves`                                                                                    |
+| Character state           | `CharacterLevels`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterInventory`, `CharacterLanguages`, `CharacterAbilities` |
+| Internal forking metadata | `EntitySnapshots`                                                                                                                                          |
+| Ruleset entities          | `Feats`, `Items`, `Races`, `Klasses`, `KlassLevels`, `Skills`, `Powers`, `Aptitudes`, `Saves`, `Languages`, `Mechanics`                                    |
+| Status-driven lifecycle   | `Contributors` (Pending/Active/Rejected/Revoked enum)                                                                                                      |
 
 `Abilities` is hard-coded in the schema and never deleted.
 
@@ -49,14 +49,14 @@ Three groups where archive vs hard-delete makes a real, observable difference.
 Archiving preserves content for later restoration.
 
 - `Characters` and `Campaigns` have a hard-delete path on **archived rows**:
-  - `DELETE /api/characters/:id/permanent` — owner only, must be archived, must not be linked to a campaign that is itself active (an archived campaign no longer "uses" the character). Its bonded children go through FK CASCADE, and the database deletes every deleted character's attachments and modifiers (see *Polymorphic rows* below).
+  - `DELETE /api/characters/:id/permanent` — owner only, must be archived, must not be linked to a campaign that is itself active (an archived campaign no longer "uses" the character). Its bonded children go through FK CASCADE, and the database deletes every deleted character's attachments and modifiers (see _Polymorphic rows_ below).
   - `DELETE /api/campaigns/:id/permanent` — GM only, must be archived. Every FK to `campaigns.id` is `ON DELETE CASCADE`, so the row delete wipes membership rows (`players`, `invites`, `player_characters`) **and** every campaign-scoped ruleset entity (`aptitudes`, `abilities`, `feats`, `items`, `klasses` → `klass_levels` → level-feats/powers/saves, `languages`, `mechanics`, `powers`, `races`, `saves`, `skills`) in one shot.
   - Both endpoints enforce ownership and archive-state checks through `CharactersPolicy.canHardDelete` / `CampaignsPolicy.canHardDelete`.
 - `Rulesets` has no hard-delete path. Archive is the only terminal state.
 
 ### FK CASCADE avoidance
 
-`Users` (real accounts only — demo accounts hard-delete; see *Special cases* below).
+`Users` (real accounts only — demo accounts hard-delete; see _Special cases_ below).
 
 Hard-deleting a user row would FK CASCADE through everything they own or created — characters in someone else's campaign, campaigns they GM'd that other users have characters linked to, rulesets others have forked, etc. — and silently wipe content other users still depend on. Archive leaves the user row physically present so dependent FKs stay resolvable.
 
@@ -64,14 +64,14 @@ There is no un-delete UI for accounts. The archive isn't about reversibility; it
 
 ### Hybrid: archive-on-consume, hard-delete-on-TTL-sweep
 
-| Tables | Archive when | Hard-delete when |
-|---|---|---|
-| `Sessions` | user signs out / account deleted | `runCleanup.ts` reaps expired |
-| `EmailVerifications` | code consumed / account email changed | `runCleanup.ts` reaps expired |
-| `PasswordResets` | code consumed / account deleted | `runCleanup.ts` reaps expired |
-| `Activities` | (none: no `archive`) | `runCleanup.ts` retention sweep only: they're history, kept when their target is deleted (see *Polymorphic rows*) |
-| `Notifications` | (none: no `archive`, use `markRead`) | `runCleanup.ts` retention sweep |
-| `Blobs`, `Attachments`, `Exports` | (none: no `archive`) | linked S3 object reaped / export expired |
+| Tables                            | Archive when                          | Hard-delete when                                                                                                  |
+| --------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `Sessions`                        | user signs out / account deleted      | `runCleanup.ts` reaps expired                                                                                     |
+| `EmailVerifications`              | code consumed / account email changed | `runCleanup.ts` reaps expired                                                                                     |
+| `PasswordResets`                  | code consumed / account deleted       | `runCleanup.ts` reaps expired                                                                                     |
+| `Activities`                      | (none: no `archive`)                  | `runCleanup.ts` retention sweep only: they're history, kept when their target is deleted (see _Polymorphic rows_) |
+| `Notifications`                   | (none: no `archive`, use `markRead`)  | `runCleanup.ts` retention sweep                                                                                   |
+| `Blobs`, `Attachments`, `Exports` | (none: no `archive`)                  | linked S3 object reaped / export expired                                                                          |
 
 Archive while the row is still referenced by user-visible state (a session in flight, a verification email someone might click); hard-delete once the row is just data debris.
 
@@ -79,11 +79,11 @@ Archive while the row is still referenced by user-visible state (a session in fl
 
 These tables archive specifically because re-creating the same row should restore the prior state, not start fresh.
 
-| Table | Why archive | Restore mechanism |
-|---|---|---|
-| `StarredRulesets` | Star → unstar → re-star should preserve any per-row metadata | `upsert` (un-archives the existing row) |
-| `RulesetExtensions` | Subscribe → unsubscribe → re-subscribe should be idempotent on the metadata row | `upsert` clears `deletedAt` on conflict |
-| `OauthAccounts` | Mirrors the `Users`-archive pattern: account-deletion archives the user, dependent rows tag along | `archive({ userId })` paired with the `Users.archive` flow |
+| Table               | Why archive                                                                                       | Restore mechanism                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `StarredRulesets`   | Star → unstar → re-star should preserve any per-row metadata                                      | `upsert` (un-archives the existing row)                    |
+| `RulesetExtensions` | Subscribe → unsubscribe → re-subscribe should be idempotent on the metadata row                   | `upsert` clears `deletedAt` on conflict                    |
+| `OauthAccounts`     | Mirrors the `Users`-archive pattern: account-deletion archives the user, dependent rows tag along | `archive({ userId })` paired with the `Users.archive` flow |
 
 These are intentionally archived. Don't flip them — the restore-by-recreate behavior is load-bearing.
 
@@ -110,7 +110,7 @@ Both primitives, picked by entry point:
 
 ### Demo `Users`
 
-Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo data is by design ephemeral and only owned by the demo user, so the FK CASCADE on hard-delete is exactly what's wanted to clean everything up at expiry. The database deletes the attachments of the account and its characters, and the customizations of its rulesets and characters (see *Polymorphic rows* above).
+Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo data is by design ephemeral and only owned by the demo user, so the FK CASCADE on hard-delete is exactly what's wanted to clean everything up at expiry. The database deletes the attachments of the account and its characters, and the customizations of its rulesets and characters (see _Polymorphic rows_ above).
 
 ### Ruleset entity / class cascade (`deleteEntityWithCascade`)
 
@@ -119,7 +119,7 @@ Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo d
 - Hard-deletes the entity's junction rows (aptitude links, class-structure rows referencing it).
 - Hard-deletes the entity itself, plus `klass_levels` for klasses (FK CASCADE on `klass_levels.klass_id` would also handle this).
 
-The database deletes the customizations of every row it deletes (see *Polymorphic rows* above).
+The database deletes the customizations of every row it deletes (see _Polymorphic rows_ above).
 
 For items, the `source_item_id` FK is `RESTRICT` — `revertOverride` repoints copies to the original parent template before invoking the cascade.
 

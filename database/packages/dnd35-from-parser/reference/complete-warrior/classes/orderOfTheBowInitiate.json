@@ -59,14 +59,7 @@
         "type": "(Su)"
       }
     ],
-    "classSkills": [
-      "Climb",
-      "Craft",
-      "Knowledge (Religion)",
-      "Ride",
-      "Spot",
-      "Swim"
-    ],
+    "classSkills": ["Climb", "Craft", "Knowledge (Religion)", "Ride", "Spot", "Swim"],
     "description": "By learning the meditative art of the Way of the Bow, the archer improves his discipline, precision, and spirituality.",
     "hitDie": "d8",
     "name": "Order of the Bow Initiate",
@@ -100,9 +93,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Ranged precision +1d8"
-        ],
+        "special": ["Ranged precision +1d8"],
         "willSave": 2
       },
       {
@@ -110,9 +101,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Close combat shot"
-        ],
+        "special": ["Close combat shot"],
         "willSave": 3
       },
       {
@@ -120,9 +109,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Ranged precision +2d8"
-        ],
+        "special": ["Ranged precision +2d8"],
         "willSave": 3
       },
       {
@@ -130,9 +117,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Greater Weapon Focus"
-        ],
+        "special": ["Greater Weapon Focus"],
         "willSave": 4
       },
       {
@@ -140,9 +125,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Ranged precision +3d8"
-        ],
+        "special": ["Ranged precision +3d8"],
         "willSave": 4
       },
       {
@@ -150,9 +133,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Sharp-Shooting"
-        ],
+        "special": ["Sharp-Shooting"],
         "willSave": 5
       },
       {
@@ -160,9 +141,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Ranged precision +4d8"
-        ],
+        "special": ["Ranged precision +4d8"],
         "willSave": 5
       },
       {
@@ -178,9 +157,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Ranged precision +5d8"
-        ],
+        "special": ["Ranged precision +5d8"],
         "willSave": 6
       },
       {
@@ -188,9 +165,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Extended precision"
-        ],
+        "special": ["Extended precision"],
         "willSave": 7
       }
     ],

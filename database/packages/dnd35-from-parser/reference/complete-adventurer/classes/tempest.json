@@ -6,15 +6,7 @@
     "type": "class"
   },
   "overrides": {
-    "classSkills": [
-      "Balance",
-      "Climb",
-      "Craft",
-      "Intimidate",
-      "Jump",
-      "Swim",
-      "Tumble"
-    ]
+    "classSkills": ["Balance", "Climb", "Craft", "Intimidate", "Jump", "Swim", "Tumble"]
   },
   "raw": {
     "classFeatures": [
@@ -43,26 +35,14 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": [
-      "1st",
-      "2nd",
-      "3rd",
-      "4th",
-      "5th"
-    ],
+    "classSkills": ["1st", "2nd", "3rd", "4th", "5th"],
     "description": "A tempest is the point of calm within a whirling barrier of deadly blades.",
     "hitDie": "d10",
     "name": "Tempest",
     "prerequisites": {
       "parsed": {
         "bab": 6,
-        "feats": [
-          "Dodge",
-          "Two-Weapon Fighting",
-          "Improved Two-Weapon Fighting",
-          "Mobility",
-          "Spring Attack"
-        ]
+        "feats": ["Dodge", "Two-Weapon Fighting", "Improved Two-Weapon Fighting", "Mobility", "Spring Attack"]
       },
       "text": "Base Attack Bonus: +6 Feats: Dodge, Two-Weapon Fighting, Improved Two-Weapon Fighting, Mobility, Spring Attack"
     },
@@ -72,9 +52,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Tempest defense +1"
-        ],
+        "special": ["Tempest defense +1"],
         "willSave": 0
       },
       {
@@ -82,9 +60,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Ambidexterity (?3/?1)"
-        ],
+        "special": ["Ambidexterity (?3/?1)"],
         "willSave": 0
       },
       {
@@ -92,10 +68,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Tempest defense +2",
-          "two-weapon versatility"
-        ],
+        "special": ["Tempest defense +2", "two-weapon versatility"],
         "willSave": 1
       },
       {
@@ -103,9 +76,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Ambidexterity (?2/+0)"
-        ],
+        "special": ["Ambidexterity (?2/+0)"],
         "willSave": 1
       },
       {
@@ -113,10 +84,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Tempest defense +3",
-          "two-weapon spring attack"
-        ],
+        "special": ["Tempest defense +3", "two-weapon spring attack"],
         "willSave": 1
       }
     ],

@@ -65,10 +65,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Bonus trick",
-          "spontaneous trickster"
-        ],
+        "special": ["Bonus trick", "spontaneous trickster"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -77,9 +74,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Bonus metamagic feat"
-        ],
+        "special": ["Bonus metamagic feat"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -88,11 +83,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Bonus trick",
-          "metamagic trick",
-          "tricky magic"
-        ],
+        "special": ["Bonus trick", "metamagic trick", "tricky magic"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       }

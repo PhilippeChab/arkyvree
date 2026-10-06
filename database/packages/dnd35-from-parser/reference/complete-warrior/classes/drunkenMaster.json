@@ -150,11 +150,7 @@
     "name": "Drunken Master",
     "prerequisites": {
       "parsed": {
-        "feats": [
-          "Dodge",
-          "Great Fortitude",
-          "Improved Unarmed Strike (or monk's unarmed strike ability)"
-        ],
+        "feats": ["Dodge", "Great Fortitude", "Improved Unarmed Strike (or monk's unarmed strike ability)"],
         "skills": [
           {
             "name": "Tumble",
@@ -174,10 +170,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Drink like a demon",
-          "improvised weapons"
-        ],
+        "special": ["Drink like a demon", "improvised weapons"],
         "willSave": 0
       },
       {
@@ -185,9 +178,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Stagger"
-        ],
+        "special": ["Stagger"],
         "willSave": 0
       },
       {
@@ -195,9 +186,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Swaying waist"
-        ],
+        "special": ["Swaying waist"],
         "willSave": 1
       },
       {
@@ -205,10 +194,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "AC bonus +1",
-          "improved improvised weapons"
-        ],
+        "special": ["AC bonus +1", "improved improvised weapons"],
         "willSave": 1
       },
       {
@@ -216,9 +202,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "greater improvised weapons"
-        ],
+        "special": ["greater improvised weapons"],
         "willSave": 1
       },
       {
@@ -226,9 +210,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Improved Feint"
-        ],
+        "special": ["Improved Feint"],
         "willSave": 2
       },
       {
@@ -236,9 +218,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Improved Grapple"
-        ],
+        "special": ["Improved Grapple"],
         "willSave": 2
       },
       {
@@ -246,9 +226,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "For medicinal purposes"
-        ],
+        "special": ["For medicinal purposes"],
         "willSave": 2
       },
       {
@@ -256,11 +234,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "AC bonus +2",
-          "corkscrew rush",
-          "superior improvised weapons"
-        ],
+        "special": ["AC bonus +2", "corkscrew rush", "superior improvised weapons"],
         "willSave": 3
       },
       {
@@ -268,9 +242,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Breath of flame"
-        ],
+        "special": ["Breath of flame"],
         "willSave": 3
       }
     ],

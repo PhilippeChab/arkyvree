@@ -135,9 +135,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Deforestation"
-        ],
+        "special": ["Deforestation"],
         "spellsPerDay": "4,2,-,-,-,-,-,-,-,-",
         "willSave": 2
       },
@@ -146,10 +144,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Blightfire",
-          "sustenance"
-        ],
+        "special": ["Blightfire", "sustenance"],
         "spellsPerDay": "5,3,0,-,-,-,-,-,-,-",
         "willSave": 3
       },
@@ -158,9 +153,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Undead wild shape 1/day"
-        ],
+        "special": ["Undead wild shape 1/day"],
         "spellsPerDay": "5,3,1,0,-,-,-,-,-,-",
         "willSave": 3
       },
@@ -169,10 +162,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Speak with dead animal",
-          "undead wild shape 2/day"
-        ],
+        "special": ["Speak with dead animal", "undead wild shape 2/day"],
         "spellsPerDay": "6,3,2,1,0,-,-,-,-,-",
         "willSave": 4
       },
@@ -181,10 +171,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Contagious touch 1/day",
-          "undead wild shape (Large)"
-        ],
+        "special": ["Contagious touch 1/day", "undead wild shape (Large)"],
         "spellsPerDay": "6,3,3,2,1,0,-,-,-,-",
         "willSave": 4
       },
@@ -193,10 +180,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Animate dead animal",
-          "undead wild shape 3/day"
-        ],
+        "special": ["Animate dead animal", "undead wild shape 3/day"],
         "spellsPerDay": "6,3,3,3,2,1,0,-,-,-",
         "willSave": 5
       },
@@ -205,9 +189,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Contagious touch 2/day"
-        ],
+        "special": ["Contagious touch 2/day"],
         "spellsPerDay": "6,4,3,3,3,2,1,0,-,-",
         "willSave": 5
       },
@@ -216,10 +198,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Unbond",
-          "undead wild shape 4/day"
-        ],
+        "special": ["Unbond", "undead wild shape 4/day"],
         "spellsPerDay": "6,4,4,3,3,3,2,1,0,-",
         "willSave": 6
       },
@@ -228,10 +207,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Contagious touch 3/day",
-          "undead wild shape (Huge)"
-        ],
+        "special": ["Contagious touch 3/day", "undead wild shape (Huge)"],
         "spellsPerDay": "6,5,4,4,4,4,3,2,1,0",
         "willSave": 6
       },
@@ -240,10 +216,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Plague",
-          "undead wild shape 5/day"
-        ],
+        "special": ["Plague", "undead wild shape 5/day"],
         "spellsPerDay": "6,5,5,4,4,4,4,3,2,1",
         "willSave": 7
       }

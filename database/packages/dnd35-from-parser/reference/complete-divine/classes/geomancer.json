@@ -163,10 +163,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Drift 1",
-          "spell versatility 0"
-        ],
+        "special": ["Drift 1", "spell versatility 0"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 2
       },
@@ -175,11 +172,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Drift 1",
-          "ley lines +1",
-          "spell versatility 1"
-        ],
+        "special": ["Drift 1", "ley lines +1", "spell versatility 1"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -188,10 +181,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Drift 2",
-          "spell versatility 2"
-        ],
+        "special": ["Drift 2", "spell versatility 2"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -200,10 +190,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Drift 2",
-          "spell versatility 3"
-        ],
+        "special": ["Drift 2", "spell versatility 3"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -212,10 +199,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Drift 3",
-          "spell versatility 4"
-        ],
+        "special": ["Drift 3", "spell versatility 4"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -224,11 +208,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Drift 3",
-          "ley lines +2",
-          "spell versatility 5"
-        ],
+        "special": ["Drift 3", "ley lines +2", "spell versatility 5"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 5
       },
@@ -237,10 +217,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Drift 4",
-          "spell versatility 6"
-        ],
+        "special": ["Drift 4", "spell versatility 6"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 5
       },
@@ -249,10 +226,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Drift 4",
-          "spell versatility 7"
-        ],
+        "special": ["Drift 4", "spell versatility 7"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 6
       },
@@ -261,10 +235,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Drift 5",
-          "spell versatility 8"
-        ],
+        "special": ["Drift 5", "spell versatility 8"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 6
       },
@@ -273,11 +244,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Drift 5",
-          "ley lines +3",
-          "spell versatility 9"
-        ],
+        "special": ["Drift 5", "ley lines +3", "spell versatility 9"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 7
       }

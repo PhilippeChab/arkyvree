@@ -71,10 +71,7 @@
             "ranks": 4
           }
         ],
-        "special": [
-          "Must have been tragically wronged in some manner.",
-          "been tragically wronged in some manner"
-        ]
+        "special": ["Must have been tragically wronged in some manner.", "been tragically wronged in some manner"]
       },
       "text": "Base Attack Bonus: +5 Alignment: Any nongood Skills: Hide 4 ranks, Intimidate 6 ranks, Move Silently 4 ranks Special: Must have been tragically wronged in some manner."
     },
@@ -84,10 +81,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Bloody blade",
-          "sudden strike +1d6"
-        ],
+        "special": ["Bloody blade", "sudden strike +1d6"],
         "willSave": 2
       },
       {
@@ -95,9 +89,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Rapid intimidation"
-        ],
+        "special": ["Rapid intimidation"],
         "willSave": 3
       },
       {
@@ -105,9 +97,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Sudden strike +2d6"
-        ],
+        "special": ["Sudden strike +2d6"],
         "willSave": 3
       },
       {
@@ -115,9 +105,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Dread blade"
-        ],
+        "special": ["Dread blade"],
         "willSave": 4
       },
       {
@@ -125,10 +113,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Bloody murder",
-          "sudden strike +3d6"
-        ],
+        "special": ["Bloody murder", "sudden strike +3d6"],
         "willSave": 4
       }
     ],

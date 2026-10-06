@@ -68,27 +68,14 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": [
-      "Climb",
-      "Craft",
-      "Escape Artist",
-      "Intimidate",
-      "Jump",
-      "Perform",
-      "Profession",
-      "Swim",
-      "Tumble"
-    ],
+    "classSkills": ["Climb", "Craft", "Escape Artist", "Intimidate", "Jump", "Perform", "Profession", "Swim", "Tumble"],
     "description": "Reaping maulers are the back-breakers, the limb-twisters, and the neck-snappers among pit fighters.",
     "hitDie": "d10",
     "name": "Reaping Mauler",
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": [
-          "Clever Wrestling",
-          "Improved Unarmed Strike"
-        ],
+        "feats": ["Clever Wrestling", "Improved Unarmed Strike"],
         "skills": [
           {
             "name": "Escape Artist",
@@ -112,10 +99,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Improved Grapple",
-          "Mobility"
-        ],
+        "special": ["Improved Grapple", "Mobility"],
         "willSave": 0
       },
       {
@@ -123,9 +107,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Adept wrestling +1"
-        ],
+        "special": ["Adept wrestling +1"],
         "willSave": 0
       },
       {
@@ -133,10 +115,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Counter grapple",
-          "sleeper lock"
-        ],
+        "special": ["Counter grapple", "sleeper lock"],
         "willSave": 1
       },
       {
@@ -144,9 +123,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Adept wrestling +2"
-        ],
+        "special": ["Adept wrestling +2"],
         "willSave": 1
       },
       {
@@ -154,9 +131,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Devastating grapple"
-        ],
+        "special": ["Devastating grapple"],
         "willSave": 1
       }
     ],

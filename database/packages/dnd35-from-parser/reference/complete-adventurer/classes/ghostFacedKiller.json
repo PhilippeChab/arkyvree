@@ -63,10 +63,7 @@
       "parsed": {
         "alignment": "Any evil",
         "bab": 5,
-        "feats": [
-          "Improved Initiative",
-          "Power Attack"
-        ],
+        "feats": ["Improved Initiative", "Power Attack"],
         "skills": [
           {
             "name": "Hide",
@@ -94,9 +91,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Ghost step 1/day"
-        ],
+        "special": ["Ghost step 1/day"],
         "willSave": 0
       },
       {
@@ -104,9 +99,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Sudden strike +1d6"
-        ],
+        "special": ["Sudden strike +1d6"],
         "willSave": 0
       },
       {
@@ -114,9 +107,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Frightful attack 1/day"
-        ],
+        "special": ["Frightful attack 1/day"],
         "willSave": 1
       },
       {
@@ -124,9 +115,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Ghost step 2/day"
-        ],
+        "special": ["Ghost step 2/day"],
         "willSave": 1
       },
       {
@@ -134,9 +123,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Sudden strike +2d6"
-        ],
+        "special": ["Sudden strike +2d6"],
         "willSave": 1
       },
       {
@@ -144,10 +131,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Frightful attack 2/day",
-          "ghost step (ethereal)"
-        ],
+        "special": ["Frightful attack 2/day", "ghost step (ethereal)"],
         "willSave": 2
       },
       {
@@ -155,10 +139,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Ghost sight",
-          "ghost step 3/day"
-        ],
+        "special": ["Ghost sight", "ghost step 3/day"],
         "willSave": 2
       },
       {
@@ -166,9 +147,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Sudden strike +3d6"
-        ],
+        "special": ["Sudden strike +3d6"],
         "willSave": 2
       },
       {
@@ -176,9 +155,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Frightful attack 3/day"
-        ],
+        "special": ["Frightful attack 3/day"],
         "willSave": 3
       },
       {
@@ -186,10 +163,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Frightful cleave",
-          "ghost step 4/day"
-        ],
+        "special": ["Frightful cleave", "ghost step 4/day"],
         "willSave": 3
       }
     ],

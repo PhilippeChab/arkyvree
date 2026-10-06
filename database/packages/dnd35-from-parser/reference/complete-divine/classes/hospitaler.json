@@ -73,10 +73,7 @@
             "type": "divine"
           }
         ],
-        "feats": [
-          "Mounted Combat",
-          "Ride-By Attack"
-        ],
+        "feats": ["Mounted Combat", "Ride-By Attack"],
         "skills": [
           {
             "name": "Handle Animal",
@@ -96,10 +93,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Bonus feat",
-          "lay on hands"
-        ],
+        "special": ["Bonus feat", "lay on hands"],
         "spellsPerDay": "-",
         "willSave": 0
       },
@@ -117,9 +111,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Remove disease 1/week"
-        ],
+        "special": ["Remove disease 1/week"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 1
       },
@@ -137,9 +129,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Bonus feat"
-        ],
+        "special": ["Bonus feat"],
         "spellsPerDay": "-",
         "willSave": 1
       },
@@ -157,9 +147,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Remove disease 2/week"
-        ],
+        "special": ["Remove disease 2/week"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 2
       },
@@ -177,9 +165,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Bonus feat"
-        ],
+        "special": ["Bonus feat"],
         "spellsPerDay": "-",
         "willSave": 3
       },

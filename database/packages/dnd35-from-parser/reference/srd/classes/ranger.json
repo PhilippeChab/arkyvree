@@ -55,26 +55,10 @@
       }
     },
     "freeFeats": [
-      [
-        5,
-        "Favored Enemy Specialization (Ranger)",
-        "Ranger Class Feature"
-      ],
-      [
-        10,
-        "Favored Enemy Specialization (Ranger)",
-        "Ranger Class Feature"
-      ],
-      [
-        15,
-        "Favored Enemy Specialization (Ranger)",
-        "Ranger Class Feature"
-      ],
-      [
-        20,
-        "Favored Enemy Specialization (Ranger)",
-        "Ranger Class Feature"
-      ]
+      [5, "Favored Enemy Specialization (Ranger)", "Ranger Class Feature"],
+      [10, "Favored Enemy Specialization (Ranger)", "Ranger Class Feature"],
+      [15, "Favored Enemy Specialization (Ranger)", "Ranger Class Feature"],
+      [20, "Favored Enemy Specialization (Ranger)", "Ranger Class Feature"]
     ]
   },
   "raw": {
@@ -186,11 +170,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "1st favored enemy",
-          "Track",
-          "wild empathy"
-        ],
+        "special": ["1st favored enemy", "Track", "wild empathy"],
         "spellsPerDay": "-,-,-,-",
         "willSave": 0
       },
@@ -199,9 +179,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Combat style"
-        ],
+        "special": ["Combat style"],
         "spellsPerDay": "-,-,-,-",
         "willSave": 0
       },
@@ -210,9 +188,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Endurance"
-        ],
+        "special": ["Endurance"],
         "spellsPerDay": "-,-,-,-",
         "willSave": 1
       },
@@ -221,9 +197,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Animal companion"
-        ],
+        "special": ["Animal companion"],
         "spellsPerDay": "0,-,-,-",
         "willSave": 1
       },
@@ -232,9 +206,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "2nd favored enemy"
-        ],
+        "special": ["2nd favored enemy"],
         "spellsPerDay": "0,-,-,-",
         "willSave": 1
       },
@@ -243,9 +215,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Improved combat style"
-        ],
+        "special": ["Improved combat style"],
         "spellsPerDay": "1,-,-,-",
         "willSave": 2
       },
@@ -254,9 +224,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Woodland stride"
-        ],
+        "special": ["Woodland stride"],
         "spellsPerDay": "1,-,-,-",
         "willSave": 2
       },
@@ -265,9 +233,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Swift tracker"
-        ],
+        "special": ["Swift tracker"],
         "spellsPerDay": "1,0,-,-",
         "willSave": 2
       },
@@ -276,9 +242,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Evasion"
-        ],
+        "special": ["Evasion"],
         "spellsPerDay": "1,0,-,-",
         "willSave": 3
       },
@@ -287,9 +251,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "3rd favored enemy"
-        ],
+        "special": ["3rd favored enemy"],
         "spellsPerDay": "1,1,-,-",
         "willSave": 3
       },
@@ -298,9 +260,7 @@
         "fortSave": 7,
         "level": 11,
         "refSave": 7,
-        "special": [
-          "Combat style mastery"
-        ],
+        "special": ["Combat style mastery"],
         "spellsPerDay": "1,1,0,-",
         "willSave": 3
       },
@@ -318,9 +278,7 @@
         "fortSave": 8,
         "level": 13,
         "refSave": 8,
-        "special": [
-          "Camouflage"
-        ],
+        "special": ["Camouflage"],
         "spellsPerDay": "1,1,1,-",
         "willSave": 4
       },
@@ -338,9 +296,7 @@
         "fortSave": 9,
         "level": 15,
         "refSave": 9,
-        "special": [
-          "4th favored enemy"
-        ],
+        "special": ["4th favored enemy"],
         "spellsPerDay": "2,1,1,1",
         "willSave": 5
       },
@@ -358,9 +314,7 @@
         "fortSave": 10,
         "level": 17,
         "refSave": 10,
-        "special": [
-          "Hide in plain sight"
-        ],
+        "special": ["Hide in plain sight"],
         "spellsPerDay": "2,2,2,1",
         "willSave": 5
       },
@@ -387,9 +341,7 @@
         "fortSave": 12,
         "level": 20,
         "refSave": 12,
-        "special": [
-          "5th favored enemy"
-        ],
+        "special": ["5th favored enemy"],
         "spellsPerDay": "3,3,3,3",
         "willSave": 6
       }

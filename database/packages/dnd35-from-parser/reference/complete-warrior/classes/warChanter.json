@@ -97,10 +97,7 @@
       "parsed": {
         "alignment": "Any nonlawful",
         "bab": 4,
-        "feats": [
-          "Combat Expertise",
-          "Weapon Focus"
-        ],
+        "feats": ["Combat Expertise", "Weapon Focus"],
         "skills": [
           {
             "name": "Perform (sing)",
@@ -111,9 +108,7 @@
             "ranks": 6
           }
         ],
-        "special": [
-          "Able to use the inspire courage bardic music ability."
-        ]
+        "special": ["Able to use the inspire courage bardic music ability."]
       },
       "text": "Base Attack Bonus: +4 Alignment: Any nonlawful Skills: Perform (sing) 6 ranks or Perform (oratory) 6 ranks Feats: Combat Expertise, Weapon Focus Special: Able to use the inspire courage bardic music ability."
     },
@@ -123,10 +118,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Inspire toughness",
-          "war chanter music"
-        ],
+        "special": ["Inspire toughness", "war chanter music"],
         "willSave": 0
       },
       {
@@ -142,9 +134,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Inspire recklessness"
-        ],
+        "special": ["Inspire recklessness"],
         "willSave": 1
       },
       {
@@ -160,9 +150,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Combine songs"
-        ],
+        "special": ["Combine songs"],
         "willSave": 1
       },
       {
@@ -178,9 +166,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Inspire awe"
-        ],
+        "special": ["Inspire awe"],
         "willSave": 2
       },
       {
@@ -188,9 +174,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Singing shout"
-        ],
+        "special": ["Singing shout"],
         "willSave": 2
       },
       {
@@ -206,9 +190,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Inspire legion"
-        ],
+        "special": ["Inspire legion"],
         "willSave": 3
       }
     ],

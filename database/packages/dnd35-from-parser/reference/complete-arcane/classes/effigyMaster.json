@@ -104,9 +104,7 @@
     "name": "Effigy Master",
     "prerequisites": {
       "parsed": {
-        "feats": [
-          "Craft Wondrous Item"
-        ],
+        "feats": ["Craft Wondrous Item"],
         "skills": [
           {
             "name": "Craft (leather, metal, or woodworking)",
@@ -138,9 +136,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Craft effigy"
-        ],
+        "special": ["Craft effigy"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -158,9 +154,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Improved effigy"
-        ],
+        "special": ["Improved effigy"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -178,9 +172,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Effigy link"
-        ],
+        "special": ["Effigy link"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       }

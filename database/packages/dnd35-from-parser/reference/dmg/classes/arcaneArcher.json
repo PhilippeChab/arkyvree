@@ -68,16 +68,7 @@
         "type": "(Sp)"
       }
     ],
-    "classSkills": [
-      "Craft",
-      "Hide",
-      "Listen",
-      "Move Silently",
-      "Ride",
-      "Spot",
-      "Survival",
-      "Use Rope"
-    ],
+    "classSkills": ["Craft", "Hide", "Listen", "Move Silently", "Ride", "Spot", "Survival", "Use Rope"],
     "description": "The arcane archer is a warrior skilled in using magic to supplement her combat prowess.",
     "hitDie": "d8",
     "name": "Arcane Archer",
@@ -90,14 +81,8 @@
             "type": "arcane"
           }
         ],
-        "feats": [
-          "Point Blank Shot",
-          "Precise Shot",
-          "Weapon Focus (longbow or shortbow)"
-        ],
-        "special": [
-          "Race: Elf"
-        ]
+        "feats": ["Point Blank Shot", "Precise Shot", "Weapon Focus (longbow or shortbow)"],
+        "special": ["Race: Elf"]
       },
       "text": "Base Attack Bonus: +6 Race: Elf (or) or Half-elf Feats: Point Blank Shot, Precise Shot, Weapon Focus (longbow or shortbow) Spells: Ability to cast 1st level arcane spells."
     },
@@ -107,9 +92,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Enhance Arrow +1"
-        ],
+        "special": ["Enhance Arrow +1"],
         "willSave": 0
       },
       {
@@ -117,9 +100,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Imbue Arrow"
-        ],
+        "special": ["Imbue Arrow"],
         "willSave": 0
       },
       {
@@ -127,9 +108,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Enhance Arrow +2"
-        ],
+        "special": ["Enhance Arrow +2"],
         "willSave": 1
       },
       {
@@ -137,9 +116,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Seeker Arrow"
-        ],
+        "special": ["Seeker Arrow"],
         "willSave": 1
       },
       {
@@ -147,9 +124,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Enhance Arrow +3"
-        ],
+        "special": ["Enhance Arrow +3"],
         "willSave": 1
       },
       {
@@ -157,9 +132,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Phase Arrow"
-        ],
+        "special": ["Phase Arrow"],
         "willSave": 2
       },
       {
@@ -167,9 +140,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Enhance Arrow +4"
-        ],
+        "special": ["Enhance Arrow +4"],
         "willSave": 2
       },
       {
@@ -177,9 +148,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Hail of Arrows"
-        ],
+        "special": ["Hail of Arrows"],
         "willSave": 2
       },
       {
@@ -187,9 +156,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Enhance Arrow +5"
-        ],
+        "special": ["Enhance Arrow +5"],
         "willSave": 3
       },
       {
@@ -197,9 +164,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Arrow of Death"
-        ],
+        "special": ["Arrow of Death"],
         "willSave": 3
       }
     ],

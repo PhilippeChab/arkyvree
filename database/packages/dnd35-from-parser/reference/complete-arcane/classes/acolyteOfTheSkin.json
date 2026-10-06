@@ -95,10 +95,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Wear fiend",
-          "poison 1/day"
-        ],
+        "special": ["Wear fiend", "poison 1/day"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -107,9 +104,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Flame resistant"
-        ],
+        "special": ["Flame resistant"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -118,9 +113,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Fiendish glare"
-        ],
+        "special": ["Fiendish glare"],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -138,10 +131,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Skin adaptation",
-          "poison 2/day"
-        ],
+        "special": ["Skin adaptation", "poison 2/day"],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -150,9 +140,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Cold resistant"
-        ],
+        "special": ["Cold resistant"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 5
       },
@@ -161,9 +149,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Glare of the pit"
-        ],
+        "special": ["Glare of the pit"],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -181,9 +167,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Summon fiend"
-        ],
+        "special": ["Summon fiend"],
         "spellsPerDay": "-",
         "willSave": 6
       },
@@ -192,9 +176,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Fiendish symbiosis"
-        ],
+        "special": ["Fiendish symbiosis"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 7
       }

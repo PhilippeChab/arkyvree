@@ -129,10 +129,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Exorcism",
-          "turn undead"
-        ],
+        "special": ["Exorcism", "turn undead"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 2
       },
@@ -141,10 +138,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Detect evil",
-          "resist possession"
-        ],
+        "special": ["Detect evil", "resist possession"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 3
       },
@@ -153,9 +147,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Chosen foe +1"
-        ],
+        "special": ["Chosen foe +1"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 3
       },
@@ -164,9 +156,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Dispel evil 1/week"
-        ],
+        "special": ["Dispel evil 1/week"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 4
       },
@@ -175,9 +165,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Consecrated presence"
-        ],
+        "special": ["Consecrated presence"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 4
       },
@@ -186,9 +174,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Chosen foe +2"
-        ],
+        "special": ["Chosen foe +2"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 5
       },
@@ -197,9 +183,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Dispel evil 2/week"
-        ],
+        "special": ["Dispel evil 2/week"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 5
       },
@@ -208,9 +192,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Holy aura 1/day"
-        ],
+        "special": ["Holy aura 1/day"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 6
       },
@@ -219,9 +201,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Chosen foe +3"
-        ],
+        "special": ["Chosen foe +3"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 6
       },
@@ -230,9 +210,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Dispel evil 3/week"
-        ],
+        "special": ["Dispel evil 3/week"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 7
       }

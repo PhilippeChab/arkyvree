@@ -6,9 +6,7 @@
     "type": "class"
   },
   "overrides": {
-    "reviewed": [
-      "Seeker Music"
-    ]
+    "reviewed": ["Seeker Music"]
   },
   "raw": {
     "classFeatures": [
@@ -60,9 +58,7 @@
     "name": "Seeker of the Song",
     "prerequisites": {
       "parsed": {
-        "feats": [
-          "Skill Focus (Perform [any one])"
-        ],
+        "feats": ["Skill Focus (Perform [any one])"],
         "skills": [
           {
             "name": "Knowledge (arcana)",
@@ -89,10 +85,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Rapture of the song (+2 AC)",
-          "seeker music"
-        ],
+        "special": ["Rapture of the song (+2 AC)", "seeker music"],
         "willSave": 2
       },
       {
@@ -103,9 +96,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Combine songs"
-        ],
+        "special": ["Combine songs"],
         "willSave": 3
       },
       {
@@ -127,9 +118,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Rapture of the song (+2 saves)"
-        ],
+        "special": ["Rapture of the song (+2 saves)"],
         "willSave": 4
       },
       {
@@ -140,9 +129,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Subvocalize"
-        ],
+        "special": ["Subvocalize"],
         "willSave": 4
       },
       {
@@ -164,9 +151,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Rapture of the song (DR 2/-)"
-        ],
+        "special": ["Rapture of the song (DR 2/-)"],
         "willSave": 5
       },
       {
@@ -199,9 +184,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Rapture of the song (freedom of movement)"
-        ],
+        "special": ["Rapture of the song (freedom of movement)"],
         "willSave": 7
       }
     ],

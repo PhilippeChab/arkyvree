@@ -174,9 +174,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Natural armor increase (+1)"
-        ],
+        "special": ["Natural armor increase (+1)"],
         "spellsPerDay": "1",
         "willSave": 2
       },
@@ -185,10 +183,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Ability boost (Str +2)",
-          "claws and bite"
-        ],
+        "special": ["Ability boost (Str +2)", "claws and bite"],
         "spellsPerDay": "1",
         "willSave": 3
       },
@@ -197,9 +192,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Breath weapon (2d8)"
-        ],
+        "special": ["Breath weapon (2d8)"],
         "spellsPerDay": "0",
         "willSave": 3
       },
@@ -208,10 +201,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Ability boost (Str +2)",
-          "natural armor increase (+2)"
-        ],
+        "special": ["Ability boost (Str +2)", "natural armor increase (+2)"],
         "spellsPerDay": "1",
         "willSave": 4
       },
@@ -220,9 +210,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Blindsense 30 ft."
-        ],
+        "special": ["Blindsense 30 ft."],
         "spellsPerDay": "1",
         "willSave": 4
       },
@@ -231,9 +219,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Ability boost (Con +2)"
-        ],
+        "special": ["Ability boost (Con +2)"],
         "spellsPerDay": "1",
         "willSave": 5
       },
@@ -242,10 +228,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Breath weapon (4d8)",
-          "natural armor increase (+3)"
-        ],
+        "special": ["Breath weapon (4d8)", "natural armor increase (+3)"],
         "spellsPerDay": "0",
         "willSave": 5
       },
@@ -254,9 +237,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Ability boost (Int +2)"
-        ],
+        "special": ["Ability boost (Int +2)"],
         "spellsPerDay": "1",
         "willSave": 6
       },
@@ -265,9 +246,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Wings"
-        ],
+        "special": ["Wings"],
         "spellsPerDay": "1",
         "willSave": 6
       },
@@ -276,10 +255,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Blindsense 60 ft.",
-          "dragon apotheosis"
-        ],
+        "special": ["Blindsense 60 ft.", "dragon apotheosis"],
         "spellsPerDay": "0",
         "willSave": 7
       }

@@ -77,10 +77,7 @@
     "name": "Enlightened Fist",
     "prerequisites": {
       "parsed": {
-        "feats": [
-          "Combat Casting",
-          "Improved Unarmed Strike"
-        ],
+        "feats": ["Combat Casting", "Improved Unarmed Strike"],
         "skills": [
           {
             "name": "Concentration",
@@ -104,10 +101,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Ki strike (magic)",
-          "monk abilities"
-        ],
+        "special": ["Ki strike (magic)", "monk abilities"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -116,9 +110,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Fist of energy"
-        ],
+        "special": ["Fist of energy"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -127,9 +119,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Arcane fist"
-        ],
+        "special": ["Arcane fist"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -147,9 +137,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Arcane rejuvination"
-        ],
+        "special": ["Arcane rejuvination"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 4
       },
@@ -158,9 +146,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Fist of energy (burst)"
-        ],
+        "special": ["Fist of energy (burst)"],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -169,9 +155,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Hold ray"
-        ],
+        "special": ["Hold ray"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 5
       },
@@ -189,9 +173,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Diamond soul"
-        ],
+        "special": ["Diamond soul"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 6
       },

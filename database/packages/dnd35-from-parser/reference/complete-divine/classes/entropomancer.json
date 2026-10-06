@@ -82,10 +82,7 @@
             "type": "divine"
           }
         ],
-        "feats": [
-          "Great Fortitude",
-          "Magical Aptitude"
-        ],
+        "feats": ["Great Fortitude", "Magical Aptitude"],
         "skills": [
           {
             "name": "Concentration",
@@ -105,9 +102,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Shard of entropy 2/day"
-        ],
+        "special": ["Shard of entropy 2/day"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -125,9 +120,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Entropic field 2/day"
-        ],
+        "special": ["Entropic field 2/day"],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -145,10 +138,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Entropic field (reroll)",
-          "shard of entropy (5d6)"
-        ],
+        "special": ["Entropic field (reroll)", "shard of entropy (5d6)"],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -166,9 +156,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Entropic field (wounding)"
-        ],
+        "special": ["Entropic field (wounding)"],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -186,9 +174,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Shard of entropy (7d6, consuming)"
-        ],
+        "special": ["Shard of entropy (7d6, consuming)"],
         "spellsPerDay": "-",
         "willSave": 6
       },
@@ -197,9 +183,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Control sphere"
-        ],
+        "special": ["Control sphere"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 7
       }

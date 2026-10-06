@@ -83,9 +83,7 @@
         "valueType": "number"
       }
     ],
-    "reviewed": [
-      "Any three metamagic or item creation feats"
-    ]
+    "reviewed": ["Any three metamagic or item creation feats"]
   },
   "raw": {
     "classFeatures": [
@@ -190,9 +188,7 @@
     "name": "Loremaster",
     "prerequisites": {
       "parsed": {
-        "feats": [
-          "Any three metamagic or item creation feats"
-        ],
+        "feats": ["Any three metamagic or item creation feats"],
         "skills": [
           {
             "name": "Knowledge (any)",
@@ -203,9 +199,7 @@
             "ranks": 10
           }
         ],
-        "special": [
-          "3rd level or higher"
-        ]
+        "special": ["3rd level or higher"]
       },
       "text": "Skills: Knowledge (any) 10 ranks, Knowledge (any) 10 ranks Feats: Any three metamagic or item creation feats, plus Skill Focus (Knowledge [any individual Knowledge skill]). Spells: Able to cast seven different divination spells, one of which must be 3rd level or higher."
     },
@@ -215,9 +209,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Secret"
-        ],
+        "special": ["Secret"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 2
       },
@@ -226,9 +218,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Lore"
-        ],
+        "special": ["Lore"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 3
       },
@@ -237,9 +227,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Secret"
-        ],
+        "special": ["Secret"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 3
       },
@@ -248,9 +236,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Bonus language"
-        ],
+        "special": ["Bonus language"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 4
       },
@@ -259,9 +245,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Secret"
-        ],
+        "special": ["Secret"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 4
       },
@@ -270,9 +254,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Greater lore"
-        ],
+        "special": ["Greater lore"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 5
       },
@@ -281,9 +263,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Secret"
-        ],
+        "special": ["Secret"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 5
       },
@@ -292,9 +272,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Bonus language"
-        ],
+        "special": ["Bonus language"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 6
       },
@@ -303,9 +281,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Secret"
-        ],
+        "special": ["Secret"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 6
       },
@@ -314,9 +290,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "True lore"
-        ],
+        "special": ["True lore"],
         "spellsPerDay": "+1 level of existing class",
         "willSave": 7
       }

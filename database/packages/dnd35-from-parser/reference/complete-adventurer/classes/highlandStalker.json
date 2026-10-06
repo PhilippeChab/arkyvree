@@ -57,9 +57,7 @@
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": [
-          "Track"
-        ],
+        "feats": ["Track"],
         "skills": [
           {
             "name": "Listen",
@@ -74,9 +72,7 @@
             "ranks": 8
           }
         ],
-        "special": [
-          "Skirmish or sneak attack class feature."
-        ]
+        "special": ["Skirmish or sneak attack class feature."]
       },
       "text": "Base Attack Bonus: +5 Skills: Listen 8 ranks, Spot 8 ranks, Survival 8 ranks Feats: Track Special: Skirmish or sneak attack class feature."
     },
@@ -86,9 +82,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Mountain stride"
-        ],
+        "special": ["Mountain stride"],
         "willSave": 0
       },
       {
@@ -96,9 +90,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Skirmish (+1d6)"
-        ],
+        "special": ["Skirmish (+1d6)"],
         "willSave": 0
       },
       {
@@ -106,9 +98,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Swift tracker"
-        ],
+        "special": ["Swift tracker"],
         "willSave": 1
       },
       {
@@ -116,9 +106,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Skirmish (+1d6, +1 AC)"
-        ],
+        "special": ["Skirmish (+1d6, +1 AC)"],
         "willSave": 1
       },
       {
@@ -126,9 +114,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Surefooted"
-        ],
+        "special": ["Surefooted"],
         "willSave": 1
       },
       {
@@ -136,9 +122,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Skirmish (+2d6, +1 AC)"
-        ],
+        "special": ["Skirmish (+2d6, +1 AC)"],
         "willSave": 2
       },
       {
@@ -146,9 +130,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Camouflage"
-        ],
+        "special": ["Camouflage"],
         "willSave": 2
       },
       {
@@ -156,9 +138,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Skirmish (+2d6, +2 AC)"
-        ],
+        "special": ["Skirmish (+2d6, +2 AC)"],
         "willSave": 2
       },
       {
@@ -174,9 +154,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Skirmish (+3d6, +2 AC)"
-        ],
+        "special": ["Skirmish (+3d6, +2 AC)"],
         "willSave": 3
       }
     ],

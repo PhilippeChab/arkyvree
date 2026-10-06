@@ -173,13 +173,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Bardic music",
-          "bardic knowledge",
-          "countersong",
-          "fascinate",
-          "inspire courage +1"
-        ],
+        "special": ["Bardic music", "bardic knowledge", "countersong", "fascinate", "inspire courage +1"],
         "spellsPerDay": "2,-,-,-,-,-,-",
         "willSave": 2
       },
@@ -197,9 +191,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Inspire competence"
-        ],
+        "special": ["Inspire competence"],
         "spellsPerDay": "3,1,-,-,-,-,-",
         "willSave": 3
       },
@@ -226,9 +218,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Suggestion"
-        ],
+        "special": ["Suggestion"],
         "spellsPerDay": "3,3,2,-,-,-,-",
         "willSave": 5
       },
@@ -246,9 +236,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Inspire courage +2"
-        ],
+        "special": ["Inspire courage +2"],
         "spellsPerDay": "3,3,3,1,-,-,-",
         "willSave": 6
       },
@@ -257,9 +245,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Inspire greatness"
-        ],
+        "special": ["Inspire greatness"],
         "spellsPerDay": "3,3,3,2,-,-,-",
         "willSave": 6
       },
@@ -286,9 +272,7 @@
         "fortSave": 4,
         "level": 12,
         "refSave": 8,
-        "special": [
-          "Song of freedom"
-        ],
+        "special": ["Song of freedom"],
         "spellsPerDay": "3,3,3,3,2,-,-",
         "willSave": 8
       },
@@ -306,9 +290,7 @@
         "fortSave": 4,
         "level": 14,
         "refSave": 9,
-        "special": [
-          "Inspire courage +3"
-        ],
+        "special": ["Inspire courage +3"],
         "spellsPerDay": "4,3,3,3,3,1,-",
         "willSave": 9
       },
@@ -317,9 +299,7 @@
         "fortSave": 5,
         "level": 15,
         "refSave": 9,
-        "special": [
-          "Inspire heroics"
-        ],
+        "special": ["Inspire heroics"],
         "spellsPerDay": "4,4,3,3,3,2,-",
         "willSave": 9
       },
@@ -346,9 +326,7 @@
         "fortSave": 6,
         "level": 18,
         "refSave": 11,
-        "special": [
-          "Mass suggestion"
-        ],
+        "special": ["Mass suggestion"],
         "spellsPerDay": "4,4,4,4,4,3,2",
         "willSave": 11
       },
@@ -366,9 +344,7 @@
         "fortSave": 6,
         "level": 20,
         "refSave": 12,
-        "special": [
-          "Inspire courage+4"
-        ],
+        "special": ["Inspire courage+4"],
         "spellsPerDay": "4,4,4,4,4,4,4",
         "willSave": 12
       }

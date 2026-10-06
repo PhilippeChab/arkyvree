@@ -59,10 +59,7 @@
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": [
-          "Combat Expertise",
-          "Improved Feint"
-        ],
+        "feats": ["Combat Expertise", "Improved Feint"],
         "skills": [
           {
             "name": "Bluff",
@@ -86,10 +83,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Always ready +1",
-          "streetwise"
-        ],
+        "special": ["Always ready +1", "streetwise"],
         "willSave": 0
       },
       {
@@ -97,9 +91,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Stand tough 1/day"
-        ],
+        "special": ["Stand tough 1/day"],
         "willSave": 0
       },
       {
@@ -107,10 +99,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Always ready +2",
-          "sneak attack +1d6"
-        ],
+        "special": ["Always ready +2", "sneak attack +1d6"],
         "willSave": 1
       },
       {
@@ -118,9 +107,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Stand tough 2/day"
-        ],
+        "special": ["Stand tough 2/day"],
         "willSave": 1
       },
       {
@@ -128,10 +115,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Always ready +3",
-          "uncanny dodge"
-        ],
+        "special": ["Always ready +3", "uncanny dodge"],
         "willSave": 1
       }
     ],

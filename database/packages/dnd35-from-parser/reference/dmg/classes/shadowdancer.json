@@ -132,11 +132,7 @@
     "name": "Shadowdancer",
     "prerequisites": {
       "parsed": {
-        "feats": [
-          "Combat Reflexes",
-          "Dodge",
-          "Mobility"
-        ],
+        "feats": ["Combat Reflexes", "Dodge", "Mobility"],
         "skills": [
           {
             "name": "Move Silently",
@@ -160,9 +156,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Hide in plain sight"
-        ],
+        "special": ["Hide in plain sight"],
         "willSave": 0
       },
       {
@@ -170,11 +164,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Evasion",
-          "darkvision",
-          "uncanny dodge"
-        ],
+        "special": ["Evasion", "darkvision", "uncanny dodge"],
         "willSave": 0
       },
       {
@@ -182,10 +172,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Shadow illusion",
-          "summon shadow"
-        ],
+        "special": ["Shadow illusion", "summon shadow"],
         "willSave": 1
       },
       {
@@ -193,9 +180,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Shadow jump 20 ft."
-        ],
+        "special": ["Shadow jump 20 ft."],
         "willSave": 1
       },
       {
@@ -203,10 +188,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Defensive roll",
-          "improved uncanny dodge"
-        ],
+        "special": ["Defensive roll", "improved uncanny dodge"],
         "willSave": 1
       },
       {
@@ -214,10 +196,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Shadow jump 40 ft.",
-          "summon shadow"
-        ],
+        "special": ["Shadow jump 40 ft.", "summon shadow"],
         "willSave": 2
       },
       {
@@ -225,9 +204,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Slippery mind"
-        ],
+        "special": ["Slippery mind"],
         "willSave": 2
       },
       {
@@ -235,9 +212,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Shadow jump 80 ft."
-        ],
+        "special": ["Shadow jump 80 ft."],
         "willSave": 2
       },
       {
@@ -245,9 +220,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Summon shadow"
-        ],
+        "special": ["Summon shadow"],
         "willSave": 3
       },
       {
@@ -255,10 +228,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Shadow jump 160 ft.",
-          "improved evasion"
-        ],
+        "special": ["Shadow jump 160 ft.", "improved evasion"],
         "willSave": 3
       }
     ],

@@ -26,11 +26,11 @@ AppRoutes
         └── *  (catch-all → /dashboard)
 ```
 
-| Wrapper | File | Renders for | Guard behavior |
-|---|---|---|---|
-| `AuthLayoutRoute` | `client/src/components/auth/AuthLayout.tsx` | Unauth users on auth-flow pages | Demo → `signOut()` then form. Real user → `/dashboard`. Unauth → form. |
-| `PublicLayout` | `client/src/components/layout/PublicLayout.tsx` | Anyone | None. Toolbar swaps "Sign up" ↔ "Dashboard" by auth state. |
-| `PrivateRoute` | `client/src/App.tsx` (helper) | Authenticated users | Authed → `<Outlet/>`. Unauth → `/demo-expired` if the auth store's `demoExpired` is set, else `/sign-in?redirect=<path>`. |
+| Wrapper           | File                                            | Renders for                     | Guard behavior                                                                                                            |
+| ----------------- | ----------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `AuthLayoutRoute` | `client/src/components/auth/AuthLayout.tsx`     | Unauth users on auth-flow pages | Demo → `signOut()` then form. Real user → `/dashboard`. Unauth → form.                                                    |
+| `PublicLayout`    | `client/src/components/layout/PublicLayout.tsx` | Anyone                          | None. Toolbar swaps "Sign up" ↔ "Dashboard" by auth state.                                                                |
+| `PrivateRoute`    | `client/src/App.tsx` (helper)                   | Authenticated users             | Authed → `<Outlet/>`. Unauth → `/demo-expired` if the auth store's `demoExpired` is set, else `/sign-in?redirect=<path>`. |
 
 ## Cookie security
 
@@ -64,12 +64,12 @@ Demo user → /sign-in (or /sign-up, /verify-email, /forgot-password, /reset-pas
 
 ### Where demo persists vs dies
 
-| User action | Demo state |
-|---|---|
-| In-app navigation (`/dashboard`, `/rulesets`, …) | Persists |
-| `/share/:shareToken` (PublicLayout) | Persists — public content doesn't end the session |
-| `/sign-in`, `/sign-up`, any `AuthLayoutRoute` page | **Dies** (server hard-delete) |
-| Server-side TTL expires (1 hour) | Dies (in-app expiry path, see below) |
+| User action                                        | Demo state                                        |
+| -------------------------------------------------- | ------------------------------------------------- |
+| In-app navigation (`/dashboard`, `/rulesets`, …)   | Persists                                          |
+| `/share/:shareToken` (PublicLayout)                | Persists — public content doesn't end the session |
+| `/sign-in`, `/sign-up`, any `AuthLayoutRoute` page | **Dies** (server hard-delete)                     |
+| Server-side TTL expires (1 hour)                   | Dies (in-app expiry path, see below)              |
 
 ### In-app TTL expiry
 
@@ -100,33 +100,33 @@ If the client and server desync (localStorage cleared while cookie persists, bro
 
 The cookie is shared across tabs in the same origin. State is server-authoritative; local Zustand stores can desync transiently.
 
-| Scenario | Behavior |
-|---|---|
-| Tab A (real session), Tab B opens `/sign-in` | Tab B redirects to `/dashboard`. Tab A untouched. |
-| Tab A (demo), Tab B opens `/sign-in` | Tab B kills the demo server-side. Tab A's next API call → 401 → `/demo-expired`. Self-heals. |
-| Tab A (real session), Tab B signs out | Tab B clears session. Tab A's next API call → 401 → `/sign-in`. |
-| Tab A (demo), Tab B opens `/share/:t` | Both safe — `/share` is public-no-auth, demo persists in both tabs. |
+| Scenario                                     | Behavior                                                                                     |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Tab A (real session), Tab B opens `/sign-in` | Tab B redirects to `/dashboard`. Tab A untouched.                                            |
+| Tab A (demo), Tab B opens `/sign-in`         | Tab B kills the demo server-side. Tab A's next API call → 401 → `/demo-expired`. Self-heals. |
+| Tab A (real session), Tab B signs out        | Tab B clears session. Tab A's next API call → 401 → `/sign-in`.                              |
+| Tab A (demo), Tab B opens `/share/:t`        | Both safe — `/share` is public-no-auth, demo persists in both tabs.                          |
 
 There's no `BroadcastChannel`-based active sync today. Recovery happens lazily via the next 401 in the stale tab.
 
 ## Key files
 
-| File | Purpose |
-|---|---|
-| `client/src/App.tsx` | `AppRoutes` static tree, `PrivateRoute` guard |
-| `client/src/lib/queryClient.ts` | `handleGlobalError`: a `SessionError` (the session's 401) signs out, or sends a demo to `/demo-expired` |
-| `client/src/components/auth/AuthLayout.tsx` | `AuthLayoutRoute` — demo signOut on entry, real-user redirect |
-| `client/src/components/layout/PublicLayout.tsx` | Public toolbar with auth-aware CTA |
-| `client/src/components/layout/Layout.tsx` | In-app shell, `isDemo` feature gates |
-| `client/src/stores/authStore.ts` | Zustand store + persist: who is signed in, the emails waiting for a code; `clearSession`, `updateUser` |
-| `client/src/hooks/useAuthRequests.ts` | The auth requests as mutations the store follows (sign in / up / out, verify, reset), their shared `pending`, and `checkSession` (the `PrivateRoute` probe, a `fetchQuery` of `/auth/me`) |
-| `client/src/pages/demo-expired/DemoExpiredPage.tsx` | Post-expiry messaging; clears `demoExpired` on mount |
-| `client/src/hooks/useStartDemo.ts` | POSTs `/api/demo/start`, navigates to `/dashboard` |
-| `server/middlewares/session.ts` | Cookie config, session validation middleware |
-| `server/middlewares/denyDemoUser.ts` | Server-side gate for collaboration/profile mutations |
-| `server/services/authentication/AuthenticationService.ts` | `signIn`, `signUp`, `verifyEmail`, `signOut`, `startDemo`, `purgeDemoSessionUser` |
-| `server/routers/authentication/index.ts` | `/auth/*` routes |
-| `server/routers/api/demo/index.ts` | `/api/demo/start` route |
-| `server/routers/api/shared/index.tsx` | `/api/shared/*` public routes (no auth middleware) |
+| File                                                      | Purpose                                                                                                                                                                                   |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client/src/App.tsx`                                      | `AppRoutes` static tree, `PrivateRoute` guard                                                                                                                                             |
+| `client/src/lib/queryClient.ts`                           | `handleGlobalError`: a `SessionError` (the session's 401) signs out, or sends a demo to `/demo-expired`                                                                                   |
+| `client/src/components/auth/AuthLayout.tsx`               | `AuthLayoutRoute` — demo signOut on entry, real-user redirect                                                                                                                             |
+| `client/src/components/layout/PublicLayout.tsx`           | Public toolbar with auth-aware CTA                                                                                                                                                        |
+| `client/src/components/layout/Layout.tsx`                 | In-app shell, `isDemo` feature gates                                                                                                                                                      |
+| `client/src/stores/authStore.ts`                          | Zustand store + persist: who is signed in, the emails waiting for a code; `clearSession`, `updateUser`                                                                                    |
+| `client/src/hooks/useAuthRequests.ts`                     | The auth requests as mutations the store follows (sign in / up / out, verify, reset), their shared `pending`, and `checkSession` (the `PrivateRoute` probe, a `fetchQuery` of `/auth/me`) |
+| `client/src/pages/demo-expired/DemoExpiredPage.tsx`       | Post-expiry messaging; clears `demoExpired` on mount                                                                                                                                      |
+| `client/src/hooks/useStartDemo.ts`                        | POSTs `/api/demo/start`, navigates to `/dashboard`                                                                                                                                        |
+| `server/middlewares/session.ts`                           | Cookie config, session validation middleware                                                                                                                                              |
+| `server/middlewares/denyDemoUser.ts`                      | Server-side gate for collaboration/profile mutations                                                                                                                                      |
+| `server/services/authentication/AuthenticationService.ts` | `signIn`, `signUp`, `verifyEmail`, `signOut`, `startDemo`, `purgeDemoSessionUser`                                                                                                         |
+| `server/routers/authentication/index.ts`                  | `/auth/*` routes                                                                                                                                                                          |
+| `server/routers/api/demo/index.ts`                        | `/api/demo/start` route                                                                                                                                                                   |
+| `server/routers/api/shared/index.tsx`                     | `/api/shared/*` public routes (no auth middleware)                                                                                                                                        |
 
 Password recovery revokes every existing session in the same transaction as the password update. An authenticated password change revokes other sessions while preserving the current session. Invalid reset codes and failed password changes do not revoke sessions.

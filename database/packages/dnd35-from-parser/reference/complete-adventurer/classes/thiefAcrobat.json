@@ -96,9 +96,7 @@
             "ranks": 8
           }
         ],
-        "special": [
-          "Evasion class feature."
-        ]
+        "special": ["Evasion class feature."]
       },
       "text": "Skills: Balance 8 ranks, Climb 8 ranks, Jump 8 ranks, Tumble 8 ranks Special: Evasion class feature."
     },
@@ -108,11 +106,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Fast acrobatics",
-          "kip up",
-          "steady stance"
-        ],
+        "special": ["Fast acrobatics", "kip up", "steady stance"],
         "willSave": 0
       },
       {
@@ -120,10 +114,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Agile fighting +1/+2",
-          "slow fall 20 ft."
-        ],
+        "special": ["Agile fighting +1/+2", "slow fall 20 ft."],
         "willSave": 0
       },
       {
@@ -131,10 +122,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Acrobatic charge",
-          "defensive roll 1/day"
-        ],
+        "special": ["Acrobatic charge", "defensive roll 1/day"],
         "willSave": 1
       },
       {
@@ -142,11 +130,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Agile fighting +2/+3",
-          "skill mastery",
-          "slow fall 30 ft."
-        ],
+        "special": ["Agile fighting +2/+3", "skill mastery", "slow fall 30 ft."],
         "willSave": 1
       },
       {
@@ -154,10 +138,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Defensive roll 2/day",
-          "improved evasion"
-        ],
+        "special": ["Defensive roll 2/day", "improved evasion"],
         "willSave": 1
       }
     ],

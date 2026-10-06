@@ -57,9 +57,7 @@
             "type": "arcane"
           }
         ],
-        "special": [
-          "proficient with all martial weapons"
-        ]
+        "special": ["proficient with all martial weapons"]
       },
       "text": "Weapon Proficiency: Must be proficient with all martial weapons. Spells: Able to cast 3rd-level arcane spells."
     },
@@ -69,9 +67,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Bonus feat"
-        ],
+        "special": ["Bonus feat"],
         "willSave": 0
       },
       {
@@ -79,9 +75,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "+1 level of existing arcane spellcasting class"
-        ],
+        "special": ["+1 level of existing arcane spellcasting class"],
         "willSave": 0
       },
       {
@@ -89,9 +83,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "+1 level of existing arcane spellcasting class"
-        ],
+        "special": ["+1 level of existing arcane spellcasting class"],
         "willSave": 1
       },
       {
@@ -99,9 +91,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "+1 level of existing arcane spellcasting class"
-        ],
+        "special": ["+1 level of existing arcane spellcasting class"],
         "willSave": 1
       },
       {
@@ -109,9 +99,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "+1 level of existing arcane spellcasting class"
-        ],
+        "special": ["+1 level of existing arcane spellcasting class"],
         "willSave": 1
       },
       {
@@ -119,9 +107,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "+1 level of existing arcane spellcasting class"
-        ],
+        "special": ["+1 level of existing arcane spellcasting class"],
         "willSave": 2
       },
       {
@@ -129,9 +115,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "+1 level of existing arcane spellcasting class"
-        ],
+        "special": ["+1 level of existing arcane spellcasting class"],
         "willSave": 2
       },
       {
@@ -139,9 +123,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "+1 level of existing arcane spellcasting class"
-        ],
+        "special": ["+1 level of existing arcane spellcasting class"],
         "willSave": 2
       },
       {
@@ -149,9 +131,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "+1 level of existing arcane spellcasting class"
-        ],
+        "special": ["+1 level of existing arcane spellcasting class"],
         "willSave": 3
       },
       {
@@ -159,9 +139,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "+1 level of existing arcane spellcasting class"
-        ],
+        "special": ["+1 level of existing arcane spellcasting class"],
         "willSave": 3
       }
     ],

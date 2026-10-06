@@ -83,14 +83,7 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": [
-      "Climb",
-      "Intimidate",
-      "Jump",
-      "Ride",
-      "Survival",
-      "Swim"
-    ],
+    "classSkills": ["Climb", "Intimidate", "Jump", "Ride", "Survival", "Swim"],
     "description": "An orc or half-orc who heeds the call to serve Gruumsh in his image can become an eye of Gruumsh.",
     "hitDie": "d12",
     "name": "Eye of Gruumsh",
@@ -98,10 +91,7 @@
       "parsed": {
         "alignment": "Chaotic evil, chaotic neutral, or neutral evil",
         "bab": 6,
-        "feats": [
-          "Exotic Weapon Proficiency (orc double axe)",
-          "Weapon Focus (orc double axe)"
-        ],
+        "feats": ["Exotic Weapon Proficiency (orc double axe)", "Weapon Focus (orc double axe)"],
         "special": [
           "Race: Half-Orc",
           "The character must be a worshiper of Gruumsh and must put out his own right eye in a special ritual. None of the eye of Gruumsh's special abilities function if the character regains sight in both eyes.",
@@ -116,11 +106,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Blind-Fight",
-          "command the horde",
-          "rage"
-        ],
+        "special": ["Blind-Fight", "command the horde", "rage"],
         "willSave": 0
       },
       {
@@ -128,9 +114,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Swing blindly"
-        ],
+        "special": ["Swing blindly"],
         "willSave": 0
       },
       {
@@ -138,9 +122,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Ritual scarring +1"
-        ],
+        "special": ["Ritual scarring +1"],
         "willSave": 1
       },
       {
@@ -148,9 +130,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Blinding spittle 2/day"
-        ],
+        "special": ["Blinding spittle 2/day"],
         "willSave": 1
       },
       {
@@ -158,9 +138,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Blindsight 5 ft."
-        ],
+        "special": ["Blindsight 5 ft."],
         "willSave": 1
       },
       {
@@ -168,9 +146,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Ritual scarring +2"
-        ],
+        "special": ["Ritual scarring +2"],
         "willSave": 2
       },
       {
@@ -178,9 +154,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Blinding spittle 4/day"
-        ],
+        "special": ["Blinding spittle 4/day"],
         "willSave": 2
       },
       {
@@ -188,9 +162,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Blindsight 10 ft."
-        ],
+        "special": ["Blindsight 10 ft."],
         "willSave": 2
       },
       {
@@ -198,9 +170,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Ritual scarring +3"
-        ],
+        "special": ["Ritual scarring +3"],
         "willSave": 3
       },
       {
@@ -208,9 +178,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Sight of Gruumsh"
-        ],
+        "special": ["Sight of Gruumsh"],
         "willSave": 3
       }
     ],

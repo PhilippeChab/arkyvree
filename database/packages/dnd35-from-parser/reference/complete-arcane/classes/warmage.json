@@ -76,10 +76,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Armored mage (light)",
-          "warmage edge"
-        ],
+        "special": ["Armored mage (light)", "warmage edge"],
         "spellsPerDay": "5,3,-,-,-,-,-,-,-,-",
         "willSave": 2
       },
@@ -97,9 +94,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Advanced learning"
-        ],
+        "special": ["Advanced learning"],
         "spellsPerDay": "6,5,-,-,-,-,-,-,-,-",
         "willSave": 3
       },
@@ -126,9 +121,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Advanced learning"
-        ],
+        "special": ["Advanced learning"],
         "spellsPerDay": "6,6,5,3,-,-,-,-,-,-",
         "willSave": 5
       },
@@ -137,9 +130,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Sudden Empower"
-        ],
+        "special": ["Sudden Empower"],
         "spellsPerDay": "6,6,6,4,-,-,-,-,-,-",
         "willSave": 5
       },
@@ -148,9 +139,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Armored mage (medium)"
-        ],
+        "special": ["Armored mage (medium)"],
         "spellsPerDay": "6,6,6,5,3,-,-,-,-,-",
         "willSave": 6
       },
@@ -168,9 +157,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Sudden Enlarge"
-        ],
+        "special": ["Sudden Enlarge"],
         "spellsPerDay": "6,6,6,6,5,3,-,-,-,-",
         "willSave": 7
       },
@@ -179,9 +166,7 @@
         "fortSave": 3,
         "level": 11,
         "refSave": 3,
-        "special": [
-          "Advanced learning"
-        ],
+        "special": ["Advanced learning"],
         "spellsPerDay": "6,6,6,6,6,4,-,-,-,-",
         "willSave": 7
       },
@@ -217,9 +202,7 @@
         "fortSave": 5,
         "level": 15,
         "refSave": 5,
-        "special": [
-          "Sudden Widen"
-        ],
+        "special": ["Sudden Widen"],
         "spellsPerDay": "6,6,6,6,6,6,6,4,-,-",
         "willSave": 9
       },
@@ -228,9 +211,7 @@
         "fortSave": 5,
         "level": 16,
         "refSave": 5,
-        "special": [
-          "Advanced learning"
-        ],
+        "special": ["Advanced learning"],
         "spellsPerDay": "6,6,6,6,6,6,6,5,3,-",
         "willSave": 10
       },
@@ -266,9 +247,7 @@
         "fortSave": 6,
         "level": 20,
         "refSave": 6,
-        "special": [
-          "Sudden Maximize"
-        ],
+        "special": ["Sudden Maximize"],
         "spellsPerDay": "6,6,6,6,6,6,6,6,6,5",
         "willSave": 12
       }

@@ -88,13 +88,8 @@
     "name": "Master of Many Forms",
     "prerequisites": {
       "parsed": {
-        "feats": [
-          "Alertness",
-          "Endurance"
-        ],
-        "special": [
-          "Wild shape class feature."
-        ]
+        "feats": ["Alertness", "Endurance"],
+        "special": ["Wild shape class feature."]
       },
       "text": "Feats: Alertness, Endurance Special: Wild shape class feature."
     },
@@ -104,10 +99,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Shifter's speech",
-          "improved wild shape (humanoid)"
-        ],
+        "special": ["Shifter's speech", "improved wild shape (humanoid)"],
         "willSave": 0
       },
       {
@@ -115,9 +107,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Improved wild shape (giant; Large)"
-        ],
+        "special": ["Improved wild shape (giant; Large)"],
         "willSave": 0
       },
       {
@@ -125,10 +115,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Fast wild shape",
-          "improved wild shape (monstrous humanoid)"
-        ],
+        "special": ["Fast wild shape", "improved wild shape (monstrous humanoid)"],
         "willSave": 1
       },
       {
@@ -136,9 +123,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Improved wild shape (fey; Tiny)"
-        ],
+        "special": ["Improved wild shape (fey; Tiny)"],
         "willSave": 1
       },
       {
@@ -146,9 +131,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Improved wild shape (vermin)"
-        ],
+        "special": ["Improved wild shape (vermin)"],
         "willSave": 1
       },
       {
@@ -156,9 +139,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Improved wild shape (aberration; Huge)"
-        ],
+        "special": ["Improved wild shape (aberration; Huge)"],
         "willSave": 2
       },
       {
@@ -166,10 +147,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Extraordinary wild shape",
-          "improved wild shape (plant)"
-        ],
+        "special": ["Extraordinary wild shape", "improved wild shape (plant)"],
         "willSave": 2
       },
       {
@@ -177,9 +155,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Improved wild shape (ooze; Diminutive)"
-        ],
+        "special": ["Improved wild shape (ooze; Diminutive)"],
         "willSave": 2
       },
       {
@@ -187,9 +163,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Improved wild shape (elemental)"
-        ],
+        "special": ["Improved wild shape (elemental)"],
         "willSave": 3
       },
       {
@@ -197,10 +171,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Evershifting form",
-          "improved wild shape (dragon; Gargantuan)"
-        ],
+        "special": ["Evershifting form", "improved wild shape (dragon; Gargantuan)"],
         "willSave": 3
       }
     ],

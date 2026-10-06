@@ -159,10 +159,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Skirmish (+1d6)",
-          "trapfinding"
-        ],
+        "special": ["Skirmish (+1d6)", "trapfinding"],
         "willSave": 0
       },
       {
@@ -170,10 +167,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Battle Fortitude +1",
-          "uncanny dodge"
-        ],
+        "special": ["Battle Fortitude +1", "uncanny dodge"],
         "willSave": 0
       },
       {
@@ -181,11 +175,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Fast movement +10ft",
-          "skirmish (+1d6, +1AC)",
-          "trackless step"
-        ],
+        "special": ["Fast movement +10ft", "skirmish (+1d6, +1AC)", "trackless step"],
         "willSave": 1
       },
       {
@@ -193,9 +183,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Bonus Feat"
-        ],
+        "special": ["Bonus Feat"],
         "willSave": 1
       },
       {
@@ -203,10 +191,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Evasion",
-          "skirmish (+2d6, +1AC)"
-        ],
+        "special": ["Evasion", "skirmish (+2d6, +1AC)"],
         "willSave": 1
       },
       {
@@ -214,9 +199,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Flawless Stride"
-        ],
+        "special": ["Flawless Stride"],
         "willSave": 2
       },
       {
@@ -224,9 +207,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Skirmish (+2d6, +2 AC)"
-        ],
+        "special": ["Skirmish (+2d6, +2 AC)"],
         "willSave": 2
       },
       {
@@ -234,10 +215,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Camoflague",
-          "bonus feat"
-        ],
+        "special": ["Camoflague", "bonus feat"],
         "willSave": 2
       },
       {
@@ -245,9 +223,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Skirmish (+3d6, +2 AC)"
-        ],
+        "special": ["Skirmish (+3d6, +2 AC)"],
         "willSave": 3
       },
       {
@@ -255,9 +231,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Blindsense 30ft"
-        ],
+        "special": ["Blindsense 30ft"],
         "willSave": 3
       },
       {
@@ -265,11 +239,7 @@
         "fortSave": 3,
         "level": 11,
         "refSave": 7,
-        "special": [
-          "Battle Fortitude +2",
-          "fast movement +20ft",
-          "skirmish (+3d6, +3 AC)"
-        ],
+        "special": ["Battle Fortitude +2", "fast movement +20ft", "skirmish (+3d6, +3 AC)"],
         "willSave": 3
       },
       {
@@ -277,9 +247,7 @@
         "fortSave": 4,
         "level": 12,
         "refSave": 8,
-        "special": [
-          "Bonus Feat"
-        ],
+        "special": ["Bonus Feat"],
         "willSave": 4
       },
       {
@@ -287,9 +255,7 @@
         "fortSave": 4,
         "level": 13,
         "refSave": 8,
-        "special": [
-          "Skirmish (+4d6, +3 AC)"
-        ],
+        "special": ["Skirmish (+4d6, +3 AC)"],
         "willSave": 4
       },
       {
@@ -297,9 +263,7 @@
         "fortSave": 4,
         "level": 14,
         "refSave": 9,
-        "special": [
-          "Hide in Plain Sight"
-        ],
+        "special": ["Hide in Plain Sight"],
         "willSave": 4
       },
       {
@@ -307,9 +271,7 @@
         "fortSave": 5,
         "level": 15,
         "refSave": 9,
-        "special": [
-          "Skirmish (+4d6, +4 AC)"
-        ],
+        "special": ["Skirmish (+4d6, +4 AC)"],
         "willSave": 5
       },
       {
@@ -317,9 +279,7 @@
         "fortSave": 5,
         "level": 16,
         "refSave": 10,
-        "special": [
-          "Bonus Feat"
-        ],
+        "special": ["Bonus Feat"],
         "willSave": 5
       },
       {
@@ -327,9 +287,7 @@
         "fortSave": 5,
         "level": 17,
         "refSave": 10,
-        "special": [
-          "Skirmish (+5d6, +4 AC)"
-        ],
+        "special": ["Skirmish (+5d6, +4 AC)"],
         "willSave": 5
       },
       {
@@ -337,9 +295,7 @@
         "fortSave": 6,
         "level": 18,
         "refSave": 11,
-        "special": [
-          "Free Movement"
-        ],
+        "special": ["Free Movement"],
         "willSave": 6
       },
       {
@@ -347,9 +303,7 @@
         "fortSave": 6,
         "level": 19,
         "refSave": 11,
-        "special": [
-          "Skirmish (+5d6, +5 AC)"
-        ],
+        "special": ["Skirmish (+5d6, +5 AC)"],
         "willSave": 6
       },
       {
@@ -357,11 +311,7 @@
         "fortSave": 6,
         "level": 20,
         "refSave": 12,
-        "special": [
-          "Battle Fortitude +3",
-          "blind sight 30ft",
-          "bonus feat"
-        ],
+        "special": ["Battle Fortitude +3", "blind sight 30ft", "bonus feat"],
         "willSave": 6
       }
     ],

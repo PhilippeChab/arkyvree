@@ -101,9 +101,7 @@
             "ranks": 1
           }
         ],
-        "special": [
-          "Bardic knowledge and evasion abilities."
-        ]
+        "special": ["Bardic knowledge and evasion abilities."]
       },
       "text": "Alignment: Neutral good, neutral, chaotic neutral, or neutral evil. Skills: Decipher Script 7 ranks, Diplomacy 7 ranks, Gather Information 7 ranks, Knowledge (nature) 7 ranks, Perform (string instruments) 13 ranks, Sleight of Hand 7 ranks, Speak Language (druidic) 1 ranks Spells: Ability to cast 1st-level arcane and divine spells.Special: Bardic knowledge and evasion abilities."
     },
@@ -113,11 +111,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Bardic knowledge",
-          "bardic music",
-          "unbound"
-        ],
+        "special": ["Bardic knowledge", "bardic music", "unbound"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class and +1 level of existing divine spellcasting class",
         "willSave": 2
       },

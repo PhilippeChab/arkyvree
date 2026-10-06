@@ -42,35 +42,12 @@
     "spells": {
       "inheritsFrom": {
         "additions": {
-          "1": [
-            "Animate Rope",
-            "Calm Emotions",
-            "Command",
-            "Disguise Self",
-            "Doom"
-          ],
-          "2": [
-            "Charm Person",
-            "Daylight",
-            "Detect Thoughts",
-            "Hold Person"
-          ],
-          "3": [
-            "Clairaudience/clairvoyance",
-            "Death Ward",
-            "Discern Lies",
-            "See Invisibility"
-          ],
-          "4": [
-            "Dismissal",
-            "Dominate Person",
-            "Legend Lore",
-            "Mark of Justice"
-          ]
+          "1": ["Animate Rope", "Calm Emotions", "Command", "Disguise Self", "Doom"],
+          "2": ["Charm Person", "Daylight", "Detect Thoughts", "Hold Person"],
+          "3": ["Clairaudience/clairvoyance", "Death Ward", "Discern Lies", "See Invisibility"],
+          "4": ["Dismissal", "Dominate Person", "Legend Lore", "Mark of Justice"]
         },
-        "classes": [
-          "Ranger"
-        ]
+        "classes": ["Ranger"]
       }
     }
   },
@@ -146,9 +123,7 @@
       "parsed": {
         "alignment": "Any lawful",
         "bab": 5,
-        "feats": [
-          "Track"
-        ],
+        "feats": ["Track"],
         "skills": [
           {
             "name": "Disguise",
@@ -171,10 +146,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Blessing of scripture +2",
-          "detect chaos"
-        ],
+        "special": ["Blessing of scripture +2", "detect chaos"],
         "spellsPerDay": "0,-,-,-",
         "willSave": 2
       },
@@ -183,9 +155,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Sanctified sight"
-        ],
+        "special": ["Sanctified sight"],
         "spellsPerDay": "1,-,-,-",
         "willSave": 3
       },
@@ -194,9 +164,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Dispel magic"
-        ],
+        "special": ["Dispel magic"],
         "spellsPerDay": "1,0,-,-",
         "willSave": 3
       },
@@ -205,9 +173,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Crushing despair"
-        ],
+        "special": ["Crushing despair"],
         "spellsPerDay": "1,1,-,-",
         "willSave": 4
       },
@@ -216,9 +182,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Blessing of scripture +4"
-        ],
+        "special": ["Blessing of scripture +4"],
         "spellsPerDay": "1,1,0,-",
         "willSave": 4
       },
@@ -227,9 +191,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "False vision"
-        ],
+        "special": ["False vision"],
         "spellsPerDay": "1,1,1,-",
         "willSave": 5
       },
@@ -247,9 +209,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Implacable hunt"
-        ],
+        "special": ["Implacable hunt"],
         "spellsPerDay": "2,1,1,1",
         "willSave": 6
       },
@@ -267,10 +227,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Blessing of scripture +6",
-          "faultless hunt"
-        ],
+        "special": ["Blessing of scripture +6", "faultless hunt"],
         "spellsPerDay": "2,2,2,1",
         "willSave": 7
       }

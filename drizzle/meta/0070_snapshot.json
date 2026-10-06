@@ -137,28 +137,20 @@
         "abilities_ruleset_id_fkey": {
           "name": "abilities_ruleset_id_fkey",
           "tableFrom": "abilities",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "abilities_campaign_id_fkey": {
           "name": "abilities_campaign_id_fkey",
           "tableFrom": "abilities",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -303,14 +295,10 @@
         "activities_user_id_fkey": {
           "name": "activities_user_id_fkey",
           "tableFrom": "activities",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -476,28 +464,20 @@
         "aptitudes_ruleset_id_fkey": {
           "name": "aptitudes_ruleset_id_fkey",
           "tableFrom": "aptitudes",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "aptitudes_campaign_id_fkey": {
           "name": "aptitudes_campaign_id_fkey",
           "tableFrom": "aptitudes",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -627,14 +607,10 @@
         "attachments_blob_id_fkey": {
           "name": "attachments_blob_id_fkey",
           "tableFrom": "attachments",
-          "columnsFrom": [
-            "blob_id"
-          ],
+          "columnsFrom": ["blob_id"],
           "tableTo": "blobs",
           "schemaTo": "storage",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -842,14 +818,10 @@
         "campaigns_ruleset_id_fkey": {
           "name": "campaigns_ruleset_id_fkey",
           "tableFrom": "campaigns",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -955,28 +927,20 @@
         "character_abilities_character_id_fkey": {
           "name": "character_abilities_character_id_fkey",
           "tableFrom": "character_abilities",
-          "columnsFrom": [
-            "character_id"
-          ],
+          "columnsFrom": ["character_id"],
           "tableTo": "characters",
           "schemaTo": "character",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "character_abilities_ability_id_fkey": {
           "name": "character_abilities_ability_id_fkey",
           "tableFrom": "character_abilities",
-          "columnsFrom": [
-            "ability_id"
-          ],
+          "columnsFrom": ["ability_id"],
           "tableTo": "abilities",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -984,10 +948,7 @@
       "compositePrimaryKeys": {
         "character_abilities_pkey": {
           "name": "character_abilities_pkey",
-          "columns": [
-            "character_id",
-            "ability_id"
-          ]
+          "columns": ["character_id", "ability_id"]
         }
       },
       "uniqueConstraints": {},
@@ -1197,56 +1158,40 @@
         "characters_user_id_fkey": {
           "name": "characters_user_id_fkey",
           "tableFrom": "characters",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "characters_ruleset_id_fkey": {
           "name": "characters_ruleset_id_fkey",
           "tableFrom": "characters",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "characters_race_id_fkey": {
           "name": "characters_race_id_fkey",
           "tableFrom": "characters",
-          "columnsFrom": [
-            "race_id"
-          ],
+          "columnsFrom": ["race_id"],
           "tableTo": "races",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "characters_parent_character_id_fkey": {
           "name": "characters_parent_character_id_fkey",
           "tableFrom": "characters",
-          "columnsFrom": [
-            "parent_character_id"
-          ],
+          "columnsFrom": ["parent_character_id"],
           "tableTo": "characters",
           "schemaTo": "character",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1475,42 +1420,30 @@
         "character_contributors_character_id_fk": {
           "name": "character_contributors_character_id_fk",
           "tableFrom": "character_contributors",
-          "columnsFrom": [
-            "character_id"
-          ],
+          "columnsFrom": ["character_id"],
           "tableTo": "characters",
           "schemaTo": "character",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "character_contributors_user_id_fk": {
           "name": "character_contributors_user_id_fk",
           "tableFrom": "character_contributors",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "character_contributors_invited_by_fk": {
           "name": "character_contributors_invited_by_fk",
           "tableFrom": "character_contributors",
-          "columnsFrom": [
-            "invited_by"
-          ],
+          "columnsFrom": ["invited_by"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1693,42 +1626,30 @@
         "contributors_ruleset_id_fk": {
           "name": "contributors_ruleset_id_fk",
           "tableFrom": "contributors",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "contributors_user_id_fk": {
           "name": "contributors_user_id_fk",
           "tableFrom": "contributors",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "contributors_invited_by_fk": {
           "name": "contributors_invited_by_fk",
           "tableFrom": "contributors",
-          "columnsFrom": [
-            "invited_by"
-          ],
+          "columnsFrom": ["invited_by"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1834,14 +1755,10 @@
         "email_verifications_user_id_fkey": {
           "name": "email_verifications_user_id_fkey",
           "tableFrom": "email_verifications",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1955,14 +1872,10 @@
         "entity_snapshots_ruleset_id_fkey": {
           "name": "entity_snapshots_ruleset_id_fkey",
           "tableFrom": "entity_snapshots",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1971,11 +1884,7 @@
       "uniqueConstraints": {
         "entity_snapshots_ruleset_type_source_unique": {
           "name": "entity_snapshots_ruleset_type_source_unique",
-          "columns": [
-            "ruleset_id",
-            "entity_type",
-            "source_entity_id"
-          ],
+          "columns": ["ruleset_id", "entity_type", "source_entity_id"],
           "nullsNotDistinct": false
         }
       },
@@ -2074,14 +1983,10 @@
         "exports_user_id_fkey": {
           "name": "exports_user_id_fkey",
           "tableFrom": "exports",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -2134,28 +2039,20 @@
         "feats_aptitudes_feat_id_fkey": {
           "name": "feats_aptitudes_feat_id_fkey",
           "tableFrom": "feats_aptitudes",
-          "columnsFrom": [
-            "feat_id"
-          ],
+          "columnsFrom": ["feat_id"],
           "tableTo": "feats",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "feats_aptitudes_aptitude_id_fkey": {
           "name": "feats_aptitudes_aptitude_id_fkey",
           "tableFrom": "feats_aptitudes",
-          "columnsFrom": [
-            "aptitude_id"
-          ],
+          "columnsFrom": ["aptitude_id"],
           "tableTo": "aptitudes",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -2163,10 +2060,7 @@
       "compositePrimaryKeys": {
         "feats_aptitudes_pkey": {
           "name": "feats_aptitudes_pkey",
-          "columns": [
-            "feat_id",
-            "aptitude_id"
-          ]
+          "columns": ["feat_id", "aptitude_id"]
         }
       },
       "uniqueConstraints": {},
@@ -2337,28 +2231,20 @@
         "feats_ruleset_id_fkey": {
           "name": "feats_ruleset_id_fkey",
           "tableFrom": "feats",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "feats_campaign_id_fkey": {
           "name": "feats_campaign_id_fkey",
           "tableFrom": "feats",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -2480,28 +2366,20 @@
         "inventory_character_id_fkey": {
           "name": "inventory_character_id_fkey",
           "tableFrom": "inventory",
-          "columnsFrom": [
-            "character_id"
-          ],
+          "columnsFrom": ["character_id"],
           "tableTo": "characters",
           "schemaTo": "character",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "inventory_item_id_fkey": {
           "name": "inventory_item_id_fkey",
           "tableFrom": "inventory",
-          "columnsFrom": [
-            "item_id"
-          ],
+          "columnsFrom": ["item_id"],
           "tableTo": "items",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -2509,10 +2387,7 @@
       "compositePrimaryKeys": {
         "inventory_pkey": {
           "name": "inventory_pkey",
-          "columns": [
-            "character_id",
-            "item_id"
-          ]
+          "columns": ["character_id", "item_id"]
         }
       },
       "uniqueConstraints": {},
@@ -2686,28 +2561,20 @@
         "invites_player_id_fkey": {
           "name": "invites_player_id_fkey",
           "tableFrom": "invites",
-          "columnsFrom": [
-            "player_id"
-          ],
+          "columnsFrom": ["player_id"],
           "tableTo": "players",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "invites_user_id_fkey": {
           "name": "invites_user_id_fkey",
           "tableFrom": "invites",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -2936,42 +2803,30 @@
         "items_ruleset_id_fkey": {
           "name": "items_ruleset_id_fkey",
           "tableFrom": "items",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "items_campaign_id_fkey": {
           "name": "items_campaign_id_fkey",
           "tableFrom": "items",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "items_source_item_id_fkey": {
           "name": "items_source_item_id_fkey",
           "tableFrom": "items",
-          "columnsFrom": [
-            "source_item_id"
-          ],
+          "columnsFrom": ["source_item_id"],
           "tableTo": "items",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -3099,42 +2954,30 @@
         "klass_level_feats_klass_level_id_fkey": {
           "name": "klass_level_feats_klass_level_id_fkey",
           "tableFrom": "klass_level_feats",
-          "columnsFrom": [
-            "klass_level_id"
-          ],
+          "columnsFrom": ["klass_level_id"],
           "tableTo": "klass_levels",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "klass_level_feats_feat_id_fkey": {
           "name": "klass_level_feats_feat_id_fkey",
           "tableFrom": "klass_level_feats",
-          "columnsFrom": [
-            "feat_id"
-          ],
+          "columnsFrom": ["feat_id"],
           "tableTo": "feats",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "klass_level_feats_aptitude_id_fkey": {
           "name": "klass_level_feats_aptitude_id_fkey",
           "tableFrom": "klass_level_feats",
-          "columnsFrom": [
-            "aptitude_id"
-          ],
+          "columnsFrom": ["aptitude_id"],
           "tableTo": "aptitudes",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -3142,10 +2985,7 @@
       "compositePrimaryKeys": {
         "klass_level_feats_pkey": {
           "name": "klass_level_feats_pkey",
-          "columns": [
-            "klass_level_id",
-            "feat_id"
-          ]
+          "columns": ["klass_level_id", "feat_id"]
         }
       },
       "uniqueConstraints": {},
@@ -3239,42 +3079,30 @@
         "klass_level_powers_klass_level_id_fkey": {
           "name": "klass_level_powers_klass_level_id_fkey",
           "tableFrom": "klass_level_powers",
-          "columnsFrom": [
-            "klass_level_id"
-          ],
+          "columnsFrom": ["klass_level_id"],
           "tableTo": "klass_levels",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "klass_level_powers_power_id_fkey": {
           "name": "klass_level_powers_power_id_fkey",
           "tableFrom": "klass_level_powers",
-          "columnsFrom": [
-            "power_id"
-          ],
+          "columnsFrom": ["power_id"],
           "tableTo": "powers",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "klass_level_powers_aptitude_id_fkey": {
           "name": "klass_level_powers_aptitude_id_fkey",
           "tableFrom": "klass_level_powers",
-          "columnsFrom": [
-            "aptitude_id"
-          ],
+          "columnsFrom": ["aptitude_id"],
           "tableTo": "aptitudes",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -3282,10 +3110,7 @@
       "compositePrimaryKeys": {
         "klass_level_powers_pkey": {
           "name": "klass_level_powers_pkey",
-          "columns": [
-            "klass_level_id",
-            "power_id"
-          ]
+          "columns": ["klass_level_id", "power_id"]
         }
       },
       "uniqueConstraints": {},
@@ -3372,28 +3197,20 @@
         "klass_level_saves_klass_level_id_fkey": {
           "name": "klass_level_saves_klass_level_id_fkey",
           "tableFrom": "klass_level_saves",
-          "columnsFrom": [
-            "klass_level_id"
-          ],
+          "columnsFrom": ["klass_level_id"],
           "tableTo": "klass_levels",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "klass_level_saves_save_id_fkey": {
           "name": "klass_level_saves_save_id_fkey",
           "tableFrom": "klass_level_saves",
-          "columnsFrom": [
-            "save_id"
-          ],
+          "columnsFrom": ["save_id"],
           "tableTo": "saves",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -3401,10 +3218,7 @@
       "compositePrimaryKeys": {
         "klass_level_saves_pkey": {
           "name": "klass_level_saves_pkey",
-          "columns": [
-            "klass_level_id",
-            "save_id"
-          ]
+          "columns": ["klass_level_id", "save_id"]
         }
       },
       "uniqueConstraints": {},
@@ -3503,14 +3317,10 @@
         "klass_levels_klass_id_fkey": {
           "name": "klass_levels_klass_id_fkey",
           "tableFrom": "klass_levels",
-          "columnsFrom": [
-            "klass_id"
-          ],
+          "columnsFrom": ["klass_id"],
           "tableTo": "klasses",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -3519,10 +3329,7 @@
       "uniqueConstraints": {
         "klass_levels_klass_id_level_key": {
           "name": "klass_levels_klass_id_level_key",
-          "columns": [
-            "klass_id",
-            "level"
-          ],
+          "columns": ["klass_id", "level"],
           "nullsNotDistinct": false
         }
       },
@@ -3608,28 +3415,20 @@
         "klass_skills_klass_id_fkey": {
           "name": "klass_skills_klass_id_fkey",
           "tableFrom": "klass_skills",
-          "columnsFrom": [
-            "klass_id"
-          ],
+          "columnsFrom": ["klass_id"],
           "tableTo": "klasses",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "klass_skills_skill_id_fkey": {
           "name": "klass_skills_skill_id_fkey",
           "tableFrom": "klass_skills",
-          "columnsFrom": [
-            "skill_id"
-          ],
+          "columnsFrom": ["skill_id"],
           "tableTo": "skills",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -3637,10 +3436,7 @@
       "compositePrimaryKeys": {
         "klass_skills_pkey": {
           "name": "klass_skills_pkey",
-          "columns": [
-            "klass_id",
-            "skill_id"
-          ]
+          "columns": ["klass_id", "skill_id"]
         }
       },
       "uniqueConstraints": {},
@@ -3828,42 +3624,30 @@
         "klasses_ruleset_id_fkey": {
           "name": "klasses_ruleset_id_fkey",
           "tableFrom": "klasses",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "klasses_campaign_id_fkey": {
           "name": "klasses_campaign_id_fkey",
           "tableFrom": "klasses",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "klasses_parent_id_fkey": {
           "name": "klasses_parent_id_fkey",
           "tableFrom": "klasses",
-          "columnsFrom": [
-            "parent_id"
-          ],
+          "columnsFrom": ["parent_id"],
           "tableTo": "klasses",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -3952,28 +3736,20 @@
         "languages_character_id_fkey": {
           "name": "languages_character_id_fkey",
           "tableFrom": "languages",
-          "columnsFrom": [
-            "character_id"
-          ],
+          "columnsFrom": ["character_id"],
           "tableTo": "characters",
           "schemaTo": "character",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "languages_language_id_fkey": {
           "name": "languages_language_id_fkey",
           "tableFrom": "languages",
-          "columnsFrom": [
-            "language_id"
-          ],
+          "columnsFrom": ["language_id"],
           "tableTo": "languages",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -3981,10 +3757,7 @@
       "compositePrimaryKeys": {
         "languages_pkey": {
           "name": "languages_pkey",
-          "columns": [
-            "character_id",
-            "language_id"
-          ]
+          "columns": ["character_id", "language_id"]
         }
       },
       "uniqueConstraints": {},
@@ -4131,28 +3904,20 @@
         "languages_ruleset_id_fkey": {
           "name": "languages_ruleset_id_fkey",
           "tableFrom": "languages",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "languages_campaign_id_fkey": {
           "name": "languages_campaign_id_fkey",
           "tableFrom": "languages",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -4242,42 +4007,30 @@
         "level_feats_character_level_id_fkey": {
           "name": "level_feats_character_level_id_fkey",
           "tableFrom": "level_feats",
-          "columnsFrom": [
-            "character_level_id"
-          ],
+          "columnsFrom": ["character_level_id"],
           "tableTo": "levels",
           "schemaTo": "character",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "level_feats_feat_id_fkey": {
           "name": "level_feats_feat_id_fkey",
           "tableFrom": "level_feats",
-          "columnsFrom": [
-            "feat_id"
-          ],
+          "columnsFrom": ["feat_id"],
           "tableTo": "feats",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "level_feats_aptitude_id_fkey": {
           "name": "level_feats_aptitude_id_fkey",
           "tableFrom": "level_feats",
-          "columnsFrom": [
-            "aptitude_id"
-          ],
+          "columnsFrom": ["aptitude_id"],
           "tableTo": "aptitudes",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -4285,10 +4038,7 @@
       "compositePrimaryKeys": {
         "level_feats_pkey": {
           "name": "level_feats_pkey",
-          "columns": [
-            "character_level_id",
-            "feat_id"
-          ]
+          "columns": ["character_level_id", "feat_id"]
         }
       },
       "uniqueConstraints": {},
@@ -4375,42 +4125,30 @@
         "level_powers_character_level_id_fkey": {
           "name": "level_powers_character_level_id_fkey",
           "tableFrom": "level_powers",
-          "columnsFrom": [
-            "character_level_id"
-          ],
+          "columnsFrom": ["character_level_id"],
           "tableTo": "levels",
           "schemaTo": "character",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "level_powers_power_id_fkey": {
           "name": "level_powers_power_id_fkey",
           "tableFrom": "level_powers",
-          "columnsFrom": [
-            "power_id"
-          ],
+          "columnsFrom": ["power_id"],
           "tableTo": "powers",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "level_powers_aptitude_id_fkey": {
           "name": "level_powers_aptitude_id_fkey",
           "tableFrom": "level_powers",
-          "columnsFrom": [
-            "aptitude_id"
-          ],
+          "columnsFrom": ["aptitude_id"],
           "tableTo": "aptitudes",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -4418,10 +4156,7 @@
       "compositePrimaryKeys": {
         "level_powers_pkey": {
           "name": "level_powers_pkey",
-          "columns": [
-            "character_level_id",
-            "power_id"
-          ]
+          "columns": ["character_level_id", "power_id"]
         }
       },
       "uniqueConstraints": {},
@@ -4524,28 +4259,20 @@
         "level_skills_character_level_id_fkey": {
           "name": "level_skills_character_level_id_fkey",
           "tableFrom": "level_skills",
-          "columnsFrom": [
-            "character_level_id"
-          ],
+          "columnsFrom": ["character_level_id"],
           "tableTo": "levels",
           "schemaTo": "character",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "level_skills_skill_id_fkey": {
           "name": "level_skills_skill_id_fkey",
           "tableFrom": "level_skills",
-          "columnsFrom": [
-            "skill_id"
-          ],
+          "columnsFrom": ["skill_id"],
           "tableTo": "skills",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -4553,10 +4280,7 @@
       "compositePrimaryKeys": {
         "level_skills_pkey": {
           "name": "level_skills_pkey",
-          "columns": [
-            "character_level_id",
-            "skill_id"
-          ]
+          "columns": ["character_level_id", "skill_id"]
         }
       },
       "uniqueConstraints": {},
@@ -4661,42 +4385,30 @@
         "levels_character_id_fkey": {
           "name": "levels_character_id_fkey",
           "tableFrom": "levels",
-          "columnsFrom": [
-            "character_id"
-          ],
+          "columnsFrom": ["character_id"],
           "tableTo": "characters",
           "schemaTo": "character",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "levels_klass_level_id_fkey": {
           "name": "levels_klass_level_id_fkey",
           "tableFrom": "levels",
-          "columnsFrom": [
-            "klass_level_id"
-          ],
+          "columnsFrom": ["klass_level_id"],
           "tableTo": "klass_levels",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "levels_ability_id_fkey": {
           "name": "levels_ability_id_fkey",
           "tableFrom": "levels",
-          "columnsFrom": [
-            "ability_id"
-          ],
+          "columnsFrom": ["ability_id"],
           "tableTo": "abilities",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -4705,10 +4417,7 @@
       "uniqueConstraints": {
         "levels_character_id_klass_level_id_key": {
           "name": "levels_character_id_klass_level_id_key",
-          "columns": [
-            "character_id",
-            "klass_level_id"
-          ],
+          "columns": ["character_id", "klass_level_id"],
           "nullsNotDistinct": false
         }
       },
@@ -4854,28 +4563,20 @@
         "mechanics_ruleset_id_fkey": {
           "name": "mechanics_ruleset_id_fkey",
           "tableFrom": "mechanics",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "mechanics_campaign_id_fkey": {
           "name": "mechanics_campaign_id_fkey",
           "tableFrom": "mechanics",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -5148,42 +4849,30 @@
         "notifications_recipient_id_fkey": {
           "name": "notifications_recipient_id_fkey",
           "tableFrom": "notifications",
-          "columnsFrom": [
-            "recipient_id"
-          ],
+          "columnsFrom": ["recipient_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "notifications_actor_id_fkey": {
           "name": "notifications_actor_id_fkey",
           "tableFrom": "notifications",
-          "columnsFrom": [
-            "actor_id"
-          ],
+          "columnsFrom": ["actor_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "notifications_activity_id_fkey": {
           "name": "notifications_activity_id_fkey",
           "tableFrom": "notifications",
-          "columnsFrom": [
-            "activity_id"
-          ],
+          "columnsFrom": ["activity_id"],
           "tableTo": "activities",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -5287,14 +4976,10 @@
         "oauth_accounts_user_id_fkey": {
           "name": "oauth_accounts_user_id_fkey",
           "tableFrom": "oauth_accounts",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -5391,14 +5076,10 @@
         "password_resets_user_id_fkey": {
           "name": "password_resets_user_id_fkey",
           "tableFrom": "password_resets",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -5496,28 +5177,20 @@
         "player_characters_player_id_fkey": {
           "name": "player_characters_player_id_fkey",
           "tableFrom": "player_characters",
-          "columnsFrom": [
-            "player_id"
-          ],
+          "columnsFrom": ["player_id"],
           "tableTo": "players",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "player_characters_character_id_fkey": {
           "name": "player_characters_character_id_fkey",
           "tableFrom": "player_characters",
-          "columnsFrom": [
-            "character_id"
-          ],
+          "columnsFrom": ["character_id"],
           "tableTo": "characters",
           "schemaTo": "character",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -5620,28 +5293,20 @@
         "players_user_id_fkey": {
           "name": "players_user_id_fkey",
           "tableFrom": "players",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         },
         "players_campaign_id_fkey": {
           "name": "players_campaign_id_fkey",
           "tableFrom": "players",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -5700,28 +5365,20 @@
         "powers_aptitudes_power_id_fkey": {
           "name": "powers_aptitudes_power_id_fkey",
           "tableFrom": "powers_aptitudes",
-          "columnsFrom": [
-            "power_id"
-          ],
+          "columnsFrom": ["power_id"],
           "tableTo": "powers",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "powers_aptitudes_aptitude_id_fkey": {
           "name": "powers_aptitudes_aptitude_id_fkey",
           "tableFrom": "powers_aptitudes",
-          "columnsFrom": [
-            "aptitude_id"
-          ],
+          "columnsFrom": ["aptitude_id"],
           "tableTo": "aptitudes",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -5729,10 +5386,7 @@
       "compositePrimaryKeys": {
         "powers_aptitudes_pkey": {
           "name": "powers_aptitudes_pkey",
-          "columns": [
-            "power_id",
-            "aptitude_id"
-          ]
+          "columns": ["power_id", "aptitude_id"]
         }
       },
       "uniqueConstraints": {},
@@ -5885,42 +5539,30 @@
         "powers_ruleset_id_fkey": {
           "name": "powers_ruleset_id_fkey",
           "tableFrom": "powers",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "powers_campaign_id_fkey": {
           "name": "powers_campaign_id_fkey",
           "tableFrom": "powers",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "powers_save_id_fkey": {
           "name": "powers_save_id_fkey",
           "tableFrom": "powers",
-          "columnsFrom": [
-            "save_id"
-          ],
+          "columnsFrom": ["save_id"],
           "tableTo": "saves",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -6059,12 +5701,7 @@
       "uniqueConstraints": {
         "properties_entity_id_entity_type_type_value_key": {
           "name": "properties_entity_id_entity_type_type_value_key",
-          "columns": [
-            "entity_id",
-            "entity_type",
-            "type",
-            "value"
-          ],
+          "columns": ["entity_id", "entity_type", "type", "value"],
           "nullsNotDistinct": false
         }
       },
@@ -6243,42 +5880,30 @@
         "races_ruleset_id_fkey": {
           "name": "races_ruleset_id_fkey",
           "tableFrom": "races",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "races_campaign_id_fkey": {
           "name": "races_campaign_id_fkey",
           "tableFrom": "races",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "races_parent_id_fkey": {
           "name": "races_parent_id_fkey",
           "tableFrom": "races",
-          "columnsFrom": [
-            "parent_id"
-          ],
+          "columnsFrom": ["parent_id"],
           "tableTo": "races",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -6411,11 +6036,7 @@
       "uniqueConstraints": {
         "requirements_entity_id_entity_type_level_key": {
           "name": "requirements_entity_id_entity_type_level_key",
-          "columns": [
-            "entity_id",
-            "entity_type",
-            "level"
-          ],
+          "columns": ["entity_id", "entity_type", "level"],
           "nullsNotDistinct": false
         }
       },
@@ -6478,28 +6099,20 @@
         "ruleset_extensions_ruleset_id_fkey": {
           "name": "ruleset_extensions_ruleset_id_fkey",
           "tableFrom": "ruleset_extensions",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "ruleset_extensions_extension_id_fkey": {
           "name": "ruleset_extensions_extension_id_fkey",
           "tableFrom": "ruleset_extensions",
-          "columnsFrom": [
-            "extension_id"
-          ],
+          "columnsFrom": ["extension_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -6507,10 +6120,7 @@
       "compositePrimaryKeys": {
         "ruleset_extensions_pkey": {
           "name": "ruleset_extensions_pkey",
-          "columns": [
-            "ruleset_id",
-            "extension_id"
-          ]
+          "columns": ["ruleset_id", "extension_id"]
         }
       },
       "uniqueConstraints": {},
@@ -6667,28 +6277,20 @@
         "rulesets_ruleset_id_fkey": {
           "name": "rulesets_ruleset_id_fkey",
           "tableFrom": "rulesets",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "rulesets_user_id_fkey": {
           "name": "rulesets_user_id_fkey",
           "tableFrom": "rulesets",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -6838,42 +6440,30 @@
         "saves_ruleset_id_fkey": {
           "name": "saves_ruleset_id_fkey",
           "tableFrom": "saves",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "saves_campaign_id_fkey": {
           "name": "saves_campaign_id_fkey",
           "tableFrom": "saves",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "saves_ability_id_fkey": {
           "name": "saves_ability_id_fkey",
           "tableFrom": "saves",
-          "columnsFrom": [
-            "ability_id"
-          ],
+          "columnsFrom": ["ability_id"],
           "tableTo": "abilities",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -6964,14 +6554,10 @@
         "sessions_user_id_fkey": {
           "name": "sessions_user_id_fkey",
           "tableFrom": "sessions",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -7121,42 +6707,30 @@
         "skills_ruleset_id_fkey": {
           "name": "skills_ruleset_id_fkey",
           "tableFrom": "skills",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "skills_campaign_id_fkey": {
           "name": "skills_campaign_id_fkey",
           "tableFrom": "skills",
-          "columnsFrom": [
-            "campaign_id"
-          ],
+          "columnsFrom": ["campaign_id"],
           "tableTo": "campaigns",
           "schemaTo": "campaign",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "skills_primary_ability_id_fkey": {
           "name": "skills_primary_ability_id_fkey",
           "tableFrom": "skills",
-          "columnsFrom": [
-            "primary_ability_id"
-          ],
+          "columnsFrom": ["primary_ability_id"],
           "tableTo": "abilities",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -7225,28 +6799,20 @@
         "starred_rulesets_user_id_fkey": {
           "name": "starred_rulesets_user_id_fkey",
           "tableFrom": "starred_rulesets",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "users",
           "schemaTo": "account",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "starred_rulesets_ruleset_id_fkey": {
           "name": "starred_rulesets_ruleset_id_fkey",
           "tableFrom": "starred_rulesets",
-          "columnsFrom": [
-            "ruleset_id"
-          ],
+          "columnsFrom": ["ruleset_id"],
           "tableTo": "rulesets",
           "schemaTo": "rules",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -7254,10 +6820,7 @@
       "compositePrimaryKeys": {
         "starred_rulesets_pkey": {
           "name": "starred_rulesets_pkey",
-          "columns": [
-            "user_id",
-            "ruleset_id"
-          ]
+          "columns": ["user_id", "ruleset_id"]
         }
       },
       "uniqueConstraints": {},
@@ -7413,27 +6976,17 @@
     "public.base_rules": {
       "name": "base_rules",
       "schema": "public",
-      "values": [
-        "Dungeons & Dragons: 3.5"
-      ]
+      "values": ["Dungeons & Dragons: 3.5"]
     },
     "public.contributor_role": {
       "name": "contributor_role",
       "schema": "public",
-      "values": [
-        "Admin",
-        "Editor",
-        "Viewer"
-      ]
+      "values": ["Admin", "Editor", "Viewer"]
     },
     "public.gender": {
       "name": "gender",
       "schema": "public",
-      "values": [
-        "Male",
-        "Female",
-        "Other"
-      ]
+      "values": ["Male", "Female", "Other"]
     },
     "public.location": {
       "name": "location",
@@ -7457,42 +7010,22 @@
     "public.role": {
       "name": "role",
       "schema": "public",
-      "values": [
-        "Game Master",
-        "Player Character"
-      ]
+      "values": ["Game Master", "Player Character"]
     },
     "public.ruleset_kind": {
       "name": "ruleset_kind",
       "schema": "public",
-      "values": [
-        "ruleset",
-        "extension"
-      ]
+      "values": ["ruleset", "extension"]
     },
     "public.ruleset_status": {
       "name": "ruleset_status",
       "schema": "public",
-      "values": [
-        "Draft",
-        "Published",
-        "Archived"
-      ]
+      "values": ["Draft", "Published", "Archived"]
     },
     "public.size_type": {
       "name": "size_type",
       "schema": "public",
-      "values": [
-        "Fine",
-        "Diminutive",
-        "Tiny",
-        "Small",
-        "Medium",
-        "Large",
-        "Huge",
-        "Gargantuan",
-        "Colossal"
-      ]
+      "values": ["Fine", "Diminutive", "Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan", "Colossal"]
     }
   },
   "schemas": {

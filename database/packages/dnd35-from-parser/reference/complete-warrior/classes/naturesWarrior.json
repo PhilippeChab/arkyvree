@@ -90,9 +90,7 @@
       "parsed": {
         "alignment": "Any neutral",
         "bab": 4,
-        "feats": [
-          "Track"
-        ],
+        "feats": ["Track"],
         "skills": [
           {
             "name": "Knowledge (nature)",
@@ -107,9 +105,7 @@
             "ranks": 8
           }
         ],
-        "special": [
-          "Wild shape ability"
-        ]
+        "special": ["Wild shape ability"]
       },
       "text": "Base Attack Bonus: +4 Alignment: Any neutral Skills: Knowledge (nature) 8 ranks, Knowledge (the planes) 2 ranks, Survival 8 ranks Feats: Track Special: Wild shape ability"
     },
@@ -119,10 +115,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Nature's armament",
-          "wilding"
-        ],
+        "special": ["Nature's armament", "wilding"],
         "willSave": 0
       },
       {
@@ -130,9 +123,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "+1 level of existing divine spellcasting class"
-        ],
+        "special": ["+1 level of existing divine spellcasting class"],
         "willSave": 0
       },
       {
@@ -140,9 +131,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Nature's armament"
-        ],
+        "special": ["Nature's armament"],
         "willSave": 1
       },
       {
@@ -150,9 +139,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "+1 level of existing divine spellcasting class"
-        ],
+        "special": ["+1 level of existing divine spellcasting class"],
         "willSave": 1
       },
       {
@@ -160,9 +147,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Nature's armament"
-        ],
+        "special": ["Nature's armament"],
         "willSave": 1
       }
     ],

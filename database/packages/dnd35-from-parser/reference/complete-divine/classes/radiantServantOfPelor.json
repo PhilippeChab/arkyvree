@@ -8,9 +8,7 @@
   "overrides": {
     "aptitudePicks": [
       {
-        "levels": [
-          5
-        ],
+        "levels": [5],
         "target": "aptitudes.clericdomain.allowed"
       }
     ],
@@ -27,9 +25,7 @@
         ]
       }
     },
-    "reviewed": [
-      "Bonus Domain"
-    ]
+    "reviewed": ["Bonus Domain"]
   },
   "raw": {
     "classFeatures": [
@@ -111,9 +107,7 @@
             "type": "divine"
           }
         ],
-        "feats": [
-          "Extra Turning"
-        ],
+        "feats": ["Extra Turning"],
         "saves": [
           {
             "base": 5,
@@ -143,11 +137,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Extra greater turning",
-          "radiance",
-          "turn undead"
-        ],
+        "special": ["Extra greater turning", "radiance", "turn undead"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 2
       },
@@ -156,10 +146,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Divine health",
-          "empower healing"
-        ],
+        "special": ["Divine health", "empower healing"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 3
       },
@@ -168,9 +155,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Aura of warding"
-        ],
+        "special": ["Aura of warding"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 3
       },
@@ -188,9 +173,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Bonus domain"
-        ],
+        "special": ["Bonus domain"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 4
       },
@@ -199,9 +182,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Maximize healing"
-        ],
+        "special": ["Maximize healing"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 5
       },
@@ -219,9 +200,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Positive energy burst"
-        ],
+        "special": ["Positive energy burst"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 6
       },
@@ -239,9 +218,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Supreme healing"
-        ],
+        "special": ["Supreme healing"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 7
       }

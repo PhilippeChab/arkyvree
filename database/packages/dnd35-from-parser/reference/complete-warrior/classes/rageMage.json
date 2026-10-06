@@ -75,12 +75,7 @@
         "type": "(Sp)"
       }
     ],
-    "classSkills": [
-      "Concentration",
-      "Profession",
-      "Spellcraft",
-      "Survival"
-    ],
+    "classSkills": ["Concentration", "Profession", "Spellcraft", "Survival"],
     "description": "The rage mage's approach to magic is based on the primal passion of magic more than the studious quasi-scientific approach.",
     "hitDie": "d8",
     "name": "Rage Mage",
@@ -94,12 +89,8 @@
             "type": "arcane"
           }
         ],
-        "feats": [
-          "Combat Casting"
-        ],
-        "special": [
-          "Rage or frenzy ability."
-        ]
+        "feats": ["Combat Casting"],
+        "special": ["Rage or frenzy ability."]
       },
       "text": "Base Attack Bonus: +4 Alignment: Any nonlawful Feats: Combat Casting Spells: Able to cast 2nd-level arcane spells.Special: Rage or frenzy ability."
     },
@@ -109,9 +100,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Spell rage 1/day"
-        ],
+        "special": ["Spell rage 1/day"],
         "spellsPerDay": "-",
         "willSave": 0
       },
@@ -120,9 +109,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Overcome spell failure"
-        ],
+        "special": ["Overcome spell failure"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 0
       },
@@ -131,9 +118,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Rage +1 use/day"
-        ],
+        "special": ["Rage +1 use/day"],
         "spellsPerDay": "-",
         "willSave": 1
       },
@@ -151,9 +136,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Spell rage 2/day"
-        ],
+        "special": ["Spell rage 2/day"],
         "spellsPerDay": "-",
         "willSave": 1
       },
@@ -171,9 +154,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Spell fury"
-        ],
+        "special": ["Spell fury"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -182,9 +163,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Rage +1 use/day"
-        ],
+        "special": ["Rage +1 use/day"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 2
       },
@@ -193,9 +172,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Tireless rage"
-        ],
+        "special": ["Tireless rage"],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -204,10 +181,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Warrior cry",
-          "spell rage 3/day"
-        ],
+        "special": ["Warrior cry", "spell rage 3/day"],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       }

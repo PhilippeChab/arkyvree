@@ -82,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # full history so --changed can diff against the base branch
+          fetch-depth: 0 # full history so --changed can diff against the base branch
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest

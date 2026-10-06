@@ -45,9 +45,7 @@
         "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
     },
-    "reviewed": [
-      "AC"
-    ]
+    "reviewed": ["AC"]
   },
   "raw": {
     "classFeatures": [
@@ -107,23 +105,14 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": [
-      "Handle Animal",
-      "Listen",
-      "Ride",
-      "Spot",
-      "Survival"
-    ],
+    "classSkills": ["Handle Animal", "Listen", "Ride", "Spot", "Survival"],
     "description": "Halfling outriders are elite champions whose task is to warn their fellows of, and protect them from, danger.",
     "hitDie": "d8",
     "name": "Halfling Outrider",
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": [
-          "Mounted Combat",
-          "Mounted Archery"
-        ],
+        "feats": ["Mounted Combat", "Mounted Archery"],
         "skills": [
           {
             "name": "Listen",
@@ -138,9 +127,7 @@
             "ranks": 3
           }
         ],
-        "special": [
-          "Race: Halfling"
-        ]
+        "special": ["Race: Halfling"]
       },
       "text": "Base Attack Bonus: +5 Race: Halfling Skills: Listen 3 ranks, Ride 6 ranks, Spot 3 ranks Feats: Mounted Combat, Mounted Archery"
     },
@@ -153,11 +140,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Mount",
-          "Alertness",
-          "Ride bonus"
-        ],
+        "special": ["Mount", "Alertness", "Ride bonus"],
         "willSave": 0
       },
       {
@@ -168,9 +151,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Defensive riding"
-        ],
+        "special": ["Defensive riding"],
         "willSave": 0
       },
       {
@@ -181,9 +162,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Unbroken charge"
-        ],
+        "special": ["Unbroken charge"],
         "willSave": 1
       },
       {
@@ -194,9 +173,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Stand on mount"
-        ],
+        "special": ["Stand on mount"],
         "willSave": 1
       },
       {
@@ -207,9 +184,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Leap from the saddle"
-        ],
+        "special": ["Leap from the saddle"],
         "willSave": 1
       },
       {
@@ -231,9 +206,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Evasion"
-        ],
+        "special": ["Evasion"],
         "willSave": 2
       },
       {
@@ -244,9 +217,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Full mounted attack"
-        ],
+        "special": ["Full mounted attack"],
         "willSave": 2
       },
       {
@@ -268,9 +239,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Quick turn"
-        ],
+        "special": ["Quick turn"],
         "willSave": 3
       }
     ],

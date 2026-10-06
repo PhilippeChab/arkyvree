@@ -70,11 +70,7 @@
     "prerequisites": {
       "parsed": {
         "alignment": "Any nonevil",
-        "feats": [
-          "Augment Summoning",
-          "Spell Focus (conjuration) Languages: Celestial",
-          "Infernal"
-        ],
+        "feats": ["Augment Summoning", "Spell Focus (conjuration) Languages: Celestial", "Infernal"],
         "skills": [
           {
             "name": "Bluff",
@@ -85,9 +81,7 @@
             "ranks": 4
           }
         ],
-        "special": [
-          "Ability to cast summon monster III"
-        ]
+        "special": ["Ability to cast summon monster III"]
       },
       "text": "Alignment: Any nonevil Skills: Bluff 4 ranks, Knowledge (the planes) 4 ranks Feats: Augment Summoning, Spell Focus (conjuration) Languages: Celestial, Infernal.Special: Ability to cast summon monster III"
     },
@@ -97,10 +91,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": [
-          "Deceptive summons",
-          "unrestricted conjuration"
-        ],
+        "special": ["Deceptive summons", "unrestricted conjuration"],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -109,9 +100,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Planar binding"
-        ],
+        "special": ["Planar binding"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -120,9 +109,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": [
-          "Skill Focus (Bluff)"
-        ],
+        "special": ["Skill Focus (Bluff)"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -131,9 +118,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Deceptive summons (fury)"
-        ],
+        "special": ["Deceptive summons (fury)"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -142,9 +127,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": [
-          "Fiendish legion"
-        ],
+        "special": ["Fiendish legion"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -153,9 +136,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Deceitful bargaining"
-        ],
+        "special": ["Deceitful bargaining"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 5
       },
@@ -164,9 +145,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": [
-          "Deceptive summons (resistance)"
-        ],
+        "special": ["Deceptive summons (resistance)"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 5
       },
@@ -175,9 +154,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Improved calling"
-        ],
+        "special": ["Improved calling"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 6
       },
@@ -186,9 +163,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": [
-          "Safe summoning"
-        ],
+        "special": ["Safe summoning"],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 6
       }

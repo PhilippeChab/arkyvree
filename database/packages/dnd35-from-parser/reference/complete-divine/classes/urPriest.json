@@ -29,9 +29,7 @@
     },
     "spells": {
       "inheritsFrom": {
-        "classes": [
-          "Cleric"
-        ]
+        "classes": ["Cleric"]
       }
     }
   },
@@ -93,10 +91,7 @@
             "type": "divine"
           }
         ],
-        "feats": [
-          "Iron Will",
-          "Spell Focus (evil)"
-        ],
+        "feats": ["Iron Will", "Spell Focus (evil)"],
         "saves": [
           {
             "base": 3,
@@ -152,9 +147,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": [
-          "Rebuke undead"
-        ],
+        "special": ["Rebuke undead"],
         "spellsPerDay": "5,3,0,-,-,-,-,-,-,-",
         "willSave": 3
       },
@@ -172,9 +165,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": [
-          "Divine spell resistance 15"
-        ],
+        "special": ["Divine spell resistance 15"],
         "spellsPerDay": "6,3,2,1,0,-,-,-,-,-",
         "willSave": 4
       },
@@ -192,9 +183,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": [
-          "Siphon spell power"
-        ],
+        "special": ["Siphon spell power"],
         "spellsPerDay": "6,3,3,3,2,1,0,-,-,-",
         "willSave": 5
       },
@@ -212,9 +201,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": [
-          "Divine spell resistance 20"
-        ],
+        "special": ["Divine spell resistance 20"],
         "spellsPerDay": "6,4,4,3,3,3,2,1,0,-",
         "willSave": 6
       },
@@ -232,9 +219,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": [
-          "Steal spell-like ability"
-        ],
+        "special": ["Steal spell-like ability"],
         "spellsPerDay": "6,5,5,4,4,4,4,3,2,1",
         "willSave": 7
       }

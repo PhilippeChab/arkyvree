@@ -97,10 +97,7 @@
     "name": "Dungeon Delver",
     "prerequisites": {
       "parsed": {
-        "feats": [
-          "Alertness",
-          "Blind-Fight"
-        ],
+        "feats": ["Alertness", "Blind-Fight"],
         "skills": [
           {
             "name": "Climb",
@@ -147,11 +144,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Darkvision",
-          "deep survival",
-          "trap sense +1"
-        ],
+        "special": ["Darkvision", "deep survival", "trap sense +1"],
         "willSave": 0
       },
       {
@@ -159,10 +152,7 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Reduce",
-          "stonecunning"
-        ],
+        "special": ["Reduce", "stonecunning"],
         "willSave": 0
       },
       {
@@ -170,10 +160,7 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Augury 1/day",
-          "skill mastery"
-        ],
+        "special": ["Augury 1/day", "skill mastery"],
         "willSave": 1
       },
       {
@@ -181,10 +168,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Evasion",
-          "trap sense +2"
-        ],
+        "special": ["Evasion", "trap sense +2"],
         "willSave": 1
       },
       {
@@ -192,9 +176,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Blindsense 1/day"
-        ],
+        "special": ["Blindsense 1/day"],
         "willSave": 1
       },
       {
@@ -202,10 +184,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Augury 2/day",
-          "passwall"
-        ],
+        "special": ["Augury 2/day", "passwall"],
         "willSave": 2
       },
       {
@@ -213,9 +192,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Trap sense +3"
-        ],
+        "special": ["Trap sense +3"],
         "willSave": 2
       },
       {
@@ -223,9 +200,7 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Find the path"
-        ],
+        "special": ["Find the path"],
         "willSave": 2
       },
       {
@@ -233,10 +208,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Augury 3/day",
-          "phase door"
-        ],
+        "special": ["Augury 3/day", "phase door"],
         "willSave": 3
       },
       {
@@ -244,10 +216,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Blindsense 2/day",
-          "trap sense +4"
-        ],
+        "special": ["Blindsense 2/day", "trap sense +4"],
         "willSave": 3
       }
     ],

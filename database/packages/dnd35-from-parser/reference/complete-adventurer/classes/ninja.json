@@ -70,9 +70,7 @@
         ]
       }
     },
-    "reviewed": [
-      "AC Bonus"
-    ]
+    "reviewed": ["AC Bonus"]
   },
   "raw": {
     "classFeatures": [
@@ -208,11 +206,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Ki power",
-          "sudden strike +1d6",
-          "trapfinding"
-        ],
+        "special": ["Ki power", "sudden strike +1d6", "trapfinding"],
         "willSave": 0
       },
       {
@@ -223,9 +217,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Ghost step (invisible)"
-        ],
+        "special": ["Ghost step (invisible)"],
         "willSave": 0
       },
       {
@@ -236,10 +228,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Sudden strike +2d6",
-          "poison use"
-        ],
+        "special": ["Sudden strike +2d6", "poison use"],
         "willSave": 1
       },
       {
@@ -250,9 +239,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Great leap"
-        ],
+        "special": ["Great leap"],
         "willSave": 1
       },
       {
@@ -263,9 +250,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Sudden strike +3d6"
-        ],
+        "special": ["Sudden strike +3d6"],
         "willSave": 1
       },
       {
@@ -276,10 +261,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Acrobatics +2",
-          "ki dodge"
-        ],
+        "special": ["Acrobatics +2", "ki dodge"],
         "willSave": 2
       },
       {
@@ -290,10 +272,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Sudden strike +4d6",
-          "speed climb"
-        ],
+        "special": ["Sudden strike +4d6", "speed climb"],
         "willSave": 2
       },
       {
@@ -304,9 +283,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Ghost strike"
-        ],
+        "special": ["Ghost strike"],
         "willSave": 2
       },
       {
@@ -317,10 +294,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Sudden strike +5d6",
-          "improved poison use"
-        ],
+        "special": ["Sudden strike +5d6", "improved poison use"],
         "willSave": 3
       },
       {
@@ -331,9 +305,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Ghost step (ethereal)"
-        ],
+        "special": ["Ghost step (ethereal)"],
         "willSave": 3
       },
       {
@@ -344,9 +316,7 @@
         "fortSave": 3,
         "level": 11,
         "refSave": 7,
-        "special": [
-          "Sudden strike +6d6"
-        ],
+        "special": ["Sudden strike +6d6"],
         "willSave": 3
       },
       {
@@ -357,10 +327,7 @@
         "fortSave": 4,
         "level": 12,
         "refSave": 8,
-        "special": [
-          "Acrobatics +4",
-          "evasion"
-        ],
+        "special": ["Acrobatics +4", "evasion"],
         "willSave": 4
       },
       {
@@ -371,9 +338,7 @@
         "fortSave": 4,
         "level": 13,
         "refSave": 8,
-        "special": [
-          "Sudden strike +7d6"
-        ],
+        "special": ["Sudden strike +7d6"],
         "willSave": 4
       },
       {
@@ -384,9 +349,7 @@
         "fortSave": 4,
         "level": 14,
         "refSave": 9,
-        "special": [
-          "Ghost mind"
-        ],
+        "special": ["Ghost mind"],
         "willSave": 4
       },
       {
@@ -397,9 +360,7 @@
         "fortSave": 5,
         "level": 15,
         "refSave": 9,
-        "special": [
-          "Sudden strike +8d6"
-        ],
+        "special": ["Sudden strike +8d6"],
         "willSave": 5
       },
       {
@@ -410,9 +371,7 @@
         "fortSave": 5,
         "level": 16,
         "refSave": 10,
-        "special": [
-          "Ghost sight"
-        ],
+        "special": ["Ghost sight"],
         "willSave": 5
       },
       {
@@ -423,9 +382,7 @@
         "fortSave": 5,
         "level": 17,
         "refSave": 10,
-        "special": [
-          "Sudden strike +9d6"
-        ],
+        "special": ["Sudden strike +9d6"],
         "willSave": 5
       },
       {
@@ -436,10 +393,7 @@
         "fortSave": 6,
         "level": 18,
         "refSave": 11,
-        "special": [
-          "Acrobatics +6",
-          "greater ki dodge"
-        ],
+        "special": ["Acrobatics +6", "greater ki dodge"],
         "willSave": 6
       },
       {
@@ -450,9 +404,7 @@
         "fortSave": 6,
         "level": 19,
         "refSave": 11,
-        "special": [
-          "Sudden strike +10d6"
-        ],
+        "special": ["Sudden strike +10d6"],
         "willSave": 6
       },
       {
@@ -463,9 +415,7 @@
         "fortSave": 6,
         "level": 20,
         "refSave": 12,
-        "special": [
-          "Ghost walk"
-        ],
+        "special": ["Ghost walk"],
         "willSave": 6
       }
     ],

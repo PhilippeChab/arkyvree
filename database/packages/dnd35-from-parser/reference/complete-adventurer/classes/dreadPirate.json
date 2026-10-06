@@ -92,10 +92,7 @@
       "parsed": {
         "alignment": "Any nonlawful",
         "bab": 4,
-        "feats": [
-          "Quick Draw",
-          "Weapon Finesse"
-        ],
+        "feats": ["Quick Draw", "Weapon Finesse"],
         "skills": [
           {
             "name": "Appraise",
@@ -126,10 +123,7 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Seamanship",
-          "two-weapon fighting"
-        ],
+        "special": ["Seamanship", "two-weapon fighting"],
         "willSave": 0
       },
       {
@@ -137,9 +131,7 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": [
-          "Fearsome reputation +2"
-        ],
+        "special": ["Fearsome reputation +2"],
         "willSave": 0
       },
       {
@@ -147,9 +139,7 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": [
-          "Rally the crew +1 (1/day) or sneak attack +1d6"
-        ],
+        "special": ["Rally the crew +1 (1/day) or sneak attack +1d6"],
         "willSave": 1
       },
       {
@@ -157,10 +147,7 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Acrobatic charge",
-          "steady stance"
-        ],
+        "special": ["Acrobatic charge", "steady stance"],
         "willSave": 1
       },
       {
@@ -168,9 +155,7 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Luck of the wind or scourge of the seas"
-        ],
+        "special": ["Luck of the wind or scourge of the seas"],
         "willSave": 1
       },
       {
@@ -178,9 +163,7 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Fearsome reputation +4"
-        ],
+        "special": ["Fearsome reputation +4"],
         "willSave": 2
       },
       {
@@ -188,9 +171,7 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Rally the crew +2 (2/day) or sneak attack +2d6"
-        ],
+        "special": ["Rally the crew +2 (2/day) or sneak attack +2d6"],
         "willSave": 2
       },
       {
@@ -198,9 +179,7 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": [
-          "Skill mastery"
-        ],
+        "special": ["Skill mastery"],
         "willSave": 2
       },
       {
@@ -208,9 +187,7 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Fight to the death or motivate the scum"
-        ],
+        "special": ["Fight to the death or motivate the scum"],
         "willSave": 3
       },
       {
@@ -218,10 +195,7 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Fearsome reputation +6",
-          "pirate king"
-        ],
+        "special": ["Fearsome reputation +6", "pirate king"],
         "willSave": 3
       }
     ],

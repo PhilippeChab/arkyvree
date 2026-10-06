@@ -139,9 +139,7 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": [
-          "Extra domain (Travel)"
-        ],
+        "special": ["Extra domain (Travel)"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 0
       },
@@ -168,9 +166,7 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": [
-          "Swiftfooted"
-        ],
+        "special": ["Swiftfooted"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 1
       },
@@ -179,10 +175,7 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": [
-          "Corellon's perception",
-          "surefooted"
-        ],
+        "special": ["Corellon's perception", "surefooted"],
         "spellsPerDay": "-",
         "willSave": 1
       },
@@ -191,9 +184,7 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": [
-          "Find the path"
-        ],
+        "special": ["Find the path"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 2
       },
@@ -202,9 +193,7 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": [
-          "Extra domain (Magic)"
-        ],
+        "special": ["Extra domain (Magic)"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 2
       },
@@ -222,9 +211,7 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": [
-          "Arcane sight"
-        ],
+        "special": ["Arcane sight"],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 3
       },
@@ -233,9 +220,7 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": [
-          "Discern location"
-        ],
+        "special": ["Discern location"],
         "spellsPerDay": "-",
         "willSave": 3
       }
