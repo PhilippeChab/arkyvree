@@ -21,14 +21,23 @@ export default class CowData {
     this.aliases = aliases;
     this.siblings = siblings;
     this.siblingIds = new Set([...siblings.values()].flat());
+    this.stateId = String(++CowData.lastStateId);
     // A loser paired under two winners belongs to the later one
     for (const [winnerId, loserIds] of siblings) {
       for (const loserId of loserIds) this.winners.set(loserId, winnerId);
     }
   }
 
+  private static lastStateId = 0;
+
   /** The ruleset's extensions, then its ancestors: where its inherited entities come from. */
   readonly sourceChain: string[];
+
+  /**
+   * A short id of its own, one per built CowData, so that a request's reads in two copy-on-write states (a
+   * character's ruleset and another's) never share a cached result.
+   */
+  readonly stateId: string;
 
   /** Every sibling loser. */
   readonly siblingIds: ReadonlySet<string>;

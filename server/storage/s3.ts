@@ -10,7 +10,11 @@ export interface StorageBackend {
   objectStats(key: string): Promise<{ size: number; etag: string } | null>;
 }
 
-let _storage: StorageBackend | null = null;
+/**
+ * 5-minute cooldown so a credentials rotation that breaks the backend re-warns instead of staying silent forever after
+ * the first miss.
+ */
+const PUBLIC_URL_WARN_COOLDOWN_MS = 5 * 60 * 1000;
 
 function isNotFound(err: unknown): boolean {
   if (typeof err !== "object" || err === null) return false;
@@ -62,12 +66,36 @@ class S3StorageBackend implements StorageBackend {
   }
 }
 
-export function getStorage(): StorageBackend {
-  if (_storage) return _storage;
-  _storage = new S3StorageBackend();
-  return _storage;
+/** The object storage the server uploads attachments to: S3 (`S3StorageBackend`), built on first use, or a test's. */
+class ObjectStorage {
+  private backend: StorageBackend | null = null;
+
+  private publicUrlLastWarnedAt = 0;
+
+  /** The public URL of a stored object, or null (warned at most every 5 minutes) when storage isn't configured. */
+  findPublicUrl(key: string): string | null {
+    try {
+      return this.get().publicUrl(key);
+    } catch (err) {
+      const now = Date.now();
+      if (now - this.publicUrlLastWarnedAt > PUBLIC_URL_WARN_COOLDOWN_MS) {
+        this.publicUrlLastWarnedAt = now;
+        console.warn(
+          `[attachments] getPublicUrl() returning null — storage not configured: ${err instanceof Error ? err.message : err}`,
+        );
+      }
+      return null;
+    }
+  }
+
+  get(): StorageBackend {
+    this.backend ??= new S3StorageBackend();
+    return this.backend;
+  }
+
+  setForTest(backend: StorageBackend | null): void {
+    this.backend = backend;
+  }
 }
 
-export function setStorageForTest(backend: StorageBackend | null): void {
-  _storage = backend;
-}
+export default new ObjectStorage();

@@ -1,34 +1,14 @@
 import { Hono } from "hono";
 
 import { readEnv } from "@/server/environment.ts";
+import PageTemplates from "@/server/routers/PageTemplates.ts";
 
 interface RouteMeta {
   title: string;
   description: string;
 }
 
-const APP_CONFIG = JSON.stringify({
-  googleClientId: readEnv("GOOGLE_CLIENT_ID") || null,
-  sentryDsn: readEnv("SENTRY_CLIENT_DSN") || null,
-  sentryEnvironment: readEnv("NODE_ENV") || null,
-  sentryRelease: readEnv("FLY_MACHINE_VERSION") || null,
-});
-
 const APP_URL = readEnv("APP_URL") || "http://localhost:8000";
-
-/** Cache landing.html template at startup */
-let cachedLanding: string | null = null;
-/** Cache index.html template at startup */
-let cachedTemplate: string | null = null;
-const DEFAULT_DESCRIPTION =
-  "A programmable ruleset engine and character creator for tabletop RPGs. Customize game rules with modifiers, requirements, and properties, then build characters with real-time validation.";
-const DEFAULT_OG_DESCRIPTION =
-  "A programmable ruleset engine and character creator for tabletop RPGs. Customize rules, build characters, and manage campaigns.";
-
-const DEFAULT_OG_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Creator";
-
-/** Default values that appear in index.html (used as replacement anchors) */
-const DEFAULT_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Creator";
 
 /**
  * Routes that should be crawled and indexed via the SPA shell. Everything else (auth-gated app routes, token-gated
@@ -47,6 +27,24 @@ const INDEXABLE_ROUTE_META: Record<string, RouteMeta> = {
       "Terms of service and privacy policy for Arkyvree, the programmable ruleset engine and character creator for tabletop RPGs.",
   },
 };
+
+/** Default values that appear in index.html (used as replacement anchors) */
+const DEFAULT_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Creator";
+const DEFAULT_DESCRIPTION =
+  "A programmable ruleset engine and character creator for tabletop RPGs. Customize game rules with modifiers, requirements, and properties, then build characters with real-time validation.";
+const DEFAULT_OG_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Creator";
+const DEFAULT_OG_DESCRIPTION =
+  "A programmable ruleset engine and character creator for tabletop RPGs. Customize rules, build characters, and manage campaigns.";
+
+const APP_CONFIG = JSON.stringify({
+  googleClientId: readEnv("GOOGLE_CLIENT_ID") || null,
+  sentryDsn: readEnv("SENTRY_CLIENT_DSN") || null,
+  sentryEnvironment: readEnv("NODE_ENV") || null,
+  sentryRelease: readEnv("FLY_MACHINE_VERSION") || null,
+});
+
+/** The landing page and the app's shell, read once. */
+const templates = new PageTemplates(APP_URL, APP_CONFIG);
 
 /** Helper function to get MIME type based on file extension */
 function getMimeType(path: string): string {
@@ -109,26 +107,10 @@ function injectMeta(html: string, path: string): string {
   return result;
 }
 
-async function getLandingTemplate(): Promise<string> {
-  if (cachedLanding) return cachedLanding;
-  const file = Bun.file("./server/landing.html");
-  const raw = await file.text();
-  cachedLanding = raw.replaceAll("__APP_URL__", APP_URL);
-  return cachedLanding;
-}
-
-async function getTemplate(): Promise<string> {
-  if (cachedTemplate) return cachedTemplate;
-  const file = Bun.file("./dist/index.html");
-  const raw = await file.text();
-  cachedTemplate = raw.replace("__APP_CONFIG_JSON__", APP_CONFIG);
-  return cachedTemplate;
-}
-
 export default new Hono()
   .get("/", async (c) => {
     try {
-      const html = await getLandingTemplate();
+      const html = await templates.getLanding();
       return new Response(html, {
         headers: { "Content-Type": "text/html", "Cache-Control": "no-cache" },
       });
@@ -224,7 +206,7 @@ export default new Hono()
       return c.text("Not found", 404);
     }
     try {
-      const template = await getTemplate();
+      const template = await templates.getTemplate();
       const html = injectMeta(template, c.req.path);
       return new Response(html, {
         headers: { "Content-Type": "text/html", "Cache-Control": "no-cache" },

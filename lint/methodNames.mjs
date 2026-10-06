@@ -14,7 +14,7 @@
  *
  * `function-names`: an exported function of the server or `shared/` (declared, held by a const, or listed in an `export
  * { f }`) starts with a verb too (`FUNCTION_VERBS`), or is one of the shapes the code writes: a context it runs a
- * callback in (`withTransaction`), a handler it registers (`onShutdown`), a conversion (`toSafeUser`) or a constructor
+ * callback in (`withTransaction`), an event's handler (`onCacheHit`), a conversion (`toSafeUser`) or a constructor
  * (`newTimingStore`). A PascalCase one (a concern, a class's factory) is a type's name; a module's own functions name
  * themselves.
  *
@@ -44,7 +44,7 @@ const FUNCTION_VERBS = [
   // running
   "run", "start", "stop", "init", "open", "close", "send", "request", "ping", "wait", "enqueue", "schedule",
   "instrument", "note", "notify", "limit", "register", "emit",
-  // the shapes: a context (`withTransaction`), a handler (`onShutdown`), a conversion (`toSafeUser`), a constructor
+  // the shapes: a context (`withTransaction`), an event's handler (`onCacheHit`), a conversion (`toSafeUser`), a constructor
   "with", "on", "to", "new",
 ];
 

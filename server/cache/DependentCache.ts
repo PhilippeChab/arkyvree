@@ -1,6 +1,6 @@
 import { runWithRequestCache } from "@/server/database/index.ts";
 
-import MemoryCache, { isCacheEnabled } from "./MemoryCache.ts";
+import MemoryCache from "./MemoryCache.ts";
 
 interface Loaded<T> {
   data: T;
@@ -32,7 +32,7 @@ export default class DependentCache<T> {
   }
 
   async getOrFetch(key: string, dependencyIds: readonly string[], fetcher: () => Promise<Loaded<T>>): Promise<T> {
-    if (!isCacheEnabled()) {
+    if (!MemoryCache.isEnabled()) {
       return (await fetcher()).data;
     }
     const cached = this.cache.get(key);

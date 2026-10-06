@@ -12,19 +12,9 @@ interface MemoryCacheOptions {
   sweepInterval?: number;
 }
 
-const DEFAULT_MAX_SIZE = 200;
-const DEFAULT_SWEEP_INTERVAL_MS = 60 * 1000; // 1 minute
 const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
-let globalCacheEnabled = readEnv("DISABLE_CACHE") !== "true";
-
-export function isCacheEnabled(): boolean {
-  return globalCacheEnabled;
-}
-
-export function setCacheEnabled(enabled: boolean): void {
-  globalCacheEnabled = enabled;
-}
+const DEFAULT_SWEEP_INTERVAL_MS = 60 * 1000; // 1 minute
+const DEFAULT_MAX_SIZE = 200;
 
 export default class MemoryCache<T> {
   constructor(options: MemoryCacheOptions | number = {}) {
@@ -44,6 +34,19 @@ export default class MemoryCache<T> {
     if (typeof this.sweepTimer === "object" && "unref" in this.sweepTimer) {
       this.sweepTimer.unref();
     }
+  }
+
+  /** Whether every cache keeps what it's given: off with DISABLE_CACHE, and in the worker (`setEnabled`). */
+  private static enabled = readEnv("DISABLE_CACHE") !== "true";
+
+  /** Whether every cache keeps what it's given. */
+  static isEnabled(): boolean {
+    return MemoryCache.enabled;
+  }
+
+  /** Turns every cache on or off: the worker reads committed rows each time, the tests compare both. */
+  static setEnabled(enabled: boolean): void {
+    MemoryCache.enabled = enabled;
   }
 
   private store = new Map<string, CacheEntry<T>>();
@@ -85,7 +88,7 @@ export default class MemoryCache<T> {
   }
 
   get(key: string): T | undefined {
-    if (!globalCacheEnabled) {
+    if (!MemoryCache.enabled) {
       onCacheMiss();
       return undefined;
     }
@@ -104,6 +107,27 @@ export default class MemoryCache<T> {
 
     onCacheHit();
     return entry.value;
+  }
+
+  isPinned(key: string): boolean {
+    return this.pinned.has(key);
+  }
+
+  set(key: string, value: T, ttl?: number): void {
+    if (!MemoryCache.enabled) return;
+    // If at capacity and this is a new key, evict the oldest unpinned entry.
+    // If eviction fails (everything is pinned), skip the insert to prevent
+    // unbounded growth past maxSize.
+    if (!this.store.has(key) && this.store.size >= this.maxSize) {
+      const sizeBefore = this.store.size;
+      this.evictOldest();
+      if (this.store.size === sizeBefore) return;
+    }
+
+    this.store.set(key, {
+      value,
+      expiresAt: Date.now() + (ttl ?? this.defaultTtl),
+    });
   }
 
   invalidate(key: string): void {
@@ -131,29 +155,8 @@ export default class MemoryCache<T> {
     }
   }
 
-  isPinned(key: string): boolean {
-    return this.pinned.has(key);
-  }
-
   pin(key: string): void {
     this.pinned.add(key);
-  }
-
-  set(key: string, value: T, ttl?: number): void {
-    if (!globalCacheEnabled) return;
-    // If at capacity and this is a new key, evict the oldest unpinned entry.
-    // If eviction fails (everything is pinned), skip the insert to prevent
-    // unbounded growth past maxSize.
-    if (!this.store.has(key) && this.store.size >= this.maxSize) {
-      const sizeBefore = this.store.size;
-      this.evictOldest();
-      if (this.store.size === sizeBefore) return;
-    }
-
-    this.store.set(key, {
-      value,
-      expiresAt: Date.now() + (ttl ?? this.defaultTtl),
-    });
   }
 
   unpin(key: string): void {

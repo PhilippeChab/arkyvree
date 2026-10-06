@@ -3,7 +3,7 @@ import type { StorageBackend } from "@/server/storage/s3.ts";
 /**
  * An in-memory storage backend: every object exists and reports 1 KiB.
  * `tests/setup.ts` installs one before each test; pass `overrides` to
- * `setStorageForTest(fakeStorage({ ... }))` to observe or fail calls.
+ * `ObjectStorage.setForTest(fakeStorage({ ... }))` to observe or fail calls.
  */
 export function fakeStorage(overrides: Partial<StorageBackend> = {}): StorageBackend {
   return {

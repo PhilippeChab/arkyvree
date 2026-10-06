@@ -1,10 +1,4 @@
-import {
-  clearRequestCache,
-  type CowData,
-  getCowContext,
-  db as globalDb,
-  memoizeRequest,
-} from "@/server/database/index.ts";
+import { clearRequestCache, getCowContext, db as globalDb, memoizeRequest } from "@/server/database/index.ts";
 
 import { mapArgIds, mapResultIds } from "./copyOnWriteIds.ts";
 import methodVerbs from "./methodVerbs.json";
@@ -12,14 +6,7 @@ import methodVerbs from "./methodVerbs.json";
 /** A call to a repository method, with the arguments it runs with. */
 type Call = (args: unknown[]) => unknown;
 
-let lastStateId = 0;
 const READS = new Set(methodVerbs.read);
-
-/**
- * A short id per copy-on-write state, so that a request's reads in two of them (a character's ruleset and another's)
- * never share a cached result.
- */
-const stateIds = new WeakMap<CowData, string>();
 const WRITES = new Set(methodVerbs.write);
 
 /**
@@ -34,16 +21,7 @@ function getReadKey(repository: string, method: string, args: unknown[]): string
     return undefined;
   }
   const cow = getCowContext();
-  return cow && !cow.isEmpty() ? `${key}|cow:${getStateId(cow)}` : key;
-}
-
-function getStateId(cow: CowData): string {
-  let id = stateIds.get(cow);
-  if (!id) {
-    id = String(++lastStateId);
-    stateIds.set(cow, id);
-  }
-  return id;
+  return cow && !cow.isEmpty() ? `${key}|cow:${cow.stateId}` : key;
 }
 
 /**
