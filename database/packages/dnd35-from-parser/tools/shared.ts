@@ -396,8 +396,3 @@ export function validateModifiers<M extends ModifierEffect>(
   }
   return { validated, errors };
 }
-
-/** Re-export stripSeparators — used as the slug function throughout the tools */
-export { stripSeparators } from "@/shared/text.ts";
-
-export { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";

@@ -12,6 +12,10 @@
  * - `folder-index`: code outside a folder that has an `index.ts` imports it through that index (the service folders,
  *   `cow/`, `policies/`, the client's component folders). Files within the folder import each other directly, and a
  *   test may reach a folder's own modules (a pure module's unit test).
+ * - `re-exports`: an `index.ts` that re-exports is a folder's entry, which only re-exports what the folder offers,
+ *   from the modules themselves (`export { x } from "./x.ts"`): its own code goes in a module named for it. Any other
+ *   module (an `index.ts` that re-exports nothing too: a route folder's routes) exports what it declares, never another
+ *   module's: code that needs that imports it from where it's defined.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -32,13 +36,17 @@ const ABOVE_REPOSITORIES = [
   "server/middlewares/",
   "server/routers/",
 ];
+/** What a folder's entry with code of its own is told. */
+const ENTRY_ONLY_RE_EXPORTS =
+  'A folder\'s index.ts only re-exports what the folder offers (`export { x } from "./x.ts"`): its own code goes in a ' +
+  "module named for it.";
 const indexCache = new Map();
-
 /**
  * The trees whose folders are entered through their `index.ts`: the server's, but its routers (a route folder's
  * `index.ts` is its routes, not its folder's entry), and the client's components.
  */
 const INDEXED_TREES = ["server/", "client/src/components/"];
+
 const LAYERS = [
   { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
   { layer: "server/repositories/", deny: ABOVE_REPOSITORIES },
@@ -66,6 +74,9 @@ const LAYERS = [
   { layer: "shared/", deny: ["server/", "client/", "database/", "drizzle/"], types: ["drizzle/"] },
   { layer: "client/", deny: ["server/", "database/", "drizzle/"], types: ["server/", "drizzle/"] },
 ];
+/** What a module that exports another module's is told. */
+const MODULE_EXPORTS_ITS_OWN =
+  "A module exports what it declares, never another module's: code that needs that imports it from where it's defined.";
 /** Where a query may be built: the repositories, and the database layer (what talks to Postgres itself). */
 const QUERY_HOMES = ["server/repositories/", "server/database/"];
 
@@ -190,6 +201,28 @@ function createQueriesInRepositories(context) {
   };
 }
 
+function createReExports(context) {
+  const isIndex = /(^|\/)index\.tsx?$/.test(repoPath(context.filename));
+  return {
+    Program(program) {
+      const imported = new Set(
+        program.body
+          .filter((s) => s.type === "ImportDeclaration")
+          .flatMap((s) => s.specifiers.map((sp) => sp.local.name)),
+      );
+      const reExporting = program.body.filter((s) => reExports(s, imported));
+      // An index that re-exports is its folder's entry: it re-exports from the modules themselves, and holds nothing else
+      if (isIndex && reExporting.length > 0) {
+        for (const statement of program.body.filter((s) => !reExportsFrom(s))) {
+          context.report({ node: statement, message: ENTRY_ONLY_RE_EXPORTS });
+        }
+        return;
+      }
+      for (const statement of reExporting) context.report({ node: statement, message: MODULE_EXPORTS_ITS_OWN });
+    },
+  };
+}
+
 function hasIndex(dir) {
   if (!indexCache.has(dir)) {
     indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));
@@ -197,8 +230,25 @@ function hasIndex(dir) {
   return indexCache.get(dir);
 }
 
+/** Whether a statement exports another module's: from it (`export … from`), or through what the file imports. */
+function reExports(statement, imported) {
+  if (statement.type === "ExportAllDeclaration") return true;
+  // `export default x`, of what the file imports, is another module's too
+  if (statement.type === "ExportDefaultDeclaration") return imported.has(statement.declaration.name);
+  if (statement.type !== "ExportNamedDeclaration" || statement.declaration) return false;
+  return Boolean(statement.source) || statement.specifiers.some((s) => imported.has(s.local.name));
+}
+
+/** Whether a statement re-exports straight from the module that declares it: `export { x } from "./x.ts"`. */
+function reExportsFrom(statement) {
+  return (
+    statement.type === "ExportAllDeclaration" || (statement.type === "ExportNamedDeclaration" && !!statement.source)
+  );
+}
+
 export default {
   layers: { meta: { type: "problem" }, create: createLayers },
   "queries-in-repositories": { meta: { type: "problem" }, create: createQueriesInRepositories },
   "folder-index": { meta: { type: "problem" }, create: createFolderIndex },
+  "re-exports": { meta: { type: "problem" }, create: createReExports },
 };

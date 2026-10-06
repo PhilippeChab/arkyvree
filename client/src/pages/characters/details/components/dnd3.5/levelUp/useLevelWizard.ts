@@ -1,11 +1,12 @@
 import { skipToken, useMutation, useQuery } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
 import { rollDie } from "@/client/src/lib/dice.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import { featPickString, fitFeats, openPoolOf } from "./fitPicks.ts";
 import type { BaseRules, LevelUpFormData } from "./levelUpTypes.ts";

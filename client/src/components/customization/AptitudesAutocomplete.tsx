@@ -1,11 +1,12 @@
 import { Autocomplete, type AutocompleteInputChangeReason, Chip, TextField } from "@mui/material";
 import type { InferResponseType } from "hono/client";
+import { parseResponse } from "hono/client";
 import { useState } from "react";
 
 import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 interface AptitudeAutocompleteProps {
   rulesetId: string;

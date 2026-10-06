@@ -11,6 +11,34 @@ function lint(files: Record<string, string>, from = ".") {
 setDefaultTimeout(30_000);
 
 describe("architecture rules", () => {
+  test("an index that re-exports only re-exports; any other module exports what it declares", async () => {
+    expect(
+      await lintRepo(
+        {
+          // A folder's entry, re-exporting from its modules; a module named index that re-exports nothing (routes)
+          "server/a/index.ts": 'export { f } from "./f.ts";\nexport type { T } from "./t.ts";\n',
+          "server/routers/r/index.ts": "export default 1;\n",
+          // An entry with code of its own, and one that re-exports what it imports
+          "server/b/index.ts": 'export { f } from "./f.ts";\nexport const g = 1;\n',
+          "server/c/index.ts": 'import { f } from "./f.ts";\nexport { f };\n',
+          // A module re-exporting from another, or what it imports
+          "server/d.ts": 'export { f } from "./a/f.ts";\n',
+          "server/e.ts": 'import { f } from "./a/f.ts";\nexport { f };\nexport const h = f;\n',
+          // A module making what it imports its default export
+          "server/g.ts": 'import f from "./a/f.ts";\nexport default f;\n',
+        },
+        ["re-exports"],
+      ),
+    ).toEqual([
+      "re-exports server/b/index.ts",
+      "re-exports server/c/index.ts",
+      "re-exports server/c/index.ts",
+      "re-exports server/d.ts",
+      "re-exports server/e.ts",
+      "re-exports server/g.ts",
+    ]);
+  });
+
   test("a layer imports only what's below it, types where a layer names them", async () => {
     expect(
       await lint({

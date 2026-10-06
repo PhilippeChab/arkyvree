@@ -2,6 +2,7 @@ import {
   loadBonusFeatAptitudes,
   loadBonusFeatClassLevels,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/feats.ts";
+import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { parseAlignmentRequirement } from "@/database/packages/dnd35-from-parser/tools/scraper/alignment.ts";
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
 import { familyOptions, featWithoutChoice } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
@@ -12,7 +13,6 @@ import {
 import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
 import {
   anySkillRequirement,
-  BOOK_ABBREV_PATTERN,
   type ModifierDetection,
   NUMBER_WORDS,
   SAVE_MAP,

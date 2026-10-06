@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 
-import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { expect } from "@playwright/test";
+
+import { test } from "@/tests/e2e/fixtures.ts";
 import { fillOtp, getPasswordResetCode, signUpAndVerify } from "@/tests/e2e/support/emails.ts";
 
 test.describe("New accounts", () => {

@@ -1,5 +1,6 @@
 import { Box, Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
 
@@ -9,7 +10,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface EmailChangeVerificationDialogProps {

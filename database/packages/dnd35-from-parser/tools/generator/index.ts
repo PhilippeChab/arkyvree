@@ -617,7 +617,7 @@ function regenerateBookIndex(out: Output, book: string) {
   const parts: { key: string; file: string; name: string }[] = [
     { key: "aptitudes", file: "aptitudes.ts", name: "ALL_APTITUDES" },
     { key: "standaloneFeats", file: "feats/index.ts", name: "ALL_STANDALONE_FEATS" },
-    { key: "classFeats", file: "feats/index.ts", name: "ALL_CLASS_FEATS" },
+    { key: "classFeats", file: "feats/classes/index.ts", name: "ALL_CLASS_FEATS" },
     { key: "cowFeats", file: "cowFeats.ts", name: "COW_FEATS" },
     { key: "spells", file: "spells/index.ts", name: "ALL_SPELLS" },
     { key: "cowSpells", file: "cowSpells.ts", name: "COW_SPELLS" },
@@ -693,12 +693,6 @@ function regenerateClassFeatIndex(out: Output, book: string) {
   lines.push(`  _seen.add(f.name);`);
   lines.push(`  return true;`);
   lines.push(`});`);
-  lines.push(``);
-
-  // Re-export individual arrays for consumers that need them
-  for (const e of entries) {
-    lines.push(`export { ${e.constName} };`);
-  }
   lines.push(``);
 
   const outPath = join(classFeatDir, "index.ts");
@@ -966,7 +960,7 @@ function regenerateFeatIndex(out: Output, book: string) {
 
   if (allFeatExports.length === 0 && !hasClassFeats) return;
 
-  // Each feat file's lists, imported once: the index exports them, and the lists of them all
+  // Each feat file's lists, imported once, and the lists of them all
   const lines = [
     ...GENERATED_HEADER,
     `import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`,
@@ -980,7 +974,6 @@ function regenerateFeatIndex(out: Output, book: string) {
   lines.push(
     ...listExport("ALL_FEATS", "FeatSeed", hasClassFeats ? [...standalone, "...ALL_CLASS_FEATS"] : standalone),
   );
-  lines.push(`export { ${[...allFeatExports, ...(hasClassFeats ? ["ALL_CLASS_FEATS"] : [])].join(", ")} };`, ``);
 
   const outPath = join(featDir, "index.ts");
   writeGenerated(out, outPath, lines.join("\n"));

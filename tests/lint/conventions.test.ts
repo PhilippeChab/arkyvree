@@ -54,11 +54,11 @@ describe("conventions", () => {
     ]);
   });
 
-  test("only the repositories' index builds a repository", async () => {
+  test("only the repositories' instances module builds a repository", async () => {
     expect(
       await lintRepo(
         {
-          "server/repositories/index.ts": "export const Feats = new FeatsRepository();\n",
+          "server/repositories/instances.ts": "export const Feats = new FeatsRepository();\n",
           "server/services/s.ts": "export const feats = new FeatsRepository();\n",
         },
         ["repository-instances"],

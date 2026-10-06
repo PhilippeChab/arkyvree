@@ -7,5 +7,3 @@ import { ALL_CLASS_FEATS } from "./classes/index.ts";
 export const ALL_FEATS: FeatSeed[] = [...ALL_CLASS_FEATS];
 
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [];
-
-export { ALL_CLASS_FEATS };

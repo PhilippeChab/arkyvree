@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useState } from "react";
 import { useController } from "react-hook-form";
 
@@ -28,7 +29,7 @@ import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import { type AptitudePool, type FeatsData, type SelectedFeat, withoutPick } from "./levelUp/index.ts";
 import type { LevelUpFeatsStepProps } from "./levelUpFactory.ts";

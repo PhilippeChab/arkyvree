@@ -1,7 +1,8 @@
 import { type QueryClient, useIsMutating, useMutation } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { type AuthUser, toAuthUser } from "@/client/src/stores/authUser.ts";
 

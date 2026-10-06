@@ -6,6 +6,7 @@ import {
 } from "@mui/icons-material";
 import { Alert, Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -15,7 +16,7 @@ import { usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { DURATION } from "@/client/src/lib/animations.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 export default function CampaignCharacterPage() {
   const { id: campaignId = "", characterId = "" } = useParams<{ id: string; characterId: string }>();
   const navigate = useNavigate();

@@ -7,7 +7,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import { REFERENCE_DIR, stripSeparators } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { type DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";
@@ -19,6 +19,7 @@ import {
   SIMPLE_WEAPONS,
 } from "@/database/packages/dnd35/data/weapons.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
   const results: FeatSeed[] = [];

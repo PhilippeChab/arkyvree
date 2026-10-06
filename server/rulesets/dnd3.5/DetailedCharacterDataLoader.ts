@@ -758,9 +758,3 @@ export default class DetailedCharacterDataLoader {
     };
   }
 }
-
-/**
- * PMR types re-exported for the two files that reach in for them (`DetailedCharacter.ts`,
- * `DetailedCharacterSpellcasting.ts`). `Dnd35ProjectedCharacterData` is imported directly from `./types.ts`.
- */
-export type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR };

@@ -1,9 +1,9 @@
 import { Box, Button, Typography } from "@mui/material";
+import * as Sentry from "@sentry/react";
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 
 import { isChunkLoadError, reloadForStaleChunks } from "@/client/src/lib/chunkReload.ts";
-import { Sentry } from "@/client/src/lib/sentry.ts";
 
 interface Props {
   children: ReactNode;

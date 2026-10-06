@@ -1,12 +1,8 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
-import type {
-  FeatWithPMR,
-  KlassLevelWithPMR,
-  PowerWithPMR,
-} from "@/server/rulesets/dnd3.5/DetailedCharacterDataLoader.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import { JOIN_TARGET, listOpenedBy } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
+import type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR } from "@/server/rulesets/types.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, Power, Property } from "@/shared/relations.ts";

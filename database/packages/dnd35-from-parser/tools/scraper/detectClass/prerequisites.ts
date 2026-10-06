@@ -1,5 +1,6 @@
 /** Parses a prestige class's prerequisites into requirements. */
 
+import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { parseAlignmentRequirement } from "@/database/packages/dnd35-from-parser/tools/scraper/alignment.ts";
 import { familyFeatRequirements } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
 import {
@@ -8,12 +9,7 @@ import {
   weaponNamed,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
 import { findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
-import {
-  anySkillRequirement,
-  BOOK_ABBREV_PATTERN,
-  SKILL_MAP,
-  skillSlug,
-} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { anySkillRequirement, SKILL_MAP, skillSlug } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";

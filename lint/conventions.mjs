@@ -565,7 +565,7 @@ function createPolicyShape(context) {
 }
 
 function createRepositoryInstances(context) {
-  if (repoPath(context.filename) === "server/repositories/index.ts") return {};
+  if (repoPath(context.filename) === "server/repositories/instances.ts") return {};
   return {
     NewExpression(node) {
       if (node.callee.type === "Identifier" && node.callee.name.endsWith("Repository")) {

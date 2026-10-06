@@ -20,5 +20,3 @@ export function initSentry() {
   });
   initialized = true;
 }
-
-export { Sentry };

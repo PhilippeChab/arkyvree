@@ -1,7 +1,8 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 
 /** What a complete target path takes: its value type, operators and values. */

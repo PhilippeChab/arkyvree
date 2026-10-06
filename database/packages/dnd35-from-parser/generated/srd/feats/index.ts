@@ -72,27 +72,3 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...WEAPON_PROFICIENCY_FEATS,
   ...SPELL_WEAPON_FOCUS_FEATS,
 ];
-
-export {
-  DOMAIN_POOL_FEATS,
-  favoredEnemy,
-  GENERAL_FEATS,
-  FIGHTER_FEATS,
-  ITEM_CREATION_FEATS,
-  METAMAGIC_FEATS,
-  SPECIAL_FEATS,
-  exoticWeaponProficiency,
-  greaterSpellFocus,
-  greaterWeaponFocus,
-  greaterWeaponSpecialization,
-  improvedCritical,
-  rapidReload,
-  skillFocus,
-  spellFocus,
-  weaponFocus,
-  weaponSpecialization,
-  WIZARD_SCHOOL_FEATS,
-  WEAPON_PROFICIENCY_FEATS,
-  SPELL_WEAPON_FOCUS_FEATS,
-  ALL_CLASS_FEATS,
-};

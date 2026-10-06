@@ -1,6 +1,7 @@
 import { Notifications as NotificationsIcon } from "@mui/icons-material";
 import { Box, Button, Paper, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useNavigate } from "react-router-dom";
 
 import { BlankState, CLICKABLE_SX, clickableProps, DiceSpinner } from "@/client/src/components/common/index.ts";
@@ -13,7 +14,7 @@ import {
 } from "@/client/src/lib/activityFormatters.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 export function RecentNotificationsCard() {
   const navigate = useNavigate();

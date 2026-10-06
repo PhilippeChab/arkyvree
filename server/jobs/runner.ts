@@ -2,6 +2,7 @@
 
 import { EventEmitter } from "node:events";
 
+import * as Sentry from "@sentry/bun";
 import { Logger } from "graphile-worker";
 import { Pool } from "pg";
 
@@ -10,7 +11,6 @@ import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { runCleanupTask } from "@/server/jobs/runCleanup.ts";
 import { sendEmailTask } from "@/server/jobs/sendEmail.ts";
 import { sweepPendingBlobsTask } from "@/server/jobs/sweepPendingBlobs.ts";
-import { Sentry } from "@/server/sentry.ts";
 
 /** The cleanup at 4 every morning, the blob sweep every hour. */
 export const crontab = ["0 4 * * * runCleanup", "0 * * * * sweepPendingBlobs"].join("\n");

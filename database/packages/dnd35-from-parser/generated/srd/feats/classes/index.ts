@@ -33,15 +33,3 @@ export const ALL_CLASS_FEATS: FeatSeed[] = _allClassFeats.filter((f) => {
   _seen.add(f.name);
   return true;
 });
-
-export { BARBARIAN_FEATS };
-export { BARD_FEATS };
-export { CLERIC_FEATS };
-export { DRUID_FEATS };
-export { FIGHTER_FEATS };
-export { MONK_FEATS };
-export { PALADIN_FEATS };
-export { RANGER_FEATS };
-export { ROGUE_FEATS };
-export { SORCERER_FEATS };
-export { WIZARD_FEATS };
