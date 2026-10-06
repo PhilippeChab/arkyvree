@@ -11,8 +11,9 @@
 
 import { basename } from "node:path";
 
+import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli.ts";
+import { discoverRefs } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { readStoredReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 type OverrideEntry = {
   book: string;

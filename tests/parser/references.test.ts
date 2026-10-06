@@ -7,6 +7,8 @@ import {
   seededMagicItems,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
 import { buildRaceSeeds, seededRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
+import { checkOneOf } from "@/database/packages/dnd35-from-parser/tools/checks.ts";
+import { REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import {
   classReferences,
   loadReference,
@@ -17,7 +19,6 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { buildFeatDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
 import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
-import { checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 

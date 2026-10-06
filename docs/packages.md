@@ -55,6 +55,14 @@ database/packages/dnd35-from-parser/
 │   ├── srd/              #   The core rules
 │   └── dmg/, complete-warrior/, …   # Each extension book, with an index.ts exporting BOOK
 └── tools/                # Scraper, generator, validate, overrides
+    ├── types/            # A reference's types, a module per kind of reference
+    ├── scraper/          # Pages → reference/
+    ├── buildSeeds/       # A reference → the seeds it makes
+    └── generator/        # The seeds → generated/
+        ├── BaseGenerator.ts  # A generator's core: the folder it writes to, the writes kinds of files share
+        ├── Generator.ts      # generateAll, generateReference: the steps a reference takes
+        ├── concerns/         # A kind of file per concern: GeneratesClasses, GeneratesFeats…
+        └── code/             # A file's code: CodeFile (its lines, the names they use), FeatsFile
 ```
 
 `content/` and `data/` never touch the database: the generated data, the parser and the seeds import them. `generated/` holds only what the generator writes; hand-written content goes in `data/`, what content is written with in `content/`.

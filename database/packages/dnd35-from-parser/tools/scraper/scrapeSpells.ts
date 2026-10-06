@@ -2,13 +2,13 @@
 
 import { join } from "node:path";
 
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { buildListingUrl } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { fetchHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import { discover } from "@/database/packages/dnd35-from-parser/tools/scraper/listingEntries.ts";
 import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
 import { saveReference } from "@/database/packages/dnd35-from-parser/tools/scraper/saveReference.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 
 export async function scrapeAllSpells(book: string) {
   const listingUrl = buildListingUrl("spells", book);

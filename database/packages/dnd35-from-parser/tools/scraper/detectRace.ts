@@ -1,14 +1,14 @@
-import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
-import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
-import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
 import {
   detectModifiersOf,
   type ModifierDetection,
   modifierMapping,
-  SAVE_MAP,
   validateModifiers,
-} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+} from "@/database/packages/dnd35-from-parser/tools/modifierDetection.ts";
+import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
+import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
+import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
+import { SAVE_MAP } from "@/database/packages/dnd35-from-parser/tools/targets.ts";
+import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 
 const ABILITY_MAP: Record<string, string> = {

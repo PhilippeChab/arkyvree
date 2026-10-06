@@ -1,4 +1,4 @@
-import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
 import { getWeaponDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/weaponGenerator.ts";
 

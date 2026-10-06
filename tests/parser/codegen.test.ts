@@ -9,23 +9,18 @@ import {
 } from "@/database/packages/dnd35-from-parser/generated/srd/feats/feats.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
 import { buildClassFeatSeeds, classModifiers } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
+import { generateClassSeed } from "@/database/packages/dnd35-from-parser/tools/generator/code/classFiles.ts";
+import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
+import { coreSystemFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
+import { stringifyModifier } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
+import { generateFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
 import {
-  escapeTemplate,
   importLines,
-  quote,
   REQUIREMENT_IMPORTS,
-  requirementImports,
-  stringifyFeatModifier,
-  stringifyModifier,
-  stringifyRequirement,
-} from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
-import { generateClassSeed } from "@/database/packages/dnd35-from-parser/tools/generator/generators/class.ts";
-import {
-  coreSystemFeats,
-  generateFeatSeeds,
-} from "@/database/packages/dnd35-from-parser/tools/generator/generators/feat.ts";
+} from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
+import { escapeTemplate, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   Modifier,
@@ -47,7 +42,7 @@ function classRef(book: string, slug: string) {
 }
 
 function code(req: RequirementEntry) {
-  return stringifyRequirement(req, new Set());
+  return new CodeFile().requirement(req);
 }
 
 describe("A generated requirement check", () => {
@@ -88,32 +83,29 @@ describe("A generated requirement check", () => {
   });
 
   test("records the builders it's written with, which the file imports", () => {
-    const uses = new Set<string>();
-    stringifyRequirement(and(or(eq(feat("Dodge")), gte("combat.bab", 4)), check("not_equal", "number", "13")), uses);
-    expect([...uses].sort()).toEqual(["and", "eq", "gte", "or"]);
-    expect(requirementImports(uses)).toEqual([
+    const file = new CodeFile();
+    file.requirement(and(or(eq(feat("Dodge")), gte("combat.bab", 4)), check("not_equal", "number", "13")));
+    expect([...file.uses].sort()).toEqual(["and", "eq", "gte", "or"]);
+    expect(file.imports()).toEqual([
       `import { and, eq, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";`,
     ]);
-    expect(requirementImports(new Set())).toEqual([]);
+    expect(new CodeFile().imports()).toEqual([]);
   });
 
   test("of a feat's modifier is imported with it", () => {
-    const uses = new Set<string>();
+    const file = new CodeFile();
     expect(
-      stringifyFeatModifier(
-        {
-          target: "combat.ac.misc",
-          operator: "add",
-          value: "1",
-          valueType: "number",
-          requirements: [eq(feat("Dodge"))],
-        },
-        uses,
-      ),
+      file.featModifier({
+        target: "combat.ac.misc",
+        operator: "add",
+        value: "1",
+        valueType: "number",
+        requirements: [eq(feat("Dodge"))],
+      }),
     ).toBe(
       `{ target: "combat.ac.misc", operator: "add", value: "1", valueType: "number", requirements: [eq("feats.dodge.possessed")] }`,
     );
-    expect([...uses]).toEqual(["eq"]);
+    expect([...file.uses]).toEqual(["eq"]);
   });
 
   test("of another modifier (a domain's, a race's, an item's) can't be", () => {

@@ -1,5 +1,9 @@
 /** A class reference's mapping: its initial section, and where its features' occurrences go. */
 
+import {
+  lookupWithPluralVariants,
+  matchesWithPluralVariants,
+} from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import { CHOICE_PATTERN } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/aptitudePicks.ts";
 import {
   buildFeatureMap,
@@ -11,12 +15,9 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/features.ts";
 import { detectWAPModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/proficiencies.ts";
 import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
-import {
-  lookupWithPluralVariants,
-  matchesWithPluralVariants,
-  normalizeWs,
-} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type ClassReference, type NamedText } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { type NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A class reference's initial mapping section. */

@@ -2,12 +2,13 @@
 
 import { join } from "node:path";
 
+import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/names.ts";
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { fetchHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import { discover } from "@/database/packages/dnd35-from-parser/tools/scraper/listingEntries.ts";
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/classPage.ts";
 import { saveResolvedReference } from "@/database/packages/dnd35-from-parser/tools/scraper/saveReference.ts";
-import { REFERENCE_DIR, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 export async function scrapeAllClasses(book: string) {
   // dndtools.net doesn't support /classes/{book}/ URLs — use the full listing

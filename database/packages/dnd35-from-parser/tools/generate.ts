@@ -5,21 +5,22 @@
  * Usage: bun run parser:generate [<reference>.json [--book <book>]] [--book <book>] [--type <type>]
  */
 
-import {
-  generateAll,
-  generateAtomically,
-  GENERATED_DIR,
-  generateRef,
-} from "@/database/packages/dnd35-from-parser/tools/generator/index.ts";
-import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { join } from "node:path";
+
+import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli.ts";
+import { generateAtomically } from "@/database/packages/dnd35-from-parser/tools/generator/atomicGeneration.ts";
+import { Generator } from "@/database/packages/dnd35-from-parser/tools/generator/Generator.ts";
+
+/** What the generator writes: the content package's seed data. */
+const GENERATED_DIR = join(import.meta.dirname!, "../generated");
 
 function main() {
   const args = process.argv.slice(2);
   const generate = (dir: string) => {
-    if (!args[0]?.endsWith(".json")) return generateAll(parseCliArgs(), dir);
+    if (!args[0]?.endsWith(".json")) return new Generator(dir, true).generateAll(parseCliArgs());
     const bookIdx = args.indexOf("--book");
     try {
-      generateRef({ dir, quiet: false }, args[0], bookIdx >= 0 ? args[bookIdx + 1] : undefined);
+      new Generator(dir, false).generateReference(args[0], bookIdx >= 0 ? args[bookIdx + 1] : undefined);
       return [];
     } catch (error) {
       return [error instanceof Error ? error.message : String(error)];

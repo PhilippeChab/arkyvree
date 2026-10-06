@@ -3,7 +3,8 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSyn
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 
-import { generateAll, generateAtomically } from "@/database/packages/dnd35-from-parser/tools/generator/index.ts";
+import { generateAtomically } from "@/database/packages/dnd35-from-parser/tools/generator/atomicGeneration.ts";
+import { Generator } from "@/database/packages/dnd35-from-parser/tools/generator/Generator.ts";
 
 const GENERATED = join(import.meta.dirname, "../../database/packages/dnd35-from-parser/generated");
 
@@ -25,7 +26,7 @@ describe("The generator", () => {
     const folder = mkdtempSync(join(tmpdir(), "generated-"));
     try {
       // As `parser:generate` writes them: generated in a copy, formatted, then swapped in
-      expect(generateAtomically(folder, (copy) => generateAll({}, copy))).toEqual([]);
+      expect(generateAtomically(folder, (copy) => new Generator(copy, true).generateAll({}))).toEqual([]);
       expect(filesOf(folder)).toEqual(filesOf(GENERATED));
       for (const file of filesOf(GENERATED)) {
         expect({ file, code: readFileSync(join(folder, file), "utf8") }).toEqual({

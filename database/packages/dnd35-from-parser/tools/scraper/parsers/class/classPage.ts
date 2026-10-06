@@ -34,7 +34,7 @@ import {
   parseHitDie,
   parseSkillPoints,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/summary.ts";
-import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 export function parseClassHtml(
   html: string,

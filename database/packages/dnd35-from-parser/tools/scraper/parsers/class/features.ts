@@ -14,8 +14,8 @@ import { type AnyNode } from "domhandler";
 import { findSectionHeader } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
 import { titleCase } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/titleCase.ts";
 import { sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 type RawFeature = ClassReference["raw"]["classFeatures"][number];
 

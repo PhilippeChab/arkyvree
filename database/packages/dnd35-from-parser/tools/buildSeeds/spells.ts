@@ -3,15 +3,11 @@
 import { existsSync } from "node:fs";
 
 import { inheritedLevel, inheritedLists } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
+import { REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { classReferences } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import {
-  normalizeDescription,
-  normalizeWs,
-  REFERENCE_DIR,
-  referenceBooks,
-} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { normalizeDescription, normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import type { PowerSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 import {
   SPELL_AREA_OF_EFFECT,

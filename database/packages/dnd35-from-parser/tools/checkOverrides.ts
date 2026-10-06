@@ -1,11 +1,11 @@
 import { classSpells } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
 import {
+  generateClassFeatSeeds,
   generateClassSeed,
-  generateFeatSeeds,
-} from "@/database/packages/dnd35-from-parser/tools/generator/generators/class.ts";
+} from "@/database/packages/dnd35-from-parser/tools/generator/code/classFiles.ts";
 import { resolveReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 type ClassOverrides = NonNullable<StoredReference<"class">["overrides"]>;
 
@@ -19,7 +19,7 @@ function alike(a: unknown, b: unknown) {
 /** What the generator writes for a class (its class file and its feats file), or why it refuses the class. */
 function generated(ref: ClassReference): string | Error {
   try {
-    return generateClassSeed(ref) + generateFeatSeeds(ref);
+    return generateClassSeed(ref) + generateClassFeatSeeds(ref);
   } catch (error) {
     return error instanceof Error ? error : new Error(String(error));
   }

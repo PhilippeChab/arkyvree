@@ -62,6 +62,8 @@ Loading a reference (`tools/references.ts`) derives the rest: **`detected`** (BA
 
 `generated/` holds only what the generator writes: hand-written content goes in `database/packages/dnd35/data/`, and what content is written with (its types and builders) in `database/packages/dnd35/content/`.
 
+The generator (`tools/generator/`) is a `Generator`, built as the seeder is: a step that writes one kind of file is a concern (`concerns/`: `GeneratesClasses`, `GeneratesFeats`…) on a `BaseGenerator` (the folder it writes to, what several kinds of files are written with), and the steps a reference takes, which rewrite the files the kinds share (the aptitudes, the indexes, what an extension copies from the core rules), are its own. A file's code is a `CodeFile` (`code/`): its lines, and the names they use, which its imports are written from.
+
 ## Supported entity types
 
 ### Classes

@@ -3,8 +3,8 @@
 import type * as cheerio from "cheerio";
 import { type AnyNode } from "domhandler";
 
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 /**
  * The text over each column of a table's header rows above its main one, by column: each cell placed past those a row

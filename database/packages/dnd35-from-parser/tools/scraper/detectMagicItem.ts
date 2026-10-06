@@ -1,8 +1,11 @@
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
 import { parseCost, parseWeight } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
 import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
-import { SAVE_MAP } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { SAVE_MAP } from "@/database/packages/dnd35-from-parser/tools/targets.ts";
+import type {
+  MagicItemCategory,
+  MagicItemReference,
+} from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
 
 type Modifier = { target: string; operator: string; value: string; valueType: string };
 

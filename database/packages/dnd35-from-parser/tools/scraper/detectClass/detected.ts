@@ -17,7 +17,7 @@ import {
   parseHd,
   parseSkillPoints,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/progression.ts";
-import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 /** A class reference's detected section, from what was scraped. */
 export function buildDetected(raw: ClassReference["raw"]): ClassReference["detected"] {

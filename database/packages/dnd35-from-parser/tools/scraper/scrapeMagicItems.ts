@@ -2,6 +2,7 @@
 
 import { join } from "node:path";
 
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { fetchHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import {
   parseMagicArmorHtml,
@@ -13,8 +14,7 @@ import {
   parseWondrousItemsHtml,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/magicItem.ts";
 import { saveReference } from "@/database/packages/dnd35-from-parser/tools/scraper/saveReference.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { type MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
 
 /** The SRD's pages of specific magic items (d20srd.org). */
 const D20SRD_MAGIC_URLS = {

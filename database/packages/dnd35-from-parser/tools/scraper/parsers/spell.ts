@@ -23,8 +23,8 @@ import * as cheerio from "cheerio";
 import { type Element, isText } from "domhandler";
 
 import { pageTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import { capitalize } from "@/shared/text.ts";
 
 const STAT_LABEL_PREFIXES = [

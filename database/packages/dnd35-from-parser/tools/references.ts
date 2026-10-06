@@ -9,6 +9,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { sanitizeJsonValues, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { buildDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/detected.ts";
 import {
@@ -23,17 +24,14 @@ import { buildFeatDetected, buildFeatMapping } from "@/database/packages/dnd35-f
 import { buildItemDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
 import { buildMagicItemDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { buildRaceDetected, buildRaceMapping } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import type {
-  ClassReference,
-  DomainReference,
-  FeatReference,
-  ItemReference,
-  MagicItemReference,
-  RaceReference,
-  SpellReference,
-  WizardSchoolReference,
-} from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
+import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
+import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
+import type { MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
+import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
+import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
+import type { WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types/wizardSchools.ts";
 
 export type ReferenceByType = {
   class: ClassReference;

@@ -2,10 +2,10 @@ import { domainSpellIssues } from "@/database/packages/dnd35-from-parser/tools/b
 import { seededMagicItems } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
 import { seededRaces, skippedRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
 import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/checkOverrides.ts";
+import { type discoverRefs } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { loadReference, readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { unresolvedItems } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
-import { type discoverRefs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 type DetectedEntry = {
   errors?: string[];

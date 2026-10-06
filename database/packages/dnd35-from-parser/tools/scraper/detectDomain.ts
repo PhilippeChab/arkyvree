@@ -1,12 +1,12 @@
-import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import {
-  SKILL_MAP as BASE_SKILL_MAP,
   detectModifiersOf,
   type ModifierDetection,
   modifierMapping,
   validateModifiers,
-} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+} from "@/database/packages/dnd35-from-parser/tools/modifierDetection.ts";
+import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
+import { SKILL_MAP as BASE_SKILL_MAP } from "@/database/packages/dnd35-from-parser/tools/targets.ts";
+import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
