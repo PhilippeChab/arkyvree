@@ -10,7 +10,6 @@ import {
   type rulesetsInRules,
   starredRulesetsInAccount,
 } from "@/drizzle/schema.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   BadRequestError,
@@ -49,7 +48,7 @@ import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -295,7 +294,7 @@ describe("RulesetsService", () => {
       const created = await fork(session, { id: rulesetId }, { private: true });
       const feats = await Feats.findPage(db, { rulesetId }, { limit: 26, page: 1 });
       for (const feat of feats.items) {
-        expect((await cowEntity(db, "feats", feat.id, created.id, [rulesetId], [])).id).not.toBe(feat.id);
+        expect((await copyEntity(db, "feats", feat.id, created.id, [rulesetId], [])).id).not.toBe(feat.id);
       }
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toHaveLength(26);
     });
@@ -566,7 +565,7 @@ describe("RulesetsService", () => {
         const { klass, skill } = await addPlayableContent(parent.id);
         await KlassLevels.create(db, { klassId: klass.id, level: 1 });
         await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
-        const copy = await cowEntity(db, "klasses", klass.id, fork.id, [parent.id], []);
+        const copy = await copyEntity(db, "klasses", klass.id, fork.id, [parent.id], []);
 
         await RulesetChangesService.revertOverride(session, fork.id, "klasses", klass.id);
 
@@ -582,7 +581,7 @@ describe("RulesetsService", () => {
       test("points the items made from a copied template back at the original", async () => {
         const { session, parent, fork } = await setupChanges();
         const [template] = await Items.create(db, { name: "Longsword", rulesetId: parent.id, isTemplate: true });
-        const copy = await cowEntity(db, "items", template.id, fork.id, [parent.id], []);
+        const copy = await copyEntity(db, "items", template.id, fork.id, [parent.id], []);
         const [made] = await Items.create(db, {
           name: "Longsword +1",
           rulesetId: fork.id,
@@ -595,7 +594,7 @@ describe("RulesetsService", () => {
 
       test("is refused for a copy a character picked, and for an entity the fork didn't change", async () => {
         const { user, session, fork, aptitude, modified, untouched } = await setupChanges();
-        const copy = await cowEntity(db, "feats", modified.id, fork.id, [fork.rulesetId!], []);
+        const copy = await copyEntity(db, "feats", modified.id, fork.id, [fork.rulesetId!], []);
         const character = await createTestCharacter(user.id, { rulesetId: fork.id });
         const { klassLevel } = await createTestKlassLevel(fork.id);
         await addCharacterLevel(character.id, klassLevel.id, {

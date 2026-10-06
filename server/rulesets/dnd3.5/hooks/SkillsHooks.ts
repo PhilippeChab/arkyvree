@@ -1,5 +1,5 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntityForCustomization, hasCharacterPicks } from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Aptitudes, Feats, FeatsAptitudes, Modifiers, Properties } from "@/server/repositories/index.ts";
@@ -39,16 +39,21 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     return skills.map((skill) => ({ ...skill, ...(flagsBySkillId.get(skill.id) ?? NO_SKILL_FLAGS) }));
   }
 
-  async deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void> {
+  async deleteSkillFeat(
+    tx: Db,
+    ruleset: { id: string; extensionRulesetIds: string[] },
+    rulesetData: CachedRulesetData,
+    skillName: string,
+  ): Promise<void> {
     const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
     if (!feat) return;
-    if (await hasCharacterPicks(tx, "feats", feat.id, rulesetId)) {
+    if (await hasCharacterPicks(tx, "feats", feat.id, ruleset.id)) {
       throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");
     }
 
     // Deleting the local COW copy leaves a tombstone snapshot: the obsolete
     // inherited feat disappears from this fork while its ancestor stays intact.
-    const targetId = await cowEntityForCustomization(tx, rulesetId, "feats", feat.id);
+    const targetId = await new RulesetEdit(ruleset, rulesetData.cow).cowOwner(tx, "feats", feat.id);
     // Hard-delete: FK CASCADE on feats_aptitudes wipes the aptitude link, and
     // the database deletes the feat's customizations.
     // Soft-archive would block a future generateSkillFeat with the same name

@@ -22,5 +22,10 @@ export interface SkillsHooks {
   /** Stores the skill's flags as its properties, and answers them as stored. */
   syncProperties(tx: Db, skillId: string, flags: SkillFlags): Promise<SkillFlags>;
   generateSkillFeat(tx: Db, rulesetId: string, sourceChain: string[], skillName: string): Promise<void>;
-  deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void>;
+  deleteSkillFeat(
+    tx: Db,
+    ruleset: { id: string; extensionRulesetIds: string[] },
+    rulesetData: CachedRulesetData,
+    skillName: string,
+  ): Promise<void>;
 }

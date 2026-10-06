@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
-import { findScopedEntity } from "@/server/cow/index.ts";
+import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { include } from "@/server/mixins.ts";

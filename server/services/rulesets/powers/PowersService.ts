@@ -1,16 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { type CachedRulesetData, findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  assertEntityNameAvailable,
-  cowEntityToDelete,
-  cowEntityToEdit,
-  findScopedEntity,
-  hasCharacterPicks,
-  repointTombstoneSnapshot,
-} from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { FeatsAptitudes, Powers, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
@@ -147,13 +140,8 @@ class PowersService {
 
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "powers",
-          body.name,
-        );
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "powers", body.name);
 
         if (!body.aptitudes || body.aptitudes.length === 0) {
           throw new BadRequestError("At least one aptitude must be selected for the power");
@@ -176,7 +164,7 @@ class PowersService {
         const power = rows[0];
 
         if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "powers", tombstoneAncestorId, power.id);
+          await edit.repointTombstone(tx, "powers", tombstoneAncestorId, power.id);
         }
 
         for (const aptitude of body.aptitudes) {
@@ -218,7 +206,8 @@ class PowersService {
 
         const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
 
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "powers", power);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "powers", power);
 
         // FK CASCADE on powers_aptitudes.power_id and klass_level_powers.power_id
         // wipes those join rows when the power row is deleted.
@@ -297,7 +286,8 @@ class PowersService {
 
         const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "powers", power);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "powers", power);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;

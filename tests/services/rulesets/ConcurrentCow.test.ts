@@ -1,12 +1,11 @@
 import { afterAll, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { EntitySnapshots, Feats } from "@/server/repositories/index.ts";
 import { runWhileLocked } from "@/tests/support/database.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 const pool = createTestPool();
@@ -19,10 +18,10 @@ test("COW waits for a competing copy transaction and continues after rollback", 
   const copied = await runWhileLocked(
     pool,
     (blockerDb) => EntitySnapshots.lock(blockerDb, { rulesetId: fork.id, sourceEntityId: sourceId }),
-    () => cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []),
+    () => copyEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []),
   );
   expect(copied.id).not.toBe(sourceId);
-  expect((await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], [])).id).toBe(copied.id);
+  expect((await copyEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], [])).id).toBe(copied.id);
   expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toHaveLength(1);
   expect((await Feats.findOne(db, { id: sourceId }))?.rulesetId).toBe(seed.rulesetId);
 });
@@ -48,9 +47,9 @@ test("a tombstoned copy can be recreated without duplicating snapshots", async (
   const seed = await getSeedCtx();
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const sourceId = seed.featMap.Toughness;
-  const first = await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
+  const first = await copyEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
   await Feats.delete(db, { id: first.id });
-  const second = await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
+  const second = await copyEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
   expect(second.id).not.toBe(first.id);
   const snapshots = await EntitySnapshots.findMany(db, { rulesetId: fork.id });
   expect(snapshots).toHaveLength(1);
