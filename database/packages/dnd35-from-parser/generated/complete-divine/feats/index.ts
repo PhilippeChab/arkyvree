@@ -14,22 +14,22 @@ import {
 } from "./feats.ts";
 
 export const ALL_FEATS: FeatSeed[] = [
-  ...GENERAL_FEATS,
-  ...WILD_FEATS,
-  ...EPIC_FEATS,
-  ...METAMAGIC_FEATS,
   ...DIVINE_FEATS,
+  ...EPIC_FEATS,
   ...FAITH_FEATS,
+  ...GENERAL_FEATS,
   ...ITEM_CREATION_FEATS,
+  ...METAMAGIC_FEATS,
+  ...WILD_FEATS,
   ...ALL_CLASS_FEATS,
 ];
 
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
-  ...GENERAL_FEATS,
-  ...WILD_FEATS,
-  ...EPIC_FEATS,
-  ...METAMAGIC_FEATS,
   ...DIVINE_FEATS,
+  ...EPIC_FEATS,
   ...FAITH_FEATS,
+  ...GENERAL_FEATS,
   ...ITEM_CREATION_FEATS,
+  ...METAMAGIC_FEATS,
+  ...WILD_FEATS,
 ];

@@ -3,10 +3,7 @@ import { join } from "node:path";
 
 import { buildItemSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/items.ts";
 import { buildMagicItemSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
-import {
-  type BaseGenerator,
-  GENERATED_HEADER,
-} from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import {
   stringifyModifier,
   stringifyProperty,
@@ -35,32 +32,6 @@ export function GeneratesMagicItems<B extends Constructor<BaseGenerator>>(Base: 
         ...seeds.shields,
       ];
       return Object.fromEntries(bases.map((item) => [item.name, item.weight]));
-    }
-
-    private writeItemIndexWithMagic(outDir: string) {
-      const lines: string[] = [];
-      lines.push(...GENERATED_HEADER);
-      // Mundane items
-      if (existsSync(join(outDir, "weapons.ts"))) lines.push(`export { SIMPLE_WEAPONS } from "./weapons.ts";`);
-      if (existsSync(join(outDir, "martial.ts"))) lines.push(`export { MARTIAL_WEAPONS } from "./martial.ts";`);
-      if (existsSync(join(outDir, "exotic.ts"))) lines.push(`export { EXOTIC_WEAPONS } from "./exotic.ts";`);
-      if (existsSync(join(outDir, "armor.ts"))) lines.push(`export { ARMOR } from "./armor.ts";`);
-      if (existsSync(join(outDir, "shields.ts"))) lines.push(`export { SHIELDS } from "./shields.ts";`);
-      if (existsSync(join(outDir, "goods.ts"))) lines.push(`export { GOODS } from "./goods.ts";`);
-      // Magic items
-      if (existsSync(join(outDir, "magic-armor.ts"))) lines.push(`export { MAGIC_ARMOR } from "./magic-armor.ts";`);
-      if (existsSync(join(outDir, "magic-shields.ts")))
-        lines.push(`export { MAGIC_SHIELDS } from "./magic-shields.ts";`);
-      if (existsSync(join(outDir, "magic-weapons.ts")))
-        lines.push(`export { MAGIC_WEAPONS } from "./magic-weapons.ts";`);
-      if (existsSync(join(outDir, "wondrous-items.ts")))
-        lines.push(`export { WONDROUS_ITEMS } from "./wondrous-items.ts";`);
-      if (existsSync(join(outDir, "rings.ts"))) lines.push(`export { RINGS } from "./rings.ts";`);
-      if (existsSync(join(outDir, "rods.ts"))) lines.push(`export { RODS } from "./rods.ts";`);
-      if (existsSync(join(outDir, "staffs.ts"))) lines.push(`export { STAFFS } from "./staffs.ts";`);
-      lines.push(``);
-      const outPath = join(outDir, "index.ts");
-      this.write(outPath, lines.join("\n"));
     }
 
     private writeMagicItemFile(path: string, constName: string, items: MagicItemSeeds) {
@@ -98,8 +69,7 @@ export function GeneratesMagicItems<B extends Constructor<BaseGenerator>>(Base: 
         this.writeMagicItemFile(join(outDir, filename), constName, items);
       }
 
-      // Update index.ts to include magic item re-exports
-      this.writeItemIndexWithMagic(outDir);
+      this.writeItemIndex(outDir);
 
       this.log(
         `\nDone! Generated ${seeds.magicArmor.length} magic armor, ${seeds.magicShields.length} magic shields, ${seeds.magicWeapons.length} magic weapons`,

@@ -1,8 +1,10 @@
 /**
- * Generates the content package's seed data from the references: every book's (`--book`, `--type` to narrow), or one
- * reference file's (`<file>.json [--book <book>]`), into generated/ as a whole or not at all.
+ * Generates the content package's seed data from the references: every book's (a book, `--type` to narrow), or one
+ * reference file's (into `--book`'s folder, when given), into generated/ as a whole or not at all.
  *
- * Usage: bun run parser:generate [<reference>.json [--book <book>]] [--book <book>] [--type <type>]
+ * Usage:
+ *   bun run parser:generate [<book>] [--type <type>]
+ *   bun run parser:generate <reference>.json [--book <book>]
  */
 
 import { join } from "node:path";
