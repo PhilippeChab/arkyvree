@@ -1,10 +1,7 @@
 import { join } from "node:path";
 
 import { buildItemSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/items.ts";
-import {
-  type BaseGenerator,
-  GENERATED_HEADER,
-} from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -44,20 +41,6 @@ export function GeneratesItems<B extends Constructor<BaseGenerator>>(Base: B) {
         `weight: ${quote(g.weight)}, costGp: ${quote(g.costGp)}, type: "Other", slot: "Other",`,
         `properties: [],`,
       ]);
-    }
-
-    private writeItemIndex(outDir: string) {
-      const lines: string[] = [];
-      lines.push(...GENERATED_HEADER);
-      lines.push(`export { SIMPLE_WEAPONS } from "./weapons.ts";`);
-      lines.push(`export { MARTIAL_WEAPONS } from "./martial.ts";`);
-      lines.push(`export { EXOTIC_WEAPONS } from "./exotic.ts";`);
-      lines.push(`export { ARMOR } from "./armor.ts";`);
-      lines.push(`export { SHIELDS } from "./shields.ts";`);
-      lines.push(`export { GOODS } from "./goods.ts";`);
-      lines.push(``);
-      const outPath = join(outDir, "index.ts");
-      this.write(outPath, lines.join("\n"));
     }
 
     private writeShieldFile(path: string, constName: string, items: ItemSeeds["shields"]) {

@@ -13,7 +13,7 @@ import {
   generateFavoredEnemyFeats,
   generateFeatSeeds,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
-import { importLine } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
+import { compareNames, importLine } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
@@ -71,7 +71,9 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
           for (const m of content.matchAll(/export const (\w+): FeatSeed\[\]/g)) {
             exports.push(m[1]);
           }
-          if (exports.length > 0) featFiles.push({ file, exports });
+          // By name, as a formatted file declares them: one this run just wrote declares them in the order it wrote
+          // them, and the index is the same whichever it reads
+          if (exports.length > 0) featFiles.push({ file, exports: exports.sort(compareNames) });
         }
       } catch {
         // dir doesn't exist

@@ -1,10 +1,27 @@
-import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname, relative } from "node:path";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
 
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { importLine, type ImportTable } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { classReferences } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+
+/** The files a book's items/ can hold, each with the list it exports, in the order the items' index lists them. */
+const ITEM_FILES = [
+  ["weapons.ts", "SIMPLE_WEAPONS"],
+  ["martial.ts", "MARTIAL_WEAPONS"],
+  ["exotic.ts", "EXOTIC_WEAPONS"],
+  ["armor.ts", "ARMOR"],
+  ["shields.ts", "SHIELDS"],
+  ["goods.ts", "GOODS"],
+  ["magic-armor.ts", "MAGIC_ARMOR"],
+  ["magic-shields.ts", "MAGIC_SHIELDS"],
+  ["magic-weapons.ts", "MAGIC_WEAPONS"],
+  ["wondrous-items.ts", "WONDROUS_ITEMS"],
+  ["rings.ts", "RINGS"],
+  ["rods.ts", "RODS"],
+  ["staffs.ts", "STAFFS"],
+];
 
 /** The builders an item file can import, in the order its import lists them. */
 const ITEM_IMPORTS: ImportTable = [
@@ -128,5 +145,20 @@ export class BaseGenerator {
         `import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";`,
       ]),
     );
+  }
+
+  /**
+   * Writes a book's items' index (items/index.ts): every item file it has, mundane or magic, whichever reference was
+   * generated last.
+   */
+  protected writeItemIndex(outDir: string) {
+    const lines = [
+      ...GENERATED_HEADER,
+      ...ITEM_FILES.filter(([file]) => existsSync(join(outDir, file))).map(
+        ([file, name]) => `export { ${name} } from "./${file}";`,
+      ),
+      ``,
+    ];
+    this.write(join(outDir, "index.ts"), lines.join("\n"));
   }
 }

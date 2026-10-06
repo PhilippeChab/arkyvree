@@ -1,16 +1,28 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 
 import { generateAtomically } from "@/database/packages/dnd35-from-parser/tools/generator/atomicGeneration.ts";
 import { Generator } from "@/database/packages/dnd35-from-parser/tools/generator/Generator.ts";
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 
 const GENERATED = join(import.meta.dirname, "../../database/packages/dnd35-from-parser/generated");
 
 /** A file's code as the generator leaves it, formatted: the swap formats what a generation writes. */
 function code(value: string) {
   return `export const value = "${value}";\n`;
+}
+
+/** That `folder` holds the committed generated files, each as it's committed. */
+function expectCommitted(folder: string) {
+  expect(filesOf(folder)).toEqual(filesOf(GENERATED));
+  for (const file of filesOf(GENERATED)) {
+    expect({ file, code: readFileSync(join(folder, file), "utf8") }).toEqual({
+      file,
+      code: readFileSync(join(GENERATED, file), "utf8"),
+    });
+  }
 }
 
 /** The files under `folder`, by their path in it. */
@@ -27,13 +39,31 @@ describe("The generator", () => {
     try {
       // As `parser:generate` writes them: generated in a copy, formatted, then swapped in
       expect(generateAtomically(folder, (copy) => new Generator(copy, true).generateAll({}))).toEqual([]);
-      expect(filesOf(folder)).toEqual(filesOf(GENERATED));
-      for (const file of filesOf(GENERATED)) {
-        expect({ file, code: readFileSync(join(folder, file), "utf8") }).toEqual({
-          file,
-          code: readFileSync(join(GENERATED, file), "utf8"),
-        });
-      }
+      expectCommitted(folder);
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  test("writes, from one reference, what generating them all wrote", () => {
+    const folder = mkdtempSync(join(tmpdir(), "generated-"));
+    try {
+      cpSync(GENERATED, folder, { recursive: true });
+      // Items alone keep the magic items in their index, and a class or domains its book's feat lists in their order
+      const references = [
+        "srd/items.json",
+        "srd/classes/wizard.json",
+        "srd/domains.json",
+        "complete-divine/domains.json",
+      ];
+      expect(
+        generateAtomically(folder, (copy) => {
+          const generator = new Generator(copy, true);
+          for (const reference of references) generator.generateReference(join(REFERENCE_DIR, reference));
+          return [];
+        }),
+      ).toEqual([]);
+      expectCommitted(folder);
     } finally {
       rmSync(folder, { recursive: true, force: true });
     }

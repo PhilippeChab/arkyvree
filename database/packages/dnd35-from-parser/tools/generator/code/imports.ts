@@ -11,13 +11,15 @@ export const REQUIREMENT_IMPORTS: ImportTable = [
   ],
 ];
 
-/** An import of `names` from `from`, the names in lint's order (`sort-imports`, which ignores case). */
+/** Two names in lint's order, which ignores case (`sort-imports`, `member-order`). */
+export function compareNames(a: string, b: string): number {
+  const [x, y] = [a.toLowerCase(), b.toLowerCase()];
+  return x < y ? -1 : x > y ? 1 : 0;
+}
+
+/** An import of `names` from `from`, the names in lint's order. */
 export function importLine(names: string[], from: string): string {
-  const sorted = [...names].sort((a, b) => {
-    const [x, y] = [a.toLowerCase(), b.toLowerCase()];
-    return x < y ? -1 : x > y ? 1 : 0;
-  });
-  return `import { ${sorted.join(", ")} } from "${from}";`;
+  return `import { ${[...names].sort(compareNames).join(", ")} } from "${from}";`;
 }
 
 /** The imports of the names a file's code uses (`uses`), from `table`. A name `table` doesn't list throws. */
