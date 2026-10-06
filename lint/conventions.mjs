@@ -30,8 +30,9 @@
  * - `empty-list-reads`: an empty list never reaches the database, and is checked in one place: the repository. A read
  *   method filtering on a list of `where` (`inArray(column, where.ids)`, outside an `or`) answers an empty one without a
  *   query (`if (where.ids.length === 0) return [];` first), and its callers read without checking: no
- *   `ids.length > 0 ? Repo.findMany(db, { ids }) : []`, no `if (!ids.length) return []` before a read of `ids`. A write
- *   is no read: an insert of no rows throws, so its repository skips it; an update or a delete of none changes nothing.
+ *   `ids.length > 0 ? Repo.findMany(db, { ids }) : []`, no `if (!ids.length) return []` before reads of `ids` alone. A
+ *   check that skips other queries too (a write, a read of something else) is the caller's to keep: an insert of no rows
+ *   throws, and a read of something else would run for nothing.
  * - `no-disable-comments`: no comment turns a lint rule off (`oxlint-disable…`, `eslint-disable…`): a case a rule gets
  *   wrong changes the rule, its options or its definition, never one line.
  * - `environment`: the server reads its environment in `server/environment.ts` only (`readEnv`, `isProduction`…),
@@ -292,18 +293,25 @@ function createEmptyListReads(context) {
   }
   // The repositories' shared instances this file imports.
   const repositories = new Set();
-  const mentions = (node, list) =>
-    new RegExp(`(^|[^\\w$.])${list.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^\\w$])`).test(textOf(node));
-  // The repository calls in `nodes` that name `list`, as reads and writes
-  const callsOn = (nodes, list) => {
-    const calls = nodes.flatMap((node) => [...callsIn(node)]);
-    const onList = calls.filter((call) => {
-      const callee = call.callee;
-      if (callee.type !== "MemberExpression" || !repositories.has(callee.object.name)) return false;
-      return call.arguments.slice(1).some((argument) => mentions(argument, list));
+  // Whether `node` uses `list` as a value (`{ ids }`, `{ entityIds: ids.map(…) }`), not as a property's key
+  const uses = (node, list) => {
+    if ((node.type === "Identifier" || node.type === "MemberExpression") && textOf(node) === list) return true;
+    return Object.entries(node).some(([key, value]) => {
+      if (key === "parent" || (key === "key" && node.type === "Property" && !node.computed)) return false;
+      return (Array.isArray(value) ? value : [value]).some(
+        (child) => typeof child?.type === "string" && uses(child, list),
+      );
     });
-    const isRead = (call) => READ_VERBS.some((verb) => startsWithVerb(call.callee.property.name, verb));
-    return { reads: onList.filter(isRead), writes: onList.filter((call) => !isRead(call)) };
+  };
+  // Whether every repository call in `nodes` reads `list`, and there is one: what a check of `list` alone skips
+  const readsOnly = (nodes, list) => {
+    const calls = nodes
+      .flatMap((node) => [...callsIn(node)])
+      .filter((call) => call.callee.type === "MemberExpression" && repositories.has(call.callee.object.name));
+    const readsList = (call) =>
+      READ_VERBS.some((verb) => startsWithVerb(call.callee.property.name, verb)) &&
+      call.arguments.slice(1).some((argument) => uses(argument, list));
+    return calls.length > 0 && calls.every(readsList);
   };
   const report = (node) =>
     context.report({
@@ -322,9 +330,7 @@ function createEmptyListReads(context) {
       const test = emptinessTest(node.test);
       if (!test) return;
       const [skipped, read] = test.whenEmpty ? [node.consequent, node.alternate] : [node.alternate, node.consequent];
-      if (!isEmptyValue(skipped)) return;
-      const { reads, writes } = callsOn([read], textOf(test.list));
-      if (reads.length > 0 && writes.length === 0) report(node);
+      if (isEmptyValue(skipped) && readsOnly([read], textOf(test.list))) report(node);
     },
     IfStatement(node) {
       const test = emptinessTest(node.test);
@@ -334,14 +340,11 @@ function createEmptyListReads(context) {
         // `if (!ids.length) return [];`, then reads of `ids`
         const returned = returnedBy(node.consequent);
         if (!returned || !isEmptyValue(returned.argument) || node.parent.type !== "BlockStatement") return;
-        const after = node.parent.body.slice(node.parent.body.indexOf(node) + 1);
-        const { reads, writes } = callsOn(after, list);
-        if (reads.length > 0 && writes.length === 0) report(node);
+        if (readsOnly(node.parent.body.slice(node.parent.body.indexOf(node) + 1), list)) report(node);
         return;
       }
       // `if (ids.length > 0) { …a read of ids… }`
-      const { reads, writes } = callsOn([node.consequent], list);
-      if (reads.length > 0 && writes.length === 0) report(node);
+      if (readsOnly([node.consequent], list)) report(node);
     },
   };
 }

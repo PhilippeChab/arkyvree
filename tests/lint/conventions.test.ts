@@ -265,7 +265,7 @@ describe("conventions", () => {
   test("an empty list is checked in its repository's read, which answers it without a query, never by a caller", async () => {
     const reading = (body: string) =>
       lines(
-        'import { Feats } from "@/server/repositories/index.ts";',
+        'import { Feats, Rulesets } from "@/server/repositories/index.ts";',
         `export async function f(db: Db, ids: string[], rows: R[]) {`,
         body,
         "}",
@@ -290,6 +290,12 @@ describe("conventions", () => {
             "  if (rows.length === 0) return [];\n  return await Feats.createMany(tx, rows);",
           ),
           "server/services/other.ts": reading("  return ids.length > 0 ? describe(ids) : [];"),
+          "server/services/key.ts": reading(
+            "  if (ids.length === 0) return [];\n  return await Feats.findMany(db, { ids: otherIds });",
+          ),
+          "server/services/more.ts": reading(
+            "  if (ids.length === 0) return [];\n  const ruleset = await Rulesets.findOne(db, { id });\n  return await Feats.findMany(db, { ids });",
+          ),
           "server/repositories/unchecked.ts": repository(
             "    return await db.select().from(t).where(and(inArray(t.id, where.ids), isNull(t.deletedAt)));",
           ),
