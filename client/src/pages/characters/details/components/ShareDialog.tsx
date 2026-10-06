@@ -93,7 +93,6 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
               <TextField
                 value={shareUrl}
                 fullWidth
-                size="small"
                 slotProps={{
                   input: {
                     readOnly: true,

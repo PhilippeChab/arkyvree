@@ -638,7 +638,6 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
             setRollMethod(method.id);
             setValue("abilities", {});
           }}
-          size="small"
           sx={{ minWidth: 200 }}
         >
           {ROLL_METHODS.map((m) => (

@@ -867,6 +867,26 @@ describe("frontend rules", () => {
     ]);
   });
 
+  test("a menu lists ActionMenuItems or chosen MenuItems, and a panel is a Popover", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/actions.tsx":
+            'export const a = (\n  <Menu open>\n    <ActionMenuItem icon={EditIcon} label="Edit" onClick={edit} />\n    <Divider />\n  </Menu>\n);\n',
+          "client/src/choices.tsx":
+            "export const c = (\n  <Menu open>\n    {options.map((o) => (\n      <MenuItem key={o} selected={o === value} onClick={() => pick(o)}>\n        {o}\n      </MenuItem>\n    ))}\n  </Menu>\n);\n",
+          "client/src/action.tsx":
+            "export const m = (\n  <Menu open>\n    <MenuItem onClick={edit}>Edit</MenuItem>\n  </Menu>\n);\n",
+          "client/src/panel.tsx":
+            "export const p = (\n  <Menu open>\n    <Box>\n      <Typography>Notifications</Typography>\n    </Box>\n  </Menu>\n);\n",
+          "client/src/select.tsx":
+            'export const s = (\n  <TextField select value={v}>\n    <MenuItem value="a">A</MenuItem>\n  </TextField>\n);\n',
+        },
+        ["menus"],
+      ),
+    ).toEqual(["menus client/src/action.tsx", "menus client/src/panel.tsx"]);
+  });
+
   test("a button that starts a request shows it running", async () => {
     expect(
       await lintRepo(

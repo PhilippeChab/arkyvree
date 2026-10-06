@@ -78,6 +78,8 @@
  *   its state with `ExpandArrow`; a component's own arrow (`expandIcon`) stays its own. A toggle is a button, but a
  *   table row keeps its role (`toggleProps(open, onToggle, "row")`).
  * - `pending-buttons`: a button that starts a request shows it running, its label in a `DiceSpinner`.
+ * - `menus`: a menu lists its items alone: an action is an `ActionMenuItem`, one of several to choose a `MenuItem`
+ *   marked `selected` (a filter, a sort, a visibility); a panel that opens from a button is a `Popover`.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -226,6 +228,9 @@ const LABELLED = new Set(["ActionMenuItem", "Button", "MenuItem"]);
 
 /** The fields, besides the bound ones, whose `label` names them */
 const LABELLED_FIELDS = new Set(["FormControlLabel", "SwitchField", "TextField"]);
+
+/** What a `Menu` holds: its items, and the dividers between them */
+const MENU_CHILDREN = new Set(["ActionMenuItem", "Divider", "MenuItem"]);
 
 /** A time or an easing written out: `200ms`, `0.3s`, `ease-in-out`, `cubic-bezier(…)` */
 const MOTION_LITERAL = /\d(?:\.\d+)?m?s\b|\b(?:ease(?:-in|-out|-in-out)?|linear|steps)\b|cubic-bezier\(/;
@@ -984,6 +989,35 @@ function createLabelCase(context) {
   };
 }
 
+function createMenus(context) {
+  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/ActionMenuItem.tsx") return {};
+  return {
+    JSXElement(node) {
+      const name = elementName(node);
+      if (name === "Menu") {
+        const panel = childElements(node).some((child) => !MENU_CHILDREN.has(elementName(child)));
+        if (panel) {
+          context.report({
+            node: node.openingElement,
+            message: "A menu lists its items alone: a panel that opens from a button is a `Popover`.",
+          });
+        }
+      }
+      if (name !== "MenuItem" || hasAttribute(node, "selected")) return;
+      for (let p = parentElement(node); p; p = parentElement(p)) {
+        if (elementName(p) !== "Menu") continue;
+        context.report({
+          node: node.openingElement,
+          message:
+            "A menu's action is an `ActionMenuItem` (its icon, its label, its intent); a `MenuItem` is one of " +
+            "several to choose, marked `selected`.",
+        });
+        return;
+      }
+    },
+  };
+}
+
 function createMotion(context) {
   if (!inClient(context) || repoPath(context.filename) === "client/src/lib/animations.ts") return {};
   const report = (node) =>
@@ -1704,6 +1738,7 @@ export default {
   icons: { meta: { type: "suggestion" }, create: createIcons },
   "nav-links": { meta: { type: "suggestion" }, create: createNavLinks },
   "browser-storage": { meta: { type: "suggestion" }, create: createBrowserStorage },
+  menus: { meta: { type: "suggestion" }, create: createMenus },
   motion: { meta: { type: "suggestion" }, create: createMotion },
   "type-scale": { meta: { type: "suggestion" }, create: createTypeScale },
   shape: { meta: { type: "suggestion" }, create: createShape },

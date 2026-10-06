@@ -1,8 +1,21 @@
-import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
+import {
+  Badge,
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  Popover,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
@@ -78,12 +91,14 @@ export function NotificationBell() {
           <NotificationsIcon />
         </Badge>
       </IconButton>
-      <Menu
+      <Popover
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
         slotProps={{
           paper: {
+            role: "dialog",
+            "aria-label": "Notifications",
             sx: { width: { xs: "90vw", sm: 450 }, maxHeight: 480 },
           },
         }}
@@ -95,12 +110,8 @@ export function NotificationBell() {
             </Typography>
           </Box>
         ) : (
-          [
-            <Stack
-              key="header"
-              direction="row"
-              sx={{ px: 2, py: 1, justifyContent: "space-between", alignItems: "center" }}
-            >
+          <>
+            <Stack direction="row" sx={{ px: 2, py: 1, justifyContent: "space-between", alignItems: "center" }}>
               <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>
                 Notifications
               </Typography>
@@ -113,49 +124,41 @@ export function NotificationBell() {
                   Mark All as Read
                 </DiceSpinner>
               </Button>
-            </Stack>,
-            <Divider key="divider" />,
-            ...notifications.map((notification) =>
-              actions.isActionable(notification) ? (
-                <Box key={notification.id} sx={{ px: 2, py: 1.5 }}>
-                  <NotificationSummary notification={notification} />
-                  <InviteActionButtons
-                    sx={{ mt: 1 }}
-                    onAccept={() => actions.accept(notification, (path) => closeAnd(() => navigate(path)))}
-                    onReject={() => actions.reject(notification)}
-                    disabled={actions.isAnswering(notification)}
-                  />
-                </Box>
-              ) : (
-                <Tooltip
-                  describeChild
-                  key={notification.id}
-                  title={formatActivityDetails(notification.data) ?? ""}
-                  placement="left"
-                  slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
-                >
-                  <MenuItem
-                    onClick={() => closeAnd(() => actions.open(notification))}
-                    sx={{ py: 1.5, whiteSpace: "normal" }}
-                  >
+            </Stack>
+            <Divider />
+            <List disablePadding>
+              {notifications.map((notification) =>
+                actions.isActionable(notification) ? (
+                  <ListItem key={notification.id} sx={{ display: "block", px: 2, py: 1.5 }}>
                     <NotificationSummary notification={notification} />
-                  </MenuItem>
-                </Tooltip>
-              ),
-            ),
-            <Divider key="divider-bottom" />,
-            <MenuItem
-              key="view-all"
-              onClick={() => closeAnd(() => navigate("/notifications"))}
-              sx={{ justifyContent: "center" }}
-            >
-              <Typography variant="body2" sx={{ color: "primary.main" }}>
-                View all notifications
-              </Typography>
-            </MenuItem>,
-          ]
+                    <InviteActionButtons
+                      sx={{ mt: 1 }}
+                      onAccept={() => actions.accept(notification, (path) => closeAnd(() => navigate(path)))}
+                      onReject={() => actions.reject(notification)}
+                      disabled={actions.isAnswering(notification)}
+                    />
+                  </ListItem>
+                ) : (
+                  <Tooltip
+                    describeChild
+                    key={notification.id}
+                    title={formatActivityDetails(notification.data) ?? ""}
+                    placement="left"
+                  >
+                    <ListItemButton onClick={() => closeAnd(() => actions.open(notification))} sx={{ py: 1.5 }}>
+                      <NotificationSummary notification={notification} />
+                    </ListItemButton>
+                  </Tooltip>
+                ),
+              )}
+            </List>
+            <Divider />
+            <Button component={Link} to="/notifications" onClick={() => setAnchorEl(null)} fullWidth>
+              View All
+            </Button>
+          </>
         )}
-      </Menu>
+      </Popover>
     </>
   );
 }
