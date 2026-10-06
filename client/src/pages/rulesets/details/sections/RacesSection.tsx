@@ -1,10 +1,10 @@
-import { People as RacesIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { RacesIcon } from "@/client/src/components/icons/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_RACE, type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";

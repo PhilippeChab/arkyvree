@@ -1,8 +1,8 @@
-import { Add as AddIcon, FormatListNumbered as LevelsIcon } from "@mui/icons-material";
 import { Box, Button, Chip, Tooltip, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
+import { AddIcon, LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";

@@ -1,6 +1,6 @@
-import { Group as ContributorIcon } from "@mui/icons-material";
 import { useParams } from "react-router-dom";
 
+import { ContributorsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteLandingPage } from "@/client/src/components/invites/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -15,7 +15,7 @@ export default function RulesetContributorInvitePage() {
       entityLabel="Ruleset"
       entityPath={(id) => `/rulesets/${id}`}
       listPath="/rulesets"
-      icon={ContributorIcon}
+      icon={ContributorsIcon}
       queryKey={queryKeys.invites.detail("rulesetContributor", contributorId)}
       inviteFn={async () => {
         const invite = await parseResponse(rpc.api.rulesets.contributors.invites[":id"].$get(param));

@@ -1,4 +1,3 @@
-import { History as HistoryIcon } from "@mui/icons-material";
 import { Chip, Container, Tooltip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
@@ -13,6 +12,7 @@ import {
   SearchBar,
   type SortOption,
 } from "@/client/src/components/common/index.ts";
+import { ActivityIcon } from "@/client/src/components/icons/index.ts";
 import { isNavigableTarget, useListParams, useOpenActivityTarget, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatActivityDetails, formatActivityType } from "@/client/src/lib/activityFormatters.ts";
 import { formatDateTime } from "@/client/src/lib/formatDate.ts";
@@ -109,7 +109,7 @@ export default function ActivitiesPage() {
               isRowClickable={(activity) => isNavigableTarget(activity.targetTable)}
               search={search}
               empty={{
-                icon: HistoryIcon,
+                icon: ActivityIcon,
                 title: "No activity logs found",
                 description: "Your activity history will appear here as you interact with the application.",
               }}

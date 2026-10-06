@@ -1,4 +1,3 @@
-import { FilterList as FilterIcon, Search as SearchIcon, Sort as SortIcon } from "@mui/icons-material";
 import {
   Box,
   IconButton,
@@ -12,6 +11,8 @@ import {
   Tooltip,
 } from "@mui/material";
 import { useState } from "react";
+
+import { FilterIcon, SearchIcon, SortIcon } from "@/client/src/components/icons/index.ts";
 
 interface SearchBarProps<TFilter extends string = string, TSort extends string = string> {
   searchValue: string;

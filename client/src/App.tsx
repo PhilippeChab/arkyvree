@@ -10,7 +10,6 @@ import { CustomThemeProvider } from "@/client/src/contexts/ThemeContext.tsx";
 import { SnackbarProvider } from "@/client/src/contexts/ToastContext.tsx";
 import { WebSocketProvider } from "@/client/src/contexts/WebSocketContext.tsx";
 import { checkSession } from "@/client/src/hooks/index.ts";
-import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
 import { createQueryClient } from "@/client/src/lib/queryClient.ts";
 import SignIn from "@/client/src/pages/auth/SignIn.tsx";
 import DashboardPage from "@/client/src/pages/dashboard/DashboardPage.tsx";
@@ -64,6 +63,7 @@ function PrivateRoute() {
   const location = useLocation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const signedOutByUser = useAuthStore((s) => s.signedOutByUser);
+  const demoExpired = useAuthStore((s) => s.demoExpired);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
@@ -80,15 +80,8 @@ function PrivateRoute() {
   if (!checked && !isAuthenticated) return null;
   if (isAuthenticated) return <Outlet />;
 
-  // Read-only here; DemoExpiredPage clears the flag on mount. Mutating during
-  // render is unsafe under StrictMode's double-invoke (the second pass would
-  // see an already-cleared flag and fall through to /sign-in).
-  let demoExpired = false;
-  try {
-    demoExpired = !!localStorage.getItem(DEMO_EXPIRED_FLAG);
-  } catch {
-    // storage disabled
-  }
+  // Read-only here; DemoExpiredPage clears it on mount. Clearing it during render would be unsafe under StrictMode's
+  // double-invoke (the second pass would see it cleared and fall through to /sign-in).
   if (demoExpired) return <Navigate to="/demo-expired" replace />;
 
   // Back to the page once signed in, unless the user signed out of it

@@ -1,7 +1,3 @@
-import ChevronRight from "@mui/icons-material/ChevronRight";
-import Clear from "@mui/icons-material/Clear";
-import FilterList from "@mui/icons-material/FilterList";
-import Public from "@mui/icons-material/Public";
 import {
   Box,
   Chip,
@@ -18,6 +14,7 @@ import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { BlankState, DiceSpinner, NextPageSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
+import { ChevronRightIcon, ClearIcon, FilterIcon, PublicIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -174,7 +171,7 @@ export function TargetPathBrowser({
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.5, minHeight: 32 }}>
         {breadcrumbSegments.map((segment, index) => (
           <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
-            {index > 0 && <ChevronRight sx={{ fontSize: 16, color: "text.secondary", mx: 0.25 }} />}
+            {index > 0 && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary", mx: 0.25 }} />}
             <Chip
               label={segmentLabels[segment] || formatSegment(segment)}
               size="small"
@@ -187,7 +184,7 @@ export function TargetPathBrowser({
         ))}
         {breadcrumbSegments.length > 0 && !disabled && (
           <IconButton size="small" aria-label="Clear path" onClick={handleClear} sx={{ ml: 0.5 }}>
-            <Clear fontSize="small" />
+            <ClearIcon fontSize="small" />
           </IconButton>
         )}
         {breadcrumbSegments.length === 0 && <Skeleton variant="rounded" width={100} height={24} />}
@@ -217,7 +214,7 @@ export function TargetPathBrowser({
                 color={searchEverywhere ? "primary" : "default"}
                 aria-label="Toggle search scope"
               >
-                {searchEverywhere ? <Public fontSize="small" /> : <FilterList fontSize="small" />}
+                {searchEverywhere ? <PublicIcon fontSize="small" /> : <FilterIcon fontSize="small" />}
               </IconButton>
             </Tooltip>
             {isLoading && (
@@ -280,7 +277,7 @@ export function TargetPathBrowser({
                               <Typography variant="body2" sx={{ fontWeight: isGroup || isSelected ? 600 : 400 }}>
                                 {segmentLabels[option.label] || formatSegment(option.label)}
                               </Typography>
-                              {isGroup && <ChevronRight sx={{ fontSize: 16, color: "text.secondary" }} />}
+                              {isGroup && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
                             </Box>
                           )
                         }

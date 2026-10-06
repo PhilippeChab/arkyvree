@@ -1,6 +1,7 @@
-import { Add as AddIcon } from "@mui/icons-material";
 import { Button, type ButtonProps } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+
+import { AddIcon } from "@/client/src/components/icons/index.ts";
 
 type PageActionButtonProps = Omit<ButtonProps, "variant" | "size">;
 

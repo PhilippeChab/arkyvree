@@ -1,19 +1,19 @@
-import {
-  EmojiEvents as FeatPoolsIcon,
-  TrendingUp as LevelsIcon,
-  Settings as ModifiersIcon,
-  Label as PropertiesIcon,
-  Rule as RequirementsIcon,
-  Psychology as SkillsIcon,
-  Bolt as SpellListIcon,
-  AutoStories as SpellsIcon,
-} from "@mui/icons-material";
 import { Box, Chip, MenuItem, TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { DeleteDialog, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
+import {
+  FeatPoolsIcon,
+  LevelsIcon,
+  ModifiersIcon,
+  PropertiesIcon,
+  RequirementsIcon,
+  SkillsIcon,
+  SpellProgressionIcon,
+  SpellsIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
@@ -59,9 +59,9 @@ const TABS: SectionTab<ClassSection>[] = [
   { key: "levels", label: "Levels", icon: LevelsIcon },
   { key: "skills", label: "Skills", icon: SkillsIcon },
   { key: "feat-pools", label: "Feat Pools", icon: FeatPoolsIcon },
-  { key: "spells-known", label: "Spells Known", icon: SpellsIcon },
-  { key: "spells", label: "Spell Uses", icon: SpellsIcon },
-  { key: "spell-list", label: "Spells", icon: SpellListIcon },
+  { key: "spells-known", label: "Spells Known", icon: SpellProgressionIcon },
+  { key: "spells", label: "Spell Uses", icon: SpellProgressionIcon },
+  { key: "spell-list", label: "Spells", icon: SpellsIcon },
   { key: "properties", label: "Properties", icon: PropertiesIcon },
   { key: "modifiers", label: "Modifiers", icon: ModifiersIcon },
   { key: "requirements", label: "Requirements", icon: RequirementsIcon },
@@ -216,7 +216,7 @@ export default function ClassDetailsPage() {
       <EntityPageError
         message={!ruleset ? loadFailureMessage("Ruleset", rulesetError) : loadFailureMessage("Class", classError)}
         backLabel="Back"
-        onBack={() => navigate(backUrl)}
+        backTo={backUrl}
       />
     );
   }
@@ -229,7 +229,7 @@ export default function ClassDetailsPage() {
       <EntityDetailLayout
         entityName={classData?.name}
         rulesetName={ruleset?.name}
-        onBack={() => navigate(backUrl)}
+        backTo={backUrl}
         canDelete={canEdit}
         onDelete={() => setDeleteDialogOpen(true)}
         isLoading={isLoading}

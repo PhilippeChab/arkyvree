@@ -1,7 +1,7 @@
-import { ExpandLess } from "@mui/icons-material";
 import { IconButton, TableCell, TableRow } from "@mui/material";
 import { type ReactNode, useMemo } from "react";
 
+import { ExpandLessIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 
 import { groupSkills } from "./skillGroups.ts";
@@ -69,7 +69,7 @@ export function GroupedSkillRows<S extends { name: string }>({
                 aria-label={`${isExpanded ? "Hide" : "Show"} ${row.prefix} skills`}
                 sx={{ transition: "transform 200ms", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}
               >
-                <ExpandLess fontSize="small" />
+                <ExpandLessIcon fontSize="small" />
               </IconButton>
             </TableCell>
           </TableRow>

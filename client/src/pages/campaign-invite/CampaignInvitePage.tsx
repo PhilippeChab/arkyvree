@@ -1,6 +1,6 @@
-import { Mail as InviteIcon } from "@mui/icons-material";
 import { useParams } from "react-router-dom";
 
+import { InviteIcon } from "@/client/src/components/icons/index.ts";
 import { InviteLandingPage } from "@/client/src/components/invites/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";

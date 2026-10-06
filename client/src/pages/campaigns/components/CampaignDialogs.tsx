@@ -1,12 +1,3 @@
-import {
-  Edit as EditIcon,
-  AdminPanelSettings as GMIcon,
-  ExitToApp as LeaveIcon,
-  PersonAdd as PersonAddIcon,
-  Person as PersonIcon,
-  PersonRemove as PersonRemoveIcon,
-  Send as SendIcon,
-} from "@mui/icons-material";
 import { Alert, Box, TextField, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { type ElementType, useState } from "react";
@@ -23,6 +14,15 @@ import {
   RulesetPicker,
   SelectField,
 } from "@/client/src/components/common/index.ts";
+import {
+  AddPlayerIcon,
+  EditIcon,
+  GameMasterIcon,
+  LeaveIcon,
+  PlayerIcon,
+  RemovePlayerIcon,
+  SendIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
@@ -121,8 +121,8 @@ function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
       rules={{ required: "Role is required" }}
       disabled={isLoading}
       options={[
-        { value: "Player Character", label: <RoleLabel icon={PersonIcon} label="Player Character" /> },
-        { value: "Game Master", label: <RoleLabel icon={GMIcon} label="Game Master" /> },
+        { value: "Player Character", label: <RoleLabel icon={PlayerIcon} label="Player Character" /> },
+        { value: "Game Master", label: <RoleLabel icon={GameMasterIcon} label="Game Master" /> },
       ]}
     />
   );
@@ -140,7 +140,7 @@ export function AddPlayerDialog({ open, onClose, form, onSubmit, isLoading }: Ad
       onSubmit={onSubmit}
       isLoading={isLoading}
       submitLabel={inviting ? "Send Invite" : "Create Player"}
-      submitIcon={inviting ? <SendIcon /> : <PersonAddIcon />}
+      submitIcon={inviting ? <SendIcon /> : <AddPlayerIcon />}
     >
       <Alert severity="info">
         <Typography variant="body2">
@@ -306,7 +306,7 @@ export function RemovePlayerDialog({
       }
       confirmLabel={isSelfRemoval ? "Leave" : "Remove Player"}
       confirmColor={isSelfRemoval ? "warning" : "error"}
-      confirmIcon={isSelfRemoval ? <LeaveIcon /> : <PersonRemoveIcon />}
+      confirmIcon={isSelfRemoval ? <LeaveIcon /> : <RemovePlayerIcon />}
     />
   );
 }

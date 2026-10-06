@@ -1,4 +1,3 @@
-import { Settings as ModifiersIcon, Label as PropertiesIcon, Rule as RequirementsIcon } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
 import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
@@ -12,6 +11,7 @@ import {
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
+import { ModifiersIcon, PropertiesIcon, RequirementsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
@@ -282,7 +282,7 @@ function CustomizationView({
     <EntityDetailLayout
       entityName={`Customize ${title}`}
       subtitle={subtitle ?? `${label} in ${ruleset.name}`}
-      onBack={() => navigate(backPath ?? listPath)}
+      backTo={backPath ?? listPath}
       backDisabled={locked}
       canDelete={canEdit && isEditable(data) && !locked}
       onDelete={() => setDeleteDialogOpen(true)}
@@ -357,7 +357,6 @@ export default function CustomizationPage() {
     entityId: string;
     section?: string;
   }>();
-  const navigate = useNavigate();
   const location = useLocation();
   const validType = parseCustomizationSegment(entityType);
 
@@ -421,14 +420,14 @@ export default function CustomizationPage() {
               : loadFailureMessage(entityTypeLabel(validType, ruleset?.baseRules), entityError)
         }
         backLabel="Back to Ruleset"
-        onBack={() => navigate(`/rulesets/${rulesetId}`)}
+        backTo={`/rulesets/${rulesetId}`}
       />
     );
   }
 
   if (!ruleset || !data || !currentTab) {
     return (
-      <EntityDetailLayout onBack={() => navigate(-1)} canDelete={false} isLoading>
+      <EntityDetailLayout backTo={`/rulesets/${rulesetId}`} canDelete={false} isLoading>
         {null}
       </EntityDetailLayout>
     );

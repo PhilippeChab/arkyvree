@@ -1,5 +1,6 @@
-import { Add as AddIcon } from "@mui/icons-material";
 import { Box, Button } from "@mui/material";
+
+import { AddIcon } from "@/client/src/components/icons/index.ts";
 
 interface SectionAddButtonProps {
   label: string;

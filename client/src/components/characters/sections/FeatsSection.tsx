@@ -1,9 +1,9 @@
-import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import { Box, Collapse, IconButton, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { BlankState } from "@/client/src/components/common/index.ts";
+import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 import { SheetSection } from "./SheetSection.tsx";

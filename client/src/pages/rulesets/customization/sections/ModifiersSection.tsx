@@ -1,4 +1,3 @@
-import { Tune as ModifiersIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
@@ -7,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 import { CreateDialog, DeleteDialog, EditDialog, SectionContent } from "@/client/src/components/common/index.ts";
 import { EMPTY_MODIFIER, ModifierForm, TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
+import { ModifiersIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";

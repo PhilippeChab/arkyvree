@@ -1,4 +1,3 @@
-import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from "@mui/icons-material";
 import { Autocomplete, Box, Button, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
@@ -16,6 +15,7 @@ import {
   ScrollSafeListbox,
   ValidationIssueList,
 } from "@/client/src/components/common/index.ts";
+import { AddIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useFormWith, useListboxQuery, useValidationIssues } from "@/client/src/hooks/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";

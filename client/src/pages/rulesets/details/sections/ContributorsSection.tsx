@@ -1,10 +1,3 @@
-import {
-  Add as AddIcon,
-  People as ContributorsIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  ExitToApp as LeaveIcon,
-} from "@mui/icons-material";
 import { Box, Button } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
@@ -24,6 +17,7 @@ import {
   ContributorsTable,
   InviteContributorDialog,
 } from "@/client/src/components/contributors/index.ts";
+import { AddIcon, ContributorsIcon, DeleteIcon, EditIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";

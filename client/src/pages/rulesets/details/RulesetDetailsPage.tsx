@@ -1,29 +1,4 @@
 import {
-  FitnessCenter as AbilitiesIcon,
-  Stars as AptitudesIcon,
-  Archive as ArchiveIcon,
-  AccessibilityNew as ClassesIcon,
-  CompareArrows as CompareArrowsIcon,
-  Group as ContributorsIcon,
-  Edit as EditIcon,
-  Extension as ExtensionIcon,
-  Spoke as FeatsIcon,
-  ContentCopy as ForkIcon,
-  Construction as ItemsIcon,
-  Translate as LanguagesIcon,
-  Gavel as MechanicsIcon,
-  Bolt as PowersIcon,
-  Lock as PrivateIcon,
-  Public as PublicIcon,
-  Publish as PublishIcon,
-  People as RacesIcon,
-  Shield as SavesIcon,
-  Psychology as SkillsIcon,
-  StarBorder as StarBorderIcon,
-  Star as StarIcon,
-  Unarchive as UnarchiveIcon,
-} from "@mui/icons-material";
-import {
   Alert,
   Box,
   Button,
@@ -42,7 +17,7 @@ import {
 } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
-import { Navigate, Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import {
   ActionMenuItem,
@@ -55,6 +30,31 @@ import {
   type SectionTab,
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
+import {
+  AbilitiesIcon,
+  AptitudesIcon,
+  ArchiveIcon,
+  ClassesIcon,
+  CompareIcon,
+  ContributorsIcon,
+  EditIcon,
+  ExtensionIcon,
+  FeatsIcon,
+  ForkIcon,
+  ItemsIcon,
+  LanguagesIcon,
+  MechanicsIcon,
+  PrivateIcon,
+  PublicIcon,
+  PublishIcon,
+  RacesIcon,
+  SavesIcon,
+  SkillsIcon,
+  SpellsIcon,
+  StarredIcon,
+  UnarchiveIcon,
+  UnstarredIcon,
+} from "@/client/src/components/icons/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
@@ -225,7 +225,7 @@ export default function RulesetDetailsPage() {
       {
         key: "powers",
         label: entityTypeLabel("powers", rules, true),
-        icon: PowersIcon,
+        icon: SpellsIcon,
         component: sections.PowersSection,
       },
       { key: "items", label: "Items", icon: ItemsIcon, component: sections.ItemsSection },
@@ -276,11 +276,7 @@ export default function RulesetDetailsPage() {
   if (!ruleset) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageError
-          message={loadFailureMessage("Ruleset", error)}
-          backLabel="Back to Rulesets"
-          onBack={() => navigate("/rulesets")}
-        />
+        <PageError message={loadFailureMessage("Ruleset", error)} backLabel="Back to Rulesets" backTo={"/rulesets"} />
       </Container>
     );
   }
@@ -303,11 +299,11 @@ export default function RulesetDetailsPage() {
                   "&:hover": { color: "warning.main", backgroundColor: "transparent" },
                 }}
               >
-                {ruleset.isStarred ? <StarIcon fontSize="medium" /> : <StarBorderIcon fontSize="medium" />}
+                {ruleset.isStarred ? <StarredIcon fontSize="medium" /> : <UnstarredIcon fontSize="medium" />}
               </IconButton>
             )
           }
-          onBack={() => navigate("/rulesets")}
+          backTo={"/rulesets"}
           onMenuOpen={hasMenuItems ? (e) => setAnchorEl(e.currentTarget) : undefined}
           chips={
             <>
@@ -337,7 +333,7 @@ export default function RulesetDetailsPage() {
                   size="medium"
                   color="info"
                   variant="outlined"
-                  component={RouterLink}
+                  component={Link}
                   to={`/rulesets/${ruleset.rulesetId}`}
                   clickable
                   sx={{ fontWeight: 500 }}
@@ -373,7 +369,7 @@ export default function RulesetDetailsPage() {
                           size="medium"
                           color={ext.updateAvailable ? "warning" : "default"}
                           variant="outlined"
-                          component={RouterLink}
+                          component={Link}
                           to={`/rulesets/${ext.extensionId}`}
                           clickable
                           sx={{ fontWeight: 500, justifyContent: "flex-start" }}
@@ -446,7 +442,7 @@ export default function RulesetDetailsPage() {
           )}
           {!!ruleset.rulesetId && (
             <ActionMenuItem
-              icon={CompareArrowsIcon}
+              icon={CompareIcon}
               label="Local changes"
               description="View added, modified, and deleted entities"
               onClick={closeMenuAnd(() => setOverridesDialogOpen(true))}

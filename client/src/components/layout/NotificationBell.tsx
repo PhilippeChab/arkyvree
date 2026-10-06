@@ -1,4 +1,3 @@
-import { Notifications as NotificationsIcon } from "@mui/icons-material";
 import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
 import { keyframes } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
@@ -6,6 +5,7 @@ import type { InferResponseType } from "hono/client";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useNotificationActions } from "@/client/src/hooks/index.ts";
 import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";

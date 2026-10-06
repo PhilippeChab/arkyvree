@@ -1,4 +1,3 @@
-import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon, Spoke as FeatsIcon } from "@mui/icons-material";
 import {
   Box,
   Chip,
@@ -25,6 +24,7 @@ import {
   NextPageSpinner,
   NoMatchesState,
 } from "@/client/src/components/common/index.ts";
+import { ExpandLessIcon, ExpandMoreIcon, FeatsIcon } from "@/client/src/components/icons/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";

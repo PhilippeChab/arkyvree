@@ -1,5 +1,6 @@
-import { Casino as CasinoIcon } from "@mui/icons-material";
 import { Box, Button, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+
+import { DiceIcon } from "@/client/src/components/icons/index.ts";
 
 import type { AddHpStepProps } from "./levelUpFactory.ts";
 
@@ -15,7 +16,7 @@ export function AddHpStep({ wizard }: AddHpStepProps) {
   return (
     <Stack spacing={3}>
       <Box sx={{ display: "flex", gap: 1 }}>
-        <Button startIcon={<CasinoIcon />} onClick={onRollAll} size="small">
+        <Button startIcon={<DiceIcon />} onClick={onRollAll} size="small">
           Roll All
         </Button>
         <Button onClick={onMaxAll} size="small">
@@ -29,7 +30,7 @@ export function AddHpStep({ wizard }: AddHpStepProps) {
               Set HP for {level.className} Level {level.nextLevel}
             </Typography>
             <IconButton onClick={() => onRoll(index)} color="primary" size="small" aria-label={`Roll d${level.hd}`}>
-              <CasinoIcon />
+              <DiceIcon />
             </IconButton>
             <Chip label="MAX" size="small" variant="outlined" onClick={() => onHpChange(index, level.hd)} />
           </Stack>

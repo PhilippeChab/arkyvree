@@ -1,15 +1,15 @@
-import { DarkMode, LightMode, SettingsBrightness } from "@mui/icons-material";
 import { Card, CardContent, Container, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 
 import { PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
-import { type ThemeMode } from "@/client/src/contexts/themeContext.ts";
+import { DarkModeIcon, LightModeIcon, SystemModeIcon } from "@/client/src/components/icons/index.ts";
 import { useTheme } from "@/client/src/contexts/useTheme.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
+import type { ThemeMode } from "@/client/src/stores/themeMode.ts";
 
 const themeModeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
-  { value: "light", label: "Light", icon: <LightMode /> },
-  { value: "dark", label: "Dark", icon: <DarkMode /> },
-  { value: "system", label: "System", icon: <SettingsBrightness /> },
+  { value: "light", label: "Light", icon: <LightModeIcon /> },
+  { value: "dark", label: "Dark", icon: <DarkModeIcon /> },
+  { value: "system", label: "System", icon: <SystemModeIcon /> },
 ];
 
 export default function SettingsPage() {

@@ -1,12 +1,7 @@
-import {
-  ContentCopy as ContentCopyIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  LibraryAdd as LibraryAddIcon,
-} from "@mui/icons-material";
 import type { ElementType, ReactNode } from "react";
 
 import { DataTable, type DataTableColumn, type RowAction } from "@/client/src/components/common/index.ts";
+import { DeleteIcon, DuplicateIcon, EditIcon, VariantsIcon } from "@/client/src/components/icons/index.ts";
 
 interface RulesetSectionTableProps<T extends { id: string }> {
   data?: T[];
@@ -52,10 +47,10 @@ export function RulesetSectionTable<T extends { id: string }>({
       ? [{ label: "Edit", icon: <EditIcon fontSize="small" />, onClick: () => onEdit(item), color: "primary" as const }]
       : []),
     ...(canEdit && onDuplicate
-      ? [{ label: "Duplicate", icon: <ContentCopyIcon fontSize="small" />, onClick: () => onDuplicate(item) }]
+      ? [{ label: "Duplicate", icon: <DuplicateIcon fontSize="small" />, onClick: () => onDuplicate(item) }]
       : []),
     ...(canEdit && onCreateVariants
-      ? [{ label: "Create variants", icon: <LibraryAddIcon fontSize="small" />, onClick: () => onCreateVariants(item) }]
+      ? [{ label: "Create variants", icon: <VariantsIcon fontSize="small" />, onClick: () => onCreateVariants(item) }]
       : []),
     ...(canDelete && onDelete
       ? [

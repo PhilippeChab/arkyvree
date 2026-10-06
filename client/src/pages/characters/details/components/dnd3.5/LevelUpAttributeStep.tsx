@@ -1,7 +1,7 @@
-import { FitnessCenter as AbilitiesIcon } from "@mui/icons-material";
 import { useController } from "react-hook-form";
 
 import { BlankState, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import { AbilitiesIcon } from "@/client/src/components/icons/index.ts";
 
 import { AttributeIncreaseField } from "./AttributeIncreaseField.tsx";
 import type { LevelUpAttributeStepProps } from "./levelUpFactory.ts";

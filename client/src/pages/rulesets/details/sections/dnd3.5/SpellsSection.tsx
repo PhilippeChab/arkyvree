@@ -1,4 +1,3 @@
-import { Bolt as PowersIcon } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
@@ -6,6 +5,7 @@ import { useCallback, useState } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
+import { SpellsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetSaves, useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
@@ -143,7 +143,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={PowersIcon}
+        emptyIcon={SpellsIcon}
         emptyTitle="No spells"
         emptyDescription="No spells available for this ruleset."
       />

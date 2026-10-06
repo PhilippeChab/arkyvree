@@ -1,21 +1,4 @@
 import {
-  AccountCircle,
-  MenuBook as BookIcon,
-  RocketLaunch as ChangelogIcon,
-  ChevronLeft,
-  ChevronRight,
-  Dashboard as DashboardIcon,
-  HelpOutlined as FaqIcon,
-  History as HistoryIcon,
-  Logout,
-  Map as MapIcon,
-  Menu as MenuIcon,
-  Notifications as NotificationsIcon,
-  Person as PersonIcon,
-  Settings as SettingsIcon,
-  Favorite as SupportIcon,
-} from "@mui/icons-material";
-import {
   AppBar,
   Avatar,
   Box,
@@ -38,6 +21,23 @@ import { useCallback, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { ActionMenuItem } from "@/client/src/components/common/index.ts";
+import {
+  AccountIcon,
+  ActivityIcon,
+  CampaignsIcon,
+  ChangelogIcon,
+  CharactersIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DashboardIcon,
+  HelpIcon,
+  MenuIcon,
+  NotificationsIcon,
+  RulesetsIcon,
+  SettingsIcon,
+  SignOutIcon,
+  SupportIcon,
+} from "@/client/src/components/icons/index.ts";
 import { Onboarding } from "@/client/src/components/onboarding/index.ts";
 import { useAttachment, useAuthRequests, useDemoTimeRemaining, useIsMobile } from "@/client/src/hooks/index.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
@@ -70,21 +70,21 @@ const sidebarItems = [
   {
     id: "rulesets" as const,
     label: "Rulesets",
-    icon: <BookIcon />,
+    icon: <RulesetsIcon />,
     description: "Browse available rulesets",
     path: "/rulesets",
   },
   {
     id: "characters" as const,
     label: "Characters",
-    icon: <PersonIcon />,
+    icon: <CharactersIcon />,
     description: "View your characters",
     path: "/characters",
   },
   {
     id: "campaigns" as const,
     label: "Campaigns",
-    icon: <MapIcon />,
+    icon: <CampaignsIcon />,
     description: "Manage your campaigns",
     path: "/campaigns",
   },
@@ -98,7 +98,7 @@ const sidebarItems = [
   {
     id: "faq" as const,
     label: "Help",
-    icon: <FaqIcon />,
+    icon: <HelpIcon />,
     description: "Help center",
     path: externalLinks.help,
     external: true,
@@ -279,16 +279,16 @@ export function Layout() {
             {!isDemo && (
               <IconButton size="large" onClick={handleMenuOpen} color="inherit" aria-label="Account menu">
                 <Avatar src={avatarAttachment?.url ?? undefined} sx={{ width: 32, height: 32 }}>
-                  <AccountCircle />
+                  <AccountIcon />
                 </Avatar>
               </IconButton>
             )}
           </Box>
 
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-            <ActionMenuItem icon={AccountCircle} label="Profile" onClick={handleProfile} />
+            <ActionMenuItem icon={AccountIcon} label="Profile" onClick={handleProfile} />
             <ActionMenuItem
-              icon={HistoryIcon}
+              icon={ActivityIcon}
               label="Activity"
               onClick={() => {
                 handleMenuClose();
@@ -297,7 +297,7 @@ export function Layout() {
             />
             <ActionMenuItem icon={SettingsIcon} label="Settings" onClick={handleSettings} />
             <Divider />
-            <ActionMenuItem icon={Logout} label="Sign Out" onClick={handleSignOut} />
+            <ActionMenuItem icon={SignOutIcon} label="Sign Out" onClick={handleSignOut} />
           </Menu>
         </Toolbar>
       </AppBar>
@@ -482,9 +482,9 @@ export function Layout() {
                 size="small"
               >
                 {effectiveExpanded ? (
-                  <ChevronLeft sx={{ transition: "transform 0.25s ease" }} />
+                  <ChevronLeftIcon sx={{ transition: "transform 0.25s ease" }} />
                 ) : (
-                  <ChevronRight sx={{ transition: "transform 0.25s ease" }} />
+                  <ChevronRightIcon sx={{ transition: "transform 0.25s ease" }} />
                 )}
               </IconButton>
             </Box>

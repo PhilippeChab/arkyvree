@@ -1,4 +1,3 @@
-import { ContentCopy as CopyIcon, LinkOff as LinkOffIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 import {
   Button,
   DialogActions,
@@ -14,6 +13,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { CopyIcon, RefreshIcon, UnlinkIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -146,7 +146,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
                     variant="outlined"
                     size="small"
                     color="error"
-                    startIcon={<LinkOffIcon />}
+                    startIcon={<UnlinkIcon />}
                     onClick={() => setConfirmRevoke(true)}
                     disabled={isLoading}
                   >

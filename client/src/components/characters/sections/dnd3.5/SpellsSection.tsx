@@ -1,4 +1,3 @@
-import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import {
   Box,
   Chip,
@@ -17,6 +16,7 @@ import { Fragment, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
+import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";

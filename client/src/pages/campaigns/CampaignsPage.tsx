@@ -1,9 +1,3 @@
-import {
-  Archive as ArchiveIcon,
-  Map as CampaignIcon,
-  Group as GroupIcon,
-  AutoStories as RulesetIcon,
-} from "@mui/icons-material";
 import { Button, Container } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +21,7 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
+import { ArchiveIcon, CampaignsIcon, PlayersIcon, RulesetsIcon } from "@/client/src/components/icons/index.ts";
 import { useListParams, usePageTitle, useStaggerOffset } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
@@ -122,13 +117,13 @@ export default function CampaignsPage() {
                     pills={
                       <>
                         <InfoPill
-                          icon={GroupIcon}
+                          icon={PlayersIcon}
                           label={players}
                           color="info"
                           tooltip={`${players} in this campaign`}
                         />
                         <InfoPill
-                          icon={RulesetIcon}
+                          icon={RulesetsIcon}
                           label={campaign.rulesetName}
                           color="secondary"
                           tooltip={campaign.rulesetName}
@@ -162,7 +157,7 @@ export default function CampaignsPage() {
           />
         ) : (
           <BlankState
-            icon={CampaignIcon}
+            icon={CampaignsIcon}
             title="No campaigns yet"
             description={
               isDemo

@@ -1,6 +1,7 @@
-import { AccountTree } from "@mui/icons-material";
 import { IconButton, InputAdornment, Popover, TextField, Tooltip } from "@mui/material";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+
+import { TemplateIcon } from "@/client/src/components/icons/index.ts";
 
 import { TargetPathInput } from "./TargetPathInput.tsx";
 
@@ -133,7 +134,7 @@ export const TemplateExpressionInput = forwardRef<TemplateExpressionInputRef, Te
                         disabled={disabled}
                         edge="end"
                       >
-                        <AccountTree fontSize="small" />
+                        <TemplateIcon fontSize="small" />
                       </IconButton>
                     </span>
                   </Tooltip>

@@ -1,7 +1,7 @@
-import { FitnessCenter as AbilitiesIcon } from "@mui/icons-material";
 import { Box, Stack, Typography } from "@mui/material";
 
 import { BlankState, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import { AbilitiesIcon } from "@/client/src/components/icons/index.ts";
 
 import { AttributeIncreaseField } from "./AttributeIncreaseField.tsx";
 import type { AddAttributeStepProps } from "./levelUpFactory.ts";

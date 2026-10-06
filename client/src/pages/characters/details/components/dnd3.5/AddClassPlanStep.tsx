@@ -1,9 +1,8 @@
-import AddIcon from "@mui/icons-material/Add";
-import CloseIcon from "@mui/icons-material/Close";
 import { Autocomplete, Box, Button, Chip, IconButton, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useMemo } from "react";
 
 import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { AddIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
 
 import type { AvailableKlass } from "./levelUp/index.ts";
 import type { AddClassPlanStepProps } from "./levelUpFactory.ts";

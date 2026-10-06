@@ -1,9 +1,3 @@
-import {
-  Add as AddIcon,
-  People as ContributorsIcon,
-  Delete as DeleteIcon,
-  ExitToApp as LeaveIcon,
-} from "@mui/icons-material";
 import { Box, Button, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
@@ -12,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 import { ConfirmDialog, LoadError, LoadMoreButton, Modal } from "@/client/src/components/common/index.ts";
 import { ContributorsTable, InviteContributorDialog } from "@/client/src/components/contributors/index.ts";
+import { AddIcon, ContributorsIcon, DeleteIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";

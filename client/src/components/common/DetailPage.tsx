@@ -1,12 +1,15 @@
-import { ArrowBack, MoreVert as MoreVertIcon } from "@mui/icons-material";
 import { Box, IconButton, Tab, Tabs, Typography, useTheme } from "@mui/material";
 import { type ElementType, type MouseEvent, type ReactNode, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+
+import { BackIcon, MoreIcon } from "@/client/src/components/icons/index.ts";
 
 interface DetailPageHeaderProps {
   title: string;
   /** Inline control after the title, e.g. a star toggle. */
   titleAdornment?: ReactNode;
-  onBack: () => void;
+  /** Where Back goes */
+  backTo: string;
   /** Opens the page's action menu; the button is hidden when omitted. */
   onMenuOpen?: (event: MouseEvent<HTMLElement>) => void;
   chips?: ReactNode;
@@ -37,7 +40,7 @@ export interface SectionTab<K extends string> {
 export function DetailPageHeader({
   title,
   titleAdornment,
-  onBack,
+  backTo,
   onMenuOpen,
   chips,
   description,
@@ -57,12 +60,12 @@ export function DetailPageHeader({
         position: "relative",
       }}
     >
-      <IconButton onClick={onBack} size="large" aria-label="Back" sx={{ ...cornerButtonSx, left: 0 }}>
-        <ArrowBack />
+      <IconButton component={Link} to={backTo} size="large" aria-label="Back" sx={{ ...cornerButtonSx, left: 0 }}>
+        <BackIcon />
       </IconButton>
       {onMenuOpen && (
         <IconButton onClick={onMenuOpen} size="large" aria-label="More actions" sx={{ ...cornerButtonSx, right: 0 }}>
-          <MoreVertIcon />
+          <MoreIcon />
         </IconButton>
       )}
       <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, md: 8 } }}>

@@ -1,11 +1,3 @@
-import {
-  Archive as ArchiveIcon,
-  Extension as ExtensionIcon,
-  Lock as LockIcon,
-  Public as PublicIcon,
-  Publish as PublishIcon,
-  MenuBook as RulesetIcon,
-} from "@mui/icons-material";
 import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { Controller, type UseFormReturn } from "react-hook-form";
@@ -17,6 +9,14 @@ import {
   EditDialog,
   NameField,
 } from "@/client/src/components/common/index.ts";
+import {
+  ArchiveIcon,
+  ExtensionIcon,
+  PrivateIcon,
+  PublicIcon,
+  PublishIcon,
+  RulesetsIcon,
+} from "@/client/src/components/icons/index.ts";
 import { nameRules } from "@/client/src/lib/validation.ts";
 import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -103,7 +103,7 @@ function PrivacyToggle({ value, onChange, disabled }: PrivacyToggleProps) {
         </ToggleButton>
         <ToggleButton value>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <LockIcon fontSize="small" />
+            <PrivateIcon fontSize="small" />
             <Typography variant="body2">Private</Typography>
           </Stack>
         </ToggleButton>
@@ -128,7 +128,7 @@ function RulesetKindToggle({ value, onChange, disabled }: RulesetKindToggleProps
       >
         <ToggleButton value="ruleset">
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <RulesetIcon fontSize="small" />
+            <RulesetsIcon fontSize="small" />
             <Typography variant="body2">Ruleset</Typography>
           </Stack>
         </ToggleButton>

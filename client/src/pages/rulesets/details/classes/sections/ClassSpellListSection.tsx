@@ -1,10 +1,10 @@
-import { Bolt as SpellListIcon } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 
 import { LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
+import { SpellsIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
@@ -73,7 +73,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
         columns={COLUMNS}
         onRowClick={handleRowClick}
         renderCell={renderCell}
-        emptyIcon={SpellListIcon}
+        emptyIcon={SpellsIcon}
         emptyTitle="No spells"
         emptyDescription="No spells found for this class at the selected level."
       />

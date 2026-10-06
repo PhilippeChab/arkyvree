@@ -1,4 +1,3 @@
-import { ChevronRight as ChevronRightIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
@@ -18,6 +17,7 @@ import {
 } from "@mui/material";
 import { Fragment, type ReactNode, useMemo } from "react";
 
+import { ChevronRightIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 

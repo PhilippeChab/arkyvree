@@ -1,11 +1,3 @@
-import {
-  Add as AddIcon,
-  Close as CloseIcon,
-  ContentCopy as ContentCopyIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  Tune as TuneIcon,
-} from "@mui/icons-material";
 import { Box, Button, Chip, DialogContent, IconButton, Stack, Toolbar, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
@@ -26,6 +18,14 @@ import {
   type ModifierFormData,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
+import {
+  AddIcon,
+  CloseIcon,
+  DeleteIcon,
+  DuplicateIcon,
+  EditIcon,
+  ModifiersIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
@@ -223,7 +223,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
               { label: "Edit modifier", icon: <EditIcon fontSize="small" />, onClick: () => handleEdit(mod) },
               {
                 label: "Duplicate modifier",
-                icon: <ContentCopyIcon fontSize="small" />,
+                icon: <DuplicateIcon fontSize="small" />,
                 onClick: () => handleDuplicate(mod),
               },
               {
@@ -234,7 +234,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
               },
             ]}
             empty={{
-              icon: TuneIcon,
+              icon: ModifiersIcon,
               title: "No modifiers",
               description: "Add custom bonuses or overrides to this character.",
             }}

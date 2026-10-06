@@ -1,7 +1,7 @@
-import { Science as ScienceIcon } from "@mui/icons-material";
 import { Box, Button, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
+import { DemoIcon } from "@/client/src/components/icons/index.ts";
 import { useDemoTimeRemaining } from "@/client/src/hooks/index.ts";
 import { brandGoldTint } from "@/client/src/theme/brandGold.ts";
 
@@ -38,7 +38,7 @@ export function DemoBanner() {
           boxShadow: (theme) => `0 2px 12px ${theme.palette.shadow}`,
         }}
       >
-        <ScienceIcon sx={{ fontSize: 18, color: "warning.main" }} />
+        <DemoIcon sx={{ fontSize: 18, color: "warning.main" }} />
         <Typography
           variant="body2"
           sx={{

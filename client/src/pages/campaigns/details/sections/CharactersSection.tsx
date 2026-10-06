@@ -1,4 +1,3 @@
-import { Add as AddIcon, Person as CharacterIcon, Visibility as VisibilityIcon } from "@mui/icons-material";
 import {
   Autocomplete,
   Avatar,
@@ -34,6 +33,7 @@ import {
   SectionContent,
   StyledCard,
 } from "@/client/src/components/common/index.ts";
+import { AddIcon, CharactersIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
   useAttachments,
@@ -512,7 +512,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
             <NoMatchesState search={searchQuery} />
           ) : (
             <BlankState
-              icon={CharacterIcon}
+              icon={CharactersIcon}
               title="No characters in this campaign"
               description="Link your existing characters to this campaign to get started"
             />

@@ -1,11 +1,8 @@
-import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
-import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import { Avatar, Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useRef, useState } from "react";
 
+import { DeleteIcon, ImageIcon, PhotoIcon, UploadIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAttachment, useDemoTimeRemaining, useDetachAttachment, useDirectUpload } from "@/client/src/hooks/index.ts";
 import { ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
@@ -170,14 +167,14 @@ export function AttachmentField({
             >
               {canUpload ? (
                 <>
-                  <CloudUploadOutlinedIcon sx={{ fontSize: dimension * 0.32 }} />
+                  <UploadIcon sx={{ fontSize: dimension * 0.32 }} />
                   <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
                     {dragOver ? "Drop to upload" : isAvatar ? "Add photo" : "Drop or click to upload"}
                   </Typography>
                 </>
               ) : (
                 <>
-                  <ImageOutlinedIcon sx={{ fontSize: dimension * 0.32 }} />
+                  <ImageIcon sx={{ fontSize: dimension * 0.32 }} />
                   <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
                     No {label ?? name}
                   </Typography>
@@ -207,7 +204,7 @@ export function AttachmentField({
                 flexDirection: "column",
               }}
             >
-              <PhotoCameraOutlinedIcon sx={{ fontSize: dimension * 0.22 }} />
+              <PhotoIcon sx={{ fontSize: dimension * 0.22 }} />
               <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: 0.5 }}>
                 Change
               </Typography>
@@ -253,7 +250,7 @@ export function AttachmentField({
                 "&:hover": { bgcolor: "primary.dark" },
               }}
             >
-              <PhotoCameraOutlinedIcon fontSize="small" />
+              <PhotoIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
@@ -278,7 +275,7 @@ export function AttachmentField({
                 "&:hover": { bgcolor: "error.main", color: "error.contrastText" },
               }}
             >
-              <DeleteOutlineIcon fontSize="small" />
+              <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}

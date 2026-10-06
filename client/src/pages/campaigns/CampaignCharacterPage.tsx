@@ -1,16 +1,11 @@
-import {
-  ArrowBack as ArrowBackIcon,
-  Download as DownloadIcon,
-  Edit as EditIcon,
-  MoreVert as MoreVertIcon,
-} from "@mui/icons-material";
 import { Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
 import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
+import { BackIcon, DownloadIcon, EditIcon, MoreIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { DURATION } from "@/client/src/lib/animations.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
@@ -51,7 +46,7 @@ export default function CampaignCharacterPage() {
   if (!campaignId || !characterId) {
     return (
       <Container maxWidth="xl" sx={{ py: 2 }}>
-        <PageError message="Character not found" backLabel="Back to Campaigns" onBack={() => navigate("/campaigns")} />
+        <PageError message="Character not found" backLabel="Back to Campaigns" backTo={"/campaigns"} />
       </Container>
     );
   }
@@ -73,7 +68,7 @@ export default function CampaignCharacterPage() {
         <PageError
           message={loadFailureMessage("Character", error)}
           backLabel="Back to Campaign"
-          onBack={() => navigate(`/campaigns/${campaignId}/characters`)}
+          backTo={`/campaigns/${campaignId}/characters`}
         />
       </Container>
     );
@@ -84,8 +79,8 @@ export default function CampaignCharacterPage() {
       <Paper sx={{ p: 2, mb: 2 }}>
         <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
           <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
-            <IconButton aria-label="Back" onClick={() => navigate(`/campaigns/${campaignId}`)}>
-              <ArrowBackIcon />
+            <IconButton aria-label="Back" component={Link} to={`/campaigns/${campaignId}`}>
+              <BackIcon />
             </IconButton>
             <Typography sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
               {data.rulesetName || "Character Sheet"}
@@ -99,7 +94,7 @@ export default function CampaignCharacterPage() {
                 onClick={(e) => setAnchorEl(e.currentTarget)}
                 sx={{ color: "text.secondary" }}
               >
-                <MoreVertIcon />
+                <MoreIcon />
               </IconButton>
               <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
                 {data.canEdit && (

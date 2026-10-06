@@ -1,9 +1,9 @@
-import { Construction as ItemsIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { ItemsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
 import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";

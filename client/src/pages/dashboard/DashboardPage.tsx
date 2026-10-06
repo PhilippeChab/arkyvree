@@ -1,16 +1,21 @@
 import {
-  HelpOutlined as FaqIcon,
-  Map as MapIcon,
-  Person as PersonIcon,
-  MenuBook as RulesetIcon,
-} from "@mui/icons-material";
-import { Box, Card, CardActionArea, CardContent, Container, Link, Paper, type Theme, Typography } from "@mui/material";
+  Box,
+  Card,
+  CardActionArea,
+  CardContent,
+  Container,
+  Link as MuiLink,
+  Paper,
+  type Theme,
+  Typography,
+} from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import type { ElementType } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { DiceSpinner, GoldDivider, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
+import { CampaignsIcon, CharactersIcon, HelpIcon, RulesetsIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
@@ -23,7 +28,8 @@ interface StatCardProps {
   count: number;
   label: string;
   tagline: string;
-  onClick: () => void;
+  /** The page the card opens */
+  to: string;
   /** Gradient start and end, from the theme palette. */
   colors: (theme: Theme) => [string, string];
   animationIndex: number;
@@ -34,7 +40,7 @@ function textShadow(theme: Theme) {
   return `0px 2px 4px ${alpha(theme.palette.common.black, 0.3)}`;
 }
 
-function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animationIndex }: StatCardProps) {
+function StatCard({ icon: Icon, count, label, tagline, to, colors, animationIndex }: StatCardProps) {
   return (
     <Box sx={{ flex: "1 1 300px", minWidth: { xs: 0, sm: 300 } }}>
       <Card
@@ -54,7 +60,7 @@ function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animatio
           ...fadeInUpSx(animationIndex),
         }}
       >
-        <CardActionArea onClick={onClick} sx={{ height: "100%" }}>
+        <CardActionArea component={Link} to={to} sx={{ height: "100%" }}>
           <CardContent sx={{ textAlign: "center", p: { xs: 2, sm: 4 } }}>
             <Icon sx={{ fontSize: { xs: 48, sm: 60 }, mb: 2 }} />
             <Typography sx={{ typography: { xs: "h4", md: "h2" }, fontWeight: 800, mb: 1, textShadow }}>
@@ -75,7 +81,6 @@ function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animatio
 
 export default function DashboardPage() {
   usePageTitle("Dashboard");
-  const navigate = useNavigate();
 
   const { data: dashboardStats, isLoading, error } = useQuery(dashboardStatsQuery());
 
@@ -209,7 +214,7 @@ export default function DashboardPage() {
           >
             Your programmable ruleset engine. Build characters, manage campaigns.
           </Typography>
-          <Link
+          <MuiLink
             href={externalLinks.help}
             target="_blank"
             rel="noopener noreferrer"
@@ -224,38 +229,38 @@ export default function DashboardPage() {
               "&:hover": { color: "common.white" },
             }}
           >
-            <FaqIcon sx={{ fontSize: 18 }} />
+            <HelpIcon sx={{ fontSize: 18 }} />
             Help
-          </Link>
+          </MuiLink>
         </Paper>
 
         <GoldDivider />
 
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, mb: 4 }}>
           <StatCard
-            icon={PersonIcon}
+            icon={CharactersIcon}
             count={dashboardStats?.totalCharacters ?? 0}
             label="Characters"
             tagline="Heroes ready for adventure"
-            onClick={() => navigate("/characters")}
+            to="/characters"
             colors={(theme) => [theme.palette.primary.light, theme.palette.primary.main]}
             animationIndex={0}
           />
           <StatCard
-            icon={MapIcon}
+            icon={CampaignsIcon}
             count={dashboardStats?.totalCampaigns ?? 0}
             label="Campaigns"
             tagline="Epic quests in progress"
-            onClick={() => navigate("/campaigns")}
+            to="/campaigns"
             colors={(theme) => [theme.palette.secondary.light, theme.palette.secondary.main]}
             animationIndex={1}
           />
           <StatCard
-            icon={RulesetIcon}
+            icon={RulesetsIcon}
             count={dashboardStats?.totalRulesets ?? 0}
             label="Rulesets"
             tagline="Game systems available"
-            onClick={() => navigate("/rulesets")}
+            to="/rulesets"
             colors={(theme) => [theme.palette.primary.dark, theme.palette.primary.dark]}
             animationIndex={2}
           />

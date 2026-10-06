@@ -1,9 +1,9 @@
-import { HelpOutlined } from "@mui/icons-material";
 import { Box, FormControlLabel, Switch, Tooltip } from "@mui/material";
 import { useRef, useState } from "react";
 import type { FieldError } from "react-hook-form";
 
 import { Crossfade } from "@/client/src/components/common/index.ts";
+import { HelpIcon } from "@/client/src/components/icons/index.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/client/src/lib/templateValues.ts";
 
 import { OperatorSelect } from "./OperatorSelect.tsx";
@@ -161,7 +161,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
                 title="Compute the value from another path or an expression. Wrap paths in [brackets] and use floor/ceil/min/max plus +-*/ for arithmetic. Examples: [abilities.charisma.modifier], floor([classes.ranger.level] / 2), max(0, [classes.beastmaster.level] + 3)."
                 arrow
               >
-                <HelpOutlined sx={{ fontSize: 16, color: "text.secondary", cursor: "help" }} />
+                <HelpIcon sx={{ fontSize: 16, color: "text.secondary", cursor: "help" }} />
               </Tooltip>
             </Box>
           }

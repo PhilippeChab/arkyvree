@@ -1,6 +1,6 @@
-import { AutoStories as SpellsIcon } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
+import { SpellProgressionIcon } from "@/client/src/components/icons/index.ts";
 import { classSpellsKnownQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 import { ClassLevelCountsTable } from "./ClassLevelCountsTable.tsx";
@@ -18,7 +18,7 @@ export function ClassSpellsKnownSection({ rulesetId, classId }: ClassSectionProp
       countOf={(level, key) => level.spellsKnown[Number(key)]}
       compareKeys={bySpellLevel}
       labelOf={spellLevelLabel}
-      emptyIcon={SpellsIcon}
+      emptyIcon={SpellProgressionIcon}
       emptyTitle="No spells known"
       emptyDescription="This class doesn't have any spells known data."
     />

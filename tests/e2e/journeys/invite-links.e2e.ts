@@ -53,7 +53,7 @@ test.describe("A campaign invite link", () => {
 
     await page.goto(campaign.link);
     await expect(page.getByText("Already Accepted", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Go to Campaign" }).click();
+    await page.getByRole("link", { name: "Go to Campaign" }).click();
     await expect(page).toHaveURL(campaign.page);
   });
 

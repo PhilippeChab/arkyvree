@@ -1,4 +1,3 @@
-import { CompareArrows as CompareArrowsIcon, Restore as RestoreIcon } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -21,6 +20,7 @@ import type { InferResponseType } from "hono/client";
 import { Link } from "react-router-dom";
 
 import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { CompareIcon, RestoreIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
@@ -100,7 +100,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
   return (
     <Modal open={open} onClose={onClose}>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <CompareArrowsIcon />
+        <CompareIcon />
         Local changes
       </DialogTitle>
       <DialogContent sx={{ maxHeight: "60vh" }}>

@@ -1,18 +1,10 @@
 import {
-  HelpOutlined as FaqIcon,
-  Map as MapIcon,
-  Person as PersonIcon,
-  MenuBook as RulesetIcon,
-} from "@mui/icons-material";
-import type { SvgIconComponent } from "@mui/icons-material";
-import { HelpOutlined as HelpIcon } from "@mui/icons-material";
-import {
   Backdrop,
   Box,
   Button,
   DialogContent,
-  Link,
   MobileStepper,
+  Link as MuiLink,
   Paper,
   Popper,
   Tooltip,
@@ -24,6 +16,8 @@ import type { Instance } from "@popperjs/core";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Modal } from "@/client/src/components/common/index.ts";
+import { CampaignsIcon, CharactersIcon, HelpIcon, RulesetsIcon } from "@/client/src/components/icons/index.ts";
+import type { SvgIconComponent } from "@/client/src/components/icons/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { brandGold, brandGoldTint } from "@/client/src/theme/brandGold.ts";
@@ -63,7 +57,7 @@ const steps: OnboardingStep[] = [
     mode: "dialog",
   },
   {
-    icon: RulesetIcon,
+    icon: RulesetsIcon,
     title: "Rulesets",
     description:
       "The foundation — browse base and community rulesets, fork a base ruleset to create your own, and customize rules to fit your table.",
@@ -72,19 +66,19 @@ const steps: OnboardingStep[] = [
     mode: "popper",
   },
   {
-    icon: PersonIcon,
+    icon: CharactersIcon,
     title: "Characters",
     description: "Create characters using any ruleset — build sheets with stats, feats, equipment, and more.",
     mode: "popper",
   },
   {
-    icon: MapIcon,
+    icon: CampaignsIcon,
     title: "Campaigns",
     description: "Organize your games — create campaigns, invite players, and manage characters together.",
     mode: "popper",
   },
   {
-    icon: FaqIcon,
+    icon: HelpIcon,
     title: "Learn More",
     description: "Want to dive deeper? The {faq} covers rulesets, forking, the customization system, and more.",
     mode: "dialog",
@@ -284,13 +278,13 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
                 <span key={i}>
                   {part}
                   {i === 0 && (
-                    <Link
+                    <MuiLink
                       component="button"
                       onClick={handleViewFaq}
                       sx={{ fontSize: "inherit", verticalAlign: "baseline" }}
                     >
                       FAQ
-                    </Link>
+                    </MuiLink>
                   )}
                 </span>
               ))

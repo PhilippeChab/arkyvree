@@ -174,7 +174,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
       <EntityPageError
         message={!ruleset ? loadFailureMessage("Ruleset", rulesetError) : loadFailureMessage(label, entityError)}
         backLabel="Back"
-        onBack={() => navigate(backUrl)}
+        backTo={backUrl}
       />
     );
   }
@@ -184,7 +184,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
       <EntityDetailLayout
         entityName={entity?.name}
         rulesetName={ruleset?.name}
-        onBack={() => navigate(backUrl)}
+        backTo={backUrl}
         canDelete={canEdit}
         onDelete={() => setDeleteDialogOpen(true)}
         isLoading={isRulesetLoading || isEntityLoading}

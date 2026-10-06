@@ -1,5 +1,6 @@
-import HelpOutline from "@mui/icons-material/HelpOutlined";
 import { Tooltip } from "@mui/material";
+
+import { HelpIcon } from "@/client/src/components/icons/index.ts";
 
 import { faqTooltip } from "./faqTooltip.tsx";
 
@@ -11,7 +12,7 @@ interface FaqHelpIconProps {
 export function FaqHelpIcon({ text, size = 16 }: FaqHelpIconProps) {
   return (
     <Tooltip title={faqTooltip(text)} arrow>
-      <HelpOutline sx={{ fontSize: size, color: "text.secondary", cursor: "help" }} />
+      <HelpIcon sx={{ fontSize: size, color: "text.secondary", cursor: "help" }} />
     </Tooltip>
   );
 }

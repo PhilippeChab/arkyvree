@@ -1,11 +1,3 @@
-import {
-  Archive as ArchiveIcon,
-  Person as CharactersIcon,
-  DeleteForever as DeleteForeverIcon,
-  Edit as EditIcon,
-  Group as PlayersIcon,
-  Unarchive as UnarchiveIcon,
-} from "@mui/icons-material";
 import { Alert, Box, Chip, Container, Menu, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -22,6 +14,14 @@ import {
   type SectionTab,
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
+import {
+  ArchiveIcon,
+  CharactersIcon,
+  DeleteForeverIcon,
+  EditIcon,
+  PlayersIcon,
+  UnarchiveIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
@@ -136,7 +136,7 @@ export default function CampaignDetailsPage() {
         <PageError
           message={loadFailureMessage("Campaign", error)}
           backLabel="Back to Campaigns"
-          onBack={() => navigate("/campaigns")}
+          backTo={"/campaigns"}
         />
       </Container>
     );
@@ -152,7 +152,7 @@ export default function CampaignDetailsPage() {
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <DetailPageHeader
           title={`⚔️ ${campaign.name}`}
-          onBack={() => navigate("/campaigns")}
+          backTo={"/campaigns"}
           onMenuOpen={canEdit ? (e) => setAnchorEl(e.currentTarget) : undefined}
           chips={
             <>

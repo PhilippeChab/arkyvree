@@ -1,4 +1,3 @@
-import { Extension as ExtensionIcon } from "@mui/icons-material";
 import {
   Autocomplete,
   Button,
@@ -13,6 +12,7 @@ import {
 import { useMemo, useState } from "react";
 
 import { DiceSpinner, Modal, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { ExtensionIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 import type { RulesetListItem } from "@/client/src/lib/queries.ts";

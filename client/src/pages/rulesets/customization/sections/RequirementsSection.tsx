@@ -1,11 +1,3 @@
-import {
-  Add as AddIcon,
-  ChevronRight as ChevronRightIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  ExpandMore as ExpandMoreIcon,
-  Rule as RequirementsIcon,
-} from "@mui/icons-material";
 import { Alert, Box, Card, CardContent, Chip, IconButton, Stack, Typography } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
@@ -27,6 +19,14 @@ import {
   type RequirementType,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
+import {
+  AddIcon,
+  ChevronRightIcon,
+  DeleteIcon,
+  EditIcon,
+  ExpandMoreIcon,
+  RequirementsIcon,
+} from "@/client/src/components/icons/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";

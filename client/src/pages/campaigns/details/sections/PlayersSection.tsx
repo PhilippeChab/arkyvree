@@ -1,14 +1,3 @@
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  AdminPanelSettings as GMIcon,
-  ExitToApp as LeaveIcon,
-  HourglassEmpty as PendingIcon,
-  Person as PlayerIcon,
-  Close as RevokeIcon,
-  PersonOff as UnassignedIcon,
-} from "@mui/icons-material";
 import { Box, Button, Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
@@ -24,6 +13,17 @@ import {
   SearchBar,
   SectionContent,
 } from "@/client/src/components/common/index.ts";
+import {
+  AddIcon,
+  DeleteIcon,
+  EditIcon,
+  GameMasterIcon,
+  LeaveIcon,
+  PendingIcon,
+  PlayerIcon,
+  RevokeIcon,
+  UnassignedIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
@@ -258,7 +258,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       case "role":
         return (
           <Chip
-            icon={isGameMaster ? <GMIcon sx={{ fontSize: 14 }} /> : <PlayerIcon sx={{ fontSize: 14 }} />}
+            icon={isGameMaster ? <GameMasterIcon sx={{ fontSize: 14 }} /> : <PlayerIcon sx={{ fontSize: 14 }} />}
             label={player.role}
             size="small"
             color={isGameMaster ? "warning" : "primary"}

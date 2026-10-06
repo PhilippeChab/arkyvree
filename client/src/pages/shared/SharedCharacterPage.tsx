@@ -1,10 +1,10 @@
-import { Download as DownloadIcon } from "@mui/icons-material";
 import { Container, IconButton, Paper, Stack, Typography } from "@mui/material";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
 import { CharacterSheetBody, downloadPdf } from "@/client/src/components/characters/index.ts";
 import { DiceSpinner, PageError, PageTransition } from "@/client/src/components/common/index.ts";
+import { DownloadIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost } from "@/client/src/lib/errorMessage.ts";

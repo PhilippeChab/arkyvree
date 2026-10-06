@@ -1,4 +1,5 @@
-const LAST_RELOAD_KEY = "chunk_reload";
+import { useChunkReloadStore } from "@/client/src/stores/chunkReloadStore.ts";
+
 const RELOAD_WINDOW_MS = 10_000;
 
 /**
@@ -18,13 +19,11 @@ export function isChunkLoadError(error: unknown): boolean {
  * unavailable), so a chunk that is really missing can't loop the page.
  */
 export function reloadForStaleChunks(): boolean {
-  try {
-    const lastReload = Number(sessionStorage.getItem(LAST_RELOAD_KEY));
-    if (lastReload && Date.now() - lastReload < RELOAD_WINDOW_MS) return false;
-    sessionStorage.setItem(LAST_RELOAD_KEY, String(Date.now()));
-  } catch {
-    return false;
-  }
+  const reloads = useChunkReloadStore.getState();
+  // Without storage to remember it, a reload couldn't tell it was the second
+  if (!useChunkReloadStore.persist.getOptions().storage) return false;
+  if (reloads.lastReloadAt && Date.now() - reloads.lastReloadAt < RELOAD_WINDOW_MS) return false;
+  reloads.markReload();
   window.location.reload();
   return true;
 }

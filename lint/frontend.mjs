@@ -39,7 +39,11 @@
  *   (`"white"`), and no hex alpha appended to a color (`${theme.palette.primary.main}40`).
  * - `component-props`: a component's props are one named type, its own (`interface XProps`, `type XProps = Omit<…>`)
  *   or one its family shares (`RulesetSectionProps`, `EditorProps<Feat>`), never written in place: an object type, an
- *   intersection, `Omit<…>` / `Pick<…>` / `ComponentProps<…>`.
+ *   intersection, `Omit<…>` / `Pick<…>` / `ComponentProps<…>` (a `memo` or `forwardRef` component too).
+ * - `icons`: an icon comes from `components/icons`, named for what it means, so a meaning has one icon.
+ * - `nav-links`: a control that only navigates is a link (`component={Link} to`), never an `onClick` that calls
+ *   `navigate`; a card holds content of its own and opens on click. React Router's `Link` is `Link`, MUI's `MuiLink`.
+ * - `browser-storage`: what the browser keeps is a store's (`client/src/stores/`, zustand's `persist`).
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -72,7 +76,16 @@ const ERROR_ALERT_FILES = new Set([
 ]);
 
 /** A color written out: a hex color, or an `rgb()` / `hsl()` of numbers (`rgba(var(--…))` reads the theme's) */
-const COLOR_LITERAL = /(?<![\w&])#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})\b|\b(?:rgba?|hsla?)\(\s*[\d.]/i;
+const HEX_COLOR = /(?<![\w&])#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})\b/i;
+
+/** A color function of written values (`rgba(0, 0, 0, 0.3)`, `oklch(…)`, `color(srgb …)`); `rgba(var(--…))` reads the theme's */
+const COLOR_FUNCTION = /\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(\s*[\d.]|\bcolor\(\s*[a-z-]+\s+[\d.]/i;
+
+/** A style value that holds a color: a gradient, a shadow, a border */
+const COLOR_CONTEXT = /gradient\(|shadow\(|\bsolid\b|\bdashed\b|\dpx\b/;
+
+/** The JSX attributes that take a color (`<path fill="…">`): any other attribute's hex text isn't one (`href="#add"`) */
+const COLOR_ATTRIBUTES = new Set(["bgcolor", "color", "fill", "stopColor", "stroke"]);
 
 /** A hex alpha appended to a color: the text that follows `${color}` in `${color}40` */
 const HEX_ALPHA_SUFFIX = /^[0-9a-f]{2}(?![\w])/i;
@@ -80,6 +93,10 @@ const HEX_ALPHA_SUFFIX = /^[0-9a-f]{2}(?![\w])/i;
 /** The style properties that take a color */
 const COLOR_PROPERTIES = new Set([
   "background",
+  "boxShadow",
+  "filter",
+  "outline",
+  "textShadow",
   "backgroundColor",
   "bgcolor",
   "border",
@@ -118,6 +135,12 @@ const CSS_COLOR_NAMES = new Set([
   "steelblue", "tan", "teal", "thistle", "tomato", "turquoise", "violet", "wheat", "white", "whitesmoke", "yellow",
   "yellowgreen",
 ]);
+
+/** The wrappers a component is declared in (`memo(function Row(…) {…})`) */
+const COMPONENT_WRAPPERS = new Set(["forwardRef", "memo"]);
+
+/** What a card renders: a container that opens on click and holds content of its own, so it can't be a link */
+const CARDS = new Set(["ListCard", "StyledCard"]);
 
 /** TypeScript's and React's type builders: a props type built with one in a component's signature is written in place */
 const IN_PLACE_TYPES = new Set([
@@ -190,6 +213,27 @@ function fromRpc(node) {
 
 function inClient(context) {
   return repoPath(context.filename).startsWith("client/src/");
+}
+
+function createBrowserStorage(context) {
+  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/stores/")) return {};
+  return {
+    Identifier(node) {
+      if (node.name !== "localStorage" && node.name !== "sessionStorage") return;
+      const isKey = node.parent.type === "Property" && node.parent.key === node && !node.parent.computed;
+      const member = node.parent.type === "MemberExpression" && node.parent.property === node ? node.parent : null;
+      // `window.localStorage` is the browser's; `x.localStorage`, some object's own
+      const ofGlobal =
+        member?.object.type === "Identifier" && ["globalThis", "self", "window"].includes(member.object.name);
+      if (isKey || (member && !ofGlobal)) return;
+      context.report({
+        node,
+        message:
+          "What the browser keeps is a store's (`client/src/stores/`, persisted through zustand's `persist`): never " +
+          "`localStorage` or `sessionStorage` elsewhere.",
+      });
+    },
+  };
 }
 
 function createClientApis(context) {
@@ -268,6 +312,21 @@ function createDateFormats(context) {
   };
 }
 
+function createIcons(context) {
+  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/components/icons/")) return {};
+  return {
+    ImportDeclaration(node) {
+      if (!node.source.value.startsWith("@mui/icons-material")) return;
+      context.report({
+        node,
+        message:
+          "An icon comes from `components/icons`, named for what it means (`ContributorsIcon`), so a meaning has one " +
+          "icon: never from `@mui/icons-material`.",
+      });
+    },
+  };
+}
+
 function createQueryKeyRule(context) {
   if (!inClient(context) || repoPath(context.filename) === "client/src/lib/queryKeys.ts") return {};
   return {
@@ -293,19 +352,44 @@ function createThemeColors(context) {
         "`theme.palette.shadow`), translucent through `alpha()`, never a color written out or a hex alpha appended.",
     });
   return {
+    ImportDeclaration(node) {
+      if (node.source.value.startsWith("@mui/material/colors")) report(node);
+    },
     Literal(node) {
-      if (typeof node.value === "string" && COLOR_LITERAL.test(node.value)) report(node);
+      if (typeof node.value !== "string") return;
+      const attribute = node.parent.type === "JSXAttribute" ? node.parent.name.name : null;
+      const hex = HEX_COLOR.test(node.value) && (attribute === null || COLOR_ATTRIBUTES.has(attribute));
+      if (hex || COLOR_FUNCTION.test(node.value)) report(node);
     },
     TemplateLiteral(node) {
-      if (node.quasis.some((quasi) => COLOR_LITERAL.test(quasi.value.cooked ?? ""))) return report(node);
-      if (node.quasis.slice(1).some((quasi) => HEX_ALPHA_SUFFIX.test(quasi.value.cooked ?? ""))) report(node);
+      const texts = node.quasis.map((quasi) => quasi.value.cooked ?? "");
+      if (texts.some((text) => HEX_COLOR.test(text) || COLOR_FUNCTION.test(text))) return report(node);
+      const css = COLOR_CONTEXT.test(texts.join(""));
+      const suffixed = node.expressions.some(
+        (expression, index) =>
+          HEX_ALPHA_SUFFIX.test(texts[index + 1]) &&
+          (css || context.sourceCode.getText(expression).includes("palette")),
+      );
+      if (suffixed) report(node);
     },
     Property(node) {
       const key = node.key.type === "Identifier" ? node.key.name : null;
-      const value = node.value.type === "Literal" ? node.value.value : null;
-      if (COLOR_PROPERTIES.has(key) && typeof value === "string" && CSS_COLOR_NAMES.has(value.toLowerCase())) {
-        report(node.value);
-      }
+      if (!COLOR_PROPERTIES.has(key)) return;
+      const texts =
+        node.value.type === "Literal" && typeof node.value.value === "string"
+          ? [node.value.value]
+          : node.value.type === "TemplateLiteral"
+            ? node.value.quasis.map((quasi) => quasi.value.cooked ?? "")
+            : [];
+      // A palette token's path (`common.white`) names the theme's color, not CSS's
+      const words = texts.flatMap(
+        (text) =>
+          text
+            .replace(/[\w-]+(?:\.[\w-]+)+/g, " ")
+            .toLowerCase()
+            .match(/[a-z]+/g) ?? [],
+      );
+      if (words.some((word) => CSS_COLOR_NAMES.has(word))) report(node.value);
     },
   };
 }
@@ -405,6 +489,45 @@ function namesOne(node, names) {
   return Object.entries(node).some(
     ([key, child]) => key !== "parent" && child && typeof child === "object" && namesOne(child, names),
   );
+}
+
+/** Whether a handler only navigates to a path: `() => navigate(path)` (not `navigate(-1)`, which goes back in history). */
+function onlyNavigates(handler) {
+  if (handler?.type !== "ArrowFunctionExpression" || handler.params.length > 0) return false;
+  let call = handler.body;
+  if (call.type === "BlockStatement") {
+    if (call.body.length !== 1 || call.body[0].type !== "ExpressionStatement") return false;
+    call = call.body[0].expression;
+  }
+  const isNavigate = call.type === "CallExpression" && calleeName(call) === "navigate" && call.arguments.length === 1;
+  const [to] = call.arguments ?? [];
+  return isNavigate && !(to.type === "Literal" && typeof to.value === "number") && to.type !== "UnaryExpression";
+}
+
+function createNavLinks(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXAttribute(node) {
+      if (node.name.name !== "onClick" || CARDS.has(elementName(node.parent.parent))) return;
+      if (node.value?.type !== "JSXExpressionContainer" || !onlyNavigates(node.value.expression)) return;
+      context.report({
+        node,
+        message:
+          'A control that only navigates is a link: `component={Link} to="…"` (a page\'s way back too: `backTo`), ' +
+          "so it opens in a new tab and reads as a link. A card, which holds content of its own, opens on click.",
+      });
+    },
+    ImportSpecifier(node) {
+      if (node.imported.name !== "Link") return;
+      const source = node.parent.source.value;
+      const expected = source === "@mui/material" ? "MuiLink" : source === "react-router-dom" ? "Link" : null;
+      if (!expected || node.local.name === expected) return;
+      context.report({
+        node,
+        message: "React Router's `Link` is imported as `Link`, MUI's as `MuiLink`: one name for each, in every file.",
+      });
+    },
+  };
 }
 
 /** The nearest JSX element around `node`. */
@@ -540,17 +663,25 @@ function referenceName(typeName) {
 
 function createComponentProps(context) {
   if (!inClient(context)) return {};
+  const check = (fn) => {
+    const type = fn.params[0]?.typeAnnotation?.typeAnnotation;
+    if (!type || (type.type === "TSTypeReference" && !IN_PLACE_TYPES.has(referenceName(type.typeName)))) return;
+    context.report({
+      node: type,
+      message:
+        "A component's props are one named type: its own (`interface XProps`, `type XProps = Omit<…>`) or one its " +
+        "family shares (`RulesetSectionProps`), never written in place.",
+    });
+  };
   return {
     FunctionDeclaration(node) {
-      if (!/^[A-Z]/.test(node.id?.name ?? "")) return;
-      const type = node.params[0]?.typeAnnotation?.typeAnnotation;
-      if (!type || (type.type === "TSTypeReference" && !IN_PLACE_TYPES.has(referenceName(type.typeName)))) return;
-      context.report({
-        node: type,
-        message:
-          "A component's props are one named type: its own (`interface XProps`, `type XProps = Omit<…>`) or one its " +
-          "family shares (`RulesetSectionProps`), never written in place.",
-      });
+      if (/^[A-Z]/.test(node.id?.name ?? "")) check(node);
+    },
+    CallExpression(node) {
+      const callee = node.callee.type === "MemberExpression" ? node.callee.property : node.callee;
+      const component = node.arguments[0];
+      const isFunction = component?.type === "FunctionExpression" || component?.type === "ArrowFunctionExpression";
+      if (callee.type === "Identifier" && COMPONENT_WRAPPERS.has(callee.name) && isFunction) check(component);
     },
   };
 }
@@ -671,4 +802,7 @@ export default {
   "date-formats": { meta: { type: "suggestion" }, create: createDateFormats },
   "theme-colors": { meta: { type: "suggestion" }, create: createThemeColors },
   "component-props": { meta: { type: "suggestion" }, create: createComponentProps },
+  icons: { meta: { type: "suggestion" }, create: createIcons },
+  "nav-links": { meta: { type: "suggestion" }, create: createNavLinks },
+  "browser-storage": { meta: { type: "suggestion" }, create: createBrowserStorage },
 };

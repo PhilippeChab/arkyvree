@@ -1,6 +1,6 @@
-import { Feedback } from "@mui/icons-material";
 import { IconButton, Tooltip } from "@mui/material";
 
+import { FeedbackIcon } from "@/client/src/components/icons/index.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 
 export function FeedbackButton() {
@@ -14,7 +14,7 @@ export function FeedbackButton() {
         target="_blank"
         rel="noopener noreferrer"
       >
-        <Feedback />
+        <FeedbackIcon />
       </IconButton>
     </Tooltip>
   );

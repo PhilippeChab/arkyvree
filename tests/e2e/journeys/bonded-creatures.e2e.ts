@@ -41,7 +41,7 @@ test.describe("A bonded creature", () => {
       // Its sheet is the master's to change: it has no levels to add
       await expect(page.getByRole("button", { name: "Add Level" })).toHaveCount(0);
 
-      await page.getByRole("button", { name: "Back" }).click();
+      await page.getByRole("link", { name: "Back" }).click();
       await expect(page).toHaveURL(new RegExp(`/characters/${masterId}$`));
       await expect(page.locator(`h5:has-text("${master}")`)).toBeVisible();
     });

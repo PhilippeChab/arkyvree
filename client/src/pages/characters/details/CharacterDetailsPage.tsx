@@ -1,20 +1,7 @@
-import {
-  Add as AddIcon,
-  Archive as ArchiveIcon,
-  ArrowBack as ArrowBackIcon,
-  DeleteForever as DeleteForeverIcon,
-  Download as DownloadIcon,
-  Group as GroupIcon,
-  MoreVert as MoreVertIcon,
-  Remove as RemoveIcon,
-  Share as ShareIcon,
-  Tune as TuneIcon,
-  Unarchive as UnarchiveIcon,
-} from "@mui/icons-material";
 import { Alert, Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
 import {
@@ -24,6 +11,19 @@ import {
   PageError,
   PageTransition,
 } from "@/client/src/components/common/index.ts";
+import {
+  AddIcon,
+  ArchiveIcon,
+  BackIcon,
+  ContributorsIcon,
+  DecrementIcon,
+  DeleteForeverIcon,
+  DownloadIcon,
+  ModifiersIcon,
+  MoreIcon,
+  ShareIcon,
+  UnarchiveIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { DURATION } from "@/client/src/lib/animations.ts";
@@ -160,7 +160,7 @@ export default function CharacterDetailsPage() {
         <PageError
           message={loadFailureMessage("Character", error)}
           backLabel="Back to Characters"
-          onBack={() => navigate("/characters")}
+          backTo={"/characters"}
         />
       </Container>
     );
@@ -183,11 +183,10 @@ export default function CharacterDetailsPage() {
             <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
               <IconButton
                 aria-label="Back"
-                onClick={() =>
-                  navigate(isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters")
-                }
+                component={Link}
+                to={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
               >
-                <ArrowBackIcon />
+                <BackIcon />
               </IconButton>
               <Typography sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
                 {character.rulesetName || "Character Sheet"}
@@ -197,7 +196,7 @@ export default function CharacterDetailsPage() {
             {!(isBonded && isArchived) && (
               <Stack direction="row" spacing={1}>
                 <IconButton aria-label="More actions" onClick={handleClick} sx={{ color: "text.secondary" }}>
-                  <MoreVertIcon />
+                  <MoreIcon />
                 </IconButton>
                 <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
                   {isBonded ? (
@@ -221,7 +220,7 @@ export default function CharacterDetailsPage() {
                       !isDemo && (
                         <ActionMenuItem
                           key="contributors"
-                          icon={GroupIcon}
+                          icon={ContributorsIcon}
                           label="Contributors"
                           onClick={closeMenuAnd(() => setContributorsOpen(true))}
                         />
@@ -246,13 +245,13 @@ export default function CharacterDetailsPage() {
                       />,
                       <ActionMenuItem
                         key="remove-level"
-                        icon={RemoveIcon}
+                        icon={DecrementIcon}
                         label="Remove Level"
                         onClick={closeMenuAnd(() => setConfirmOpen(true))}
                       />,
                       <ActionMenuItem
                         key="manage-modifiers"
-                        icon={TuneIcon}
+                        icon={ModifiersIcon}
                         label="Manage Modifiers"
                         onClick={closeMenuAnd(() => setModifiersOpen(true))}
                       />,
@@ -265,7 +264,7 @@ export default function CharacterDetailsPage() {
                       !isDemo && (
                         <ActionMenuItem
                           key="contributors"
-                          icon={GroupIcon}
+                          icon={ContributorsIcon}
                           label="Contributors"
                           onClick={closeMenuAnd(() => setContributorsOpen(true))}
                         />

@@ -1,10 +1,4 @@
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  ExpandMore as ExpandMoreIcon,
-  Remove as RemoveIcon,
-} from "@mui/icons-material";
-import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
@@ -20,6 +14,7 @@ import type React from "react";
 import { Link } from "react-router-dom";
 
 import { BlankState } from "@/client/src/components/common/index.ts";
+import { AddIcon, DecrementIcon, EditIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
 
 import type { CharacterData } from "./characterData.ts";
@@ -57,7 +52,7 @@ export function ClassesSection({
             </Tooltip>
             <Tooltip title="Remove Level">
               <IconButton size="small" onClick={onRemoveLevel}>
-                <RemoveIcon fontSize="small" />
+                <DecrementIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           </Stack>

@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 
 import { isRecord } from "@/shared/isRecord.ts";
 
+import { isThemeMode, legacyThemeMode, type ThemeMode } from "./themeMode.ts";
 import {
   updateWarning,
   WARNING_DEFAULTS,
@@ -12,6 +13,9 @@ import {
 } from "./warningPreferences.ts";
 
 interface UserPreferencesState {
+  /** Light, dark, or the system's */
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => void;
   warnings: Record<WarningKey, WarningPreference>;
   shouldWarn: (key: WarningKey) => boolean;
   setWarningEnabled: (key: WarningKey, enabled: boolean) => void;
@@ -21,6 +25,8 @@ interface UserPreferencesState {
 export const useUserPreferencesStore = create<UserPreferencesState>()(
   persist(
     (set, get) => ({
+      themeMode: "system",
+      setThemeMode: (themeMode) => set({ themeMode }),
       warnings: WARNING_DEFAULTS,
       shouldWarn: (key) => {
         const warning = get().warnings[key];
@@ -33,6 +39,7 @@ export const useUserPreferencesStore = create<UserPreferencesState>()(
       name: "user-preferences",
       version: 1,
       partialize: (state) => ({
+        themeMode: state.themeMode,
         warnings: Object.fromEntries(
           Object.entries(state.warnings).map(([key, value]) => [key, { enabled: value.enabled }]),
         ),
@@ -47,7 +54,9 @@ export const useUserPreferencesStore = create<UserPreferencesState>()(
             isRecord(entry) && typeof entry.enabled === "boolean" ? entry.enabled : current.warnings[key].enabled;
           warnings[key] = { ...current.warnings[key], enabled };
         }
-        return { ...current, warnings };
+        const themeMode =
+          isRecord(persisted) && isThemeMode(persisted.themeMode) ? persisted.themeMode : legacyThemeMode();
+        return { ...current, themeMode, warnings };
       },
     },
   ),

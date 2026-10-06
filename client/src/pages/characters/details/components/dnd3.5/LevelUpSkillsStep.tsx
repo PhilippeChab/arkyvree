@@ -1,4 +1,3 @@
-import { Casino as CasinoIcon } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -18,6 +17,7 @@ import { useController } from "react-hook-form";
 
 import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
 import { DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import { DiceIcon } from "@/client/src/components/icons/index.ts";
 import { useLatest } from "@/client/src/hooks/index.ts";
 import { computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
@@ -226,7 +226,7 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
       <Box sx={{ position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper", pb: 1 }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
           <Typography variant="h6">Skill Points to Spend: {skillData.skillPointsToSpend}</Typography>
-          <Button startIcon={<CasinoIcon />} onClick={randomAssign} size="small">
+          <Button startIcon={<DiceIcon />} onClick={randomAssign} size="small">
             Auto
           </Button>
         </Stack>

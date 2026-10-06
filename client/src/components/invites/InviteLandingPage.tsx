@@ -1,10 +1,10 @@
-import { Check } from "@mui/icons-material";
 import { Avatar, Box, Button, Card, CardContent, Chip, Container, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { DiceSpinner, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
+import { CheckIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
@@ -142,7 +142,7 @@ export function InviteLandingPage({
   });
 
   const goToDashboard = (
-    <Button variant="contained" onClick={() => navigate("/dashboard")}>
+    <Button variant="contained" component={Link} to={"/dashboard"}>
       Go to Dashboard
     </Button>
   );
@@ -178,11 +178,11 @@ export function InviteLandingPage({
   if (!isAnswering && invite.status === acceptedStatus) {
     return (
       <InviteStateCard
-        icon={<Check sx={{ fontSize: { xs: 48, sm: 64 }, color: "success.main", mb: 2 }} />}
+        icon={<CheckIcon sx={{ fontSize: { xs: 48, sm: 64 }, color: "success.main", mb: 2 }} />}
         title="Already Accepted"
         action={
           entityId && (
-            <Button variant="contained" onClick={() => navigate(entityPath(entityId))}>
+            <Button variant="contained" component={Link} to={entityPath(entityId)}>
               Go to {entityLabel}
             </Button>
           )

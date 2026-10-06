@@ -13,7 +13,10 @@ interface AuthState {
   pendingPasswordResetEmail: string | null;
   /** The user signed out (rather than the server ending the session): their private pages send them to sign in afresh */
   signedOutByUser: boolean;
-  clearSession: (options?: { byUser?: boolean }) => void;
+  /** A demo's session ended: the private pages send the user to the demo-expired page, which clears it */
+  demoExpired: boolean;
+  clearDemoExpired: () => void;
+  clearSession: (options?: { byUser?: boolean; demoExpired?: boolean }) => void;
   /** Merge fields into the signed-in user, e.g. after a profile update. */
   updateUser: (patch: Partial<AuthUser>) => void;
 }
@@ -30,9 +33,14 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       ...signedOut,
+      demoExpired: false,
 
-      clearSession: ({ byUser = false } = {}) => {
-        set({ ...signedOut, signedOutByUser: byUser });
+      clearDemoExpired: () => {
+        set({ demoExpired: false });
+      },
+
+      clearSession: ({ byUser = false, demoExpired = false } = {}) => {
+        set({ ...signedOut, signedOutByUser: byUser, demoExpired });
       },
 
       updateUser: (patch) => {
@@ -44,10 +52,11 @@ export const useAuthStore = create<AuthState>()(
       // Version 0 stored the whole sign-in response, password digest included:
       // drop it, and checkSession (`useAuthRequests.ts`) reloads the user from /auth/me.
       version: 1,
-      migrate: () => ({ user: null, isAuthenticated: false }),
+      migrate: () => ({ user: null, isAuthenticated: false, demoExpired: false }),
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        demoExpired: state.demoExpired,
       }),
     },
   ),

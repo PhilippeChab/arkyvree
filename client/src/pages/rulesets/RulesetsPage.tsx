@@ -1,12 +1,3 @@
-import {
-  MenuBook as BookIcon,
-  Extension as ExtensionIcon,
-  ContentCopy as ForkIcon,
-  Lock as LockIcon,
-  Public as PublicIcon,
-  StarBorder as StarBorderIcon,
-  Star as StarIcon,
-} from "@mui/icons-material";
 import { Container, IconButton, Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +19,15 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
+import {
+  ExtensionIcon,
+  ForkIcon,
+  PrivateIcon,
+  PublicIcon,
+  RulesetsIcon,
+  StarredIcon,
+  UnstarredIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useListParams, usePageTitle, useStaggerOffset } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -96,7 +96,11 @@ function RulesetList({ filters }: RulesetListProps) {
     return filters.search ? (
       <NoMatchesState search={filters.search} />
     ) : (
-      <BlankState icon={BookIcon} title="No rulesets found" description="Try another filter, or fork a base ruleset" />
+      <BlankState
+        icon={RulesetsIcon}
+        title="No rulesets found"
+        description="Try another filter, or fork a base ruleset"
+      />
     );
   }
 
@@ -120,7 +124,7 @@ function RulesetList({ filters }: RulesetListProps) {
               onClick={() => navigate(`/rulesets/${ruleset.id}`)}
               onMouseEnter={prefetch}
               onFocus={prefetch}
-              avatar={<BookIcon sx={{ fontSize: 18 }} />}
+              avatar={<RulesetsIcon sx={{ fontSize: 18 }} />}
               title={ruleset.name}
               description={ruleset.description}
               corner={
@@ -143,7 +147,7 @@ function RulesetList({ filters }: RulesetListProps) {
                         "&:hover": { color: "warning.main" },
                       }}
                     >
-                      {ruleset.isStarred ? <StarIcon /> : <StarBorderIcon />}
+                      {ruleset.isStarred ? <StarredIcon /> : <UnstarredIcon />}
                     </IconButton>
                   </Stack>
                 )
@@ -152,7 +156,7 @@ function RulesetList({ filters }: RulesetListProps) {
                 <>
                   <InfoPill icon={status.icon} label={ruleset.status} color={status.color} tooltip={status.tooltip} />
                   {ruleset.private ? (
-                    <InfoPill icon={LockIcon} label="Private" color="warning" tooltip="Private ruleset" />
+                    <InfoPill icon={PrivateIcon} label="Private" color="warning" tooltip="Private ruleset" />
                   ) : (
                     <InfoPill icon={PublicIcon} label="Public" color="success" tooltip="Public ruleset" />
                   )}

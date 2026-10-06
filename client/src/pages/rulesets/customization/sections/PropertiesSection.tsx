@@ -1,4 +1,3 @@
-import { ListAlt as PropertiesIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { Controller } from "react-hook-form";
@@ -11,6 +10,7 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { PropertyTypeInput, PropertyValueInput } from "@/client/src/components/customization/index.ts";
+import { PropertiesIcon } from "@/client/src/components/icons/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";

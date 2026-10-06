@@ -1,4 +1,3 @@
-import { Add as AddIcon, Close as CloseIcon } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -13,6 +12,7 @@ import {
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
 import { DiceSpinner, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
+import { AddIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 
 import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";

@@ -1,6 +1,6 @@
-import { Add as AddIcon, Remove as RemoveIcon } from "@mui/icons-material";
 import { Box, IconButton, Paper, Stack, Typography } from "@mui/material";
 
+import { AddIcon, DecrementIcon } from "@/client/src/components/icons/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
@@ -93,7 +93,7 @@ export function AbilityScoreBox({
                   disabled={baseValue <= 1}
                   sx={{ p: 0 }}
                 >
-                  <RemoveIcon sx={{ fontSize: 14 }} />
+                  <DecrementIcon sx={{ fontSize: 14 }} />
                 </IconButton>
                 <Typography variant="caption" sx={{ color: "text.secondary", minWidth: 40 }}>
                   Base: {baseValue}

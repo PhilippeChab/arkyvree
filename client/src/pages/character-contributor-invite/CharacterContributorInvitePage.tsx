@@ -1,6 +1,6 @@
-import { Group as ContributorIcon } from "@mui/icons-material";
 import { useParams } from "react-router-dom";
 
+import { ContributorsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteLandingPage } from "@/client/src/components/invites/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -15,7 +15,7 @@ export default function CharacterContributorInvitePage() {
       entityLabel="Character"
       entityPath={(id) => `/characters/${id}`}
       listPath="/characters"
-      icon={ContributorIcon}
+      icon={ContributorsIcon}
       queryKey={queryKeys.invites.detail("characterContributor", contributorId)}
       inviteFn={async () => {
         const invite = await parseResponse(rpc.api.characters.contributors.invites[":id"].$get(param));

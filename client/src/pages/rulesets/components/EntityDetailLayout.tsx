@@ -1,9 +1,10 @@
-import { ArrowBack, MoreVert as MoreVertIcon } from "@mui/icons-material";
 import { Box, IconButton, Menu, MenuItem, Skeleton, Typography } from "@mui/material";
 import type { ComponentProps, ReactNode } from "react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { PageError } from "@/client/src/components/common/index.ts";
+import { BackIcon, MoreIcon } from "@/client/src/components/icons/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
@@ -12,7 +13,8 @@ interface EntityDetailLayoutProps {
   rulesetName?: string;
   /** Replaces "<ruleset> Ruleset" under the title. */
   subtitle?: ReactNode;
-  onBack: () => void;
+  /** Where Back goes */
+  backTo: string;
   /** Momentarily nowhere sensible to go back to. */
   backDisabled?: boolean;
   canDelete: boolean;
@@ -30,7 +32,7 @@ export function EntityDetailLayout({
   entityName,
   rulesetName,
   subtitle,
-  onBack,
+  backTo,
   backDisabled,
   canDelete,
   onDelete,
@@ -86,7 +88,8 @@ export function EntityDetailLayout({
       >
         <IconButton
           aria-label="Back"
-          onClick={onBack}
+          component={Link}
+          to={backTo}
           disabled={backDisabled}
           size={isMobile ? "medium" : "large"}
           sx={{
@@ -95,7 +98,7 @@ export function EntityDetailLayout({
             "&:hover": { bgcolor: "action.hover" },
           }}
         >
-          <ArrowBack />
+          <BackIcon />
         </IconButton>
         <Box
           sx={{
@@ -121,7 +124,7 @@ export function EntityDetailLayout({
                 "&:hover": { bgcolor: "action.hover" },
               }}
             >
-              <MoreVertIcon />
+              <MoreIcon />
             </IconButton>
             <Menu
               anchorEl={anchorEl}

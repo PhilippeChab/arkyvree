@@ -64,7 +64,7 @@ test.describe("Demo", () => {
     await expect(page.getByRole("heading", { name: /Your demo has ended/ })).toBeVisible();
 
     await page.unroute("**/api/**");
-    await page.getByRole("button", { name: /^Sign up$/ }).click();
+    await page.getByRole("link", { name: /^Sign up$/ }).click();
     await page.waitForURL("/sign-up", { timeout: 10_000 });
   });
 });

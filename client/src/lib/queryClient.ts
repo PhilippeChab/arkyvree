@@ -1,6 +1,5 @@
 import { matchMutation, MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 
-import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
 import { sessionEnded } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -10,16 +9,8 @@ function handleGlobalError(error: unknown) {
   if (sessionEnded(error)) {
     // Skip when already unauth — re-clearing on every 401 creates a refetch loop.
     if (!useAuthStore.getState().isAuthenticated) return;
-    // If the cleared user was a demo, leave a breadcrumb so the post-clear
-    // catch-all can route to /demo-expired instead of /sign-in.
-    if (useAuthStore.getState().user?.expiresAt) {
-      try {
-        localStorage.setItem(DEMO_EXPIRED_FLAG, "1");
-      } catch {
-        // storage disabled
-      }
-    }
-    useAuthStore.getState().clearSession();
+    // A demo's ending sends its private pages to /demo-expired instead of /sign-in.
+    useAuthStore.getState().clearSession({ demoExpired: !!useAuthStore.getState().user?.expiresAt });
   }
 }
 

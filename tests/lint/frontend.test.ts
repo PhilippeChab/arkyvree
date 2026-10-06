@@ -290,15 +290,26 @@ describe("frontend rules", () => {
           "client/src/channel.ts": 'export const c = "0 0 0 3px rgba(var(--mui-palette-primary-mainChannel) / 0.4)";\n',
           "client/src/words.tsx": 'export const w = <Chip label="white" href="#top" sx={{ width: `${size}px` }} />;\n',
           "client/src/theme/palette.ts": 'export const p = { main: "#8d1e1e", shadow: "rgba(0, 0, 0, 0.3)" };\n',
+          "client/src/compound.tsx": 'export const c = <Box sx={{ border: "1px solid red" }} />;\n',
+          "client/src/oklch.tsx": 'export const o = <Box sx={{ color: "oklch(0.7 0.1 30)" }} />;\n',
+          "client/src/swatch.tsx": 'import { red } from "@mui/material/colors";\nexport const r = red[500];\n',
+          "client/src/painted.tsx": 'export const p = <path fill="#4285F4" />;\n',
+          "client/src/anchored.tsx": 'export const a = <a href="#add">Add</a>;\n',
+          "client/src/counted.tsx": "export const n = `${count}00 points`;\n",
+          "client/src/greyed.tsx": 'export const g = <Chip sx={{ bgcolor: "grey.400", color: "common.white" }} />;\n',
         },
         ["theme-colors"],
       ),
     ).toEqual([
       "theme-colors client/src/bordered.tsx",
+      "theme-colors client/src/compound.tsx",
       "theme-colors client/src/hex.tsx",
       "theme-colors client/src/named.tsx",
+      "theme-colors client/src/oklch.tsx",
+      "theme-colors client/src/painted.tsx",
       "theme-colors client/src/rgba.tsx",
       "theme-colors client/src/suffixed.tsx",
+      "theme-colors client/src/swatch.tsx",
     ]);
   });
 
@@ -319,14 +330,79 @@ describe("frontend rules", () => {
             "export function FeatsSection({ ruleset }: RulesetSectionProps) {\n  return ruleset.name;\n}\n",
           "client/src/helper.tsx": "export function labelOf({ label }: { label: string }) {\n  return label;\n}\n",
           "client/src/bare.tsx": "export function Bare() {\n  return null;\n}\n",
+          "client/src/memoized.tsx":
+            "export const M = memo(function M({ label }: { label: string }) {\n  return label;\n});\n",
+          "client/src/forwarded.tsx":
+            'export const F = React.forwardRef(function F(props: Omit<BoxProps, "ref">) {\n  return null;\n});\n',
+          "client/src/wrapped.tsx": "export const W = memo(function W({ label }: WProps) {\n  return label;\n});\n",
         },
         ["component-props"],
       ),
     ).toEqual([
+      "component-props client/src/forwarded.tsx",
       "component-props client/src/joined.tsx",
       "component-props client/src/literal.tsx",
+      "component-props client/src/memoized.tsx",
       "component-props client/src/omitted.tsx",
       "component-props client/src/qualified.tsx",
     ]);
+  });
+
+  test("an icon comes from components/icons, named for what it means", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/named.tsx":
+            'import { Group as ContributorsIcon } from "@mui/icons-material";\nexport const c = ContributorsIcon;\n',
+          "client/src/pathed.tsx":
+            'import HelpOutline from "@mui/icons-material/HelpOutlined";\nexport const h = HelpOutline;\n',
+          "client/src/mapped.tsx":
+            'import { ContributorsIcon } from "@/client/src/components/icons/index.ts";\nexport const c = ContributorsIcon;\n',
+          "client/src/components/icons/index.ts": 'export { Group as ContributorsIcon } from "@mui/icons-material";\n',
+        },
+        ["icons"],
+      ),
+    ).toEqual(["icons client/src/named.tsx", "icons client/src/pathed.tsx"]);
+  });
+
+  test("a control that only navigates is a link, and Link has one name per package", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/button.tsx": 'export const b = <Button onClick={() => navigate("/sign-up")}>Sign up</Button>;\n',
+          "client/src/block.tsx": "export const k = <IconButton onClick={() => { navigate(path); }} />;\n",
+          "client/src/linked.tsx": 'export const l = <Button component={Link} to="/sign-up">Sign up</Button>;\n',
+          "client/src/history.tsx": "export const h = <IconButton onClick={() => navigate(-1)} />;\n",
+          "client/src/more.tsx": 'export const m = <Button onClick={() => { save(); navigate("/x"); }} />;\n',
+          "client/src/card.tsx": "export const c = <ListCard onClick={() => navigate(`/rulesets/${id}`)} />;\n",
+          "client/src/left.tsx": 'export const s = <ContributorsSection onLeave={() => navigate("/rulesets")} />;\n',
+          "client/src/router.tsx":
+            'import { Link as RouterLink } from "react-router-dom";\nexport const r = RouterLink;\n',
+          "client/src/mui.tsx": 'import { Link } from "@mui/material";\nexport const m = Link;\n',
+          "client/src/both.tsx":
+            'import { Link as MuiLink } from "@mui/material";\nimport { Link } from "react-router-dom";\nexport const b = [Link, MuiLink];\n',
+        },
+        ["nav-links"],
+      ),
+    ).toEqual([
+      "nav-links client/src/block.tsx",
+      "nav-links client/src/button.tsx",
+      "nav-links client/src/mui.tsx",
+      "nav-links client/src/router.tsx",
+    ]);
+  });
+
+  test("what the browser keeps is a store's", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/local.ts": 'export const l = localStorage.getItem("themeMode");\n',
+          "client/src/session.ts": "export const s = window.sessionStorage;\n",
+          "client/src/stores/prefs.ts": 'export const p = localStorage.getItem("themeMode");\n',
+          "client/src/keyed.ts": "export const k = { localStorage: 1 }.localStorage;\n",
+        },
+        ["browser-storage"],
+      ),
+    ).toEqual(["browser-storage client/src/local.ts", "browser-storage client/src/session.ts"]);
   });
 });

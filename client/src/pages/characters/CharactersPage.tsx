@@ -1,4 +1,3 @@
-import { Archive as ArchiveIcon, Group as GroupIcon, Shield as ShieldIcon } from "@mui/icons-material";
 import { Button, Chip, Container } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -22,6 +21,7 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
+import { ArchiveIcon, CharactersIcon, ContributorsIcon } from "@/client/src/components/icons/index.ts";
 import { useAttachments, useListParams, usePageTitle, useStaggerOffset } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -161,14 +161,14 @@ export default function CharactersPage() {
           />
         ) : view === "shared" ? (
           <BlankState
-            icon={GroupIcon}
+            icon={ContributorsIcon}
             title="No shared characters"
             description="Characters other users invite you to contribute to will appear here."
             action={viewActiveButton}
           />
         ) : (
           <BlankState
-            icon={ShieldIcon}
+            icon={CharactersIcon}
             title="No characters yet"
             description="Create your first character to start your adventure"
             action={createButton("Create Your First Character")}

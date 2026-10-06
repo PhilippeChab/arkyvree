@@ -1,4 +1,3 @@
-import { Circle as CircleIcon, Notifications as NotificationsIcon } from "@mui/icons-material";
 import { Box, Button, Container, Tooltip, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
@@ -14,6 +13,7 @@ import {
   PageTransition,
   SearchBar,
 } from "@/client/src/components/common/index.ts";
+import { NotificationsIcon, UnreadIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useListParams, useNotificationActions, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
@@ -140,7 +140,7 @@ export default function NotificationsPage() {
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       {!notification.readAt && (
-                        <CircleIcon titleAccess="Unread" sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }} />
+                        <UnreadIcon titleAccess="Unread" sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }} />
                       )}
                       <Typography variant="body2">
                         {formatNotificationMessage(notification.type, notification.data)}

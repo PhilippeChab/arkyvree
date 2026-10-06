@@ -1,4 +1,4 @@
-import { Archive as ArchiveIcon, EditNote as DraftIcon, CheckCircle as PublishedIcon } from "@mui/icons-material";
+import { ArchiveIcon, DraftIcon, PublishedIcon } from "@/client/src/components/icons/index.ts";
 
 /** A ruleset status's icon, color and explanation, for the list's pills and the page's chip. */
 export const RULESET_STATUS = {

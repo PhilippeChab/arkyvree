@@ -1,4 +1,3 @@
-import { Add as AddIcon, Casino as CasinoIcon, Remove as RemoveIcon } from "@mui/icons-material";
 import { Chip, IconButton, MenuItem, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { keepPreviousData, skipToken, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
@@ -15,6 +14,7 @@ import {
   RulesetPicker,
   SelectField,
 } from "@/client/src/components/common/index.ts";
+import { AddIcon, DecrementIcon, DiceIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
   type RulesetAbility,
@@ -127,7 +127,7 @@ function AbilityCard({
       </Typography>
       <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "center" }}>
         <IconButton size="small" aria-label={`Lower ${name}`} onClick={onDecrease} disabled={!canDecrease}>
-          <RemoveIcon fontSize="small" />
+          <DecrementIcon fontSize="small" />
         </IconButton>
         <Typography variant="h6" sx={{ minWidth: 28 }}>
           {score}
@@ -646,7 +646,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
             size="small"
             aria-label="Roll all ability scores"
           >
-            <CasinoIcon />
+            <DiceIcon />
           </IconButton>
         )}
         {rollMethod === "point-buy" &&
