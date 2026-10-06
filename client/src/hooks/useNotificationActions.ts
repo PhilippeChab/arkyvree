@@ -61,6 +61,12 @@ function isInviteType(type: string): type is InviteType {
   return type in INVITES;
 }
 
+/** The notification a pending answer is for: TanStack keeps a mutation's variables untyped. */
+function answeredNotificationId(variables: unknown) {
+  if (!isRecord(variables) || !isRecord(variables.notification)) return undefined;
+  return typeof variables.notification.id === "string" ? variables.notification.id : undefined;
+}
+
 /** A notification's payload: its string fields (ids, names); anything else is left out. */
 function notificationData(n: NotificationLike): NotificationData {
   return isRecord(n.data)
@@ -135,7 +141,7 @@ export function useNotificationActions() {
 
   const answeringIds = useMutationState({
     filters: { mutationKey: ANSWER_INVITE_KEY, status: "pending" },
-    select: (mutation) => (mutation.state.variables as InviteAnswer).notification.id,
+    select: (mutation) => answeredNotificationId(mutation.state.variables),
   });
 
   const isActionable = (n: NotificationLike) => isInviteType(n.type) && !n.readAt;

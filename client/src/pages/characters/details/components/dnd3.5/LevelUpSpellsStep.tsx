@@ -2,7 +2,13 @@ import { Bolt as PowersIcon } from "@mui/icons-material";
 import { Box, Chip, List, ListItemButton, ListItemText, Skeleton, TextField, Tooltip, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
-import { BlankState, DiceSpinner, LoadError, NoMatchesState } from "@/client/src/components/common/index.ts";
+import {
+  BlankState,
+  DiceSpinner,
+  LoadError,
+  NextPageSpinner,
+  NoMatchesState,
+} from "@/client/src/components/common/index.ts";
 
 import { type PowerAptitudePool, withoutPick } from "./levelUp/index.ts";
 import type { LevelUpPowersStepProps } from "./levelUpFactory.ts";
@@ -261,11 +267,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                           </span>
                         </Tooltip>
                       ))}
-                      {isFetchingNextPowersPage && (
-                        <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
-                          <DiceSpinner size="small" />
-                        </Box>
-                      )}
+                      <NextPageSpinner loading={isFetchingNextPowersPage} />
                     </List>
                   )}
                 </Box>

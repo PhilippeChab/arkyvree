@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Chip, MenuItem, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Chip, TextField, Typography } from "@mui/material";
 import { Controller, useController, type UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
@@ -27,6 +27,9 @@ interface SpellFormFieldsProps {
   /** Aptitudes the form may already hold (the spell's own), so they show by name. */
   knownAptitudes?: Aptitude[];
 }
+
+/** A select's first choice, for a spell without one: the API stores it as "". */
+const NONE = { value: "", label: "None" };
 
 /** A free-text list with suggestions, shown as chips. */
 function TagsField({
@@ -68,34 +71,8 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
   return (
     <>
       <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
-        <Controller
-          name="school"
-          control={form.control}
-          render={({ field }) => (
-            <TextField {...field} value={field.value ?? ""} label="School" fullWidth select>
-              <MenuItem value="">None</MenuItem>
-              {SPELL_SCHOOLS.map((s) => (
-                <MenuItem key={s} value={s}>
-                  {s}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
-        <Controller
-          name="subschool"
-          control={form.control}
-          render={({ field }) => (
-            <TextField {...field} value={field.value ?? ""} label="Subschool" fullWidth select>
-              <MenuItem value="">None</MenuItem>
-              {SPELL_SUBSCHOOLS.map((s) => (
-                <MenuItem key={s} value={s}>
-                  {s}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
+        <SelectField control={form.control} name="school" label="School" options={[NONE, ...SPELL_SCHOOLS]} />
+        <SelectField control={form.control} name="subschool" label="Subschool" options={[NONE, ...SPELL_SUBSCHOOLS]} />
       </Box>
       <TagsField form={form} name="descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
       <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
@@ -106,20 +83,7 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
           fullWidth
           placeholder='e.g., "1 standard action"'
         />
-        <Controller
-          name="rangeType"
-          control={form.control}
-          render={({ field }) => (
-            <TextField {...field} value={field.value ?? ""} label="Range" fullWidth select>
-              <MenuItem value="">None</MenuItem>
-              {SPELL_RANGE_TYPES.map((r) => (
-                <MenuItem key={r} value={r}>
-                  {r}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
+        <SelectField control={form.control} name="rangeType" label="Range" options={[NONE, ...SPELL_RANGE_TYPES]} />
       </Box>
       <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
         <FormTextField
@@ -145,19 +109,11 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
           fullWidth
           placeholder='e.g., "1 round/level"'
         />
-        <Controller
-          name="spellResistance"
+        <SelectField
           control={form.control}
-          render={({ field }) => (
-            <TextField {...field} value={field.value ?? ""} label="Spell Resistance" fullWidth select>
-              <MenuItem value="">None</MenuItem>
-              {SPELL_RESISTANCE_OPTIONS.map((sr) => (
-                <MenuItem key={sr} value={sr}>
-                  {sr}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
+          name="spellResistance"
+          label="Spell Resistance"
+          options={[NONE, ...SPELL_RESISTANCE_OPTIONS]}
         />
       </Box>
       <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />

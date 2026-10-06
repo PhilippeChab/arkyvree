@@ -23,7 +23,7 @@ export { useListboxQuery } from "./useListboxQuery.ts";
 export { useListParams } from "./useListParams.ts";
 export { useSearchParam } from "./useSearchParam.ts";
 export { useSearchText } from "./useSearchText.ts";
-export { useStaggerAnimation } from "./useStaggerAnimation.ts";
+export { useStaggerOffset } from "./useStaggerOffset.ts";
 export { useStartDemo } from "./useStartDemo.ts";
 export { useToggleSet } from "./useToggleSet.ts";
 export { useValidationIssues } from "./useValidationIssues.ts";

@@ -105,6 +105,26 @@ describe("frontend rules", () => {
     ]);
   });
 
+  test("a form's field reaches its input through inputRef, never spread whole with its ref", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/rendered.tsx":
+            "export const r = <Controller render={({ field }) => <TextField {...field} select />} />;\n",
+          "client/src/controlled.tsx":
+            "export function C() {\n  const { field } = useController(options);\n  return <TextField {...field} />;\n}\n",
+          "client/src/split.tsx":
+            "export const s = <Controller render={({ field: { ref, ...field } }) => <TextField {...field} inputRef={ref} />} />;\n",
+          "client/src/props.tsx":
+            "export function P({ rows, ...field }: Props) {\n  return <FormTextField {...field} minRows={rows} />;\n}\n",
+          "client/src/read.tsx":
+            "export const d = <Controller render={({ field }) => <CodeInput digits={field.value} onChange={field.onChange} />} />;\n",
+        },
+        ["controlled-inputs"],
+      ),
+    ).toEqual(["controlled-inputs client/src/controlled.tsx", "controlled-inputs client/src/rendered.tsx"]);
+  });
+
   test("a form is made with useFormWith, whose values are whole, never react-hook-form's useForm", async () => {
     expect(
       await lintRepo(
@@ -174,6 +194,12 @@ describe("frontend rules", () => {
             'export const x = <Alert severity="error">{loadFailureMessage("Feats", error)}</Alert>;\n',
           "client/src/inline.tsx": 'export const i = <AnimatedAlert in severity="error">{error}</AnimatedAlert>;\n',
           "client/src/info.tsx": 'export const n = <Alert severity="info">Loading feats</Alert>;\n',
+          "client/src/braced.tsx": 'export const b = <Alert severity={"error"}>{error}</Alert>;\n',
+          "client/src/templated.tsx": "export const t = <Alert severity={`error`}>{error}</Alert>;\n",
+          "client/src/colored.tsx": 'export const c = <Alert color="error">{error}</Alert>;\n',
+          "client/src/computed.tsx": "export const k = <Alert severity={kind}>{message}</Alert>;\n",
+          "client/src/contexts/ToastContext.tsx":
+            "export const q = <Alert severity={current.severity}>{text}</Alert>;\n",
           "client/src/components/common/LoadError.tsx":
             'export const l = <Alert severity="error">{loadFailureMessage(what, error)}</Alert>;\n',
           "client/src/components/auth/AuthLayout.tsx": 'export const a = <Alert severity="error">{error}</Alert>;\n',
@@ -181,7 +207,11 @@ describe("frontend rules", () => {
         ["error-alerts"],
       ),
     ).toEqual([
+      "error-alerts client/src/braced.tsx",
+      "error-alerts client/src/colored.tsx",
+      "error-alerts client/src/computed.tsx",
       "error-alerts client/src/inline.tsx",
+      "error-alerts client/src/templated.tsx",
       "error-alerts client/src/worded.tsx",
       "error-alerts client/src/written.tsx",
     ]);
@@ -195,6 +225,9 @@ describe("frontend rules", () => {
           "client/src/timed.tsx": "export const t = new Date(at).toLocaleTimeString();\n",
           "client/src/intl.tsx": 'export const f = new Intl.DateTimeFormat("en").format(new Date(at));\n',
           "client/src/relative.tsx": 'export const r = new Intl.RelativeTimeFormat().format(-1, "day");\n',
+          "client/src/called.tsx": 'export const c = Intl.DateTimeFormat("en").format(new Date(at));\n',
+          "client/src/destructured.tsx": "const { DateTimeFormat } = Intl;\nexport const f = new DateTimeFormat();\n",
+          "client/src/stringified.tsx": "export const s = new Date(at).toLocaleString();\n",
           "client/src/counted.tsx":
             "export const n = count.toLocaleString() + new Intl.NumberFormat().format(total);\n",
           "client/src/lib/formatDate.ts":
@@ -203,9 +236,12 @@ describe("frontend rules", () => {
         ["date-formats"],
       ),
     ).toEqual([
+      "date-formats client/src/called.tsx",
+      "date-formats client/src/destructured.tsx",
       "date-formats client/src/intl.tsx",
       "date-formats client/src/localized.tsx",
       "date-formats client/src/relative.tsx",
+      "date-formats client/src/stringified.tsx",
       "date-formats client/src/timed.tsx",
     ]);
   });
@@ -222,6 +258,7 @@ describe("frontend rules", () => {
           "client/src/plain.ts": 'export const style = { color: "red" };\n',
           "client/src/made.tsx":
             'import { styled } from "@mui/material/styles";\nexport const M = styled("div")({});\n',
+          "client/src/spaced.tsx": 'import * as M from "@mui/material";\nexport const S = M.styled("div")({});\n',
           "client/src/emotion.tsx": 'import styled from "@emotion/styled";\nexport const E = styled.div({});\n',
           "client/src/sheet.tsx": 'import "./sheet.css";\nexport const c = 1;\n',
           "client/src/main.tsx": 'import "./index.css";\nexport const m = 1;\n',
@@ -233,6 +270,7 @@ describe("frontend rules", () => {
       "sx-styles client/src/made.tsx",
       "sx-styles client/src/sheet.tsx",
       "sx-styles client/src/slotted.tsx",
+      "sx-styles client/src/spaced.tsx",
       "sx-styles client/src/styled.tsx",
     ]);
   });

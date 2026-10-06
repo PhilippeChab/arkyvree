@@ -27,7 +27,7 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
-import { useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
+import { useListParams, usePageTitle, useStaggerOffset } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -62,7 +62,6 @@ export default function CampaignsPage() {
     useCampaignOperations();
 
   const listQuery = campaignListQuery({ view, search, orderBy, orderDir });
-  const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...listQuery,
@@ -70,6 +69,7 @@ export default function CampaignsPage() {
   });
 
   const campaigns = pageItems(data);
+  const offset = useStaggerOffset(campaigns);
 
   // Warm the detail page and its tabs while the pointer is on a card.
   const prefetchCampaign = (id: string) => {
@@ -144,10 +144,7 @@ export default function CampaignsPage() {
               label="Load More Campaigns"
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
-              onClick={() => {
-                updateOffset(campaigns.length);
-                fetchNextPage();
-              }}
+              onClick={() => fetchNextPage()}
             />
           </>
         ) : search ? (

@@ -13,7 +13,8 @@
  * - `controlled-inputs`: every input is controlled, and a form's field is bound one way: through `useController` (the
  *   shared fields, `FormTextField`, `Controller`), never `register` (uncontrolled), and never a value `watch` reads
  *   with a `setValue` for its change. A form starts every field with a value: it's made with `useFormWith` (a whole
- *   `defaultValues`), never react-hook-form's `useForm`, which takes some.
+ *   `defaultValues`), never react-hook-form's `useForm`, which takes some. A field reaches its input through
+ *   `inputRef`, never spread whole (`{...field}` with its `ref`), which a failed submit couldn't focus.
  * - `effect-writes`: an effect synchronizes with what's outside React, and never does what an event or a render does: it
  *   never writes a form's field (`setValue`, `resetField`, `reset`, but `useFormSync`'s, which follows the server),
  *   navigates (a redirect is a rendered `<Navigate>`) nor calls back its owner (an `on…` prop, or a callback a ref
@@ -25,13 +26,14 @@
  *   `saveFn`).
  * - `date-formats`: a date is shown through `lib/formatDate.ts` (`formatDate`, `formatDateTime`, `formatRelativeTime`),
  *   in one locale and three forms: no `toLocaleDateString`, `toLocaleTimeString` or `Intl.DateTimeFormat` elsewhere.
- * - `sx-styles`: a style is written with `sx`, by the theme's scale: never `styled()`, never a stylesheet but the global
+ * - `sx-styles`: a style is written with `sx`, by the theme's scale: never `styled()` (nor `M.styled`), never a stylesheet but the global
  *   one `main.tsx` loads (`index.css`, the fonts), and `style` only passes on one a component is given
  *   (`{ ...props.style, … }`, as MUI hands a list option), on an element or in a prop's object (`slotProps`).
  * - `error-alerts`: an error reaches the user one way per kind: a list, a section or a step that failed to load is a
  *   `LoadError` (`loadFailureMessage`'s words), a page that can't show is a `PageError`, a failed action is a toast
  *   (`snackbar.error`, which names what failed), a wrong value is its field's error, and the auth pages show their
- *   form's error. So an error `Alert` sits only in `LoadError` and the auth pages' layout.
+ *   form's error. So an error `Alert` sits only in `LoadError`, the auth pages' layout and the toast, and every other
+ *   `Alert` writes out its `severity` and `color`, so the rule can read them.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -56,11 +58,15 @@ const DATE_FORMATTERS = new Set(["toLocaleDateString", "toLocaleTimeString"]);
 /** The packages that export MUI's `styled` */
 const STYLED_SOURCES = new Set(["@mui/material", "@mui/material/styles", "@mui/system"]);
 
-/** The components that show an error in an `Alert`: a load failure, and the auth pages' form error. */
+/** The components that show an error in an `Alert`: a load failure, the auth pages' form error, and the toast. */
 const ERROR_ALERT_FILES = new Set([
   "client/src/components/common/LoadError.tsx",
   "client/src/components/auth/AuthLayout.tsx",
+  "client/src/contexts/ToastContext.tsx",
 ]);
+
+/** `Intl`'s date formatters */
+const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
 
 /** Whether a JSX element has the attribute `name`. */
 function hasAttribute(node, name) {
@@ -78,6 +84,35 @@ function calleeName(node) {
 /** A JSX element's name: `IconButton`, `Dialog`. */
 function elementName(node) {
   return node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;
+}
+
+/**
+ * How `pattern` binds `name`: "whole" for a form's field taken whole, its `ref` with it (`{ field }`), "bound" for any
+ * other binding (`{ field: { ref, ...field } }`, a parameter), null when it doesn't bind it.
+ */
+function fieldBinding(pattern, name) {
+  if (!pattern) return null;
+  switch (pattern.type) {
+    case "Identifier":
+      return pattern.name === name ? "bound" : null;
+    case "AssignmentPattern":
+      return fieldBinding(pattern.left, name);
+    case "RestElement":
+      return fieldBinding(pattern.argument, name);
+    case "ArrayPattern":
+      return pattern.elements.map((element) => fieldBinding(element, name)).find(Boolean) ?? null;
+    case "ObjectPattern":
+      for (const property of pattern.properties) {
+        const value = property.type === "RestElement" ? property : property.value;
+        const isField = property.type === "Property" && !property.computed && property.key.name === "field";
+        if (isField && value.type === "Identifier" && value.name === name) return "whole";
+        const binding = fieldBinding(value, name);
+        if (binding) return binding;
+      }
+      return null;
+    default:
+      return null;
+  }
 }
 
 /** Whether a member chain starts at `rpc`: `rpc.api.rulesets[":id"].$get`. */
@@ -149,40 +184,20 @@ function createDateFormats(context) {
   return {
     CallExpression(node) {
       const callee = node.callee;
-      if (callee.type === "MemberExpression" && !callee.computed && DATE_FORMATTERS.has(callee.property.name)) {
+      if (callee.type !== "MemberExpression" || callee.computed) return;
+      // A number has `toLocaleString` too: a date's is known where the date is built in place
+      const ofNewDate = callee.object.type === "NewExpression" && callee.object.callee.name === "Date";
+      if (DATE_FORMATTERS.has(callee.property.name) || (callee.property.name === "toLocaleString" && ofNewDate)) {
         report(node);
       }
     },
-    NewExpression(node) {
-      const callee = node.callee;
-      const isIntl = callee.type === "MemberExpression" && callee.object.type === "Identifier";
-      if (
-        isIntl &&
-        callee.object.name === "Intl" &&
-        ["DateTimeFormat", "RelativeTimeFormat"].includes(callee.property.name)
-      ) {
-        report(node);
-      }
+    MemberExpression(node) {
+      const ofIntl = !node.computed && node.object.type === "Identifier" && node.object.name === "Intl";
+      if (ofIntl && INTL_DATE_FORMATS.has(node.property.name)) report(node);
     },
-  };
-}
-
-function createErrorAlerts(context) {
-  if (!inClient(context) || ERROR_ALERT_FILES.has(repoPath(context.filename))) return {};
-  return {
-    JSXElement(node) {
-      if (!["Alert", "AnimatedAlert"].includes(elementName(node))) return;
-      const severity = node.openingElement.attributes.find(
-        (a) => a.type === "JSXAttribute" && a.name.name === "severity",
-      );
-      if (severity?.value?.type !== "Literal" || severity.value.value !== "error") return;
-      context.report({
-        node,
-        message:
-          "An error reaches the user one way per kind: a load failure is a `LoadError`, a page that can't show a " +
-          "`PageError`, a failed action a toast (`snackbar.error`), a wrong value its field's error: never an error " +
-          "`Alert` of its own.",
-      });
+    VariableDeclarator(node) {
+      if (node.init?.type !== "Identifier" || node.init.name !== "Intl" || node.id.type !== "ObjectPattern") return;
+      if (node.id.properties.some((p) => p.type === "Property" && INTL_DATE_FORMATS.has(p.key.name))) report(node);
     },
   };
 }
@@ -379,12 +394,22 @@ function createSxStyles(context) {
         "A style is written with `sx`: never `styled()`, no stylesheet but the global one `main.tsx` loads, and " +
         "`style` only passes on one a component is given (`{ ...props.style }`).",
     });
+  // What a file imports MUI's packages whole as (`import * as M from "@mui/material"`), whose `M.styled` it reports
+  const namespaces = new Set();
   return {
     ImportDeclaration(node) {
       const source = node.source.value;
       const stylesheet = source.endsWith(".css") && repoPath(context.filename) !== "client/src/main.tsx";
       const styled = node.specifiers.some((s) => s.type === "ImportSpecifier" && s.imported.name === "styled");
       if (stylesheet || source === "@emotion/styled" || (STYLED_SOURCES.has(source) && styled)) report(node);
+      if (!STYLED_SOURCES.has(source)) return;
+      for (const specifier of node.specifiers) {
+        if (specifier.type !== "ImportSpecifier") namespaces.add(specifier.local.name);
+      }
+    },
+    MemberExpression(node) {
+      const ofNamespace = node.object.type === "Identifier" && namespaces.has(node.object.name);
+      if (ofNamespace && !node.computed && node.property.name === "styled") report(node);
     },
     JSXAttribute(node) {
       if (node.name.type !== "JSXIdentifier" || node.name.name !== "style") return;
@@ -413,6 +438,26 @@ function readsWatch(node) {
   return Object.entries(node).some(
     ([key, child]) => key !== "parent" && child && typeof child === "object" && readsWatch(child),
   );
+}
+
+/** Whether `name`, spread at `node`, is a form's field taken whole: bound by the nearest function or declaration that binds it. */
+function spreadsWholeField(node, name) {
+  for (let scope = node.parent; scope; scope = scope.parent) {
+    const declarations =
+      scope.type === "BlockStatement" || scope.type === "Program"
+        ? scope.body.flatMap((statement) => (statement.type === "VariableDeclaration" ? statement.declarations : []))
+        : [];
+    for (const declaration of declarations) {
+      const binding = fieldBinding(declaration.id, name);
+      if (binding) return binding === "whole";
+    }
+    const params = /Function/.test(scope.type) ? scope.params : [];
+    for (const param of params) {
+      const binding = fieldBinding(param, name);
+      if (binding) return binding === "whole";
+    }
+  }
+  return false;
 }
 
 function createControlledInputs(context) {
@@ -446,6 +491,16 @@ function createControlledInputs(context) {
     VariableDeclarator(node) {
       if (node.id.type === "Identifier" && readsWatch(node.init)) watched.add(node.id.name);
     },
+    JSXSpreadAttribute(node) {
+      if (node.argument.type !== "Identifier" || !spreadsWholeField(node, node.argument.name)) return;
+      context.report({
+        node,
+        message:
+          "A form's field reaches its input through `inputRef` (`field: { ref, ...field }`, as `FormTextField` and " +
+          "`SelectField` take it): spread whole, its `ref` lands on the component's root, so a failed submit can't " +
+          "focus the input.",
+      });
+    },
     JSXAttribute(node) {
       if (node.name.type !== "JSXIdentifier" || !VALUE_PROPS.has(node.name.name)) return;
       const expression = node.value?.type === "JSXExpressionContainer" ? node.value.expression : null;
@@ -455,6 +510,34 @@ function createControlledInputs(context) {
         message:
           "An input's value is its field's (`useController`), never one `watch` reads: the field binds its value and " +
           "its change.",
+      });
+    },
+  };
+}
+
+/** What a JSX attribute's value says when it's written out (`"error"`, `{"error"}`, `` {`error`} ``), else null. */
+function writtenString(attribute) {
+  const value = attribute.value?.type === "JSXExpressionContainer" ? attribute.value.expression : attribute.value;
+  if (value?.type === "Literal" && typeof value.value === "string") return value.value;
+  if (value?.type === "TemplateLiteral" && value.expressions.length === 0) return value.quasis[0].value.cooked;
+  return null;
+}
+
+function createErrorAlerts(context) {
+  if (!inClient(context) || ERROR_ALERT_FILES.has(repoPath(context.filename))) return {};
+  return {
+    JSXElement(node) {
+      if (!["Alert", "AnimatedAlert"].includes(elementName(node))) return;
+      const colors = node.openingElement.attributes.filter(
+        (a) => a.type === "JSXAttribute" && ["severity", "color"].includes(a.name.name),
+      );
+      if (!colors.some((a) => (writtenString(a) ?? "error") === "error")) return;
+      context.report({
+        node,
+        message:
+          "An error reaches the user one way per kind: a load failure is a `LoadError`, a page that can't show a " +
+          "`PageError`, a failed action a toast (`snackbar.error`), a wrong value its field's error: never an error " +
+          "`Alert` of its own. An `Alert` writes out its `severity` and `color`, so this can read them.",
       });
     },
   };

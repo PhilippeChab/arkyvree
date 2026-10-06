@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { type ElementType, type ReactNode, useMemo, useRef } from "react";
 
-import { useIsMobile } from "@/client/src/hooks/index.ts";
+import { useIsMobile, useStaggerOffset } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 
 import { BlankState, NoMatchesState } from "./BlankState.tsx";
@@ -132,6 +132,7 @@ export function DataTable<T extends { id: string }>({
 }: DataTableProps<T>) {
   const hoverTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isMobile = useIsMobile();
+  const staggerOffset = useStaggerOffset(rows);
   const visibleColumns = useMemo(
     () => (isMobile ? columns.filter((c) => !c.hideOnMobile) : columns),
     [columns, isMobile],
@@ -190,7 +191,7 @@ export function DataTable<T extends { id: string }>({
             return (
               <TableRow
                 key={row.id}
-                hover
+                hover={clickable || rowActions.length > 0}
                 {...(clickable && clickableProps(() => onRowClick?.(row)))}
                 onMouseEnter={
                   onRowMouseEnter
@@ -207,7 +208,7 @@ export function DataTable<T extends { id: string }>({
                     position: "relative",
                     ...(clickable && CLICKABLE_SX),
                     ...ROW_ACTIONS_HOVER_SX,
-                    ...fadeInUpSx(index),
+                    ...fadeInUpSx(index, staggerOffset),
                   },
                   ...(Array.isArray(ownSx) ? ownSx : [ownSx]),
                 ]}

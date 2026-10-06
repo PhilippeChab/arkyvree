@@ -41,7 +41,7 @@ import {
   useListboxQuery,
   usePrefetch,
   useSearchText,
-  useStaggerAnimation,
+  useStaggerOffset,
 } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -425,7 +425,6 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("characterSearch");
 
   const listQuery = campaignCharactersQuery(campaign.id, searchQuery);
-  const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
 
   const {
     data,
@@ -437,6 +436,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   } = useInfiniteQuery({ ...listQuery, placeholderData: keepPreviousData });
 
   const characters = useMemo(() => pageItems(data), [data]);
+  const offset = useStaggerOffset(characters);
 
   const characterIds = useMemo(() => characters.map((c) => c.id), [characters]);
   const { data: portraitsByCharacterId } = useAttachments({
@@ -504,10 +504,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
                 label="Load More Characters"
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
-                onClick={() => {
-                  updateOffset(characters.length);
-                  fetchNextPage();
-                }}
+                onClick={() => fetchNextPage()}
               />
             </>
           ) : searchQuery ? (

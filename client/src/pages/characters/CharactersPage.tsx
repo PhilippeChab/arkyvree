@@ -22,7 +22,7 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
-import { useAttachments, useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
+import { useAttachments, useListParams, usePageTitle, useStaggerOffset } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { characterDetailQuery, type CharacterListFilters, characterListQuery } from "@/client/src/lib/queries.ts";
@@ -52,7 +52,6 @@ export default function CharactersPage() {
   const view = oneOf(searchParams.get("view"), ["active", "shared", "archived"], "active");
 
   const listQuery = characterListQuery({ view, search, orderBy, orderDir });
-  const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...listQuery,
@@ -60,6 +59,7 @@ export default function CharactersPage() {
   });
 
   const characters = useMemo(() => pageItems(data), [data]);
+  const offset = useStaggerOffset(characters);
 
   const characterIds = useMemo(() => characters.map((c) => c.id), [characters]);
   const { data: portraitsByCharacterId } = useAttachments({
@@ -147,10 +147,7 @@ export default function CharactersPage() {
               label="Load More Characters"
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
-              onClick={() => {
-                updateOffset(characters.length);
-                fetchNextPage();
-              }}
+              onClick={() => fetchNextPage()}
             />
           </>
         ) : search ? (

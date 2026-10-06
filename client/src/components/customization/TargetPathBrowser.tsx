@@ -17,7 +17,7 @@ import {
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { BlankState, DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
+import { BlankState, DiceSpinner, NextPageSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -289,11 +289,7 @@ export function TargetPathBrowser({
                   </Tooltip>
                 );
               })}
-              {isFetchingNextPage && (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
-                  <DiceSpinner size="small" />
-                </Box>
-              )}
+              <NextPageSpinner loading={isFetchingNextPage} />
             </List>
           )}
         </>

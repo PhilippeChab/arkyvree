@@ -22,6 +22,7 @@ import {
   DiceSpinner,
   LoadError,
   LoadMoreButton,
+  NextPageSpinner,
   NoMatchesState,
 } from "@/client/src/components/common/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
@@ -425,11 +426,7 @@ export function LevelUpFeatsStep({
                           </Tooltip>
                         );
                       })}
-                      {isFetchingNextFeatsPage && (
-                        <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
-                          <DiceSpinner size="small" />
-                        </Box>
-                      )}
+                      <NextPageSpinner loading={isFetchingNextFeatsPage} />
                     </List>
                   )}
                 </Box>
