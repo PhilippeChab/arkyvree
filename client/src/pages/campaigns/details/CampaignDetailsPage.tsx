@@ -23,7 +23,7 @@ import {
   type SectionTab,
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";

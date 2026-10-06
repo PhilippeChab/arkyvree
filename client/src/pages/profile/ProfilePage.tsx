@@ -13,7 +13,7 @@ import {
   PageTransition,
   PasswordField,
 } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { confirmPasswordRules, emailRules, newPasswordRules } from "@/client/src/lib/validation.ts";

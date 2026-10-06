@@ -1,14 +1,10 @@
 import { Grow } from "@mui/material";
 import { createTheme, responsiveFontSizes, type Theme, ThemeProvider } from "@mui/material/styles";
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
-interface ThemeContextType {
-  themeMode: ThemeMode;
-  setThemeMode: (mode: ThemeMode) => void;
-  darkMode: boolean;
-}
+import { ThemeContext, type ThemeMode } from "./themeContext.ts";
 
 type ContainedColor =
   | "primary"
@@ -24,10 +20,6 @@ type ContainedColor =
 interface CustomThemeProviderProps {
   children: React.ReactNode;
 }
-
-export type ThemeMode = "light" | "dark" | "system";
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 function containedBorderColor(color: ContainedColor, darkMode: boolean) {
   switch (color) {
@@ -444,12 +436,4 @@ export function CustomThemeProvider({ children }: CustomThemeProviderProps) {
       <ThemeProvider theme={appTheme}>{children}</ThemeProvider>
     </ThemeContext.Provider>
   );
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a CustomThemeProvider");
-  }
-  return context;
 }

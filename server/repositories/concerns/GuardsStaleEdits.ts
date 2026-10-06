@@ -14,8 +14,7 @@ export function GuardsStaleEdits<B extends Constructor<BaseRepository<Table>>>(B
      */
     protected casUpdatedAt(expectedUpdatedAt: string | undefined): SQL | false {
       if (!expectedUpdatedAt) return false;
-      // @ts-expect-error all entity tables have updatedAt
-      return eq(this.table.updatedAt, expectedUpdatedAt);
+      return eq(this.column("updatedAt"), expectedUpdatedAt);
     }
   }
   return GuardingStaleEdits;

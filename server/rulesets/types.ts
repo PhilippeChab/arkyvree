@@ -165,11 +165,10 @@ export interface PreloadedCharacterData extends PreloadedRulesetData {
 }
 
 /**
- * Base type for all character component holders (abilities, skills, combat, etc.): class instances whose getters
- * TargetPaths calls by name, which only an `any` index signature lets a class instance be.
+ * A character component holder (abilities, skills, combat, etc.): a class instance whose getters the target paths call
+ * by name (`readHolder`).
  */
-// oxlint-disable-next-line typescript/no-explicit-any -- a holder is read by name (see above)
-export type Holder = Record<string, any>;
+export type Holder = object;
 
 export type Holders = Record<string, Holder>;
 

@@ -26,8 +26,7 @@ export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Ba
 
     protected buildRulesetCondition(db: Db, where: RulesetEntityFilters): SQL<unknown> {
       const { ancestorRulesetIds, childOnly } = where;
-      // @ts-expect-error all ruleset tables have rulesetId and campaignId
-      const childOwned = and(eq(this.table.rulesetId, where.rulesetId), isNull(this.table.campaignId));
+      const childOwned = and(eq(this.column("rulesetId"), where.rulesetId), isNull(this.column("campaignId")));
 
       if (childOnly) {
         return childOwned!;
@@ -36,8 +35,7 @@ export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Ba
       const inheritedClauses = (ancestorRulesetIds ?? []).map((ancestorId, i) => {
         const overriddenBy = [where.rulesetId, ...(ancestorRulesetIds ?? []).slice(0, i)];
         const cowExcluded = notInArray(
-          // @ts-expect-error all ruleset tables have id
-          this.table.id,
+          this.column("id"),
           db
             .select({ id: entitySnapshotsInRules.sourceEntityId })
             .from(entitySnapshotsInRules)
@@ -48,17 +46,14 @@ export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Ba
               ),
             ),
         );
-        // @ts-expect-error all ruleset tables have rulesetId and campaignId
-        return and(eq(this.table.rulesetId, ancestorId), isNull(this.table.campaignId), cowExcluded);
+        return and(eq(this.column("rulesetId"), ancestorId), isNull(this.column("campaignId")), cowExcluded);
       });
       const inherited = inheritedClauses.length > 0 ? or(...inheritedClauses) : undefined;
 
       if (where.campaignId) {
         const campaignOwned = and(
-          // @ts-expect-error all ruleset tables have rulesetId and campaignId
-          eq(this.table.rulesetId, where.rulesetId),
-          // @ts-expect-error all ruleset tables have campaignId
-          eq(this.table.campaignId, where.campaignId),
+          eq(this.column("rulesetId"), where.rulesetId),
+          eq(this.column("campaignId"), where.campaignId),
         );
         return or(childOwned, inherited, campaignOwned)!;
       }

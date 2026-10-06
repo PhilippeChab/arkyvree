@@ -24,7 +24,7 @@ import {
   ContributorsTable,
   InviteContributorDialog,
 } from "@/client/src/components/contributors/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";

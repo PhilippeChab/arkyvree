@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useCallback, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useWebSocket } from "@/client/src/contexts/useWebSocket.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";

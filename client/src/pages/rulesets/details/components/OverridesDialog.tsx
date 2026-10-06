@@ -21,7 +21,7 @@ import type { InferResponseType } from "hono/client";
 import { Link } from "react-router-dom";
 
 import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";

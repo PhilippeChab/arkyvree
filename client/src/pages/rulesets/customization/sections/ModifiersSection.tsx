@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 import { CreateDialog, DeleteDialog, EditDialog, SectionContent } from "@/client/src/components/common/index.ts";
 import { ModifierForm, TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";

@@ -23,7 +23,7 @@ import { useNavigate } from "react-router-dom";
 
 import { BlankState, ConfirmDialog, DiceSpinner, LoadMoreButton, Modal } from "@/client/src/components/common/index.ts";
 import { ContributorsTable, InviteContributorDialog } from "@/client/src/components/contributors/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";

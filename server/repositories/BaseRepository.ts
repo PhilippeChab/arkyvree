@@ -31,6 +31,16 @@ abstract class BaseRepository<T extends Table> {
     return this.where([...keys, ...rest]);
   }
 
+  /**
+   * The table's column `name`, one every table a concern reads has (`deletedAt`, `updatedAt`, `id`, `rulesetId`,
+   * `campaignId`), which the table's generic type can't promise: a table without it throws.
+   */
+  protected column(name: string): Column {
+    const column: Column | undefined = getTableColumns(this.table)[name];
+    if (!column) throw new Error(`${this.constructor.name}: its table has no ${name} column`);
+    return column;
+  }
+
   protected orderBy(column: Column | SQL, direction: "asc" | "desc" = "asc"): SQL {
     return direction === "asc" ? asc(column) : desc(column);
   }
@@ -40,11 +50,9 @@ abstract class BaseRepository<T extends Table> {
       case Visibility.All:
         return false;
       case Visibility.UnarchivedOnly:
-        // @ts-expect-error All tables have a deletedAt column
-        return isNull(this.table.deletedAt);
+        return isNull(this.column("deletedAt"));
       case Visibility.ArchivedOnly:
-        // @ts-expect-error All tables have a deletedAt column
-        return not(isNull(this.table.deletedAt));
+        return not(isNull(this.column("deletedAt")));
       default:
         return false;
     }
@@ -59,12 +67,12 @@ abstract class BaseRepository<T extends Table> {
    * `skipLocked`: a row another transaction holds counts as not found instead of being waited for.
    */
   async lock(db: Db, where: { id: string }, mode: "update" | "share" = "update", skipLocked = false): Promise<boolean> {
-    const columns = getTableColumns(this.table);
-    if (!columns.id) throw new Error("Row locking requires an id column");
+    // A table without `deletedAt` keeps no archived rows to skip
+    const { deletedAt } = getTableColumns(this.table);
     const rows = await db
       .select({ locked: sql<number>`1` })
       .from(sql`${this.table}`)
-      .where(and(eq(columns.id, where.id), columns.deletedAt ? isNull(columns.deletedAt) : undefined))
+      .where(and(eq(this.column("id"), where.id), deletedAt ? isNull(deletedAt) : undefined))
       .for(mode, skipLocked ? { skipLocked: true } : {});
     return rows.length > 0;
   }

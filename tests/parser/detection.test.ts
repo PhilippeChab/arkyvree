@@ -109,7 +109,7 @@ describe("A bonus", () => {
     // "for" scales it here, it doesn't narrow it
     expect(conditional("You gain a +1 bonus on Search checks for every three class levels.")).toBe(false);
     // A race's traits are joined by a separator: each is its own sentence
-    expect(conditional("+2 racial bonus on Listen checks.\u0001Proficient with longswords only when trained.")).toBe(
+    expect(conditional("+2 racial bonus on Listen checks.\u2063Proficient with longswords only when trained.")).toBe(
       false,
     );
   });

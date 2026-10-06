@@ -16,7 +16,7 @@ import {
   ScrollSafeListbox,
   ValidationIssueList,
 } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useListboxQuery, useValidationIssues } from "@/client/src/hooks/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";

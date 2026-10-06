@@ -34,6 +34,9 @@ export const queryKeys = {
       ["rulesets", "detail", id, "entity", entityType, entityId] as const,
     targetCompletions: (id: string, prefix: string, kind: string, search: string, entityType?: string) =>
       ["rulesets", "detail", id, "targetCompletions", prefix, kind, search, entityType] as const,
+    /** Whether a complete target path is one the ruleset knows, and what it may have meant. */
+    targetPathValidation: (id: string, kind: string, path: string) =>
+      ["rulesets", "detail", id, "targetPathValidation", kind, path] as const,
     changes: (id: string) => ["rulesets", "detail", id, "changes"] as const,
     /** Every language of the ruleset, for pickers; nested like `abilities`. */
     languages: (id: string) => ["rulesets", "detail", id, "languages", "options"] as const,

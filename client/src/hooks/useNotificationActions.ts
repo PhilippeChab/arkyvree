@@ -2,7 +2,7 @@ import { useMutation, useMutationState, useQueryClient } from "@tanstack/react-q
 import type { InferResponseType } from "hono/client";
 import { useNavigate } from "react-router-dom";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { saveBlob } from "@/client/src/lib/download.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { ApiError, rpc } from "@/client/src/services/rpc.ts";

@@ -591,7 +591,7 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
    - `<Ruleset>LevelUpProjector extends LevelUpProjector` (add any per-level-up operations your ruleset needs beyond `evaluateClassAvailability`).
 4. **Mirror the service + router layout** at `server/services/characters/levels/<ruleset>/` and `server/routers/api/characters/levels/<ruleset>/` if your ruleset's level-up flow differs in shape.
 5. **Add dispatch at `CharacterLevelsService.ts`** and at `server/routers/api/characters/index.tsx` (the `levels` import). Route by ruleset name or ID.
-6. **Register the factory**: add your module to `RulesetFactory.fromRulesetId` so the generic layer can load it.
+6. **Register the factory**: add your module to `RulesetFactory`'s `MODULES`, keyed by its base rules: until it is, the server doesn't compile.
 
 ### How to extend `universal/` without leaking a ruleset
 

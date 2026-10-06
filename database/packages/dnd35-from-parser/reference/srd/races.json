@@ -170,14 +170,14 @@
         },
         {
           "description": "Dwarves are hardy and resistant to toxins.",
-          "name": "\u0001+2 racial bonus on saving throws against poison"
+          "name": "\u2063+2 racial bonus on saving throws against poison"
         },
         {
           "description": "dwarves have an innate resistance to magic spells.",
           "name": "+2 racial bonus on saving throws against spells and spell-like effects"
         },
         {
-          "description": "+1 racial bonus to attack rolls against orcs (including half-orcs) and goblinoids (including goblins, hobgoblins, and bugbears): Dwarves are trained in the special combat techniques that allow them to fight their common enemies more effectively.\u0001+4 dodge bonus to Armor Class against monsters of the giant type (such as ogres, trolls, and hill giants): This bonus represents special training that dwarves undergo, during which they learn tricks that previous generations developed in their battles with giants. Any time a creature loses its Dexterity bonus (if any) to Armor Class, such as when it's caught flat-footed, it loses its dodge bonus, too.",
+          "description": "+1 racial bonus to attack rolls against orcs (including half-orcs) and goblinoids (including goblins, hobgoblins, and bugbears): Dwarves are trained in the special combat techniques that allow them to fight their common enemies more effectively.\u2063+4 dodge bonus to Armor Class against monsters of the giant type (such as ogres, trolls, and hill giants): This bonus represents special training that dwarves undergo, during which they learn tricks that previous generations developed in their battles with giants. Any time a creature loses its Dexterity bonus (if any) to Armor Class, such as when it's caught flat-footed, it loses its dodge bonus, too.",
           "name": "+1 racial bonus to attack rolls against orcs (including half"
         },
         {
@@ -185,7 +185,7 @@
           "name": "+2 racial bonus on Appraise checks that are related to stone or metal items"
         },
         {
-          "description": "Dwarves are especially capable with stonework and metalwork.\u0001Automatic Languages: Common and Dwarven. Bonus Languages: Giant, Gnome, Goblin, Orc, Terran, and Undercommon. Dwarves are familiar with the languages of their enemies and of their subterranean allies.",
+          "description": "Dwarves are especially capable with stonework and metalwork.\u2063Automatic Languages: Common and Dwarven. Bonus Languages: Giant, Gnome, Goblin, Orc, Terran, and Undercommon. Dwarves are familiar with the languages of their enemies and of their subterranean allies.",
           "name": "+2 racial bonus on Craft checks that are related to stone or metal"
         },
         {
@@ -212,8 +212,8 @@
       "favoredClass": "Wizard",
       "features": [
         {
-          "description": "Elves are graceful but frail. An elf's grace makes her naturally better at stealth and archery.\u0001Immunity to magic sleep effects, and a +2 racial saving throw bonus against enchantment spells or effects.\u0001Low-light Vision: An elf can see twice as far as a human in starlight, moonlight, torchlight, and similar conditions of poor illumination. She retains the ability to distinguish color and detail under these conditions.\u0001Weapon Proficiency: Elves receive the Martial Weapon Proficiency feats for the longsword, rapier, longbow (including composite longbow), and shortbow (including composite shortbow) as bonus feats. Elves esteem the arts of swordplay and archery, so all elves are familiar with these weapons.\u0001+2 racial bonus on Listen, Search, and Spot checks. An elf who merely passes within 5 feet of a secret or concealed door is entitled to a Search check to notice it as if she were actively looking for it. An elf's senses are so keen that she practically has a sixth sense about hidden portals.\u0001Automatic Languages: Common and Elven. Bonus Languages: Draconic, Gnoll, Gnome, Goblin, Orc, and Sylvan. Elves commonly know the languages of their enemies and of their friends, as well as Draconic, the language commonly found in ancient tomes of secret knowledge.<",
-          "name": "\u0001+2 Dexterity, ?2 Constitution"
+          "description": "Elves are graceful but frail. An elf's grace makes her naturally better at stealth and archery.\u2063Immunity to magic sleep effects, and a +2 racial saving throw bonus against enchantment spells or effects.\u2063Low-light Vision: An elf can see twice as far as a human in starlight, moonlight, torchlight, and similar conditions of poor illumination. She retains the ability to distinguish color and detail under these conditions.\u2063Weapon Proficiency: Elves receive the Martial Weapon Proficiency feats for the longsword, rapier, longbow (including composite longbow), and shortbow (including composite shortbow) as bonus feats. Elves esteem the arts of swordplay and archery, so all elves are familiar with these weapons.\u2063+2 racial bonus on Listen, Search, and Spot checks. An elf who merely passes within 5 feet of a secret or concealed door is entitled to a Search check to notice it as if she were actively looking for it. An elf's senses are so keen that she practically has a sixth sense about hidden portals.\u2063Automatic Languages: Common and Elven. Bonus Languages: Draconic, Gnoll, Gnome, Goblin, Orc, and Sylvan. Elves commonly know the languages of their enemies and of their friends, as well as Draconic, the language commonly found in ancient tomes of secret knowledge.<",
+          "name": "\u2063+2 Dexterity, ?2 Constitution"
         }
       ],
       "name": "Elf",
@@ -236,55 +236,55 @@
       "features": [
         {
           "description": "Like dwarves, gnomes are tough, but they are small and therefore not as strong as larger humanoids.",
-          "name": "\u0001 +2 Constitution, ?2 Strength"
+          "name": "\u2063 +2 Constitution, ?2 Strength"
         },
         {
           "description": "As a Small creature, a gnome gains a +1 size bonus to Armor Class, a +1 size bonus on attack rolls, and a +4 size bonus on Hide checks, but he uses smaller weapons than humans use, and his lifting and carrying limits are three-quarters of those of a Medium character.",
-          "name": "\u0001 Small"
+          "name": "\u2063 Small"
         },
         {
           "description": "",
-          "name": "\u0001 Gnome base land speed is 20 feet"
+          "name": "\u2063 Gnome base land speed is 20 feet"
         },
         {
           "description": "A gnome can see twice as far as a human in starlight, moonlight, torchlight, and similar conditions of poor illumination. He retains the ability to distinguish color and detail under these conditions.",
-          "name": "\u0001 Low-light Vision"
+          "name": "\u2063 Low-light Vision"
         },
         {
-          "description": "Gnomes may treat gnome hooked hammers as martial weapons rather than exotic weapons. \u0001 +2 racial bonus on saving throws against illusions: Gnomes are innately familiar with illusions of all kinds.",
-          "name": "\u0001 Weapon Familiarity"
+          "description": "Gnomes may treat gnome hooked hammers as martial weapons rather than exotic weapons. \u2063 +2 racial bonus on saving throws against illusions: Gnomes are innately familiar with illusions of all kinds.",
+          "name": "\u2063 Weapon Familiarity"
         },
         {
-          "description": "\u0001 Add +1 to the Difficulty Class for all saving throws against illusion spells cast by gnomes. Their innate familiarity with these effects make their illusions more difficult to see through. This adjustment stacks with those from similar effects, such as the Spell Focus feat.",
-          "name": "\u0001 Add +1 to the Difficulty Class for all saving throws again"
+          "description": "\u2063 Add +1 to the Difficulty Class for all saving throws against illusion spells cast by gnomes. Their innate familiarity with these effects make their illusions more difficult to see through. This adjustment stacks with those from similar effects, such as the Spell Focus feat.",
+          "name": "\u2063 Add +1 to the Difficulty Class for all saving throws again"
         },
         {
-          "description": "\u0001 +1 racial bonus on attack rolls against kobolds and goblinoids (including goblins, hobgoblins, and bugbears): Gnomes battle these creatures frequently and practice special techniques for fighting them.",
-          "name": "\u0001 +1 racial bonus on attack rolls against kobolds and goblin"
+          "description": "\u2063 +1 racial bonus on attack rolls against kobolds and goblinoids (including goblins, hobgoblins, and bugbears): Gnomes battle these creatures frequently and practice special techniques for fighting them.",
+          "name": "\u2063 +1 racial bonus on attack rolls against kobolds and goblin"
         },
         {
-          "description": "\u0001 +4 dodge bonus to Armor Class against monsters of the giant type (such as ogres, trolls, and hill giants): This bonus represents special training that gnomes undergo, during which they learn tricks that previous generations developed in their battles with giants. Any time a creature loses its Dexterity bonus (if any) to Armor Class, such as when it's caught flat-footed, it loses its dodge bonus, too.",
-          "name": "\u0001 +4 dodge bonus to Armor Class against monsters of the gian"
+          "description": "\u2063 +4 dodge bonus to Armor Class against monsters of the giant type (such as ogres, trolls, and hill giants): This bonus represents special training that gnomes undergo, during which they learn tricks that previous generations developed in their battles with giants. Any time a creature loses its Dexterity bonus (if any) to Armor Class, such as when it's caught flat-footed, it loses its dodge bonus, too.",
+          "name": "\u2063 +4 dodge bonus to Armor Class against monsters of the gian"
         },
         {
           "description": "Gnomes have keen ears.",
-          "name": "\u0001 +2 racial bonus on Listen checks"
+          "name": "\u2063 +2 racial bonus on Listen checks"
         },
         {
           "description": "A gnome's sensitive nose allows him to monitor alchemical processes by smell.",
-          "name": "\u0001 +2 racial bonus on Craft (alchemy) checks"
+          "name": "\u2063 +2 racial bonus on Craft (alchemy) checks"
         },
         {
           "description": "Common and Gnome.",
-          "name": "\u0001 Automatic Languages"
+          "name": "\u2063 Automatic Languages"
         },
         {
           "description": "1/day?speak with animals (burrowing mammal only, duration 1 minute). A gnome with a Charisma score of at least 10 also has the following spell-like abilities: 1/day?dancing lights, ghost sound, prestidigitation. Caster level 1st; save DC 10 + gnome's Cha modifier + spell level. See the spell descriptions on, 235, and 264, respectively.",
-          "name": "\u0001 Spell-Like Abilities"
+          "name": "\u2063 Spell-Like Abilities"
         },
         {
           "description": "Bard. A multiclass gnome's bard class does not count when determining whether he takes an experience point penalty XP for Multiclass Characters",
-          "name": "\u0001 Favored Class"
+          "name": "\u2063 Favored Class"
         }
       ],
       "name": "Gnome",
@@ -296,16 +296,16 @@
       "description": "To humans, half-elves look like elves. To elves, they look like humans - indeed, elves call them half-humans. Half-elf height ranges from under 5 feet to about 6 feet tall, and weight usually ranges from 100 to 180 pounds. Half-elf men are taller and heavier than half-elf women, but the difference is less pronounced than that found among humans. Half-elves are paler, fairer, and smoother-skinned than their human parents, but their actual skin tone, hair color, and other details vary just as human features do. Half-elves' eyes are green, just as are those of their elf parents. A half-elf reaches adulthood at age 20 and can live to be over 180 years old.",
       "features": [
         {
-          "description": "Immunity to sleep spells and similar magical effects, and a +2 racial bonus on saving throw against enchantment spells or effects.\u0001Low-light Vision: A half-elf can see twice as far as a human in starlight, moonlight, torchlight, and similar conditions of poor illumination. She retains the ability to distinguish color and detail under these conditions.\u0001+1 racial bonus on Listen, Search, and Spot checks: A half-elf does not have the elf's ability to notice secret doors simply by passing near them. Half-elves have keen senses, but not as keen as those of an elf.",
+          "description": "Immunity to sleep spells and similar magical effects, and a +2 racial bonus on saving throw against enchantment spells or effects.\u2063Low-light Vision: A half-elf can see twice as far as a human in starlight, moonlight, torchlight, and similar conditions of poor illumination. She retains the ability to distinguish color and detail under these conditions.\u2063+1 racial bonus on Listen, Search, and Spot checks: A half-elf does not have the elf's ability to notice secret doors simply by passing near them. Half-elves have keen senses, but not as keen as those of an elf.",
           "name": "Immunity to sleep spells and similar magical effects, and a"
         },
         {
           "description": "Half-elves get along naturally with all people.",
-          "name": "\u0001+2 racial bonus on Diplomacy and Gather Information checks"
+          "name": "\u2063+2 racial bonus on Diplomacy and Gather Information checks"
         },
         {
           "description": "For all effects related to race, a half-elf is considered an elf. Half-elves, for example, are just as vulnerable to special effects that affect elves as their elf ancestors are, and they can use magic items that are only usable by elves.",
-          "name": "\u0001Elven Blood"
+          "name": "\u2063Elven Blood"
         },
         {
           "description": "Common and Elven. Bonus Languages: Any (other than secret languages, such as Druidic). Half-elves have all the versatility and broad (if shallow) experience that humans have.",

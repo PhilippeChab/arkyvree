@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";

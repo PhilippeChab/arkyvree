@@ -13,11 +13,6 @@ describe("RulesetFactory", () => {
     await expect(RulesetFactory.fromRulesetId(NIL_UUID)).rejects.toThrow(NotFoundError);
   });
 
-  test("throws for unsupported base rules", () => {
-    // @ts-expect-error testing unsupported ruleset
-    expect(() => RulesetFactory.fromBaseRules("Unsupported Ruleset")).toThrow("Unsupported ruleset");
-  });
-
   test("builds the D&D 3.5 module", () => {
     const module = RulesetFactory.fromBaseRules("Dungeons & Dragons: 3.5");
     expect(module.hooks).toBeDefined();

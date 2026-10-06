@@ -41,7 +41,7 @@ import {
   SearchBar,
   SectionContent,
 } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";

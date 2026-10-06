@@ -23,8 +23,8 @@
  *   transaction's handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`: a write is atomic with the
  *   rest of its request, and a lock holds until its transaction ends. A transaction's queries run one at a time, on its
  *   one connection: never in a `Promise.all` (`tx`, or a handle the function is given, which may be a transaction).
- * - `directive-reasons`: a comment that turns a lint rule off says why, after `--`
- *   (`// oxlint-disable-next-line rule -- why`), so the exception explains itself where it's made.
+ * - `no-disable-comments`: no comment turns a lint rule off (`oxlint-disable…`, `eslint-disable…`): a case a rule gets
+ *   wrong changes the rule, its options or its definition, never one line.
  * - `environment`: the server reads its environment in `server/environment.ts` only (`readEnv`, `isProduction`…),
  *   which lists every variable: never `process.env` or `Bun.env` elsewhere in the server or `shared/`.
  * - `test-placement`: a test named after a module sits at that module's mirror (`tests/services/…` ↔
@@ -67,7 +67,7 @@ const WRITE_VERBS = [...METHOD_VERBS.write, ...METHOD_VERBS.lock];
 
 const CONCURRENT = new Set(["all", "allSettled", "any", "race"]);
 
-/** An `eslint-disable` / `oxlint-disable` comment's text: its rules, then its reason after `--`. */
+/** An `eslint-disable` / `oxlint-disable` comment's text. */
 const DIRECTIVE = /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
 
 /** Each test area and the source tree it mirrors. */
@@ -97,24 +97,6 @@ function isConcern(fn) {
 function isSessionType(type) {
   if (type?.type === "TSUnionType") return type.types.some(isSessionType);
   return type?.type === "TSTypeReference" && type.typeName.type === "Identifier" && type.typeName.name === "Session";
-}
-
-function createDirectiveReasons(context) {
-  return {
-    Program(program) {
-      const text = context.sourceCode.text;
-      for (const comment of context.sourceCode.getAllComments()) {
-        if (!DIRECTIVE.test(comment.value)) continue;
-        // A block comment's reason may wrap to its next line.
-        if (/--\s*\S/.test(comment.value)) continue;
-        const line = text.slice(0, comment.start).split("\n").length;
-        context.report({
-          node: program,
-          message: `Line ${line}: a comment that turns a rule off says why, after \`--\` (\`// oxlint-disable-next-line rule -- why\`).`,
-        });
-      }
-    },
-  };
 }
 
 function createEnvironment(context) {
@@ -147,6 +129,22 @@ function createIncludeOrder(context) {
         message: `A class includes its concerns by name, after its base: \`${sorted.join(", ")}\`.`,
         fix: (fixer) => concerns.map((c, i) => fixer.replaceText(c, sorted[i])),
       });
+    },
+  };
+}
+
+function createNoDisableComments(context) {
+  return {
+    Program(program) {
+      const text = context.sourceCode.text;
+      for (const comment of context.sourceCode.getAllComments()) {
+        if (!DIRECTIVE.test(comment.value)) continue;
+        const line = text.slice(0, comment.start).split("\n").length;
+        context.report({
+          node: program,
+          message: `Line ${line}: no comment turns a rule off: a case the rule gets wrong changes the rule, its options or its definition.`,
+        });
+      }
     },
   };
 }
@@ -633,7 +631,7 @@ export default {
   "repository-instances": { meta: { type: "problem" }, create: createRepositoryInstances },
   "route-conventions": { meta: { type: "problem" }, create: createRouteConventions },
   environment: { meta: { type: "problem" }, create: createEnvironment },
-  "directive-reasons": { meta: { type: "suggestion" }, create: createDirectiveReasons },
+  "no-disable-comments": { meta: { type: "problem" }, create: createNoDisableComments },
   "writes-in-transactions": { meta: { type: "problem" }, create: createWritesInTransactions },
   "order-through-repository": { meta: { type: "suggestion" }, create: createOrderThroughRepository },
   "shared-runtime": { meta: { type: "problem" }, create: createSharedRuntime },

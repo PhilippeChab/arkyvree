@@ -21,6 +21,13 @@ export default abstract class SpellcastingState {
     protected readonly characterModifiers: DetailedCharacterModifiers,
   ) {}
 
+  /**
+   * The highest arcane and divine spell levels the character casts (`spellcasting.arcane`, `spellcasting.divine`):
+   * estimated from its spell slots' modifiers before modifiers apply, so requirements like Scribe Scroll's can read
+   * them, then computed from its classes' slots after.
+   */
+  protected casterLevels = { arcane: 0, divine: 0 };
+
   protected bonusKlassLevelClassMap = new Map<string, string>();
 
   protected bonusKlassLevelModifiers: Modifier[] = [];

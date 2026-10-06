@@ -4,7 +4,7 @@ import { type DefaultValues, type FieldValues, useForm, type UseFormReturn } fro
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { DeleteDialog } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";

@@ -1,28 +1,9 @@
 import { Alert, type AlertColor, Button, Snackbar } from "@mui/material";
-import React, { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import React, { type ReactNode, useCallback, useState } from "react";
 
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 
-interface ToastAction {
-  label: string;
-  onClick: () => void;
-}
-
-interface ToastOptions {
-  action?: ToastAction;
-  persistent?: boolean;
-}
-
-interface SnackbarContextType {
-  success: (message: string, options?: ToastOptions) => void;
-  /**
-   * Show an error toast. Accepts a plain string, an Error (uses `.message`),
-   * or anything else (falls back to `fallback`).
-   */
-  error: (err: unknown, fallback?: string) => void;
-  info: (message: string, options?: ToastOptions) => void;
-  warning: (message: string) => void;
-}
+import { SnackbarContext, type ToastAction, type ToastOptions } from "./snackbarContext.ts";
 
 interface SnackbarProviderProps {
   children: ReactNode;
@@ -35,21 +16,12 @@ interface ToastItem {
   persistent?: boolean;
 }
 
-const SnackbarContext = createContext<SnackbarContextType | undefined>(undefined);
-
 export function SnackbarProvider({ children }: SnackbarProviderProps) {
+  // The toast showing is the queue's head, until its exit transition ends; the next one opens then
   const [queue, setQueue] = useState<ToastItem[]>([]);
-  const [current, setCurrent] = useState<ToastItem | null>(null);
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (!current && queue.length > 0) {
-      // oxlint-disable-next-line react/set-state-in-effect -- the queue moves on to its next toast once none is showing
-      setCurrent(queue[0]);
-      setQueue((prev) => prev.slice(1));
-      setOpen(true);
-    }
-  }, [current, queue]);
+  const [closing, setClosing] = useState(false);
+  const current = queue[0] ?? null;
+  const open = current !== null && !closing;
 
   const enqueue = useCallback((message: string, severity: AlertColor, options?: ToastOptions) => {
     setQueue((prev) => [...prev, { message, severity, action: options?.action, persistent: options?.persistent }]);
@@ -72,11 +44,12 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
 
   const handleClose = (_event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === "clickaway") return;
-    setOpen(false);
+    setClosing(true);
   };
 
   const handleExited = () => {
-    setCurrent(null);
+    setQueue((prev) => prev.slice(1));
+    setClosing(false);
   };
 
   const action = current?.action;
@@ -113,7 +86,7 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
                 size="small"
                 onClick={() => {
                   action.onClick();
-                  setOpen(false);
+                  setClosing(true);
                 }}
               >
                 {action.label}
@@ -126,12 +99,4 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
       </Snackbar>
     </SnackbarContext.Provider>
   );
-}
-
-export function useSnackbar() {
-  const context = useContext(SnackbarContext);
-  if (context === undefined) {
-    throw new Error("useSnackbar must be used within a SnackbarProvider");
-  }
-  return context;
 }

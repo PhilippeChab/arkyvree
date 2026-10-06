@@ -3,7 +3,7 @@ import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";

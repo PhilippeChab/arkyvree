@@ -29,29 +29,18 @@ const shared = new Hono()
   // Generate PDF for shared character (public, no auth)
   .get("/characters/:shareToken/pdf", validate("param", shareTokenParam), async (c) => {
     const { shareToken } = c.req.valid("param");
-    // Outside the try: a token that finds no character is a 404, not a failed render.
     const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } =
       await CharacterSharingService.generateSharedPdf(shareToken);
+    const pdfBlob = await pdf(
+      <CharacterSheetComponent detailedCharacter={detailedCharacter} portraitUrl={portraitUrl} kind={kind} />,
+    ).toBlob();
 
-    // A service's error still reaches onError above.
-    // oxlint-disable-next-line arkyvree/route-conventions -- the render's own failure answers a PDF-specific 500
-    try {
-      const pdfBlob = await pdf(
-        <CharacterSheetComponent detailedCharacter={detailedCharacter} portraitUrl={portraitUrl} kind={kind} />,
-      ).toBlob();
-
-      const arrayBuffer = await pdfBlob.arrayBuffer();
-
-      return new Response(arrayBuffer, {
-        headers: {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `inline; filename="shared-character.pdf"`,
-        },
-      });
-    } catch (error) {
-      console.error("[api] Error generating shared PDF:", error);
-      return c.json({ error: "Failed to generate PDF" }, 500);
-    }
+    return new Response(await pdfBlob.arrayBuffer(), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `inline; filename="shared-character.pdf"`,
+      },
+    });
   });
 
 export default shared;

@@ -16,12 +16,15 @@ import * as cheerio from "cheerio";
 
 import { frameHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/frame.ts";
 import { pageTitle, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { normalizeWs, PART_SEPARATOR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
 
 /** A race page's frame also heads its listing "Races". */
 const RACE_FRAME_HEADING = frameHeading("Races");
+
+/** The control character the SRD's race pages open each trait with: read as the part separator it stands for. */
+const PAGE_TRAIT_MARK = "\u0001";
 
 const ABILITY_NAMES = new Set(["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]);
 
@@ -89,7 +92,7 @@ function parseSpeed(text: string): number {
  * Parse a single race detail page.
  */
 export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] | null {
-  const $ = cheerio.load(html);
+  const $ = cheerio.load(html.replaceAll(PAGE_TRAIT_MARK, PART_SEPARATOR));
 
   const name = pageTitle($, RACE_FRAME_HEADING);
   if (!name) return null;

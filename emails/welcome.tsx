@@ -1,6 +1,7 @@
 import { Heading, Text } from "@react-email/components";
 
-import { EmailLayout, styles } from "./EmailLayout.tsx";
+import { EmailLayout } from "./EmailLayout.tsx";
+import { styles } from "./emailStyles.ts";
 
 interface WelcomeEmailProps {
   username?: string;

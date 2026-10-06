@@ -12,7 +12,7 @@ import {
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";

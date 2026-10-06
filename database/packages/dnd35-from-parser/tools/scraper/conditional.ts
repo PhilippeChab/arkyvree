@@ -1,3 +1,5 @@
+import { PART_SEPARATOR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+
 /** A word that makes what its sentence grants apply only sometimes: "+2 on saves against poison", "while raging". */
 const CONDITION = /\b(?:against|while|whenever|when|during|versus|if|unless|only|as long as)\b|\bvs\./i;
 
@@ -29,9 +31,8 @@ const EQUIPPED =
  * save's), and what comes after it joins them both ("…, while a dishonorable one gains a +2…": either one).
  */
 function scopeOf(text: string, start: number, end: number): string {
-  // A period before a capital or the end, or the separator some scraped texts join their parts with (a race's traits)
-  // oxlint-disable-next-line no-control-regex -- that separator is a control character (\x01)
-  const boundary = /\.(?=\s+[A-Z]|\s*$|\s*\x01)|\x01/g;
+  // A period before a capital or the end, or the separator some scraped texts keep between their parts (a race's traits)
+  const boundary = new RegExp(String.raw`\.(?=\s+[A-Z]|\s*$|\s*${PART_SEPARATOR})|${PART_SEPARATOR}`, "g");
   let from = 0;
   let to = text.length;
   for (const match of text.matchAll(boundary)) {

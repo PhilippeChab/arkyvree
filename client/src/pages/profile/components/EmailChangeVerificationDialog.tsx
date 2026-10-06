@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 
 import { VerificationCodeInput } from "@/client/src/components/auth/index.ts";
 import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";

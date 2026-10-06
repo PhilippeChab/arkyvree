@@ -2,7 +2,7 @@ import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/reac
 import { useState } from "react";
 import { type DefaultValues, type FieldValues, useForm } from "react-hook-form";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 
 interface RulesetSectionConfig<

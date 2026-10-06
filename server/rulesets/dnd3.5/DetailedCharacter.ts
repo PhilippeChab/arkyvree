@@ -200,6 +200,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       identity: this.detailedCharacterIdentity,
       aptitudes: this.detailedCharacterAptitudes,
       bonded: this.detailedCharacterBonds,
+      spellcasting: this.detailedCharacterSpellcasting,
     };
   }
 
@@ -419,7 +420,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
         ]),
     );
     this.detailedCharacterSpellcasting.applyBonusSpellsFromAbilities(this.klassBonusSpellAbilityMap);
-    this.detailedCharacterSpellcasting.computeSpellcasting(this.holders!, this.klassCasterTypeMap);
+    this.detailedCharacterSpellcasting.computeSpellcasting(this.klassCasterTypeMap);
     this.detailedCharacterSpellcasting.fetchAptitudePowerData(rulesetData, this.powers);
     this.detailedCharacterSpellcasting.enrichAllKnownPowers(
       this.powers,
@@ -432,7 +433,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
 
   protected async preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void> {
     this.detailedCharacterSpellcasting.loadClassLists(rulesetData);
-    this.detailedCharacterSpellcasting.initSpellcastingHolder(this.holders!, this.modifiers, this.klassCasterTypeMap);
+    this.detailedCharacterSpellcasting.initCasterLevels(this.modifiers, this.klassCasterTypeMap);
     // Possession modifiers have given their feats: a finessed weapon's attack is what requirements read
     this.detailedCharacterCombat.applyWeaponFinesse(this.hasFeatWith(rulesetData, FEAT_WEAPON_FINESSE));
     this.detailedCharacterCombat.applyOversizedTwoWeaponFighting(
@@ -485,8 +486,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
   }
 
   getSpellcasting(): { arcane: number; divine: number } {
-    const holder = this.holders?.["spellcasting"];
-    return holder ? holder.getSpellcasting() : { arcane: 0, divine: 0 };
+    return this.detailedCharacterSpellcasting.getSpellcasting();
   }
 
   getVirtuallyPossessedPowerIds() {

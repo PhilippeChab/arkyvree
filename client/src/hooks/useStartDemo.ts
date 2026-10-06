@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 

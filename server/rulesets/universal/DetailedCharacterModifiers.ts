@@ -1,4 +1,5 @@
 import type { Holder, Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
+import { readHolder } from "@/server/rulesets/universal/readHolder.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 import type DetailedCharacterRequirements from "./DetailedCharacterRequirements.ts";
@@ -87,9 +88,7 @@ export default class DetailedCharacterModifiers {
       appliedTarget !== modifier.target ? { ...modifier, target: appliedTarget } : modifier,
     );
 
-    if (holder.updateAvailables) {
-      holder.updateAvailables();
-    }
+    readHolder(holder, "updateAvailables");
   }
 
   /**

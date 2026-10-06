@@ -14,7 +14,7 @@ import {
   RulesetPicker,
   SelectField,
 } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
   type RulesetAbility,
   useDebouncedValue,

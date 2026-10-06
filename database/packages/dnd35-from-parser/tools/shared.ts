@@ -48,6 +48,12 @@ const SAVE_NAMES = ["Fortitude", "Reflex", "Will"];
 
 const WEAPON_DESC_PATTERNS = [/the selected weapon/gi, /selected weapon/gi, /the weapon you selected/gi];
 
+/**
+ * The separator a scraped text keeps between its parts (a race's traits): U+2063 INVISIBLE SEPARATOR, which
+ * `normalizeWs` keeps, as it would not a line break.
+ */
+export const PART_SEPARATOR = "\u2063";
+
 export const NUMBER_WORDS: Record<string, number> = {
   one: 1,
   two: 2,

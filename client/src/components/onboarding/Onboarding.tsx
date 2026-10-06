@@ -23,6 +23,7 @@ import type { Instance } from "@popperjs/core";
 import { useEffect, useRef, useState } from "react";
 
 import { Modal } from "@/client/src/components/common/index.ts";
+import { useOnChange } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
@@ -95,33 +96,28 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   const isLastStep = activeStep === steps.length - 1;
   const effectiveMode = isMobile || !anchorEl ? "dialog" : "popper";
 
-  // Delay popper visibility until sidebar expansion transition completes
+  // The popper shows once the sidebar's expansion, which entering popper mode starts, has finished: leaving the mode
+  // hides it until the next entry's transition ends. Between popper steps, no transition: it moves to the new anchor.
   const popperRef = useRef<Instance>(null);
-  const wasPopperMode = useRef(false);
-  const [popperVisible, setPopperVisible] = useState(false);
+  const [popperEntered, setPopperEntered] = useState(false);
+  const popperVisible = effectiveMode === "popper" && popperEntered;
+
+  useOnChange(effectiveMode, (mode) => {
+    if (mode !== "popper") setPopperEntered(false);
+  });
 
   useEffect(() => {
-    if (effectiveMode !== "popper") {
-      wasPopperMode.current = false;
-      // oxlint-disable-next-line react/set-state-in-effect -- leaving popper mode hides the popper
-      setPopperVisible(false);
-      return;
-    }
-    // Already in popper mode (switching between popper steps) — no sidebar transition
-    if (wasPopperMode.current) {
+    if (effectiveMode !== "popper") return;
+    if (popperEntered) {
       popperRef.current?.update();
-      setPopperVisible(true);
       return;
     }
-    // Entering popper mode — sidebar is expanding, wait for transition
-    setPopperVisible(false);
-    wasPopperMode.current = true;
     const timer = setTimeout(() => {
       popperRef.current?.update();
-      setPopperVisible(true);
+      setPopperEntered(true);
     }, SIDEBAR_TRANSITION_MS);
     return () => clearTimeout(timer);
-  }, [effectiveMode, anchorEl]);
+  }, [effectiveMode, anchorEl, popperEntered]);
 
   const handleNext = () => {
     if (isLastStep) {

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankState, ConfirmDialog } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
