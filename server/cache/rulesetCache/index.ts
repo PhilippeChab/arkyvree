@@ -4,9 +4,9 @@
  * by `CowDataBuilder`: the source chain, the overrides, the sibling pairs), whose invalidation every change to a
  * ruleset makes; and the warm-up the server makes at boot.
  */
-export { type CachedRulesetData } from "./compose.ts";
 export { buildSourceChain, default as CowDataBuilder, NAME_FALLBACK_ENTITY_TYPES } from "./CowDataBuilder.ts";
 export { refreshEntityData } from "./refreshEntityData.ts";
 export { default as RulesetCache } from "./RulesetCache.ts";
+export { type CachedRulesetData } from "./RulesetComposition.ts";
 export { withRulesetScope, withRulesetScopes } from "./scope.ts";
 export { mergeSiblingRequirements } from "./siblingRequirements.ts";

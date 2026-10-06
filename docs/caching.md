@@ -67,7 +67,7 @@ Without intervention, every lookup site had to remember to do `rulesetData.feats
 
 ### Layer 1 — cache id Maps auto-resolve on get/has
 
-Every `*ById` / `*BySource` / `*ByEntity` Map returned by `RulesetCache.getData` is wrapped in a Proxy (`cowResolvingMap`). `.get(key)` and `.has(key)` run the key through `CowData.resolve` first, then hit the underlying Map. `.size`, `.values()`, `.entries()`, iteration — all behave normally (no alias dup).
+Every `*ById` / `*BySource` / `*ByEntity` Map returned by `RulesetCache.getData` is wrapped in a Proxy (`RulesetComposition`'s `resolvingIds`). `.get(key)` and `.has(key)` run the key through `CowData.resolve` first, then hit the underlying Map. `.size`, `.values()`, `.entries()`, iteration — all behave normally (no alias dup).
 
 ```ts
 // storedFeatId may be pre-COW or post-COW; both land on the post-COW entity.
@@ -281,7 +281,7 @@ Services used to query the DB for single rows even after the cache was warm. The
 
 All are derived from the composed arrays at compose time. They add a few hundred KB of pointer overhead per cached ruleset — negligible against the entity data itself.
 
-Every id-keyed Map in this table is wrapped by `cowResolvingMap` — `.get(key)` / `.has(key)` auto-resolve `key` through the override map. Callers can pass stored pre-COW ids directly.
+Every id-keyed Map in this table is wrapped by `RulesetComposition.resolvingIds` — `.get(key)` / `.has(key)` auto-resolve `key` through `CowData.resolve`. Callers can pass stored pre-COW ids directly.
 
 The flat `properties` / `modifiers` / `requirements` arrays were removed from `CachedRulesetData` — they encouraged scans (`arr.filter(p => set.has(p.entityId))`) that were all replaced with one of the Maps above. Sibling-sourced rows are pre-merged by the compose step into the winner's bucket (sourceId / entityId remapped, deduped), so every index above already reflects the full multi-extension view — consumers never see sibling-loser rows.
 
@@ -477,7 +477,7 @@ sequenceDiagram
 2. Fetch it in the appropriate round of `fetchRulesetRawData` (rounds gate on dependencies — klass-level fetches need `klasses` first, customizations need all entity IDs).
 3. Add the composed array to `CachedRulesetData`.
 4. Extend the compose step: concat across chain → filter `isExcluded(id)` → `cow.resolveRows` if it has FKs.
-5. Build a `<entity>ById` Map alongside (`buildById(resolvedX)`, like `featsById`) **and** wrap it with `cowResolvingMap(map, cowData)` before returning so `.get` auto-resolves stored pre-COW ids.
+5. Build a `<entity>ById` Map alongside (`buildById(resolvedX)`, like `featsById`) **and** wrap it with `this.resolvingIds(map)` in `RulesetComposition.build` before returning so `.get` auto-resolves stored pre-COW ids.
 6. If callers need a filter like "X by Y", build that index in the compose step too and wrap it the same way.
 7. If the entity carries inline join arrays (like `powersAptitudesInRules`), remap the nested ids in the compose step too — `CowData.resolveRows` only touches top-level fields.
 8. Update `tests/cache/rulesetCache.test.ts` with a smoke test (the existing compose+invalidation patterns are copy-paste templates); include a COW-fork assertion so regressions in the auto-resolve path are caught.
@@ -492,7 +492,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 ## References
 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
-- `server/cache/rulesetCache/` — `RulesetCache` (`RulesetCache.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up), the raw rows' fetch (`rawData.ts`), and the compose step with its sibling merging, FK remap and accessor maps, `cowResolvingMap` included (`compose.ts`)
+- `server/cache/rulesetCache/` — `RulesetCache` (`RulesetCache.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up), the raw rows' fetch (`rawData.ts`), the compose step with its sibling merging, FK remap and resolving maps (`RulesetComposition.ts`), and the lookup indices it builds (`rulesetIndices.ts`)
 - `server/cache/rulesetCache/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), the COW data's build (`CowDataBuilder.ts`; `RulesetCache` caches and invalidates it), the sibling requirements' merge (`siblingRequirements.ts`)
 - `server/cow/` (copy-on-write's write side) — `cowEntity` and the other copies a change makes, the copy primitives
 - `server/database/CowData.ts` — a ruleset's copy-on-write state: what an id resolves to, and whether it's overridden or a sibling loser

@@ -68,7 +68,7 @@ async function validateItemRequirements(
   // Weapons are exempt — non-proficiency applies a -4 penalty instead of blocking equip
   if (item.type === "Weapon") return;
 
-  // requirementsByEntity is wrapped by cowResolvingMap — stored pre-COW ids
+  // requirementsByEntity resolves its keys (RulesetComposition) — stored pre-COW ids
   // auto-resolve on lookup. No manual canonicalize needed.
   const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
   const templateRequirements = item.sourceItemId ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? []) : [];
