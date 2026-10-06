@@ -200,7 +200,6 @@ export function CopiesOnWrite<B extends Constructor<BaseSeeder>>(Base: B) {
         entityType,
         sourceEntityId,
         forkedEntityId,
-        contentHash: "seed",
       });
     }
 

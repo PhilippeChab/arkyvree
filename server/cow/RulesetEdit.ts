@@ -1,11 +1,19 @@
 import { type CowData, type Db, withCowContext } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { EntitySnapshots, Klasses, KlassLevels, Modifiers } from "@/server/repositories/index.ts";
+import {
+  EntitySnapshots,
+  Klasses,
+  KlassLevels,
+  Modifiers,
+  Properties,
+  Requirements,
+  type RulesetEntityType,
+} from "@/server/repositories/index.ts";
 
-import { CUSTOMIZATION_REPOS, type CustomizationKind, ENTITY_REPOS } from "./constants.ts";
 import EntityCopy, { type CopiedEntity } from "./EntityCopy.ts";
-import type { EntityType } from "./hashing.ts";
-import { lockEntityForMutation } from "./storedEntities.ts";
+import { ENTITY_REPOS, lockEntityForMutation } from "./entityRepositories.ts";
+
+type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;
 
 /**
  * The row a customization of an entity changes (`cowOwner`), and what its copy copied when this call copied it: a
@@ -16,8 +24,15 @@ interface Owner {
   copiedIds?: ReadonlyMap<string, string>;
 }
 
+/** Each customization kind's repository: what a change to a copied entity's customization resolves the row through. */
+const CUSTOMIZATION_REPOS = {
+  property: Properties,
+  requirement: Requirements,
+  modifier: Modifiers,
+} as const;
+
 /** The entity types a customization's owner can be, which a customization change copies when inherited. */
-const OWNER_TYPES: Record<string, EntityType> = {
+const OWNER_TYPES: Record<string, RulesetEntityType> = {
   feats: "feats",
   powers: "powers",
   items: "items",
@@ -43,7 +58,7 @@ export default class RulesetEdit {
   private readonly cow: CowData;
 
   /** Copies an inherited entity into the ruleset (or returns the copy it has), on the ruleset's source chain. */
-  private async copyEntity(tx: Db, entityType: EntityType, entityId: string): Promise<CopiedEntity> {
+  private async copyEntity(tx: Db, entityType: RulesetEntityType, entityId: string): Promise<CopiedEntity> {
     return EntityCopy.create(tx, entityType, entityId, {
       rulesetId: this.ruleset.id,
       sourceChain: this.cow.sourceChain,
@@ -157,7 +172,7 @@ export default class RulesetEdit {
    * snapshot for a new entity to take over. A live local copy keeps its snapshot
    * even after a rename, so inherited references keep resolving to it.
    */
-  async assertAncestorNamesHidden(tx: Db, entityType: EntityType, ancestorIds: string[]): Promise<Set<string>> {
+  async assertAncestorNamesHidden(tx: Db, entityType: RulesetEntityType, ancestorIds: string[]): Promise<Set<string>> {
     if (ancestorIds.some((id) => !this.cow.isHidden(id))) {
       throw new ConflictError("Name already exists in the source chain (an ancestor or subscribed extension)");
     }
@@ -184,7 +199,7 @@ export default class RulesetEdit {
    */
   async assertNameAvailable(
     tx: Db,
-    entityType: EntityType,
+    entityType: RulesetEntityType,
     name: string,
   ): Promise<{ tombstoneAncestorId: string | null }> {
     const repo = ENTITY_REPOS[entityType];
@@ -235,7 +250,7 @@ export default class RulesetEdit {
    * The row a delete of `entity` removes: as `cowToEdit`, and the ruleset's own entity is locked first, so its
    * customizations' writes wait for the delete.
    */
-  async cowToDelete(tx: Db, entityType: EntityType, entity: { id: string; rulesetId: string }): Promise<string> {
+  async cowToDelete(tx: Db, entityType: RulesetEntityType, entity: { id: string; rulesetId: string }): Promise<string> {
     const target = await this.cowToEdit(tx, entityType, entity);
     if (!target.copied) await lockEntityForMutation(tx, entityType, target.id);
     return target.id;
@@ -247,7 +262,7 @@ export default class RulesetEdit {
    */
   async cowToEdit(
     tx: Db,
-    entityType: EntityType,
+    entityType: RulesetEntityType,
     entity: { id: string; rulesetId: string },
   ): Promise<{ id: string; copied: boolean }> {
     if (entity.rulesetId === this.ruleset.id) return { id: entity.id, copied: false };
@@ -261,7 +276,12 @@ export default class RulesetEdit {
    * If found, repoint the snapshot's `forkedEntityId` to the new entity so the
    * inherited version stays hidden from the source-chain.
    */
-  async repointTombstone(tx: Db, entityType: EntityType, ancestorEntityId: string, newEntityId: string): Promise<void> {
+  async repointTombstone(
+    tx: Db,
+    entityType: RulesetEntityType,
+    ancestorEntityId: string,
+    newEntityId: string,
+  ): Promise<void> {
     const tombstone = await EntitySnapshots.findOne(tx, {
       sourceEntityId: ancestorEntityId,
       rulesetId: this.ruleset.id,
@@ -276,7 +296,6 @@ export default class RulesetEdit {
       entityType,
       sourceEntityId: ancestorEntityId,
       forkedEntityId: newEntityId,
-      contentHash: tombstone.contentHash,
     });
   }
 }

@@ -3,7 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { NAME_FALLBACK_ENTITY_TYPES } from "@/server/cache/rulesetCache/index.ts";
-import { ENTITY_REPOS, type EntityType } from "@/server/cow/index.ts";
+import { ENTITY_REPOS } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
@@ -18,6 +18,7 @@ import {
   EntitySnapshots,
   RULESET_ENTITY_TYPES,
   RulesetEntities,
+  type RulesetEntityType,
   RulesetExtensions,
   Rulesets,
 } from "@/server/repositories/index.ts";
@@ -43,9 +44,9 @@ class RulesetExtensionsService {
     const entityTypes = RULESET_ENTITY_TYPES.filter((t) => t !== "aptitudes");
     const rows = await RulesetEntities.findNativeNames(tx, { rulesetIds, entityTypes });
 
-    const ownersByType = new Map<EntityType, Map<string, Set<string>>>();
+    const ownersByType = new Map<RulesetEntityType, Map<string, Set<string>>>();
     for (const r of rows) {
-      const type = r.entityType as EntityType;
+      const type = r.entityType as RulesetEntityType;
       let byName = ownersByType.get(type);
       if (!byName) {
         byName = new Map<string, Set<string>>();
@@ -67,7 +68,7 @@ class RulesetExtensionsService {
     // blocked even for paired types. All other entity types (races, classes,
     // abilities, etc.) have no name-fallback pairing — extension+extension
     // collisions there would surface as UI duplicates, so block them.
-    const pairableTypes = new Set<EntityType>(NAME_FALLBACK_ENTITY_TYPES);
+    const pairableTypes = new Set<RulesetEntityType>(NAME_FALLBACK_ENTITY_TYPES);
     for (const [entityType, byName] of ownersByType) {
       const isPairableType = pairableTypes.has(entityType);
       for (const [name, ownerIds] of byName) {
@@ -96,15 +97,15 @@ class RulesetExtensionsService {
     // in one batched query (avoids N+1 over snapshot count). Build a per-type
     // list of host-owned shadow IDs whose source entity belongs to the extension.
     const snapshots = await EntitySnapshots.findMany(tx, { rulesetId: hostRulesetId });
-    const sourceIdsByType: Partial<Record<EntityType, string[]>> = {};
+    const sourceIdsByType: Partial<Record<RulesetEntityType, string[]>> = {};
     for (const snap of snapshots) {
-      const type = snap.entityType as EntityType;
+      const type = snap.entityType as RulesetEntityType;
       if (!ENTITY_REPOS[type]) continue;
       (sourceIdsByType[type] ??= []).push(snap.sourceEntityId);
     }
 
-    const shadowIdsByType: Partial<Record<EntityType, string[]>> = {};
-    for (const [type, ids] of Object.entries(sourceIdsByType) as [EntityType, string[]][]) {
+    const shadowIdsByType: Partial<Record<RulesetEntityType, string[]>> = {};
+    for (const [type, ids] of Object.entries(sourceIdsByType) as [RulesetEntityType, string[]][]) {
       const sources = await ENTITY_REPOS[type].findMany(tx, { ids });
       const fromExt = new Set(sources.filter((s) => s.rulesetId === extensionId).map((s) => s.id));
       const forked = snapshots
@@ -112,7 +113,7 @@ class RulesetExtensionsService {
         .map((s) => s.forkedEntityId);
       if (forked.length > 0) shadowIdsByType[type] = forked;
     }
-    const shadow = (type: EntityType) => shadowIdsByType[type] ?? [];
+    const shadow = (type: RulesetEntityType) => shadowIdsByType[type] ?? [];
 
     // Shadow ids as stored: a shadow can be a sibling loser, whose id copy-on-write would read as its winner's.
     return await withCowContext(
@@ -286,7 +287,7 @@ class RulesetExtensionsService {
       const snapshots = await EntitySnapshots.findMany(tx, { rulesetId: id });
       const extensionSnapshots = [];
       for (const snap of snapshots) {
-        const entityType = snap.entityType as EntityType;
+        const entityType = snap.entityType as RulesetEntityType;
         const repo = ENTITY_REPOS[entityType];
         if (!repo) continue;
         const sourceEntity = await repo.findOne(tx, { id: snap.sourceEntityId });
@@ -297,7 +298,7 @@ class RulesetExtensionsService {
 
       // Delete COW copies and their snapshots
       for (const snap of extensionSnapshots) {
-        const entityType = snap.entityType as EntityType;
+        const entityType = snap.entityType as RulesetEntityType;
         await deleteEntityWithCascade(tx, entityType, snap.forkedEntityId);
         await EntitySnapshots.delete(tx, {
           sourceEntityId: snap.sourceEntityId,

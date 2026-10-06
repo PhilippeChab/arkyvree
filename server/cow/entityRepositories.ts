@@ -1,4 +1,7 @@
+/** Each ruleset entity type's repository, as copy-on-write uses it, and the lock a change takes on one. */
+
 import type { Db } from "@/server/database/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import {
   Abilities,
   Aptitudes,
@@ -7,16 +10,12 @@ import {
   Klasses,
   Languages,
   Mechanics,
-  Modifiers,
   Powers,
-  Properties,
   Races,
-  Requirements,
+  type RulesetEntityType,
   Saves,
   Skills,
 } from "@/server/repositories/index.ts";
-
-import type { EntityType } from "./hashing.ts";
 
 /**
  * What the COW code calls on any ruleset entity's repository. Properties, which TypeScript checks strictly, except
@@ -31,21 +30,13 @@ interface EntityRepository {
   delete: (db: Db, where: { id: string }) => Promise<unknown>;
 }
 
-export type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;
-
 export interface EntityWithId {
   id: string;
   rulesetId: string;
   [key: string]: unknown;
 }
 
-export const CUSTOMIZATION_REPOS = {
-  property: Properties,
-  requirement: Requirements,
-  modifier: Modifiers,
-} as const;
-
-export const ENTITY_REPOS: Record<EntityType, EntityRepository> = {
+export const ENTITY_REPOS: Record<RulesetEntityType, EntityRepository> = {
   abilities: Abilities,
   saves: Saves,
   skills: Skills,
@@ -58,3 +49,10 @@ export const ENTITY_REPOS: Record<EntityType, EntityRepository> = {
   aptitudes: Aptitudes,
   mechanics: Mechanics,
 };
+
+/** Locks an entity a change writes under (its customizations, its delete), by its stored id: a not found when gone. */
+export async function lockEntityForMutation(tx: Db, entityType: RulesetEntityType, entityId: string): Promise<void> {
+  if (!(await ENTITY_REPOS[entityType].lock(tx, { id: entityId }))) {
+    throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
+}

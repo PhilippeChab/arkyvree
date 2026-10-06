@@ -519,6 +519,13 @@
       "when": 1791158921050,
       "tag": "0073_inventory-entries",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1791317415037,
+      "tag": "0074_snapshot-content-hash",
+      "breakpoints": true
     }
   ]
 }
