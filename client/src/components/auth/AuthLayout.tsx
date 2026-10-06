@@ -84,7 +84,7 @@ function DesktopBranding() {
   } as const;
 
   const stagger = (i: number) => ({
-    animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} ${i * 80}ms both`,
+    animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} ${i * DURATION.stagger}ms both`,
     ...animBase,
   });
 

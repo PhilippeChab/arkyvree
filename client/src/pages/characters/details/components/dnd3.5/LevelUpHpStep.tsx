@@ -3,7 +3,7 @@ import { useController } from "react-hook-form";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { DiceIcon } from "@/client/src/components/icons/index.ts";
-import { settledPulse } from "@/client/src/lib/animations.ts";
+import { ANIMATIONS } from "@/client/src/lib/animations.ts";
 
 import type { LevelUpHpStepProps } from "./levelUpFactory.ts";
 
@@ -52,7 +52,7 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
         margin="normal"
         sx={{
           ...(hpSettled && {
-            animation: `${settledPulse} 0.4s cubic-bezier(0.4, 0, 0.2, 1)`,
+            animation: ANIMATIONS.settledPulse,
           }),
         }}
         slotProps={{

@@ -44,6 +44,8 @@
  * - `nav-links`: a control that only navigates is a link (`component={Link} to`), never an `onClick` that calls
  *   `navigate`; a card holds content of its own and opens on click. React Router's `Link` is `Link`, MUI's `MuiLink`.
  * - `browser-storage`: what the browser keeps is a store's (`client/src/stores/`, zustand's `persist`).
+ * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
+ *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -153,6 +155,21 @@ const IN_PLACE_TYPES = new Set([
   "Readonly",
   "Required",
 ]);
+
+/** The style properties that time a change */
+const MOTION_PROPERTIES = new Set([
+  "animation",
+  "animationDelay",
+  "animationDuration",
+  "animationTimingFunction",
+  "transition",
+  "transitionDelay",
+  "transitionDuration",
+  "transitionTimingFunction",
+]);
+
+/** A time or an easing written out: `200ms`, `0.3s`, `ease-in-out`, `cubic-bezier(…)` */
+const MOTION_LITERAL = /\d(?:\.\d+)?m?s\b|\b(?:ease(?:-in|-out|-in-out)?|linear|steps)\b|cubic-bezier\(/;
 
 /** `Intl`'s date formatters */
 const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
@@ -761,6 +778,43 @@ function createControlledInputs(context) {
   };
 }
 
+/** Whether a template literal times something by its own numbers: a literal time, or a time no `DURATION` gives (`${i * 80}ms`). */
+function timesItself(template, sourceCode) {
+  const texts = template.quasis.map((quasi) => quasi.value.cooked ?? "");
+  if (texts.some((text) => MOTION_LITERAL.test(text))) return true;
+  return template.expressions.some(
+    (expression, index) => /^m?s\b/.test(texts[index + 1]) && !sourceCode.getText(expression).includes("DURATION."),
+  );
+}
+
+function createMotion(context) {
+  if (!inClient(context) || repoPath(context.filename) === "client/src/lib/animations.ts") return {};
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        "Motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS.diceRoll`), a transition of its " +
+        'tokens (`transitionOf(["opacity"], DURATION.fast)`), or a template of `DURATION` / `EASING`. No time, ' +
+        "easing or keyframes written elsewhere.",
+    });
+  return {
+    ImportSpecifier(node) {
+      if (node.imported.name === "keyframes") report(node);
+    },
+    Literal(node) {
+      if (typeof node.value === "string" && node.value.includes("cubic-bezier(")) report(node);
+    },
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : node.key.type === "Literal" ? node.key.value : null;
+      if (typeof key === "string" && key.startsWith("@keyframes")) return report(node);
+      if (!MOTION_PROPERTIES.has(key)) return;
+      const value = node.value;
+      if (value.type === "Literal" && typeof value.value === "string" && value.value !== "none") report(value);
+      if (value.type === "TemplateLiteral" && timesItself(value, context.sourceCode)) report(value);
+    },
+  };
+}
+
 /** What a JSX attribute's value says when it's written out (`"error"`, `{"error"}`, `` {`error`} ``), else null. */
 function writtenString(attribute) {
   const value = attribute.value?.type === "JSXExpressionContainer" ? attribute.value.expression : attribute.value;
@@ -805,4 +859,5 @@ export default {
   icons: { meta: { type: "suggestion" }, create: createIcons },
   "nav-links": { meta: { type: "suggestion" }, create: createNavLinks },
   "browser-storage": { meta: { type: "suggestion" }, create: createBrowserStorage },
+  motion: { meta: { type: "suggestion" }, create: createMotion },
 };

@@ -1,7 +1,7 @@
 import { Box, Container, Paper, Skeleton, Stack, Typography } from "@mui/material";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
-import { EASING, fadeInUpSx, prefersReducedMotion, pulse } from "@/client/src/lib/animations.ts";
+import { ANIMATIONS, fadeInUpSx, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
 interface SectionProps {
   index: number;
@@ -22,7 +22,7 @@ export function CharacterDetailSkeleton() {
           variant="body2"
           sx={{
             color: "text.secondary",
-            animation: `${pulse} 2s ${EASING.standard} infinite`,
+            animation: ANIMATIONS.pulse,
             [prefersReducedMotion]: { animation: "none", opacity: 0.6 },
           }}
         >

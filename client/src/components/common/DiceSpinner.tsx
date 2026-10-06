@@ -2,7 +2,7 @@ import { Box, type SxProps, type Theme, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 
-import { diceRoll, EASING, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { ANIMATIONS, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
 interface DiceSpinnerProps {
   size?: "small" | "medium" | "large";
@@ -46,7 +46,7 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
         fontSize: SIZES[size],
         lineHeight: 1,
         display: "inline-block",
-        animation: `${diceRoll} 1.6s ${EASING.decelerate} infinite`,
+        animation: ANIMATIONS.diceRoll,
         [prefersReducedMotion]: { animation: "none" },
       }}
     >

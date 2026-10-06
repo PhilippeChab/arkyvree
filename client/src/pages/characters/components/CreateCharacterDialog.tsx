@@ -24,7 +24,7 @@ import {
   useRulesetAbilities,
 } from "@/client/src/hooks/index.ts";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
-import { settledPulse } from "@/client/src/lib/animations.ts";
+import { ANIMATIONS } from "@/client/src/lib/animations.ts";
 import {
   getRollFunction,
   isDiceMethod,
@@ -118,7 +118,7 @@ function AbilityCard({
         justifyContent: "space-between",
         minHeight: 100,
         ...(isSettled && {
-          animation: `${settledPulse} 0.4s cubic-bezier(0.4, 0, 0.2, 1)`,
+          animation: ANIMATIONS.settledPulse,
         }),
       }}
     >

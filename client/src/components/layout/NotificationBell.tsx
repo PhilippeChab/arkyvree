@@ -1,5 +1,4 @@
 import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
-import { keyframes } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useEffect, useRef, useState } from "react";
@@ -9,6 +8,7 @@ import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useNotificationActions } from "@/client/src/hooks/index.ts";
 import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
+import { ANIMATIONS } from "@/client/src/lib/animations.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -19,15 +19,6 @@ type UnreadNotification = InferResponseType<typeof rpc.api.notifications.unread.
 interface NotificationSummaryProps {
   notification: UnreadNotification;
 }
-
-const bellShake = keyframes`
-  0%, 100% { transform: rotate(0deg); }
-  15% { transform: rotate(14deg); }
-  30% { transform: rotate(-12deg); }
-  45% { transform: rotate(10deg); }
-  60% { transform: rotate(-8deg); }
-  75% { transform: rotate(4deg); }
-`;
 
 function NotificationSummary({ notification }: NotificationSummaryProps) {
   return (
@@ -79,7 +70,7 @@ export function NotificationBell() {
         color="inherit"
         onClick={(e) => setAnchorEl(e.currentTarget)}
         aria-label={formatCount(unreadCount, "unread notification")}
-        sx={shake ? { animation: `${bellShake} 0.6s ease-in-out` } : undefined}
+        sx={shake ? { animation: ANIMATIONS.bellShake } : undefined}
         onAnimationEnd={() => setShake(false)}
       >
         <Badge badgeContent={unreadCount} color="error">

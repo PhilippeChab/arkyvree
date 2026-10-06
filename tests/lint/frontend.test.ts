@@ -405,4 +405,34 @@ describe("frontend rules", () => {
       ),
     ).toEqual(["browser-storage client/src/local.ts", "browser-storage client/src/session.ts"]);
   });
+
+  test("motion is timed in lib/animations.ts, by its animations, transitionOf and its tokens", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/written.tsx": 'export const w = <Box sx={{ transition: "opacity 0.2s ease" }} />;\n',
+          "client/src/curved.ts": 'export const c = "all 1s cubic-bezier(0.2, 0, 0, 1)";\n',
+          "client/src/templated.tsx": "export const t = <Box sx={{ animation: `${fadeIn} 300ms ease-in` }} />;\n",
+          "client/src/computed.tsx":
+            "export const k = <Box sx={{ animation: `${fadeInUp} ${DURATION.slow}ms ${i * 80}ms` }} />;\n",
+          "client/src/framed.tsx": 'export const f = { "@keyframes spin": { to: { rotate: "1turn" } } };\n',
+          "client/src/spun.tsx":
+            'import { keyframes } from "@mui/material";\nexport const s = keyframes`to { opacity: 1; }`;\n',
+          "client/src/tokened.tsx":
+            'export const o = <Box sx={{ transition: transitionOf(["opacity"], DURATION.fast), animation: `${fadeIn} ${DURATION.normal}ms ${EASING.standard}` }} />;\n',
+          "client/src/named.tsx":
+            'export const n = <Box sx={{ animation: ANIMATIONS.diceRoll, [reduced]: { animation: "none" } }} />;\n',
+          "client/src/lib/animations.ts": 'export const EASING = { standard: "cubic-bezier(0.4, 0, 0.2, 1)" };\n',
+        },
+        ["motion"],
+      ),
+    ).toEqual([
+      "motion client/src/computed.tsx",
+      "motion client/src/curved.ts",
+      "motion client/src/framed.tsx",
+      "motion client/src/spun.tsx",
+      "motion client/src/templated.tsx",
+      "motion client/src/written.tsx",
+    ]);
+  });
 });

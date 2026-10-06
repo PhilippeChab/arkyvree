@@ -2,7 +2,7 @@ import { Card, type CardProps } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { type ReactNode } from "react";
 
-import { fadeInUpSx, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { fadeInUpSx, prefersReducedMotion, transitionOf } from "@/client/src/lib/animations.ts";
 
 import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 
@@ -38,7 +38,7 @@ export function StyledCard({
         borderColor: isArchived ? "warning.light" : "divider",
         borderRadius: 3,
         overflow: "hidden",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: transitionOf(["all"]),
         position: "relative",
         cursor: "default",
         ...(onClick && CLICKABLE_SX),

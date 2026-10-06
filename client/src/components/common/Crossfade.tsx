@@ -1,6 +1,8 @@
 import { Box } from "@mui/material";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
+import { DURATION, transitionOf } from "@/client/src/lib/animations.ts";
+
 interface CrossfadeProps {
   showFirst: boolean;
   first: ReactNode;
@@ -8,7 +10,7 @@ interface CrossfadeProps {
   duration?: number;
 }
 
-export function Crossfade({ showFirst, first, second, duration = 200 }: CrossfadeProps) {
+export function Crossfade({ showFirst, first, second, duration = DURATION.fast }: CrossfadeProps) {
   const firstRef = useRef<HTMLDivElement>(null);
   const secondRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
@@ -36,7 +38,7 @@ export function Crossfade({ showFirst, first, second, duration = 200 }: Crossfad
       sx={{
         position: "relative",
         height: height ?? "auto",
-        transition: `height ${duration}ms ease`,
+        transition: transitionOf(["height"], duration),
         overflow: "hidden",
       }}
     >
@@ -48,7 +50,7 @@ export function Crossfade({ showFirst, first, second, duration = 200 }: Crossfad
           left: 0,
           right: 0,
           opacity: showFirst ? 1 : 0,
-          transition: `opacity ${duration}ms`,
+          transition: transitionOf(["opacity"], duration),
           pointerEvents: showFirst ? "auto" : "none",
         }}
       >
@@ -62,7 +64,7 @@ export function Crossfade({ showFirst, first, second, duration = 200 }: Crossfad
           left: 0,
           right: 0,
           opacity: showFirst ? 0 : 1,
-          transition: `opacity ${duration}ms`,
+          transition: transitionOf(["opacity"], duration),
           pointerEvents: showFirst ? "none" : "auto",
         }}
       >

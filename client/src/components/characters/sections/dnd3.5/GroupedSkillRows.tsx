@@ -3,6 +3,7 @@ import { type ReactNode, useMemo } from "react";
 
 import { ExpandLessIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
+import { ANIMATIONS, DURATION, transitionOf } from "@/client/src/lib/animations.ts";
 
 import { groupSkills } from "./skillGroups.ts";
 
@@ -28,10 +29,7 @@ interface SkillRowProps extends SkillPlacement {
   children: ReactNode;
 }
 
-const fadeInSx = {
-  animation: "fadeInRow 200ms ease-out",
-  "@keyframes fadeInRow": { from: { opacity: 0 }, to: { opacity: 1 } },
-};
+const fadeInSx = { animation: ANIMATIONS.fadeIn };
 
 /**
  * A skill table's rows, with the skills that share a prefix ("Knowledge (…)")
@@ -67,7 +65,10 @@ export function GroupedSkillRows<S extends { name: string }>({
               <IconButton
                 size="small"
                 aria-label={`${isExpanded ? "Hide" : "Show"} ${row.prefix} skills`}
-                sx={{ transition: "transform 200ms", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}
+                sx={{
+                  transition: transitionOf(["transform"], DURATION.fast),
+                  transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+                }}
               >
                 <ExpandLessIcon fontSize="small" />
               </IconButton>

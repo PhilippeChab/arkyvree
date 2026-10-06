@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { DeleteIcon, ImageIcon, PhotoIcon, UploadIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAttachment, useDemoTimeRemaining, useDetachAttachment, useDirectUpload } from "@/client/src/hooks/index.ts";
+import { DURATION, transitionOf } from "@/client/src/lib/animations.ts";
 import { ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
 
 import { DiceSpinner } from "./DiceSpinner.tsx";
@@ -122,7 +123,7 @@ export function AttachmentField({
             border: showRing ? "4px solid" : canUpload ? "2px dashed" : "2px solid",
             borderColor: showRing ? "background.paper" : dragOver ? "primary.main" : url ? "transparent" : "divider",
             boxShadow: (theme) => (showRing ? `0 6px 24px ${alpha(theme.palette.common.black, 0.18)}` : "none"),
-            transition: "border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease",
+            transition: transitionOf(["border-color", "transform", "box-shadow"], DURATION.fast),
             transform: dragOver ? "scale(1.02)" : "none",
             outline: "none",
             "&:focus-visible": {
@@ -132,7 +133,7 @@ export function AttachmentField({
             // Hover overlay only when image is present and interactive
             "& .attachment-overlay": {
               opacity: 0,
-              transition: "opacity 150ms ease",
+              transition: transitionOf(["opacity"], DURATION.fast),
             },
             "&:hover .attachment-overlay": interactive && url ? { opacity: 1 } : {},
             // Keyboard a11y. Not :focus-within — that sticks after a click and

@@ -1,7 +1,7 @@
 import { Grow } from "@mui/material";
 import { createTheme, responsiveFontSizes, type Theme } from "@mui/material/styles";
 
-import { prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { DURATION, prefersReducedMotion, transitionOf } from "@/client/src/lib/animations.ts";
 
 declare module "@mui/material/styles" {
   interface Palette {
@@ -348,7 +348,7 @@ export function createAppTheme(darkMode: boolean): Theme {
             root: ({ theme }) => ({
               color: theme.palette.primary.main,
               textDecorationColor: "transparent",
-              transition: "text-decoration-color 200ms ease",
+              transition: transitionOf(["text-decoration-color"], DURATION.fast),
               "&:hover": {
                 textDecorationColor: "currentColor",
               },

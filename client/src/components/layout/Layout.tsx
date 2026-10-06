@@ -40,6 +40,7 @@ import {
 } from "@/client/src/components/icons/index.ts";
 import { Onboarding } from "@/client/src/components/onboarding/index.ts";
 import { useAttachment, useAuthRequests, useDemoTimeRemaining, useIsMobile } from "@/client/src/hooks/index.ts";
+import { DURATION, EASING, transitionOf } from "@/client/src/lib/animations.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import {
   campaignListQuery,
@@ -310,7 +311,7 @@ export function Layout() {
             width: isMobile ? expandedDrawerWidth : effectiveExpanded ? expandedDrawerWidth : drawerWidth,
             boxSizing: "border-box",
             borderRight: "none",
-            transition: "all 0.35s cubic-bezier(0.2, 0, 0, 1)",
+            transition: transitionOf(["all"], DURATION.slow, EASING.emphasized),
             overflow: "hidden",
             bgcolor: (theme) => (theme.palette.mode === "dark" ? "background.paper" : "grey.50"),
             boxShadow: (theme) => `2px 0 8px ${theme.palette.shadow}`,
@@ -353,7 +354,7 @@ export function Layout() {
                     mx: 0.5,
                     position: "relative",
                     overflow: "hidden",
-                    transition: "all 0.25s cubic-bezier(0.2, 0, 0, 1)",
+                    transition: transitionOf(["all"], DURATION.normal, EASING.emphasized),
                     "&::before": {
                       content: '""',
                       position: "absolute",
@@ -364,7 +365,7 @@ export function Layout() {
                       background: (theme) =>
                         `linear-gradient(135deg, transparent, ${alpha(theme.palette.common.white, 0.1)})`,
                       opacity: 0,
-                      transition: "opacity 0.25s ease",
+                      transition: transitionOf(["opacity"]),
                     },
                     "&.Mui-selected": {
                       backgroundColor: "primary.main",
@@ -418,10 +419,10 @@ export function Layout() {
                       minWidth: 0,
                       justifyContent: "center",
                       mr: isMobile || effectiveExpanded ? 2 : 0,
-                      transition: "all 0.35s cubic-bezier(0.2, 0, 0, 1)",
+                      transition: transitionOf(["all"], DURATION.slow, EASING.emphasized),
                       "& .MuiSvgIcon-root": {
                         fontSize: "1.4rem",
-                        transition: "transform 0.25s ease",
+                        transition: transitionOf(["transform"]),
                       },
                     }}
                   >
@@ -433,7 +434,7 @@ export function Layout() {
                     sx={{
                       opacity: isMobile || effectiveExpanded ? 1 : 0,
                       transform: isMobile || effectiveExpanded ? "translateX(0)" : "translateX(-10px)",
-                      transition: "all 0.35s cubic-bezier(0.2, 0, 0, 1)",
+                      transition: transitionOf(["all"], DURATION.slow, EASING.emphasized),
                       transitionDelay: isMobile || effectiveExpanded ? "0.05s" : "0s",
                     }}
                     slotProps={{
@@ -471,7 +472,7 @@ export function Layout() {
                   backgroundColor: "action.hover",
                   border: "2px solid",
                   borderColor: "divider",
-                  transition: "all 0.25s cubic-bezier(0.2, 0, 0, 1)",
+                  transition: transitionOf(["all"], DURATION.normal, EASING.emphasized),
                   "&:hover": {
                     backgroundColor: "action.focus",
                     borderColor: "primary.main",
@@ -482,9 +483,9 @@ export function Layout() {
                 size="small"
               >
                 {effectiveExpanded ? (
-                  <ChevronLeftIcon sx={{ transition: "transform 0.25s ease" }} />
+                  <ChevronLeftIcon sx={{ transition: transitionOf(["transform"]) }} />
                 ) : (
-                  <ChevronRightIcon sx={{ transition: "transform 0.25s ease" }} />
+                  <ChevronRightIcon sx={{ transition: transitionOf(["transform"]) }} />
                 )}
               </IconButton>
             </Box>

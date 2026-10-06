@@ -17,7 +17,7 @@ import { Link } from "react-router-dom";
 import { DiceSpinner, GoldDivider, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
 import { CampaignsIcon, CharactersIcon, HelpIcon, RulesetsIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { fadeInUpSx } from "@/client/src/lib/animations.ts";
+import { DURATION, fadeInUpSx, transitionOf } from "@/client/src/lib/animations.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { dashboardStatsQuery } from "@/client/src/lib/queries.ts";
 import { RecentNotificationsCard } from "@/client/src/pages/dashboard/components/index.ts";
@@ -52,7 +52,7 @@ function StatCard({ icon: Icon, count, label, tagline, to, colors, animationInde
           },
           color: "common.white",
           border: (theme) => `1px solid ${alpha(colors(theme)[1], 0.38)}`,
-          transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+          transition: transitionOf(["transform", "box-shadow"], DURATION.fast),
           "&:hover": {
             transform: "translateY(-8px)",
             boxShadow: (theme) => `0px 8px 24px ${alpha(colors(theme)[1], 0.38)}`,
