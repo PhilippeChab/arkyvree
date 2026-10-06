@@ -8,23 +8,20 @@ import {
   existingFeatGranted,
   insertOrdinalInName,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
-import {
-  formatStringArray,
-  listField,
-  MAX_CLASS_DESC,
-  quote,
-  requirementImports,
-  stringifyFeatModifier,
-  stringifyProperty,
-  stringifyRequirement,
-  toConstName,
-  truncateDesc,
-} from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
+import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
+import { stringifyProperty } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import {
   anyOfFamilies,
   requirableFamilies,
-} from "@/database/packages/dnd35-from-parser/tools/generator/generators/feat.ts";
-import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+} from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
+import {
+  formatStringArray,
+  listField,
+  quote,
+  toConstName,
+} from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
+import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
+import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -118,23 +115,39 @@ function findMappedName(rawName: string, features: ClassReference["mapping"]["fe
   return undefined;
 }
 
-/** A feat as a line of a class's feats file: the class feature aptitude as `APT`. */
-function stringifyFeat(feat: FeatSeed, classFeatureAptitude: string, uses: Set<string>): string {
+/** A feat as a line of a class's feats file (`file`): the class feature aptitude as `APT`. */
+function stringifyFeat(file: CodeFile, feat: FeatSeed, classFeatureAptitude: string): string {
   const parts = [
     `name: ${quote(feat.name)}`,
     `description: ${quote(feat.description)}`,
     ...(feat.stackable ? ["stackable: true"] : []),
     ...(feat.selectable !== undefined ? [`selectable: ${feat.selectable}`] : []),
     `aptitudes: [${feat.aptitudes.map((a) => (a === classFeatureAptitude ? "APT" : quote(a))).join(", ")}]`,
-    ...(feat.modifiers?.length
-      ? [`modifiers: [${feat.modifiers.map((m) => stringifyFeatModifier(m, uses)).join(", ")}]`]
-      : []),
+    ...(feat.modifiers?.length ? [`modifiers: [${feat.modifiers.map((m) => file.featModifier(m)).join(", ")}]`] : []),
     ...(feat.requirements?.length
-      ? [`requirements: [${feat.requirements.map((r) => stringifyRequirement(r, uses)).join(", ")}]`]
+      ? [`requirements: [${feat.requirements.map((r) => file.requirement(r)).join(", ")}]`]
       : []),
     ...(feat.properties?.length ? [`properties: [${feat.properties.map(stringifyProperty).join(", ")}]`] : []),
   ];
   return `  { ${parts.join(", ")} },`;
+}
+
+/** A class's feats file: its own feats (`buildClassFeatSeeds`), and the domains it picks from (`classDomainPickFeats`). */
+export function generateClassFeatSeeds(ref: ClassReference): string {
+  const aptitude = ref.mapping.classFeatureAptitude;
+  const file = new CodeFile();
+  const feats = [...buildClassFeatSeeds(ref), ...classDomainPickFeats(ref)].map((feat) =>
+    stringifyFeat(file, feat, aptitude),
+  );
+  file.lines.push(
+    `const APT = ${quote(aptitude)};`,
+    "",
+    `export const ${toConstName(ref.raw.name)}_FEATS: FeatSeed[] = [`,
+    ...feats,
+    `];`,
+    "",
+  );
+  return file.code([`import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`]);
 }
 
 /** A class reference's ClassSeed file. */
@@ -156,12 +169,12 @@ export function generateClassSeed(ref: ClassReference): string {
   const { aptitudePicks, remap, perLevel } = classAptitudePicks(ref);
   const { classFeatures, autoFreeFeats } = buildClassFeatures(ref, perLevel);
 
-  // The requirement builders the class is written with, which its imports are written from
-  const uses = new Set<string>();
-  const lines: string[] = [];
+  // The class's code, and the requirement builders it's written with, which its imports are written from
+  const file = new CodeFile();
+  const { lines } = file;
   lines.push(`export const ${constName}: ClassSeed = {`);
   lines.push(`  name: ${quote(raw.name)},`);
-  lines.push(`  description: ${quote(truncateDesc(overrides.description ?? raw.description, MAX_CLASS_DESC))},`);
+  lines.push(`  description: ${quote(normalizeDescription(overrides.description ?? raw.description))},`);
   lines.push(`  hd: ${detected.hd}, levels: ${detected.levels}, skillPoints: ${detected.skillPoints},`);
   lines.push(`  bab: ${quote(bab)},`);
   lines.push(
@@ -172,7 +185,7 @@ export function generateClassSeed(ref: ClassReference): string {
   lines.push(
     ...listField(
       "requirements",
-      requirements.map((req) => stringifyRequirement(req, uses, 2)),
+      requirements.map((req) => file.requirement(req, 2)),
       "  ",
     ),
   );
@@ -249,7 +262,7 @@ export function generateClassSeed(ref: ClassReference): string {
     if (spells.lists) {
       lines.push(`    lists: [`);
       for (const list of spells.lists) {
-        const requirements = list.requirements.map((r) => stringifyRequirement(r, uses, 3));
+        const requirements = list.requirements.map((r) => file.requirement(r, 3));
         lines.push(`      { slug: ${quote(stripSeparators(list.name))}, requirements: [${requirements.join(", ")}] },`);
       }
       lines.push(`    ],`);
@@ -261,7 +274,7 @@ export function generateClassSeed(ref: ClassReference): string {
   if (modifiers.length > 0) {
     lines.push(`  modifiers: [`);
     for (const m of modifiers) {
-      const requirements = (m.requirements ?? []).map((r) => stringifyRequirement(r, uses, 3));
+      const requirements = (m.requirements ?? []).map((r) => file.requirement(r, 3));
       const gate = requirements.length > 0 ? `, requirements: [${requirements.join(", ")}]` : "";
       lines.push(
         `    { level: ${m.level}, target: ${quote(m.target)}, value: ${quote(m.value)}, valueType: ${quote(m.valueType)}, operator: ${quote(m.operator)}${gate} },`,
@@ -320,31 +333,5 @@ export function generateClassSeed(ref: ClassReference): string {
   const review = todos.length > 0 ? ["/**", " * To review:", ...todos.map((todo) => ` * - ${todo}`), " */", ""] : [];
 
   lines.push("");
-  return [
-    ...review,
-    `import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";`,
-    ...requirementImports(uses),
-    "",
-    ...lines,
-  ].join("\n");
-}
-
-/** A class's feats file: its own feats (`buildClassFeatSeeds`), and the domains it picks from (`classDomainPickFeats`). */
-export function generateFeatSeeds(ref: ClassReference): string {
-  const aptitude = ref.mapping.classFeatureAptitude;
-  const uses = new Set<string>();
-  const feats = [...buildClassFeatSeeds(ref), ...classDomainPickFeats(ref)].map((feat) =>
-    stringifyFeat(feat, aptitude, uses),
-  );
-  return [
-    `import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`,
-    ...requirementImports(uses),
-    "",
-    `const APT = ${quote(aptitude)};`,
-    "",
-    `export const ${toConstName(ref.raw.name)}_FEATS: FeatSeed[] = [`,
-    ...feats,
-    `];`,
-    "",
-  ].join("\n");
+  return file.code([...review, `import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";`]);
 }

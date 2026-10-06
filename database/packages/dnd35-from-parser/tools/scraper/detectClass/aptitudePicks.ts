@@ -1,12 +1,13 @@
 /** Detects a class's aptitude picks: the features where its player picks from a pool. */
 
+import { lookupWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/names.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import {
   aggregateOrdinalVariants,
   buildFeatureMap,
   isScalingFeature,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/features.ts";
-import { lookupWithPluralVariants, normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type AptitudePick, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { type AptitudePick, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

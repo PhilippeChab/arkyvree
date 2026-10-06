@@ -2,6 +2,7 @@
 
 import { join } from "node:path";
 
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { fetchHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import {
   parseArmorHtml,
@@ -9,8 +10,7 @@ import {
   parseWeaponsHtml,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/item.ts";
 import { saveResolvedReference } from "@/database/packages/dnd35-from-parser/tools/scraper/saveReference.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type ItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { type ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
 
 /** The SRD's equipment pages (d20srd.org): static pages, not a book's. */
 const D20SRD_URLS = {

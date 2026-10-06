@@ -1,9 +1,12 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type {
+  MagicItemCategory,
+  MagicItemReference,
+} from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
 
 type CheerioEl = cheerio.Cheerio<AnyNode>;
 

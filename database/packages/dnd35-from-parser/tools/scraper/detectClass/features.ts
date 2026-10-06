@@ -1,7 +1,7 @@
 /** Groups a class's features: their names, occurrences, sub-options and ordinal variants. */
 
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
+import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 /**
  * Parse a combined pool feature description into individual sub-options.

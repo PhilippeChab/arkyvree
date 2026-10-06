@@ -1,7 +1,7 @@
 /**
  * Builders the content's requirements are written with: `or(eq(feat("Dodge")), gte("combat.bab", 4))`. The generator
- * writes a check with the builder that makes exactly that check (`builderOf` in generator/codegen.ts), and any other
- * check as an object.
+ * writes a check with the builder that makes exactly that check (`CodeFile.builderOf`, in the parser's generator), and
+ * any other check as an object.
  */
 
 import type {

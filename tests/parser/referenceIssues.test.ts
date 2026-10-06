@@ -3,9 +3,9 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
+import { discoverRefs, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { referenceIssues } from "@/database/packages/dnd35-from-parser/tools/referenceIssues.ts";
 import { readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import { discoverRefs, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 const folders: string[] = [];

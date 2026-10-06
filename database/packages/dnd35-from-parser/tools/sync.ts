@@ -11,8 +11,9 @@ import { basename, join } from "node:path";
 
 import { $ } from "bun";
 
+import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli.ts";
+import { discoverRefs } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
-import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 const BASE_DIR = join(import.meta.dirname!, "../");
 const GENERATOR = join(BASE_DIR, "tools/generate.ts");

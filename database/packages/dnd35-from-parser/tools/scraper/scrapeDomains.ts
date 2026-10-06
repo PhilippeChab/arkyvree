@@ -2,6 +2,7 @@
 
 import { join } from "node:path";
 
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { fetchHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import {
@@ -13,7 +14,6 @@ import {
   parseSpellDomainLevelsHtml,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
 import { saveReference } from "@/database/packages/dnd35-from-parser/tools/scraper/saveReference.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 /** dndtools' domains as its copy at dnd.arkalseif.info keeps them: a page per book's version (`parsers/domain.ts`). */
 const DOMAIN_SITE = "https://dnd.arkalseif.info/spells";

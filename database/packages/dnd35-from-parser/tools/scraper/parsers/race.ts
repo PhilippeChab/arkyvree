@@ -14,10 +14,11 @@
 
 import * as cheerio from "cheerio";
 
+import { normalizeWs, PART_SEPARATOR } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { frameHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/frame.ts";
 import { pageTitle, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
-import { normalizeWs, PART_SEPARATOR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
+import type { NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
 
 const ABILITY_NAMES = new Set(["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]);

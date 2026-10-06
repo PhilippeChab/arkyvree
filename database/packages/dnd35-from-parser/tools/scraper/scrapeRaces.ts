@@ -2,13 +2,13 @@
 
 import { join } from "node:path";
 
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { buildRaceListingUrl, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { fetchHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import { discover } from "@/database/packages/dnd35-from-parser/tools/scraper/listingEntries.ts";
 import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
 import { saveReference } from "@/database/packages/dnd35-from-parser/tools/scraper/saveReference.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { type RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 
 export async function scrapeAllRaces(book: string) {
   const bookSlug = getBookSlug(book);

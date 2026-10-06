@@ -1,4 +1,4 @@
-import { PART_SEPARATOR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { PART_SEPARATOR } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 
 /** An effect used rather than had: "expend/spend one use of…", "three times per day", "as a swift action", "for 1 hour". */
 const ACTIVATION =

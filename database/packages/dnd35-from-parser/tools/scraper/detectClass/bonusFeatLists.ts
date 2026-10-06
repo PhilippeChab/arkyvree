@@ -1,12 +1,13 @@
 /** Detects a class's bonus feat lists: the existing feats its player picks from. */
 
+import { lookupWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/names.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { parseTreatedAsHavingFeats } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/aptitudePicks.ts";
 import {
   buildFeatureMap,
   parsePoolSubOptions,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/features.ts";
-import { lookupWithPluralVariants, normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type BonusFeatList, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { type BonusFeatList, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 /** A bonus feat list: "from the following list: Feat1, Feat2, ...". */
 function parseBonusFeatList(description: string): string[] | undefined {

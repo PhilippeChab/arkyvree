@@ -2,7 +2,7 @@
 
 A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. Loading it (`tools/references.ts`) derives what the generator reads: `detected`, parsed from `raw`, and `mapping`, the entities to generate (items and magic items have only `detected`; spells and wizard schools, neither). The overrides win over both. So a correction takes effect at the next `parser:generate`, and re-scraping (which replaces `raw`) keeps it.
 
-A class reference, as stored (see `tools/types.ts` for the definitive types):
+A class reference, as stored (see `tools/types/classes.ts` for the definitive types):
 
 ```
 _meta                               # Bookkeeping (type, book, url, timestamp)

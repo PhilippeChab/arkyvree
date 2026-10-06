@@ -5,23 +5,25 @@
 
 import { bookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
 import { existingFeatNamed } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/existingFeats.ts";
-import { classReferences } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import {
   autoCompanionGrantModifiers,
   autoUncannyDodgeModifiers,
   extractGrantedFeatNames,
+} from "@/database/packages/dnd35-from-parser/tools/grants.ts";
+import {
   matchesWithPluralVariants,
-  normalizeDescription,
   pluralVariants,
   stripClassSuffix,
-} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+} from "@/database/packages/dnd35-from-parser/tools/names.ts";
+import { classReferences } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import {
   type AptitudePick,
   type BonusFeatList,
   type ClassReference,
   type InheritedSpellList,
-  type SpellReference,
-} from "@/database/packages/dnd35-from-parser/tools/types.ts";
+} from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import { feat, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";

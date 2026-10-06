@@ -9,8 +9,8 @@ import {
   weaponNamed,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
 import { findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
-import { anySkillRequirement, SKILL_MAP, skillSlug } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { anySkillRequirement, SKILL_MAP, skillSlug } from "@/database/packages/dnd35-from-parser/tools/targets.ts";
+import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import { proficiencyRequirements } from "@/database/packages/dnd35/content/items/proficiencies.ts";

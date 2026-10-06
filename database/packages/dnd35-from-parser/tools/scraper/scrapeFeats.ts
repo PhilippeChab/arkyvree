@@ -2,13 +2,13 @@
 
 import { join } from "node:path";
 
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { buildListingUrl } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { fetchHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import { discover } from "@/database/packages/dnd35-from-parser/tools/scraper/listingEntries.ts";
 import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
 import { saveReference } from "@/database/packages/dnd35-from-parser/tools/scraper/saveReference.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { type FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 
 export async function scrapeAllFeats(book: string) {
   const listingUrl = buildListingUrl("feats", book);

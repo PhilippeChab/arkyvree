@@ -1,4 +1,4 @@
-import { SKILL_MAP } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { SKILL_MAP } from "@/database/packages/dnd35-from-parser/tools/targets.ts";
 
 /** A skill bonus a text gives: its skill's slug, or none when the name isn't a skill (`name`), and where it was read. */
 export type SkillBonus = { value: string; name: string; slug: string | undefined; index: number };

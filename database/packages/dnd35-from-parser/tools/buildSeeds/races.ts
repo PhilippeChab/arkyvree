@@ -1,7 +1,7 @@
 /** A race reference's seeds: its RaceDefinition[]. */
 
-import { checkedValue, checkOneOf } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { type RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { checkedValue, checkOneOf } from "@/database/packages/dnd35-from-parser/tools/checks.ts";
+import { type RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 
