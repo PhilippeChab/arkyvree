@@ -54,6 +54,12 @@ describe("RequirementTree", () => {
     ]);
   });
 
+  test("keeps every row at a shared level, a row under it hanging from the first", () => {
+    const tree = RequirementTree.fromRows([row("1", "and"), row("1"), row("1.1")]);
+    expect(tree.roots.map((node) => node.requirement)).toEqual([row("1", "and"), row("1")]);
+    expect(tree.roots[0].children.map((node) => node.requirement.level)).toEqual(["1.1"]);
+  });
+
   test("holds no depth limit", () => {
     const levels = ["1", "1.1", "1.1.1", "1.1.1.1", "1.1.1.1.1", "1.1.1.1.1.1"];
     const tree = RequirementTree.fromRows(levels.map((level, i) => row(level, i < levels.length - 1 ? "and" : null)));

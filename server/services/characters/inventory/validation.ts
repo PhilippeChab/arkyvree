@@ -72,14 +72,14 @@ async function validateItemRequirements(
   // auto-resolve on lookup. No manual canonicalize needed.
   const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
   const templateRequirements = item.sourceItemId ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? []) : [];
-  const requirements = [...templateRequirements, ...ownRequirements];
-  if (requirements.length === 0) return;
+  if (ownRequirements.length === 0 && templateRequirements.length === 0) return;
 
   const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
   const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
   await detailedCharacter.build(tx);
 
-  const issues = detailedCharacter.getUnmetRequirementIssues([requirements]);
+  // Two entities' requirements, each its own group: their levels each start at "1"
+  const issues = detailedCharacter.getUnmetRequirementIssues([templateRequirements, ownRequirements]);
   if (issues.length > 0) {
     throw new BadRequestError("Character does not meet the requirements to equip this item", { issues });
   }

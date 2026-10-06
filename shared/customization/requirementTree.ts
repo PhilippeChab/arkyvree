@@ -41,8 +41,10 @@ export function getParentLevel(level: string): string | null {
 }
 
 /**
- * The tree of an entity's requirement rows (levels unique, as the database holds them). A row whose parent isn't among
- * them is a root. A row under a condition, which groups nothing, is detached: in no node, for the caller to report.
+ * The tree of requirement rows. A row whose parent isn't among them is a root. A row under a condition, which groups
+ * nothing, is detached: in no node, for the caller to report. An entity's levels are unique (the database holds them
+ * so); rows that share one (two entities' rows put together) each keep a node, and a row under that level hangs from
+ * the first of them.
  */
 export default class RequirementTree<R extends RequirementRow> {
   private constructor(roots: RequirementNode<R>[], detached: R[]) {
@@ -51,21 +53,20 @@ export default class RequirementTree<R extends RequirementRow> {
   }
 
   static fromRows<R extends RequirementRow>(rows: readonly R[]): RequirementTree<R> {
-    const sorted = [...rows].sort((a, b) => compareLevels(a.level, b.level));
-    const nodes = new Map<string, RequirementNode<R>>();
-    for (const requirement of sorted) {
-      if (!nodes.has(requirement.level)) nodes.set(requirement.level, { requirement, children: [] });
-    }
+    const nodes = [...rows]
+      .sort((a, b) => compareLevels(a.level, b.level))
+      .map((requirement): RequirementNode<R> => ({ requirement, children: [] }));
+    // What a row under a level hangs from: the first row at it
+    const byLevel = new Map<string, RequirementNode<R>>();
+    for (const node of nodes) if (!byLevel.has(node.requirement.level)) byLevel.set(node.requirement.level, node);
     const roots: RequirementNode<R>[] = [];
     const detached: R[] = [];
-    for (const requirement of sorted) {
-      const node = nodes.get(requirement.level);
-      if (node?.requirement !== requirement) continue;
-      const parentLevel = getParentLevel(requirement.level);
-      const parent = parentLevel === null ? undefined : nodes.get(parentLevel);
+    for (const node of nodes) {
+      const parentLevel = getParentLevel(node.requirement.level);
+      const parent = parentLevel === null ? undefined : byLevel.get(parentLevel);
       if (!parent) roots.push(node);
       else if (parent.requirement.chainingOperator) parent.children.push(node);
-      else detached.push(requirement);
+      else detached.push(node.requirement);
     }
     return new RequirementTree(roots, detached);
   }
