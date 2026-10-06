@@ -744,4 +744,20 @@ describe("frontend rules", () => {
       ),
     ).toEqual(["expand-arrows client/src/swapped.tsx", "expand-arrows client/src/swapped.tsx"]);
   });
+
+  test("a button that starts a request shows it running", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/bare.tsx":
+            "export const b = <Button onClick={() => m.mutate()} disabled={m.isPending}>Mark All as Read</Button>;\n",
+          "client/src/spun.tsx":
+            '<Button onClick={() => m.mutate()} disabled={m.isPending}><DiceSpinner size="small" loading={m.isPending}>Save</DiceSpinner></Button>;\n',
+          "client/src/opener.tsx":
+            "export const o = <Button onClick={() => setOpen(true)} disabled={m.isPending}>Revoke Link</Button>;\n",
+        },
+        ["pending-buttons"],
+      ),
+    ).toEqual(["pending-buttons client/src/bare.tsx"]);
+  });
 });

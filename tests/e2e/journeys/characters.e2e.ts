@@ -197,7 +197,7 @@ test.describe("Characters", () => {
     expect(statSync((await file.path())!).size).toBeGreaterThan(0);
 
     await dialog.getByRole("button", { name: /Revoke Link/i }).click();
-    await dialog.getByRole("button", { name: /^Revoke$/ }).click();
+    await owner.getByRole("dialog", { name: "Revoke Link" }).getByRole("button", { name: "Revoke Link" }).click();
     await expect(dialog.getByRole("button", { name: /Generate Link/i })).toBeVisible({ timeout: 5000 });
     const revoked = anyone.waitForResponse((r) => /\/api\/shared\/characters\/[A-Za-z0-9_-]+$/.test(r.url()));
     await anyone.goto(shareUrl);

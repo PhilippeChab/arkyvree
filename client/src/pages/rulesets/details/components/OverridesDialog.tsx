@@ -162,7 +162,15 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                               disabled={revertMutation.isPending}
                               sx={{ flexShrink: 0, ml: 0.5 }}
                             >
-                              <RestoreIcon fontSize="small" />
+                              <DiceSpinner
+                                size="small"
+                                loading={
+                                  revertMutation.isPending &&
+                                  revertMutation.variables?.sourceEntityId === change.sourceEntityId
+                                }
+                              >
+                                <RestoreIcon fontSize="small" />
+                              </DiceSpinner>
                             </IconButton>
                           </Tooltip>
                         )}

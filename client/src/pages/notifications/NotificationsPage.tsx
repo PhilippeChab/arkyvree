@@ -6,6 +6,7 @@ import {
   CREATED_SORTS,
   DataTable,
   type DataTableColumn,
+  DiceSpinner,
   type FilterOption,
   LoadError,
   LoadMoreButton,
@@ -87,7 +88,9 @@ export default function NotificationsPage() {
                 borderRadius: 2,
               }}
             >
-              Mark All as Read
+              <DiceSpinner size="small" loading={actions.markAllRead.isPending}>
+                Mark All as Read
+              </DiceSpinner>
             </Button>
           }
         />

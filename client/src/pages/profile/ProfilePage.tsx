@@ -224,7 +224,9 @@ export default function ProfilePage() {
                   onClick={() => cancelEmailChangeMutation.mutate()}
                   disabled={cancelEmailChangeMutation.isPending}
                 >
-                  Cancel
+                  <DiceSpinner size="small" loading={cancelEmailChangeMutation.isPending}>
+                    Cancel
+                  </DiceSpinner>
                 </Button>
               </Stack>
             }

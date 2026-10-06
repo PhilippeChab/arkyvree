@@ -4,6 +4,7 @@ import type { InferResponseType } from "hono/client";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useNotificationActions } from "@/client/src/hooks/index.ts";
@@ -108,7 +109,9 @@ export function NotificationBell() {
                 onClick={() => actions.markAllRead.mutate(undefined, { onSuccess: () => setAnchorEl(null) })}
                 disabled={actions.markAllRead.isPending}
               >
-                Mark All as Read
+                <DiceSpinner size="small" loading={actions.markAllRead.isPending}>
+                  Mark All as Read
+                </DiceSpinner>
               </Button>
             </Stack>,
             <Divider key="divider" />,

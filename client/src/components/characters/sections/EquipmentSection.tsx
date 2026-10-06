@@ -279,7 +279,9 @@ export function EquipmentSection({
               disabled={addMutation.isPending || updateMutation.isPending}
               sx={{ whiteSpace: "nowrap" }}
             >
-              Proceed Anyway
+              <DiceSpinner size="small" loading={addMutation.isPending || updateMutation.isPending}>
+                Proceed Anyway
+              </DiceSpinner>
             </Button>
           )
         }

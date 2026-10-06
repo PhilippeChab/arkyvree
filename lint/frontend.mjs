@@ -68,6 +68,7 @@
  * - `tag-chips`: a role, a status or a fact is a `TagChip`, and a chip's color is its `color` prop.
  * - `expand-arrows`: a row or a header that shows or hides what's under it is the toggle (`toggleProps`) and shows
  *   its state with `ExpandArrow`; a component's own arrow (`expandIcon`) stays its own.
+ * - `pending-buttons`: a button that starts a request shows it running, its label in a `DiceSpinner`.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -901,6 +902,30 @@ function createPageErrors(context) {
   };
 }
 
+function createPendingButtons(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXElement(node) {
+      const name = elementName(node);
+      if (name !== "Button" && name !== "IconButton") return;
+      const attribute = (key) =>
+        node.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === key);
+      const onClick = attribute("onClick");
+      const disabled = attribute("disabled");
+      if (!onClick || !disabled) return;
+      const mutates = context.sourceCode.getText(onClick).includes(".mutate(");
+      const waits = context.sourceCode.getText(disabled).includes("isPending");
+      if (!mutates || !waits || holdsSpinner(node)) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          'A button that starts a request shows it running: its label in `<DiceSpinner size="small" loading={…}>`, ' +
+          "disabled the while.",
+      });
+    },
+  };
+}
+
 function createQueryKeyRule(context) {
   if (!inClient(context) || repoPath(context.filename) === "client/src/lib/queryKeys.ts") return {};
   return {
@@ -1208,6 +1233,13 @@ function headingVariants(object) {
   return values.filter((v) => v?.type === "Literal" && /^h[1-6]$/.test(v.value));
 }
 
+/** Whether a JSX element holds a `DiceSpinner` somewhere inside it. */
+function holdsSpinner(element) {
+  return element.children.some(
+    (child) => child.type === "JSXElement" && (elementName(child) === "DiceSpinner" || holdsSpinner(child)),
+  );
+}
+
 function inClient(context) {
   return repoPath(context.filename).startsWith("client/src/");
 }
@@ -1459,4 +1491,5 @@ export default {
   "page-errors": { meta: { type: "suggestion" }, create: createPageErrors },
   "tag-chips": { meta: { type: "suggestion" }, create: createTagChips },
   "expand-arrows": { meta: { type: "suggestion" }, create: createExpandArrows },
+  "pending-buttons": { meta: { type: "suggestion" }, create: createPendingButtons },
 };

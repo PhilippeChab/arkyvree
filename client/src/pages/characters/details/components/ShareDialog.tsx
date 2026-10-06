@@ -12,7 +12,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
 import { CopyIcon, RefreshIcon, UnlinkIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -115,44 +115,20 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
                   onClick={() => generateMutation.mutate()}
                   disabled={isLoading}
                 >
-                  Regenerate
+                  <DiceSpinner size="small" loading={generateMutation.isPending}>
+                    Regenerate
+                  </DiceSpinner>
                 </Button>
-                {confirmRevoke ? (
-                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      Are you sure?
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      color="error"
-                      onClick={() => revokeMutation.mutate()}
-                      disabled={isLoading}
-                    >
-                      Revoke
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="inherit"
-                      onClick={() => setConfirmRevoke(false)}
-                      disabled={isLoading}
-                    >
-                      Cancel
-                    </Button>
-                  </Stack>
-                ) : (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="error"
-                    startIcon={<UnlinkIcon />}
-                    onClick={() => setConfirmRevoke(true)}
-                    disabled={isLoading}
-                  >
-                    Revoke Link
-                  </Button>
-                )}
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="error"
+                  startIcon={<UnlinkIcon />}
+                  onClick={() => setConfirmRevoke(true)}
+                  disabled={isLoading}
+                >
+                  Revoke Link
+                </Button>
               </Stack>
             </>
           ) : (
@@ -175,6 +151,16 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
           Close
         </Button>
       </DialogActions>
+      <ConfirmDialog
+        open={confirmRevoke}
+        onClose={() => setConfirmRevoke(false)}
+        onConfirm={() => revokeMutation.mutate()}
+        isLoading={revokeMutation.isPending}
+        title="Revoke Link"
+        message="Are you sure you want to revoke this share link? Anyone who has it loses access."
+        confirmLabel="Revoke Link"
+        confirmColor="error"
+      />
     </Modal>
   );
 }
