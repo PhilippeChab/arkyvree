@@ -78,9 +78,7 @@ export function DetailPageHeader({
             ))}
           </Stack>
         )}
-        <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>
-          {description}
-        </Typography>
+        <Typography sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>{description}</Typography>
         {children}
       </Box>
     </Stack>

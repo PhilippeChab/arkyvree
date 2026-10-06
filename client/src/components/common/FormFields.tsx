@@ -7,6 +7,7 @@
 import {
   FormControlLabel,
   MenuItem,
+  Stack,
   Switch,
   type SxProps,
   TextField,
@@ -39,6 +40,10 @@ interface EmailFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
   label?: string;
 }
 
+interface FieldRowProps {
+  children: ReactNode;
+}
+
 /** A text field's own props: the form gives its value, change, error and ref. */
 type FormTextFieldProps<T extends FieldValues> = BoundFieldProps<T> &
   Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "inputRef" | "error"> & {
@@ -69,19 +74,19 @@ interface SelectFieldProps<T extends FieldValues> {
   /** The choices; a plain string is both value and label. */
   options: readonly SelectOption[];
   rules?: ControllerProps<T>["rules"];
-  /** A first choice for no value ("None"); picking it stores null. */
-  emptyLabel?: string;
+  /** A first choice, "None", and what picking it stores: null for a reference, "" for a text column. */
+  none?: null | "";
   /** Shown under it while its value has no error. */
   helperText?: ReactNode;
   disabled?: boolean;
-  size?: "small" | "medium";
-  margin?: "normal";
   sx?: SxProps<Theme>;
   /** Loads more options as the open menu nears its end (see `createListboxScrollHandler`). */
   onMenuScroll?: UIEventHandler<HTMLElement>;
+  /** Follows the field's own change, for what it changes too. */
+  onChange?: (value: string | null) => void;
 }
 
-type SelectOption = string | { value: string; label: ReactNode; disabled?: boolean };
+type SelectOption = string | { value: string | number; label: ReactNode; disabled?: boolean };
 
 interface SwitchFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
   label: string;
@@ -107,7 +112,6 @@ export function DescriptionField<T extends FieldValues>({ rows = 3, placeholder,
     <FormTextField
       {...field}
       label="Description"
-      fullWidth
       multiline
       minRows={rows}
       placeholder={placeholder}
@@ -118,16 +122,15 @@ export function DescriptionField<T extends FieldValues>({ rows = 3, placeholder,
 
 /** An email address, validated by `emailRules`. */
 export function EmailField<T extends FieldValues>({ label = "Email", ...field }: EmailFieldProps<T>) {
+  return <FormTextField {...field} label={label} type="email" slotProps={{ htmlInput: { autoComplete: "email" } }} />;
+}
+
+/** Fields side by side from a tablet up, stacked on a phone: as far apart as the form's own fields. */
+export function FieldRow({ children }: FieldRowProps) {
   return (
-    <FormTextField
-      {...field}
-      label={label}
-      type="email"
-      variant="outlined"
-      fullWidth
-      margin="normal"
-      slotProps={{ htmlInput: { autoComplete: "email" } }}
-    />
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
+      {children}
+    </Stack>
   );
 }
 
@@ -148,6 +151,7 @@ export function FormTextField<T extends FieldValues>({
     <TextField
       {...props}
       {...field}
+      fullWidth
       // On the input, so a failed submit focuses it
       inputRef={ref}
       value={value === undefined || value === null || (number && Number.isNaN(value)) ? "" : value}
@@ -163,22 +167,12 @@ export function FormTextField<T extends FieldValues>({
 
 /** An entity's name, validated by `nameRules`. */
 export function NameField<T extends FieldValues>({ label = "Name", helperText, ...field }: NameFieldProps<T>) {
-  return <FormTextField {...field} label={label} helperText={helperText} fullWidth />;
+  return <FormTextField {...field} label={label} helperText={helperText} />;
 }
 
 /** A password: `autoComplete` tells password managers whether to fill the saved one or suggest a new one. */
 export function PasswordField<T extends FieldValues>({ label, autoComplete, ...field }: PasswordFieldProps<T>) {
-  return (
-    <FormTextField
-      {...field}
-      label={label}
-      type="password"
-      variant="outlined"
-      fullWidth
-      margin="normal"
-      slotProps={{ htmlInput: { autoComplete } }}
-    />
-  );
+  return <FormTextField {...field} label={label} type="password" slotProps={{ htmlInput: { autoComplete } }} />;
 }
 
 /** A labeled select bound to a form field; a value missing from the options (not loaded yet) shows empty. */
@@ -188,13 +182,12 @@ export function SelectField<T extends FieldValues>({
   label,
   options,
   rules,
-  emptyLabel,
+  none,
   helperText,
   disabled,
-  size,
-  margin,
   sx,
   onMenuScroll,
+  onChange,
 }: SelectFieldProps<T>) {
   const choices = options.map((option) => (typeof option === "string" ? { value: option, label: option } : option));
   return (
@@ -211,12 +204,14 @@ export function SelectField<T extends FieldValues>({
           fullWidth
           label={label}
           value={choices.some((choice) => choice.value === field.value) ? field.value : ""}
-          onChange={(event) => field.onChange(emptyLabel && !event.target.value ? null : event.target.value)}
+          onChange={(event) => {
+            const value = none === null && event.target.value === "" ? null : event.target.value;
+            field.onChange(value);
+            onChange?.(value);
+          }}
           error={!!fieldState.error}
           helperText={fieldState.error?.message ?? helperText}
           disabled={disabled}
-          size={size}
-          margin={margin}
           sx={sx}
           slotProps={
             onMenuScroll && {
@@ -224,7 +219,7 @@ export function SelectField<T extends FieldValues>({
             }
           }
         >
-          {emptyLabel && <MenuItem value="">{emptyLabel}</MenuItem>}
+          {none !== undefined && <MenuItem value="">None</MenuItem>}
           {choices.map((choice) => (
             <MenuItem key={choice.value} value={choice.value} disabled={choice.disabled}>
               {choice.label}

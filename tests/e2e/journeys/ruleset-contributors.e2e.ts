@@ -42,7 +42,7 @@ test.describe("Ruleset contributors", () => {
       invitee.locator("tr", { hasText: forkName }).filter({ has: invitee.getByRole("button", { name: "Reject" }) }),
     ).toHaveCount(0, { timeout: 10_000 });
     await invitee.goto("/rulesets");
-    await expect(invitee.locator(`h6:has-text("${forkName}")`)).toHaveCount(0);
+    await expect(invitee.getByRole("heading", { name: forkName, level: 2 })).toHaveCount(0);
 
     await owner.context().close();
     await invitee.context().close();
@@ -67,7 +67,7 @@ test.describe("Ruleset contributors", () => {
     await left;
 
     await expect(contributor).toHaveURL(/\/rulesets(\?|$)/, { timeout: 15_000 });
-    await expect(contributor.locator(`h6:has-text("${forkName}")`)).toHaveCount(0);
+    await expect(contributor.getByRole("heading", { name: forkName, level: 2 })).toHaveCount(0);
     await contributor.goto(`/rulesets/${forkId}`);
     await expect(contributor.getByRole("heading", { name: forkName })).toHaveCount(0, { timeout: 5000 });
 

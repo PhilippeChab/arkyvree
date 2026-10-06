@@ -18,7 +18,7 @@ export function PublicLayout() {
             `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
         }}
       >
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+        <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography
             variant="h6"
             noWrap

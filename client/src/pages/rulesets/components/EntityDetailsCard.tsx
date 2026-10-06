@@ -43,21 +43,19 @@ export function EntityDetailsCard({ title, chips, description, readOnlyBody, edi
         </Box>
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
           {edit ? (
-            <form onSubmit={edit.onSubmit}>
-              <Stack spacing={2}>
-                {edit.fields}
-                <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
-                  <Button type="submit" variant="contained" disabled={!edit.canSave || edit.isSaving}>
-                    <DiceSpinner size="small" loading={edit.isSaving}>
-                      Save
-                    </DiceSpinner>
-                  </Button>
-                </Stack>
+            <Stack component="form" spacing={3} onSubmit={edit.onSubmit} noValidate>
+              {edit.fields}
+              <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
+                <Button type="submit" variant="contained" disabled={!edit.canSave || edit.isSaving}>
+                  <DiceSpinner size="small" loading={edit.isSaving}>
+                    Save
+                  </DiceSpinner>
+                </Button>
               </Stack>
-            </form>
+            </Stack>
           ) : (
             (readOnlyBody ?? (
-              <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+              <Typography sx={{ color: "text.secondary", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
                 {description || NO_DESCRIPTION}
               </Typography>
             ))

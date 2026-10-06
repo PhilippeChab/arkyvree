@@ -76,7 +76,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
                   select
                   fullWidth
                   size="small"
-                  label="Spell list"
+                  label="Spell List"
                   value={listId ?? ""}
                   onChange={(e) => setChosenListId(e.target.value)}
                 >

@@ -48,6 +48,71 @@ describe("frontend rules", () => {
     ]);
   });
 
+  test("a dialog is laid out by the theme: a plain title, no dividers, no top gap, its prose a DialogContentText", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/titled.tsx": "export const t = <DialogTitle>Contributors</DialogTitle>;\n",
+          "client/src/helped.tsx":
+            'export const h = (\n  <DialogTitle>\n    <HelpLabel label="Modifiers" help="x" />\n  </DialogTitle>\n);\n',
+          "client/src/iconed.tsx":
+            "export const i = (\n  <DialogTitle>\n    <CompareIcon /> Changes\n  </DialogTitle>\n);\n",
+          "client/src/styled.tsx": 'export const s = <DialogTitle sx={{ display: "flex" }}>Changes</DialogTitle>;\n',
+          "client/src/divided.tsx": "export const d = <DialogContent dividers>x</DialogContent>;\n",
+          "client/src/spaced.tsx":
+            "export const p = (\n  <DialogContent>\n    <Stack spacing={3} sx={{ mt: 1 }} />\n  </DialogContent>\n);\n",
+          "client/src/prose.tsx":
+            'export const r = (\n  <DialogContent>\n    <Stack spacing={3}>\n      <Typography variant="body2">x</Typography>\n    </Stack>\n  </DialogContent>\n);\n',
+          "client/src/texted.tsx":
+            'export const x = (\n  <DialogContent>\n    <Stack spacing={3}>\n      <DialogContentText>x</DialogContentText>\n      <Typography variant="subtitle2">y</Typography>\n    </Stack>\n  </DialogContent>\n);\n',
+          "client/src/paper.tsx": 'export const a = <Modal sx={{ "& .MuiDialog-paper": { height: "90vh" } }} />;\n',
+        },
+        ["dialog-conventions"],
+      ),
+    ).toEqual([
+      "dialog-conventions client/src/divided.tsx",
+      "dialog-conventions client/src/iconed.tsx",
+      "dialog-conventions client/src/paper.tsx",
+      "dialog-conventions client/src/prose.tsx",
+      "dialog-conventions client/src/spaced.tsx",
+      "dialog-conventions client/src/styled.tsx",
+    ]);
+  });
+
+  test("a form is a noValidate Stack, its fields spaced by it, one size and look, its selects SelectFields", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/form.tsx":
+            'export const f = (\n  <Stack component="form" spacing={3} noValidate>\n    <NameField control={c} name="name" />\n    <FieldRow>\n      <FormTextField control={c} name="a" />\n    </FieldRow>\n  </Stack>\n);\n',
+          "client/src/raw.tsx": "export const r = <form onSubmit={submit} />;\n",
+          "client/src/validated.tsx": 'export const v = <Stack component="form" onSubmit={submit} />;\n',
+          "client/src/margined.tsx": 'export const m = <TextField label="x" margin="normal" />;\n',
+          "client/src/selected.tsx": 'export const s = <FormTextField control={c} name="hd" select />;\n',
+          "client/src/bound.tsx": "export const b = <TextField select inputRef={field.ref} value={field.value} />;\n",
+          "client/src/filter.tsx": 'export const t = <TextField select size="small" value={level} />;\n',
+          "client/src/sized.tsx": 'export const z = <FormTextField control={c} name="a" size="small" />;\n',
+          "client/src/outlined.tsx": 'export const o = <TextField label="x" variant="outlined" />;\n',
+          "client/src/rowed.tsx":
+            'export const w = (\n  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>\n    <FormTextField control={c} name="a" />\n  </Stack>\n);\n',
+          "client/src/gapped.tsx":
+            'export const g = (\n  <Stack spacing={1}>\n    {open && <SelectField control={c} name="a" label="A" options={[]} />}\n  </Stack>\n);\n',
+        },
+        ["forms"],
+      ),
+    ).toEqual([
+      "forms client/src/bound.tsx",
+      "forms client/src/gapped.tsx",
+      "forms client/src/margined.tsx",
+      "forms client/src/outlined.tsx",
+      "forms client/src/raw.tsx",
+      "forms client/src/rowed.tsx",
+      "forms client/src/selected.tsx",
+      "forms client/src/sized.tsx",
+      "forms client/src/validated.tsx",
+    ]);
+  });
+
   test("a query key starts from lib/queryKeys.ts", async () => {
     expect(
       await lintRepo(
@@ -530,6 +595,10 @@ describe("frontend rules", () => {
           "client/src/gridded.tsx":
             'export const r = <Box sx={{ display: "grid", gap: 2, "& .row": { display: "flex" } }} />;\n',
           "client/src/toolbar.tsx": 'export const o = <Toolbar sx={{ display: "flex", gap: 1 }} />;\n',
+          "client/src/paper.tsx":
+            'export const p = <Paper sx={{ p: 1, ...(compact ? { display: "flex" } : { minHeight: 9 }) }} />;\n',
+          "client/src/inner.tsx":
+            'export const i = (\n  <Paper>\n    <Stack sx={{ height: "100%" }} />\n  </Paper>\n);\n',
         },
         ["flex-layout"],
       ),
@@ -538,6 +607,8 @@ describe("frontend rules", () => {
       "flex-layout client/src/boxed.tsx",
       "flex-layout client/src/called.tsx",
       "flex-layout client/src/gapped.tsx",
+      "flex-layout client/src/paper.tsx",
+      "flex-layout client/src/toolbar.tsx",
       "flex-layout client/src/turned.tsx",
     ]);
   });
@@ -552,17 +623,25 @@ describe("frontend rules", () => {
           "client/src/placed.tsx":
             'export const p = <Tooltip title="x" placement="right" describeChild><span /></Tooltip>;\n',
           "client/src/opened.tsx": "export const o = <Collapse in={open} unmountOnExit />;\n",
+          "client/src/gapped.tsx": "export const g = <Stack useFlexGap spacing={2} />;\n",
+          "client/src/filled.tsx": 'export const f = <Chip label="x" variant="filled" />;\n',
+          "client/src/body.tsx": 'export const b = <Typography variant="body1">x</Typography>;\n',
+          "client/src/kept.tsx":
+            'export const k = <><Chip label="x" variant="outlined" /><Typography variant="body2">x</Typography></>;\n',
         },
         ["component-defaults"],
       ),
     ).toEqual([
       "component-defaults client/src/arrowed.tsx",
+      "component-defaults client/src/body.tsx",
       "component-defaults client/src/delayed.tsx",
+      "component-defaults client/src/filled.tsx",
+      "component-defaults client/src/gapped.tsx",
       "component-defaults client/src/timed.tsx",
     ]);
   });
 
-  test("a button's, a menu item's and a dialog's words are in Title Case", async () => {
+  test("a button's, a menu item's, a field's and a dialog's words are in Title Case", async () => {
     expect(
       await lintRepo(
         {
@@ -575,12 +654,18 @@ describe("frontend rules", () => {
           "client/src/tooltip.tsx":
             'export const o = <Tooltip title="Opens the sheet in a new tab"><span /></Tooltip>;\n',
           "client/src/chip.tsx": 'export const p = <Chip label="not equipped" />;\n',
+          "client/src/field.tsx": 'export const f = <TextField select label="Spell list" value={id} />;\n',
+          "client/src/bound.tsx": 'export const n = <EmailField control={c} name="email" label="Email address" />;\n',
+          "client/src/labelled.tsx":
+            'export const l = <FormTextField control={c} name="a" label="Area of Effect" />;\n',
         },
         ["label-case"],
       ),
     ).toEqual([
+      "label-case client/src/bound.tsx",
       "label-case client/src/button.tsx",
       "label-case client/src/dialog.tsx",
+      "label-case client/src/field.tsx",
       "label-case client/src/menu.tsx",
       "label-case client/src/titled.tsx",
     ]);
@@ -730,7 +815,7 @@ describe("frontend rules", () => {
     ).toEqual(["dialog-conventions client/src/icon.tsx", "dialog-conventions client/src/toolbar.tsx"]);
   });
 
-  test("a toggle shows its state with ExpandArrow, an accordion with its own expandIcon", async () => {
+  test("a toggle shows its state with ExpandArrow, an accordion with its own expandIcon, and a row keeps its role", async () => {
     expect(
       await lintRepo(
         {
@@ -739,10 +824,18 @@ describe("frontend rules", () => {
             "export const a = <Stack {...toggleProps(open, toggle)}><ExpandArrow open={open} /></Stack>;\n",
           "client/src/accordion.tsx":
             "export const c = <AccordionSummary expandIcon={<ExpandMoreIcon />}>Diagnostics</AccordionSummary>;\n",
+          "client/src/row.tsx": 'export const r = <TableRow {...toggleProps(open, toggle, "row")} />;\n',
+          "client/src/rowless.tsx": "export const w = <TableRow {...toggleProps(open, toggle)} />;\n",
+          "client/src/header.tsx": 'export const h = <Stack {...(has && toggleProps(open, toggle, "row"))} />;\n',
         },
         ["expand-arrows"],
       ),
-    ).toEqual(["expand-arrows client/src/swapped.tsx", "expand-arrows client/src/swapped.tsx"]);
+    ).toEqual([
+      "expand-arrows client/src/header.tsx",
+      "expand-arrows client/src/rowless.tsx",
+      "expand-arrows client/src/swapped.tsx",
+      "expand-arrows client/src/swapped.tsx",
+    ]);
   });
 
   test("a button that starts a request shows it running", async () => {

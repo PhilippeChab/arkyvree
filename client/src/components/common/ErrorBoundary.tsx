@@ -52,7 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
               color: "text.secondary",
             }}
           >
-            <Typography variant="body1">Updating — please refresh if this persists.</Typography>
+            <Typography>Updating — please refresh if this persists.</Typography>
           </Stack>
         </ThemeProvider>
       );
@@ -80,7 +80,7 @@ export class ErrorBoundary extends Component<Props, State> {
             >
               A Critical Failure
             </Typography>
-            <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 420, lineHeight: 1.7 }}>
+            <Typography sx={{ color: "text.secondary", maxWidth: 420, lineHeight: 1.7 }}>
               You rolled a natural 1.
               <br />
               Something broke unexpectedly.

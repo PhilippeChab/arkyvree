@@ -537,9 +537,7 @@ export default function RulesetDetailsPage() {
         )}
 
         <Modal open={contributorsDialogOpen} onClose={() => setContributorsDialogOpen(false)} maxWidth="md">
-          <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <ContributorsIcon /> Contributors
-          </DialogTitle>
+          <DialogTitle>Contributors</DialogTitle>
           <DialogContent>
             <ContributorsSection ruleset={ruleset} onLeave={() => navigate("/rulesets")} />
           </DialogContent>

@@ -81,7 +81,7 @@ function SubscribeExtensionForm({
                 return <Chip key={key} label={option.name} size="small" {...tagProps} />;
               })
             }
-            renderInput={(params) => <TextField {...params} label="Select extensions" />}
+            renderInput={(params) => <TextField {...params} label="Select Extensions" />}
             fullWidth
             slotProps={{
               listbox: {

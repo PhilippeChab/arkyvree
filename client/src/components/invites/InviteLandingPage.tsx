@@ -61,9 +61,7 @@ function InviteStateCard({ icon, title, children, action }: InviteStateCardProps
           <Typography component="h1" variant="h5" gutterBottom>
             {title}
           </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary", mb: 3 }}>
-            {children}
-          </Typography>
+          <Typography sx={{ color: "text.secondary", mb: 3 }}>{children}</Typography>
           {action}
         </CardContent>
       </Card>
@@ -204,14 +202,7 @@ export function InviteLandingPage({
   if (!isAnswering && invite.status !== "Pending") {
     return (
       <InviteStateCard
-        icon={
-          <Chip
-            label={invite.status}
-            color={invite.status === "Rejected" ? "error" : "default"}
-            size="medium"
-            sx={{ mb: 2 }}
-          />
-        }
+        icon={<Chip label={invite.status} color={invite.status === "Rejected" ? "error" : "default"} sx={{ mb: 2 }} />}
         title={`Invitation ${invite.status}`}
         action={goToDashboard}
       >
@@ -249,9 +240,7 @@ export function InviteLandingPage({
               </Box>
             </Stack>
 
-            <Typography variant="body1" sx={{ mb: 4 }}>
-              {description}
-            </Typography>
+            <Typography sx={{ mb: 4 }}>{description}</Typography>
 
             <InviteActionButtons
               prominent

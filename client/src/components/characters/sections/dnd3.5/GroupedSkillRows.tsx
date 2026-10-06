@@ -54,7 +54,7 @@ export function GroupedSkillRows<S extends { name: string }>({
         return (
           <TableRow
             key={`group-${row.prefix}`}
-            {...toggleProps(isExpanded, () => toggle(row.prefix))}
+            {...toggleProps(isExpanded, () => toggle(row.prefix), "row")}
             sx={{ bgcolor: "action.hover", ...CLICKABLE_SX }}
           >
             <TableCell sx={{ fontWeight: 600 }}>

@@ -24,7 +24,7 @@ interface ReviewItemProps {
 /** A named pick of the review ("Power Attack"). */
 function ReviewItem({ name, note }: ReviewItemProps) {
   return (
-    <Typography variant="body1">
+    <Typography>
       <strong>{name}</strong>
       {note}
     </Typography>

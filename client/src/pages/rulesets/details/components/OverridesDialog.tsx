@@ -20,7 +20,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { Link } from "react-router-dom";
 
-import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { BlankState, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
 import { CompareIcon, RestoreIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -100,19 +100,14 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
 
   return (
     <Modal open={open} onClose={onClose}>
-      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <CompareIcon />
-        Local Changes
-      </DialogTitle>
+      <DialogTitle>Local Changes</DialogTitle>
       <DialogContent sx={{ maxHeight: "60vh" }}>
         {isLoading && <DiceSpinner sx={{ py: 4 }} />}
         <Collapse in={!isLoading && !!changes && changes.length === 0} unmountOnExit>
-          <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>
-            No local changes
-          </Typography>
+          <BlankState icon={CompareIcon} title="No local changes" />
         </Collapse>
         <Collapse in={!isLoading && !!changes && changes.length > 0} unmountOnExit>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack spacing={2}>
             {[...grouped.entries()].map(([entityType, items]) => (
               <Paper key={entityType} variant="outlined" sx={{ overflow: "hidden" }}>
                 <Stack direction="row" spacing={1} sx={{ px: 2, py: 1, bgcolor: "action.hover", alignItems: "center" }}>

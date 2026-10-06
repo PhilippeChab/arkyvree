@@ -1,4 +1,4 @@
-import { Box, Button, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Button, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
 
 import { DiceIcon } from "@/client/src/components/icons/index.ts";
 
@@ -24,7 +24,7 @@ export function AddHpStep({ wizard }: AddHpStepProps) {
         </Button>
       </Stack>
       {levels.map((level, index) => (
-        <Box key={index}>
+        <Stack key={index} spacing={2}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <Typography component="h3" variant="h6">
               Set HP for {level.className} Level {level.nextLevel}
@@ -34,7 +34,7 @@ export function AddHpStep({ wizard }: AddHpStepProps) {
             </IconButton>
             <Chip label="MAX" size="small" variant="outlined" onClick={() => onHpChange(index, level.hd)} />
           </Stack>
-          <Typography variant="body2" sx={{ color: "text.secondary" }} gutterBottom>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             Enter HP gain (1 to {level.hd}). Average: {Math.ceil(level.hd / 2)}, Maximum: {level.hd}
           </Typography>
           <TextField
@@ -46,12 +46,11 @@ export function AddHpStep({ wizard }: AddHpStepProps) {
               onHpChange(index, isNaN(val) ? null : Math.max(1, Math.min(val, level.hd)));
             }}
             fullWidth
-            margin="normal"
             slotProps={{
               htmlInput: { min: 1, max: level.hd, step: 1 },
             }}
           />
-        </Box>
+        </Stack>
       ))}
     </Stack>
   );

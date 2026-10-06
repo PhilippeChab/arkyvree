@@ -2,11 +2,12 @@ import {
   Button,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
+  Divider,
   IconButton,
   Stack,
   Tooltip,
-  Typography,
 } from "@mui/material";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
@@ -61,18 +62,18 @@ export function BulkVariantsDialog({
       maxWidth="md"
       slotProps={{ paper: { sx: { maxHeight: "85vh" } } }}
     >
-      <form onSubmit={form.handleSubmit(submit)}>
+      <Stack component="form" onSubmit={form.handleSubmit(submit)} noValidate>
         <DialogTitle>Create Variants of {baseItemName}</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          <Stack spacing={3}>
+            <DialogContentText>
               Each variant copies the base item's cost, weight, type, and slot. You'll be able to customize them
               individually after.
-            </Typography>
-            <Stack spacing={3}>
+            </DialogContentText>
+            <Stack spacing={3} divider={<Divider />}>
               {fields.map((field, index) => (
                 <Stack key={field.id} direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
-                  <Stack spacing={1} sx={{ flex: 1 }}>
+                  <Stack spacing={3} sx={{ flex: 1 }}>
                     <FormTextField
                       control={form.control}
                       name={`variants.${index}.name`}
@@ -80,15 +81,11 @@ export function BulkVariantsDialog({
                         required: "Name is required",
                       }}
                       label="Name"
-                      size="small"
-                      fullWidth
                     />
                     <FormTextField
                       control={form.control}
                       name={`variants.${index}.description`}
                       label="Description"
-                      size="small"
-                      fullWidth
                       multiline
                       minRows={1}
                     />
@@ -132,7 +129,7 @@ export function BulkVariantsDialog({
             </DiceSpinner>
           </Button>
         </DialogActions>
-      </form>
+      </Stack>
     </FormDialog>
   );
 }

@@ -10,6 +10,7 @@ export { DiceSpinner } from "./DiceSpinner.tsx";
 export {
   DescriptionField,
   EmailField,
+  FieldRow,
   FormTextField,
   NameField,
   PasswordField,

@@ -47,7 +47,7 @@ export function VerificationCodeInput({ digits, onChange, error }: VerificationC
   };
 
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box>
       <Stack direction="row" spacing={1} sx={{ justifyContent: "center" }}>
         {digits.map((digit, index) => (
           <TextField

@@ -1,4 +1,4 @@
-import { Box, Link as MuiLink, Typography } from "@mui/material";
+import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -37,7 +37,7 @@ export default function SignUp() {
 
   return (
     <AuthPage error={error} title="Sign Up">
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <Stack component="form" spacing={3} onSubmit={handleSubmit(onSubmit)} noValidate>
         <EmailField control={control} name="emailAddress" rules={emailRules} />
 
         <PasswordField
@@ -57,7 +57,7 @@ export default function SignUp() {
         />
 
         <AuthSubmitButton loading={auth.pending}>Sign Up</AuthSubmitButton>
-      </form>
+      </Stack>
       <GoogleSignInSection
         label="Sign up with Google"
         disabled={auth.pending}

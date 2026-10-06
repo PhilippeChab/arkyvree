@@ -129,7 +129,7 @@ function GroupedRow({
       <>
         <TableRow
           hover
-          {...toggleProps(isExpanded, () => onToggleFamily(family))}
+          {...toggleProps(isExpanded, () => onToggleFamily(family), "row")}
           sx={{ ...CLICKABLE_SX, ...fadeInUpSx(rowIndex) }}
         >
           <TableCell>

@@ -1,4 +1,4 @@
-import { Card, type CardProps } from "@mui/material";
+import { Card, type CardProps, Stack } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { type ReactNode } from "react";
 
@@ -32,8 +32,6 @@ export function StyledCard({
       {...(onClick && clickableProps(onClick))}
       sx={{
         height: "100%",
-        display: "flex",
-        flexDirection: "column",
         borderColor: isArchived ? "warning.light" : "divider",
         borderRadius: 3,
         overflow: "hidden",
@@ -79,7 +77,7 @@ export function StyledCard({
       }}
       {...props}
     >
-      {children}
+      <Stack sx={{ height: "100%" }}>{children}</Stack>
     </Card>
   );
 }

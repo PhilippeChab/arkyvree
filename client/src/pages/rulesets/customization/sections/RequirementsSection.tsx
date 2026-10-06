@@ -293,8 +293,6 @@ export function RequirementsSection({
                 <Chip
                   label={requirement.level}
                   size="small"
-                  color="default"
-                  variant="filled"
                   sx={{ fontWeight: 700, minWidth: 32, fontFamily: "monospace" }}
                 />
 

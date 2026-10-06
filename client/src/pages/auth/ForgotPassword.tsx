@@ -1,4 +1,4 @@
-import { Box, Link as MuiLink, Typography } from "@mui/material";
+import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -36,11 +36,11 @@ export default function ForgotPassword() {
       title="Forgot Password"
       subtitle="Enter your email address and we'll send you a code to reset your password."
     >
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <Stack component="form" spacing={3} onSubmit={handleSubmit(onSubmit)} noValidate>
         <EmailField control={control} name="emailAddress" rules={emailRules} />
 
         <AuthSubmitButton loading={auth.pending}>Send Reset Code</AuthSubmitButton>
-      </form>
+      </Stack>
       <Box sx={{ mt: 2, textAlign: "center" }}>
         <Typography variant="body2">
           <MuiLink component={Link} to="/sign-in" underline="hover">

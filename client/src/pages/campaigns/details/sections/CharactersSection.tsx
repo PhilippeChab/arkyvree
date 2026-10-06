@@ -264,7 +264,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
     <Modal open={open} onClose={onClose}>
       <DialogTitle>Link Character to Campaign</DialogTitle>
       <DialogContent>
-        <Stack spacing={3} sx={{ mt: 2 }}>
+        <Stack spacing={3}>
           <Autocomplete
             options={unlinkedCharacters}
             getOptionLabel={(option) => option.name}
@@ -303,7 +303,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
               {VISIBILITY_OPTIONS.map((option) => (
                 <MenuItem key={option} value={option}>
                   <Box>
-                    <Typography variant="body1">{option}</Typography>
+                    <Typography>{option}</Typography>
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
                       {VISIBILITY_DESCRIPTIONS[option]}
                     </Typography>
@@ -378,7 +378,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
         searchPlaceholder="Search characters..."
         actions={
           !campaign.deletedAt && (
-            <Button variant="contained" startIcon={<AddIcon />} size="medium" onClick={() => setLinkDialogOpen(true)}>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setLinkDialogOpen(true)}>
               Link Character
             </Button>
           )

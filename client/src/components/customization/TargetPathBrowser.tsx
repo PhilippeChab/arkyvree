@@ -181,7 +181,6 @@ export function TargetPathBrowser({
             <Chip
               label={segmentLabels[segment] || formatSegment(segment)}
               size="small"
-              variant="filled"
               color={isComplete ? "success" : "info"}
               onClick={disabled ? undefined : () => handleBreadcrumbClick(index)}
               sx={{ cursor: disabled ? "default" : "pointer" }}

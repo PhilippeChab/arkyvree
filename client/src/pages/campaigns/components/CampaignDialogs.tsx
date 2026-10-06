@@ -94,10 +94,9 @@ function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
     <FormTextField
       control={form.control}
       name="email"
-      label="Email address"
+      label="Email Address"
       placeholder="Enter an email to send an invite..."
       type="email"
-      fullWidth
       disabled={isLoading}
     />
   );
@@ -260,7 +259,7 @@ export function EditPlayerDialog({ open, onClose, form, onSubmit, isLoading, slo
 
       {pendingInvite ? (
         <TextField
-          label="Invited email"
+          label="Invited Email"
           fullWidth
           value={pendingInvite.usersInAccount?.emailAddress ?? pendingInvite.email ?? ""}
           disabled

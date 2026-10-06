@@ -52,7 +52,6 @@ export function SkillFormFields({ form, abilities }: SkillFormFieldsProps) {
           number
           label="Armor Check Penalty Multiplier"
           type="number"
-          fullWidth
         />
       )}
       <SwitchField control={form.control} name="usableWithoutTraining" label="Usable Without Training" />

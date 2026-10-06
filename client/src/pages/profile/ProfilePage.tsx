@@ -244,15 +244,17 @@ export default function ProfilePage() {
             <AttachmentField recordType="User" recordId={userData?.id} name="avatar" variant="avatar" size={140} />
 
             <Box sx={{ flex: 1, width: "100%" }}>
-              <form onSubmit={profileSync.handleSubmit((data) => profileMutation.mutate(data))} noValidate>
+              <Stack
+                component="form"
+                spacing={3}
+                onSubmit={profileSync.handleSubmit((data) => profileMutation.mutate(data))}
+                noValidate
+              >
                 <FormTextField
                   control={profileForm.control}
                   name="username"
                   rules={usernameRules}
                   label="Username"
-                  variant="outlined"
-                  fullWidth
-                  margin="normal"
                   helperText={profileErrors.username?.message || "Optional: Choose a display name"}
                 />
 
@@ -263,18 +265,12 @@ export default function ProfilePage() {
                   label="Email Address"
                 />
 
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  sx={{ mt: 2 }}
-                  disabled={profileMutation.isPending}
-                >
+                <Button type="submit" variant="contained" sx={{ mt: 2 }} disabled={profileMutation.isPending}>
                   <DiceSpinner size="small" loading={profileMutation.isPending}>
                     Save Changes
                   </DiceSpinner>
                 </Button>
-              </form>
+              </Stack>
             </Box>
           </Stack>
         </ProfileCard>
@@ -286,7 +282,7 @@ export default function ProfilePage() {
             sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}
           >
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-              <Typography variant="body1">Google</Typography>
+              <Typography>Google</Typography>
               {isGoogleLinked && <Chip label="Linked" size="small" color="success" />}
             </Stack>
             <Box sx={{ width: { xs: "100%", sm: 200 } }}>
@@ -315,7 +311,12 @@ export default function ProfilePage() {
         </ProfileCard>
 
         <ProfileCard title={hasPassword ? "Change Password" : "Set Password"}>
-          <form onSubmit={passwordForm.handleSubmit((data) => passwordMutation.mutate(data))} noValidate>
+          <Stack
+            component="form"
+            spacing={3}
+            onSubmit={passwordForm.handleSubmit((data) => passwordMutation.mutate(data))}
+            noValidate
+          >
             {hasPassword && (
               <PasswordField
                 control={passwordForm.control}
@@ -342,18 +343,12 @@ export default function ProfilePage() {
               autoComplete="new-password"
             />
 
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              sx={{ mt: 2 }}
-              disabled={passwordMutation.isPending}
-            >
+            <Button type="submit" variant="contained" sx={{ mt: 2 }} disabled={passwordMutation.isPending}>
               <DiceSpinner size="small" loading={passwordMutation.isPending}>
                 {hasPassword ? "Update Password" : "Set Password"}
               </DiceSpinner>
             </Button>
-          </form>
+          </Stack>
         </ProfileCard>
 
         <ProfileCard title="Delete Account" danger>

@@ -26,7 +26,10 @@ export function clickableProps(onActivate: () => void) {
   };
 }
 
-/** A row or a header that shows or hides what's under it, reachable from the keyboard, saying whether it's open. */
-export function toggleProps(open: boolean, onToggle: () => void) {
-  return { ...clickableProps(onToggle), "aria-expanded": open };
+/**
+ * A header or a table row that shows or hides what's under it, reachable from the keyboard, saying whether it's open:
+ * a header is a button, a table row keeps its role.
+ */
+export function toggleProps(open: boolean, onToggle: () => void, role: "button" | "row" = "button") {
+  return { ...clickableProps(onToggle), role, "aria-expanded": open };
 }

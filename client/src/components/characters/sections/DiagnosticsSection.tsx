@@ -135,7 +135,7 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
           const isOpen = expanded.has(key);
           return (
             <Fragment key={key}>
-              <TableRow hover {...toggleProps(isOpen, () => toggle(key))} sx={CLICKABLE_SX}>
+              <TableRow hover {...toggleProps(isOpen, () => toggle(key), "row")} sx={CLICKABLE_SX}>
                 <TableCell sx={{ ...tableCellSx, pr: 0 }}>
                   <ExpandArrow open={isOpen} />
                 </TableCell>

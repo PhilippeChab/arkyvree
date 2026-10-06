@@ -63,7 +63,7 @@ function AuthFooterLinks() {
         rel="noopener noreferrer"
         variant="body2"
         underline="hover"
-        sx={{ color: "text.secondary", display: "inline-flex", alignItems: "center", minHeight: 44 }}
+        sx={{ color: "text.secondary", py: 1.5 }}
       >
         Source
       </MuiLink>

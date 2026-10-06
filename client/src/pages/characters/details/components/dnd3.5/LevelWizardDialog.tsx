@@ -72,77 +72,72 @@ export function LevelWizardDialog({
         if (reason !== "backdropClick" && !isSaving) wizard.handleCancel();
       }}
       maxWidth="md"
-      sx={{
-        ...(!isMobile && {
-          "& .MuiDialog-paper": {
-            height: "90vh",
-            maxHeight: "90vh",
-          },
-        }),
-      }}
+      slotProps={{ paper: { sx: { height: { sm: "90vh" }, maxHeight: { sm: "90vh" } } } }}
     >
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent sx={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        {/* Validation errors */}
-        <AnimatedAlert
-          in={wizard.validationErrors.length > 0}
-          severity="warning"
-          onClose={() => wizard.setValidationErrors([])}
-          action={
-            <Button
-              size="small"
-              variant="outlined"
-              color="warning"
-              onClick={wizard.handleForceSubmit}
-              disabled={isSaving}
-              sx={{ whiteSpace: "nowrap" }}
-            >
-              Proceed Anyway
-            </Button>
-          }
-          sx={{
-            mb: 2,
-            "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 },
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-            Validation warnings
-          </Typography>
-          <ValidationIssueList issues={wizard.validationErrors} />
-        </AnimatedAlert>
+      <DialogContent sx={{ height: "100%", overflow: "hidden" }}>
+        <Stack sx={{ height: "100%" }}>
+          {/* Validation errors */}
+          <AnimatedAlert
+            in={wizard.validationErrors.length > 0}
+            severity="warning"
+            onClose={() => wizard.setValidationErrors([])}
+            action={
+              <Button
+                size="small"
+                variant="outlined"
+                color="warning"
+                onClick={wizard.handleForceSubmit}
+                disabled={isSaving}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                Proceed Anyway
+              </Button>
+            }
+            sx={{
+              mb: 2,
+              "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 },
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+              Validation warnings
+            </Typography>
+            <ValidationIssueList issues={wizard.validationErrors} />
+          </AnimatedAlert>
 
-        {/* Stepper */}
-        <Stepper
-          activeStep={wizard.activeStep}
-          alternativeLabel={isMobile}
-          sx={{
-            mb: 3,
-            flexShrink: 0,
-            "& .MuiStepLabel-iconContainer": {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            },
-            "& svg text": {
-              dominantBaseline: "middle",
-              textAnchor: "middle",
-            },
-            ...(isMobile && {
-              "& .MuiStepLabel-label": {
-                typography: "caption",
+          {/* Stepper */}
+          <Stepper
+            activeStep={wizard.activeStep}
+            alternativeLabel={isMobile}
+            sx={{
+              mb: 3,
+              flexShrink: 0,
+              "& .MuiStepLabel-iconContainer": {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               },
-            }),
-          }}
-        >
-          {stepLabels.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+              "& svg text": {
+                dominantBaseline: "middle",
+                textAnchor: "middle",
+              },
+              ...(isMobile && {
+                "& .MuiStepLabel-label": {
+                  typography: "caption",
+                },
+              }),
+            }}
+          >
+            {stepLabels.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
 
-        {/* Step content */}
-        <Stack sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>{children}</Stack>
+          {/* Step content */}
+          <Stack sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>{children}</Stack>
+        </Stack>
       </DialogContent>
       <DialogActions sx={{ flexShrink: 0 }}>
         <Button onClick={wizard.handleCancel} disabled={isSaving} variant="outlined" color="inherit">

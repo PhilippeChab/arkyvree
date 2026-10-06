@@ -97,7 +97,6 @@ export function AddClassPlanStep({
             <Chip
               label={`${selectedKlass.name} — Level ${selectedKlass.nextLevel}`}
               onDelete={() => onRemoveLevel(index)}
-              size="medium"
               sx={{
                 typography: "body1",
                 height: 46,

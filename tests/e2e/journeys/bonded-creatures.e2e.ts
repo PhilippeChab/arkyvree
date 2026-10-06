@@ -27,7 +27,7 @@ test.describe("A bonded creature", () => {
 
       await page.goto(`/characters/${masterId}`);
       // The feat's details hold the creature's summary
-      await page.getByRole("button", { name: `Show ${feat} details` }).click();
+      await page.getByRole("button", { name: feat, exact: true }).click();
       const link = page.getByRole("link", { name: creature, exact: true });
       await expect(link).toBeVisible();
       // The summary: the innermost block holding the link and its stats
@@ -41,7 +41,7 @@ test.describe("A bonded creature", () => {
       // Its sheet is the master's to change: it has no levels to add
       await expect(page.getByRole("button", { name: "Add Level" })).toHaveCount(0);
 
-      await page.getByRole("link", { name: "Back" }).click();
+      await page.getByRole("link", { name: "Back", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/characters/${masterId}$`));
       await expect(page.getByRole("heading", { name: master, level: 1 })).toBeVisible();
     });

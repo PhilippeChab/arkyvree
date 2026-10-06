@@ -1,7 +1,13 @@
 import { Autocomplete, Chip, Stack, TextField, Typography } from "@mui/material";
 import { Controller, useController, type UseFormReturn } from "react-hook-form";
 
-import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
+import {
+  DescriptionField,
+  FieldRow,
+  FormTextField,
+  NameField,
+  SelectField,
+} from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
 import type { RulesetSave } from "@/client/src/hooks/index.ts";
 import { nameRules } from "@/client/src/lib/validation.ts";
@@ -39,58 +45,42 @@ interface TagsFieldProps {
   options: readonly string[];
 }
 
-/** A select's first choice, for a spell without one: the API stores it as "". */
-const NONE = { value: "", label: "None" };
-
 function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
   return (
     <>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <SelectField control={form.control} name="school" label="School" options={[NONE, ...SPELL_SCHOOLS]} />
-        <SelectField control={form.control} name="subschool" label="Subschool" options={[NONE, ...SPELL_SUBSCHOOLS]} />
-      </Stack>
+      <FieldRow>
+        <SelectField control={form.control} name="school" label="School" none="" options={SPELL_SCHOOLS} />
+        <SelectField control={form.control} name="subschool" label="Subschool" none="" options={SPELL_SUBSCHOOLS} />
+      </FieldRow>
       <TagsField form={form} name="descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+      <FieldRow>
         <FormTextField
           control={form.control}
           name="castingTime"
           label="Casting Time"
-          fullWidth
           placeholder='e.g., "1 standard action"'
         />
-        <SelectField control={form.control} name="rangeType" label="Range" options={[NONE, ...SPELL_RANGE_TYPES]} />
-      </Stack>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <FormTextField
-          control={form.control}
-          name="target"
-          label="Target"
-          fullWidth
-          placeholder='e.g., "One creature"'
-        />
+        <SelectField control={form.control} name="rangeType" label="Range" none="" options={SPELL_RANGE_TYPES} />
+      </FieldRow>
+      <FieldRow>
+        <FormTextField control={form.control} name="target" label="Target" placeholder='e.g., "One creature"' />
         <FormTextField
           control={form.control}
           name="areaOfEffect"
           label="Area of Effect"
-          fullWidth
           placeholder='e.g., "20-ft. radius"'
         />
-      </Stack>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <FormTextField
-          control={form.control}
-          name="duration"
-          label="Duration"
-          fullWidth
-          placeholder='e.g., "1 round/level"'
-        />
+      </FieldRow>
+      <FieldRow>
+        <FormTextField control={form.control} name="duration" label="Duration" placeholder='e.g., "1 round/level"' />
         <SelectField
           control={form.control}
           name="spellResistance"
           label="Spell Resistance"
-          options={[NONE, ...SPELL_RESISTANCE_OPTIONS]}
+          none=""
+          options={SPELL_RESISTANCE_OPTIONS}
         />
-      </Stack>
+      </FieldRow>
       <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />
     </>
   );
@@ -139,14 +129,13 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
         control={form.control}
         name="saveId"
         label="Saving Throw"
-        emptyLabel="None"
+        none={null}
         options={saves.map((save) => ({ value: save.id, label: save.name }))}
       />
       <FormTextField
         control={form.control}
         name="saveEffect"
         label="Save Effect"
-        fullWidth
         placeholder='e.g., "negates", "half", "partial"'
       />
       {!hideProperties && <SpellPropertyFields form={form} />}

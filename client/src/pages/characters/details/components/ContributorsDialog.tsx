@@ -1,4 +1,4 @@
-import { Button, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
+import { Button, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
@@ -92,12 +92,10 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
     <>
       <Modal open={open} onClose={onClose}>
         <DialogTitle>Contributors</DialogTitle>
-        <DialogContent dividers>
+        <DialogContent>
           <Stack spacing={2}>
             <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Contributors can edit this character and download its PDF.
-              </Typography>
+              <DialogContentText>Contributors can edit this character and download its PDF.</DialogContentText>
               {canInvite ? (
                 <Button variant="contained" startIcon={<AddIcon />} onClick={() => setInviteOpen(true)}>
                   Invite

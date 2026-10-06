@@ -15,7 +15,7 @@ export function AddReviewStep({ wizard }: AddReviewStepProps) {
         {classPlan
           .filter((klass) => klass !== null)
           .map((klass, i) => (
-            <Typography key={i} variant="body1">
+            <Typography key={i}>
               <strong>{klass.name}</strong> Level {klass.nextLevel}
               {hpValues[i] != null && <> — HP: +{hpValues[i]}</>}
             </Typography>
@@ -24,7 +24,7 @@ export function AddReviewStep({ wizard }: AddReviewStepProps) {
       {increases.length > 0 && (
         <ReviewGroup title="Attribute Increases">
           {increases.map(([index, abilityId]) => (
-            <Typography key={index} variant="body1">
+            <Typography key={index}>
               <strong>{attributeName(attributeData, abilityId)}</strong> +1
             </Typography>
           ))}

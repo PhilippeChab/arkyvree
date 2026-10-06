@@ -6,13 +6,12 @@ import { faqTooltip } from "./faqTooltip.tsx";
 
 interface FaqHelpIconProps {
   text: string;
-  size?: number;
 }
 
-export function FaqHelpIcon({ text, size = 16 }: FaqHelpIconProps) {
+export function FaqHelpIcon({ text }: FaqHelpIconProps) {
   return (
     <Tooltip title={faqTooltip(text)}>
-      <HelpIcon sx={{ fontSize: size, color: "text.secondary", cursor: "help" }} />
+      <HelpIcon fontSize="compact" sx={{ color: "text.secondary", cursor: "help" }} />
     </Tooltip>
   );
 }

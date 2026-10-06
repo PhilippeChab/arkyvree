@@ -27,7 +27,7 @@ export function Footer() {
         variant="caption"
         color="inherit"
         underline="hover"
-        sx={{ display: "inline-flex", alignItems: "center", minHeight: 44, px: 1 }}
+        sx={{ py: 1.5, px: 1 }}
       >
         Source
       </MuiLink>

@@ -8,7 +8,7 @@ import { signIn } from "@/tests/e2e/support/signIn.ts";
 /** Opens the core rules. */
 async function openCoreRuleset(page: Page) {
   await visitCoreRulesetList(page);
-  await page.locator('h6:has-text("Core SRD 3.5")').first().click();
+  await page.getByRole("heading", { name: "Core SRD 3.5", level: 2 }).first().click();
   await expect(page).toHaveURL(/\/rulesets\/[a-f0-9-]+/);
 }
 
@@ -35,7 +35,7 @@ test.describe("Rulesets", () => {
     await forked;
     await expect(page.getByRole("heading", { name })).toBeVisible({ timeout: 15_000 });
     await page.goto("/rulesets?scope=forked");
-    await expect(page.locator(`h6:has-text("${name}")`)).toBeVisible();
+    await expect(page.getByRole("heading", { name, level: 2 })).toBeVisible();
   });
 
   test("a fork's name and description can be changed", async ({ page }) => {
@@ -69,10 +69,10 @@ test.describe("Rulesets", () => {
     await expect(page).toHaveURL(/\/rulesets$/, { timeout: 15_000 });
     // The list has rendered before we check what it lacks.
     await expect(page.getByRole("textbox", { name: "Search rulesets..." })).toBeVisible();
-    await expect(page.locator(`h6:has-text("${name}")`)).toHaveCount(0);
+    await expect(page.getByRole("heading", { name, level: 2 })).toHaveCount(0);
     await filterList(page, /^Archived$/);
     await expect(page).toHaveURL(/scope=archived/);
-    await page.locator(`h6:has-text("${name}")`).first().click();
+    await page.getByRole("heading", { name, level: 2 }).first().click();
     await expect(page.locator("text=/^Archived$/").first()).toBeVisible();
 
     const unarchived = apiResponse(page, "POST", /\/api\/rulesets\/[a-f0-9-]+\/unarchive/);
@@ -95,7 +95,7 @@ test.describe("Rulesets", () => {
 
     await expect(page.locator("text=/^Published$/").first()).toBeVisible({ timeout: 15_000 });
     await page.goto("/rulesets?scope=community");
-    await expect(page.locator(`h6:has-text("${name}")`)).toBeVisible();
+    await expect(page.getByRole("heading", { name, level: 2 })).toBeVisible();
   });
 
   test("searching the feats narrows the list, and clearing the search restores it", async ({ page }) => {
@@ -159,7 +159,7 @@ test.describe("A starred ruleset", () => {
     // The card opens the ruleset when clicked: press its star button, not the card.
     const star = (name: string) =>
       page
-        .locator('h6:has-text("Core SRD 3.5")')
+        .getByRole("heading", { name: "Core SRD 3.5", level: 2 })
         .first()
         .locator('xpath=ancestor::*[contains(@class, "MuiCard-root")][1]')
         .getByRole("button", { name, exact: true });
@@ -172,6 +172,6 @@ test.describe("A starred ruleset", () => {
     const unstarred = apiResponse(page, "DELETE", /\/api\/rulesets\/[a-f0-9-]+\/star/);
     await star("Unstar ruleset").click();
     await unstarred;
-    await expect(page.locator('h6:has-text("Core SRD 3.5")')).toHaveCount(0, { timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Core SRD 3.5", level: 2 })).toHaveCount(0, { timeout: 15_000 });
   });
 });

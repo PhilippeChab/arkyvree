@@ -11,7 +11,7 @@ for (const operation of ["delete", "revert"] as const) {
     test(`${kind} creation racing ${operation} leaves no orphan customization`, async ({ page, ownerUser }) => {
       await signIn(page, ownerUser.email, ownerUser.password);
       await visitCoreRulesetList(page);
-      await page.locator('h6:has-text("Core SRD 3.5")').first().click();
+      await page.getByRole("heading", { name: "Core SRD 3.5", level: 2 }).first().click();
       const baseId = page.url().match(/\/rulesets\/([a-f0-9-]+)/)?.[1];
       expect(baseId).toBeTruthy();
       await page.getByRole("tab", { name: "Races" }).click();

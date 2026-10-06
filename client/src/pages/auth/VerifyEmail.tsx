@@ -1,4 +1,4 @@
-import { Box, Link as MuiLink, Typography } from "@mui/material";
+import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { Controller } from "react-hook-form";
 import { Link, Navigate, useLocation } from "react-router-dom";
 
@@ -57,7 +57,7 @@ export default function VerifyEmail() {
         </>
       }
     >
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <Stack component="form" spacing={3} onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <Controller
           control={form.control}
           name="digits"
@@ -67,7 +67,7 @@ export default function VerifyEmail() {
         <AuthSubmitButton loading={auth.pending} disabled={!isComplete}>
           Verify
         </AuthSubmitButton>
-      </form>
+      </Stack>
       <Box sx={{ textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
           Don't see it? Check your spam or junk folder.

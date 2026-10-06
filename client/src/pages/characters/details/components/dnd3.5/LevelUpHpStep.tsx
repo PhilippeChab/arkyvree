@@ -1,4 +1,4 @@
-import { Box, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
@@ -14,7 +14,7 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
   if (!selectedClass) return <DiceSpinner />;
 
   return (
-    <Box>
+    <Stack spacing={2}>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <Typography component="h3" variant="h6">
           Set HP for Level {selectedClass.nextLevel}
@@ -36,7 +36,7 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
           disabled={hpRolling}
         />
       </Stack>
-      <Typography variant="body2" sx={{ color: "text.secondary" }} gutterBottom>
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
         Enter HP gain (1 to {selectedClass.hd}). Average: {Math.ceil(selectedClass.hd / 2)}, Maximum: {selectedClass.hd}
       </Typography>
       <TextField
@@ -51,7 +51,6 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
         inputRef={field.ref}
         disabled={hpRolling}
         fullWidth
-        margin="normal"
         sx={{
           ...(hpSettled && {
             animation: ANIMATIONS.settledPulse,
@@ -65,6 +64,6 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
           },
         }}
       />
-    </Box>
+    </Stack>
   );
 }

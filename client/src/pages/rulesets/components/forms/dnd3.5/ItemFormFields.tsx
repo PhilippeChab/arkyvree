@@ -1,8 +1,7 @@
-import { MenuItem, TextField } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { useController, type UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 
-import { DescriptionField, FormTextField, NameField } from "@/client/src/components/common/index.ts";
+import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { nameRules } from "@/client/src/lib/validation.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -31,41 +30,24 @@ function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorP
     queryFn: () => parseResponse(rpc.api.rulesets[":id"].templates.$get({ param: { id: rulesetId }, query: { type } })),
   });
 
-  const { field } = useController({ control: form.control, name: "sourceItemId" });
-  const rawValue = field.value || "";
-  // Empty until the templates load (a value with no option is out of range); one this ruleset no longer has shows as "None".
-  const value = templates?.some((t) => t.id === rawValue) ? rawValue : "";
-
+  // A template this ruleset no longer has shows as "None"
   return (
-    <TextField
-      name={field.name}
+    <SelectField
+      control={form.control}
+      name="sourceItemId"
       label={`${type} Template`}
-      fullWidth
-      select
-      value={value}
-      onChange={field.onChange}
-      onBlur={field.onBlur}
-      inputRef={field.ref}
+      none=""
+      options={(templates ?? []).map((t) => ({ value: t.id, label: t.name }))}
       disabled={isLoading || disabled}
-    >
-      <MenuItem value="">None</MenuItem>
-      {templates?.map((t) => (
-        <MenuItem key={t.id} value={t.id}>
-          {t.name}
-        </MenuItem>
-      ))}
-    </TextField>
+    />
   );
 }
 
 export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProps) {
-  const { field: typeField } = useController({ control: form.control, name: "type" });
-  const itemType = typeField.value;
+  const itemType = form.watch("type");
   const isTemplate = form.watch("isTemplate");
 
-  const handleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newType = e.target.value;
-    typeField.onChange(newType);
+  const handleTypeChange = (newType: string | null) => {
     if (isTemplateType(newType)) {
       form.setValue("slot", "", { shouldDirty: true });
       form.setValue("sourceItemId", "", { shouldDirty: true });
@@ -82,7 +64,6 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
         rules={{ pattern: DECIMAL_PATTERN }}
         label="Cost (gp)"
         type="text"
-        fullWidth
         slotProps={{
           htmlInput: { inputMode: "decimal" },
         }}
@@ -93,40 +74,30 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
         rules={{ pattern: DECIMAL_PATTERN }}
         label="Weight (lbs)"
         type="text"
-        fullWidth
         slotProps={{
           htmlInput: { inputMode: "decimal" },
         }}
       />
-      <TextField
-        name={typeField.name}
+      <SelectField
+        control={form.control}
+        name="type"
         label="Item Type"
-        fullWidth
-        select
-        value={itemType || ""}
+        none=""
+        options={ITEM_TYPE_OPTIONS}
         onChange={handleTypeChange}
-        onBlur={typeField.onBlur}
-        inputRef={typeField.ref}
         disabled={lockType}
-      >
-        <MenuItem value="">None</MenuItem>
-        {ITEM_TYPE_OPTIONS.map((opt) => (
-          <MenuItem key={opt} value={opt}>
-            {opt}
-          </MenuItem>
-        ))}
-      </TextField>
+      />
       {isTemplateType(itemType) ? (
         !isTemplate && <TemplateSelector form={form} rulesetId={rulesetId} type={itemType} disabled={lockType} />
       ) : (
-        <FormTextField control={form.control} name="slot" label="Slot" fullWidth select disabled={lockType}>
-          <MenuItem value="">None</MenuItem>
-          {LOCATION_OPTIONS.map((slot) => (
-            <MenuItem key={slot} value={slot}>
-              {slot}
-            </MenuItem>
-          ))}
-        </FormTextField>
+        <SelectField
+          control={form.control}
+          name="slot"
+          label="Slot"
+          none=""
+          options={LOCATION_OPTIONS}
+          disabled={lockType}
+        />
       )}
     </>
   );

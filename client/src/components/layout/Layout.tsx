@@ -239,7 +239,7 @@ export function Layout() {
             `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
         }}
       >
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+        <Toolbar sx={{ justifyContent: "space-between" }}>
           {isMobile ? (
             <IconButton
               color="inherit"
@@ -346,8 +346,6 @@ export function Layout() {
                     ...(onboardingHighlightId === item.id && {
                       boxShadow: `0 0 0 2px ${gold}, 0 0 12px ${goldFaint}`,
                     }),
-                    display: "flex",
-                    alignItems: "center",
                     justifyContent: isMobile || effectiveExpanded ? "flex-start" : "center",
                     px: isMobile || effectiveExpanded ? 2 : 1.5,
                     py: 1,

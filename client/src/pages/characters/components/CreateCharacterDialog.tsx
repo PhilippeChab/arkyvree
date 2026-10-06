@@ -9,6 +9,7 @@ import {
   BaseRulesetAlert,
   CreateDialog,
   DescriptionField,
+  FieldRow,
   FormTextField,
   NameField,
   RulesetPicker,
@@ -108,37 +109,41 @@ function AbilityCard({
     <Paper
       variant="outlined"
       sx={{
-        p: 1.5,
         minWidth: 100,
         flex: "1 1 0",
-        textAlign: "center",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "space-between",
-        minHeight: 100,
         ...(isSettled && {
           animation: ANIMATIONS.settledPulse,
         }),
       }}
     >
-      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-        {name}
-      </Typography>
-      <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "center" }}>
-        <IconButton size="small" aria-label={`Lower ${name}`} onClick={onDecrease} disabled={!canDecrease}>
-          <DecrementIcon fontSize="small" />
-        </IconButton>
-        <Typography component="p" variant="h6" sx={{ minWidth: 28 }}>
-          {score}
+      <Stack
+        sx={{
+          height: "100%",
+          minHeight: 100,
+          p: 1.5,
+          textAlign: "center",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          {name}
         </Typography>
-        <IconButton size="small" aria-label={`Raise ${name}`} onClick={onIncrease} disabled={!canIncrease}>
-          <AddIcon fontSize="small" />
-        </IconButton>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "center" }}>
+          <IconButton size="small" aria-label={`Lower ${name}`} onClick={onDecrease} disabled={!canDecrease}>
+            <DecrementIcon fontSize="small" />
+          </IconButton>
+          <Typography component="p" variant="h6" sx={{ minWidth: 28 }}>
+            {score}
+          </Typography>
+          <IconButton size="small" aria-label={`Raise ${name}`} onClick={onIncrease} disabled={!canIncrease}>
+            <AddIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          {bottomInfo}
+        </Typography>
       </Stack>
-      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-        {bottomInfo}
-      </Typography>
     </Paper>
   );
 }
@@ -229,7 +234,7 @@ function AbilityScoresSection({ ref, abilities, control, onRollingChange, method
   }
 
   return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+    <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
         const isSettled = settledIds.has(ability.id);
         const displayValue = rolling
@@ -270,7 +275,7 @@ function PointBuyScores({ abilities, abilityValues, onChange }: PointBuyScoresPr
   const pointsRemaining = POINT_BUY_TOTAL - pointsSpent;
 
   return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+    <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
         const score = abilityValues?.[ability.id] ?? 8;
         const costNow = POINT_BUY_COSTS[score] ?? 0;
@@ -316,7 +321,7 @@ function StandardArrayScores({ abilities, abilityValues, onChange }: StandardArr
   const sortedAsc = useMemo(() => [...STANDARD_ARRAY].sort((a, b) => a - b), []);
 
   return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+    <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
         const score = abilityValues?.[ability.id] ?? STANDARD_ARRAY[0];
         const idx = sortedAsc.indexOf(score);
@@ -547,7 +552,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
       <Typography component="h3" variant="h6">
         Basic Information
       </Typography>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+      <FieldRow>
         <NameField control={control} name="name" rules={nameRules} label="Character Name" />
         <FormTextField
           control={control}
@@ -556,11 +561,10 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
           number
           label="Experience Points"
           type="number"
-          fullWidth
         />
-      </Stack>
+      </FieldRow>
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+      <FieldRow>
         <Controller
           name="rulesetId"
           control={control}
@@ -598,9 +602,9 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
           disabled={!selectedRulesetId}
           onMenuScroll={handleRacesScroll}
         />
-      </Stack>
+      </FieldRow>
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+      <FieldRow>
         <SelectField
           control={control}
           name="alignment"
@@ -615,7 +619,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
           rules={{ required: "Gender is required" }}
           options={GENDER_OPTIONS}
         />
-      </Stack>
+      </FieldRow>
 
       {/* Ability Scores */}
       <Typography component="h3" variant="h6">
@@ -676,7 +680,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
           method={rollMethod}
         />
       ) : (
-        <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+        <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} variant="rounded" height={100} sx={{ minWidth: 100, flex: "1 1 0" }} />
           ))}
@@ -687,7 +691,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
       <Typography component="h3" variant="h6">
         Physical Details
       </Typography>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+      <FieldRow>
         <FormTextField
           control={control}
           name="age"
@@ -696,17 +700,16 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
           label="Age"
           type="number"
           slotProps={{ htmlInput: { min: 1 } }}
-          fullWidth
         />
-        <FormTextField control={control} name="height" label="Height" placeholder="e.g., 5 feet 8 inches" fullWidth />
-        <FormTextField control={control} name="weight" label="Weight" placeholder="e.g., 150 lbs, 68kg" fullWidth />
-      </Stack>
+        <FormTextField control={control} name="height" label="Height" placeholder="e.g., 5 feet 8 inches" />
+        <FormTextField control={control} name="weight" label="Weight" placeholder="e.g., 150 lbs, 68kg" />
+      </FieldRow>
 
       {/* Optional Details */}
       <Typography component="h3" variant="h6">
         Optional Details
       </Typography>
-      <FormTextField control={control} name="deity" label="Deity" fullWidth />
+      <FormTextField control={control} name="deity" label="Deity" />
       <DescriptionField
         control={control}
         name="description"
@@ -719,7 +722,6 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
         multiline
         minRows={3}
         placeholder="Campaign notes, character development, reminders..."
-        fullWidth
         sx={{ "& textarea": { resize: "vertical" } }}
       />
     </CreateDialog>

@@ -49,7 +49,7 @@ test.describe("A fork's entities", () => {
       await expect(page.getByLabel("Name", { exact: true })).toHaveValue(`${name} renamed`, { timeout: 10_000 });
 
       // The section lists it under its new name, and opens it
-      await page.getByRole("link", { name: "Back" }).click();
+      await page.getByRole("link", { name: "Back", exact: true }).click();
       await page.getByPlaceholder(/^Search /).fill(name);
       // The search applied (the header and its one row), so the list doesn't re-render under the click
       await expect(page).toHaveURL(/[?&]search=/);

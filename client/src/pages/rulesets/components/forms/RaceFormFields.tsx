@@ -18,7 +18,7 @@ export function RaceFormFields({ form }: RaceFormFieldsProps) {
       <NameField control={form.control} name="name" rules={nameRules} />
       <DescriptionField control={form.control} name="description" />
       <SelectField control={form.control} name="size" label="Size" options={SIZE_OPTIONS} />
-      <FormTextField control={form.control} name="baseSpeed" number label="Base Speed (feet)" type="number" fullWidth />
+      <FormTextField control={form.control} name="baseSpeed" number label="Base Speed (feet)" type="number" />
     </>
   );
 }

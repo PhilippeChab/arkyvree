@@ -6,6 +6,9 @@
  *   name the button. The attributes are written out: a spread (`{...buttonProps}`) doesn't count, whatever it holds.
  * - `dialog-conventions`: a `Dialog` goes full screen on a phone (`fullScreen={isMobile}`), and a form is never in a
  *   `Modal`, which skips the guard that keeps a dirty form open (`FormDialog`, `CreateDialog` and `EditDialog` have it).
+ *   A dialog is laid out by the theme: its title is its text (a `HelpLabel` when it has help), its content has no
+ *   `dividers` and sets no gap under the title, its prose is `DialogContentText`, and its paper is styled through
+ *   `slotProps.paper`.
  * - `query-keys`: every query key comes from `lib/queryKeys.ts`: a key written as an array starts by spreading one
  *   (`[...queryKeys.rulesets.section(id, "feats"), search]`).
  * - `client-apis`: a mutation runs with `.mutate()` and its callbacks, never `.mutateAsync()`, and a loader is a
@@ -51,10 +54,14 @@
  * - `borders`: a border is the theme's shorthand (`border: 1`), its color `borderColor`, its style `borderStyle`; a
  *   `Paper` or `Card` takes its elevation and its outline as props (`elevation`, `variant="outlined"`).
  * - `flex-layout`: a flex container is a `Stack`, its `direction` and `spacing` props (`useFlexGap`, the theme's
- *   default, makes `spacing` a gap), never a `Box` with a flex `display`.
+ *   default, makes `spacing` a gap), never another element with a flex `display`: a surface (`Paper`, `Card`,
+ *   `DialogContent`) holds a `Stack`.
+ * - `forms`: a form is a `Stack component="form" noValidate` (its rules check its fields, never the browser). Its fields
+ *   stack `spacing={3}` apart and never set a `margin`; fields side by side are a `FieldRow`, and a form's select is a
+ *   `SelectField`.
  * - `component-defaults`: what the theme sets for every instance (a tooltip's arrow and delay, `Collapse`'s timeout)
- *   isn't set again on one.
- * - `label-case`: a button's, a menu item's and a dialog's words are in Title Case ("Mark All as Read").
+ *   isn't set again on one, nor is a value MUI gives by default (`<Chip variant="filled">`); `--fix` removes both.
+ * - `label-case`: a button's, a menu item's, a field's and a dialog's words are in Title Case ("Mark All as Read").
  * - `search-fields`: a search box is a `SearchField`, never a `TextField` of its own.
  * - `button-intents`: a button is styled by its intent, as `docs/ui-buttons.md` sets it: the verb its label starts with
  *   (Delete, Archive, Publish, Cancel…) picks its variant and color.
@@ -67,7 +74,8 @@
  * - `page-errors`: a page that couldn't load says why in `loadFailureMessage`'s words.
  * - `tag-chips`: a role, a status or a fact is a `TagChip`, and a chip's color is its `color` prop.
  * - `expand-arrows`: a row or a header that shows or hides what's under it is the toggle (`toggleProps`) and shows
- *   its state with `ExpandArrow`; a component's own arrow (`expandIcon`) stays its own.
+ *   its state with `ExpandArrow`; a component's own arrow (`expandIcon`) stays its own. A toggle is a button, but a
+ *   table row keeps its role (`toggleProps(open, onToggle, "row")`).
  * - `pending-buttons`: a button that starts a request shows it running, its label in a `DiceSpinner`.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
@@ -79,6 +87,16 @@ import { repoPath } from "./paths.mjs";
 
 /** The border shorthands, which the theme writes from a width (`border: 1` is `1px solid`) */
 const BORDER_SIDES = new Set(["border", "borderBottom", "borderLeft", "borderRight", "borderTop"]);
+
+/** The fields bound to a form's (`components/common/FormFields.tsx`) */
+const BOUND_FIELDS = new Set([
+  "DescriptionField",
+  "EmailField",
+  "FormTextField",
+  "NameField",
+  "PasswordField",
+  "SelectField",
+]);
 
 /** A button's look by its intent, as `docs/ui-buttons.md` sets it: the verb its label starts with picks the row */
 // oxfmt-ignore
@@ -202,6 +220,9 @@ const LABEL_PROPS = new Set(["backLabel", "confirmLabel", "label", "submitLabel"
 /** The elements whose text is an action's label: a button, a menu item */
 const LABELLED = new Set(["ActionMenuItem", "Button", "MenuItem"]);
 
+/** The fields, besides the bound ones, whose `label` names them */
+const LABELLED_FIELDS = new Set(["FormControlLabel", "SwitchField", "TextField"]);
+
 /** A time or an easing written out: `200ms`, `0.3s`, `ease-in-out`, `cubic-bezier(…)` */
 const MOTION_LITERAL = /\d(?:\.\d+)?m?s\b|\b(?:ease(?:-in|-out|-in-out)?|linear|steps)\b|cubic-bezier\(/;
 
@@ -216,6 +237,17 @@ const MOTION_PROPERTIES = new Set([
   "transitionDuration",
   "transitionTimingFunction",
 ]);
+
+/** The props MUI gives a value by default, which a component leaves out: `<Chip>` is `variant="filled"` */
+const MUI_DEFAULTS = {
+  Button: { color: "primary", size: "medium", variant: "text" },
+  Chip: { color: "default", size: "medium", variant: "filled" },
+  IconButton: { size: "medium" },
+  Stack: { direction: "column" },
+  TextField: { size: "medium" },
+  Tooltip: { placement: "bottom" },
+  Typography: { variant: "body1" },
+};
 
 /** MUI's transitions a component never runs itself: a page fades in with `PageTransition`, a block opens with `Collapse` */
 const MUI_TRANSITIONS = new Set(["Fade", "Grow", "Slide", "Zoom"]);
@@ -276,7 +308,16 @@ const SPACING_KEYS = new Set([
 const STYLED_SOURCES = new Set(["@mui/material", "@mui/material/styles", "@mui/system"]);
 
 /** The props the theme sets for every instance of a component (`MuiTooltip`'s and `MuiCollapse`'s `defaultProps`) */
-const THEME_DEFAULTS = { Collapse: new Set(["timeout"]), Tooltip: new Set(["arrow", "enterDelay", "enterNextDelay"]) };
+const THEME_DEFAULTS = {
+  Collapse: new Set(["timeout"]),
+  Dialog: new Set(["transitionDuration"]),
+  DialogContentText: new Set(["variant"]),
+  Stack: new Set(["useFlexGap"]),
+  Tooltip: new Set(["arrow", "enterDelay", "enterNextDelay"]),
+};
+
+/** The style keys that move a box down from what's above it */
+const TOP_SPACING = new Set(["marginTop", "mt", "my", "paddingTop", "pt"]);
 
 /** The props an input takes its value through. */
 const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
@@ -294,6 +335,23 @@ function calleeName(node) {
   if (callee.type === "Identifier") return callee.name;
   if (callee.type === "MemberExpression" && !callee.computed) return callee.property.name;
   return null;
+}
+
+/** The elements a JSX element renders as its children: written out, in a fragment, or behind a condition. */
+function childElements(node) {
+  return node.children.flatMap((child) => {
+    if (child.type === "JSXElement") return [child];
+    if (child.type === "JSXFragment") return childElements(child);
+    if (child.type !== "JSXExpressionContainer") return [];
+    const { expression } = child;
+    const branches =
+      expression.type === "LogicalExpression"
+        ? [expression.right]
+        : expression.type === "ConditionalExpression"
+          ? [expression.consequent, expression.alternate]
+          : [expression];
+    return branches.filter((branch) => branch.type === "JSXElement");
+  });
 }
 
 function createAccessibleIconButtons(context) {
@@ -470,10 +528,20 @@ function createComponentDefaults(context) {
   return {
     JSXAttribute(node) {
       const element = elementName(node.parent.parent);
-      if (!THEME_DEFAULTS[element]?.has(node.name.name)) return;
+      const prop = node.name.name;
+      const themes = THEME_DEFAULTS[element]?.has(prop);
+      const value = node.value?.type === "JSXExpressionContainer" ? node.value.expression : node.value;
+      const mui = value?.type === "Literal" && MUI_DEFAULTS[element]?.[prop] === value.value;
+      if (!themes && !mui) return;
+      const { text } = context.sourceCode;
+      let start = rangeOf(node)[0];
+      while (/\s/.test(text[start - 1])) start--;
       context.report({
         node,
-        message: `A \`${element}\`'s \`${node.name.name}\` is the theme's default, the same for every one: never set here.`,
+        message: themes
+          ? `A \`${element}\`'s \`${prop}\` is the theme's default, the same for every one: never set here.`
+          : `\`${prop}="${value.value}"\` is a \`${element}\`'s default: left out.`,
+        fix: (fixer) => fixer.removeRange([start, rangeOf(node)[1]]),
       });
     },
   };
@@ -620,6 +688,12 @@ function createDateFormats(context) {
 function createDialogConventions(context) {
   if (!inClient(context)) return {};
   return {
+    Property(node) {
+      const key = node.key.type === "Literal" ? node.key.value : null;
+      if (typeof key === "string" && key.includes(".MuiDialog-paper")) {
+        context.report({ node, message: "A dialog's paper is styled through `slotProps={{ paper: { sx } }}`." });
+      }
+    },
     JSXElement(node) {
       const name = elementName(node);
       if (name === "Dialog" && !hasAttribute(node, "fullScreen")) {
@@ -643,6 +717,42 @@ function createDialogConventions(context) {
           node: node.openingElement,
           message: 'A dialog closes with its Close button in `DialogActions` (`variant="outlined" color="inherit"`).',
         });
+      }
+      if (name === "DialogTitle") {
+        const decorated = hasAttribute(node, "sx");
+        const extra = childElements(node).some((child) => elementName(child) !== "HelpLabel");
+        if (decorated || extra) {
+          context.report({
+            node: node.openingElement,
+            message:
+              "A dialog's title is its text, styled by the theme: a `HelpLabel` when it has help, never an icon.",
+          });
+        }
+      }
+      if (name === "DialogContent") {
+        if (hasAttribute(node, "dividers")) {
+          context.report({
+            node: node.openingElement,
+            message: "A dialog's content has no `dividers`: one look for every dialog.",
+          });
+        }
+        const [first] = childElements(node);
+        if (first && sxSetsAny(first, TOP_SPACING)) {
+          context.report({
+            node: first.openingElement,
+            message:
+              "The theme spaces a dialog's content from its title: its first element sets no top margin or padding.",
+          });
+        }
+        const prose = [node, ...childElements(node).filter((child) => elementName(child) === "Stack")]
+          .flatMap(childElements)
+          .filter(
+            (child) =>
+              elementName(child) === "Typography" && /^body[12]$/.test(attributeText(child, "variant") ?? "body1"),
+          );
+        for (const text of prose) {
+          context.report({ node: text.openingElement, message: "A dialog's prose is a `DialogContentText`." });
+        }
       }
       // component="form", or component={"form"}
       const valueOf = (a) => (a.value?.type === "JSXExpressionContainer" ? a.value.expression.value : a.value?.value);
@@ -740,6 +850,17 @@ function createExpandArrows(context) {
           "shows it with `ExpandArrow`: one arrow, turned up while open.",
       });
     },
+    JSXSpreadAttribute(node) {
+      const call = node.argument.type === "LogicalExpression" ? node.argument.right : node.argument;
+      if (call.type !== "CallExpression" || calleeName(call) !== "toggleProps") return;
+      const role = call.arguments[2]?.type === "Literal" ? call.arguments[2].value : "button";
+      if ((elementName(node.parent.parent) === "TableRow") === (role === "row")) return;
+      context.report({
+        node,
+        message:
+          'A toggle is a button, but a table row keeps its role: `toggleProps(open, onToggle, "row")` on a `TableRow` alone.',
+      });
+    },
   };
 }
 
@@ -750,17 +871,64 @@ function createFlexLayout(context) {
       const key = node.key.type === "Identifier" ? node.key.name : null;
       if (key !== "display" && key !== "gap" && key !== "flexDirection") return;
       const owner = node.parent.type === "ObjectExpression" ? sxOwner(node.parent) : null;
-      if (owner === "Box" && key === "display" && showsFlex(node.value)) {
+      if (owner && owner !== "Stack" && key === "display" && showsFlex(node.value)) {
         context.report({
           node,
           message:
-            "A flex container is a `Stack` (`direction`, `spacing`; the rest in `sx`), never a `Box` with a flex " +
-            "`display`.",
+            "A flex container is a `Stack` (`direction`, `spacing`; the rest in `sx`), never another element with a " +
+            "flex `display`: a surface (`Paper`, `Card`, `DialogContent`) holds one.",
         });
       }
       if (owner === "Stack" && key !== "display") {
         context.report({ node, message: "A `Stack` takes its `direction` and `spacing` as props, never `sx`." });
       }
+    },
+  };
+}
+
+function createForms(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXAttribute(node) {
+      if (node.name.name !== "margin") return;
+      context.report({
+        node,
+        message:
+          "A field sets no `margin`: its form's `Stack` spaces its fields (`spacing={3}`), a `FieldRow` those side by side.",
+      });
+    },
+    JSXElement(node) {
+      const name = elementName(node);
+      const report = (message) => context.report({ node: node.openingElement, message });
+      if (name === "form") report('A form is a `Stack component="form" noValidate`.');
+      if (attributeText(node, "component") === "form" && !hasAttribute(node, "noValidate")) {
+        report("A form is `noValidate`: its rules check its fields and say why, never the browser.");
+      }
+      if (name === "FormTextField" && hasAttribute(node, "select")) report("A form's select is a `SelectField`.");
+      const isSelectField = repoPath(context.filename) === "client/src/components/common/FormFields.tsx";
+      if (name === "TextField" && hasAttribute(node, "select") && hasAttribute(node, "inputRef") && !isSelectField) {
+        report("A select bound to a form's field is a `SelectField`.");
+      }
+      if (BOUND_FIELDS.has(name) && hasAttribute(node, "size")) report("A form's field is one size, MUI's default.");
+      const fullWidth = BOUND_FIELDS.has(name)
+        ? node.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === "fullWidth")
+        : null;
+      if (fullWidth) {
+        const { text } = context.sourceCode;
+        let start = rangeOf(fullWidth)[0];
+        while (/\s/.test(text[start - 1])) start--;
+        context.report({
+          node: fullWidth,
+          message: "A form's field fills its width already: it takes no `fullWidth`.",
+          fix: (fixer) => fixer.removeRange([start, rangeOf(fullWidth)[1]]),
+        });
+      }
+      if ((name === "TextField" || BOUND_FIELDS.has(name)) && hasAttribute(node, "variant")) {
+        report("A field is outlined, MUI's default, the one look: it sets no `variant`.");
+      }
+      if (name !== "Stack" || !childElements(node).some((child) => BOUND_FIELDS.has(elementName(child)))) return;
+      if (hasAttribute(node, "direction")) report("Fields side by side are a `FieldRow`.");
+      else if (numberAttribute(node, "spacing") !== 3) report("A form's fields stack `spacing={3}` apart.");
     },
   };
 }
@@ -808,7 +976,7 @@ function createLabelCase(context) {
   const report = (node, text) =>
     context.report({
       node,
-      message: `A button's, a menu item's and a dialog's words are in Title Case ("Mark All as Read"): "${text.trim()}".`,
+      message: `A button's, a menu item's, a field's and a dialog's words are in Title Case ("Mark All as Read"): "${text.trim()}".`,
     });
   return {
     JSXText(node) {
@@ -821,7 +989,8 @@ function createLabelCase(context) {
       if (node.value?.type !== "Literal" || typeof node.value.value !== "string") return;
       const element = elementName(node.parent.parent) ?? "";
       const dialogTitle = node.name.name === "title" && /(Dialog|^Modal)$/.test(element);
-      const label = LABEL_PROPS.has(node.name.name) && (LABELLED.has(element) || /(Dialog|^Modal)$/.test(element));
+      const labelled = LABELLED.has(element) || LABELLED_FIELDS.has(element) || BOUND_FIELDS.has(element);
+      const label = LABEL_PROPS.has(node.name.name) && (labelled || /(Dialog|^Modal)$/.test(element));
       if ((dialogTitle || label) && !inTitleCase(node.value.value)) report(node, node.value.value);
     },
   };
@@ -1294,6 +1463,13 @@ function namesOne(node, names) {
   );
 }
 
+/** The number a JSX attribute holds, when it's written out (`spacing={3}`). */
+function numberAttribute(element, name) {
+  const attribute = element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
+  const value = attribute?.value?.type === "JSXExpressionContainer" ? attribute.value.expression : null;
+  return value?.type === "Literal" && typeof value.value === "number" ? value.value : null;
+}
+
 /** Whether a handler only navigates to a path: `() => navigate(path)` (not `navigate(-1)`, which goes back in history). */
 function onlyNavigates(handler) {
   if (handler?.type !== "ArrowFunctionExpression" || handler.params.length > 0) return false;
@@ -1327,7 +1503,15 @@ function passesStyleOn(value) {
   );
 }
 
-/** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */
+/**
+ * Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`.
+ *
+ * A node's start and end in its file.
+ */
+function rangeOf(node) {
+  return node.range ?? [node.start, node.end];
+}
+
 function readsWatch(node) {
   if (!node || typeof node !== "object") return false;
   if (Array.isArray(node)) return node.some(readsWatch);
@@ -1406,6 +1590,8 @@ function sxOwner(object) {
     }
     const passes =
       parent.type === "ArrayExpression" ||
+      parent.type === "SpreadElement" ||
+      (parent.type === "ObjectExpression" && node.type === "SpreadElement") ||
       parent.type === "ConditionalExpression" ||
       parent.type === "LogicalExpression" ||
       parent.type === "ReturnStatement" ||
@@ -1414,6 +1600,14 @@ function sxOwner(object) {
     if (!passes) return null;
   }
   return null;
+}
+
+/** Whether an element's own `sx`, written as an object, sets one of `keys`. */
+function sxSetsAny(element, keys) {
+  const attribute = element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === "sx");
+  const value = attribute?.value?.type === "JSXExpressionContainer" ? attribute.value.expression : null;
+  if (value?.type !== "ObjectExpression") return false;
+  return value.properties.some((p) => p.type === "Property" && p.key.type === "Identifier" && keys.has(p.key.name));
 }
 
 /** Whether a template literal times something by its own numbers: a literal time, or a time no `DURATION` gives (`${i * 80}ms`). */
@@ -1481,7 +1675,8 @@ export default {
   shape: { meta: { type: "suggestion" }, create: createShape },
   borders: { meta: { type: "suggestion" }, create: createBorders },
   "flex-layout": { meta: { type: "suggestion" }, create: createFlexLayout },
-  "component-defaults": { meta: { type: "suggestion" }, create: createComponentDefaults },
+  forms: { meta: { type: "suggestion", fixable: "code" }, create: createForms },
+  "component-defaults": { meta: { type: "suggestion", fixable: "code" }, create: createComponentDefaults },
   "label-case": { meta: { type: "suggestion" }, create: createLabelCase },
   "search-fields": { meta: { type: "suggestion" }, create: createSearchFields },
   "button-intents": { meta: { type: "suggestion" }, create: createButtonIntents },

@@ -46,7 +46,6 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
         number
         label="Level"
         type="number"
-        fullWidth
         slotProps={{
           htmlInput: { min: 1, max: 20 },
         }}
@@ -58,7 +57,6 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
         number
         label="Base Attack Bonus"
         type="number"
-        fullWidth
         slotProps={{
           htmlInput: { min: 0 },
         }}
@@ -70,7 +68,6 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
         number
         label="Skill Points"
         type="number"
-        fullWidth
         slotProps={{
           htmlInput: { min: 1 },
         }}

@@ -12,16 +12,16 @@ export function LevelUpReviewStep({ wizard }: LevelUpReviewStepProps) {
   return (
     <LevelReview wizard={wizard}>
       <ReviewGroup title="Class Advancement">
-        <Typography variant="body1">
+        <Typography>
           <strong>{selectedClass.name}</strong> Level {selectedClass.nextLevel}
         </Typography>
-        <Typography variant="body1">
+        <Typography>
           HP Gain: <strong>+{selectedHP}</strong>
         </Typography>
       </ReviewGroup>
       {selectedAttribute && (
         <ReviewGroup title="Attribute Increase">
-          <Typography variant="body1">
+          <Typography>
             <strong>{attributeName(attributeData, selectedAttribute)}</strong> +1
           </Typography>
         </ReviewGroup>

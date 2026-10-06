@@ -1,4 +1,13 @@
-import { Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Stack, Typography } from "@mui/material";
+import {
+  Button,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Link as MuiLink,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { useState } from "react";
 
 import { DiceSpinner, LoadError, Modal } from "@/client/src/components/common/index.ts";
@@ -26,14 +35,14 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
       </MuiLink>
       <Modal open={open} onClose={() => setOpen(false)} maxWidth="md" aria-labelledby="ruleset-license-title">
         <DialogTitle id="ruleset-license-title">License & Attribution</DialogTitle>
-        <DialogContent dividers>
+        <DialogContent>
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
             {name}
           </Typography>
-          <Typography variant="body2" sx={{ mb: 3 }}>
+          <DialogContentText sx={{ mb: 3 }}>
             This notice applies to the SRD-derived Open Game Content in this system source package. It does not license
             the application code or designate independent user-created content as Open Game Content.
-          </Typography>
+          </DialogContentText>
           {isPending && (
             <Stack role="status" aria-label="Loading license" direction="row" sx={{ justifyContent: "center", py: 4 }}>
               <DiceSpinner />
@@ -41,13 +50,12 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
           )}
           {isError && <LoadError what="License text" error={error} onRetry={() => void refetch()} />}
           {text !== undefined && (
-            <Typography
+            <DialogContentText
               component="pre"
-              variant="body2"
               sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontFamily: "inherit", m: 0 }}
             >
               {text}
-            </Typography>
+            </DialogContentText>
           )}
         </DialogContent>
         <DialogActions>

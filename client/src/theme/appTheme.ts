@@ -426,6 +426,15 @@ export function createAppTheme(darkMode: boolean): Theme {
             }),
           },
         },
+        MuiDialogContent: {
+          styleOverrides: {
+            // Under a title, room for an outlined field's label, which sits above its box
+            root: { ".MuiDialogTitle-root + &": { paddingTop: 8 } },
+          },
+        },
+        MuiDialogContentText: {
+          defaultProps: { variant: "body2" },
+        },
         MuiDialogActions: {
           styleOverrides: {
             root: { padding: "16px 24px" },

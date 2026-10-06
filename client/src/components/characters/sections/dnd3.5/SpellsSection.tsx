@@ -127,7 +127,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
     <Fragment>
       <TableRow
         hover
-        {...toggleProps(open, () => setOpen((prev) => !prev))}
+        {...toggleProps(open, () => setOpen((prev) => !prev), "row")}
         sx={{ ...CLICKABLE_SX, "& > td": { borderBottom: open ? "none" : undefined } }}
       >
         <TableCell>

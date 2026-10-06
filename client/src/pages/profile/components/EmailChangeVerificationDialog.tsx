@@ -1,4 +1,14 @@
-import { Box, Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Link as MuiLink,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Controller } from "react-hook-form";
 
@@ -67,35 +77,41 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
 
   return (
     <FormDialog open={open} onClose={handleClose} form={form} isLoading={verifyMutation.isPending} maxWidth="xs">
-      <DialogTitle>Verify New Email</DialogTitle>
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <Stack component="form" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+        <DialogTitle>Verify New Email</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            We sent an 8-digit code to <strong>{pendingEmail}</strong>
-          </Typography>
+          <Stack spacing={3}>
+            <DialogContentText>
+              We sent an 8-digit code to <strong>{pendingEmail}</strong>
+            </DialogContentText>
 
-          <Controller
-            control={form.control}
-            name="digits"
-            render={({ field, fieldState }) => (
-              <VerificationCodeInput digits={field.value} onChange={field.onChange} error={fieldState.error?.message} />
-            )}
-          />
+            <Controller
+              control={form.control}
+              name="digits"
+              render={({ field, fieldState }) => (
+                <VerificationCodeInput
+                  digits={field.value}
+                  onChange={field.onChange}
+                  error={fieldState.error?.message}
+                />
+              )}
+            />
 
-          <Box sx={{ textAlign: "center", mb: 1 }}>
-            <Typography variant="body2">
-              Didn't receive the code?{" "}
-              <MuiLink
-                component="button"
-                type="button"
-                underline="hover"
-                onClick={() => resendMutation.mutate()}
-                disabled={resendMutation.isPending}
-              >
-                Resend
-              </MuiLink>
-            </Typography>
-          </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="body2">
+                Didn't receive the code?{" "}
+                <MuiLink
+                  component="button"
+                  type="button"
+                  underline="hover"
+                  onClick={() => resendMutation.mutate()}
+                  disabled={resendMutation.isPending}
+                >
+                  Resend
+                </MuiLink>
+              </Typography>
+            </Box>
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} disabled={verifyMutation.isPending} variant="outlined" color="inherit">
@@ -107,7 +123,7 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
             </DiceSpinner>
           </Button>
         </DialogActions>
-      </form>
+      </Stack>
     </FormDialog>
   );
 }

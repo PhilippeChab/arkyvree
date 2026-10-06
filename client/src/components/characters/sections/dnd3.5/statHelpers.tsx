@@ -12,7 +12,6 @@ export function StatField({ label, value }: StatFieldProps) {
         {label}:
       </Typography>
       <Typography
-        variant="body1"
         sx={{ fontWeight: 500, borderBottom: 1, borderColor: "divider", px: 1, minWidth: 40, whiteSpace: "nowrap" }}
       >
         {value ?? "—"}

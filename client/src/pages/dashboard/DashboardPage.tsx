@@ -226,15 +226,12 @@ export default function DashboardPage() {
             sx={{
               color: (theme) => alpha(theme.palette.common.white, 0.8),
               textDecorationColor: (theme) => alpha(theme.palette.common.white, 0.4),
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 0.5,
               typography: "body2",
               position: "relative",
               "&:hover": { color: "common.white" },
             }}
           >
-            <HelpIcon fontSize="compact" />
+            <HelpIcon fontSize="compact" sx={{ mr: 0.5, verticalAlign: "middle" }} />
             Help
           </MuiLink>
         </Paper>

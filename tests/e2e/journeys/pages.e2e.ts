@@ -70,7 +70,7 @@ test.describe("Every page", () => {
   test("of the app loads", async ({ page }) => {
     const errors = watchErrors(page);
     for (const [path, content] of [
-      ["/dashboard", /Dashboard|Welcome/],
+      ["/dashboard", "Welcome to Arkyvree"],
       ["/rulesets", "Core SRD 3.5"],
       ["/campaigns", "Campaigns"],
       ["/characters", "Characters"],

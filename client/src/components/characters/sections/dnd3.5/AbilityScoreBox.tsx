@@ -32,96 +32,97 @@ export function AbilityScoreBox({
   const breakdown = compact ? undefined : abilityData;
 
   return (
-    <Paper
-      variant="outlined"
-      sx={{
-        p: compact ? 1 : 2,
-        textAlign: "center",
-        ...(compact
-          ? { display: "flex", flexDirection: "column", gap: 0.5 }
-          : { minHeight: 180, display: "flex", flexDirection: "column", justifyContent: "space-between" }),
-      }}
-    >
-      <Typography
-        variant={compact ? "caption" : "body2"}
+    <Paper variant="outlined">
+      <Stack
+        spacing={compact ? 0.5 : 0}
         sx={{
-          fontWeight: 600,
-          textTransform: "uppercase",
-          ...(compact && { lineHeight: 1 }),
+          height: "100%",
+          p: compact ? 1 : 2,
+          textAlign: "center",
+          ...(!compact && { minHeight: 180, justifyContent: "space-between" }),
         }}
       >
-        {label}
-      </Typography>
-      <Box>
         <Typography
-          sx={{
-            fontWeight: 700,
-            lineHeight: 1,
-            typography: compact ? { xs: "h6", sm: "h5" } : { xs: "h5", sm: "h4" },
-          }}
-        >
-          {score}
-        </Typography>
-
-        <Typography
-          variant={compact ? "caption" : "body1"}
+          variant={compact ? "caption" : "body2"}
           sx={{
             fontWeight: 600,
-            color: modifier >= 0 ? "success.main" : "error.main",
-            border: 1,
-            borderColor: "divider",
-            borderRadius: 1,
-            py: compact ? 0.25 : 0.5,
-            px: 1,
-            mt: compact ? 0.5 : 1,
-            mb: compact ? 0 : 2,
-            display: "inline-block",
-            minWidth: compact ? 32 : 40,
+            textTransform: "uppercase",
+            ...(compact && { lineHeight: 1 }),
           }}
         >
-          {formatSigned(modifier)}
+          {label}
         </Typography>
+        <Box>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              lineHeight: 1,
+              typography: compact ? { xs: "h6", sm: "h5" } : { xs: "h5", sm: "h4" },
+            }}
+          >
+            {score}
+          </Typography>
 
-        {breakdown && (
-          <Box sx={{ typography: "caption", textAlign: "center" }}>
-            {edit ? (
-              <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "center" }}>
-                <IconButton
-                  size="small"
-                  aria-label={`Lower base ${ability}`}
-                  onClick={() => edit.onBaseChange(edit.abilityId, baseValue - 1)}
-                  disabled={baseValue <= 1}
-                  sx={{ p: 0 }}
-                >
-                  <DecrementIcon fontSize="tiny" />
-                </IconButton>
-                <Typography variant="caption" sx={{ color: "text.secondary", minWidth: 40 }}>
+          <Typography
+            variant={compact ? "caption" : "body1"}
+            sx={{
+              fontWeight: 600,
+              color: modifier >= 0 ? "success.main" : "error.main",
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+              py: compact ? 0.25 : 0.5,
+              px: 1,
+              mt: compact ? 0.5 : 1,
+              mb: compact ? 0 : 2,
+              display: "inline-block",
+              minWidth: compact ? 32 : 40,
+            }}
+          >
+            {formatSigned(modifier)}
+          </Typography>
+
+          {breakdown && (
+            <Box sx={{ typography: "caption", textAlign: "center" }}>
+              {edit ? (
+                <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "center" }}>
+                  <IconButton
+                    size="small"
+                    aria-label={`Lower base ${ability}`}
+                    onClick={() => edit.onBaseChange(edit.abilityId, baseValue - 1)}
+                    disabled={baseValue <= 1}
+                    sx={{ p: 0 }}
+                  >
+                    <DecrementIcon fontSize="tiny" />
+                  </IconButton>
+                  <Typography variant="caption" sx={{ color: "text.secondary", minWidth: 40 }}>
+                    Base: {baseValue}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    aria-label={`Raise base ${ability}`}
+                    onClick={() => edit.onBaseChange(edit.abilityId, baseValue + 1)}
+                    disabled={baseValue >= 100}
+                    sx={{ p: 0 }}
+                  >
+                    <AddIcon fontSize="tiny" />
+                  </IconButton>
+                </Stack>
+              ) : (
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
                   Base: {baseValue}
                 </Typography>
-                <IconButton
-                  size="small"
-                  aria-label={`Raise base ${ability}`}
-                  onClick={() => edit.onBaseChange(edit.abilityId, baseValue + 1)}
-                  disabled={baseValue >= 100}
-                  sx={{ p: 0 }}
-                >
-                  <AddIcon fontSize="tiny" />
-                </IconButton>
-              </Stack>
-            ) : (
+              )}
               <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-                Base: {baseValue}
+                Level: {formatSigned(breakdown.level)}
               </Typography>
-            )}
-            <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-              Level: {formatSigned(breakdown.level)}
-            </Typography>
-            <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-              Misc: {formatSigned(breakdown.misc)}
-            </Typography>
-          </Box>
-        )}
-      </Box>
+              <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+                Misc: {formatSigned(breakdown.misc)}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Stack>
     </Paper>
   );
 }

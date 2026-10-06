@@ -335,7 +335,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         actions={
           canManagePlayers &&
           !campaign.deletedAt && (
-            <Button variant="contained" startIcon={<AddIcon />} size="medium" onClick={handleAddPlayer}>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddPlayer}>
               Add Player
             </Button>
           )

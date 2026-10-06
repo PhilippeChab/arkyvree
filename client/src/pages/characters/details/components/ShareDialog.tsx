@@ -2,12 +2,12 @@ import {
   Button,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   IconButton,
   InputAdornment,
   Stack,
   TextField,
-  Typography,
 } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -83,13 +83,13 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
     <Modal open={open} onClose={() => !isLoading && onClose()}>
       <DialogTitle>Share Character Sheet</DialogTitle>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
+        <Stack spacing={3}>
           {shareUrl ? (
             <>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              <DialogContentText>
                 Anyone with this link can view this character sheet and download the PDF. Private notes are not
                 included.
-              </Typography>
+              </DialogContentText>
               <TextField
                 value={shareUrl}
                 fullWidth
@@ -133,10 +133,10 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
             </>
           ) : (
             <>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              <DialogContentText>
                 Generate a public link to share this character sheet. Anyone with the link will be able to view the
                 sheet and download the PDF. Private notes will not be visible.
-              </Typography>
+              </DialogContentText>
               <Button variant="contained" onClick={() => generateMutation.mutate()} disabled={isLoading}>
                 <DiceSpinner size="small" loading={generateMutation.isPending}>
                   Generate Link

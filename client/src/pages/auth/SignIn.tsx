@@ -1,4 +1,4 @@
-import { Box, Link as MuiLink, Typography } from "@mui/material";
+import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -42,7 +42,7 @@ export default function SignIn() {
 
   return (
     <AuthPage error={error} title="Sign In">
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <Stack component="form" spacing={3} onSubmit={handleSubmit(onSubmit)} noValidate>
         <EmailField control={control} name="emailAddress" rules={emailRules} />
 
         <PasswordField
@@ -53,14 +53,14 @@ export default function SignIn() {
           autoComplete="current-password"
         />
 
-        <Box sx={{ mt: 1, textAlign: "right" }}>
+        <Box sx={{ textAlign: "right" }}>
           <MuiLink component={Link} to="/forgot-password" underline="hover" variant="body2">
             Forgot password?
           </MuiLink>
         </Box>
 
         <AuthSubmitButton loading={auth.pending}>Sign In</AuthSubmitButton>
-      </form>
+      </Stack>
       <GoogleSignInSection
         disabled={auth.pending}
         onError={(error) => setError(errorMessage(error, "Failed to sign in with Google"))}

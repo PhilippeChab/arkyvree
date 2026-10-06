@@ -19,7 +19,7 @@ export async function answerInvite(page: Page, name: string, answer: "Accept" | 
 export async function inviteContributor(page: Page, email: string) {
   await (await openContributors(page)).getByRole("button", { name: /^Invite$/ }).click();
   const dialog = page.getByRole("dialog", { name: "Invite Contributor" });
-  await dialog.getByLabel("Email address").fill(email);
+  await dialog.getByLabel("Email Address").fill(email);
   const invited = apiResponse(page, "POST", /\/api\/(rulesets|characters)\/[a-f0-9-]+\/contributors/);
   await dialog.getByRole("button", { name: /^Invite$/ }).click();
   await invited;

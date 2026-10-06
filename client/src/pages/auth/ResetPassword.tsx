@@ -1,4 +1,4 @@
-import { Box, Link as MuiLink, Typography } from "@mui/material";
+import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { Controller } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
@@ -72,7 +72,7 @@ export default function ResetPassword() {
         </>
       }
     >
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <Stack component="form" spacing={3} onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <Controller
           control={form.control}
           name="digits"
@@ -98,7 +98,7 @@ export default function ResetPassword() {
         <AuthSubmitButton loading={auth.pending} disabled={!isComplete}>
           Reset Password
         </AuthSubmitButton>
-      </form>
+      </Stack>
       <Box sx={{ textAlign: "center" }}>
         <ResendCodeLink onResend={handleResend} disabled={auth.pending} />
         <Typography variant="body2" sx={{ mt: 1 }}>

@@ -16,13 +16,7 @@ export function LanguageFormFields({ form }: LanguageFormFieldsProps) {
     <>
       <NameField control={form.control} name="name" rules={nameRules} />
       <DescriptionField control={form.control} name="description" />
-      <FormTextField
-        control={form.control}
-        name="type"
-        label="Type"
-        fullWidth
-        placeholder="e.g., Spoken, Written, Sign"
-      />
+      <FormTextField control={form.control} name="type" label="Type" placeholder="e.g., Spoken, Written, Sign" />
     </>
   );
 }

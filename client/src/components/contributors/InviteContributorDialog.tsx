@@ -1,4 +1,4 @@
-import { Button, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { Button, DialogActions, DialogContent, DialogTitle, Stack } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 
 import { DiceSpinner, EmailField, FormDialog, SelectField } from "@/client/src/components/common/index.ts";
@@ -35,11 +35,13 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
 
   return (
     <FormDialog open={open} onClose={handleClose} form={form} isLoading={isLoading}>
-      <form onSubmit={form.handleSubmit((data) => onSubmit(data, () => form.reset()))} noValidate>
+      <Stack component="form" onSubmit={form.handleSubmit((data) => onSubmit(data, () => form.reset()))} noValidate>
         <DialogTitle>Invite Contributor</DialogTitle>
         <DialogContent>
-          <EmailField control={form.control} name="email" rules={emailRules} label="Email address" autoFocus />
-          {roles && <SelectField control={form.control} name="role" label="Role" options={roles} margin="normal" />}
+          <Stack spacing={3}>
+            <EmailField control={form.control} name="email" rules={emailRules} label="Email Address" autoFocus />
+            {roles && <SelectField control={form.control} name="role" label="Role" options={roles} />}
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} disabled={isLoading} variant="outlined" color="inherit">
@@ -51,7 +53,7 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
             </DiceSpinner>
           </Button>
         </DialogActions>
-      </form>
+      </Stack>
     </FormDialog>
   );
 }

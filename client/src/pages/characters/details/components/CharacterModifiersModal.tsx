@@ -9,7 +9,7 @@ import {
   type DataTableColumn,
   DeleteDialog,
   EditDialog,
-  FaqHelpIcon,
+  HelpLabel,
   Modal,
 } from "@/client/src/components/common/index.ts";
 import {
@@ -165,16 +165,13 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         }}
       >
         <DialogTitle>
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-            <span>Manage Modifiers</span>
-            <FaqHelpIcon
-              text="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc."
-              size={18}
-            />
-          </Stack>
+          <HelpLabel
+            label="Manage Modifiers"
+            help="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc."
+          />
         </DialogTitle>
 
-        <DialogContent dividers sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
+        <DialogContent sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
           <Stack direction="row" sx={{ justifyContent: "flex-end", mb: 2 }}>
             <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
               Add Modifier

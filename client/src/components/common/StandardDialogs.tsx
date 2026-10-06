@@ -79,15 +79,14 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
       <Stack
         component="form"
         onSubmit={form.handleSubmit(onSubmit)}
+        noValidate
         sx={fixedHeight ? { flex: 1, minHeight: 0 } : undefined}
       >
         <DialogTitle>{title}</DialogTitle>
         <DialogContent
           sx={fixedHeight ? { flex: 1, minHeight: 0, overflowY: "auto", scrollbarGutter: "stable" } : undefined}
         >
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            {children}
-          </Stack>
+          <Stack spacing={3}>{children}</Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">

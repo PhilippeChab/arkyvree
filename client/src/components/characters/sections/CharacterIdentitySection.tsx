@@ -183,11 +183,16 @@ export function CharacterIdentitySection({
 
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <form onSubmit={sync.handleSubmit((formData) => saveIdentity.mutate(formData))}>
+      <Stack
+        component="form"
+        spacing={3}
+        onSubmit={sync.handleSubmit((formData) => saveIdentity.mutate(formData))}
+        noValidate
+      >
         <Stack
           direction="row"
           spacing={1}
-          sx={{ justifyContent: "space-between", alignItems: "center", mb: 3, flexWrap: "wrap" }}
+          sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
         >
           {nameEditing ? (
             <TextField
@@ -205,7 +210,6 @@ export function CharacterIdentitySection({
               }}
               autoFocus
               disabled={rename.isPending}
-              variant="standard"
               slotProps={{ htmlInput: { "aria-label": "Character name", maxLength: 255 } }}
               sx={{
                 "& .MuiInputBase-input": {
@@ -242,7 +246,6 @@ export function CharacterIdentitySection({
           <Button
             type="submit"
             variant="contained"
-            size="small"
             disabled={!isDirty || saveIdentity.isPending}
             sx={{ visibility: readOnly ? "hidden" : "visible" }}
           >
@@ -267,22 +270,21 @@ export function CharacterIdentitySection({
             url={portraitUrl}
           />
 
-          <Box sx={{ flex: 1, width: "100%", minWidth: 0 }}>
+          <Stack spacing={3} sx={{ flex: 1, width: "100%", minWidth: 0 }}>
             {/* Line 1: Race, Alignment, Experience, Deity */}
             <Box
               sx={{
                 display: "grid",
                 gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr" },
                 gap: 3,
-                mb: 2,
               }}
             >
-              <FormTextField control={form.control} name="race" label="Race" size="small" variant="outlined" disabled />
+              <FormTextField control={form.control} name="race" label="Race" disabled />
               {partial ? (
                 <>
-                  <Skeleton variant="rounded" height={40} />
-                  <Skeleton variant="rounded" height={40} />
-                  <Skeleton variant="rounded" height={40} />
+                  <Skeleton variant="rounded" height={56} />
+                  <Skeleton variant="rounded" height={56} />
+                  <Skeleton variant="rounded" height={56} />
                 </>
               ) : (
                 <>
@@ -291,7 +293,6 @@ export function CharacterIdentitySection({
                     name="alignment"
                     label="Alignment"
                     options={ALIGNMENT_OPTIONS}
-                    size="small"
                     disabled={readOnly}
                     sx={disabledFieldStyle}
                   />
@@ -301,8 +302,6 @@ export function CharacterIdentitySection({
                     number
                     label="Experience"
                     type="number"
-                    size="small"
-                    variant="outlined"
                     slotProps={{ htmlInput: { min: 0 } }}
                     disabled={readOnly}
                     sx={disabledFieldStyle}
@@ -311,8 +310,6 @@ export function CharacterIdentitySection({
                     control={form.control}
                     name="deity"
                     label="Deity"
-                    size="small"
-                    variant="outlined"
                     disabled={readOnly}
                     sx={disabledFieldStyle}
                   />
@@ -326,15 +323,12 @@ export function CharacterIdentitySection({
                 display: "grid",
                 gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr" },
                 gap: 3,
-                mb: 2,
               }}
             >
               <FormTextField
                 control={form.control}
                 name="age"
                 label="Age"
-                size="small"
-                variant="outlined"
                 disabled={readOnly}
                 sx={disabledFieldStyle}
               />
@@ -343,7 +337,6 @@ export function CharacterIdentitySection({
                 name="gender"
                 label="Gender"
                 options={GENDER_OPTIONS}
-                size="small"
                 disabled={readOnly}
                 sx={disabledFieldStyle}
               />
@@ -351,8 +344,6 @@ export function CharacterIdentitySection({
                 control={form.control}
                 name="height"
                 label="Height"
-                size="small"
-                variant="outlined"
                 disabled={readOnly}
                 sx={disabledFieldStyle}
               />
@@ -360,92 +351,77 @@ export function CharacterIdentitySection({
                 control={form.control}
                 name="weight"
                 label="Weight"
-                size="small"
-                variant="outlined"
                 disabled={readOnly}
                 sx={disabledFieldStyle}
               />
             </Box>
 
             {/* Languages */}
-            {!partial && (
-              <Box sx={{ mb: 2 }}>
-                {readOnly ? (
-                  <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary", mr: 1 }}>
-                      Languages:
+            {!partial &&
+              (readOnly ? (
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary", mr: 1 }}>
+                    Languages:
+                  </Typography>
+                  {selectedLanguages.length === 0 ? (
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      None
                     </Typography>
-                    {selectedLanguages.length === 0 ? (
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                        None
-                      </Typography>
-                    ) : (
-                      selectedLanguages.map((lang) => <Chip key={lang.id} label={lang.name} size="small" />)
-                    )}
-                  </Stack>
-                ) : (
-                  <Autocomplete
-                    multiple
-                    size="small"
-                    options={availableLanguages ?? []}
-                    getOptionLabel={(option) => option.name}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    value={selectedLanguages}
-                    onChange={(_, newValue) => languageIds.onChange(newValue.map((l) => l.id))}
-                    onBlur={languageIds.onBlur}
-                    renderValue={(value, getItemProps) =>
-                      value.map((option, index) => (
-                        <Chip {...getItemProps({ index })} key={option.id} label={option.name} size="small" />
-                      ))
-                    }
-                    renderInput={(params) => <TextField {...params} label="Languages" variant="outlined" />}
-                  />
-                )}
-              </Box>
-            )}
+                  ) : (
+                    selectedLanguages.map((lang) => <Chip key={lang.id} label={lang.name} size="small" />)
+                  )}
+                </Stack>
+              ) : (
+                <Autocomplete
+                  multiple
+                  options={availableLanguages ?? []}
+                  getOptionLabel={(option) => option.name}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  value={selectedLanguages}
+                  onChange={(_, newValue) => languageIds.onChange(newValue.map((l) => l.id))}
+                  onBlur={languageIds.onBlur}
+                  renderValue={(value, getItemProps) =>
+                    value.map((option, index) => (
+                      <Chip {...getItemProps({ index })} key={option.id} label={option.name} size="small" />
+                    ))
+                  }
+                  renderInput={(params) => <TextField {...params} label="Languages" />}
+                />
+              ))}
 
             {/* Line 3: Description and Notes */}
             {partial ? (
-              <Stack spacing={2}>
+              <>
                 <Skeleton variant="rounded" height={80} />
                 <Skeleton variant="rounded" height={100} />
-              </Stack>
+              </>
             ) : (
               <>
-                <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3, mb: 2 }}>
-                  <FormTextField
-                    control={form.control}
-                    name="description"
-                    label="Description"
-                    size="small"
-                    variant="outlined"
-                    multiline
-                    minRows={3}
-                    placeholder="Character appearance, personality, or background..."
-                    disabled={readOnly}
-                    sx={{ ...disabledFieldStyle, "& textarea": { resize: "vertical" } }}
-                  />
-                </Box>
-
-                <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3 }}>
-                  <FormTextField
-                    control={form.control}
-                    name="notes"
-                    label="Notes"
-                    size="small"
-                    variant="outlined"
-                    multiline
-                    minRows={4}
-                    placeholder="Campaign notes, character development, reminders..."
-                    disabled={readOnly}
-                    sx={{ ...disabledFieldStyle, "& textarea": { resize: "vertical" } }}
-                  />
-                </Box>
+                <FormTextField
+                  control={form.control}
+                  name="description"
+                  label="Description"
+                  multiline
+                  minRows={3}
+                  placeholder="Character appearance, personality, or background..."
+                  disabled={readOnly}
+                  sx={{ ...disabledFieldStyle, "& textarea": { resize: "vertical" } }}
+                />
+                <FormTextField
+                  control={form.control}
+                  name="notes"
+                  label="Notes"
+                  multiline
+                  minRows={4}
+                  placeholder="Campaign notes, character development, reminders..."
+                  disabled={readOnly}
+                  sx={{ ...disabledFieldStyle, "& textarea": { resize: "vertical" } }}
+                />
               </>
             )}
-          </Box>
+          </Stack>
         </Stack>
-      </form>
+      </Stack>
     </Paper>
   );
 }
