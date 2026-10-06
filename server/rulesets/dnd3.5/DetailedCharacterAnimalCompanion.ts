@@ -41,6 +41,12 @@ const BASICS_TABLE: BasicsRow[] = [
   { bonusHD: 12, natural: 12, strDex: 6 },
 ];
 
+function basicsAt(effectiveLevel: number): BasicsRow {
+  if (effectiveLevel <= 0) return BASICS_TABLE[0];
+  const idx = Math.min(effectiveLevel, BASICS_TABLE.length) - 1;
+  return BASICS_TABLE[idx];
+}
+
 /**
  * Effective AC level = the master's resolved `bonded.animalcompanion.level`,
  * which is the sum of every grant feat's template-modifier contribution
@@ -50,12 +56,6 @@ const BASICS_TABLE: BasicsRow[] = [
  */
 function getAnimalCompanionEffectiveLevel(master: Dnd35DetailedCharacter): number {
   return master.getDetailedCharacterBonds().getBondedLevel("animalcompanion");
-}
-
-function basicsAt(effectiveLevel: number): BasicsRow {
-  if (effectiveLevel <= 0) return BASICS_TABLE[0];
-  const idx = Math.min(effectiveLevel, BASICS_TABLE.length) - 1;
-  return BASICS_TABLE[idx];
 }
 
 /**

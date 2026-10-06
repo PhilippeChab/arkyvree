@@ -16,6 +16,16 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     return true;
   }
 
+  async create(db: Db, values: InferInsertModel<typeof entitySnapshotsInRules>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async delete(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
+    return await db
+      .delete(this.table)
+      .where(and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)));
+  }
+
   async findMany(
     db: Db,
     where:
@@ -44,16 +54,6 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     return await db.query.entitySnapshotsInRules.findFirst({
       where: and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)),
     });
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof entitySnapshotsInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async delete(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
-    return await db
-      .delete(this.table)
-      .where(and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)));
   }
 
   /**

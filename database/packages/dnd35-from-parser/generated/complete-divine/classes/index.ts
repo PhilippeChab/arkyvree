@@ -33,6 +33,8 @@ import { UR_PRIEST } from "./urPriest.ts";
 import { VOID_DISCIPLE } from "./voidDisciple.ts";
 import { WARPRIEST } from "./warpriest.ts";
 
+export const ALL_BASE_CLASSES: ClassSeed[] = [FAVORED_SOUL, SHUGENJA, SPIRIT_SHAMAN];
+
 export const ALL_CLASSES: ClassSeed[] = [
   BLACK_FLAME_ZEALOT,
   BLIGHTER,
@@ -65,8 +67,6 @@ export const ALL_CLASSES: ClassSeed[] = [
   VOID_DISCIPLE,
   WARPRIEST,
 ];
-
-export const ALL_BASE_CLASSES: ClassSeed[] = [FAVORED_SOUL, SHUGENJA, SPIRIT_SHAMAN];
 
 export const ALL_PRESTIGE_CLASSES: ClassSeed[] = [
   BLACK_FLAME_ZEALOT,

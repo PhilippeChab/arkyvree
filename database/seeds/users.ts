@@ -1,11 +1,11 @@
 import { sessionsInAccount, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 
-/** The seed user's id: the user who owns the seeded characters. */
-export const SEED_USER_ID = "00000000-0000-4000-8000-000000000456";
-
 /** The seeded users' password digest ("LocalTest123!"), which the e2e run's users share. */
 export const PASSWORD_DIGEST = "6fc914e8107f52a500ae8d6f5fd9b7ca677440c2fea38b2a9ec6b3143eb91c2b";
+
+/** The seed user's id: the user who owns the seeded characters. */
+export const SEED_USER_ID = "00000000-0000-4000-8000-000000000456";
 
 export default async function seed(db: Db) {
   const now = new Date().toISOString();

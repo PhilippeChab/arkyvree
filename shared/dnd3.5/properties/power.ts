@@ -1,17 +1,17 @@
 /** D&D 3.5 spell properties. */
 
+export const SPELL_AREA_OF_EFFECT = "SPELL_AREA_OF_EFFECT";
+export const SPELL_CASTING_TIME = "SPELL_CASTING_TIME";
+export const SPELL_COMPONENT = "SPELL_COMPONENT";
+export const SPELL_DESCRIPTOR = "SPELL_DESCRIPTOR";
+export const SPELL_DURATION = "SPELL_DURATION";
+export const SPELL_DURATION_TYPE = "SPELL_DURATION_TYPE";
+export const SPELL_LEVEL = "SPELL_LEVEL";
+export const SPELL_MATERIAL = "SPELL_MATERIAL";
+export const SPELL_RANGE_TYPE = "SPELL_RANGE_TYPE";
+export const SPELL_RESISTANCE = "SPELL_RESISTANCE";
+export const SPELL_SAVING_THROW = "SPELL_SAVING_THROW";
 /** The property a spell's school is in, which the sheets show as its own column. */
 export const SPELL_SCHOOL = "SPELL_SCHOOL";
 export const SPELL_SUBSCHOOL = "SPELL_SUBSCHOOL";
-export const SPELL_DESCRIPTOR = "SPELL_DESCRIPTOR";
-export const SPELL_COMPONENT = "SPELL_COMPONENT";
-export const SPELL_RANGE_TYPE = "SPELL_RANGE_TYPE";
-export const SPELL_DURATION = "SPELL_DURATION";
-export const SPELL_DURATION_TYPE = "SPELL_DURATION_TYPE";
-export const SPELL_RESISTANCE = "SPELL_RESISTANCE";
-export const SPELL_SAVING_THROW = "SPELL_SAVING_THROW";
-export const SPELL_LEVEL = "SPELL_LEVEL";
-export const SPELL_MATERIAL = "SPELL_MATERIAL";
-export const SPELL_CASTING_TIME = "SPELL_CASTING_TIME";
 export const SPELL_TARGET = "SPELL_TARGET";
-export const SPELL_AREA_OF_EFFECT = "SPELL_AREA_OF_EFFECT";

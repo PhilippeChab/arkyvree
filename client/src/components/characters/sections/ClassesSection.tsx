@@ -25,8 +25,6 @@ import type { EditingLevel } from "@/client/src/types/character.ts";
 import type { CharacterData } from "./characterData.ts";
 import { SheetSection } from "./SheetSection.tsx";
 
-type SheetClasses = NonNullable<CharacterData["classes"]>;
-
 interface ClassesSectionProps {
   classes: SheetClasses;
   rulesetId?: string;
@@ -35,6 +33,8 @@ interface ClassesSectionProps {
   onRemoveLevel?: () => void;
   readOnly?: boolean;
 }
+
+type SheetClasses = NonNullable<CharacterData["classes"]>;
 
 export function ClassesSection({
   classes,

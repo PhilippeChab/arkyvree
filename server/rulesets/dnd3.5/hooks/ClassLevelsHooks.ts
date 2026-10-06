@@ -28,16 +28,6 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
     ];
   }
 
-  getSpellListId(
-    rulesetData: Pick<CachedRulesetData, "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
-    klassId: string,
-  ): string | undefined {
-    const klassLevels = rulesetData.klassLevelsByKlassId.get(klassId) ?? [];
-    const [list] =
-      collectClassLists({ klassLevels, modifiersBySource: rulesetData.modifiersBySource }).get(klassId) ?? [];
-    return list === undefined ? undefined : rulesetData.aptitudeIdBySlug.get(list);
-  }
-
   enrichWithFeatPools<T extends { id: string; level: number }>(
     levels: T[],
     modifiers: { sourceId: string; target: string; value: string; operator: string }[],
@@ -208,6 +198,16 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
       ...level,
       spellsPerDay: resultMap.get(level.id) ?? {},
     }));
+  }
+
+  getSpellListId(
+    rulesetData: Pick<CachedRulesetData, "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
+    klassId: string,
+  ): string | undefined {
+    const klassLevels = rulesetData.klassLevelsByKlassId.get(klassId) ?? [];
+    const [list] =
+      collectClassLists({ klassLevels, modifiersBySource: rulesetData.modifiersBySource }).get(klassId) ?? [];
+    return list === undefined ? undefined : rulesetData.aptitudeIdBySlug.get(list);
   }
 
   readCurrentValues(properties: { type: string; value: string }[]): { bab: number; skills: number } {

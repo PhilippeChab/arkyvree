@@ -52,8 +52,6 @@ export type StoredReference<T extends ReferenceType = ReferenceType> = Pick<
   "_meta" | "raw" | "overrides"
 >;
 
-const STORED_KEYS = new Set(["_meta", "raw", "overrides"]);
-
 const loaded: { [T in ReferenceType]: Map<string, ReferenceByType[T]> } = {
   class: new Map(),
   feat: new Map(),
@@ -130,6 +128,8 @@ const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => Referen
   wizardSchool: (stored) => stored,
 };
 
+const STORED_KEYS = new Set(["_meta", "raw", "overrides"]);
+
 /** Freezes a value and everything in it. */
 function deepFreeze<T>(value: T): T {
   if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
@@ -139,26 +139,15 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
-/**
- * A reference with what the generator reads derived from it, in the shape a reference file has: keys sorted,
- * no undefined values.
- */
-export function resolveReference<T extends ReferenceType>(type: T, stored: StoredReference<T>): ReferenceByType[T] {
-  const resolve: (stored: StoredReference<T>) => ReferenceByType[T] = RESOLVERS[type];
-  return JSON.parse(stableStringify(resolve(stored)));
-}
-
-/**
- * The reference stored at `path`, checked to be of `type` and to store nothing else: anything else (a correction
- * written in `mapping`, say) would be ignored, then lost at the next scrape.
- */
-export function readStoredReference<T extends ReferenceType>(path: string, type: T): StoredReference<T> {
-  const stored: StoredReference<T> = JSON.parse(readFileSync(path, "utf-8"));
-  if (stored._meta.type !== type) throw new Error(`${path} is a ${stored._meta.type} reference, not a ${type} one`);
-  const extra = Object.keys(stored).filter((key) => !STORED_KEYS.has(key));
-  if (extra.length > 0)
-    throw new Error(`${path} stores ${extra.join(", ")}: a reference stores _meta, raw and overrides only`);
-  return stored;
+/** A book's class references with their file's name, sorted by it: none for a book without classes. */
+export function classReferences(book: string): { file: string; ref: ClassReference }[] {
+  const dir = join(REFERENCE_DIR, book, "classes");
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((file) => file.endsWith(".json"))
+    .sort()
+    .map((file) => ({ file, ref: loadReference(join(dir, file), "class") }))
+    .filter(({ ref }) => !ref.overrides?.skip);
 }
 
 /**
@@ -176,15 +165,26 @@ export function loadReference<T extends ReferenceType>(path: string, type: T): R
   return reference;
 }
 
-/** A book's class references with their file's name, sorted by it: none for a book without classes. */
-export function classReferences(book: string): { file: string; ref: ClassReference }[] {
-  const dir = join(REFERENCE_DIR, book, "classes");
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((file) => file.endsWith(".json"))
-    .sort()
-    .map((file) => ({ file, ref: loadReference(join(dir, file), "class") }))
-    .filter(({ ref }) => !ref.overrides?.skip);
+/**
+ * The reference stored at `path`, checked to be of `type` and to store nothing else: anything else (a correction
+ * written in `mapping`, say) would be ignored, then lost at the next scrape.
+ */
+export function readStoredReference<T extends ReferenceType>(path: string, type: T): StoredReference<T> {
+  const stored: StoredReference<T> = JSON.parse(readFileSync(path, "utf-8"));
+  if (stored._meta.type !== type) throw new Error(`${path} is a ${stored._meta.type} reference, not a ${type} one`);
+  const extra = Object.keys(stored).filter((key) => !STORED_KEYS.has(key));
+  if (extra.length > 0)
+    throw new Error(`${path} stores ${extra.join(", ")}: a reference stores _meta, raw and overrides only`);
+  return stored;
+}
+
+/**
+ * A reference with what the generator reads derived from it, in the shape a reference file has: keys sorted,
+ * no undefined values.
+ */
+export function resolveReference<T extends ReferenceType>(type: T, stored: StoredReference<T>): ReferenceByType[T] {
+  const resolve: (stored: StoredReference<T>) => ReferenceByType[T] = RESOLVERS[type];
+  return JSON.parse(stableStringify(resolve(stored)));
 }
 
 /** The overrides of the reference of `type` stored at `path`, which a re-scrape keeps. */

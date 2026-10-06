@@ -21,64 +21,6 @@ import { getListFeatIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {
-  async getFeat(rulesetId: string, featId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
-      return {
-        ...feat,
-        modifiers: rulesetData.modifiersBySource.get(feat.id) ?? [],
-        properties: rulesetData.propertiesByEntity.get(feat.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(feat.id) ?? [],
-      };
-    });
-  }
-
-  async getFeatGroups(
-    rulesetId: string,
-    where: { childOnly?: boolean; aptitudeId?: string; search?: string },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const { aptitudeId, ...filters } = where;
-      const ids = aptitudeId === undefined ? undefined : getListFeatIds(rulesetData, aptitudeId);
-      return await Feats.findGroupPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ids, ...filters }, pagination);
-    });
-  }
-
-  async getFeats(
-    rulesetId: string,
-    where: {
-      childOnly?: boolean;
-      aptitudeId?: string;
-      family?: string;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const { aptitudeId, ...filters } = where;
-      const ids = aptitudeId === undefined ? undefined : getListFeatIds(rulesetData, aptitudeId);
-      const result = await Feats.findPage(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ...filters, ids },
-        pagination,
-      );
-      // Each inherited feat's lists as the ruleset composes them: its siblings' links merged in, their ids remapped
-      if (sourceChain.length > 0 && !where.childOnly) {
-        result.items = result.items.map((feat) => {
-          const merged = rulesetData.featsById.get(feat.id);
-          return merged ? { ...feat, featsAptitudesInRules: merged.featsAptitudesInRules } : feat;
-        });
-      }
-      return result;
-    });
-  }
-
   async createFeat(
     session: Session,
     rulesetId: string,
@@ -143,6 +85,96 @@ class FeatsService {
     });
     RulesetCache.invalidate(rulesetId);
     return result;
+  }
+
+  async deleteFeat(session: Session, rulesetId: string, featId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "feats", featId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
+
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "feats", feat);
+
+        // FK CASCADE on feats_aptitudes.feat_id and klass_level_feats.feat_id
+        // wipes those join rows when the feat row is deleted.
+        // The database deletes its customizations with it.
+        const rows = await Feats.delete(tx, { id: targetId });
+        const deletedFeat = rows[0];
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(featsInRules),
+          type: "deleteFeat",
+          data: { rulesetId, entityName: feat.name },
+        });
+
+        return deletedFeat;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async getFeat(rulesetId: string, featId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
+      return {
+        ...feat,
+        modifiers: rulesetData.modifiersBySource.get(feat.id) ?? [],
+        properties: rulesetData.propertiesByEntity.get(feat.id) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(feat.id) ?? [],
+      };
+    });
+  }
+
+  async getFeatGroups(
+    rulesetId: string,
+    where: { childOnly?: boolean; aptitudeId?: string; search?: string },
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const { aptitudeId, ...filters } = where;
+      const ids = aptitudeId === undefined ? undefined : getListFeatIds(rulesetData, aptitudeId);
+      return await Feats.findGroupPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ids, ...filters }, pagination);
+    });
+  }
+
+  async getFeats(
+    rulesetId: string,
+    where: {
+      childOnly?: boolean;
+      aptitudeId?: string;
+      family?: string;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const { aptitudeId, ...filters } = where;
+      const ids = aptitudeId === undefined ? undefined : getListFeatIds(rulesetData, aptitudeId);
+      const result = await Feats.findPage(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, ...filters, ids },
+        pagination,
+      );
+      // Each inherited feat's lists as the ruleset composes them: its siblings' links merged in, their ids remapped
+      if (sourceChain.length > 0 && !where.childOnly) {
+        result.items = result.items.map((feat) => {
+          const merged = rulesetData.featsById.get(feat.id);
+          return merged ? { ...feat, featsAptitudesInRules: merged.featsAptitudesInRules } : feat;
+        });
+      }
+      return result;
+    });
   }
 
   async updateFeat(
@@ -216,38 +248,6 @@ class FeatsService {
         });
 
         return updatedFeat;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteFeat(session: Session, rulesetId: string, featId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "feats", featId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "feats", feat);
-
-        // FK CASCADE on feats_aptitudes.feat_id and klass_level_feats.feat_id
-        // wipes those join rows when the feat row is deleted.
-        // The database deletes its customizations with it.
-        const rows = await Feats.delete(tx, { id: targetId });
-        const deletedFeat = rows[0];
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(featsInRules),
-          type: "deleteFeat",
-          data: { rulesetId, entityName: feat.name },
-        });
-
-        return deletedFeat;
       });
     });
     RulesetCache.invalidate(rulesetId);

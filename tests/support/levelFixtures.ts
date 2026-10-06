@@ -14,13 +14,6 @@ import { makeSession } from "@/tests/support/users.ts";
 
 type CharacterValues = Omit<Parameters<typeof createCharacter>[2], "name" | "xp" | "description">;
 
-/** A level's picks, by id: skill ranks, and feats and powers by the aptitude they're picked through. */
-export type Picks = {
-  skills: Record<string, number>;
-  feats: Record<string, string[]>;
-  powers: Record<string, string[]>;
-};
-
 /** A level's picks by name, with its hit points and ability increase. */
 export type LevelPlan = {
   hp: number;
@@ -28,6 +21,13 @@ export type LevelPlan = {
   skills?: Record<string, number>;
   feats?: Record<string, string[]>;
   powers?: Record<string, string[]>;
+};
+
+/** A level's picks, by id: skill ranks, and feats and powers by the aptitude they're picked through. */
+export type Picks = {
+  skills: Record<string, number>;
+  feats: Record<string, string[]>;
+  powers: Record<string, string[]>;
 };
 
 /** A human druid's first level, with a wolf for animal companion. */
@@ -150,6 +150,13 @@ export const SORCERER_1: LevelPlan = {
   powers: { "Sorcerer Spells": ["Detect Magic", "Light", "Read Magic", "Mage Hand", "Magic Missile", "Shield"] },
 };
 
+/** A first cleric level taken as a second character level: the War and Good domains, and the longsword as war weapon. */
+export const WAR_CLERIC_1: LevelPlan = {
+  hp: 8,
+  skills: { Concentration: 1, Heal: 1, Spellcraft: 1, Diplomacy: 1 },
+  feats: { "Cleric Domain": ["War Domain", "Good Domain"], "War Domain Weapon": ["War Domain Weapon: Longsword"] },
+};
+
 /** An elf wizard's first level: an evoker who gave up illusion and necromancy. */
 export const WIZARD_1: LevelPlan = {
   hp: 4,
@@ -182,24 +189,64 @@ export const WIZARD_1: LevelPlan = {
   },
 };
 
-/** A first cleric level taken as a second character level: the War and Good domains, and the longsword as war weapon. */
-export const WAR_CLERIC_1: LevelPlan = {
-  hp: 8,
-  skills: { Concentration: 1, Heal: 1, Spellcraft: 1, Diplomacy: 1 },
-  feats: { "Cleric Domain": ["War Domain", "Good Domain"], "War Domain Weapon": ["War Domain Weapon: Longsword"] },
-};
+/** A seed-user character of `build` with `levels` of `klass`, and the creature of `kind` bonded to them. */
+async function createMaster(
+  kind: "familiar" | "animalcompanion" | "mount",
+  build: keyof typeof BUILDS,
+  klass: string,
+  levels: number,
+  first: LevelPlan,
+  at: Record<number, Omit<LevelPlan, "hp">> = {},
+) {
+  const ctx = await getSeedCtx();
+  const masterId = await createSeedCharacter(ctx, build);
+  await levelTo(makeSession(), ctx, masterId, klass, levels, first, at);
+  const bonded = await Characters.findOne(db, { parentCharacterId: masterId, kind });
+  if (!bonded) throw new Error(`No ${kind} was bonded to the ${build}`);
+  return { ctx, masterId, bonded };
+}
 
-/** The ids of a plan's picks. */
-export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }: Omit<LevelPlan, "hp">): Picks {
-  const byAptitude = (named: Record<string, string[]>, ids: Record<string, string>) =>
-    Object.fromEntries(
-      Object.entries(named).map(([aptitude, names]) => [ctx.aptMap[aptitude], names.map((name) => ids[name])]),
-    );
-  return {
-    skills: Object.fromEntries(Object.entries(skills).map(([name, rank]) => [ctx.skillMap[name], rank])),
-    feats: byAptitude(feats, ctx.featMap),
-    powers: byAptitude(powers, ctx.powerMap),
-  };
+/**
+ * Finalizes levels 1 to `to` of `klass`: the first as `first` says, the others with its hit points, a Strength increase
+ * every fourth, and the picks `at` gives them. Those levels are forced: the points they leave unspent don't matter here.
+ */
+async function levelTo(
+  session: Session,
+  ctx: SeedContext,
+  characterId: string,
+  klass: string,
+  to: number,
+  first: LevelPlan,
+  at: Record<number, Omit<LevelPlan, "hp">> = {},
+) {
+  for (let level = 1; level <= to; level++) {
+    const plan =
+      level === 1 ? first : { hp: first.hp, ability: level % 4 === 0 ? "Strength" : undefined, ...at[level] };
+    await levelUp(session, ctx, characterId, klass, level, plan, level > 1);
+  }
+}
+
+/** A druid with this animal companion. */
+export function createDruidWithCompanion(levels = 1, companion = "Wolf Animal Companion") {
+  return createMaster(
+    "animalcompanion",
+    "druid",
+    "Druid",
+    levels,
+    picking(DRUID_1, "Animal Companion Bond", [companion]),
+  );
+}
+
+/** A paladin with this special mount, picked at the fifth level, which unlocks it. */
+export function createPaladinWithMount(levels = 5, mount = "Heavy Warhorse Special Mount") {
+  return createMaster("mount", "paladin", "Paladin", levels, PALADIN_1, {
+    5: { feats: { "Special Mount Bond": [mount] } },
+  });
+}
+
+/** A wizard whose first level, `plan`, picks this familiar. */
+export function createWizardWithFamiliar(familiar = "Cat Familiar", plan = WIZARD_1) {
+  return createMaster("familiar", "wizard", "Wizard", 1, picking(plan, "Familiar Bond", [familiar]));
 }
 
 /** Finalizes one level of `klass` as `plan` says. */
@@ -227,6 +274,32 @@ export function levelUp(
   );
 }
 
+/** `plan` with these picks through `aptitude` instead of its own, or none. */
+export function picking(plan: LevelPlan, aptitude: string, feats: string[]): LevelPlan {
+  const { [aptitude]: _, ...others } = plan.feats ?? {};
+  return { ...plan, feats: feats.length > 0 ? { ...others, [aptitude]: feats } : others };
+}
+
+/** The ids of a plan's picks. */
+export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }: Omit<LevelPlan, "hp">): Picks {
+  const byAptitude = (named: Record<string, string[]>, ids: Record<string, string>) =>
+    Object.fromEntries(
+      Object.entries(named).map(([aptitude, names]) => [ctx.aptMap[aptitude], names.map((name) => ids[name])]),
+    );
+  return {
+    skills: Object.fromEntries(Object.entries(skills).map(([name, rank]) => [ctx.skillMap[name], rank])),
+    feats: byAptitude(feats, ctx.featMap),
+    powers: byAptitude(powers, ctx.powerMap),
+  };
+}
+
+/** Finalizes the first `count` fighter levels. */
+export async function addFighterLevels(session: Session, ctx: SeedContext, characterId: string, count: number) {
+  for (const [index, plan] of FIGHTER_LEVELS.slice(0, count).entries()) {
+    await levelUp(session, ctx, characterId, "Fighter", index + 1, plan);
+  }
+}
+
 /** A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes. */
 export async function createSeedCharacter(
   ctx: SeedContext,
@@ -246,77 +319,4 @@ export async function createSeedCharacter(
     xp,
     description: "Test",
   });
-}
-
-/**
- * Finalizes levels 1 to `to` of `klass`: the first as `first` says, the others with its hit points, a Strength increase
- * every fourth, and the picks `at` gives them. Those levels are forced: the points they leave unspent don't matter here.
- */
-async function levelTo(
-  session: Session,
-  ctx: SeedContext,
-  characterId: string,
-  klass: string,
-  to: number,
-  first: LevelPlan,
-  at: Record<number, Omit<LevelPlan, "hp">> = {},
-) {
-  for (let level = 1; level <= to; level++) {
-    const plan =
-      level === 1 ? first : { hp: first.hp, ability: level % 4 === 0 ? "Strength" : undefined, ...at[level] };
-    await levelUp(session, ctx, characterId, klass, level, plan, level > 1);
-  }
-}
-
-/** A seed-user character of `build` with `levels` of `klass`, and the creature of `kind` bonded to them. */
-async function createMaster(
-  kind: "familiar" | "animalcompanion" | "mount",
-  build: keyof typeof BUILDS,
-  klass: string,
-  levels: number,
-  first: LevelPlan,
-  at: Record<number, Omit<LevelPlan, "hp">> = {},
-) {
-  const ctx = await getSeedCtx();
-  const masterId = await createSeedCharacter(ctx, build);
-  await levelTo(makeSession(), ctx, masterId, klass, levels, first, at);
-  const bonded = await Characters.findOne(db, { parentCharacterId: masterId, kind });
-  if (!bonded) throw new Error(`No ${kind} was bonded to the ${build}`);
-  return { ctx, masterId, bonded };
-}
-
-/** A paladin with this special mount, picked at the fifth level, which unlocks it. */
-export function createPaladinWithMount(levels = 5, mount = "Heavy Warhorse Special Mount") {
-  return createMaster("mount", "paladin", "Paladin", levels, PALADIN_1, {
-    5: { feats: { "Special Mount Bond": [mount] } },
-  });
-}
-
-/** `plan` with these picks through `aptitude` instead of its own, or none. */
-export function picking(plan: LevelPlan, aptitude: string, feats: string[]): LevelPlan {
-  const { [aptitude]: _, ...others } = plan.feats ?? {};
-  return { ...plan, feats: feats.length > 0 ? { ...others, [aptitude]: feats } : others };
-}
-
-/** A druid with this animal companion. */
-export function createDruidWithCompanion(levels = 1, companion = "Wolf Animal Companion") {
-  return createMaster(
-    "animalcompanion",
-    "druid",
-    "Druid",
-    levels,
-    picking(DRUID_1, "Animal Companion Bond", [companion]),
-  );
-}
-
-/** A wizard whose first level, `plan`, picks this familiar. */
-export function createWizardWithFamiliar(familiar = "Cat Familiar", plan = WIZARD_1) {
-  return createMaster("familiar", "wizard", "Wizard", 1, picking(plan, "Familiar Bond", [familiar]));
-}
-
-/** Finalizes the first `count` fighter levels. */
-export async function addFighterLevels(session: Session, ctx: SeedContext, characterId: string, count: number) {
-  for (const [index, plan] of FIGHTER_LEVELS.slice(0, count).entries()) {
-    await levelUp(session, ctx, characterId, "Fighter", index + 1, plan);
-  }
 }

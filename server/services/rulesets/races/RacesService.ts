@@ -20,36 +20,6 @@ import type { SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class RacesService {
-  async getRace(rulesetId: string, raceId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
-      return {
-        ...race,
-        modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
-        properties: rulesetData.propertiesByEntity.get(race.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
-      };
-    });
-  }
-
-  async getRaces(
-    rulesetId: string,
-    where: {
-      childOnly?: boolean;
-      kind?: string;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      return await Races.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-    });
-  }
-
   async createRace(
     session: Session,
     rulesetId: string,
@@ -99,6 +69,66 @@ class RacesService {
     return result;
   }
 
+  async deleteRace(session: Session, rulesetId: string, raceId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "races", raceId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
+
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "races", race);
+
+        // The database deletes its customizations with it.
+        const rows = await Races.delete(tx, { id: targetId });
+        const deletedRace = rows[0];
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(racesInRules),
+          type: "deleteRace",
+          data: { rulesetId, entityName: race.name },
+        });
+
+        return deletedRace;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async getRace(rulesetId: string, raceId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
+      return {
+        ...race,
+        modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
+        properties: rulesetData.propertiesByEntity.get(race.id) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
+      };
+    });
+  }
+
+  async getRaces(
+    rulesetId: string,
+    where: {
+      childOnly?: boolean;
+      kind?: string;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      return await Races.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+    });
+  }
+
   async updateRace(
     session: Session,
     rulesetId: string,
@@ -141,36 +171,6 @@ class RacesService {
         });
 
         return updatedRace;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteRace(session: Session, rulesetId: string, raceId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "races", raceId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "races", race);
-
-        // The database deletes its customizations with it.
-        const rows = await Races.delete(tx, { id: targetId });
-        const deletedRace = rows[0];
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(racesInRules),
-          type: "deleteRace",
-          data: { rulesetId, entityName: race.name },
-        });
-
-        return deletedRace;
       });
     });
     RulesetCache.invalidate(rulesetId);

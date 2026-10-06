@@ -14,13 +14,13 @@ import { TemplateExpressionInput, type TemplateExpressionInputRef } from "./Temp
 import { TemplateExpressionToolbar } from "./TemplateExpressionToolbar.tsx";
 import { type PathInfo, useTargetPath } from "./useTargetPath.ts";
 
-type ConditionField = "target" | "operator" | "value";
-
 /** A form's field, as `useController` binds it: its value, its change and its error. */
 interface BoundField {
   field: { value: string | undefined; onChange: (value: string) => void };
   fieldState: { error?: FieldError };
 }
+
+type ConditionField = "target" | "operator" | "value";
 
 interface ConditionFieldsProps {
   kind: "modifier" | "requirement";

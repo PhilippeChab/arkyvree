@@ -13,6 +13,23 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
     super(playersInCampaign);
   }
 
+  async archive(db: Db, where: { userId: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof playersInCampaign>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  // Hard delete — used when intentionally removing a player from a campaign
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id));
+  }
+
   /** Whether the user plays in a live campaign on the ruleset: what lets a member create on a private ruleset. */
   /** Whether the user plays in a campaign on the ruleset. */
   async exists(db: Db, where: { userId: string; rulesetId: string }) {
@@ -122,29 +139,12 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
     });
   }
 
-  async create(db: Db, values: InferInsertModel<typeof playersInCampaign>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async update(db: Db, values: Partial<InferInsertModel<typeof playersInCampaign>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
       .returning();
-  }
-
-  async archive(db: Db, where: { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  // Hard delete — used when intentionally removing a player from a campaign
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
 }
 

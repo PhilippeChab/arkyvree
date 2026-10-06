@@ -44,23 +44,6 @@ export function lines(...rows: string[]) {
   return rows.join("\n") + "\n";
 }
 
-/**
- * Runs oxlint on one thread (the suite's other workers keep the rest of the cores), asynchronously: Bun's `spawnSync`
- * can miss a child's exit under a busy suite and block its worker for good. A run past 15s is killed and run again;
- * a second fails with oxlint's stderr.
- */
-export async function runOxlint(args: string[], cwd?: string) {
-  const hung = (result: Awaited<ReturnType<typeof runOnce>>) =>
-    `(${args.join(" ")}; exit ${result.exitCode}): ${result.stderr}`;
-  let result = await runOnce(args, cwd);
-  if (result.timedOut) {
-    console.warn(`oxlint hung once, running it again ${hung(result)}`);
-    result = await runOnce(args, cwd);
-  }
-  if (result.timedOut) throw new Error(`oxlint hung twice ${hung(result)}`);
-  return result;
-}
-
 /** What `oxlint --fix` with our `rules` makes of each of `files`, run `passes` times: a fix can open the way to another. */
 export async function fixRepo(files: Record<string, string>, rules: string[], passes = 1) {
   const { dir, config } = writeRepo(files, rules);
@@ -83,4 +66,21 @@ export async function lintRepo(files: Record<string, string>, rules: string[], f
   return [...run.stdout.matchAll(/^\.?\/?([^:]+):\d+:\d+: .*\[Error\/arkyvree\(([a-z-]+)\)\]$/gm)]
     .map(([, file, rule]) => `${rule} ${path.posix.join(from, file)}`)
     .sort();
+}
+
+/**
+ * Runs oxlint on one thread (the suite's other workers keep the rest of the cores), asynchronously: Bun's `spawnSync`
+ * can miss a child's exit under a busy suite and block its worker for good. A run past 15s is killed and run again;
+ * a second fails with oxlint's stderr.
+ */
+export async function runOxlint(args: string[], cwd?: string) {
+  const hung = (result: Awaited<ReturnType<typeof runOnce>>) =>
+    `(${args.join(" ")}; exit ${result.exitCode}): ${result.stderr}`;
+  let result = await runOnce(args, cwd);
+  if (result.timedOut) {
+    console.warn(`oxlint hung once, running it again ${hung(result)}`);
+    result = await runOnce(args, cwd);
+  }
+  if (result.timedOut) throw new Error(`oxlint hung twice ${hung(result)}`);
+  return result;
 }

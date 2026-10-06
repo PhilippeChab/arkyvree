@@ -12,24 +12,15 @@ import methodVerbs from "./methodVerbs.json";
 /** A call to a repository method, with the arguments it runs with. */
 type Call = (args: unknown[]) => unknown;
 
+let lastStateId = 0;
 const READS = new Set(methodVerbs.read);
-const WRITES = new Set(methodVerbs.write);
 
 /**
  * A short id per copy-on-write state, so that a request's reads in two of them (a character's ruleset and another's)
  * never share a cached result.
  */
 const stateIds = new WeakMap<CowData, string>();
-let lastStateId = 0;
-
-function getStateId(cow: CowData): string {
-  let id = stateIds.get(cow);
-  if (!id) {
-    id = String(++lastStateId);
-    stateIds.set(cow, id);
-  }
-  return id;
-}
+const WRITES = new Set(methodVerbs.write);
 
 /**
  * What a read is cached under for the request: its repository, method and arguments but the database handle, and the
@@ -44,6 +35,15 @@ function getReadKey(repository: string, method: string, args: unknown[]): string
   }
   const cow = getCowContext();
   return cow && !cow.isEmpty() ? `${key}|cow:${getStateId(cow)}` : key;
+}
+
+function getStateId(cow: CowData): string {
+  let id = stateIds.get(cow);
+  if (!id) {
+    id = String(++lastStateId);
+    stateIds.set(cow, id);
+  }
+  return id;
 }
 
 /**

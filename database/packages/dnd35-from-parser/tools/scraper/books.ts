@@ -5,6 +5,8 @@
  * those mappings so every parser can resolve a book slug to its URL component.
  */
 
+const BASE_URL = "https://dndtools.net";
+
 const BOOK_SLUGS: Record<string, string> = {
   srd: "players-handbook-v35--6",
   "complete-warrior": "complete-warrior--61",
@@ -15,17 +17,6 @@ const BOOK_SLUGS: Record<string, string> = {
   dmg: "dungeon-masters-guide-v35--4",
 };
 
-const BASE_URL = "https://dndtools.net";
-
-export function getBookSlug(book: string): string {
-  const slug = BOOK_SLUGS[book];
-  if (!slug) {
-    const known = Object.keys(BOOK_SLUGS).join(", ");
-    throw new Error(`Unknown book "${book}". Known books: ${known}`);
-  }
-  return slug;
-}
-
 export function buildListingUrl(type: "classes" | "feats" | "spells", book: string): string {
   return `${BASE_URL}/${type}/${getBookSlug(book)}/`;
 }
@@ -35,6 +26,15 @@ export function buildRaceListingUrl(book: string): string {
   const match = slug.match(/--(\d+)$/);
   if (!match) throw new Error(`Could not extract book ID from slug "${slug}"`);
   return `${BASE_URL}/races/?rulebook=${match[1]}`;
+}
+
+export function getBookSlug(book: string): string {
+  const slug = BOOK_SLUGS[book];
+  if (!slug) {
+    const known = Object.keys(BOOK_SLUGS).join(", ");
+    throw new Error(`Unknown book "${book}". Known books: ${known}`);
+  }
+  return slug;
 }
 
 export { BASE_URL };

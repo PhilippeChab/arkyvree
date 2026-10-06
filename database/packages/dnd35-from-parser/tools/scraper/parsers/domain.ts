@@ -11,9 +11,6 @@ import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.
 /** A domain version of the domain index: its page's slug ("celerity-cd") and its label ("Celerity (CD)"). */
 export type DomainIndexEntry = { slug: string; label: string };
 
-/** A spell a domain's page lists: its page (`<book>/<spell>`), its name and its edition ("Core (3.5)"). */
-export type DomainPageSpell = { path: string; name: string; edition: string };
-
 /** A domain version's page: its book (the rulebook's slug, "complete-divine--56") and page, its granted power, its spells. */
 export type DomainPage = {
   label: string;
@@ -22,6 +19,9 @@ export type DomainPage = {
   description: string;
   spells: DomainPageSpell[];
 };
+
+/** A spell a domain's page lists: its page (`<book>/<spell>`), its name and its edition ("Core (3.5)"). */
+export type DomainPageSpell = { path: string; name: string; edition: string };
 
 /** The book's code a domain version's label ends with ("Celerity (CD)" → "CD"), if any. */
 export function domainBookCode(label: string) {

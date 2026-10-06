@@ -217,14 +217,6 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       }
     }
 
-    getSpellTagLists() {
-      return this.spellTagLists;
-    }
-
-    getSpellTags() {
-      return this.spellTags;
-    }
-
     enrichAllKnownPowers(
       powers: PowerWithPMR[],
       klassLevels: KlassLevelWithPMR[],
@@ -292,6 +284,14 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
 
       this.aptitudePowerProperties = properties;
       this.powerAptitudeLinks = powerAptitudeLinks;
+    }
+
+    getSpellTagLists() {
+      return this.spellTagLists;
+    }
+
+    getSpellTags() {
+      return this.spellTags;
     }
   }
   return WithKnownPowers;

@@ -22,22 +22,6 @@ import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-/** The spell properties in a 3.5 stat block's order; the others follow by name. */
-const SPELL_PROPERTY_ORDER = [
-  SPELL_SUBSCHOOL,
-  SPELL_DESCRIPTOR,
-  SPELL_COMPONENT,
-  SPELL_MATERIAL,
-  SPELL_CASTING_TIME,
-  SPELL_RANGE_TYPE,
-  SPELL_TARGET,
-  SPELL_AREA_OF_EFFECT,
-  SPELL_DURATION_TYPE,
-  SPELL_DURATION,
-  SPELL_RESISTANCE,
-];
-const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
-
 /**
  * Short labels so each spell's property row fits on a single line. A legend is rendered once at the top of the spells
  * section.
@@ -55,6 +39,22 @@ const SPELL_PROPERTY_ABBR: Record<string, { short: string; full: string }> = {
   [SPELL_DURATION]: { short: "Dur", full: "Duration" },
   [SPELL_RESISTANCE]: { short: "SR", full: "Spell Resistance" },
 };
+/** The spell properties in a 3.5 stat block's order; the others follow by name. */
+const SPELL_PROPERTY_ORDER = [
+  SPELL_SUBSCHOOL,
+  SPELL_DESCRIPTOR,
+  SPELL_COMPONENT,
+  SPELL_MATERIAL,
+  SPELL_CASTING_TIME,
+  SPELL_RANGE_TYPE,
+  SPELL_TARGET,
+  SPELL_AREA_OF_EFFECT,
+  SPELL_DURATION_TYPE,
+  SPELL_DURATION,
+  SPELL_RESISTANCE,
+];
+
+const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
 
 function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.getDetailedCharacterIdentity();

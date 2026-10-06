@@ -29,24 +29,10 @@ export function invalidateSeededRuleset(rulesetId: string) {
   RulesetCache.invalidate(rulesetId);
 }
 
-/**
- * An empty private D&D 3.5 draft ruleset owned by `userId` (`null` for a
- * system ruleset). Pass `rulesetId` and `ancestorRulesetIds` to make it a
- * fork. For one that already has the seeded content, use `createSeededTestRuleset`.
- */
-export async function createTestRuleset(
-  userId: string | null,
-  values: Partial<InferInsertModel<typeof rulesetsInRules>> = {},
-) {
-  const [ruleset] = await Rulesets.create(db, {
-    name: `Test Ruleset ${uniqueId()}`,
-    description: "Test ruleset description",
-    private: true,
-    baseRules: "Dungeons & Dragons: 3.5",
-    userId,
-    ...values,
-  });
-  return ruleset;
+/** A new seeded fork of the seed user's with an aptitude of its own: the fork's `id` and the `aptitudeId`. */
+export async function createSeededForkWithAptitude() {
+  const { id } = await createSeededTestRuleset(SEED_USER_ID);
+  return { id, aptitudeId: (await postAptitude(id)).id };
 }
 
 /**
@@ -102,6 +88,26 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
   return ruleset;
 }
 
+/**
+ * An empty private D&D 3.5 draft ruleset owned by `userId` (`null` for a
+ * system ruleset). Pass `rulesetId` and `ancestorRulesetIds` to make it a
+ * fork. For one that already has the seeded content, use `createSeededTestRuleset`.
+ */
+export async function createTestRuleset(
+  userId: string | null,
+  values: Partial<InferInsertModel<typeof rulesetsInRules>> = {},
+) {
+  const [ruleset] = await Rulesets.create(db, {
+    name: `Test Ruleset ${uniqueId()}`,
+    description: "Test ruleset description",
+    private: true,
+    baseRules: "Dungeons & Dragons: 3.5",
+    userId,
+    ...values,
+  });
+  return ruleset;
+}
+
 /** A new user with an empty ruleset of their own, holding aptitudes of these names: their ids, in that order. */
 export async function createTestUserAndRuleset(aptitudeNames: string[] = []) {
   const { user, session } = await createTestUser();
@@ -118,10 +124,4 @@ export async function postAptitude(rulesetId: string) {
   return await expectOk(
     api.api.rulesets[":id"].aptitudes.$post({ param: { id: rulesetId }, json: { name: `Aptitude ${uniqueId()}` } }),
   );
-}
-
-/** A new seeded fork of the seed user's with an aptitude of its own: the fork's `id` and the `aptitudeId`. */
-export async function createSeededForkWithAptitude() {
-  const { id } = await createSeededTestRuleset(SEED_USER_ID);
-  return { id, aptitudeId: (await postAptitude(id)).id };
 }

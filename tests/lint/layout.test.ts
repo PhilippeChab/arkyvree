@@ -10,16 +10,16 @@ describe("file layout", () => {
     expect(
       await lintRepo(
         {
-          // In order; an export a helper calls is one
+          // In order; a helper may call an export below it: functions are hoisted
           "server/a/ordered.ts": lines(
             'import { x } from "@/x.ts";',
             "type A = number;",
             "const N = 1;",
-            "export function build(a: A) {",
-            "  return a + N + x;",
-            "}",
             "function helper() {",
             "  return build(2);",
+            "}",
+            "export function build(a: A) {",
+            "  return a + N + x;",
             "}",
             "export const main = () => helper();",
           ),

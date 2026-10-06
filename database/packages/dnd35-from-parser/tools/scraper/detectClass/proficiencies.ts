@@ -4,13 +4,6 @@ import { type ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
 import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-/** Weapon name → proficiency slug lookup: a later list's name replaces an earlier one's */
-const WEAPON_PROF_MAP = new Map<string, string>([
-  ...SIMPLE_WEAPONS.map((w) => [w.toLowerCase(), `simpleweaponproficiency${stripSeparators(w)}`] as const),
-  ...MARTIAL_WEAPONS.map((w) => [w.toLowerCase(), `martialweaponproficiency${stripSeparators(w)}`] as const),
-  ...EXOTIC_WEAPONS.map((w) => [w.toLowerCase(), `exoticweaponproficiency${stripSeparators(w)}`] as const),
-]);
-
 /** Aliases for description text → canonical weapon names */
 const WEAPON_ALIASES: Record<string, string[]> = {
   "crossbow (light or heavy)": ["Light Crossbow", "Heavy Crossbow"],
@@ -20,14 +13,12 @@ const WEAPON_ALIASES: Record<string, string[]> = {
   "hand axe": ["Handaxe"],
 };
 
-function PROF(slug: string) {
-  return {
-    operator: "set" as const,
-    target: `feats.${slug}.possessed`,
-    value: "true",
-    valueType: "boolean" as const,
-  };
-}
+/** Weapon name → proficiency slug lookup: a later list's name replaces an earlier one's */
+const WEAPON_PROF_MAP = new Map<string, string>([
+  ...SIMPLE_WEAPONS.map((w) => [w.toLowerCase(), `simpleweaponproficiency${stripSeparators(w)}`] as const),
+  ...MARTIAL_WEAPONS.map((w) => [w.toLowerCase(), `martialweaponproficiency${stripSeparators(w)}`] as const),
+  ...EXOTIC_WEAPONS.map((w) => [w.toLowerCase(), `exoticweaponproficiency${stripSeparators(w)}`] as const),
+]);
 
 function detectSpecificWeapons(desc: string): string[] {
   const slugs: string[] = [];
@@ -75,6 +66,15 @@ function detectSpecificWeapons(desc: string): string[] {
   }
 
   return slugs;
+}
+
+function PROF(slug: string) {
+  return {
+    operator: "set" as const,
+    target: `feats.${slug}.possessed`,
+    value: "true",
+    valueType: "boolean" as const,
+  };
 }
 
 export function detectWAPModifiers(desc: string): ModifierSeed[] {

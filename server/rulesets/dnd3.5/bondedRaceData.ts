@@ -35,6 +35,15 @@
  * Source: SRD Monster Manual entries (cross-checked via d20srd.org).
  */
 
+type BondedRaceAbilities = {
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+};
+
 type NaturalAttack = {
   name: string;
   damage: string;
@@ -44,15 +53,6 @@ type NaturalAttack = {
   secondary?: true;
   /** What the stat block's feats add to its attack: a wolf's Weapon Focus (bite), which the ruleset has no feat for. */
   misc?: number;
-};
-
-type BondedRaceAbilities = {
-  strength: number;
-  dexterity: number;
-  constitution: number;
-  intelligence: number;
-  wisdom: number;
-  charisma: number;
 };
 
 export type BondedRaceStatBlock = {

@@ -88,6 +88,28 @@ export default class DetailedCharacterClasses {
 
   private readonly detailedCharacterClasses: DetailedCharacterComprehensiveClasses = {};
 
+  addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: CharacterLevel): void {
+    const entry = this.detailedCharacterClasses[klassName];
+    if (!entry) return;
+
+    entry.levels.push({
+      klassLevel: { ...klassLevel, modifiers: [], properties: [], requirements: [] },
+      characterLevel,
+      feats: [],
+      skills: [],
+      powers: [],
+    });
+    entry.level++;
+  }
+
+  getCharacterClasses() {
+    return Object.fromEntries(Object.entries(this.detailedCharacterClasses).filter(([, klass]) => klass.level > 0));
+  }
+
+  getClasses() {
+    return this.detailedCharacterClasses;
+  }
+
   initialize(
     klasses: Klass[],
     klassSkills: KlassSkill[],
@@ -202,28 +224,6 @@ export default class DetailedCharacterClasses {
         }
       }
     }
-  }
-
-  getCharacterClasses() {
-    return Object.fromEntries(Object.entries(this.detailedCharacterClasses).filter(([, klass]) => klass.level > 0));
-  }
-
-  getClasses() {
-    return this.detailedCharacterClasses;
-  }
-
-  addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: CharacterLevel): void {
-    const entry = this.detailedCharacterClasses[klassName];
-    if (!entry) return;
-
-    entry.levels.push({
-      klassLevel: { ...klassLevel, modifiers: [], properties: [], requirements: [] },
-      characterLevel,
-      feats: [],
-      skills: [],
-      powers: [],
-    });
-    entry.level++;
   }
 
   removeProjectedLevel(klassName: string): void {

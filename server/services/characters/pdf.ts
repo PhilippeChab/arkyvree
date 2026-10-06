@@ -19,24 +19,6 @@ export function getCharacterPdfTargetTable(campaignId?: string) {
 }
 
 /**
- * The character `userId` may export as a PDF, or null: one they own or
- * contribute to (or a bonded character of such a master). Through
- * `campaignId`, the character must be linked to that campaign, and its Game
- * Master may export it too. Checked when the export is queued and again when
- * the worker runs it, so access revoked in between is honored.
- */
-export async function findExportableCharacter(userId: string, characterId: string, campaignId?: string) {
-  if (campaignId) {
-    if (!(await PlayerCharacters.findOne(db, { characterId, campaignId }))) return null;
-    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (campaign && (await CampaignsPolicy.for(db, { userId }, campaign)).isGameMaster()) {
-      return (await Characters.findOne(db, { id: characterId })) ?? null;
-    }
-  }
-  return findEditableCharacterOrBonded(db, characterId, userId);
-}
-
-/**
  * Queues a PDF of the character for the session user, who is notified when it
  * is ready. Callers check access with `findExportableCharacter`, passing the
  * same `campaignId` so the worker repeats that check.
@@ -63,4 +45,22 @@ export async function enqueueCharacterPdf(
   });
 
   pingWorker();
+}
+
+/**
+ * The character `userId` may export as a PDF, or null: one they own or
+ * contribute to (or a bonded character of such a master). Through
+ * `campaignId`, the character must be linked to that campaign, and its Game
+ * Master may export it too. Checked when the export is queued and again when
+ * the worker runs it, so access revoked in between is honored.
+ */
+export async function findExportableCharacter(userId: string, characterId: string, campaignId?: string) {
+  if (campaignId) {
+    if (!(await PlayerCharacters.findOne(db, { characterId, campaignId }))) return null;
+    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
+    if (campaign && (await CampaignsPolicy.for(db, { userId }, campaign)).isGameMaster()) {
+      return (await Characters.findOne(db, { id: characterId })) ?? null;
+    }
+  }
+  return findEditableCharacterOrBonded(db, characterId, userId);
 }

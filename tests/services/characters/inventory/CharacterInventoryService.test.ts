@@ -30,14 +30,6 @@ type Placement = {
 /** What the test's items weigh and cost, unless a test says otherwise. */
 const ITEM_VALUES = { weight: "5", costGp: "10" };
 
-function equipped(location: ItemLocation, weaponSet: number | null = null): Placement {
-  return {
-    equipped: true,
-    location,
-    weaponSet,
-  };
-}
-
 function add(
   session: Session,
   characterId: string,
@@ -65,10 +57,40 @@ function add(
   );
 }
 
+function equipped(location: ItemLocation, weaponSet: number | null = null): Placement {
+  return {
+    equipped: true,
+    location,
+    weaponSet,
+  };
+}
+
 /** The character's entry of the item, by the item: a test carries each item once. An id it doesn't carry is its own. */
 async function entryOf(characterId: string, itemId: string) {
   const entries = await CharacterInventory.findMany(db, { characterId });
   return entries.find((entry) => entry.itemId === itemId)?.id ?? itemId;
+}
+
+/** Removes the character's entry of the item. */
+async function remove(session: Session, characterId: string, itemId: string) {
+  return CharacterInventoryService.removeItem(session, characterId, await entryOf(characterId, itemId));
+}
+
+/** A new user's character on their fork of the seeded ruleset, whose items the test makes. */
+async function setup(race?: { size: SizeType }) {
+  const { user, session } = await createTestUser();
+  const ruleset = await createSeededTestRuleset(user.id);
+  const raceId =
+    race &&
+    (await Races.create(db, { name: `Test Race ${uniqueId()}`, rulesetId: ruleset.id, baseSpeed: 30, ...race }))[0].id;
+  RulesetCache.invalidate(ruleset.id);
+  const character = await createCharacterAs(
+    session,
+    raceId ? { rulesetId: ruleset.id, raceId } : { rulesetId: ruleset.id },
+  );
+  const newItem = (values?: Partial<InferInsertModel<typeof itemsInRules>>, properties?: Record<string, string>) =>
+    createTestItem({ rulesetId: ruleset.id, ...ITEM_VALUES, ...values }, properties);
+  return { session, character, newItem, item: await newItem() };
 }
 
 async function update(
@@ -98,28 +120,6 @@ async function update(
     force,
     updatedAt,
   );
-}
-
-/** Removes the character's entry of the item. */
-async function remove(session: Session, characterId: string, itemId: string) {
-  return CharacterInventoryService.removeItem(session, characterId, await entryOf(characterId, itemId));
-}
-
-/** A new user's character on their fork of the seeded ruleset, whose items the test makes. */
-async function setup(race?: { size: SizeType }) {
-  const { user, session } = await createTestUser();
-  const ruleset = await createSeededTestRuleset(user.id);
-  const raceId =
-    race &&
-    (await Races.create(db, { name: `Test Race ${uniqueId()}`, rulesetId: ruleset.id, baseSpeed: 30, ...race }))[0].id;
-  RulesetCache.invalidate(ruleset.id);
-  const character = await createCharacterAs(
-    session,
-    raceId ? { rulesetId: ruleset.id, raceId } : { rulesetId: ruleset.id },
-  );
-  const newItem = (values?: Partial<InferInsertModel<typeof itemsInRules>>, properties?: Record<string, string>) =>
-    createTestItem({ rulesetId: ruleset.id, ...ITEM_VALUES, ...values }, properties);
-  return { session, character, newItem, item: await newItem() };
 }
 
 describe("InventoryService", () => {

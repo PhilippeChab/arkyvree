@@ -1,11 +1,11 @@
 import { type ItemLocation, LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 import { type HandLocation, isHandLocation } from "@/shared/equipment.ts";
 
-type WeaponSetSlot = (typeof WEAPON_LOCATION_MAP)[HandLocation];
-
 type EquipmentSlot = Lowercase<Exclude<ItemLocation, HandLocation>>;
 
 type InventorySlot = EquipmentSlot | WeaponSetSlot;
+
+type WeaponSetSlot = (typeof WEAPON_LOCATION_MAP)[HandLocation];
 
 const WEAPON_LOCATION_MAP = {
   "Main Hand": "mainhand",

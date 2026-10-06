@@ -9,6 +9,29 @@ class PropertiesRepository extends CustomizationRepository<typeof propertiesInCu
     super(propertiesInCustomization);
   }
 
+  // Exception to soft-delete: disposable configuration data — intentional removal
+  async delete(
+    db: Db,
+    where: { id: string } | { ids: string[] } | { entityIds: string[]; entityType: string; types?: readonly string[] },
+  ) {
+    return await db
+      .delete(this.table)
+      .where(
+        this.branchWhere(
+          [
+            "id" in where && eq(this.table.id, where.id),
+            "ids" in where && inArray(this.table.id, where.ids),
+            "entityIds" in where && inArray(this.table.entityId, where.entityIds),
+          ],
+          [
+            "entityType" in where && eq(this.table.entityType, where.entityType),
+            "types" in where && where.types !== undefined && inArray(this.table.type, where.types),
+          ],
+        ),
+      )
+      .returning();
+  }
+
   async findMany(
     db: Db,
     where:
@@ -38,29 +61,6 @@ class PropertiesRepository extends CustomizationRepository<typeof propertiesInCu
         ],
       ),
     });
-  }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(
-    db: Db,
-    where: { id: string } | { ids: string[] } | { entityIds: string[]; entityType: string; types?: readonly string[] },
-  ) {
-    return await db
-      .delete(this.table)
-      .where(
-        this.branchWhere(
-          [
-            "id" in where && eq(this.table.id, where.id),
-            "ids" in where && inArray(this.table.id, where.ids),
-            "entityIds" in where && inArray(this.table.entityId, where.entityIds),
-          ],
-          [
-            "entityType" in where && eq(this.table.entityType, where.entityType),
-            "types" in where && where.types !== undefined && inArray(this.table.type, where.types),
-          ],
-        ),
-      )
-      .returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal

@@ -27,15 +27,6 @@ import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/l
 import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 
-interface OnboardingStep {
-  icon: SvgIconComponent | null;
-  logo?: boolean;
-  title: string;
-  description: string;
-  tooltip?: string;
-  mode: "dialog" | "popper";
-}
-
 interface OnboardingProps {
   open: boolean;
   onClose: () => void;
@@ -43,6 +34,15 @@ interface OnboardingProps {
   onStepChange: (step: number) => void;
   anchorEl: HTMLElement | null;
   isMobile: boolean;
+}
+
+interface OnboardingStep {
+  icon: SvgIconComponent | null;
+  logo?: boolean;
+  title: string;
+  description: string;
+  tooltip?: string;
+  mode: "dialog" | "popper";
 }
 
 const SIDEBAR_TRANSITION_MS = 380;

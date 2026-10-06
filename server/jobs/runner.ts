@@ -12,15 +12,15 @@ import { sendEmailTask } from "@/server/jobs/sendEmail.ts";
 import { sweepPendingBlobsTask } from "@/server/jobs/sweepPendingBlobs.ts";
 import { Sentry } from "@/server/sentry.ts";
 
+/** The cleanup at 4 every morning, the blob sweep every hour. */
+export const crontab = ["0 4 * * * runCleanup", "0 * * * * sweepPendingBlobs"].join("\n");
+
 export const taskList = {
   generatePdf: generatePdfTask,
   sendEmail: sendEmailTask,
   runCleanup: runCleanupTask,
   sweepPendingBlobs: sweepPendingBlobsTask,
 };
-
-/** The cleanup at 4 every morning, the blob sweep every hour. */
-export const crontab = ["0 4 * * * runCleanup", "0 * * * * sweepPendingBlobs"].join("\n");
 
 export const workerLogger = new Logger((scope) => {
   return (level, message) => {

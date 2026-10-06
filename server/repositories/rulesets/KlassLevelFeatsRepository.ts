@@ -10,12 +10,6 @@ class KlassLevelFeatsRepository extends BaseRepository<typeof klassLevelFeatsInR
     super(klassLevelFeatsInRules);
   }
 
-  async findMany(db: Db, where: { klassLevelIds: string[] }) {
-    return await db.query.klassLevelFeatsInRules.findMany({
-      where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
-    });
-  }
-
   async create(db: Db, values: InferInsertModel<typeof klassLevelFeatsInRules>) {
     return await db.insert(this.table).values(values).returning();
   }
@@ -37,6 +31,12 @@ class KlassLevelFeatsRepository extends BaseRepository<typeof klassLevelFeatsInR
         ]),
       )
       .returning();
+  }
+
+  async findMany(db: Db, where: { klassLevelIds: string[] }) {
+    return await db.query.klassLevelFeatsInRules.findMany({
+      where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
+    });
   }
 }
 

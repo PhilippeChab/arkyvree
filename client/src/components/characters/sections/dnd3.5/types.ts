@@ -7,8 +7,17 @@
 
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
-/** The sheet's combat stats; empty on a sheet that carries none. */
-export type SheetCombat = Partial<CharacterDetail["combat"]>;
+export interface Dnd35AbilityScoresSectionProps {
+  abilities: CharacterDetail["abilities"];
+  characterId: string;
+  readOnly?: boolean;
+}
+
+export interface Dnd35BondedSectionProps {
+  bonded: NonNullable<CharacterDetail["bonded"][string]>;
+  /** When true, the bonded name renders as a router link to `/characters/<bondedId>`. */
+  linkable?: boolean;
+}
 
 export interface Dnd35CombatAndSavesSectionProps {
   combat: SheetCombat;
@@ -25,18 +34,9 @@ export interface Dnd35PowersSectionProps {
   rulesetId?: string;
 }
 
-export interface Dnd35AbilityScoresSectionProps {
-  abilities: CharacterDetail["abilities"];
-  characterId: string;
-  readOnly?: boolean;
-}
-
-export interface Dnd35BondedSectionProps {
-  bonded: NonNullable<CharacterDetail["bonded"][string]>;
-  /** When true, the bonded name renders as a router link to `/characters/<bondedId>`. */
-  linkable?: boolean;
-}
-
 export interface Dnd35SkillsSectionProps {
   skills: NonNullable<CharacterDetail["skills"]>;
 }
+
+/** The sheet's combat stats; empty on a sheet that carries none. */
+export type SheetCombat = Partial<CharacterDetail["combat"]>;

@@ -11,9 +11,29 @@ import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 type Actor = "Owner" | ContributorRole | "Stranger";
 
-const OWNER = "owner-id";
-const OTHER = "other-id";
 const ACTORS: Actor[] = ["Owner", "Admin", "Editor", "Viewer", "Stranger"];
+const OTHER = "other-id";
+const OWNER = "owner-id";
+
+/** Which actors may act; everyone else gets `error`. */
+function expectOnly(
+  allowed: Actor[],
+  check: (policy: RulesetsPolicy) => unknown,
+  error: typeof ForbiddenError,
+  overrides: Partial<Ruleset> = {},
+) {
+  for (const actor of ACTORS) {
+    const run = () => check(policyOf(actor, overrides));
+    if (allowed.includes(actor)) expect(run()).toBe(true);
+    else expect(run).toThrow(error);
+  }
+}
+
+/** The policy `actor` gets on a draft fork owned by OWNER, adjusted by `overrides`. */
+function policyOf(actor: Actor, overrides: Partial<Ruleset> = {}) {
+  const role: ContributorRole | null = actor === "Owner" || actor === "Stranger" ? null : actor;
+  return new RulesetsPolicy(makeSession(actor === "Owner" ? OWNER : OTHER), rulesetOf(overrides), role);
+}
 
 function rulesetOf(overrides: Partial<Ruleset> = {}): Ruleset {
   const now = new Date().toISOString();
@@ -35,26 +55,6 @@ function rulesetOf(overrides: Partial<Ruleset> = {}): Ruleset {
     extensionRulesetIds: [],
     ...overrides,
   };
-}
-
-/** The policy `actor` gets on a draft fork owned by OWNER, adjusted by `overrides`. */
-function policyOf(actor: Actor, overrides: Partial<Ruleset> = {}) {
-  const role: ContributorRole | null = actor === "Owner" || actor === "Stranger" ? null : actor;
-  return new RulesetsPolicy(makeSession(actor === "Owner" ? OWNER : OTHER), rulesetOf(overrides), role);
-}
-
-/** Which actors may act; everyone else gets `error`. */
-function expectOnly(
-  allowed: Actor[],
-  check: (policy: RulesetsPolicy) => unknown,
-  error: typeof ForbiddenError,
-  overrides: Partial<Ruleset> = {},
-) {
-  for (const actor of ACTORS) {
-    const run = () => check(policyOf(actor, overrides));
-    if (allowed.includes(actor)) expect(run()).toBe(true);
-    else expect(run).toThrow(error);
-  }
 }
 
 describe("RulesetsPolicy", () => {

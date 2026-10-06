@@ -15,8 +15,8 @@ import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/too
 import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 const BASE_DIR = join(import.meta.dirname!, "../");
-const SCRAPER = join(BASE_DIR, "tools/scraper/index.ts");
 const GENERATOR = join(BASE_DIR, "tools/generate.ts");
+const SCRAPER = join(BASE_DIR, "tools/scraper/index.ts");
 
 /**
  * Build CLI args for the scraper.
@@ -75,15 +75,6 @@ function buildScrapeArgs(ref: { path: string; type: string; url?: string; book: 
   return args;
 }
 
-/** Runs a tool (`script` with `args`), printing FAILED and its errors when it fails: whether it succeeded. */
-async function run(script: string, args: string[]): Promise<boolean> {
-  const result = await $`bun ${script} ${args}`.quiet().nothrow();
-  if (result.exitCode === 0) return true;
-  console.log("FAILED");
-  console.error(result.stderr.toString());
-  return false;
-}
-
 async function main() {
   const { bookFilter, typeFilter, nameFilter } = parseCliArgs();
 
@@ -130,6 +121,15 @@ async function main() {
     return;
   }
   console.log(`\nDone. Synced ${refs.length} references.`);
+}
+
+/** Runs a tool (`script` with `args`), printing FAILED and its errors when it fails: whether it succeeded. */
+async function run(script: string, args: string[]): Promise<boolean> {
+  const result = await $`bun ${script} ${args}`.quiet().nothrow();
+  if (result.exitCode === 0) return true;
+  console.log("FAILED");
+  console.error(result.stderr.toString());
+  return false;
 }
 
 main().catch((err) => {

@@ -14,9 +14,9 @@ export interface TimingStore {
   dedupMisses: number;
 }
 
-const SLOW_QUERY_THRESHOLD_MS = 200;
-
 let patched = false;
+
+const SLOW_QUERY_THRESHOLD_MS = 200;
 
 export const timingStorage = new AsyncLocalStorage<TimingStore>();
 

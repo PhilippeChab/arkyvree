@@ -19,30 +19,6 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class LanguagesService {
-  async getLanguage(rulesetId: string, languageId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
-      return language;
-    });
-  }
-
-  async getLanguages(
-    rulesetId: string,
-    where: {
-      childOnly?: boolean;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      return await Languages.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-    });
-  }
-
   async createLanguage(
     session: Session,
     rulesetId: string,
@@ -89,6 +65,61 @@ class LanguagesService {
     return result;
   }
 
+  async deleteLanguage(session: Session, rulesetId: string, languageId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "languages", languageId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
+
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "languages", language);
+
+        // The database deletes its customizations with it.
+        const rows = await Languages.delete(tx, { id: targetId });
+        const deletedLanguage = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(languagesInRules),
+          type: "deleteLanguage",
+          data: { rulesetId, entityName: language.name },
+        });
+
+        return deletedLanguage;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async getLanguage(rulesetId: string, languageId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
+      return language;
+    });
+  }
+
+  async getLanguages(
+    rulesetId: string,
+    where: {
+      childOnly?: boolean;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      return await Languages.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+    });
+  }
+
   async updateLanguage(
     session: Session,
     rulesetId: string,
@@ -130,37 +161,6 @@ class LanguagesService {
         });
 
         return updatedLanguage;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteLanguage(session: Session, rulesetId: string, languageId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "languages", languageId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "languages", language);
-
-        // The database deletes its customizations with it.
-        const rows = await Languages.delete(tx, { id: targetId });
-        const deletedLanguage = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(languagesInRules),
-          type: "deleteLanguage",
-          data: { rulesetId, entityName: language.name },
-        });
-
-        return deletedLanguage;
       });
     });
     RulesetCache.invalidate(rulesetId);

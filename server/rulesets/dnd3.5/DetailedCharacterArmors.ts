@@ -13,6 +13,9 @@ import {
 import type { Item, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+/** Grouping key (normalized) → shared ArmorSlot reference */
+type ArmorsData = Record<string, ArmorSlot>;
+
 type ArmorSlot = {
   name: string;
   itemId: string;
@@ -24,8 +27,7 @@ type ArmorSlot = {
   maxdex: number;
 };
 
-/** Grouping key (normalized) → shared ArmorSlot reference */
-type ArmorsData = Record<string, ArmorSlot>;
+const ARMOR_GROUPING_PROPERTIES = [ARMOR_TYPE] as const;
 
 const NAVIGATABLE_ARMOR_PATHS = [
   { path: "ac.bonus", description: "Base AC bonus from armor", type: "number" as const },
@@ -42,8 +44,6 @@ const SEGMENT_LABELS: Record<string, string> = {
   spellfailure: "Spell Failure",
   maxdex: "Maximum Dexterity",
 };
-
-const ARMOR_GROUPING_PROPERTIES = [ARMOR_TYPE] as const;
 
 export type { ArmorsData };
 

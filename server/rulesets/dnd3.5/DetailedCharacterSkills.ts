@@ -30,6 +30,13 @@ type DetailedCharacterComprehensiveSkills = {
   };
 };
 
+const BUDGET_PATHS = [
+  { path: "perlevel", description: "Bonus skill points per level (a human's)", requirementOnly: false },
+  { path: "total", description: "Skill points from every level", requirementOnly: true },
+  { path: "spent", description: "Skill points spent", requirementOnly: true },
+  { path: "available", description: "Skill points left to spend", requirementOnly: true },
+];
+
 const NAVIGATABLE_PATHS = [
   { path: "rank", description: "Total ranks invested", type: "number" as const },
   { path: "ability", description: "From key ability modifier", type: "number" as const, requirementOnly: true },
@@ -39,13 +46,6 @@ const NAVIGATABLE_PATHS = [
   { path: "total", description: "Final skill check bonus", type: "number" as const, requirementOnly: true },
   { path: "trained", description: "Whether at least 1 rank is invested", type: "boolean" as const },
   { path: "innate", description: "Whether skill is a class skill", type: "boolean" as const },
-];
-
-const BUDGET_PATHS = [
-  { path: "perlevel", description: "Bonus skill points per level (a human's)", requirementOnly: false },
-  { path: "total", description: "Skill points from every level", requirementOnly: true },
-  { path: "spent", description: "Skill points spent", requirementOnly: true },
-  { path: "available", description: "Skill points left to spend", requirementOnly: true },
 ];
 
 /**
@@ -171,14 +171,6 @@ export default class DetailedCharacterSkills {
 
   private raceSize = "Medium";
 
-  /** The modifier of the ruleset's skill point ability, its misc bonuses aside: 0 when the ruleset names none. */
-  private getSkillPointAbilityModifier(): number {
-    const abilityName = this.skillPointAbilityId
-      ? (this.skillPointRulesetAbilities.find((a) => a.id === this.skillPointAbilityId)?.name ?? null)
-      : null;
-    return abilityName ? this.characterAbilities.getAbilityModifierExcludingMisc(abilityName) : 0;
-  }
-
   /** The armor check penalty a skill armor weighs on takes: the worse of the armor and shield's and the load's. */
   private armorCheckPenalty(): number {
     let armorPenalty = 0;
@@ -200,6 +192,106 @@ export default class DetailedCharacterSkills {
     // D&D 3.5: use the worse (more negative) of armor+shield penalty vs encumbrance penalty
     const encumbrancePenalty = this.characterEncumbrance ? this.characterEncumbrance.getEncumbrance().checkpenalty : 0;
     return Math.abs(Math.min(armorPenalty, encumbrancePenalty));
+  }
+
+  /** The modifier of the ruleset's skill point ability, its misc bonuses aside: 0 when the ruleset names none. */
+  private getSkillPointAbilityModifier(): number {
+    const abilityName = this.skillPointAbilityId
+      ? (this.skillPointRulesetAbilities.find((a) => a.id === this.skillPointAbilityId)?.name ?? null)
+      : null;
+    return abilityName ? this.characterAbilities.getAbilityModifierExcludingMisc(abilityName) : 0;
+  }
+
+  /** Ranks a bonded creature's hit dice past its stat block's give a skill. */
+  addRanks(skillName: string, ranks: number): void {
+    const skill = this.detailedCharacterSkills[stripSeparators(skillName)];
+    if (!skill || ranks === 0) return;
+    skill.rank += ranks;
+    skill.trained = true;
+  }
+
+  /** Raises each skill's ranks to these, by skill slug, where they're better: a familiar's to its master's. */
+  applyBetterRanks(ranks: Record<string, number>): void {
+    for (const [slug, rank] of Object.entries(ranks)) {
+      const skill = this.detailedCharacterSkills[slug];
+      if (!skill || rank <= skill.rank) continue;
+      skill.rank = rank;
+      skill.trained = true;
+    }
+  }
+
+  /** Enriches ruleset skills with character-specific class/rank data for level-up UI. */
+  getEnrichedSkills<T extends { id: string; name: string }>(
+    allSkills: T[],
+    classSkillIds: Set<string>,
+  ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[] {
+    return allSkills.map((skill) => {
+      const skillData = this.detailedCharacterSkills[stripSeparators(skill.name)];
+      return {
+        ...skill,
+        isClassSkill: skillData?.innate ?? classSkillIds.has(skill.id),
+        isCurrentClassSkill: classSkillIds.has(skill.id),
+        currentRank: skillData?.rank || 0,
+      };
+    });
+  }
+
+  /** A level's points per level, before the minimum: its class's and the skill point ability's modifier. */
+  getLevelPointsPerLevel(classSkillPoints: number): number {
+    return classSkillPoints + this.getSkillPointAbilityModifier();
+  }
+
+  /** The skill points a level gives: its class's and the skill point ability's modifier, and any bonus per level. */
+  getLevelSkillPoints(classSkillPoints: number, isFirstCharacterLevel: boolean): number {
+    return computeLevelSkillPoints(
+      this.getLevelPointsPerLevel(classSkillPoints),
+      this.skillBudget.perlevel,
+      isFirstCharacterLevel,
+    );
+  }
+
+  getSkillBudget() {
+    return this.skillBudget;
+  }
+
+  /**
+   * Each level's points per level before the minimum, in the order the character took them (the first is its first
+   * level), and the bonus each level adds: what the level-up wizard recomputes the points from when it raises the
+   * skill point ability.
+   */
+  getSkillPointBases(): { pointsPerLevel: number[]; bonusPerLevel: number } {
+    const levels = Object.values(this.characterClasses.getClasses())
+      .flatMap((klass) => klass.levels)
+      .sort((a, b) => (a.characterLevel.createdAt < b.characterLevel.createdAt ? -1 : 1));
+    return {
+      pointsPerLevel: levels.map((level) =>
+        this.getLevelPointsPerLevel(this.skillPointKlassLevelProperties.get(level.klassLevel.id)?.skills ?? 0),
+      ),
+      bonusPerLevel: this.skillBudget.perlevel,
+    };
+  }
+
+  getSkills() {
+    return this.detailedCharacterSkills;
+  }
+
+  getValidationIssues(characterLevel: number): ValidationIssue[] {
+    const issues: ValidationIssue[] = [];
+    const classSkillMaxRank = characterLevel + 3;
+    const crossClassMaxRank = (characterLevel + 3) / 2;
+
+    for (const [, skill] of Object.entries(this.detailedCharacterSkills)) {
+      if (skill.rank <= 0) continue;
+      const maxRank = skill.innate ? classSkillMaxRank : crossClassMaxRank;
+      if (skill.rank > maxRank) {
+        issues.push({
+          category: "skills",
+          message: `${skill.name}: rank ${skill.rank} exceeds ${skill.innate ? "class" : "cross-class"} max of ${maxRank}`,
+        });
+      }
+    }
+
+    return issues;
   }
 
   initialize(
@@ -295,98 +387,6 @@ export default class DetailedCharacterSkills {
         },
       };
     }
-  }
-
-  /** Raises each skill's ranks to these, by skill slug, where they're better: a familiar's to its master's. */
-  applyBetterRanks(ranks: Record<string, number>): void {
-    for (const [slug, rank] of Object.entries(ranks)) {
-      const skill = this.detailedCharacterSkills[slug];
-      if (!skill || rank <= skill.rank) continue;
-      skill.rank = rank;
-      skill.trained = true;
-    }
-  }
-
-  /** Enriches ruleset skills with character-specific class/rank data for level-up UI. */
-  getEnrichedSkills<T extends { id: string; name: string }>(
-    allSkills: T[],
-    classSkillIds: Set<string>,
-  ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[] {
-    return allSkills.map((skill) => {
-      const skillData = this.detailedCharacterSkills[stripSeparators(skill.name)];
-      return {
-        ...skill,
-        isClassSkill: skillData?.innate ?? classSkillIds.has(skill.id),
-        isCurrentClassSkill: classSkillIds.has(skill.id),
-        currentRank: skillData?.rank || 0,
-      };
-    });
-  }
-
-  /** A level's points per level, before the minimum: its class's and the skill point ability's modifier. */
-  getLevelPointsPerLevel(classSkillPoints: number): number {
-    return classSkillPoints + this.getSkillPointAbilityModifier();
-  }
-
-  /** The skill points a level gives: its class's and the skill point ability's modifier, and any bonus per level. */
-  getLevelSkillPoints(classSkillPoints: number, isFirstCharacterLevel: boolean): number {
-    return computeLevelSkillPoints(
-      this.getLevelPointsPerLevel(classSkillPoints),
-      this.skillBudget.perlevel,
-      isFirstCharacterLevel,
-    );
-  }
-
-  getSkillBudget() {
-    return this.skillBudget;
-  }
-
-  /**
-   * Each level's points per level before the minimum, in the order the character took them (the first is its first
-   * level), and the bonus each level adds: what the level-up wizard recomputes the points from when it raises the
-   * skill point ability.
-   */
-  getSkillPointBases(): { pointsPerLevel: number[]; bonusPerLevel: number } {
-    const levels = Object.values(this.characterClasses.getClasses())
-      .flatMap((klass) => klass.levels)
-      .sort((a, b) => (a.characterLevel.createdAt < b.characterLevel.createdAt ? -1 : 1));
-    return {
-      pointsPerLevel: levels.map((level) =>
-        this.getLevelPointsPerLevel(this.skillPointKlassLevelProperties.get(level.klassLevel.id)?.skills ?? 0),
-      ),
-      bonusPerLevel: this.skillBudget.perlevel,
-    };
-  }
-
-  getSkills() {
-    return this.detailedCharacterSkills;
-  }
-
-  getValidationIssues(characterLevel: number): ValidationIssue[] {
-    const issues: ValidationIssue[] = [];
-    const classSkillMaxRank = characterLevel + 3;
-    const crossClassMaxRank = (characterLevel + 3) / 2;
-
-    for (const [, skill] of Object.entries(this.detailedCharacterSkills)) {
-      if (skill.rank <= 0) continue;
-      const maxRank = skill.innate ? classSkillMaxRank : crossClassMaxRank;
-      if (skill.rank > maxRank) {
-        issues.push({
-          category: "skills",
-          message: `${skill.name}: rank ${skill.rank} exceeds ${skill.innate ? "class" : "cross-class"} max of ${maxRank}`,
-        });
-      }
-    }
-
-    return issues;
-  }
-
-  /** Ranks a bonded creature's hit dice past its stat block's give a skill. */
-  addRanks(skillName: string, ranks: number): void {
-    const skill = this.detailedCharacterSkills[stripSeparators(skillName)];
-    if (!skill || ranks === 0) return;
-    skill.rank += ranks;
-    skill.trained = true;
   }
 
   setArmorSources(armors: { getArmors(): ArmorsData }, shields: { getShields(): ShieldsData }) {

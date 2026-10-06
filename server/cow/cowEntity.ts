@@ -11,6 +11,120 @@ import { type EntityType, hashEntity, type KlassRelationships } from "./hashing.
 import { resolveCustomizationId } from "./resolveCustomizationId.ts";
 import { mergeSiblingData } from "./siblingMerge.ts";
 
+/** Resolve a modifier as the owner of requirements: COW its owning entity and map the modifier to its copy. */
+async function cowModifierForCustomization(
+  tx: Db,
+  rulesetId: string,
+  modifierId: string,
+  customizationIds: Map<string, string>,
+): Promise<string> {
+  // Keep the stored source ID: the repository proxy remaps it after COW,
+  // which would make an ancestor modifier appear locally owned on repeat edits.
+  const modifier = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifierId }));
+  if (!modifier || modifier.sourceType === "modifiers")
+    throw new NotFoundError("Customization source not found in this ruleset");
+
+  const resolvedOwnerId = await cowOwnerForCustomization(
+    tx,
+    rulesetId,
+    modifier.sourceType,
+    modifier.sourceId,
+    customizationIds,
+  );
+  return resolveExistingCustomization(
+    tx,
+    modifier.sourceId,
+    resolvedOwnerId,
+    "modifier",
+    modifier.id,
+    customizationIds,
+  );
+}
+
+/**
+ * The row a customization of a feat, power, item, race, class or class level changes: the ruleset's own entity, locked,
+ * or the copy of an inherited one (a class level's class is copied with its levels, and the level mapped to its copy).
+ */
+async function cowOwnerForCustomization(
+  tx: Db,
+  rulesetId: string,
+  entityType: string,
+  entityId: string,
+  customizationIds: Map<string, string>,
+): Promise<string> {
+  const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
+  if (!ruleset) throw new NotFoundError("Customization source not found in this ruleset");
+  const sourceChain = buildSourceChain(ruleset);
+
+  if (entityType === "klass_levels") {
+    // Find which klass owns this level
+    const level = await KlassLevels.findOne(tx, { id: entityId });
+    if (!level) throw new NotFoundError("Customization source not found in this ruleset");
+
+    const klass = await Klasses.findOne(tx, { id: level.klassId });
+    if (!klass) throw new NotFoundError("Customization source not found in this ruleset");
+
+    if (klass.rulesetId === rulesetId) {
+      await lockEntityForMutation(tx, "klasses", klass.id);
+      if (!(await KlassLevels.findOne(tx, { id: level.id }))) {
+        throw new NotFoundError("Customization source no longer exists; refresh the entity");
+      }
+      return level.id;
+    }
+    if (!sourceChain.includes(klass.rulesetId))
+      throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
+
+    // COW the klass (copies all levels)
+    const cowResult = await cowEntity(
+      tx,
+      "klasses",
+      klass.id,
+      rulesetId,
+      sourceChain,
+      ruleset.extensionRulesetIds,
+      customizationIds,
+    );
+    // Find the new level by matching level number (levels aren't individually snapshotted)
+    const newLevels = await KlassLevels.findMany(tx, { klassId: cowResult.id });
+    const newLevel = newLevels.find((l) => l.level === level.level);
+    if (!newLevel) throw new NotFoundError("Copied class level not found");
+    return newLevel.id;
+  }
+
+  const entityTypeMap: Record<string, EntityType> = {
+    feats: "feats",
+    powers: "powers",
+    items: "items",
+    races: "races",
+    klasses: "klasses",
+  };
+
+  const cowType = entityTypeMap[entityType];
+  if (!cowType) throw new NotFoundError("Customization source not found in this ruleset");
+
+  const repo = ENTITY_REPOS[cowType];
+  const entity = await repo.findOne(tx, { id: entityId });
+  if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
+
+  if (entity.rulesetId === rulesetId) {
+    await lockEntityForMutation(tx, cowType, entity.id);
+    return entity.id;
+  }
+  if (!sourceChain.includes(entity.rulesetId))
+    throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
+
+  const cowResult = await cowEntity(
+    tx,
+    cowType,
+    entity.id,
+    rulesetId,
+    sourceChain,
+    ruleset.extensionRulesetIds,
+    customizationIds,
+  );
+  return cowResult.id;
+}
+
 /**
  * The customization `customizationId` of `entityId` once that entity resolved to `resolvedEntityId`: its copy when the
  * entity was copied, or itself, which must still exist.
@@ -37,6 +151,49 @@ async function resolveExistingCustomization(
     throw new NotFoundError("Customization source no longer exists; refresh the entity");
   }
   return resolvedCustomizationId;
+}
+
+/** The entity `entityId` names in the ruleset's composed view: the ruleset's own, or one inherited through its source chain. */
+export function findScopedEntity<T extends { rulesetId: string }>(
+  entities: ReadonlyMap<string, T>,
+  entityId: string,
+  rulesetId: string,
+  sourceChain: string[],
+  name: string,
+): T {
+  const entity = entities.get(entityId);
+  if (!entity || (entity.rulesetId !== rulesetId && !sourceChain.includes(entity.rulesetId))) {
+    throw new NotFoundError(`${name} not found in this ruleset`);
+  }
+  return entity;
+}
+
+/**
+ * Resolve the stored row a customization update or delete should change.
+ * `entityId` is the owner the row is shown on, so visible sibling contributions
+ * resolve like the entity's own rows. COWs that owner when inherited and returns
+ * the copy made for the row. A row on a local owner is re-read after the owner
+ * lock, which may have waited for its deletion.
+ */
+export async function cowCustomizationForMutation(
+  tx: Db,
+  rulesetId: string,
+  entityType: string,
+  entityId: string,
+  kind: CustomizationKind,
+  customizationId: string,
+  customizationIds: Map<string, string> = new Map(),
+): Promise<{ resolvedEntityId: string; resolvedCustomizationId: string }> {
+  const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, entityId, customizationIds);
+  const resolvedCustomizationId = await resolveExistingCustomization(
+    tx,
+    entityId,
+    resolvedEntityId,
+    kind,
+    customizationId,
+    customizationIds,
+  );
+  return { resolvedEntityId, resolvedCustomizationId };
 }
 
 /**
@@ -148,142 +305,6 @@ export async function cowEntity(
   return newEntity;
 }
 
-/** Serialize child writes with deletion/revert of their stored owner. */
-export async function lockEntityForMutation(tx: Db, entityType: EntityType, entityId: string): Promise<void> {
-  if (!(await ENTITY_REPOS[entityType].lock(tx, { id: entityId }))) {
-    throw new NotFoundError("Customization source no longer exists; refresh the entity");
-  }
-}
-
-/**
- * The row a customization of a feat, power, item, race, class or class level changes: the ruleset's own entity, locked,
- * or the copy of an inherited one (a class level's class is copied with its levels, and the level mapped to its copy).
- */
-async function cowOwnerForCustomization(
-  tx: Db,
-  rulesetId: string,
-  entityType: string,
-  entityId: string,
-  customizationIds: Map<string, string>,
-): Promise<string> {
-  const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-  if (!ruleset) throw new NotFoundError("Customization source not found in this ruleset");
-  const sourceChain = buildSourceChain(ruleset);
-
-  if (entityType === "klass_levels") {
-    // Find which klass owns this level
-    const level = await KlassLevels.findOne(tx, { id: entityId });
-    if (!level) throw new NotFoundError("Customization source not found in this ruleset");
-
-    const klass = await Klasses.findOne(tx, { id: level.klassId });
-    if (!klass) throw new NotFoundError("Customization source not found in this ruleset");
-
-    if (klass.rulesetId === rulesetId) {
-      await lockEntityForMutation(tx, "klasses", klass.id);
-      if (!(await KlassLevels.findOne(tx, { id: level.id }))) {
-        throw new NotFoundError("Customization source no longer exists; refresh the entity");
-      }
-      return level.id;
-    }
-    if (!sourceChain.includes(klass.rulesetId))
-      throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
-
-    // COW the klass (copies all levels)
-    const cowResult = await cowEntity(
-      tx,
-      "klasses",
-      klass.id,
-      rulesetId,
-      sourceChain,
-      ruleset.extensionRulesetIds,
-      customizationIds,
-    );
-    // Find the new level by matching level number (levels aren't individually snapshotted)
-    const newLevels = await KlassLevels.findMany(tx, { klassId: cowResult.id });
-    const newLevel = newLevels.find((l) => l.level === level.level);
-    if (!newLevel) throw new NotFoundError("Copied class level not found");
-    return newLevel.id;
-  }
-
-  const entityTypeMap: Record<string, EntityType> = {
-    feats: "feats",
-    powers: "powers",
-    items: "items",
-    races: "races",
-    klasses: "klasses",
-  };
-
-  const cowType = entityTypeMap[entityType];
-  if (!cowType) throw new NotFoundError("Customization source not found in this ruleset");
-
-  const repo = ENTITY_REPOS[cowType];
-  const entity = await repo.findOne(tx, { id: entityId });
-  if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
-
-  if (entity.rulesetId === rulesetId) {
-    await lockEntityForMutation(tx, cowType, entity.id);
-    return entity.id;
-  }
-  if (!sourceChain.includes(entity.rulesetId))
-    throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
-
-  const cowResult = await cowEntity(
-    tx,
-    cowType,
-    entity.id,
-    rulesetId,
-    sourceChain,
-    ruleset.extensionRulesetIds,
-    customizationIds,
-  );
-  return cowResult.id;
-}
-
-/** Resolve a modifier as the owner of requirements: COW its owning entity and map the modifier to its copy. */
-async function cowModifierForCustomization(
-  tx: Db,
-  rulesetId: string,
-  modifierId: string,
-  customizationIds: Map<string, string>,
-): Promise<string> {
-  // Keep the stored source ID: the repository proxy remaps it after COW,
-  // which would make an ancestor modifier appear locally owned on repeat edits.
-  const modifier = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifierId }));
-  if (!modifier || modifier.sourceType === "modifiers")
-    throw new NotFoundError("Customization source not found in this ruleset");
-
-  const resolvedOwnerId = await cowOwnerForCustomization(
-    tx,
-    rulesetId,
-    modifier.sourceType,
-    modifier.sourceId,
-    customizationIds,
-  );
-  return resolveExistingCustomization(
-    tx,
-    modifier.sourceId,
-    resolvedOwnerId,
-    "modifier",
-    modifier.id,
-    customizationIds,
-  );
-}
-
-/** The entity `entityId` names in the ruleset's composed view: the ruleset's own, or one inherited through its source chain. */
-export function findScopedEntity<T extends { rulesetId: string }>(
-  entities: ReadonlyMap<string, T>,
-  entityId: string,
-  rulesetId: string,
-  sourceChain: string[],
-  name: string,
-): T {
-  const entity = entities.get(entityId);
-  if (!entity || (entity.rulesetId !== rulesetId && !sourceChain.includes(entity.rulesetId))) {
-    throw new NotFoundError(`${name} not found in this ruleset`);
-  }
-  return entity;
-}
-
 /**
  * COW helper for customization mutations. Given an entityType and entityId,
  * checks if the entity belongs to the parent ruleset and COWs it if needed.
@@ -304,31 +325,19 @@ export async function cowEntityForCustomization(
 }
 
 /**
- * Resolve the stored row a customization update or delete should change.
- * `entityId` is the owner the row is shown on, so visible sibling contributions
- * resolve like the entity's own rows. COWs that owner when inherited and returns
- * the copy made for the row. A row on a local owner is re-read after the owner
- * lock, which may have waited for its deletion.
+ * The row a delete of `entity` removes: as `cowEntityToEdit`, and the ruleset's own entity is locked first, so its
+ * customizations' writes wait for the delete.
  */
-export async function cowCustomizationForMutation(
+export async function cowEntityToDelete(
   tx: Db,
-  rulesetId: string,
-  entityType: string,
-  entityId: string,
-  kind: CustomizationKind,
-  customizationId: string,
-  customizationIds: Map<string, string> = new Map(),
-): Promise<{ resolvedEntityId: string; resolvedCustomizationId: string }> {
-  const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, entityId, customizationIds);
-  const resolvedCustomizationId = await resolveExistingCustomization(
-    tx,
-    entityId,
-    resolvedEntityId,
-    kind,
-    customizationId,
-    customizationIds,
-  );
-  return { resolvedEntityId, resolvedCustomizationId };
+  ruleset: { id: string; extensionRulesetIds: string[] },
+  sourceChain: string[],
+  entityType: EntityType,
+  entity: { id: string; rulesetId: string },
+): Promise<string> {
+  const target = await cowEntityToEdit(tx, ruleset, sourceChain, entityType, entity);
+  if (!target.copied) await lockEntityForMutation(tx, entityType, target.id);
+  return target.id;
 }
 
 /**
@@ -347,18 +356,9 @@ export async function cowEntityToEdit(
   return { id: copy.id, copied: true };
 }
 
-/**
- * The row a delete of `entity` removes: as `cowEntityToEdit`, and the ruleset's own entity is locked first, so its
- * customizations' writes wait for the delete.
- */
-export async function cowEntityToDelete(
-  tx: Db,
-  ruleset: { id: string; extensionRulesetIds: string[] },
-  sourceChain: string[],
-  entityType: EntityType,
-  entity: { id: string; rulesetId: string },
-): Promise<string> {
-  const target = await cowEntityToEdit(tx, ruleset, sourceChain, entityType, entity);
-  if (!target.copied) await lockEntityForMutation(tx, entityType, target.id);
-  return target.id;
+/** Serialize child writes with deletion/revert of their stored owner. */
+export async function lockEntityForMutation(tx: Db, entityType: EntityType, entityId: string): Promise<void> {
+  if (!(await ENTITY_REPOS[entityType].lock(tx, { id: entityId }))) {
+    throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
 }

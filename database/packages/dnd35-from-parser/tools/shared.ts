@@ -48,11 +48,7 @@ const SAVE_NAMES = ["Fortitude", "Reflex", "Will"];
 
 const WEAPON_DESC_PATTERNS = [/the selected weapon/gi, /selected weapon/gi, /the weapon you selected/gi];
 
-/**
- * The separator a scraped text keeps between its parts (a race's traits): U+2063 INVISIBLE SEPARATOR, which
- * `normalizeWs` keeps, as it would not a line break.
- */
-export const PART_SEPARATOR = "\u2063";
+export const MAX_DESC = 2000;
 
 export const NUMBER_WORDS: Record<string, number> = {
   one: 1,
@@ -67,12 +63,14 @@ export const NUMBER_WORDS: Record<string, number> = {
   ten: 10,
 };
 
+/**
+ * The separator a scraped text keeps between its parts (a race's traits): U+2063 INVISIBLE SEPARATOR, which
+ * `normalizeWs` keeps, as it would not a line break.
+ */
+export const PART_SEPARATOR = "\u2063";
+
 /** The books' references: a folder per book. */
 export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
-
-export const SKILL_MAP: Record<string, string> = Object.fromEntries(
-  SKILL_NAMES.map((name) => [name.toLowerCase(), stripSeparators(name)]),
-);
 
 export const SAVE_MAP: Record<string, string> = Object.fromEntries(
   SAVE_NAMES.flatMap((name) => [
@@ -81,7 +79,9 @@ export const SAVE_MAP: Record<string, string> = Object.fromEntries(
   ]),
 );
 
-export const MAX_DESC = 2000;
+export const SKILL_MAP: Record<string, string> = Object.fromEntries(
+  SKILL_NAMES.map((name) => [name.toLowerCase(), stripSeparators(name)]),
+);
 
 /**
  * Extract the bonded-level contribution formula from a grant feat's SRD
@@ -133,22 +133,6 @@ function detectBondedLevelFormula(description: string, classSlug: string): strin
 export { stripSeparators } from "@/shared/text.ts";
 
 export { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-
-export function validateModifiers<M extends ModifierEffect>(
-  modifiers: M[],
-  isValid: (target: string) => boolean,
-): { validated: M[]; errors: string[] } {
-  const validated: M[] = [];
-  const errors: string[] = [];
-  for (const m of modifiers) {
-    if (isValid(m.target)) {
-      validated.push(m);
-    } else {
-      errors.push(`Invalid modifier path "${m.target}": ${m.operator} ${m.value}`);
-    }
-  }
-  return { validated, errors };
-}
 
 /** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
 export function anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
@@ -209,17 +193,17 @@ export function autoUncannyDodgeModifiers(featName: string): ModifierSeed[] {
     : [];
 }
 
+/** A checked value, for the seed: its problem throws. */
+export function checkedValue<T>(checked: Checked<T>): T {
+  if (!checked.ok) throw new Error(checked.problem);
+  return checked.value;
+}
+
 /** `value` checked against `options`: `what` names it in the problem. */
 export function checkOneOf<T extends string>(value: string, options: readonly T[], what: string): Checked<T> {
   return isOneOf(value, options)
     ? { ok: true, value }
     : { ok: false, problem: `${what}: "${value}" isn't one of ${options.join(", ")}` };
-}
-
-/** A checked value, for the seed: its problem throws. */
-export function checkedValue<T>(checked: Checked<T>): T {
-  if (!checked.ok) throw new Error(checked.problem);
-  return checked.value;
 }
 
 /** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
@@ -285,6 +269,18 @@ export function extractGrantedFeatNames(desc: string): string[] {
   return names;
 }
 
+export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): V | undefined {
+  for (const v of pluralVariants(name)) {
+    const result = map.get(v);
+    if (result !== undefined) return result;
+  }
+  return undefined;
+}
+
+export function matchesWithPluralVariants(a: string, b: string): boolean {
+  return pluralVariants(a).includes(b.toLowerCase());
+}
+
 /** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override. */
 export function modifierMapping<
   E extends { name: string; description: string },
@@ -309,6 +305,11 @@ export function modifierMapping<
   return mapping;
 }
 
+export function normalizeDescription(text: string, maxLen = MAX_DESC): string {
+  const clean = normalizeWs(sanitizeText(text));
+  return clean.length > maxLen ? clean.substring(0, maxLen - 3).trim() + "..." : clean;
+}
+
 /**
  * Capitalize the first letter of each word inside parentheses.
  * e.g. "Armor Proficiency (heavy)" → "Armor Proficiency (Heavy)"
@@ -323,11 +324,6 @@ export function normalizeName(name: string): string {
 /** Text with its runs of whitespace (newlines included) as single spaces, trimmed. */
 export function normalizeWs(text: string) {
   return text.replace(/\s+/g, " ").trim();
-}
-
-export function normalizeDescription(text: string, maxLen = MAX_DESC): string {
-  const clean = normalizeWs(sanitizeText(text));
-  return clean.length > maxLen ? clean.substring(0, maxLen - 3).trim() + "..." : clean;
 }
 
 export function parseCliArgs(): { bookFilter?: string; typeFilter?: string; nameFilter?: string; keyFilter?: string } {
@@ -348,18 +344,6 @@ export function parseCliArgs(): { bookFilter?: string; typeFilter?: string; name
 export function pluralVariants(name: string): string[] {
   const n = name.toLowerCase();
   return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
-}
-
-export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): V | undefined {
-  for (const v of pluralVariants(name)) {
-    const result = map.get(v);
-    if (result !== undefined) return result;
-  }
-  return undefined;
-}
-
-export function matchesWithPluralVariants(a: string, b: string): boolean {
-  return pluralVariants(a).includes(b.toLowerCase());
 }
 
 /** The books with references: the folders of REFERENCE_DIR (a symlinked one too), sorted, so generation is the same on every filesystem. */
@@ -400,4 +384,20 @@ export function toCamelCase(name: string): string {
     .split(/[\s-]+/)
     .map((word, i) => (i === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
     .join("");
+}
+
+export function validateModifiers<M extends ModifierEffect>(
+  modifiers: M[],
+  isValid: (target: string) => boolean,
+): { validated: M[]; errors: string[] } {
+  const validated: M[] = [];
+  const errors: string[] = [];
+  for (const m of modifiers) {
+    if (isValid(m.target)) {
+      validated.push(m);
+    } else {
+      errors.push(`Invalid modifier path "${m.target}": ${m.operator} ${m.value}`);
+    }
+  }
+  return { validated, errors };
 }

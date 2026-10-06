@@ -137,57 +137,6 @@ export default class RulesetComposition {
   private readonly cow: CowData;
 
   /**
-   * Resolve IDs nested inside the feat/power join arrays. `CowData.resolveRows` only touches top-level string fields; the
-   * inline powersAptitudesInRules / featsAptitudesInRules arrays still hold pre-COW aptitudeIds + pre-COW Aptitude join
-   * objects after a sibling-dedup or aptitude COW. Downstream consumers compare these against post-COW IDs from the
-   * composed cache (`pa.aptitudeId === rulesetData.aptitudesById...`) and silently miss. Walk the arrays once here so
-   * every `aptitudeId`, `powerId`, `featId`, and `aptitudesInRule` entry is post-COW. Also merge sibling aptitude links
-   * here; dedup by resolved aptitudeId so sibling duplicates collapse naturally. Siblings always imply stale ids
-   * (`CowDataBuilder` aliases each sibling loser to its winner), so the caller runs this only when the scope resolves an
-   * id, and the shallow-copied feats and powers are safe to mutate.
-   */
-  private resolveAptitudeLinks(
-    feats: FeatWithAptitudes[],
-    powers: PowerWithAptitudes[],
-    aptitudes: Aptitude[],
-    links: ReturnType<RulesetComposition["collectSiblingAptitudeLinks"]>,
-  ) {
-    const aptitudesByIdMap = new Map(aptitudes.map((apt) => [apt.id, apt]));
-
-    for (const feat of feats) {
-      const sibLinks = links.feats.get(feat.id);
-      const source = sibLinks ? [...feat.featsAptitudesInRules, ...sibLinks] : feat.featsAptitudesInRules;
-      const seen = new Set<string>();
-      const rewritten: typeof feat.featsAptitudesInRules = [];
-      for (const link of source) {
-        const resolvedAptId = this.cow.resolve(link.aptitudeId);
-        if (seen.has(resolvedAptId)) continue;
-        seen.add(resolvedAptId);
-        const resolvedFeatId = this.cow.resolve(link.featId);
-        const aptitudesInRule = aptitudesByIdMap.get(resolvedAptId) ?? link.aptitudesInRule;
-        rewritten.push({ ...link, aptitudeId: resolvedAptId, featId: resolvedFeatId, aptitudesInRule });
-      }
-      feat.featsAptitudesInRules = rewritten;
-    }
-
-    for (const power of powers) {
-      const sibLinks = links.powers.get(power.id);
-      const source = sibLinks ? [...power.powersAptitudesInRules, ...sibLinks] : power.powersAptitudesInRules;
-      const seen = new Set<string>();
-      const rewritten: typeof power.powersAptitudesInRules = [];
-      for (const link of source) {
-        const resolvedAptId = this.cow.resolve(link.aptitudeId);
-        if (seen.has(resolvedAptId)) continue;
-        seen.add(resolvedAptId);
-        const resolvedPowerId = this.cow.resolve(link.powerId);
-        const aptitudesInRule = aptitudesByIdMap.get(resolvedAptId) ?? link.aptitudesInRule;
-        rewritten.push({ ...link, aptitudeId: resolvedAptId, powerId: resolvedPowerId, aptitudesInRule });
-      }
-      power.powersAptitudesInRules = rewritten;
-    }
-  }
-
-  /**
    * Collect sibling aptitude links (keyed by winner id, featId/powerId already remapped to winner) so they can be merged
    * into the winner's inline aptitudes-in-rule array alongside the FK remap pass. Built once from the raw chain because
    * compose filters out sibling entities before this point.
@@ -418,6 +367,57 @@ export default class RulesetComposition {
   /** A list's rows across the chain, the fork's first, without the overridden ones and the sibling losers. */
   private composeRows<T extends { id: string }>(pick: (raw: RulesetRawData) => T[]): T[] {
     return this.chain.flatMap((raw) => pick(raw).filter((item) => !this.cow.isHidden(item.id)));
+  }
+
+  /**
+   * Resolve IDs nested inside the feat/power join arrays. `CowData.resolveRows` only touches top-level string fields; the
+   * inline powersAptitudesInRules / featsAptitudesInRules arrays still hold pre-COW aptitudeIds + pre-COW Aptitude join
+   * objects after a sibling-dedup or aptitude COW. Downstream consumers compare these against post-COW IDs from the
+   * composed cache (`pa.aptitudeId === rulesetData.aptitudesById...`) and silently miss. Walk the arrays once here so
+   * every `aptitudeId`, `powerId`, `featId`, and `aptitudesInRule` entry is post-COW. Also merge sibling aptitude links
+   * here; dedup by resolved aptitudeId so sibling duplicates collapse naturally. Siblings always imply stale ids
+   * (`CowDataBuilder` aliases each sibling loser to its winner), so the caller runs this only when the scope resolves an
+   * id, and the shallow-copied feats and powers are safe to mutate.
+   */
+  private resolveAptitudeLinks(
+    feats: FeatWithAptitudes[],
+    powers: PowerWithAptitudes[],
+    aptitudes: Aptitude[],
+    links: ReturnType<RulesetComposition["collectSiblingAptitudeLinks"]>,
+  ) {
+    const aptitudesByIdMap = new Map(aptitudes.map((apt) => [apt.id, apt]));
+
+    for (const feat of feats) {
+      const sibLinks = links.feats.get(feat.id);
+      const source = sibLinks ? [...feat.featsAptitudesInRules, ...sibLinks] : feat.featsAptitudesInRules;
+      const seen = new Set<string>();
+      const rewritten: typeof feat.featsAptitudesInRules = [];
+      for (const link of source) {
+        const resolvedAptId = this.cow.resolve(link.aptitudeId);
+        if (seen.has(resolvedAptId)) continue;
+        seen.add(resolvedAptId);
+        const resolvedFeatId = this.cow.resolve(link.featId);
+        const aptitudesInRule = aptitudesByIdMap.get(resolvedAptId) ?? link.aptitudesInRule;
+        rewritten.push({ ...link, aptitudeId: resolvedAptId, featId: resolvedFeatId, aptitudesInRule });
+      }
+      feat.featsAptitudesInRules = rewritten;
+    }
+
+    for (const power of powers) {
+      const sibLinks = links.powers.get(power.id);
+      const source = sibLinks ? [...power.powersAptitudesInRules, ...sibLinks] : power.powersAptitudesInRules;
+      const seen = new Set<string>();
+      const rewritten: typeof power.powersAptitudesInRules = [];
+      for (const link of source) {
+        const resolvedAptId = this.cow.resolve(link.aptitudeId);
+        if (seen.has(resolvedAptId)) continue;
+        seen.add(resolvedAptId);
+        const resolvedPowerId = this.cow.resolve(link.powerId);
+        const aptitudesInRule = aptitudesByIdMap.get(resolvedAptId) ?? link.aptitudesInRule;
+        rewritten.push({ ...link, aptitudeId: resolvedAptId, powerId: resolvedPowerId, aptitudesInRule });
+      }
+      power.powersAptitudesInRules = rewritten;
+    }
   }
 
   /**

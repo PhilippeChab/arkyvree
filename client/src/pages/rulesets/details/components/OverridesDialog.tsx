@@ -29,12 +29,9 @@ import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/custo
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-type ChangesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["changes"]["$get"], 200>;
-
 type Change = ChangesResponse[number];
 
-/** A change the fork can undo: an entity it modified or deleted, which the restore route takes back. */
-type RestorableChange = Extract<Change, { sourceEntityId: string }>;
+type ChangesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["changes"]["$get"], 200>;
 
 interface OverridesDialogProps {
   open: boolean;
@@ -44,6 +41,9 @@ interface OverridesDialogProps {
   baseRules: string;
   canEdit?: boolean;
 }
+
+/** A change the fork can undo: an entity it modified or deleted, which the restore route takes back. */
+type RestorableChange = Extract<Change, { sourceEntityId: string }>;
 
 const restoreApi = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].restore;
 

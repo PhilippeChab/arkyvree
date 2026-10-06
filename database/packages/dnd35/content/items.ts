@@ -36,9 +36,9 @@ import {
   WEAPON_TYPE,
 } from "@/shared/dnd3.5/properties/index.ts";
 
+export const HEAVY_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Heavy)"))];
 export const LIGHT_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Light)"))];
 export const MEDIUM_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Medium)"))];
-export const HEAVY_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Heavy)"))];
 export const SHIELD_PROF: RequirementEntry[] = [eq(feat("Shield Proficiency"))];
 export const TOWER_SHIELD_PROF: RequirementEntry[] = [eq(feat("Tower Shield Proficiency"))];
 

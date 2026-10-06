@@ -6,7 +6,13 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 
-const powerParams = idParam.extend({ powerId: z.string().uuid() });
+/** The aptitudes a power is linked to, each at its spell level. */
+const aptitudeLinks = z.array(
+  z.object({
+    id: z.string().uuid(),
+    level: z.number().int().min(0).max(9).optional(),
+  }),
+);
 
 const spellFields = {
   school: z.string().optional(),
@@ -33,13 +39,7 @@ const powerFields = {
   ...spellFields,
 };
 
-/** The aptitudes a power is linked to, each at its spell level. */
-const aptitudeLinks = z.array(
-  z.object({
-    id: z.string().uuid(),
-    level: z.number().int().min(0).max(9).optional(),
-  }),
-);
+const powerParams = idParam.extend({ powerId: z.string().uuid() });
 
 export default new Hono<SessionContext>()
   .get(

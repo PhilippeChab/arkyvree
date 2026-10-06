@@ -14,13 +14,6 @@ import type { Db } from "@/server/database/index.ts";
 import type { LevelUpProjector, ProjectedCharacterData } from "@/server/rulesets/types.ts";
 import type { Power, Property, Skill } from "@/shared/relations.ts";
 
-/** A projected skill row with a 3.5 rank allocation. */
-type Dnd35ProjectedSkill = Skill & {
-  klassLevelId: string;
-  characterLevelId: string;
-  rank: number;
-};
-
 /** A projected power row with 3.5 spell-level and save-name fields. */
 type Dnd35ProjectedPower = Power & {
   klassLevelId: string;
@@ -30,11 +23,12 @@ type Dnd35ProjectedPower = Power & {
   saveName: string | null;
 };
 
-/** 3.5 projected character data — extends the generic shape with 3.5 skill/power rows. */
-export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
-  skills?: Dnd35ProjectedSkill[];
-  powers?: Dnd35ProjectedPower[];
-}
+/** A projected skill row with a 3.5 rank allocation. */
+type Dnd35ProjectedSkill = Skill & {
+  klassLevelId: string;
+  characterLevelId: string;
+  rank: number;
+};
 
 /** 3.5 level-up projector — generic surface + 3.5 skill-points / schools / ranks. */
 export interface Dnd35LevelUpProjector extends LevelUpProjector {
@@ -69,6 +63,12 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
     allSkills: T[],
     classSkillIds: Set<string>,
   ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[];
+}
+
+/** 3.5 projected character data — extends the generic shape with 3.5 skill/power rows. */
+export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
+  skills?: Dnd35ProjectedSkill[];
+  powers?: Dnd35ProjectedPower[];
 }
 
 /** What a weapon's stats read of a property: its type and its value (an item's, or a natural attack's). */

@@ -20,11 +20,6 @@ export function makeSession(userId: string = SEED_USER_ID): Session {
   };
 }
 
-/** The code of `userId`'s latest email verification. */
-export async function findVerificationCode(userId: string) {
-  return (await EmailVerifications.findOne(db, { userId }))!.code;
-}
-
 /** A new user and a session for them. `prefix` starts the username and email. */
 export async function createTestUser(prefix = "testuser") {
   const id = uniqueId();
@@ -34,4 +29,9 @@ export async function createTestUser(prefix = "testuser") {
     password: "password1234",
   });
   return { user, session: makeSession(user.id) };
+}
+
+/** The code of `userId`'s latest email verification. */
+export async function findVerificationCode(userId: string) {
+  return (await EmailVerifications.findOne(db, { userId }))!.code;
 }

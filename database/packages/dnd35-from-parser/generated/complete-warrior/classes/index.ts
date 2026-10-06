@@ -42,6 +42,8 @@ import { THAYAN_KNIGHT } from "./thayanKnight.ts";
 import { WAR_CHANTER } from "./warChanter.ts";
 import { WARSHAPER } from "./warshaper.ts";
 
+export const ALL_BASE_CLASSES: ClassSeed[] = [HEXBLADE, SAMURAI, SWASHBUCKLER];
+
 export const ALL_CLASSES: ClassSeed[] = [
   BEAR_WARRIOR,
   BLADESINGER,
@@ -83,8 +85,6 @@ export const ALL_CLASSES: ClassSeed[] = [
   WAR_CHANTER,
   WARSHAPER,
 ];
-
-export const ALL_BASE_CLASSES: ClassSeed[] = [HEXBLADE, SAMURAI, SWASHBUCKLER];
 
 export const ALL_PRESTIGE_CLASSES: ClassSeed[] = [
   BEAR_WARRIOR,

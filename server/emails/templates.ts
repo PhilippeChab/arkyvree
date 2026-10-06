@@ -11,11 +11,11 @@ import { WelcomeEmail } from "@/emails/welcome.tsx";
 
 type PropsFor<K extends TemplateName> = Parameters<(typeof TEMPLATES)[K]>[0];
 
-export type TemplateName = keyof typeof TEMPLATES;
-
 export type EmailJobPayload = {
   [K in TemplateName]: { template: K; props: PropsFor<K> };
 }[TemplateName];
+
+export type TemplateName = keyof typeof TEMPLATES;
 
 const TEMPLATES = {
   campaignInvitation: CampaignInvitationEmail,

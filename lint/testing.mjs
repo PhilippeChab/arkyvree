@@ -13,9 +13,9 @@
 
 import { repoPath } from "./paths.mjs";
 
+const MOCKS = new Set(["mock", "spyOn", "jest"]);
 const SKIPPING = new Set(["skip", "only", "todo", "skipIf", "if", "failing", "fixme"]);
 const TEST_FUNCTIONS = new Set(["test", "it", "describe"]);
-const MOCKS = new Set(["mock", "spyOn", "jest"]);
 
 function createTestConventions(context) {
   const file = repoPath(context.filename);

@@ -15,12 +15,12 @@ const ENTITY_KINDS: readonly EntityKind[] = ["pc", ...BONDED_KIND_SLUGS];
 
 const ENTITY_SORT_FIELDS = ["name", "createdAt", "updatedAt"] as const;
 
+const ENTITY_SORT_OPTIONS: SortOption<EntitySortField>[] = [...NAME_SORTS, ...CREATED_SORTS, ...UPDATED_SORTS];
+
 const KIND_FILTER_OPTIONS: FilterOption<EntityKind>[] = [
   { value: "pc", label: "Player Character" },
   ...BONDED_KINDS.map((b) => ({ value: b.slug, label: b.label })),
 ];
-
-const ENTITY_SORT_OPTIONS: SortOption<EntitySortField>[] = [...NAME_SORTS, ...CREATED_SORTS, ...UPDATED_SORTS];
 
 /** Kind and sort the Races and Classes tabs open with. */
 export const DEFAULT_ENTITY_FILTERS = {

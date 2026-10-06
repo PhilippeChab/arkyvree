@@ -141,6 +141,14 @@ export default class DetailedCharacterModifiers {
     }
   }
 
+  private filterByRequirements(modifier: Modifier, blockedKeys: Set<string>): boolean {
+    if (blockedKeys.has(`${modifier.sourceId}:${modifier.sourceType}`) || blockedKeys.has(`${modifier.id}:modifiers`)) {
+      this.detailedCharacterModifiers.unappliedModifiers.push(modifier);
+      return false;
+    }
+    return true;
+  }
+
   /**
    * The modifier's value, typed: a template reference resolved against the holders, or the literal coerced to its value
    * type (which the target's must match). Null when it can't be (each reason recorded).
@@ -183,14 +191,6 @@ export default class DetailedCharacterModifiers {
     });
   }
 
-  private filterByRequirements(modifier: Modifier, blockedKeys: Set<string>): boolean {
-    if (blockedKeys.has(`${modifier.sourceId}:${modifier.sourceType}`) || blockedKeys.has(`${modifier.id}:modifiers`)) {
-      this.detailedCharacterModifiers.unappliedModifiers.push(modifier);
-      return false;
-    }
-    return true;
-  }
-
   /** Records a modifier the engine skipped, with why: it isn't applied. */
   private skip(modifier: Modifier, warning: string): false {
     this.detailedCharacterModifiers.skippedModifiers.push({ warning, modifier });
@@ -229,10 +229,6 @@ export default class DetailedCharacterModifiers {
       }
     }
     return chained;
-  }
-
-  getModifiers() {
-    return this.detailedCharacterModifiers;
   }
 
   evaluateModifier(modifier: Modifier, holders: Holders) {
@@ -281,5 +277,9 @@ export default class DetailedCharacterModifiers {
       if (chainedIds.has(modifier.id)) continue;
       this.evaluateModifier(modifier, holders);
     }
+  }
+
+  getModifiers() {
+    return this.detailedCharacterModifiers;
   }
 }

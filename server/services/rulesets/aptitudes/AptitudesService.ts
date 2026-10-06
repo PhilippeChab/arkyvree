@@ -19,31 +19,6 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class AptitudesService {
-  async getAptitude(rulesetId: string, aptitudeId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
-      return aptitude;
-    });
-  }
-
-  async getAptitudes(
-    rulesetId: string,
-    where: {
-      childOnly?: boolean;
-      scope?: "feats" | "spells";
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      return await Aptitudes.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-    });
-  }
-
   async createAptitude(
     session: Session,
     rulesetId: string,
@@ -89,6 +64,64 @@ class AptitudesService {
     return result;
   }
 
+  async deleteAptitude(session: Session, rulesetId: string, aptitudeId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "aptitudes", aptitudeId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
+
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "aptitudes", aptitude);
+
+        // FK CASCADE on feats_aptitudes / powers_aptitudes / klass_level_feats /
+        // klass_level_powers wipes the join rows pointing at this aptitude.
+        // The database deletes its customizations with it.
+        const rows = await Aptitudes.delete(tx, { id: targetId });
+        const deletedAptitude = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(aptitudesInRules),
+          type: "deleteAptitude",
+          data: { rulesetId, entityName: aptitude.name },
+        });
+
+        return deletedAptitude;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async getAptitude(rulesetId: string, aptitudeId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
+      return aptitude;
+    });
+  }
+
+  async getAptitudes(
+    rulesetId: string,
+    where: {
+      childOnly?: boolean;
+      scope?: "feats" | "spells";
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      return await Aptitudes.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+    });
+  }
+
   async updateAptitude(
     session: Session,
     rulesetId: string,
@@ -129,39 +162,6 @@ class AptitudesService {
         });
 
         return updatedAptitude;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteAptitude(session: Session, rulesetId: string, aptitudeId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "aptitudes", aptitudeId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "aptitudes", aptitude);
-
-        // FK CASCADE on feats_aptitudes / powers_aptitudes / klass_level_feats /
-        // klass_level_powers wipes the join rows pointing at this aptitude.
-        // The database deletes its customizations with it.
-        const rows = await Aptitudes.delete(tx, { id: targetId });
-        const deletedAptitude = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(aptitudesInRules),
-          type: "deleteAptitude",
-          data: { rulesetId, entityName: aptitude.name },
-        });
-
-        return deletedAptitude;
       });
     });
     RulesetCache.invalidate(rulesetId);

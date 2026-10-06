@@ -151,37 +151,47 @@ function weaponSet(detailed: Detailed, set = "0") {
   return detailed.getDetailedCharacterCombat().getCombat().weaponsets[set];
 }
 
-async function build(character: Character) {
-  const detailed = new DetailedCharacter(character);
-  await detailed.build();
-  return detailed;
-}
-
-async function buildSeeded(name: string) {
-  return build(await findSeededCharacter(name));
-}
-
-/** A new wondrous item of the seeded ruleset, worn at `slot`, that raises an ability by `bonus`. */
-async function createAbilityItem(ability: string, bonus: number, slot: ItemLocation) {
-  const item = await createTestItem({ name: `${ability} +${bonus}`, type: "Wondrous Item", slot });
-  await Modifiers.create(db, {
-    sourceId: item.id,
-    sourceType: "items",
-    target: `abilities.${ability}.misc`,
-    value: String(bonus),
-    valueType: "number",
-    operator: "add",
-  });
-  invalidateSeededRuleset((await getSeedCtx()).rulesetId);
-  return item;
-}
-
 /** The seeded character, now a halfling. */
 async function asHalfling(name: string) {
   const character = await findSeededCharacter(name);
   const halfling = (await Races.findOne(db, { name: "Halfling", rulesetId: character.rulesetId }))!;
   await db.update(charactersInCharacter).set({ raceId: halfling.id }).where(eq(charactersInCharacter.id, character.id));
   return { ...character, raceId: halfling.id };
+}
+
+async function build(character: Character) {
+  const detailed = new DetailedCharacter(character);
+  await detailed.build();
+  return detailed;
+}
+
+/** The seeded character, carrying only these items. */
+async function buildCarrying(name: string, carried: Carried[] = []) {
+  const character = await findSeededCharacter(name);
+  await carry(character, carried);
+  return build(character);
+}
+
+/** A ranger 6 with Two-Weapon Fighting and its improved feat, through the combat style: STR 14, DEX 16, BAB +6. */
+async function buildRanger(carried: Carried[]) {
+  const ctx = await getSeedCtx();
+  const characterId = await seedHuman(
+    "Two-Weapon Ranger",
+    { Strength: 14, Dexterity: 16, Constitution: 12, Intelligence: 10, Wisdom: 12, Charisma: 8 },
+    { xp: 15000 },
+  );
+  const levels = await addClassLevels(db, ctx, characterId, "Ranger", [1, 2, 3, 4, 5, 6], [8, 5, 5, 5, 5, 5]);
+  await addFeats(db, ctx, levels, [
+    { levelIndex: 1, featName: "Two-Weapon Fighting", aptitude: "Ranger Combat Style (2nd)" },
+    { levelIndex: 5, featName: "Improved Two-Weapon Fighting", aptitude: "Ranger Improved Combat Style (6th)" },
+  ]);
+  const character = (await Characters.findOne(db, { id: characterId }))!;
+  await carry(character, carried);
+  return build(character);
+}
+
+async function buildSeeded(name: string) {
+  return build(await findSeededCharacter(name));
 }
 
 /** Replaces the character's inventory: seeded items by name, or item ids. */
@@ -200,11 +210,42 @@ async function carry(character: Character, carried: Carried[]) {
   );
 }
 
-/** The seeded character, carrying only these items. */
-async function buildCarrying(name: string, carried: Carried[] = []) {
-  const character = await findSeededCharacter(name);
-  await carry(character, carried);
-  return build(character);
+/** A new wondrous item of the seeded ruleset, worn at `slot`, that raises an ability by `bonus`. */
+async function createAbilityItem(ability: string, bonus: number, slot: ItemLocation) {
+  const item = await createTestItem({ name: `${ability} +${bonus}`, type: "Wondrous Item", slot });
+  await Modifiers.create(db, {
+    sourceId: item.id,
+    sourceType: "items",
+    target: `abilities.${ability}.misc`,
+    value: String(bonus),
+    valueType: "number",
+    operator: "add",
+  });
+  invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+  return item;
+}
+
+/** A character of a fork with Complete Divine, with these modifiers of its own (`[target, value, valueType]`). */
+async function divineCharacter(
+  name: string,
+  abilities: Record<string, number>,
+  granted: [string, string, string][],
+  alignment?: "Neutral Good" | "Chaotic Neutral",
+) {
+  const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
+  const characterId = await seedHuman(name, abilities, { rulesetId: fork.id, alignment });
+  for (const [target, value, valueType] of granted) {
+    const operator = valueType === "boolean" ? "set" : "add";
+    await Modifiers.create(db, {
+      sourceId: characterId,
+      sourceType: "characters",
+      target,
+      value,
+      valueType,
+      operator,
+    });
+  }
+  return characterId;
 }
 
 /** A fork of the seeded ruleset that uses these extensions. */
@@ -313,47 +354,6 @@ async function seedHuman(
     languages: ["Common"],
     rulesetId: values.rulesetId,
   });
-}
-
-/** A ranger 6 with Two-Weapon Fighting and its improved feat, through the combat style: STR 14, DEX 16, BAB +6. */
-async function buildRanger(carried: Carried[]) {
-  const ctx = await getSeedCtx();
-  const characterId = await seedHuman(
-    "Two-Weapon Ranger",
-    { Strength: 14, Dexterity: 16, Constitution: 12, Intelligence: 10, Wisdom: 12, Charisma: 8 },
-    { xp: 15000 },
-  );
-  const levels = await addClassLevels(db, ctx, characterId, "Ranger", [1, 2, 3, 4, 5, 6], [8, 5, 5, 5, 5, 5]);
-  await addFeats(db, ctx, levels, [
-    { levelIndex: 1, featName: "Two-Weapon Fighting", aptitude: "Ranger Combat Style (2nd)" },
-    { levelIndex: 5, featName: "Improved Two-Weapon Fighting", aptitude: "Ranger Improved Combat Style (6th)" },
-  ]);
-  const character = (await Characters.findOne(db, { id: characterId }))!;
-  await carry(character, carried);
-  return build(character);
-}
-
-/** A character of a fork with Complete Divine, with these modifiers of its own (`[target, value, valueType]`). */
-async function divineCharacter(
-  name: string,
-  abilities: Record<string, number>,
-  granted: [string, string, string][],
-  alignment?: "Neutral Good" | "Chaotic Neutral",
-) {
-  const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
-  const characterId = await seedHuman(name, abilities, { rulesetId: fork.id, alignment });
-  for (const [target, value, valueType] of granted) {
-    const operator = valueType === "boolean" ? "set" : "add";
-    await Modifiers.create(db, {
-      sourceId: characterId,
-      sourceType: "characters",
-      target,
-      value,
-      valueType,
-      operator,
-    });
-  }
-  return characterId;
 }
 
 /** A new wizard 1 whose Toughness grants Magic Missile, which gets `requirement` of its own when given. */

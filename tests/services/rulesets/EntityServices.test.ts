@@ -24,11 +24,11 @@ import { customize, findCustomizations } from "@/tests/support/customizations.ts
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
-type Row = { id: string; name: string; rulesetId: string; updatedAt: string };
 type Page = { items: { id: string; name: string }[] };
-
 /** Rows an entity's body refers to, created in the ruleset under test. */
 type Refs = { abilityId: string; featAptitudeId: string; powerAptitudeId: string };
+
+type Row = { id: string; name: string; rulesetId: string; updatedAt: string };
 
 type Service = {
   list: (rulesetId: string, search?: string) => Promise<Page>;

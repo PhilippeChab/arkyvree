@@ -14,12 +14,12 @@ import { setStorageForTest } from "@/server/storage/s3.ts";
 import { forgetSeededRulesetWrites } from "@/tests/support/rulesets.ts";
 import { fakeStorage } from "@/tests/support/storage.ts";
 
-const testPool = createTestPool();
-let testClient: PoolClient | null = null;
 let endTest: (() => void) | null = null;
+let testClient: PoolClient | null = null;
+const testPool = createTestPool();
+let testStarted = false;
 let testTransaction: Promise<void> | null = null;
 let transactionFailure: Error | undefined;
-let testStarted = false;
 
 beforeEach(async () => {
   // Never reach real storage. A test can swap in its own fake for itself.

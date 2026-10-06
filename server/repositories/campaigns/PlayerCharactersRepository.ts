@@ -22,6 +22,15 @@ class PlayerCharactersRepository extends include(
     super(playerCharactersInCampaign);
   }
 
+  async create(db: Db, values: InferInsertModel<typeof playerCharactersInCampaign>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  // Hard delete — used when intentionally removing a player from a campaign
+  async delete(db: Db, where: { playerId: string }) {
+    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId));
+  }
+
   /**
    * Returns true if the character is linked to a campaign that is itself live
    * (campaign not archived AND link not soft-removed AND owning player not
@@ -124,10 +133,6 @@ class PlayerCharactersRepository extends include(
     });
   }
 
-  async create(db: Db, values: InferInsertModel<typeof playerCharactersInCampaign>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof playerCharactersInCampaign>>,
@@ -144,11 +149,6 @@ class PlayerCharactersRepository extends include(
         ),
       )
       .returning();
-  }
-
-  // Hard delete — used when intentionally removing a player from a campaign
-  async delete(db: Db, where: { playerId: string }) {
-    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId));
   }
 }
 

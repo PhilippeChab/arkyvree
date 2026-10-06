@@ -93,6 +93,27 @@ class CharactersRepository extends include(
     return rows[0];
   }
 
+  /** Archives a character and its children (`{ id }`), or every character a user owns (`{ userId }`). */
+  async archive(db: Db, where: { id: string } | { userId: string }) {
+    const archived = await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(
+        this.branchWhere(
+          ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
+          [isNull(this.table.deletedAt)],
+        ),
+      )
+      .returning();
+    if ("id" in where && archived.length > 0) {
+      await db
+        .update(this.table)
+        .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+        .where(and(eq(this.table.parentCharacterId, where.id), isNull(this.table.deletedAt)));
+    }
+    return archived;
+  }
+
   async count(db: Db, where: { userId: string }) {
     const [result] = await db
       .select({ count: count() })
@@ -106,6 +127,15 @@ class CharactersRepository extends include(
       );
 
     return result.count;
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof charactersInCharacter>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  /** Hard delete — bonded children are reconcile-managed, not user-archived. */
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
 
   /**
@@ -309,8 +339,19 @@ class CharactersRepository extends include(
     });
   }
 
-  async create(db: Db, values: InferInsertModel<typeof charactersInCharacter>) {
-    return await db.insert(this.table).values(values).returning();
+  async unarchive(db: Db, where: { id: string }) {
+    const unarchived = await db
+      .update(this.table)
+      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), not(isNull(this.table.deletedAt))))
+      .returning();
+    if (unarchived.length > 0) {
+      await db
+        .update(this.table)
+        .set({ deletedAt: null, updatedAt: new Date().toISOString() })
+        .where(and(eq(this.table.parentCharacterId, where.id), not(isNull(this.table.deletedAt))));
+    }
+    return unarchived;
   }
 
   async update(
@@ -329,47 +370,6 @@ class CharactersRepository extends include(
         ]),
       )
       .returning();
-  }
-
-  /** Archives a character and its children (`{ id }`), or every character a user owns (`{ userId }`). */
-  async archive(db: Db, where: { id: string } | { userId: string }) {
-    const archived = await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        this.branchWhere(
-          ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
-          [isNull(this.table.deletedAt)],
-        ),
-      )
-      .returning();
-    if ("id" in where && archived.length > 0) {
-      await db
-        .update(this.table)
-        .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-        .where(and(eq(this.table.parentCharacterId, where.id), isNull(this.table.deletedAt)));
-    }
-    return archived;
-  }
-
-  /** Hard delete — bonded children are reconcile-managed, not user-archived. */
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id));
-  }
-
-  async unarchive(db: Db, where: { id: string }) {
-    const unarchived = await db
-      .update(this.table)
-      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), not(isNull(this.table.deletedAt))))
-      .returning();
-    if (unarchived.length > 0) {
-      await db
-        .update(this.table)
-        .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-        .where(and(eq(this.table.parentCharacterId, where.id), not(isNull(this.table.deletedAt))));
-    }
-    return unarchived;
   }
 }
 

@@ -104,6 +104,53 @@ class ItemsService extends include(Object, Variants) {
     return result;
   }
 
+  async createItem(session: Session, rulesetId: string, body: ItemBody) {
+    return await this.addRulesetItem(session, rulesetId, body);
+  }
+
+  async deleteItem(session: Session, rulesetId: string, itemId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "items", itemId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
+
+        // If template, check for copies using the resolved ID
+        if (item.isTemplate) {
+          const copies = await Items.findMany(tx, { sourceItemId: item.id });
+          if (copies.length > 0) {
+            throw new ConflictError("Cannot delete a template item that has copies referencing it");
+          }
+        }
+
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "items", item);
+
+        // The database deletes its customizations with it.
+        const rows = await Items.delete(tx, { id: targetId });
+        const deletedItem = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(itemsInRules),
+          type: "deleteItem",
+          data: { rulesetId, entityName: item.name },
+        });
+
+        return deletedItem;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async duplicateItem(session: Session, rulesetId: string, sourceItemId: string, body: ItemBody) {
+    return await this.addRulesetItem(session, rulesetId, body, sourceItemId);
+  }
+
   async getItem(rulesetId: string, itemId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
@@ -153,14 +200,6 @@ class ItemsService extends include(Object, Variants) {
     });
   }
 
-  async createItem(session: Session, rulesetId: string, body: ItemBody) {
-    return await this.addRulesetItem(session, rulesetId, body);
-  }
-
-  async duplicateItem(session: Session, rulesetId: string, sourceItemId: string, body: ItemBody) {
-    return await this.addRulesetItem(session, rulesetId, body, sourceItemId);
-  }
-
   async updateItem(session: Session, rulesetId: string, itemId: string, body: ItemBody) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
@@ -207,45 +246,6 @@ class ItemsService extends include(Object, Variants) {
         });
 
         return updatedItem;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteItem(session: Session, rulesetId: string, itemId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "items", itemId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
-
-        // If template, check for copies using the resolved ID
-        if (item.isTemplate) {
-          const copies = await Items.findMany(tx, { sourceItemId: item.id });
-          if (copies.length > 0) {
-            throw new ConflictError("Cannot delete a template item that has copies referencing it");
-          }
-        }
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "items", item);
-
-        // The database deletes its customizations with it.
-        const rows = await Items.delete(tx, { id: targetId });
-        const deletedItem = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(itemsInRules),
-          type: "deleteItem",
-          data: { rulesetId, entityName: item.name },
-        });
-
-        return deletedItem;
       });
     });
     RulesetCache.invalidate(rulesetId);

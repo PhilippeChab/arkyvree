@@ -16,14 +16,14 @@ function colorStatus(status: number): string {
   return s;
 }
 
-function utcTimestamp(): string {
-  return new Date().toISOString();
-}
-
 function log(prefix: LogPrefix, method: string, path: string, extra?: string): void {
   const ts = utcTimestamp();
   const msg = extra ? `[api] ${ts} ${prefix} ${method} ${path} ${extra}` : `[api] ${ts} ${prefix} ${method} ${path}`;
   console.log(msg);
+}
+
+function utcTimestamp(): string {
+  return new Date().toISOString();
 }
 
 export function requestLogger(): MiddlewareHandler {

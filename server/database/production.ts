@@ -20,7 +20,6 @@ export type Transaction = PgTransaction<
   ExtractTablesWithRelations<typeof schemaWithRelations>
 >;
 
-const schemaWithRelations = { ...schema, ...relations };
 const pool = createPool({
   connectionString: readRequiredEnv("DATABASE_URL"),
   max: parseInt(readEnv("DB_POOL_MAX") || "20", 10),
@@ -38,6 +37,7 @@ const pool = createPool({
   statement_timeout: 10000,
   query_timeout: 10000,
 });
+const schemaWithRelations = { ...schema, ...relations };
 
 export const db = drizzle(pool as NodePgClient, { schema: schemaWithRelations });
 

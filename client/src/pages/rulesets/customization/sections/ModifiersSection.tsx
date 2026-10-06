@@ -23,15 +23,15 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
+type Modifier = ModifiersArray[number];
+type ModifierFormData = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$post"]
+>["json"];
+
 type ModifiersArray = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"],
   200
 >;
-type Modifier = ModifiersArray[number];
-
-type ModifierFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$post"]
->["json"];
 
 interface ModifiersSectionProps {
   ruleset: RulesetDetail;

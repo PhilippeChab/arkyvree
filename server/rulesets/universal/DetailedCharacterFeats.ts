@@ -3,11 +3,11 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Feat } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-type FeatGroupEntry = Record<string, FeatEntry>;
-
 type DetailedCharacterComprehensiveFeats = {
   [key: string]: FeatEntry | FeatGroupEntry;
 };
+
+type FeatGroupEntry = Record<string, FeatEntry>;
 
 export type FeatEntry = {
   name: string;
@@ -66,6 +66,16 @@ export default class DetailedCharacterFeats {
 
   private readonly detailedCharacterFeats: DetailedCharacterComprehensiveFeats = {};
 
+  /** The feat of that name: none for a family's name, whose group no feat shares. */
+  getFeat(featName: string): FeatEntry | undefined {
+    const entry = this.detailedCharacterFeats[stripSeparators(featName)];
+    return isFeatEntry(entry) ? entry : undefined;
+  }
+
+  getFeats() {
+    return this.detailedCharacterFeats;
+  }
+
   initialize(rulesetFeats: Feat[], possessedFeats: Feat[]) {
     const possessedCounts = new Map<string, number>();
     for (const feat of possessedFeats) {
@@ -83,16 +93,6 @@ export default class DetailedCharacterFeats {
         count,
       };
     }
-  }
-
-  /** The feat of that name: none for a family's name, whose group no feat shares. */
-  getFeat(featName: string): FeatEntry | undefined {
-    const entry = this.detailedCharacterFeats[stripSeparators(featName)];
-    return isFeatEntry(entry) ? entry : undefined;
-  }
-
-  getFeats() {
-    return this.detailedCharacterFeats;
   }
 
   /**

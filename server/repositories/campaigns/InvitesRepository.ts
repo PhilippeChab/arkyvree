@@ -12,6 +12,41 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
     super(invitesInCampaign);
   }
 
+  async archive(db: Db, where: { userId: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  async backfillUserId(db: Db, email: string, userId: string) {
+    return await db
+      .update(this.table)
+      .set({ userId, updatedAt: new Date().toISOString() })
+      .where(
+        and(
+          eq(this.table.email, email),
+          eq(this.table.status, "Pending"),
+          isNull(this.table.userId),
+          isNull(this.table.deletedAt),
+        ),
+      )
+      .returning();
+  }
+
+  async create(db: Db, values: { email: string; userId?: string; playerId: string }) {
+    return await db
+      .insert(this.table)
+      .values({ email: values.email, userId: values.userId, playerId: values.playerId })
+      .returning();
+  }
+
+  // Hard delete — used when intentionally removing a player from a campaign
+  async delete(db: Db, where: { playerId: string }) {
+    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId)).returning();
+  }
+
   async findMany(
     db: Db,
     where: { userId: string } | { playerId: string },
@@ -125,47 +160,12 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
     return this.paginated(rows, pagination);
   }
 
-  async create(db: Db, values: { email: string; userId?: string; playerId: string }) {
-    return await db
-      .insert(this.table)
-      .values({ email: values.email, userId: values.userId, playerId: values.playerId })
-      .returning();
-  }
-
-  async backfillUserId(db: Db, email: string, userId: string) {
-    return await db
-      .update(this.table)
-      .set({ userId, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.email, email),
-          eq(this.table.status, "Pending"),
-          isNull(this.table.userId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
   async update(db: Db, values: Partial<InferInsertModel<typeof invitesInCampaign>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
       .returning();
-  }
-
-  async archive(db: Db, where: { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  // Hard delete — used when intentionally removing a player from a campaign
-  async delete(db: Db, where: { playerId: string }) {
-    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId)).returning();
   }
 }
 

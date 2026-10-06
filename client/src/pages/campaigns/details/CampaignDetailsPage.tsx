@@ -37,15 +37,15 @@ import { CharactersSection, PlayersSection } from "./sections/index.ts";
 
 type TabSection = CampaignSection;
 
-const TABS: SectionTab<TabSection>[] = [
-  { key: "characters", label: "Characters", icon: CharactersIcon },
-  { key: "players", label: "Players", icon: PlayersIcon },
-];
-
 const SECTION_COMPONENTS = {
   characters: CharactersSection,
   players: PlayersSection,
 } as const;
+
+const TABS: SectionTab<TabSection>[] = [
+  { key: "characters", label: "Characters", icon: CharactersIcon },
+  { key: "players", label: "Players", icon: PlayersIcon },
+];
 
 function isTabSection(section: string | undefined): section is TabSection {
   return TABS.some((tab) => tab.key === section);

@@ -58,10 +58,6 @@ function spell(aptitudeId: string, name: string, school?: string, fields: Record
   };
 }
 
-async function findFeat(rulesetId: string, name: string) {
-  return (await Feats.findOne(db, { rulesetId, name }))!;
-}
-
 /** A ruleset of its own with Strength, a spell list and, unless left out, the General aptitude generated feats go in. */
 async function bareRuleset({ general = true } = {}) {
   const { session, ruleset } = await createTestUserAndRuleset();
@@ -80,6 +76,10 @@ async function featNames(rulesetId: string, search?: string) {
     .map((feat) => feat.name)
     .filter((name) => !search || name === search)
     .sort();
+}
+
+async function findFeat(rulesetId: string, name: string) {
+  return (await Feats.findOne(db, { rulesetId, name }))!;
 }
 
 async function forkWithExtensions() {

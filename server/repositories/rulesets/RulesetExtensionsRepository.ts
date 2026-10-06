@@ -9,6 +9,20 @@ class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtension
     super(rulesetExtensionsInRules);
   }
 
+  async archive(db: Db, where: { rulesetId: string; extensionId: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(
+        and(
+          eq(this.table.rulesetId, where.rulesetId),
+          eq(this.table.extensionId, where.extensionId),
+          isNull(this.table.deletedAt),
+        ),
+      )
+      .returning();
+  }
+
   async findMany(db: Db, where: { rulesetId: string }) {
     return await db
       .select({
@@ -36,20 +50,6 @@ class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtension
           updatedAt: new Date().toISOString(),
         },
       })
-      .returning();
-  }
-
-  async archive(db: Db, where: { rulesetId: string; extensionId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.rulesetId, where.rulesetId),
-          eq(this.table.extensionId, where.extensionId),
-          isNull(this.table.deletedAt),
-        ),
-      )
       .returning();
   }
 }

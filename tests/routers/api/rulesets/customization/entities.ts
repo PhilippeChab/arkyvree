@@ -4,6 +4,12 @@ import { api, expectOk } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, postAptitude } from "@/tests/support/rulesets.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 
+/** A seeded fork of the seeded user's with a new feat to customize: the fork's `id`, and the feat's as `entityId`. */
+export async function createCustomizableFeat() {
+  const { id } = await createSeededTestRuleset(SEED_USER_ID);
+  return { id, entityId: await createEntity(id, "feats") };
+}
+
 /**
  * A new entity of `entityType` created in the ruleset, so customizing it edits
  * that row instead of copying an inherited one.
@@ -37,10 +43,4 @@ export async function createEntity(rulesetId: string, entityType: CustomizableEn
       return level.id;
     }
   }
-}
-
-/** A seeded fork of the seeded user's with a new feat to customize: the fork's `id`, and the feat's as `entityId`. */
-export async function createCustomizableFeat() {
-  const { id } = await createSeededTestRuleset(SEED_USER_ID);
-  return { id, entityId: await createEntity(id, "feats") };
 }

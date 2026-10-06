@@ -53,19 +53,6 @@ import type {
 /** An aptitude pool's (or one of its spell levels') slots. */
 type AptitudeSlots = { allowed: number; spent: number; available: number };
 
-export type ValidationIssue = {
-  category: "aptitudes" | "skills" | "requirements" | "modifiers" | "integrity";
-  message: string;
-  entityName?: string;
-  entityType?: string;
-  requirementTree?: string;
-};
-
-export type ValidationResult = {
-  valid: boolean;
-  issues: ValidationIssue[];
-};
-
 /**
  * Data loader interface that ruleset implementations must provide.
  * Handles DB fetching of character-level data + PMR distribution. Ruleset-
@@ -80,6 +67,19 @@ export interface DataLoader {
     preloaded: PreloadedCharacterData | PreloadedRulesetData,
   ): Promise<LoadedCharacterData>;
 }
+
+export type ValidationIssue = {
+  category: "aptitudes" | "skills" | "requirements" | "modifiers" | "integrity";
+  message: string;
+  entityName?: string;
+  entityType?: string;
+  requirementTree?: string;
+};
+
+export type ValidationResult = {
+  valid: boolean;
+  issues: ValidationIssue[];
+};
 
 export default abstract class AbstractDetailedCharacter implements DetailedCharacterInterface {
   constructor(protected readonly character: Character) {}
@@ -230,9 +230,6 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       .map((entry) => entry.id);
   };
 
-  /** Build the holders map — universal holders + ruleset-specific ones. */
-  protected abstract buildHolders(): Holders;
-
   protected applyLoadedData(data: LoadedCharacterData) {
     this.ruleset = data.ruleset;
     this.player = data.player;
@@ -322,6 +319,9 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     );
   }
 
+  /** Build the holders map — universal holders + ruleset-specific ones. */
+  protected abstract buildHolders(): Holders;
+
   /** Create the data loader for this ruleset. */
   protected abstract createDataLoader(): DataLoader;
 
@@ -396,6 +396,75 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     };
   }
 
+  /**
+   * Whether the groups are met, each of the item its owner names, or of `context.sourceId` when given: a weapon's
+   * proficiency, its base item's requirements, reads its own hand. A `null` source is no item: a weapon's own paths
+   * (its hand) reach nothing, as for a weapon not yet held.
+   */
+  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean {
+    if (!this.holders) return false;
+
+    const tempRequirements = new DetailedCharacterRequirements(this.targetPaths);
+    const nonEmpty = requirementGroups.filter((group) => group.length > 0);
+    if (nonEmpty.length === 0) return true;
+
+    const sourceId = context?.sourceId;
+    tempRequirements.evaluateRequirements(
+      this.holders,
+      nonEmpty,
+      sourceId === undefined ? this.itemOf : () => sourceId ?? undefined,
+    );
+    const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
+    return unmetRequirementGroups.length === 0 && invalidRequirements.length === 0;
+  }
+
+  formatRequirements(requirements: Requirement[]): string {
+    type TreeNode = { requirement: Requirement; children: TreeNode[] };
+
+    const nodeMap = new Map<string, TreeNode>();
+    const sorted = [...requirements].sort((a, b) => parseFloat(a.level) - parseFloat(b.level));
+
+    for (const req of sorted) {
+      nodeMap.set(req.level, { requirement: req, children: [] });
+    }
+
+    const roots: TreeNode[] = [];
+    for (const req of sorted) {
+      const parts = req.level.split(".");
+      if (parts.length === 1) {
+        roots.push(nodeMap.get(req.level)!);
+      } else {
+        const parentLevel = parts.slice(0, -1).join(".");
+        const parent = nodeMap.get(parentLevel);
+        if (parent) {
+          parent.children.push(nodeMap.get(req.level)!);
+        } else {
+          roots.push(nodeMap.get(req.level)!);
+        }
+      }
+    }
+
+    // Each condition evaluated as the requirements are, templates and every operator included
+    const conditions = new DetailedCharacterRequirements(this.targetPaths);
+    const isLeafMet = (req: Requirement) =>
+      !!this.holders && conditions.isConditionMet(req, this.holders, this.itemOf([req]));
+
+    const formatNode = (node: TreeNode, indent: string): string => {
+      const req = node.requirement;
+      if (req.chainingOperator) {
+        const label = `(${req.chainingOperator.toUpperCase()})`;
+        const childLines = node.children.map((child) => formatNode(child, indent + "  ")).join("\n");
+        return `${indent}${label}\n${childLines}`;
+      }
+      const op = AbstractDetailedCharacter.OPERATOR_SYMBOLS[req.operator ?? ""] ?? req.operator ?? "?";
+      const isMet = isLeafMet(req);
+      const marker = isMet ? "" : "  [UNMET]";
+      return `${indent}${req.target} ${op} ${req.value}${marker}`;
+    };
+
+    return roots.map((root) => formatNode(root, "")).join("\n");
+  }
+
   getCampaign() {
     return this.campaign;
   }
@@ -448,9 +517,9 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     return this.ruleset;
   }
 
-  abstract getSpellTags(): Record<string, string[]>;
-
   abstract getSpellcasting(): { arcane: number; divine: number };
+
+  abstract getSpellTags(): Record<string, string[]>;
 
   getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[] {
     if (!this.holders) return [];
@@ -582,88 +651,6 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     return { valid: issues.length === 0, issues };
   }
 
-  /**
-   * Whether the groups are met, each of the item its owner names, or of `context.sourceId` when given: a weapon's
-   * proficiency, its base item's requirements, reads its own hand. A `null` source is no item: a weapon's own paths
-   * (its hand) reach nothing, as for a weapon not yet held.
-   */
-  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean {
-    if (!this.holders) return false;
-
-    const tempRequirements = new DetailedCharacterRequirements(this.targetPaths);
-    const nonEmpty = requirementGroups.filter((group) => group.length > 0);
-    if (nonEmpty.length === 0) return true;
-
-    const sourceId = context?.sourceId;
-    tempRequirements.evaluateRequirements(
-      this.holders,
-      nonEmpty,
-      sourceId === undefined ? this.itemOf : () => sourceId ?? undefined,
-    );
-    const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
-    return unmetRequirementGroups.length === 0 && invalidRequirements.length === 0;
-  }
-
-  formatRequirements(requirements: Requirement[]): string {
-    type TreeNode = { requirement: Requirement; children: TreeNode[] };
-
-    const nodeMap = new Map<string, TreeNode>();
-    const sorted = [...requirements].sort((a, b) => parseFloat(a.level) - parseFloat(b.level));
-
-    for (const req of sorted) {
-      nodeMap.set(req.level, { requirement: req, children: [] });
-    }
-
-    const roots: TreeNode[] = [];
-    for (const req of sorted) {
-      const parts = req.level.split(".");
-      if (parts.length === 1) {
-        roots.push(nodeMap.get(req.level)!);
-      } else {
-        const parentLevel = parts.slice(0, -1).join(".");
-        const parent = nodeMap.get(parentLevel);
-        if (parent) {
-          parent.children.push(nodeMap.get(req.level)!);
-        } else {
-          roots.push(nodeMap.get(req.level)!);
-        }
-      }
-    }
-
-    // Each condition evaluated as the requirements are, templates and every operator included
-    const conditions = new DetailedCharacterRequirements(this.targetPaths);
-    const isLeafMet = (req: Requirement) =>
-      !!this.holders && conditions.isConditionMet(req, this.holders, this.itemOf([req]));
-
-    const formatNode = (node: TreeNode, indent: string): string => {
-      const req = node.requirement;
-      if (req.chainingOperator) {
-        const label = `(${req.chainingOperator.toUpperCase()})`;
-        const childLines = node.children.map((child) => formatNode(child, indent + "  ")).join("\n");
-        return `${indent}${label}\n${childLines}`;
-      }
-      const op = AbstractDetailedCharacter.OPERATOR_SYMBOLS[req.operator ?? ""] ?? req.operator ?? "?";
-      const isMet = isLeafMet(req);
-      const marker = isMet ? "" : "  [UNMET]";
-      return `${indent}${req.target} ${op} ${req.value}${marker}`;
-    };
-
-    return roots.map((root) => formatNode(root, "")).join("\n");
-  }
-
-  async preload(): Promise<PreloadedCharacterData> {
-    const dataLoader = this.createDataLoader();
-    return await withRulesetScope(db, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
-      const shared = await dataLoader.loadSharedData(db, { ruleset, cowData: rulesetData.cow, rulesetData });
-      return {
-        ruleset,
-        cowData: shared.cowData,
-        rulesetData: shared.rulesetData,
-        _shared: shared,
-      };
-    });
-  }
-
   async build(database: Db = db, projectedData?: unknown, preloaded?: PreloadedCharacterData | PreloadedRulesetData) {
     const dataLoader = this.createDataLoader();
 
@@ -707,6 +694,19 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
         powerModifiers,
         this.detailedCharacterRequirements,
       );
+    });
+  }
+
+  async preload(): Promise<PreloadedCharacterData> {
+    const dataLoader = this.createDataLoader();
+    return await withRulesetScope(db, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
+      const shared = await dataLoader.loadSharedData(db, { ruleset, cowData: rulesetData.cow, rulesetData });
+      return {
+        ruleset,
+        cowData: shared.cowData,
+        rulesetData: shared.rulesetData,
+        _shared: shared,
+      };
     });
   }
 }

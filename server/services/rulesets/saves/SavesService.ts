@@ -18,30 +18,6 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class SavesService {
-  async getSave(rulesetId: string, saveId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
-      return save;
-    });
-  }
-
-  async getSaves(
-    rulesetId: string,
-    where: {
-      childOnly?: boolean;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      return await Saves.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-    });
-  }
-
   async createSave(
     session: Session,
     rulesetId: string,
@@ -85,6 +61,64 @@ class SavesService {
     return result;
   }
 
+  async deleteSave(session: Session, rulesetId: string, saveId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
+
+        // Saves don't have a character-pick path — class-side check instead.
+        // klass_level_saves.save_id is ON DELETE RESTRICT, so this is just for
+        // the friendlier error.
+        const inUse = await KlassLevelSaves.exists(tx, { saveId: save.id });
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "saves", save);
+
+        // The database deletes its customizations with it.
+        const rows = await Saves.delete(tx, { id: targetId });
+        const deletedSave = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(savesInRules),
+          type: "deleteSave",
+          data: { rulesetId, entityName: save.name },
+        });
+
+        return deletedSave;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async getSave(rulesetId: string, saveId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
+      return save;
+    });
+  }
+
+  async getSaves(
+    rulesetId: string,
+    where: {
+      childOnly?: boolean;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      return await Saves.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+    });
+  }
+
   async updateSave(
     session: Session,
     rulesetId: string,
@@ -126,40 +160,6 @@ class SavesService {
         });
 
         return updatedSave;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteSave(session: Session, rulesetId: string, saveId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
-
-        // Saves don't have a character-pick path — class-side check instead.
-        // klass_level_saves.save_id is ON DELETE RESTRICT, so this is just for
-        // the friendlier error.
-        const inUse = await KlassLevelSaves.exists(tx, { saveId: save.id });
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "saves", save);
-
-        // The database deletes its customizations with it.
-        const rows = await Saves.delete(tx, { id: targetId });
-        const deletedSave = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(savesInRules),
-          type: "deleteSave",
-          data: { rulesetId, entityName: save.name },
-        });
-
-        return deletedSave;
       });
     });
     RulesetCache.invalidate(rulesetId);

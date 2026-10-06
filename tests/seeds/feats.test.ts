@@ -6,16 +6,16 @@ import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
 
+/** The families the rulesets' feats are in (their FEAT_FAMILY). */
+function familiesOf(rulesets: Awaited<ReturnType<typeof seededRulesets>>) {
+  return new Set(rulesets.flatMap((rows) => rows.properties.filter((p) => p.type === FEAT_FAMILY).map((p) => p.value)));
+}
+
 /** Every seeded ruleset's rows. */
 async function seededRulesets() {
   const rulesets = [];
   for (const name of Object.values(RULESET_NAMES)) rulesets.push(await seededRows(name));
   return rulesets;
-}
-
-/** The families the rulesets' feats are in (their FEAT_FAMILY). */
-function familiesOf(rulesets: Awaited<ReturnType<typeof seededRulesets>>) {
-  return new Set(rulesets.flatMap((rows) => rows.properties.filter((p) => p.type === FEAT_FAMILY).map((p) => p.value)));
 }
 
 test("The seeded families of feats are the built-in ones the customization offers", async () => {

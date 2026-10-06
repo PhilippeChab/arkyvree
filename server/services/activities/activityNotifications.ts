@@ -38,17 +38,17 @@ import type { ChangedField } from "@/shared/activity.ts";
 
 type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
 
-/** Ruleset entities' tables, named like their types (abilities raise no activity) */
-const RULESET_ENTITY_TABLES = new Set<string>(RULESET_ENTITY_TYPES.filter((type) => type !== "abilities"));
+const CHARACTER_CONTRIBUTORS_TABLE = getTableName(contributorsInCharacter);
+
+const CONTRIBUTORS_TABLE = getTableName(contributorsInRules);
 
 /** Customization tables whose source entities have a rulesetId */
 const CUSTOMIZATION_TABLES = new Set(["modifiers", "requirements", "properties"]);
-
 const INVITES_TABLE = getTableName(invitesInCampaign);
-const CONTRIBUTORS_TABLE = getTableName(contributorsInRules);
-const CHARACTER_CONTRIBUTORS_TABLE = getTableName(contributorsInCharacter);
-
 const LONG_TEXT_FIELDS = new Set(["description"]);
+
+/** Ruleset entities' tables, named like their types (abilities raise no activity) */
+const RULESET_ENTITY_TABLES = new Set<string>(RULESET_ENTITY_TYPES.filter((type) => type !== "abilities"));
 
 function normalize(v: unknown): string {
   if (typeof v === "number") return String(v);
@@ -85,59 +85,6 @@ async function getRulesetStakeholders(db: Db, rulesetId: string): Promise<string
     if (c.userId) userIds.add(c.userId);
   }
   return Array.from(userIds);
-}
-
-/**
- * Resolve the rulesetId from a target entity. Used for ruleset content change notifications.
- */
-async function resolveRulesetId(db: Db, targetTable: string, targetId: string): Promise<string | null> {
-  if (RULESET_ENTITY_TABLES.has(targetTable)) {
-    const finders: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
-      feats: (id) => Feats.findOne(db, { id }),
-      powers: (id) => Powers.findOne(db, { id }),
-      skills: (id) => Skills.findOne(db, { id }),
-      races: (id) => Races.findOne(db, { id }),
-      klasses: (id) => Klasses.findOne(db, { id }),
-      items: (id) => Items.findOne(db, { id }),
-      saves: (id) => Saves.findOne(db, { id }),
-      languages: (id) => Languages.findOne(db, { id }),
-      aptitudes: (id) => Aptitudes.findOne(db, { id }),
-    };
-    const entity = await finders[targetTable]?.(targetId);
-    return entity?.rulesetId ?? null;
-  }
-
-  if (targetTable === "klass_levels") {
-    const klassLevel = await KlassLevels.findOne(db, { id: targetId });
-    if (!klassLevel) return null;
-    const klass = await Klasses.findOne(db, { id: klassLevel.klassId });
-    return klass?.rulesetId ?? null;
-  }
-
-  if (targetTable === "klass_skills") {
-    const klass = await Klasses.findOne(db, { id: targetId });
-    return klass?.rulesetId ?? null;
-  }
-
-  if (CUSTOMIZATION_TABLES.has(targetTable)) {
-    if (targetTable === "modifiers") {
-      const modifier = await Modifiers.findOne(db, { id: targetId });
-      if (!modifier) return null;
-      return resolveRulesetId(db, modifier.sourceType, modifier.sourceId);
-    }
-    if (targetTable === "requirements") {
-      const req = await Requirements.findOne(db, { id: targetId });
-      if (!req) return null;
-      return resolveRulesetId(db, req.entityType, req.entityId);
-    }
-    if (targetTable === "properties") {
-      const prop = await Properties.findOne(db, { id: targetId });
-      if (!prop) return null;
-      return resolveRulesetId(db, prop.entityType, prop.entityId);
-    }
-  }
-
-  return null;
 }
 
 /**
@@ -243,6 +190,59 @@ async function resolveRecipients(
   // Never notify the actor
   recipients.delete(actorId);
   return Array.from(recipients);
+}
+
+/**
+ * Resolve the rulesetId from a target entity. Used for ruleset content change notifications.
+ */
+async function resolveRulesetId(db: Db, targetTable: string, targetId: string): Promise<string | null> {
+  if (RULESET_ENTITY_TABLES.has(targetTable)) {
+    const finders: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
+      feats: (id) => Feats.findOne(db, { id }),
+      powers: (id) => Powers.findOne(db, { id }),
+      skills: (id) => Skills.findOne(db, { id }),
+      races: (id) => Races.findOne(db, { id }),
+      klasses: (id) => Klasses.findOne(db, { id }),
+      items: (id) => Items.findOne(db, { id }),
+      saves: (id) => Saves.findOne(db, { id }),
+      languages: (id) => Languages.findOne(db, { id }),
+      aptitudes: (id) => Aptitudes.findOne(db, { id }),
+    };
+    const entity = await finders[targetTable]?.(targetId);
+    return entity?.rulesetId ?? null;
+  }
+
+  if (targetTable === "klass_levels") {
+    const klassLevel = await KlassLevels.findOne(db, { id: targetId });
+    if (!klassLevel) return null;
+    const klass = await Klasses.findOne(db, { id: klassLevel.klassId });
+    return klass?.rulesetId ?? null;
+  }
+
+  if (targetTable === "klass_skills") {
+    const klass = await Klasses.findOne(db, { id: targetId });
+    return klass?.rulesetId ?? null;
+  }
+
+  if (CUSTOMIZATION_TABLES.has(targetTable)) {
+    if (targetTable === "modifiers") {
+      const modifier = await Modifiers.findOne(db, { id: targetId });
+      if (!modifier) return null;
+      return resolveRulesetId(db, modifier.sourceType, modifier.sourceId);
+    }
+    if (targetTable === "requirements") {
+      const req = await Requirements.findOne(db, { id: targetId });
+      if (!req) return null;
+      return resolveRulesetId(db, req.entityType, req.entityId);
+    }
+    if (targetTable === "properties") {
+      const prop = await Properties.findOne(db, { id: targetId });
+      if (!prop) return null;
+      return resolveRulesetId(db, prop.entityType, prop.entityId);
+    }
+  }
+
+  return null;
 }
 
 /**

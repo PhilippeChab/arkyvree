@@ -56,11 +56,6 @@ interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends Fie
   renderChips?: (entity: TEntity) => ReactNode;
 }
 
-/** Refetches the section that lists the entity. */
-function invalidateSection(queryClient: QueryClient, rulesetId: string, section: string) {
-  return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
-}
-
 /** An editor's details: the entity's form, following the entity, which saves it. */
 function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey>({
   rulesetId,
@@ -123,6 +118,11 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
       }}
     />
   );
+}
+
+/** Refetches the section that lists the entity. */
+function invalidateSection(queryClient: QueryClient, rulesetId: string, section: string) {
+  return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
 }
 
 /**
