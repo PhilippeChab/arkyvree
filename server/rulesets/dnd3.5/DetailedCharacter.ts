@@ -56,7 +56,7 @@ import DetailedCharacterShields from "./DetailedCharacterShields.ts";
 import DetailedCharacterSpellcasting from "./DetailedCharacterSpellcasting.ts";
 import DetailedCharacterWeapons from "./DetailedCharacterWeapons.ts";
 import { Dnd35LevelsHooks } from "./hooks/index.ts";
-import { getStaticPropertyValues } from "./PropertyTypes.ts";
+import Dnd35PropertyTypes from "./PropertyTypes.ts";
 import TargetPaths from "./TargetPaths.ts";
 import type { Dnd35ProjectedCharacterData } from "./types.ts";
 
@@ -71,7 +71,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterFeatGroupings = new DetailedCharacterFeatGroupings(this.detailedCharacterFeats, [
       FEAT_FAMILY,
     ]);
-    this.detailedCharacterPowers = new DetailedCharacterPowers(getStaticPropertyValues);
+    this.detailedCharacterPowers = new DetailedCharacterPowers(new Dnd35PropertyTypes());
     this.detailedCharacterPowerGroupings = new DetailedCharacterPowerGroupings(
       this.detailedCharacterPowers,
       this.detailedCharacterAbilities,

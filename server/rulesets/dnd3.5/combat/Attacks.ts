@@ -7,6 +7,7 @@ import {
   type WeaponAbilities,
   type WeaponSlot,
 } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
+import { sortProperties } from "@/server/rulesets/dnd3.5/PropertyTypes.ts";
 import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
 import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/server/rulesets/properties/index.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
@@ -312,7 +313,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         get total() {
           return formatDamageTotal(this);
         },
-        types: properties.filter((p) => p.type === DAMAGE_TYPE).map((p) => p.value),
+        types: sortProperties(properties.filter((p) => p.type === DAMAGE_TYPE)).map((p) => p.value),
         strmultiplier,
         critical: {
           range: Number(property(WEAPON_CRITICAL_RANGE)?.value ?? 1),

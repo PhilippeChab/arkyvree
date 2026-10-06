@@ -6,7 +6,12 @@ interface AptitudeLink {
   aptitudesInRule?: { name: string } | null;
 }
 
-/** A section table's aptitudes column: a chip per aptitude, or a dash. */
+/** Two links by their lists' names, as the books list a spell's classes. */
+function byListName(a: AptitudeLink, b: AptitudeLink) {
+  return (a.aptitudesInRule?.name ?? "").localeCompare(b.aptitudesInRule?.name ?? "");
+}
+
+/** A section table's aptitudes column: a chip per aptitude, by name, or a dash. */
 export function AptitudeChipsCell({ links }: { links: AptitudeLink[] | null | undefined }) {
   if (!links?.length) {
     return (
@@ -17,7 +22,7 @@ export function AptitudeChipsCell({ links }: { links: AptitudeLink[] | null | un
   }
   return (
     <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-      {links.map((link) => (
+      {links.toSorted(byListName).map((link) => (
         <Chip
           key={link.aptitudeId}
           label={link.aptitudesInRule?.name || "Unknown"}

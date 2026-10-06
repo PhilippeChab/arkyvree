@@ -60,7 +60,17 @@ export function buildKlassIndices(
   powersById: Map<string, PowerWithAptitudes>,
   skillsById: Map<string, Skill>,
 ) {
-  const { klassLevels, klassSkills, klassLevelFeats, klassLevelPowers, klassLevelSaves } = rows;
+  const { klassLevels, klassLevelSaves } = rows;
+  // A class's skills, and a level's feats and spells, by name: as the books list them
+  const klassSkills = rows.klassSkills.toSorted((a, b) =>
+    (skillsById.get(a.skillId)?.name ?? "").localeCompare(skillsById.get(b.skillId)?.name ?? ""),
+  );
+  const klassLevelFeats = rows.klassLevelFeats.toSorted((a, b) =>
+    (featsById.get(a.featId)?.name ?? "").localeCompare(featsById.get(b.featId)?.name ?? ""),
+  );
+  const klassLevelPowers = rows.klassLevelPowers.toSorted((a, b) =>
+    (powersById.get(a.powerId)?.name ?? "").localeCompare(powersById.get(b.powerId)?.name ?? ""),
+  );
   const klassLevelsByKlassId = Map.groupBy(klassLevels, (kl) => kl.klassId);
   for (const group of klassLevelsByKlassId.values()) group.sort((a, b) => a.level - b.level);
 

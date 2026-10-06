@@ -241,21 +241,22 @@ const FEAT_PROPERTY_TYPES: Record<string, string> = {
   [WIZARD_PROHIBITED_SCHOOL]: "School of magic prohibited by wizard specialization",
 };
 
+/** A spell's property types, in the order a 3.5 stat block shows them. */
 const POWER_PROPERTY_TYPES: Record<string, string> = {
   [SPELL_SCHOOL]: "Spell school (Abjuration, Conjuration, etc.)",
   [SPELL_SUBSCHOOL]: "Spell subschool (Calling, Charm, Creation, etc.)",
   [SPELL_DESCRIPTOR]: "Spell descriptor (Fire, Cold, Mind-Affecting, etc.)",
-  [SPELL_COMPONENT]: "Required component (Verbal, Somatic, Material, Focus, Divine Focus, XP Cost)",
-  [SPELL_RANGE_TYPE]: "Range category (Personal, Touch, Close, Medium, Long, Unlimited)",
-  [SPELL_DURATION_TYPE]: "Duration category (Instantaneous, Concentration, Sustained, Permanent, etc.)",
-  [SPELL_RESISTANCE]: "Whether spell resistance applies (Yes/No)",
-  [SPELL_SAVING_THROW]: "Saving throw type and effect (None, Fortitude negates, Reflex half, etc.)",
   [SPELL_LEVEL]: 'Spell level for a class (e.g., "Wizard 3", "Cleric 2")',
+  [SPELL_COMPONENT]: "Required component (Verbal, Somatic, Material, Focus, Divine Focus, XP Cost)",
   [SPELL_MATERIAL]: "Material component description",
   [SPELL_CASTING_TIME]: 'Time to cast (e.g., "1 standard action", "1 round")',
+  [SPELL_RANGE_TYPE]: "Range category (Personal, Touch, Close, Medium, Long, Unlimited)",
   [SPELL_TARGET]: 'Valid targets (e.g., "One creature", "You")',
-  [SPELL_DURATION]: 'Duration description (e.g., "1 round/level", "Instantaneous")',
   [SPELL_AREA_OF_EFFECT]: 'Area of effect (e.g., "20-ft. radius", "Cone")',
+  [SPELL_DURATION_TYPE]: "Duration category (Instantaneous, Concentration, Sustained, Permanent, etc.)",
+  [SPELL_DURATION]: 'Duration description (e.g., "1 round/level", "Instantaneous")',
+  [SPELL_SAVING_THROW]: "Saving throw type and effect (None, Fortitude negates, Reflex half, etc.)",
+  [SPELL_RESISTANCE]: "Whether spell resistance applies (Yes/No)",
 };
 
 const ENTITY_PROPERTY_TYPES: Partial<Record<PropertyEntityType, Record<string, string>>> = {
@@ -269,6 +270,12 @@ const ENTITY_PROPERTY_TYPES: Partial<Record<PropertyEntityType, Record<string, s
   skills: SKILL_PROPERTY_TYPES,
 };
 
+/** Each static property type's place: its entity type's types in their order, as a stat block shows them. */
+const PROPERTY_TYPE_RANKS = new Map(
+  Object.values(ENTITY_PROPERTY_TYPES)
+    .flatMap((types) => Object.keys(types))
+    .map((type, rank) => [type, rank]),
+);
 const PROPERTY_VALUES: Record<string, string[]> = {
   [WEAPON_PROFICIENCY]: ["Simple", "Martial", "Exotic"],
   [WEAPON_FAMILY]: [
@@ -326,6 +333,27 @@ export function getStaticPropertyValues(type: string): string[] | null {
   return PROPERTY_VALUES[type] ?? null;
 }
 
+/**
+ * Properties as a stat block shows them: by type, in the ruleset's order of types (a spell's school, then its
+ * descriptors, components, range…; a type it doesn't know after those, by name), each type's values in its options'
+ * order, then by value. Never in the order their rows come in, which seeded rows, made together, can't give.
+ */
+export function sortProperties<T extends { type: string; value: string }>(properties: readonly T[]): T[] {
+  const typeRank = (type: string) => PROPERTY_TYPE_RANKS.get(type) ?? PROPERTY_TYPE_RANKS.size;
+  const valueRank = ({ type, value }: T) => {
+    const options = getStaticPropertyValues(type) ?? [];
+    const rank = options.indexOf(value);
+    return rank === -1 ? options.length : rank;
+  };
+  return properties.toSorted(
+    (a, b) =>
+      typeRank(a.type) - typeRank(b.type) ||
+      a.type.localeCompare(b.type) ||
+      valueRank(a) - valueRank(b) ||
+      a.value.localeCompare(b.value),
+  );
+}
+
 export default class Dnd35PropertyTypes implements PropertyTypesProvider {
   getStaticPropertyTypes(entityType?: PropertyEntityType): Record<string, string> {
     if (!entityType) {
@@ -346,5 +374,9 @@ export default class Dnd35PropertyTypes implements PropertyTypesProvider {
 
   getStaticPropertyValues(type: string): string[] | null {
     return getStaticPropertyValues(type);
+  }
+
+  sortProperties<T extends { type: string; value: string }>(properties: readonly T[]): T[] {
+    return sortProperties(properties);
   }
 }
