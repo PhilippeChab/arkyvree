@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   DialogActions,
   DialogContent,
@@ -7,11 +6,10 @@ import {
   DialogTitle,
   Link as MuiLink,
   Stack,
-  Typography,
 } from "@mui/material";
 import { useState } from "react";
 
-import { DiceSpinner, LoadError, Modal } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, Modal, Subsection } from "@/client/src/components/common/index.ts";
 import { useOglLicense } from "@/client/src/hooks/index.ts";
 
 interface RulesetLicenseNoticeProps {
@@ -31,15 +29,12 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
         <DialogTitle id="ruleset-license-title">License & Attribution</DialogTitle>
         <DialogContent>
           <Stack spacing={3}>
-            <Box>
-              <Typography component="h3" variant="h6" gutterBottom>
-                {name}
-              </Typography>
+            <Subsection title={name}>
               <DialogContentText>
                 This notice applies to the SRD-derived Open Game Content in this system source package. It does not
                 license the application code or designate independent user-created content as Open Game Content.
               </DialogContentText>
-            </Box>
+            </Subsection>
             {isPending && <DiceSpinner sx={{ py: 4 }} />}
             {isError && <LoadError what="License text" error={error} onRetry={() => void refetch()} />}
             {text !== undefined && (

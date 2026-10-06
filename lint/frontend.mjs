@@ -70,7 +70,8 @@
  * - `button-sizes`: a button's size is its place's: an icon button is `large` in the app bar and a page header's
  *   corners, `small` anywhere else, written out; a text button is `large` only as a page's action (`PageActionButton`,
  *   a `PageHeader`'s `action`), MUI's own size in a section's header, a form, a dialog and an empty state, and `small`
- *   inside a block (a row, an alert, a toolbar, a field's tools).
+ *   inside a block (a row, an alert, a toolbar, a field's tools). Load More is `large` on a list page, `small` in a
+ *   dialog or a wizard step.
  * - `headings`: a `Typography` sized as a heading or a subtitle (`variant="h6"`, `typography: { xs: "h6" }`, which MUI
  *   renders as an `<h6>`) declares its element, and a heading's element picks its look: `h1` is `variant="h3"`, `h2`
  *   `h5`, `h3` `h6`, `h4` `subtitle1`, sized, weighted and colored by the theme; the outline stops at `h4`.
@@ -82,8 +83,8 @@
  * - `tag-chips`: a chip is a `TagChip` (a role, a status, a fact, a pick to remove), a `ChoiceChip` (one of several to
  *   choose), or an Autocomplete's picked value, MUI's own small chip (`{...getItemProps({ index })}`).
  * - `expand-arrows`: a row or a header that shows or hides what's under it is the toggle (`toggleProps`) and shows
- *   its state with `ExpandArrow`; a component's own arrow (`expandIcon`) stays its own. A toggle is a button, but a
- *   table row keeps its role (`toggleProps(open, onToggle, "row")`).
+ *   its state with `ExpandArrow`, leading it; a component's own arrow (`expandIcon`) stays its own. A titled group
+ *   that opens is a `Subsection`'s toggle, a button; a table row keeps its role (`toggleProps(open, onToggle, "row")`).
  * - `pending-buttons`: a button that starts a request shows it running, its label in a `DiceSpinner`.
  * - `menus`: a menu lists its items alone: an action is an `ActionMenuItem`, one of several to choose a `MenuItem`
  *   marked `selected` (a filter, a sort, a visibility); a panel that opens from a button is a `Popover`.
@@ -92,7 +93,8 @@
  *   gutter `gutterBottom`. A margin only aligns (`auto`) or resets (`0`), in a nested selector too. A gap is a step of
  *   the ladder, by what it spaces (`GAPS`): a row of icon buttons is 0.5 apart, of buttons or chips 1, a group of
  *   panels or cards 2. A padding is a step too, an indent (`pl: 6`), its role's per-screen shape (`PADDING_SHAPES`),
- *   or derived from data, never a constant that hides a step.
+ *   or derived from data, never a constant that hides a step. A card's blocks are 2 apart, a panel's 3, read from the
+ *   surface; a heading and what it titles are a `Subsection`.
  * - `surfaces`: a panel of a page is a `Section` (a `Paper`, its padding, its title); a `Card` is a card one opens:
  *   `StyledCard`, or one holding a `CardActionArea`.
  * - `shadows`: a shadow is the theme's: an elevation (`boxShadow: 2`, `0` for none; a `Paper`, a `Card` or an
@@ -127,6 +129,9 @@ const BUTTON_INTENTS = [
   { verbs: ["Publish", "Accept", "Unarchive", "Restore"], variant: "contained", color: "success" },
   { verbs: ["Cancel", "Close", "Dismiss"], variant: "outlined", color: "inherit" },
 ];
+
+/** The surfaces a card is, whose blocks sit 2 apart */
+const CARD_SURFACES = new Set(["Card", "CardContent", "StyledCard"]);
 
 /** What a card renders: a container that opens on click and holds content of its own, so it can't be a link */
 const CARDS = new Set(["ListCard", "StyledCard"]);
@@ -268,6 +273,9 @@ const LABELLED = new Set(["ActionMenuItem", "Button", "MenuItem"]);
 
 /** The fields, besides the bound ones, whose `label` names them */
 const LABELLED_FIELDS = new Set(["FormControlLabel", "SwitchField", "TextField"]);
+
+/** The elements that only lay out what they hold, which a toggle's leading arrow sits in */
+const LAYOUT_WRAPPERS = new Set(["Box", "span", "Stack", "TableCell"]);
 
 /** The style keys that set a box's margin, on any side */
 const MARGINS = new Set([
@@ -413,6 +421,9 @@ const SPACING_KEYS = new Set([
 
 /** The packages that export MUI's `styled` */
 const STYLED_SOURCES = new Set(["@mui/material", "@mui/material/styles", "@mui/system"]);
+
+/** The style keys that size a text */
+const TEXT_SIZE_KEYS = new Set(["fontSize", "typography"]);
 
 /** The props the theme sets for every instance of a component (`MuiTooltip`'s and `MuiCollapse`'s `defaultProps`) */
 const THEME_DEFAULTS = {
@@ -617,6 +628,8 @@ function createButtonIntents(context) {
 function createButtonSizes(context) {
   if (!inClient(context)) return {};
   const pageAction = repoPath(context.filename) === "client/src/components/common/PageActionButton.tsx";
+  const listPage = context.sourceCode.text.includes("<PageHeader");
+  const step = repoPath(context.filename).endsWith("Step.tsx");
   return {
     JSXElement(node) {
       const name = elementName(node);
@@ -629,6 +642,17 @@ function createButtonSizes(context) {
             'An icon button writes its size, `size="small"` or `size="large"` (a condition\'s branches count, a ' +
             "spread doesn't): large in the app bar and a page header's corners, small anywhere else.",
         });
+      }
+      if (name === "LoadMoreButton") {
+        const place = listPage ? "large" : step || inDialog(node) ? "small" : undefined;
+        if ((size ?? undefined) !== place) {
+          context.report({
+            node: node.openingElement,
+            message:
+              'Load More is sized by its place, as a button is: `size="large"` on a list page (its `PageHeader`), ' +
+              '`size="small"` in a dialog or a wizard step, MUI\'s own size anywhere else.',
+          });
+        }
       }
       if (name === "Button" && sxSetsAny(node, PADDINGS)) {
         context.report({
@@ -1006,12 +1030,27 @@ function createExpandArrows(context) {
       const call = node.argument.type === "LogicalExpression" ? node.argument.right : node.argument;
       if (call.type !== "CallExpression" || calleeName(call) !== "toggleProps") return;
       const role = call.arguments[2]?.type === "Literal" ? call.arguments[2].value : "button";
-      if ((elementName(node.parent.parent) === "TableRow") === (role === "row")) return;
-      context.report({
-        node,
-        message:
-          'A toggle is a button, but a table row keeps its role: `toggleProps(open, onToggle, "row")` on a `TableRow` alone.',
-      });
+      const toggle = node.parent.parent;
+      if ((elementName(toggle) === "TableRow") !== (role === "row")) {
+        context.report({
+          node,
+          message:
+            'A toggle is a button, but a table row keeps its role: `toggleProps(open, onToggle, "row")` on a `TableRow` alone.',
+        });
+      }
+      if (role !== "row" && repoPath(context.filename) !== "client/src/components/common/Subsection.tsx") {
+        context.report({
+          node,
+          message:
+            'A titled group that opens and closes is a `Subsection` (`open`, `onToggle`); a row that does, a `TableRow` (`toggleProps(open, onToggle, "row")`).',
+        });
+      }
+      if (leadingElement(toggle) !== "ExpandArrow") {
+        context.report({
+          node,
+          message: "A toggle's arrow leads it: `ExpandArrow` before its label, in its first cell.",
+        });
+      }
     },
   };
 }
@@ -1397,18 +1436,51 @@ function createShape(context) {
 }
 
 function createSpacing(context) {
-  if (!inClient(context)) return {};
+  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
+  const inSubsection = repoPath(context.filename) === "client/src/components/common/Subsection.tsx";
   const ladder =
-    "A gap is a step of the ladder, by what it spaces: the lines of one item 0.5, the items of a list or a row 1, " +
-    "the panels or cards of a group 2, a panel's blocks 3 (a section's, a dialog's, a form's, a card's), a page's 4 " +
-    "(`PageBody`). Never a step between them, one per screen size, or `spacing={0}`, a `Stack`'s own.";
+    "A gap is a step of the ladder, by what it spaces: the parts of one item 0.5, the items of a list or a row 1, " +
+    "a card's blocks and the panels or cards of a group 2, a panel's blocks 3 (a section's, a dialog's, a form's), a " +
+    "page's 4 (`PageBody`). Never a step between them, one per screen size, or `spacing={0}`, a `Stack`'s own.";
   return {
     JSXAttribute(node) {
       if (node.name.name !== "spacing" || node.value?.type !== "JSXExpressionContainer") return;
       if (offLadder(node.value.expression)) context.report({ node, message: ladder });
     },
     JSXElement(node) {
-      if (elementName(node) !== "Stack") return;
+      const name = elementName(node);
+      const column = !hasAttribute(node, "direction");
+      if ((name === "Stack" || name === "Box") && column && !inSubsection && titlesBlock(node)) {
+        context.report({
+          node: node.openingElement,
+          message:
+            "A heading and what it titles are a `Subsection` (its title, an action beside it, its content 1 apart; " +
+            "`open` and `onToggle` when it opens and closes), never a heading over its block by hand.",
+        });
+      }
+      if (name !== "Stack") return;
+      const surface = parentElement(node);
+      const surfaceName = surface && elementName(surface);
+      const surfaceStep = CARD_SURFACES.has(surfaceName)
+        ? 2
+        : surfaceName === "AccordionDetails" ||
+            (surfaceName === "Paper" && attributeText(surface, "variant") !== "outlined")
+          ? 3
+          : null;
+      if (
+        column &&
+        surfaceStep !== null &&
+        hasAttribute(node, "spacing") &&
+        numberAttribute(node, "spacing") !== surfaceStep
+      ) {
+        context.report({
+          node: node.openingElement,
+          message:
+            surfaceStep === 2
+              ? "A card's blocks are `spacing={2}` apart."
+              : "A panel's blocks (a `Paper`'s, an accordion's) are `spacing={3}` apart.",
+        });
+      }
       const kids = childElements(node).map((child) => elementName(child));
       const mapped = node.children.some(
         (c) => c.type === "JSXExpressionContainer" && c.expression.callee?.property?.name === "map",
@@ -1759,6 +1831,12 @@ function inClient(context) {
   return repoPath(context.filename).startsWith("client/src/");
 }
 
+/** Whether an element sits in a dialog's content */
+function inDialog(element) {
+  for (let p = parentElement(element); p; p = parentElement(p)) if (elementName(p) === "DialogContent") return true;
+  return false;
+}
+
 /**
  * Whether `node` runs as an effect runs: in its callback (`useEffect(() => …)`, `useLayoutEffect`), not in a function
  * it hands on (a subscription's handler, a timer's callback, which an event calls).
@@ -1821,6 +1899,38 @@ function inTitleCase(text) {
     .split(/\s+/)
     .filter((word) => /^[a-z]/i.test(word));
   return words.every((word, index) => /^[A-Z0-9]/.test(word) || (index > 0 && SMALL_WORDS.has(word.toLowerCase())));
+}
+
+/**
+ * What a toggle renders first, through the containers that hold it (a row's first cell, a `Stack`): an element's
+ * name, or `#text` when words lead it.
+ */
+function leadingElement(element) {
+  for (const child of element.children) {
+    if (child.type === "JSXText") {
+      if (child.value.trim()) return "#text";
+      continue;
+    }
+    if (child.type === "JSXExpressionContainer") {
+      const { expression } = child;
+      if (expression.type === "JSXEmptyExpression") continue;
+      if (expression.type !== "JSXElement") return "#text";
+      if (!LAYOUT_WRAPPERS.has(elementName(expression))) return elementName(expression);
+      const inner = leadingElement(expression);
+      if (inner) return inner;
+      continue;
+    }
+    if (child.type === "JSXFragment") {
+      const inner = leadingElement(child);
+      if (inner) return inner;
+      continue;
+    }
+    if (child.type !== "JSXElement") continue;
+    if (!LAYOUT_WRAPPERS.has(elementName(child))) return elementName(child);
+    const inner = leadingElement(child);
+    if (inner) return inner;
+  }
+  return null;
 }
 
 /** The elements a `.map()` callback returns: its body, or what its block returns (`items.map((i) => <Box />)`). */
@@ -2074,6 +2184,32 @@ function timesItself(template, sourceCode) {
   if (texts.some((text) => MOTION_LITERAL.test(text))) return true;
   return template.expressions.some(
     (expression, index) => /^m?s\b/.test(texts[index + 1]) && !sourceCode.getText(expression).includes("DURATION."),
+  );
+}
+
+/**
+ * Whether a column opens with a heading over the rest of its block: an `h3` or an `h4` first, or a row that starts
+ * with one (a title and its action), which a `Subsection` lays out.
+ */
+function titlesBlock(column) {
+  const kids = childElements(column);
+  if (kids.length < 2) return false;
+  // Plain text set bold is a heading by its look; a label with a variant or a size of its own (a score's, a field's) is
+  // one item's part
+  const minorHeading = (element) =>
+    element &&
+    elementName(element) === "Typography" &&
+    (["h3", "h4"].includes(attributeText(element, "component")) ||
+      (!hasAttribute(element, "component") &&
+        !hasAttribute(element, "variant") &&
+        !sxSetsAny(element, TEXT_SIZE_KEYS) &&
+        sxString(element, "fontWeight") === "fontWeightBold"));
+  const [first] = kids;
+  if (minorHeading(first)) return true;
+  return (
+    elementName(first) === "Stack" &&
+    attributeText(first, "direction") === "row" &&
+    minorHeading(childElements(first)[0])
   );
 }
 

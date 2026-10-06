@@ -134,7 +134,7 @@ function GroupedRow({
           sx={{ ...CLICKABLE_SX, ...fadeInUpSx(rowIndex) }}
         >
           <TableCell>
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
               <ExpandArrow open={isExpanded} />
               <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium" }}>
                 {row.displayName}

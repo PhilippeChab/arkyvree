@@ -1,6 +1,6 @@
 import { Box, Stack, Typography } from "@mui/material";
 
-import { BlankState, Section } from "@/client/src/components/common/index.ts";
+import { BlankState, Section, Subsection } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { capitalize } from "@/shared/text.ts";
 
@@ -34,11 +34,8 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
     <Section title="Combat & Saves">
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         {/* Left column: Combat Stats */}
-        <Stack spacing={1} sx={{ flex: 1, minWidth: { md: 350 } }}>
-          <Typography component="h3" variant="h6">
-            Combat Stats
-          </Typography>
-          <Stack spacing={1}>
+        <Box sx={{ flex: 1, minWidth: { md: 350 } }}>
+          <Subsection title="Combat Stats">
             {/* Combat stat grid — single grid so columns align across rows */}
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
               <StatField label="HP" value={combat?.hp?.total ?? 0} />
@@ -62,43 +59,42 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
                 </Typography>
               ))}
             </Box>
-          </Stack>
-        </Stack>
+          </Subsection>
+        </Box>
 
         {/* Right column: Saving Throws */}
-        <Stack spacing={1} sx={{ flex: 1, minWidth: { md: 300 } }}>
-          <Typography component="h3" variant="h6">
-            Saving Throws
-          </Typography>
-          {Object.keys(saves).length > 0 ? (
-            <Stack spacing={3}>
-              {Object.entries(saves).map(([save, saveData]) => {
-                const total = saveData?.total ?? 0;
-                const displayName = saveData?.name || capitalize(save);
-                return (
-                  <Stack key={save} spacing={1}>
-                    <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium", color: "text.secondary" }}>
-                      {displayName}: {formatSigned(total)}
-                    </Typography>
-                    <Stack direction="row" spacing={1} sx={{ pl: 2 }}>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        Base: {formatSigned(saveData?.base)}
+        <Box sx={{ flex: 1, minWidth: { md: 300 } }}>
+          <Subsection title="Saving Throws">
+            {Object.keys(saves).length > 0 ? (
+              <Stack spacing={3}>
+                {Object.entries(saves).map(([save, saveData]) => {
+                  const total = saveData?.total ?? 0;
+                  const displayName = saveData?.name || capitalize(save);
+                  return (
+                    <Stack key={save} spacing={1}>
+                      <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium", color: "text.secondary" }}>
+                        {displayName}: {formatSigned(total)}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        Ability: {formatSigned(saveData?.ability)}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        Misc: {formatSigned(saveData?.misc)}
-                      </Typography>
+                      <Stack direction="row" spacing={1} sx={{ pl: 2 }}>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          Base: {formatSigned(saveData?.base)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          Ability: {formatSigned(saveData?.ability)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          Misc: {formatSigned(saveData?.misc)}
+                        </Typography>
+                      </Stack>
                     </Stack>
-                  </Stack>
-                );
-              })}
-            </Stack>
-          ) : (
-            <BlankState title="No saving throws available" />
-          )}
-        </Stack>
+                  );
+                })}
+              </Stack>
+            ) : (
+              <BlankState title="No saving throws available" />
+            )}
+          </Subsection>
+        </Box>
       </Stack>
     </Section>
   );

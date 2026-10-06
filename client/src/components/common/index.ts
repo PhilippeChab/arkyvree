@@ -27,6 +27,7 @@ export { ExpandArrow } from "./ExpandArrow.tsx";
 export { LoadMoreButton } from "./LoadMoreButton.tsx";
 export { SearchField } from "./SearchField.tsx";
 export { Section } from "./Section.tsx";
+export { Subsection } from "./Subsection.tsx";
 export { type Tag, TagChip } from "./TagChip.tsx";
 export { NextPageSpinner } from "./NextPageSpinner.tsx";
 export { Modal } from "./Modal.tsx";

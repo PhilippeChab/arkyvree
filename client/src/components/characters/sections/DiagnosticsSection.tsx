@@ -14,7 +14,14 @@ import {
 } from "@mui/material";
 import { Fragment, type ReactNode, useMemo } from "react";
 
-import { CLICKABLE_SX, ExpandArrow, Section, TagChip, toggleProps } from "@/client/src/components/common/index.ts";
+import {
+  CLICKABLE_SX,
+  ExpandArrow,
+  Section,
+  Subsection,
+  TagChip,
+  toggleProps,
+} from "@/client/src/components/common/index.ts";
 import { ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
@@ -297,11 +304,9 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             )}
 
             {/* Requirements System Status */}
-            <Stack spacing={1}>
-              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <Typography component="h3" variant="h6">
-                  Requirements
-                </Typography>
+            <Subsection
+              title="Requirements"
+              action={
                 <Stack direction="row" spacing={1}>
                   <TagChip
                     tag={{ label: `Fulfilled: ${requirements.fulfilledRequirementGroups.length}`, color: "success" }}
@@ -311,18 +316,17 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
                     <TagChip tag={{ label: `Invalid: ${requirements.invalidRequirements.length}`, color: "warning" }} />
                   )}
                 </Stack>
-              </Stack>
+              }
+            >
               <RequirementTable groups={requirements.fulfilledRequirementGroups} label="Fulfilled" />
               <RequirementTable groups={requirements.unmetRequirementGroups} label="Unmet" />
               <InvalidRequirementTable items={requirements.invalidRequirements} />
-            </Stack>
+            </Subsection>
 
             {/* Modifier System Status */}
-            <Stack spacing={1}>
-              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <Typography component="h3" variant="h6">
-                  Modifiers
-                </Typography>
+            <Subsection
+              title="Modifiers"
+              action={
                 <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
                   <TagChip tag={{ label: `Applied: ${modifiers.appliedModifiers.length}`, color: "success" }} />
                   {modifiers.unappliedModifiers.length > 0 && (
@@ -335,12 +339,13 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
                     <TagChip tag={{ label: `Skipped: ${modifiers.skippedModifiers.length}`, color: "warning" }} />
                   )}
                 </Stack>
-              </Stack>
+              }
+            >
               <ModifierTable modifiers={modifiers.appliedModifiers} label="Applied" />
               <ModifierTable modifiers={modifiers.unappliedModifiers} label="Unapplied" />
               <ModifierTable modifiers={modifiers.inactiveModifiers} label="Inactive" />
               <SkippedModifierTable items={modifiers.skippedModifiers} />
-            </Stack>
+            </Subsection>
           </Stack>
         </AccordionDetails>
       </Accordion>

@@ -1,4 +1,4 @@
-import { Box, Collapse, List, ListItemButton, ListItemText, Skeleton, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, List, ListItemButton, ListItemText, Skeleton, Stack, Tooltip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
@@ -7,7 +7,6 @@ import { useController } from "react-hook-form";
 import {
   BlankState,
   ChoiceChip,
-  CLICKABLE_SX,
   DiceSpinner,
   ExpandArrow,
   LoadError,
@@ -15,8 +14,8 @@ import {
   NextPageSpinner,
   NoMatchesState,
   SearchField,
+  Subsection,
   TagChip,
-  toggleProps,
 } from "@/client/src/components/common/index.ts";
 import { FeatsIcon } from "@/client/src/components/icons/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
@@ -52,26 +51,13 @@ interface FeatFamilyExpansionProps {
 function AutoGrantedFeats({ feats, defaultCollapsed }: AutoGrantedFeatsProps) {
   const [open, setOpen] = useState(!defaultCollapsed);
   return (
-    <Box>
-      <Stack
-        {...toggleProps(open, () => setOpen(!open))}
-        direction="row"
-        spacing={1}
-        sx={{ alignItems: "center", justifyContent: "space-between", ...CLICKABLE_SX }}
-      >
-        <Typography component="h4" variant="subtitle1" sx={{ flex: 1 }}>
-          Auto-Granted Feats ({feats.length})
-        </Typography>
-        <ExpandArrow open={open} />
-      </Stack>
-      <Collapse in={open}>
-        <List dense>
-          {feats.map((feat, i) => (
-            <ListItemText key={`${feat.id}-${i}`} primary={feat.name} />
-          ))}
-        </List>
-      </Collapse>
-    </Box>
+    <Subsection title={`Auto-Granted Feats (${feats.length})`} level="h4" open={open} onToggle={() => setOpen(!open)}>
+      <List dense>
+        {feats.map((feat, i) => (
+          <ListItemText key={`${feat.id}-${i}`} primary={feat.name} />
+        ))}
+      </List>
+    </Subsection>
   );
 }
 
@@ -234,45 +220,43 @@ export function LevelUpFeatsStep({
 
   return (
     <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
-      <Stack spacing={1} sx={{ flexShrink: 0 }}>
-        <Typography component="h3" variant="h6">
-          Select Feats by Aptitude
-        </Typography>
+      <Box sx={{ flexShrink: 0 }}>
+        <Subsection title="Select Feats by Aptitude">
+          {featData.autoGrantedFeats.length > 0 && (
+            <AutoGrantedFeats feats={featData.autoGrantedFeats} defaultCollapsed={hasSelectableFeats} />
+          )}
 
-        {featData.autoGrantedFeats.length > 0 && (
-          <AutoGrantedFeats feats={featData.autoGrantedFeats} defaultCollapsed={hasSelectableFeats} />
-        )}
+          {aptitudePools.some((pool) => pool.available > 0) && (
+            <>
+              <Typography component="p" variant="subtitle1">
+                Choose an aptitude to select feats from:
+              </Typography>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+                {aptitudePools
+                  .filter((pool) => pool.available > 0)
+                  .map((pool) => {
+                    const currentPoolFeats = selectedFeats[pool.id] || [];
+                    const isSelected = selectedAptitude === pool.id;
 
-        {aptitudePools.some((pool) => pool.available > 0) && (
-          <>
-            <Typography component="p" variant="subtitle1">
-              Choose an aptitude to select feats from:
-            </Typography>
-            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-              {aptitudePools
-                .filter((pool) => pool.available > 0)
-                .map((pool) => {
-                  const currentPoolFeats = selectedFeats[pool.id] || [];
-                  const isSelected = selectedAptitude === pool.id;
-
-                  return (
-                    <ChoiceChip
-                      key={pool.id}
-                      label={`${pool.name} ${currentPoolFeats.length}/${pool.available}${pool.shared ? " (optional)" : ""}`}
-                      selected={isSelected}
-                      onClick={() => {
-                        if (isSelected) return;
-                        // A search typed for the last pool would filter this one.
-                        setSelectedAptitude(pool.id);
-                        setFeatSearch("");
-                      }}
-                    />
-                  );
-                })}
-            </Stack>
-          </>
-        )}
-      </Stack>
+                    return (
+                      <ChoiceChip
+                        key={pool.id}
+                        label={`${pool.name} ${currentPoolFeats.length}/${pool.available}${pool.shared ? " (optional)" : ""}`}
+                        selected={isSelected}
+                        onClick={() => {
+                          if (isSelected) return;
+                          // A search typed for the last pool would filter this one.
+                          setSelectedAptitude(pool.id);
+                          setFeatSearch("");
+                        }}
+                      />
+                    );
+                  })}
+              </Stack>
+            </>
+          )}
+        </Subsection>
+      </Box>
 
       {/* Feat Selection Interface for Selected Aptitude */}
       {selectedAptitude &&

@@ -874,26 +874,33 @@ describe("frontend rules", () => {
     ).toEqual(["dialog-conventions client/src/icon.tsx", "dialog-conventions client/src/toolbar.tsx"]);
   });
 
-  test("a toggle shows its state with ExpandArrow, an accordion with its own expandIcon, and a row keeps its role", async () => {
+  test("a toggle shows its state with ExpandArrow leading it: a titled group's is a Subsection's, a row keeps its role", async () => {
     expect(
       await lintRepo(
         {
           "client/src/swapped.tsx": "export const s = open ? <ExpandLessIcon /> : <ExpandMoreIcon />;\n",
-          "client/src/arrowed.tsx":
-            "export const a = <Stack {...toggleProps(open, toggle)}><ExpandArrow open={open} /></Stack>;\n",
+          "client/src/header.tsx":
+            "export const a = <Stack {...toggleProps(open, toggle)}><ExpandArrow open={open} /><span>Granted</span></Stack>;\n",
           "client/src/accordion.tsx":
             "export const c = <AccordionSummary expandIcon={<ExpandMoreIcon />}>Diagnostics</AccordionSummary>;\n",
-          "client/src/row.tsx": 'export const r = <TableRow {...toggleProps(open, toggle, "row")} />;\n',
-          "client/src/rowless.tsx": "export const w = <TableRow {...toggleProps(open, toggle)} />;\n",
-          "client/src/header.tsx": 'export const h = <Stack {...(has && toggleProps(open, toggle, "row"))} />;\n',
+          "client/src/row.tsx":
+            'export const r = <TableRow {...toggleProps(open, toggle, "row")}><TableCell><Stack direction="row"><ExpandArrow open={open} /><span>Knowledge</span></Stack></TableCell></TableRow>;\n',
+          "client/src/trailing.tsx":
+            'export const t = <TableRow {...toggleProps(open, toggle, "row")}><TableCell>Knowledge</TableCell><TableCell><ExpandArrow open={open} /></TableCell></TableRow>;\n',
+          "client/src/rowless.tsx":
+            "export const w = <TableRow {...toggleProps(open, toggle)}><TableCell><ExpandArrow open={open} /></TableCell></TableRow>;\n",
+          "client/src/components/common/Subsection.tsx":
+            'export const u = <Stack component="span" {...toggleProps(open, onToggle)}><ExpandArrow open={open} /><span>{title}</span></Stack>;\n',
         },
         ["expand-arrows"],
       ),
     ).toEqual([
       "expand-arrows client/src/header.tsx",
       "expand-arrows client/src/rowless.tsx",
+      "expand-arrows client/src/rowless.tsx",
       "expand-arrows client/src/swapped.tsx",
       "expand-arrows client/src/swapped.tsx",
+      "expand-arrows client/src/trailing.tsx",
     ]);
   });
 
@@ -958,6 +965,20 @@ describe("frontend rules", () => {
             'export const h = (\n  <Stack direction="row" spacing={0.5}>\n    {tags.map((t) => (\n      <TagChip key={t.label} tag={t} />\n    ))}\n  </Stack>\n);\n',
           "client/src/buttons.tsx":
             'export const u = (\n  <Stack direction="row" spacing={2}>\n    <Button>Retry</Button>\n    <Button>Back</Button>\n  </Stack>\n);\n',
+          "client/src/bold.tsx":
+            'export const o = (\n  <Stack spacing={1}>\n    <Typography sx={{ fontWeight: "fontWeightBold" }}>Abilities</Typography>\n    <Box />\n  </Stack>\n);\n',
+          "client/src/scored.tsx":
+            'export const c = (\n  <Stack spacing={0.5}>\n    <Typography variant="caption" sx={{ fontWeight: "fontWeightBold" }}>STR</Typography>\n    <Typography sx={{ typography: "h5", fontWeight: "fontWeightBold" }}>16</Typography>\n  </Stack>\n);\n',
+          "client/src/titled.tsx":
+            'export const h = (\n  <Stack spacing={1}>\n    <Typography component="h3" variant="h6">Combat Stats</Typography>\n    <Box />\n  </Stack>\n);\n',
+          "client/src/gutter.tsx":
+            'export const g = (\n  <Box>\n    <Typography component="h4" variant="subtitle1" gutterBottom>Granted</Typography>\n    <List />\n  </Box>\n);\n',
+          "client/src/headerrow.tsx":
+            'export const w = (\n  <Stack spacing={1}>\n    <Stack direction="row">\n      <Typography component="h3" variant="h6">Skills</Typography>\n      <Button size="small">Auto</Button>\n    </Stack>\n    <Box />\n  </Stack>\n);\n',
+          "client/src/surfaces.tsx":
+            "export const f = (\n  <>\n    <Paper>\n      <Stack spacing={2}>\n        <Box />\n        <Box />\n      </Stack>\n    </Paper>\n    <CardContent>\n      <Stack spacing={1}>\n        <Box />\n        <Box />\n      </Stack>\n    </CardContent>\n  </>\n);\n",
+          "client/src/placed.tsx":
+            'export const q = (\n  <>\n    <Subsection title="Combat Stats">\n      <Box />\n    </Subsection>\n    <Paper variant="outlined">\n      <Stack spacing={0.5}>\n        <Box />\n        <Box />\n      </Stack>\n    </Paper>\n    <StyledCard>\n      <Stack spacing={2}>\n        <Box />\n        <Box />\n      </Stack>\n    </StyledCard>\n  </>\n);\n',
           "client/src/cards.tsx":
             "export const q = (\n  <Stack spacing={3}>\n    <Paper>a</Paper>\n    <Paper>b</Paper>\n  </Stack>\n);\n",
           "client/src/panels.tsx":
@@ -981,6 +1002,7 @@ describe("frontend rules", () => {
       ),
     ).toEqual([
       "spacing client/src/between.tsx",
+      "spacing client/src/bold.tsx",
       "spacing client/src/buttons.tsx",
       "spacing client/src/cards.tsx",
       "spacing client/src/chips.tsx",
@@ -988,6 +1010,8 @@ describe("frontend rules", () => {
       "spacing client/src/constant.tsx",
       "spacing client/src/constant.tsx",
       "spacing client/src/grid.tsx",
+      "spacing client/src/gutter.tsx",
+      "spacing client/src/headerrow.tsx",
       "spacing client/src/icons.tsx",
       "spacing client/src/nested.tsx",
       "spacing client/src/none.tsx",
@@ -995,6 +1019,9 @@ describe("frontend rules", () => {
       "spacing client/src/panels.tsx",
       "spacing client/src/region.tsx",
       "spacing client/src/screens.tsx",
+      "spacing client/src/surfaces.tsx",
+      "spacing client/src/surfaces.tsx",
+      "spacing client/src/titled.tsx",
     ]);
   });
 
@@ -1053,6 +1080,11 @@ describe("frontend rules", () => {
           "client/src/branched.tsx":
             'export const b = <IconButton size={dense ? "small" : "large"} aria-label="Back" />;\n',
           "client/src/spread.tsx": 'export const r = <IconButton {...sizeProps} aria-label="Back" />;\n',
+          "client/src/more.tsx": 'export const m = <LoadMoreButton size="large" onClick={next} />;\n',
+          "client/src/listed.tsx":
+            'export const l = (\n  <>\n    <PageHeader title="Characters" />\n    <LoadMoreButton size="large" onClick={next} />\n  </>\n);\n',
+          "client/src/dialogged.tsx":
+            'export const d = (\n  <DialogContent>\n    <LoadMoreButton size="small" onClick={next} />\n    <LoadMoreButton onClick={next} />\n  </DialogContent>\n);\n',
           "client/src/placed.tsx":
             'export const p = (\n  <>\n    <IconButton size="small" aria-label="Edit" />\n    <IconButton size="large" aria-label="Back" />\n    <PageHeader title="Notifications" action={<Button size="large">Mark All as Read</Button>} />\n    <Button size="small">Max</Button>\n  </>\n);\n',
           "client/src/components/common/PageActionButton.tsx":
@@ -1061,6 +1093,8 @@ describe("frontend rules", () => {
         ["button-sizes"],
       ),
     ).toEqual([
+      "button-sizes client/src/dialogged.tsx",
+      "button-sizes client/src/more.tsx",
       "button-sizes client/src/padded.tsx",
       "button-sizes client/src/screens.tsx",
       "button-sizes client/src/section.tsx",

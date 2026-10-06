@@ -1,6 +1,7 @@
 import { Button, IconButton, Stack, TextField, Typography } from "@mui/material";
 import type { Ref } from "react";
 
+import { Subsection } from "@/client/src/components/common/index.ts";
 import { DiceIcon } from "@/client/src/components/icons/index.ts";
 import { ANIMATIONS } from "@/client/src/lib/animations.ts";
 
@@ -31,18 +32,19 @@ export function HpGainField({
   onBlur,
 }: HpGainFieldProps) {
   return (
-    <Stack spacing={1}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <Typography component="h3" variant="h6">
-          {title}
-        </Typography>
-        <IconButton onClick={onRoll} disabled={rolling} color="primary" size="small" aria-label={`Roll d${hd}`}>
-          <DiceIcon />
-        </IconButton>
-        <Button size="small" onClick={() => onChange(hd)} disabled={rolling}>
-          Max
-        </Button>
-      </Stack>
+    <Subsection
+      title={title}
+      action={
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <IconButton onClick={onRoll} disabled={rolling} color="primary" size="small" aria-label={`Roll d${hd}`}>
+            <DiceIcon />
+          </IconButton>
+          <Button size="small" onClick={() => onChange(hd)} disabled={rolling}>
+            Max
+          </Button>
+        </Stack>
+      }
+    >
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
         Enter HP gain (1 to {hd}). Average: {Math.ceil(hd / 2)}, Maximum: {hd}
       </Typography>
@@ -61,6 +63,6 @@ export function HpGainField({
         sx={settled ? { animation: ANIMATIONS.settledPulse } : undefined}
         slotProps={{ htmlInput: { min: 1, max: hd, step: 1 } }}
       />
-    </Stack>
+    </Subsection>
   );
 }

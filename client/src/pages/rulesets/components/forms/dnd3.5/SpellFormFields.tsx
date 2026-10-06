@@ -7,6 +7,7 @@ import {
   FormTextField,
   NameField,
   SelectField,
+  Subsection,
 } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
 import type { RulesetSave } from "@/client/src/hooks/index.ts";
@@ -148,10 +149,7 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
         }}
       />
       {selectedAptitudes.length > 0 && (
-        <Stack spacing={1}>
-          <Typography component="h3" variant="h6">
-            Aptitude Settings
-          </Typography>
+        <Subsection title="Aptitude Settings">
           {selectedAptitudes.map((apt) => {
             return (
               <Stack key={apt.id} direction="row" spacing={1} sx={{ alignItems: "center" }}>
@@ -174,7 +172,7 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
               </Stack>
             );
           })}
-        </Stack>
+        </Subsection>
       )}
     </>
   );

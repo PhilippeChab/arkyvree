@@ -1,4 +1,4 @@
-import { TableCell, TableRow } from "@mui/material";
+import { Stack, TableCell, TableRow } from "@mui/material";
 import { type ReactNode, useMemo } from "react";
 
 import { CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
@@ -58,12 +58,14 @@ export function GroupedSkillRows<S extends { name: string }>({
             sx={{ bgcolor: "action.hover", ...CLICKABLE_SX }}
           >
             <TableCell sx={{ fontWeight: "fontWeightBold" }}>
-              {row.prefix} ({row.count})
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                <ExpandArrow open={isExpanded} />
+                <span>
+                  {row.prefix} ({row.count})
+                </span>
+              </Stack>
             </TableCell>
-            <TableCell colSpan={columns - 2} />
-            <TableCell align="center">
-              <ExpandArrow open={isExpanded} />
-            </TableCell>
+            <TableCell colSpan={columns - 1} />
           </TableRow>
         );
       })}

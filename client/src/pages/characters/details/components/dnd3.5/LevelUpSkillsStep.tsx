@@ -16,7 +16,7 @@ import { memo, useCallback } from "react";
 import { useController } from "react-hook-form";
 
 import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
-import { DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, Subsection } from "@/client/src/components/common/index.ts";
 import { DiceIcon } from "@/client/src/components/icons/index.ts";
 import { useLatest } from "@/client/src/hooks/index.ts";
 import { computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
@@ -229,37 +229,38 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
 
   return (
     <Box>
-      <Stack spacing={1} sx={{ position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper", pb: 1 }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <Typography component="h3" variant="h6">
-            Skill Points to Spend: {skillData.skillPointsToSpend}
-          </Typography>
-          <Button startIcon={<DiceIcon />} onClick={randomAssign} size="small">
-            Auto
-          </Button>
-        </Stack>
-        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-          <Typography
-            component="p"
-            variant="subtitle2"
-            sx={{
-              color:
-                pointsSpent > skillData.skillPointsToSpend
-                  ? "error.main"
-                  : pointsSpent === skillData.skillPointsToSpend
-                    ? "success.main"
-                    : "text.secondary",
-            }}
-          >
-            Points Spent: {pointsSpent} / {skillData.skillPointsToSpend}
-          </Typography>
-          {pointsRemaining > 0 && (
-            <Typography component="p" variant="subtitle2" sx={{ color: "warning.main" }}>
-              ({pointsRemaining} remaining)
+      <Box sx={{ position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper", pb: 1 }}>
+        <Subsection
+          title={`Skill Points to Spend: ${skillData.skillPointsToSpend}`}
+          action={
+            <Button startIcon={<DiceIcon />} onClick={randomAssign} size="small">
+              Auto
+            </Button>
+          }
+        >
+          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+            <Typography
+              component="p"
+              variant="subtitle2"
+              sx={{
+                color:
+                  pointsSpent > skillData.skillPointsToSpend
+                    ? "error.main"
+                    : pointsSpent === skillData.skillPointsToSpend
+                      ? "success.main"
+                      : "text.secondary",
+              }}
+            >
+              Points Spent: {pointsSpent} / {skillData.skillPointsToSpend}
             </Typography>
-          )}
-        </Stack>
-      </Stack>
+            {pointsRemaining > 0 && (
+              <Typography component="p" variant="subtitle2" sx={{ color: "warning.main" }}>
+                ({pointsRemaining} remaining)
+              </Typography>
+            )}
+          </Stack>
+        </Subsection>
+      </Box>
       <TableContainer sx={{ overflowX: "auto" }}>
         <Table size="small" sx={{ minWidth: 420, tableLayout: "fixed" }}>
           <colgroup>

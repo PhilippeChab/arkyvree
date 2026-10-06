@@ -1,6 +1,6 @@
-import { Box, Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 
-import { BlankState, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import { BlankState, DiceSpinner, LoadError, Subsection } from "@/client/src/components/common/index.ts";
 import { AbilitiesIcon } from "@/client/src/components/icons/index.ts";
 
 import { AttributeIncreaseField } from "./AttributeIncreaseField.tsx";
@@ -29,10 +29,7 @@ export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
         const selected = abilityIncreases[index] ?? null;
 
         return (
-          <Box key={index}>
-            <Typography component="h3" variant="h6" gutterBottom>
-              {detail ? `${detail.klassName} Level ${detail.level}` : `Level ${index + 1}`}
-            </Typography>
+          <Subsection key={index} title={detail ? `${detail.klassName} Level ${detail.level}` : `Level ${index + 1}`}>
             <AttributeIncreaseField
               attributes={attributeData.attributes}
               baseRules={baseRules}
@@ -40,7 +37,7 @@ export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
               value={selected}
               onChange={(abilityId) => onAbilityIncreaseChange(index, abilityId)}
             />
-          </Box>
+          </Subsection>
         );
       })}
     </Stack>

@@ -58,7 +58,7 @@ function StatCard({ icon: Icon, count, label, tagline, to, colors, animationInde
       >
         <CardActionArea component={Link} to={to} sx={{ height: "100%" }}>
           <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-            <Stack spacing={1} sx={{ alignItems: "center", textAlign: "center" }}>
+            <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
               <Icon fontSize="hero" />
               <Typography
                 component="p"
@@ -160,7 +160,7 @@ export default function DashboardPage() {
           }}
         />
 
-        <Stack spacing={2} sx={{ alignItems: "flex-start", position: "relative" }}>
+        <Stack spacing={3} sx={{ alignItems: "flex-start", position: "relative" }}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             {/* Icon with radial glow */}
             <Stack

@@ -1,8 +1,8 @@
-import { Box, Collapse, Link as MuiLink, Stack, Typography } from "@mui/material";
+import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { BlankState, CLICKABLE_SX, ExpandArrow, Section, toggleProps } from "@/client/src/components/common/index.ts";
+import { BlankState, Section, Subsection } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number];
@@ -10,7 +10,10 @@ type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number
 interface FeatRowProps {
   name: React.ReactNode;
   description?: string | null;
+  /** What opens under the feat (a familiar's sheet) */
   extra?: React.ReactNode;
+  /** `h4` for a feat within a group (the granted ones) */
+  level?: "h3" | "h4";
 }
 
 interface FeatsSectionProps {
@@ -25,32 +28,39 @@ interface GrantedFeatsSectionProps {
   rulesetId?: string;
 }
 
-function FeatRow({ name, description, extra }: FeatRowProps) {
+/** A feat's name, a link to its page when the ruleset is known; a stacked feat's count after it (`(x2)`). */
+function featName(feat: { id?: string; name: string }, rulesetId?: string, suffix?: string) {
+  const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
+  const label = suffix ? `${feat.name} ${suffix}` : feat.name;
+  return featLink ? (
+    <MuiLink component={Link} to={featLink} target="_blank" underline="hover" sx={{ color: "primary.main" }}>
+      {label}
+    </MuiLink>
+  ) : (
+    label
+  );
+}
+
+function FeatRow({ name, description, extra, level = "h3" }: FeatRowProps) {
   const [open, setOpen] = useState(false);
   const hasExtra = extra != null && extra !== false;
+  const summary = (
+    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+      {description || "—"}
+    </Typography>
+  );
 
   return (
-    <Stack spacing={1} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{ alignItems: "center", justifyContent: "space-between", ...(hasExtra && CLICKABLE_SX) }}
-        {...(hasExtra && toggleProps(open, () => setOpen((p) => !p)))}
+    <Box sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
+      <Subsection
+        title={name}
+        level={level}
+        summary={summary}
+        {...(hasExtra && { open, onToggle: () => setOpen((prev) => !prev) })}
       >
-        <Typography component="h3" variant="h6">
-          {name}
-        </Typography>
-        {hasExtra && <ExpandArrow open={open} />}
-      </Stack>
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        {description || "—"}
-      </Typography>
-      {hasExtra && (
-        <Collapse in={open} unmountOnExit>
-          {extra}
-        </Collapse>
-      )}
-    </Stack>
+        {hasExtra && extra}
+      </Subsection>
+    </Box>
   );
 }
 
@@ -58,48 +68,13 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Stack spacing={1}>
-      <Stack
-        {...toggleProps(open, () => setOpen((prev) => !prev))}
-        direction="row"
-        spacing={1}
-        sx={{ alignItems: "center", justifyContent: "space-between", ...CLICKABLE_SX }}
-      >
-        <Typography component="h3" variant="h6">
-          Granted ({feats.length})
-        </Typography>
-        <ExpandArrow open={open} />
+    <Subsection title={`Granted (${feats.length})`} open={open} onToggle={() => setOpen((prev) => !prev)}>
+      <Stack spacing={3}>
+        {feats.map((feat) => {
+          return <FeatRow key={feat.id} name={featName(feat, rulesetId)} description={feat.description} level="h4" />;
+        })}
       </Stack>
-      <Collapse in={open} unmountOnExit>
-        <Stack spacing={3}>
-          {feats.map((feat) => {
-            const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
-            return (
-              <Box key={feat.id} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
-                <Typography component="h3" variant="h6">
-                  {featLink ? (
-                    <MuiLink
-                      component={Link}
-                      to={featLink}
-                      target="_blank"
-                      underline="hover"
-                      sx={{ color: "primary.main" }}
-                    >
-                      {feat.name}
-                    </MuiLink>
-                  ) : (
-                    feat.name
-                  )}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  {feat.description || "—"}
-                </Typography>
-              </Box>
-            );
-          })}
-        </Stack>
-      </Collapse>
-    </Stack>
+    </Subsection>
   );
 }
 
@@ -117,18 +92,6 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
     return acc;
   }, {});
 
-  const renderFeatName = (feat: { id?: string; name: string }, suffix?: string) => {
-    const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
-    const label = suffix ? `${feat.name} ${suffix}` : feat.name;
-    return featLink ? (
-      <MuiLink component={Link} to={featLink} target="_blank" underline="hover" sx={{ color: "primary.main" }}>
-        {label}
-      </MuiLink>
-    ) : (
-      label
-    );
-  };
-
   const featElements = Object.values(groupedFeats).flatMap((featGroup, groupIndex) => {
     const feat = featGroup[0];
     const count = featGroup.length;
@@ -137,7 +100,7 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
       return (
         <FeatRow
           key={`${feat.name}-${groupIndex}`}
-          name={renderFeatName(feat, `(x${count})`)}
+          name={featName(feat, rulesetId, `(x${count})`)}
           description={feat.description}
           extra={renderFeatExtra?.(feat)}
         />
@@ -147,7 +110,7 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
     return featGroup.map((featInstance, instanceIndex) => (
       <FeatRow
         key={`${featInstance.name}-${groupIndex}-${instanceIndex}`}
-        name={renderFeatName(featInstance)}
+        name={featName(featInstance, rulesetId)}
         description={featInstance.description}
         extra={renderFeatExtra?.(featInstance)}
       />
