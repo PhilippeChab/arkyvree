@@ -27,9 +27,17 @@ import type { Session } from "@/shared/relations.ts";
 type VisibilityType = "Private" | "Public" | "Partial";
 
 class CampaignCharactersService {
+  /** The session's player row in the campaign: a 404 when there's no such campaign, a 403 when they aren't in it. */
+  private async getMember(session: Session, campaignId: string) {
+    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
+    if (!campaign) {
+      throw new NotFoundError("Campaign not found");
+    }
+    return (await CampaignsPolicy.for(db, session, campaign)).canRead();
+  }
+
   async getCharacter(session: Session, campaignId: string, characterId: string) {
-    // Verify the requesting user is a campaign member
-    const member = await CampaignsPolicy.canRead(db, session, campaignId);
+    const member = await this.getMember(session, campaignId);
 
     const link = await PlayerCharacters.findOne(db, { characterId, campaignId });
     if (!link) throw new NotFoundError("Character not found in this campaign");
@@ -83,7 +91,7 @@ class CampaignCharactersService {
     where: { search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
     pagination: { limit: number; page: number },
   ) {
-    const member = await CampaignsPolicy.canRead(db, session, campaignId);
+    const member = await this.getMember(session, campaignId);
 
     const isGM = member.role === "Game Master";
 
@@ -180,9 +188,10 @@ class CampaignCharactersService {
       if (!campaign) {
         throw new NotFoundError("Campaign not found");
       }
-      new CampaignsPolicy(session, campaign).canModify();
+      const policy = await CampaignsPolicy.for(tx, session, campaign);
+      policy.canModify();
 
-      const player = await CampaignsPolicy.canRead(tx, session, campaignId);
+      const player = policy.canRead();
 
       const link = await PlayerCharacters.findOne(tx, { characterId });
       if (!link || link.playerId !== player.id) {
@@ -217,7 +226,7 @@ class CampaignCharactersService {
       if (!campaign) {
         throw new NotFoundError("Campaign not found");
       }
-      new CampaignsPolicy(session, campaign).canModify();
+      (await CampaignsPolicy.for(tx, session, campaign)).canModify();
 
       const player = await Players.findOne(tx, {
         campaignId,

@@ -62,11 +62,7 @@ class CharacterContributorsService {
       throw new NotFoundError("Character not found");
     }
 
-    const role = await CharacterContributors.findRole(db, {
-      userId: session.userId,
-      characterId,
-    });
-    new CharactersPolicy(session, character, role !== null).canReadContributors();
+    (await CharactersPolicy.for(db, session, character)).canReadContributors();
 
     const paginated = await CharacterContributors.findPage(db, { characterId, ...where }, pagination);
     const ownerUser = await Users.findOne(db, { id: character.userId });
@@ -117,7 +113,7 @@ class CharacterContributorsService {
         throw new NotFoundError("Character not found");
       }
 
-      new CharactersPolicy(session, character).canManageContributors();
+      (await CharactersPolicy.for(tx, session, character)).canManageContributors();
 
       if (character.deletedAt) {
         throw new ConflictError("Cannot invite a contributor to an archived character");
@@ -256,7 +252,7 @@ class CharacterContributorsService {
         throw new NotFoundError("Character not found");
       }
 
-      new CharactersPolicy(session, character).canManageContributors();
+      (await CharactersPolicy.for(tx, session, character)).canManageContributors();
 
       if (contributor.status !== "Active" && contributor.status !== "Pending") {
         throw new ConflictError("Contributor is not active or pending");

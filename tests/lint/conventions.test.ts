@@ -332,6 +332,30 @@ describe("conventions", () => {
       "concern-shape server/a/Scoped.ts",
     ]);
   });
+  test("a policy is built by its `for`, its only static and its only async method", async () => {
+    const policy = (member: string) => `export default class FeatsPolicy extends BasePolicy<Feat> {\n  ${member}\n}\n`;
+    expect(
+      await lintRepo(
+        {
+          "server/services/policies/FeatsPolicy.ts": policy(
+            "static async for(db: Db) {\n    return new FeatsPolicy(db);\n  }",
+          ),
+          "server/services/policies/Checks.ts": policy("canUpdate() {\n    return true;\n  }"),
+          "server/services/policies/Queries.ts": policy("async canUpdate() {\n    return true;\n  }"),
+          "server/services/policies/Statics.ts": policy("static canRead() {\n    return true;\n  }"),
+          "server/services/feats/FeatsService.ts": "export const p = new FeatsPolicy(session, feat);\n",
+          "server/services/feats/Built.ts": "export const p = await FeatsPolicy.for(db, session, feat);\n",
+          "tests/services/policies/FeatsPolicy.test.ts": "export const p = new FeatsPolicy(session, feat);\n",
+        },
+        ["policy-shape"],
+      ),
+    ).toEqual([
+      "policy-shape server/services/feats/FeatsService.ts",
+      "policy-shape server/services/policies/Queries.ts",
+      "policy-shape server/services/policies/Statics.ts",
+    ]);
+  });
+
   test("a file's own function is a declaration, and --fix declares a const's arrow", async () => {
     expect(
       await lintRepo(

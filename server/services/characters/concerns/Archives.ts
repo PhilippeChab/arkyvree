@@ -4,7 +4,7 @@ import { charactersInCharacter } from "@/drizzle/schema.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
-import { Activities, Characters, Visibility } from "@/server/repositories/index.ts";
+import { Activities, Characters, PlayerCharacters, Visibility } from "@/server/repositories/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -57,7 +57,8 @@ export function Archives<B extends Constructor>(Base: B) {
           throw new NotFoundError("Character not found");
         }
 
-        await new CharactersPolicy(session, existingCharacter).canHardDelete();
+        const inActiveCampaign = await PlayerCharacters.exists(tx, { characterId, campaignArchived: false });
+        (await CharactersPolicy.for(tx, session, existingCharacter)).canHardDelete({ inActiveCampaign });
 
         // Bonded children cascade via FK on delete, and the database deletes
         // their attachments and modifiers with them.

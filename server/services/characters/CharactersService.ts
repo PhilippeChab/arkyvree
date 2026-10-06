@@ -281,7 +281,7 @@ class CharactersService extends include(Object, Archives) {
   ) {
     return await withTransaction(async (tx) => {
       return await withRulesetScope(tx, characterData.rulesetId, async ({ ruleset, rulesetData }) => {
-        await (await RulesetsPolicy.for(tx, session, ruleset)).canCreateCharacter(tx);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canCreateCharacter();
 
         const race = findScopedEntity(
           rulesetData.racesById,

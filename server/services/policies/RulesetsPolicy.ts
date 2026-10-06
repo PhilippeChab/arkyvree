@@ -1,23 +1,32 @@
 import type { Db } from "@/server/database/index.ts";
 import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { include } from "@/server/mixins.ts";
-import { Contributors } from "@/server/repositories/index.ts";
+import { Contributors, Players } from "@/server/repositories/index.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 
 import { ContributorRights } from "./concerns/ContributorRights.ts";
 import { CreationRights } from "./concerns/CreationRights.ts";
 import { EntityRights } from "./concerns/EntityRights.ts";
 import { ExtensionRights } from "./concerns/ExtensionRights.ts";
-import RulesetRoles from "./RulesetRoles.ts";
+import RulesetRoles, { isPublicRuleset } from "./RulesetRoles.ts";
 
 class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRights, EntityRights, ExtensionRights) {
-  /** The session's policy on `ruleset`: a contributor's rights come from their active role on it. */
+  /**
+   * The session's policy on `ruleset`: a contributor's rights come from their active role on it, and a player's in a
+   * campaign on it from their seat, which matters only on a ruleset that isn't public.
+   */
   static async for(db: Db, session: Session, ruleset: Ruleset) {
-    let role = null;
-    if (ruleset.userId && ruleset.userId !== session.userId) {
-      role = await Contributors.findRole(db, { userId: session.userId, rulesetId: ruleset.id });
-    }
-    return new RulesetsPolicy(session, ruleset, role);
+    const isOwner = ruleset.userId === session.userId;
+    const role =
+      ruleset.userId && !isOwner
+        ? await Contributors.findRole(db, { userId: session.userId, rulesetId: ruleset.id })
+        : null;
+    const isCampaignPlayer =
+      !isOwner &&
+      role === null &&
+      !isPublicRuleset(ruleset) &&
+      (await Players.exists(db, { userId: session.userId, rulesetId: ruleset.id }));
+    return new RulesetsPolicy(session, ruleset, role, isCampaignPlayer);
   }
 
   canFork() {

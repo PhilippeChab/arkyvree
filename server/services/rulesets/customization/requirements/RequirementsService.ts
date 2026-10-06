@@ -6,12 +6,16 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Requirements } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
-import { CustomizationsPolicy, RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   cowCustomizationForMutation,
   cowEntityForCustomization,
   withRulesetScope,
 } from "@/server/services/rulesets/cow/index.ts";
+import {
+  checkCustomizedEntity,
+  getCustomizableEntityName,
+} from "@/server/services/rulesets/customization/customizableEntities.ts";
 import {
   getTargetPathsWithLabels,
   resolvePathValueType,
@@ -37,7 +41,7 @@ class RequirementsService {
   async getRequirements(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const resolvedId = rulesetData.canonicalize(entityId);
-      await CustomizationsPolicy.canCustomize(resolvedId, entityType, rulesetData);
+      await getCustomizableEntityName(resolvedId, entityType, rulesetData);
       // Compose step pre-merges sibling requirements (OR-chain-aware) into the
       // winner's bucket with entityId remapped. Filter by entityType.
       const allReqs = rulesetData.requirementsByEntity.get(resolvedId) ?? [];
@@ -74,7 +78,7 @@ class RequirementsService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
         const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
 
@@ -152,13 +156,12 @@ class RequirementsService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
         const requirement = this.findEntityRequirement(rulesetData, entityType, effectiveEntityId, requirementId);
 
-        // Policy check BEFORE COW — canCustomize uses global db, not tx
-        const customizationPolicy = new CustomizationsPolicy(session, requirement);
-        await customizationPolicy.canUpdate();
+        // Before the copy-on-write: the lookup reads the shared db, not tx
+        await checkCustomizedEntity(requirement);
 
         // COW the owning entity if this requirement is inherited
         const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await cowCustomizationForMutation(
@@ -217,7 +220,7 @@ class RequirementsService {
           throw new InternalError("Failed to update requirement");
         }
 
-        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: updatedRequirement.id,
@@ -249,13 +252,12 @@ class RequirementsService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
         const requirement = this.findEntityRequirement(rulesetData, entityType, effectiveEntityId, requirementId);
 
-        // Policy check BEFORE COW — canCustomize uses global db, not tx
-        const customizationPolicy = new CustomizationsPolicy(session, requirement);
-        await customizationPolicy.canDelete();
+        // Before the copy-on-write: the lookup reads the shared db, not tx
+        await checkCustomizedEntity(requirement);
 
         const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await cowCustomizationForMutation(
           tx,
@@ -269,7 +271,7 @@ class RequirementsService {
         const rows = await Requirements.delete(tx, { id: resolvedRequirementId });
         const deletedRequirement = rows[0];
 
-        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: deletedRequirement.id,

@@ -14,6 +14,7 @@ import {
   createTestUser,
   getSeedCtx,
   makeSession,
+  NIL_UUID,
 } from "@/tests/helpers.ts";
 
 type Visibility = "Private" | "Public" | "Partial";
@@ -216,11 +217,12 @@ describe("CampaignCharactersService", () => {
       ]);
     });
 
-    test("refuses a non-member", async () => {
+    test("refuses a non-member, and an unknown campaign is a 404", async () => {
       const { rulesetId } = await getSeedCtx();
       const { user } = await createTestUser();
       const [campaign] = await Campaigns.create(db, { name: "Empty Campaign", rulesetId });
       await expect(list(user.id, campaign.id)).rejects.toThrow(ForbiddenError);
+      await expect(list(user.id, NIL_UUID)).rejects.toThrow("Campaign not found");
     });
   });
 
@@ -291,6 +293,9 @@ describe("CampaignCharactersService", () => {
       await expect(
         CampaignCharactersService.getCharacter(makeSession(user.id), campaign.id, unlinked.id),
       ).rejects.toThrow(NotFoundError);
+      await expect(CampaignCharactersService.getCharacter(makeSession(user.id), NIL_UUID, linked.id)).rejects.toThrow(
+        "Campaign not found",
+      );
     });
   });
 });

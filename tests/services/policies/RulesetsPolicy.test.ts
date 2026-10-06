@@ -134,18 +134,16 @@ describe("RulesetsPolicy", () => {
   });
 
   describe("canCreateCharacter", () => {
-    test("allows public published rulesets, and the owner's and contributors' own", async () => {
-      expect(await policyOf("Stranger", { private: false, status: "Published" }).canCreateCharacter(db)).toBe(true);
+    test("allows public published rulesets, and the owner's and contributors' own", () => {
+      expect(policyOf("Stranger", { private: false, status: "Published" }).canCreateCharacter()).toBe(true);
       for (const actor of ["Owner", "Admin", "Editor", "Viewer"] as const) {
-        expect(await policyOf(actor).canCreateCharacter(db)).toBe(true);
+        expect(policyOf(actor).canCreateCharacter()).toBe(true);
       }
     });
 
-    test("refuses extensions and archived rulesets", async () => {
+    test("refuses extensions and archived rulesets", () => {
       for (const overrides of [{ kind: "extension" as const }, { status: "Archived" as const }]) {
-        await expect(policyOf("Owner", overrides).canCreateCharacter(db)).rejects.toThrow(
-          "Choose an active playable ruleset",
-        );
+        expect(() => policyOf("Owner", overrides).canCreateCharacter()).toThrow("Choose an active playable ruleset");
       }
     });
 
@@ -157,8 +155,9 @@ describe("RulesetsPolicy", () => {
       const [campaign] = await Campaigns.create(db, { name: "Private Ruleset Campaign", rulesetId: ruleset.id });
       await Players.create(db, { campaignId: campaign.id, userId: member.id, role: "Player Character" });
 
-      expect(await new RulesetsPolicy(memberSession, ruleset).canCreateCampaign(db)).toBe(true);
-      await expect(new RulesetsPolicy(strangerSession, ruleset).canCreateCharacter(db)).rejects.toThrow(ForbiddenError);
+      expect((await RulesetsPolicy.for(db, memberSession, ruleset)).canCreateCampaign()).toBe(true);
+      const stranger = await RulesetsPolicy.for(db, strangerSession, ruleset);
+      expect(() => stranger.canCreateCharacter()).toThrow(ForbiddenError);
     });
   });
 });

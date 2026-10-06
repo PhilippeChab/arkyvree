@@ -31,7 +31,7 @@ export function Publishes<B extends Constructor>(Base: B) {
           throw new NotFoundError("Ruleset not found");
         }
 
-        new RulesetsPolicy(session, ruleset).canPublish();
+        (await RulesetsPolicy.for(tx, session, ruleset)).canPublish();
 
         const targetKind = body.kind ?? ruleset.kind;
         if (targetKind === "extension") {

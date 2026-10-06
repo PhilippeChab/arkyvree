@@ -33,9 +33,9 @@ class CampaignPlayersService {
     if (!campaign) {
       throw new NotFoundError("Campaign not found");
     }
-    const policy = new CampaignsPolicy(session, campaign);
+    const policy = await CampaignsPolicy.for(tx, session, campaign);
     policy.canModify();
-    await policy.canUpdate();
+    policy.canUpdate();
 
     // Look up user by email (may not exist)
     const user = await Users.findOne(tx, { emailAddress: email });
@@ -140,7 +140,7 @@ class CampaignPlayersService {
       throw new NotFoundError("Campaign not found");
     }
 
-    await CampaignsPolicy.canRead(db, session, campaignId);
+    (await CampaignsPolicy.for(db, session, campaign)).canRead();
 
     return await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
   }
@@ -153,9 +153,9 @@ class CampaignPlayersService {
       if (!campaign) {
         throw new NotFoundError("Campaign not found");
       }
-      const policy = new CampaignsPolicy(session, campaign);
+      const policy = await CampaignsPolicy.for(tx, session, campaign);
       policy.canModify();
-      await policy.canUpdate();
+      policy.canUpdate();
 
       const rows = await Players.create(tx, {
         campaignId,
@@ -195,9 +195,9 @@ class CampaignPlayersService {
       if (!campaign) {
         throw new NotFoundError("Campaign not found");
       }
-      const policy = new CampaignsPolicy(session, campaign);
+      const policy = await CampaignsPolicy.for(tx, session, campaign);
       policy.canModify();
-      await policy.canUpdate();
+      policy.canUpdate();
 
       const player = await Players.findOne(tx, { id: playerId, campaignId });
       if (!player) {
@@ -254,7 +254,8 @@ class CampaignPlayersService {
       if (!campaign) {
         throw new NotFoundError("Campaign not found");
       }
-      new CampaignsPolicy(session, campaign).canModify();
+      const policy = await CampaignsPolicy.for(tx, session, campaign);
+      policy.canModify();
 
       const player = await Players.findOne(tx, { id: playerId });
       if (!player || player.campaignId !== campaignId) {
@@ -263,7 +264,7 @@ class CampaignPlayersService {
 
       const isSelfRemoval = player.userId === session.userId;
       if (!isSelfRemoval) {
-        await new CampaignsPolicy(session, campaign).canUpdate();
+        policy.canUpdate();
       }
 
       if (player.role === "Game Master") {

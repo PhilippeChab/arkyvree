@@ -156,7 +156,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       if (!ruleset) {
         throw new NotFoundError("Ruleset not found");
       }
-      new RulesetsPolicy(session, ruleset).canFork();
+      (await RulesetsPolicy.for(tx, session, ruleset)).canFork();
 
       // 2. Verify name uniqueness
       const existing = await Rulesets.findOne(tx, { name: body.name });
