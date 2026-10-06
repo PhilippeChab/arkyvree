@@ -2,11 +2,11 @@
 
 import type * as cheerio from "cheerio";
 
+import { capitalizeTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/capitalizeTitle.ts";
 import {
   findSectionHeader,
   getTextAfterHeader,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
-import { capitalizeTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/titleCase.ts";
 import {
   findContentHeading,
   findSectionElements,

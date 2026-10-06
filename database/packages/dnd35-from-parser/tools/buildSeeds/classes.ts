@@ -12,7 +12,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/grants.ts";
 import {
   getPluralVariants,
-  hasPluralVariant,
+  isPluralVariantOf,
   stripClassSuffix,
 } from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
@@ -249,7 +249,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
     const name = feature.seedName ?? (feature.aptitude ? `${key} (${feature.aptitude})` : key);
     const lockedType = lockedFavoredEnemies.get(key.toLowerCase());
     // An existing feat the class grants is a free feat, not one of its own.
-    if (!lockedType && findGrantedExistingFeat(ref, name, feature.description)) continue;
+    if (!lockedType && findExistingFeatGranted(ref, name, feature.description)) continue;
 
     const description = normalizeDescription(feature.description ?? "");
     const aptitudes = [feature.aptitude ?? mapping.classFeatureAptitude];
@@ -345,7 +345,7 @@ export function buildPoolParentNameMap(
     const suffix = feat.aptitude.replace(new RegExp(`^${className}\\s+`, "i"), "");
     const s = suffix.toLowerCase();
     // Find the mapping entry whose key matches one of the variants (the pool parent itself)
-    const parentEntry = Object.entries(mf).find(([key]) => hasPluralVariant(key, s));
+    const parentEntry = Object.entries(mf).find(([key]) => isPluralVariantOf(s, key));
     if (!parentEntry) continue;
     const seedName = parentEntry[1].seedName ?? `${parentEntry[0]} (${className})`;
     // Map all variants to this seedName
@@ -360,7 +360,7 @@ export function buildPoolParentNameMap(
  * The existing feat a class's feature named `name` grants instead of being a feat of its own: that feat (with or without
  * the class's suffix), or one its description says it gains as a bonus feat.
  */
-export function findGrantedExistingFeat(ref: ClassReference, name: string, description: string | undefined) {
+export function findExistingFeatGranted(ref: ClassReference, name: string, description: string | undefined) {
   const book = ref._meta.book;
   const baseName = stripClassSuffix(name, ref.raw.name);
   return (

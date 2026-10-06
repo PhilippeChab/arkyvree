@@ -13,8 +13,9 @@ export function getPluralVariants(name: string): string[] {
   return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
 }
 
-export function hasPluralVariant(a: string, b: string): boolean {
-  return getPluralVariants(a).includes(b.toLowerCase());
+/** Whether `variant` is one of `name`'s forms, singular or plural ("Bonus Feats" of "bonus feat"). */
+export function isPluralVariantOf(variant: string, name: string): boolean {
+  return getPluralVariants(name).includes(variant.toLowerCase());
 }
 
 /**

@@ -1,7 +1,7 @@
 import {
   buildClassModifiers,
   buildPoolParentNameMap,
-  findGrantedExistingFeat,
+  findExistingFeatGranted,
   getClassAptitudePicks,
   getClassSpells,
   insertOrdinalInName,
@@ -59,7 +59,7 @@ function buildClassFeatures(
     const mappedName = feature?.seedName ?? findMappedName(occ.name, features_);
     const name = mappedName ?? poolParentNames.get(occ.name.toLowerCase()) ?? occ.name;
 
-    const freeFeatName = findGrantedExistingFeat(ref, name, feature?.description);
+    const freeFeatName = findExistingFeatGranted(ref, name, feature?.description);
     if (freeFeatName && mapping.classFeatureAptitude) {
       for (const level of occ.levels) autoFreeFeats.push([level, freeFeatName, mapping.classFeatureAptitude]);
     } else {
@@ -83,7 +83,7 @@ function buildClassFeatures(
     if (feat.skip || feat.level == null || coveredKeys.has(key.toLowerCase())) continue;
     if (feat.aptitude && feat.aptitude !== mapping.classFeatureAptitude) continue;
     const name = feat.seedName ?? key;
-    const freeFeatName = findGrantedExistingFeat(ref, name, feat.description);
+    const freeFeatName = findExistingFeatGranted(ref, name, feat.description);
     if (freeFeatName && mapping.classFeatureAptitude) {
       autoFreeFeats.push([feat.level, freeFeatName, mapping.classFeatureAptitude]);
     } else {

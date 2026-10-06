@@ -1,6 +1,6 @@
 /** A class reference's mapping: its initial section, and where its features' occurrences go. */
 
-import { findWithPluralVariants, hasPluralVariant } from "@/database/packages/dnd35-from-parser/tools/names.ts";
+import { findWithPluralVariants, isPluralVariantOf } from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { CHOICE_PATTERN } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/aptitudePicks.ts";
 import {
@@ -74,8 +74,8 @@ class InitialMapping {
         // aptitudes.favoredenemy.allowed). The shared branch is gated on
         // the prefix check to avoid matching "combatstyle" across classes.
         const matches =
-          hasPluralVariant(featureSlug, pickSlug) ||
-          (!pickSlug.startsWith(classSlug) && hasPluralVariant(keySlug, pickSlug));
+          isPluralVariantOf(pickSlug, featureSlug) ||
+          (!pickSlug.startsWith(classSlug) && isPluralVariantOf(pickSlug, keySlug));
         if (matches) {
           // If per-level bonusFeatLists exist for this pick, the feat will be split
           // into per-level variants — don't mark stackable (e.g. Monk Bonus Feat).
@@ -173,7 +173,7 @@ class InitialMapping {
     const { raw, detected } = this;
     const normalizedDesc = normalizeWs(cf.description);
     const baseSlug = stripSeparators(baseName);
-    const poolOcc = detected.featureOccurrences.find((fo) => hasPluralVariant(stripSeparators(fo.name), baseSlug));
+    const poolOcc = detected.featureOccurrences.find((fo) => isPluralVariantOf(baseSlug, stripSeparators(fo.name)));
     const poolLevel = poolOcc ? Math.min(...poolOcc.levels) : 1;
     const poolStackable = poolOcc && poolOcc.levels.length > 1 ? true : undefined;
 
@@ -485,7 +485,7 @@ export function buildOccurrenceMap(
         continue;
       }
       // Plural match ("Bonus Feat" ↔ "Bonus Feats")
-      if (hasPluralVariant(foLower, keyLower)) {
+      if (isPluralVariantOf(keyLower, foLower)) {
         occurrenceMap[fo.name] = key;
         continue;
       }
