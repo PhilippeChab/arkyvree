@@ -74,7 +74,8 @@ type Output = { dir: string; quiet: boolean };
 
 const BASE_DIR = join(import.meta.dirname!, "../../");
 
-/** The repo's formatter config, which a generated tree is laid out by. */
+/** The repo's formatter, its pinned version, and its config, which a generated tree is laid out by. */
+const FORMATTER = join(BASE_DIR, "../../../node_modules/.bin/oxfmt");
 const FORMATTER_CONFIG = join(BASE_DIR, "../../../.oxfmtrc.json");
 
 /** A generated file's opening comment, and the blank line under it. */
@@ -182,7 +183,7 @@ function formatGenerated(dir: string) {
   const files = readdirSync(dir, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(".ts"))
     .map((entry) => join(entry.parentPath, entry.name));
-  const formatted = Bun.spawnSync(["bunx", "oxfmt", "-c", FORMATTER_CONFIG, ...files], {
+  const formatted = Bun.spawnSync([FORMATTER, "-c", FORMATTER_CONFIG, ...files], {
     stdout: "pipe",
     stderr: "pipe",
   });
