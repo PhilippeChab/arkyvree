@@ -82,6 +82,11 @@ function cellNumber(cell: string) {
   return Number(cell.replace("\u2212", "-").match(/[+-]?\d+/)?.[0] ?? 0);
 }
 
+/** Having `level` levels in the class `classSlug`. */
+function classLevelRequirement(classSlug: string, level: number): RequirementEntry[] {
+  return [gte(`classes.${classSlug}.level`, level)];
+}
+
 function detectClassFeatFamily(name: string): string | undefined {
   for (const { pattern, family } of CLASS_FEAT_FAMILIES) {
     if (pattern.test(name)) return family;
@@ -126,6 +131,20 @@ function expandPerLevelAptitudePicks(
   return result;
 }
 
+/**
+ * The creature type of each feature granting a locked favored enemy ("Favored Enemy (Giant)"), by its mapping's key
+ * and its name, lowercased: its feat gets the shared variant through a modifier.
+ */
+function lockedFavoredEnemiesOf({ mapping, detected }: ClassReference): Map<string, string> {
+  const lockedFavoredEnemies = new Map<string, string>();
+  for (const { featureName, creatureType } of detected.lockedFavoredEnemies ?? []) {
+    const key = mapping.occurrenceMap?.[featureName];
+    if (key) lockedFavoredEnemies.set(key.toLowerCase(), creatureType);
+    lockedFavoredEnemies.set(featureName.toLowerCase(), creatureType);
+  }
+  return lockedFavoredEnemies;
+}
+
 /** Merge detected aptitude picks with overrides. Overrides win per-target; detected picks not in overrides are preserved. */
 function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[]): AptitudePick[] | undefined {
   if (!overrides) return detected;
@@ -135,22 +154,67 @@ function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[
 }
 
 /**
+ * A feature giving a pick at several levels, as a feat per pick (`expansions`): its first, second… named by its
+ * ordinal, its `perLevelModifier` targeting the pick's own aptitude, open from the pick's first level.
+ */
+function perLevelFeatSeeds(
+  classSlug: string,
+  name: string,
+  { description, aptitudes }: Pick<FeatSeed, "description" | "aptitudes">,
+  feature: ClassReference["mapping"]["features"][string],
+  perLevelModifier: ModifierSeed,
+  expansions: PerLevelExpansion[],
+): FeatSeed[] {
+  return expansions.map((expansion) => {
+    const minLevel = Math.min(...expansion.levels);
+    return {
+      name: insertOrdinalInName(name, expansion.ordinal),
+      description,
+      selectable: false,
+      aptitudes,
+      ...(feature.modifiers?.length
+        ? {
+            modifiers: feature.modifiers.map((m) =>
+              m.target === perLevelModifier.target ? { ...m, target: expansion.newTarget } : m,
+            ),
+          }
+        : {}),
+      ...(minLevel > 1 ? { requirements: classLevelRequirement(classSlug, minLevel) } : {}),
+    };
+  });
+}
+
+/** A spellcasting class's own list gets a feat other classes advance it with: none for any other class. */
+function spellcastingAdvanceFeats(ref: ClassReference, classSlug: string): FeatSeed[] {
+  const { detected } = ref;
+  const casterType = ref.overrides?.casterType ?? detected.casterType;
+  if (!detected.hasOwnSpells || !casterType || detected.casterLevelAdvancement) return [];
+  return [
+    {
+      name: `Advance ${ref.raw.name} Spellcasting`,
+      description: `Your effective ${classSlug} caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in ${classSlug}.`,
+      stackable: true,
+      aptitudes: [
+        casterType === "Divine" ? "Bonus Divine Caster Level" : "Bonus Arcane Caster Level",
+        "Bonus Caster Level",
+      ],
+      modifiers: [
+        { target: `classes.${classSlug}.bonuscasterlevel`, operator: "add", value: "1", valueType: "number" },
+      ],
+      requirements: classLevelRequirement(classSlug, 1),
+    },
+  ];
+}
+
+/**
  * A class's own feats: its class features (other than the existing feats it grants), one per level for a feature
  * that gives a pick at several (its first, second… pick), and the feat advancing its spellcasting.
  */
 export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
-  const { mapping, detected } = ref;
+  const { mapping } = ref;
   const classSlug = stripSeparators(ref.raw.name);
   const { aptitudeMinLevel, remap: aptitudeTargetRemap, perLevel: perLevelExpansion } = classAptitudePicks(ref);
-  const levelRequirement = (level: number): RequirementEntry[] => [gte(`classes.${classSlug}.level`, level)];
-
-  // A feature granting a locked favored enemy ("Favored Enemy (Giant)") gets the shared variant through a modifier.
-  const lockedFavoredEnemies = new Map<string, string>();
-  for (const { featureName, creatureType } of detected.lockedFavoredEnemies ?? []) {
-    const key = mapping.occurrenceMap?.[featureName];
-    if (key) lockedFavoredEnemies.set(key.toLowerCase(), creatureType);
-    lockedFavoredEnemies.set(featureName.toLowerCase(), creatureType);
-  }
+  const lockedFavoredEnemies = lockedFavoredEnemiesOf(ref);
 
   const feats: FeatSeed[] = [];
   for (const [key, feature] of Object.entries(mapping.features)) {
@@ -164,23 +228,10 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
     const aptitudes = [feature.aptitude ?? mapping.classFeatureAptitude];
     const perLevelModifier = feature.modifiers?.find((m) => perLevelExpansion.has(m.target));
     if (perLevelModifier) {
-      for (const expansion of perLevelExpansion.get(perLevelModifier.target) ?? []) {
-        const minLevel = Math.min(...expansion.levels);
-        feats.push({
-          name: insertOrdinalInName(name, expansion.ordinal),
-          description,
-          selectable: false,
-          aptitudes,
-          ...(feature.modifiers?.length
-            ? {
-                modifiers: feature.modifiers.map((m) =>
-                  m.target === perLevelModifier.target ? { ...m, target: expansion.newTarget } : m,
-                ),
-              }
-            : {}),
-          ...(minLevel > 1 ? { requirements: levelRequirement(minLevel) } : {}),
-        });
-      }
+      const expansions = perLevelExpansion.get(perLevelModifier.target) ?? [];
+      feats.push(
+        ...perLevelFeatSeeds(classSlug, name, { description, aptitudes }, feature, perLevelModifier, expansions),
+      );
       continue;
     }
 
@@ -199,7 +250,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
         : undefined;
     const requirements = [
       ...(feature.requirements ?? []),
-      ...(poolLevel != null && poolLevel > 1 ? levelRequirement(poolLevel) : []),
+      ...(poolLevel != null && poolLevel > 1 ? classLevelRequirement(classSlug, poolLevel) : []),
     ];
     const isAutoGranted = feature.level != null && !feature.aptitude;
     const family = lockedType ? FAVORED_ENEMY_FAMILY : detectClassFeatFamily(name);
@@ -219,23 +270,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
     });
   }
 
-  // A spellcasting class's own list gets a feat other classes advance it with.
-  const casterType = ref.overrides?.casterType ?? detected.casterType;
-  if (detected.hasOwnSpells && casterType && !detected.casterLevelAdvancement) {
-    feats.push({
-      name: `Advance ${ref.raw.name} Spellcasting`,
-      description: `Your effective ${classSlug} caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in ${classSlug}.`,
-      stackable: true,
-      aptitudes: [
-        casterType === "Divine" ? "Bonus Divine Caster Level" : "Bonus Arcane Caster Level",
-        "Bonus Caster Level",
-      ],
-      modifiers: [
-        { target: `classes.${classSlug}.bonuscasterlevel`, operator: "add", value: "1", valueType: "number" },
-      ],
-      requirements: levelRequirement(1),
-    });
-  }
+  feats.push(...spellcastingAdvanceFeats(ref, classSlug));
   return feats;
 }
 

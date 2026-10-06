@@ -16,6 +16,9 @@ import type { RequirementEntry } from "@/database/packages/dnd35/content/customi
 import { proficiencyRequirements } from "@/database/packages/dnd35/content/items/proficiencies.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 
+/** Skills that exist in D&D 3.5 but aren't tracked in this system. */
+const NON_TRACKABLE_SKILLS = new Set(["speak language"]);
+
 const RACE_NAMES: Record<string, string> = {
   elf: "Elf",
   "half-elf": "Half-Elf",
@@ -82,6 +85,70 @@ function featPrerequisites(scraped: string[]): string[] {
   const languages = feats.findIndex((f) => /\bLanguages?:/.test(f));
   if (languages < 0) return feats;
   return [...feats.slice(0, languages), feats[languages].replace(/\s*\bLanguages?:.*$/, "")];
+}
+
+/** The feats a class's prerequisites list, as requirements: the names their checks don't resolve to go in `featNameMap`. */
+function featRequirements(
+  scraped: string[],
+  featNameMap: Record<string, string>,
+  unresolvedPrereqs: string[],
+): RequirementEntry[] {
+  const reqs: RequirementEntry[] = [];
+  const feats = featPrerequisites(scraped);
+  for (let i = 0; i < feats.length; i++) {
+    let f = feats[i];
+    // Skip scraping artifacts (page references, HTML fragments, etc.)
+    if (/\bpage \d+\b|^[^a-zA-Z]*$/i.test(f)) continue;
+
+    // "Negotiator (or), Persuasive": either one
+    if (/\s*\(or\)$/i.test(f) && i + 1 < feats.length) {
+      reqs.push(or(eq(feat(f.replace(/\s*\(or\)$/i, ""))), eq(feat(feats[++i]))));
+      continue;
+    }
+    // "Improved Unarmed Strike (or monk's unarmed strike ability)": the feat, which the alternative grants
+    f = f.replace(/\s*\(or\b[^)]*\)$/i, "");
+    // "Exotic Weapon Proficiency (kukri)": proficiency with the weapon, which may be martial
+    const proficiencyWeapon = weaponNamed(/^Exotic Weapon Proficiency \((.+)\)$/i.exec(f)?.[1] ?? "");
+    if (proficiencyWeapon) {
+      reqs.push(...proficiencyRequirements(proficiencyWeapon));
+      continue;
+    }
+    const withoutChoice = featWithoutChoice(f);
+    if (withoutChoice) {
+      reqs.push(eq(feat(withoutChoice)));
+      continue;
+    }
+
+    const familyReqs = familyFeatRequirements(f);
+    if (familyReqs.length > 0) {
+      reqs.push(...familyReqs);
+      continue;
+    }
+    // "any" feats (e.g. "Weapon Focus (any thrown weapon)", "Spell Focus in two schools of magic",
+    //   "Weapon Focus (with deity's favored weapon)")
+    // → prefix wildcard on the feat family slug
+    if (/\(any\b|\bany\b|\btwo\s+(schools?|weapons?|domains?|powers?|skills?|feats?)\b|\bdeity'?s?\b/i.test(f)) {
+      const anyReq = expandAnyFeatRequirement(f);
+      if (anyReq) {
+        reqs.push(anyReq);
+      } else {
+        unresolvedPrereqs.push(f);
+      }
+      continue;
+    }
+    const compoundReq = parseCompoundFeatRequirement(f, featNameMap);
+    if (compoundReq) {
+      reqs.push(compoundReq);
+    } else {
+      // Strip numeric/dice suffixes (e.g. "Sudden Strike +8d6" → "Sudden Strike")
+      // and book abbreviation suffixes (e.g. "Brutal Throw (CAd)" → "Brutal Throw")
+      const cleaned = f.replace(/\s*\+\d+(?:d\d+)?$/, "").replace(BOOK_ABBREV_PATTERN, "");
+      const slug = stripSeparators(cleaned);
+      featNameMap[slug] = f;
+      reqs.push(eq(feat(cleaned)));
+    }
+  }
+  return reqs;
 }
 
 /** Distinguish mechanical special prerequisites (sneak attack, rage, spellcasting, etc.)
@@ -283,6 +350,116 @@ function parseSpecialAbilityRequirement(
   return undefined;
 }
 
+/**
+ * The skills a class's prerequisites list, as requirements: an "X or Y" one either, and an "or Y" entry folded into
+ * the skill before it. A skill the system doesn't track is left out.
+ */
+function skillRequirements(skills: { name: string; ranks: number }[]): RequirementEntry[] {
+  const reqs: RequirementEntry[] = [];
+  let lastSkillReqIdx = -1;
+  for (let i = 0; i < skills.length; i++) {
+    const s = skills[i];
+
+    // Skip skills not tracked in this system (e.g. "Speak Language")
+    const baseName = s.name
+      .replace(/\s*\([^)]*\)\s*$/, "")
+      .toLowerCase()
+      .trim();
+    if (NON_TRACKABLE_SKILLS.has(baseName)) continue;
+
+    // Try to expand special skill patterns first (e.g. "Knowledge (any)", "Knowledge (arcana, local or psionics)")
+    const expanded = expandSkillRequirement(s.name, s.ranks);
+    if (expanded) {
+      reqs.push(expanded);
+      lastSkillReqIdx = reqs.length - 1;
+      continue;
+    }
+
+    // "Diplomacy or Intimidate 1 rank" → single entry with "or" inside
+    if (/\bor\b/i.test(s.name) && !/^or\s+/i.test(s.name)) {
+      const parts = s.name
+        .split(/\s+or\s+/i)
+        .map((p) => p.trim())
+        .filter(Boolean);
+      if (parts.length >= 2) {
+        reqs.push(or(...parts.map((p) => gte(`skills.${skillSlug(p)}.rank`, s.ranks))));
+        lastSkillReqIdx = reqs.length - 1;
+        continue;
+      }
+    }
+    // "or Intimidate" as a separate entry → merge with previous skill req as OR
+    if (/^or\s+/i.test(s.name)) {
+      const name = s.name.replace(/^or\s+/i, "");
+      const newTarget = `skills.${skillSlug(name)}.rank`;
+      if (lastSkillReqIdx >= 0) {
+        const prev = reqs[lastSkillReqIdx];
+        // Skip if it resolves to the same path (e.g. Perform subtypes)
+        if (!("chainingOperator" in prev) && prev.target === newTarget) continue;
+        reqs[lastSkillReqIdx] = or(prev, gte(newTarget, s.ranks));
+      } else {
+        reqs.push(gte(newTarget, s.ranks));
+        lastSkillReqIdx = reqs.length - 1;
+      }
+      continue;
+    }
+    reqs.push(gte(`skills.${skillSlug(s.name)}.rank`, s.ranks));
+    lastSkillReqIdx = reqs.length - 1;
+  }
+  return reqs;
+}
+
+/**
+ * The race, proficiency and special ability requirements of a class's special prerequisites. One it can't read is
+ * unresolved when it's mechanical (sneak attack, rage…), and dropped when it's narrative (a deity, an organization).
+ */
+function specialRequirements(
+  special: string[],
+  featNameMap: Record<string, string>,
+  unresolvedPrereqs: string[],
+): RequirementEntry[] {
+  const reqs: RequirementEntry[] = [];
+  for (const s of special) {
+    const raceReq = parseRaceRequirement(s);
+    if (raceReq) {
+      reqs.push(raceReq);
+      continue;
+    }
+
+    const profReq = parseProficiencyRequirement(s, featNameMap);
+    if (profReq) {
+      reqs.push(profReq);
+      continue;
+    }
+
+    const abilityReq = parseSpecialAbilityRequirement(s, featNameMap);
+    if (abilityReq) {
+      reqs.push(abilityReq);
+      continue;
+    }
+
+    // Track mechanical prerequisites that we couldn't parse (sneak attack, rage, etc.)
+    // Discard narrative/RP-only ones (deity worship, organization membership, rituals)
+    if (isMechanicalPrereq(s)) {
+      unresolvedPrereqs.push(s);
+    }
+  }
+  return reqs;
+}
+
+/** The requirements whose paths are all valid: an invalid one is left out, its paths in `errors`. */
+function validRequirements(reqs: RequirementEntry[], errors: string[]): RequirementEntry[] {
+  const validatedReqs: RequirementEntry[] = [];
+  for (const req of reqs) {
+    const invalid = findInvalidRequirementPaths(req);
+    if (invalid.length > 0) {
+      for (const p of invalid) errors.push(`Invalid requirement path: "${p}"`);
+    } else {
+      validatedReqs.push(req);
+    }
+  }
+  return validatedReqs;
+}
+
 export function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]["parsed"]): {
   requirements: RequirementEntry[];
   featNameMap: Record<string, string>;
@@ -298,117 +475,9 @@ export function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]
     reqs.push(gte("combat.bab", parsed.bab));
   }
 
-  // Skills that exist in D&D 3.5 but aren't tracked in this system
-  const NON_TRACKABLE_SKILLS = new Set(["speak language"]);
+  if (parsed.skills) reqs.push(...skillRequirements(parsed.skills));
 
-  if (parsed.skills) {
-    let lastSkillReqIdx = -1;
-    for (let i = 0; i < parsed.skills.length; i++) {
-      const s = parsed.skills[i];
-
-      // Skip skills not tracked in this system (e.g. "Speak Language")
-      const baseName = s.name
-        .replace(/\s*\([^)]*\)\s*$/, "")
-        .toLowerCase()
-        .trim();
-      if (NON_TRACKABLE_SKILLS.has(baseName)) continue;
-
-      // Try to expand special skill patterns first (e.g. "Knowledge (any)", "Knowledge (arcana, local or psionics)")
-      const expanded = expandSkillRequirement(s.name, s.ranks);
-      if (expanded) {
-        reqs.push(expanded);
-        lastSkillReqIdx = reqs.length - 1;
-        continue;
-      }
-
-      // "Diplomacy or Intimidate 1 rank" → single entry with "or" inside
-      if (/\bor\b/i.test(s.name) && !/^or\s+/i.test(s.name)) {
-        const parts = s.name
-          .split(/\s+or\s+/i)
-          .map((p) => p.trim())
-          .filter(Boolean);
-        if (parts.length >= 2) {
-          reqs.push(or(...parts.map((p) => gte(`skills.${skillSlug(p)}.rank`, s.ranks))));
-          lastSkillReqIdx = reqs.length - 1;
-          continue;
-        }
-      }
-      // "or Intimidate" as a separate entry → merge with previous skill req as OR
-      if (/^or\s+/i.test(s.name)) {
-        const name = s.name.replace(/^or\s+/i, "");
-        const newTarget = `skills.${skillSlug(name)}.rank`;
-        if (lastSkillReqIdx >= 0) {
-          const prev = reqs[lastSkillReqIdx];
-          // Skip if it resolves to the same path (e.g. Perform subtypes)
-          if (!("chainingOperator" in prev) && prev.target === newTarget) continue;
-          reqs[lastSkillReqIdx] = or(prev, gte(newTarget, s.ranks));
-        } else {
-          reqs.push(gte(newTarget, s.ranks));
-          lastSkillReqIdx = reqs.length - 1;
-        }
-        continue;
-      }
-      reqs.push(gte(`skills.${skillSlug(s.name)}.rank`, s.ranks));
-      lastSkillReqIdx = reqs.length - 1;
-    }
-  }
-
-  if (parsed.feats) {
-    const feats = featPrerequisites(parsed.feats);
-    for (let i = 0; i < feats.length; i++) {
-      let f = feats[i];
-      // Skip scraping artifacts (page references, HTML fragments, etc.)
-      if (/\bpage \d+\b|^[^a-zA-Z]*$/i.test(f)) continue;
-
-      // "Negotiator (or), Persuasive": either one
-      if (/\s*\(or\)$/i.test(f) && i + 1 < feats.length) {
-        reqs.push(or(eq(feat(f.replace(/\s*\(or\)$/i, ""))), eq(feat(feats[++i]))));
-        continue;
-      }
-      // "Improved Unarmed Strike (or monk's unarmed strike ability)": the feat, which the alternative grants
-      f = f.replace(/\s*\(or\b[^)]*\)$/i, "");
-      // "Exotic Weapon Proficiency (kukri)": proficiency with the weapon, which may be martial
-      const proficiencyWeapon = weaponNamed(/^Exotic Weapon Proficiency \((.+)\)$/i.exec(f)?.[1] ?? "");
-      if (proficiencyWeapon) {
-        reqs.push(...proficiencyRequirements(proficiencyWeapon));
-        continue;
-      }
-      const withoutChoice = featWithoutChoice(f);
-      if (withoutChoice) {
-        reqs.push(eq(feat(withoutChoice)));
-        continue;
-      }
-
-      const familyReqs = familyFeatRequirements(f);
-      if (familyReqs.length > 0) {
-        reqs.push(...familyReqs);
-        continue;
-      }
-      // "any" feats (e.g. "Weapon Focus (any thrown weapon)", "Spell Focus in two schools of magic",
-      //   "Weapon Focus (with deity's favored weapon)")
-      // → prefix wildcard on the feat family slug
-      if (/\(any\b|\bany\b|\btwo\s+(schools?|weapons?|domains?|powers?|skills?|feats?)\b|\bdeity'?s?\b/i.test(f)) {
-        const anyReq = expandAnyFeatRequirement(f);
-        if (anyReq) {
-          reqs.push(anyReq);
-        } else {
-          unresolvedPrereqs.push(f);
-        }
-        continue;
-      }
-      const compoundReq = parseCompoundFeatRequirement(f, featNameMap);
-      if (compoundReq) {
-        reqs.push(compoundReq);
-      } else {
-        // Strip numeric/dice suffixes (e.g. "Sudden Strike +8d6" → "Sudden Strike")
-        // and book abbreviation suffixes (e.g. "Brutal Throw (CAd)" → "Brutal Throw")
-        const cleaned = f.replace(/\s*\+\d+(?:d\d+)?$/, "").replace(BOOK_ABBREV_PATTERN, "");
-        const slug = stripSeparators(cleaned);
-        featNameMap[slug] = f;
-        reqs.push(eq(feat(cleaned)));
-      }
-    }
-  }
+  if (parsed.feats) reqs.push(...featRequirements(parsed.feats, featNameMap, unresolvedPrereqs));
 
   if (parsed.casterLevel) {
     for (const cl of parsed.casterLevel) {
@@ -441,44 +510,9 @@ export function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]
   }
 
   // Parse race, proficiency, and special ability requirements from special entries
-  if (parsed.special) {
-    for (const s of parsed.special) {
-      const raceReq = parseRaceRequirement(s);
-      if (raceReq) {
-        reqs.push(raceReq);
-        continue;
-      }
-
-      const profReq = parseProficiencyRequirement(s, featNameMap);
-      if (profReq) {
-        reqs.push(profReq);
-        continue;
-      }
-
-      const abilityReq = parseSpecialAbilityRequirement(s, featNameMap);
-      if (abilityReq) {
-        reqs.push(abilityReq);
-        continue;
-      }
-
-      // Track mechanical prerequisites that we couldn't parse (sneak attack, rage, etc.)
-      // Discard narrative/RP-only ones (deity worship, organization membership, rituals)
-      if (isMechanicalPrereq(s)) {
-        unresolvedPrereqs.push(s);
-      }
-    }
-  }
+  if (parsed.special) reqs.push(...specialRequirements(parsed.special, featNameMap, unresolvedPrereqs));
 
   // Validate all requirement paths
-  const validatedReqs: RequirementEntry[] = [];
-  for (const req of reqs) {
-    const invalid = findInvalidRequirementPaths(req);
-    if (invalid.length > 0) {
-      for (const p of invalid) errors.push(`Invalid requirement path: "${p}"`);
-    } else {
-      validatedReqs.push(req);
-    }
-  }
-
+  const validatedReqs = validRequirements(reqs, errors);
   return { requirements: validatedReqs, featNameMap, errors, unresolvedPrereqs };
 }

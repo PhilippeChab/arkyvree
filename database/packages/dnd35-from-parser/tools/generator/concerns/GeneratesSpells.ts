@@ -18,9 +18,61 @@ import { classReferences, loadReference } from "@/database/packages/dnd35-from-p
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
+/** A spell a book copies from the core rules: the lists it joins, and its level on each. */
+type CowSpellEntry = { spell: string; aptitudes: { aptitude: string; level: number }[] };
+
 /** Generating a book's spells: a file per spell level, their index, and the core spells its classes' lists copy. */
 export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingSpells extends Base {
+    /** The spells a book's inherited lists add (`additions`), each at its level there, into `entries`. */
+    private addListAdditions(
+      entries: Map<string, CowSpellEntry>,
+      inheritable: Set<string>,
+      lists: ReturnType<typeof inheritedLists>,
+    ) {
+      for (const { aptitude, list } of lists) {
+        for (const [level, names] of Object.entries(list.additions ?? {})) {
+          for (const name of names) {
+            if (!inheritable.has(name))
+              throw new Error(`${aptitude}: "${name}" is neither a core spell nor the book's`);
+            const entry = entries.get(name) ?? { spell: name, aptitudes: [] };
+            entry.aptitudes = [
+              ...entry.aptitudes.filter((a) => a.aptitude !== aptitude),
+              { aptitude, level: Number(level) },
+            ];
+            entries.set(name, entry);
+          }
+        }
+      }
+    }
+
+    /** The names of a book's own spells, which it seeds itself: none needs copying. */
+    private bookSpellNames(book: string): Set<string> {
+      const names = new Set<string>();
+      const path = join(REFERENCE_DIR, book, "spells.json");
+      if (existsSync(path)) {
+        const ref = loadReference(path, "spell");
+        for (const spell of ref.raw) names.add(spell.name);
+      }
+      return names;
+    }
+
+    /** A book's cowSpells.ts: each spell it copies, with the lists it joins and its level on each. */
+    private cowSpellsCode(entries: Map<string, CowSpellEntry>): string {
+      const lines: string[] = [];
+      lines.push(...GENERATED_HEADER);
+      lines.push(`import type { CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";`);
+      lines.push(``);
+      lines.push(`export const COW_SPELLS: CowSpellEntry[] = [`);
+      for (const entry of entries.values()) {
+        const aptStr = entry.aptitudes.map((a) => `{ aptitude: ${quote(a.aptitude)}, level: ${a.level} }`).join(", ");
+        lines.push(`  { spell: ${quote(entry.spell)}, aptitudes: [${aptStr}] },`);
+      }
+      lines.push(`];`);
+      lines.push(``);
+      return lines.join("\n");
+    }
+
     /** Regenerate cowSpells.ts for a book. Scans all OTHER books' spell references for spells that
      *  have levelEntries matching this book's casting classes. Produces per-class-level entries
      *  so the seed uses the correct level for each class (not the global minimum). */
@@ -36,17 +88,11 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
       // The lists classes draw on (`inheritsFrom`), each its class's aptitude
       const bookInheritedLists = inheritedLists(book);
 
-      // Load this book's own spell names (these don't need COW — they're seeded directly)
-      const bookSpellNames = new Set<string>();
-      const bookSpellPath = join(REFERENCE_DIR, book, "spells.json");
-      if (existsSync(bookSpellPath)) {
-        const ref = loadReference(bookSpellPath, "spell");
-        for (const spell of ref.raw) bookSpellNames.add(spell.name);
-      }
+      // This book's own spells don't need COW — they're seeded directly
+      const bookSpellNames = this.bookSpellNames(book);
 
       // Scan ALL other books' spell references
-      type CowEntry = { spell: string; aptitudes: { aptitude: string; level: number }[] };
-      const entries = new Map<string, CowEntry>();
+      const entries = new Map<string, CowSpellEntry>();
       // The spells an inherited list can take: the base book's and this book's
       const inheritable = new Set<string>();
 
@@ -101,37 +147,8 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
         }
       }
 
-      // A list's additions, at their level there
-      for (const { aptitude, list } of bookInheritedLists) {
-        for (const [level, names] of Object.entries(list.additions ?? {})) {
-          for (const name of names) {
-            if (!inheritable.has(name))
-              throw new Error(`${aptitude}: "${name}" is neither a core spell nor the book's`);
-            const entry = entries.get(name) ?? { spell: name, aptitudes: [] };
-            entry.aptitudes = [
-              ...entry.aptitudes.filter((a) => a.aptitude !== aptitude),
-              { aptitude, level: Number(level) },
-            ];
-            entries.set(name, entry);
-          }
-        }
-      }
-
-      const outPath = join(this.dir, book, "cowSpells.ts");
-
-      const lines: string[] = [];
-      lines.push(...GENERATED_HEADER);
-      lines.push(`import type { CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";`);
-      lines.push(``);
-      lines.push(`export const COW_SPELLS: CowSpellEntry[] = [`);
-      for (const entry of entries.values()) {
-        const aptStr = entry.aptitudes.map((a) => `{ aptitude: ${quote(a.aptitude)}, level: ${a.level} }`).join(", ");
-        lines.push(`  { spell: ${quote(entry.spell)}, aptitudes: [${aptStr}] },`);
-      }
-      lines.push(`];`);
-      lines.push(``);
-
-      this.write(outPath, lines.join("\n"));
+      this.addListAdditions(entries, inheritable, bookInheritedLists);
+      this.write(join(this.dir, book, "cowSpells.ts"), this.cowSpellsCode(entries));
     }
 
     /** Regenerate spells/index.ts for a book from existing level .ts files. */
