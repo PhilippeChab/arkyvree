@@ -289,7 +289,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
                   Issues
                 </Typography>
                 {validation.issues.map((issue, i) => (
-                  <Typography key={i} variant="body2" sx={{ pl: 1, py: 0.25 }}>
+                  <Typography key={i} variant="body2" sx={{ pl: 1 }}>
                     {issue.message}
                   </Typography>
                 ))}

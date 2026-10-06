@@ -103,6 +103,7 @@
     "arkyvree/label-case": "error",
     "arkyvree/search-fields": "error",
     "arkyvree/button-intents": "error",
+    "arkyvree/button-sizes": "error",
     "arkyvree/headings": "error",
     "arkyvree/toast-wording": "error",
     "arkyvree/confirm-wording": "error",

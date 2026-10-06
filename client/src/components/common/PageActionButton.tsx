@@ -13,15 +13,7 @@ export function PageActionButton({ children, sx, ...props }: PageActionButtonPro
       size="large"
       startIcon={<AddIcon />}
       {...props}
-      sx={[
-        {
-          px: 3,
-          py: 1.5,
-          borderRadius: 2,
-          boxShadow: (theme) => glow(theme.palette.primary.main),
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
+      sx={[{ boxShadow: (theme) => glow(theme.palette.primary.main) }, ...(Array.isArray(sx) ? sx : [sx])]}
     >
       {children}
     </Button>

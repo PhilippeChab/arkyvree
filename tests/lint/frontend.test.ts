@@ -945,7 +945,7 @@ describe("frontend rules", () => {
     ]);
   });
 
-  test("a gap is a step of the ladder, by what it spaces: a row of buttons or chips 1, a group of panels 2", async () => {
+  test("a gap and a padding are steps of the ladder, a nested margin too: a row of buttons or chips 1, a group of panels 2", async () => {
     expect(
       await lintRepo(
         {
@@ -960,6 +960,11 @@ describe("frontend rules", () => {
             'export const u = (\n  <Stack direction="row" spacing={2}>\n    <Button>Retry</Button>\n    <Button>Back</Button>\n  </Stack>\n);\n',
           "client/src/panels.tsx":
             'export const p = (\n  <Stack spacing={3}>\n    <Section title="A">a</Section>\n    <Section title="B">b</Section>\n  </Stack>\n);\n',
+          "client/src/padded.tsx": "export const d = <Box sx={{ py: 1.5, px: 2 }} />;\n",
+          "client/src/region.tsx": "export const g = <Paper sx={{ p: { xs: 3, sm: 4 } }} />;\n",
+          "client/src/nested.tsx": 'export const n = <Tabs sx={{ "& .MuiTab-root": { mx: 0.5 } }} />;\n',
+          "client/src/ladder.tsx":
+            'export const l = (\n  <>\n    <Paper sx={{ p: { xs: 2, sm: 3 } }} />\n    <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />\n    <TableCell sx={{ pl: 6 }} />\n    <Box sx={{ px: open ? 2 : 1, "& .MuiTabs-list": { gap: 1 } }} />\n  </>\n);\n',
           "client/src/roles.tsx":
             'export const r = (\n  <Stack spacing={2}>\n    {cards.map((c) => (\n      <Paper key={c} />\n    ))}\n    <Stack direction="row" spacing={1}>\n      <TagChip tag={a} />\n      <TagChip tag={b} />\n    </Stack>\n  </Stack>\n);\n',
           "client/src/steps.tsx":
@@ -973,8 +978,11 @@ describe("frontend rules", () => {
       "spacing client/src/chips.tsx",
       "spacing client/src/computed.tsx",
       "spacing client/src/grid.tsx",
+      "spacing client/src/nested.tsx",
       "spacing client/src/none.tsx",
+      "spacing client/src/padded.tsx",
       "spacing client/src/panels.tsx",
+      "spacing client/src/region.tsx",
       "spacing client/src/screens.tsx",
     ]);
   });
@@ -1019,6 +1027,30 @@ describe("frontend rules", () => {
       "shadows client/src/none.tsx",
       "shadows client/src/paper.tsx",
       "shadows client/src/written.tsx",
+    ]);
+  });
+
+  test("a button's size is its place's", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/unsized.tsx": 'export const u = <IconButton aria-label="Edit" onClick={edit} />;\n',
+          "client/src/screens.tsx":
+            'export const s = <IconButton size={isMobile ? "medium" : "large"} aria-label="Back" />;\n',
+          "client/src/section.tsx": 'export const t = <Button size="large" onClick={add}>Add Player</Button>;\n',
+          "client/src/padded.tsx": "export const d = <Button sx={{ px: 3, py: 1.5 }}>Create</Button>;\n",
+          "client/src/placed.tsx":
+            'export const p = (\n  <>\n    <IconButton size="small" aria-label="Edit" />\n    <IconButton size="large" aria-label="Back" />\n    <PageHeader title="Notifications" action={<Button size="large">Mark All as Read</Button>} />\n    <Button size="small">Max</Button>\n  </>\n);\n',
+          "client/src/components/common/PageActionButton.tsx":
+            'export const a = <Button size="large">Create</Button>;\n',
+        },
+        ["button-sizes"],
+      ),
+    ).toEqual([
+      "button-sizes client/src/padded.tsx",
+      "button-sizes client/src/screens.tsx",
+      "button-sizes client/src/section.tsx",
+      "button-sizes client/src/unsized.tsx",
     ]);
   });
 

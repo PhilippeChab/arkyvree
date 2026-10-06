@@ -31,7 +31,6 @@ export function GoogleSignInButton({
           typography: "body1",
           textTransform: "none",
           fontWeight: "fontWeightMedium",
-          py: 1.5,
           background: (theme) => theme.palette.background.paper,
           color: (theme) => theme.palette.text.secondary,
           border: 1,

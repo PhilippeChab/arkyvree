@@ -227,6 +227,7 @@ export function AttachmentField({
         {interactive && (
           <Tooltip title={url ? `Change ${label ?? name}` : `Upload ${label ?? name}`}>
             <IconButton
+              size="small"
               onClick={pick}
               tabIndex={-1}
               aria-hidden
@@ -253,6 +254,7 @@ export function AttachmentField({
         {url && interactive && (
           <Tooltip title={`Remove ${label ?? name}`}>
             <IconButton
+              size="small"
               onClick={() => attachment && detach.mutate(attachment.id)}
               aria-label={`Remove ${label ?? name}`}
               sx={{

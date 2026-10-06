@@ -35,7 +35,7 @@ export function TemplateExpressionToolbar({ inputRef, disabled }: TemplateExpres
               variant="outlined"
               onClick={() => inputRef.current?.insertText(op.insert)}
               disabled={disabled}
-              sx={{ minWidth: 28, fontFamily: "monospace", px: 0.75, py: 0.25 }}
+              sx={{ minWidth: 28, fontFamily: "monospace" }}
             >
               {op.display}
             </Button>
@@ -50,7 +50,7 @@ export function TemplateExpressionToolbar({ inputRef, disabled }: TemplateExpres
               variant="outlined"
               onClick={() => inputRef.current?.wrapSelection(`${fn}(`, ")")}
               disabled={disabled}
-              sx={{ fontFamily: "monospace", px: 0.75, py: 0.25 }}
+              sx={{ fontFamily: "monospace" }}
             >
               {fn}()
             </Button>

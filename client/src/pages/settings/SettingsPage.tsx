@@ -33,8 +33,6 @@ export default function SettingsPage() {
           }}
           sx={{
             "& .MuiToggleButton-root": {
-              px: { xs: 1.5, sm: 3 },
-              py: { xs: 1, sm: 1.5 },
               gap: 1,
               textTransform: "none",
               fontWeight: "fontWeightMedium",

@@ -145,7 +145,6 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
             <Button
               variant="contained"
               color="warning"
-              size="small"
               startIcon={<LeaveIcon />}
               onClick={() => setLeaveDialogOpen(true)}
             >

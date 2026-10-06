@@ -234,9 +234,11 @@ export function createAppTheme(darkMode: boolean): Theme {
                 ownerState.variant === "contained"
                   ? containedBorderColor(ownerState.color, darkMode)
                   : `rgba(141, 30, 30, ${darkMode ? 0.4 : 0.2})`;
+              // A button's size sets its padding, a large one (a page's action) its rounder corners too
+              const large = ownerState.size === "large";
               return {
-                borderRadius: 4,
-                padding: "10px 20px",
+                borderRadius: large ? 8 : 4,
+                padding: large ? "12px 24px" : ownerState.size === "small" ? "4px 12px" : "10px 20px",
                 border: `1px solid ${borderColor}`,
                 textShadow: "0px 1px 2px rgba(0, 0, 0, 0.1)",
                 "&:active": {

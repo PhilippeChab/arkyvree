@@ -18,7 +18,7 @@ interface AttributeIncreaseFieldProps {
 /** The ability a level's attribute increase goes to, each with its score and modifier. */
 export function AttributeIncreaseField({ attributes, baseRules, name, value, onChange }: AttributeIncreaseFieldProps) {
   return (
-    <FormControl component="fieldset" sx={{ "& .MuiFormLabel-root": { mb: 0.25 } }}>
+    <FormControl component="fieldset">
       <FormLabel component="legend">Select an attribute to increase</FormLabel>
       <RadioGroup aria-label={name} name={name} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
         {sortAbilities(Object.entries(attributes), baseRules, ([key]) => key).map(([key, attribute]) => (

@@ -90,7 +90,7 @@ function RowActions({ actions }: RowActionsProps) {
         bgcolor: "background.paper",
         borderRadius: 1,
         boxShadow: 1,
-        p: 0.25,
+        p: 0.5,
       }}
     >
       {actions.map(({ label, icon, onClick, color, disabled }) => (

@@ -76,7 +76,7 @@ export function SkillRow({ name, indented, hidden, renderName = (label) => label
   const label = indented ? name.replace(/^.+?\s*\(/, "(") : name;
   return (
     <TableRow sx={hidden ? { display: "none" } : indented ? fadeInSx : undefined}>
-      <TableCell sx={indented ? { pl: 5 } : undefined}>{renderName(label)}</TableCell>
+      <TableCell sx={indented ? { pl: 6 } : undefined}>{renderName(label)}</TableCell>
       {children}
     </TableRow>
   );

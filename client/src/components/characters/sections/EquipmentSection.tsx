@@ -285,17 +285,11 @@ export function EquipmentSection({
         hasItems && (
           <Stack direction="row" spacing={1}>
             {isCustomRuleset && (
-              <Button
-                variant="outlined"
-                size="small"
-                component={Link}
-                to={`/rulesets/${rulesetId}/items`}
-                target="_blank"
-              >
+              <Button variant="outlined" component={Link} to={`/rulesets/${rulesetId}/items`} target="_blank">
                 Create Item
               </Button>
             )}
-            <Button variant="contained" size="small" onClick={handleAddItem}>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddItem}>
               Add Item
             </Button>
           </Stack>
@@ -339,7 +333,7 @@ export function EquipmentSection({
           description="Add items to this character's inventory."
           action={
             !isArchived ? (
-              <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddItem}>
+              <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddItem}>
                 Add Item
               </Button>
             ) : undefined

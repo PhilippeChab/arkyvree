@@ -63,7 +63,12 @@ export default function SharedCharacterPage() {
             {character.rulesetName || "Character Sheet"}
           </Typography>
 
-          <IconButton aria-label="Download PDF" onClick={handleDownloadPdf} sx={{ color: "text.secondary" }}>
+          <IconButton
+            size="large"
+            aria-label="Download PDF"
+            onClick={handleDownloadPdf}
+            sx={{ color: "text.secondary" }}
+          >
             <DownloadIcon />
           </IconButton>
         </Stack>

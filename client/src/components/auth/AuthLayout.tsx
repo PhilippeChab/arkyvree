@@ -61,7 +61,7 @@ function AuthFooterLinks() {
         rel="noopener noreferrer"
         variant="body2"
         underline="hover"
-        sx={{ color: "text.secondary", py: 1.5 }}
+        sx={{ color: "text.secondary", py: 1 }}
       >
         Source
       </MuiLink>
@@ -96,8 +96,7 @@ function DesktopBranding() {
         justifyContent: "center",
         background: `linear-gradient(160deg, ${theme.palette.backdrop.top} 0%, ${theme.palette.backdrop.middle} 50%, ${theme.palette.backdrop.bottom} 100%)`,
         overflow: "hidden",
-        py: 6,
-        px: 4,
+        p: 4,
       }}
     >
       {/* Corner filigree top-left */}
@@ -213,8 +212,7 @@ function MobileBranding() {
       spacing={1}
       sx={{
         alignItems: "center",
-        px: 2,
-        py: 2.5,
+        p: 2,
         background: `linear-gradient(135deg, ${theme.palette.backdrop.top}, ${theme.palette.backdrop.middle})`,
         borderRadius: 1,
         borderBottomLeftRadius: 0,
@@ -286,7 +284,7 @@ export function AuthLayoutRoute() {
       <Stack spacing={2} sx={{ minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}>
         <Paper sx={{ width: "100%", maxWidth: 450, mx: "auto", overflow: "hidden" }}>
           <MobileBranding />
-          <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
+          <Suspense fallback={<DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />}>
             <Outlet />
           </Suspense>
         </Paper>
@@ -300,7 +298,7 @@ export function AuthLayoutRoute() {
       <DesktopBranding />
 
       <Stack spacing={2} sx={{ flex: 1, alignItems: "center", justifyContent: "center", px: 4 }}>
-        <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
+        <Suspense fallback={<DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />}>
           <Outlet />
         </Suspense>
         <AuthFooterLinks />

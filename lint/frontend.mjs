@@ -67,6 +67,10 @@
  * - `search-fields`: a search box is a `SearchField`, never a `TextField` of its own.
  * - `button-intents`: a button is styled by its intent, as `docs/ui-buttons.md` sets it: the verb its label starts with
  *   (Delete, Archive, Publish, Cancel…) picks its variant and color.
+ * - `button-sizes`: a button's size is its place's: an icon button is `large` in the app bar and a page header's
+ *   corners, `small` anywhere else, written out; a text button is `large` only as a page's action (`PageActionButton`,
+ *   a `PageHeader`'s `action`), MUI's own size in a section's header, a form, a dialog and an empty state, and `small`
+ *   inside a block (a row, an alert, a toolbar, a field's tools).
  * - `headings`: a `Typography` sized as a heading or a subtitle (`variant="h6"`, `typography: { xs: "h6" }`, which MUI
  *   renders as an `<h6>`) declares its element, and a heading's element picks its look: `h1` is `variant="h3"`, `h2`
  *   `h5`, `h3` `h6`, `h4` `subtitle1`, sized, weighted and colored by the theme; the outline stops at `h4`.
@@ -85,8 +89,9 @@
  *   marked `selected` (a filter, a sort, a visibility); a panel that opens from a button is a `Popover`.
  * - `spacing`: the gap between blocks is their `Stack`'s `spacing` (a page's blocks are a `PageBody`'s, a row's its
  *   `spacing` or a flex component's `gap`), never a block's own margin, on any side; an indent is padding, a heading's
- *   gutter `gutterBottom`. A margin only aligns (`auto`) or resets (`0`). A gap is a step of the ladder, by what it
- *   spaces (`GAPS`): a row of buttons or chips is 1 apart, a group of panels or cards 2.
+ *   gutter `gutterBottom`. A margin only aligns (`auto`) or resets (`0`), in a nested selector too. A gap is a step of
+ *   the ladder, by what it spaces (`GAPS`): a row of buttons or chips is 1 apart, a group of panels or cards 2. A
+ *   padding is a step too, an indent (`pl: 6`), or its role's per-screen shape (`PADDING_SHAPES`).
  * - `surfaces`: a panel of a page is a `Section` (a `Paper`, its padding, its title); a `Card` is a card one opens:
  *   `StyledCard`, or one holding a `CardActionArea`.
  * - `shadows`: a shadow is the theme's: an elevation (`boxShadow: 2`, `0` for none; a `Paper`, a `Card` or an
@@ -313,6 +318,30 @@ const MUI_TRANSITIONS = new Set(["Fade", "Grow", "Slide", "Zoom"]);
 
 /** The checks the browser makes of an input, which a `noValidate` form skips: a bound field's are its `rules` */
 const NATIVE_CHECKS = new Set(["max", "min", "pattern", "required"]);
+
+/**
+ * The paddings that change with the screen, one per role: a surface's (`{ xs: 2, sm: 3 }`: a section, a card, a page's
+ * header), a page's (`{ xs: 2, sm: 4 }`, `PageBody`'s) and an empty or a loading region's (`{ xs: 4, sm: 8 }`)
+ */
+const PADDING_SHAPES = new Set(["2/3", "2/4", "4/8"]);
+
+/** The style keys that pad a box, on any side */
+const PADDINGS = new Set([
+  "p",
+  "padding",
+  "paddingBottom",
+  "paddingLeft",
+  "paddingRight",
+  "paddingTop",
+  "paddingX",
+  "paddingY",
+  "pb",
+  "pl",
+  "pr",
+  "pt",
+  "px",
+  "py",
+]);
 
 /** The surfaces a group lays side by side or stacks, 2 apart */
 const PANELS = new Set(["Accordion", "ListCard", "Paper", "Section", "StyledCard"]);
@@ -579,6 +608,44 @@ function createButtonIntents(context) {
         message:
           `A "${verb}" button is \`variant="${intent.variant}" color="${intent.color}"\` (\`docs/ui-buttons.md\`), ` +
           "the same everywhere, whether or not it confirms first.",
+      });
+    },
+  };
+}
+
+function createButtonSizes(context) {
+  if (!inClient(context)) return {};
+  const pageAction = repoPath(context.filename) === "client/src/components/common/PageActionButton.tsx";
+  return {
+    JSXElement(node) {
+      const name = elementName(node);
+      const size = attributeText(node, "size");
+      if (name === "IconButton" && size !== "small" && size !== "large") {
+        context.report({
+          node: node.openingElement,
+          message:
+            "An icon button's size is its place's, written out: `size=\"large\"` in the app bar and a page header's " +
+            'corners, `size="small"` anywhere else.',
+        });
+      }
+      if (name === "Button" && sxSetsAny(node, PADDINGS)) {
+        context.report({
+          node: node.openingElement,
+          message: "A button's padding is its size's, which the theme sets: `size`, never an `sx` padding.",
+        });
+      }
+      if (name !== "Button" || size !== "large" || pageAction) return;
+      const attribute = node.parent?.type === "JSXExpressionContainer" ? node.parent.parent : null;
+      const headerAction =
+        attribute?.type === "JSXAttribute" &&
+        attribute.name.name === "action" &&
+        elementName(attribute.parent.parent) === "PageHeader";
+      if (headerAction) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "A large button is a page's action: a `PageActionButton`, or a `PageHeader`'s `action`. A section's, a " +
+          "form's, a dialog's and an empty state's take MUI's own size.",
       });
     },
   };
@@ -1361,7 +1428,17 @@ function createSpacing(context) {
       if (GAP_KEYS.has(key) && node.parent.type === "ObjectExpression" && offLadder(node.value)) {
         context.report({ node, message: ladder });
       }
-      if (!MARGINS.has(key) || node.parent.type !== "ObjectExpression" || !sxOwner(node.parent)) return;
+      const padded = PADDINGS.has(key) && node.parent.type === "ObjectExpression" && inSx(node.parent);
+      if (padded && styleValues(node.value).some((value) => !onPaddingLadder(key, value))) {
+        context.report({
+          node,
+          message:
+            "A padding is a step of the ladder (0.5, 1, 2, 3, 4), an indent `pl: 6` (a child row under its parent's " +
+            "label), or the one per screen its role takes: a surface's `{ xs: 2, sm: 3 }`, a page's `{ xs: 2, sm: 4 }`, " +
+            "an empty or a loading region's `{ xs: 4, sm: 8 }`. A button's is its size's.",
+        });
+      }
+      if (!MARGINS.has(key) || node.parent.type !== "ObjectExpression" || !inSx(node.parent)) return;
       if (alignsOrResets(node.value)) return;
       context.report({
         node,
@@ -1702,6 +1779,30 @@ function inQueryFunction(node) {
   return false;
 }
 
+/**
+ * Whether a style object sits in an `sx`, at any depth: its own, a nested selector's (`"& .MuiTab-root": {…}`), a
+ * breakpoint's, a branch of a condition, or what its theme callback returns.
+ */
+function inSx(object) {
+  for (let node = object, parent = node.parent; parent; node = parent, parent = parent.parent) {
+    if (parent.type === "JSXExpressionContainer") {
+      return parent.parent?.type === "JSXAttribute" && parent.parent.name.name === "sx";
+    }
+    const passes =
+      parent.type === "ObjectExpression" ||
+      parent.type === "ArrayExpression" ||
+      parent.type === "SpreadElement" ||
+      parent.type === "ConditionalExpression" ||
+      parent.type === "LogicalExpression" ||
+      parent.type === "ReturnStatement" ||
+      parent.type === "BlockStatement" ||
+      (parent.type === "Property" && parent.value === node) ||
+      (parent.type === "ArrowFunctionExpression" && parent.body === node);
+    if (!passes) return false;
+  }
+  return false;
+}
+
 /** Whether a label is in Title Case: every word but the small ones starts with a capital (`Mark All as Read`). */
 function inTitleCase(text) {
   const words = text
@@ -1755,6 +1856,18 @@ function onlyNavigates(handler) {
   const navigation = calls.find((call) => calleeName(call) === "navigate" && call.arguments.length === 1);
   const [to] = navigation?.arguments ?? [];
   return !!to && !(to.type === "Literal" && typeof to.value === "number") && to.type !== "UnaryExpression";
+}
+
+/** Whether a padding is on the ladder: a step, an indent (`pl: 6`), a role's per-screen shape, or computed */
+function onPaddingLadder(key, value) {
+  if (value.type === "Literal") {
+    return GAPS.has(value.value) || value.value === 0 || (value.value === 6 && (key === "pl" || key === "paddingLeft"));
+  }
+  if (value.type !== "ObjectExpression") return value.type !== "TemplateLiteral";
+  const steps = Object.fromEntries(
+    value.properties.map((p) => [p.key?.name, p.value?.type === "Literal" ? p.value.value : null]),
+  );
+  return Object.keys(steps).length === 2 && PADDING_SHAPES.has(`${steps.xs}/${steps.sm}`);
 }
 
 /** The nearest JSX element around `node`. */
@@ -2030,6 +2143,7 @@ export default {
   "label-case": { meta: { type: "suggestion" }, create: createLabelCase },
   "search-fields": { meta: { type: "suggestion" }, create: createSearchFields },
   "button-intents": { meta: { type: "suggestion" }, create: createButtonIntents },
+  "button-sizes": { meta: { type: "suggestion" }, create: createButtonSizes },
   headings: { meta: { type: "suggestion" }, create: createHeadings },
   "toast-wording": { meta: { type: "suggestion" }, create: createToastWording },
   "confirm-wording": { meta: { type: "suggestion" }, create: createConfirmWording },

@@ -23,24 +23,7 @@ export function LoadMoreButton({
 
   return (
     <Stack direction="row" sx={{ justifyContent: "center" }}>
-      <Button
-        variant="outlined"
-        size={size}
-        onClick={onClick}
-        disabled={isFetchingNextPage}
-        sx={
-          size === "large"
-            ? {
-                px: 4,
-                py: 1.5,
-                borderRadius: 2,
-                fontWeight: "fontWeightBold",
-                borderWidth: 2,
-                "&:hover": { borderWidth: 2 },
-              }
-            : undefined
-        }
-      >
+      <Button variant="outlined" size={size} onClick={onClick} disabled={isFetchingNextPage}>
         <DiceSpinner size="small" loading={isFetchingNextPage}>
           {label}
         </DiceSpinner>

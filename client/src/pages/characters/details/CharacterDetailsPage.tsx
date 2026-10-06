@@ -175,6 +175,7 @@ export default function CharacterDetailsPage() {
         >
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
             <IconButton
+              size="large"
               aria-label="Back"
               component={Link}
               to={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
@@ -188,7 +189,7 @@ export default function CharacterDetailsPage() {
 
           {!(isBonded && isArchived) && (
             <Stack direction="row" spacing={1}>
-              <IconButton aria-label="More actions" onClick={handleClick} sx={{ color: "text.secondary" }}>
+              <IconButton size="large" aria-label="More actions" onClick={handleClick} sx={{ color: "text.secondary" }}>
                 <MoreIcon />
               </IconButton>
               <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>

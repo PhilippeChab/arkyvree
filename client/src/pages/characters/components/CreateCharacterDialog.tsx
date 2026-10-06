@@ -122,7 +122,7 @@ function AbilityCard({
         sx={{
           height: "100%",
           minHeight: 100,
-          p: 1.5,
+          p: 1,
           textAlign: "center",
           alignItems: "center",
           justifyContent: "space-between",

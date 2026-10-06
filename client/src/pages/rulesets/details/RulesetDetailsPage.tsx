@@ -310,7 +310,7 @@ export default function RulesetDetailsPage() {
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
           transformOrigin={{ vertical: "top", horizontal: "center" }}
         >
-          <Stack spacing={1} sx={{ p: 1.5, maxWidth: 360, alignItems: "flex-start" }}>
+          <Stack spacing={1} sx={{ p: 2, maxWidth: 360, alignItems: "flex-start" }}>
             {subscribedExtensions.map((ext) => (
               <TagChip
                 key={ext.extensionId}

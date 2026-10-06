@@ -44,7 +44,7 @@ export function TargetPathInput({
           border: 1,
           borderColor: error ? "error.main" : "divider",
           borderRadius: 1,
-          px: 1.5,
+          px: 2,
           py: 1,
           "&:hover": {
             borderColor: error ? "error.main" : "text.primary",

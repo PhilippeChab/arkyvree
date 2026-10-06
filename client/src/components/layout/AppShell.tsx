@@ -82,7 +82,7 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
       {banner}
       {/* No side padding here: every page brings its own gutter, its PageBody's. */}
       <Box sx={{ width: "100%", maxWidth: "1200px", flex: 1 }}>
-        <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
+        <Suspense fallback={<DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />}>
           <Outlet />
         </Suspense>
       </Box>

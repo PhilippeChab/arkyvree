@@ -7,11 +7,14 @@ import { BackIcon, MoreIcon } from "@/client/src/components/icons/index.ts";
 import { type Tag, TagChip } from "./TagChip.tsx";
 
 interface DetailPageHeaderProps {
-  title: string;
+  /** Its text, or a skeleton while it loads */
+  title: ReactNode;
   /** Inline control after the title, e.g. a star toggle. */
   titleAdornment?: ReactNode;
   /** Where Back goes */
   backTo: string;
+  /** Momentarily nowhere sensible to go back to. */
+  backDisabled?: boolean;
   /** Opens the page's action menu; the button is hidden when omitted. */
   onMenuOpen?: (event: MouseEvent<HTMLElement>) => void;
   /** Its facts, beside the title: a status, a visibility… */
@@ -39,32 +42,36 @@ export interface SectionTab<K extends string> {
   icon: ElementType;
 }
 
-/** Centered title block of a ruleset or campaign page, with back and menu buttons. */
+/**
+ * A detail page's header: its title block, centered between its Back button and its action menu's (an empty cell when
+ * it has none, so the title stays centered).
+ */
 export function DetailPageHeader({
   title,
   titleAdornment,
   backTo,
+  backDisabled = false,
   onMenuOpen,
   tags,
   description,
   children,
 }: DetailPageHeaderProps) {
-  const cornerButtonSx = { position: "absolute", "&:hover": { bgcolor: "action.hover" } } as const;
-
   return (
-    <Stack
-      direction="row"
-      sx={{ alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "48px minmax(0, 1fr) 48px",
+        columnGap: 1,
+        alignItems: "center",
+        py: 2,
+        borderBottom: 1,
+        borderColor: "divider",
+      }}
     >
-      <IconButton component={Link} to={backTo} size="large" aria-label="Back" sx={{ ...cornerButtonSx, left: 0 }}>
+      <IconButton component={Link} to={backTo} disabled={backDisabled} size="large" aria-label="Back">
         <BackIcon />
       </IconButton>
-      {onMenuOpen && (
-        <IconButton onClick={onMenuOpen} size="large" aria-label="More actions" sx={{ ...cornerButtonSx, right: 0 }}>
-          <MoreIcon />
-        </IconButton>
-      )}
-      <Stack spacing={2} sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, md: 8 } }}>
+      <Stack spacing={2} sx={{ textAlign: "center" }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center" }}>
           <Typography component="h1" variant="h3">
             {title}
@@ -78,10 +85,19 @@ export function DetailPageHeader({
             ))}
           </Stack>
         )}
-        <Typography sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>{description}</Typography>
+        <Typography component="div" sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>
+          {description}
+        </Typography>
         {children}
       </Stack>
-    </Stack>
+      {onMenuOpen ? (
+        <IconButton onClick={onMenuOpen} size="large" aria-label="More actions">
+          <MoreIcon />
+        </IconButton>
+      ) : (
+        <Box />
+      )}
+    </Box>
   );
 }
 
@@ -148,10 +164,10 @@ export function SectionTabs<K extends string>({
             fontWeight: "fontWeightBold",
             minHeight: 48,
             borderRadius: 1,
-            mx: 0.5,
             "&:hover": { bgcolor: "action.hover" },
             "&.Mui-selected": { bgcolor: "background.default", boxShadow: 1 },
           },
+          "& .MuiTabs-list": { gap: 1 },
           "& .MuiTabs-scrollButtons.Mui-disabled": { opacity: 0.3 },
         }}
       >

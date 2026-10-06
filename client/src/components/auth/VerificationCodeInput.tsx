@@ -61,7 +61,7 @@ export function VerificationCodeInput({ digits, onChange, error }: VerificationC
             error={!!error}
             sx={{
               width: { xs: 36, sm: 44 },
-              "& input": { typography: "h4", textAlign: "center", fontWeight: "fontWeightBold", py: 1.5, px: 0 },
+              "& input": { typography: "h4", textAlign: "center", fontWeight: "fontWeightBold", py: 2, px: 0 },
             }}
             slotProps={{
               htmlInput: {

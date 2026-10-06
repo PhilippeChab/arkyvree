@@ -68,7 +68,7 @@ export default function CampaignCharacterPage() {
           sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
         >
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
-            <IconButton aria-label="Back" component={Link} to={`/campaigns/${campaignId}`}>
+            <IconButton size="large" aria-label="Back" component={Link} to={`/campaigns/${campaignId}`}>
               <BackIcon />
             </IconButton>
             <Typography component="p" sx={{ fontWeight: "fontWeightBold", typography: { xs: "h5", md: "h4" } }} noWrap>
@@ -79,6 +79,7 @@ export default function CampaignCharacterPage() {
           {data.canDownloadPdf && !data.deletedAt && (
             <Stack direction="row" spacing={1}>
               <IconButton
+                size="large"
                 aria-label="More actions"
                 onClick={(e) => setAnchorEl(e.currentTarget)}
                 sx={{ color: "text.secondary" }}

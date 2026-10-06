@@ -61,7 +61,7 @@ import { NotificationBell } from "./NotificationBell.tsx";
 
 /** How a list page opens by default, which a prefetch asks for. */
 const DEFAULT_LIST = { search: "", orderBy: "createdAt", orderDir: "desc" } as const;
-const drawerWidth = 72;
+const drawerWidth = 64;
 
 const expandedDrawerWidth = 240;
 
@@ -235,6 +235,7 @@ export function Layout() {
         <Toolbar sx={{ justifyContent: "space-between" }}>
           {isMobile ? (
             <IconButton
+              size="large"
               color="inherit"
               onClick={() => setMobileDrawerOpen(true)}
               edge="start"
@@ -310,7 +311,7 @@ export function Layout() {
       >
         <Toolbar />
         <Stack sx={{ flex: 1, minHeight: 0, position: "relative" }}>
-          <Stack component={List} disablePadding spacing={1} sx={{ flex: 1, pt: 2, px: 1.5 }}>
+          <Stack component={List} disablePadding spacing={1} sx={{ flex: 1, pt: 2, px: 1 }}>
             {sidebarItems.map((item) => (
               <ListItem key={item.id} disablePadding>
                 <ListItemButton
@@ -330,7 +331,7 @@ export function Layout() {
                       boxShadow: ring(gold),
                     }),
                     justifyContent: isMobile || effectiveExpanded ? "flex-start" : "center",
-                    px: isMobile || effectiveExpanded ? 2 : 1.5,
+                    px: isMobile || effectiveExpanded ? 2 : 1,
                     py: 1,
                     gap: isMobile || effectiveExpanded ? 2 : 0,
                     borderRadius: 3,

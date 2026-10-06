@@ -158,7 +158,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
       <TableRow>
         <TableCell colSpan={4} sx={{ py: 0, borderBottom: open ? undefined : "none" }}>
           <Collapse in={open} unmountOnExit>
-            <Stack spacing={1} sx={{ py: 1.5, px: 1 }}>
+            <Stack spacing={1} sx={{ p: 1 }}>
               {detailProps.length > 0 && (
                 <Box
                   sx={{

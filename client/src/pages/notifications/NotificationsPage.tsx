@@ -82,9 +82,6 @@ export default function NotificationsPage() {
               color: "common.white",
               borderColor: (theme) => alpha(theme.palette.common.white, 0.5),
               "&:hover": { borderColor: "common.white", bgcolor: (theme) => alpha(theme.palette.common.white, 0.1) },
-              px: 3,
-              py: 1.5,
-              borderRadius: 2,
             }}
           >
             <DiceSpinner size="small" loading={actions.markAllRead.isPending}>

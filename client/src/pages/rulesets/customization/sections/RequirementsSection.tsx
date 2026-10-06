@@ -286,7 +286,7 @@ export function RequirementsSection({
               borderColor: "primary.main",
             }}
           >
-            <Box sx={{ py: 1.5, px: 2 }}>
+            <Box sx={{ py: 1, px: 2 }}>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
                 <TagChip tag={{ label: requirement.level ?? "—", color: "default", tooltip: "Level" }} />
 

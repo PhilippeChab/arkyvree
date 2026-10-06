@@ -57,7 +57,7 @@ function StatCard({ icon: Icon, count, label, tagline, to, colors, animationInde
         }}
       >
         <CardActionArea component={Link} to={to} sx={{ height: "100%" }}>
-          <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Stack spacing={1} sx={{ alignItems: "center", textAlign: "center" }}>
               <Icon fontSize="hero" />
               <Typography
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           background: (theme) =>
             `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
           color: "common.white",
-          p: { xs: 3, sm: 4 },
+          p: { xs: 2, sm: 3 },
           borderRadius: 4,
           overflow: "hidden",
           position: "relative",

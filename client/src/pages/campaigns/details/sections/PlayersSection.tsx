@@ -359,7 +359,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
               description: "Add players to start your adventure together",
               action:
                 canManagePlayers && !campaign.deletedAt ? (
-                  <Button variant="outlined" startIcon={<AddIcon />} size="large" onClick={handleAddPlayer}>
+                  <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddPlayer}>
                     Add Your First Player
                   </Button>
                 ) : undefined,

@@ -105,7 +105,7 @@ export function NotificationBell() {
         }}
       >
         {notifications.length === 0 ? (
-          <Box sx={{ px: 2, py: 1.5 }}>
+          <Box sx={{ px: 2, py: 1 }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               No unread notifications
             </Typography>
@@ -134,7 +134,7 @@ export function NotificationBell() {
             <List disablePadding>
               {notifications.map((notification) =>
                 actions.isActionable(notification) ? (
-                  <ListItem key={notification.id} sx={{ px: 2, py: 1.5 }}>
+                  <ListItem key={notification.id} sx={{ px: 2, py: 1 }}>
                     <Stack spacing={1} sx={{ flex: 1 }}>
                       <NotificationSummary notification={notification} />
                       <InviteActionButtons
@@ -151,7 +151,7 @@ export function NotificationBell() {
                     title={formatActivityDetails(notification.data) ?? ""}
                     placement="left"
                   >
-                    <ListItemButton onClick={() => closeAnd(() => actions.open(notification))} sx={{ py: 1.5 }}>
+                    <ListItemButton onClick={() => closeAnd(() => actions.open(notification))} sx={{ py: 1 }}>
                       <NotificationSummary notification={notification} />
                     </ListItemButton>
                   </Tooltip>

@@ -72,7 +72,7 @@ export function AbilityScoreBox({
                 border: 1,
                 borderColor: "divider",
                 borderRadius: 1,
-                py: compact ? 0.25 : 0.5,
+                py: 0.5,
                 px: 1,
                 minWidth: compact ? 32 : 40,
               }}

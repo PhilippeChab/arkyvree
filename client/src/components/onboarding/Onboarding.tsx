@@ -184,8 +184,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         alignItems: "center",
         justifyContent: "center",
         textAlign: "center",
-        py: effectiveMode === "dialog" ? { xs: 4, sm: 6 } : 3,
-        px: effectiveMode === "dialog" ? { xs: 3, sm: 5 } : 3,
+        p: 3,
         minHeight: effectiveMode === "dialog" ? { xs: "auto", sm: 380 } : "auto",
       }}
     >
@@ -317,7 +316,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         justifyContent: "center",
         background: "transparent",
         pb: 0,
-        "& .MuiMobileStepper-dot": { mx: 0.5 },
+        "& .MuiMobileStepper-dots": { gap: 0.5 },
         "& .MuiMobileStepper-dotActive": { backgroundColor: gold },
       }}
       backButton={null}
