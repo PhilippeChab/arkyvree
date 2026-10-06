@@ -8,7 +8,7 @@ import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 export function ResolvesCopies<B extends Constructor<BaseRepository<Table>>>(Base: B) {
   abstract class ResolvingCopies extends Base {
     /**
-     * An `id NOT IN (...)` clause for the ids a query leaves out (a picker's, those a character already has), or `false`
+     * An `id NOT IN (...)` clause for the ids a query leaves out (those a character already has), or `false`
      * (`this.where([...])`'s sentinel) when there are none. A list's sibling losers are left out by `ScopesToRuleset`.
      */
     protected excludeIds(ids: Iterable<string> | undefined): SQL | false {
