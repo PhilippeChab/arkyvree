@@ -69,6 +69,7 @@
     "arkyvree/writes-in-transactions": "error",
     "arkyvree/test-placement": "error",
     "arkyvree/concern-shape": "error",
+    "arkyvree/comment-style": "error",
     "arkyvree/policy-shape": "error",
     "arkyvree/include-order": "error",
     "arkyvree/file-layout": "error",

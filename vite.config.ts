@@ -7,7 +7,6 @@ import { VitePWA } from "vite-plugin-pwa";
 
 import { createQuietLogger } from "./scripts/vite/quietLogger.ts";
 
-// https://vitejs.dev/config/
 const apiPort = process.env.API_PORT || "8000";
 
 const filteredLogger = createQuietLogger();

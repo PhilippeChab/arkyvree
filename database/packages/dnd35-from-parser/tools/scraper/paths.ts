@@ -1,15 +1,15 @@
+/** Path validation — reuses actual server components to stay in sync */
+
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { buildValidPaths } from "./validPaths.ts";
 
-// ---------------------------------------------------------------------------
-// Path validation — reuses actual server components to stay in sync
-// ---------------------------------------------------------------------------
-
-// Base slugs for skill groups with subtypes (e.g. "knowledge", "craft", "perform", "profession").
-// Paths like "skills.knowledge.rank" are valid — the runtime resolves them as an OR across all subtypes.
+/**
+ * Base slugs for skill groups with subtypes (e.g. "knowledge", "craft", "perform", "profession"). Paths like
+ * "skills.knowledge.rank" are valid — the runtime resolves them as an OR across all subtypes.
+ */
 const SKILL_GROUP_SLUGS = new Set([
   ...SKILL_NAMES.filter((n) => /\(/.test(n)).map((n) => stripSeparators(n.replace(/\s*\([^)]*\)/, ""))),
   "craft",

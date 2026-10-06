@@ -122,9 +122,12 @@ const sidebarItems = [
 
 const stepToSidebarId: Record<number, string> = { 1: "rulesets", 2: "characters", 3: "campaigns" };
 
-// Warm the first page of a section when its sidebar item is hovered. The
-// options are the ones the pages use, filtered the way a page opens by default.
+/** How a list page opens by default, which a prefetch asks for. */
 const DEFAULT_LIST = { search: "", orderBy: "createdAt", orderDir: "desc" } as const;
+/**
+ * Warm the first page of a section when its sidebar item is hovered. The options are the ones the pages use, filtered
+ * the way a page opens by default.
+ */
 const prefetchers: Partial<Record<string, (queryClient: QueryClient) => void>> = {
   dashboard: (queryClient) => void queryClient.prefetchQuery(dashboardStatsQuery()),
   rulesets: (queryClient) =>

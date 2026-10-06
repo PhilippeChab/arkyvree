@@ -9,13 +9,12 @@ interface RouteMeta {
 
 const APP_URL = readEnv("APP_URL") || "http://localhost:8000";
 
-// --- SEO: Route meta map ---
-
-// Routes that should be crawled and indexed via the SPA shell. Everything else
-// (auth-gated app routes, token-gated /share, utility pages like /sign-in) is
-// served with a noindex tag — there is no public ruleset view, so /rulesets and
-// /rulesets/:id intentionally fall through to noindex. The landing page "/" is
-// served from landing.html (never reaches injectMeta), so it isn't listed here.
+/**
+ * Routes that should be crawled and indexed via the SPA shell. Everything else (auth-gated app routes, token-gated
+ * /share, utility pages like /sign-in) is served with a noindex tag — there is no public ruleset view, so /rulesets and
+ * /rulesets/:id intentionally fall through to noindex. The landing page "/" is served from landing.html (never reaches
+ * injectMeta), so it isn't listed here.
+ */
 const INDEXABLE_ROUTE_META: Record<string, RouteMeta> = {
   "/sign-up": {
     title: "Sign Up | Arkyvree",
@@ -28,7 +27,7 @@ const INDEXABLE_ROUTE_META: Record<string, RouteMeta> = {
   },
 };
 
-// Default values that appear in index.html (used as replacement anchors)
+/** Default values that appear in index.html (used as replacement anchors) */
 const DEFAULT_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Creator";
 const DEFAULT_DESCRIPTION =
   "A programmable ruleset engine and character creator for tabletop RPGs. Customize game rules with modifiers, requirements, and properties, then build characters with real-time validation.";
@@ -36,10 +35,10 @@ const DEFAULT_OG_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Cre
 const DEFAULT_OG_DESCRIPTION =
   "A programmable ruleset engine and character creator for tabletop RPGs. Customize rules, build characters, and manage campaigns.";
 
-// Cache landing.html template at startup
+/** Cache landing.html template at startup */
 let cachedLanding: string | null = null;
 
-// Cache index.html template at startup
+/** Cache index.html template at startup */
 let cachedTemplate: string | null = null;
 
 const APP_CONFIG = JSON.stringify({
@@ -49,7 +48,7 @@ const APP_CONFIG = JSON.stringify({
   sentryRelease: readEnv("FLY_MACHINE_VERSION") || null,
 });
 
-// Helper function to get MIME type based on file extension
+/** Helper function to get MIME type based on file extension */
 function getMimeType(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase();
   const mimeTypes: Record<string, string> = {

@@ -1,11 +1,3 @@
-import { isNull } from "drizzle-orm";
-
-import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { checkAbilityIncreases } from "@/scripts/ops/validateCharacters/abilityIncreases.ts";
-import { checkBuilds } from "@/scripts/ops/validateCharacters/builds.ts";
-import { printCharacterData } from "@/scripts/ops/validateCharacters/characterData.ts";
-import { checkJunctions } from "@/scripts/ops/validateCharacters/junctions.ts";
-import { checkReferences } from "@/scripts/ops/validateCharacters/references.ts";
 /**
  * Validates every active character:
  *  1. Reference integrity — every FK points to an existing, non-deleted entity
@@ -15,6 +7,15 @@ import { checkReferences } from "@/scripts/ops/validateCharacters/references.ts"
  *
  * Usage: bun run prod:validate-characters (or DATABASE_URL=… bun scripts/ops/validate-characters.ts)
  */
+
+import { isNull } from "drizzle-orm";
+
+import { charactersInCharacter } from "@/drizzle/schema.ts";
+import { checkAbilityIncreases } from "@/scripts/ops/validateCharacters/abilityIncreases.ts";
+import { checkBuilds } from "@/scripts/ops/validateCharacters/builds.ts";
+import { printCharacterData } from "@/scripts/ops/validateCharacters/characterData.ts";
+import { checkJunctions } from "@/scripts/ops/validateCharacters/junctions.ts";
+import { checkReferences } from "@/scripts/ops/validateCharacters/references.ts";
 import { db } from "@/server/database/index.ts";
 
 async function main() {

@@ -98,8 +98,7 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
   }
   const quickAddKlasses = hasUnfilteredKlasses ? availableKlasses : quickAddSnapshot;
 
-  // ── Deferred step (minimum 300ms spinner before heavy render) ───────
-
+  // Deferred step (minimum 300ms spinner before heavy render)
   const [renderedStep, setRenderedStep] = useState(wizard.activeStep);
 
   useEffect(() => {

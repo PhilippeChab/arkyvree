@@ -1,3 +1,8 @@
+/**
+ * The database's enums. Their values are written out rather than read from the schema, which the client would then load
+ * whole; tests/shared/enums.test.ts checks they match it and the migrated database.
+ */
+
 import type {
   alignment,
   baseRules,
@@ -8,9 +13,6 @@ import type {
   rulesetKind,
   sizeType,
 } from "@/drizzle/schema.ts";
-
-// The database's enums. Their values are written out rather than read from the schema, which the client would then
-// load whole; tests/shared/enums.test.ts checks they match it and the migrated database.
 
 export type Alignment = (typeof alignment.enumValues)[number];
 export type BaseRules = (typeof baseRules.enumValues)[number];

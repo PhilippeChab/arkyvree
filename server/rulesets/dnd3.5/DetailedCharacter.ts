@@ -138,7 +138,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterBonds = new DetailedCharacterBonds();
   }
 
-  // ── Dnd3.5-specific sub-systems ─────────────────────────────────
+  // Dnd3.5-specific sub-systems
   protected readonly detailedCharacterSkills: DetailedCharacterSkills;
 
   protected readonly detailedCharacterCombat: DetailedCharacterCombat;
@@ -157,7 +157,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
 
   protected readonly detailedCharacterBonds: DetailedCharacterBonds;
 
-  // ── Dnd3.5-specific data ────────────────────────────────────────
+  // Dnd3.5-specific data
   protected skillPointAbilityId: string | null = null;
 
   protected skillProperties: Map<string, SkillFlags> = new Map();

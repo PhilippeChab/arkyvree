@@ -6,10 +6,7 @@ import type { MagicItemCategory, MagicItemReference } from "@/database/packages/
 
 type Modifier = { target: string; operator: string; value: string; valueType: string };
 
-// ---------------------------------------------------------------------------
-// Base item template names (sorted longest-first per category)
-// ---------------------------------------------------------------------------
-
+/** The base weapons' template names, longest first. */
 const BASE_WEAPONS = [
   "Repeating Heavy Crossbow",
   "Repeating Light Crossbow",
@@ -80,6 +77,7 @@ const BASE_WEAPONS = [
   "Sai",
 ];
 
+/** The base armors' template names, longest first. */
 const BASE_ARMOR = [
   "Studded Leather",
   "Leather Armor",
@@ -95,6 +93,7 @@ const BASE_ARMOR = [
   "Full Plate",
 ];
 
+/** The base shields' template names, longest first. */
 const BASE_SHIELDS = [
   "Light Wooden Shield",
   "Light Steel Shield",
@@ -119,10 +118,6 @@ const ALIASES: Partial<Record<MagicItemCategory, Record<string, string>>> = {
   },
 };
 
-// ---------------------------------------------------------------------------
-// Category → item type mapping
-// ---------------------------------------------------------------------------
-
 const CATEGORY_TYPE_MAP: Record<MagicItemCategory, string> = {
   specificArmor: "Armor",
   specificShield: "Shield",
@@ -132,10 +127,6 @@ const CATEGORY_TYPE_MAP: Record<MagicItemCategory, string> = {
   rod: "Rod",
   staff: "Staff",
 };
-
-// ---------------------------------------------------------------------------
-// Slot inference
-// ---------------------------------------------------------------------------
 
 const CATEGORY_SLOT_MAP: Partial<Record<MagicItemCategory, string>> = {
   ring: "Finger",
@@ -156,10 +147,6 @@ const WONDROUS_SLOT_PATTERNS: [RegExp, string][] = [
   [/\b(?:Robe|Vest)\b/i, "Torso"],
   [/\b(?:Boots|Slippers|Sandals)\b/i, "Other"],
 ];
-
-// ---------------------------------------------------------------------------
-// Modifier detection
-// ---------------------------------------------------------------------------
 
 const ABILITY_MAP: Record<string, string> = {
   strength: "abilities.strength.misc",
@@ -224,27 +211,12 @@ const NAME_MODIFIER_PATTERNS: { pattern: RegExp; toModifiers: (match: RegExpMatc
   },
 ];
 
-function inferSlot(name: string, category: MagicItemCategory): string {
-  if (category !== "wondrousItem") {
-    return CATEGORY_SLOT_MAP[category] ?? "Other";
-  }
-
-  for (const [pattern, slot] of WONDROUS_SLOT_PATTERNS) {
-    if (pattern.test(name)) return slot;
-  }
-  return "Other";
-}
-
-// ---------------------------------------------------------------------------
-// Metadata parsing
-// ---------------------------------------------------------------------------
-
 /** An item's modifiers, from its name and description, and the bonuses it names that no modifier can hold. */
 function detectModifiers(name: string, description: string): { modifiers: Modifier[]; unresolvedModifiers: string[] } {
   const modifiers: Modifier[] = [];
   const unresolvedModifiers: string[] = [];
 
-  // --- Name-based patterns (accumulate, don't short-circuit) ---
+  // Name-based patterns (accumulate, don't short-circuit)
   for (const { pattern, toModifiers } of NAME_MODIFIER_PATTERNS) {
     const match = name.match(pattern);
     if (match) {
@@ -274,8 +246,7 @@ function detectModifiers(name: string, description: string): { modifiers: Modifi
     }
   }
 
-  // --- Description-based patterns ---
-
+  // Description-based patterns
   // 1. Ability score bonuses: "+N enhancement bonus to Constitution"
   const abilityNames = "Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma";
   const enhRegex = new RegExp(
@@ -319,6 +290,36 @@ function detectModifiers(name: string, description: string): { modifiers: Modifi
   return { modifiers, unresolvedModifiers };
 }
 
+function inferSlot(name: string, category: MagicItemCategory): string {
+  if (category !== "wondrousItem") {
+    return CATEGORY_SLOT_MAP[category] ?? "Other";
+  }
+
+  for (const [pattern, slot] of WONDROUS_SLOT_PATTERNS) {
+    if (pattern.test(name)) return slot;
+  }
+  return "Other";
+}
+
+/**
+ * Parse all variant prices from metadata text.
+ * Returns a map: variant tag → price string, or null if no variants.
+ */
+function parseAllVariantPrices(metadataText: string): Map<string, string> | null {
+  const variantPattern = /([\d,]+)\s*gp\s*\(([^)]+)\)/g;
+  const variants = new Map<string, string>();
+  let match: RegExpExecArray | null;
+  while ((match = variantPattern.exec(metadataText)) !== null) {
+    // Strip category prefix and normalize to match cleaned variant names from the parser
+    let tag = match[2].trim().replace(/^(?:ring|armor|shield|weapon)\s+/i, "");
+    if (tag && !tag.startsWith("+")) {
+      tag = tag.replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+    variants.set(tag, match[1].replace(/,/g, ""));
+  }
+  return variants.size > 1 ? variants : null;
+}
+
 function parseAura(metadataText: string): string | undefined {
   const match = metadataText.match(/(faint|moderate|strong|overwhelming)\s+([\w][\w\s,]+?)(?:;|$)/i);
   if (!match) return undefined;
@@ -343,29 +344,6 @@ function parseMetadataWeight(metadataText: string): string {
   const match = metadataText.match(/Weight\s+([\d.]+)\s*lb/i);
   if (match) return parseWeight(`${match[1]} lb.`);
   return "0";
-}
-
-// ---------------------------------------------------------------------------
-// Detection
-// ---------------------------------------------------------------------------
-
-/**
- * Parse all variant prices from metadata text.
- * Returns a map: variant tag → price string, or null if no variants.
- */
-function parseAllVariantPrices(metadataText: string): Map<string, string> | null {
-  const variantPattern = /([\d,]+)\s*gp\s*\(([^)]+)\)/g;
-  const variants = new Map<string, string>();
-  let match: RegExpExecArray | null;
-  while ((match = variantPattern.exec(metadataText)) !== null) {
-    // Strip category prefix and normalize to match cleaned variant names from the parser
-    let tag = match[2].trim().replace(/^(?:ring|armor|shield|weapon)\s+/i, "");
-    if (tag && !tag.startsWith("+")) {
-      tag = tag.replace(/\b\w/g, (c) => c.toUpperCase());
-    }
-    variants.set(tag, match[1].replace(/,/g, ""));
-  }
-  return variants.size > 1 ? variants : null;
 }
 
 export function detectBaseItem(name: string, description: string, category: MagicItemCategory): string | undefined {

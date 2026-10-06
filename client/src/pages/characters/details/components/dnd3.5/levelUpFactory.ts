@@ -1,3 +1,8 @@
+/**
+ * Each step takes the wizard state it reads as `wizard`; the Add Level and Edit Level wizards both hand themselves
+ * over.
+ */
+
 import type React from "react";
 import type { ComponentType } from "react";
 
@@ -26,9 +31,6 @@ import { LevelUpHpStep } from "./LevelUpHpStep.tsx";
 import { LevelUpReviewStep } from "./LevelUpReviewStep.tsx";
 import { LevelUpSkillsStep } from "./LevelUpSkillsStep.tsx";
 import { LevelUpSpellsStep } from "./LevelUpSpellsStep.tsx";
-
-// Each step takes the wizard state it reads as `wizard`; the Add Level and
-// Edit Level wizards both hand themselves over.
 
 interface LevelUpHpState {
   selectedClass: SelectedKlass | null;

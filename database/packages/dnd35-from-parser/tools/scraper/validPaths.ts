@@ -1,3 +1,8 @@
+/**
+ * The engine's own target paths, so the parser's checks stay in step with the app: its components, given stub
+ * abilities, saves and skills.
+ */
+
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
 import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
@@ -5,9 +10,6 @@ import DetailedCharacterWeapons from "@/server/rulesets/dnd3.5/DetailedCharacter
 import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
-
-// The engine's own target paths, so the parser's checks stay in step with the app: its components, given stub
-// abilities, saves and skills.
 
 const ABILITY_NAMES = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
 const SAVE_NAMES = ["Fortitude", "Reflex", "Will"];

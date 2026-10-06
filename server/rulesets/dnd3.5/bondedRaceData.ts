@@ -81,9 +81,10 @@ export type BondedRaceStatBlock = {
   skillPriority?: string[];
 };
 
-// Generic feat pool used as the tail of featPriority for animals whose
-// per-race list runs out. These are all valid for an animal taking feats
-// via Monster Manual advancement.
+/**
+ * Generic feat pool used as the tail of featPriority for animals whose per-race list runs out. These are all valid for
+ * an animal taking feats via Monster Manual advancement.
+ */
 const GENERIC_TAIL = ["Toughness", "Iron Will", "Lightning Reflexes", "Great Fortitude"];
 
 const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {

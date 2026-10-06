@@ -1,3 +1,8 @@
+/**
+ * An extension changes an inherited feat or power the way a fork does: it copies it (copy on write) and records the
+ * copy in `entity_snapshots`, so the ruleset shows the copy in place of the original.
+ */
+
 import { and, eq, like } from "drizzle-orm";
 
 import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/types.ts";
@@ -16,9 +21,6 @@ import {
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-
-// An extension changes an inherited feat or power the way a fork does: it copies it (copy on write) and records
-// the copy in `entity_snapshots`, so the ruleset shows the copy in place of the original.
 
 /**
  * Adds class levels to a feat's first-level `or` of requirements, which a single first-level requirement becomes.

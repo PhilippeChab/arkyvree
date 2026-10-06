@@ -14,7 +14,7 @@ export default function DemoExpiredPage() {
     try {
       localStorage.removeItem(DEMO_EXPIRED_FLAG);
     } catch {
-      /* storage disabled */
+      // storage disabled
     }
   }, []);
 

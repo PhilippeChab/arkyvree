@@ -1,6 +1,6 @@
 import type { CharacterSeed } from "@/database/seeds/helpers.ts";
 
-// Human Cleric 3 — Skills: (2+1+1)*4 + (2+1+1)*2 = 24
+/** Human Cleric 3 — Skills: (2+1+1)*4 + (2+1+1)*2 = 24 */
 export default {
   raceName: "Human",
   name: "Theron Lightbringer",

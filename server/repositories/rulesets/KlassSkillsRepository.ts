@@ -37,10 +37,6 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules> {
       )
       .returning();
   }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
 }
 
 export default KlassSkillsRepository;

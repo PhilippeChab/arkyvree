@@ -1,7 +1,8 @@
 /**
- * Queries of the class page tabs, shared by the sections and the tab-hover
- * prefetch so a hovered tab is cached under the key its section reads.
+ * Queries of the class page tabs, shared by the sections and the tab-hover prefetch so a hovered tab is cached under
+ * the key its section reads.
  */
+
 import { infiniteQueryOptions, type QueryClient, queryOptions } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 

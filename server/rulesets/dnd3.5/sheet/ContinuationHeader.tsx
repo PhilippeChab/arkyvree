@@ -2,6 +2,7 @@ import { Text, View } from "@react-pdf/renderer";
 
 import { styles } from "./styles.ts";
 
+/** The header of the sheet's pages after the first: the character's name, and what the page holds. */
 function ContinuationHeader({ name, label }: { name: string; label?: string }) {
   return (
     <View style={styles.header}>

@@ -1,8 +1,8 @@
 /**
- * List queries of the ruleset tabs. Each section renders with these, and the
- * tab bar prefetches with the same factories, so a hovered tab's first page is
- * already cached under the exact key the section asks for.
+ * List queries of the ruleset tabs. Each section renders with these, and the tab bar prefetches with the same
+ * factories, so a hovered tab's first page is already cached under the exact key the section asks for.
  */
+
 import { infiniteQueryOptions, type QueryClient, queryOptions } from "@tanstack/react-query";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";

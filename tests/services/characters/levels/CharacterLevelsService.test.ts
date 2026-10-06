@@ -87,9 +87,10 @@ function skillRanks(ctx: Awaited<ReturnType<typeof getSeedCtx>>, ranks: Record<s
   return picks(ctx, { skills: ranks }).skills;
 }
 
-// The Blackguard (Dungeon Master's Guide) needs BAB 6, 5 ranks of Hide, 2 of
-// Knowledge (Religion), Power Attack, Cleave and Improved Sunder. Each case
-// leaves one out of the character and supplies it as a pending pick.
+/**
+ * The Blackguard (Dungeon Master's Guide) needs BAB 6, 5 ranks of Hide, 2 of Knowledge (Religion), Power Attack, Cleave
+ * and Improved Sunder. Each case leaves one out of the character and supplies it as a pending pick.
+ */
 async function setupCandidate(missing: { bab?: boolean; feat?: string; skill?: string }) {
   const ctx = await getSeedCtx();
   const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {

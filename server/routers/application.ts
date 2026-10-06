@@ -30,16 +30,16 @@ const cors = buildCors({
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 });
 
-// Canonical host for the app, parsed from APP_URL. Non-matching hosts (e.g.
-// Fly's default `*.fly.dev`) are 301'd to the canonical origin so search
-// engines consolidate authority at one URL. `/health` is exempt because Fly's
-// probes hit it with the machine-name Host, not the public hostname. Disabled
-// in dev because Vite's `changeOrigin: true` proxy rewrites the Host to the
-// backend's, which would otherwise trigger an infinite redirect loop.
+/**
+ * Canonical host for the app, parsed from APP_URL. Non-matching hosts (e.g. Fly's default `*.fly.dev`) are 301'd to the
+ * canonical origin so search engines consolidate authority at one URL. `/health` is exempt because Fly's probes hit it
+ * with the machine-name Host, not the public hostname. Disabled in dev because Vite's `changeOrigin: true` proxy
+ * rewrites the Host to the backend's, which would otherwise trigger an infinite redirect loop.
+ */
 const enforceCanonicalHost = isProduction() && !!readEnv("APP_URL");
 const canonicalHost = enforceCanonicalHost ? new URL(readEnv("APP_URL")!).host : null;
 
-// The session is set only on the routes behind the session middleware.
+/** The session is set only on the routes behind the session middleware. */
 const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
   // First, so whatever any later middleware or route throws reaches onError as an Error.
   .use("*", wrapNonErrors)

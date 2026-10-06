@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import type { Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
 import { evaluateTemplateExpression } from "@/server/rulesets/universal/templateExpression.ts";
 
-// Minimal stub holders + traverser that knows a small fixed path tree.
+/** Minimal stub holders + traverser that knows a small fixed path tree. */
 const tree: Record<string, number | string> = {
   "classes.druid.level": 5,
   "classes.ranger.level": 3,

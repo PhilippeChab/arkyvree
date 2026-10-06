@@ -1,4 +1,5 @@
 /** The level-up endpoints' types, shared by the Add Level and Edit Level wizards and their steps. */
+
 import type { InferResponseType } from "hono/client";
 
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";

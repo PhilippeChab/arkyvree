@@ -1,3 +1,5 @@
+/** Spending skill points over planned levels: the level-up wizard previews it, the server applies it. */
+
 /**
  * The levels in the order points go to `skillId`: those where it's a class skill first, at a point a rank, then the
  * others, at two points a rank.
@@ -13,8 +15,6 @@ function spendingOrder(
   }));
   return [...levels.filter((l) => l.pointsPerRank === 1), ...levels.filter((l) => l.pointsPerRank === 2)];
 }
-
-// Spending skill points over planned levels: the level-up wizard previews it, the server applies it.
 
 /**
  * The skill points a level gives: its points per level (its class's and the skill point ability's modifier), at least

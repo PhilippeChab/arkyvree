@@ -1,3 +1,18 @@
+/**
+ * Requirement forest model (used by siblingMerge.ts + the matching read-time compose in rulesetCache/compose.ts)
+ *
+ * Every entity's requirements form a forest of trees:
+ *   - Each top-level entry is a root (no `.` parent prefix).
+ *   - Top-level standalone leaves and chain roots are AND'd at the top level
+ *     (the implicit AND of the schema).
+ *   - Chains nest recursively: an OR root contains children which can be
+ *     leaves OR chain roots themselves (AND-of-ORs, OR-of-ANDs, etc.).
+ *
+ * Merging multiple sources (target + N siblings) is `AND(target, sib1, ...)` — each source's tree is preserved verbatim
+ * and appended at the top level of the combined forest. Sibling chain trees get fresh top-level integer roots to avoid
+ * colliding with target's existing levels; their internal child indices are renumbered recursively.
+ */
+
 import type { Requirement } from "@/shared/relations.ts";
 
 type ReqLeafNode = {
@@ -15,22 +30,6 @@ type ReqChainNode = {
   children: ReqNode[];
 };
 type ReqNode = ReqLeafNode | ReqChainNode;
-
-// Requirement forest model (used by siblingMerge.ts + the
-// matching read-time compose in rulesetCache/compose.ts)
-//
-// Every entity's requirements form a forest of trees:
-//   - Each top-level entry is a root (no `.` parent prefix).
-//   - Top-level standalone leaves and chain roots are AND'd at the top level
-//     (the implicit AND of the schema).
-//   - Chains nest recursively: an OR root contains children which can be
-//     leaves OR chain roots themselves (AND-of-ORs, OR-of-ANDs, etc.).
-//
-// Merging multiple sources (target + N siblings) is `AND(target, sib1, ...)` —
-// each source's tree is preserved verbatim and appended at the top level of
-// the combined forest. Sibling chain trees get fresh top-level integer roots
-// to avoid colliding with target's existing levels; their internal child
-// indices are renumbered recursively.
 
 const MAX_REQ_TREE_DEPTH = 5;
 

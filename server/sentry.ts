@@ -5,8 +5,10 @@ import { timingStorage } from "@/server/timing.ts";
 
 let initialized = false;
 
-// Initializes Sentry from SENTRY_DSN. No-op if unset so dev/tests stay quiet.
-// DSN points at Better Stack's Sentry-compatible ingest endpoint.
+/**
+ * Initializes Sentry from SENTRY_DSN. No-op if unset so dev/tests stay quiet. DSN points at Better Stack's
+ * Sentry-compatible ingest endpoint.
+ */
 export function initSentry(component: "web" | "worker") {
   if (initialized) return;
   const dsn = readEnv("SENTRY_DSN");

@@ -43,7 +43,7 @@ type RequirementsArray = InferResponseType<
 >;
 type Requirement = RequirementsArray[number];
 
-// Tree node interface for hierarchical requirements
+/** Tree node interface for hierarchical requirements */
 interface RequirementTreeNode {
   id: string;
   level: string;

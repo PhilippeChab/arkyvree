@@ -16,18 +16,19 @@ type PowerEntry = {
   dc?: PowerDcsByClass;
 };
 
-// A grouping's spells, each with its DC as each class casts it
+/** A grouping's spells, each with its DC as each class casts it */
 type PowerGroupEntry = Record<string, Record<string, { dc: PowerDc }>>;
 type PowerGroupsNamespace = Record<string, PowerGroupEntry>;
 
-// Spell known entries ({ [aptSlug]: { known } }) are bolted onto PowerEntry objects
-// and onto standalone entries for spells the character doesn't have. The traversal system
-// navigates these via dot paths (e.g. powers.magicmissile.wizard.known).
-// getSpellEntry() encapsulates all known reads.
-//
-// Groupings (school/descriptor) live under the reserved `groups` key
-// (powers.groups.<name>.<spellSlug>.dc.misc) to avoid collisions with spells whose
-// name matches a school name (e.g. the Cleric spell "Divination" vs the Divination school).
+/**
+ * Spell known entries ({ [aptSlug]: { known } }) are bolted onto PowerEntry objects and onto standalone entries for
+ * spells the character doesn't have. The traversal system navigates these via dot paths (e.g.
+ * powers.magicmissile.wizard.known). getSpellEntry() encapsulates all known reads.
+ *
+ * Groupings (school/descriptor) live under the reserved `groups` key (powers.groups.<name>.<spellSlug>.dc.misc) to
+ * avoid collisions with spells whose name matches a school name (e.g. the Cleric spell "Divination" vs the Divination
+ * school).
+ */
 type DetailedCharacterComprehensivePowers = {
   [key: string]: PowerEntry | PowerGroupEntry | Record<string, { known: boolean }> | PowerGroupsNamespace;
 };

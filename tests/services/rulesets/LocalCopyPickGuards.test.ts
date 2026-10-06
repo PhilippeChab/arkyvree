@@ -15,9 +15,10 @@ import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findPlainItem } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
-// A character that picked an inherited entity stores the source id. Deleting
-// the fork's later local copy leaves a tombstone that hides the source, which
-// would orphan that pick — so the delete must count it as in use.
+/**
+ * A character that picked an inherited entity stores the source id. Deleting the fork's later local copy leaves a
+ * tombstone that hides the source, which would orphan that pick — so the delete must count it as in use.
+ */
 async function setup() {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);

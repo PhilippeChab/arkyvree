@@ -7,7 +7,7 @@ import {
   classSpells,
   existingFeatGranted,
   insertOrdinalInName,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
 import {
   formatStringArray,
   listField,
@@ -27,33 +27,6 @@ import {
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
-
-// ---------------------------------------------------------------------------
-// Generate FeatSeed[] TypeScript file
-// ---------------------------------------------------------------------------
-
-/** A feat as a line of a class's feats file: the class feature aptitude as `APT`. */
-function stringifyFeat(feat: FeatSeed, classFeatureAptitude: string, uses: Set<string>): string {
-  const parts = [
-    `name: ${quote(feat.name)}`,
-    `description: ${quote(feat.description)}`,
-    ...(feat.stackable ? ["stackable: true"] : []),
-    ...(feat.selectable !== undefined ? [`selectable: ${feat.selectable}`] : []),
-    `aptitudes: [${feat.aptitudes.map((a) => (a === classFeatureAptitude ? "APT" : quote(a))).join(", ")}]`,
-    ...(feat.modifiers?.length
-      ? [`modifiers: [${feat.modifiers.map((m) => stringifyFeatModifier(m, uses)).join(", ")}]`]
-      : []),
-    ...(feat.requirements?.length
-      ? [`requirements: [${feat.requirements.map((r) => stringifyRequirement(r, uses)).join(", ")}]`]
-      : []),
-    ...(feat.properties?.length ? [`properties: [${feat.properties.map(stringifyProperty).join(", ")}]`] : []),
-  ];
-  return `  { ${parts.join(", ")} },`;
-}
-
-// ---------------------------------------------------------------------------
-// Build classFeatures array from mapping + detected
-// ---------------------------------------------------------------------------
 
 function findMappedName(rawName: string, features: ClassReference["mapping"]["features"]): string | undefined {
   if (!features) return undefined;
@@ -145,30 +118,26 @@ function buildClassFeatures(
   return { classFeatures: features, autoFreeFeats };
 }
 
-/** A class's feats file: its own feats (`buildClassFeatSeeds`), and the domains it picks from (`classDomainPickFeats`). */
-export function generateFeatSeeds(ref: ClassReference): string {
-  const aptitude = ref.mapping.classFeatureAptitude;
-  const uses = new Set<string>();
-  const feats = [...buildClassFeatSeeds(ref), ...classDomainPickFeats(ref)].map((feat) =>
-    stringifyFeat(feat, aptitude, uses),
-  );
-  return [
-    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
-    ...requirementImports(uses),
-    "",
-    `const APT = ${quote(aptitude)};`,
-    "",
-    `export const ${toConstName(ref.raw.name)}_FEATS: FeatSeed[] = [`,
-    ...feats,
-    `];`,
-    "",
-  ].join("\n");
+/** A feat as a line of a class's feats file: the class feature aptitude as `APT`. */
+function stringifyFeat(feat: FeatSeed, classFeatureAptitude: string, uses: Set<string>): string {
+  const parts = [
+    `name: ${quote(feat.name)}`,
+    `description: ${quote(feat.description)}`,
+    ...(feat.stackable ? ["stackable: true"] : []),
+    ...(feat.selectable !== undefined ? [`selectable: ${feat.selectable}`] : []),
+    `aptitudes: [${feat.aptitudes.map((a) => (a === classFeatureAptitude ? "APT" : quote(a))).join(", ")}]`,
+    ...(feat.modifiers?.length
+      ? [`modifiers: [${feat.modifiers.map((m) => stringifyFeatModifier(m, uses)).join(", ")}]`]
+      : []),
+    ...(feat.requirements?.length
+      ? [`requirements: [${feat.requirements.map((r) => stringifyRequirement(r, uses)).join(", ")}]`]
+      : []),
+    ...(feat.properties?.length ? [`properties: [${feat.properties.map(stringifyProperty).join(", ")}]`] : []),
+  ];
+  return `  { ${parts.join(", ")} },`;
 }
 
-// ---------------------------------------------------------------------------
-// Generate ClassSeed TypeScript file
-// ---------------------------------------------------------------------------
-
+/** A class reference's ClassSeed file. */
 export function generateClassSeed(ref: ClassReference): string {
   const detected = ref.detected;
   const mapping = ref.mapping;
@@ -361,5 +330,25 @@ export function generateClassSeed(ref: ClassReference): string {
     ...requirementImports(uses),
     "",
     ...lines,
+  ].join("\n");
+}
+
+/** A class's feats file: its own feats (`buildClassFeatSeeds`), and the domains it picks from (`classDomainPickFeats`). */
+export function generateFeatSeeds(ref: ClassReference): string {
+  const aptitude = ref.mapping.classFeatureAptitude;
+  const uses = new Set<string>();
+  const feats = [...buildClassFeatSeeds(ref), ...classDomainPickFeats(ref)].map((feat) =>
+    stringifyFeat(feat, aptitude, uses),
+  );
+  return [
+    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    ...requirementImports(uses),
+    "",
+    `const APT = ${quote(aptitude)};`,
+    "",
+    `export const ${toConstName(ref.raw.name)}_FEATS: FeatSeed[] = [`,
+    ...feats,
+    `];`,
+    "",
   ].join("\n");
 }

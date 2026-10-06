@@ -9,8 +9,10 @@ import { CHAINING_OPERATORS, MODIFIER_OPERATORS, REQUIREMENT_OPERATORS } from "@
 
 const dialect = new PgDialect();
 
-// Inspect PostgreSQL's normalized text constants only in this drift test.
-// Application code never parses generated schema SQL or queries the catalog.
+/**
+ * Inspect PostgreSQL's normalized text constants only in this drift test. Application code never parses generated
+ * schema SQL or queries the catalog.
+ */
 function operatorValues(definition: string): string[] {
   return [...definition.matchAll(/'((?:[^']|'')*)'::text/g)].map((match) => match[1].replaceAll("''", "'"));
 }

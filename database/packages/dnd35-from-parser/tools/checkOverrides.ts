@@ -1,4 +1,4 @@
-import { classSpells } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { classSpells } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
 import {
   generateClassSeed,
   generateFeatSeeds,

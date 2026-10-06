@@ -1,4 +1,5 @@
-// Shared application definitions, checked against the migrated database by tests.
+/** Shared application definitions, checked against the migrated database by tests. */
+
 /** The requirement operators that compare a number: what a numeric target path offers a requirement. */
 export const NUMERIC_REQUIREMENT_OPERATORS = [
   "equal",

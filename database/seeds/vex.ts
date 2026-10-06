@@ -1,6 +1,6 @@
 import type { CharacterSeed } from "@/database/seeds/helpers.ts";
 
-// Human Sorcerer 3 — Skills: (2+0+1)*4 + (2+0+1)*2 = 18
+/** Human Sorcerer 3 — Skills: (2+0+1)*4 + (2+0+1)*2 = 18 */
 export default {
   raceName: "Human",
   name: "Vex Flamecaller",

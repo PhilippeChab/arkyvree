@@ -4,6 +4,7 @@
  *
  * Usage: bun --env-file=.env.test scripts/db/provision-test-dbs.ts [--workers N] (N: the CPU count by default)
  */
+
 import os from "node:os";
 
 import { cloneDatabase, databaseOf } from "@/scripts/db/databases.ts";

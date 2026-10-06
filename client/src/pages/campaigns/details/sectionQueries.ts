@@ -1,7 +1,8 @@
 /**
- * List queries of the campaign tabs, shared by the sections and the campaign
- * card's hover prefetch so they use the same key and request.
+ * List queries of the campaign tabs, shared by the sections and the campaign card's hover prefetch so they use the same
+ * key and request.
  */
+
 import { infiniteQueryOptions, type QueryClient } from "@tanstack/react-query";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";

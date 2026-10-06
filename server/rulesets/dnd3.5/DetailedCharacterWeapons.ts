@@ -8,10 +8,10 @@ import { WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/shared/dnd3.5/properties/inde
 import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-// Record of weapon key ("setIndex_slotKey") → shared WeaponSlot reference
+/** Record of weapon key ("setIndex_slotKey") → shared WeaponSlot reference */
 type WeaponGroup = Record<string, NonNullable<WeaponSet[keyof WeaponSet]>>;
 
-// Grouping key (normalized) → WeaponGroup
+/** Grouping key (normalized) → WeaponGroup */
 type WeaponsData = Record<string, WeaponGroup>;
 
 /**

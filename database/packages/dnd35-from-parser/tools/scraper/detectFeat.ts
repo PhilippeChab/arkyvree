@@ -1,7 +1,7 @@
 import {
   loadBonusFeatAptitudes,
   loadBonusFeatClassLevels,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/feats.ts";
 import { parseAlignmentRequirement } from "@/database/packages/dnd35-from-parser/tools/scraper/alignment.ts";
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
 import { familyOptions, featWithoutChoice } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
@@ -27,10 +27,6 @@ import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-// ---------------------------------------------------------------------------
-// Feat type → aptitudes
-// ---------------------------------------------------------------------------
-
 const FEAT_TYPE_APTITUDES: Record<string, string[]> = {
   general: ["General"],
   fighter: ["General", "Fighter Bonus Feat"],
@@ -38,10 +34,10 @@ const FEAT_TYPE_APTITUDES: Record<string, string[]> = {
   "item creation": ["General", "Wizard Bonus Feat"],
 };
 
-// Complete Arcane's draconic feats have no type of their own: their name makes them a family
+/** Complete Arcane's draconic feats have no type of their own: their name makes them a family */
 const DRACONIC_FAMILY = "Draconic";
 
-// Patterns that extractFeatPrereqs should skip — these are class abilities, not feat names
+/** Patterns that extractFeatPrereqs should skip — these are class abilities, not feat names */
 const ABILITY_PREREQ_PATTERNS = [
   /^sneak attack ability$/i,
   /^sneak attack \+\d+d\d+$/i,
@@ -63,21 +59,13 @@ const ABILITY_PREREQ_PATTERNS = [
   /^Weapon Proficiency\b/i,
 ];
 
-// ---------------------------------------------------------------------------
-// Detect requirements + aptitudes for all feats
-// ---------------------------------------------------------------------------
-
-// The alignment "Relevant alignment" asks of a feat for an alignment's spells ("Spell Focus (Chaos)")
+/** The alignment "Relevant alignment" asks of a feat for an alignment's spells ("Spell Focus (Chaos)") */
 const RELEVANT_ALIGNMENTS: Record<string, string> = {
   chaos: "Any chaotic",
   evil: "Any evil",
   good: "Any good",
   law: "Any lawful",
 };
-
-// ---------------------------------------------------------------------------
-// Extract feat names from prerequisite text
-// ---------------------------------------------------------------------------
 
 function isCommonPhrase(text: string): boolean {
   const lower = text.toLowerCase();
@@ -94,10 +82,80 @@ function isCommonPhrase(text: string): boolean {
   return false;
 }
 
+function isStackable(entry: FeatReference["raw"][number]): boolean {
+  const special = (entry.special ?? "").toLowerCase();
+  if (/do not stack|don't stack|effects are not cumulative/i.test(special)) return false;
+  return (
+    /(?:can|may) (?:gain|take).*multiple times/i.test(special) ||
+    /select this feat multiple times/i.test(special) ||
+    special.includes("its effects stack")
+  );
+}
+
+function detectTemplate(entry: FeatReference["raw"][number]): FeatReference["detected"][string]["template"] {
+  const text = (entry.benefit + " " + (entry.special ?? "")).toLowerCase();
+
+  // Weapon templates: "selected weapon", "using the weapon you selected"
+  if (/selected weapon|the weapon you selected|type of weapon/.test(text)) {
+    return { type: "weapon", familyName: entry.name };
+  }
+
+  // Crossbow-specific: "chosen type of crossbow"
+  if (/type of crossbow|chosen.*crossbow/.test(text)) {
+    return { type: "crossbow", familyName: entry.name };
+  }
+
+  // Skill templates: a feat taken again for another skill, not one about any skill ("as if you had 1/2 rank in that
+  // skill": Jack of All Trades)
+  if (/the skill you select|applies to a new skill/.test(text)) {
+    return { type: "skill", familyName: entry.name };
+  }
+
+  // School templates: a feat taken again for another school, not one naming a school ("a school of magic you have
+  // access to": Precocious Apprentice)
+  if (/school of magic you select|chosen school|selected school|applies to a new school/.test(text)) {
+    return { type: "school", familyName: entry.name };
+  }
+
+  // "Each time you take the feat, it applies to a new type of exotic weapon"
+  if (/new type of.*weapon/.test(text)) {
+    return { type: "weapon", familyName: entry.name };
+  }
+
+  return undefined;
+}
+
+/** "Any (other) metamagic feat": one feat of the family; "any two luck feats": that many of them. */
+export function familyFeatRequirements(text: string): RequirementEntry[] {
+  const counts = Object.keys(NUMBER_WORDS).join("|");
+  return FEAT_FAMILIES.flatMap((family) => {
+    const match = new RegExp(`\\bany (?:other )?(?:(${counts}) )?${family} feats?\\b`, "i").exec(text);
+    if (!match) return [];
+    const slug = stripSeparators(family);
+    return [
+      match[1] ? gte(`feats.${slug}.count`, NUMBER_WORDS[match[1].toLowerCase()]) : eq(`feats.${slug}.*.possessed`),
+    ];
+  });
+}
+
 function titleCaseFeat(s: string): string {
   // Most feat names from SRD are already in a reasonable case
   // Just ensure first letter of each word is uppercase
   return s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+}
+
+/** The feats a feat's benefit or special text implies it requires. */
+function detectImplicitFeatPrereqs(entry: FeatReference["raw"][number]): string[] {
+  const feats: string[] = [];
+  const text = entry.benefit + " " + (entry.special ?? "");
+
+  // "already have applied the X feat"
+  const appliedMatch = text.match(/already (?:have )?applied the\s+([A-Z][A-Za-z\s]+?)\s+feat/i);
+  if (appliedMatch) {
+    feats.push(titleCaseFeat(appliedMatch[1].trim()));
+  }
+
+  return feats;
 }
 
 function extractFeatPrereqs(text: string): string[] {
@@ -107,7 +165,6 @@ function extractFeatPrereqs(text: string): string[] {
   // They appear as capitalized names, sometimes with additional context
   // We need to match things like "Power Attack", "Combat Expertise", "Dodge"
   // but NOT ability scores, BAB, skill ranks, or generic phrases
-
   // Remove ability scores, BAB, base save bonus, skill rank, and caster level clauses first
   const cleaned = text
     .replace(/(?:Base attack bonus|BAB)[:\s]+\+{1,2}\d+/gi, "")
@@ -150,23 +207,6 @@ function extractFeatPrereqs(text: string): string[] {
   }
 
   return feats;
-}
-
-// ---------------------------------------------------------------------------
-// Prerequisite text → RequirementEntry[]
-// ---------------------------------------------------------------------------
-
-/** "Any (other) metamagic feat": one feat of the family; "any two luck feats": that many of them. */
-export function familyFeatRequirements(text: string): RequirementEntry[] {
-  const counts = Object.keys(NUMBER_WORDS).join("|");
-  return FEAT_FAMILIES.flatMap((family) => {
-    const match = new RegExp(`\\bany (?:other )?(?:(${counts}) )?${family} feats?\\b`, "i").exec(text);
-    if (!match) return [];
-    const slug = stripSeparators(family);
-    return [
-      match[1] ? gte(`feats.${slug}.count`, NUMBER_WORDS[match[1].toLowerCase()]) : eq(`feats.${slug}.*.possessed`),
-    ];
-  });
 }
 
 function parsePrerequisiteText(text: string): {
@@ -475,75 +515,7 @@ function parsePrerequisiteText(text: string): {
   return { requirements: reqs, featNameMap, unresolvedPrereqs };
 }
 
-// ---------------------------------------------------------------------------
-// Detect implicit feat prerequisites from benefit/special text
-// e.g. "to which you already have applied the Spell Focus feat"
-// ---------------------------------------------------------------------------
-
-function detectImplicitFeatPrereqs(entry: FeatReference["raw"][number]): string[] {
-  const feats: string[] = [];
-  const text = entry.benefit + " " + (entry.special ?? "");
-
-  // "already have applied the X feat"
-  const appliedMatch = text.match(/already (?:have )?applied the\s+([A-Z][A-Za-z\s]+?)\s+feat/i);
-  if (appliedMatch) {
-    feats.push(titleCaseFeat(appliedMatch[1].trim()));
-  }
-
-  return feats;
-}
-
-// ---------------------------------------------------------------------------
-// Template feat detection
-// ---------------------------------------------------------------------------
-
-function isStackable(entry: FeatReference["raw"][number]): boolean {
-  const special = (entry.special ?? "").toLowerCase();
-  if (/do not stack|don't stack|effects are not cumulative/i.test(special)) return false;
-  return (
-    /(?:can|may) (?:gain|take).*multiple times/i.test(special) ||
-    /select this feat multiple times/i.test(special) ||
-    special.includes("its effects stack")
-  );
-}
-
-function detectTemplate(entry: FeatReference["raw"][number]): FeatReference["detected"][string]["template"] {
-  const text = (entry.benefit + " " + (entry.special ?? "")).toLowerCase();
-
-  // Weapon templates: "selected weapon", "using the weapon you selected"
-  if (/selected weapon|the weapon you selected|type of weapon/.test(text)) {
-    return { type: "weapon", familyName: entry.name };
-  }
-
-  // Crossbow-specific: "chosen type of crossbow"
-  if (/type of crossbow|chosen.*crossbow/.test(text)) {
-    return { type: "crossbow", familyName: entry.name };
-  }
-
-  // Skill templates: a feat taken again for another skill, not one about any skill ("as if you had 1/2 rank in that
-  // skill": Jack of All Trades)
-  if (/the skill you select|applies to a new skill/.test(text)) {
-    return { type: "skill", familyName: entry.name };
-  }
-
-  // School templates: a feat taken again for another school, not one naming a school ("a school of magic you have
-  // access to": Precocious Apprentice)
-  if (/school of magic you select|chosen school|selected school|applies to a new school/.test(text)) {
-    return { type: "school", familyName: entry.name };
-  }
-
-  // "Each time you take the feat, it applies to a new type of exotic weapon"
-  if (/new type of.*weapon/.test(text)) {
-    return { type: "weapon", familyName: entry.name };
-  }
-
-  return undefined;
-}
-
-// ---------------------------------------------------------------------------
-// Build mapping (merged from detected + overrides)
-// ---------------------------------------------------------------------------
-
+/** A feat reference's mapping: what was detected, with its overrides merged in. */
 export function buildFeatMapping(
   raw: FeatReference["raw"],
   detected: FeatReference["detected"],
@@ -589,10 +561,7 @@ export function buildFeatMapping(
   return mapping;
 }
 
-// ---------------------------------------------------------------------------
-// Modifier detection from benefit text
-// ---------------------------------------------------------------------------
-
+/** The modifiers a feat's benefit text gives. */
 export function detectModifiers(benefit: string): ModifierDetection {
   const modifiers: ModifierSeed[] = [];
   const errors: string[] = [];

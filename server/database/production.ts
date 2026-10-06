@@ -1,11 +1,10 @@
+/** The database outside the tests (index.ts picks it): a pool on DATABASE_URL, and the Db and transactions on it. */
+
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { NodePgClient } from "drizzle-orm/node-postgres";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { type PgQueryResultHKT, type PgTransaction } from "drizzle-orm/pg-core";
 
-/**
- * PRODUCTION DATABASE IMPLEMENTATION
- */
 import * as relations from "@/drizzle/relations.ts";
 import * as schema from "@/drizzle/schema.ts";
 import { clearRequestCache } from "@/server/database/requestCache.ts";

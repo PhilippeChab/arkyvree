@@ -1,6 +1,6 @@
-import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
+/** Builders the content's modifiers are written with, as its requirements are with `requirements.ts`'s. */
 
-// Builders the content's modifiers are written with, as its requirements are with `requirements.ts`'s.
+import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 
 /** `value` added to `target`. */
 export function bonus(target: string, value: number): Modifier {

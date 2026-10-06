@@ -22,8 +22,6 @@ class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersI
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
   async delete(db: Db, where: { klassLevelId: string } | { powerId: string } | { aptitudeId: string }) {
     return await db
       .delete(this.table)
@@ -36,8 +34,6 @@ class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersI
       )
       .returning();
   }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
 }
 
 export default KlassLevelPowersRepository;

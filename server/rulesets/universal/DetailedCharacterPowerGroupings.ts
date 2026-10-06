@@ -16,7 +16,9 @@ export type PowerDc = {
   readonly total: number;
 };
 
-// A spell's DC is its casting class's: grouping key (normalized) → spell → class (its aptitude's slug) → shared PowerDc
+/**
+ * A spell's DC is its casting class's: grouping key (normalized) → spell → class (its aptitude's slug) → shared PowerDc
+ */
 export type PowerDcsByClass = Record<string, PowerDc>;
 
 const NAVIGATABLE_POWER_DC_PATHS = [

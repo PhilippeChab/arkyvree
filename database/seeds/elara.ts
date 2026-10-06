@@ -1,6 +1,6 @@
 import type { CharacterSeed } from "@/database/seeds/helpers.ts";
 
-// Elf Wizard 3 — Skills: (2+4)*4 + (2+4)*2 = 36
+/** Elf Wizard 3 — Skills: (2+4)*4 + (2+4)*2 = 36 */
 export default {
   raceName: "Elf",
   name: "Elara Starweaver",

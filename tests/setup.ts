@@ -1,7 +1,8 @@
 /**
- * Preloaded before every backend test file (bunfig.toml). Each test runs in
- * its own transaction, rolled back afterwards, against a fake storage backend.
+ * Preloaded before every backend test file (bunfig.toml). Each test runs in its own transaction, rolled back
+ * afterwards, against a fake storage backend.
  */
+
 import { afterEach, beforeEach } from "bun:test";
 
 import { TransactionRollbackError } from "drizzle-orm/errors";

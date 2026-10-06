@@ -57,7 +57,6 @@ export function useDirectUpload(slot: SlotParams) {
       );
 
       // Straight to storage, outside the API client: check the status here.
-
       const putRes = await fetch(presignedUrl, {
         method: "PUT",
         body: file,

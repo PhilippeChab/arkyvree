@@ -3,10 +3,10 @@ import { isRecord } from "@/shared/isRecord.ts";
 /** Replacements, applied in order. */
 type Replacements = [RegExp, string][];
 
-// All known source book names — used across multiple sanitization rules
+/** All known source book names — used across multiple sanitization rules */
 const BOOK =
   "(?:Player's Handbook|Dungeon Master's Guide|Monster Manual|Complete Divine|Complete Warrior|Complete Arcane|Complete Adventurer)";
-// Matches "Book" or "the Book" with optional trailing "book"/"handbook"/"sourcebook"
+/** Matches "Book" or "the Book" with optional trailing "book"/"handbook"/"sourcebook" */
 const THE_BOOK = `(?:the )?${BOOK}(?:\\s+(?:book|handbook|sourcebook))?`;
 
 /** Smart quotes, dashes, ellipses and non-breaking spaces, as entities or characters, and garbled apostrophes. */

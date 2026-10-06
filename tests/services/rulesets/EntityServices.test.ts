@@ -1,8 +1,8 @@
 /**
- * The contract every ruleset entity service keeps: CRUD, ownership, lineage,
- * copy-on-write and customization cleanup. Each entity's own test file only
- * covers what is specific to it.
+ * The contract every ruleset entity service keeps: CRUD, ownership, lineage, copy-on-write and customization cleanup.
+ * Each entity's own test file only covers what is specific to it.
  */
+
 import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";

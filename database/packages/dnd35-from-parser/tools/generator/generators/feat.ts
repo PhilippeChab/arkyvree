@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-import { CLASS_FEAT_FAMILY_NAMES } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { CLASS_FEAT_FAMILY_NAMES } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
 import {
   escapeTemplate,
   featLines,
@@ -37,10 +37,6 @@ import { spellWeaponFocusFeats, weaponProficiencyFeats } from "@/database/packag
 import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchools.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
-
-// ---------------------------------------------------------------------------
-// The feats a feat reference makes
-// ---------------------------------------------------------------------------
 
 type FeatEntry = {
   entry: FeatReference["raw"][number];
@@ -120,10 +116,6 @@ const WEAPON_LISTS: Record<string, string> = {
   "Exotic Weapon Proficiency": "EXOTIC_WEAPONS",
 };
 
-// ---------------------------------------------------------------------------
-// Generate FeatSeed[] TypeScript file from a FeatReference
-// ---------------------------------------------------------------------------
-
 /** Where each name the generated feats use comes from, in the order the imports are written. */
 const IMPORTS: ImportTable = [
   ...REQUIREMENT_IMPORTS,
@@ -150,84 +142,6 @@ const IMPORTS: ImportTable = [
 
 /** Each book's template families, read once: every class of the book asks for them. */
 const bookTemplateNamesCache = new Map<string, Set<string>>();
-
-/**
- * What a feat reference makes: its feats by feat type, and its template families. An epic feat is left out unless an
- * override keeps it.
- */
-function referenceFeats(ref: FeatReference) {
-  const kept: FeatEntry[] = [];
-  for (const entry of ref.raw) {
-    const mapped = ref.mapping[entry.name];
-    if (!mapped || mapped.skip) continue;
-    if (entry.featType === "epic" && ref.overrides?.[entry.name]?.skip !== false) continue;
-    kept.push({ entry, detected: ref.detected[entry.name], mapped });
-  }
-
-  const byType = new Map<string, FeatSeed[]>();
-  const templates: TemplateFamily[] = [];
-  for (const { entry, detected, mapped } of kept) {
-    if (mapped.template) {
-      const { type, familyName } = mapped.template;
-      templates.push({
-        type,
-        constName: toCamelCase(familyName),
-        familyName,
-        aptitudes: mapped.aptitudes ?? [],
-        requirements: mapped.requirements ?? [],
-        featNameMap: { ...(detected?.featNameMap ?? {}), ...(mapped.featNameMap ?? {}) },
-        modifiers: mapped.modifiers ?? [],
-        description: mapped.description ?? entry.benefit,
-      });
-      continue;
-    }
-    const name = normalizeName(entry.name);
-    const feats = byType.get(entry.featType) ?? [];
-    byType.set(entry.featType, feats);
-    feats.push({
-      name,
-      description: truncateDesc(mapped.description ?? entry.benefit),
-      ...(mapped.stackable ? { stackable: true } : {}),
-      ...(mapped.selectable === false ? { selectable: false } : {}),
-      aptitudes: mapped.aptitudes ?? [],
-      requirements: mapped.requirements ?? [],
-      modifiers: [
-        ...(mapped.modifiers ?? []),
-        ...autoCompanionGrantModifiers(name, mapped.description ?? entry.benefit ?? ""),
-      ],
-      properties: mapped.properties ?? [],
-    });
-  }
-  return {
-    byType,
-    templates,
-    templateNames: new Set(kept.filter(({ mapped }) => mapped.template).map(({ entry }) => entry.name)),
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** The slug of the feat a `feats.<slug>.possessed` check names. */
-function featSlug(req: RequirementCondition): string {
-  return req.target.replace(/^feats\./, "").replace(/\.possessed$/, "");
-}
-
-// ---------------------------------------------------------------------------
-// Emit template feat expansion
-// ---------------------------------------------------------------------------
-
-/** A book's template families, from its feat reference: none for a book without feats. */
-function bookTemplateNames(book: string): Set<string> {
-  let names = bookTemplateNamesCache.get(book);
-  if (!names) {
-    const path = join(REFERENCE_DIR, book, "feats.json");
-    names = existsSync(path) ? referenceFeats(loadReference(path, "feat")).templateNames : new Set<string>();
-    bookTemplateNamesCache.set(book, names);
-  }
-  return names;
-}
 
 /** Ends a template: its feats' family. */
 function closeTemplate({ lines }: FeatFile, familyName: string): void {
@@ -291,6 +205,11 @@ function featRequirement({ uses }: FeatFile, featName: string, perItem: boolean,
   return perItem ? `eq(feat(\`${escapeTemplate(featName)}: \${${variable}}\`))` : `eq(feat(${quote(featName)}))`;
 }
 
+/** The slug of the feat a `feats.<slug>.possessed` check names. */
+function featSlug(req: RequirementCondition): string {
+  return req.target.replace(/^feats\./, "").replace(/\.possessed$/, "");
+}
+
 /**
  * A template's `requirements`, for its item (`variable`): a family it requires (`families`) is that family's feat for
  * the item (Greater Spell Focus requires Spell Focus in its school); any other feat, and any other requirement, as it
@@ -335,6 +254,71 @@ function openTemplate(
   lines.push(`  description: \`${description}\`,`);
   lines.push(`  generated: true,`);
   lines.push(`  aptitudes: [${aptitudes.map(quote).join(", ")}],`);
+}
+
+/**
+ * What a feat reference makes: its feats by feat type, and its template families. An epic feat is left out unless an
+ * override keeps it.
+ */
+function referenceFeats(ref: FeatReference) {
+  const kept: FeatEntry[] = [];
+  for (const entry of ref.raw) {
+    const mapped = ref.mapping[entry.name];
+    if (!mapped || mapped.skip) continue;
+    if (entry.featType === "epic" && ref.overrides?.[entry.name]?.skip !== false) continue;
+    kept.push({ entry, detected: ref.detected[entry.name], mapped });
+  }
+
+  const byType = new Map<string, FeatSeed[]>();
+  const templates: TemplateFamily[] = [];
+  for (const { entry, detected, mapped } of kept) {
+    if (mapped.template) {
+      const { type, familyName } = mapped.template;
+      templates.push({
+        type,
+        constName: toCamelCase(familyName),
+        familyName,
+        aptitudes: mapped.aptitudes ?? [],
+        requirements: mapped.requirements ?? [],
+        featNameMap: { ...(detected?.featNameMap ?? {}), ...(mapped.featNameMap ?? {}) },
+        modifiers: mapped.modifiers ?? [],
+        description: mapped.description ?? entry.benefit,
+      });
+      continue;
+    }
+    const name = normalizeName(entry.name);
+    const feats = byType.get(entry.featType) ?? [];
+    byType.set(entry.featType, feats);
+    feats.push({
+      name,
+      description: truncateDesc(mapped.description ?? entry.benefit),
+      ...(mapped.stackable ? { stackable: true } : {}),
+      ...(mapped.selectable === false ? { selectable: false } : {}),
+      aptitudes: mapped.aptitudes ?? [],
+      requirements: mapped.requirements ?? [],
+      modifiers: [
+        ...(mapped.modifiers ?? []),
+        ...autoCompanionGrantModifiers(name, mapped.description ?? entry.benefit ?? ""),
+      ],
+      properties: mapped.properties ?? [],
+    });
+  }
+  return {
+    byType,
+    templates,
+    templateNames: new Set(kept.filter(({ mapped }) => mapped.template).map(({ entry }) => entry.name)),
+  };
+}
+
+/** A book's template families, from its feat reference: none for a book without feats. */
+function bookTemplateNames(book: string): Set<string> {
+  let names = bookTemplateNamesCache.get(book);
+  if (!names) {
+    const path = join(REFERENCE_DIR, book, "feats.json");
+    names = existsSync(path) ? referenceFeats(loadReference(path, "feat")).templateNames : new Set<string>();
+    bookTemplateNamesCache.set(book, names);
+  }
+  return names;
 }
 
 /** A template's description, each mention of the chosen item made the item (`variable`). */
@@ -478,6 +462,7 @@ export function requirableFamilies(book: string, own = bookTemplateNames(book)):
   return new Set([...own, ...(book === "srd" ? [] : bookTemplateNames("srd")), ...CLASS_FEAT_FAMILY_NAMES]);
 }
 
+/** A feat reference's FeatSeed[] file. */
 export function generateFeatSeeds(ref: FeatReference): string {
   const { byType, templates, templateNames } = referenceFeats(ref);
   const families = requirableFamilies(ref._meta.book, templateNames);

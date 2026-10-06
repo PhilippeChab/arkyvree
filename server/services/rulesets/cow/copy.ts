@@ -104,7 +104,7 @@ export async function copyEntityCustomizationsToMany(
   );
 }
 
-// Copy customizations from source entity to target entity
+/** Copy customizations from source entity to target entity */
 export async function copyEntityCustomizations(
   tx: Db,
   _sourceEntityId: string,
@@ -181,7 +181,7 @@ async function copyKlassLevels(
   );
 }
 
-// Copy relationship data (join tables) for a single entity
+/** Copy relationship data (join tables) for a single entity */
 export async function copyEntityRelationships(
   tx: Db,
   entityType: EntityType,

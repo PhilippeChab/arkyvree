@@ -1,3 +1,5 @@
+/** The d&d 3.5 Add Level wizard: opening it, planning its levels and walking its steps. */
+
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { openActionsMenu } from "@/tests/e2e/support/page.ts";
@@ -32,8 +34,6 @@ async function fillPools(wizard: Locator, { skipOptional }: { skipOptional: bool
   }
   throw new Error("The pools never filled up");
 }
-
-/** The d&d 3.5 Add Level wizard: opening it, planning its levels and walking its steps. */
 
 /** Clicks `button` to finish the wizard, which must take the levels without warnings. */
 export async function finishWithoutWarnings(wizard: Locator, button = /^Finish All$/) {

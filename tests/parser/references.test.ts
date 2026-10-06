@@ -4,10 +4,9 @@ import { join } from "node:path";
 
 import {
   buildMagicItemSeeds,
-  buildRaceSeeds,
   seededMagicItems,
-  seededRaces,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
+import { buildRaceSeeds, seededRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
 import {
   classReferences,
   loadReference,

@@ -10,10 +10,11 @@ export const authSessionRateLimit = limitRate({ windowMs: 15 * MINUTE, limit: 60
 
 export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
 
-// Each direct-upload commits a blob row + S3 object that the sweep won't
-// reclaim until UNATTACHED_BLOB_TTL_MS (shared/attachments.ts) after
-// creation. Cap per-IP creation rate so a single scripted client can't
-// bloat storage at will.
+/**
+ * Each direct-upload commits a blob row + S3 object that the sweep won't reclaim until UNATTACHED_BLOB_TTL_MS
+ * (shared/attachments.ts) after creation. Cap per-IP creation rate so a single scripted client can't bloat storage at
+ * will.
+ */
 export const attachmentUploadRateLimit = limitRate({ windowMs: MINUTE, limit: 20 });
 
 export const exportRateLimit = limitRate({ windowMs: MINUTE, limit: 5 });

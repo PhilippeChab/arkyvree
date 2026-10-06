@@ -21,10 +21,11 @@ export function toSafeUser(user: InferSelectModel<typeof usersInAccount>) {
   return { ...safeUser, hasPassword: !!passwordDigest };
 }
 
-// Conversion cleanup: when a request reaches sign-in / verifyEmail / Google
-// while still carrying a demo cookie, hard-delete the demo user the cookie
-// points at. CASCADE wipes their fork/character/etc. immediately rather than
-// waiting for lazy recycle on the next /api/demo/start.
+/**
+ * Conversion cleanup: when a request reaches sign-in / verifyEmail / Google while still carrying a demo cookie,
+ * hard-delete the demo user the cookie points at. CASCADE wipes their fork/character/etc. immediately rather than
+ * waiting for lazy recycle on the next /api/demo/start.
+ */
 export async function purgeDemoSessionUser(tx: Db, sessionId: string | undefined) {
   if (!sessionId) return;
   const session = await Sessions.findOne(tx, { id: sessionId });

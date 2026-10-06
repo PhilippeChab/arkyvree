@@ -32,7 +32,7 @@ function featLabel(feat: LevelFeatRow) {
   return levelFeatLabel(feat.name, feat.aptitudeName);
 }
 
-// Feats in the form's (label) order, like ClassLevelFields keeps them.
+/** Feats in the form's (label) order, like ClassLevelFields keeps them. */
 function sortedFeats(level: ClassLevel) {
   return [...level.feats].sort((a, b) => featLabel(a).localeCompare(featLabel(b)));
 }

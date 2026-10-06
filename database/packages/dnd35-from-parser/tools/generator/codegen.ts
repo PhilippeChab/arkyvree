@@ -14,10 +14,6 @@ import type {
 /** Modules and the names a generated file can import from them, in the order its imports list them. */
 export type ImportTable = [string, string[]][];
 
-// ---------------------------------------------------------------------------
-// Requirement stringification
-// ---------------------------------------------------------------------------
-
 /** The builders of content/requirements.ts the generated code writes checks with. */
 const BUILDERS = { eq, eqNum, gte, eqStr };
 
@@ -35,22 +31,6 @@ export const MAX_CLASS_DESC = MAX_DESC;
 export const REQUIREMENT_IMPORTS: ImportTable = [
   ["@/database/packages/dnd35/content/requirements.ts", ["and", "eq", "eqNum", "eqStr", "feat", "gte", "or"]],
 ];
-
-// ---------------------------------------------------------------------------
-// Indentation
-// ---------------------------------------------------------------------------
-
-function indent(text: string, level: number): string {
-  const prefix = "  ".repeat(level);
-  return text
-    .split("\n")
-    .map((line) => (line ? prefix + line : line))
-    .join("\n");
-}
-
-// ---------------------------------------------------------------------------
-// String escaping
-// ---------------------------------------------------------------------------
 
 /**
  * The builder the generated code writes `check` with: one that builds that very check from its target and value. A
@@ -73,6 +53,14 @@ function escapeString(s: string): string {
   return JSON.stringify(String(s)).slice(1, -1);
 }
 
+function indent(text: string, level: number): string {
+  const prefix = "  ".repeat(level);
+  return text
+    .split("\n")
+    .map((line) => (line ? prefix + line : line))
+    .join("\n");
+}
+
 /** `s` as a string literal. */
 export function quote(s: string): string {
   return `"${escapeString(s)}"`;
@@ -87,10 +75,6 @@ function builderCall(
   return `${name}(${quote(target)}, ${takes === "number" ? Number(value) : quote(value)})`;
 }
 
-// ---------------------------------------------------------------------------
-// Modifier stringification
-// ---------------------------------------------------------------------------
-
 /** A modifier's fields written as code, its target as `target`. */
 function modifierFields(mod: ModifierEffect, target: string): string[] {
   return [
@@ -101,10 +85,6 @@ function modifierFields(mod: ModifierEffect, target: string): string[] {
   ];
 }
 
-// ---------------------------------------------------------------------------
-// Naming helpers
-// ---------------------------------------------------------------------------
-
 /** A `key: [...]` field of `items`, one per line, after `prefix` (its indentation); none when there are no items. */
 export function listField(key: string, items: string[], prefix: string): string[] {
   return items.length === 0 ? [] : [`${prefix}${key}: [`, ...items.map((item) => `${prefix}  ${item},`), `${prefix}],`];
@@ -113,6 +93,13 @@ export function listField(key: string, items: string[], prefix: string): string[
 /** `s` escaped for a template literal: as for a string literal, and its backticks and `${` too. */
 export function escapeTemplate(s: string): string {
   return escapeString(s).replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+}
+
+export function formatStringArray(items: string[], indentLevel = 1): string {
+  const inner = items.map(quote).join(", ");
+  if (inner.length < 100) return `[${inner}]`;
+  const lines = items.map((s) => indent(`${quote(s)},`, indentLevel + 1));
+  return `[\n${lines.join("\n")}\n${indent("]", indentLevel)}`;
 }
 
 /** The imports of the names a file's code uses (`uses`), from `table`. A name `table` doesn't list throws. */
@@ -214,15 +201,4 @@ export function toConstName(name: string): string {
 
 export function truncateDesc(text: string, maxLen = MAX_DESC): string {
   return normalizeDescription(text, maxLen);
-}
-
-// ---------------------------------------------------------------------------
-// Array formatting
-// ---------------------------------------------------------------------------
-
-export function formatStringArray(items: string[], indentLevel = 1): string {
-  const inner = items.map(quote).join(", ");
-  if (inner.length < 100) return `[${inner}]`;
-  const lines = items.map((s) => indent(`${quote(s)},`, indentLevel + 1));
-  return `[\n${lines.join("\n")}\n${indent("]", indentLevel)}`;
 }

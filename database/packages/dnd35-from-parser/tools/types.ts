@@ -1,3 +1,9 @@
+/**
+ * References as loaded (`loadReference`): what the file stores (`_meta`, `raw`, `overrides`), with `detected` and
+ * `mapping` derived from it (items and magic items have only `detected`; spells and wizard schools, neither). The file
+ * itself holds only `StoredReference` (tools/references.ts).
+ */
+
 import type { Modifier, ModifierSeed, Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 
 type Saves = { fortitude: SaveType; reflex: SaveType; will: SaveType };
@@ -83,10 +89,6 @@ type MagicItemFields = ItemFields & {
    */
   template?: boolean;
 };
-
-// References as loaded (`loadReference`): what the file stores (`_meta`, `raw`, `overrides`), with `detected` and
-// `mapping` derived from it (items and magic items have only `detected`; spells and wizard schools, neither). The
-// file itself holds only `StoredReference` (tools/references.ts).
 
 export type BabType = "good" | "medium" | "poor";
 export type SaveType = "good" | "poor";

@@ -5,7 +5,7 @@ import { apiResponse, openActionsMenu, selectOption, uniqueName } from "@/tests/
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
 
-/*
+/**
  * A fork's own entities of each kind with a page of its own: created from its section, renamed on its page (surviving a
  * reload), and deleted from there.
  */

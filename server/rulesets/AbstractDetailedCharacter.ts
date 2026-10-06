@@ -99,14 +99,14 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     not_empty: "is not empty",
   };
 
-  // ── Context data ──────────────────────────────────────────────────
+  // Context data
   protected ruleset: Ruleset | undefined = undefined;
 
   protected player: Player | undefined = undefined;
 
   protected campaign: Campaign | undefined = undefined;
 
-  // ── Ruleset data ──────────────────────────────────────────────────
+  // Ruleset data
   protected rulesetAbilities: RulesetAbility[] = [];
 
   protected rulesetSaves: RulesetSave[] = [];
@@ -125,7 +125,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
   protected rulesetKlasses: Klass[] = [];
 
-  // ── Character data ────────────────────────────────────────────────
+  // Character data
   protected race: RaceWithPMR = {} as RaceWithPMR;
 
   protected languages: Language[] = [];
@@ -150,7 +150,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
   protected powers: PowerWithPMR[] = [];
 
-  // ── Derived data ──────────────────────────────────────────────────
+  // Derived data
   protected klassLevelFeatCountsByAptitudeId: Record<string, number> = {};
 
   protected klassLevelPowerCountsByAptitudeId: Record<string, number> = {};
@@ -159,7 +159,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
   protected featListIds: Set<string> = new Set();
 
-  // ── Modifier/requirement collections ──────────────────────────────
+  // Modifier/requirement collections
   protected holders: Holders | null = null;
 
   protected modifiers: Modifier[] = [];
@@ -174,7 +174,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
   protected validRulesetIds = new Set<string>();
 
-  // ── Universal sub-systems (initialized by subclass constructor) ──
+  // Universal sub-systems (initialized by subclass constructor)
   protected detailedCharacterAbilities!: DetailedCharacterAbilities;
 
   protected detailedCharacterClasses!: DetailedCharacterClasses;

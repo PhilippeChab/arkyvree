@@ -7,10 +7,8 @@ import { unreadCount } from "@/tests/e2e/support/notifications.ts";
 import { uniqueName } from "@/tests/e2e/support/page.ts";
 import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
-/*
- * What the server pushes to an open page over its websocket. The bell also refetches every minute on its own, so the
- * test waits for the push itself, then for the bell it updates.
- */
+// What the server pushes to an open page over its websocket. The bell also refetches every minute on its own, so the
+// test waits for the push itself, then for the bell it updates.
 test.describe("An open page", () => {
   test("counts a new notification on its bell as it comes, without a reload", async ({
     page,

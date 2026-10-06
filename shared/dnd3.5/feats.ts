@@ -1,5 +1,7 @@
-// Class features each class that has one seeds as a feat of its own, "Sneak Attack (Rogue)": a prerequisite checks
-// any of them, by the feature's name ("Sneak attack +2d6")
+/**
+ * Class features each class that has one seeds as a feat of its own, "Sneak Attack (Rogue)": a prerequisite checks any
+ * of them, by the feature's name ("Sneak attack +2d6")
+ */
 export const CLASS_FEATURE_FAMILIES = [
   "Animal Companion",
   "Bardic Music",
@@ -19,8 +21,10 @@ export const CLASS_FEATURE_FAMILIES = [
   "Trapfinding",
 ] as const;
 
-// The families of feats the seeded rules have (a feat's FEAT_FAMILY property): the values the customization offers, and
-// the families an "any X feat" prerequisite names. A feat type's family has its name (a luck feat is of Luck)
+/**
+ * The families of feats the seeded rules have (a feat's FEAT_FAMILY property): the values the customization offers, and
+ * the families an "any X feat" prerequisite names. A feat type's family has its name (a luck feat is of Luck)
+ */
 export const FEAT_FAMILIES = [
   // Taken for a weapon, a school of magic or a skill
   "Weapon Focus",

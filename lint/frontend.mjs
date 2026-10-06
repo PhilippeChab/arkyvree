@@ -13,6 +13,7 @@
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
+
 import { repoPath } from "./paths.mjs";
 
 /** Whether a JSX element has the attribute `name`. */

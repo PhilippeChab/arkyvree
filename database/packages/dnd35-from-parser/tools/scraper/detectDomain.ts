@@ -11,12 +11,7 @@ import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-// ---------------------------------------------------------------------------
-// Skill name → slug mapping (extends base with paren-stripped variants)
-// ---------------------------------------------------------------------------
-
-// "Knowledge (nature)" → "knowledgenature", etc.
-// Also index without parens: "knowledge nature" → "knowledgenature"
+/** Skill names → slugs, the base's and each without its parentheses: "Knowledge (nature)" and "knowledge nature" → "knowledgenature". */
 const SKILL_MAP: Record<string, string> = {
   ...BASE_SKILL_MAP,
   ...Object.fromEntries(
@@ -26,10 +21,7 @@ const SKILL_MAP: Record<string, string> = {
   ),
 };
 
-// ---------------------------------------------------------------------------
-// All Knowledge skills for "Add all Knowledge skills" pattern
-// ---------------------------------------------------------------------------
-
+/** Every Knowledge skill, which "Add all Knowledge skills" names. */
 const ALL_KNOWLEDGE_SKILLS = SKILL_NAMES.filter((n) => n.startsWith("Knowledge"));
 
 function detectDomainModifiers(description: string): ModifierDetection<Modifier> {
@@ -76,10 +68,6 @@ function detectDomainModifiers(description: string): ModifierDetection<Modifier>
 
   return { modifiers: validated, errors, unresolvedModifiers };
 }
-
-// ---------------------------------------------------------------------------
-// Detect domain modifiers from description text
-// ---------------------------------------------------------------------------
 
 export function buildDomainDetected(raw: DomainReference["raw"]): DomainReference["detected"] {
   return detectModifiersOf(raw, (entry) => detectDomainModifiers(entry.description));

@@ -43,11 +43,11 @@ export { ENTITY_REPOS, NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
 export { fetchEntityCustomizations } from "./customizations.ts";
 export { copyEntityCustomizations, copyEntityCustomizationsToMany } from "./copy.ts";
 
-// Framework internals — cache compose step + ruleset implementations.
+/** Framework internals — cache compose step + ruleset implementations. */
 export { buildSourceChain, refreshEntityData, resolveOverrides } from "./overrideMap.ts";
 export { getOrBuildCowData, invalidateAllCowData, invalidateCowData } from "./cowData.ts";
 
-// Merging a fork's requirements with its sources' (rulesetCache/compose.ts).
+/** Merging a fork's requirements with its sources' (rulesetCache/compose.ts). */
 export { mergeSiblingRequirements } from "./requirements.ts";
 
 export type { CowData, IdResolveMap } from "@/server/database/index.ts";

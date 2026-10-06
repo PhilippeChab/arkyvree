@@ -13,8 +13,10 @@ import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
-// Real repository reads in separate request contexts: an earlier request loads
-// again only after another request's mutation and cache invalidation complete.
+/**
+ * Real repository reads in separate request contexts: an earlier request loads again only after another request's
+ * mutation and cache invalidation complete.
+ */
 async function overlap(read: () => Promise<unknown>, mutate: () => Promise<unknown>) {
   const ready = Promise.withResolvers<void>();
   const release = Promise.withResolvers<void>();

@@ -30,7 +30,7 @@ interface EquipmentTableProps<T extends EquipmentTableRow> {
 }
 
 const headerSx = { fontWeight: 600 };
-// Slots and figures stay on one line; the table scrolls on narrow screens.
+/** Slots and figures stay on one line; the table scrolls on narrow screens. */
 const noWrap = { whiteSpace: "nowrap" };
 
 /** A character's inventory: slot, quantity, weight, value, and the carried load under it. */

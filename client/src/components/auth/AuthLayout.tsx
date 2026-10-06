@@ -19,8 +19,6 @@ interface AuthPageProps {
   notice?: string | null;
 }
 
-// ── Branding panels (rendered once by the layout route) ──
-
 function AuthFooterLinks() {
   const { start, isPending } = useStartDemo();
   // The demo is for newcomers, so only sign-up offers it.
@@ -71,6 +69,7 @@ function AuthFooterLinks() {
   );
 }
 
+/** The branding panel on a wide screen, which the layout route renders once. */
 function DesktopBranding() {
   const theme = useTheme();
   const darkMode = theme.palette.mode === "dark";
@@ -207,6 +206,7 @@ function DesktopBranding() {
   );
 }
 
+/** The branding on a small screen, above the page, which the layout route renders once. */
 function MobileBranding() {
   const theme = useTheme();
   const darkMode = theme.palette.mode === "dark";
@@ -252,8 +252,7 @@ function MobileBranding() {
   );
 }
 
-// ── Layout route: renders branding once, child pages swap via <Outlet> ──
-
+/** The auth pages' layout route: it renders the branding once, and each page swaps in at its `<Outlet>`. */
 export function AuthLayoutRoute() {
   const isMobile = useIsMobile();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -323,8 +322,7 @@ export function AuthLayoutRoute() {
   );
 }
 
-// ── Page wrapper: each auth page wraps its content with this ──
-
+/** The frame each auth page puts its content in: its title, subtitle, error and notice. */
 export function AuthPage({ children, title, subtitle, error, notice }: AuthPageProps) {
   return (
     <PageTransition>

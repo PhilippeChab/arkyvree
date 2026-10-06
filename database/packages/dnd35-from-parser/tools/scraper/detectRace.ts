@@ -11,10 +11,6 @@ import {
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 
-// ---------------------------------------------------------------------------
-// Ability name → slug mapping
-// ---------------------------------------------------------------------------
-
 const ABILITY_MAP: Record<string, string> = {
   strength: "strength",
   dexterity: "dexterity",
@@ -24,34 +20,11 @@ const ABILITY_MAP: Record<string, string> = {
   charisma: "charisma",
 };
 
-// ---------------------------------------------------------------------------
-// Internal detection
-// ---------------------------------------------------------------------------
-
 /** Whether the bonus `match` read applies only sometimes (`isConditional`). */
 function conditional(text: string, match: RegExpMatchArray): boolean {
   const start = match.index ?? 0;
   return isConditional(text, start, start + match[0].length);
 }
-
-// ---------------------------------------------------------------------------
-// Skill bonus detection
-// ---------------------------------------------------------------------------
-
-function detectSkillBonuses(text: string, modifiers: Modifier[], unresolvedModifiers: string[]): void {
-  // "+N racial bonus on X checks" or "+N racial bonus on X, Y, and Z checks"
-  for (const bonus of readSkillBonuses(text, (match) => conditional(text, match))) {
-    if (bonus.slug) {
-      modifiers.push({ target: `skills.${bonus.slug}.misc`, operator: "add", value: bonus.value, valueType: "number" });
-    } else {
-      unresolvedModifiers.push(`Unresolved skill bonus: +${bonus.value} on "${bonus.name}"`);
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Save bonus detection
-// ---------------------------------------------------------------------------
 
 function detectSaveBonuses(text: string, modifiers: Modifier[]): void {
   const add = (save: string, bonus: string) =>
@@ -74,9 +47,16 @@ function detectSaveBonuses(text: string, modifiers: Modifier[]): void {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Detect race modifiers from raw data
-// ---------------------------------------------------------------------------
+function detectSkillBonuses(text: string, modifiers: Modifier[], unresolvedModifiers: string[]): void {
+  // "+N racial bonus on X checks" or "+N racial bonus on X, Y, and Z checks"
+  for (const bonus of readSkillBonuses(text, (match) => conditional(text, match))) {
+    if (bonus.slug) {
+      modifiers.push({ target: `skills.${bonus.slug}.misc`, operator: "add", value: bonus.value, valueType: "number" });
+    } else {
+      unresolvedModifiers.push(`Unresolved skill bonus: +${bonus.value} on "${bonus.name}"`);
+    }
+  }
+}
 
 function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetection<Modifier> {
   const modifiers: Modifier[] = [];
@@ -111,11 +91,6 @@ function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetec
 
   return { modifiers: validated, errors, unresolvedModifiers };
 }
-
-/**
- * Whether a bonus applies only sometimes: what follows it says when ("checks that are related to stone", "checks to
- * notice…", "saving throws against poison", "…vs. enchantments", "…, if…").
- */
 
 export function buildRaceDetected(raw: RaceReference["raw"]): RaceReference["detected"] {
   return detectModifiersOf(raw, detectRaceModifiers);

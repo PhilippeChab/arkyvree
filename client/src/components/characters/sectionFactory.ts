@@ -17,9 +17,10 @@ import {
 
 type BaseRules = NonNullable<CharacterDetail["baseRules"]>;
 
-// The 3.5 prop shapes under the generic names the SectionMap uses. When a
-// second ruleset ships, this file will grow per-ruleset prop types and the
-// SectionMap will become a discriminated union rather than a single shape.
+/**
+ * The 3.5 prop shapes under the generic names the SectionMap uses. When a second ruleset ships, this file will grow
+ * per-ruleset prop types and the SectionMap will become a discriminated union rather than a single shape.
+ */
 type CombatAndSavesSectionProps = Dnd35CombatAndSavesSectionProps;
 type PowersSectionProps = Dnd35PowersSectionProps;
 type AbilityScoresSectionProps = Dnd35AbilityScoresSectionProps;

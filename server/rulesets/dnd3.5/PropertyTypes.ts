@@ -72,7 +72,7 @@ import {
   SPELL_SCHOOLS,
   SPELL_SUBSCHOOLS,
 } from "@/shared/dnd3.5/spells.ts";
-// Static autocomplete hints for property value dropdowns
+/** Static autocomplete hints for property value dropdowns */
 const WEAPON_TYPE_NAMES = [
   "Bastard Sword",
   "Battleaxe",

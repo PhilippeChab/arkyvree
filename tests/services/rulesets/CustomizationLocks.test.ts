@@ -16,9 +16,10 @@ import { makeSession } from "@/tests/support/users.ts";
 
 const pool = createTestPool();
 
-// The composed ruleset data a request reads can predate a concurrent delete
-// (for example one that committed while this request waited on the owner lock).
-// Every customization kind re-reads its row after the lock and reports it missing.
+/**
+ * The composed ruleset data a request reads can predate a concurrent delete (for example one that committed while this
+ * request waited on the owner lock). Every customization kind re-reads its row after the lock and reports it missing.
+ */
 async function setupRemovedCustomizations() {
   const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);

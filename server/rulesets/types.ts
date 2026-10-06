@@ -52,8 +52,6 @@ export interface PreloadedRulesetData {
   rulesetData: CachedRulesetData;
 }
 
-// ── Entity types with attached Properties/Modifiers/Requirements ───
-
 export type RaceWithPMR = Race & {
   properties: Property[];
   modifiers: Modifier[];
@@ -120,8 +118,6 @@ export type InventoryEntry = CharacterInventory & {
   };
 };
 
-// ── Data loader result types ───────────────────────────────────────
-
 /** Base result of character data loading. Rulesets extend with specific fields. */
 export interface LoadedCharacterData {
   ruleset: Ruleset | undefined;
@@ -168,8 +164,10 @@ export interface PreloadedCharacterData extends PreloadedRulesetData {
   _shared: unknown;
 }
 
-// Base type for all character component holders (abilities, skills, combat, etc.): class instances whose getters
-// TargetPaths calls by name, which only an `any` index signature lets a class instance be.
+/**
+ * Base type for all character component holders (abilities, skills, combat, etc.): class instances whose getters
+ * TargetPaths calls by name, which only an `any` index signature lets a class instance be.
+ */
 // oxlint-disable-next-line typescript/no-explicit-any -- a holder is read by name (see above)
 export type Holder = Record<string, any>;
 

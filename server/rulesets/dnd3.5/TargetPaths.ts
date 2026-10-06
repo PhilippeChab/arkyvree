@@ -1,6 +1,7 @@
+/** Import DetailedCharacter components that generate paths */
+
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { UNARMED_STRIKE } from "@/server/rulesets/constants.ts";
-// Import DetailedCharacter components that generate paths
 import DetailedCharacterArmors from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
 import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
 import DetailedCharacterEncumbrance from "@/server/rulesets/dnd3.5/DetailedCharacterEncumbrance.ts";
@@ -43,7 +44,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import { Dnd35LevelsHooks } from "./hooks/index.ts";
 import { collectClassListIds, collectFeatListIds } from "./spellcasting/spellLists.ts";
 
-// D&D 3.5 specific constants
+/** The categories of the 3.5 rules' target paths (`getCategories`). */
 const DND35_CATEGORIES = [
   "abilities",
   "skills",
@@ -95,8 +96,10 @@ const PATH_DESCRIPTIONS: Record<string, string> = {
   "identity.physiology.race": "Character race name and size",
 };
 
-// Template for entity-level descriptions (dynamic segments like ability/skill/class names).
-// {name} is replaced with the segment's display label.
+/**
+ * Template for entity-level descriptions (dynamic segments like ability/skill/class names). {name} is replaced with the
+ * segment's display label.
+ */
 const GROUP_DESCRIPTION_TEMPLATES: Record<string, string> = {
   abilities: "{name} ability score and modifier",
   skills: "{name} skill rank and modifiers",

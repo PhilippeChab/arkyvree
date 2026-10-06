@@ -1,4 +1,5 @@
 /** Where a linted file sits in the repo, wherever oxlint runs from. */
+
 import fs from "node:fs";
 import path from "node:path";
 

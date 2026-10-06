@@ -11,7 +11,7 @@ import {
 import { apiResponse, openActionsMenu } from "@/tests/e2e/support/page.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
 
-/** Every wizard here must finish without "Proceed Anyway": a warning means a pick a real user would have to make was missed. */
+// Every wizard here must finish without "Proceed Anyway": a warning means a pick a real user would have to make was missed.
 test.describe("Level up", () => {
   test.setTimeout(180_000);
 
