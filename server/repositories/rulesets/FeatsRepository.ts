@@ -109,6 +109,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
       orderBy: [this.orderBy(this.table.name)],
       with: {
         featsAptitudesInRules: {
+          orderBy: (links) => [this.orderBy(links.createdAt), this.orderBy(links.aptitudeId)],
           with: {
             aptitudesInRule: true,
           },
@@ -128,6 +129,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
       ),
       with: {
         featsAptitudesInRules: {
+          orderBy: (links) => [this.orderBy(links.createdAt), this.orderBy(links.aptitudeId)],
           with: {
             aptitudesInRule: true,
           },
@@ -284,6 +286,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
         orderBy: this.pageOrder(this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir))),
         with: {
           featsAptitudesInRules: {
+            orderBy: (links) => [this.orderBy(links.createdAt), this.orderBy(links.aptitudeId)],
             with: {
               aptitudesInRule: true,
             },

@@ -29,12 +29,19 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
   }
 
   getSpellListId(
-    rulesetData: Pick<CachedRulesetData, "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
+    rulesetData: Pick<
+      CachedRulesetData,
+      "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug"
+    >,
     klassId: string,
   ): string | undefined {
     const klassLevels = rulesetData.klassLevelsByKlassId.get(klassId) ?? [];
-    const [list] =
-      collectClassLists({ klassLevels, modifiersBySource: rulesetData.modifiersBySource }).get(klassId) ?? [];
+    const lists = [
+      ...(collectClassLists({ klassLevels, modifiersBySource: rulesetData.modifiersBySource }).get(klassId) ?? []),
+    ];
+    // A class casting from one of several lists (a pious templar's, or its blackguard one) is shown the list named for it
+    const own = `${stripSeparators(rulesetData.klassesById.get(klassId)?.name ?? "")}spells`;
+    const list = lists.includes(own) ? own : lists[0];
     return list === undefined ? undefined : rulesetData.aptitudeIdBySlug.get(list);
   }
 

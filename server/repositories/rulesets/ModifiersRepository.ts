@@ -16,6 +16,7 @@ class ModifiersRepository extends CustomizationRepository<typeof modifiersInCust
         [inArray(this.table.sourceId, where.sourceIds)],
         ["sourceType" in where && eq(this.table.sourceType, where.sourceType), isNull(this.table.deletedAt)],
       ),
+      orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.target), this.orderBy(this.table.id)],
     });
   }
 

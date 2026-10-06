@@ -18,7 +18,8 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
       .from(powersAptitudesInRules)
       .where(
         and(inArray(powersAptitudesInRules.aptitudeId, where.aptitudeIds), isNotNull(powersAptitudesInRules.level)),
-      );
+      )
+      .orderBy(this.orderBy(powersAptitudesInRules.aptitudeId));
     return new Set(rows.map((r) => r.aptitudeId));
   }
 

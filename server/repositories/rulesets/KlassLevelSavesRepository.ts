@@ -20,6 +20,11 @@ class KlassLevelSavesRepository extends BaseRepository<typeof klassLevelSavesInR
   async findMany(db: Db, where: { klassLevelIds: string[] }) {
     return await db.query.klassLevelSavesInRules.findMany({
       where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
+      orderBy: [
+        this.orderBy(this.table.createdAt),
+        this.orderBy(this.table.klassLevelId),
+        this.orderBy(this.table.saveId),
+      ],
     });
   }
 

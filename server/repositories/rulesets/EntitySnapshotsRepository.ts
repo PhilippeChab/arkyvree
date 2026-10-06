@@ -37,6 +37,7 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
           "sourceEntityIds" in where && inArray(this.table.sourceEntityId, where.sourceEntityIds),
         ],
       ),
+      orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.id)],
     });
   }
 
