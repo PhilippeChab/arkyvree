@@ -2,24 +2,15 @@ import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededForkWithAptitude, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const powers = api.api.rulesets[":id"].powers;
 const power = powers[":powerId"];
 
-/** A seeded fork with a new aptitude for its powers. */
-async function setup() {
-  const { id } = await createSeededTestRuleset(SEED_USER_ID);
-  const aptitude = await expectOk(
-    api.api.rulesets[":id"].aptitudes.$post({ param: { id }, json: { name: "Power Aptitude" } }),
-  );
-  return { id, aptitudeId: aptitude.id };
-}
-
 describe("rulesets powers", () => {
   test("creates, reads, lists, updates and deletes a power", async () => {
-    const { id, aptitudeId } = await setup();
+    const { id, aptitudeId } = await createSeededForkWithAptitude();
 
     const json = { name: "Test Power", description: "A test power", aptitudes: [{ id: aptitudeId, level: 2 }] };
     const created = await expectOk(powers.$post({ param: { id }, json }));
@@ -45,7 +36,7 @@ describe("rulesets powers", () => {
   });
 
   test("rejects a power without a name, with malformed aptitudes or a level above 9", async () => {
-    const { id, aptitudeId } = await setup();
+    const { id, aptitudeId } = await createSeededForkWithAptitude();
     for (const json of [
       { name: "" },
       { name: "Power", aptitudes: aptitudeId },
@@ -56,7 +47,7 @@ describe("rulesets powers", () => {
   });
 
   test("returns 404 for a missing ruleset or power", async () => {
-    const { id } = await setup();
+    const { id } = await createSeededForkWithAptitude();
     await expectStatus(powers.$get({ param: { id: NIL_UUID }, query: {} }), 404);
     const param = { id, powerId: NIL_UUID };
     await expectStatus(power.$get({ param }), 404);
@@ -65,7 +56,7 @@ describe("rulesets powers", () => {
   });
 
   test("refuses a power in an aptitude that feats already use", async () => {
-    const { id, aptitudeId } = await setup();
+    const { id, aptitudeId } = await createSeededForkWithAptitude();
     await expectOk(
       api.api.rulesets[":id"].feats.$post({ param: { id }, json: { name: "Test Feat", aptitudeIds: [aptitudeId] } }),
     );

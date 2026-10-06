@@ -182,7 +182,7 @@ describe("CharactersService", () => {
     test("sets an ability through the id of a fork's copy of it", async () => {
       // Regression: scores were matched against the stored, pre-copy ability ids, so every save failed once the fork copied an ability.
       const ctx = await getSeedCtx();
-      const session = makeSession(SEED_USER_ID);
+      const session = makeSession();
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: ctx.rulesetId,
         ancestorRulesetIds: [ctx.rulesetId],

@@ -1,9 +1,6 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 
-import { lintRepo, runOxlint } from "./lintRepo.ts";
+import { fixRepo, lines, lintRepo } from "./lintRepo.ts";
 
 /** A router file whose one route's handler is `handler`. */
 function routeReading(handler: string) {
@@ -26,22 +23,10 @@ describe("conventions", () => {
       ),
     ).toEqual(["no-parent-imports server/a/b/c.ts"]);
 
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-"));
-    fs.mkdirSync(path.join(dir, "server/a/b"), { recursive: true });
-    fs.writeFileSync(path.join(dir, "server/a/b/c.ts"), 'import { d } from "../d.ts";\nexport const c = d;\n');
-    const config = path.join(dir, ".oxlintrc.json");
-    fs.writeFileSync(
-      config,
-      JSON.stringify({
-        jsPlugins: [path.resolve("lint/plugin.mjs")],
-        rules: { "arkyvree/no-parent-imports": "error" },
-      }),
-    );
-    await runOxlint(["-c", config, "--fix", dir]);
-    expect(fs.readFileSync(path.join(dir, "server/a/b/c.ts"), "utf8")).toStartWith(
-      'import { d } from "@/server/a/d.ts";',
-    );
-    fs.rmSync(dir, { recursive: true });
+    const fixed = await fixRepo({ "server/a/b/c.ts": 'import { d } from "../d.ts";\nexport const c = d;\n' }, [
+      "no-parent-imports",
+    ]);
+    expect(fixed["server/a/b/c.ts"]).toStartWith('import { d } from "@/server/a/d.ts";');
   });
 
   test("a helper is a module named for what it does, anywhere", async () => {
@@ -461,30 +446,20 @@ describe("conventions", () => {
       "function-declarations shared/c.ts",
     ]);
 
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-"));
-    const file = path.join(dir, "a.tsx");
-    fs.writeFileSync(
-      file,
-      [
-        "/** Its verb. */",
-        'export const verbOf = (method: string) => /^[a-z]+/.exec(method)?.[0] ?? "";',
-        "const make = async <T,>(t: T): Promise<T> => {",
-        "  return t;",
-        "};",
-        "const Row = ({ label }: { label: string }) => <div>{label}</div>;",
-        "",
-      ].join("\n"),
+    const fixed = await fixRepo(
+      {
+        "a.tsx": lines(
+          "/** Its verb. */",
+          'export const verbOf = (method: string) => /^[a-z]+/.exec(method)?.[0] ?? "";',
+          "const make = async <T,>(t: T): Promise<T> => {",
+          "  return t;",
+          "};",
+          "const Row = ({ label }: { label: string }) => <div>{label}</div>;",
+        ),
+      },
+      ["function-declarations"],
     );
-    const config = path.join(dir, ".oxlintrc.json");
-    fs.writeFileSync(
-      config,
-      JSON.stringify({
-        jsPlugins: [path.resolve("lint/plugin.mjs")],
-        rules: { "arkyvree/function-declarations": "error" },
-      }),
-    );
-    await runOxlint(["-c", config, "--fix", dir]);
-    expect(fs.readFileSync(file, "utf8")).toBe(
+    expect(fixed["a.tsx"]).toBe(
       [
         "/** Its verb. */",
         "export function verbOf(method: string) {",
@@ -499,7 +474,6 @@ describe("conventions", () => {
         "",
       ].join("\n"),
     );
-    fs.rmSync(dir, { recursive: true });
   });
 
   test("a class includes its concerns by name, after its base, and --fix sorts them", async () => {
@@ -514,18 +488,12 @@ describe("conventions", () => {
       ),
     ).toEqual(["include-order server/b.ts"]);
 
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-"));
-    const file = path.join(dir, "b.ts");
-    fs.writeFileSync(file, "class B extends include(\n  Base,\n  Searches,\n  Paginates,\n  ChecksExistence,\n) {}\n");
-    const config = path.join(dir, ".oxlintrc.json");
-    fs.writeFileSync(
-      config,
-      JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/include-order": "error" } }),
+    const fixed = await fixRepo(
+      { "b.ts": "class B extends include(\n  Base,\n  Searches,\n  Paginates,\n  ChecksExistence,\n) {}\n" },
+      ["include-order"],
     );
-    await runOxlint(["-c", config, "--fix", dir]);
-    expect(fs.readFileSync(file, "utf8")).toBe(
+    expect(fixed["b.ts"]).toBe(
       "class B extends include(\n  Base,\n  ChecksExistence,\n  Paginates,\n  Searches,\n) {}\n",
     );
-    fs.rmSync(dir, { recursive: true });
   });
 });

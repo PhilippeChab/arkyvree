@@ -1,6 +1,6 @@
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
-import { Users } from "@/server/repositories/index.ts";
+import { EmailVerifications, Users } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 
@@ -18,6 +18,11 @@ export function makeSession(userId: string = SEED_USER_ID): Session {
     deletedAt: null,
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   };
+}
+
+/** The code of `userId`'s latest email verification. */
+export async function findVerificationCode(userId: string) {
+  return (await EmailVerifications.findOne(db, { userId }))!.code;
 }
 
 /** A new user and a session for them. `prefix` starts the username and email. */

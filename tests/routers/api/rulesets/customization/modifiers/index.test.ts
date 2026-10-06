@@ -4,7 +4,7 @@ import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { application } from "@/server/routers/application.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
-import { createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
+import { createCustomizableFeat, createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
 import { api, expectOk, expectStatus, guestApi, SEED_SESSION_ID } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
@@ -12,14 +12,9 @@ import { NIL_UUID } from "@/tests/support/seed.ts";
 const modifiers = api.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers;
 const modifier = modifiers[":modifierId"];
 
-async function setup() {
-  const { id } = await createSeededTestRuleset(SEED_USER_ID);
-  return { id, entityId: await createEntity(id, "feats") };
-}
-
 describe("rulesets customization modifiers", () => {
   test("creates, reads, lists, updates, duplicates and deletes a feat modifier", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const param = { id, entityType: "feats" as const, entityId };
     expect(await expectOk(modifiers.$get({ param }))).toEqual([]);
 
@@ -76,7 +71,7 @@ describe("rulesets customization modifiers", () => {
   });
 
   test("refuses a value that isn't of its target's type, on create, duplicate and update", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const param = { id, entityType: "feats" as const, entityId };
     const bonus = { target: "abilities.strength.misc", value: "2", operator: "add" };
     await expectStatus(modifiers.$post({ param, json: { ...bonus, value: "+two" } }), 400);
@@ -91,7 +86,7 @@ describe("rulesets customization modifiers", () => {
   });
 
   test("refuses an operator the path doesn't offer, and a pool's slots anything but more or all known", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const param = { id, entityType: "feats" as const, entityId };
     const refused = [
       { target: "feats.dodge.possessed", value: "true", operator: "add" },
@@ -122,7 +117,7 @@ describe("rulesets customization modifiers", () => {
   });
 
   test("refuses modifiers as the entity being customized", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const body = { target: "abilities.strength.misc", value: "2", operator: "add" };
     const created = await expectOk(modifiers.$post({ param: { id, entityType: "feats", entityId }, json: body }));
     // Only GET accepts `modifiers` as the entity type; the typed client can't build these writes.
@@ -140,7 +135,7 @@ describe("rulesets customization modifiers", () => {
   });
 
   test("requires a session", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const response = await guestApi.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers.$get({
       param: { id, entityType: "feats", entityId },
     });
@@ -148,7 +143,7 @@ describe("rulesets customization modifiers", () => {
   });
 
   test("rejects a modifier without a target", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const response = await modifiers.$post({
       param: { id, entityType: "feats", entityId },
       json: { value: "2", operator: "add" } as never,
@@ -157,7 +152,7 @@ describe("rulesets customization modifiers", () => {
   });
 
   test("returns 404 for a missing ruleset, entity or modifier", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     await expectStatus(modifiers.$get({ param: { id: NIL_UUID, entityType: "feats", entityId } }), 404);
     await expectStatus(modifiers.$get({ param: { id, entityType: "feats", entityId: NIL_UUID } }), 404);
     const param = { id, entityType: "feats" as const, entityId, modifierId: NIL_UUID };

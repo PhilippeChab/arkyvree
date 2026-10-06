@@ -5,7 +5,7 @@ import { parseResponse } from "hono/client";
 
 import { expect, test } from "@/tests/e2e/fixtures.ts";
 import { apiOf } from "@/tests/e2e/support/api.ts";
-import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
+import { createCampaign, postPlayerInvite } from "@/tests/e2e/support/campaigns.ts";
 import { selectOption, uniqueName } from "@/tests/e2e/support/page.ts";
 import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
@@ -22,24 +22,20 @@ test.describe("A campaign's Game Master", () => {
   }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
     const id = await createCampaign(page, uniqueName("Players Campaign"));
-    const invite = (email: string) =>
-      parseResponse(
-        apiOf(page).api.campaigns[":id"].players.$post({ param: { id }, json: { role: "Player Character", email } }),
-      );
     // Two players accept; an invite to an email without an account waits
     for (const joining of [user, inviteeUser]) {
       const player = await signedInPage(browser, joining);
       try {
-        const { invite: accepted } = await invite(joining.email);
+        const accepted = await postPlayerInvite(page, id, joining.email);
         await parseResponse(
-          apiOf(player).api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: accepted!.id } }),
+          apiOf(player).api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: accepted.id } }),
         );
       } finally {
         await player.context().close();
       }
     }
     const pendingEmail = `pending-${randomUUID().slice(0, 8)}@example.com`;
-    await invite(pendingEmail);
+    await postPlayerInvite(page, id, pendingEmail);
 
     const players = async () => {
       await page.goto(`/campaigns/${id}/players`);

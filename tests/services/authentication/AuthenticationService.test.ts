@@ -26,7 +26,7 @@ import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
-import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { createTestUser, findVerificationCode, makeSession } from "@/tests/support/users.ts";
 
 const missingSession: Session = {
   id: NIL_UUID,
@@ -63,10 +63,6 @@ async function createPasswordlessUser() {
   return { user, session: makeSession(user.id) };
 }
 
-async function codeFor(userId: string) {
-  return (await EmailVerifications.findOne(db, { userId }))!.code;
-}
-
 /** A new verified user, signed in. */
 async function signUpAndVerify(account = credentials()) {
   const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
@@ -101,7 +97,7 @@ describe("AuthenticationService", () => {
     test("signs the user in with the code sent, once", async () => {
       const account = credentials();
       const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
-      const code = await codeFor(user.id);
+      const code = await findVerificationCode(user.id);
       expect(await AuthenticationService.verifyEmail(account.emailAddress, code)).toMatchObject({
         session: { userId: user.id },
         user: { id: user.id },
@@ -160,7 +156,7 @@ describe("AuthenticationService", () => {
       expect(invites.map((i) => i.userId)).toEqual([null, null]);
 
       const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
-      await AuthenticationService.verifyEmail(account.emailAddress, await codeFor(user.id));
+      await AuthenticationService.verifyEmail(account.emailAddress, await findVerificationCode(user.id));
       for (const { id } of invites) expect(await Invites.findOne(db, { id })).toMatchObject({ userId: user.id });
 
       // Signing in claims those sent later.
@@ -295,7 +291,11 @@ describe("AuthenticationService", () => {
       const verifying = await AuthenticationService.startDemo();
       const newAccount = credentials();
       const { user } = await AuthenticationService.signUp(newAccount.emailAddress, newAccount.password);
-      await AuthenticationService.verifyEmail(newAccount.emailAddress, await codeFor(user.id), verifying.session.id);
+      await AuthenticationService.verifyEmail(
+        newAccount.emailAddress,
+        await findVerificationCode(user.id),
+        verifying.session.id,
+      );
       expect(await Users.findOne(db, { id: verifying.user.id })).toBeUndefined();
     });
   });
@@ -316,7 +316,7 @@ describe("AuthenticationService", () => {
         emailAddress: account.emailAddress,
         pendingEmailAddress: newEmail,
       });
-      expect(await AccountService.verifyEmailChange(session, await codeFor(user.id))).toMatchObject({
+      expect(await AccountService.verifyEmailChange(session, await findVerificationCode(user.id))).toMatchObject({
         emailAddress: newEmail,
         pendingEmailAddress: null,
       });

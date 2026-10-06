@@ -1,21 +1,16 @@
 import { describe, expect, test } from "bun:test";
 
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { postCampaign } from "@/tests/support/campaigns.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 const campaigns = api.api.campaigns;
 const campaign = campaigns[":id"];
 
-async function createCampaign(name = "Test Campaign") {
-  const { rulesetId } = await getSeedCtx();
-  const created = await expectOk(campaigns.$post({ json: { name, description: "A test campaign", rulesetId } }));
-  return created.campaign;
-}
-
 describe("campaigns", () => {
   test("creates, reads, lists and updates a campaign", async () => {
     const { rulesetId } = await getSeedCtx();
-    const created = await createCampaign("Router Campaign");
+    const created = await postCampaign({ name: "Router Campaign", description: "A test campaign" });
     expect(created).toMatchObject({ name: "Router Campaign", description: "A test campaign", rulesetId });
 
     expect(await expectOk(campaign.$get({ param: { id: created.id } }))).toMatchObject({
@@ -32,7 +27,7 @@ describe("campaigns", () => {
   });
 
   test("archives, unarchives and permanently deletes a campaign", async () => {
-    const { id } = await createCampaign();
+    const { id } = await postCampaign();
     const listed = async (visibility: "active" | "archived") =>
       (await expectOk(campaigns.$get({ query: { visibility } }))).items.map((c) => c.id);
 
@@ -49,7 +44,7 @@ describe("campaigns", () => {
   });
 
   test("only deletes an archived campaign permanently", async () => {
-    const { id } = await createCampaign();
+    const { id } = await postCampaign();
     await expectStatus(campaign.permanent.$delete({ param: { id } }), 404);
   });
 

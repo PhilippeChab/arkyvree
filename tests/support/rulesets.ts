@@ -1,10 +1,13 @@
 import { eq, type InferInsertModel } from "drizzle-orm";
 
 import { coreRulesetId } from "@/database/packages/dnd35/seed/context.ts";
-import { rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { aptitudesInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Properties, Rulesets } from "@/server/repositories/index.ts";
+import { api, expectOk } from "@/tests/support/api.ts";
+import { insertRows } from "@/tests/support/database.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -99,9 +102,26 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
   return ruleset;
 }
 
-/** A new user with an empty ruleset of their own. */
-export async function createTestUserAndRuleset() {
+/** A new user with an empty ruleset of their own, holding aptitudes of these names: their ids, in that order. */
+export async function createTestUserAndRuleset(aptitudeNames: string[] = []) {
   const { user, session } = await createTestUser();
   const ruleset = await createTestRuleset(user.id);
-  return { user, session, ruleset };
+  const aptitudes = await insertRows(
+    aptitudesInRules,
+    aptitudeNames.map((name) => ({ name, rulesetId: ruleset.id })),
+  );
+  return { user, session, ruleset, aptitudeIds: aptitudes.map((a) => a.id) };
+}
+
+/** A new aptitude of the ruleset, created through the API as the seed user. */
+export async function postAptitude(rulesetId: string) {
+  return await expectOk(
+    api.api.rulesets[":id"].aptitudes.$post({ param: { id: rulesetId }, json: { name: `Aptitude ${uniqueId()}` } }),
+  );
+}
+
+/** A new seeded fork of the seed user's with an aptitude of its own: the fork's `id` and the `aptitudeId`. */
+export async function createSeededForkWithAptitude() {
+  const { id } = await createSeededTestRuleset(SEED_USER_ID);
+  return { id, aptitudeId: (await postAptitude(id)).id };
 }
