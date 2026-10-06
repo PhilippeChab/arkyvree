@@ -39,7 +39,7 @@ describe("conventions", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  test("a helper is a module named for what it does, in the app's code", async () => {
+  test("a helper is a module named for what it does, in the app's code and the tests", async () => {
     expect(
       await lintRepo(
         {
@@ -47,6 +47,8 @@ describe("conventions", () => {
           "client/src/lib/helpers.tsx": "export const y = 1;\n",
           "server/services/x/editable.ts": "export const z = 1;\n",
           "tests/helpers.ts": "export const t = 1;\n",
+          "tests/support/users.ts": "export const s = 1;\n",
+          "database/seeds/helpers.ts": "export const d = 1;\n",
           "shared/utils.ts": "export const u = 1;\n",
           "server/utils/format.ts": "export const f = 1;\n",
         },
@@ -57,6 +59,7 @@ describe("conventions", () => {
       "no-helpers-modules server/services/x/helpers.ts",
       "no-helpers-modules server/utils/format.ts",
       "no-helpers-modules shared/utils.ts",
+      "no-helpers-modules tests/helpers.ts",
     ]);
   });
 

@@ -33,14 +33,11 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import {
-  addCharacterLevel,
-  createTestCharacter,
-  createTestRuleset,
-  createTestUserAndRuleset,
-  insertRows,
-  NIL_UUID,
-} from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { addCharacterLevel } from "@/tests/support/levels.ts";
+import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 
 type LevelBody = Omit<Parameters<typeof ClassLevelsService.createClassLevel>[3], "level">;
 

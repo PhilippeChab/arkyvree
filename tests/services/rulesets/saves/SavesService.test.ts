@@ -5,7 +5,8 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Klasses, KlassLevels, KlassLevelSaves } from "@/server/repositories/index.ts";
 import { SavesService } from "@/server/services/rulesets/saves/index.ts";
-import { createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 /** A new user's empty ruleset with two abilities. */
 async function setup() {

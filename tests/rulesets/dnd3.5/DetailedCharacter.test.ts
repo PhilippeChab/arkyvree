@@ -81,18 +81,12 @@ import {
 import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
-import {
-  addCharacterLevel,
-  createTestRuleset,
-  findKlassLevel,
-  findSeededCharacter,
-  getSeedCtx,
-  insertRows,
-  invalidateSeededRuleset,
-  makeSession,
-  NIL_UUID,
-} from "@/tests/helpers.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
+import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 type Carried = {
   item: string;

@@ -4,7 +4,9 @@ import { db } from "@/server/database/index.ts";
 import { runCleanupTask } from "@/server/jobs/runCleanup.ts";
 import { Attachments, Users } from "@/server/repositories/index.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
-import { createTestAttachment, createTestCharacter, silentJobHelpers } from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestAttachment } from "@/tests/support/files.ts";
+import { silentJobHelpers } from "@/tests/support/jobs.ts";
 
 describe("runCleanup", () => {
   test("hard-deletes demo users whose expires_at has passed", async () => {

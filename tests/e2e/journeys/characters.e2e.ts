@@ -3,18 +3,10 @@ import { statSync } from "node:fs";
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import {
-  apiResponse,
-  createCharacter,
-  fillStrengthModifier,
-  filterList,
-  openActionsMenu,
-  openContext,
-  selectOption,
-  signedInPage,
-  signIn,
-  uniqueName,
-} from "@/tests/e2e/helpers.ts";
+import { createCharacter } from "@/tests/e2e/support/characters.ts";
+import { apiResponse, filterList, openActionsMenu, selectOption, uniqueName } from "@/tests/e2e/support/page.ts";
+import { fillStrengthModifier } from "@/tests/e2e/support/rulesets.ts";
+import { openContext, signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
 /** Renames the character whose sheet is open, in place: clicking its name edits it. */
 async function renameInPlace(page: Page, name: string, newName: string) {

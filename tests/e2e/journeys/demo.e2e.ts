@@ -1,7 +1,8 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { openContext, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
+import { visitCoreRulesetList } from "@/tests/e2e/support/rulesets.ts";
+import { openContext } from "@/tests/e2e/support/signIn.ts";
 
 /** Starts a demo from the sign-up page, which lands on the dashboard under the demo banner. */
 async function startDemo(page: Page) {

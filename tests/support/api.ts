@@ -1,4 +1,4 @@
-import { type ClientResponse, DetailedError, type InferRequestType, parseResponse } from "hono/client";
+import { type ClientResponse, DetailedError, parseResponse } from "hono/client";
 import { testClient } from "hono/testing";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
@@ -6,7 +6,7 @@ import { db } from "@/server/database/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
 import { Sessions } from "@/server/repositories/index.ts";
 import { application, type Application } from "@/server/routers/application.ts";
-import { createTestUser, getSeedCtx, uniqueId } from "@/tests/helpers.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 /** The seeded session of the seeded user (`SEED_USER_ID`, LocalUser). */
 export const SEED_SESSION_ID = "00000000-0000-4000-8000-000000000123";
@@ -69,30 +69,4 @@ export async function expectStatus<T extends { status: number; clone(): { text()
     throw new Error(`Expected status ${status}, got ${awaited.status}: ${await awaited.clone().text()}`);
   }
   return awaited;
-}
-
-/**
- * A new character of the seed user's, created through the API: a Human on the seeded ruleset with every ability at 10,
- * unless `json` says otherwise.
- */
-export async function postCharacter(json: Partial<InferRequestType<typeof api.api.characters.$post>["json"]> = {}) {
-  const ctx = await getSeedCtx();
-  const { rulesetId = ctx.rulesetId, name = `Test Character ${uniqueId()}`, ...rest } = json;
-  return await expectOk(
-    api.api.characters.$post({
-      json: {
-        raceId: ctx.raceMap.pc["Human"],
-        xp: 0,
-        alignment: "True Neutral",
-        abilities: Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10])),
-        age: 25,
-        gender: "Male",
-        height: "180",
-        weight: "80",
-        ...rest,
-        rulesetId,
-        name,
-      },
-    }),
-  );
 }

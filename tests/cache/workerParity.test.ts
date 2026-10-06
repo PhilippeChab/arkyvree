@@ -8,8 +8,8 @@ import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
 import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { cowEntity } from "@/server/services/rulesets/cow/index.ts";
-import { createSeededTestRuleset } from "@/tests/helpers.ts";
-import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/levelFixtures.ts";
+import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/support/levelFixtures.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 
 afterEach(() => {
   RulesetCache.invalidateAll();

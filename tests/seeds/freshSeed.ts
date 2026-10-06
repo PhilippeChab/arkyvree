@@ -10,8 +10,8 @@ import {
 } from "@/database/packages/dnd35/seed/context.ts";
 import { modifiersInCustomization, propertiesInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { uniqueId } from "@/tests/helpers.ts";
 import { describeRequirement } from "@/tests/seeds/seededRows.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
 
 /** A modifier as a line: "target operator value valueType". */
 function describeModifier(m: { target: string; operator: string; value: string; valueType: string }) {

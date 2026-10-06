@@ -6,7 +6,10 @@ import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { Exports, Modifiers, Notifications, Requirements } from "@/server/repositories/index.ts";
 import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { createTestCharacter, createTestUser, findSeededCharacter, silentJobHelpers } from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { silentJobHelpers } from "@/tests/support/jobs.ts";
+import { findSeededCharacter } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 /** The notifications of `type` a user got, newest first. */
 async function notificationsOf(userId: string, type: string) {

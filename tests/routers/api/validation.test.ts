@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { toJson } from "@/server/errors/index.ts";
 import { buildEntityTypeSchema, sanitizedEmail, sanitizeText } from "@/server/routers/api/validation.ts";
 import { application } from "@/server/routers/application.ts";
-import { api, expectOk, expectStatus, SEED_SESSION_ID } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, SEED_SESSION_ID } from "@/tests/support/api.ts";
 
 const headers = { cookie: `session-id=${SEED_SESSION_ID}` };
 

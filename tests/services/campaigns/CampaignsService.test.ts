@@ -6,7 +6,9 @@ import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Campaigns, Players, Rulesets } from "@/server/repositories/index.ts";
 import { CampaignsService } from "@/server/services/campaigns/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createSeededTestRuleset, createTestUser, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 const firstPage = { limit: 10, page: 1 };
 

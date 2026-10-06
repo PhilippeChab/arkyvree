@@ -6,7 +6,7 @@ import { applyPackages } from "@/database/packages/runner.ts";
 import type { ContentPackage } from "@/database/packages/types.ts";
 import { contentPackagesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { uniqueId } from "@/tests/helpers.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
 
 /** A package whose seeds and updates record that they ran, in `ran`. */
 function testPackage(seedsVersion: number, updateVersions: number[], ran: string[]): ContentPackage {

@@ -1,16 +1,15 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { apiResponse, uniqueName } from "@/tests/e2e/support/page.ts";
 import {
-  apiResponse,
   fillStrengthModifier,
   forkCoreRuleset,
   openFeat,
   openFighterLevel1,
   openRace,
-  signIn,
-  uniqueName,
-} from "@/tests/e2e/helpers.ts";
+} from "@/tests/e2e/support/rulesets.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 /** Where a customization of `section` is saved. */
 function customizationApi(section: string) {

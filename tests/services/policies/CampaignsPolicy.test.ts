@@ -8,7 +8,8 @@ import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.
 import { Campaigns, Players } from "@/server/repositories/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
-import { createTestUser, getSeedCtx } from "@/tests/helpers.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 /** A campaign, and the policy of a new user holding `role` in it (or no seat at all). */
 async function policyFor(role: CampaignRole | null) {

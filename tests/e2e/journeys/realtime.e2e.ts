@@ -1,8 +1,11 @@
 import { parseResponse } from "hono/client";
 
-import { apiOf } from "@/tests/e2e/api.ts";
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { createCampaign, signedInPage, signIn, uniqueName, unreadCount } from "@/tests/e2e/helpers.ts";
+import { apiOf } from "@/tests/e2e/support/api.ts";
+import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
+import { unreadCount } from "@/tests/e2e/support/notifications.ts";
+import { uniqueName } from "@/tests/e2e/support/page.ts";
+import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
 /*
  * What the server pushes to an open page over its websocket. The bell also refetches every minute on its own, so the

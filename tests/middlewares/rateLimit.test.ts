@@ -4,7 +4,7 @@ import { Hono, type MiddlewareHandler } from "hono";
 
 import { toJson } from "@/server/errors/index.ts";
 import { limitRate } from "@/server/middlewares/rateLimit.ts";
-import { expectStatus } from "@/tests/api.ts";
+import { expectStatus } from "@/tests/support/api.ts";
 
 /** An app behind `limiter`, answering errors as the application does. */
 function behind(limiter: MiddlewareHandler) {

@@ -10,8 +10,8 @@ import type { PoolClient } from "pg";
 
 import { createTestDbFromClient, createTestPool, setTestDb } from "@/server/database/test.ts";
 import { setStorageForTest } from "@/server/storage/s3.ts";
-import { forgetSeededRulesetWrites } from "@/tests/helpers.ts";
-import { fakeStorage } from "@/tests/storage.ts";
+import { forgetSeededRulesetWrites } from "@/tests/support/rulesets.ts";
+import { fakeStorage } from "@/tests/support/storage.ts";
 
 const testPool = createTestPool();
 let testClient: PoolClient | null = null;

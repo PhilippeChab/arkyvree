@@ -1,5 +1,7 @@
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { apiResponse, forkCoreRuleset, selectOption, signIn, uniqueName } from "@/tests/e2e/helpers.ts";
+import { apiResponse, selectOption, uniqueName } from "@/tests/e2e/support/page.ts";
+import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 /*
  * Writing a class of one's own in a fork: its hit die, a level (its base attack bonus, a save and skill points), and

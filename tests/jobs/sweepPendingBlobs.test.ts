@@ -4,8 +4,8 @@ import { db } from "@/server/database/index.ts";
 import { sweepPendingBlobs } from "@/server/jobs/sweepPendingBlobs.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
 import { setStorageForTest } from "@/server/storage/s3.ts";
-import { createTestUser } from "@/tests/helpers.ts";
-import { fakeStorage } from "@/tests/storage.ts";
+import { fakeStorage } from "@/tests/support/storage.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 const DAY = 24 * 60 * 60 * 1000;
 

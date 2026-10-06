@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 const campaigns = api.api.campaigns;
 const campaign = campaigns[":id"];

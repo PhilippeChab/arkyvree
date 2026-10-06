@@ -12,17 +12,10 @@ import { CharacterInventoryService } from "@/server/services/characters/inventor
 import { WEAPON_PROFICIENCY, WEAPON_SIZE } from "@/shared/dnd3.5/properties/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
-import {
-  createCharacterAs,
-  createSeededTestRuleset,
-  createTestRuleset,
-  createTestUser,
-  findSeededCharacter,
-  getSeedCtx,
-  makeSession,
-  NIL_UUID,
-  uniqueId,
-} from "@/tests/helpers.ts";
+import { createCharacterAs } from "@/tests/support/characters.ts";
+import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 type Placement = {
   quantity?: number;

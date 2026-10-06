@@ -8,14 +8,11 @@ import { ContributorsService } from "@/server/services/rulesets/contributors/ind
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { collectNotified } from "@/server/websockets/index.ts";
-import {
-  addRulesetContributor,
-  createTestCampaign,
-  createTestCharacter,
-  createTestRuleset,
-  createTestUser,
-  inviteToSlot,
-} from "@/tests/helpers.ts";
+import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { addRulesetContributor } from "@/tests/support/contributors.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 type User = Awaited<ReturnType<typeof createTestUser>>;
 

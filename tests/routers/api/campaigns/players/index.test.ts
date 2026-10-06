@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { createTestUser, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 const players = api.api.campaigns[":id"].players;
 const player = players[":playerId"];

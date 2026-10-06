@@ -1,17 +1,15 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { apiResponse, openActionsMenu, uniqueName } from "@/tests/e2e/support/page.ts";
 import {
-  apiResponse,
   forkCoreRuleset,
-  openActionsMenu,
   openFeat,
   openRace,
   renameEntity,
-  signIn,
-  uniqueName,
   visitCoreRulesetList,
-} from "@/tests/e2e/helpers.ts";
+} from "@/tests/e2e/support/rulesets.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 /** Opens the fork's Local changes, from its page. */
 async function openLocalChanges(page: Page, forkId: string) {

@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, createSignedInUser, expectOk, expectStatus, guestApi, postCharacter } from "@/tests/api.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { postCharacter } from "@/tests/support/characters.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 const modifiers = api.api.characters.modifiers[":characterId"].modifiers;
 const modifier = modifiers[":modifierId"];

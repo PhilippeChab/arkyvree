@@ -43,21 +43,8 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { FEAT_FAMILY, KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
-import {
-  addCharacterLevel,
-  addOneLevel,
-  createSeededTestRuleset,
-  createTestCharacter,
-  createTestRuleset,
-  createTestUser,
-  findKlassLevel,
-  getSeedCtx,
-  insertRows,
-  invalidateSeededRuleset,
-  makeSession,
-  NIL_UUID,
-  uniqueId,
-} from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { insertRows } from "@/tests/support/database.ts";
 import {
   addFighterLevels,
   createSeedCharacter,
@@ -67,7 +54,11 @@ import {
   SORCERER_1,
   WAR_CLERIC_1,
   WIZARD_1,
-} from "@/tests/levelFixtures.ts";
+} from "@/tests/support/levelFixtures.ts";
+import { addCharacterLevel, addOneLevel, findKlassLevel } from "@/tests/support/levels.ts";
+import { createSeededTestRuleset, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 /** The levels, ability increases, feats and skill ranks being added, which getAvailableKlasses takes after its paging. */
 type PendingPicks =

@@ -1,0 +1,107 @@
+import { eq, type InferInsertModel } from "drizzle-orm";
+
+import { coreRulesetId } from "@/database/packages/dnd35/seed/context.ts";
+import { rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { db } from "@/server/database/index.ts";
+import { Properties, Rulesets } from "@/server/repositories/index.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
+
+const writtenSeededRulesets = new Set<string>();
+
+/**
+ * An empty private D&D 3.5 draft ruleset owned by `userId` (`null` for a
+ * system ruleset). Pass `rulesetId` and `ancestorRulesetIds` to make it a
+ * fork. For one that already has the seeded content, use `createSeededTestRuleset`.
+ */
+export async function createTestRuleset(
+  userId: string | null,
+  values: Partial<InferInsertModel<typeof rulesetsInRules>> = {},
+) {
+  const [ruleset] = await Rulesets.create(db, {
+    name: `Test Ruleset ${uniqueId()}`,
+    description: "Test ruleset description",
+    private: true,
+    baseRules: "Dungeons & Dragons: 3.5",
+    userId,
+    ...values,
+  });
+  return ruleset;
+}
+
+/** A new user with an empty ruleset of their own. */
+export async function createTestUserAndRuleset() {
+  const { user, session } = await createTestUser();
+  const ruleset = await createTestRuleset(user.id);
+  return { user, session, ruleset };
+}
+
+/**
+ * Creates a test ruleset by forking the seeded D&D 3.5 base ruleset.
+ * The fork inherits all entities (abilities, saves, skills, feats, etc.)
+ * via COW without duplicating any data.
+ */
+export async function createSeededTestRuleset(
+  userId: string,
+  options: {
+    name?: string;
+    description?: string;
+    private?: boolean;
+    status?: "Draft" | "Published" | "Archived";
+  } = {},
+) {
+  const coreId = await coreRulesetId(db, "A seeded test ruleset");
+
+  const ruleset = await createTestRuleset(userId, {
+    rulesetId: coreId,
+    ancestorRulesetIds: [coreId],
+    ...options,
+  });
+
+  // Copy ruleset-level properties (e.g., RULESET_SKILL_POINT_ABILITY_ID)
+  const sourceProperties = await Properties.findMany(db, {
+    entityIds: [coreId],
+    entityType: "rulesets",
+  });
+  if (sourceProperties.length > 0) {
+    await Properties.createMany(
+      db,
+      sourceProperties.map((p) => ({
+        ...p,
+        id: undefined,
+        entityId: ruleset.id,
+      })),
+    );
+  }
+
+  return ruleset;
+}
+
+/**
+ * Drops a seeded ruleset's cached rules after the test wrote rows straight into it, so what it reads next
+ * sees them. The cache outlives the test's rollback, so the setup drops them again once the test ends.
+ * A fork goes away with the rollback: after writing into one, `RulesetCache.invalidate` is enough.
+ */
+export function invalidateSeededRuleset(rulesetId: string) {
+  writtenSeededRulesets.add(rulesetId);
+  RulesetCache.invalidate(rulesetId);
+}
+
+/** Drops the rules of the seeded rulesets the test wrote to, now that the rollback undid its rows. */
+export function forgetSeededRulesetWrites() {
+  for (const rulesetId of writtenSeededRulesets) RulesetCache.invalidate(rulesetId);
+  writtenSeededRulesets.clear();
+}
+
+/** A seeded fork that also uses every extension shipped with the seeded base ruleset. */
+export async function createSeededTestRulesetWithExtensions(userId: string) {
+  const fork = await createSeededTestRuleset(userId);
+  const links = await db
+    .select({ id: rulesetExtensionsInRules.extensionId })
+    .from(rulesetExtensionsInRules)
+    .where(eq(rulesetExtensionsInRules.rulesetId, fork.rulesetId!));
+  const [ruleset] = await Rulesets.update(db, { extensionRulesetIds: links.map((link) => link.id) }, { id: fork.id });
+  RulesetCache.invalidate(fork.id);
+  return ruleset;
+}

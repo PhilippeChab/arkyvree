@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { createTestRuleset } from "@/tests/helpers.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
 
 /** A ruleset owned by the seeded user, and another user invited to contribute to it. */
 async function setup() {

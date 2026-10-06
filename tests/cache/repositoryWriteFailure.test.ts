@@ -17,7 +17,7 @@ import {
   Sessions,
   Users,
 } from "@/server/repositories/index.ts";
-import { getSeedCtx } from "@/tests/helpers.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 
 test("a rejected repository write remains handled and subsequent reads work", async () => {
   const ctx = await getSeedCtx();

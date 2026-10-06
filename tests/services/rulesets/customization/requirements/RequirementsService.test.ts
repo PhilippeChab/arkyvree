@@ -5,7 +5,9 @@ import { db } from "@/server/database/index.ts";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Races, Requirements } from "@/server/repositories/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
-import { activityTypes, createTestUserAndRuleset, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
+import { activityTypes } from "@/tests/support/activities.ts";
+import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 
 const chain = { level: "1", chainingOperator: "and" };
 const babAtLeast5 = { level: "1", target: "combat.bab", value: "5", operator: "greater_than_or_equal" };

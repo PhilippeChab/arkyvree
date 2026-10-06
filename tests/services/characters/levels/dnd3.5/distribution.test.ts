@@ -5,7 +5,9 @@ import { db } from "@/server/database/index.ts";
 import { Modifiers, Rulesets } from "@/server/repositories/index.ts";
 import { computePerLevelAptitudeSlots } from "@/server/services/characters/levels/dnd3.5/distribution.ts";
 import { getOrBuildCowData } from "@/server/services/rulesets/cow/index.ts";
-import { findKlassLevel, getSeedCtx, invalidateSeededRuleset } from "@/tests/helpers.ts";
+import { findKlassLevel } from "@/tests/support/levels.ts";
+import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 
 /** The seeded cleric's first two levels, the second adding a 1st-level spell her first made all known. */
 async function clericWithLaterAdd() {

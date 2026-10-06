@@ -5,12 +5,9 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Abilities, EntitySnapshots, Klasses, KlassLevels, KlassSkills, Skills } from "@/server/repositories/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
-import {
-  addCharacterLevel,
-  createTestCharacter,
-  createTestRuleset,
-  createTestUserAndRuleset,
-} from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { addCharacterLevel } from "@/tests/support/levels.ts";
+import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 /** A new user's empty ruleset with two classes and two skills. */
 async function setup() {

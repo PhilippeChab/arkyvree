@@ -21,7 +21,7 @@ import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts"
 import { getOrBuildCowData } from "@/server/services/rulesets/cow/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { createSeededTestRulesetWithExtensions } from "@/tests/helpers.ts";
+import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
 
 /**
  * A seeded fork that uses every extension of its base, so the COW layer sees

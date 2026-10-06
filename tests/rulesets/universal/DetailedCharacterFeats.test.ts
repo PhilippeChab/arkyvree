@@ -5,7 +5,7 @@ import { Feats, Properties } from "@/server/repositories/index.ts";
 import DetailedCharacterFeatGroupings from "@/server/rulesets/universal/DetailedCharacterFeatGroupings.ts";
 import DetailedCharacterFeats from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
-import { getSeedCtx } from "@/tests/helpers.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 
 describe("DetailedCharacterFeats.injectGroupings", () => {
   test("puts a family named like a feat in that feat's entry, and never the feat in itself", async () => {

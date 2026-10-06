@@ -4,7 +4,8 @@ import { languagesInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
-import { createTestCharacter, createTestRuleset, createTestUserAndRuleset } from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("LanguagesService", () => {

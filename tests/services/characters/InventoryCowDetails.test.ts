@@ -7,7 +7,8 @@ import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 
 async function setup() {
   const user = await Users.findOne(db, { emailAddress: "testuser1@example.com" });

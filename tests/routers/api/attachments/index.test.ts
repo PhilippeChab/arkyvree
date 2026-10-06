@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { createTestUser, NIL_UUID } from "@/tests/helpers.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 const attachments = api.api.attachments;
 const avatar = { recordType: "User", recordId: SEED_USER_ID, name: "avatar" };

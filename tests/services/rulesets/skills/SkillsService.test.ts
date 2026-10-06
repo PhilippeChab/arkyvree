@@ -8,13 +8,10 @@ import { ConflictError } from "@/server/errors/index.ts";
 import { KlassSkills } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
-import {
-  addCharacterLevel,
-  createTestCharacter,
-  createTestKlassLevel,
-  createTestUserAndRuleset,
-  insertRows,
-} from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
+import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 type SkillBody = Parameters<typeof SkillsService.createSkill>[2];
 

@@ -10,7 +10,9 @@ import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/inde
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { createSeededTestRuleset, findPlainItem, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { findPlainItem } from "@/tests/support/seed.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 async function setup() {
   const session = makeSession();

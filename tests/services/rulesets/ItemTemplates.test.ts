@@ -21,7 +21,8 @@ import {
   WEAPON_SIZE,
   WEAPON_TYPE,
 } from "@/shared/dnd3.5/properties/index.ts";
-import { createSeededTestRuleset, createTestUser, invalidateSeededRuleset } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 async function setup() {
   const { user, session } = await createTestUser();

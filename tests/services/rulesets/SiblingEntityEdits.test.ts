@@ -10,7 +10,8 @@ import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/inde
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
-import { createSeededTestRuleset, invalidateSeededRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 type EntityType = "races" | "klasses" | "items";
 

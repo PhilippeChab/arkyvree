@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { getSeedCtx } from "@/tests/helpers.ts";
+import { createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 
 describe("dashboard", () => {
   test("counts the user's characters and campaigns, and the rulesets available to them", async () => {

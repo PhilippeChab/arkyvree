@@ -44,19 +44,14 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import {
-  addCharacterLevel,
-  addRulesetContributor,
-  createTestCampaign,
-  createTestCharacter,
-  createTestKlassLevel,
-  createTestRuleset,
-  createTestUser,
-  getSeedCtx,
-  insertRows,
-  NIL_UUID,
-  uniqueId,
-} from "@/tests/helpers.ts";
+import { createTestCampaign } from "@/tests/support/campaigns.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { addRulesetContributor } from "@/tests/support/contributors.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
 const firstPage = { limit: 100, page: 1 };

@@ -20,7 +20,8 @@ import { SavesService } from "@/server/services/rulesets/saves/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createTestRuleset, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 
 type Row = { id: string; name: string; rulesetId: string; updatedAt: string };
 type Page = { items: { id: string; name: string }[] };

@@ -4,7 +4,9 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
-import { addCharacterContributor, createTestCharacter, createTestUser } from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { addCharacterContributor } from "@/tests/support/contributors.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 /** A character of a new user's, with that user's session and a stranger's. */
 async function setup() {

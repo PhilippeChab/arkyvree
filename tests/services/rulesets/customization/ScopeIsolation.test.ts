@@ -7,7 +7,8 @@ import { cowEntityForCustomization } from "@/server/services/rulesets/cow/index.
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
-import { createSeededTestRuleset, invalidateSeededRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 async function setup() {
   const session = makeSession();

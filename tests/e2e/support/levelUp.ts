@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-import { openActionsMenu } from "@/tests/e2e/helpers.ts";
+import { openActionsMenu } from "@/tests/e2e/support/page.ts";
 
 /**
  * Picks, for each pool chip still short of its total (`name picked/total`), the first item it lists, until every

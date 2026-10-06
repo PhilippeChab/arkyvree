@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const paths = api.api.rulesets[":id"].customization.target.paths;
 const root = { partialPath: "", position: 0, kind: "modifier" as const };

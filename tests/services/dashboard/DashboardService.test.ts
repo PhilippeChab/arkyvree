@@ -3,13 +3,11 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { Campaigns, Characters, Rulesets } from "@/server/repositories/index.ts";
 import { DashboardService } from "@/server/services/dashboard/index.ts";
-import {
-  addRulesetContributor,
-  createTestCampaign,
-  createTestCharacter,
-  createTestRuleset,
-  createTestUser,
-} from "@/tests/helpers.ts";
+import { createTestCampaign } from "@/tests/support/campaigns.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { addRulesetContributor } from "@/tests/support/contributors.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 describe("DashboardService.getStats", () => {
   test("counts the user's own live characters and campaigns only", async () => {

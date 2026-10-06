@@ -11,7 +11,9 @@ import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
-import { createSeededTestRuleset, findPlainItem, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { findPlainItem } from "@/tests/support/seed.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 // A character that picked an inherited entity stores the source id. Deleting
 // the fork's later local copy leaves a tombstone that hides the source, which

@@ -5,7 +5,8 @@ import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/in
 import { Contributors, Rulesets } from "@/server/repositories/index.ts";
 import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
-import { createTestRuleset, createTestUser } from "@/tests/helpers.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 /** A new user's draft ruleset. */
 async function setup() {

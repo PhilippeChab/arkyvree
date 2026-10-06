@@ -4,7 +4,8 @@
  * - `no-parent-imports`: a file imports another folder's module through `@/` (the repo's root), never `../`.
  *   `oxlint --fix` rewrites one. Not in `lint/`, whose plugins node loads without the alias.
  * - `no-helpers-modules`: a helper is a module named for what it does, never a `helpers` or `utils` grab bag, file or
- *   folder (the server, `shared/` and the client; the tests' and seeders' helpers are their own).
+ *   folder (the server, `shared/`, the client and the tests, whose shared code is `tests/support/`'s topic modules;
+ *   the seeders' helpers are their own).
  * - `repository-instances`: code uses the repositories' shared instances (`@/server/repositories/index.ts`), which
  *   the request cache wraps; only that file builds one.
  * - `route-conventions`: a route's path params are camelCase (`:modifierId`; `.get`, `.route`, `.on`) and its fixed
@@ -69,7 +70,7 @@ const noParentImports = {
   },
 };
 
-const HELPER_TREES = ["server/", "shared/", "client/"];
+const HELPER_TREES = ["server/", "shared/", "client/", "tests/"];
 /** A module or folder named for no particular thing: `helpers.ts`, `utils/`. */
 const GRAB_BAG = /(^|\/)(helpers|utils?)(\.tsx?$|\/)/;
 

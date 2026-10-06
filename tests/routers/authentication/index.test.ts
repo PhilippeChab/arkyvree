@@ -6,8 +6,8 @@ import { emailVerificationsInAccount, sessionsInAccount } from "@/drizzle/schema
 import { db } from "@/server/database/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
 import { EmailVerifications, OauthAccounts, PasswordResets, Users } from "@/server/repositories/index.ts";
-import { apiAs, expectOk, expectStatus, guestApi, sessionIdFrom, signedInApi } from "@/tests/api.ts";
-import { uniqueId } from "@/tests/helpers.ts";
+import { apiAs, expectOk, expectStatus, guestApi, sessionIdFrom, signedInApi } from "@/tests/support/api.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
 
 const auth = guestApi.auth;
 const password = "password1234";
