@@ -396,65 +396,6 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     };
   }
 
-  async preload(): Promise<PreloadedCharacterData> {
-    const dataLoader = this.createDataLoader();
-    return await withRulesetScope(db, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
-      const shared = await dataLoader.loadSharedData(db, { ruleset, cowData: rulesetData.cow, rulesetData });
-      return {
-        ruleset,
-        cowData: shared.cowData,
-        rulesetData: shared.rulesetData,
-        _shared: shared,
-      };
-    });
-  }
-
-  async build(database: Db = db, projectedData?: unknown, preloaded?: PreloadedCharacterData | PreloadedRulesetData) {
-    const dataLoader = this.createDataLoader();
-
-    // withRulesetScope activates the cowContext, loads ruleset + cowData +
-    // rulesetData, and hands them back. The data loader requires preloaded
-    // ruleset-level data — never fetches on its own. Projection mode's
-    // caller-supplied `preloaded` with `_shared` still takes precedence.
-    return await withRulesetScope(database, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
-      const preloadedForLoad: PreloadedCharacterData | PreloadedRulesetData =
-        preloaded && "_shared" in preloaded ? preloaded : { ruleset, cowData: rulesetData.cow, rulesetData };
-      // 1. Load data
-      const data = await dataLoader.load(database, projectedData, preloadedForLoad);
-      this.applyLoadedData(data);
-
-      // 2. Normalize (subclass — initializes all sub-systems)
-      this.normalizeData();
-
-      // 3. Pre-apply possession modifiers (universal)
-      this.preApplyPossessionModifiers();
-
-      // 4. Build holders (subclass — includes ruleset-specific holders)
-      this.holders = this.buildHolders();
-
-      // 5. Pre-requirement processing (subclass — e.g. the spellcasting holder, a bonded creature's stat block)
-      await this.preRequirementProcessing(rulesetData);
-
-      // 6. Post-requirement processing (subclass — e.g. proficiency penalties, which check requirements of their own)
-      this.postRequirementProcessing();
-
-      // 7. Non-power modifiers, and the requirements that gate them (universal)
-      const powerModifiers = this.modifiers.filter((m) => m.target.startsWith("powers."));
-      const otherModifiers = this.modifiers.filter((m) => !m.target.startsWith("powers."));
-      this.applyModifiersInRounds(otherModifiers);
-
-      // 8. Ruleset-specific post-modifier processing (subclass)
-      await this.postModifierProcessing(rulesetData);
-
-      // 9. Evaluate power modifiers (universal)
-      this.detailedCharacterModifiers.evaluateModifiers(
-        this.holders,
-        powerModifiers,
-        this.detailedCharacterRequirements,
-      );
-    });
-  }
-
   getCampaign() {
     return this.campaign;
   }
@@ -708,5 +649,64 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     };
 
     return roots.map((root) => formatNode(root, "")).join("\n");
+  }
+
+  async preload(): Promise<PreloadedCharacterData> {
+    const dataLoader = this.createDataLoader();
+    return await withRulesetScope(db, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
+      const shared = await dataLoader.loadSharedData(db, { ruleset, cowData: rulesetData.cow, rulesetData });
+      return {
+        ruleset,
+        cowData: shared.cowData,
+        rulesetData: shared.rulesetData,
+        _shared: shared,
+      };
+    });
+  }
+
+  async build(database: Db = db, projectedData?: unknown, preloaded?: PreloadedCharacterData | PreloadedRulesetData) {
+    const dataLoader = this.createDataLoader();
+
+    // withRulesetScope activates the cowContext, loads ruleset + cowData +
+    // rulesetData, and hands them back. The data loader requires preloaded
+    // ruleset-level data — never fetches on its own. Projection mode's
+    // caller-supplied `preloaded` with `_shared` still takes precedence.
+    return await withRulesetScope(database, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
+      const preloadedForLoad: PreloadedCharacterData | PreloadedRulesetData =
+        preloaded && "_shared" in preloaded ? preloaded : { ruleset, cowData: rulesetData.cow, rulesetData };
+      // 1. Load data
+      const data = await dataLoader.load(database, projectedData, preloadedForLoad);
+      this.applyLoadedData(data);
+
+      // 2. Normalize (subclass — initializes all sub-systems)
+      this.normalizeData();
+
+      // 3. Pre-apply possession modifiers (universal)
+      this.preApplyPossessionModifiers();
+
+      // 4. Build holders (subclass — includes ruleset-specific holders)
+      this.holders = this.buildHolders();
+
+      // 5. Pre-requirement processing (subclass — e.g. the spellcasting holder, a bonded creature's stat block)
+      await this.preRequirementProcessing(rulesetData);
+
+      // 6. Post-requirement processing (subclass — e.g. proficiency penalties, which check requirements of their own)
+      this.postRequirementProcessing();
+
+      // 7. Non-power modifiers, and the requirements that gate them (universal)
+      const powerModifiers = this.modifiers.filter((m) => m.target.startsWith("powers."));
+      const otherModifiers = this.modifiers.filter((m) => !m.target.startsWith("powers."));
+      this.applyModifiersInRounds(otherModifiers);
+
+      // 8. Ruleset-specific post-modifier processing (subclass)
+      await this.postModifierProcessing(rulesetData);
+
+      // 9. Evaluate power modifiers (universal)
+      this.detailedCharacterModifiers.evaluateModifiers(
+        this.holders,
+        powerModifiers,
+        this.detailedCharacterRequirements,
+      );
+    });
   }
 }

@@ -99,11 +99,6 @@ const FIELD_LABELS: Record<string, string> = {
   saveId: "Save",
 };
 
-/** An activity's payload: the fields its type records, or none. */
-function payload(data: unknown): Record<string, unknown> {
-  return isRecord(data) ? data : {};
-}
-
 function isChangedField(value: unknown): value is ChangedField {
   return isRecord(value) && typeof value.field === "string";
 }
@@ -120,6 +115,44 @@ function formatChange(change: ChangedField): string {
     return `${label} set to ${change.to}`;
   }
   return `${label} cleared`;
+}
+
+/** An activity's payload: the fields its type records, or none. */
+function payload(data: unknown): Record<string, unknown> {
+  return isRecord(data) ? data : {};
+}
+
+export function formatActivityDate(dateString: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(dateString));
+}
+
+export function formatActivityDetails(data: unknown): string | null {
+  const d = payload(data);
+  const parts: string[] = [];
+
+  if (Array.isArray(d.changedFields)) {
+    for (const change of d.changedFields.filter(isChangedField)) {
+      parts.push(formatChange(change));
+    }
+  }
+  if (d.level != null) {
+    parts.push(`Level ${d.level}`);
+  }
+  // Modifier details
+  if (d.target && d.operator) {
+    parts.push(`${d.operator} ${d.value ?? ""} on ${d.target}`.trim());
+  }
+  // Property details
+  if (typeof d.propertyType === "string" && d.propertyType) {
+    parts.push(`${FIELD_LABELS[d.propertyType] ?? d.propertyType}: ${d.value ?? ""}`);
+  }
+  return parts.length > 0 ? parts.join("\n") : null;
 }
 
 export function formatActivityType(type: string, data?: unknown): string {
@@ -145,14 +178,15 @@ export function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString();
 }
 
-export function formatActivityDate(dateString: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(dateString));
+export function formatNotificationMessage(type: string, data: unknown): string {
+  const d = payload(data);
+  const actorName = typeof d.actorName === "string" && d.actorName ? d.actorName : "Someone";
+
+  const formatter = NOTIFICATION_MESSAGES[type];
+  if (formatter) return formatter(actorName, d);
+
+  const typeFormatted = formatActivityType(type, data).toLowerCase();
+  return `${actorName}: ${typeFormatted}`;
 }
 
 export function formatRelativeTime(dateString: string): string {
@@ -168,38 +202,4 @@ export function formatRelativeTime(dateString: string): string {
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}d ago`;
   return formatActivityDate(dateString);
-}
-
-export function formatNotificationMessage(type: string, data: unknown): string {
-  const d = payload(data);
-  const actorName = typeof d.actorName === "string" && d.actorName ? d.actorName : "Someone";
-
-  const formatter = NOTIFICATION_MESSAGES[type];
-  if (formatter) return formatter(actorName, d);
-
-  const typeFormatted = formatActivityType(type, data).toLowerCase();
-  return `${actorName}: ${typeFormatted}`;
-}
-
-export function formatActivityDetails(data: unknown): string | null {
-  const d = payload(data);
-  const parts: string[] = [];
-
-  if (Array.isArray(d.changedFields)) {
-    for (const change of d.changedFields.filter(isChangedField)) {
-      parts.push(formatChange(change));
-    }
-  }
-  if (d.level != null) {
-    parts.push(`Level ${d.level}`);
-  }
-  // Modifier details
-  if (d.target && d.operator) {
-    parts.push(`${d.operator} ${d.value ?? ""} on ${d.target}`.trim());
-  }
-  // Property details
-  if (typeof d.propertyType === "string" && d.propertyType) {
-    parts.push(`${FIELD_LABELS[d.propertyType] ?? d.propertyType}: ${d.value ?? ""}`);
-  }
-  return parts.length > 0 ? parts.join("\n") : null;
 }

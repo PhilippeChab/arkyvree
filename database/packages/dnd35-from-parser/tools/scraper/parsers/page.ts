@@ -31,18 +31,6 @@ export function pageTitle($: cheerio.CheerioAPI, frame = FRAME_HEADING): string 
   return contentHeading($, frame)?.text().trim() ?? "";
 }
 
-/** An element's tag name, lowercased. */
-export function tagOf(el: cheerio.Cheerio<AnyNode>): string | undefined {
-  return el.prop("tagName")?.toLowerCase();
-}
-
-/** The elements after `start` (its section), up to the next one whose tag is among `stops`: an h2 or h3 by default. */
-export function sectionElements(start: cheerio.Cheerio<AnyNode>, stops = ["h2", "h3"]): cheerio.Cheerio<AnyNode>[] {
-  const elements: cheerio.Cheerio<AnyNode>[] = [];
-  for (let el = start.next(); el.length > 0 && !stops.includes(tagOf(el) ?? ""); el = el.next()) elements.push(el);
-  return elements;
-}
-
 /** A listing page's entries: the first link of each table row that leads into `section` ("feats", "spells"…). */
 export function parseListingHtml(html: string, section: string): { name: string; url: string }[] {
   const $ = cheerio.load(html);
@@ -54,4 +42,16 @@ export function parseListingHtml(html: string, section: string): { name: string;
     if (name && href?.includes(`/${section}/`)) results.push({ name, url: href });
   });
   return results;
+}
+
+/** An element's tag name, lowercased. */
+export function tagOf(el: cheerio.Cheerio<AnyNode>): string | undefined {
+  return el.prop("tagName")?.toLowerCase();
+}
+
+/** The elements after `start` (its section), up to the next one whose tag is among `stops`: an h2 or h3 by default. */
+export function sectionElements(start: cheerio.Cheerio<AnyNode>, stops = ["h2", "h3"]): cheerio.Cheerio<AnyNode>[] {
+  const elements: cheerio.Cheerio<AnyNode>[] = [];
+  for (let el = start.next(); el.length > 0 && !stops.includes(tagOf(el) ?? ""); el = el.next()) elements.push(el);
+  return elements;
 }

@@ -76,14 +76,6 @@ class AttachmentsService {
     return `blobs/${blobId}/${safe}`;
   }
 
-  private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
-    const refs = await Attachments.findMany(tx, { blobIds: [blobId] });
-    if (refs.length > 0) return null;
-    const blob = await Blobs.findOne(tx, { id: blobId });
-    if (!blob) return null;
-    return { id: blob.id, key: blob.key };
-  }
-
   private getAttachableConfig(recordType: string): AttachableConfig {
     const config = ATTACHABLE_TYPES.get(recordType);
     if (!config) throw new BadRequestError(`Unsupported record type: ${recordType}`);
@@ -100,30 +92,6 @@ class AttachmentsService {
     if (typeof err !== "object" || err === null) return false;
     const e = err as { code?: string; cause?: { code?: string } };
     return e.code === "23505" || e.cause?.code === "23505";
-  }
-
-  private async purgeOrphan(orphan: { id: string; key: string } | null): Promise<void> {
-    if (!orphan) return;
-    try {
-      await getStorage().deleteObject(orphan.key);
-      await withTransaction((tx) => Blobs.delete(tx, { id: orphan.id }));
-    } catch (err) {
-      console.warn(`[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`);
-    }
-  }
-
-  private async assertCanAttach(session: Session, recordType: string, recordId: string): Promise<void> {
-    const config = this.getAttachableConfig(recordType);
-    if (!(await config.isOwner(session, recordId))) {
-      throw new ForbiddenError("Not authorized to attach to this record");
-    }
-  }
-
-  private async assertCanRead(session: Session, recordType: string, recordId: string): Promise<void> {
-    const config = this.getAttachableConfig(recordType);
-    if (!(await config.isReader(session, recordId))) {
-      throw new ForbiddenError("Not authorized to view this attachment");
-    }
   }
 
   private assertValidName(recordType: string, name: string): void {
@@ -172,6 +140,38 @@ class AttachmentsService {
       throw new BadRequestError("Signed id has expired");
     }
     return payload;
+  }
+
+  private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
+    const refs = await Attachments.findMany(tx, { blobIds: [blobId] });
+    if (refs.length > 0) return null;
+    const blob = await Blobs.findOne(tx, { id: blobId });
+    if (!blob) return null;
+    return { id: blob.id, key: blob.key };
+  }
+
+  private async purgeOrphan(orphan: { id: string; key: string } | null): Promise<void> {
+    if (!orphan) return;
+    try {
+      await getStorage().deleteObject(orphan.key);
+      await withTransaction((tx) => Blobs.delete(tx, { id: orphan.id }));
+    } catch (err) {
+      console.warn(`[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`);
+    }
+  }
+
+  private async assertCanAttach(session: Session, recordType: string, recordId: string): Promise<void> {
+    const config = this.getAttachableConfig(recordType);
+    if (!(await config.isOwner(session, recordId))) {
+      throw new ForbiddenError("Not authorized to attach to this record");
+    }
+  }
+
+  private async assertCanRead(session: Session, recordType: string, recordId: string): Promise<void> {
+    const config = this.getAttachableConfig(recordType);
+    if (!(await config.isReader(session, recordId))) {
+      throw new ForbiddenError("Not authorized to view this attachment");
+    }
   }
 
   async getAttachment(session: Session, params: { recordType: string; recordId: string; name: string }) {

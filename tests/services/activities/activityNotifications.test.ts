@@ -21,14 +21,14 @@ function note(type: string, actor: User) {
   return `${type} from ${actor.user.id}`;
 }
 
+function users(count: number) {
+  return Promise.all(Array.from({ length: count }, () => createTestUser()));
+}
+
 /** What `recipient` was notified of. */
 async function inbox(recipient: User) {
   const { items } = await Notifications.findPage(db, { recipientId: recipient.user.id }, { limit: 50, page: 1 });
   return items.map((n) => `${n.type} from ${n.actorId}`).sort();
-}
-
-function users(count: number) {
-  return Promise.all(Array.from({ length: count }, () => createTestUser()));
 }
 
 /** A Game Master's campaign with an empty slot, and someone to invite into it. */

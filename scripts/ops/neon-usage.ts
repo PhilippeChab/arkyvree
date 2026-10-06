@@ -19,14 +19,16 @@ const csv = process.argv.includes("--csv");
 const apiKey = process.env.NEON_API_KEY;
 const projectId = process.env.NEON_PROJECT_ID;
 
-function mb(b: number) {
-  return b / 1024 / 1024;
-}
 function gb(b: number) {
   return b / 1024 / 1024 / 1024;
 }
+
 function hrs(s: number) {
   return s / 3600;
+}
+
+function mb(b: number) {
+  return b / 1024 / 1024;
 }
 
 /**

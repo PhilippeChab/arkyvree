@@ -3,6 +3,12 @@ import { sql } from "drizzle-orm";
 import type { Db } from "@/server/database/index.ts";
 import { readEnv } from "@/server/environment.ts";
 
+export function pingWorker() {
+  const url = readEnv("WORKER_FLYCAST_URL");
+  if (!url) return;
+  fetch(url, { signal: AbortSignal.timeout(500) }).catch(() => {});
+}
+
 /** Queues a job for the worker (graphile-worker), in `db`'s transaction when it's one. Ping the worker once it commits. */
 export async function addJob(
   db: Db,
@@ -18,10 +24,4 @@ export async function addJob(
       queue_name := ${options.queueName ?? null}
     )`,
   );
-}
-
-export function pingWorker() {
-  const url = readEnv("WORKER_FLYCAST_URL");
-  if (!url) return;
-  fetch(url, { signal: AbortSignal.timeout(500) }).catch(() => {});
 }

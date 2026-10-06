@@ -24,15 +24,6 @@ interface EntityDetailLayoutProps {
 /** An entity page's column: centered, up to 1200px. */
 const PAGE_SX = { maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } } as const;
 
-/** An entity page that couldn't load its entity, in the page's column. */
-export function EntityPageError(props: ComponentProps<typeof PageError>) {
-  return (
-    <Box sx={PAGE_SX}>
-      <PageError {...props} />
-    </Box>
-  );
-}
-
 export function EntityDetailLayout({
   entityName,
   rulesetName,
@@ -153,6 +144,15 @@ export function EntityDetailLayout({
         )}
       </Box>
       {children}
+    </Box>
+  );
+}
+
+/** An entity page that couldn't load its entity, in the page's column. */
+export function EntityPageError(props: ComponentProps<typeof PageError>) {
+  return (
+    <Box sx={PAGE_SX}>
+      <PageError {...props} />
     </Box>
   );
 }

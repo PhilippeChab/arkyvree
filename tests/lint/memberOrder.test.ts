@@ -193,4 +193,150 @@ describe("member order", () => {
     expect(check.exitCode).toBe(0);
     fs.rmSync(dir, { recursive: true });
   });
+  test("orders a file's functions and a class's methods sync first, a callee above its caller, with oxlint --fix", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
+    fs.mkdirSync(path.join(dir, "server"), { recursive: true });
+    const config = path.join(dir, ".oxlintrc.json");
+    fs.writeFileSync(
+      config,
+      JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/member-order": "error" } }),
+    );
+    const write = (name: string, lines: string[]) => {
+      const file = path.join(dir, "server", name);
+      fs.writeFileSync(file, lines.join("\n"));
+      return file;
+    };
+    const functions = write("functions.ts", [
+      "function helperB() {",
+      "  return 1;",
+      "}",
+      "",
+      "/** Calls helperB. */",
+      "async function helperA() {",
+      "  return helperB();",
+      "}",
+      "",
+      "function helperC() {",
+      "  return 2;",
+      "}",
+      "",
+      "export async function getThing() {",
+      "  return helperA();",
+      "}",
+      "",
+      "export function deleteThing() {",
+      "  return helperC();",
+      "}",
+      "",
+      "export function createThing() {",
+      "  return findThing();",
+      "}",
+      "",
+      "export function findThing() {",
+      "  return 1;",
+      "}",
+      "",
+    ]);
+    // A heading set apart by a blank line starts a run of its own; functions that call each other keep their order.
+    const runs = write("runs.ts", [
+      "function b() {}",
+      "",
+      "function a() {}",
+      "",
+      "// The second section.",
+      "",
+      "function y() {",
+      "  return x();",
+      "}",
+      "",
+      "function x() {",
+      "  return y();",
+      "}",
+      "",
+    ]);
+    const methods = write("methods.ts", [
+      "export class S {",
+      "  async getA() {}",
+      "",
+      "  getB() {}",
+      "",
+      "  private async load() {}",
+      "",
+      "  private helper() {}",
+      "}",
+      "",
+    ]);
+    // A declaration file follows the module it types.
+    const declarations = write("types.d.ts", ["export function b(): void;", "export function a(): void;", ""]);
+    await runOxlint(["-c", config, "--fix", dir]);
+
+    expect(fs.readFileSync(functions, "utf8")).toBe(
+      [
+        // Its helpers, sync first, then its exports: sync first, by verb (reads, creates, deletes), a callee above.
+        "function helperB() {",
+        "  return 1;",
+        "}",
+        "",
+        "function helperC() {",
+        "  return 2;",
+        "}",
+        "",
+        "/** Calls helperB. */",
+        "async function helperA() {",
+        "  return helperB();",
+        "}",
+        "",
+        "export function findThing() {",
+        "  return 1;",
+        "}",
+        "",
+        "export function createThing() {",
+        "  return findThing();",
+        "}",
+        "",
+        "export function deleteThing() {",
+        "  return helperC();",
+        "}",
+        "",
+        "export async function getThing() {",
+        "  return helperA();",
+        "}",
+        "",
+      ].join("\n"),
+    );
+    expect(fs.readFileSync(runs, "utf8")).toBe(
+      [
+        "function a() {}",
+        "",
+        "function b() {}",
+        "",
+        "// The second section.",
+        "",
+        "function y() {",
+        "  return x();",
+        "}",
+        "",
+        "function x() {",
+        "  return y();",
+        "}",
+        "",
+      ].join("\n"),
+    );
+    expect(fs.readFileSync(methods, "utf8")).toBe(
+      [
+        "export class S {",
+        "  private helper() {}",
+        "",
+        "  private async load() {}",
+        "",
+        "  getB() {}",
+        "",
+        "  async getA() {}",
+        "}",
+        "",
+      ].join("\n"),
+    );
+    expect(fs.readFileSync(declarations, "utf8")).toBe("export function b(): void;\nexport function a(): void;\n");
+    fs.rmSync(dir, { recursive: true });
+  });
 });

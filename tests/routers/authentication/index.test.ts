@@ -16,13 +16,13 @@ function newEmail(label: string) {
   return `test+${label}+${uniqueId()}@example.com`;
 }
 
+async function latestVerificationCode(userId: string) {
+  return (await EmailVerifications.findOne(db, { userId }))!.code;
+}
+
 async function signUp(email: string) {
   await expectOk(auth["sign-up"].$post({ json: { emailAddress: email, password, passwordConfirmation: password } }));
   return (await Users.findOne(db, { emailAddress: email }))!;
-}
-
-async function latestVerificationCode(userId: string) {
-  return (await EmailVerifications.findOne(db, { userId }))!.code;
 }
 
 /** Signs up and verifies a new user, returning their session and a client signed in with it. */

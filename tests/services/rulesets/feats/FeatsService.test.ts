@@ -15,6 +15,11 @@ import { insertRows } from "@/tests/support/database.ts";
 import { pickFeat } from "@/tests/support/levels.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
+async function linkedAptitudeIds(featId: string) {
+  const rows = await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.featId, featId));
+  return rows.map((row) => row.aptitudeId).sort();
+}
+
 /** A new user's empty ruleset with three aptitudes. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
@@ -23,11 +28,6 @@ async function setup() {
     ["Combat", "Metamagic", "General"].map((name) => ({ name, rulesetId: ruleset.id })),
   );
   return { user, session, ruleset, aptitudeIds: aptitudes.map((a) => a.id) };
-}
-
-async function linkedAptitudeIds(featId: string) {
-  const rows = await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.featId, featId));
-  return rows.map((row) => row.aptitudeId).sort();
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.

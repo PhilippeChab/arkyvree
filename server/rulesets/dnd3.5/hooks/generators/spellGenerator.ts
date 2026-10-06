@@ -42,35 +42,6 @@ export const SPELL_FIELD_PROPERTY_TYPES = [
   SPELL_COMPONENT,
 ] as const;
 
-export async function generateSpellProperties(tx: Db, powerId: string, fields: SpellFields) {
-  const props: { entityId: string; entityType: string; type: string; value: string }[] = [];
-
-  const add = (type: string, value: string | undefined) => {
-    if (value) props.push({ entityId: powerId, entityType: "powers", type, value });
-  };
-
-  add(SPELL_SCHOOL, fields.school);
-  add(SPELL_SUBSCHOOL, fields.subschool);
-  add(SPELL_CASTING_TIME, fields.castingTime);
-  add(SPELL_RANGE_TYPE, fields.rangeType);
-  add(SPELL_TARGET, fields.target);
-  add(SPELL_AREA_OF_EFFECT, fields.areaOfEffect);
-  add(SPELL_DURATION, fields.duration);
-  add(SPELL_RESISTANCE, fields.spellResistance);
-
-  for (const descriptor of fields.descriptors ?? []) {
-    props.push({ entityId: powerId, entityType: "powers", type: SPELL_DESCRIPTOR, value: descriptor });
-  }
-
-  for (const component of fields.components ?? []) {
-    props.push({ entityId: powerId, entityType: "powers", type: SPELL_COMPONENT, value: component });
-  }
-
-  if (props.length > 0) {
-    await Properties.createMany(tx, props);
-  }
-}
-
 export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceChain: string[], schoolName: string) {
   // Check child and all ancestors for existing feat
   let existing = await Feats.findOne(tx, { name: `Spell Focus: ${schoolName}`, rulesetId });
@@ -152,4 +123,33 @@ export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceC
       valueType: "boolean",
     },
   ]);
+}
+
+export async function generateSpellProperties(tx: Db, powerId: string, fields: SpellFields) {
+  const props: { entityId: string; entityType: string; type: string; value: string }[] = [];
+
+  const add = (type: string, value: string | undefined) => {
+    if (value) props.push({ entityId: powerId, entityType: "powers", type, value });
+  };
+
+  add(SPELL_SCHOOL, fields.school);
+  add(SPELL_SUBSCHOOL, fields.subschool);
+  add(SPELL_CASTING_TIME, fields.castingTime);
+  add(SPELL_RANGE_TYPE, fields.rangeType);
+  add(SPELL_TARGET, fields.target);
+  add(SPELL_AREA_OF_EFFECT, fields.areaOfEffect);
+  add(SPELL_DURATION, fields.duration);
+  add(SPELL_RESISTANCE, fields.spellResistance);
+
+  for (const descriptor of fields.descriptors ?? []) {
+    props.push({ entityId: powerId, entityType: "powers", type: SPELL_DESCRIPTOR, value: descriptor });
+  }
+
+  for (const component of fields.components ?? []) {
+    props.push({ entityId: powerId, entityType: "powers", type: SPELL_COMPONENT, value: component });
+  }
+
+  if (props.length > 0) {
+    await Properties.createMany(tx, props);
+  }
 }

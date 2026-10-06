@@ -16,14 +16,8 @@ import { createSeededTestRuleset, createTestRuleset, createTestUserAndRuleset } 
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
-/** A new user's empty ruleset with three aptitudes. */
-async function setup() {
-  const { user, session, ruleset } = await createTestUserAndRuleset();
-  const aptitudes = await insertRows(
-    aptitudesInRules,
-    ["Wizard", "Cleric", "Druid"].map((name) => ({ name, rulesetId: ruleset.id })),
-  );
-  return { user, session, ruleset, aptitudeIds: aptitudes.map((a) => a.id) };
+function sorted(links: { aptitudeId: string; level: number | null }[]) {
+  return [...links].sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
 }
 
 async function linkedAptitudes(powerId: string) {
@@ -33,8 +27,14 @@ async function linkedAptitudes(powerId: string) {
     .sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
 }
 
-function sorted(links: { aptitudeId: string; level: number | null }[]) {
-  return [...links].sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
+/** A new user's empty ruleset with three aptitudes. */
+async function setup() {
+  const { user, session, ruleset } = await createTestUserAndRuleset();
+  const aptitudes = await insertRows(
+    aptitudesInRules,
+    ["Wizard", "Cleric", "Druid"].map((name) => ({ name, rulesetId: ruleset.id })),
+  );
+  return { user, session, ruleset, aptitudeIds: aptitudes.map((a) => a.id) };
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts,

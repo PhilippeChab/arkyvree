@@ -10,14 +10,6 @@ import { RequirementsService } from "@/server/services/rulesets/customization/re
 import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
-async function setup() {
-  const session = makeSession();
-  const own = await createSeededTestRuleset(session.userId);
-  const foreign = await createSeededTestRuleset(session.userId);
-  const [feat] = await Feats.create(db, { rulesetId: foreign.id, name: "Foreign feat", description: "Untouched" });
-  return { session, own, feat };
-}
-
 async function createModifier(sourceId: string) {
   const [modifier] = await Modifiers.create(db, {
     sourceId,
@@ -28,6 +20,14 @@ async function createModifier(sourceId: string) {
     operator: "add",
   });
   return modifier;
+}
+
+async function setup() {
+  const session = makeSession();
+  const own = await createSeededTestRuleset(session.userId);
+  const foreign = await createSeededTestRuleset(session.userId);
+  const [feat] = await Feats.create(db, { rulesetId: foreign.id, name: "Foreign feat", description: "Untouched" });
+  return { session, own, feat };
 }
 
 describe("ruleset customization isolation", () => {

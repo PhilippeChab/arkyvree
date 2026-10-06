@@ -61,17 +61,45 @@ export async function fetchEntityCustomizations(
   return buildCustomizationsMap(entityIds, modifiers, properties, requirements, modifierRequirements);
 }
 
-/**
- * The customizations of sibling losers, by their own ids: read with copy-on-write resolution off, which would otherwise
- * resolve each loser to its winner and return the winner's rows. What `mergeSiblingData` copies onto the winner.
- */
-export async function fetchSiblingCustomizations(
+// Also fetch klass_level customizations (modifiers, properties, requirements) for snapshot hashing
+export async function fetchKlassLevelCustomizations(
   tx: Db,
-  entityIds: string[],
-  entityType: string,
-  sourceType?: string,
+  klassIds: string[],
 ): Promise<Map<string, EntityCustomizations>> {
-  return await withCowContext(undefined, () => fetchEntityCustomizations(tx, entityIds, entityType, sourceType));
+  if (klassIds.length === 0) return new Map();
+
+  // Fetch all levels for these klasses
+  const allLevelIds: string[] = [];
+  const klassToLevelIds = new Map<string, string[]>();
+  for (const klassId of klassIds) {
+    const levels = await KlassLevels.findMany(tx, { klassId });
+    const levelIds = levels.map((l) => l.id);
+    klassToLevelIds.set(klassId, levelIds);
+    allLevelIds.push(...levelIds);
+  }
+
+  if (allLevelIds.length === 0) return new Map();
+
+  const levelCustomizations = await fetchEntityCustomizations(tx, allLevelIds, "klass_levels", "klass_levels");
+
+  // Merge per-klass
+  const map = new Map<string, EntityCustomizations>();
+  for (const klassId of klassIds) {
+    const levelIds = klassToLevelIds.get(klassId) ?? [];
+    const merged: EntityCustomizations = { modifiers: [], properties: [], requirements: [], modifierRequirements: [] };
+    for (const levelId of levelIds) {
+      const lc = levelCustomizations.get(levelId);
+      if (lc) {
+        merged.modifiers.push(...lc.modifiers);
+        merged.properties.push(...lc.properties);
+        merged.requirements.push(...lc.requirements);
+        merged.modifierRequirements.push(...lc.modifierRequirements);
+      }
+    }
+    map.set(klassId, merged);
+  }
+
+  return map;
 }
 
 export async function fetchKlassRelationships(tx: Db, klassIds: string[]): Promise<Map<string, KlassRelationships>> {
@@ -131,43 +159,15 @@ export async function fetchKlassRelationships(tx: Db, klassIds: string[]): Promi
   return map;
 }
 
-// Also fetch klass_level customizations (modifiers, properties, requirements) for snapshot hashing
-export async function fetchKlassLevelCustomizations(
+/**
+ * The customizations of sibling losers, by their own ids: read with copy-on-write resolution off, which would otherwise
+ * resolve each loser to its winner and return the winner's rows. What `mergeSiblingData` copies onto the winner.
+ */
+export async function fetchSiblingCustomizations(
   tx: Db,
-  klassIds: string[],
+  entityIds: string[],
+  entityType: string,
+  sourceType?: string,
 ): Promise<Map<string, EntityCustomizations>> {
-  if (klassIds.length === 0) return new Map();
-
-  // Fetch all levels for these klasses
-  const allLevelIds: string[] = [];
-  const klassToLevelIds = new Map<string, string[]>();
-  for (const klassId of klassIds) {
-    const levels = await KlassLevels.findMany(tx, { klassId });
-    const levelIds = levels.map((l) => l.id);
-    klassToLevelIds.set(klassId, levelIds);
-    allLevelIds.push(...levelIds);
-  }
-
-  if (allLevelIds.length === 0) return new Map();
-
-  const levelCustomizations = await fetchEntityCustomizations(tx, allLevelIds, "klass_levels", "klass_levels");
-
-  // Merge per-klass
-  const map = new Map<string, EntityCustomizations>();
-  for (const klassId of klassIds) {
-    const levelIds = klassToLevelIds.get(klassId) ?? [];
-    const merged: EntityCustomizations = { modifiers: [], properties: [], requirements: [], modifierRequirements: [] };
-    for (const levelId of levelIds) {
-      const lc = levelCustomizations.get(levelId);
-      if (lc) {
-        merged.modifiers.push(...lc.modifiers);
-        merged.properties.push(...lc.properties);
-        merged.requirements.push(...lc.requirements);
-        merged.modifierRequirements.push(...lc.modifierRequirements);
-      }
-    }
-    map.set(klassId, merged);
-  }
-
-  return map;
+  return await withCowContext(undefined, () => fetchEntityCustomizations(tx, entityIds, entityType, sourceType));
 }

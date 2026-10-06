@@ -72,6 +72,25 @@ async function seedAbilities(db: Db, ctx: SeedContext) {
   });
 }
 
+async function seedSaves(db: Db, ctx: SeedContext) {
+  Object.assign(
+    ctx.saveMap,
+    idsByName(
+      await db
+        .insert(savesInRules)
+        .values(
+          SAVES.map(({ name, description, ability }) => ({
+            rulesetId: ctx.rulesetId,
+            name,
+            description,
+            abilityId: ctx.abilityMap[ability],
+          })),
+        )
+        .returning({ id: savesInRules.id, name: savesInRules.name }),
+    ),
+  );
+}
+
 async function seedSkills(db: Db, ctx: SeedContext) {
   Object.assign(
     ctx.skillMap,
@@ -100,25 +119,6 @@ async function seedSkills(db: Db, ctx: SeedContext) {
           : []),
         ...(usableWithoutTraining ? [{ type: SKILL_USABLE_WITHOUT_TRAINING, value: "true" }] : []),
       ].map((property) => ({ entityId: ctx.skillMap[name], entityType: "skills", ...property })),
-    ),
-  );
-}
-
-async function seedSaves(db: Db, ctx: SeedContext) {
-  Object.assign(
-    ctx.saveMap,
-    idsByName(
-      await db
-        .insert(savesInRules)
-        .values(
-          SAVES.map(({ name, description, ability }) => ({
-            rulesetId: ctx.rulesetId,
-            name,
-            description,
-            abilityId: ctx.abilityMap[ability],
-          })),
-        )
-        .returning({ id: savesInRules.id, name: savesInRules.name }),
     ),
   );
 }

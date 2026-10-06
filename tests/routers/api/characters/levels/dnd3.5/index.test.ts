@@ -11,6 +11,27 @@ import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 const levels = api.api.characters.levels[":characterId"];
 const level = levels[":characterLevelId"];
 
+function featIds(feats: Record<string, { id: string }[]>, aptitudeId: string) {
+  return (feats[aptitudeId] ?? []).map((f) => f.id);
+}
+
+// A human fighter (INT 12): 16 skill points, 2 General feats and a bonus feat at the first level; 4 points and a bonus feat at the second.
+function fighter1(ctx: SeedContext) {
+  return picks(ctx, FIGHTER_LEVELS[0]);
+}
+
+function fighter2(ctx: SeedContext) {
+  return picks(ctx, FIGHTER_LEVELS[1]);
+}
+
+/** Finalizes one level, returning the raw response. */
+function finalize(characterId: string, klassId: string, levelNumber: number, hp: number, levelPicks: Picks) {
+  return levels.finalize.$post({
+    param: { characterId },
+    json: { levels: [{ klassId, level: levelNumber, hp, abilityId: null }], ...levelPicks },
+  });
+}
+
 /** A new human character of the seeded user's (INT 12), on the seeded ruleset unless `rulesetId` says otherwise. */
 async function createCharacter(rulesetId?: string) {
   const ctx = await getSeedCtx();
@@ -27,30 +48,10 @@ async function createCharacter(rulesetId?: string) {
   return { characterId: character.id, ctx };
 }
 
-/** Finalizes one level, returning the raw response. */
-function finalize(characterId: string, klassId: string, levelNumber: number, hp: number, levelPicks: Picks) {
-  return levels.finalize.$post({
-    param: { characterId },
-    json: { levels: [{ klassId, level: levelNumber, hp, abilityId: null }], ...levelPicks },
-  });
-}
-
 /** Finalizes one level and returns it. */
 async function finalizeOk(characterId: string, klassId: string, levelNumber: number, hp: number, levelPicks: Picks) {
   const [created] = await expectOk(finalize(characterId, klassId, levelNumber, hp, levelPicks));
   return created;
-}
-
-// A human fighter (INT 12): 16 skill points, 2 General feats and a bonus feat at the first level; 4 points and a bonus feat at the second.
-function fighter1(ctx: SeedContext) {
-  return picks(ctx, FIGHTER_LEVELS[0]);
-}
-function fighter2(ctx: SeedContext) {
-  return picks(ctx, FIGHTER_LEVELS[1]);
-}
-
-function featIds(feats: Record<string, { id: string }[]>, aptitudeId: string) {
-  return (feats[aptitudeId] ?? []).map((f) => f.id);
 }
 
 describe("character levels", () => {

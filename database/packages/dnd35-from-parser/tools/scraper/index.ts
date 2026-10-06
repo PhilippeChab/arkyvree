@@ -91,6 +91,17 @@ const D20SRD_MAGIC_URLS = {
 // Write helper — only updates scrapedAt when content actually changed
 // ---------------------------------------------------------------------------
 
+/** A reference as scraped (its `_meta` and `raw`), with the overrides its file had. */
+function scrapedReference<T extends ReferenceType>(
+  outPath: string,
+  _meta: StoredReference<T>["_meta"] & { type: T },
+  raw: StoredReference<T>["raw"],
+): StoredReference<T> {
+  const overrides = storedOverrides(outPath, _meta.type);
+  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
+  return sanitizeJsonValues({ _meta, raw, ...(overrides ? { overrides } : {}) });
+}
+
 function writeIfChanged(outPath: string, data: StoredReference): void {
   const newJson = stableStringify(data);
   if (existsSync(outPath)) {
@@ -106,17 +117,6 @@ function writeIfChanged(outPath: string, data: StoredReference): void {
   }
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, newJson);
-}
-
-/** A reference as scraped (its `_meta` and `raw`), with the overrides its file had. */
-function scrapedReference<T extends ReferenceType>(
-  outPath: string,
-  _meta: StoredReference<T>["_meta"] & { type: T },
-  raw: StoredReference<T>["raw"],
-): StoredReference<T> {
-  const overrides = storedOverrides(outPath, _meta.type);
-  if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
-  return sanitizeJsonValues({ _meta, raw, ...(overrides ? { overrides } : {}) });
 }
 
 /** Writes a reference to its file, when it changed. */
@@ -283,6 +283,30 @@ async function scrapeSingleFeat(url: string) {
 // Spell scraping
 // ---------------------------------------------------------------------------
 
+/** A page of the domain index: the copy keeps page N as `index.html?page=N`, its `?` escaped. */
+function domainIndexPageUrl(page: number) {
+  return page === 1 ? DOMAIN_INDEX_URL : `${DOMAIN_INDEX_URL}%3Fpage=${page}`;
+}
+
+/** Every domain version of the index, with its page. */
+async function fetchDomainPages() {
+  const first = parseDomainIndexHtml(await fetchHtml(domainIndexPageUrl(1)));
+  const entries = [...first.entries];
+  for (let page = 2; entries.length < first.total; page++) {
+    const { entries: more } = parseDomainIndexHtml(await fetchHtml(domainIndexPageUrl(page)));
+    if (more.length === 0) break;
+    entries.push(...more);
+  }
+  const pages = [];
+  for (const entry of entries) {
+    pages.push({
+      ...entry,
+      ...parseDomainPageHtml(await fetchHtml(`${DOMAIN_SITE}/domains/${entry.slug}/index.html`)),
+    });
+  }
+  return pages;
+}
+
 async function scrapeAllSpells(book: string) {
   const listingUrl = buildListingUrl("spells", book);
   console.log(`Discovering spells from ${listingUrl}...`);
@@ -324,43 +348,6 @@ async function scrapeAllSpells(book: string) {
     },
     raw,
   );
-}
-
-async function scrapeSingleSpell(url: string) {
-  console.log(`Fetching ${url}...`);
-  const html = await fetchHtml(url);
-  const spell = parseSpellDetailHtml(html, url);
-  if (!spell) {
-    console.error(`Could not parse spell from ${url}`);
-    process.exit(1);
-  }
-  console.log(`Parsed: ${spell.name} (${spell.school})`);
-  console.log(`  Level: ${spell.levelEntries.map((e) => `${e.className} ${e.level}`).join(", ")}`);
-  console.log(JSON.stringify(spell, null, 2));
-}
-
-/** A page of the domain index: the copy keeps page N as `index.html?page=N`, its `?` escaped. */
-function domainIndexPageUrl(page: number) {
-  return page === 1 ? DOMAIN_INDEX_URL : `${DOMAIN_INDEX_URL}%3Fpage=${page}`;
-}
-
-/** Every domain version of the index, with its page. */
-async function fetchDomainPages() {
-  const first = parseDomainIndexHtml(await fetchHtml(domainIndexPageUrl(1)));
-  const entries = [...first.entries];
-  for (let page = 2; entries.length < first.total; page++) {
-    const { entries: more } = parseDomainIndexHtml(await fetchHtml(domainIndexPageUrl(page)));
-    if (more.length === 0) break;
-    entries.push(...more);
-  }
-  const pages = [];
-  for (const entry of entries) {
-    pages.push({
-      ...entry,
-      ...parseDomainPageHtml(await fetchHtml(`${DOMAIN_SITE}/domains/${entry.slug}/index.html`)),
-    });
-  }
-  return pages;
 }
 
 /**
@@ -410,66 +397,22 @@ async function scrapeBookDomains(book: string) {
   );
 }
 
+async function scrapeSingleSpell(url: string) {
+  console.log(`Fetching ${url}...`);
+  const html = await fetchHtml(url);
+  const spell = parseSpellDetailHtml(html, url);
+  if (!spell) {
+    console.error(`Could not parse spell from ${url}`);
+    process.exit(1);
+  }
+  console.log(`Parsed: ${spell.name} (${spell.school})`);
+  console.log(`  Level: ${spell.levelEntries.map((e) => `${e.className} ${e.level}`).join(", ")}`);
+  console.log(JSON.stringify(spell, null, 2));
+}
+
 // ---------------------------------------------------------------------------
 // Race scraping
 // ---------------------------------------------------------------------------
-
-async function scrapeAllRaces(book: string) {
-  const bookSlug = getBookSlug(book);
-  const listingUrl = buildRaceListingUrl(book);
-  console.log(`Discovering races from ${listingUrl} (filtering for ${bookSlug})...`);
-
-  const raceUrls = await discover(listingUrl, "races", bookSlug);
-
-  console.log(`Found ${raceUrls.length} races`);
-
-  const raw: RaceReference["raw"] = [];
-  for (const entry of raceUrls) {
-    console.log(`  Fetching: ${entry.name}...`);
-    const html = await fetchHtml(entry.url);
-    const race = parseRaceDetailHtml(html);
-    if (race) {
-      raw.push(race);
-      const adjStr =
-        race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)";
-      console.log(`    ${race.name}: ${race.size}, speed ${race.baseSpeed}, ${adjStr}`);
-    } else {
-      console.warn(`    SKIP: Could not parse ${entry.name} at ${entry.url}`);
-    }
-  }
-
-  console.log(`Parsed ${raw.length} races`);
-
-  const outPath = join(REFERENCE_DIR, book, "races.json");
-
-  saveReference(
-    outPath,
-    {
-      type: "race",
-      sourceUrl: listingUrl,
-      book,
-      scrapedAt: new Date().toISOString(),
-    },
-    raw,
-  );
-}
-
-async function scrapeSingleRace(url: string) {
-  console.log(`Fetching ${url}...`);
-  const html = await fetchHtml(url);
-  const race = parseRaceDetailHtml(html);
-  if (!race) {
-    console.error(`Could not parse race from ${url}`);
-    process.exit(1);
-  }
-  console.log(`Parsed: ${race.name} (${race.size}, speed ${race.baseSpeed})`);
-  console.log(
-    `  Abilities: ${race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)"}`,
-  );
-  if (race.favoredClass) console.log(`  Favored class: ${race.favoredClass}`);
-  console.log(`  Features: ${race.features.length}`);
-  console.log(JSON.stringify(race, null, 2));
-}
 
 async function scrapeAllItems(book: string) {
   console.log(`Fetching item pages from d20srd.org...`);
@@ -585,6 +528,63 @@ async function scrapeAllMagicItems(book: string) {
     { type: "magicItem", sourceUrls: D20SRD_MAGIC_URLS, book, scrapedAt: new Date().toISOString() },
     raw,
   );
+}
+
+async function scrapeAllRaces(book: string) {
+  const bookSlug = getBookSlug(book);
+  const listingUrl = buildRaceListingUrl(book);
+  console.log(`Discovering races from ${listingUrl} (filtering for ${bookSlug})...`);
+
+  const raceUrls = await discover(listingUrl, "races", bookSlug);
+
+  console.log(`Found ${raceUrls.length} races`);
+
+  const raw: RaceReference["raw"] = [];
+  for (const entry of raceUrls) {
+    console.log(`  Fetching: ${entry.name}...`);
+    const html = await fetchHtml(entry.url);
+    const race = parseRaceDetailHtml(html);
+    if (race) {
+      raw.push(race);
+      const adjStr =
+        race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)";
+      console.log(`    ${race.name}: ${race.size}, speed ${race.baseSpeed}, ${adjStr}`);
+    } else {
+      console.warn(`    SKIP: Could not parse ${entry.name} at ${entry.url}`);
+    }
+  }
+
+  console.log(`Parsed ${raw.length} races`);
+
+  const outPath = join(REFERENCE_DIR, book, "races.json");
+
+  saveReference(
+    outPath,
+    {
+      type: "race",
+      sourceUrl: listingUrl,
+      book,
+      scrapedAt: new Date().toISOString(),
+    },
+    raw,
+  );
+}
+
+async function scrapeSingleRace(url: string) {
+  console.log(`Fetching ${url}...`);
+  const html = await fetchHtml(url);
+  const race = parseRaceDetailHtml(html);
+  if (!race) {
+    console.error(`Could not parse race from ${url}`);
+    process.exit(1);
+  }
+  console.log(`Parsed: ${race.name} (${race.size}, speed ${race.baseSpeed})`);
+  console.log(
+    `  Abilities: ${race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)"}`,
+  );
+  if (race.favoredClass) console.log(`  Favored class: ${race.favoredClass}`);
+  console.log(`  Features: ${race.features.length}`);
+  console.log(JSON.stringify(race, null, 2));
 }
 
 // ---------------------------------------------------------------------------

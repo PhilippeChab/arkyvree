@@ -52,6 +52,19 @@ export function readEnv(name: EnvironmentVariable): string | undefined {
   return process.env[name];
 }
 
+/** The deployment's name for monitoring (Sentry, OpenTelemetry): NODE_ENV, or `development` when it's unset. */
+export function getEnvironmentName() {
+  return readEnv("NODE_ENV") || "development";
+}
+
+/**
+ * A developer's machine: NODE_ENV=development, which .env.example sets. Explicit, never assumed: it shows an error's
+ * details in responses and logs (server/errors), so an unset NODE_ENV keeps them masked.
+ */
+export function isDevelopment() {
+  return readEnv("NODE_ENV") === "development";
+}
+
 export function isProduction() {
   return readEnv("NODE_ENV") === "production";
 }
@@ -63,17 +76,4 @@ export function isProduction() {
  */
 export function isTest() {
   return readEnv("NODE_ENV") === "test";
-}
-
-/**
- * A developer's machine: NODE_ENV=development, which .env.example sets. Explicit, never assumed: it shows an error's
- * details in responses and logs (server/errors), so an unset NODE_ENV keeps them masked.
- */
-export function isDevelopment() {
-  return readEnv("NODE_ENV") === "development";
-}
-
-/** The deployment's name for monitoring (Sentry, OpenTelemetry): NODE_ENV, or `development` when it's unset. */
-export function getEnvironmentName() {
-  return readEnv("NODE_ENV") || "development";
 }

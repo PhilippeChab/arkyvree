@@ -8,13 +8,6 @@ function typeOnly(node) {
   return specifiers.length > 0 && specifiers.every((s) => s.importKind === "type" || s.exportKind === "type");
 }
 
-/** An import's target, as a repo path: `@/x`, or relative to the importer. Packages have none. */
-export function targetOf(importer, spec) {
-  if (spec.startsWith("@/")) return path.posix.normalize(spec.slice(2));
-  if (spec.startsWith(".")) return path.posix.normalize(path.posix.join(path.posix.dirname(importer), spec));
-  return null;
-}
-
 /** Every import and re-export a file makes: its node, its specifier, and whether it brings types only. */
 export function onImports(callback) {
   const visit = (node) => {
@@ -29,4 +22,11 @@ export function onImports(callback) {
         callback(node, node.source.value, false);
     },
   };
+}
+
+/** An import's target, as a repo path: `@/x`, or relative to the importer. Packages have none. */
+export function targetOf(importer, spec) {
+  if (spec.startsWith("@/")) return path.posix.normalize(spec.slice(2));
+  if (spec.startsWith(".")) return path.posix.normalize(path.posix.join(path.posix.dirname(importer), spec));
+  return null;
 }

@@ -28,6 +28,24 @@ export function computeLevelSkillPoints(
   return (Math.max(1, pointsPerLevel) + bonusPerLevel) * (isFirstCharacterLevel ? 4 : 1);
 }
 
+/** The most points `skillId` can take before it gains `maxRanksCanAdd` ranks, class-skill levels first. */
+export function computeMaxPointsForSkill(
+  skillId: string,
+  maxRanksCanAdd: number,
+  perLevelClassSkillIds: string[][],
+  perLevelSkillPoints: number[],
+): number {
+  let ranksLeft = maxRanksCanAdd;
+  let points = 0;
+  for (const { level, pointsPerRank } of spendingOrder(skillId, perLevelClassSkillIds, perLevelSkillPoints)) {
+    if (ranksLeft <= 0) break;
+    const ranks = Math.min(ranksLeft, perLevelSkillPoints[level] / pointsPerRank);
+    points += ranks * pointsPerRank;
+    ranksLeft -= ranks;
+  }
+  return Math.floor(points);
+}
+
 /** `points` spent on `skillId`, class-skill levels first: the ranks they buy and the points each level spends. */
 export function distributeSkillPoints(
   skillId: string,
@@ -46,22 +64,4 @@ export function distributeSkillPoints(
     remaining -= spent;
   }
   return { ranks, perLevel };
-}
-
-/** The most points `skillId` can take before it gains `maxRanksCanAdd` ranks, class-skill levels first. */
-export function computeMaxPointsForSkill(
-  skillId: string,
-  maxRanksCanAdd: number,
-  perLevelClassSkillIds: string[][],
-  perLevelSkillPoints: number[],
-): number {
-  let ranksLeft = maxRanksCanAdd;
-  let points = 0;
-  for (const { level, pointsPerRank } of spendingOrder(skillId, perLevelClassSkillIds, perLevelSkillPoints)) {
-    if (ranksLeft <= 0) break;
-    const ranks = Math.min(ranksLeft, perLevelSkillPoints[level] / pointsPerRank);
-    points += ranks * pointsPerRank;
-    ranksLeft -= ranks;
-  }
-  return Math.floor(points);
 }

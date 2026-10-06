@@ -18,12 +18,12 @@ const DEFAULT_MAX_SIZE = 200;
 
 let globalCacheEnabled = readEnv("DISABLE_CACHE") !== "true";
 
-export function setCacheEnabled(enabled: boolean): void {
-  globalCacheEnabled = enabled;
-}
-
 export function isCacheEnabled(): boolean {
   return globalCacheEnabled;
+}
+
+export function setCacheEnabled(enabled: boolean): void {
+  globalCacheEnabled = enabled;
 }
 
 export default class MemoryCache<T> {

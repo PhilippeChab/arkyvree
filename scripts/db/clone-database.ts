@@ -11,6 +11,14 @@ import pg from "pg";
 /** The hosts of a local database server: the only one whose databases are replaced or reset. */
 const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
 
+/** Refuses `url` unless its database is on a local server: a script that drops databases or tables runs only there. */
+export function assertLocalDatabase(url: string, action: string) {
+  const { hostname } = new URL(url);
+  if (!LOCAL_HOSTS.includes(hostname)) {
+    throw new Error(`${hostname} isn't a local database server: only a local database is ${action}`);
+  }
+}
+
 /** A database URL's server (without a database) and database name. */
 export function databaseOf(url: string) {
   const parsed = new URL(url);
@@ -23,14 +31,6 @@ export function databaseOf(url: string) {
 /** The URL of the database named `name` on `url`'s server. */
 export function withDatabase(url: string, name: string) {
   return `${databaseOf(url).server}/${name}${new URL(url).search}`;
-}
-
-/** Refuses `url` unless its database is on a local server: a script that drops databases or tables runs only there. */
-export function assertLocalDatabase(url: string, action: string) {
-  const { hostname } = new URL(url);
-  if (!LOCAL_HOSTS.includes(hostname)) {
-    throw new Error(`${hostname} isn't a local database server: only a local database is ${action}`);
-  }
 }
 
 /**

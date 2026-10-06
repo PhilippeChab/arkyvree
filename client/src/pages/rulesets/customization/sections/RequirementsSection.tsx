@@ -60,19 +60,19 @@ interface RequirementsSectionProps {
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
 }
 
-/** What a requirement saves: its level, then its chaining operator or its condition. */
-function requirementPayload(type: RequirementType, level: string, data: RequirementFormData): RequirementFormData {
-  return type === "chaining"
-    ? { level, chainingOperator: data.chainingOperator }
-    : { level, target: data.target, operator: data.operator, value: data.value };
-}
-
 function PublishedWarning() {
   return (
     <Alert severity="warning">
       This ruleset is published. Changing requirements may break character validation for existing users.
     </Alert>
   );
+}
+
+/** What a requirement saves: its level, then its chaining operator or its condition. */
+function requirementPayload(type: RequirementType, level: string, data: RequirementFormData): RequirementFormData {
+  return type === "chaining"
+    ? { level, chainingOperator: data.chainingOperator }
+    : { level, target: data.target, operator: data.operator, value: data.value };
 }
 
 export function RequirementsSection({

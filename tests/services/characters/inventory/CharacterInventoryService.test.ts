@@ -26,6 +26,14 @@ type Placement = {
   force?: boolean;
 };
 
+function equipped(location: ItemLocation, weaponSet: number | null = null): Placement {
+  return {
+    equipped: true,
+    location,
+    weaponSet,
+  };
+}
+
 function add(
   session: Session,
   characterId: string,
@@ -51,6 +59,29 @@ function add(
     weaponSet,
     force,
   );
+}
+
+/** A new item of the ruleset, with these properties. */
+async function createItem(
+  rulesetId: string,
+  values: Partial<InferInsertModel<typeof itemsInRules>> = {},
+  properties: Record<string, string> = {},
+) {
+  const [item] = await Items.create(db, {
+    rulesetId,
+    name: `Test Item ${uniqueId()}`,
+    weight: "5",
+    costGp: "10",
+    ...values,
+  });
+  const entries = Object.entries(properties);
+  if (entries.length > 0)
+    await Properties.createMany(
+      db,
+      entries.map(([type, value]) => ({ entityId: item.id, entityType: "items", type, value })),
+    );
+  RulesetCache.invalidate(rulesetId);
+  return item;
 }
 
 /** The character's entry of the item, by the item: a test carries each item once. An id it doesn't carry is its own. */
@@ -91,37 +122,6 @@ async function update(
 /** Removes the character's entry of the item. */
 async function remove(session: Session, characterId: string, itemId: string) {
   return CharacterInventoryService.removeItem(session, characterId, await entryOf(characterId, itemId));
-}
-
-function equipped(location: ItemLocation, weaponSet: number | null = null): Placement {
-  return {
-    equipped: true,
-    location,
-    weaponSet,
-  };
-}
-
-/** A new item of the ruleset, with these properties. */
-async function createItem(
-  rulesetId: string,
-  values: Partial<InferInsertModel<typeof itemsInRules>> = {},
-  properties: Record<string, string> = {},
-) {
-  const [item] = await Items.create(db, {
-    rulesetId,
-    name: `Test Item ${uniqueId()}`,
-    weight: "5",
-    costGp: "10",
-    ...values,
-  });
-  const entries = Object.entries(properties);
-  if (entries.length > 0)
-    await Properties.createMany(
-      db,
-      entries.map(([type, value]) => ({ entityId: item.id, entityType: "items", type, value })),
-    );
-  RulesetCache.invalidate(rulesetId);
-  return item;
 }
 
 /** A new user's character on their fork of the seeded ruleset, whose items the test makes. */

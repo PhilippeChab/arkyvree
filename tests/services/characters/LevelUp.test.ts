@@ -30,6 +30,15 @@ type BatchLevel = [klass: string, level: number, hp: number, ability?: string];
 
 const session = makeSession(SEED_USER_ID);
 
+function fighter(count: number) {
+  return Array.from({ length: count }, (_, i): [string, number] => ["Fighter", i + 1]);
+}
+
+/** Fighter levels 1 to `count`, as a batch. */
+function fighterLevels(count: number): BatchLevel[] {
+  return FIGHTER_LEVELS.slice(0, count).map((plan, index) => ["Fighter", index + 1, plan.hp, plan.ability]);
+}
+
 /** Finalizes several levels at once, the picks pooled across them. */
 function finalizeBatch(
   ctx: SeedContext,
@@ -48,27 +57,8 @@ function finalizeBatch(
   return CharacterLevelsService.finalizeLevelUp(session, characterId, batch, skills, feats, powers, force);
 }
 
-/** Fighter levels 1 to `count`, as a batch. */
-function fighterLevels(count: number): BatchLevel[] {
-  return FIGHTER_LEVELS.slice(0, count).map((plan, index) => ["Fighter", index + 1, plan.hp, plan.ability]);
-}
-
 function levelsOf(klass: string, hps: number[]): BatchLevel[] {
   return hps.map((hp, index) => [klass, index + 1, hp]);
-}
-
-async function preview(
-  ctx: SeedContext,
-  characterId: string,
-  levels: [string, number][],
-  abilities: (string | null)[] = levels.map(() => null),
-) {
-  return CharacterLevelsService.getLevelUpPreview(
-    session,
-    characterId,
-    levels.map(([klass, level]) => ({ klassId: ctx.klassMap.pc[klass], level })),
-    abilities,
-  );
 }
 
 /** Whether a feat is eligible at `level` of a batch of fighter levels, with these earlier picks and increases. */
@@ -107,6 +97,20 @@ async function eligible(
   return items.find((row) => row.displayName === search)!.eligible;
 }
 
+async function preview(
+  ctx: SeedContext,
+  characterId: string,
+  levels: [string, number][],
+  abilities: (string | null)[] = levels.map(() => null),
+) {
+  return CharacterLevelsService.getLevelUpPreview(
+    session,
+    characterId,
+    levels.map(([klass, level]) => ({ klassId: ctx.klassMap.pc[klass], level })),
+    abilities,
+  );
+}
+
 /** A fighter's first two levels, and the plan the first was saved with. */
 async function setupFighter() {
   const ctx = await getSeedCtx();
@@ -128,10 +132,6 @@ async function setupFighter() {
     );
   };
   return { ctx, characterId, first, resave };
-}
-
-function fighter(count: number) {
-  return Array.from({ length: count }, (_, i): [string, number] => ["Fighter", i + 1]);
 }
 
 describe("finalizing several levels at once", () => {

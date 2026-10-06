@@ -12,10 +12,16 @@ type ModifierRow = typeof modifiersInCustomization.$inferInsert;
 type PropertyRow = typeof propertiesInCustomization.$inferInsert;
 type RequirementRow = typeof requirementsInCustomization.$inferInsert;
 
-/** The rows without the repeats: the first of each key. */
-export function uniqueBy<T>(rows: T[], key: (row: T) => string): T[] {
-  const seen = new Set<string>();
-  return rows.filter((row) => !seen.has(key(row)) && seen.add(key(row)));
+/** A spell list's spells joining the list of the class whose level gave the source: a cleric's domain, the cleric's. */
+export function joinsClassList(sourceId: string, sourceType: string, list: string): ModifierRow {
+  return {
+    sourceId,
+    sourceType,
+    target: `aptitudes.${list}.joinsclasslist`,
+    value: "true",
+    valueType: "boolean",
+    operator: "set",
+  };
 }
 
 export function modifierRows(
@@ -84,45 +90,15 @@ export function spellListSlots(sourceId: string, sourceType: string, list: strin
   ]).flat();
 }
 
-/** A spell list's spells joining the list of the class whose level gave the source: a cleric's domain, the cleric's. */
-export function joinsClassList(sourceId: string, sourceType: string, list: string): ModifierRow {
-  return {
-    sourceId,
-    sourceType,
-    target: `aptitudes.${list}.joinsclasslist`,
-    value: "true",
-    valueType: "boolean",
-    operator: "set",
-  };
+/** The rows without the repeats: the first of each key. */
+export function uniqueBy<T>(rows: T[], key: (row: T) => string): T[] {
+  const seen = new Set<string>();
+  return rows.filter((row) => !seen.has(key(row)) && seen.add(key(row)));
 }
 
 /** Inserts the rows, if there are any. */
 export async function insertAll<T extends PgTable>(db: Db, table: T, rows: T["$inferInsert"][]) {
   if (rows.length > 0) await db.insert(table).values(rows);
-}
-
-/**
- * Modifiers with their sources: the ones without requirements in one insert, and each one with requirements alone, its
- * requirements as rows of it.
- */
-export async function insertModifiers(
-  db: Db,
-  sourceType: string,
-  modifiers: { sourceId: string; modifier: ModifierSeed }[],
-): Promise<void> {
-  const plain = modifiers.filter(({ modifier }) => !modifier.requirements?.length);
-  await insertAll(
-    db,
-    modifiersInCustomization,
-    plain.flatMap(({ sourceId, modifier }) => modifierRows(sourceId, sourceType, [modifier])),
-  );
-  for (const { sourceId, modifier } of modifiers.filter(({ modifier }) => modifier.requirements?.length)) {
-    const [row] = await db
-      .insert(modifiersInCustomization)
-      .values(modifierRows(sourceId, sourceType, [modifier]))
-      .returning({ id: modifiersInCustomization.id });
-    await insertAll(db, requirementsInCustomization, requirementRows(row.id, "modifiers", modifier.requirements));
-  }
 }
 
 /**
@@ -160,4 +136,28 @@ export async function insertGatedSpellSlots(
       ];
     }),
   );
+}
+
+/**
+ * Modifiers with their sources: the ones without requirements in one insert, and each one with requirements alone, its
+ * requirements as rows of it.
+ */
+export async function insertModifiers(
+  db: Db,
+  sourceType: string,
+  modifiers: { sourceId: string; modifier: ModifierSeed }[],
+): Promise<void> {
+  const plain = modifiers.filter(({ modifier }) => !modifier.requirements?.length);
+  await insertAll(
+    db,
+    modifiersInCustomization,
+    plain.flatMap(({ sourceId, modifier }) => modifierRows(sourceId, sourceType, [modifier])),
+  );
+  for (const { sourceId, modifier } of modifiers.filter(({ modifier }) => modifier.requirements?.length)) {
+    const [row] = await db
+      .insert(modifiersInCustomization)
+      .values(modifierRows(sourceId, sourceType, [modifier]))
+      .returning({ id: modifiersInCustomization.id });
+    await insertAll(db, requirementsInCustomization, requirementRows(row.id, "modifiers", modifier.requirements));
+  }
 }

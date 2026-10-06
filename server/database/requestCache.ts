@@ -23,9 +23,10 @@ import { onDedupHit, onDedupMiss } from "@/server/timing.ts";
 
 const storage = new AsyncLocalStorage<Map<string, Promise<unknown>>>();
 
-/** Run a request (or test) inside a fresh dedup cache. */
-export function runWithRequestCache<T>(fn: () => Promise<T>): Promise<T> {
-  return storage.run(new Map(), fn);
+/** Drop every entry. Called after a mutation commits to avoid stale reads. */
+export function clearRequestCache(): void {
+  const store = storage.getStore();
+  store?.clear();
 }
 
 /**
@@ -50,8 +51,7 @@ export function memoizeRequest<T>(key: string, fn: () => Promise<T>): Promise<T>
   return promise;
 }
 
-/** Drop every entry. Called after a mutation commits to avoid stale reads. */
-export function clearRequestCache(): void {
-  const store = storage.getStore();
-  store?.clear();
+/** Run a request (or test) inside a fresh dedup cache. */
+export function runWithRequestCache<T>(fn: () => Promise<T>): Promise<T> {
+  return storage.run(new Map(), fn);
 }

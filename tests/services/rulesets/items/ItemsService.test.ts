@@ -24,22 +24,6 @@ const copiedCustomizations = {
 };
 const noCustomizations = { modifiers: [], properties: [], requirements: [] };
 
-/** Gives an item a modifier (with a requirement of its own), a property and a requirement. */
-async function customize(itemId: string) {
-  const [modifier] = await Modifiers.create(db, {
-    sourceId: itemId,
-    sourceType: "items",
-    target: "abilities.strength.misc",
-    value: "2",
-    valueType: "number",
-    operator: "add",
-  });
-  await Requirements.create(db, { ...requirement, entityId: modifier.id, entityType: "modifiers" });
-  await Properties.create(db, { entityId: itemId, entityType: "items", type: "resistance", value: "Cold" });
-  await Requirements.create(db, { ...requirement, entityId: itemId, entityType: "items" });
-  return modifier;
-}
-
 /** The customizations an item owns, with each modifier's own requirements. */
 async function customizationsOf(itemId: string) {
   const modifiers = await Modifiers.findMany(db, { sourceIds: [itemId], sourceType: "items" });
@@ -56,6 +40,22 @@ async function customizationsOf(itemId: string) {
     properties: (await Properties.findMany(db, { entityIds: [itemId], entityType: "items" })).map((p) => p.value),
     requirements: (await Requirements.findMany(db, { entityIds: [itemId], entityType: "items" })).map((r) => r.target),
   };
+}
+
+/** Gives an item a modifier (with a requirement of its own), a property and a requirement. */
+async function customize(itemId: string) {
+  const [modifier] = await Modifiers.create(db, {
+    sourceId: itemId,
+    sourceType: "items",
+    target: "abilities.strength.misc",
+    value: "2",
+    valueType: "number",
+    operator: "add",
+  });
+  await Requirements.create(db, { ...requirement, entityId: modifier.id, entityType: "modifiers" });
+  await Properties.create(db, { entityId: itemId, entityType: "items", type: "resistance", value: "Cold" });
+  await Requirements.create(db, { ...requirement, entityId: itemId, entityType: "items" });
+  return modifier;
 }
 
 /** A template with a property and a requirement, which its instances read, and a modifier, which they don't. */

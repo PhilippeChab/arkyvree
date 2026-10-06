@@ -5,6 +5,16 @@ import type { ContentPackage } from "@/database/packages/types.ts";
 import { contentPackagesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 
+/**
+ * A database's version of a package below its seeds can't be brought up to date: the updates it lacks were folded
+ * into the seeds.
+ */
+function refusal(pkg: ContentPackage, applied: number | undefined) {
+  return applied !== undefined && applied < pkg.seedsVersion
+    ? `${pkg.name} is at v${applied}, below its seeds (v${pkg.seedsVersion}), which contain the updates it lacks`
+    : undefined;
+}
+
 /** A package's updates in version order, checked to follow its seeds without a gap. */
 function updatesOf(pkg: ContentPackage) {
   const versions = Object.keys(pkg.updates ?? {})
@@ -16,16 +26,6 @@ function updatesOf(pkg: ContentPackage) {
     }
   }
   return versions.map((version) => ({ version, update: pkg.updates![version] }));
-}
-
-/**
- * A database's version of a package below its seeds can't be brought up to date: the updates it lacks were folded
- * into the seeds.
- */
-function refusal(pkg: ContentPackage, applied: number | undefined) {
-  return applied !== undefined && applied < pkg.seedsVersion
-    ? `${pkg.name} is at v${applied}, below its seeds (v${pkg.seedsVersion}), which contain the updates it lacks`
-    : undefined;
 }
 
 /**

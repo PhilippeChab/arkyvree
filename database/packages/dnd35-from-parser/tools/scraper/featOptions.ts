@@ -25,10 +25,12 @@ function nameOf(option: string, names: readonly string[]): string | undefined {
   return started.length === 1 ? started[0] : undefined;
 }
 
-/** The feat a prerequisite names with its choice ("Energy Substitution (cold)"), alone; none for any other name. */
-export function featWithoutChoice(name: string): string | undefined {
-  const base = /^(.+?)\s*\(/.exec(name)?.[1];
-  return base ? FEATS_WITH_A_CHOICE.find((feat) => stripSeparators(feat) === stripSeparators(base)) : undefined;
+/** The feat of a family a name takes with its option ("Skill Focus (Bluff)": Skill Focus: Bluff), if any. */
+export function familyFeatNamed(name: string): string | undefined {
+  const [, family, option] = /^(.+?)\s*\((.+)\)$/.exec(name) ?? [];
+  const names = family ? OPTIONS_OF.find((options) => options.family.test(family))?.names : undefined;
+  const optionName = names && nameOf(option, names);
+  return optionName ? `${family}: ${optionName}` : undefined;
 }
 
 /**
@@ -50,12 +52,10 @@ export function familyOptions(family: string, optionsText: string): string[] {
   return options;
 }
 
-/** The feat of a family a name takes with its option ("Skill Focus (Bluff)": Skill Focus: Bluff), if any. */
-export function familyFeatNamed(name: string): string | undefined {
-  const [, family, option] = /^(.+?)\s*\((.+)\)$/.exec(name) ?? [];
-  const names = family ? OPTIONS_OF.find((options) => options.family.test(family))?.names : undefined;
-  const optionName = names && nameOf(option, names);
-  return optionName ? `${family}: ${optionName}` : undefined;
+/** The feat a prerequisite names with its choice ("Energy Substitution (cold)"), alone; none for any other name. */
+export function featWithoutChoice(name: string): string | undefined {
+  const base = /^(.+?)\s*\(/.exec(name)?.[1];
+  return base ? FEATS_WITH_A_CHOICE.find((feat) => stripSeparators(feat) === stripSeparators(base)) : undefined;
 }
 
 /** The weapon a prerequisite names ("orc double axe"), if any. */

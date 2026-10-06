@@ -88,15 +88,15 @@ function isAmmunition(name: string): boolean {
 // Detection
 // ---------------------------------------------------------------------------
 
-function resolveWeaponName(srdName: string, overrideNameMap?: Record<string, string>): string {
-  if (overrideNameMap?.[srdName]) return overrideNameMap[srdName];
-  if (DEFAULT_WEAPON_NAME_MAP[srdName]) return DEFAULT_WEAPON_NAME_MAP[srdName];
-  return srdName;
-}
-
 function resolveArmorName(srdName: string, overrideNameMap?: Record<string, string>): string {
   if (overrideNameMap?.[srdName]) return overrideNameMap[srdName];
   if (DEFAULT_ARMOR_NAME_MAP[srdName]) return DEFAULT_ARMOR_NAME_MAP[srdName];
+  return srdName;
+}
+
+function resolveWeaponName(srdName: string, overrideNameMap?: Record<string, string>): string {
+  if (overrideNameMap?.[srdName]) return overrideNameMap[srdName];
+  if (DEFAULT_WEAPON_NAME_MAP[srdName]) return DEFAULT_WEAPON_NAME_MAP[srdName];
   return srdName;
 }
 

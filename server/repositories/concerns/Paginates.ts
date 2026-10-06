@@ -9,34 +9,6 @@ export type Paginated<T> = {
   nextPage: number | undefined;
 };
 
-/** A page of a list held in memory, shaped like the repositories' pages. */
-export function paginateItems<T>(items: T[], pagination: { limit: number; page: number }): Paginated<T> {
-  const start = (pagination.page - 1) * pagination.limit;
-  return {
-    items: items.slice(start, start + pagination.limit),
-    page: pagination.page,
-    nextPage: start + pagination.limit < items.length ? pagination.page + 1 : undefined,
-  };
-}
-
-/** Every page of a paginated query, together: `fetchEveryPage((pagination) => Feats.findPage(db, filters, pagination))`. */
-export async function fetchEveryPage<R>(
-  fetchPage: (pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
-  limit = 100,
-): Promise<R[]> {
-  const items: R[] = [];
-  let page = 1;
-
-  while (true) {
-    const result = await fetchPage({ limit, page });
-    items.push(...result.items);
-    if (!result.nextPage) break;
-    page = result.nextPage;
-  }
-
-  return items;
-}
-
 /** A list a page at a time: a query fetches one row past the page to know whether another follows. */
 export function Paginates<B extends Constructor<BaseRepository<Table>>>(Base: B) {
   abstract class Paginating extends Base {
@@ -67,4 +39,32 @@ export function Paginates<B extends Constructor<BaseRepository<Table>>>(Base: B)
     }
   }
   return Paginating;
+}
+
+/** A page of a list held in memory, shaped like the repositories' pages. */
+export function paginateItems<T>(items: T[], pagination: { limit: number; page: number }): Paginated<T> {
+  const start = (pagination.page - 1) * pagination.limit;
+  return {
+    items: items.slice(start, start + pagination.limit),
+    page: pagination.page,
+    nextPage: start + pagination.limit < items.length ? pagination.page + 1 : undefined,
+  };
+}
+
+/** Every page of a paginated query, together: `fetchEveryPage((pagination) => Feats.findPage(db, filters, pagination))`. */
+export async function fetchEveryPage<R>(
+  fetchPage: (pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
+  limit = 100,
+): Promise<R[]> {
+  const items: R[] = [];
+  let page = 1;
+
+  while (true) {
+    const result = await fetchPage({ limit, page });
+    items.push(...result.items);
+    if (!result.nextPage) break;
+    page = result.nextPage;
+  }
+
+  return items;
 }

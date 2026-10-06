@@ -1,11 +1,14 @@
 /**
- * One member order for every class and every router: the lifecycle (load, preload, initialize, build, apply, in that
- * order), reads, creates, updates, deletes, then the other actions, by name within each group. `oxlint --fix` puts a
- * file in order.
+ * One member order for every class and every file's functions: sync before async, then the lifecycle (load, preload,
+ * initialize, build, apply, in that order), reads, creates, updates, deletes, then the other actions, by name within
+ * each group. A router's routes sort by HTTP method and path. `oxlint --fix` puts a file in order.
  *
  * - A class's methods group by their leading verb (`findOne` reads, `archiveCharacter` deletes): its private and
- *   protected methods first, then its public ones. The constructor, statics and fields stay at the top, in their own
- *   order (a field's initializer may read an earlier one).
+ *   protected methods first, then its public ones, the sync ones before the async ones in each. The constructor,
+ *   statics and fields stay at the top, in their own order (a field's initializer may read an earlier one).
+ * - A file's own functions, in each run of them: its helpers, then its exports, as `file-layout` sections them (an
+ *   export a helper calls is a helper), each in that order. A function another one calls stays above it (the file
+ *   reads bottom-up); a comment set apart by a blank line ends a run, a section's heading.
  * - A router's routes group by HTTP method (GET, POST, PUT, PATCH, DELETE), then sort by path: a fixed segment
  *   before a parameter, which Hono needs anyway (it matches overlapping routes in the order they're registered).
  *   Its sub-routers (`.route()`) come first, in their own order, then its routes, which must not overlap theirs:
@@ -14,6 +17,8 @@
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
+import { rankStatements } from "./layout.mjs";
+import { isToolWritten } from "./paths.mjs";
 
 /**
  * A method's group, by its leading verb: a word followed by a capital or nothing (`get`, `getRuleset`). The lifecycle
@@ -31,35 +36,71 @@ const ACTIONS = VERB_GROUPS.length;
 
 const ROUTE_METHODS = ["get", "post", "put", "patch", "delete"];
 
-/** Whether `name` starts with the word `verb`: `find` starts `findOne`, not `finder`. */
-export function startsWithVerb(name, verb) {
-  return new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);
+function isMount(call) {
+  return call.callee.type === "MemberExpression" && call.callee.property.name === "route";
 }
 
-/** A lifecycle method's step (`load` before `build`), or 0 for any other method. */
-export function lifecycleStep(name) {
-  return LIFECYCLE.findIndex((verb) => startsWithVerb(name, verb)) + 1;
+function isRoute(call) {
+  return (
+    call.callee.type === "MemberExpression" &&
+    ROUTE_METHODS.includes(call.callee.property.name) &&
+    call.arguments[0]?.type === "Literal" &&
+    typeof call.arguments[0].value === "string"
+  );
 }
 
-export function verbGroup(name) {
-  const index = VERB_GROUPS.findIndex((verbs) => verbs.some((verb) => startsWithVerb(name, verb)));
-  return index === -1 ? ACTIONS : index;
+/** Two ranks' order, element by element. */
+function compareRanks(a, b) {
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] === b[i]) continue;
+    return typeof a[i] === "string" ? (a[i] < b[i] ? -1 : 1) : a[i] - b[i];
+  }
+  return 0;
 }
 
-/**
- * Where a class member goes: [rank, group, lifecycle step, name]. The constructor (-4), statics (-3) and fields (-2)
- * keep their order; private and protected methods (-1), then public ones (0), sort by verb group (the lifecycle by
- * step), then name.
- */
-function memberRank(member) {
-  if (member.kind === "constructor") return [-4, 0, 0, ""];
-  if (member.static) return [-3, 0, 0, ""];
-  if (member.type !== "MethodDefinition" && member.type !== "TSAbstractMethodDefinition") return [-2, 0, 0, ""];
-  const name = member.key?.name ?? member.key?.value;
-  if (typeof name !== "string") return [-2, 0, 0, ""];
-  const isPublic =
-    (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
-  return [isPublic ? 0 : -1, verbGroup(name), lifecycleStep(name), name];
+function compareMembers(a, b) {
+  if (a.rank[0] !== b.rank[0]) return a.rank[0] - b.rank[0];
+  // The constructor, statics and fields keep their order.
+  if (a.rank[0] < -1) return a.index - b.index;
+  // A getter and its setter, or an overload's signatures and body, stay in their order.
+  return compareRanks(a.rank, b.rank) || a.index - b.index;
+}
+
+/** A top-level function statement's declaration, exported or not, or null: a run of them sorts. */
+function functionOf(statement) {
+  const declaration =
+    statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
+      ? statement.declaration
+      : statement;
+  const isFunction = declaration?.type === "FunctionDeclaration" || declaration?.type === "TSDeclareFunction";
+  return isFunction && declaration.id ? declaration : null;
+}
+
+/** The names `node` reads: what a function calls, or passes on. */
+function namesIn(node, names = new Set()) {
+  if (node.type === "Identifier" || node.type === "JSXIdentifier") names.add(node.name);
+  for (const [key, value] of Object.entries(node)) {
+    if (key === "parent") continue;
+    for (const child of Array.isArray(value) ? value : [value]) {
+      if (typeof child?.type === "string") namesIn(child, names);
+    }
+  }
+  return names;
+}
+
+function rangeOf(node) {
+  return node.range ?? [node.start, node.end];
+}
+
+/** Reorders `items` (each with `node`, `start`, `end`): one report, one fix rewriting [from, to). */
+function reportOrder(context, items, sorted, render, message) {
+  const outOfPlace = items.findIndex((item, i) => item !== sorted[i]);
+  if (outOfPlace === -1) return;
+  context.report({
+    node: items[outOfPlace].node,
+    message,
+    fix: (fixer) => fixer.replaceTextRange(render.range, render.text(sorted)),
+  });
 }
 
 /** A path's segments, each a kind (0 fixed, 1 parameter, 2 wildcard) and its text. */
@@ -87,21 +128,60 @@ export function compareRoutes(a, b) {
   return 0;
 }
 
-function compareMembers(a, b) {
-  const [rankA, groupA, stepA, nameA] = a.rank;
-  const [rankB, groupB, stepB, nameB] = b.rank;
-  if (rankA !== rankB) return rankA - rankB;
-  // The constructor, statics and fields keep their order.
-  if (rankA < -1) return a.index - b.index;
-  if (groupA !== groupB) return groupA - groupB;
-  if (stepA !== stepB) return stepA - stepB;
-  if (nameA !== nameB) return nameA < nameB ? -1 : 1;
-  // A getter and its setter, or an overload's signatures and body, stay in their order.
-  return a.index - b.index;
+/** A run's order: its sub-routers first, as they come, then its routes, sorted. */
+function compareRunMembers(a, b) {
+  if (a.mount !== b.mount) return a.mount ? -1 : 1;
+  return (a.mount ? 0 : compareRoutes(a.route, b.route)) || a.index - b.index;
 }
 
-function rangeOf(node) {
-  return node.range ?? [node.start, node.end];
+/**
+ * A run's order: by rank, a function another one calls above it. A run whose functions call each other (a cycle, which
+ * says so in a disable comment) keeps its order: where its functions belong depends on it.
+ */
+function sortRun(items) {
+  const byName = new Map(items.map((item) => [item.name, item]));
+  for (const item of items) {
+    item.callees = [...item.names].filter((n) => n !== item.name && byName.has(n)).map((n) => byName.get(n));
+  }
+  const placed = new Set();
+  const order = [];
+  while (order.length < items.length) {
+    const left = items.filter((item) => !placed.has(item));
+    const ready = left.filter((item) => item.callees.every((callee) => placed.has(callee)));
+    if (ready.length === 0) return items;
+    const next = ready.reduce((best, item) =>
+      (compareRanks(item.rank, best.rank) || item.index - best.index) < 0 ? item : best,
+    );
+    placed.add(next);
+    order.push(next);
+  }
+  return order;
+}
+
+function checkRun(context, items) {
+  if (items.length < 2) return;
+  const text = context.sourceCode.text;
+  reportOrder(
+    context,
+    items,
+    sortRun(items),
+    {
+      range: [items[0].start, items.at(-1).end],
+      text: (order) => order.map((item) => text.slice(item.start, item.end)).join("\n\n"),
+    },
+    "A file's functions go in order: its helpers, then its exports, each sync before async, then by verb " +
+      "group and name, as a class's methods; a function another one calls stays above it.",
+  );
+}
+
+/** Whether `name` starts with the word `verb`: `find` starts `findOne`, not `finder`. */
+export function startsWithVerb(name, verb) {
+  return new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);
+}
+
+/** A lifecycle method's step (`load` before `build`), or 0 for any other method. */
+export function lifecycleStep(name) {
+  return LIFECYCLE.findIndex((verb) => startsWithVerb(name, verb)) + 1;
 }
 
 /** The comment that ends the line at `pos` (` // note`), which belongs to what ends there: its length, or 0. */
@@ -109,78 +189,6 @@ function trailingComment(text, pos) {
   const lineEnd = text.indexOf("\n", pos);
   const rest = text.slice(pos, lineEnd === -1 ? text.length : lineEnd);
   return /^\s*(\/\/.*|\/\*.*\*\/\s*)$/.test(rest) ? rest.trimEnd().length : 0;
-}
-
-/** Reorders `items` (each with `node`, `start`, `end`): one report, one fix rewriting [from, to). */
-function reportOrder(context, items, sorted, render, message) {
-  const outOfPlace = items.findIndex((item, i) => item !== sorted[i]);
-  if (outOfPlace === -1) return;
-  context.report({
-    node: items[outOfPlace].node,
-    message,
-    fix: (fixer) => fixer.replaceTextRange(render.range, render.text(sorted)),
-  });
-}
-
-function checkClass(context, body) {
-  const text = context.sourceCode.text;
-  const [bodyStart, bodyEnd] = rangeOf(body);
-  // A comment ending the line of the `{`, or of a member, stays with it.
-  const headEnd = bodyStart + 1 + trailingComment(text, bodyStart + 1);
-  const members = [];
-  for (const [index, node] of body.body.entries()) {
-    const [start, memberEnd] = rangeOf(node);
-    const end = memberEnd + trailingComment(text, memberEnd);
-    const previousEnd = index === 0 ? headEnd : members[index - 1].end;
-    // What sits between the previous member and this one: its comments.
-    const comments = text.slice(previousEnd, start).trim();
-    members.push({ node, index, rank: memberRank(node), start, end, comments });
-  }
-  const sorted = [...members].sort(compareMembers);
-  const indent = " ".repeat(context.sourceCode.getLocFromIndex?.(members[0]?.start ?? 0)?.column ?? 2);
-  const tail = text.slice(members.at(-1)?.end ?? headEnd, bodyEnd - 1).trim();
-  reportOrder(
-    context,
-    members,
-    sorted,
-    {
-      range: [bodyStart, bodyEnd],
-      text: (order) =>
-        text.slice(bodyStart, headEnd) +
-        order
-          .map(
-            (m, i) =>
-              (i === 0 ? "\n" : "\n\n") +
-              indent +
-              (m.comments ? m.comments + "\n" + indent : "") +
-              text.slice(m.start, m.end),
-          )
-          .join("") +
-        (tail ? "\n\n" + indent + tail : "") +
-        "\n}",
-    },
-    "Members go in order: the lifecycle (load, preload, initialize, build, apply), reads, creates, updates, " +
-      "deletes, then the other actions, by name in each group.",
-  );
-}
-
-function isMount(call) {
-  return call.callee.type === "MemberExpression" && call.callee.property.name === "route";
-}
-
-/** A run's order: its sub-routers first, as they come, then its routes, sorted. */
-function compareRunMembers(a, b) {
-  if (a.mount !== b.mount) return a.mount ? -1 : 1;
-  return (a.mount ? 0 : compareRoutes(a.route, b.route)) || a.index - b.index;
-}
-
-function isRoute(call) {
-  return (
-    call.callee.type === "MemberExpression" &&
-    ROUTE_METHODS.includes(call.callee.property.name) &&
-    call.arguments[0]?.type === "Literal" &&
-    typeof call.arguments[0].value === "string"
-  );
 }
 
 function checkChain(context, outermost) {
@@ -239,6 +247,127 @@ function checkChain(context, outermost) {
   flush();
 }
 
+export function verbGroup(name) {
+  const index = VERB_GROUPS.findIndex((verbs) => verbs.some((verb) => startsWithVerb(name, verb)));
+  return index === -1 ? ACTIONS : index;
+}
+
+/** Where a function goes among its peers: [async, group, lifecycle step, name]. */
+function functionRank(name, isAsync) {
+  return [isAsync ? 1 : 0, verbGroup(name), lifecycleStep(name), name];
+}
+
+/**
+ * A file's own functions, run by run: consecutive top-level function declarations, which a comment set apart by a
+ * blank line (a section's heading) or any other statement ends.
+ */
+function checkFunctions(context, program) {
+  const text = context.sourceCode.text;
+  // Its helpers, then what it's for, as `file-layout` ranks them: an export a helper calls is a helper.
+  const sections = new Map(rankStatements(program.body).map((item) => [item.statement, item.rank]));
+  let run = [];
+  let previousEnd = 0;
+  for (const statement of program.body) {
+    const declaration = functionOf(statement);
+    const [start, codeEnd] = rangeOf(statement);
+    const end = codeEnd + trailingComment(text, codeEnd);
+    const between = text.slice(previousEnd, start);
+    previousEnd = end;
+    // Its comments: those right above it, after the last blank line.
+    const blank = [...between.matchAll(/\n[ \t]*\n/g)].at(-1);
+    const attached = (blank ? between.slice(blank.index + blank[0].length) : between).trimStart();
+    const heading = between.slice(0, between.length - attached.length);
+    if (!declaration || /\/[/*]/.test(heading)) {
+      checkRun(context, run);
+      run = [];
+      if (!declaration) continue;
+    }
+    const name = declaration.id.name;
+    const last = run.at(-1);
+    // An overload's signatures and its body are one function.
+    if (last?.name === name && last.overload) {
+      last.end = end;
+      last.overload = declaration.type === "TSDeclareFunction";
+      last.rank = [last.rank[0], ...functionRank(name, declaration.async)];
+      namesIn(declaration, last.names);
+      continue;
+    }
+    run.push({
+      node: declaration.id,
+      name,
+      index: run.length,
+      overload: declaration.type === "TSDeclareFunction",
+      rank: [sections.get(statement), ...functionRank(name, declaration.async)],
+      names: namesIn(declaration),
+      start: start - attached.length,
+      end,
+    });
+  }
+  checkRun(context, run);
+}
+
+/**
+ * Where a class member goes: [rank, async, group, lifecycle step, name]. The constructor (-4), statics (-3) and fields
+ * (-2) keep their order; private and protected methods (-1), then public ones (0), sort sync before async, then by
+ * verb group (the lifecycle by step), then name. `asyncNames`: the methods with an async body, whose overload
+ * signatures go with it.
+ */
+function memberRank(member, asyncNames) {
+  if (member.kind === "constructor") return [-4, 0, 0, 0, ""];
+  if (member.static) return [-3, 0, 0, 0, ""];
+  if (member.type !== "MethodDefinition" && member.type !== "TSAbstractMethodDefinition") return [-2, 0, 0, 0, ""];
+  const name = member.key?.name ?? member.key?.value;
+  if (typeof name !== "string") return [-2, 0, 0, 0, ""];
+  const isPublic =
+    (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
+  return [isPublic ? 0 : -1, ...functionRank(name, asyncNames.has(name))];
+}
+
+function checkClass(context, body) {
+  const text = context.sourceCode.text;
+  const [bodyStart, bodyEnd] = rangeOf(body);
+  // A comment ending the line of the `{`, or of a member, stays with it.
+  const headEnd = bodyStart + 1 + trailingComment(text, bodyStart + 1);
+  const members = [];
+  const asyncNames = new Set(
+    body.body.filter((node) => node.value?.async).map((node) => node.key?.name ?? node.key?.value),
+  );
+  for (const [index, node] of body.body.entries()) {
+    const [start, memberEnd] = rangeOf(node);
+    const end = memberEnd + trailingComment(text, memberEnd);
+    const previousEnd = index === 0 ? headEnd : members[index - 1].end;
+    // What sits between the previous member and this one: its comments.
+    const comments = text.slice(previousEnd, start).trim();
+    members.push({ node, index, rank: memberRank(node, asyncNames), start, end, comments });
+  }
+  const sorted = [...members].sort(compareMembers);
+  const indent = " ".repeat(context.sourceCode.getLocFromIndex?.(members[0]?.start ?? 0)?.column ?? 2);
+  const tail = text.slice(members.at(-1)?.end ?? headEnd, bodyEnd - 1).trim();
+  reportOrder(
+    context,
+    members,
+    sorted,
+    {
+      range: [bodyStart, bodyEnd],
+      text: (order) =>
+        text.slice(bodyStart, headEnd) +
+        order
+          .map(
+            (m, i) =>
+              (i === 0 ? "\n" : "\n\n") +
+              indent +
+              (m.comments ? m.comments + "\n" + indent : "") +
+              text.slice(m.start, m.end),
+          )
+          .join("") +
+        (tail ? "\n\n" + indent + tail : "") +
+        "\n}",
+    },
+    "Members go in order: sync before async, then the lifecycle (load, preload, initialize, build, apply), reads, " +
+      "creates, updates, deletes, then the other actions, by name in each group.",
+  );
+}
+
 export default {
   meta: { name: "arkyvree" },
   rules: {
@@ -248,6 +377,11 @@ export default {
         return {
           ClassBody(body) {
             checkClass(context, body);
+          },
+          Program(program) {
+            // A declaration file follows the module it types.
+            if (isToolWritten(context.filename) || /\.d\.[cm]?ts$/.test(context.filename)) return;
+            checkFunctions(context, program);
           },
           CallExpression(call) {
             if (!/\/server\/routers\//.test(context.filename)) return;

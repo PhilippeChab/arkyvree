@@ -34,6 +34,27 @@ type ReqNode = ReqLeafNode | ReqChainNode;
 
 const MAX_REQ_TREE_DEPTH = 5;
 
+function collectTopLevelStandaloneKeys(forest: ReqNode[]): Set<string> {
+  const keys = new Set<string>();
+  for (const node of forest) {
+    if (node.kind === "leaf") {
+      keys.add(`${node.target}|${node.operator}|${node.value}`);
+    }
+  }
+  return keys;
+}
+
+/** Deduplicate standalone roots only; preserve every condition inside a chain. */
+function dedupAgainstExisting(node: ReqNode, existingKeys: Set<string>): ReqNode | null {
+  if (node.kind === "leaf") {
+    const key = `${node.target}|${node.operator}|${node.value}`;
+    if (existingKeys.has(key)) return null;
+  }
+  // A AND (A OR B) is satisfied whenever A is true. Removing A from the
+  // OR would incorrectly require B; keep nested trees intact.
+  return node;
+}
+
 function parentLevelOf(level: string): string | null {
   const idx = level.lastIndexOf(".");
   return idx === -1 ? null : level.slice(0, idx);
@@ -100,27 +121,6 @@ function serializeReqNode(node: ReqNode, level: string, entityId: string, entity
     out.push(...serializeReqNode(node.children[idx], `${level}.${idx + 1}`, entityId, entityType));
   }
   return out;
-}
-
-/** Deduplicate standalone roots only; preserve every condition inside a chain. */
-function dedupAgainstExisting(node: ReqNode, existingKeys: Set<string>): ReqNode | null {
-  if (node.kind === "leaf") {
-    const key = `${node.target}|${node.operator}|${node.value}`;
-    if (existingKeys.has(key)) return null;
-  }
-  // A AND (A OR B) is satisfied whenever A is true. Removing A from the
-  // OR would incorrectly require B; keep nested trees intact.
-  return node;
-}
-
-function collectTopLevelStandaloneKeys(forest: ReqNode[]): Set<string> {
-  const keys = new Set<string>();
-  for (const node of forest) {
-    if (node.kind === "leaf") {
-      keys.add(`${node.target}|${node.operator}|${node.value}`);
-    }
-  }
-  return keys;
 }
 
 /** Merge sibling forests for both display and copying, retaining source row IDs. */

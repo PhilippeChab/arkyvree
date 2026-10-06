@@ -13,6 +13,24 @@ export default class DependentCache<T> {
 
   private pending = new Map<string, { promise: Promise<T>; dependencies: ReadonlySet<string> }>();
 
+  isPinned(key: string): boolean {
+    return this.cache.isPinned(key);
+  }
+
+  invalidate(dependencyId: string): void {
+    // MemoryCache is capped at 200 entries. No unbounded dependency registry,
+    // no database lookup, and unrelated cached/in-flight reads stay reusable.
+    this.cache.invalidateWhere((entry) => entry.dependencies.has(dependencyId));
+    for (const [key, entry] of this.pending) {
+      if (entry.dependencies.has(dependencyId)) this.pending.delete(key);
+    }
+  }
+
+  invalidateAll(): void {
+    this.cache.invalidateAll();
+    this.pending.clear();
+  }
+
   async getOrFetch(key: string, dependencyIds: readonly string[], fetcher: () => Promise<Loaded<T>>): Promise<T> {
     if (!isCacheEnabled()) {
       return (await fetcher()).data;
@@ -42,23 +60,5 @@ export default class DependentCache<T> {
       });
     this.pending.set(key, { promise, dependencies });
     return promise;
-  }
-
-  isPinned(key: string): boolean {
-    return this.cache.isPinned(key);
-  }
-
-  invalidate(dependencyId: string): void {
-    // MemoryCache is capped at 200 entries. No unbounded dependency registry,
-    // no database lookup, and unrelated cached/in-flight reads stay reusable.
-    this.cache.invalidateWhere((entry) => entry.dependencies.has(dependencyId));
-    for (const [key, entry] of this.pending) {
-      if (entry.dependencies.has(dependencyId)) this.pending.delete(key);
-    }
-  }
-
-  invalidateAll(): void {
-    this.cache.invalidateAll();
-    this.pending.clear();
   }
 }

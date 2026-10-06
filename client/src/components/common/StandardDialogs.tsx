@@ -101,14 +101,6 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
   );
 }
 
-export function CreateDialog<T extends FieldValues = FieldValues>(props: StandardFormDialogProps<T>) {
-  return <FormActionDialog submitLabel="Create" {...props} />;
-}
-
-export function EditDialog<T extends FieldValues = FieldValues>(props: StandardFormDialogProps<T>) {
-  return <FormActionDialog submitLabel="Update" {...props} />;
-}
-
 export function ConfirmDialog({
   open,
   onClose,
@@ -149,6 +141,14 @@ export function ConfirmDialog({
   );
 }
 
+export function CreateDialog<T extends FieldValues = FieldValues>(props: StandardFormDialogProps<T>) {
+  return <FormActionDialog submitLabel="Create" {...props} />;
+}
+
 export function DeleteDialog(props: Omit<ConfirmDialogProps, "confirmColor">) {
   return <ConfirmDialog confirmLabel="Delete" {...props} confirmColor="error" />;
+}
+
+export function EditDialog<T extends FieldValues = FieldValues>(props: StandardFormDialogProps<T>) {
+  return <FormActionDialog submitLabel="Update" {...props} />;
 }

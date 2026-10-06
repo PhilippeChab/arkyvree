@@ -35,26 +35,6 @@ import {
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
-/** A ruleset of its own with Strength, a spell list and, unless left out, the General aptitude generated feats go in. */
-async function bareRuleset({ general = true } = {}) {
-  const { session, ruleset } = await createTestUserAndRuleset();
-  const [strength] = await Abilities.create(db, { name: "Strength", description: "", rulesetId: ruleset.id });
-  const [spells] = await Aptitudes.create(db, { name: "Wizard Spells", description: "", rulesetId: ruleset.id });
-  const [generalAptitude] = general
-    ? await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id })
-    : [];
-  return { session, ruleset, strength, spells, general: generalAptitude };
-}
-
-function spell(aptitudeId: string, name: string, school?: string, fields: Record<string, unknown> = {}) {
-  return {
-    name,
-    description: "",
-    aptitudes: [{ id: aptitudeId }],
-    school,
-    ...fields,
-  };
-}
 function skill(abilityId: string, name: string, fields: Record<string, unknown> = {}) {
   return {
     name,
@@ -67,6 +47,31 @@ function skill(abilityId: string, name: string, fields: Record<string, unknown> 
   };
 }
 
+function spell(aptitudeId: string, name: string, school?: string, fields: Record<string, unknown> = {}) {
+  return {
+    name,
+    description: "",
+    aptitudes: [{ id: aptitudeId }],
+    school,
+    ...fields,
+  };
+}
+
+async function findFeat(rulesetId: string, name: string) {
+  return (await Feats.findOne(db, { rulesetId, name }))!;
+}
+
+/** A ruleset of its own with Strength, a spell list and, unless left out, the General aptitude generated feats go in. */
+async function bareRuleset({ general = true } = {}) {
+  const { session, ruleset } = await createTestUserAndRuleset();
+  const [strength] = await Abilities.create(db, { name: "Strength", description: "", rulesetId: ruleset.id });
+  const [spells] = await Aptitudes.create(db, { name: "Wizard Spells", description: "", rulesetId: ruleset.id });
+  const [generalAptitude] = general
+    ? await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id })
+    : [];
+  return { session, ruleset, strength, spells, general: generalAptitude };
+}
+
 /** The names of the ruleset's feats, or of those matching `search`. */
 async function featNames(rulesetId: string, search?: string) {
   const { items } = await FeatsService.getFeats(rulesetId, { search }, { limit: 100, page: 1 });
@@ -76,18 +81,14 @@ async function featNames(rulesetId: string, search?: string) {
     .sort();
 }
 
-async function findFeat(rulesetId: string, name: string) {
-  return (await Feats.findOne(db, { rulesetId, name }))!;
-}
-
-/** A spell's generated properties, read through the service. */
-async function spellFields(rulesetId: string, powerId: string) {
-  return (await PowersService.getPower(rulesetId, powerId)).properties.map((p) => `${p.type}: ${p.value}`).sort();
-}
-
 async function forkWithExtensions() {
   const session = makeSession();
   return { session, fork: await createSeededTestRulesetWithExtensions(session.userId) };
+}
+
+async function seededFork() {
+  const session = makeSession();
+  return { session, fork: await createSeededTestRuleset(session.userId) };
 }
 
 /** The seed user's fork of the seeded ruleset, and its inherited Climb. */
@@ -105,9 +106,9 @@ async function seededForkWithClimb() {
   return { session, fork, climb, climbBody, feat: await findFeat(climb.rulesetId, "Skill Focus: Climb") };
 }
 
-async function seededFork() {
-  const session = makeSession();
-  return { session, fork: await createSeededTestRuleset(session.userId) };
+/** A spell's generated properties, read through the service. */
+async function spellFields(rulesetId: string, powerId: string) {
+  return (await PowersService.getPower(rulesetId, powerId)).properties.map((p) => `${p.type}: ${p.value}`).sort();
 }
 
 describe("Spell Focus", () => {

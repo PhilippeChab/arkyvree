@@ -149,6 +149,22 @@ function RulesetKindToggle({
   );
 }
 
+export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading }: ArchiveRulesetDialogProps) {
+  return (
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={onConfirm}
+      isLoading={isLoading}
+      title="Archive Ruleset"
+      message="Are you sure you want to archive this ruleset? You can restore it later from the archived rulesets section."
+      confirmLabel="Archive Ruleset"
+      confirmColor="warning"
+      confirmIcon={<ArchiveIcon />}
+    />
+  );
+}
+
 export function EditRulesetDialog({
   open,
   onClose,
@@ -218,22 +234,6 @@ export function ForkRulesetDialog({ open, onClose, form, onSubmit, isLoading }: 
         disabled={isLoading}
       />
     </CreateDialog>
-  );
-}
-
-export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading }: ArchiveRulesetDialogProps) {
-  return (
-    <ConfirmDialog
-      open={open}
-      onClose={onClose}
-      onConfirm={onConfirm}
-      isLoading={isLoading}
-      title="Archive Ruleset"
-      message="Are you sure you want to archive this ruleset? You can restore it later from the archived rulesets section."
-      confirmLabel="Archive Ruleset"
-      confirmColor="warning"
-      confirmIcon={<ArchiveIcon />}
-    />
   );
 }
 

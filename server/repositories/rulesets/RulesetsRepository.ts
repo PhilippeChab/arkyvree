@@ -42,51 +42,6 @@ class RulesetsRepository extends include(
     super(rulesetsInRules);
   }
 
-  /** A page of the rulesets the user starred, among those `condition` keeps. */
-  private async findStarredPage(
-    db: Db,
-    session: Session,
-    condition: SQL | undefined,
-    order: SQL,
-    pagination: { limit: number; page: number },
-  ) {
-    return await this.withPagination(
-      pagination,
-      async (paginate) =>
-        await db
-          .select({
-            id: rulesetsInRules.id,
-            createdAt: rulesetsInRules.createdAt,
-            updatedAt: rulesetsInRules.updatedAt,
-            deletedAt: rulesetsInRules.deletedAt,
-            name: rulesetsInRules.name,
-            rulesetId: rulesetsInRules.rulesetId,
-            description: rulesetsInRules.description,
-            userId: rulesetsInRules.userId,
-            system: rulesetsInRules.system,
-            private: rulesetsInRules.private,
-            status: rulesetsInRules.status,
-            kind: rulesetsInRules.kind,
-            baseRules: rulesetsInRules.baseRules,
-            ancestorRulesetIds: rulesetsInRules.ancestorRulesetIds,
-            extensionRulesetIds: rulesetsInRules.extensionRulesetIds,
-          })
-          .from(rulesetsInRules)
-          .innerJoin(
-            starredRulesetsInAccount,
-            and(
-              eq(starredRulesetsInAccount.rulesetId, rulesetsInRules.id),
-              eq(starredRulesetsInAccount.userId, session.userId),
-              isNull(starredRulesetsInAccount.deletedAt),
-            ),
-          )
-          .where(condition)
-          .orderBy(order)
-          .limit(paginate.limit)
-          .offset(paginate.offset),
-    );
-  }
-
   /** What a listing scope keeps (the starred scope, its join aside). */
   private scopeConditions(db: Db, session: Session, scope: RulesetScope | undefined): (SQL | undefined)[] {
     const notDeleted = isNull(rulesetsInRules.deletedAt);
@@ -201,6 +156,51 @@ class RulesetsRepository extends include(
             eq(campaignsInCampaign.rulesetId, rulesetsInRules.id),
           ),
         ),
+    );
+  }
+
+  /** A page of the rulesets the user starred, among those `condition` keeps. */
+  private async findStarredPage(
+    db: Db,
+    session: Session,
+    condition: SQL | undefined,
+    order: SQL,
+    pagination: { limit: number; page: number },
+  ) {
+    return await this.withPagination(
+      pagination,
+      async (paginate) =>
+        await db
+          .select({
+            id: rulesetsInRules.id,
+            createdAt: rulesetsInRules.createdAt,
+            updatedAt: rulesetsInRules.updatedAt,
+            deletedAt: rulesetsInRules.deletedAt,
+            name: rulesetsInRules.name,
+            rulesetId: rulesetsInRules.rulesetId,
+            description: rulesetsInRules.description,
+            userId: rulesetsInRules.userId,
+            system: rulesetsInRules.system,
+            private: rulesetsInRules.private,
+            status: rulesetsInRules.status,
+            kind: rulesetsInRules.kind,
+            baseRules: rulesetsInRules.baseRules,
+            ancestorRulesetIds: rulesetsInRules.ancestorRulesetIds,
+            extensionRulesetIds: rulesetsInRules.extensionRulesetIds,
+          })
+          .from(rulesetsInRules)
+          .innerJoin(
+            starredRulesetsInAccount,
+            and(
+              eq(starredRulesetsInAccount.rulesetId, rulesetsInRules.id),
+              eq(starredRulesetsInAccount.userId, session.userId),
+              isNull(starredRulesetsInAccount.deletedAt),
+            ),
+          )
+          .where(condition)
+          .orderBy(order)
+          .limit(paginate.limit)
+          .offset(paginate.offset),
     );
   }
 

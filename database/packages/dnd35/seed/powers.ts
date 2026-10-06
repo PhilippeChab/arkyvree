@@ -14,6 +14,24 @@ function parseSavingThrow(savingThrow: string | undefined, saveMap: Record<strin
   return { saveId: saveMap[match[1]] ?? null, saveEffect: match[2] };
 }
 
+/** Adds a power to aptitudes, each at its level: the first link to an aptitude it isn't in yet. */
+export async function linkPower(db: Db, powerId: string, links: { aptitudeId: string; level: number | null }[]) {
+  const linked = new Set(
+    (
+      await db
+        .select({ aptitudeId: powersAptitudesInRules.aptitudeId })
+        .from(powersAptitudesInRules)
+        .where(eq(powersAptitudesInRules.powerId, powerId))
+    ).map((link) => link.aptitudeId),
+  );
+  const added = links.filter(({ aptitudeId }) => !linked.has(aptitudeId) && linked.add(aptitudeId));
+  await insertAll(
+    db,
+    powersAptitudesInRules,
+    added.map((link) => ({ powerId, ...link })),
+  );
+}
+
 /**
  * Seeds spells with their properties, each in its spell lists at its level there, and adds them to the context.
  * A list the ruleset doesn't have is left out: the book that has it adds the spell to it.
@@ -57,23 +75,5 @@ export async function seedPowers(db: Db, ctx: SeedContext, spells: SpellSeed[]) 
       spells.flatMap((spell) => propertyRows(ids[spell.name], "powers", spell.properties)),
       (p) => `${p.entityId}:${p.type}:${p.value}`,
     ),
-  );
-}
-
-/** Adds a power to aptitudes, each at its level: the first link to an aptitude it isn't in yet. */
-export async function linkPower(db: Db, powerId: string, links: { aptitudeId: string; level: number | null }[]) {
-  const linked = new Set(
-    (
-      await db
-        .select({ aptitudeId: powersAptitudesInRules.aptitudeId })
-        .from(powersAptitudesInRules)
-        .where(eq(powersAptitudesInRules.powerId, powerId))
-    ).map((link) => link.aptitudeId),
-  );
-  const added = links.filter(({ aptitudeId }) => !linked.has(aptitudeId) && linked.add(aptitudeId));
-  await insertAll(
-    db,
-    powersAptitudesInRules,
-    added.map((link) => ({ powerId, ...link })),
   );
 }

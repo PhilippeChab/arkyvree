@@ -76,16 +76,16 @@ const SECTION_COMPONENTS = {
   requirements: ClassRequirementsSection,
 } as const;
 
+function isClassSection(section: string | undefined): section is ClassSection {
+  return TABS.some((tab) => tab.key === section);
+}
+
 function toClassForm(klass: Pick<ClassDetail, "name" | "description" | "hd">): ClassFormData {
   return {
     name: klass.name,
     description: klass.description ?? "",
     hd: oneOf(klass.hd, HIT_DIE_VALUES, 8),
   };
-}
-
-function isClassSection(section: string | undefined): section is ClassSection {
-  return TABS.some((tab) => tab.key === section);
 }
 
 export default function ClassDetailsPage() {

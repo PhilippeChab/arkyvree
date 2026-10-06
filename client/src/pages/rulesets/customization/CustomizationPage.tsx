@@ -103,10 +103,6 @@ const TABS: SectionTab<TabSection>[] = [
   },
 ];
 
-// A modifier can only carry requirements.
-function tabsFor(type: CustomizationPageType) {
-  return type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
-}
 function isEditable(data: CustomizationEntity): data is EditableEntity {
   return EDITABLE_TYPES.some((type) => type === data.type);
 }
@@ -173,6 +169,11 @@ function renderEditor(data: EditableEntity, props: Omit<EditorProps<unknown>, "e
     default:
       return data satisfies never;
   }
+}
+
+// A modifier can only carry requirements.
+function tabsFor(type: CustomizationPageType) {
+  return type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
 }
 
 async function deleteEntity(data: EditableEntity, id: string, entityId: string) {

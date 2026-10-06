@@ -22,13 +22,25 @@ import { checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/d
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 
-/** A committed reference of `type` as stored. */
-function stored<T extends ReferenceType>(file: string, type: T) {
-  return structuredClone(readStoredReference(join(REFERENCE_DIR, file), type));
+function add(target: string, value: number) {
+  return {
+    target,
+    operator: "add",
+    value: String(value),
+    valueType: "number",
+  };
 }
 
 function anyOf(family: string, options: string[]) {
   return or(...options.map((o) => eq(feat(`${family}: ${o}`))));
+}
+
+function classRequirementsOf(book: string, slug: string) {
+  return loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class").detected.requirements;
+}
+
+function featDetectedOf(name: string, prerequisiteText: string) {
+  return buildFeatDetected([{ name, featType: "general", prerequisiteText, benefit: "", special: "" }])[name];
 }
 
 function race(name: string, abilityAdjustments: { ability: string; value: number }[], ...features: string[]) {
@@ -42,21 +54,9 @@ function race(name: string, abilityAdjustments: { ability: string; value: number
   };
 }
 
-function add(target: string, value: number) {
-  return {
-    target,
-    operator: "add",
-    value: String(value),
-    valueType: "number",
-  };
-}
-
-function classRequirementsOf(book: string, slug: string) {
-  return loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class").detected.requirements;
-}
-
-function featDetectedOf(name: string, prerequisiteText: string) {
-  return buildFeatDetected([{ name, featType: "general", prerequisiteText, benefit: "", special: "" }])[name];
+/** A committed reference of `type` as stored. */
+function stored<T extends ReferenceType>(file: string, type: T) {
+  return structuredClone(readStoredReference(join(REFERENCE_DIR, file), type));
 }
 
 describe("A book's class references", () => {

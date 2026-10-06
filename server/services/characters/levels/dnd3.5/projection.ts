@@ -20,17 +20,6 @@ import type { Character, Modifier, Property, Requirement } from "@/shared/relati
 
 export type FeatPick = { featId: string; aptitudeId: string };
 
-/** Returns IDs of the given level and all subsequent levels (by creation order). */
-export function getLevelIdsFromOnward(
-  characterLevels: { id: string; createdAt: string }[],
-  characterLevelId: string,
-): string[] {
-  const sorted = [...characterLevels].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  const index = sorted.findIndex((l) => l.id === characterLevelId);
-  if (index === -1) return [];
-  return sorted.slice(index).map((l) => l.id);
-}
-
 /** Loads modifiers, properties, and requirements for feats so projected data carries full effects. */
 export function loadFeatCustomizations(rulesetData: CachedRulesetData, featIds: string[]) {
   const modifiersMap = new Map<string, Modifier[]>();
@@ -51,52 +40,6 @@ export function loadFeatCustomizations(rulesetData: CachedRulesetData, featIds: 
     properties: propertiesMap,
     requirements: requirementsMap,
   };
-}
-
-export function buildProjectedFeatsFromPicks(
-  selectedFeatPicks: FeatPick[],
-  klassLevelId: string,
-  projectedCharacterLevelId: string,
-  rulesetData: CachedRulesetData,
-): {
-  projectedFeats: NonNullable<ProjectedCharacterData["feats"]>;
-  nonStackableFeatIds: string[];
-} {
-  if (selectedFeatPicks.length === 0) {
-    return { projectedFeats: [], nonStackableFeatIds: [] };
-  }
-
-  // Dedup by (featId, aptitudeId) — the wizard sometimes sends the same pick
-  // under both `selectedFeatPicks` and `pendingLevelFeatPicks` (Add Level batch
-  // treats all picks as pending). Without this, projection doubles up and
-  // applies modifiers twice. Legitimate multi-pool picks of the same feat
-  // (different aptitudeIds) are preserved.
-  const uniquePicks = [...new Map(selectedFeatPicks.map((p) => [`${p.featId}:${p.aptitudeId}`, p])).values()];
-  const uniqueFeatIds = [...new Set(uniquePicks.map((p) => p.featId))];
-  const customizations = loadFeatCustomizations(rulesetData, uniqueFeatIds);
-
-  const projectedFeats = uniquePicks
-    .map((pick) => {
-      const feat = rulesetData.featsById.get(pick.featId);
-      if (!feat) return null;
-      return {
-        ...feat,
-        klassLevelId,
-        characterLevelId: projectedCharacterLevelId,
-        aptitudeId: pick.aptitudeId,
-        modifiers: customizations.modifiers.get(feat.id) ?? [],
-        properties: customizations.properties.get(feat.id) ?? [],
-        requirements: customizations.requirements.get(feat.id) ?? [],
-      };
-    })
-    .filter((f): f is NonNullable<typeof f> => f !== null);
-
-  const nonStackableFeatIds = uniqueFeatIds
-    .map((id) => rulesetData.featsById.get(id))
-    .filter((f): f is NonNullable<typeof f> => f !== undefined && !f.stackable)
-    .map((f) => f.id);
-
-  return { projectedFeats, nonStackableFeatIds };
 }
 
 /** Builds projected auto-granted feats for character projection, filtering out user-picked feats. */
@@ -151,6 +94,75 @@ export function buildPendingCharacterLevels(
   });
 }
 
+export function buildProjectedFeatsFromPicks(
+  selectedFeatPicks: FeatPick[],
+  klassLevelId: string,
+  projectedCharacterLevelId: string,
+  rulesetData: CachedRulesetData,
+): {
+  projectedFeats: NonNullable<ProjectedCharacterData["feats"]>;
+  nonStackableFeatIds: string[];
+} {
+  if (selectedFeatPicks.length === 0) {
+    return { projectedFeats: [], nonStackableFeatIds: [] };
+  }
+
+  // Dedup by (featId, aptitudeId) — the wizard sometimes sends the same pick
+  // under both `selectedFeatPicks` and `pendingLevelFeatPicks` (Add Level batch
+  // treats all picks as pending). Without this, projection doubles up and
+  // applies modifiers twice. Legitimate multi-pool picks of the same feat
+  // (different aptitudeIds) are preserved.
+  const uniquePicks = [...new Map(selectedFeatPicks.map((p) => [`${p.featId}:${p.aptitudeId}`, p])).values()];
+  const uniqueFeatIds = [...new Set(uniquePicks.map((p) => p.featId))];
+  const customizations = loadFeatCustomizations(rulesetData, uniqueFeatIds);
+
+  const projectedFeats = uniquePicks
+    .map((pick) => {
+      const feat = rulesetData.featsById.get(pick.featId);
+      if (!feat) return null;
+      return {
+        ...feat,
+        klassLevelId,
+        characterLevelId: projectedCharacterLevelId,
+        aptitudeId: pick.aptitudeId,
+        modifiers: customizations.modifiers.get(feat.id) ?? [],
+        properties: customizations.properties.get(feat.id) ?? [],
+        requirements: customizations.requirements.get(feat.id) ?? [],
+      };
+    })
+    .filter((f): f is NonNullable<typeof f> => f !== null);
+
+  const nonStackableFeatIds = uniqueFeatIds
+    .map((id) => rulesetData.featsById.get(id))
+    .filter((f): f is NonNullable<typeof f> => f !== undefined && !f.stackable)
+    .map((f) => f.id);
+
+  return { projectedFeats, nonStackableFeatIds };
+}
+
+/** Maps auto-granted feat records to projected givenFeats format for character building. */
+export function buildProjectedGivenFeats<T extends { id: string }>(
+  autoGrantedRecords: Array<{
+    id: string;
+    featsInRule: T;
+    aptitudeId: string;
+    klassLevelId: string;
+  }>,
+  characterLevelId: string,
+  customizations: { modifiers: Map<string, Modifier[]> },
+) {
+  return autoGrantedRecords.map((rec) => ({
+    ...rec.featsInRule,
+    klassLevelId: rec.klassLevelId,
+    klassLevelFeatId: rec.id,
+    characterLevelId,
+    aptitudeId: rec.aptitudeId,
+    modifiers: customizations.modifiers.get(rec.featsInRule.id) ?? [],
+    properties: [],
+    requirements: [],
+  }));
+}
+
 /** Maps validated selections to projected skill/feat/power data for character building. */
 export function buildProjectedSelections<S extends { id: string }, F extends { id: string }, P extends { id: string }>(
   klassLevelId: string,
@@ -193,29 +205,6 @@ export function buildProjectedSelections<S extends { id: string }, F extends { i
   };
 }
 
-/** Maps auto-granted feat records to projected givenFeats format for character building. */
-export function buildProjectedGivenFeats<T extends { id: string }>(
-  autoGrantedRecords: Array<{
-    id: string;
-    featsInRule: T;
-    aptitudeId: string;
-    klassLevelId: string;
-  }>,
-  characterLevelId: string,
-  customizations: { modifiers: Map<string, Modifier[]> },
-) {
-  return autoGrantedRecords.map((rec) => ({
-    ...rec.featsInRule,
-    klassLevelId: rec.klassLevelId,
-    klassLevelFeatId: rec.id,
-    characterLevelId,
-    aptitudeId: rec.aptitudeId,
-    modifiers: customizations.modifiers.get(rec.featsInRule.id) ?? [],
-    properties: [],
-    requirements: [],
-  }));
-}
-
 /** Builds projected skill records from skill ID + rank allocations for requirement evaluation. */
 export function buildProjectedSkillsFromAllocations(
   allocations: { skillId: string; rank: number }[],
@@ -239,6 +228,17 @@ export function buildProjectedSkillsFromAllocations(
       return { ...skill, klassLevelId, characterLevelId, rank };
     })
     .filter((s): s is NonNullable<typeof s> => s !== null);
+}
+
+/** Returns IDs of the given level and all subsequent levels (by creation order). */
+export function getLevelIdsFromOnward(
+  characterLevels: { id: string; createdAt: string }[],
+  characterLevelId: string,
+): string[] {
+  const sorted = [...characterLevels].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const index = sorted.findIndex((l) => l.id === characterLevelId);
+  if (index === -1) return [];
+  return sorted.slice(index).map((l) => l.id);
 }
 
 /**

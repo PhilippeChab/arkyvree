@@ -41,12 +41,8 @@ import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 const page = { limit: 100, page: 1 };
 
-/** Another user's private ruleset, with a race. */
-async function setupPrivateRuleset() {
-  const { user: owner } = await createTestUser();
-  const ruleset = await createTestRuleset(owner.id);
-  const [race] = await Races.create(db, { name: "Private Race", rulesetId: ruleset.id, size: "Medium", baseSpeed: 30 });
-  return { owner, ruleset, race };
+function ids(rows: { id: string }[]) {
+  return rows.map((r) => r.id);
 }
 
 async function fighterLevel() {
@@ -54,8 +50,12 @@ async function fighterLevel() {
   return (await findKlassLevel(klassMap.pc["Fighter"], 1))!;
 }
 
-function ids(rows: { id: string }[]) {
-  return rows.map((r) => r.id);
+/** Another user's private ruleset, with a race. */
+async function setupPrivateRuleset() {
+  const { user: owner } = await createTestUser();
+  const ruleset = await createTestRuleset(owner.id);
+  const [race] = await Races.create(db, { name: "Private Race", rulesetId: ruleset.id, size: "Medium", baseSpeed: 30 });
+  return { owner, ruleset, race };
 }
 
 describe("CharactersService", () => {

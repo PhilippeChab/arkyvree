@@ -121,6 +121,31 @@ function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
   );
 }
 
+export function AddPlayerDialog({ open, onClose, form, onSubmit, isLoading }: AddPlayerDialogProps) {
+  const inviting = !!form.watch("email");
+
+  return (
+    <CreateDialog
+      open={open}
+      onClose={onClose}
+      title="Add Player"
+      form={form}
+      onSubmit={onSubmit}
+      isLoading={isLoading}
+      submitLabel={inviting ? "Send Invite" : "Create Player"}
+      submitIcon={inviting ? <SendIcon /> : <PersonAddIcon />}
+    >
+      <Alert severity="info">
+        <Typography variant="body2">
+          You can either create an empty player slot or enter an email address to send an invite.
+        </Typography>
+      </Alert>
+      <PlayerEmailField form={form} isLoading={isLoading} />
+      <PlayerRoleSelect form={form} isLoading={isLoading} />
+    </CreateDialog>
+  );
+}
+
 export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading }: CreateCampaignDialogProps) {
   const [rulesetSearch, setRulesetSearch] = useState("");
   const debouncedRulesetSearch = useDebouncedValue(rulesetSearch);
@@ -200,31 +225,6 @@ export function EditCampaignDialog({ open, onClose, form, onSubmit, isLoading }:
       />
       <DescriptionField {...form.register("description")} disabled={isLoading} rows={4} />
     </EditDialog>
-  );
-}
-
-export function AddPlayerDialog({ open, onClose, form, onSubmit, isLoading }: AddPlayerDialogProps) {
-  const inviting = !!form.watch("email");
-
-  return (
-    <CreateDialog
-      open={open}
-      onClose={onClose}
-      title="Add Player"
-      form={form}
-      onSubmit={onSubmit}
-      isLoading={isLoading}
-      submitLabel={inviting ? "Send Invite" : "Create Player"}
-      submitIcon={inviting ? <SendIcon /> : <PersonAddIcon />}
-    >
-      <Alert severity="info">
-        <Typography variant="body2">
-          You can either create an empty player slot or enter an email address to send an invite.
-        </Typography>
-      </Alert>
-      <PlayerEmailField form={form} isLoading={isLoading} />
-      <PlayerRoleSelect form={form} isLoading={isLoading} />
-    </CreateDialog>
   );
 }
 

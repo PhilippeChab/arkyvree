@@ -23,19 +23,6 @@ type OverrideEntry = {
   prereqText?: string;
 };
 
-/** The entries of a feat or domain reference whose overrides change more than their description. */
-function collectEntryOverrides(
-  overrides: Record<string, object> | undefined,
-  reference: Pick<OverrideEntry, "book" | "refType" | "refName">,
-  prereqText: (name: string) => string | undefined = () => undefined,
-): OverrideEntry[] {
-  const { reviewed: _reviewed, ...rest } = overrides ?? {};
-  return Object.entries(rest).flatMap(([name, override]) => {
-    const keys = Object.keys(override).filter((k) => k !== "description");
-    return keys.length === 0 ? [] : [{ ...reference, entryName: name, keys, prereqText: prereqText(name) }];
-  });
-}
-
 function collectClassOverrides(data: StoredReference<"class">, book: string, fileName: string): OverrideEntry[] {
   const entries: OverrideEntry[] = [];
   const overrides = data.overrides;
@@ -62,6 +49,19 @@ function collectClassOverrides(data: StoredReference<"class">, book: string, fil
   });
 
   return entries;
+}
+
+/** The entries of a feat or domain reference whose overrides change more than their description. */
+function collectEntryOverrides(
+  overrides: Record<string, object> | undefined,
+  reference: Pick<OverrideEntry, "book" | "refType" | "refName">,
+  prereqText: (name: string) => string | undefined = () => undefined,
+): OverrideEntry[] {
+  const { reviewed: _reviewed, ...rest } = overrides ?? {};
+  return Object.entries(rest).flatMap(([name, override]) => {
+    const keys = Object.keys(override).filter((k) => k !== "description");
+    return keys.length === 0 ? [] : [{ ...reference, entryName: name, keys, prereqText: prereqText(name) }];
+  });
 }
 
 function main() {

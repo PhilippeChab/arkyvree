@@ -10,25 +10,6 @@ import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.t
 export default abstract class DetailedCharacterBonded extends Dnd35DetailedCharacter {
   protected cachedTotalHD: number | null = null;
 
-  protected async loadMaster(
-    parentCharacterId: string,
-    rulesetData: CachedRulesetData,
-  ): Promise<Dnd35DetailedCharacter> {
-    return await memoizeRequest(`bonded-master:${parentCharacterId}`, async () => {
-      const masterRecord = await Characters.findOne(db, { id: parentCharacterId }, Visibility.All);
-      if (!masterRecord) {
-        throw new Error(`Bonded's master not found: ${parentCharacterId}`);
-      }
-      const composed = new Dnd35DetailedCharacter(masterRecord);
-      await composed.build(db, undefined, {
-        ruleset: this.ruleset!,
-        cowData: rulesetData.cow,
-        rulesetData,
-      });
-      return composed;
-    });
-  }
-
   protected applyGrantedFeats(featNames: string[], rulesetData: CachedRulesetData): void {
     if (featNames.length === 0) return;
     const featModifiers: Modifier[] = [];
@@ -76,6 +57,25 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
 
   protected override getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
     return { budget: [], ranks: [] };
+  }
+
+  protected async loadMaster(
+    parentCharacterId: string,
+    rulesetData: CachedRulesetData,
+  ): Promise<Dnd35DetailedCharacter> {
+    return await memoizeRequest(`bonded-master:${parentCharacterId}`, async () => {
+      const masterRecord = await Characters.findOne(db, { id: parentCharacterId }, Visibility.All);
+      if (!masterRecord) {
+        throw new Error(`Bonded's master not found: ${parentCharacterId}`);
+      }
+      const composed = new Dnd35DetailedCharacter(masterRecord);
+      await composed.build(db, undefined, {
+        ruleset: this.ruleset!,
+        cowData: rulesetData.cow,
+        rulesetData,
+      });
+      return composed;
+    });
   }
 
   /**

@@ -20,135 +20,6 @@ import type { Db } from "@/server/database/index.ts";
 // An extension changes an inherited feat or power the way a fork does: it copies it (copy on write) and records
 // the copy in `entity_snapshots`, so the ruleset shows the copy in place of the original.
 
-async function copyRequirements(db: Db, fromId: string, toId: string) {
-  const rows = await db
-    .select()
-    .from(requirementsInCustomization)
-    .where(eq(requirementsInCustomization.entityId, fromId));
-  await insertAll(
-    db,
-    requirementsInCustomization,
-    rows.map(({ entityType, level, target, operator, value, valueType, chainingOperator }) => ({
-      entityId: toId,
-      entityType,
-      level,
-      target,
-      operator,
-      value,
-      valueType,
-      chainingOperator,
-    })),
-  );
-}
-
-/** Copies an entity's requirements, modifiers (with theirs) and properties onto its copy. */
-async function copyCustomizations(db: Db, fromId: string, toId: string) {
-  await copyRequirements(db, fromId, toId);
-  for (const modifier of await db
-    .select()
-    .from(modifiersInCustomization)
-    .where(eq(modifiersInCustomization.sourceId, fromId))) {
-    const { sourceType, target, value, valueType, operator } = modifier;
-    const [copy] = await db
-      .insert(modifiersInCustomization)
-      .values({ sourceId: toId, sourceType, target, value, valueType, operator })
-      .returning({ id: modifiersInCustomization.id });
-    await copyRequirements(db, modifier.id, copy.id);
-  }
-  const properties = await db
-    .select()
-    .from(propertiesInCustomization)
-    .where(eq(propertiesInCustomization.entityId, fromId));
-  await insertAll(
-    db,
-    propertiesInCustomization,
-    properties.map(({ entityType, type, value, description }) => ({
-      entityId: toId,
-      entityType,
-      type,
-      value,
-      description,
-    })),
-  );
-}
-
-async function recordCopy(
-  db: Db,
-  rulesetId: string,
-  entityType: string,
-  sourceEntityId: string,
-  forkedEntityId: string,
-) {
-  await db
-    .insert(entitySnapshotsInRules)
-    .values({ rulesetId, entityType, sourceEntityId, forkedEntityId, contentHash: "seed" });
-}
-
-/** Copies an inherited feat into the ruleset, with its aptitudes and customizations. */
-async function cowFeat(db: Db, featId: string, rulesetId: string) {
-  const [feat] = await db.select().from(featsInRules).where(eq(featsInRules.id, featId));
-  const [copy] = await db
-    .insert(featsInRules)
-    .values({
-      rulesetId,
-      name: feat.name,
-      description: feat.description,
-      stackable: feat.stackable,
-      selectable: feat.selectable,
-      generated: feat.generated,
-    })
-    .returning({ id: featsInRules.id });
-  const aptitudes = await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.featId, featId));
-  await insertAll(
-    db,
-    featsAptitudesInRules,
-    aptitudes.map(({ aptitudeId }) => ({ featId: copy.id, aptitudeId })),
-  );
-  await copyCustomizations(db, featId, copy.id);
-  await recordCopy(db, rulesetId, "feats", featId, copy.id);
-  return copy.id;
-}
-
-/** Adds a power to the spell lists another one is in, at the same levels. */
-async function copySpellLists(db: Db, fromId: string, toId: string) {
-  const links = await db
-    .select({
-      aptitudeId: powersAptitudesInRules.aptitudeId,
-      level: powersAptitudesInRules.level,
-      aptitude: aptitudesInRules.name,
-    })
-    .from(powersAptitudesInRules)
-    .innerJoin(aptitudesInRules, eq(aptitudesInRules.id, powersAptitudesInRules.aptitudeId))
-    .where(eq(powersAptitudesInRules.powerId, fromId));
-  await linkPower(
-    db,
-    toId,
-    links.filter(({ aptitude }) => /^(\w[\w ]*) Spells$/.test(aptitude)),
-  );
-}
-
-/**
- * Copies an inherited power into the ruleset, with its customizations and its spell lists ("X Spells" aptitudes):
- * the copy hides the original in the rulesets that extend this one, so it keeps the original's lists.
- */
-async function cowPower(db: Db, powerId: string, rulesetId: string) {
-  const [power] = await db.select().from(powersInRules).where(eq(powersInRules.id, powerId));
-  const [copy] = await db
-    .insert(powersInRules)
-    .values({
-      rulesetId,
-      name: power.name,
-      description: power.description,
-      saveId: power.saveId,
-      saveEffect: power.saveEffect,
-    })
-    .returning({ id: powersInRules.id });
-  await copyCustomizations(db, powerId, copy.id);
-  await recordCopy(db, rulesetId, "powers", powerId, copy.id);
-  await copySpellLists(db, powerId, copy.id);
-  return copy.id;
-}
-
 /**
  * Adds class levels to a feat's first-level `or` of requirements, which a single first-level requirement becomes.
  * A feat with neither gets none.
@@ -203,11 +74,133 @@ async function addClassLevelAlternatives(db: Db, featId: string, classLevels: Co
   );
 }
 
-/** The ruleset's own power named so, copying the inherited one first when it has none. */
-export async function ownPower(db: Db, ctx: SeedContext, name: string): Promise<string | undefined> {
-  const inheritedId = ctx.inheritedPowerMap[name];
-  if (!ctx.powerMap[name] && inheritedId) ctx.powerMap[name] = await cowPower(db, inheritedId, ctx.rulesetId);
-  return ctx.powerMap[name];
+async function copyRequirements(db: Db, fromId: string, toId: string) {
+  const rows = await db
+    .select()
+    .from(requirementsInCustomization)
+    .where(eq(requirementsInCustomization.entityId, fromId));
+  await insertAll(
+    db,
+    requirementsInCustomization,
+    rows.map(({ entityType, level, target, operator, value, valueType, chainingOperator }) => ({
+      entityId: toId,
+      entityType,
+      level,
+      target,
+      operator,
+      value,
+      valueType,
+      chainingOperator,
+    })),
+  );
+}
+
+/** Copies an entity's requirements, modifiers (with theirs) and properties onto its copy. */
+async function copyCustomizations(db: Db, fromId: string, toId: string) {
+  await copyRequirements(db, fromId, toId);
+  for (const modifier of await db
+    .select()
+    .from(modifiersInCustomization)
+    .where(eq(modifiersInCustomization.sourceId, fromId))) {
+    const { sourceType, target, value, valueType, operator } = modifier;
+    const [copy] = await db
+      .insert(modifiersInCustomization)
+      .values({ sourceId: toId, sourceType, target, value, valueType, operator })
+      .returning({ id: modifiersInCustomization.id });
+    await copyRequirements(db, modifier.id, copy.id);
+  }
+  const properties = await db
+    .select()
+    .from(propertiesInCustomization)
+    .where(eq(propertiesInCustomization.entityId, fromId));
+  await insertAll(
+    db,
+    propertiesInCustomization,
+    properties.map(({ entityType, type, value, description }) => ({
+      entityId: toId,
+      entityType,
+      type,
+      value,
+      description,
+    })),
+  );
+}
+
+/** Adds a power to the spell lists another one is in, at the same levels. */
+async function copySpellLists(db: Db, fromId: string, toId: string) {
+  const links = await db
+    .select({
+      aptitudeId: powersAptitudesInRules.aptitudeId,
+      level: powersAptitudesInRules.level,
+      aptitude: aptitudesInRules.name,
+    })
+    .from(powersAptitudesInRules)
+    .innerJoin(aptitudesInRules, eq(aptitudesInRules.id, powersAptitudesInRules.aptitudeId))
+    .where(eq(powersAptitudesInRules.powerId, fromId));
+  await linkPower(
+    db,
+    toId,
+    links.filter(({ aptitude }) => /^(\w[\w ]*) Spells$/.test(aptitude)),
+  );
+}
+
+async function recordCopy(
+  db: Db,
+  rulesetId: string,
+  entityType: string,
+  sourceEntityId: string,
+  forkedEntityId: string,
+) {
+  await db
+    .insert(entitySnapshotsInRules)
+    .values({ rulesetId, entityType, sourceEntityId, forkedEntityId, contentHash: "seed" });
+}
+
+/** Copies an inherited feat into the ruleset, with its aptitudes and customizations. */
+async function cowFeat(db: Db, featId: string, rulesetId: string) {
+  const [feat] = await db.select().from(featsInRules).where(eq(featsInRules.id, featId));
+  const [copy] = await db
+    .insert(featsInRules)
+    .values({
+      rulesetId,
+      name: feat.name,
+      description: feat.description,
+      stackable: feat.stackable,
+      selectable: feat.selectable,
+      generated: feat.generated,
+    })
+    .returning({ id: featsInRules.id });
+  const aptitudes = await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.featId, featId));
+  await insertAll(
+    db,
+    featsAptitudesInRules,
+    aptitudes.map(({ aptitudeId }) => ({ featId: copy.id, aptitudeId })),
+  );
+  await copyCustomizations(db, featId, copy.id);
+  await recordCopy(db, rulesetId, "feats", featId, copy.id);
+  return copy.id;
+}
+
+/**
+ * Copies an inherited power into the ruleset, with its customizations and its spell lists ("X Spells" aptitudes):
+ * the copy hides the original in the rulesets that extend this one, so it keeps the original's lists.
+ */
+async function cowPower(db: Db, powerId: string, rulesetId: string) {
+  const [power] = await db.select().from(powersInRules).where(eq(powersInRules.id, powerId));
+  const [copy] = await db
+    .insert(powersInRules)
+    .values({
+      rulesetId,
+      name: power.name,
+      description: power.description,
+      saveId: power.saveId,
+      saveEffect: power.saveEffect,
+    })
+    .returning({ id: powersInRules.id });
+  await copyCustomizations(db, powerId, copy.id);
+  await recordCopy(db, rulesetId, "powers", powerId, copy.id);
+  await copySpellLists(db, powerId, copy.id);
+  return copy.id;
 }
 
 /**
@@ -229,6 +222,13 @@ export async function cowFeatsIntoExtension(db: Db, ctx: SeedContext, entries: C
         .map((aptitude) => ({ featId: copyId, aptitudeId: ctx.aptMap[aptitude] })),
     );
   }
+}
+
+/** The ruleset's own power named so, copying the inherited one first when it has none. */
+export async function ownPower(db: Db, ctx: SeedContext, name: string): Promise<string | undefined> {
+  const inheritedId = ctx.inheritedPowerMap[name];
+  if (!ctx.powerMap[name] && inheritedId) ctx.powerMap[name] = await cowPower(db, inheritedId, ctx.rulesetId);
+  return ctx.powerMap[name];
 }
 
 /**

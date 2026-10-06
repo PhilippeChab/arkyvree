@@ -18,15 +18,6 @@ const BASE_DIR = join(import.meta.dirname!, "../");
 const SCRAPER = join(BASE_DIR, "tools/scraper/index.ts");
 const GENERATOR = join(BASE_DIR, "tools/generator/index.ts");
 
-/** Runs a tool (`script` with `args`), printing FAILED and its errors when it fails: whether it succeeded. */
-async function run(script: string, args: string[]): Promise<boolean> {
-  const result = await $`bun ${script} ${args}`.quiet().nothrow();
-  if (result.exitCode === 0) return true;
-  console.log("FAILED");
-  console.error(result.stderr.toString());
-  return false;
-}
-
 /**
  * Build CLI args for the scraper.
  *
@@ -82,6 +73,15 @@ function buildScrapeArgs(ref: { path: string; type: string; url?: string; book: 
   }
 
   return args;
+}
+
+/** Runs a tool (`script` with `args`), printing FAILED and its errors when it fails: whether it succeeded. */
+async function run(script: string, args: string[]): Promise<boolean> {
+  const result = await $`bun ${script} ${args}`.quiet().nothrow();
+  if (result.exitCode === 0) return true;
+  console.log("FAILED");
+  console.error(result.stderr.toString());
+  return false;
 }
 
 async function main() {

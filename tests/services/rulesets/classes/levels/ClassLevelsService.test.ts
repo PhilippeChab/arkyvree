@@ -41,14 +41,6 @@ import { NIL_UUID } from "@/tests/support/seed.ts";
 
 type LevelBody = Omit<Parameters<typeof ClassLevelsService.createClassLevel>[3], "level">;
 
-/** A new user's empty ruleset with a class and an aptitude. */
-async function setup() {
-  const { user, session, ruleset } = await createTestUserAndRuleset();
-  const klass = await ClassesService.createClass(session, ruleset.id, { name: "Test Class" });
-  const [aptitude] = await Aptitudes.create(db, { name: "Fighter Bonus Feat", rulesetId: ruleset.id });
-  return { user, session, ruleset, klass, aptitude, poolTarget: `aptitudes.${stripSeparators(aptitude.name)}.allowed` };
-}
-
 function createLevel(
   session: Session,
   rulesetId: string,
@@ -59,14 +51,22 @@ function createLevel(
   return ClassLevelsService.createClassLevel(session, rulesetId, klassId, { level, bab: level, skills: 4, ...body });
 }
 
+function modifier(sourceId: string, target: string, value: string) {
+  return { sourceId, sourceType: "klass_levels", target, value, valueType: "number", operator: "add" } as const;
+}
+
 async function createSave(rulesetId: string, name: string) {
   const [ability] = await Abilities.create(db, { name: `${name} Ability`, description: name, rulesetId });
   const [save] = await Saves.create(db, { name, abilityId: ability.id, rulesetId });
   return save;
 }
 
-function modifier(sourceId: string, target: string, value: string) {
-  return { sourceId, sourceType: "klass_levels", target, value, valueType: "number", operator: "add" } as const;
+/** A new user's empty ruleset with a class and an aptitude. */
+async function setup() {
+  const { user, session, ruleset } = await createTestUserAndRuleset();
+  const klass = await ClassesService.createClass(session, ruleset.id, { name: "Test Class" });
+  const [aptitude] = await Aptitudes.create(db, { name: "Fighter Bonus Feat", rulesetId: ruleset.id });
+  return { user, session, ruleset, klass, aptitude, poolTarget: `aptitudes.${stripSeparators(aptitude.name)}.allowed` };
 }
 
 /** A fork of `setup()`'s ruleset, whose class has a first level. */

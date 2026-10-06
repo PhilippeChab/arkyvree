@@ -26,6 +26,67 @@ export function pickIds(picks: Record<string, { id: string }[]>) {
 }
 
 /**
+ * The feat pools grown by the picked feats' "add" aptitude modifiers. When a
+ * pool shrinks (a feat that granted slots was removed), the picks past it are
+ * dropped, and the open picker closes once its pool has no room left.
+ */
+export function useAdjustedFeatPools(
+  aptitudePools: Record<string, AptitudePool> | undefined,
+  { selectedFeats, getValues, setValue, selectedAptitude, setSelectedAptitude }: LevelWizardBase,
+) {
+  const adjustedFeatPools = useMemo(() => {
+    if (!aptitudePools) return {};
+    const pools = { ...aptitudePools };
+
+    const adjustments = new Map<string, number>();
+    for (const feats of Object.values(selectedFeats)) {
+      for (const feat of feats) {
+        for (const mod of feat.aptitudeModifiers ?? []) {
+          if (mod.operator === "add") {
+            adjustments.set(mod.aptitudeId, (adjustments.get(mod.aptitudeId) ?? 0) + mod.value);
+          }
+        }
+      }
+    }
+
+    for (const [aptitudeId, delta] of adjustments) {
+      if (pools[aptitudeId]) {
+        pools[aptitudeId] = {
+          ...pools[aptitudeId],
+          allowed: pools[aptitudeId].allowed + delta,
+          available: pools[aptitudeId].available + delta,
+        };
+      }
+    }
+
+    return pools;
+  }, [aptitudePools, selectedFeats]);
+
+  useEffect(() => {
+    let changed = false;
+    const updated = { ...getValues("selectedFeats") };
+    for (const [poolId, feats] of Object.entries(updated)) {
+      const pool = adjustedFeatPools[poolId];
+      const max = pool ? Math.max(0, pool.available) : 0;
+      if (feats.length > max) {
+        updated[poolId] = feats.slice(0, max);
+        changed = true;
+      }
+    }
+    if (changed) setValue("selectedFeats", updated);
+    if (
+      selectedAptitude &&
+      adjustedFeatPools[selectedAptitude]?.available !== undefined &&
+      adjustedFeatPools[selectedAptitude].available <= 0
+    ) {
+      setSelectedAptitude(null);
+    }
+  }, [adjustedFeatPools, getValues, setValue, selectedAptitude, setSelectedAptitude]);
+
+  return adjustedFeatPools;
+}
+
+/**
  * What the Add Level and Edit Level wizards share: the picks form, the step,
  * the feat and spell pickers' state, and the save's cache refresh and errors.
  */
@@ -140,65 +201,4 @@ export function useLevelWizardBase(characterId: string) {
     refreshAfterSave,
     handleSaveError,
   };
-}
-
-/**
- * The feat pools grown by the picked feats' "add" aptitude modifiers. When a
- * pool shrinks (a feat that granted slots was removed), the picks past it are
- * dropped, and the open picker closes once its pool has no room left.
- */
-export function useAdjustedFeatPools(
-  aptitudePools: Record<string, AptitudePool> | undefined,
-  { selectedFeats, getValues, setValue, selectedAptitude, setSelectedAptitude }: LevelWizardBase,
-) {
-  const adjustedFeatPools = useMemo(() => {
-    if (!aptitudePools) return {};
-    const pools = { ...aptitudePools };
-
-    const adjustments = new Map<string, number>();
-    for (const feats of Object.values(selectedFeats)) {
-      for (const feat of feats) {
-        for (const mod of feat.aptitudeModifiers ?? []) {
-          if (mod.operator === "add") {
-            adjustments.set(mod.aptitudeId, (adjustments.get(mod.aptitudeId) ?? 0) + mod.value);
-          }
-        }
-      }
-    }
-
-    for (const [aptitudeId, delta] of adjustments) {
-      if (pools[aptitudeId]) {
-        pools[aptitudeId] = {
-          ...pools[aptitudeId],
-          allowed: pools[aptitudeId].allowed + delta,
-          available: pools[aptitudeId].available + delta,
-        };
-      }
-    }
-
-    return pools;
-  }, [aptitudePools, selectedFeats]);
-
-  useEffect(() => {
-    let changed = false;
-    const updated = { ...getValues("selectedFeats") };
-    for (const [poolId, feats] of Object.entries(updated)) {
-      const pool = adjustedFeatPools[poolId];
-      const max = pool ? Math.max(0, pool.available) : 0;
-      if (feats.length > max) {
-        updated[poolId] = feats.slice(0, max);
-        changed = true;
-      }
-    }
-    if (changed) setValue("selectedFeats", updated);
-    if (
-      selectedAptitude &&
-      adjustedFeatPools[selectedAptitude]?.available !== undefined &&
-      adjustedFeatPools[selectedAptitude].available <= 0
-    ) {
-      setSelectedAptitude(null);
-    }
-  }, [adjustedFeatPools, getValues, setValue, selectedAptitude, setSelectedAptitude]);
-
-  return adjustedFeatPools;
 }

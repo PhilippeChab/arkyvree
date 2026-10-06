@@ -68,6 +68,11 @@ const DETECTED_ISSUES = [
   ["unresolvedAptitudePicks", "aptitude pick"],
 ] as const;
 
+/** An entry's detected issues. */
+function detectedIssues(d: DetectedEntry): Found[] {
+  return DETECTED_ISSUES.flatMap(([key, kind]) => (d[key] ?? []).map((text) => ({ kind, text })));
+}
+
 /**
  * A reference's review list (`overrides.reviewed`): the entries it has, those that covered an issue (`use`), and,
  * once each, the ones that covered none or are repeated.
@@ -79,11 +84,6 @@ function reviewOf(reviewed: string[] = []) {
     use: (entry: string) => void used.add(entry),
     stale: () => [...new Set(reviewed.filter((entry, i) => !used.has(entry) || reviewed.indexOf(entry) < i))],
   };
-}
-
-/** An entry's detected issues. */
-function detectedIssues(d: DetectedEntry): Found[] {
-  return DETECTED_ISSUES.flatMap(([key, kind]) => (d[key] ?? []).map((text) => ({ kind, text })));
 }
 
 /** The issues of the references `refs` (`discoverRefs`): what the header lists. */

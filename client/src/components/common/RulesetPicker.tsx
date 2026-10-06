@@ -29,6 +29,15 @@ interface RulesetPickerProps<R extends PickableRuleset> {
   inputRef?: Ref<HTMLInputElement>;
 }
 
+/** The warning shown once a base ruleset is picked: it can't be edited until forked. */
+export function BaseRulesetAlert({ ruleset }: { ruleset: PickableRuleset | null }) {
+  return (
+    <AnimatedAlert in={ruleset !== null && !ruleset.userId} severity="warning" sx={{ mb: 2 }}>
+      Base rulesets are read-only templates. Fork it first to customize rules for your group.
+    </AnimatedAlert>
+  );
+}
+
 /** A create dialog's ruleset field, with the rulesets under their group headings. */
 export function RulesetPicker<R extends PickableRuleset>({
   rulesets,
@@ -61,14 +70,5 @@ export function RulesetPicker<R extends PickableRuleset>({
       fullWidth
       slotProps={{ listbox: { component: ScrollSafeListbox, onScroll } }}
     />
-  );
-}
-
-/** The warning shown once a base ruleset is picked: it can't be edited until forked. */
-export function BaseRulesetAlert({ ruleset }: { ruleset: PickableRuleset | null }) {
-  return (
-    <AnimatedAlert in={ruleset !== null && !ruleset.userId} severity="warning" sx={{ mb: 2 }}>
-      Base rulesets are read-only templates. Fork it first to customize rules for your group.
-    </AnimatedAlert>
   );
 }

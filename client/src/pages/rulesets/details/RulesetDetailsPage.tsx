@@ -91,15 +91,6 @@ import {
   SavesSection,
 } from "./sections/index.ts";
 
-function HelpLabel({ label, help }: { label: string; help: string }) {
-  return (
-    <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-      {label}
-      <FaqHelpIcon text={help} />
-    </Box>
-  );
-}
-
 function getStatusChip(status: RulesetDetail["status"]) {
   const { icon: StatusIcon, color, tooltip } = RULESET_STATUS[status];
   return (
@@ -117,6 +108,15 @@ function getStatusChip(status: RulesetDetail["status"]) {
         }
       />
     </Tooltip>
+  );
+}
+
+function HelpLabel({ label, help }: { label: string; help: string }) {
+  return (
+    <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+      {label}
+      <FaqHelpIcon text={help} />
+    </Box>
   );
 }
 

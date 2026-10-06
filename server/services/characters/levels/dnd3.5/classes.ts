@@ -25,6 +25,13 @@ export function getClassSkillIds(
   return ids;
 }
 
+/** The class's level `level`, in the composed ruleset, or a 404. */
+export function getKlassLevel(rulesetData: CachedRulesetData, klassId: string, level: number) {
+  const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
+  if (!klassLevel) throw new NotFoundError("Class level not found");
+  return klassLevel;
+}
+
 /**
  * The class skills of planned levels, from their classes (`klassIds`, one per level): each level's, in the ruleset's
  * skill order (what a rank costs at that level), and every planned class's together (the rank cap).
@@ -38,13 +45,6 @@ export function getPlannedClassSkills(rulesetData: CachedRulesetData, klassIds: 
   });
   const merged = getClassSkillIds([...new Set(klassIds)].flatMap(recordsOf), skills);
   return { perLevel, merged };
-}
-
-/** The class's level `level`, in the composed ruleset, or a 404. */
-export function getKlassLevel(rulesetData: CachedRulesetData, klassId: string, level: number) {
-  const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
-  if (!klassLevel) throw new NotFoundError("Class level not found");
-  return klassLevel;
 }
 
 /**

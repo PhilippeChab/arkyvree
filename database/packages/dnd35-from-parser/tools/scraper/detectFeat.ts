@@ -497,6 +497,16 @@ function detectImplicitFeatPrereqs(entry: FeatReference["raw"][number]): string[
 // Template feat detection
 // ---------------------------------------------------------------------------
 
+function isStackable(entry: FeatReference["raw"][number]): boolean {
+  const special = (entry.special ?? "").toLowerCase();
+  if (/do not stack|don't stack|effects are not cumulative/i.test(special)) return false;
+  return (
+    /(?:can|may) (?:gain|take).*multiple times/i.test(special) ||
+    /select this feat multiple times/i.test(special) ||
+    special.includes("its effects stack")
+  );
+}
+
 function detectTemplate(entry: FeatReference["raw"][number]): FeatReference["detected"][string]["template"] {
   const text = (entry.benefit + " " + (entry.special ?? "")).toLowerCase();
 
@@ -528,16 +538,6 @@ function detectTemplate(entry: FeatReference["raw"][number]): FeatReference["det
   }
 
   return undefined;
-}
-
-function isStackable(entry: FeatReference["raw"][number]): boolean {
-  const special = (entry.special ?? "").toLowerCase();
-  if (/do not stack|don't stack|effects are not cumulative/i.test(special)) return false;
-  return (
-    /(?:can|may) (?:gain|take).*multiple times/i.test(special) ||
-    /select this feat multiple times/i.test(special) ||
-    special.includes("its effects stack")
-  );
 }
 
 // ---------------------------------------------------------------------------

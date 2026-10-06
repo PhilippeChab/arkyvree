@@ -43,11 +43,6 @@ function familiarOf(masterId: string) {
   return Characters.findOne(db, { parentCharacterId: masterId, kind: "familiar" });
 }
 
-async function build<T extends { build(): Promise<unknown> }>(detailed: T) {
-  await detailed.build();
-  return detailed;
-}
-
 /** A bonded creature's numbers, as its sheet shows them. */
 function statBlock(detailed: DetailedCharacterMount | DetailedCharacterAnimalCompanion) {
   const { hp, bab, ac, weaponsets } = detailed.getDetailedCharacterCombat().getCombat();
@@ -69,6 +64,11 @@ function statBlock(detailed: DetailedCharacterMount | DetailedCharacterAnimalCom
     },
     attack: { name: bite?.name, size: bite?.tohit?.size, toHit: bite?.tohit?.total?.[0], damage: bite?.damage?.total },
   };
+}
+
+async function build<T extends { build(): Promise<unknown> }>(detailed: T) {
+  await detailed.build();
+  return detailed;
 }
 
 describe("Bonded creatures", () => {

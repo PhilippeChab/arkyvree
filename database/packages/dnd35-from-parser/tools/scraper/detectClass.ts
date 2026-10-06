@@ -197,6 +197,23 @@ function expandAnyFeatRequirement(text: string): RequirementEntry | undefined {
 // Compound feat requirements — e.g. "Weapon Focus (longbow or shortbow)"
 // ---------------------------------------------------------------------------
 
+/**
+ * A class's feat prerequisites as the scraper split them, mended: a list split inside its parentheses ("Weapon Focus
+ * (longbow", "shortbow", "or composite version of either)") is one prerequisite again, and the languages read into
+ * the list ("Spell Focus (conjuration) Languages: Celestial", "Infernal") are dropped.
+ */
+function featPrerequisites(scraped: string[]): string[] {
+  const feats: string[] = [];
+  for (const entry of scraped) {
+    const open = feats.at(-1);
+    if (open && open.split("(").length > open.split(")").length) feats[feats.length - 1] = `${open}, ${entry}`;
+    else feats.push(entry);
+  }
+  const languages = feats.findIndex((f) => /\bLanguages?:/.test(f));
+  if (languages < 0) return feats;
+  return [...feats.slice(0, languages), feats[languages].replace(/\s*\bLanguages?:.*$/, "")];
+}
+
 function parseCompoundFeatRequirement(text: string, featNameMap: Record<string, string>): RequirementEntry | undefined {
   // Pattern: "FeatName (optionA or optionB)", "FeatName (optionA, optionB, or optionC)"
   const match = text.match(/^(.+?)\s*\(([^)]+\s+or\s+[^)]+)\)$/i);
@@ -215,23 +232,6 @@ function parseCompoundFeatRequirement(text: string, featNameMap: Record<string, 
   });
 
   return or(...children);
-}
-
-/**
- * A class's feat prerequisites as the scraper split them, mended: a list split inside its parentheses ("Weapon Focus
- * (longbow", "shortbow", "or composite version of either)") is one prerequisite again, and the languages read into
- * the list ("Spell Focus (conjuration) Languages: Celestial", "Infernal") are dropped.
- */
-function featPrerequisites(scraped: string[]): string[] {
-  const feats: string[] = [];
-  for (const entry of scraped) {
-    const open = feats.at(-1);
-    if (open && open.split("(").length > open.split(")").length) feats[feats.length - 1] = `${open}, ${entry}`;
-    else feats.push(entry);
-  }
-  const languages = feats.findIndex((f) => /\bLanguages?:/.test(f));
-  if (languages < 0) return feats;
-  return [...feats.slice(0, languages), feats[languages].replace(/\s*\bLanguages?:.*$/, "")];
 }
 
 function parseRaceRequirement(text: string): RequirementEntry | undefined {
@@ -408,6 +408,19 @@ function parseSpellSlotString(s: string): number[] {
     .filter((n) => n >= 0);
 }
 
+function detectSpellsKnown(raw: ClassReference["raw"]): number[][] | undefined {
+  if (!raw.spellsKnown || raw.spellsKnown.length === 0) return undefined;
+  const result: number[][] = [];
+  let hasAny = false;
+  for (const row of raw.spellsKnown) {
+    const slots = parseSpellSlotString(row);
+    // Push empty row for all-dash entries to keep level-indexed alignment with perDay
+    result.push(slots);
+    if (slots.length > 0) hasAny = true;
+  }
+  return hasAny ? result : undefined;
+}
+
 function detectSpellsPerDay(progression: ClassReference["raw"]["progression"]): number[][] | undefined {
   const result: number[][] = [];
   let hasAny = false;
@@ -418,19 +431,6 @@ function detectSpellsPerDay(progression: ClassReference["raw"]["progression"]): 
       continue;
     }
     const slots = parseSpellSlotString(row.spellsPerDay);
-    result.push(slots);
-    if (slots.length > 0) hasAny = true;
-  }
-  return hasAny ? result : undefined;
-}
-
-function detectSpellsKnown(raw: ClassReference["raw"]): number[][] | undefined {
-  if (!raw.spellsKnown || raw.spellsKnown.length === 0) return undefined;
-  const result: number[][] = [];
-  let hasAny = false;
-  for (const row of raw.spellsKnown) {
-    const slots = parseSpellSlotString(row);
-    // Push empty row for all-dash entries to keep level-indexed alignment with perDay
     result.push(slots);
     if (slots.length > 0) hasAny = true;
   }
@@ -582,6 +582,84 @@ function parsePoolSubOptions(
 // Bonus feat list detection — "from the following list: Feat1, Feat2, ..."
 // ---------------------------------------------------------------------------
 
+function buildFeatureMap<T>(
+  features: ClassReference["raw"]["classFeatures"],
+  valueFn: (cf: ClassReference["raw"]["classFeatures"][number]) => T,
+): Map<string, T> {
+  const map = new Map<string, T>();
+  for (const cf of features) {
+    map.set(cf.name.toLowerCase(), valueFn(cf));
+    const stripped = cf.name.replace(TYPE_SUFFIX, "").toLowerCase();
+    if (stripped !== cf.name.toLowerCase()) {
+      map.set(stripped, valueFn(cf));
+    }
+  }
+  return map;
+}
+
+/** Open creature-type pick — selection language near "favored enemy" / "type of creature". */
+function isFavoredEnemyOpenPick(featureName: string, desc: string): boolean {
+  if (!/favored enemy/i.test(featureName) && !/favored enemy/i.test(desc)) return false;
+  return /(?:select|choose|designate|pick)s?\s+[^.]*?(?:type of creature|favored enemy)/i.test(desc);
+}
+
+/** Distinguish mechanical special prerequisites (sneak attack, rage, spellcasting, etc.)
+ *  from narrative/RP-only ones (deity worship, organization membership, rituals).
+ *  Mechanical ones are tracked as unresolved so they show up as TODOs. */
+function isMechanicalPrereq(text: string): boolean {
+  return /animal companion|spell-like|psionic/i.test(text);
+}
+
+/**
+ * Check if a feature is a scaling ability (e.g. "Dodge bonus +1", "+2", "+3")
+ * by looking at raw progression entries. If the raw entries that normalize to
+ * the same name have increasing numeric suffixes, it's scaling, not a pool pick.
+ */
+function isScalingFeature(normalizedName: string, progression: ClassReference["raw"]["progression"]): boolean {
+  const rawEntries: string[] = [];
+  for (const row of progression) {
+    for (const special of row.special) {
+      if (!special) continue;
+      if (normalizeFeatureName(special) === normalizedName) {
+        rawEntries.push(special);
+      }
+    }
+  }
+  if (rawEntries.length < 2) return false;
+
+  // Check if raw entries have increasing numeric suffixes
+  const numbers = rawEntries.map((e) => {
+    const m = e.match(/\+(\d+)(?:d\d+)?$|\((?:\+)?(\d+)(?:d\d+)?\)$|(\d+)\/[–-]$/);
+    return m ? parseInt(m[1] ?? m[2] ?? m[3], 10) : null;
+  });
+
+  if (numbers.every((n) => n !== null)) {
+    // All entries have numeric suffixes — check if they increase
+    for (let i = 1; i < numbers.length; i++) {
+      if (numbers[i]! <= numbers[i - 1]!) return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+function detectCasterType(raw: ClassReference["raw"]): { casterType?: "Arcane" | "Divine" } {
+  const text = raw.classFeatures.map((f) => f.description).join(" ");
+  if (/casts?\b.{0,30}\barcane spells/i.test(text) || /arcane spell failure/i.test(text))
+    return { casterType: "Arcane" };
+  if (/casts?\b.{0,30}\bdivine spells/i.test(text) || /\bdivine focus\b/i.test(text)) return { casterType: "Divine" };
+  return {};
+}
+
+/** Detect when a class feature references an existing SRD aptitude by name
+ *  (e.g. "from the list of fighter bonus feats"). Returns the aptitude target
+ *  path or null if no known aptitude is referenced. */
+function detectExistingAptitudeReference(desc: string): string | null {
+  if (/fighter bonus feat|feats available to fighters?\b|bonus feats allowed to a fighter/i.test(desc))
+    return "aptitudes.fighterbonusfeat.allowed";
+  return null;
+}
+
 function parseBonusFeatList(description: string): string[] | undefined {
   // Match patterns like "from the following list: X, Y, Z" or "choose one feat from the following list: X, Y, Z"
   const match = description.match(/(?:from the following list|from the following feats)[:\s]+(.+?)(?:\.\s|$)/i);
@@ -652,82 +730,6 @@ function parseTreatedAsHavingFeats(description: string): string[] | undefined {
   return feats.length >= 2 ? feats : undefined;
 }
 
-function buildFeatureMap<T>(
-  features: ClassReference["raw"]["classFeatures"],
-  valueFn: (cf: ClassReference["raw"]["classFeatures"][number]) => T,
-): Map<string, T> {
-  const map = new Map<string, T>();
-  for (const cf of features) {
-    map.set(cf.name.toLowerCase(), valueFn(cf));
-    const stripped = cf.name.replace(TYPE_SUFFIX, "").toLowerCase();
-    if (stripped !== cf.name.toLowerCase()) {
-      map.set(stripped, valueFn(cf));
-    }
-  }
-  return map;
-}
-
-/**
- * Check if a feature is a scaling ability (e.g. "Dodge bonus +1", "+2", "+3")
- * by looking at raw progression entries. If the raw entries that normalize to
- * the same name have increasing numeric suffixes, it's scaling, not a pool pick.
- */
-function isScalingFeature(normalizedName: string, progression: ClassReference["raw"]["progression"]): boolean {
-  const rawEntries: string[] = [];
-  for (const row of progression) {
-    for (const special of row.special) {
-      if (!special) continue;
-      if (normalizeFeatureName(special) === normalizedName) {
-        rawEntries.push(special);
-      }
-    }
-  }
-  if (rawEntries.length < 2) return false;
-
-  // Check if raw entries have increasing numeric suffixes
-  const numbers = rawEntries.map((e) => {
-    const m = e.match(/\+(\d+)(?:d\d+)?$|\((?:\+)?(\d+)(?:d\d+)?\)$|(\d+)\/[–-]$/);
-    return m ? parseInt(m[1] ?? m[2] ?? m[3], 10) : null;
-  });
-
-  if (numbers.every((n) => n !== null)) {
-    // All entries have numeric suffixes — check if they increase
-    for (let i = 1; i < numbers.length; i++) {
-      if (numbers[i]! <= numbers[i - 1]!) return false;
-    }
-    return true;
-  }
-  return false;
-}
-function stripOrdinalPrefix(name: string): string {
-  return name.replace(ORDINAL_PREFIX, "");
-}
-
-/** Merges "1st Foo" / "2nd Foo" occurrences into one entry with combined levels. */
-function aggregateOrdinalVariants(
-  featureOccurrences: { name: string; levels: number[] }[],
-): { name: string; levels: number[] }[] {
-  const map = new Map<string, { name: string; levels: Set<number> }>();
-  for (const occ of featureOccurrences) {
-    const base = stripOrdinalPrefix(occ.name);
-    const key = base.toLowerCase();
-    const existing = map.get(key);
-    if (existing) {
-      for (const l of occ.levels) existing.levels.add(l);
-      if (existing.name !== base && /^\d/.test(existing.name)) existing.name = base;
-    } else {
-      map.set(key, { name: base, levels: new Set(occ.levels) });
-    }
-  }
-  return Array.from(map.values()).map(({ name, levels }) => ({ name, levels: [...levels].sort((a, b) => a - b) }));
-}
-
-/** Open creature-type pick — selection language near "favored enemy" / "type of creature". */
-function isFavoredEnemyOpenPick(featureName: string, desc: string): boolean {
-  if (!/favored enemy/i.test(featureName) && !/favored enemy/i.test(desc)) return false;
-  return /(?:select|choose|designate|pick)s?\s+[^.]*?(?:type of creature|favored enemy)/i.test(desc);
-}
-
 function detectBonusFeatLists(
   raw: ClassReference["raw"],
   featureOccurrences: { name: string; levels: number[] }[],
@@ -779,13 +781,27 @@ function detectBonusFeatLists(
   return lists.length > 0 ? { bonusFeatLists: lists } : {};
 }
 
-/** Detect when a class feature references an existing SRD aptitude by name
- *  (e.g. "from the list of fighter bonus feats"). Returns the aptitude target
- *  path or null if no known aptitude is referenced. */
-function detectExistingAptitudeReference(desc: string): string | null {
-  if (/fighter bonus feat|feats available to fighters?\b|bonus feats allowed to a fighter/i.test(desc))
-    return "aptitudes.fighterbonusfeat.allowed";
-  return null;
+function stripOrdinalPrefix(name: string): string {
+  return name.replace(ORDINAL_PREFIX, "");
+}
+
+/** Merges "1st Foo" / "2nd Foo" occurrences into one entry with combined levels. */
+function aggregateOrdinalVariants(
+  featureOccurrences: { name: string; levels: number[] }[],
+): { name: string; levels: number[] }[] {
+  const map = new Map<string, { name: string; levels: Set<number> }>();
+  for (const occ of featureOccurrences) {
+    const base = stripOrdinalPrefix(occ.name);
+    const key = base.toLowerCase();
+    const existing = map.get(key);
+    if (existing) {
+      for (const l of occ.levels) existing.levels.add(l);
+      if (existing.name !== base && /^\d/.test(existing.name)) existing.name = base;
+    } else {
+      map.set(key, { name: base, levels: new Set(occ.levels) });
+    }
+  }
+  return Array.from(map.values()).map(({ name, levels }) => ({ name, levels: [...levels].sort((a, b) => a - b) }));
 }
 
 function detectAptitudePicks(
@@ -862,21 +878,6 @@ function detectAptitudePicks(
     ...(picks.length > 0 ? { aptitudePicks: picks } : {}),
     ...(unresolved.length > 0 ? { unresolvedAptitudePicks: unresolved } : {}),
   };
-}
-
-/** Distinguish mechanical special prerequisites (sneak attack, rage, spellcasting, etc.)
- *  from narrative/RP-only ones (deity worship, organization membership, rituals).
- *  Mechanical ones are tracked as unresolved so they show up as TODOs. */
-function isMechanicalPrereq(text: string): boolean {
-  return /animal companion|spell-like|psionic/i.test(text);
-}
-
-function detectCasterType(raw: ClassReference["raw"]): { casterType?: "Arcane" | "Divine" } {
-  const text = raw.classFeatures.map((f) => f.description).join(" ");
-  if (/casts?\b.{0,30}\barcane spells/i.test(text) || /arcane spell failure/i.test(text))
-    return { casterType: "Arcane" };
-  if (/casts?\b.{0,30}\bdivine spells/i.test(text) || /\bdivine focus\b/i.test(text)) return { casterType: "Divine" };
-  return {};
 }
 
 // ---------------------------------------------------------------------------

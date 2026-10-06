@@ -196,6 +196,51 @@ function loadExistingFeats(book?: string): Set<string> {
 }
 
 /**
+ * Build maps for aptitude target remapping after per-level expansion.
+ * - remap: 1-to-1 remaps (single-occurrence features like Ranger combat style tiers)
+ * - perLevel: 1-to-N splits (multi-occurrence features like Monk Bonus Feat)
+ */
+function buildAptitudeExpansionMaps(
+  preMerged: AptitudePick[] | undefined,
+  expanded: AptitudePick[] | undefined,
+): { remap: Map<string, string>; perLevel: Map<string, PerLevelExpansion[]> } {
+  const remap = new Map<string, string>();
+  const perLevel = new Map<string, PerLevelExpansion[]>();
+  if (!preMerged || !expanded) return { remap, perLevel };
+
+  const expandedTargets = new Set(expanded.map((p) => p.target));
+  for (const old of preMerged) {
+    if (expandedTargets.has(old.target)) continue;
+    const replacements = expanded.filter((p) => p.levels.some((l) => old.levels.includes(l)));
+    if (replacements.length === 0) continue;
+    if (replacements.length === 1) {
+      remap.set(old.target, replacements[0].target);
+    } else {
+      const oldSlug = old.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1] ?? "";
+      const entries = replacements.map((r) => {
+        const newSlug = r.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1] ?? "";
+        const ordinal = newSlug.slice(oldSlug.length);
+        return { newTarget: r.target, levels: r.levels, ordinal };
+      });
+      perLevel.set(old.target, entries);
+    }
+  }
+  return { remap, perLevel };
+}
+
+/** A table cell's number: "+10 ft." is 10, "−2" (a typographic minus) is -2, a dash none. */
+function cellNumber(cell: string) {
+  return Number(cell.replace("\u2212", "-").match(/[+-]?\d+/)?.[0] ?? 0);
+}
+
+function detectClassFeatFamily(name: string): string | undefined {
+  for (const { pattern, family } of CLASS_FEAT_FAMILIES) {
+    if (pattern.test(name)) return family;
+  }
+  return undefined;
+}
+
+/**
  * The existing feat a name means: one by its letters (a class feature's "Two-weapon Fighting" is Two-Weapon Fighting),
  * or a family's feat for the option the name holds ("Skill Focus (Bluff)": Skill Focus: Bluff).
  */
@@ -206,14 +251,6 @@ function existingFeatNamed(book: string, name: string): string | undefined {
     _existingFeatSlugsCache.set(book, bySlug);
   }
   return bySlug.get(stripSeparators(name)) ?? familyFeatNamed(name);
-}
-
-/** Merge detected aptitude picks with overrides. Overrides win per-target; detected picks not in overrides are preserved. */
-function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[]): AptitudePick[] | undefined {
-  if (!overrides) return detected;
-  if (!detected) return overrides;
-  const overrideTargets = new Set(overrides.map((p) => p.target));
-  return [...detected.filter((p) => !overrideTargets.has(p.target)), ...overrides];
 }
 
 /** When bonusFeatLists has per-level entries, expand the single aptitude pick into per-level picks. */
@@ -253,49 +290,12 @@ function expandPerLevelAptitudePicks(
   return result;
 }
 
-/**
- * Build maps for aptitude target remapping after per-level expansion.
- * - remap: 1-to-1 remaps (single-occurrence features like Ranger combat style tiers)
- * - perLevel: 1-to-N splits (multi-occurrence features like Monk Bonus Feat)
- */
-function buildAptitudeExpansionMaps(
-  preMerged: AptitudePick[] | undefined,
-  expanded: AptitudePick[] | undefined,
-): { remap: Map<string, string>; perLevel: Map<string, PerLevelExpansion[]> } {
-  const remap = new Map<string, string>();
-  const perLevel = new Map<string, PerLevelExpansion[]>();
-  if (!preMerged || !expanded) return { remap, perLevel };
-
-  const expandedTargets = new Set(expanded.map((p) => p.target));
-  for (const old of preMerged) {
-    if (expandedTargets.has(old.target)) continue;
-    const replacements = expanded.filter((p) => p.levels.some((l) => old.levels.includes(l)));
-    if (replacements.length === 0) continue;
-    if (replacements.length === 1) {
-      remap.set(old.target, replacements[0].target);
-    } else {
-      const oldSlug = old.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1] ?? "";
-      const entries = replacements.map((r) => {
-        const newSlug = r.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1] ?? "";
-        const ordinal = newSlug.slice(oldSlug.length);
-        return { newTarget: r.target, levels: r.levels, ordinal };
-      });
-      perLevel.set(old.target, entries);
-    }
-  }
-  return { remap, perLevel };
-}
-
-function detectClassFeatFamily(name: string): string | undefined {
-  for (const { pattern, family } of CLASS_FEAT_FAMILIES) {
-    if (pattern.test(name)) return family;
-  }
-  return undefined;
-}
-
-/** A table cell's number: "+10 ft." is 10, "−2" (a typographic minus) is -2, a dash none. */
-function cellNumber(cell: string) {
-  return Number(cell.replace("\u2212", "-").match(/[+-]?\d+/)?.[0] ?? 0);
+/** Merge detected aptitude picks with overrides. Overrides win per-target; detected picks not in overrides are preserved. */
+function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[]): AptitudePick[] | undefined {
+  if (!overrides) return detected;
+  if (!detected) return overrides;
+  const overrideTargets = new Set(overrides.map((p) => p.target));
+  return [...detected.filter((p) => !overrideTargets.has(p.target)), ...overrides];
 }
 
 // ---------------------------------------------------------------------------
@@ -451,6 +451,7 @@ function buildClassSpellMaps(): { classMap: Record<string, string>; dualMap: Rec
 
   return { classMap, dualMap };
 }
+
 function getClassSpellMaps() {
   if (!_classSpellMaps) _classSpellMaps = buildClassSpellMaps();
   return _classSpellMaps;
@@ -464,41 +465,6 @@ function getClassAbbrevMap(): Record<string, string> {
 /** Combined class entries that map to multiple aptitudes */
 function getDualClassMap(): Record<string, string[]> {
   return getClassSpellMaps().dualMap;
-}
-
-function simplifyRange(range: string): string {
-  // Strip leaked "Area/Effect/Target:" labels from upstream parser glitches
-  // (e.g. "Touch Area/Effect/Target: Animal touched" → "Touch")
-  const stripped = range.replace(/\s+(Area|Effect|Target)\/.*$/i, "").trim();
-  if (stripped.startsWith("Close")) return "Close";
-  if (stripped.startsWith("Medium")) return "Medium";
-  if (stripped.startsWith("Long")) return "Long";
-  return stripped;
-}
-
-function normalizeSubschool(value: string): string {
-  // "divination (scrying)" → "Scrying"; "teleportation" → "Teleportation"
-  const parenMatch = value.match(/\(([^)]+)\)/);
-  if (parenMatch) {
-    const inner = parenMatch[1].trim().toLowerCase();
-    if (SUBSCHOOL_CANON[inner]) return SUBSCHOOL_CANON[inner];
-  }
-  const lower = value.trim().toLowerCase();
-  return SUBSCHOOL_CANON[lower] ?? value;
-}
-
-function normalizeDescriptor(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return trimmed;
-  // Only normalize all-lowercase scrapes (e.g. "good"); leave mixed-case
-  // compounds like "Fire or Cold" or "Mind-Affecting" untouched.
-  if (trimmed !== trimmed.toLowerCase()) return trimmed;
-  return trimmed.split("-").map(capitalize).join("-");
-}
-
-function normalizeSpellResistance(value: string): string {
-  // Lowercase the canonical "(harmless)" / "(harmless, object)" parenthetical
-  return value.replace(/\(Harmless/g, "(harmless");
 }
 
 function expandComponents(components: string[]): string[] {
@@ -515,15 +481,44 @@ function expandComponents(components: string[]): string[] {
   return result;
 }
 
+function normalizeDescriptor(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  // Only normalize all-lowercase scrapes (e.g. "good"); leave mixed-case
+  // compounds like "Fire or Cold" or "Mind-Affecting" untouched.
+  if (trimmed !== trimmed.toLowerCase()) return trimmed;
+  return trimmed.split("-").map(capitalize).join("-");
+}
+
+function normalizeSpellResistance(value: string): string {
+  // Lowercase the canonical "(harmless)" / "(harmless, object)" parenthetical
+  return value.replace(/\(Harmless/g, "(harmless");
+}
+
 /** Collapse whitespace/newlines and normalize spell stat text */
 function normalizeSpellText(text: string): string {
   return normalizeWs(sanitizeText(text)).replace(/(\d+)\s*\/\s*/g, "$1/"); // "1 round/ level" → "1 round/level"
 }
 
-/** The properties of `base`, those of `own` over them by type. */
-function withOwnProperties(base: Property[], own: Property[]): Property[] {
-  const ownTypes = new Set(own.map((property) => property.type));
-  return [...base.filter((property) => !ownTypes.has(property.type)), ...own];
+function normalizeSubschool(value: string): string {
+  // "divination (scrying)" → "Scrying"; "teleportation" → "Teleportation"
+  const parenMatch = value.match(/\(([^)]+)\)/);
+  if (parenMatch) {
+    const inner = parenMatch[1].trim().toLowerCase();
+    if (SUBSCHOOL_CANON[inner]) return SUBSCHOOL_CANON[inner];
+  }
+  const lower = value.trim().toLowerCase();
+  return SUBSCHOOL_CANON[lower] ?? value;
+}
+
+function simplifyRange(range: string): string {
+  // Strip leaked "Area/Effect/Target:" labels from upstream parser glitches
+  // (e.g. "Touch Area/Effect/Target: Animal touched" → "Touch")
+  const stripped = range.replace(/\s+(Area|Effect|Target)\/.*$/i, "").trim();
+  if (stripped.startsWith("Close")) return "Close";
+  if (stripped.startsWith("Medium")) return "Medium";
+  if (stripped.startsWith("Long")) return "Long";
+  return stripped;
 }
 
 /** A weapon's enhancement bonus, as modifiers of the weapon holding it: its attack's and its damage's. */
@@ -533,6 +528,19 @@ function weaponEnhancementModifiers(description: string): Modifier[] {
   const bonus = (target: string, value: number): Modifier[] =>
     value ? [{ target, operator: "add", value: String(value), valueType: "number" }] : [];
   return [...bonus("weapon.tohit.magic", enhancement.attack), ...bonus("weapon.damage.magic", enhancement.damage)];
+}
+
+/** The properties of `base`, those of `own` over them by type. */
+function withOwnProperties(base: Property[], own: Property[]): Property[] {
+  const ownTypes = new Set(own.map((property) => property.type));
+  return [...base.filter((property) => !ownTypes.has(property.type)), ...own];
+}
+
+/** Insert an ordinal suffix before the parenthetical class suffix in a feat name. */
+export function insertOrdinalInName(name: string, ordinal: string): string {
+  const match = name.match(/^(.+?)(\s*\(.+\))$/);
+  if (match) return `${match[1]} ${ordinal}${match[2]}`;
+  return `${name} ${ordinal}`;
 }
 
 /**
@@ -551,13 +559,6 @@ export function existingFeatGranted(ref: ClassReference, name: string, descripti
           .find(Boolean)
       : undefined)
   );
-}
-
-/** Insert an ordinal suffix before the parenthetical class suffix in a feat name. */
-export function insertOrdinalInName(name: string, ordinal: string): string {
-  const match = name.match(/^(.+?)(\s*\(.+\))$/);
-  if (match) return `${match[1]} ${ordinal}${match[2]}`;
-  return `${name} ${ordinal}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -592,74 +593,12 @@ export function buildPoolParentNameMap(
   return nameMap;
 }
 
-/**
- * A class's level modifiers: its overrides', then those its table's columns give (`overrides.columns`), at each level a
- * column's value changes: a number's rise, or its text.
- */
-export function classModifiers(ref: ClassReference): (ModifierSeed & { level: number })[] {
-  const fromColumns = Object.entries(ref.overrides?.columns ?? {}).flatMap(
-    ([column, { target, operator, requirements }]) => {
-      if (!ref.raw.progression.some((row) => row.columns?.[column] !== undefined)) {
-        throw new Error(`${ref.raw.name}: its table has no "${column}" column`);
-      }
-      let previous = operator === "add" ? "+0" : "";
-      return ref.raw.progression.flatMap((row) => {
-        // A blank cell keeps the value above it
-        const cell = row.columns?.[column] || previous;
-        const rise = cellNumber(cell) - cellNumber(previous);
-        const changed = operator === "add" ? rise !== 0 : cell !== previous;
-        previous = cell;
-        if (!changed) return [];
-        const value = operator === "add" ? String(rise) : cell;
-        const valueType = operator === "add" ? "number" : "string";
-        return [{ level: row.level, target, value, valueType, operator, ...(requirements && { requirements }) }];
-      });
-    },
-  );
-  return [...(ref.overrides?.modifiers ?? []), ...fromColumns];
-}
-
-/** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
-export function classSpells(ref: ClassReference) {
-  const { spells } = ref.mapping;
-  return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
-}
-
-/**
- * A spell's level on a list a class draws on (`inheritsFrom`): on the first of its classes' lists that has it, when
- * it's of the list's schools and has none of its excluded descriptors.
- */
-export function inheritedLevel(
-  spell: Pick<SpellReference["raw"][number], "school" | "descriptors">,
-  levelEntries: { className: string; level: number }[],
-  list: InheritedSpellList,
-): number | undefined {
-  if (list.schools && !list.schools.includes(spell.school)) return undefined;
-  if (spell.descriptors.some((descriptor) => list.excludeDescriptors?.includes(descriptor))) return undefined;
-  for (const className of list.classes) {
-    const entry = levelEntries.find((le) => le.className === className);
-    if (entry) return entry.level;
-  }
-  return undefined;
-}
-
-/** The lists a book's classes draw on others' lists for (`inheritsFrom`): each class's own, or each of its `lists`. */
-export function inheritedLists(book: string): { aptitude: string; list: InheritedSpellList }[] {
-  const lists: { aptitude: string; list: InheritedSpellList }[] = [];
-  for (const { ref } of classReferences(book)) {
-    const spells = classSpells(ref);
-    if (!spells || !ref.raw?.name || ref.overrides?.skip) continue;
-    if (spells.inheritsFrom) lists.push({ aptitude: `${ref.raw.name} Spells`, list: spells.inheritsFrom });
-    for (const list of spells.lists ?? []) lists.push({ aptitude: list.name, list: list.inheritsFrom });
-  }
-  return lists;
-}
-
-/** The spell lists a class's slots go to (`spells.lists`), or its own, "<Class> Spells": none for a class without slots. */
-export function classSpellLists(ref: ClassReference): string[] {
-  const spells = classSpells(ref);
-  if (!spells) return [];
-  return spells.lists?.map((list) => list.name) ?? [`${ref.raw.name} Spells`];
+/** A book's domains as it prints them (`reference/<book>/domains.json`; none for a book without), and their feat pools' feats. */
+export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[] } {
+  const path = join(REFERENCE_DIR, book, "domains.json");
+  if (!existsSync(path)) return { seeds: [], poolFeats: [] };
+  const ref = loadReference(path, "domain");
+  return { seeds: domainSeeds(ref), poolFeats: buildDomainFeatPoolSeeds(ref) };
 }
 
 /**
@@ -787,12 +726,71 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
   return feats;
 }
 
-/** A book's domains as it prints them (`reference/<book>/domains.json`; none for a book without), and their feat pools' feats. */
-export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[] } {
-  const path = join(REFERENCE_DIR, book, "domains.json");
-  if (!existsSync(path)) return { seeds: [], poolFeats: [] };
-  const ref = loadReference(path, "domain");
-  return { seeds: domainSeeds(ref), poolFeats: buildDomainFeatPoolSeeds(ref) };
+/**
+ * A class's level modifiers: its overrides', then those its table's columns give (`overrides.columns`), at each level a
+ * column's value changes: a number's rise, or its text.
+ */
+export function classModifiers(ref: ClassReference): (ModifierSeed & { level: number })[] {
+  const fromColumns = Object.entries(ref.overrides?.columns ?? {}).flatMap(
+    ([column, { target, operator, requirements }]) => {
+      if (!ref.raw.progression.some((row) => row.columns?.[column] !== undefined)) {
+        throw new Error(`${ref.raw.name}: its table has no "${column}" column`);
+      }
+      let previous = operator === "add" ? "+0" : "";
+      return ref.raw.progression.flatMap((row) => {
+        // A blank cell keeps the value above it
+        const cell = row.columns?.[column] || previous;
+        const rise = cellNumber(cell) - cellNumber(previous);
+        const changed = operator === "add" ? rise !== 0 : cell !== previous;
+        previous = cell;
+        if (!changed) return [];
+        const value = operator === "add" ? String(rise) : cell;
+        const valueType = operator === "add" ? "number" : "string";
+        return [{ level: row.level, target, value, valueType, operator, ...(requirements && { requirements }) }];
+      });
+    },
+  );
+  return [...(ref.overrides?.modifiers ?? []), ...fromColumns];
+}
+
+/** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
+export function classSpells(ref: ClassReference) {
+  const { spells } = ref.mapping;
+  return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
+}
+
+/**
+ * The feats a class's domain pool offers (`spells.domainPool`, a divine crusader's): one per domain her book and the
+ * core rules have, each joining that domain's list to hers. The domain gives her its spells, not its granted power.
+ */
+export function classDomainPickFeats(ref: ClassReference): FeatSeed[] {
+  const pool = classSpells(ref)?.domainPool;
+  if (!pool) return [];
+  const book = ref._meta.book;
+  const domains = [...bookDomainSeeds("srd").seeds, ...(book === "srd" ? [] : bookDomainSeeds(book).seeds)];
+  return domains
+    .map(({ name }) => ({
+      name: `${name} Domain (${ref.raw.name})`,
+      description: `The ${name} domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.`,
+      selectable: true,
+      aptitudes: [pool],
+      modifiers: [
+        {
+          target: `aptitudes.${stripSeparators(name)}domainspells.joinsclasslist`,
+          operator: "set",
+          value: "true",
+          valueType: "boolean",
+        },
+      ],
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The spell lists a class's slots go to (`spells.lists`), or its own, "<Class> Spells": none for a class without slots. */
+export function classSpellLists(ref: ClassReference): string[] {
+  const spells = classSpells(ref);
+  if (!spells) return [];
+  return spells.lists?.map((list) => list.name) ?? [`${ref.raw.name} Spells`];
 }
 
 /**
@@ -828,30 +826,33 @@ export function domainSpellIssues(ref: DomainReference): { domain: string; text:
 }
 
 /**
- * The feats a class's domain pool offers (`spells.domainPool`, a divine crusader's): one per domain her book and the
- * core rules have, each joining that domain's list to hers. The domain gives her its spells, not its granted power.
+ * A spell's level on a list a class draws on (`inheritsFrom`): on the first of its classes' lists that has it, when
+ * it's of the list's schools and has none of its excluded descriptors.
  */
-export function classDomainPickFeats(ref: ClassReference): FeatSeed[] {
-  const pool = classSpells(ref)?.domainPool;
-  if (!pool) return [];
-  const book = ref._meta.book;
-  const domains = [...bookDomainSeeds("srd").seeds, ...(book === "srd" ? [] : bookDomainSeeds(book).seeds)];
-  return domains
-    .map(({ name }) => ({
-      name: `${name} Domain (${ref.raw.name})`,
-      description: `The ${name} domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.`,
-      selectable: true,
-      aptitudes: [pool],
-      modifiers: [
-        {
-          target: `aptitudes.${stripSeparators(name)}domainspells.joinsclasslist`,
-          operator: "set",
-          value: "true",
-          valueType: "boolean",
-        },
-      ],
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+export function inheritedLevel(
+  spell: Pick<SpellReference["raw"][number], "school" | "descriptors">,
+  levelEntries: { className: string; level: number }[],
+  list: InheritedSpellList,
+): number | undefined {
+  if (list.schools && !list.schools.includes(spell.school)) return undefined;
+  if (spell.descriptors.some((descriptor) => list.excludeDescriptors?.includes(descriptor))) return undefined;
+  for (const className of list.classes) {
+    const entry = levelEntries.find((le) => le.className === className);
+    if (entry) return entry.level;
+  }
+  return undefined;
+}
+
+/** The lists a book's classes draw on others' lists for (`inheritsFrom`): each class's own, or each of its `lists`. */
+export function inheritedLists(book: string): { aptitude: string; list: InheritedSpellList }[] {
+  const lists: { aptitude: string; list: InheritedSpellList }[] = [];
+  for (const { ref } of classReferences(book)) {
+    const spells = classSpells(ref);
+    if (!spells || !ref.raw?.name || ref.overrides?.skip) continue;
+    if (spells.inheritsFrom) lists.push({ aptitude: `${ref.raw.name} Spells`, list: spells.inheritsFrom });
+    for (const list of spells.lists ?? []) lists.push({ aptitude: list.name, list: list.inheritsFrom });
+  }
+  return lists;
 }
 
 // ---------------------------------------------------------------------------

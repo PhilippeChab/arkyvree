@@ -116,6 +116,18 @@ function itemEntries(block: ReturnType<typeof readItemBlock>, category: MagicIte
   );
 }
 
+/**
+ * Fallback: parse all h5 entries on the page (for pages without a clear section h4), those with a price only.
+ */
+function parseAllH5Entries($: cheerio.CheerioAPI, category: MagicItemCategory): RawMagicItem[] {
+  const items: RawMagicItem[] = [];
+  $("h5").each((_, el) => {
+    const block = readItemBlock($, $(el));
+    if (block.name && block.metadataText) items.push(...itemEntries(block, category));
+  });
+  return items;
+}
+
 /** The items of the section after the h4 heading `startH4Text`: an h5 heading each. */
 function parseItemEntries($: cheerio.CheerioAPI, startH4Text: string, category: MagicItemCategory): RawMagicItem[] {
   const startEl = findH4ByText($, startH4Text);
@@ -134,18 +146,6 @@ function parseItemEntries($: cheerio.CheerioAPI, startH4Text: string, category: 
     }
     current = current.next();
   }
-  return items;
-}
-
-/**
- * Fallback: parse all h5 entries on the page (for pages without a clear section h4), those with a price only.
- */
-function parseAllH5Entries($: cheerio.CheerioAPI, category: MagicItemCategory): RawMagicItem[] {
-  const items: RawMagicItem[] = [];
-  $("h5").each((_, el) => {
-    const block = readItemBlock($, $(el));
-    if (block.name && block.metadataText) items.push(...itemEntries(block, category));
-  });
   return items;
 }
 

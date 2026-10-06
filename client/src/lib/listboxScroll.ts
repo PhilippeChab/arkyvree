@@ -11,6 +11,24 @@ interface InfiniteList {
 const scrollLocks = new WeakMap<Element, () => void>();
 
 /**
+ * `onScroll` handler for a listbox backed by one or more infinite queries:
+ * near the bottom it fetches the next page of each list that has one. Pair it
+ * with `ScrollSafeListbox` so the appended options don't reset the scroll.
+ */
+export function createListboxScrollHandler(lists: InfiniteList | InfiniteList[]) {
+  return (event: React.UIEvent<HTMLElement>) => {
+    const target = event.currentTarget;
+    if (target.scrollHeight - target.scrollTop > target.clientHeight + 50) return;
+    const pending = (Array.isArray(lists) ? lists : [lists]).filter(
+      (list) => list.hasNextPage && !list.isFetchingNextPage,
+    );
+    if (pending.length === 0) return;
+    scrollLocks.get(target)?.();
+    for (const list of pending) list.fetchNextPage();
+  };
+}
+
+/**
  * Make a listbox ignore the scroll reset MUI's Autocomplete performs when its
  * options change, for the moment after a lock (see `createListboxScrollHandler`).
  */
@@ -46,22 +64,4 @@ export function lockableScroll(el: HTMLElement): void {
       locked = false;
     }, 500);
   });
-}
-
-/**
- * `onScroll` handler for a listbox backed by one or more infinite queries:
- * near the bottom it fetches the next page of each list that has one. Pair it
- * with `ScrollSafeListbox` so the appended options don't reset the scroll.
- */
-export function createListboxScrollHandler(lists: InfiniteList | InfiniteList[]) {
-  return (event: React.UIEvent<HTMLElement>) => {
-    const target = event.currentTarget;
-    if (target.scrollHeight - target.scrollTop > target.clientHeight + 50) return;
-    const pending = (Array.isArray(lists) ? lists : [lists]).filter(
-      (list) => list.hasNextPage && !list.isFetchingNextPage,
-    );
-    if (pending.length === 0) return;
-    scrollLocks.get(target)?.();
-    for (const list of pending) list.fetchNextPage();
-  };
 }

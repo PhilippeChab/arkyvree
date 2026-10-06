@@ -24,6 +24,11 @@ import {
 import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
+/** An item's properties as read through the service, by type. */
+async function propertiesOf(rulesetId: string, itemId: string) {
+  return Object.fromEntries((await ItemsService.getItem(rulesetId, itemId)).properties.map((p) => [p.type, p.value]));
+}
+
 async function setup() {
   const { user, session } = await createTestUser();
   const ruleset = await createSeededTestRuleset(user.id);
@@ -38,11 +43,6 @@ async function setup() {
     return ItemsService.createItem(session, ruleset.id, { name: `My ${name}`, type, sourceItemId: id });
   };
   return { session, ruleset, template, instance };
-}
-
-/** An item's properties as read through the service, by type. */
-async function propertiesOf(rulesetId: string, itemId: string) {
-  return Object.fromEntries((await ItemsService.getItem(rulesetId, itemId)).properties.map((p) => [p.type, p.value]));
 }
 
 describe("Item templates", () => {

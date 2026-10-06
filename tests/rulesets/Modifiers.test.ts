@@ -3,23 +3,6 @@ import { describe, expect, test } from "bun:test";
 import DetailedCharacterModifiers from "@/server/rulesets/universal/DetailedCharacterModifiers.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
-function modifier(values: Partial<Modifier> = {}): Modifier {
-  const now = new Date().toISOString();
-  return {
-    id: "modifier-1",
-    sourceId: "feat-1",
-    sourceType: "feats",
-    target: "abilities.strength.misc",
-    operator: "add",
-    value: "1",
-    valueType: "number",
-    deletedAt: null,
-    createdAt: now,
-    updatedAt: now,
-    ...values,
-  };
-}
-
 /** Evaluates a modifier on a target holding `value`; returns what the target ends with, and what was recorded. */
 function evaluate(applied: Modifier, value: number | boolean | string[]) {
   const target = { misc: value };
@@ -35,6 +18,23 @@ function evaluate(applied: Modifier, value: number | boolean | string[]) {
     value: target.misc,
     applied: appliedModifiers.length,
     skipped: skippedModifiers.map((skip) => skip.warning),
+  };
+}
+
+function modifier(values: Partial<Modifier> = {}): Modifier {
+  const now = new Date().toISOString();
+  return {
+    id: "modifier-1",
+    sourceId: "feat-1",
+    sourceType: "feats",
+    target: "abilities.strength.misc",
+    operator: "add",
+    value: "1",
+    valueType: "number",
+    deletedAt: null,
+    createdAt: now,
+    updatedAt: now,
+    ...values,
   };
 }
 

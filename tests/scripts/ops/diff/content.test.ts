@@ -124,6 +124,28 @@ const query: Query = async <R extends Record<string, unknown>>(text: string, par
   return (await db.execute(sql.join(chunks))).rows as R[];
 };
 
+/** Runs `statement` in a savepoint, kept when it changed a row, else rolled back: whether it did. */
+async function attempt(statement: string): Promise<boolean> {
+  await db.execute(sql`savepoint attempt`);
+  try {
+    if ((await db.execute(sql.raw(statement))).rowCount) return true;
+  } catch {
+    // A constraint refused the value: the next one is tried
+  }
+  await db.execute(sql`rollback to savepoint attempt`);
+  return false;
+}
+
+/** The operators a customization table's check constraint allows. */
+async function operators(table: string): Promise<string[]> {
+  const [check] = await query<{ definition: string }>(
+    `select pg_get_constraintdef(oid) as definition from pg_constraint
+      where conrelid = $1::regclass and conname like '%operator_check'`,
+    [table],
+  );
+  return [...check.definition.matchAll(/'([a-z_]+)'::text/g)].map((match) => match[1]);
+}
+
 /** The table `column`'s ids point to: its foreign key's, else (a customization's owner, a snapshot's entity) its type's. */
 async function referencedTable(table: string, column: string, row: Record<string, unknown>): Promise<string> {
   const [fk] = await query<{ referenced: string }>(
@@ -137,16 +159,6 @@ async function referencedTable(table: string, column: string, row: Record<string
     [table, column],
   );
   return fk?.referenced ?? `rules.${String(row.source_type ?? row.entity_type)}`;
-}
-
-/** The operators a customization table's check constraint allows. */
-async function operators(table: string): Promise<string[]> {
-  const [check] = await query<{ definition: string }>(
-    `select pg_get_constraintdef(oid) as definition from pg_constraint
-      where conrelid = $1::regclass and conname like '%operator_check'`,
-    [table],
-  );
-  return [...check.definition.matchAll(/'([a-z_]+)'::text/g)].map((match) => match[1]);
 }
 
 /** The values to try in turn as `column`'s new one, as SQL: other values its type and constraints allow. */
@@ -180,18 +192,6 @@ async function candidates(
   return allowed
     ? allowed.filter((value) => value !== row[column.name]).map((value) => `'${value}'`)
     : [`coalesce(${current}, '') || ' (changed)'`];
-}
-
-/** Runs `statement` in a savepoint, kept when it changed a row, else rolled back: whether it did. */
-async function attempt(statement: string): Promise<boolean> {
-  await db.execute(sql`savepoint attempt`);
-  try {
-    if ((await db.execute(sql.raw(statement))).rowCount) return true;
-  } catch {
-    // A constraint refused the value: the next one is tried
-  }
-  await db.execute(sql`rollback to savepoint attempt`);
-  return false;
 }
 
 describe("The content comparison (diff-prod)", () => {

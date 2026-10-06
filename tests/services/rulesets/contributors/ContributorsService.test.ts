@@ -8,13 +8,6 @@ import type { ContributorRole } from "@/shared/enums.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
-/** A new user's draft ruleset. */
-async function setup() {
-  const { user: owner, session: ownerSession } = await createTestUser("owner");
-  const ruleset = await createTestRuleset(owner.id);
-  return { owner, ownerSession, ruleset };
-}
-
 /** A new user invited to the ruleset with `role` by `inviterSession`; accepted unless `pending`. */
 async function addContributor(
   inviterSession: Parameters<typeof ContributorsService.inviteContributor>[0],
@@ -26,6 +19,13 @@ async function addContributor(
   const invite = await ContributorsService.inviteContributor(inviterSession, rulesetId, user.emailAddress, role);
   if (!pending) await ContributorsService.acceptInvite(session, invite.id);
   return { user, session, invite };
+}
+
+/** A new user's draft ruleset. */
+async function setup() {
+  const { user: owner, session: ownerSession } = await createTestUser("owner");
+  const ruleset = await createTestRuleset(owner.id);
+  return { owner, ownerSession, ruleset };
 }
 
 describe("ContributorsService", () => {

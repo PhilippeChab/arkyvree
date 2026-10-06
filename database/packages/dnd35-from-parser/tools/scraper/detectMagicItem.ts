@@ -239,32 +239,6 @@ function inferSlot(name: string, category: MagicItemCategory): string {
 // Metadata parsing
 // ---------------------------------------------------------------------------
 
-function parseAura(metadataText: string): string | undefined {
-  const match = metadataText.match(/(faint|moderate|strong|overwhelming)\s+([\w][\w\s,]+?)(?:;|$)/i);
-  if (!match) return undefined;
-  const strength = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
-  const school = match[2].trim();
-  return `${strength} ${school}`;
-}
-
-function parseCasterLevel(metadataText: string): number | undefined {
-  const match = metadataText.match(/CL\s+(\d+)(?:st|nd|rd|th)/i);
-  return match ? parseInt(match[1], 10) : undefined;
-}
-
-function parseMetadataPrice(metadataText: string): string {
-  // For variant items, the metadata may have multiple prices — we extract the first one
-  const match = metadataText.match(/Price\s+([\d,]+)\s*gp/i);
-  if (match) return parseCost(`${match[1]} gp`);
-  return "0";
-}
-
-function parseMetadataWeight(metadataText: string): string {
-  const match = metadataText.match(/Weight\s+([\d.]+)\s*lb/i);
-  if (match) return parseWeight(`${match[1]} lb.`);
-  return "0";
-}
-
 /** An item's modifiers, from its name and description, and the bonuses it names that no modifier can hold. */
 function detectModifiers(name: string, description: string): { modifiers: Modifier[]; unresolvedModifiers: string[] } {
   const modifiers: Modifier[] = [];
@@ -343,6 +317,32 @@ function detectModifiers(name: string, description: string): { modifiers: Modifi
   }
 
   return { modifiers, unresolvedModifiers };
+}
+
+function parseAura(metadataText: string): string | undefined {
+  const match = metadataText.match(/(faint|moderate|strong|overwhelming)\s+([\w][\w\s,]+?)(?:;|$)/i);
+  if (!match) return undefined;
+  const strength = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+  const school = match[2].trim();
+  return `${strength} ${school}`;
+}
+
+function parseCasterLevel(metadataText: string): number | undefined {
+  const match = metadataText.match(/CL\s+(\d+)(?:st|nd|rd|th)/i);
+  return match ? parseInt(match[1], 10) : undefined;
+}
+
+function parseMetadataPrice(metadataText: string): string {
+  // For variant items, the metadata may have multiple prices — we extract the first one
+  const match = metadataText.match(/Price\s+([\d,]+)\s*gp/i);
+  if (match) return parseCost(`${match[1]} gp`);
+  return "0";
+}
+
+function parseMetadataWeight(metadataText: string): string {
+  const match = metadataText.match(/Weight\s+([\d.]+)\s*lb/i);
+  if (match) return parseWeight(`${match[1]} lb.`);
+  return "0";
 }
 
 // ---------------------------------------------------------------------------

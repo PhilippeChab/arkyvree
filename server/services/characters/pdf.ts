@@ -10,6 +10,15 @@ import type { Character, Session } from "@/shared/relations.ts";
 import { findEditableCharacterOrBonded } from "./editableCharacter.ts";
 
 /**
+ * Where a PDF export's activity and failure notification link to: the
+ * character page, or for an export requested from a campaign the campaign
+ * character page (a Game Master can't open the character page itself).
+ */
+export function getCharacterPdfTargetTable(campaignId?: string) {
+  return getTableName(campaignId ? playerCharactersInCampaign : charactersInCharacter);
+}
+
+/**
  * The character `userId` may export as a PDF, or null: one they own or
  * contribute to (or a bonded character of such a master). Through
  * `campaignId`, the character must be linked to that campaign, and its Game
@@ -25,15 +34,6 @@ export async function findExportableCharacter(userId: string, characterId: strin
     }
   }
   return findEditableCharacterOrBonded(db, characterId, userId);
-}
-
-/**
- * Where a PDF export's activity and failure notification link to: the
- * character page, or for an export requested from a campaign the campaign
- * character page (a Game Master can't open the character page itself).
- */
-export function getCharacterPdfTargetTable(campaignId?: string) {
-  return getTableName(campaignId ? playerCharactersInCampaign : charactersInCharacter);
 }
 
 /**

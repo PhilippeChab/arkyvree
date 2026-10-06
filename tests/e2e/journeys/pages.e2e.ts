@@ -29,14 +29,6 @@ function watchErrors(page: Page) {
   return errors;
 }
 
-/** Opens `path` and waits for `content` and for the calls the page makes, then checks nothing went wrong. */
-async function visit(page: Page, errors: string[], path: string, content: string | RegExp) {
-  await page.goto(path);
-  await expect(page.getByText(content).first(), path).toBeVisible({ timeout: 15_000 });
-  await page.waitForLoadState("networkidle");
-  expect(errors, path).toEqual([]);
-}
-
 /** The first of a ruleset's entities of a list, by the list's name in the API. */
 async function firstOf(
   page: Page,
@@ -58,6 +50,14 @@ async function firstOf(
   const { items } = await parseResponse(response);
   if (!items[0]) throw new Error(`The ruleset has no ${list}`);
   return items[0];
+}
+
+/** Opens `path` and waits for `content` and for the calls the page makes, then checks nothing went wrong. */
+async function visit(page: Page, errors: string[], path: string, content: string | RegExp) {
+  await page.goto(path);
+  await expect(page.getByText(content).first(), path).toBeVisible({ timeout: 15_000 });
+  await page.waitForLoadState("networkidle");
+  expect(errors, path).toEqual([]);
 }
 
 test.describe("Every page", () => {

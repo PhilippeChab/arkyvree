@@ -22,6 +22,16 @@ async function latestCode(table: "email_verifications" | "password_resets", emai
   return row.code;
 }
 
+/** The code that verifies a user's email address. */
+export function getEmailVerificationCode(email: string) {
+  return latestCode("email_verifications", email);
+}
+
+/** The code that resets a user's password. */
+export function getPasswordResetCode(email: string) {
+  return latestCode("password_resets", email);
+}
+
 /**
  * Types the 8-digit `code` into the form's code inputs (the only unnamed ones), setting each through React's value
  * tracker as typing would. `scope` narrows the search to a dialog when the page has other forms.
@@ -38,11 +48,6 @@ export async function fillOtp(scope: Page | Locator, code: string): Promise<void
   }
 }
 
-/** The code that verifies a user's email address. */
-export function getEmailVerificationCode(email: string) {
-  return latestCode("email_verifications", email);
-}
-
 /** Signs up a new user and verifies their email, leaving them on the dashboard with its onboarding open. */
 export async function signUpAndVerify(page: Page, email: string, password: string) {
   await page.goto("/sign-up");
@@ -54,9 +59,4 @@ export async function signUpAndVerify(page: Page, email: string, password: strin
   await fillOtp(page, await getEmailVerificationCode(email));
   await page.getByRole("button", { name: /^Verify$/ }).click();
   await page.waitForURL("/dashboard", { timeout: 10_000 });
-}
-
-/** The code that resets a user's password. */
-export function getPasswordResetCode(email: string) {
-  return latestCode("password_resets", email);
 }

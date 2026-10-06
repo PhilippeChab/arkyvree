@@ -25,6 +25,30 @@ class RulesetCache {
 
   private readonly targetPaths = new DependentCache<TargetPathsAndLabels>();
 
+  /** Whether a ruleset's own rows are pinned, kept whatever else the cache evicts. */
+  isRawDataPinned(rulesetId: string, campaignId?: string): boolean {
+    return this.rawData.isPinned(getRawDataKey(rulesetId, campaignId));
+  }
+
+  /** Drops what a change to a ruleset can touch: its copy-on-write data, its rows and its target paths. */
+  invalidate(rulesetId: string): void {
+    this.invalidateEntities(rulesetId);
+    this.targetPaths.invalidate(rulesetId);
+  }
+
+  /** Drops everything the cache holds. */
+  invalidateAll(): void {
+    invalidateAllCowData();
+    this.rawData.invalidateAll();
+    this.targetPaths.invalidateAll();
+  }
+
+  /** Drops a ruleset's copy-on-write data and rows, for a change that leaves its target paths (a requirement's). */
+  invalidateEntities(rulesetId: string): void {
+    invalidateCowData(rulesetId);
+    this.rawData.invalidate(rulesetId);
+  }
+
   /** A ruleset's view: its own rows and its source chain's, composed by copy-on-write. */
   async getData(rulesetId: string, cowData: CachedCowData, campaignId?: string): Promise<CachedRulesetData> {
     const chain = await Promise.all([
@@ -51,30 +75,6 @@ class RulesetCache {
     // Old subscription metadata must not populate the key for the new chain.
     const key = JSON.stringify([rulesetId, kind, ...sourceChain]);
     return this.targetPaths.getOrFetch(key, [rulesetId, ...sourceChain], async () => ({ data: await fetcher() }));
-  }
-
-  /** Whether a ruleset's own rows are pinned, kept whatever else the cache evicts. */
-  isRawDataPinned(rulesetId: string, campaignId?: string): boolean {
-    return this.rawData.isPinned(getRawDataKey(rulesetId, campaignId));
-  }
-
-  /** Drops what a change to a ruleset can touch: its copy-on-write data, its rows and its target paths. */
-  invalidate(rulesetId: string): void {
-    this.invalidateEntities(rulesetId);
-    this.targetPaths.invalidate(rulesetId);
-  }
-
-  /** Drops everything the cache holds. */
-  invalidateAll(): void {
-    invalidateAllCowData();
-    this.rawData.invalidateAll();
-    this.targetPaths.invalidateAll();
-  }
-
-  /** Drops a ruleset's copy-on-write data and rows, for a change that leaves its target paths (a requirement's). */
-  invalidateEntities(rulesetId: string): void {
-    invalidateCowData(rulesetId);
-    this.rawData.invalidate(rulesetId);
   }
 
   /** Loads the system rulesets' rows (the bases and the extensions), at boot: the first user doesn't wait for them. */

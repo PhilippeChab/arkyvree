@@ -30,6 +30,40 @@ class BroadcastListener {
     }
   }
 
+  private scheduleReconnect() {
+    if (this.stopping || this.reconnectTimer) return;
+    const delay = Math.min(1000 * 2 ** this.attempt, 30_000);
+    console.warn(`[ws] Listen client disconnected — reconnecting in ${delay}ms`);
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect();
+    }, delay);
+  }
+
+  private startHeartbeat(client: PgClient) {
+    this.clearHeartbeat();
+    this.heartbeatTimer = setInterval(async () => {
+      let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          client.query("SELECT 1"),
+          new Promise((_, reject) => {
+            timeoutHandle = setTimeout(() => reject(new Error("heartbeat timeout")), HEARTBEAT_TIMEOUT_MS);
+          }),
+        ]);
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+      } catch (err) {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+        console.warn("[ws] Heartbeat failed — forcing reconnect:", err instanceof Error ? err.message : err);
+        this.clearHeartbeat();
+        this.client = null;
+        client.removeAllListeners();
+        client.end().catch(() => {});
+        this.scheduleReconnect();
+      }
+    }, HEARTBEAT_INTERVAL_MS);
+  }
+
   private async connect(): Promise<void> {
     if (this.stopping) return;
 
@@ -70,40 +104,6 @@ class BroadcastListener {
       this.attempt++;
       this.scheduleReconnect();
     }
-  }
-
-  private scheduleReconnect() {
-    if (this.stopping || this.reconnectTimer) return;
-    const delay = Math.min(1000 * 2 ** this.attempt, 30_000);
-    console.warn(`[ws] Listen client disconnected — reconnecting in ${delay}ms`);
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null;
-      this.connect();
-    }, delay);
-  }
-
-  private startHeartbeat(client: PgClient) {
-    this.clearHeartbeat();
-    this.heartbeatTimer = setInterval(async () => {
-      let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
-      try {
-        await Promise.race([
-          client.query("SELECT 1"),
-          new Promise((_, reject) => {
-            timeoutHandle = setTimeout(() => reject(new Error("heartbeat timeout")), HEARTBEAT_TIMEOUT_MS);
-          }),
-        ]);
-        if (timeoutHandle) clearTimeout(timeoutHandle);
-      } catch (err) {
-        if (timeoutHandle) clearTimeout(timeoutHandle);
-        console.warn("[ws] Heartbeat failed — forcing reconnect:", err instanceof Error ? err.message : err);
-        this.clearHeartbeat();
-        this.client = null;
-        client.removeAllListeners();
-        client.end().catch(() => {});
-        this.scheduleReconnect();
-      }
-    }, HEARTBEAT_INTERVAL_MS);
   }
 
   async start(): Promise<void> {

@@ -28,6 +28,13 @@ export async function insertRows<T extends PgTable>(
   return (await db.insert(table).values(rows).returning()) as InferSelectModel<T>[];
 }
 
+/** What `run` costs the database: its queries, and the caches' hits and misses, as the request logger counts them. */
+export async function measure<T>(run: () => Promise<T>) {
+  const timing = newTimingStore();
+  const result = await timingStorage.run(timing, run);
+  return { result, timing };
+}
+
 /**
  * Runs `call` on the test's connection while another transaction (a connection of `pool`) holds what `lock` takes, and
  * returns its result once that transaction rolls back. `call` must have waited on the lock: PostgreSQL shows it blocked,
@@ -53,11 +60,4 @@ export async function runWhileLocked<T>(pool: Pool, lock: (blockerDb: Db) => Pro
       blocker.release();
     }
   }
-}
-
-/** What `run` costs the database: its queries, and the caches' hits and misses, as the request logger counts them. */
-export async function measure<T>(run: () => Promise<T>) {
-  const timing = newTimingStore();
-  const result = await timingStorage.run(timing, run);
-  return { result, timing };
 }

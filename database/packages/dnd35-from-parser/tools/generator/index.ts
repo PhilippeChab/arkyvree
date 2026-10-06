@@ -101,6 +101,74 @@ const ITEM_IMPORTS: ImportTable = [
   ],
 ];
 
+function getShieldProf(generatorName: string): string {
+  const def = getShieldDefinition(generatorName);
+  if (def?.shieldType === "Tower") return "TOWER_SHIELD_PROF";
+  return "SHIELD_PROF";
+}
+
+/** An exported list of `seedType`, an item per line. */
+function listExport(name: string, seedType: string, items: string[]): string[] {
+  return [`export const ${name}: ${seedType}[] = [`, ...items.map((item) => `  ${item},`), `];`, ``];
+}
+
+/** The proficiency an armor of a category takes, by the builder's name. */
+function armorProficiencyOf(category: string | undefined): string {
+  if (category === "Medium") return "MEDIUM_ARMOR_PROF";
+  if (category === "Heavy") return "HEAVY_ARMOR_PROF";
+  return "LIGHT_ARMOR_PROF";
+}
+
+function getArmorProf(generatorName: string): string {
+  return armorProficiencyOf(getArmorDefinition(generatorName)?.armorType);
+}
+
+/** The weight of each weapon, armor and shield the book's item reference seeds, by name: what an item made from one weighs. */
+function baseItemWeights(referenceDir: string): Record<string, string> {
+  const path = join(referenceDir, "items.json");
+  if (!existsSync(path)) return {};
+  const seeds = buildItemSeeds(loadReference(path, "item"));
+  const bases = [
+    ...seeds.simpleWeapons,
+    ...seeds.martialWeapons,
+    ...seeds.exoticWeapons,
+    ...seeds.armor,
+    ...seeds.shields,
+  ];
+  return Object.fromEntries(bases.map((item) => [item.name, item.weight]));
+}
+
+/**
+ * Whether a book copies feats and spells from the core rules (cowFeats.ts, cowSpells.ts): an extension with classes.
+ * The core rules are what extensions copy from.
+ */
+function copiesFromCore(book: string): boolean {
+  return book !== "srd" && classReferences(book).length > 0;
+}
+
+/** A book's domains file (data.ts). */
+function domainsCode(seeds: DomainDefinition[]): string {
+  const lines: string[] = [];
+  lines.push(`export const ALL_DOMAINS: DomainDefinition[] = [`);
+  for (const d of seeds) {
+    lines.push(`  {`);
+    lines.push(`    name: ${quote(d.name)},`);
+    lines.push(`    description: ${quote(d.description)},`);
+    lines.push(...listField("modifiers", (d.modifiers ?? []).map(stringifyModifier), "    "));
+    lines.push(`    spells: [`);
+    for (const s of d.spells) {
+      lines.push(`      { name: ${quote(s.name)}, level: ${s.level} },`);
+    }
+    lines.push(`    ],`);
+    lines.push(`  },`);
+  }
+  lines.push(`];`);
+  lines.push(``);
+  return [`import type { DomainDefinition } from "@/database/packages/dnd35/content/types.ts";`, ``, ...lines].join(
+    "\n",
+  );
+}
+
 /** An index file's head: its header, the seed type's import, and the import of each file's list. */
 function indexHead(seedType: string, lists: { constName: string; file: string }[]): string[] {
   return [
@@ -112,9 +180,49 @@ function indexHead(seedType: string, lists: { constName: string; file: string }[
   ];
 }
 
-/** An exported list of `seedType`, an item per line. */
-function listExport(name: string, seedType: string, items: string[]): string[] {
-  return [`export const ${name}: ${seedType}[] = [`, ...items.map((item) => `  ${item},`), `];`, ``];
+/** Takes `lock`, a file only one process can create: a second generation on the same folder would work in the first's copy. */
+function takeLock(lock: string): number {
+  try {
+    return openSync(lock, "wx");
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
+    throw new Error(`Another generation is running on this folder: delete ${lock} if it was killed`);
+  }
+}
+
+/**
+ * Runs a generation in a copy of `dir`, which takes `dir`'s place only when the generation reports no failure: a failed
+ * one leaves `dir` as it was rather than half-written. The copy sits next to `dir`, so the swap is a rename, and one
+ * generation runs on `dir` at a time.
+ */
+export function generateAtomically(dir: string, generate: (copy: string) => string[]): string[] {
+  const copy = `${dir}.next`;
+  const previous = `${dir}.previous`;
+  const lock = `${dir}.lock`;
+  const lockFd = takeLock(lock);
+  try {
+    // A run killed mid-swap left the tree only as `previous`
+    if (!existsSync(dir) && existsSync(previous)) renameSync(previous, dir);
+    rmSync(copy, { recursive: true, force: true });
+    rmSync(previous, { recursive: true, force: true });
+    cpSync(dir, copy, { recursive: true });
+    const failures = generate(copy);
+    if (failures.length === 0) {
+      renameSync(dir, previous);
+      try {
+        renameSync(copy, dir);
+      } catch (error) {
+        renameSync(previous, dir);
+        throw error;
+      }
+      rmSync(previous, { recursive: true, force: true });
+    }
+    return failures;
+  } finally {
+    rmSync(copy, { recursive: true, force: true });
+    closeSync(lockFd);
+    rmSync(lock, { force: true });
+  }
 }
 
 /** Writes a generated file, creating its folder. */
@@ -122,6 +230,139 @@ function writeGenerated(out: Output, path: string, code: string) {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, code);
   if (!out.quiet) console.log(`Generated: ${relative(out.dir, path)}`);
+}
+
+/** Writes a book's domain pool feats (domainFeats.ts): one list, the feats grouped by their pool's aptitude. */
+function generateDomainFeatPool(out: Output, feats: FeatSeed[], book: string) {
+  const uses = new Set<string>();
+  const lines = [
+    `export const DOMAIN_POOL_FEATS: FeatSeed[] = [`,
+    ...[...Map.groupBy(feats, (feat) => feat.aptitudes[0]).values()].flat().flatMap((feat) => featLines(feat, uses)),
+    `];`,
+    ``,
+  ];
+
+  const head = [
+    GENERATED_HEADER,
+    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    ...requirementImports(uses),
+    ``,
+  ];
+  writeGenerated(out, join(out.dir, book, "feats", "domainFeats.ts"), [...head, ...lines].join("\n"));
+}
+
+function generateItemIndex(out: Output, outDir: string) {
+  const lines: string[] = [];
+  lines.push(GENERATED_HEADER);
+  lines.push(`export { SIMPLE_WEAPONS } from "./weapons.ts";`);
+  lines.push(`export { MARTIAL_WEAPONS } from "./martial.ts";`);
+  lines.push(`export { EXOTIC_WEAPONS } from "./exotic.ts";`);
+  lines.push(`export { ARMOR } from "./armor.ts";`);
+  lines.push(`export { SHIELDS } from "./shields.ts";`);
+  lines.push(`export { GOODS } from "./goods.ts";`);
+  lines.push(``);
+  const outPath = join(outDir, "index.ts");
+  writeGenerated(out, outPath, lines.join("\n"));
+}
+
+function generateItemIndexWithMagic(out: Output, outDir: string) {
+  const lines: string[] = [];
+  lines.push(GENERATED_HEADER);
+  // Mundane items
+  if (existsSync(join(outDir, "weapons.ts"))) lines.push(`export { SIMPLE_WEAPONS } from "./weapons.ts";`);
+  if (existsSync(join(outDir, "martial.ts"))) lines.push(`export { MARTIAL_WEAPONS } from "./martial.ts";`);
+  if (existsSync(join(outDir, "exotic.ts"))) lines.push(`export { EXOTIC_WEAPONS } from "./exotic.ts";`);
+  if (existsSync(join(outDir, "armor.ts"))) lines.push(`export { ARMOR } from "./armor.ts";`);
+  if (existsSync(join(outDir, "shields.ts"))) lines.push(`export { SHIELDS } from "./shields.ts";`);
+  if (existsSync(join(outDir, "goods.ts"))) lines.push(`export { GOODS } from "./goods.ts";`);
+  // Magic items
+  if (existsSync(join(outDir, "magic-armor.ts"))) lines.push(`export { MAGIC_ARMOR } from "./magic-armor.ts";`);
+  if (existsSync(join(outDir, "magic-shields.ts"))) lines.push(`export { MAGIC_SHIELDS } from "./magic-shields.ts";`);
+  if (existsSync(join(outDir, "magic-weapons.ts"))) lines.push(`export { MAGIC_WEAPONS } from "./magic-weapons.ts";`);
+  if (existsSync(join(outDir, "wondrous-items.ts")))
+    lines.push(`export { WONDROUS_ITEMS } from "./wondrous-items.ts";`);
+  if (existsSync(join(outDir, "rings.ts"))) lines.push(`export { RINGS } from "./rings.ts";`);
+  if (existsSync(join(outDir, "rods.ts"))) lines.push(`export { RODS } from "./rods.ts";`);
+  if (existsSync(join(outDir, "staffs.ts"))) lines.push(`export { STAFFS } from "./staffs.ts";`);
+  lines.push(``);
+  const outPath = join(outDir, "index.ts");
+  writeGenerated(out, outPath, lines.join("\n"));
+}
+
+function generateRace(out: Output, ref: RaceReference, book: string) {
+  const seeds = buildRaceSeeds(ref);
+  if (!out.quiet) console.log(`Built ${seeds.length} race seeds`);
+
+  // Generate data.ts
+  const lines: string[] = [];
+  lines.push(`export const ALL_RACES: RaceDefinition[] = [`);
+  for (const r of seeds) {
+    lines.push(`  {`);
+    lines.push(`    name: ${quote(r.name)},`);
+    lines.push(`    description: ${quote(r.description)},`);
+    lines.push(`    size: ${quote(r.size)},`);
+    lines.push(`    baseSpeed: ${r.baseSpeed},`);
+    lines.push(...listField("modifiers", (r.modifiers ?? []).map(stringifyModifier), "    "));
+    lines.push(...listField("properties", (r.properties ?? []).map(stringifyProperty), "    "));
+    lines.push(`  },`);
+  }
+  lines.push(`];`);
+  lines.push(``);
+
+  const head = [`import type { RaceDefinition } from "@/database/packages/dnd35/content/types.ts";`, ``];
+  writeGenerated(out, join(out.dir, book, "races", "data.ts"), [...head, ...lines].join("\n"));
+
+  if (!out.quiet) console.log(`\nDone!`);
+}
+
+function generateWizardSchool(out: Output, ref: WizardSchoolReference, book: string) {
+  const seeds = buildWizardSchoolSeeds(ref);
+  if (!out.quiet) console.log(`Built ${seeds.length} wizard school seeds`);
+
+  // Generate data.ts
+  const lines: string[] = [];
+  lines.push(`import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";`);
+  lines.push(``);
+  lines.push(`export const WIZARD_SCHOOLS: WizardSchoolDefinition[] = [`);
+  for (const s of seeds) {
+    lines.push(`  {`);
+    lines.push(`    name: ${quote(s.name)},`);
+    lines.push(`    description: ${quote(s.description)},`);
+    lines.push(`    prohibitedSchoolCount: ${s.prohibitedSchoolCount},`);
+    lines.push(`  },`);
+  }
+  lines.push(`];`);
+  lines.push(``);
+
+  writeGenerated(out, join(out.dir, book, "wizard-schools", "data.ts"), lines.join("\n"));
+
+  if (!out.quiet) console.log(`\nDone!`);
+}
+
+/** Regenerate aptitudes.ts for a book from reference JSONs: its feats', and the core rules' system feats. */
+function regenerateAptitudes(out: Output, book: string) {
+  const featRefPath = join(REFERENCE_DIR, book, "feats.json");
+  const feats = [
+    ...(existsSync(featRefPath) ? featAptitudeSources(loadReference(featRefPath, "feat")) : []),
+    ...(book === "srd"
+      ? coreSystemFeats(
+          buildWizardSchoolSeeds(loadReference(join(REFERENCE_DIR, "srd", "wizardSchools.json"), "wizardSchool")),
+        )
+      : []),
+  ];
+
+  const aptitudes = collectAptitudes(feats, book);
+
+  const aptLines: string[] = [];
+  aptLines.push(GENERATED_HEADER);
+  aptLines.push(``);
+  aptLines.push(`export const ALL_APTITUDES: string[] = [`);
+  for (const apt of aptitudes) {
+    aptLines.push(`  ${quote(apt)},`);
+  }
+  aptLines.push(`];`);
+  aptLines.push(``);
+  writeGenerated(out, join(out.dir, book, "aptitudes.ts"), aptLines.join("\n"));
 }
 
 /** Regenerate index.ts for an extension's book: its content, as the extension seeds it. */
@@ -161,374 +402,98 @@ function regenerateBookIndex(out: Output, book: string) {
   writeGenerated(out, join(dir, "index.ts"), lines.join("\n"));
 }
 
-function generateWizardSchool(out: Output, ref: WizardSchoolReference, book: string) {
-  const seeds = buildWizardSchoolSeeds(ref);
-  if (!out.quiet) console.log(`Built ${seeds.length} wizard school seeds`);
-
-  // Generate data.ts
-  const lines: string[] = [];
-  lines.push(`import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";`);
-  lines.push(``);
-  lines.push(`export const WIZARD_SCHOOLS: WizardSchoolDefinition[] = [`);
-  for (const s of seeds) {
-    lines.push(`  {`);
-    lines.push(`    name: ${quote(s.name)},`);
-    lines.push(`    description: ${quote(s.description)},`);
-    lines.push(`    prohibitedSchoolCount: ${s.prohibitedSchoolCount},`);
-    lines.push(`  },`);
+/** Regenerate feats/classes/index.ts for a book from all generated class feat .ts files. */
+function regenerateClassFeatIndex(out: Output, book: string) {
+  const classFeatDir = join(out.dir, book, "feats", "classes");
+  let tsFiles: string[];
+  try {
+    tsFiles = readdirSync(classFeatDir)
+      .filter((f) => f.endsWith(".ts") && f !== "index.ts")
+      .sort();
+  } catch {
+    return; // no class feat files for this book
   }
-  lines.push(`];`);
-  lines.push(``);
 
-  writeGenerated(out, join(out.dir, book, "wizard-schools", "data.ts"), lines.join("\n"));
+  if (tsFiles.length === 0) return;
 
-  if (!out.quiet) console.log(`\nDone!`);
-}
+  type FeatEntry = { slug: string; constName: string };
+  const entries: FeatEntry[] = [];
 
-/** A book's domains file (data.ts). */
-function domainsCode(seeds: DomainDefinition[]): string {
-  const lines: string[] = [];
-  lines.push(`export const ALL_DOMAINS: DomainDefinition[] = [`);
-  for (const d of seeds) {
-    lines.push(`  {`);
-    lines.push(`    name: ${quote(d.name)},`);
-    lines.push(`    description: ${quote(d.description)},`);
-    lines.push(...listField("modifiers", (d.modifiers ?? []).map(stringifyModifier), "    "));
-    lines.push(`    spells: [`);
-    for (const s of d.spells) {
-      lines.push(`      { name: ${quote(s.name)}, level: ${s.level} },`);
+  for (const file of tsFiles) {
+    const slug = file.replace(".ts", "");
+    const content = readFileSync(join(classFeatDir, file), "utf-8");
+    const match = content.match(/export const (\w+_FEATS)/);
+    if (match) {
+      entries.push({ slug, constName: match[1] });
     }
-    lines.push(`    ],`);
-    lines.push(`  },`);
   }
-  lines.push(`];`);
-  lines.push(``);
-  return [`import type { DomainDefinition } from "@/database/packages/dnd35/content/types.ts";`, ``, ...lines].join(
-    "\n",
+
+  if (entries.length === 0) return;
+
+  const lines = indexHead(
+    "FeatSeed",
+    entries.map((e) => ({ constName: e.constName, file: `${e.slug}.ts` })),
   );
-}
 
-function regenerateFavoredEnemyFeats(out: Output, book: string) {
-  if (book !== "srd") return;
-
-  writeGenerated(out, join(out.dir, book, "feats", "favoredEnemy.ts"), generateFavoredEnemyFeats());
-}
-
-/** Writes a book's domain pool feats (domainFeats.ts): one list, the feats grouped by their pool's aptitude. */
-function generateDomainFeatPool(out: Output, feats: FeatSeed[], book: string) {
-  const uses = new Set<string>();
-  const lines = [
-    `export const DOMAIN_POOL_FEATS: FeatSeed[] = [`,
-    ...[...Map.groupBy(feats, (feat) => feat.aptitudes[0]).values()].flat().flatMap((feat) => featLines(feat, uses)),
-    `];`,
-    ``,
-  ];
-
-  const head = [
-    GENERATED_HEADER,
-    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
-    ...requirementImports(uses),
-    ``,
-  ];
-  writeGenerated(out, join(out.dir, book, "feats", "domainFeats.ts"), [...head, ...lines].join("\n"));
-}
-
-function generateRace(out: Output, ref: RaceReference, book: string) {
-  const seeds = buildRaceSeeds(ref);
-  if (!out.quiet) console.log(`Built ${seeds.length} race seeds`);
-
-  // Generate data.ts
-  const lines: string[] = [];
-  lines.push(`export const ALL_RACES: RaceDefinition[] = [`);
-  for (const r of seeds) {
-    lines.push(`  {`);
-    lines.push(`    name: ${quote(r.name)},`);
-    lines.push(`    description: ${quote(r.description)},`);
-    lines.push(`    size: ${quote(r.size)},`);
-    lines.push(`    baseSpeed: ${r.baseSpeed},`);
-    lines.push(...listField("modifiers", (r.modifiers ?? []).map(stringifyModifier), "    "));
-    lines.push(...listField("properties", (r.properties ?? []).map(stringifyProperty), "    "));
-    lines.push(`  },`);
+  // Deduplicate: a feat like "Familiar" may appear in multiple class feat files
+  lines.push(`const _allClassFeats: FeatSeed[] = [`);
+  for (const e of entries) {
+    lines.push(`  ...${e.constName},`);
   }
   lines.push(`];`);
+  lines.push(`const _seen = new Set<string>();`);
+  lines.push(`export const ALL_CLASS_FEATS: FeatSeed[] = _allClassFeats.filter((f) => {`);
+  lines.push(`  if (_seen.has(f.name)) return false;`);
+  lines.push(`  _seen.add(f.name);`);
+  lines.push(`  return true;`);
+  lines.push(`});`);
   lines.push(``);
 
-  const head = [`import type { RaceDefinition } from "@/database/packages/dnd35/content/types.ts";`, ``];
-  writeGenerated(out, join(out.dir, book, "races", "data.ts"), [...head, ...lines].join("\n"));
+  // Re-export individual arrays for consumers that need them
+  for (const e of entries) {
+    lines.push(`export { ${e.constName} };`);
+  }
+  lines.push(``);
 
-  if (!out.quiet) console.log(`\nDone!`);
+  const outPath = join(classFeatDir, "index.ts");
+  writeGenerated(out, outPath, lines.join("\n"));
 }
 
-/**
- * Writes a file of items, `constName`: each its name and description, then the lines `fields` gives. `uses` are the
- * builders it takes from content/items.ts.
- */
-function writeItemFile<T extends { name: string; description: string }>(
-  out: Output,
-  path: string,
-  constName: string,
-  uses: string[],
-  items: T[],
-  fields: (item: T) => string[],
-) {
+/** Regenerate classes/index.ts for a book from class reference JSONs. */
+function regenerateClassIndex(out: Output, book: string) {
+  const classes = classReferences(book).sort((a, b) => (a.file < b.file ? -1 : 1));
+  if (classes.length === 0) return; // no classes for this book
+
+  type ClassEntry = { slug: string; constName: string; isBase: boolean };
+  const entries: ClassEntry[] = [];
+
+  for (const { ref } of classes) {
+    if (!ref.raw?.name) continue;
+    const slug = toCamelCase(ref.raw.name);
+    const levels = ref.detected?.levels ?? 0;
+    entries.push({
+      slug,
+      constName: toConstName(ref.raw.name),
+      isBase: levels === 20,
+    });
+  }
+
+  const names = (list: ClassEntry[]) => list.map((e) => e.constName);
+  const baseEntries = entries.filter((e) => e.isBase);
+  const prestigeEntries = entries.filter((e) => !e.isBase);
   const lines = [
-    GENERATED_HEADER,
-    `import type { ItemDef } from "@/database/packages/dnd35/content/types.ts";`,
-    ...importLines(new Set(uses), ITEM_IMPORTS),
-    ``,
-    `export const ${constName}: ItemDef[] = [`,
-    ...items.flatMap((item) => [
-      `  {`,
-      `    name: ${quote(item.name)},`,
-      `    description: ${quote(item.description)},`,
-      ...fields(item).map((line) => `    ${line}`),
-      `  },`,
-    ]),
-    `];`,
-    ``,
+    ...indexHead(
+      "ClassSeed",
+      entries.map((e) => ({ constName: e.constName, file: `${e.slug}.ts` })),
+    ),
+    ...listExport("ALL_CLASSES", "ClassSeed", names(entries)),
+    ...(baseEntries.length > 0 ? listExport("ALL_BASE_CLASSES", "ClassSeed", names(baseEntries)) : []),
+    ...(prestigeEntries.length > 0 ? listExport("ALL_PRESTIGE_CLASSES", "ClassSeed", names(prestigeEntries)) : []),
   ];
-  writeGenerated(out, path, lines.join("\n"));
-}
 
-function generateWeaponFile(
-  out: Output,
-  path: string,
-  constName: string,
-  weapons: ReturnType<typeof buildItemSeeds>["simpleWeapons"],
-  profFn: string,
-) {
-  writeItemFile(out, path, constName, [profFn, "weaponProperties"], weapons, (w) => [
-    `weight: ${quote(w.weight)}, costGp: ${quote(w.costGp)}, type: "Weapon",`,
-    `requirements: ${profFn}(${quote(w.name)}),`,
-    `properties: weaponProperties(${quote(w.name)}),`,
-  ]);
-}
-
-/** The proficiency an armor of a category takes, by the builder's name. */
-function armorProficiencyOf(category: string | undefined): string {
-  if (category === "Medium") return "MEDIUM_ARMOR_PROF";
-  if (category === "Heavy") return "HEAVY_ARMOR_PROF";
-  return "LIGHT_ARMOR_PROF";
-}
-
-function getArmorProf(generatorName: string): string {
-  return armorProficiencyOf(getArmorDefinition(generatorName)?.armorType);
-}
-
-function generateArmorFile(
-  out: Output,
-  path: string,
-  constName: string,
-  items: ReturnType<typeof buildItemSeeds>["armor"],
-) {
-  writeItemFile(out, path, constName, ["armorProperties", ...items.map((a) => getArmorProf(a.name))], items, (a) => [
-    `weight: ${quote(a.weight)}, costGp: ${quote(a.costGp)}, type: "Armor", slot: "Torso",`,
-    `requirements: ${getArmorProf(a.name)},`,
-    `properties: armorProperties(${quote(a.name)}),`,
-  ]);
-}
-
-function getShieldProf(generatorName: string): string {
-  const def = getShieldDefinition(generatorName);
-  if (def?.shieldType === "Tower") return "TOWER_SHIELD_PROF";
-  return "SHIELD_PROF";
-}
-
-function generateShieldFile(
-  out: Output,
-  path: string,
-  constName: string,
-  items: ReturnType<typeof buildItemSeeds>["shields"],
-) {
-  writeItemFile(out, path, constName, ["shieldProperties", ...items.map((s) => getShieldProf(s.name))], items, (s) => [
-    `weight: ${quote(s.weight)}, costGp: ${quote(s.costGp)}, type: "Shield", slot: "Off Hand",`,
-    `requirements: ${getShieldProf(s.name)},`,
-    `properties: shieldProperties(${quote(s.name)}),`,
-  ]);
-}
-
-function generateGoodsFile(
-  out: Output,
-  path: string,
-  constName: string,
-  items: ReturnType<typeof buildItemSeeds>["goods"],
-) {
-  writeItemFile(out, path, constName, [], items, (g) => [
-    `weight: ${quote(g.weight)}, costGp: ${quote(g.costGp)}, type: "Other", slot: "Other",`,
-    `properties: [],`,
-  ]);
-}
-
-function generateItemIndex(out: Output, outDir: string) {
-  const lines: string[] = [];
-  lines.push(GENERATED_HEADER);
-  lines.push(`export { SIMPLE_WEAPONS } from "./weapons.ts";`);
-  lines.push(`export { MARTIAL_WEAPONS } from "./martial.ts";`);
-  lines.push(`export { EXOTIC_WEAPONS } from "./exotic.ts";`);
-  lines.push(`export { ARMOR } from "./armor.ts";`);
-  lines.push(`export { SHIELDS } from "./shields.ts";`);
-  lines.push(`export { GOODS } from "./goods.ts";`);
-  lines.push(``);
-  const outPath = join(outDir, "index.ts");
+  const genClassDir = join(out.dir, book, "classes");
+  const outPath = join(genClassDir, "index.ts");
   writeGenerated(out, outPath, lines.join("\n"));
-}
-
-function generateItem(out: Output, ref: ItemReference, book: string) {
-  const seeds = buildItemSeeds(ref);
-  const outDir = join(out.dir, book, "items");
-
-  // --- weapons.ts ---
-  generateWeaponFile(out, join(outDir, "weapons.ts"), "SIMPLE_WEAPONS", seeds.simpleWeapons, "simple");
-  generateWeaponFile(out, join(outDir, "martial.ts"), "MARTIAL_WEAPONS", seeds.martialWeapons, "martial");
-  generateWeaponFile(out, join(outDir, "exotic.ts"), "EXOTIC_WEAPONS", seeds.exoticWeapons, "exotic");
-
-  // --- armor.ts ---
-  generateArmorFile(out, join(outDir, "armor.ts"), "ARMOR", seeds.armor);
-
-  // --- shields.ts ---
-  generateShieldFile(out, join(outDir, "shields.ts"), "SHIELDS", seeds.shields);
-
-  // --- goods.ts ---
-  generateGoodsFile(out, join(outDir, "goods.ts"), "GOODS", seeds.goods);
-
-  // --- index.ts ---
-  generateItemIndex(out, outDir);
-
-  if (!out.quiet)
-    console.log(
-      `\nDone! Generated ${seeds.simpleWeapons.length} simple, ${seeds.martialWeapons.length} martial, ${seeds.exoticWeapons.length} exotic weapons`,
-    );
-  if (!out.quiet)
-    console.log(`  ${seeds.armor.length} armor, ${seeds.shields.length} shields, ${seeds.goods.length} goods`);
-}
-
-function generateMagicItemFile(
-  out: Output,
-  path: string,
-  constName: string,
-  items: ReturnType<typeof buildMagicItemSeeds>[keyof ReturnType<typeof buildMagicItemSeeds>],
-) {
-  // A template's requirements are the proficiency with it, by its category
-  const proficiency = (item: (typeof items)[number]) =>
-    armorProficiencyOf(item.properties.find((property) => property.type === ARMOR_PROFICIENCY)?.value);
-  const uses = items.filter((item) => item.isTemplate).map(proficiency);
-  writeItemFile(out, path, constName, uses, items, (item) => [
-    `weight: ${quote(item.weight)}, costGp: ${quote(item.costGp)}, type: ${quote(item.type)},${item.slot ? ` slot: ${quote(item.slot)},` : ""}`,
-    ...(item.isTemplate ? [`isTemplate: true,`, `requirements: ${proficiency(item)},`] : []),
-    ...(item.sourceItem ? [`sourceItem: ${quote(item.sourceItem)},`] : []),
-    ...(item.properties.length > 0
-      ? [`properties: [`, ...item.properties.map((p) => `  ${stringifyProperty(p)},`), `],`]
-      : [`properties: [],`]),
-    ...listField("modifiers", (item.modifiers ?? []).map(stringifyModifier), ""),
-  ]);
-}
-
-function generateItemIndexWithMagic(out: Output, outDir: string) {
-  const lines: string[] = [];
-  lines.push(GENERATED_HEADER);
-  // Mundane items
-  if (existsSync(join(outDir, "weapons.ts"))) lines.push(`export { SIMPLE_WEAPONS } from "./weapons.ts";`);
-  if (existsSync(join(outDir, "martial.ts"))) lines.push(`export { MARTIAL_WEAPONS } from "./martial.ts";`);
-  if (existsSync(join(outDir, "exotic.ts"))) lines.push(`export { EXOTIC_WEAPONS } from "./exotic.ts";`);
-  if (existsSync(join(outDir, "armor.ts"))) lines.push(`export { ARMOR } from "./armor.ts";`);
-  if (existsSync(join(outDir, "shields.ts"))) lines.push(`export { SHIELDS } from "./shields.ts";`);
-  if (existsSync(join(outDir, "goods.ts"))) lines.push(`export { GOODS } from "./goods.ts";`);
-  // Magic items
-  if (existsSync(join(outDir, "magic-armor.ts"))) lines.push(`export { MAGIC_ARMOR } from "./magic-armor.ts";`);
-  if (existsSync(join(outDir, "magic-shields.ts"))) lines.push(`export { MAGIC_SHIELDS } from "./magic-shields.ts";`);
-  if (existsSync(join(outDir, "magic-weapons.ts"))) lines.push(`export { MAGIC_WEAPONS } from "./magic-weapons.ts";`);
-  if (existsSync(join(outDir, "wondrous-items.ts")))
-    lines.push(`export { WONDROUS_ITEMS } from "./wondrous-items.ts";`);
-  if (existsSync(join(outDir, "rings.ts"))) lines.push(`export { RINGS } from "./rings.ts";`);
-  if (existsSync(join(outDir, "rods.ts"))) lines.push(`export { RODS } from "./rods.ts";`);
-  if (existsSync(join(outDir, "staffs.ts"))) lines.push(`export { STAFFS } from "./staffs.ts";`);
-  lines.push(``);
-  const outPath = join(outDir, "index.ts");
-  writeGenerated(out, outPath, lines.join("\n"));
-}
-
-/** The weight of each weapon, armor and shield the book's item reference seeds, by name: what an item made from one weighs. */
-function baseItemWeights(referenceDir: string): Record<string, string> {
-  const path = join(referenceDir, "items.json");
-  if (!existsSync(path)) return {};
-  const seeds = buildItemSeeds(loadReference(path, "item"));
-  const bases = [
-    ...seeds.simpleWeapons,
-    ...seeds.martialWeapons,
-    ...seeds.exoticWeapons,
-    ...seeds.armor,
-    ...seeds.shields,
-  ];
-  return Object.fromEntries(bases.map((item) => [item.name, item.weight]));
-}
-
-function generateMagicItem(out: Output, ref: MagicItemReference, book: string, referenceDir: string) {
-  const seeds = buildMagicItemSeeds(ref, baseItemWeights(referenceDir));
-  const outDir = join(out.dir, book, "items");
-
-  const files: [
-    string,
-    string,
-    ReturnType<typeof buildMagicItemSeeds>[keyof ReturnType<typeof buildMagicItemSeeds>],
-  ][] = [
-    ["magic-armor.ts", "MAGIC_ARMOR", seeds.magicArmor],
-    ["magic-shields.ts", "MAGIC_SHIELDS", seeds.magicShields],
-    ["magic-weapons.ts", "MAGIC_WEAPONS", seeds.magicWeapons],
-    ["wondrous-items.ts", "WONDROUS_ITEMS", seeds.wondrousItems],
-    ["rings.ts", "RINGS", seeds.rings],
-    ["rods.ts", "RODS", seeds.rods],
-    ["staffs.ts", "STAFFS", seeds.staffs],
-  ];
-
-  for (const [filename, constName, items] of files) {
-    generateMagicItemFile(out, join(outDir, filename), constName, items);
-  }
-
-  // Update index.ts to include magic item re-exports
-  generateItemIndexWithMagic(out, outDir);
-
-  if (!out.quiet)
-    console.log(
-      `\nDone! Generated ${seeds.magicArmor.length} magic armor, ${seeds.magicShields.length} magic shields, ${seeds.magicWeapons.length} magic weapons`,
-    );
-  if (!out.quiet)
-    console.log(
-      `  ${seeds.wondrousItems.length} wondrous items, ${seeds.rings.length} rings, ${seeds.rods.length} rods, ${seeds.staffs.length} staffs`,
-    );
-}
-
-/** Regenerate aptitudes.ts for a book from reference JSONs: its feats', and the core rules' system feats. */
-function regenerateAptitudes(out: Output, book: string) {
-  const featRefPath = join(REFERENCE_DIR, book, "feats.json");
-  const feats = [
-    ...(existsSync(featRefPath) ? featAptitudeSources(loadReference(featRefPath, "feat")) : []),
-    ...(book === "srd"
-      ? coreSystemFeats(
-          buildWizardSchoolSeeds(loadReference(join(REFERENCE_DIR, "srd", "wizardSchools.json"), "wizardSchool")),
-        )
-      : []),
-  ];
-
-  const aptitudes = collectAptitudes(feats, book);
-
-  const aptLines: string[] = [];
-  aptLines.push(GENERATED_HEADER);
-  aptLines.push(``);
-  aptLines.push(`export const ALL_APTITUDES: string[] = [`);
-  for (const apt of aptitudes) {
-    aptLines.push(`  ${quote(apt)},`);
-  }
-  aptLines.push(`];`);
-  aptLines.push(``);
-  writeGenerated(out, join(out.dir, book, "aptitudes.ts"), aptLines.join("\n"));
-}
-
-/**
- * Whether a book copies feats and spells from the core rules (cowFeats.ts, cowSpells.ts): an extension with classes.
- * The core rules are what extensions copy from.
- */
-function copiesFromCore(book: string): boolean {
-  return book !== "srd" && classReferences(book).length > 0;
 }
 
 /** Regenerate cowFeats.ts for a book from bonusFeatLists in class reference JSONs.
@@ -720,98 +685,10 @@ function regenerateCowSpellsAllBooks(out: Output) {
   for (const book of referenceBooks()) regenerateCowSpells(out, book);
 }
 
-/** Regenerate classes/index.ts for a book from class reference JSONs. */
-function regenerateClassIndex(out: Output, book: string) {
-  const classes = classReferences(book).sort((a, b) => (a.file < b.file ? -1 : 1));
-  if (classes.length === 0) return; // no classes for this book
+function regenerateFavoredEnemyFeats(out: Output, book: string) {
+  if (book !== "srd") return;
 
-  type ClassEntry = { slug: string; constName: string; isBase: boolean };
-  const entries: ClassEntry[] = [];
-
-  for (const { ref } of classes) {
-    if (!ref.raw?.name) continue;
-    const slug = toCamelCase(ref.raw.name);
-    const levels = ref.detected?.levels ?? 0;
-    entries.push({
-      slug,
-      constName: toConstName(ref.raw.name),
-      isBase: levels === 20,
-    });
-  }
-
-  const names = (list: ClassEntry[]) => list.map((e) => e.constName);
-  const baseEntries = entries.filter((e) => e.isBase);
-  const prestigeEntries = entries.filter((e) => !e.isBase);
-  const lines = [
-    ...indexHead(
-      "ClassSeed",
-      entries.map((e) => ({ constName: e.constName, file: `${e.slug}.ts` })),
-    ),
-    ...listExport("ALL_CLASSES", "ClassSeed", names(entries)),
-    ...(baseEntries.length > 0 ? listExport("ALL_BASE_CLASSES", "ClassSeed", names(baseEntries)) : []),
-    ...(prestigeEntries.length > 0 ? listExport("ALL_PRESTIGE_CLASSES", "ClassSeed", names(prestigeEntries)) : []),
-  ];
-
-  const genClassDir = join(out.dir, book, "classes");
-  const outPath = join(genClassDir, "index.ts");
-  writeGenerated(out, outPath, lines.join("\n"));
-}
-
-/** Regenerate feats/classes/index.ts for a book from all generated class feat .ts files. */
-function regenerateClassFeatIndex(out: Output, book: string) {
-  const classFeatDir = join(out.dir, book, "feats", "classes");
-  let tsFiles: string[];
-  try {
-    tsFiles = readdirSync(classFeatDir)
-      .filter((f) => f.endsWith(".ts") && f !== "index.ts")
-      .sort();
-  } catch {
-    return; // no class feat files for this book
-  }
-
-  if (tsFiles.length === 0) return;
-
-  type FeatEntry = { slug: string; constName: string };
-  const entries: FeatEntry[] = [];
-
-  for (const file of tsFiles) {
-    const slug = file.replace(".ts", "");
-    const content = readFileSync(join(classFeatDir, file), "utf-8");
-    const match = content.match(/export const (\w+_FEATS)/);
-    if (match) {
-      entries.push({ slug, constName: match[1] });
-    }
-  }
-
-  if (entries.length === 0) return;
-
-  const lines = indexHead(
-    "FeatSeed",
-    entries.map((e) => ({ constName: e.constName, file: `${e.slug}.ts` })),
-  );
-
-  // Deduplicate: a feat like "Familiar" may appear in multiple class feat files
-  lines.push(`const _allClassFeats: FeatSeed[] = [`);
-  for (const e of entries) {
-    lines.push(`  ...${e.constName},`);
-  }
-  lines.push(`];`);
-  lines.push(`const _seen = new Set<string>();`);
-  lines.push(`export const ALL_CLASS_FEATS: FeatSeed[] = _allClassFeats.filter((f) => {`);
-  lines.push(`  if (_seen.has(f.name)) return false;`);
-  lines.push(`  _seen.add(f.name);`);
-  lines.push(`  return true;`);
-  lines.push(`});`);
-  lines.push(``);
-
-  // Re-export individual arrays for consumers that need them
-  for (const e of entries) {
-    lines.push(`export { ${e.constName} };`);
-  }
-  lines.push(``);
-
-  const outPath = join(classFeatDir, "index.ts");
-  writeGenerated(out, outPath, lines.join("\n"));
+  writeGenerated(out, join(out.dir, book, "feats", "favoredEnemy.ts"), generateFavoredEnemyFeats());
 }
 
 /** Regenerate feats/index.ts for a book from all .ts files in feats/ and classes/index.ts. */
@@ -926,18 +803,6 @@ function generateClass(out: Output, ref: ClassReference, book: string) {
   if (!out.quiet) console.log(`\nDone! Review the generated files and copy to database/packages/dnd35/ when ready.`);
 }
 
-function generateFeat(out: Output, ref: FeatReference, book: string) {
-  const featCode = generateFeatSeeds(ref);
-  const featPath = join(out.dir, book, "feats", "feats.ts");
-  writeGenerated(out, featPath, featCode);
-
-  regenerateFavoredEnemyFeats(out, book);
-  regenerateAptitudes(out, book);
-  regenerateFeatIndex(out, book);
-
-  if (!out.quiet) console.log(`\nDone! Review the generated file and copy to database/packages/dnd35/ when ready.`);
-}
-
 /** A book's domains file and its domains' feat pools: those of its domains reference, none for a book without one. */
 function generateDomain(out: Output, book: string) {
   const { seeds, poolFeats } = bookDomainSeeds(book);
@@ -977,6 +842,18 @@ function generateDomain(out: Output, book: string) {
   regenerateFeatIndex(out, book);
 
   if (!out.quiet) console.log(`\nDone!`);
+}
+
+function generateFeat(out: Output, ref: FeatReference, book: string) {
+  const featCode = generateFeatSeeds(ref);
+  const featPath = join(out.dir, book, "feats", "feats.ts");
+  writeGenerated(out, featPath, featCode);
+
+  regenerateFavoredEnemyFeats(out, book);
+  regenerateAptitudes(out, book);
+  regenerateFeatIndex(out, book);
+
+  if (!out.quiet) console.log(`\nDone! Review the generated file and copy to database/packages/dnd35/ when ready.`);
 }
 
 /** Regenerate spells/index.ts for a book from existing level .ts files. */
@@ -1048,6 +925,174 @@ function generateSpell(out: Output, ref: SpellReference, book: string) {
   regenerateCowSpellsAllBooks(out);
 
   if (!out.quiet) console.log(`\nDone! Review the generated files and copy to database/packages/dnd35/ when ready.`);
+}
+
+/**
+ * Writes a file of items, `constName`: each its name and description, then the lines `fields` gives. `uses` are the
+ * builders it takes from content/items.ts.
+ */
+function writeItemFile<T extends { name: string; description: string }>(
+  out: Output,
+  path: string,
+  constName: string,
+  uses: string[],
+  items: T[],
+  fields: (item: T) => string[],
+) {
+  const lines = [
+    GENERATED_HEADER,
+    `import type { ItemDef } from "@/database/packages/dnd35/content/types.ts";`,
+    ...importLines(new Set(uses), ITEM_IMPORTS),
+    ``,
+    `export const ${constName}: ItemDef[] = [`,
+    ...items.flatMap((item) => [
+      `  {`,
+      `    name: ${quote(item.name)},`,
+      `    description: ${quote(item.description)},`,
+      ...fields(item).map((line) => `    ${line}`),
+      `  },`,
+    ]),
+    `];`,
+    ``,
+  ];
+  writeGenerated(out, path, lines.join("\n"));
+}
+
+function generateArmorFile(
+  out: Output,
+  path: string,
+  constName: string,
+  items: ReturnType<typeof buildItemSeeds>["armor"],
+) {
+  writeItemFile(out, path, constName, ["armorProperties", ...items.map((a) => getArmorProf(a.name))], items, (a) => [
+    `weight: ${quote(a.weight)}, costGp: ${quote(a.costGp)}, type: "Armor", slot: "Torso",`,
+    `requirements: ${getArmorProf(a.name)},`,
+    `properties: armorProperties(${quote(a.name)}),`,
+  ]);
+}
+
+function generateGoodsFile(
+  out: Output,
+  path: string,
+  constName: string,
+  items: ReturnType<typeof buildItemSeeds>["goods"],
+) {
+  writeItemFile(out, path, constName, [], items, (g) => [
+    `weight: ${quote(g.weight)}, costGp: ${quote(g.costGp)}, type: "Other", slot: "Other",`,
+    `properties: [],`,
+  ]);
+}
+
+function generateMagicItemFile(
+  out: Output,
+  path: string,
+  constName: string,
+  items: ReturnType<typeof buildMagicItemSeeds>[keyof ReturnType<typeof buildMagicItemSeeds>],
+) {
+  // A template's requirements are the proficiency with it, by its category
+  const proficiency = (item: (typeof items)[number]) =>
+    armorProficiencyOf(item.properties.find((property) => property.type === ARMOR_PROFICIENCY)?.value);
+  const uses = items.filter((item) => item.isTemplate).map(proficiency);
+  writeItemFile(out, path, constName, uses, items, (item) => [
+    `weight: ${quote(item.weight)}, costGp: ${quote(item.costGp)}, type: ${quote(item.type)},${item.slot ? ` slot: ${quote(item.slot)},` : ""}`,
+    ...(item.isTemplate ? [`isTemplate: true,`, `requirements: ${proficiency(item)},`] : []),
+    ...(item.sourceItem ? [`sourceItem: ${quote(item.sourceItem)},`] : []),
+    ...(item.properties.length > 0
+      ? [`properties: [`, ...item.properties.map((p) => `  ${stringifyProperty(p)},`), `],`]
+      : [`properties: [],`]),
+    ...listField("modifiers", (item.modifiers ?? []).map(stringifyModifier), ""),
+  ]);
+}
+
+function generateMagicItem(out: Output, ref: MagicItemReference, book: string, referenceDir: string) {
+  const seeds = buildMagicItemSeeds(ref, baseItemWeights(referenceDir));
+  const outDir = join(out.dir, book, "items");
+
+  const files: [
+    string,
+    string,
+    ReturnType<typeof buildMagicItemSeeds>[keyof ReturnType<typeof buildMagicItemSeeds>],
+  ][] = [
+    ["magic-armor.ts", "MAGIC_ARMOR", seeds.magicArmor],
+    ["magic-shields.ts", "MAGIC_SHIELDS", seeds.magicShields],
+    ["magic-weapons.ts", "MAGIC_WEAPONS", seeds.magicWeapons],
+    ["wondrous-items.ts", "WONDROUS_ITEMS", seeds.wondrousItems],
+    ["rings.ts", "RINGS", seeds.rings],
+    ["rods.ts", "RODS", seeds.rods],
+    ["staffs.ts", "STAFFS", seeds.staffs],
+  ];
+
+  for (const [filename, constName, items] of files) {
+    generateMagicItemFile(out, join(outDir, filename), constName, items);
+  }
+
+  // Update index.ts to include magic item re-exports
+  generateItemIndexWithMagic(out, outDir);
+
+  if (!out.quiet)
+    console.log(
+      `\nDone! Generated ${seeds.magicArmor.length} magic armor, ${seeds.magicShields.length} magic shields, ${seeds.magicWeapons.length} magic weapons`,
+    );
+  if (!out.quiet)
+    console.log(
+      `  ${seeds.wondrousItems.length} wondrous items, ${seeds.rings.length} rings, ${seeds.rods.length} rods, ${seeds.staffs.length} staffs`,
+    );
+}
+
+function generateShieldFile(
+  out: Output,
+  path: string,
+  constName: string,
+  items: ReturnType<typeof buildItemSeeds>["shields"],
+) {
+  writeItemFile(out, path, constName, ["shieldProperties", ...items.map((s) => getShieldProf(s.name))], items, (s) => [
+    `weight: ${quote(s.weight)}, costGp: ${quote(s.costGp)}, type: "Shield", slot: "Off Hand",`,
+    `requirements: ${getShieldProf(s.name)},`,
+    `properties: shieldProperties(${quote(s.name)}),`,
+  ]);
+}
+
+function generateWeaponFile(
+  out: Output,
+  path: string,
+  constName: string,
+  weapons: ReturnType<typeof buildItemSeeds>["simpleWeapons"],
+  profFn: string,
+) {
+  writeItemFile(out, path, constName, [profFn, "weaponProperties"], weapons, (w) => [
+    `weight: ${quote(w.weight)}, costGp: ${quote(w.costGp)}, type: "Weapon",`,
+    `requirements: ${profFn}(${quote(w.name)}),`,
+    `properties: weaponProperties(${quote(w.name)}),`,
+  ]);
+}
+
+function generateItem(out: Output, ref: ItemReference, book: string) {
+  const seeds = buildItemSeeds(ref);
+  const outDir = join(out.dir, book, "items");
+
+  // --- weapons.ts ---
+  generateWeaponFile(out, join(outDir, "weapons.ts"), "SIMPLE_WEAPONS", seeds.simpleWeapons, "simple");
+  generateWeaponFile(out, join(outDir, "martial.ts"), "MARTIAL_WEAPONS", seeds.martialWeapons, "martial");
+  generateWeaponFile(out, join(outDir, "exotic.ts"), "EXOTIC_WEAPONS", seeds.exoticWeapons, "exotic");
+
+  // --- armor.ts ---
+  generateArmorFile(out, join(outDir, "armor.ts"), "ARMOR", seeds.armor);
+
+  // --- shields.ts ---
+  generateShieldFile(out, join(outDir, "shields.ts"), "SHIELDS", seeds.shields);
+
+  // --- goods.ts ---
+  generateGoodsFile(out, join(outDir, "goods.ts"), "GOODS", seeds.goods);
+
+  // --- index.ts ---
+  generateItemIndex(out, outDir);
+
+  if (!out.quiet)
+    console.log(
+      `\nDone! Generated ${seeds.simpleWeapons.length} simple, ${seeds.martialWeapons.length} martial, ${seeds.exoticWeapons.length} exotic weapons`,
+    );
+  if (!out.quiet)
+    console.log(`  ${seeds.armor.length} armor, ${seeds.shields.length} shields, ${seeds.goods.length} goods`);
 }
 
 function generateRef(out: Output, jsonPath: string, bookOverride?: string) {
@@ -1128,51 +1173,6 @@ export function generateAll(
     }
   }
   return failures;
-}
-
-/** Takes `lock`, a file only one process can create: a second generation on the same folder would work in the first's copy. */
-function takeLock(lock: string): number {
-  try {
-    return openSync(lock, "wx");
-  } catch (error) {
-    if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
-    throw new Error(`Another generation is running on this folder: delete ${lock} if it was killed`);
-  }
-}
-
-/**
- * Runs a generation in a copy of `dir`, which takes `dir`'s place only when the generation reports no failure: a failed
- * one leaves `dir` as it was rather than half-written. The copy sits next to `dir`, so the swap is a rename, and one
- * generation runs on `dir` at a time.
- */
-export function generateAtomically(dir: string, generate: (copy: string) => string[]): string[] {
-  const copy = `${dir}.next`;
-  const previous = `${dir}.previous`;
-  const lock = `${dir}.lock`;
-  const lockFd = takeLock(lock);
-  try {
-    // A run killed mid-swap left the tree only as `previous`
-    if (!existsSync(dir) && existsSync(previous)) renameSync(previous, dir);
-    rmSync(copy, { recursive: true, force: true });
-    rmSync(previous, { recursive: true, force: true });
-    cpSync(dir, copy, { recursive: true });
-    const failures = generate(copy);
-    if (failures.length === 0) {
-      renameSync(dir, previous);
-      try {
-        renameSync(copy, dir);
-      } catch (error) {
-        renameSync(previous, dir);
-        throw error;
-      }
-      rmSync(previous, { recursive: true, force: true });
-    }
-    return failures;
-  } finally {
-    rmSync(copy, { recursive: true, force: true });
-    closeSync(lockFd);
-    rmSync(lock, { force: true });
-  }
 }
 
 function main() {

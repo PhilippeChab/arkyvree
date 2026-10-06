@@ -188,27 +188,6 @@ export const WAR_CLERIC_1: LevelPlan = {
   feats: { "Cleric Domain": ["War Domain", "Good Domain"], "War Domain Weapon": ["War Domain Weapon: Longsword"] },
 };
 
-/** A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes. */
-export async function createSeedCharacter(
-  ctx: SeedContext,
-  build: keyof typeof BUILDS = "fighter",
-  {
-    xp = 0,
-    abilities = {},
-    ...values
-  }: Partial<Omit<CharacterValues, "abilities">> & { xp?: number; abilities?: Record<string, number> } = {},
-) {
-  const base = BUILDS[build];
-  return await createCharacter(db, ctx, {
-    ...base,
-    ...values,
-    abilities: { ...base.abilities, ...abilities },
-    name: `Test ${build} ${uniqueId()}`,
-    xp,
-    description: "Test",
-  });
-}
-
 /** The ids of a plan's picks. */
 export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }: Omit<LevelPlan, "hp">): Picks {
   const byAptitude = (named: Record<string, string[]>, ids: Record<string, string>) =>
@@ -245,6 +224,27 @@ export function levelUp(
     powers,
     force,
   );
+}
+
+/** A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes. */
+export async function createSeedCharacter(
+  ctx: SeedContext,
+  build: keyof typeof BUILDS = "fighter",
+  {
+    xp = 0,
+    abilities = {},
+    ...values
+  }: Partial<Omit<CharacterValues, "abilities">> & { xp?: number; abilities?: Record<string, number> } = {},
+) {
+  const base = BUILDS[build];
+  return await createCharacter(db, ctx, {
+    ...base,
+    ...values,
+    abilities: { ...base.abilities, ...abilities },
+    name: `Test ${build} ${uniqueId()}`,
+    xp,
+    description: "Test",
+  });
 }
 
 /**
@@ -284,15 +284,17 @@ async function createMaster(
   return { ctx, masterId, bonded };
 }
 
+/** A paladin with this special mount, picked at the fifth level, which unlocks it. */
+export function createPaladinWithMount(levels = 5, mount = "Heavy Warhorse Special Mount") {
+  return createMaster("mount", "paladin", "Paladin", levels, PALADIN_1, {
+    5: { feats: { "Special Mount Bond": [mount] } },
+  });
+}
+
 /** `plan` with these picks through `aptitude` instead of its own, or none. */
 export function picking(plan: LevelPlan, aptitude: string, feats: string[]): LevelPlan {
   const { [aptitude]: _, ...others } = plan.feats ?? {};
   return { ...plan, feats: feats.length > 0 ? { ...others, [aptitude]: feats } : others };
-}
-
-/** A wizard whose first level, `plan`, picks this familiar. */
-export function createWizardWithFamiliar(familiar = "Cat Familiar", plan = WIZARD_1) {
-  return createMaster("familiar", "wizard", "Wizard", 1, picking(plan, "Familiar Bond", [familiar]));
 }
 
 /** A druid with this animal companion. */
@@ -306,11 +308,9 @@ export function createDruidWithCompanion(levels = 1, companion = "Wolf Animal Co
   );
 }
 
-/** A paladin with this special mount, picked at the fifth level, which unlocks it. */
-export function createPaladinWithMount(levels = 5, mount = "Heavy Warhorse Special Mount") {
-  return createMaster("mount", "paladin", "Paladin", levels, PALADIN_1, {
-    5: { feats: { "Special Mount Bond": [mount] } },
-  });
+/** A wizard whose first level, `plan`, picks this familiar. */
+export function createWizardWithFamiliar(familiar = "Cat Familiar", plan = WIZARD_1) {
+  return createMaster("familiar", "wizard", "Wizard", 1, picking(plan, "Familiar Bond", [familiar]));
 }
 
 /** Finalizes the first `count` fighter levels. */

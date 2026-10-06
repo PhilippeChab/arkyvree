@@ -43,18 +43,6 @@ function klassesWithNextLevel(
     .map((klass) => ({ klass, nextKlassLevel: nextKlassLevelMap.get(klass.id)! }));
 }
 
-/** Each candidate's requirement groups, its class's own and its next level's, by its next level; none without any. */
-function requirementsByNextLevel(candidates: KlassWithNextLevel[], rulesetData: CachedRulesetData) {
-  const requirementsByKlassLevel = new Map<string, Requirement[][]>();
-  for (const k of candidates) {
-    const groups = [k.klass.id, k.nextKlassLevel.id]
-      .map((id) => rulesetData.requirementsByEntity.get(id) ?? [])
-      .filter((reqs) => reqs.length > 0);
-    if (groups.length > 0) requirementsByKlassLevel.set(k.nextKlassLevel.id, groups);
-  }
-  return requirementsByKlassLevel;
-}
-
 /**
  * What the level-up wizard's pending picks add to the character: its pending levels with the feats their class levels
  * grant, its picked feats and its skill ranks. Undefined when there are none.
@@ -107,6 +95,18 @@ function pendingProjection(
         ...(projectedSkills.length > 0 && { skills: projectedSkills }),
       }
     : undefined;
+}
+
+/** Each candidate's requirement groups, its class's own and its next level's, by its next level; none without any. */
+function requirementsByNextLevel(candidates: KlassWithNextLevel[], rulesetData: CachedRulesetData) {
+  const requirementsByKlassLevel = new Map<string, Requirement[][]>();
+  for (const k of candidates) {
+    const groups = [k.klass.id, k.nextKlassLevel.id]
+      .map((id) => rulesetData.requirementsByEntity.get(id) ?? [])
+      .filter((reqs) => reqs.length > 0);
+    if (groups.length > 0) requirementsByKlassLevel.set(k.nextKlassLevel.id, groups);
+  }
+  return requirementsByKlassLevel;
 }
 
 export async function getAvailableKlasses(

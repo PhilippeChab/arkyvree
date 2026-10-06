@@ -151,6 +151,33 @@ function parseDescription($: cheerio.CheerioAPI): string {
 // Progression table
 // ---------------------------------------------------------------------------
 
+/**
+ * The text over each column of a table's header rows above its main one, by column: each cell placed past those a row
+ * above spans down into, over the columns it spans ("Unarmed" over the monk's "Damage").
+ */
+function headersAbove($: cheerio.CheerioAPI, rows: AnyNode[]): string[] {
+  const grid: string[][] = rows.map(() => []);
+  for (const [r, row] of rows.entries()) {
+    let column = 0;
+    $(row)
+      .children("th")
+      .each((_, th) => {
+        while (grid[r][column] !== undefined) column++;
+        const text = normalizeWs($(th).text().trim());
+        const rowspan = parseInt($(th).attr("rowspan") ?? "1", 10);
+        const colspan = parseInt($(th).attr("colspan") ?? "1", 10);
+        for (let dr = 0; dr < rowspan && r + dr < rows.length; dr++) {
+          for (let dc = 0; dc < colspan; dc++) grid[r + dr][column + dc] = text;
+        }
+        column += colspan;
+      });
+  }
+  const width = Math.max(0, ...grid.map((row) => row.length));
+  return Array.from({ length: width }, (_, column) =>
+    [...new Set(grid.map((row) => row[column]).filter(Boolean))].join(" "),
+  );
+}
+
 /** Split a Special column value on commas/periods, but not inside parentheses. */
 function splitSpecial(text: string): string[] {
   const parts: string[] = [];
@@ -181,33 +208,6 @@ function splitSpecial(text: string): string[] {
   }
   if (current) parts.push(current);
   return parts;
-}
-
-/**
- * The text over each column of a table's header rows above its main one, by column: each cell placed past those a row
- * above spans down into, over the columns it spans ("Unarmed" over the monk's "Damage").
- */
-function headersAbove($: cheerio.CheerioAPI, rows: AnyNode[]): string[] {
-  const grid: string[][] = rows.map(() => []);
-  for (const [r, row] of rows.entries()) {
-    let column = 0;
-    $(row)
-      .children("th")
-      .each((_, th) => {
-        while (grid[r][column] !== undefined) column++;
-        const text = normalizeWs($(th).text().trim());
-        const rowspan = parseInt($(th).attr("rowspan") ?? "1", 10);
-        const colspan = parseInt($(th).attr("colspan") ?? "1", 10);
-        for (let dr = 0; dr < rowspan && r + dr < rows.length; dr++) {
-          for (let dc = 0; dc < colspan; dc++) grid[r + dr][column + dc] = text;
-        }
-        column += colspan;
-      });
-  }
-  const width = Math.max(0, ...grid.map((row) => row.length));
-  return Array.from({ length: width }, (_, column) =>
-    [...new Set(grid.map((row) => row[column]).filter(Boolean))].join(" "),
-  );
 }
 
 function parseProgression($: cheerio.CheerioAPI): {
@@ -543,22 +543,6 @@ function parseHitDie($: cheerio.CheerioAPI): string {
 // Skill Points — <h3>Skill points</h3> followed by text
 // ---------------------------------------------------------------------------
 
-function parseSkillPoints($: cheerio.CheerioAPI): string {
-  const header = findSectionHeader($, /^Skill points$/i);
-  if (header.length > 0) {
-    const text = getTextAfterHeader(header);
-    const match = text.match(/(\d+)\s*\+\s*Int/i);
-    if (match) return `${match[1]} + Int modifier`;
-  }
-
-  // Fallback: regex on body text
-  const bodyText = $("body").text();
-  const spMatch = bodyText.match(/Skill Points?\s+(?:at Each|per)\s+(?:Additional\s+)?Level[:\s]*(\d+)\s*\+/i);
-  if (spMatch) return `${spMatch[1]} + Int modifier`;
-
-  return "2 + Int modifier";
-}
-
 function parseClassSkills($: cheerio.CheerioAPI): string[] {
   const skills: string[] = [];
 
@@ -613,6 +597,22 @@ function parseClassSkills($: cheerio.CheerioAPI): string[] {
   return skills;
 }
 
+function parseSkillPoints($: cheerio.CheerioAPI): string {
+  const header = findSectionHeader($, /^Skill points$/i);
+  if (header.length > 0) {
+    const text = getTextAfterHeader(header);
+    const match = text.match(/(\d+)\s*\+\s*Int/i);
+    if (match) return `${match[1]} + Int modifier`;
+  }
+
+  // Fallback: regex on body text
+  const bodyText = $("body").text();
+  const spMatch = bodyText.match(/Skill Points?\s+(?:at Each|per)\s+(?:Additional\s+)?Level[:\s]*(\d+)\s*\+/i);
+  if (spMatch) return `${spMatch[1]} + Int modifier`;
+
+  return "2 + Int modifier";
+}
+
 // ---------------------------------------------------------------------------
 // Alignment
 // ---------------------------------------------------------------------------
@@ -636,6 +636,70 @@ function parseAlignment($: cheerio.CheerioAPI): string | undefined {
 // ---------------------------------------------------------------------------
 // Prerequisites
 // ---------------------------------------------------------------------------
+
+/** Find name and effect column indices from a sub-option table */
+function findSubOptionColumns(
+  $: cheerio.CheerioAPI,
+  table: cheerio.Cheerio<AnyNode>,
+): { nameCol: number; effectCol: number } {
+  // Find the header row with the most <th> cells (skip title rows with 1 spanning th, and footnote rows)
+  const headerRows = table.find("tr").filter((_, row) => $(row).children("th").length > 1);
+  if (headerRows.length === 0) return { nameCol: -1, effectCol: -1 };
+
+  // Use the row with the most th cells
+  let bestRow = headerRows.first();
+  let bestCount = bestRow.children("th").length;
+  headerRows.each((_, row) => {
+    const count = $(row).children("th").length;
+    if (count > bestCount) {
+      bestRow = $(row);
+      bestCount = count;
+    }
+  });
+
+  const headers = bestRow
+    .children("th")
+    .toArray()
+    .map((th) => $(th).text().trim().toLowerCase());
+  const nameCol = headers.findIndex((h) => /^(secret|name|ability|trick|mastery|option|maneuver)$/i.test(h));
+  const effectCol = headers.findIndex((h) => /^(effect|benefit|description)$/i.test(h));
+  return { nameCol, effectCol };
+}
+
+/**
+ * Clean a Special column entry to its base feature name.
+ * "Sneak Attack +1d6" → "Sneak Attack"
+ * "hexblade's curse 2/day" → "hexblade's curse"
+ * "Ignore spell failure 10%" → "Ignore spell failure"
+ * "Slow Fall 20 ft." → "Slow Fall"
+ * "Damage Reduction 3/-" → "Damage Reduction"
+ */
+function cleanSpecialEntry(s: string): string {
+  return s
+    .replace(/\s*\+\d+(?:d\d+)?(?:\/\+\d+(?:d\d+)?)*$/, "") // +1, +1d6, +1/+1d6
+    .replace(/\s*\+?\d+\/day$/i, "") // 2/day, +1/day
+    .replace(/\s*\d+%$/, "") // 10%
+    .replace(/\s*\d+\s*(?:ft\.?|feet)$/i, "") // 20 ft.
+    .replace(/\s*\d+\/[-–]$/, "") // 3/-
+    .replace(/\s*\d+\/(?:week|round)$/i, "") // 1/week
+    .replace(/\s*\(\d+(?:st|nd|rd|th)\)$/, "") // (1st)
+    .replace(/\s*\(\d+(?:st|nd|rd|th) type\)$/i, "") // (1st type)
+    .replace(/\s*\([^)]*\d+\/day[^)]*\)$/i, "") // (elemental 1/day)
+    .replace(
+      /\s*\((?:black|brown|dire|large|small|tiny|huge|plant|elemental|magic|lawful|adamantine|move action|free action|two|four|radius)[^)]*\)$/i,
+      "",
+    ) // (black), (magic), (huge elemental), etc.
+    .replace(/\s*(?:any distance)$/i, "") // any distance
+    .replace(/^(?:1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\s+/i, "") // "1st Favored Enemy" → "Favored Enemy"
+    .replace(/\s*\+\d+\s+(?:level of existing .*spellcasting class)$/i, "") // "+1 level of existing..."
+    .replace(/^[^A-Za-z]*/, "") // strip leading non-alpha chars (broken parens, etc.)
+    .replace(/\s*\([^)]*\d[^)]*\)?\s*$/, "") // strip trailing parenthetical containing numbers: (+1), (2d8), (1/day)
+    .replace(/\s*\([^)]*$/, "") // strip any unclosed paren at end
+    .replace(/^([^(]*)\)$/, "$1") // strip orphaned trailing ) only when no opening (
+    .replace(/\d+\/day$/, "") // leftover "2/day" after paren strip
+    .trim()
+    .replace(/^(?:huge |large |small )?elemental$/i, ""); // orphaned fragments from broken wild shape cells
+}
 
 function extractPrerequisiteText($: cheerio.CheerioAPI): string {
   // dndtools.net: <h4>Requirements</h4> followed by content
@@ -672,6 +736,43 @@ function extractPrerequisiteText($: cheerio.CheerioAPI): string {
   if (match) return match[1].trim();
 
   return "";
+}
+
+/** Normalize a feature name for matching — strips plurals, collapses whitespace */
+function normalizeFeatureName(name: string): string {
+  // "Special Abilities" → "special ability"
+  return normalizeWs(name.toLowerCase()).replace(/ies$/, "y");
+}
+
+/** Find the exact key in the known features set that matches this name */
+function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): string | undefined {
+  const norm = normalizeFeatureName(name);
+  const lower = name.toLowerCase();
+  // The name, or a plural variant
+  const exact = [norm, lower, lower + "s", lower.replace(/s$/, ""), norm + "s", norm.replace(/s$/, "")].find((n) =>
+    knownFeatures.has(n),
+  );
+  if (exact !== undefined) return exact;
+  // A known feature starting with this name
+  // e.g. "Mounted Weapon Bonus" matches "Mounted Weapon Bonus (Lance)"
+  for (const known of knownFeatures) {
+    if (known.startsWith(norm + " ") || known.startsWith(lower + " ")) return known;
+  }
+  // A known feature this name starts with, then a non-alpha suffix
+  // e.g. "Rage +1/Day" matches "Rage" (suffix starts with +)
+  // But NOT "Terrain Mastery Benefits" matching "Terrain Mastery" (suffix is a word)
+  for (const known of knownFeatures) {
+    if (norm.startsWith(known) && norm.length > known.length) {
+      const suffix = norm.substring(known.length);
+      if (/^[^a-z\s]/.test(suffix.trim())) return known; // +1/day, (lance), etc. — but not "Benefits"
+    }
+  }
+  return undefined;
+}
+
+/** Check if a feature name matches any known feature (case-insensitive, with plural matching) */
+function isKnownFeature(name: string, knownFeatures: Set<string>): boolean {
+  return findMatchingFeatureKey(name, knownFeatures) !== undefined;
 }
 
 function parsePrerequisiteText(text: string): ClassReference["raw"]["prerequisites"]["parsed"] {
@@ -811,76 +912,6 @@ function parsePrerequisites($: cheerio.CheerioAPI): ClassReference["raw"]["prere
   return { text, parsed };
 }
 
-/**
- * Clean a Special column entry to its base feature name.
- * "Sneak Attack +1d6" → "Sneak Attack"
- * "hexblade's curse 2/day" → "hexblade's curse"
- * "Ignore spell failure 10%" → "Ignore spell failure"
- * "Slow Fall 20 ft." → "Slow Fall"
- * "Damage Reduction 3/-" → "Damage Reduction"
- */
-function cleanSpecialEntry(s: string): string {
-  return s
-    .replace(/\s*\+\d+(?:d\d+)?(?:\/\+\d+(?:d\d+)?)*$/, "") // +1, +1d6, +1/+1d6
-    .replace(/\s*\+?\d+\/day$/i, "") // 2/day, +1/day
-    .replace(/\s*\d+%$/, "") // 10%
-    .replace(/\s*\d+\s*(?:ft\.?|feet)$/i, "") // 20 ft.
-    .replace(/\s*\d+\/[-–]$/, "") // 3/-
-    .replace(/\s*\d+\/(?:week|round)$/i, "") // 1/week
-    .replace(/\s*\(\d+(?:st|nd|rd|th)\)$/, "") // (1st)
-    .replace(/\s*\(\d+(?:st|nd|rd|th) type\)$/i, "") // (1st type)
-    .replace(/\s*\([^)]*\d+\/day[^)]*\)$/i, "") // (elemental 1/day)
-    .replace(
-      /\s*\((?:black|brown|dire|large|small|tiny|huge|plant|elemental|magic|lawful|adamantine|move action|free action|two|four|radius)[^)]*\)$/i,
-      "",
-    ) // (black), (magic), (huge elemental), etc.
-    .replace(/\s*(?:any distance)$/i, "") // any distance
-    .replace(/^(?:1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\s+/i, "") // "1st Favored Enemy" → "Favored Enemy"
-    .replace(/\s*\+\d+\s+(?:level of existing .*spellcasting class)$/i, "") // "+1 level of existing..."
-    .replace(/^[^A-Za-z]*/, "") // strip leading non-alpha chars (broken parens, etc.)
-    .replace(/\s*\([^)]*\d[^)]*\)?\s*$/, "") // strip trailing parenthetical containing numbers: (+1), (2d8), (1/day)
-    .replace(/\s*\([^)]*$/, "") // strip any unclosed paren at end
-    .replace(/^([^(]*)\)$/, "$1") // strip orphaned trailing ) only when no opening (
-    .replace(/\d+\/day$/, "") // leftover "2/day" after paren strip
-    .trim()
-    .replace(/^(?:huge |large |small )?elemental$/i, ""); // orphaned fragments from broken wild shape cells
-}
-
-/** Find name and effect column indices from a sub-option table */
-function findSubOptionColumns(
-  $: cheerio.CheerioAPI,
-  table: cheerio.Cheerio<AnyNode>,
-): { nameCol: number; effectCol: number } {
-  // Find the header row with the most <th> cells (skip title rows with 1 spanning th, and footnote rows)
-  const headerRows = table.find("tr").filter((_, row) => $(row).children("th").length > 1);
-  if (headerRows.length === 0) return { nameCol: -1, effectCol: -1 };
-
-  // Use the row with the most th cells
-  let bestRow = headerRows.first();
-  let bestCount = bestRow.children("th").length;
-  headerRows.each((_, row) => {
-    const count = $(row).children("th").length;
-    if (count > bestCount) {
-      bestRow = $(row);
-      bestCount = count;
-    }
-  });
-
-  const headers = bestRow
-    .children("th")
-    .toArray()
-    .map((th) => $(th).text().trim().toLowerCase());
-  const nameCol = headers.findIndex((h) => /^(secret|name|ability|trick|mastery|option|maneuver)$/i.test(h));
-  const effectCol = headers.findIndex((h) => /^(effect|benefit|description)$/i.test(h));
-  return { nameCol, effectCol };
-}
-
-/** Normalize a feature name for matching — strips plurals, collapses whitespace */
-function normalizeFeatureName(name: string): string {
-  // "Special Abilities" → "special ability"
-  return normalizeWs(name.toLowerCase()).replace(/ies$/, "y");
-}
-
 /** A sub-option table's options of the feature `parentKey`: each its key ("Feature: Option") and effect. */
 function subOptionRows(
   $: cheerio.CheerioAPI,
@@ -906,37 +937,6 @@ function subOptionRows(
         },
       ];
     });
-}
-
-/** Find the exact key in the known features set that matches this name */
-function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): string | undefined {
-  const norm = normalizeFeatureName(name);
-  const lower = name.toLowerCase();
-  // The name, or a plural variant
-  const exact = [norm, lower, lower + "s", lower.replace(/s$/, ""), norm + "s", norm.replace(/s$/, "")].find((n) =>
-    knownFeatures.has(n),
-  );
-  if (exact !== undefined) return exact;
-  // A known feature starting with this name
-  // e.g. "Mounted Weapon Bonus" matches "Mounted Weapon Bonus (Lance)"
-  for (const known of knownFeatures) {
-    if (known.startsWith(norm + " ") || known.startsWith(lower + " ")) return known;
-  }
-  // A known feature this name starts with, then a non-alpha suffix
-  // e.g. "Rage +1/Day" matches "Rage" (suffix starts with +)
-  // But NOT "Terrain Mastery Benefits" matching "Terrain Mastery" (suffix is a word)
-  for (const known of knownFeatures) {
-    if (norm.startsWith(known) && norm.length > known.length) {
-      const suffix = norm.substring(known.length);
-      if (/^[^a-z\s]/.test(suffix.trim())) return known; // +1/day, (lance), etc. — but not "Benefits"
-    }
-  }
-  return undefined;
-}
-
-/** Check if a feature name matches any known feature (case-insensitive, with plural matching) */
-function isKnownFeature(name: string, knownFeatures: Set<string>): boolean {
-  return findMatchingFeatureKey(name, knownFeatures) !== undefined;
 }
 
 function parseClassFeatures(

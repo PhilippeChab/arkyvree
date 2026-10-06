@@ -29,6 +29,19 @@ interface CustomThemeProviderProps {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function containedBorderColor(color: ContainedColor, darkMode: boolean) {
+  switch (color) {
+    case "error":
+      return darkMode ? "rgba(239, 83, 80, 0.5)" : "rgba(141, 30, 30, 0.4)";
+    case "success":
+      return darkMode ? "rgba(76, 175, 80, 0.5)" : "rgba(46, 125, 50, 0.4)";
+    case "warning":
+      return darkMode ? "rgba(255, 152, 0, 0.5)" : "rgba(239, 108, 0, 0.4)";
+    default:
+      return `rgba(141, 30, 30, ${darkMode ? 0.4 : 0.2})`;
+  }
+}
+
 function containedGradient(color: ContainedColor, darkMode: boolean) {
   switch (color) {
     case "error":
@@ -71,19 +84,6 @@ function containedGradient(color: ContainedColor, darkMode: boolean) {
             background: "linear-gradient(145deg, #bf9000, #8f6800)",
             hover: "linear-gradient(145deg, #f57f17, #bf9000)",
           };
-  }
-}
-
-function containedBorderColor(color: ContainedColor, darkMode: boolean) {
-  switch (color) {
-    case "error":
-      return darkMode ? "rgba(239, 83, 80, 0.5)" : "rgba(141, 30, 30, 0.4)";
-    case "success":
-      return darkMode ? "rgba(76, 175, 80, 0.5)" : "rgba(46, 125, 50, 0.4)";
-    case "warning":
-      return darkMode ? "rgba(255, 152, 0, 0.5)" : "rgba(239, 108, 0, 0.4)";
-    default:
-      return `rgba(141, 30, 30, ${darkMode ? 0.4 : 0.2})`;
   }
 }
 

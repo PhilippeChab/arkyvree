@@ -17,11 +17,18 @@ const URL_SEGMENTS = { klass_levels: "class-levels", klasses: "classes" } as con
 /** The other way: the entity type each renamed segment names. */
 const ENTITY_TYPES = { "class-levels": "klass_levels", classes: "klasses" } as const;
 
+function isRenamedSegment(segment: string): segment is RenamedSegment {
+  return Object.hasOwn(ENTITY_TYPES, segment);
+}
+
 function isRenamedType(entityType: string): entityType is RenamedType {
   return Object.hasOwn(URL_SEGMENTS, entityType);
 }
-function isRenamedSegment(segment: string): segment is RenamedSegment {
-  return Object.hasOwn(ENTITY_TYPES, segment);
+
+/** The entity type a URL segment names: what a route hands its service. */
+export function getEntityTypeOfSegment<S extends string>(segment: S): EntityTypeOfSegment<S> {
+  // As in `getUrlSegment`: each value is the one `EntityTypeOfSegment<S>` names.
+  return (isRenamedSegment(segment) ? ENTITY_TYPES[segment] : segment) as EntityTypeOfSegment<S>;
 }
 
 /** An entity type's URL segment: what a page's path or an API route names it by. */
@@ -33,10 +40,4 @@ export function getUrlSegment<T extends string>(entityType: T): UrlSegment<T> {
 /** These entity types' URL segments: the values a route's `z.enum` accepts before it reads them back as types. */
 export function getUrlSegments<T extends string>(entityTypes: readonly T[]): UrlSegment<T>[] {
   return entityTypes.map((entityType) => getUrlSegment(entityType));
-}
-
-/** The entity type a URL segment names: what a route hands its service. */
-export function getEntityTypeOfSegment<S extends string>(segment: S): EntityTypeOfSegment<S> {
-  // As in `getUrlSegment`: each value is the one `EntityTypeOfSegment<S>` names.
-  return (isRenamedSegment(segment) ? ENTITY_TYPES[segment] : segment) as EntityTypeOfSegment<S>;
 }
