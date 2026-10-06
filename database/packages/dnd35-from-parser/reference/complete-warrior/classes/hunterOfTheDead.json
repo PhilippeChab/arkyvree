@@ -83,7 +83,14 @@
         "type": "(Su)"
       }
     ],
-    "classSkills": ["Concentration", "Heal", "Knowledge (Religion)", "Profession", "Ride", "Search"],
+    "classSkills": [
+      "Concentration",
+      "Heal",
+      "Knowledge (Religion)",
+      "Profession",
+      "Ride",
+      "Search"
+    ],
     "description": "The hunter of the dead spends each restless night tracking undead to their lairs and cleansing the land of their foul presence.",
     "hitDie": "d8",
     "name": "Hunter of the Dead",
@@ -110,7 +117,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Detect undead"],
+        "special": [
+          "Detect undead"
+        ],
         "spellsPerDay": "0,-,-,-",
         "willSave": 0
       },
@@ -119,7 +128,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Smite undead 1/day"],
+        "special": [
+          "Smite undead 1/day"
+        ],
         "spellsPerDay": "1,-,-,-",
         "willSave": 0
       },
@@ -128,7 +139,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Spurn death's touch"],
+        "special": [
+          "Spurn death's touch"
+        ],
         "spellsPerDay": "1,0,-,-",
         "willSave": 1
       },
@@ -146,7 +159,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["True death"],
+        "special": [
+          "True death"
+        ],
         "spellsPerDay": "1,1,0,-",
         "willSave": 1
       },
@@ -155,7 +170,10 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Extra Turning", "Smite undead 2/day"],
+        "special": [
+          "Extra Turning",
+          "Smite undead 2/day"
+        ],
         "spellsPerDay": "1,1,1,-",
         "willSave": 2
       },
@@ -173,7 +191,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Positive energy burst"],
+        "special": [
+          "Positive energy burst"
+        ],
         "spellsPerDay": "2,1,1,1",
         "willSave": 2
       },
@@ -191,7 +211,10 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Sealed life", "Smite undead 3/day"],
+        "special": [
+          "Sealed life",
+          "Smite undead 3/day"
+        ],
         "spellsPerDay": "2,2,2,1",
         "willSave": 3
       }

@@ -136,7 +136,17 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": ["Climb", "Craft", "Handle Animal", "Intimidate", "Jump", "Listen", "Ride", "Survival", "Swim"],
+    "classSkills": [
+      "Climb",
+      "Craft",
+      "Handle Animal",
+      "Intimidate",
+      "Jump",
+      "Listen",
+      "Ride",
+      "Survival",
+      "Swim"
+    ],
     "description": "",
     "hitDie": "d12",
     "name": "Barbarian",
@@ -150,7 +160,11 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Fast movement", "illiteracy", "rage 1/day"],
+        "special": [
+          "Fast movement",
+          "illiteracy",
+          "rage 1/day"
+        ],
         "willSave": 0
       },
       {
@@ -158,7 +172,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Uncanny dodge"],
+        "special": [
+          "Uncanny dodge"
+        ],
         "willSave": 0
       },
       {
@@ -166,7 +182,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Trap sense +1"],
+        "special": [
+          "Trap sense +1"
+        ],
         "willSave": 1
       },
       {
@@ -174,7 +192,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Rage 2/day"],
+        "special": [
+          "Rage 2/day"
+        ],
         "willSave": 1
       },
       {
@@ -182,7 +202,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Improved uncanny dodge"],
+        "special": [
+          "Improved uncanny dodge"
+        ],
         "willSave": 1
       },
       {
@@ -190,7 +212,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Trap sense +2"],
+        "special": [
+          "Trap sense +2"
+        ],
         "willSave": 2
       },
       {
@@ -198,7 +222,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Damage reduction 1/-"],
+        "special": [
+          "Damage reduction 1/-"
+        ],
         "willSave": 2
       },
       {
@@ -206,7 +232,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Rage 3/day"],
+        "special": [
+          "Rage 3/day"
+        ],
         "willSave": 2
       },
       {
@@ -214,7 +242,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Trap sense +3"],
+        "special": [
+          "Trap sense +3"
+        ],
         "willSave": 3
       },
       {
@@ -222,7 +252,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Damage reduction 2/-"],
+        "special": [
+          "Damage reduction 2/-"
+        ],
         "willSave": 3
       },
       {
@@ -230,7 +262,9 @@
         "fortSave": 7,
         "level": 11,
         "refSave": 3,
-        "special": ["Greater rage"],
+        "special": [
+          "Greater rage"
+        ],
         "willSave": 3
       },
       {
@@ -238,7 +272,10 @@
         "fortSave": 8,
         "level": 12,
         "refSave": 4,
-        "special": ["Rage 4/day", "trap sense +4"],
+        "special": [
+          "Rage 4/day",
+          "trap sense +4"
+        ],
         "willSave": 4
       },
       {
@@ -246,7 +283,9 @@
         "fortSave": 8,
         "level": 13,
         "refSave": 4,
-        "special": ["Damage reduction 3/-"],
+        "special": [
+          "Damage reduction 3/-"
+        ],
         "willSave": 4
       },
       {
@@ -254,7 +293,9 @@
         "fortSave": 9,
         "level": 14,
         "refSave": 4,
-        "special": ["Indomitable will"],
+        "special": [
+          "Indomitable will"
+        ],
         "willSave": 4
       },
       {
@@ -262,7 +303,9 @@
         "fortSave": 9,
         "level": 15,
         "refSave": 5,
-        "special": ["Trap sense +5"],
+        "special": [
+          "Trap sense +5"
+        ],
         "willSave": 5
       },
       {
@@ -270,7 +313,10 @@
         "fortSave": 10,
         "level": 16,
         "refSave": 5,
-        "special": ["Damage reduction 4/-", "rage 5/day"],
+        "special": [
+          "Damage reduction 4/-",
+          "rage 5/day"
+        ],
         "willSave": 5
       },
       {
@@ -278,7 +324,9 @@
         "fortSave": 10,
         "level": 17,
         "refSave": 5,
-        "special": ["Tireless rage"],
+        "special": [
+          "Tireless rage"
+        ],
         "willSave": 5
       },
       {
@@ -286,7 +334,9 @@
         "fortSave": 11,
         "level": 18,
         "refSave": 6,
-        "special": ["Trap sense +6"],
+        "special": [
+          "Trap sense +6"
+        ],
         "willSave": 6
       },
       {
@@ -294,7 +344,9 @@
         "fortSave": 11,
         "level": 19,
         "refSave": 6,
-        "special": ["Damage reduction 5/-"],
+        "special": [
+          "Damage reduction 5/-"
+        ],
         "willSave": 6
       },
       {
@@ -302,7 +354,10 @@
         "fortSave": 12,
         "level": 20,
         "refSave": 6,
-        "special": ["Mighty rage", "rage 6/day"],
+        "special": [
+          "Mighty rage",
+          "rage 6/day"
+        ],
         "willSave": 6
       }
     ],

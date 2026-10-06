@@ -135,7 +135,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Weapon Finesse"],
+        "special": [
+          "Weapon Finesse"
+        ],
         "willSave": 0
       },
       {
@@ -143,7 +145,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Grace +1"],
+        "special": [
+          "Grace +1"
+        ],
         "willSave": 0
       },
       {
@@ -151,7 +155,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Insightful strike"],
+        "special": [
+          "Insightful strike"
+        ],
         "willSave": 1
       },
       {
@@ -167,7 +173,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Dodge bonus +1"],
+        "special": [
+          "Dodge bonus +1"
+        ],
         "willSave": 1
       },
       {
@@ -183,7 +191,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Acrobatic charge"],
+        "special": [
+          "Acrobatic charge"
+        ],
         "willSave": 2
       },
       {
@@ -191,7 +201,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Improved flanking"],
+        "special": [
+          "Improved flanking"
+        ],
         "willSave": 2
       },
       {
@@ -207,7 +219,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Dodge bonus +2"],
+        "special": [
+          "Dodge bonus +2"
+        ],
         "willSave": 3
       },
       {
@@ -215,7 +229,10 @@
         "fortSave": 7,
         "level": 11,
         "refSave": 3,
-        "special": ["Grace +2", "lucky"],
+        "special": [
+          "Grace +2",
+          "lucky"
+        ],
         "willSave": 3
       },
       {
@@ -231,7 +248,9 @@
         "fortSave": 8,
         "level": 13,
         "refSave": 4,
-        "special": ["Acrobatic skill mastery"],
+        "special": [
+          "Acrobatic skill mastery"
+        ],
         "willSave": 4
       },
       {
@@ -239,7 +258,9 @@
         "fortSave": 9,
         "level": 14,
         "refSave": 4,
-        "special": ["Weakening critical"],
+        "special": [
+          "Weakening critical"
+        ],
         "willSave": 4
       },
       {
@@ -247,7 +268,9 @@
         "fortSave": 9,
         "level": 15,
         "refSave": 5,
-        "special": ["Dodge bonus +3"],
+        "special": [
+          "Dodge bonus +3"
+        ],
         "willSave": 5
       },
       {
@@ -263,7 +286,9 @@
         "fortSave": 10,
         "level": 17,
         "refSave": 5,
-        "special": ["Slippery mind"],
+        "special": [
+          "Slippery mind"
+        ],
         "willSave": 5
       },
       {
@@ -279,7 +304,9 @@
         "fortSave": 11,
         "level": 19,
         "refSave": 6,
-        "special": ["Wounding critical"],
+        "special": [
+          "Wounding critical"
+        ],
         "willSave": 6
       },
       {
@@ -287,7 +314,10 @@
         "fortSave": 12,
         "level": 20,
         "refSave": 6,
-        "special": ["Dodge bonus +4", "grace +3"],
+        "special": [
+          "Dodge bonus +4",
+          "grace +3"
+        ],
         "willSave": 6
       }
     ],

@@ -1,9 +1,14 @@
 {
   "name": "arkyvree",
-  "version": "0.0.0",
   "private": true,
+  "version": "0.0.0",
   "license": "GPL-3.0-only",
   "type": "module",
+  "overrides": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "pdfkit": "0.20.2"
+  },
   "scripts": {
     "dev:db": "docker compose up postgres-dev --wait",
     "dev:db:stop": "docker compose down postgres-dev",
@@ -117,10 +122,5 @@
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
     "vite-plugin-pwa": "^1.3.0"
-  },
-  "overrides": {
-    "pdfkit": "0.20.2",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
   }
 }

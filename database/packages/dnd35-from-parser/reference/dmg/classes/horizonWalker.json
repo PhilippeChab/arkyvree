@@ -207,7 +207,9 @@
     "name": "Horizon Walker",
     "prerequisites": {
       "parsed": {
-        "feats": ["Endurance"],
+        "feats": [
+          "Endurance"
+        ],
         "skills": [
           {
             "name": "Knowledge (geography)",
@@ -223,7 +225,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Terrain Mastery"],
+        "special": [
+          "Terrain Mastery"
+        ],
         "willSave": 0
       },
       {
@@ -231,7 +235,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Terrain Mastery"],
+        "special": [
+          "Terrain Mastery"
+        ],
         "willSave": 0
       },
       {
@@ -239,7 +245,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Terrain Mastery"],
+        "special": [
+          "Terrain Mastery"
+        ],
         "willSave": 1
       },
       {
@@ -247,7 +255,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Terrain Mastery"],
+        "special": [
+          "Terrain Mastery"
+        ],
         "willSave": 1
       },
       {
@@ -255,7 +265,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Terrain Mastery"],
+        "special": [
+          "Terrain Mastery"
+        ],
         "willSave": 1
       },
       {
@@ -263,7 +275,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Planar Terrain Mastery"],
+        "special": [
+          "Planar Terrain Mastery"
+        ],
         "willSave": 2
       },
       {
@@ -271,7 +285,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Planar Terrain Mastery"],
+        "special": [
+          "Planar Terrain Mastery"
+        ],
         "willSave": 2
       },
       {
@@ -279,7 +295,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Planar Terrain Mastery"],
+        "special": [
+          "Planar Terrain Mastery"
+        ],
         "willSave": 2
       },
       {
@@ -287,7 +305,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Planar Terrain Mastery"],
+        "special": [
+          "Planar Terrain Mastery"
+        ],
         "willSave": 3
       },
       {
@@ -295,7 +315,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Planar Terrain Mastery"],
+        "special": [
+          "Planar Terrain Mastery"
+        ],
         "willSave": 3
       }
     ],

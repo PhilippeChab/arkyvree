@@ -102,7 +102,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Turn or rebuke undead"],
+        "special": [
+          "Turn or rebuke undead"
+        ],
         "spellsPerDay": "3,1+1,-,-,-,-,-,-,-,-",
         "willSave": 2
       },

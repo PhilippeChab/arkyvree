@@ -119,7 +119,9 @@
     "name": "Nightsong Infiltrator",
     "prerequisites": {
       "parsed": {
-        "feats": ["Alertness"],
+        "feats": [
+          "Alertness"
+        ],
         "skills": [
           {
             "name": "Climb",
@@ -150,7 +152,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Teamwork trap sense +1", "trapfinding"],
+        "special": [
+          "Teamwork trap sense +1",
+          "trapfinding"
+        ],
         "willSave": 0
       },
       {
@@ -158,7 +163,10 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["Steady stance", "teamwork infiltration +2"],
+        "special": [
+          "Steady stance",
+          "teamwork infiltration +2"
+        ],
         "willSave": 0
       },
       {
@@ -166,7 +174,10 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Break away", "trackless step (self)"],
+        "special": [
+          "Break away",
+          "trackless step (self)"
+        ],
         "willSave": 1
       },
       {
@@ -174,7 +185,11 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["Detect magic", "teamwork sneak attack +1d6", "teamwork trap sense +2"],
+        "special": [
+          "Detect magic",
+          "teamwork sneak attack +1d6",
+          "teamwork trap sense +2"
+        ],
         "willSave": 1
       },
       {
@@ -182,7 +197,10 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Defensive roll", "grant move action 1/day"],
+        "special": [
+          "Defensive roll",
+          "grant move action 1/day"
+        ],
         "willSave": 1
       },
       {
@@ -190,7 +208,11 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": ["Improved evasion", "skill mastery", "specialized tools"],
+        "special": [
+          "Improved evasion",
+          "skill mastery",
+          "specialized tools"
+        ],
         "willSave": 2
       },
       {
@@ -198,7 +220,10 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": ["Teamwork trap sense +3", "trackless step (allies)"],
+        "special": [
+          "Teamwork trap sense +3",
+          "trackless step (allies)"
+        ],
         "willSave": 2
       },
       {
@@ -206,7 +231,10 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": ["Teamwork infiltration +4", "teamwork sneak attack +2d6"],
+        "special": [
+          "Teamwork infiltration +4",
+          "teamwork sneak attack +2d6"
+        ],
         "willSave": 2
       },
       {
@@ -214,7 +242,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": ["Grant move action 2/day"],
+        "special": [
+          "Grant move action 2/day"
+        ],
         "willSave": 3
       },
       {
@@ -222,7 +252,10 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": ["Hide in plain sight", "teamwork trap sense +4"],
+        "special": [
+          "Hide in plain sight",
+          "teamwork trap sense +4"
+        ],
         "willSave": 3
       }
     ],

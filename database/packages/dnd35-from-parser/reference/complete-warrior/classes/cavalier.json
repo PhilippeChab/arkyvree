@@ -102,7 +102,12 @@
       "parsed": {
         "alignment": "Any lawful",
         "bab": 8,
-        "feats": ["Spirited Charge", "Weapon Focus (lance)", "Mounted Combat", "Ride-By Attack"],
+        "feats": [
+          "Spirited Charge",
+          "Weapon Focus (lance)",
+          "Mounted Combat",
+          "Ride-By Attack"
+        ],
         "skills": [
           {
             "name": "Handle Animal",
@@ -126,7 +131,12 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Special mount", "mounted weapon bonus (lance) +1", "Ride bonus +2", "courtly knowledge"],
+        "special": [
+          "Special mount",
+          "mounted weapon bonus (lance) +1",
+          "Ride bonus +2",
+          "courtly knowledge"
+        ],
         "willSave": 2
       },
       {
@@ -134,7 +144,10 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Deadly charge 1/day", "mounted weapon bonus (sword) +1"],
+        "special": [
+          "Deadly charge 1/day",
+          "mounted weapon bonus (sword) +1"
+        ],
         "willSave": 3
       },
       {
@@ -142,7 +155,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Burst of speed"],
+        "special": [
+          "Burst of speed"
+        ],
         "willSave": 3
       },
       {
@@ -150,7 +165,10 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Deadly charge 2/day", "Ride bonus +4"],
+        "special": [
+          "Deadly charge 2/day",
+          "Ride bonus +4"
+        ],
         "willSave": 4
       },
       {
@@ -158,7 +176,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Mounted weapon bonus (lance) +2"],
+        "special": [
+          "Mounted weapon bonus (lance) +2"
+        ],
         "willSave": 4
       },
       {
@@ -166,7 +186,11 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Deadly charge 3/day", "full mounted attack", "mounted weapon bonus (sword) +2"],
+        "special": [
+          "Deadly charge 3/day",
+          "full mounted attack",
+          "mounted weapon bonus (sword) +2"
+        ],
         "willSave": 5
       },
       {
@@ -174,7 +198,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Ride bonus +6"],
+        "special": [
+          "Ride bonus +6"
+        ],
         "willSave": 5
       },
       {
@@ -182,7 +208,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Deadly charge 4/day"],
+        "special": [
+          "Deadly charge 4/day"
+        ],
         "willSave": 6
       },
       {
@@ -190,7 +218,10 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Mounted weapon bonus (lance) +3", "Ride bonus +8"],
+        "special": [
+          "Mounted weapon bonus (lance) +3",
+          "Ride bonus +8"
+        ],
         "willSave": 6
       },
       {
@@ -198,7 +229,10 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Unstoppable charge 5/day", "mounted weapon bonus (sword) +3"],
+        "special": [
+          "Unstoppable charge 5/day",
+          "mounted weapon bonus (sword) +3"
+        ],
         "willSave": 7
       }
     ],

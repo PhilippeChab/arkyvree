@@ -110,7 +110,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Telepathy"],
+        "special": [
+          "Telepathy"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 2
       },
@@ -119,7 +121,10 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Push the weak mind 1/day", "skill boost"],
+        "special": [
+          "Push the weak mind 1/day",
+          "skill boost"
+        ],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -128,7 +133,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Mindread 2/day"],
+        "special": [
+          "Mindread 2/day"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -137,7 +144,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Eternal charm (1)"],
+        "special": [
+          "Eternal charm (1)"
+        ],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -146,7 +155,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Push the weak mind 2/day"],
+        "special": [
+          "Push the weak mind 2/day"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 4
       },
@@ -155,7 +166,10 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Enchantment spell power +2", "eternal charm (2)"],
+        "special": [
+          "Enchantment spell power +2",
+          "eternal charm (2)"
+        ],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -164,7 +178,10 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Dominate", "mindread 4/day"],
+        "special": [
+          "Dominate",
+          "mindread 4/day"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 5
       },
@@ -173,7 +190,10 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Eternal charm (3)", "push the weak mind 3/day"],
+        "special": [
+          "Eternal charm (3)",
+          "push the weak mind 3/day"
+        ],
         "spellsPerDay": "-",
         "willSave": 6
       },
@@ -191,7 +211,11 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Enchantment spell power +4", "eternal charm (4)", "thrall"],
+        "special": [
+          "Enchantment spell power +4",
+          "eternal charm (4)",
+          "thrall"
+        ],
         "spellsPerDay": "-",
         "willSave": 7
       }

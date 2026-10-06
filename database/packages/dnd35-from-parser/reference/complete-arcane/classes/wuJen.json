@@ -68,7 +68,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Watchful spirit", "bonus feat"],
+        "special": [
+          "Watchful spirit",
+          "bonus feat"
+        ],
         "spellsPerDay": "3,1,-,-,-,-,-,-,-,-",
         "willSave": 2
       },
@@ -86,7 +89,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Spell secret"],
+        "special": [
+          "Spell secret"
+        ],
         "spellsPerDay": "4,2,1,-,-,-,-,-,-,-",
         "willSave": 3
       },
@@ -113,7 +118,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": ["Elemental mastery"],
+        "special": [
+          "Elemental mastery"
+        ],
         "spellsPerDay": "4,3,3,2,-,-,-,-,-,-",
         "willSave": 5
       },
@@ -140,7 +147,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": ["Spell secret"],
+        "special": [
+          "Spell secret"
+        ],
         "spellsPerDay": "4,4,4,3,2,1,-,-,-,-",
         "willSave": 6
       },
@@ -167,7 +176,9 @@
         "fortSave": 4,
         "level": 12,
         "refSave": 4,
-        "special": ["Spell secret"],
+        "special": [
+          "Spell secret"
+        ],
         "spellsPerDay": "4,4,4,4,3,3,2,-,-,-",
         "willSave": 8
       },
@@ -194,7 +205,9 @@
         "fortSave": 5,
         "level": 15,
         "refSave": 5,
-        "special": ["Spell secret"],
+        "special": [
+          "Spell secret"
+        ],
         "spellsPerDay": "4,4,4,4,4,4,3,2,1,-",
         "willSave": 9
       },
@@ -221,7 +234,9 @@
         "fortSave": 6,
         "level": 18,
         "refSave": 6,
-        "special": ["Spell secret"],
+        "special": [
+          "Spell secret"
+        ],
         "spellsPerDay": "4,4,4,4,4,4,4,3,3,2",
         "willSave": 11
       },

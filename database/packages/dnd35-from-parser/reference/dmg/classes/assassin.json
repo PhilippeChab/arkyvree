@@ -123,7 +123,9 @@
             "ranks": 8
           }
         ],
-        "special": ["The character must kill someone for no other reason than to join the assassins."]
+        "special": [
+          "The character must kill someone for no other reason than to join the assassins."
+        ]
       },
       "text": "Alignment: Any evil Skills: Disguise 4 ranks, Hide 8 ranks, Move Silently 8 ranks Special: The character must kill someone for no other reason than to join the assassins."
     },
@@ -133,7 +135,12 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Sneak attack +1d6", "death attack", "poison use", "spells"],
+        "special": [
+          "Sneak attack +1d6",
+          "death attack",
+          "poison use",
+          "spells"
+        ],
         "spellsPerDay": "0,-,-,-",
         "willSave": 0
       },
@@ -142,7 +149,10 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["+1 save against poison", "uncanny dodge"],
+        "special": [
+          "+1 save against poison",
+          "uncanny dodge"
+        ],
         "spellsPerDay": "1,-,-,-",
         "willSave": 0
       },
@@ -151,7 +161,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Sneak attack +2d6"],
+        "special": [
+          "Sneak attack +2d6"
+        ],
         "spellsPerDay": "2,0,-,-",
         "willSave": 1
       },
@@ -160,7 +172,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["+2 save against poison"],
+        "special": [
+          "+2 save against poison"
+        ],
         "spellsPerDay": "3,1,-,-",
         "willSave": 1
       },
@@ -169,7 +183,10 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Improved uncanny dodge", "sneak attack +3d6"],
+        "special": [
+          "Improved uncanny dodge",
+          "sneak attack +3d6"
+        ],
         "spellsPerDay": "3,2,0,-",
         "willSave": 1
       },
@@ -178,7 +195,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": ["+3 save against poison"],
+        "special": [
+          "+3 save against poison"
+        ],
         "spellsPerDay": "3,3,1,-",
         "willSave": 2
       },
@@ -187,7 +206,9 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": ["Sneak attack +4d6"],
+        "special": [
+          "Sneak attack +4d6"
+        ],
         "spellsPerDay": "3,3,2,0",
         "willSave": 2
       },
@@ -196,7 +217,10 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": ["+4 save against poison", "hide in plain sight"],
+        "special": [
+          "+4 save against poison",
+          "hide in plain sight"
+        ],
         "spellsPerDay": "3,3,3,1",
         "willSave": 2
       },
@@ -205,7 +229,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": ["Sneak attack +5d6"],
+        "special": [
+          "Sneak attack +5d6"
+        ],
         "spellsPerDay": "3,3,3,2",
         "willSave": 3
       },
@@ -214,7 +240,9 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": ["+5 save against poison"],
+        "special": [
+          "+5 save against poison"
+        ],
         "spellsPerDay": "3,3,3,3",
         "willSave": 3
       }

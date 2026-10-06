@@ -91,14 +91,21 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": ["Craft", "Intimidate", "Profession"],
+    "classSkills": [
+      "Craft",
+      "Intimidate",
+      "Profession"
+    ],
     "description": "The only real requirement for exotic weapon master is commitment and perseverance.",
     "hitDie": "d10",
     "name": "Exotic Weapon Master",
     "prerequisites": {
       "parsed": {
         "bab": 6,
-        "feats": ["Exotic Weapon Proficiency (any exotic weapon)", "Weapon Focus (any exotic weapon)"],
+        "feats": [
+          "Exotic Weapon Proficiency (any exotic weapon)",
+          "Weapon Focus (any exotic weapon)"
+        ],
         "skills": [
           {
             "name": "Craft (Weaponsmithing)",
@@ -117,7 +124,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Exotic weapon stunt"],
+        "special": [
+          "Exotic weapon stunt"
+        ],
         "willSave": 0
       },
       {
@@ -125,7 +134,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Exotic weapon stunt"],
+        "special": [
+          "Exotic weapon stunt"
+        ],
         "willSave": 0
       },
       {
@@ -133,7 +144,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Exotic weapon stunt"],
+        "special": [
+          "Exotic weapon stunt"
+        ],
         "willSave": 1
       }
     ],

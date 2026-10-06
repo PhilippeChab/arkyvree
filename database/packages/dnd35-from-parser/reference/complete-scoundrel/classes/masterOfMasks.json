@@ -11,7 +11,9 @@
         "modifiers": null
       }
     },
-    "reviewed": ["*Masks Known"]
+    "reviewed": [
+      "*Masks Known"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -81,7 +83,9 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Persona masks"],
+        "special": [
+          "Persona masks"
+        ],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -105,7 +109,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Mask specialist"],
+        "special": [
+          "Mask specialist"
+        ],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -129,7 +135,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Many faces (2, move)"],
+        "special": [
+          "Many faces (2, move)"
+        ],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -141,7 +149,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": ["Hidden mask"],
+        "special": [
+          "Hidden mask"
+        ],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -165,7 +175,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": ["Many faces (3, swift)"],
+        "special": [
+          "Many faces (3, swift)"
+        ],
         "spellsPerDay": "-",
         "willSave": 6
       },
@@ -189,7 +201,9 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": ["Many faces (4, immediate)"],
+        "special": [
+          "Many faces (4, immediate)"
+        ],
         "spellsPerDay": "-",
         "willSave": 7
       }

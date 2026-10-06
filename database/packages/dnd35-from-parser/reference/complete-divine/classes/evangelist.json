@@ -22,7 +22,9 @@
         "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
     },
-    "reviewed": ["Great Orator (Inspire Dread Or Inspire Hope)"]
+    "reviewed": [
+      "Great Orator (Inspire Dread Or Inspire Hope)"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -84,7 +86,10 @@
     "prerequisites": {
       "parsed": {
         "alignment": "As a cleric of the chosen deity",
-        "feats": ["Negotiator (or)", "Persuasive"],
+        "feats": [
+          "Negotiator (or)",
+          "Persuasive"
+        ],
         "skills": [
           {
             "name": "Bluff",
@@ -116,7 +121,9 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Great orator (inspire dread or inspire hope)"],
+        "special": [
+          "Great orator (inspire dread or inspire hope)"
+        ],
         "willSave": 2
       },
       {
@@ -124,7 +131,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": ["Fast talk"],
+        "special": [
+          "Fast talk"
+        ],
         "willSave": 3
       },
       {
@@ -132,7 +141,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Great orator (inflame the righteous)"],
+        "special": [
+          "Great orator (inflame the righteous)"
+        ],
         "willSave": 3
       },
       {
@@ -140,7 +151,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": ["Skill mastery"],
+        "special": [
+          "Skill mastery"
+        ],
         "willSave": 4
       },
       {
@@ -148,7 +161,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": ["Great orator (convert the unfaithful)"],
+        "special": [
+          "Great orator (convert the unfaithful)"
+        ],
         "willSave": 4
       }
     ],

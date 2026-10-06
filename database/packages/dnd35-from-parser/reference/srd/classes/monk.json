@@ -111,7 +111,9 @@
         "level": 3
       },
       "Flurry of Blows": {
-        "aliases": ["Greater Flurry"],
+        "aliases": [
+          "Greater Flurry"
+        ],
         "description": "While unarmored, a monk can trade precision for volume of attacks by unleashing a rapid barrage of strikes. This grants one additional attack per round at her highest base attack bonus, but every attack that round (including the extra one) suffers a -2 penalty. The adjusted attack bonuses appear in the Flurry of Blows Attack Bonus column of the class table. Because this penalty persists for the full round, it also applies to any attacks of opportunity the monk takes before her next turn. At 5th level the penalty decreases to -1, and at 9th level it vanishes entirely. Executing a flurry of blows requires a full attack action. During a flurry, the monk may only use unarmed strikes or special monk weapons (kama, nunchaku, quarterstaff, sai, shuriken, and siangham), and she can freely mix unarmed strikes with monk weapon attacks in any combination she chooses. When wielding weapons during a flurry of blows, the monk uses her Strength bonus (not 1-1/2 times or 1/2 times her Strength bonus) for damage on all hits, regardless of whether she holds the weapon in one or both hands. No weapon other than a special monk weapon may be employed as part of a flurry. The quarterstaff is treated as two separate weapons (one for each end) for flurry of blows purposes. Despite requiring two hands, a monk can still alternate between quarterstaff strikes and unarmed strikes within a single flurry, provided she has sufficient attacks to do so. However, she cannot wield any additional weapon simultaneously with a quarterstaff. At 11th level, the flurry of blows ability advances further: in addition to the single extra attack normally granted, the monk gains a second extra attack at her full base attack bonus."
       },
       "Improved Evasion": {
@@ -237,7 +239,9 @@
         "description": "Beginning at 7th level, a monk can mend her own injuries through focused will. Each day she can restore a total number of hit points equal to twice her current monk level, and she may divide this healing across multiple uses throughout the day."
       }
     },
-    "reviewed": ["Flurry BAB"]
+    "reviewed": [
+      "Flurry BAB"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -386,7 +390,11 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": ["Bonus feat", "flurry of blows", "unarmed strike"],
+        "special": [
+          "Bonus feat",
+          "flurry of blows",
+          "unarmed strike"
+        ],
         "willSave": 2
       },
       {
@@ -400,7 +408,10 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": ["Bonus feat", "evasion"],
+        "special": [
+          "Bonus feat",
+          "evasion"
+        ],
         "willSave": 3
       },
       {
@@ -414,7 +425,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": ["Still mind"],
+        "special": [
+          "Still mind"
+        ],
         "willSave": 3
       },
       {
@@ -428,7 +441,10 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": ["Ki strike (magic)", "slow fall 20 ft."],
+        "special": [
+          "Ki strike (magic)",
+          "slow fall 20 ft."
+        ],
         "willSave": 4
       },
       {
@@ -442,7 +458,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": ["Purity of body"],
+        "special": [
+          "Purity of body"
+        ],
         "willSave": 4
       },
       {
@@ -456,7 +474,10 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": ["Bonus feat", "slow fall 30 ft."],
+        "special": [
+          "Bonus feat",
+          "slow fall 30 ft."
+        ],
         "willSave": 5
       },
       {
@@ -470,7 +491,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": ["Wholeness of body"],
+        "special": [
+          "Wholeness of body"
+        ],
         "willSave": 5
       },
       {
@@ -484,7 +507,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
-        "special": ["Slow fall 40 ft."],
+        "special": [
+          "Slow fall 40 ft."
+        ],
         "willSave": 6
       },
       {
@@ -498,7 +523,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": ["Improved evasion"],
+        "special": [
+          "Improved evasion"
+        ],
         "willSave": 6
       },
       {
@@ -512,7 +539,10 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": ["Ki strike (lawful)", "slow fall 50 ft."],
+        "special": [
+          "Ki strike (lawful)",
+          "slow fall 50 ft."
+        ],
         "willSave": 7
       },
       {
@@ -526,7 +556,10 @@
         "fortSave": 7,
         "level": 11,
         "refSave": 7,
-        "special": ["Diamond body", "greater flurry"],
+        "special": [
+          "Diamond body",
+          "greater flurry"
+        ],
         "willSave": 7
       },
       {
@@ -540,7 +573,10 @@
         "fortSave": 8,
         "level": 12,
         "refSave": 8,
-        "special": ["Abundant step", "slow fall 60 ft."],
+        "special": [
+          "Abundant step",
+          "slow fall 60 ft."
+        ],
         "willSave": 8
       },
       {
@@ -554,7 +590,9 @@
         "fortSave": 8,
         "level": 13,
         "refSave": 8,
-        "special": ["Diamond soul"],
+        "special": [
+          "Diamond soul"
+        ],
         "willSave": 8
       },
       {
@@ -568,7 +606,9 @@
         "fortSave": 9,
         "level": 14,
         "refSave": 9,
-        "special": ["Slow fall 70 ft."],
+        "special": [
+          "Slow fall 70 ft."
+        ],
         "willSave": 9
       },
       {
@@ -582,7 +622,9 @@
         "fortSave": 9,
         "level": 15,
         "refSave": 9,
-        "special": ["Quivering palm"],
+        "special": [
+          "Quivering palm"
+        ],
         "willSave": 9
       },
       {
@@ -596,7 +638,10 @@
         "fortSave": 10,
         "level": 16,
         "refSave": 10,
-        "special": ["Ki strike (adamantine)", "slow fall 80 ft."],
+        "special": [
+          "Ki strike (adamantine)",
+          "slow fall 80 ft."
+        ],
         "willSave": 10
       },
       {
@@ -610,7 +655,10 @@
         "fortSave": 10,
         "level": 17,
         "refSave": 10,
-        "special": ["Timeless body", "tongue of the sun and moon"],
+        "special": [
+          "Timeless body",
+          "tongue of the sun and moon"
+        ],
         "willSave": 10
       },
       {
@@ -624,7 +672,9 @@
         "fortSave": 11,
         "level": 18,
         "refSave": 11,
-        "special": ["Slow fall 90 ft."],
+        "special": [
+          "Slow fall 90 ft."
+        ],
         "willSave": 11
       },
       {
@@ -638,7 +688,9 @@
         "fortSave": 11,
         "level": 19,
         "refSave": 11,
-        "special": ["Empty body"],
+        "special": [
+          "Empty body"
+        ],
         "willSave": 11
       },
       {
@@ -652,7 +704,10 @@
         "fortSave": 12,
         "level": 20,
         "refSave": 12,
-        "special": ["Perfect self", "slow fall any distance"],
+        "special": [
+          "Perfect self",
+          "slow fall any distance"
+        ],
         "willSave": 12
       }
     ],

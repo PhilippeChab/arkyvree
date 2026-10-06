@@ -146,7 +146,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Sneak attack +1d6", "trapfinding"],
+        "special": [
+          "Sneak attack +1d6",
+          "trapfinding"
+        ],
         "willSave": 0
       },
       {
@@ -154,7 +157,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["Evasion"],
+        "special": [
+          "Evasion"
+        ],
         "willSave": 0
       },
       {
@@ -162,7 +167,10 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Sneak attack +2d6", "trap sense +1"],
+        "special": [
+          "Sneak attack +2d6",
+          "trap sense +1"
+        ],
         "willSave": 1
       },
       {
@@ -170,7 +178,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["Uncanny dodge"],
+        "special": [
+          "Uncanny dodge"
+        ],
         "willSave": 1
       },
       {
@@ -178,7 +188,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Sneak attack +3d6"],
+        "special": [
+          "Sneak attack +3d6"
+        ],
         "willSave": 1
       },
       {
@@ -186,7 +198,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": ["Trap sense +2"],
+        "special": [
+          "Trap sense +2"
+        ],
         "willSave": 2
       },
       {
@@ -194,7 +208,9 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": ["Sneak attack +4d6"],
+        "special": [
+          "Sneak attack +4d6"
+        ],
         "willSave": 2
       },
       {
@@ -202,7 +218,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": ["Improved uncanny dodge"],
+        "special": [
+          "Improved uncanny dodge"
+        ],
         "willSave": 2
       },
       {
@@ -210,7 +228,10 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": ["Sneak attack +5d6", "trap sense +3"],
+        "special": [
+          "Sneak attack +5d6",
+          "trap sense +3"
+        ],
         "willSave": 3
       },
       {
@@ -218,7 +239,9 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": ["Special ability"],
+        "special": [
+          "Special ability"
+        ],
         "willSave": 3
       },
       {
@@ -226,7 +249,9 @@
         "fortSave": 3,
         "level": 11,
         "refSave": 7,
-        "special": ["Sneak attack +6d6"],
+        "special": [
+          "Sneak attack +6d6"
+        ],
         "willSave": 3
       },
       {
@@ -234,7 +259,9 @@
         "fortSave": 4,
         "level": 12,
         "refSave": 8,
-        "special": ["Trap sense +4"],
+        "special": [
+          "Trap sense +4"
+        ],
         "willSave": 4
       },
       {
@@ -242,7 +269,10 @@
         "fortSave": 4,
         "level": 13,
         "refSave": 8,
-        "special": ["Sneak attack +7d6", "special ability"],
+        "special": [
+          "Sneak attack +7d6",
+          "special ability"
+        ],
         "willSave": 4
       },
       {
@@ -258,7 +288,10 @@
         "fortSave": 5,
         "level": 15,
         "refSave": 9,
-        "special": ["Sneak attack +8d6", "trap sense +5"],
+        "special": [
+          "Sneak attack +8d6",
+          "trap sense +5"
+        ],
         "willSave": 5
       },
       {
@@ -266,7 +299,9 @@
         "fortSave": 5,
         "level": 16,
         "refSave": 10,
-        "special": ["Special ability"],
+        "special": [
+          "Special ability"
+        ],
         "willSave": 5
       },
       {
@@ -274,7 +309,9 @@
         "fortSave": 5,
         "level": 17,
         "refSave": 10,
-        "special": ["Sneak attack +9d6"],
+        "special": [
+          "Sneak attack +9d6"
+        ],
         "willSave": 5
       },
       {
@@ -282,7 +319,9 @@
         "fortSave": 6,
         "level": 18,
         "refSave": 11,
-        "special": ["Trap sense +6"],
+        "special": [
+          "Trap sense +6"
+        ],
         "willSave": 6
       },
       {
@@ -290,7 +329,10 @@
         "fortSave": 6,
         "level": 19,
         "refSave": 11,
-        "special": ["Sneak attack +10d6", "special ability"],
+        "special": [
+          "Sneak attack +10d6",
+          "special ability"
+        ],
         "willSave": 6
       },
       {

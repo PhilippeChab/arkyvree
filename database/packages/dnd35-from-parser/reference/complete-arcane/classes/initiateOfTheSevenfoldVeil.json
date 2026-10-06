@@ -96,7 +96,11 @@
     "name": "Initiate of the Sevenfold Veil",
     "prerequisites": {
       "parsed": {
-        "feats": ["Greater Spell Focus (abjuration)", "Spell Focus (abjuration)", "Skill Focus (spellcraft)"],
+        "feats": [
+          "Greater Spell Focus (abjuration)",
+          "Spell Focus (abjuration)",
+          "Skill Focus (spellcraft)"
+        ],
         "skills": [
           {
             "name": "Knowledge (arcana)",
@@ -120,7 +124,11 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Warding 1/day", "unimpeachable abjuration", "red veil"],
+        "special": [
+          "Warding 1/day",
+          "unimpeachable abjuration",
+          "red veil"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 2
       },
@@ -129,7 +137,10 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": ["Unanswerable strike +2", "orange veil"],
+        "special": [
+          "Unanswerable strike +2",
+          "orange veil"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -138,7 +149,10 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Warding 2/day", "yellow veil"],
+        "special": [
+          "Warding 2/day",
+          "yellow veil"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -147,7 +161,10 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": ["Reactivating warding", "green veil"],
+        "special": [
+          "Reactivating warding",
+          "green veil"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 4
       },
@@ -156,7 +173,10 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": ["Warding 3/day", "blue veil"],
+        "special": [
+          "Warding 3/day",
+          "blue veil"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 4
       },
@@ -165,7 +185,11 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": ["Unanswerable strike +4", "double warding", "indigo veil"],
+        "special": [
+          "Unanswerable strike +4",
+          "double warding",
+          "indigo veil"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 5
       },
@@ -174,7 +198,11 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": ["Kaleidoscopic doom", "violet veil", "warding 4/day"],
+        "special": [
+          "Kaleidoscopic doom",
+          "violet veil",
+          "warding 4/day"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 5
       }

@@ -127,14 +127,28 @@
         "name": "Deflect Arrows"
       }
     ],
-    "classSkills": ["Balance", "Bluff", "Escape Artist", "Jump", "Listen", "Perform", "Sense Motive", "Spot", "Tumble"],
+    "classSkills": [
+      "Balance",
+      "Bluff",
+      "Escape Artist",
+      "Jump",
+      "Listen",
+      "Perform",
+      "Sense Motive",
+      "Spot",
+      "Tumble"
+    ],
     "description": "The duelist is a nimble, intelligent fighter trained in making precise attacks with light weapons.",
     "hitDie": "d10",
     "name": "Duelist",
     "prerequisites": {
       "parsed": {
         "bab": 6,
-        "feats": ["Dodge", "Mobility", "Weapon Finesse"],
+        "feats": [
+          "Dodge",
+          "Mobility",
+          "Weapon Finesse"
+        ],
         "skills": [
           {
             "name": "Perform",
@@ -154,7 +168,9 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Canny defense"],
+        "special": [
+          "Canny defense"
+        ],
         "willSave": 0
       },
       {
@@ -162,7 +178,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["Improved reaction +2"],
+        "special": [
+          "Improved reaction +2"
+        ],
         "willSave": 0
       },
       {
@@ -170,7 +188,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Enhanced mobility"],
+        "special": [
+          "Enhanced mobility"
+        ],
         "willSave": 1
       },
       {
@@ -178,7 +198,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["Grace"],
+        "special": [
+          "Grace"
+        ],
         "willSave": 1
       },
       {
@@ -186,7 +208,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Precise strike +1d6"],
+        "special": [
+          "Precise strike +1d6"
+        ],
         "willSave": 1
       },
       {
@@ -194,7 +218,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": ["Acrobatic charge"],
+        "special": [
+          "Acrobatic charge"
+        ],
         "willSave": 2
       },
       {
@@ -202,7 +228,9 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": ["Elaborate parry"],
+        "special": [
+          "Elaborate parry"
+        ],
         "willSave": 2
       },
       {
@@ -210,7 +238,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": ["Improved reaction +4"],
+        "special": [
+          "Improved reaction +4"
+        ],
         "willSave": 2
       },
       {
@@ -218,7 +248,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": ["Deflect arrows"],
+        "special": [
+          "Deflect arrows"
+        ],
         "willSave": 3
       },
       {
@@ -226,7 +258,9 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": ["Precise strike +2d6"],
+        "special": [
+          "Precise strike +2d6"
+        ],
         "willSave": 3
       }
     ],

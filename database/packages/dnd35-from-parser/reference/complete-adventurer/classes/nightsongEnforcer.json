@@ -76,7 +76,9 @@
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": ["Improved Initiative"],
+        "feats": [
+          "Improved Initiative"
+        ],
         "skills": [
           {
             "name": "Hide",
@@ -99,7 +101,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Sneak attack +1d6", "teamwork (hear/see allies)"],
+        "special": [
+          "Sneak attack +1d6",
+          "teamwork (hear/see allies)"
+        ],
         "willSave": 0
       },
       {
@@ -107,7 +112,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["Agility training"],
+        "special": [
+          "Agility training"
+        ],
         "willSave": 0
       },
       {
@@ -115,7 +122,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Skill teamwork +2"],
+        "special": [
+          "Skill teamwork +2"
+        ],
         "willSave": 1
       },
       {
@@ -123,7 +132,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["Sneak attack +2d6"],
+        "special": [
+          "Sneak attack +2d6"
+        ],
         "willSave": 1
       },
       {
@@ -131,7 +142,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Flanking teamwork"],
+        "special": [
+          "Flanking teamwork"
+        ],
         "willSave": 1
       },
       {
@@ -139,7 +152,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": ["Opportunist"],
+        "special": [
+          "Opportunist"
+        ],
         "willSave": 2
       },
       {
@@ -147,7 +162,10 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": ["Sneak attack +3d6", "skill teamwork +4"],
+        "special": [
+          "Sneak attack +3d6",
+          "skill teamwork +4"
+        ],
         "willSave": 2
       },
       {
@@ -155,7 +173,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": ["Improved evasion"],
+        "special": [
+          "Improved evasion"
+        ],
         "willSave": 2
       },
       {
@@ -163,7 +183,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": ["Teamwork (status)"],
+        "special": [
+          "Teamwork (status)"
+        ],
         "willSave": 3
       },
       {
@@ -171,7 +193,9 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": ["Sneak attack +4d6"],
+        "special": [
+          "Sneak attack +4d6"
+        ],
         "willSave": 3
       }
     ],

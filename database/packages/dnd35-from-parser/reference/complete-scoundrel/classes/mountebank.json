@@ -144,7 +144,9 @@
     "prerequisites": {
       "parsed": {
         "alignment": "Any nonlawful",
-        "feats": ["Deceitful"],
+        "feats": [
+          "Deceitful"
+        ],
         "skills": [
           {
             "name": "Bluff",
@@ -168,7 +170,9 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Tongue of the devil"],
+        "special": [
+          "Tongue of the devil"
+        ],
         "willSave": 0
       },
       {
@@ -176,7 +180,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["Sneak attack +1d6"],
+        "special": [
+          "Sneak attack +1d6"
+        ],
         "willSave": 0
       },
       {
@@ -184,7 +190,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Alter ego"],
+        "special": [
+          "Alter ego"
+        ],
         "willSave": 1
       },
       {
@@ -192,7 +200,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["Sideslip 1/day"],
+        "special": [
+          "Sideslip 1/day"
+        ],
         "willSave": 1
       },
       {
@@ -200,7 +210,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Sneak attack +2d6"],
+        "special": [
+          "Sneak attack +2d6"
+        ],
         "willSave": 1
       },
       {
@@ -208,7 +220,10 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": ["Alter ego", "sideslip 2/day"],
+        "special": [
+          "Alter ego",
+          "sideslip 2/day"
+        ],
         "willSave": 2
       },
       {
@@ -216,7 +231,9 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": ["Slippery mind"],
+        "special": [
+          "Slippery mind"
+        ],
         "willSave": 2
       },
       {
@@ -224,7 +241,10 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": ["Sideslip 3/day", "sneak attack +3d6"],
+        "special": [
+          "Sideslip 3/day",
+          "sneak attack +3d6"
+        ],
         "willSave": 2
       },
       {
@@ -232,7 +252,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": ["Alter ego"],
+        "special": [
+          "Alter ego"
+        ],
         "willSave": 3
       },
       {
@@ -240,7 +262,10 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": ["Sideslip 4/day", "sudden escape"],
+        "special": [
+          "Sideslip 4/day",
+          "sudden escape"
+        ],
         "willSave": 3
       }
     ],

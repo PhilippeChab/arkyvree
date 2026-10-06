@@ -77,21 +77,32 @@
         "type": "(Su)"
       }
     ],
-    "classSkills": ["Bluff", "Concentration", "Craft", "Heal", "Spellcraft"],
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Heal",
+      "Spellcraft"
+    ],
     "description": "Blood magi are deceased spellcasters who gain an understanding of blood's importance when returned to life.",
     "hitDie": "d6",
     "name": "Blood Magus",
     "prerequisites": {
       "parsed": {
         "alignment": "Any but lawful good",
-        "feats": ["Great Fortitude"],
+        "feats": [
+          "Great Fortitude"
+        ],
         "skills": [
           {
             "name": "Concentration",
             "ranks": 4
           }
         ],
-        "special": ["The character must have been killed, then returned to life.", "been killed, then returned to life"]
+        "special": [
+          "The character must have been killed, then returned to life.",
+          "been killed, then returned to life"
+        ]
       },
       "text": "Alignment: Any but lawful good Skills: Concentration 4 ranks Feats: Great Fortitude, Toughness Spells or Spell-Like Abilities: Arcane caster level 5th. Special: The character must have been killed, then returned to life."
     },
@@ -101,7 +112,11 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Blood component", "durable casting", "stanch"],
+        "special": [
+          "Blood component",
+          "durable casting",
+          "stanch"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting ability",
         "willSave": 0
       },
@@ -110,7 +125,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Scarification"],
+        "special": [
+          "Scarification"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting ability",
         "willSave": 0
       },
@@ -119,7 +136,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Death knell"],
+        "special": [
+          "Death knell"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting ability",
         "willSave": 1
       },
@@ -128,7 +147,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Blood draught"],
+        "special": [
+          "Blood draught"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting ability",
         "willSave": 1
       },
@@ -137,7 +158,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Homunculus"],
+        "special": [
+          "Homunculus"
+        ],
         "spellsPerDay": "-",
         "willSave": 1
       },
@@ -146,7 +169,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Bloodseeking spell"],
+        "special": [
+          "Bloodseeking spell"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting ability",
         "willSave": 2
       },
@@ -155,7 +180,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Thicker than water"],
+        "special": [
+          "Thicker than water"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting ability",
         "willSave": 2
       },
@@ -164,7 +191,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Awaken blood"],
+        "special": [
+          "Awaken blood"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting ability",
         "willSave": 2
       },
@@ -173,7 +202,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Infusion"],
+        "special": [
+          "Infusion"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting ability",
         "willSave": 3
       },
@@ -182,7 +213,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Bloodwalk"],
+        "special": [
+          "Bloodwalk"
+        ],
         "spellsPerDay": "-",
         "willSave": 3
       }

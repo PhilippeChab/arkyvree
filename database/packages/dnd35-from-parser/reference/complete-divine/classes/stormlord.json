@@ -120,7 +120,11 @@
             "type": "divine"
           }
         ],
-        "feats": ["Endurance", "Great Fortitude", "Weapon Focus (any spear or javelin)"],
+        "feats": [
+          "Endurance",
+          "Great Fortitude",
+          "Weapon Focus (any spear or javelin)"
+        ],
         "saves": [
           {
             "base": 4,
@@ -140,7 +144,10 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Enhanced javelins +1", "resistance to electricity 5"],
+        "special": [
+          "Enhanced javelins +1",
+          "resistance to electricity 5"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 2
       },
@@ -149,7 +156,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Shock weapon +1"],
+        "special": [
+          "Shock weapon +1"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 3
       },
@@ -158,7 +167,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Storm walk"],
+        "special": [
+          "Storm walk"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 3
       },
@@ -167,7 +178,9 @@
         "fortSave": 3,
         "level": 4,
         "refSave": 1,
-        "special": ["Resistance to electricity 10"],
+        "special": [
+          "Resistance to electricity 10"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 4
       },
@@ -176,7 +189,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Thundering weapon"],
+        "special": [
+          "Thundering weapon"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 4
       },
@@ -185,7 +200,10 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Storm ride", "enhanced javelins +2"],
+        "special": [
+          "Storm ride",
+          "enhanced javelins +2"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 5
       },
@@ -194,7 +212,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Resistance to electricity 15"],
+        "special": [
+          "Resistance to electricity 15"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 5
       },
@@ -203,7 +223,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Shocking burst weapon"],
+        "special": [
+          "Shocking burst weapon"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 6
       },
@@ -212,7 +234,10 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Immunity to electricity", "Enhanced javelins +3"],
+        "special": [
+          "Immunity to electricity",
+          "Enhanced javelins +3"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 6
       },
@@ -221,7 +246,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Elemental conflagration"],
+        "special": [
+          "Elemental conflagration"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 7
       }

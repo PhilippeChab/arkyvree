@@ -98,7 +98,13 @@
     "name": "Invisible Blade",
     "prerequisites": {
       "parsed": {
-        "feats": ["Far Shot", "Point Blank Shot", "Weapon Focus (dagger", "kukri", "or punch dagger)"],
+        "feats": [
+          "Far Shot",
+          "Point Blank Shot",
+          "Weapon Focus (dagger",
+          "kukri",
+          "or punch dagger)"
+        ],
         "skills": [
           {
             "name": "Bluff",
@@ -121,7 +127,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Dagger sneak attack +1d6", "unfettered defense"],
+        "special": [
+          "Dagger sneak attack +1d6",
+          "unfettered defense"
+        ],
         "willSave": 0
       },
       {
@@ -129,7 +138,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["Bleeding wound"],
+        "special": [
+          "Bleeding wound"
+        ],
         "willSave": 0
       },
       {
@@ -137,7 +148,10 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Dagger sneak attack +2d6", "uncanny feint (move action)"],
+        "special": [
+          "Dagger sneak attack +2d6",
+          "uncanny feint (move action)"
+        ],
         "willSave": 1
       },
       {
@@ -145,7 +159,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["Feint mastery"],
+        "special": [
+          "Feint mastery"
+        ],
         "willSave": 1
       },
       {
@@ -153,7 +169,10 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Dagger sneak attack +3d6", "uncanny feint (free action)"],
+        "special": [
+          "Dagger sneak attack +3d6",
+          "uncanny feint (free action)"
+        ],
         "willSave": 1
       }
     ],

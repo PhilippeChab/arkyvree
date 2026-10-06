@@ -24,7 +24,7 @@ When the parent ruleset is updated, your fork picks up the changes for any entit
 
 Your fork picks up parent changes automatically — for any entity you haven't edited yourself. If the parent author publishes a new feat, your fork shows it. If they fix a typo on an existing feat, your fork shows the fix. If they remove a feat, it disappears from your fork — unless one of your characters has it picked, in which case the entity stays put.
 
-Once you edit an entity in your fork, that entity becomes yours. Parent changes to _that specific entity_ stop reaching you — your version takes over. Other entities you haven't touched keep updating from the parent as before.
+Once you edit an entity in your fork, that entity becomes yours. Parent changes to *that specific entity* stop reaching you — your version takes over. Other entities you haven't touched keep updating from the parent as before.
 
 This per-entity behavior protects your customizations. If you've rebalanced Power Attack to fit your campaign, the parent's next update won't silently overwrite your changes.
 

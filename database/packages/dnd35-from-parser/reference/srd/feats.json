@@ -496,7 +496,10 @@
       ]
     },
     "Spell Mastery": {
-      "aptitudes": ["General", "Wizard Bonus Feat"],
+      "aptitudes": [
+        "General",
+        "Wizard Bonus Feat"
+      ],
       "description": "Each time you select this feat, choose a number of spells you already know equal to your Intelligence modifier. You can thereafter prepare those spells without consulting a spellbook."
     },
     "Spell Penetration": {

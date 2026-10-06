@@ -122,7 +122,9 @@
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": ["Endurance"],
+        "feats": [
+          "Endurance"
+        ],
         "skills": [
           {
             "name": "Craft (stoneworking)",
@@ -146,7 +148,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Earth's blood"],
+        "special": [
+          "Earth's blood"
+        ],
         "willSave": 0
       },
       {
@@ -154,7 +158,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Stone power"],
+        "special": [
+          "Stone power"
+        ],
         "willSave": 0
       },
       {
@@ -162,7 +168,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Stone shape"],
+        "special": [
+          "Stone shape"
+        ],
         "willSave": 1
       },
       {
@@ -170,7 +178,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Stone power"],
+        "special": [
+          "Stone power"
+        ],
         "willSave": 1
       },
       {
@@ -178,7 +188,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Meld into stone"],
+        "special": [
+          "Meld into stone"
+        ],
         "willSave": 1
       },
       {
@@ -186,7 +198,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Stone power"],
+        "special": [
+          "Stone power"
+        ],
         "willSave": 2
       },
       {
@@ -194,7 +208,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Stone tell"],
+        "special": [
+          "Stone tell"
+        ],
         "willSave": 2
       },
       {
@@ -202,7 +218,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Stone power"],
+        "special": [
+          "Stone power"
+        ],
         "willSave": 2
       },
       {
@@ -210,7 +228,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Earthquake"],
+        "special": [
+          "Earthquake"
+        ],
         "willSave": 3
       },
       {
@@ -218,7 +238,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Stone power"],
+        "special": [
+          "Stone power"
+        ],
         "willSave": 3
       }
     ],

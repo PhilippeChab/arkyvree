@@ -64,7 +64,9 @@
     "name": "Beastmaster",
     "prerequisites": {
       "parsed": {
-        "feats": ["Skill Focus (Handle Animal)"],
+        "feats": [
+          "Skill Focus (Handle Animal)"
+        ],
         "skills": [
           {
             "name": "Handle Animal",
@@ -84,7 +86,10 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": ["Animal companion", "wild empathy"],
+        "special": [
+          "Animal companion",
+          "wild empathy"
+        ],
         "willSave": 0
       },
       {
@@ -92,7 +97,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": ["Alertness"],
+        "special": [
+          "Alertness"
+        ],
         "willSave": 0
       },
       {
@@ -100,7 +107,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": ["Speak with animals 1/day"],
+        "special": [
+          "Speak with animals 1/day"
+        ],
         "willSave": 1
       },
       {
@@ -108,7 +117,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": ["Extra animal companion (-3)"],
+        "special": [
+          "Extra animal companion (-3)"
+        ],
         "willSave": 1
       },
       {
@@ -116,7 +127,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": ["Low-light vision"],
+        "special": [
+          "Low-light vision"
+        ],
         "willSave": 1
       },
       {
@@ -124,7 +137,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": ["Speak with animals 2/day"],
+        "special": [
+          "Speak with animals 2/day"
+        ],
         "willSave": 2
       },
       {
@@ -132,7 +147,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": ["Extra animal companion (-6)"],
+        "special": [
+          "Extra animal companion (-6)"
+        ],
         "willSave": 2
       },
       {
@@ -140,7 +157,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
-        "special": ["Scent"],
+        "special": [
+          "Scent"
+        ],
         "willSave": 2
       },
       {
@@ -148,7 +167,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": ["Speak with animals 3/day"],
+        "special": [
+          "Speak with animals 3/day"
+        ],
         "willSave": 3
       },
       {
@@ -156,7 +177,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": ["Extra animal companion (-9)"],
+        "special": [
+          "Extra animal companion (-9)"
+        ],
         "willSave": 3
       }
     ],

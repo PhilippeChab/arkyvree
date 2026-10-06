@@ -42,13 +42,26 @@
     "spells": {
       "inheritsFrom": {
         "additions": {
-          "1": ["Protection from Law"],
-          "2": ["Heroism"],
-          "3": ["Magic Circle Against Law"],
-          "4": ["Dispel Law", "Freedom of Movement"]
+          "1": [
+            "Protection from Law"
+          ],
+          "2": [
+            "Heroism"
+          ],
+          "3": [
+            "Magic Circle Against Law"
+          ],
+          "4": [
+            "Dispel Law",
+            "Freedom of Movement"
+          ]
         },
-        "classes": ["Paladin"],
-        "excludeDescriptors": ["Lawful"]
+        "classes": [
+          "Paladin"
+        ],
+        "excludeDescriptors": [
+          "Lawful"
+        ]
       }
     }
   },
@@ -122,7 +135,9 @@
       "parsed": {
         "alignment": "Chaotic Good",
         "bab": 5,
-        "feats": ["Iron Will"],
+        "feats": [
+          "Iron Will"
+        ],
         "skills": [
           {
             "name": "Diplomacy",
@@ -142,7 +157,11 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Aura of good", "detect evil", "smite evil 1/day"],
+        "special": [
+          "Aura of good",
+          "detect evil",
+          "smite evil 1/day"
+        ],
         "spellsPerDay": "0,-,-,-",
         "willSave": 0
       },
@@ -151,7 +170,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Remove fatigue"],
+        "special": [
+          "Remove fatigue"
+        ],
         "spellsPerDay": "1,-,-,-",
         "willSave": 0
       },
@@ -160,7 +181,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Aura of resolve"],
+        "special": [
+          "Aura of resolve"
+        ],
         "spellsPerDay": "1,0,-,-",
         "willSave": 1
       },
@@ -169,7 +192,10 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Break enchantment 1/week", "divine grace"],
+        "special": [
+          "Break enchantment 1/week",
+          "divine grace"
+        ],
         "spellsPerDay": "1,1,-,-",
         "willSave": 1
       },
@@ -178,7 +204,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Smite evil 2/day"],
+        "special": [
+          "Smite evil 2/day"
+        ],
         "spellsPerDay": "1,1,0,-",
         "willSave": 1
       },
@@ -187,7 +215,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Celestial companion"],
+        "special": [
+          "Celestial companion"
+        ],
         "spellsPerDay": "1,1,1,-",
         "willSave": 2
       },
@@ -205,7 +235,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Break enchantment 2/week"],
+        "special": [
+          "Break enchantment 2/week"
+        ],
         "spellsPerDay": "2,1,1,1",
         "willSave": 2
       },
@@ -223,7 +255,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Smite evil 3/day"],
+        "special": [
+          "Smite evil 3/day"
+        ],
         "spellsPerDay": "2,2,2,1",
         "willSave": 3
       }

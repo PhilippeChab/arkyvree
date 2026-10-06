@@ -4,13 +4,13 @@ The frontend uses MUI Buttons + MenuItems for actions. Color and variant carry *
 
 ## Intent palette
 
-| Intent                               | Examples                                                                       | Button                                | MenuItem                         |
-| ------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------- | -------------------------------- |
-| **Default action**                   | Create, Update, Save, Submit, Invite, Generate Link, Subscribe, Link Character | `variant="contained"` (default color) | n/a                              |
-| **Destructive**                      | Delete, Remove, Reject, Unsubscribe, Unlink, Delete Account                    | `variant="contained" color="error"`   | `sx={{ color: "error.main" }}`   |
-| **Caution** (reversible self-action) | Archive, Leave (ruleset/character/campaign)                                    | `variant="contained" color="warning"` | `sx={{ color: "warning.main" }}` |
-| **Positive**                         | Publish, Accept, Unarchive, Restore                                            | `variant="contained" color="success"` | `sx={{ color: "success.main" }}` |
-| **Cancel / Close / Dismiss**         | Cancel, Close, Dismiss (in dialogs)                                            | `variant="outlined" color="inherit"`  | n/a                              |
+| Intent | Examples | Button | MenuItem |
+|---|---|---|---|
+| **Default action** | Create, Update, Save, Submit, Invite, Generate Link, Subscribe, Link Character | `variant="contained"` (default color) | n/a |
+| **Destructive** | Delete, Remove, Reject, Unsubscribe, Unlink, Delete Account | `variant="contained" color="error"` | `sx={{ color: "error.main" }}` |
+| **Caution** (reversible self-action) | Archive, Leave (ruleset/character/campaign) | `variant="contained" color="warning"` | `sx={{ color: "warning.main" }}` |
+| **Positive** | Publish, Accept, Unarchive, Restore | `variant="contained" color="success"` | `sx={{ color: "success.main" }}` |
+| **Cancel / Close / Dismiss** | Cancel, Close, Dismiss (in dialogs) | `variant="outlined" color="inherit"` | n/a |
 
 Page action menus use `ActionMenuItem` (`components/common`), whose `intent` (`destructive` / `caution` / `positive`) applies the MenuItem column.
 
@@ -49,9 +49,7 @@ Pair the action's `color` with `<DiceSpinner>` in wrapper mode so the button doe
 
 ```tsx
 <Button onClick={onConfirm} variant="contained" color="error" disabled={isPending}>
-  <DiceSpinner size="small" loading={isPending}>
-    Delete
-  </DiceSpinner>
+  <DiceSpinner size="small" loading={isPending}>Delete</DiceSpinner>
 </Button>
 ```
 

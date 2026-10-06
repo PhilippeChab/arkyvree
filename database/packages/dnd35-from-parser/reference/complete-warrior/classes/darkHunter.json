@@ -81,7 +81,10 @@
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": ["Blind-Fight", "Track"],
+        "feats": [
+          "Blind-Fight",
+          "Track"
+        ],
         "skills": [
           {
             "name": "Craft (trapmaking)",
@@ -109,7 +112,9 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Improved stonecunning"],
+        "special": [
+          "Improved stonecunning"
+        ],
         "willSave": 0
       },
       {
@@ -117,7 +122,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["Enhanced darkvision"],
+        "special": [
+          "Enhanced darkvision"
+        ],
         "willSave": 0
       },
       {
@@ -125,7 +132,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Sneak attack +1d6"],
+        "special": [
+          "Sneak attack +1d6"
+        ],
         "willSave": 1
       },
       {
@@ -133,7 +142,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["Stone's hue"],
+        "special": [
+          "Stone's hue"
+        ],
         "willSave": 1
       },
       {
@@ -141,7 +152,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Death attack"],
+        "special": [
+          "Death attack"
+        ],
         "willSave": 1
       }
     ],

@@ -109,7 +109,9 @@
             "ranks": 4
           }
         ],
-        "special": ["Must find the hidden jungle temples of the couatls."]
+        "special": [
+          "Must find the hidden jungle temples of the couatls."
+        ]
       },
       "text": "Alignment: Any nonevil and nonchaotic Skills: Knowledge (arcana) 4 ranks Spells: Able to cast 3rd-level arcane spells.Special: Must find the hidden jungle temples of the couatls."
     },
@@ -119,7 +121,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Detect evil", "extra domain (Good)"],
+        "special": [
+          "Detect evil",
+          "extra domain (Good)"
+        ],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -146,7 +151,10 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": ["Extra domain (Air)", "grow wings"],
+        "special": [
+          "Extra domain (Air)",
+          "grow wings"
+        ],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -173,7 +181,10 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": ["Detect chaos", "extra domain (Law)"],
+        "special": [
+          "Detect chaos",
+          "extra domain (Law)"
+        ],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -200,7 +211,10 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": ["Cleric spell access", "detect thoughts"],
+        "special": [
+          "Cleric spell access",
+          "detect thoughts"
+        ],
         "spellsPerDay": "-",
         "willSave": 7
       }

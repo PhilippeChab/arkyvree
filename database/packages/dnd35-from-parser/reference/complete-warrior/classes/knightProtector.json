@@ -80,7 +80,13 @@
         "type": "(Su)"
       }
     ],
-    "classSkills": ["Diplomacy", "Intimidate", "Knowledge (Nobility and Royalty)", "Ride", "Spot"],
+    "classSkills": [
+      "Diplomacy",
+      "Intimidate",
+      "Knowledge (Nobility and Royalty)",
+      "Ride",
+      "Spot"
+    ],
     "description": "Knight protectors are martial characters dedicated to restoring the ideals of knightly chivalry before they fade forever.",
     "hitDie": "d10",
     "name": "Knight Protector",
@@ -88,7 +94,13 @@
       "parsed": {
         "alignment": "Lawful neutral or lawful good",
         "bab": 5,
-        "feats": ["Armor Proficiency (heavy)", "Cleave", "Great Cleave", "Mounted Combat", "Power Attack"],
+        "feats": [
+          "Armor Proficiency (heavy)",
+          "Cleave",
+          "Great Cleave",
+          "Mounted Combat",
+          "Power Attack"
+        ],
         "skills": [
           {
             "name": "Diplomacy",
@@ -112,7 +124,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Defensive stance +2", "shining beacon"],
+        "special": [
+          "Defensive stance +2",
+          "shining beacon"
+        ],
         "willSave": 2
       },
       {
@@ -120,7 +135,10 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": ["Best effort +2", "Iron Will"],
+        "special": [
+          "Best effort +2",
+          "Iron Will"
+        ],
         "willSave": 3
       },
       {
@@ -128,7 +146,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Supreme cleave"],
+        "special": [
+          "Supreme cleave"
+        ],
         "willSave": 3
       },
       {
@@ -136,7 +156,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": ["Defensive stance +3"],
+        "special": [
+          "Defensive stance +3"
+        ],
         "willSave": 4
       },
       {
@@ -144,7 +166,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": ["Best effort +3"],
+        "special": [
+          "Best effort +3"
+        ],
         "willSave": 4
       },
       {
@@ -152,7 +176,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": ["No mercy 1"],
+        "special": [
+          "No mercy 1"
+        ],
         "willSave": 5
       },
       {
@@ -160,7 +186,9 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": ["Defensive stance +4"],
+        "special": [
+          "Defensive stance +4"
+        ],
         "willSave": 5
       },
       {
@@ -168,7 +196,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": ["Best effort +4"],
+        "special": [
+          "Best effort +4"
+        ],
         "willSave": 6
       },
       {
@@ -176,7 +206,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": ["No mercy 2"],
+        "special": [
+          "No mercy 2"
+        ],
         "willSave": 6
       },
       {
@@ -184,7 +216,10 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": ["Defensive stance +5", "retributive attack"],
+        "special": [
+          "Defensive stance +5",
+          "retributive attack"
+        ],
         "willSave": 7
       }
     ],

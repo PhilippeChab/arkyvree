@@ -52,7 +52,13 @@
         "type": "(Sp)"
       }
     ],
-    "classSkills": ["Intimidate", "Knowledge (Religion)", "Move Silently", "Profession", "Ride"],
+    "classSkills": [
+      "Intimidate",
+      "Knowledge (Religion)",
+      "Move Silently",
+      "Profession",
+      "Ride"
+    ],
     "description": "The infamous ravager has dedicated himself to the service of Erythnul, deity of slaughter.",
     "hitDie": "d10",
     "name": "Ravager",
@@ -60,7 +66,10 @@
       "parsed": {
         "alignment": "Chaotic evil or neutral evil",
         "bab": 5,
-        "feats": ["Improved Sunder", "Power Attack"],
+        "feats": [
+          "Improved Sunder",
+          "Power Attack"
+        ],
         "skills": [
           {
             "name": "Intimidate",
@@ -75,7 +84,9 @@
             "ranks": 3
           }
         ],
-        "special": ["Must survive the ravager initiation rites the sidebar)."]
+        "special": [
+          "Must survive the ravager initiation rites the sidebar)."
+        ]
       },
       "text": "Base Attack Bonus: +5 Alignment: Chaotic evil or neutral evil Skills: Intimidate 3 ranks, Knowledge (religion) 3 ranks, Survival 3 ranks Feats: Improved Sunder, Power Attack Special: Must survive the ravager initiation rites the sidebar)."
     },
@@ -85,7 +96,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Pain touch 1/day"],
+        "special": [
+          "Pain touch 1/day"
+        ],
         "willSave": 0
       },
       {
@@ -93,7 +106,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Aura of fear 10 ft. 1/day"],
+        "special": [
+          "Aura of fear 10 ft. 1/day"
+        ],
         "willSave": 0
       },
       {
@@ -101,7 +116,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Cruelest cut 1/day"],
+        "special": [
+          "Cruelest cut 1/day"
+        ],
         "willSave": 1
       },
       {
@@ -109,7 +126,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Pain touch 2/day"],
+        "special": [
+          "Pain touch 2/day"
+        ],
         "willSave": 1
       },
       {
@@ -117,7 +136,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Aura of fear 20 ft. 2/day"],
+        "special": [
+          "Aura of fear 20 ft. 2/day"
+        ],
         "willSave": 1
       },
       {
@@ -125,7 +146,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Cruelest cut 2/day"],
+        "special": [
+          "Cruelest cut 2/day"
+        ],
         "willSave": 2
       },
       {
@@ -133,7 +156,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Pain touch 3/day"],
+        "special": [
+          "Pain touch 3/day"
+        ],
         "willSave": 2
       },
       {
@@ -141,7 +166,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Aura of fear 30 ft. 3/day"],
+        "special": [
+          "Aura of fear 30 ft. 3/day"
+        ],
         "willSave": 2
       },
       {
@@ -149,7 +176,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Cruelest cut 3/day"],
+        "special": [
+          "Cruelest cut 3/day"
+        ],
         "willSave": 3
       },
       {
@@ -157,7 +186,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Visage of terror"],
+        "special": [
+          "Visage of terror"
+        ],
         "willSave": 3
       }
     ],

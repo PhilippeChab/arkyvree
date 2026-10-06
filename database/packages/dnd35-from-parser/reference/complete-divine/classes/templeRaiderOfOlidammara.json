@@ -147,7 +147,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Trapfinding", "trap sense +1"],
+        "special": [
+          "Trapfinding",
+          "trap sense +1"
+        ],
         "spellsPerDay": "0,-,-,-",
         "willSave": 2
       },
@@ -156,7 +159,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["Sneak attack +1d6"],
+        "special": [
+          "Sneak attack +1d6"
+        ],
         "spellsPerDay": "1,-,-,-",
         "willSave": 3
       },
@@ -165,7 +170,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Uncanny dodge"],
+        "special": [
+          "Uncanny dodge"
+        ],
         "spellsPerDay": "1,0,-,-",
         "willSave": 3
       },
@@ -174,7 +181,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["Trap sense +2"],
+        "special": [
+          "Trap sense +2"
+        ],
         "spellsPerDay": "1,1,-,-",
         "willSave": 4
       },
@@ -183,7 +192,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Sneak attack +2d6"],
+        "special": [
+          "Sneak attack +2d6"
+        ],
         "spellsPerDay": "1,1,0,-",
         "willSave": 4
       },
@@ -192,7 +203,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": ["Improved uncanny dodge"],
+        "special": [
+          "Improved uncanny dodge"
+        ],
         "spellsPerDay": "1,1,1,-",
         "willSave": 5
       },
@@ -201,7 +214,9 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": ["Trap sense +3"],
+        "special": [
+          "Trap sense +3"
+        ],
         "spellsPerDay": "2,1,1,0",
         "willSave": 5
       },
@@ -210,7 +225,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": ["Sneak attack +3d6"],
+        "special": [
+          "Sneak attack +3d6"
+        ],
         "spellsPerDay": "2,1,1,1",
         "willSave": 6
       },
@@ -219,7 +236,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": ["Skill mastery"],
+        "special": [
+          "Skill mastery"
+        ],
         "spellsPerDay": "2,2,1,1",
         "willSave": 6
       },
@@ -228,7 +247,10 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": ["Luck domain", "trap sense +4"],
+        "special": [
+          "Luck domain",
+          "trap sense +4"
+        ],
         "spellsPerDay": "2,2,2,1",
         "willSave": 7
       }

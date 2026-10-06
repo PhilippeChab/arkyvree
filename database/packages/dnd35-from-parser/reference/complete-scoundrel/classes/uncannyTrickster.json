@@ -6,7 +6,9 @@
     "type": "class"
   },
   "overrides": {
-    "reviewed": ["Class Features"]
+    "reviewed": [
+      "Class Features"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -72,7 +74,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Bonus trick", "favorite trick"],
+        "special": [
+          "Bonus trick",
+          "favorite trick"
+        ],
         "willSave": 0
       },
       {
@@ -83,7 +88,10 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["Bonus trick", "favorite trick"],
+        "special": [
+          "Bonus trick",
+          "favorite trick"
+        ],
         "willSave": 0
       },
       {
@@ -94,7 +102,11 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Bonus trick", "favorite trick", "tricky defense"],
+        "special": [
+          "Bonus trick",
+          "favorite trick",
+          "tricky defense"
+        ],
         "willSave": 1
       }
     ],

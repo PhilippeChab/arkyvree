@@ -6,7 +6,9 @@
     "type": "class"
   },
   "overrides": {
-    "reviewed": ["Animal companion large enough to serve as a mount, or a paladin's special mount."]
+    "reviewed": [
+      "Animal companion large enough to serve as a mount, or a paladin's special mount."
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -56,14 +58,19 @@
     "name": "Wild Plains Outrider",
     "prerequisites": {
       "parsed": {
-        "feats": ["Mounted Combat", "Track"],
+        "feats": [
+          "Mounted Combat",
+          "Track"
+        ],
         "skills": [
           {
             "name": "Ride",
             "ranks": 9
           }
         ],
-        "special": ["Animal companion large enough to serve as a mount, or a paladin's special mount."]
+        "special": [
+          "Animal companion large enough to serve as a mount, or a paladin's special mount."
+        ]
       },
       "text": "Skills: Ride 9 ranks Feats: Mounted Combat, Track Special: Animal companion large enough to serve as a mount, or a paladin's special mount."
     },
@@ -73,7 +80,11 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Animal companion/special mount", "ride bonus", "wild plains stalker"],
+        "special": [
+          "Animal companion/special mount",
+          "ride bonus",
+          "wild plains stalker"
+        ],
         "willSave": 0
       },
       {
@@ -81,7 +92,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Wild plains swiftness"],
+        "special": [
+          "Wild plains swiftness"
+        ],
         "willSave": 0
       },
       {
@@ -89,7 +102,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Wild plains offensive"],
+        "special": [
+          "Wild plains offensive"
+        ],
         "willSave": 1
       }
     ],

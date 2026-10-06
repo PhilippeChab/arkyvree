@@ -8,7 +8,9 @@
   "overrides": {
     "aptitudePicks": [
       {
-        "levels": [1],
+        "levels": [
+          1
+        ],
         "target": "aptitudes.animallordanimalbond.allowed"
       }
     ],
@@ -407,7 +409,10 @@
         "seedName": "Wolflord (Animal Lord)"
       }
     },
-    "reviewed": ["Animal Bond", "Third Totem"]
+    "reviewed": [
+      "Animal Bond",
+      "Third Totem"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -493,7 +498,9 @@
       "parsed": {
         "alignment": "Neutral good, lawful neutral, neutral, chaotic neutral, or neutral evil",
         "bab": 5,
-        "feats": ["described on page 110.<"],
+        "feats": [
+          "described on page 110.<"
+        ],
         "skills": [
           {
             "name": "Handle Animal",
@@ -513,7 +520,11 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": ["Animal bond", "detect animals", "wild empathy"],
+        "special": [
+          "Animal bond",
+          "detect animals",
+          "wild empathy"
+        ],
         "willSave": 0
       },
       {
@@ -521,7 +532,10 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": ["First totem", "low-light vision"],
+        "special": [
+          "First totem",
+          "low-light vision"
+        ],
         "willSave": 0
       },
       {
@@ -529,7 +543,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": ["Wild aspect 1/day"],
+        "special": [
+          "Wild aspect 1/day"
+        ],
         "willSave": 1
       },
       {
@@ -537,7 +553,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": ["Speak with animals"],
+        "special": [
+          "Speak with animals"
+        ],
         "willSave": 1
       },
       {
@@ -545,7 +563,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": ["Summon animal"],
+        "special": [
+          "Summon animal"
+        ],
         "willSave": 1
       },
       {
@@ -553,7 +573,10 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": ["Second totem", "wild aspect 2/day"],
+        "special": [
+          "Second totem",
+          "wild aspect 2/day"
+        ],
         "willSave": 2
       },
       {
@@ -561,7 +584,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": ["Animal growth"],
+        "special": [
+          "Animal growth"
+        ],
         "willSave": 2
       },
       {
@@ -569,7 +594,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
-        "special": ["Animal telepathy"],
+        "special": [
+          "Animal telepathy"
+        ],
         "willSave": 2
       },
       {
@@ -577,7 +604,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": ["Wild aspect 3/day"],
+        "special": [
+          "Wild aspect 3/day"
+        ],
         "willSave": 3
       },
       {
@@ -585,7 +614,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": ["Third totem"],
+        "special": [
+          "Third totem"
+        ],
         "willSave": 3
       }
     ],

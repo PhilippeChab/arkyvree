@@ -11,7 +11,9 @@
         "seedName": "Virtuoso Performance (Sustaining Song) (Virtuoso)"
       }
     },
-    "reviewed": ["Virtuoso Performance (Persuasive Song)"]
+    "reviewed": [
+      "Virtuoso Performance (Persuasive Song)"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -96,7 +98,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Bardic music (fascinate)", "virtuoso performance (persuasive song)"],
+        "special": [
+          "Bardic music (fascinate)",
+          "virtuoso performance (persuasive song)"
+        ],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -114,7 +119,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Virtuoso performance(sustaining song)"],
+        "special": [
+          "Virtuoso performance(sustaining song)"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -132,7 +139,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": ["Virtuoso performance (jarring song)"],
+        "special": [
+          "Virtuoso performance (jarring song)"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 4
       },
@@ -150,7 +159,9 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": ["Virtuoso performance (song of fury)"],
+        "special": [
+          "Virtuoso performance (song of fury)"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 5
       },
@@ -168,7 +179,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": ["Virtuoso performance (mindbending melody)"],
+        "special": [
+          "Virtuoso performance (mindbending melody)"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 6
       },
@@ -177,7 +190,9 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": ["Virtuoso performance (revealing melody)"],
+        "special": [
+          "Virtuoso performance (revealing melody)"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 7
       }

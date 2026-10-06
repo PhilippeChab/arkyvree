@@ -27,7 +27,15 @@
         "name": "Bonus Feat"
       }
     ],
-    "classSkills": ["Climb", "Craft", "Handle Animal", "Intimidate", "Jump", "Ride", "Swim"],
+    "classSkills": [
+      "Climb",
+      "Craft",
+      "Handle Animal",
+      "Intimidate",
+      "Jump",
+      "Ride",
+      "Swim"
+    ],
     "description": "",
     "hitDie": "d10",
     "name": "Fighter",
@@ -41,7 +49,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 0
       },
       {
@@ -49,7 +59,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 0
       },
       {
@@ -65,7 +77,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 1
       },
       {
@@ -81,7 +95,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 2
       },
       {
@@ -97,7 +113,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 2
       },
       {
@@ -113,7 +131,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 3
       },
       {
@@ -129,7 +149,9 @@
         "fortSave": 8,
         "level": 12,
         "refSave": 4,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 4
       },
       {
@@ -145,7 +167,9 @@
         "fortSave": 9,
         "level": 14,
         "refSave": 4,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 4
       },
       {
@@ -161,7 +185,9 @@
         "fortSave": 10,
         "level": 16,
         "refSave": 5,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 5
       },
       {
@@ -177,7 +203,9 @@
         "fortSave": 11,
         "level": 18,
         "refSave": 6,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 6
       },
       {
@@ -193,7 +221,9 @@
         "fortSave": 12,
         "level": 20,
         "refSave": 6,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 6
       }
     ],

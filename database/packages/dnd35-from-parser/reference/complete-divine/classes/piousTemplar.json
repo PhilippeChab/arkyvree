@@ -8,7 +8,9 @@
   "overrides": {
     "aptitudePicks": [
       {
-        "levels": [1],
+        "levels": [
+          1
+        ],
         "target": "aptitudes.pioustemplarspelllist.allowed"
       }
     ],
@@ -101,7 +103,9 @@
       "lists": [
         {
           "inheritsFrom": {
-            "classes": ["Paladin"]
+            "classes": [
+              "Paladin"
+            ]
           },
           "name": "Pious Templar Spells",
           "requirements": [
@@ -115,7 +119,9 @@
         },
         {
           "inheritsFrom": {
-            "classes": ["Blackguard"]
+            "classes": [
+              "Blackguard"
+            ]
           },
           "name": "Pious Templar Blackguard Spells",
           "requirements": [
@@ -169,14 +175,28 @@
         "name": "Damage Reduction 2/?"
       }
     ],
-    "classSkills": ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th"],
+    "classSkills": [
+      "1st",
+      "2nd",
+      "3rd",
+      "4th",
+      "5th",
+      "6th",
+      "7th",
+      "8th",
+      "9th",
+      "10th"
+    ],
     "description": "Sworn to the defense of a temple site, the pious templar is a holy warrior blessed by her deity with combat prowess and great endurance.",
     "hitDie": "d10",
     "name": "Pious Templar",
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": ["True Believer", "Weapon Focus (with deity's favored weapon)"],
+        "feats": [
+          "True Believer",
+          "Weapon Focus (with deity's favored weapon)"
+        ],
         "skills": [
           {
             "name": "Knowledge (religion)",
@@ -192,7 +212,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Mettle"],
+        "special": [
+          "Mettle"
+        ],
         "spellsPerDay": "0,-,-,-",
         "willSave": 2
       },
@@ -201,7 +223,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Smite 1/day"],
+        "special": [
+          "Smite 1/day"
+        ],
         "spellsPerDay": "1,0,-,-",
         "willSave": 3
       },
@@ -210,7 +234,10 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Damage reduction 1/?", "Weapon Specialization"],
+        "special": [
+          "Damage reduction 1/?",
+          "Weapon Specialization"
+        ],
         "spellsPerDay": "1,1,-,-",
         "willSave": 3
       },
@@ -219,7 +246,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "spellsPerDay": "1,1,-,-",
         "willSave": 4
       },
@@ -237,7 +266,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Smite 2/day"],
+        "special": [
+          "Smite 2/day"
+        ],
         "spellsPerDay": "1,1,1,-",
         "willSave": 5
       },
@@ -246,7 +277,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Damage reduction 2/?"],
+        "special": [
+          "Damage reduction 2/?"
+        ],
         "spellsPerDay": "2,1,1,0",
         "willSave": 5
       },
@@ -255,7 +288,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "spellsPerDay": "2,1,1,1",
         "willSave": 6
       },
@@ -273,7 +308,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Smite 3/day"],
+        "special": [
+          "Smite 3/day"
+        ],
         "spellsPerDay": "2,2,2,1",
         "willSave": 7
       }

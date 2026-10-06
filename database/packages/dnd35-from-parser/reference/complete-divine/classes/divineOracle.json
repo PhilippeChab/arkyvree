@@ -37,8 +37,16 @@
         "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
     },
-    "freeFeats": [[1, "Oracle Domain", "Cleric Domain"]],
-    "reviewed": ["Oracle Domain"]
+    "freeFeats": [
+      [
+        1,
+        "Oracle Domain",
+        "Cleric Domain"
+      ]
+    ],
+    "reviewed": [
+      "Oracle Domain"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -105,7 +113,9 @@
     "name": "Divine Oracle",
     "prerequisites": {
       "parsed": {
-        "feats": ["Skill Focus (Knowledge [religion])"],
+        "feats": [
+          "Skill Focus (Knowledge [religion])"
+        ],
         "skills": [
           {
             "name": "Knowledge (religion)",
@@ -121,7 +131,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Oracle domain", "scry bonus"],
+        "special": [
+          "Oracle domain",
+          "scry bonus"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 2
       },
@@ -130,7 +143,10 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": ["Prescient sense", "trap sense +1"],
+        "special": [
+          "Prescient sense",
+          "trap sense +1"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -139,7 +155,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Divination enhancement"],
+        "special": [
+          "Divination enhancement"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -148,7 +166,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": ["Uncanny dodge (Dex bonus to AC)"],
+        "special": [
+          "Uncanny dodge (Dex bonus to AC)"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -157,7 +177,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": ["Trap sense +2"],
+        "special": [
+          "Trap sense +2"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -166,7 +188,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": ["Improved uncanny dodge (can't be flanked)"],
+        "special": [
+          "Improved uncanny dodge (can't be flanked)"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 5
       },
@@ -184,7 +208,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": ["Trap sense +3"],
+        "special": [
+          "Trap sense +3"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 6
       },
@@ -202,7 +228,9 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": ["Immune to surprise"],
+        "special": [
+          "Immune to surprise"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 7
       }

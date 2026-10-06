@@ -128,7 +128,11 @@
     "name": "Gnome Giant-slayer",
     "prerequisites": {
       "parsed": {
-        "feats": ["Dodge", "Mobility", "Spring Attack"],
+        "feats": [
+          "Dodge",
+          "Mobility",
+          "Spring Attack"
+        ],
         "skills": [
           {
             "name": "Escape Artist",
@@ -139,7 +143,9 @@
             "ranks": 3
           }
         ],
-        "special": ["Race: Gnome"]
+        "special": [
+          "Race: Gnome"
+        ]
       },
       "text": "Race: Gnome Skills: Escape Artist 3 ranks, Tumble 3 ranks Feats: Dodge, Mobility, Spring Attack Speak Language: Giant."
     },
@@ -149,7 +155,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Favored enemy (giant) +2"],
+        "special": [
+          "Favored enemy (giant) +2"
+        ],
         "willSave": 0
       },
       {
@@ -157,7 +165,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Crafty fighter"],
+        "special": [
+          "Crafty fighter"
+        ],
         "willSave": 0
       },
       {
@@ -165,7 +175,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Slippery"],
+        "special": [
+          "Slippery"
+        ],
         "willSave": 1
       },
       {
@@ -173,7 +185,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Favored enemy (giant) +4"],
+        "special": [
+          "Favored enemy (giant) +4"
+        ],
         "willSave": 1
       },
       {
@@ -181,7 +195,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Close shot"],
+        "special": [
+          "Close shot"
+        ],
         "willSave": 1
       },
       {
@@ -189,7 +205,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Fast movement"],
+        "special": [
+          "Fast movement"
+        ],
         "willSave": 2
       },
       {
@@ -197,7 +215,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Favored enemy (giant) +6"],
+        "special": [
+          "Favored enemy (giant) +6"
+        ],
         "willSave": 2
       },
       {
@@ -205,7 +225,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Improved mobility"],
+        "special": [
+          "Improved mobility"
+        ],
         "willSave": 2
       },
       {
@@ -213,7 +235,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Annoying strike"],
+        "special": [
+          "Annoying strike"
+        ],
         "willSave": 3
       },
       {
@@ -221,7 +245,10 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Favored enemy (giant) +8", "defensive roll"],
+        "special": [
+          "Favored enemy (giant) +8",
+          "defensive roll"
+        ],
         "willSave": 3
       }
     ],

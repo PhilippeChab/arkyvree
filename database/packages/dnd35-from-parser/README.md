@@ -55,7 +55,6 @@ HTML page → Scraper → JSON reference file (raw + overrides) → Generator �
 ```
 
 Each reference JSON stores:
-
 - **`raw`** — Scraped data, never manually edited. Replaced on re-scrape.
 - **`overrides`** — Corrections made by hand. Kept on re-scrape.
 
@@ -70,7 +69,6 @@ Loading a reference (`tools/references.ts`) derives the rest: **`detected`** (BA
 Scrapes class pages into `ClassReference` JSON with full progression tables.
 
 **Auto-detected:**
-
 - Class name, description, hit die, skill points
 - Class skills (including Knowledge subspecialties)
 - Progression table (BAB, saves, special features, spells per day)
@@ -85,7 +83,6 @@ Scrapes class pages into `ClassReference` JSON with full progression tables.
 - Free feat auto-detection by cross-referencing features against known feat names
 
 **Needs manual annotation in `overrides`:**
-
 - `modifiers` — Structured stat modifiers from prose descriptions (e.g. Dragon Disciple ability boosts)
 - `aptitudePicks` — Links "choose an ability" features to aptitude pool slugs
 - `features` — Per-feature corrections (name, level, aptitude, modifiers…); a `null` field removes the detected one
@@ -97,7 +94,6 @@ Scrapes class pages into `ClassReference` JSON with full progression tables.
 Scrapes feat listing and detail pages into `FeatReference` JSON.
 
 **Auto-detected:**
-
 - Feat name, type (General, Fighter, Metamagic, etc.), description, benefit
 - Prerequisite text parsing into structured requirements (ability scores, BAB, feats, skills, caster level), with the same option lists as classes. A class feature named as a prerequisite ("Ability to acquire a new familiar", "Sneak attack +2d6") is a check of its family; "Ki strike (lawful)" is monk level 10, and "Relevant alignment" the alignment the feat's name holds (Spell Focus (Chaos): any chaotic). What no path can read ("Ability to fly") is reported, to be reviewed
 - Template feat detection (e.g. "Weapon Focus" expands into per-weapon variants)
@@ -105,7 +101,6 @@ Scrapes feat listing and detail pages into `FeatReference` JSON.
 - Modifier detection from benefit text
 
 **Needs manual annotation in `overrides`:**
-
 - Requirement corrections when auto-parsing fails
 - Modifier definitions for complex mechanical effects
 - `stackable` / `template` overrides
@@ -115,7 +110,6 @@ Scrapes feat listing and detail pages into `FeatReference` JSON.
 Scrapes spell listing and detail pages into `SpellReference` JSON.
 
 **Auto-detected:**
-
 - Spell name, school, subschool, descriptor
 - Level entries per class (e.g. "Cleric 3, Druid 4")
 - Description text
@@ -125,13 +119,11 @@ Scrapes spell listing and detail pages into `SpellReference` JSON.
 Scrapes a book's domains into `reference/<book>/domains.json` (`DomainReference`), from dnd.arkalseif.info, a copy of dndtools' database that keeps each book's version of a domain apart ("Weather (CD)"): dndtools.net has since merged them, without their books. A version is the book's its page names, or, when it names none, the one its label's code ("CD") stands for in the versions that do.
 
 **Auto-detected:**
-
 - Domain name, page, granted power description
 - Spell list with levels: each 3.5 spell of the domain's versions whose page gives this version a level
 - Modifier detection from granted power text
 
 **Needs manual annotation in `overrides`:**
-
 - Description rewording, as for every entity
 - The spells a version's pages miss or misplace: `parser:validate` reports a spell no parsed book has, a level from 1st to 9th without a spell, and a spell of the book whose level line puts it on one of its domains at a level the list doesn't
 - Modifier definitions for complex granted powers
@@ -141,7 +133,6 @@ Scrapes a book's domains into `reference/<book>/domains.json` (`DomainReference`
 Scrapes race pages into `RaceReference` JSON.
 
 **Auto-detected:**
-
 - Race name, size, speed, description
 - Ability score modifiers (e.g. +2 DEX, -2 CON)
 - Save bonuses, skill bonuses
@@ -152,7 +143,6 @@ Scrapes race pages into `RaceReference` JSON.
 Scrapes equipment tables into `ItemReference` JSON. Covers weapons, armor, shields, and adventuring gear.
 
 **Auto-detected:**
-
 - Weapon stats (damage, critical, range, weight, cost, proficiency category)
 - Armor/shield stats (AC bonus, max DEX, check penalty, spell failure, weight, cost)
 - SRD name normalization (e.g. "Dagger, punching" → "Punching Dagger")
@@ -163,7 +153,6 @@ Scrapes equipment tables into `ItemReference` JSON. Covers weapons, armor, shiel
 Scrapes magic item pages into `MagicItemReference` JSON. Covers specific armor, shields and weapons, wondrous items, rings, rods, and staffs.
 
 **Auto-detected:**
-
 - Item name, description, cost, weight, category
 - Base item template detection (e.g. "+1 Longsword" → sourceItem "Longsword"). An item made from a base one weighs what its base does, unless its text gives its weight
 - A specific armor's or shield's stats (`readArmorStats`, `armorStats.ts`): the spell failure, maximum Dexterity bonus and check penalty its text gives, its category ("considered light armor"), its weight, and its enhancement bonus to AC ("this +3 banded mail"). Magic, adamantine or masterwork armor is masterwork, unless its text gives its check penalty

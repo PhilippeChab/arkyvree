@@ -89,7 +89,10 @@
       "parsed": {
         "alignment": "Any nongood",
         "bab": 5,
-        "feats": ["Iron Will", "Weapon Focus (longsword)"],
+        "feats": [
+          "Iron Will",
+          "Weapon Focus (longsword)"
+        ],
         "skills": [
           {
             "name": "Intimidate",
@@ -100,7 +103,10 @@
             "ranks": 2
           }
         ],
-        "special": ["Race: Human", "Sworn allegiance to the Red Wizards of Thay"]
+        "special": [
+          "Race: Human",
+          "Sworn allegiance to the Red Wizards of Thay"
+        ]
       },
       "text": "Base Attack Bonus: +5 Alignment: Any nongood Race: Human Skills: Intimidate 2 ranks, Knowledge (arcana) 2 ranks, Knowledge (local) (Thay) 2 ranks Feats: Iron Will, Weapon Focus (longsword) Special: Sworn allegiance to the Red Wizards of Thay"
     },
@@ -110,7 +116,10 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Horrors of Thay (+2 fear, +1 charm)", "zulkir's favor"],
+        "special": [
+          "Horrors of Thay (+2 fear, +1 charm)",
+          "zulkir's favor"
+        ],
         "willSave": 0
       },
       {
@@ -118,7 +127,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Zulkir's defender"],
+        "special": [
+          "Zulkir's defender"
+        ],
         "willSave": 0
       },
       {
@@ -126,7 +137,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Fighter feat"],
+        "special": [
+          "Fighter feat"
+        ],
         "willSave": 1
       },
       {
@@ -134,7 +147,10 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Horrors of Thay (+4 fear, +2 charm)", "final stand"],
+        "special": [
+          "Horrors of Thay (+4 fear, +2 charm)",
+          "final stand"
+        ],
         "willSave": 1
       },
       {
@@ -142,7 +158,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Zulkir's champion"],
+        "special": [
+          "Zulkir's champion"
+        ],
         "willSave": 1
       }
     ],

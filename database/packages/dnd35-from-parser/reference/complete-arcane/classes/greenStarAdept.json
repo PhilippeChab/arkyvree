@@ -135,7 +135,12 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Damage reduction", "improved caster level", "starmetal dependency", "starmetal rigor 1"],
+        "special": [
+          "Damage reduction",
+          "improved caster level",
+          "starmetal dependency",
+          "starmetal rigor 1"
+        ],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -144,7 +149,10 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": ["Natural attack", "unnatural metabolism +2"],
+        "special": [
+          "Natural attack",
+          "unnatural metabolism +2"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 3
       },
@@ -153,7 +161,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Fortification (25%)"],
+        "special": [
+          "Fortification (25%)"
+        ],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -162,7 +172,10 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": ["Otherworldly vision", "starmetal rigor 2"],
+        "special": [
+          "Otherworldly vision",
+          "starmetal rigor 2"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 4
       },
@@ -171,7 +184,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": ["Unnatural metabolism +4"],
+        "special": [
+          "Unnatural metabolism +4"
+        ],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -180,7 +195,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": ["Fortification (50%)"],
+        "special": [
+          "Fortification (50%)"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 5
       },
@@ -189,7 +206,10 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": ["Null metabolism", "starmetal rigor 4"],
+        "special": [
+          "Null metabolism",
+          "starmetal rigor 4"
+        ],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -198,7 +218,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": ["Unnatural metabolism +6"],
+        "special": [
+          "Unnatural metabolism +6"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 6
       },
@@ -207,7 +229,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": ["Fortification (75%)"],
+        "special": [
+          "Fortification (75%)"
+        ],
         "spellsPerDay": "-",
         "willSave": 6
       },
@@ -216,7 +240,11 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": ["Emerald perfection", "rapid repair", "starmetal rigor 6"],
+        "special": [
+          "Emerald perfection",
+          "rapid repair",
+          "starmetal rigor 6"
+        ],
         "spellsPerDay": "+1 level of existing arcane spellcasting class",
         "willSave": 7
       }

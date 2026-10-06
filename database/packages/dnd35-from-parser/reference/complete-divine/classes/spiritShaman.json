@@ -66,7 +66,9 @@
     },
     "spells": {
       "inheritsFrom": {
-        "classes": ["Druid"]
+        "classes": [
+          "Druid"
+        ]
       }
     }
   },
@@ -191,7 +193,10 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Spirit guide", "wild empathy"],
+        "special": [
+          "Spirit guide",
+          "wild empathy"
+        ],
         "spellsPerDay": "3,2,-,-,-,-,-,-,-,-",
         "willSave": 2
       },
@@ -200,7 +205,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Chastise spirits"],
+        "special": [
+          "Chastise spirits"
+        ],
         "spellsPerDay": "4,3,-,-,-,-,-,-,-,-",
         "willSave": 3
       },
@@ -209,7 +216,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Detect spirits"],
+        "special": [
+          "Detect spirits"
+        ],
         "spellsPerDay": "5,4,2,-,-,-,-,-,-,-",
         "willSave": 3
       },
@@ -218,7 +227,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Blessing of the spirits"],
+        "special": [
+          "Blessing of the spirits"
+        ],
         "spellsPerDay": "6,5,3,-,-,-,-,-,-,-",
         "willSave": 4
       },
@@ -227,7 +238,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Follow the guide"],
+        "special": [
+          "Follow the guide"
+        ],
         "spellsPerDay": "6,6,4,2,-,-,-,-,-,-",
         "willSave": 4
       },
@@ -236,7 +249,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Ghost warrior"],
+        "special": [
+          "Ghost warrior"
+        ],
         "spellsPerDay": "6,6,5,3,-,-,-,-,-,-",
         "willSave": 5
       },
@@ -245,7 +260,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Warding of the spirits"],
+        "special": [
+          "Warding of the spirits"
+        ],
         "spellsPerDay": "6,6,6,4,2,-,-,-,-,-",
         "willSave": 5
       },
@@ -263,7 +280,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Spirit form 1/day"],
+        "special": [
+          "Spirit form 1/day"
+        ],
         "spellsPerDay": "6,6,6,6,4,2,-,-,-,-",
         "willSave": 6
       },
@@ -272,7 +291,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Guide magic"],
+        "special": [
+          "Guide magic"
+        ],
         "spellsPerDay": "6,6,6,6,5,3,-,-,-,-",
         "willSave": 7
       },
@@ -281,7 +302,9 @@
         "fortSave": 7,
         "level": 11,
         "refSave": 3,
-        "special": ["Recall spirit"],
+        "special": [
+          "Recall spirit"
+        ],
         "spellsPerDay": "6,6,6,6,6,4,2,-,-,-",
         "willSave": 7
       },
@@ -299,7 +322,9 @@
         "fortSave": 8,
         "level": 13,
         "refSave": 4,
-        "special": ["Exorcism"],
+        "special": [
+          "Exorcism"
+        ],
         "spellsPerDay": "6,6,6,6,6,6,4,2,-,-",
         "willSave": 8
       },
@@ -317,7 +342,9 @@
         "fortSave": 9,
         "level": 15,
         "refSave": 5,
-        "special": ["Spirit form 2/day"],
+        "special": [
+          "Spirit form 2/day"
+        ],
         "spellsPerDay": "6,6,6,6,6,6,6,4,2,-",
         "willSave": 9
       },
@@ -326,7 +353,9 @@
         "fortSave": 10,
         "level": 16,
         "refSave": 5,
-        "special": ["Weaken spirits"],
+        "special": [
+          "Weaken spirits"
+        ],
         "spellsPerDay": "6,6,6,6,6,6,6,5,3,-",
         "willSave": 10
       },
@@ -335,7 +364,9 @@
         "fortSave": 10,
         "level": 17,
         "refSave": 5,
-        "special": ["Spirit journey"],
+        "special": [
+          "Spirit journey"
+        ],
         "spellsPerDay": "6,6,6,6,6,6,6,6,4,2",
         "willSave": 10
       },
@@ -353,7 +384,9 @@
         "fortSave": 11,
         "level": 19,
         "refSave": 6,
-        "special": ["Favored of the spirits"],
+        "special": [
+          "Favored of the spirits"
+        ],
         "spellsPerDay": "6,6,6,6,6,6,6,6,6,4",
         "willSave": 11
       },
@@ -362,7 +395,10 @@
         "fortSave": 12,
         "level": 20,
         "refSave": 6,
-        "special": ["Spirit form 3/day", "spirit who walks"],
+        "special": [
+          "Spirit form 3/day",
+          "spirit who walks"
+        ],
         "spellsPerDay": "6,6,6,6,6,6,6,6,6,5",
         "willSave": 12
       }

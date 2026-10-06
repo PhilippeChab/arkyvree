@@ -6,7 +6,9 @@
     "type": "class"
   },
   "overrides": {
-    "reviewed": ["Combat Traps Known"]
+    "reviewed": [
+      "Combat Traps Known"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -74,7 +76,9 @@
             "ranks": 6
           }
         ],
-        "special": ["Trapfinding."]
+        "special": [
+          "Trapfinding."
+        ]
       },
       "text": "Skills: Craft (trapmaking) 8 ranks, Disable Device 6 ranks, Search 6 ranks Special: Trapfinding."
     },
@@ -87,7 +91,10 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": ["Combat trapping", "trap sense +1"],
+        "special": [
+          "Combat trapping",
+          "trap sense +1"
+        ],
         "willSave": 0
       },
       {
@@ -98,7 +105,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": ["Skill Focus (Craft [trapmaking])"],
+        "special": [
+          "Skill Focus (Craft [trapmaking])"
+        ],
         "willSave": 0
       },
       {
@@ -109,7 +118,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": ["Trap sense +2"],
+        "special": [
+          "Trap sense +2"
+        ],
         "willSave": 1
       },
       {
@@ -120,7 +131,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": ["Improvised materials"],
+        "special": [
+          "Improvised materials"
+        ],
         "willSave": 1
       },
       {
@@ -131,7 +144,10 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": ["Expert trapsetter", "trap sense +3"],
+        "special": [
+          "Expert trapsetter",
+          "trap sense +3"
+        ],
         "willSave": 1
       }
     ],

@@ -101,7 +101,10 @@
     "prerequisites": {
       "parsed": {
         "alignment": "Any neutral",
-        "feats": ["Heighten Spell", "Spell Penetration"],
+        "feats": [
+          "Heighten Spell",
+          "Spell Penetration"
+        ],
         "skills": [
           {
             "name": "Spellcraft",
@@ -117,7 +120,9 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Sense Void (physical senses, 1/day)"],
+        "special": [
+          "Sense Void (physical senses, 1/day)"
+        ],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -135,7 +140,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Sense Void (2/day)"],
+        "special": [
+          "Sense Void (2/day)"
+        ],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -144,7 +151,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["Moment of clarity (2/day)"],
+        "special": [
+          "Moment of clarity (2/day)"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -153,7 +162,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Sense Void (magical senses, 3/day)"],
+        "special": [
+          "Sense Void (magical senses, 3/day)"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -171,7 +182,10 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": ["Altering the course", "sense void (4/day)"],
+        "special": [
+          "Altering the course",
+          "sense void (4/day)"
+        ],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -180,7 +194,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": ["Moment of clarity (3/day)"],
+        "special": [
+          "Moment of clarity (3/day)"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 6
       },
@@ -189,7 +205,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": ["Sense Void (empathic senses, 5/day)"],
+        "special": [
+          "Sense Void (empathic senses, 5/day)"
+        ],
         "spellsPerDay": "-",
         "willSave": 6
       },
@@ -198,7 +216,9 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": ["Void release"],
+        "special": [
+          "Void release"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 7
       },
@@ -207,7 +227,9 @@
         "fortSave": 3,
         "level": 11,
         "refSave": 6,
-        "special": ["Sense Void (6/day)"],
+        "special": [
+          "Sense Void (6/day)"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 7
       },
@@ -216,7 +238,10 @@
         "fortSave": 4,
         "level": 12,
         "refSave": 6,
-        "special": ["Void suppression", "moment of clarity (4/day)"],
+        "special": [
+          "Void suppression",
+          "moment of clarity (4/day)"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 8
       },
@@ -225,7 +250,10 @@
         "fortSave": 4,
         "level": 13,
         "refSave": 7,
-        "special": ["Sense Void (mental senses, 7/day)", "Void strike"],
+        "special": [
+          "Sense Void (mental senses, 7/day)",
+          "Void strike"
+        ],
         "spellsPerDay": "-",
         "willSave": 8
       }

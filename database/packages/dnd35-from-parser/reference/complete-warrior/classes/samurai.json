@@ -131,7 +131,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Daisho Proficiency"],
+        "special": [
+          "Daisho Proficiency"
+        ],
         "willSave": 0
       },
       {
@@ -139,7 +141,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Two swords as one"],
+        "special": [
+          "Two swords as one"
+        ],
         "willSave": 0
       },
       {
@@ -147,7 +151,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Kiai smite 1/day"],
+        "special": [
+          "Kiai smite 1/day"
+        ],
         "willSave": 1
       },
       {
@@ -163,7 +169,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Iaijutsu master"],
+        "special": [
+          "Iaijutsu master"
+        ],
         "willSave": 1
       },
       {
@@ -171,7 +179,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Staredown"],
+        "special": [
+          "Staredown"
+        ],
         "willSave": 2
       },
       {
@@ -179,7 +189,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Kiai smite 2/day"],
+        "special": [
+          "Kiai smite 2/day"
+        ],
         "willSave": 2
       },
       {
@@ -187,7 +199,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Improved Initiative"],
+        "special": [
+          "Improved Initiative"
+        ],
         "willSave": 2
       },
       {
@@ -203,7 +217,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Mass staredown"],
+        "special": [
+          "Mass staredown"
+        ],
         "willSave": 3
       },
       {
@@ -211,7 +227,9 @@
         "fortSave": 7,
         "level": 11,
         "refSave": 3,
-        "special": ["Improved two swords as one"],
+        "special": [
+          "Improved two swords as one"
+        ],
         "willSave": 3
       },
       {
@@ -219,7 +237,9 @@
         "fortSave": 8,
         "level": 12,
         "refSave": 4,
-        "special": ["Kiai smite 3/day"],
+        "special": [
+          "Kiai smite 3/day"
+        ],
         "willSave": 4
       },
       {
@@ -235,7 +255,9 @@
         "fortSave": 9,
         "level": 14,
         "refSave": 4,
-        "special": ["Improved staredown"],
+        "special": [
+          "Improved staredown"
+        ],
         "willSave": 4
       },
       {
@@ -251,7 +273,9 @@
         "fortSave": 10,
         "level": 16,
         "refSave": 5,
-        "special": ["Greater two swords as one"],
+        "special": [
+          "Greater two swords as one"
+        ],
         "willSave": 5
       },
       {
@@ -259,7 +283,9 @@
         "fortSave": 10,
         "level": 17,
         "refSave": 5,
-        "special": ["Kiai smite 4/day"],
+        "special": [
+          "Kiai smite 4/day"
+        ],
         "willSave": 5
       },
       {
@@ -283,7 +309,9 @@
         "fortSave": 12,
         "level": 20,
         "refSave": 6,
-        "special": ["Frightful presence"],
+        "special": [
+          "Frightful presence"
+        ],
         "willSave": 6
       }
     ],

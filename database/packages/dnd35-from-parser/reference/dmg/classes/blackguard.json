@@ -120,7 +120,11 @@
       "parsed": {
         "alignment": "any evil",
         "bab": 6,
-        "feats": ["Cleave", "Improved Sunder", "Power Attack"],
+        "feats": [
+          "Cleave",
+          "Improved Sunder",
+          "Power Attack"
+        ],
         "skills": [
           {
             "name": "Hide",
@@ -144,7 +148,11 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Aura of evil", "detect good", "poison use"],
+        "special": [
+          "Aura of evil",
+          "detect good",
+          "poison use"
+        ],
         "spellsPerDay": "0,-,-,-",
         "willSave": 0
       },
@@ -153,7 +161,10 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Dark blessing", "smite good 1/day"],
+        "special": [
+          "Dark blessing",
+          "smite good 1/day"
+        ],
         "spellsPerDay": "1,-,-,-",
         "willSave": 0
       },
@@ -162,7 +173,10 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Command undead", "aura of despair"],
+        "special": [
+          "Command undead",
+          "aura of despair"
+        ],
         "spellsPerDay": "1,0,-,-",
         "willSave": 1
       },
@@ -171,7 +185,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Sneak attack +1d6"],
+        "special": [
+          "Sneak attack +1d6"
+        ],
         "spellsPerDay": "1,1,-,-",
         "willSave": 1
       },
@@ -180,7 +196,10 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Fiendish servant", "smite good 2/day"],
+        "special": [
+          "Fiendish servant",
+          "smite good 2/day"
+        ],
         "spellsPerDay": "1,1,0,-",
         "willSave": 1
       },
@@ -198,7 +217,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Sneak attack +2d6"],
+        "special": [
+          "Sneak attack +2d6"
+        ],
         "spellsPerDay": "2,1,1,0",
         "willSave": 2
       },
@@ -225,7 +246,10 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Sneak attack +3d6", "smite good 3/day"],
+        "special": [
+          "Sneak attack +3d6",
+          "smite good 3/day"
+        ],
         "spellsPerDay": "2,2,2,1",
         "willSave": 3
       }

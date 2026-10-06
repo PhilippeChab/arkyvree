@@ -4,10 +4,10 @@ Arkyvree runs on **Fly.io** as two apps sharing one `Dockerfile`. CI handles bui
 
 ## Topology
 
-| App               | Purpose                              | Public?                                | Scaling                      |
-| ----------------- | ------------------------------------ | -------------------------------------- | ---------------------------- |
-| `arkyvree`        | Hono API + WebSocket + static client | Yes, `rpg.arkyvree.com` via Cloudflare | `suspend` on idle, `min = 0` |
-| `arkyvree-worker` | graphile-worker (PDFs, email, cron)  | No — Flycast only                      | `stop` on idle, `min = 0`    |
+| App | Purpose | Public? | Scaling |
+|---|---|---|---|
+| `arkyvree` | Hono API + WebSocket + static client | Yes, `rpg.arkyvree.com` via Cloudflare | `suspend` on idle, `min = 0` |
+| `arkyvree-worker` | graphile-worker (PDFs, email, cron) | No — Flycast only | `stop` on idle, `min = 0` |
 
 Why two apps: the worker is Flycast-only so it never has a public attack surface, and queued PDF and email tasks execute outside the web process. Public shared-sheet PDF requests still render in the web process. Shared `Dockerfile` uses build targets (`web`, `worker`) so deps + build stages cache across both.
 
@@ -81,21 +81,21 @@ Both configs use `primary_region = "iad"` to match US-East Neon.
 
 Set via `fly secrets set -a <app>`. Same set on both apps unless noted. `server/environment.ts` lists every variable the server reads and what it's for; this table lists those set on Fly, its `FLY_SECRETS` (`tests/environment.test.ts` keeps the two in step).
 
-| Name                                                                                    | Where | Purpose                                                                                                                                         |
-| --------------------------------------------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                                                                          | both  | Neon pooled connection                                                                                                                          |
-| `DIRECT_DATABASE_URL`                                                                   | both  | Neon direct connection (no `-pooler`). Required for LISTEN/NOTIFY — pgbouncer doesn't support session features                                  |
-| `RESEND_API_KEY`                                                                        | both  | Email via Resend                                                                                                                                |
-| `SIGNING_SECRET`                                                                        | web   | Signs upload attachment tokens; required at startup                                                                                             |
-| `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | both  | Attachment storage and cleanup; required by web startup                                                                                         |
-| `GOOGLE_CLIENT_ID`                                                                      | web   | OAuth                                                                                                                                           |
-| `APP_URL`                                                                               | both  | Email links + logo image (worker — `EmailLayout` reads it at render time), CORS allowed origin and OG meta (web), canonical-host redirect (web) |
-| `WORKER_FLYCAST_URL`                                                                    | web   | `http://arkyvree-worker.flycast:8001/health`                                                                                                    |
-| `SENTRY_DSN`                                                                            | both  | Server/worker error reporting via Better Stack's Sentry-compatible ingest (unset = disabled)                                                    |
-| `SENTRY_CLIENT_DSN`                                                                     | web   | Browser error reporting, injected into `window.__APP_CONFIG__` (unset = disabled)                                                               |
-| `SENTRY_TRACES_SAMPLE_RATE`                                                             | both  | Optional, defaults to `0`                                                                                                                       |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`                                                           | both  | Better Stack OTLP ingest base URL (unset = metrics push disabled)                                                                               |
-| `OTEL_AUTH_TOKEN`                                                                       | both  | Better Stack OTLP source token (wrapped in `Authorization: Bearer ...` at runtime)                                                              |
+| Name | Where | Purpose |
+|---|---|---|
+| `DATABASE_URL` | both | Neon pooled connection |
+| `DIRECT_DATABASE_URL` | both | Neon direct connection (no `-pooler`). Required for LISTEN/NOTIFY — pgbouncer doesn't support session features |
+| `RESEND_API_KEY` | both | Email via Resend |
+| `SIGNING_SECRET` | web | Signs upload attachment tokens; required at startup |
+| `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | both | Attachment storage and cleanup; required by web startup |
+| `GOOGLE_CLIENT_ID` | web | OAuth |
+| `APP_URL` | both | Email links + logo image (worker — `EmailLayout` reads it at render time), CORS allowed origin and OG meta (web), canonical-host redirect (web) |
+| `WORKER_FLYCAST_URL` | web | `http://arkyvree-worker.flycast:8001/health` |
+| `SENTRY_DSN` | both | Server/worker error reporting via Better Stack's Sentry-compatible ingest (unset = disabled) |
+| `SENTRY_CLIENT_DSN` | web | Browser error reporting, injected into `window.__APP_CONFIG__` (unset = disabled) |
+| `SENTRY_TRACES_SAMPLE_RATE` | both | Optional, defaults to `0` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | both | Better Stack OTLP ingest base URL (unset = metrics push disabled) |
+| `OTEL_AUTH_TOKEN` | both | Better Stack OTLP source token (wrapped in `Authorization: Bearer ...` at runtime) |
 
 ## Custom domain
 
@@ -126,13 +126,13 @@ Fly has no toggle to disable the default `*.fly.dev` hostname, so a Hono middlew
 
 One workflow per concern, in `.github/workflows/`:
 
-| Workflow        | Runs on                               | Jobs                                                                       |
-| --------------- | ------------------------------------- | -------------------------------------------------------------------------- |
-| `lint.yml`      | push to develop, PR, called by Deploy | `Lint`: TypeScript (`tsgo`), oxlint and the formatting (`oxfmt --check`)   |
-| `build.yml`     | push to develop, PR, called by Deploy | `Build`: the production build and the compiled PDF smoke check             |
-| `api-tests.yml` | push to develop, PR, called by Deploy | `API Tests (shard n/3)` on a push, `API Tests (changed)` on a PR           |
-| `e2e.yml`       | push to develop, PR, called by Deploy | `E2E (shard n/3)`                                                          |
-| `deploy.yml`    | push to main                          | the four above, `Main's head`, then `Deploy`: the web app, then the worker |
+| Workflow | Runs on | Jobs |
+|---|---|---|
+| `lint.yml` | push to develop, PR, called by Deploy | `Lint`: TypeScript (`tsgo`), oxlint and the formatting (`oxfmt --check`) |
+| `build.yml` | push to develop, PR, called by Deploy | `Build`: the production build and the compiled PDF smoke check |
+| `api-tests.yml` | push to develop, PR, called by Deploy | `API Tests (shard n/3)` on a push, `API Tests (changed)` on a PR |
+| `e2e.yml` | push to develop, PR, called by Deploy | `E2E (shard n/3)` |
+| `deploy.yml` | push to main | the four above, `Main's head`, then `Deploy`: the web app, then the worker |
 
 - A push to main runs only `deploy.yml`, which calls the four check workflows (`workflow_call`) and needs them: a deploy never uses a green result from another branch or commit. When a check fails, **Re-run failed jobs** re-runs it and deploys once it passes, as long as main is still at that commit (a re-run checks it again). A `Deploy` shown as cancelled gave its place in the queue to a newer commit's: don't re-run it. `Main's head` skips the deploy of a commit main has moved on from, before it queues, so re-running an older push never deploys it over a newer one nor takes the newer one's place in the queue: if the newer one fails its checks, nothing deploys until a fix lands on main. To roll back, redeploy both apps from the same earlier commit: `fly releases -a <app> --image` lists each app's images, `fly deploy -a <app> --config <its fly.*.toml> --image <image>` deploys one. The database stays migrated: migrations don't run backwards
 - The check workflows run in parallel. A new push to a PR cancels its previous runs; each push runs to the end

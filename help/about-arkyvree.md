@@ -8,7 +8,7 @@ Arkyvree is a character builder for tabletop RPGs.
 
 The difference from other builders: the rules aren't locked in. You can take any of the base rulesets we publish, make a copy, and change anything in it — feats, classes, BAB progression, save tables, item lists — and characters built on your copy follow your rules. House rules, homebrew content, and balance tweaks live alongside the system instead of in a separate document.
 
-Arkyvree is pronounced **archive-ry** — a play on _archive_, a place where rulesets are crafted, stored, and built upon.
+Arkyvree is pronounced **archive-ry** — a play on *archive*, a place where rulesets are crafted, stored, and built upon.
 
 ## Which game systems are supported?
 

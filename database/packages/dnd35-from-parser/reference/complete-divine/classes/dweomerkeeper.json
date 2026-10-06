@@ -28,7 +28,9 @@
         "description": "This prestige class does not grant proficiency with any weapons, armor, or shields."
       }
     },
-    "reviewed": ["Mantle Of Spells 1"]
+    "reviewed": [
+      "Mantle Of Spells 1"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -100,7 +102,10 @@
     "name": "Dweomerkeeper",
     "prerequisites": {
       "parsed": {
-        "feats": ["Any item creation feat", "any metamagic feat"],
+        "feats": [
+          "Any item creation feat",
+          "any metamagic feat"
+        ],
         "skills": [
           {
             "name": "Knowledge (arcana)",
@@ -124,7 +129,9 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Mantle of spells 1"],
+        "special": [
+          "Mantle of spells 1"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 2
       },
@@ -133,7 +140,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": ["Arcane sight"],
+        "special": [
+          "Arcane sight"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -142,7 +151,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Mantle of spells 2"],
+        "special": [
+          "Mantle of spells 2"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -151,7 +162,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": ["Supernatural spell 1/day"],
+        "special": [
+          "Supernatural spell 1/day"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -160,7 +173,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": ["Mantle of spells 3"],
+        "special": [
+          "Mantle of spells 3"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -169,7 +184,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": ["Supernatural spell 2/day"],
+        "special": [
+          "Supernatural spell 2/day"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 5
       },
@@ -178,7 +195,9 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": ["Mantle of spells 4"],
+        "special": [
+          "Mantle of spells 4"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 5
       },
@@ -187,7 +206,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": ["Supernatural spell 3/day"],
+        "special": [
+          "Supernatural spell 3/day"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 6
       },
@@ -196,7 +217,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": ["Mantle of spells 5"],
+        "special": [
+          "Mantle of spells 5"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 6
       },
@@ -205,7 +228,10 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": ["Cloak of mysteries", "supernatural spell 4/day"],
+        "special": [
+          "Cloak of mysteries",
+          "supernatural spell 4/day"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 7
       }

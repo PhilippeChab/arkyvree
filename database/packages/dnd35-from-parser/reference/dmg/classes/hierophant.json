@@ -82,7 +82,9 @@
             "type": "divine"
           }
         ],
-        "feats": ["any metamagic feat"],
+        "feats": [
+          "any metamagic feat"
+        ],
         "skills": [
           {
             "name": "Knowledge (religion)",
@@ -98,7 +100,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Special ability"],
+        "special": [
+          "Special ability"
+        ],
         "willSave": 2
       },
       {
@@ -106,7 +110,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Special ability"],
+        "special": [
+          "Special ability"
+        ],
         "willSave": 3
       },
       {
@@ -114,7 +120,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Special ability"],
+        "special": [
+          "Special ability"
+        ],
         "willSave": 3
       },
       {
@@ -122,7 +130,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Special ability"],
+        "special": [
+          "Special ability"
+        ],
         "willSave": 4
       },
       {
@@ -130,7 +140,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Special ability"],
+        "special": [
+          "Special ability"
+        ],
         "willSave": 4
       }
     ],

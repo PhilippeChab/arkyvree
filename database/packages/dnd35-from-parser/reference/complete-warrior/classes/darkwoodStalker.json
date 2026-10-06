@@ -99,7 +99,10 @@
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": ["Dodge", "Track"],
+        "feats": [
+          "Dodge",
+          "Track"
+        ],
         "skills": [
           {
             "name": "Hide",
@@ -122,7 +125,9 @@
             "ranks": 5
           }
         ],
-        "special": ["Race: Elf"]
+        "special": [
+          "Race: Elf"
+        ]
       },
       "text": "Base Attack Bonus: +5 Race: Elf or Half-elf Skills: Hide 5 ranks, Listen 5 ranks, Move Silently 5 ranks, Spot 5 ranks, Survival 5 ranks Feats: Dodge, Track Speak Language: Orc"
     },
@@ -132,7 +137,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
-        "special": ["Ancient foe +2"],
+        "special": [
+          "Ancient foe +2"
+        ],
         "willSave": 0
       },
       {
@@ -140,7 +147,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
-        "special": ["Uncanny dodge"],
+        "special": [
+          "Uncanny dodge"
+        ],
         "willSave": 0
       },
       {
@@ -148,7 +157,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
-        "special": ["Sneak attack +1d6"],
+        "special": [
+          "Sneak attack +1d6"
+        ],
         "willSave": 1
       },
       {
@@ -156,7 +167,10 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
-        "special": ["Ancient foe +4", "darkvision 30 ft."],
+        "special": [
+          "Ancient foe +4",
+          "darkvision 30 ft."
+        ],
         "willSave": 1
       },
       {
@@ -164,7 +178,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
-        "special": ["Improved uncanny dodge"],
+        "special": [
+          "Improved uncanny dodge"
+        ],
         "willSave": 1
       },
       {
@@ -172,7 +188,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
-        "special": ["Sneak attack +2d6"],
+        "special": [
+          "Sneak attack +2d6"
+        ],
         "willSave": 2
       },
       {
@@ -180,7 +198,10 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
-        "special": ["Ancient foe +6", "darkvision 60 ft."],
+        "special": [
+          "Ancient foe +6",
+          "darkvision 60 ft."
+        ],
         "willSave": 2
       },
       {
@@ -188,7 +209,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
-        "special": ["Dodge critical"],
+        "special": [
+          "Dodge critical"
+        ],
         "willSave": 2
       },
       {
@@ -196,7 +219,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
-        "special": ["Sneak attack +3d6"],
+        "special": [
+          "Sneak attack +3d6"
+        ],
         "willSave": 3
       },
       {
@@ -204,7 +229,10 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
-        "special": ["Ancient foe +8", "death attack"],
+        "special": [
+          "Ancient foe +8",
+          "death attack"
+        ],
         "willSave": 3
       }
     ],

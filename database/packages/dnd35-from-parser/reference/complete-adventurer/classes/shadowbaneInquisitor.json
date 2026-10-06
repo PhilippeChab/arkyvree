@@ -79,7 +79,9 @@
       "parsed": {
         "alignment": "Lawful good",
         "bab": 5,
-        "feats": ["Power Attack"],
+        "feats": [
+          "Power Attack"
+        ],
         "skills": [
           {
             "name": "Gather Information",
@@ -106,7 +108,10 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Absolute conviction", "pierce shadows"],
+        "special": [
+          "Absolute conviction",
+          "pierce shadows"
+        ],
         "willSave": 0
       },
       {
@@ -114,7 +119,10 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Sacred stealth (+4)", "smite 1/day"],
+        "special": [
+          "Sacred stealth (+4)",
+          "smite 1/day"
+        ],
         "willSave": 0
       },
       {
@@ -122,7 +130,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Improved Sunder"],
+        "special": [
+          "Improved Sunder"
+        ],
         "willSave": 1
       },
       {
@@ -130,7 +140,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Sneak attack +1d6"],
+        "special": [
+          "Sneak attack +1d6"
+        ],
         "willSave": 1
       },
       {
@@ -138,7 +150,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Merciless purity"],
+        "special": [
+          "Merciless purity"
+        ],
         "willSave": 1
       },
       {
@@ -146,7 +160,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Smite 2/day"],
+        "special": [
+          "Smite 2/day"
+        ],
         "willSave": 2
       },
       {
@@ -154,7 +170,10 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Sacred stealth (+8)", "sneak attack +2d6"],
+        "special": [
+          "Sacred stealth (+8)",
+          "sneak attack +2d6"
+        ],
         "willSave": 2
       },
       {
@@ -162,7 +181,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Righteous fervor"],
+        "special": [
+          "Righteous fervor"
+        ],
         "willSave": 2
       },
       {
@@ -170,7 +191,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Burning light"],
+        "special": [
+          "Burning light"
+        ],
         "willSave": 3
       },
       {
@@ -178,7 +201,10 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Smite 3/day", "sneak attack +3d6"],
+        "special": [
+          "Smite 3/day",
+          "sneak attack +3d6"
+        ],
         "willSave": 3
       }
     ],

@@ -152,7 +152,11 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Animal companion", "nature sense", "wild empathy"],
+        "special": [
+          "Animal companion",
+          "nature sense",
+          "wild empathy"
+        ],
         "spellsPerDay": "3,1,-,-,-,-,-,-,-,-",
         "willSave": 2
       },
@@ -161,7 +165,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Woodland stride"],
+        "special": [
+          "Woodland stride"
+        ],
         "spellsPerDay": "4,2,-,-,-,-,-,-,-,-",
         "willSave": 3
       },
@@ -170,7 +176,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Trackless step"],
+        "special": [
+          "Trackless step"
+        ],
         "spellsPerDay": "4,2,1,-,-,-,-,-,-,-",
         "willSave": 3
       },
@@ -179,7 +187,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Resist nature's lure"],
+        "special": [
+          "Resist nature's lure"
+        ],
         "spellsPerDay": "5,3,2,-,-,-,-,-,-,-",
         "willSave": 4
       },
@@ -188,7 +198,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Wild shape (1/day)"],
+        "special": [
+          "Wild shape (1/day)"
+        ],
         "spellsPerDay": "5,3,2,1,-,-,-,-,-,-",
         "willSave": 4
       },
@@ -197,7 +209,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Wild shape (2/day)"],
+        "special": [
+          "Wild shape (2/day)"
+        ],
         "spellsPerDay": "5,3,3,2,-,-,-,-,-,-",
         "willSave": 5
       },
@@ -206,7 +220,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Wild shape (3/day)"],
+        "special": [
+          "Wild shape (3/day)"
+        ],
         "spellsPerDay": "6,4,3,2,1,-,-,-,-,-",
         "willSave": 5
       },
@@ -215,7 +231,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Wild shape (Large)"],
+        "special": [
+          "Wild shape (Large)"
+        ],
         "spellsPerDay": "6,4,3,3,2,-,-,-,-,-",
         "willSave": 6
       },
@@ -224,7 +242,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Venom immunity"],
+        "special": [
+          "Venom immunity"
+        ],
         "spellsPerDay": "6,4,4,3,2,1,-,-,-,-",
         "willSave": 6
       },
@@ -233,7 +253,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Wild shape (4/day)"],
+        "special": [
+          "Wild shape (4/day)"
+        ],
         "spellsPerDay": "6,4,4,3,3,2,-,-,-,-",
         "willSave": 7
       },
@@ -242,7 +264,9 @@
         "fortSave": 7,
         "level": 11,
         "refSave": 3,
-        "special": ["Wild shape (Tiny)"],
+        "special": [
+          "Wild shape (Tiny)"
+        ],
         "spellsPerDay": "6,5,4,4,3,2,1,-,-,-",
         "willSave": 7
       },
@@ -251,7 +275,9 @@
         "fortSave": 8,
         "level": 12,
         "refSave": 4,
-        "special": ["Wild shape (plant)"],
+        "special": [
+          "Wild shape (plant)"
+        ],
         "spellsPerDay": "6,5,4,4,3,3,2,-,-,-",
         "willSave": 8
       },
@@ -260,7 +286,9 @@
         "fortSave": 8,
         "level": 13,
         "refSave": 4,
-        "special": ["A thousand faces"],
+        "special": [
+          "A thousand faces"
+        ],
         "spellsPerDay": "6,5,5,4,4,3,2,1,-,-",
         "willSave": 8
       },
@@ -269,7 +297,9 @@
         "fortSave": 9,
         "level": 14,
         "refSave": 4,
-        "special": ["Wild shape (5/day)"],
+        "special": [
+          "Wild shape (5/day)"
+        ],
         "spellsPerDay": "6,5,5,4,4,3,3,2,-,-",
         "willSave": 9
       },
@@ -278,7 +308,10 @@
         "fortSave": 9,
         "level": 15,
         "refSave": 5,
-        "special": ["Timeless body", "wild shape (Huge)"],
+        "special": [
+          "Timeless body",
+          "wild shape (Huge)"
+        ],
         "spellsPerDay": "6,5,5,5,4,4,3,2,1,-",
         "willSave": 9
       },
@@ -287,7 +320,9 @@
         "fortSave": 10,
         "level": 16,
         "refSave": 5,
-        "special": ["Wild shape (elemental 1/day)"],
+        "special": [
+          "Wild shape (elemental 1/day)"
+        ],
         "spellsPerDay": "6,5,5,5,4,4,3,3,2,-",
         "willSave": 10
       },
@@ -305,7 +340,9 @@
         "fortSave": 11,
         "level": 18,
         "refSave": 6,
-        "special": ["Wild shape (6/day, elemental 2/day)"],
+        "special": [
+          "Wild shape (6/day, elemental 2/day)"
+        ],
         "spellsPerDay": "6,5,5,5,5,4,4,3,3,2",
         "willSave": 11
       },
@@ -323,7 +360,9 @@
         "fortSave": 12,
         "level": 20,
         "refSave": 6,
-        "special": ["Wild shape (elemental 3/day, Huge elemental)"],
+        "special": [
+          "Wild shape (elemental 3/day, Huge elemental)"
+        ],
         "spellsPerDay": "6,5,5,5,5,5,4,4,4,4",
         "willSave": 12
       }

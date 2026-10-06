@@ -110,7 +110,9 @@
         "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
     },
-    "reviewed": ["AC Bonus"]
+    "reviewed": [
+      "AC Bonus"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -174,14 +176,29 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": ["Balance", "Craft", "Escape Artist", "Jump", "Listen", "Perform", "Profession", "Swim", "Tumble"],
+    "classSkills": [
+      "Balance",
+      "Craft",
+      "Escape Artist",
+      "Jump",
+      "Listen",
+      "Perform",
+      "Profession",
+      "Swim",
+      "Tumble"
+    ],
     "description": "The dervish epitomizes speeds, quickness, and abandon.",
     "hitDie": "d10",
     "name": "Dervish",
     "prerequisites": {
       "parsed": {
         "bab": 5,
-        "feats": ["Combat Expertise", "Dodge", "Mobility", "Weapon Focus (any slashing melee weapon)"],
+        "feats": [
+          "Combat Expertise",
+          "Dodge",
+          "Mobility",
+          "Weapon Focus (any slashing melee weapon)"
+        ],
         "skills": [
           {
             "name": "Perform (Dance)",
@@ -204,7 +221,11 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Dervish dance 1/day", "movement mastery", "slashing blades"],
+        "special": [
+          "Dervish dance 1/day",
+          "movement mastery",
+          "slashing blades"
+        ],
         "willSave": 2
       },
       {
@@ -215,7 +236,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["Fast movement +5 ft."],
+        "special": [
+          "Fast movement +5 ft."
+        ],
         "willSave": 3
       },
       {
@@ -226,7 +249,10 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Spring Attack", "dervish dance 2/day"],
+        "special": [
+          "Spring Attack",
+          "dervish dance 2/day"
+        ],
         "willSave": 3
       },
       {
@@ -237,7 +263,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["Dance of death"],
+        "special": [
+          "Dance of death"
+        ],
         "willSave": 4
       },
       {
@@ -248,7 +276,10 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Fast movement +10 ft.", "dervish dance 3/day"],
+        "special": [
+          "Fast movement +10 ft.",
+          "dervish dance 3/day"
+        ],
         "willSave": 4
       },
       {
@@ -259,7 +290,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": ["Improved reaction"],
+        "special": [
+          "Improved reaction"
+        ],
         "willSave": 5
       },
       {
@@ -270,7 +303,10 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": ["Elaborate parry", "dervish dance 4/day"],
+        "special": [
+          "Elaborate parry",
+          "dervish dance 4/day"
+        ],
         "willSave": 5
       },
       {
@@ -281,7 +317,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": ["Fast movement +15 ft."],
+        "special": [
+          "Fast movement +15 ft."
+        ],
         "willSave": 6
       },
       {
@@ -292,7 +330,10 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": ["Tireless dance", "dervish dance 5/day"],
+        "special": [
+          "Tireless dance",
+          "dervish dance 5/day"
+        ],
         "willSave": 6
       },
       {
@@ -303,7 +344,9 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": ["A thousand cuts"],
+        "special": [
+          "A thousand cuts"
+        ],
         "willSave": 7
       }
     ],

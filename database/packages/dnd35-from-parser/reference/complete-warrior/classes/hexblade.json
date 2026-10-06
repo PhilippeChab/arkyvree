@@ -129,7 +129,9 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Hexblade's curse 1/day"],
+        "special": [
+          "Hexblade's curse 1/day"
+        ],
         "spellsPerDay": "-,-,-,-",
         "willSave": 2
       },
@@ -138,7 +140,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": ["Arcane resistance"],
+        "special": [
+          "Arcane resistance"
+        ],
         "spellsPerDay": "-,-,-,-",
         "willSave": 3
       },
@@ -147,7 +151,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Mettle"],
+        "special": [
+          "Mettle"
+        ],
         "spellsPerDay": "-,-,-,-",
         "willSave": 3
       },
@@ -156,7 +162,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": ["Summon familiar"],
+        "special": [
+          "Summon familiar"
+        ],
         "spellsPerDay": "0,-,-,-",
         "willSave": 4
       },
@@ -165,7 +173,10 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": ["Bonus feat", "hexblade's curse 2/day"],
+        "special": [
+          "Bonus feat",
+          "hexblade's curse 2/day"
+        ],
         "spellsPerDay": "0,-,-,-",
         "willSave": 4
       },
@@ -183,7 +194,9 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": ["Greater hexblade's curse"],
+        "special": [
+          "Greater hexblade's curse"
+        ],
         "spellsPerDay": "1,-,-,-",
         "willSave": 5
       },
@@ -201,7 +214,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": ["Hexblade's curse 3/day"],
+        "special": [
+          "Hexblade's curse 3/day"
+        ],
         "spellsPerDay": "1,0,-,-",
         "willSave": 6
       },
@@ -210,7 +225,9 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "spellsPerDay": "1,1,-,-",
         "willSave": 7
       },
@@ -228,7 +245,9 @@
         "fortSave": 4,
         "level": 12,
         "refSave": 4,
-        "special": ["Aura of unlucky 1/day"],
+        "special": [
+          "Aura of unlucky 1/day"
+        ],
         "spellsPerDay": "1,1,1,-",
         "willSave": 8
       },
@@ -237,7 +256,9 @@
         "fortSave": 4,
         "level": 13,
         "refSave": 4,
-        "special": ["Hexblade's curse 4/day"],
+        "special": [
+          "Hexblade's curse 4/day"
+        ],
         "spellsPerDay": "1,1,1,-",
         "willSave": 8
       },
@@ -255,7 +276,9 @@
         "fortSave": 5,
         "level": 15,
         "refSave": 5,
-        "special": ["Bonus Feat"],
+        "special": [
+          "Bonus Feat"
+        ],
         "spellsPerDay": "2,1,1,1",
         "willSave": 9
       },
@@ -264,7 +287,9 @@
         "fortSave": 5,
         "level": 16,
         "refSave": 5,
-        "special": ["Aura of unlucky 2/day"],
+        "special": [
+          "Aura of unlucky 2/day"
+        ],
         "spellsPerDay": "2,2,1,1",
         "willSave": 10
       },
@@ -273,7 +298,9 @@
         "fortSave": 5,
         "level": 17,
         "refSave": 5,
-        "special": ["Hexblade's curse 5/day"],
+        "special": [
+          "Hexblade's curse 5/day"
+        ],
         "spellsPerDay": "2,2,2,1",
         "willSave": 10
       },
@@ -291,7 +318,9 @@
         "fortSave": 6,
         "level": 19,
         "refSave": 6,
-        "special": ["Dire hexblade's curse"],
+        "special": [
+          "Dire hexblade's curse"
+        ],
         "spellsPerDay": "3,3,3,2",
         "willSave": 11
       },
@@ -300,7 +329,10 @@
         "fortSave": 6,
         "level": 20,
         "refSave": 6,
-        "special": ["Aura of unlucky 3/day", "bonus feat"],
+        "special": [
+          "Aura of unlucky 3/day",
+          "bonus feat"
+        ],
         "spellsPerDay": "3,3,3,3",
         "willSave": 12
       }

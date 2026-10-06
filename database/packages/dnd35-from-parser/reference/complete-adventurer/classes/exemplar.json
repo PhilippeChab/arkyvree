@@ -54,7 +54,9 @@
       "Use Magic Device",
       "Use Rope"
     ],
-    "reviewed": ["Persuasive Performance"]
+    "reviewed": [
+      "Persuasive Performance"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -165,7 +167,9 @@
     "name": "Exemplar",
     "prerequisites": {
       "parsed": {
-        "feats": ["Skill Focus (any) Any other skill 13 ranks"],
+        "feats": [
+          "Skill Focus (any) Any other skill 13 ranks"
+        ],
         "skills": [
           {
             "name": "Diplomacy",
@@ -181,7 +185,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Skill artistry", "skill mastery"],
+        "special": [
+          "Skill artistry",
+          "skill mastery"
+        ],
         "willSave": 2
       },
       {
@@ -189,7 +196,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": ["Lend talent (one-half penalty)"],
+        "special": [
+          "Lend talent (one-half penalty)"
+        ],
         "willSave": 3
       },
       {
@@ -197,7 +206,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 3
       },
       {
@@ -205,7 +216,10 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": ["Skill artistry", "sustaining presence"],
+        "special": [
+          "Skill artistry",
+          "sustaining presence"
+        ],
         "willSave": 4
       },
       {
@@ -213,7 +227,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": ["Persuasive performance"],
+        "special": [
+          "Persuasive performance"
+        ],
         "willSave": 4
       },
       {
@@ -221,7 +237,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 5
       },
       {
@@ -229,7 +247,9 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
-        "special": ["Skill artistry"],
+        "special": [
+          "Skill artistry"
+        ],
         "willSave": 5
       },
       {
@@ -237,7 +257,10 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
-        "special": ["Intellectual agility", "lend talent (equal to penalty)"],
+        "special": [
+          "Intellectual agility",
+          "lend talent (equal to penalty)"
+        ],
         "willSave": 6
       },
       {
@@ -245,7 +268,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 6
       },
       {
@@ -253,7 +278,10 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
-        "special": ["Perfect self", "skill artistry"],
+        "special": [
+          "Perfect self",
+          "skill artistry"
+        ],
         "willSave": 7
       }
     ],

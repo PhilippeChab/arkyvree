@@ -140,13 +140,13 @@ For lineage checks (entity-belongs-to-sourceChain), `findScopedEntity`. For id c
 
 From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cache/index.ts`): `RulesetCache`, the class that holds the cache (`RulesetCache.ts`), and the types of what it holds.
 
-| Symbol                            | Purpose                                                                                               |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `RulesetCache.invalidate`         | Clear the cache entries for a single ruleset. Call after every mutation.                              |
-| `RulesetCache.invalidateEntities` | Same, but keep target-paths cache (used by customization mutations that don't change the entity set). |
-| `RulesetCache.invalidateAll`      | Nuclear option — every ruleset. Used by tests and broad recomputations.                               |
-| `RulesetCache.warm`               | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`.                      |
-| `CachedRulesetData` (type)        | Parameter / return type for scope callbacks and framework extension points.                           |
+| Symbol                                       | Purpose                                                                                               |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `RulesetCache.invalidate`                    | Clear the cache entries for a single ruleset. Call after every mutation.                              |
+| `RulesetCache.invalidateEntities`            | Same, but keep target-paths cache (used by customization mutations that don't change the entity set). |
+| `RulesetCache.invalidateAll`                 | Nuclear option — every ruleset. Used by tests and broad recomputations.                               |
+| `RulesetCache.warm`                          | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`.                      |
+| `CachedRulesetData` (type)                   | Parameter / return type for scope callbacks and framework extension points.                           |
 
 `CowData`, the class `rulesetData.cow` is (`server/database/CowData.ts`), comes from `server/database/index.ts`: the cowContext holds it.
 

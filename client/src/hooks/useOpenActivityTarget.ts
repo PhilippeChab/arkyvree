@@ -37,7 +37,11 @@ export function useOpenActivityTarget() {
         ({ url }) => navigate(url),
         // 403 says why ("You no longer have access to this character."); anything else means the entity is gone.
         (error) =>
-          snackbar.warning(error instanceof ApiError && error.status === 403 ? error.message : "This item was deleted"),
+          snackbar.warning(
+            error instanceof ApiError && error.status === 403
+              ? error.message
+              : "This item was deleted",
+          ),
       );
   };
 }

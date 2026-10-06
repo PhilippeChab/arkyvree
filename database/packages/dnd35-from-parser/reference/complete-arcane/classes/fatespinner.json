@@ -86,7 +86,9 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Spin fate"],
+        "special": [
+          "Spin fate"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 2
       },
@@ -95,7 +97,9 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": ["Fickle finger of fate"],
+        "special": [
+          "Fickle finger of fate"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -104,7 +108,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Spin destiny"],
+        "special": [
+          "Spin destiny"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 3
       },
@@ -113,7 +119,10 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": ["Deny fate", "resist fate"],
+        "special": [
+          "Deny fate",
+          "resist fate"
+        ],
         "spellsPerDay": "+1 level of existing spellcasting class",
         "willSave": 4
       },
@@ -122,7 +131,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": ["Seal fate"],
+        "special": [
+          "Seal fate"
+        ],
         "spellsPerDay": "-",
         "willSave": 4
       }

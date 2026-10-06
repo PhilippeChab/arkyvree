@@ -84,7 +84,14 @@
         "type": "(Ex)"
       }
     ],
-    "classSkills": ["Concentration", "Craft", "Intimidate", "Knowledge (Arcana)", "Profession", "Spellcraft"],
+    "classSkills": [
+      "Concentration",
+      "Craft",
+      "Intimidate",
+      "Knowledge (Arcana)",
+      "Profession",
+      "Spellcraft"
+    ],
     "description": "Masters of the unseen hand delight in crushing their foes with invisible force, flinging massive objects into the sky, and disarming enemies with a single thought.",
     "hitDie": "d4",
     "name": "Master of the Unseen Hand",
@@ -105,7 +112,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
-        "special": ["Improved caster level", "versatile telekinesis"],
+        "special": [
+          "Improved caster level",
+          "versatile telekinesis"
+        ],
         "willSave": 2
       },
       {
@@ -113,7 +123,10 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
-        "special": ["Telekinetic wielder", "sustained concentration"],
+        "special": [
+          "Telekinetic wielder",
+          "sustained concentration"
+        ],
         "willSave": 3
       },
       {
@@ -121,7 +134,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
-        "special": ["Full attack telekinesis"],
+        "special": [
+          "Full attack telekinesis"
+        ],
         "willSave": 3
       },
       {
@@ -129,7 +144,10 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
-        "special": ["Improved violent thrust", "telekinetic flight"],
+        "special": [
+          "Improved violent thrust",
+          "telekinetic flight"
+        ],
         "willSave": 4
       },
       {
@@ -137,7 +155,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
-        "special": ["Fling skyward"],
+        "special": [
+          "Fling skyward"
+        ],
         "willSave": 4
       }
     ],

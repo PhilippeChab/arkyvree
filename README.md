@@ -1,6 +1,6 @@
 # Arkyvree
 
-A programmable ruleset engine for tabletop RPGs.
+A programmable ruleset engine for tabletop RPGs. 
 
 Original idea and core architecture implemented by myself, the rest was done by AI agents.
 

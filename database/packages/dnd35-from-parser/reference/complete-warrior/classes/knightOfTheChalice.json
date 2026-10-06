@@ -118,7 +118,9 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Fiendslaying +1/+1d6"],
+        "special": [
+          "Fiendslaying +1/+1d6"
+        ],
         "spellsPerDay": "0,-,-,-",
         "willSave": 0
       },
@@ -127,7 +129,10 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Censure demons", "courage of heaven (fear)"],
+        "special": [
+          "Censure demons",
+          "courage of heaven (fear)"
+        ],
         "spellsPerDay": "1,-,-,-",
         "willSave": 0
       },
@@ -136,7 +141,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Fiendslaying +2/+2d6"],
+        "special": [
+          "Fiendslaying +2/+2d6"
+        ],
         "spellsPerDay": "1,0,-,-",
         "willSave": 1
       },
@@ -145,7 +152,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Consecrated casting"],
+        "special": [
+          "Consecrated casting"
+        ],
         "spellsPerDay": "1,1,-,-",
         "willSave": 1
       },
@@ -154,7 +163,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Courage of heaven (enchantment)"],
+        "special": [
+          "Courage of heaven (enchantment)"
+        ],
         "spellsPerDay": "1,1,0,-",
         "willSave": 1
       },
@@ -163,7 +174,9 @@
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
-        "special": ["Fiendslaying +3/+3d6"],
+        "special": [
+          "Fiendslaying +3/+3d6"
+        ],
         "spellsPerDay": "1,1,1,-",
         "willSave": 2
       },
@@ -181,7 +194,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Courage of heaven (radius)"],
+        "special": [
+          "Courage of heaven (radius)"
+        ],
         "spellsPerDay": "2,1,1,1",
         "willSave": 2
       },
@@ -190,7 +205,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Fiendslaying +4/+4d6"],
+        "special": [
+          "Fiendslaying +4/+4d6"
+        ],
         "spellsPerDay": "2,2,1,1",
         "willSave": 3
       },
@@ -199,7 +216,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Holy aura 1/day"],
+        "special": [
+          "Holy aura 1/day"
+        ],
         "spellsPerDay": "2,2,2,1",
         "willSave": 3
       }

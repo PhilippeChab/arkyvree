@@ -92,7 +92,10 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Sacrament of trust", "lay on hands"],
+        "special": [
+          "Sacrament of trust",
+          "lay on hands"
+        ],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -101,7 +104,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Debilitating touch"],
+        "special": [
+          "Debilitating touch"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 3
       },
@@ -110,7 +115,9 @@
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
-        "special": ["Smite evil 1/day"],
+        "special": [
+          "Smite evil 1/day"
+        ],
         "spellsPerDay": "-",
         "willSave": 3
       },
@@ -119,7 +126,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Justice blade (chaos)"],
+        "special": [
+          "Justice blade (chaos)"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 4
       },
@@ -128,7 +137,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Devastating touch"],
+        "special": [
+          "Devastating touch"
+        ],
         "spellsPerDay": "-",
         "willSave": 4
       },
@@ -146,7 +157,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Unbound justice"],
+        "special": [
+          "Unbound justice"
+        ],
         "spellsPerDay": "-",
         "willSave": 5
       },
@@ -155,7 +168,9 @@
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
-        "special": ["Smite evil 2/day"],
+        "special": [
+          "Smite evil 2/day"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 6
       },
@@ -164,7 +179,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Justice blade (all alignments)"],
+        "special": [
+          "Justice blade (all alignments)"
+        ],
         "spellsPerDay": "-",
         "willSave": 6
       },
@@ -173,7 +190,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Sacrament of the true faith"],
+        "special": [
+          "Sacrament of the true faith"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 7
       }

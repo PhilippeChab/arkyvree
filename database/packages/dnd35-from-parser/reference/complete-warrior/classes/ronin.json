@@ -86,7 +86,9 @@
       "parsed": {
         "alignment": "Any nonlawful",
         "bab": 6,
-        "feats": ["Exotic Weapon Proficiency (bastard sword)"],
+        "feats": [
+          "Exotic Weapon Proficiency (bastard sword)"
+        ],
         "special": [
           "Must have fled or been exiled from the service of a feudal lord, commonly for disobeying orders, displaying rudeness or cowardice at a crucial juncture, or failing in a crucial task.",
           "fled or been exiled from the service of a feudal lord, commonly for disobeying orders, displaying rudeness or cowardice at a crucial juncture, or failing in a crucial task"
@@ -100,7 +102,10 @@
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
-        "special": ["Infamy", "sneak attack +1d6"],
+        "special": [
+          "Infamy",
+          "sneak attack +1d6"
+        ],
         "willSave": 0
       },
       {
@@ -108,7 +113,9 @@
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
-        "special": ["Banzai charge"],
+        "special": [
+          "Banzai charge"
+        ],
         "willSave": 0
       },
       {
@@ -124,7 +131,9 @@
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
-        "special": ["Sneak attack +2d6"],
+        "special": [
+          "Sneak attack +2d6"
+        ],
         "willSave": 1
       },
       {
@@ -132,7 +141,9 @@
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 1
       },
       {
@@ -148,7 +159,9 @@
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
-        "special": ["Sneak attack +3d6"],
+        "special": [
+          "Sneak attack +3d6"
+        ],
         "willSave": 2
       },
       {
@@ -164,7 +177,9 @@
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
-        "special": ["Bonus feat"],
+        "special": [
+          "Bonus feat"
+        ],
         "willSave": 3
       },
       {
@@ -172,7 +187,9 @@
         "fortSave": 7,
         "level": 10,
         "refSave": 3,
-        "special": ["Sneak attack +4d6"],
+        "special": [
+          "Sneak attack +4d6"
+        ],
         "willSave": 3
       }
     ],

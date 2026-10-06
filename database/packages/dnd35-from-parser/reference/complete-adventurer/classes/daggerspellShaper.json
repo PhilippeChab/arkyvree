@@ -77,14 +77,19 @@
     "prerequisites": {
       "parsed": {
         "alignment": "Any nonevil",
-        "feats": ["Weapon Focus (Dagger)", "Two-Weapon Fighting"],
+        "feats": [
+          "Weapon Focus (Dagger)",
+          "Two-Weapon Fighting"
+        ],
         "skills": [
           {
             "name": "Concentration",
             "ranks": 8
           }
         ],
-        "special": ["Wild shape class feature.Special: Either sneak attack +1d6 or skirmish +1d6."]
+        "special": [
+          "Wild shape class feature.Special: Either sneak attack +1d6 or skirmish +1d6."
+        ]
       },
       "text": "Alignment: Any nonevil. Skills: Concentration 8 ranks Feats: Weapon Focus (Dagger), Two-Weapon Fighting Special: Wild shape class feature.Special: Either sneak attack +1d6 or skirmish +1d6."
     },
@@ -94,7 +99,10 @@
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
-        "special": ["Daggercast", "wild shape (+1/day)"],
+        "special": [
+          "Daggercast",
+          "wild shape (+1/day)"
+        ],
         "spellsPerDay": "-",
         "willSave": 2
       },
@@ -103,7 +111,10 @@
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
-        "special": ["Dagger claws", "wild shape (Tiny)"],
+        "special": [
+          "Dagger claws",
+          "wild shape (Tiny)"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 3
       },
@@ -112,7 +123,9 @@
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
-        "special": ["Sneak attack +1d6"],
+        "special": [
+          "Sneak attack +1d6"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 3
       },
@@ -121,7 +134,9 @@
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
-        "special": ["Wild shape (Large)"],
+        "special": [
+          "Wild shape (Large)"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 4
       },
@@ -130,7 +145,9 @@
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
-        "special": ["Wild shape (+2/day)"],
+        "special": [
+          "Wild shape (+2/day)"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 4
       },
@@ -139,7 +156,9 @@
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
-        "special": ["Sneak attack +2d6"],
+        "special": [
+          "Sneak attack +2d6"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 5
       },
@@ -148,7 +167,9 @@
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
-        "special": ["Fast wild shape"],
+        "special": [
+          "Fast wild shape"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 5
       },
@@ -157,7 +178,9 @@
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
-        "special": ["Enhanced wild shape"],
+        "special": [
+          "Enhanced wild shape"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 6
       },
@@ -166,7 +189,9 @@
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
-        "special": ["Sneak attack +3d6"],
+        "special": [
+          "Sneak attack +3d6"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 6
       },
@@ -175,7 +200,10 @@
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
-        "special": ["Daggerspell flurry", "wild shape (+3/day)"],
+        "special": [
+          "Daggerspell flurry",
+          "wild shape (+3/day)"
+        ],
         "spellsPerDay": "+1 level of existing divine spellcasting class",
         "willSave": 7
       }

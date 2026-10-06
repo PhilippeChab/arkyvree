@@ -52,22 +52,33 @@ Seed data is written with nested `or()` / `and()` builders from `database/packag
 import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 
 // Simple AND (all root-level entries are AND'd together):
-requirements: [gte("combat.bab", 1), eq(feat("Power Attack"))];
+requirements: [
+  gte("combat.bab", 1),
+  eq(feat("Power Attack")),
+]
 
 // OR group:
 requirements: [
-  or(eq(feat("Martial Weapon Proficiency")), eq(feat("Martial Weapon Proficiency: Longsword"))),
+  or(
+    eq(feat("Martial Weapon Proficiency")),
+    eq(feat("Martial Weapon Proficiency: Longsword")),
+  ),
   gte("combat.bab", 1),
-];
+]
 
 // Nested AND-inside-OR (e.g. monk prerequisite bypass):
 requirements: [
-  or(and(gte("abilities.dexterity.total", 13), eq(feat("Improved Unarmed Strike"))), gte("classes.monk.level", 1)),
-];
+  or(
+    and(
+      gte("abilities.dexterity.total", 13),
+      eq(feat("Improved Unarmed Strike")),
+    ),
+    gte("classes.monk.level", 1),
+  ),
+]
 ```
 
 `requirementRows()` in `database/packages/dnd35/seed/customization.ts` walks the tree and assigns hierarchical levels:
-
 - Root entries: `"1"`, `"2"`, `"3"`
 - Children: `"1.1"`, `"1.2"`, nested: `"1.1.1"`, `"1.1.2"`
 
@@ -85,17 +96,19 @@ Feats with a `FEAT_FAMILY` property are grouped by the character engine. Require
 
 ```ts
 // "Any Weapon Focus feat"
-requirements: [eq("feats.weaponfocus.*.possessed")];
+requirements: [eq("feats.weaponfocus.*.possessed")]
 
 // "Any metamagic feat" AND "any item creation feat"
-requirements: [eq("feats.metamagic.*.possessed"), eq("feats.itemcreation.*.possessed")];
+requirements: [
+  eq("feats.metamagic.*.possessed"),
+  eq("feats.itemcreation.*.possessed"),
+]
 
 // "Any two luck feats"
-requirements: [gte("feats.luck.count", 2)];
+requirements: [gte("feats.luck.count", 2)]
 ```
 
 Available families: `FEAT_FAMILIES` in `shared/dnd3.5/feats.ts`, the `FEAT_FAMILY` values the customization offers and the seeded rules use (`tests/seeds/feats.test.ts` keeps the two the same):
-
 - Template families: `weaponfocus`, `greaterweaponfocus`, `weaponspecialization`, `greaterweaponspecialization`, `improvedcritical`, `powercritical`, `disembowelingstrike`, `headshot`, `greaterresiliency`, `martialweaponproficiency`, `exoticweaponproficiency`, `rapidreload`, `spellfocus`, `greaterspellfocus`, `arcanedefense`, `skillfocus`
 - Feat type families, each named like its type: `metamagic`, `itemcreation`, `luck`, and Complete Arcane's `draconic` feats, by their "Draconic …" name
 - Class feature families: `turnorrebukeundead`, `wildshape`, `favoredenemy`, and the features each class seeds as its own feat, "Sneak Attack (Rogue)" (`CLASS_FEATURE_FAMILIES`, which `CLASS_FEAT_FAMILIES` in `dnd35-from-parser/tools/buildSeeds/classes.ts` matches): `animalcompanion`, `bardicmusic`, `evasion`, `flurryofblows`, `grace`, `inspirecourage`, `kipower`, `layonhands`, `poisonuse`, `rage`, `skirmish`, `smiteevil`, `sneakattack`, `suddenstrike`, `summonfamiliar`, `trapfinding`
@@ -108,10 +121,10 @@ Skills with sub-types (Craft, Knowledge, Perform) share a common slug prefix. Re
 
 ```ts
 // "Any Knowledge skill 5 ranks"
-requirements: [gte("skills.knowledge*.rank", 5)];
+requirements: [gte("skills.knowledge*.rank", 5)]
 
 // "Any Craft skill 10 ranks"
-requirements: [gte("skills.craft*.rank", 10)];
+requirements: [gte("skills.craft*.rank", 10)]
 ```
 
 The `*` suffix matches any key starting with the prefix. This is handled by `traversePath` in `TargetPaths.ts`.
@@ -147,28 +160,27 @@ Some entities get properties, requirements, or feats auto-generated on create/up
 
 Properties generated from `WEAPON_TYPE_DEFINITIONS` in `weaponGenerator.ts`:
 
-| Property Type                | Example (Longsword)                                            |
-| ---------------------------- | -------------------------------------------------------------- |
-| `WEAPON_PROFICIENCY`         | Martial                                                        |
-| `WEAPON_FAMILY`              | Sword                                                          |
-| `WEAPON_BASE_DAMAGE`         | 1d8                                                            |
-| `WEAPON_CRITICAL_RANGE`      | 1                                                              |
-| `WEAPON_CRITICAL_MULTIPLIER` | 2                                                              |
-| `WEAPON_SIZE`                | Medium                                                         |
-| `WEAPON_TYPE`                | Longsword                                                      |
-| `DAMAGE_TYPE`                | Slashing (one property per damage type)                        |
-| `WEAPON_FINESSABLE`          | false                                                          |
-| `WEAPON_RANGE`               | _(only if > 0)_                                                |
-| `WEAPON_RANGED`              | _(only on a ranged weapon)_                                    |
-| `WEAPON_STRENGTH_DAMAGE`     | _(only if not by slot)_                                        |
-| `WEAPON_MIGHTY`              | _(composite bows: 0)_                                          |
-| `WEAPON_ONE_HANDED_PENALTY`  | _(crossbows: −2 light, −4 heavy)_                              |
-| `WEAPON_ONE_HAND_TRAINING`   | _(bastard sword, dwarven waraxe: true)_                        |
-| `WEAPON_DOUBLE_DAMAGE`       | _(double weapons: the other end's dice, a quarterstaff's 1d6)_ |
-| `WEAPON_REACH`               | _(only if > 0)_                                                |
+| Property Type              | Example (Longsword)                 |
+|----------------------------|-------------------------------------|
+| `WEAPON_PROFICIENCY`       | Martial                             |
+| `WEAPON_FAMILY`            | Sword                               |
+| `WEAPON_BASE_DAMAGE`       | 1d8                                 |
+| `WEAPON_CRITICAL_RANGE`    | 1                                   |
+| `WEAPON_CRITICAL_MULTIPLIER` | 2                                 |
+| `WEAPON_SIZE`              | Medium                              |
+| `WEAPON_TYPE`              | Longsword                           |
+| `DAMAGE_TYPE`              | Slashing (one property per damage type) |
+| `WEAPON_FINESSABLE`        | false                               |
+| `WEAPON_RANGE`             | _(only if > 0)_                     |
+| `WEAPON_RANGED`            | _(only on a ranged weapon)_         |
+| `WEAPON_STRENGTH_DAMAGE`   | _(only if not by slot)_             |
+| `WEAPON_MIGHTY`            | _(composite bows: 0)_               |
+| `WEAPON_ONE_HANDED_PENALTY` | _(crossbows: −2 light, −4 heavy)_  |
+| `WEAPON_ONE_HAND_TRAINING` | _(bastard sword, dwarven waraxe: true)_ |
+| `WEAPON_DOUBLE_DAMAGE`     | _(double weapons: the other end's dice, a quarterstaff's 1d6)_ |
+| `WEAPON_REACH`             | _(only if > 0)_                     |
 
 How the engine reads a weapon's attack (`combat/Attacks.ts`), the SRD's rules:
-
 - A **ranged weapon** (`WEAPON_RANGED`: bows, crossbows, slings, darts, javelins, bolas, nets, shuriken) attacks with Dexterity. Any other attacks with Strength, or with Dexterity when it's `WEAPON_FINESSABLE` and the character has a feat with `FEAT_WEAPON_FINESSE` (Weapon Finesse), if that's better: a carried shield's armor check penalty applies to that Dexterity (a shield the character is proficient with: another's costs every attack already).
 - A **composite bow** (a bow with a `WEAPON_MIGHTY`, 0 for the seeded ones) takes −2 to attack when the character's Strength bonus is below its rating. A plain bow, without one, never does.
 - A **melee weapon with a range increment** (`WEAPON_RANGE`: daggers, throwing axes, spears…) can also be thrown: its weapon slot carries a `thrown` attack with Dexterity, which the sheets list as a second row.
@@ -183,7 +195,6 @@ How the engine reads a weapon's attack (`combat/Attacks.ts`), the SRD's rules:
 - **Two weapons**: when a set holds an equipped weapon in each hand (an unarmed strike or a natural attack doesn't count), each weapon slot carries a `twoweapon` attack, which the sheets list as more rows: the main hand's attacks with `combat.twoweapon.mainhandpenalty` (−6), the off hand's first attack and `combat.twoweapon.offhandattacks` − 1 more, each 5 lower, with `combat.twoweapon.offhandpenalty` (−10). A light off-hand weapon lessens both penalties by 2, and so does a one-handed one with a feat with `FEAT_OVERSIZED_TWO_WEAPON_FIGHTING` (Complete Adventurer's Oversized Two-Weapon Fighting). The feats change these fields through modifiers. A **double weapon** (`WEAPON_DOUBLE_DAMAGE`) held in two hands fights as two weapons too, its other end a light off-hand one: its `twoweapon` attacks are the main end's, with its whole Strength bonus (its row's damage), and its `offend` the other end's, with its own dice and half the Strength bonus. A sling counts as a one-handed weapon, not a light one (its size is Medium).
 
 Proficiency requirements (on the item, checked at equip time):
-
 - **Simple**: OR chain — `feats.simpleweaponproficiency.possessed` OR `feats.simpleweaponproficiency<weapon>.possessed` (a gauntlet's also takes `feats.simpleweaponproficiencyunarmedstrike.possessed`: a strike with it is unarmed)
 - **Martial**: OR chain — `feats.martialweaponproficiency.possessed` OR `feats.martialweaponproficiency<weapon>.possessed`
 - **Exotic**: `feats.exoticweaponproficiency<weapon>.possessed == true`; or, for a weapon that counts as martial, `feats.martialweaponproficiency.possessed` while it's held in two hands (`weapon.wielded == twohanded`: the bastard sword, the dwarven waraxe) or by its wielder's race (`identity.physiology.race.name`: a dwarf's waraxe and urgrosh, a gnome's hooked hammer). A prerequisite (a feat's, a class's) holds no weapon: only the race counts there
@@ -196,17 +207,16 @@ An item's proficiency is its base item's requirements: its template's, or its ow
 
 Properties generated from `ARMOR_TYPE_DEFINITIONS` in `armorGenerator.ts`:
 
-| Property Type         | Example (Chain Mail) |
-| --------------------- | -------------------- |
-| `ARMOR_PROFICIENCY`   | Medium               |
-| `ARMOR_TYPE`          | Chain Mail           |
-| `ARMOR_AC_BONUS`      | 5                    |
-| `ARMOR_MAX_DEX`       | 2                    |
-| `ARMOR_CHECK_PENALTY` | -5                   |
-| `ITEM_SPELL_FAILURE`  | 30                   |
+| Property Type        | Example (Chain Mail) |
+|----------------------|----------------------|
+| `ARMOR_PROFICIENCY`  | Medium               |
+| `ARMOR_TYPE`         | Chain Mail           |
+| `ARMOR_AC_BONUS`     | 5                    |
+| `ARMOR_MAX_DEX`      | 2                    |
+| `ARMOR_CHECK_PENALTY` | -5                  |
+| `ITEM_SPELL_FAILURE` | 30                   |
 
 Proficiency requirements:
-
 - **Light**: `feats.armorproficiencylight.possessed == true`
 - **Medium**: `feats.armorproficiencymedium.possessed == true`
 - **Heavy**: `feats.armorproficiencyheavy.possessed == true`
@@ -217,16 +227,15 @@ Armor or a shield is equipped only when its proficiency is met, unless forced. W
 
 Properties generated from `SHIELD_TYPE_DEFINITIONS` in `armorGenerator.ts`:
 
-| Property Type         | Example (Heavy Steel Shield) |
-| --------------------- | ---------------------------- |
-| `SHIELD_PROFICIENCY`  | Heavy                        |
-| `SHIELD_TYPE`         | Heavy Steel Shield           |
-| `SHIELD_AC_BONUS`     | 2                            |
-| `ARMOR_CHECK_PENALTY` | -2                           |
-| `ITEM_SPELL_FAILURE`  | 15                           |
+| Property Type        | Example (Heavy Steel Shield) |
+|----------------------|------------------------------|
+| `SHIELD_PROFICIENCY` | Heavy                        |
+| `SHIELD_TYPE`        | Heavy Steel Shield           |
+| `SHIELD_AC_BONUS`    | 2                            |
+| `ARMOR_CHECK_PENALTY` | -2                          |
+| `ITEM_SPELL_FAILURE` | 15                           |
 
 Proficiency requirements:
-
 - **Light/Heavy**: `feats.shieldproficiency.possessed == true`
 - **Tower**: `feats.towershieldproficiency.possessed == true`
 
@@ -234,13 +243,12 @@ Proficiency requirements:
 
 Properties and requirements auto-generated in `ClassLevelsHooks.syncProperties()`:
 
-| Property Type              | Description                                                      |
-| -------------------------- | ---------------------------------------------------------------- |
+| Property Type              | Description                              |
+|----------------------------|------------------------------------------|
 | `KLASS_LEVEL_BAB`          | BAB for this level, based on progression type (Full/Medium/Poor) |
-| `KLASS_LEVEL_SKILL_POINTS` | Skill points per level from class definition                     |
+| `KLASS_LEVEL_SKILL_POINTS` | Skill points per level from class definition |
 
 Requirement auto-generated for level 2+:
-
 - `classes.<normalized_class_name>.level > N-1` — ensures the character has reached the previous level before gaining the next
 
 On update: changing BAB progression or skill points re-syncs the properties (deletes old, creates new).
@@ -248,13 +256,11 @@ On update: changing BAB progression or skill points re-syncs the properties (del
 ### Skills
 
 Properties auto-generated from the skill form's fields in `SkillsHooks.syncProperties()`, and read back by `readSkillFlags` (`server/rulesets/dnd3.5/skillFlags.ts`) for the skill API and the engine alike:
-
 - `SKILL_IMPACTED_BY_WEIGHT` — whether armor check penalty applies
 - `SKILL_CHECK_PENALTY_MULTIPLIER` — how many times over a skill armor weighs on takes the penalty (2 on Swim; absent means 1)
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed
 
 Feat auto-generated per skill in `SkillsHooks.generateSkillFeat()`:
-
 - `Skill Focus: <name>` — +3 `skills.<stripped>.misc`, linked to General aptitude
 - Deleted on skill delete, regenerated on skill rename
 
@@ -269,7 +275,6 @@ and its customizations, then creates the replacement in the same transaction.
 ### Races
 
 Properties the engine reads off a race (`combat/InitiativeAndSpeed.ts`, `DetailedCharacterEncumbrance.ts`), seeded where the SRD says so:
-
 - `RACE_SPEED_IGNORES_ENCUMBRANCE` — the race keeps its speed in medium or heavy armor and under a medium or heavy load. The dwarf has it, through the parser's override (`reference/srd/races.json`).
 - `RACE_QUADRUPED` — the race walks on four legs, so it carries more for its size: ×¼ Fine to ×24 Colossal (×1½ Medium, ×3 Large) instead of a biped's ×⅛ to ×16. The four-legged familiars, animal companions and special mounts have it (`content/raceProperties.ts`); birds, bats and snakes don't.
 
@@ -277,25 +282,24 @@ Properties the engine reads off a race (`combat/InitiativeAndSpeed.ts`, `Detaile
 
 Properties auto-generated from spell form fields in `hooks/generators/spellGenerator.ts`:
 
-| Property Type          | Description                                                        |
-| ---------------------- | ------------------------------------------------------------------ |
-| `SPELL_SCHOOL`         | School of magic (required)                                         |
-| `SPELL_SUBSCHOOL`      | Subschool (optional)                                               |
-| `SPELL_DESCRIPTOR`     | Spell descriptor(s) — one property row per value (optional, multi) |
-| `SPELL_CASTING_TIME`   | Casting time (optional)                                            |
-| `SPELL_RANGE_TYPE`     | Range category (optional)                                          |
-| `SPELL_TARGET`         | Target description (optional)                                      |
-| `SPELL_AREA_OF_EFFECT` | Area of effect description (optional)                              |
-| `SPELL_DURATION`       | Duration description (optional)                                    |
-| `SPELL_RESISTANCE`     | Whether spell resistance applies (optional)                        |
-| `SPELL_COMPONENT`      | Required components — one property row per value (optional, multi) |
+| Property Type | Description |
+|---|---|
+| `SPELL_SCHOOL` | School of magic (required) |
+| `SPELL_SUBSCHOOL` | Subschool (optional) |
+| `SPELL_DESCRIPTOR` | Spell descriptor(s) — one property row per value (optional, multi) |
+| `SPELL_CASTING_TIME` | Casting time (optional) |
+| `SPELL_RANGE_TYPE` | Range category (optional) |
+| `SPELL_TARGET` | Target description (optional) |
+| `SPELL_AREA_OF_EFFECT` | Area of effect description (optional) |
+| `SPELL_DURATION` | Duration description (optional) |
+| `SPELL_RESISTANCE` | Whether spell resistance applies (optional) |
+| `SPELL_COMPONENT` | Required components — one property row per value (optional, multi) |
 
 On create: generates properties from form fields. If school is provided, also generates Spell Focus feats (idempotent).
 On update: deletes all existing properties, regenerates from updated form, and creates feats for a new school when needed. Existing school feats remain.
 On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 
 Feats auto-generated per unique school in `hooks/generators/spellGenerator.generateSpellFocusFeats()`:
-
 - `Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, linked to General aptitude
 - `Greater Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
 - Created idempotently (skipped if already exist for the school)
@@ -326,7 +330,7 @@ Use `{{ target.path }}` syntax to reference another stat as the modifier value. 
 // Divine Grace: add CHA modifier to all saves
 modifiers: [
   { target: "saves.*.misc", operator: "add", value: "{{ abilities.charisma.modifier }}", valueType: "number" },
-];
+]
 ```
 
 The `*` wildcard expands to all entries (e.g., `saves.*.misc` applies to fortitude, reflex, and will).

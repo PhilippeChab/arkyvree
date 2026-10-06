@@ -52,19 +52,19 @@ A feat that accepts either Martial Weapon Proficiency OR a per-weapon variant us
 - `feats.martialweaponproficiency.possessed == true`
 - `feats.martialweaponproficiencylongsword.possessed == true`
 
-Nested groups are supported — useful for prerequisites like _(Dex 13 AND Improved Unarmed Strike) OR Monk level 1_.
+Nested groups are supported — useful for prerequisites like *(Dex 13 AND Improved Unarmed Strike) OR Monk level 1*.
 
 Common targets:
 
-| Target                   | Meaning                                     |
-| ------------------------ | ------------------------------------------- |
-| `abilities.<name>.total` | final ability score after all bonuses       |
-| `combat.bab`             | base attack bonus                           |
-| `combat.hp.total`        | total HP                                    |
-| `feats.<slug>.possessed` | whether a specific feat is taken            |
-| `classes.<slug>.level`   | level in a specific class                   |
-| `skills.<slug>.rank`     | ranks in a specific skill                   |
-| `identity.meta.level`    | total character level (sum of class levels) |
+| Target | Meaning |
+|---|---|
+| `abilities.<name>.total` | final ability score after all bonuses |
+| `combat.bab` | base attack bonus |
+| `combat.hp.total` | total HP |
+| `feats.<slug>.possessed` | whether a specific feat is taken |
+| `classes.<slug>.level` | level in a specific class |
+| `skills.<slug>.rank` | ranks in a specific skill |
+| `identity.meta.level` | total character level (sum of class levels) |
 
 The slug is the entity name lowercased with separators stripped — Power Attack becomes `powerattack`, Knowledge (Arcana) becomes `knowledgearcana`.
 
@@ -78,13 +78,13 @@ A **modifier** is a numeric or boolean change an entity applies to a character s
 
 Each modifier has three parts: **target** (a path on the character sheet), **operator**, and **value**.
 
-| Operator   | Effect                       |
-| ---------- | ---------------------------- |
-| `add`      | adds the value               |
-| `subtract` | subtracts                    |
-| `multiply` | multiplies                   |
-| `divide`   | divides                      |
-| `set`      | overrides any previous value |
+| Operator | Effect |
+|---|---|
+| `add` | adds the value |
+| `subtract` | subtracts |
+| `multiply` | multiplies |
+| `divide` | divides |
+| `set` | overrides any previous value |
 
 Examples:
 
@@ -94,7 +94,7 @@ Examples:
 - **Toughness** — target `combat.hp.misc`, operator `add`, value `3`.
 - **A cleric's domain** — the domain's feat gives its spell list a slot at each spell level (`aptitudes.firedomainspells.1.uses` add `1`, `aptitudes.firedomainspells.1.allowed` set `-1`, and so on), and sets `aptitudes.firedomainspells.joinsclasslist` to `true`: the domain's spells join the cleric's list, tagged with the domain's name.
 
-The character engine computes the **base, permanent character sheet**. Conditional, situational, or activated effects do _not_ belong as modifiers:
+The character engine computes the **base, permanent character sheet**. Conditional, situational, or activated effects do *not* belong as modifiers:
 
 - **Dodge** — `+1` AC vs one designated opponent only.
 - **Mobility** — `+4` AC vs attacks of opportunity only.
@@ -109,9 +109,9 @@ Two advanced patterns: **wildcards** (target `saves.*.misc` to apply to all thre
 
 Three things plug into every entity in a ruleset:
 
-- [Properties](#what-are-properties) describe what the entity _is_ — the data tags. A spell carries `SPELL_SCHOOL = Evocation`, a longsword carries `WEAPON_PROFICIENCY = Martial`.
-- [Requirements](#what-are-requirements) decide when the entity is _available_ to a character. Power Attack requires `abilities.strength.total >= 13`; Cleave requires having Power Attack already.
-- [Modifiers](#what-are-modifiers) describe what the entity _does_ once it applies. Toughness adds `+3` to `combat.hp.misc`. A `+1` longsword adds `+1` to `items.weapons.longsword.tohit.magic` and `+1` to `items.weapons.longsword.damage.magic`.
+- [Properties](#what-are-properties) describe what the entity *is* — the data tags. A spell carries `SPELL_SCHOOL = Evocation`, a longsword carries `WEAPON_PROFICIENCY = Martial`.
+- [Requirements](#what-are-requirements) decide when the entity is *available* to a character. Power Attack requires `abilities.strength.total >= 13`; Cleave requires having Power Attack already.
+- [Modifiers](#what-are-modifiers) describe what the entity *does* once it applies. Toughness adds `+3` to `combat.hp.misc`. A `+1` longsword adds `+1` to `items.weapons.longsword.tohit.magic` and `+1` to `items.weapons.longsword.damage.magic`.
 
 An entity uses any combination of the three — all three, just one, or none. The system models what fits.
 
@@ -140,15 +140,15 @@ Improved Initiative is a modifier-only feat. No property tag, no prerequisite �
 
 Any character with Improved Initiative gets `+4` to initiative on their sheet automatically.
 
-Where the feat shows up in the level-up wizard — the General feat pool, the Fighter Bonus Feat pool — is set by the feat's _aptitude link_ when you create it, not by a property. Properties tag the entity with engine-readable data; the aptitude link decides which pool the engine offers it from.
+Where the feat shows up in the level-up wizard — the General feat pool, the Fighter Bonus Feat pool — is set by the feat's *aptitude link* when you create it, not by a property. Properties tag the entity with engine-readable data; the aptitude link decides which pool the engine offers it from.
 
 ## How do wildcard patterns work?
 
-Wildcards let a single requirement or modifier target a _group_ of entities or paths instead of a specific one. Three patterns.
+Wildcards let a single requirement or modifier target a *group* of entities or paths instead of a specific one. Three patterns.
 
 ### Feat family wildcards — `feats.<family>.*.possessed`
 
-Used in requirements like _any Weapon Focus_ or _any metamagic feat_. A feat is tagged with a `FEAT_FAMILY` property; the wildcard matches if the character possesses any feat in that family.
+Used in requirements like *any Weapon Focus* or *any metamagic feat*. A feat is tagged with a `FEAT_FAMILY` property; the wildcard matches if the character possesses any feat in that family.
 
 A prestige class needing any metamagic feat AND any item creation feat — two requirement rows:
 
@@ -161,28 +161,28 @@ A feat needing any Weapon Focus — one row:
 
 This matches Weapon Focus (Longsword), Weapon Focus (Greatsword), and any custom Weapon Focus variant carrying `FEAT_FAMILY = weaponfocus`.
 
-For _any two luck feats_, count the family instead: `feats.luck.count >= 2`. A family's count adds up every feat of it the character has, each as many times as it was taken: `feats.sneakattack.count` is the character's sneak attack dice from all their classes.
+For *any two luck feats*, count the family instead: `feats.luck.count >= 2`. A family's count adds up every feat of it the character has, each as many times as it was taken: `feats.sneakattack.count` is the character's sneak attack dice from all their classes.
 
 Martial Weapon Proficiency is both a feat and a family. The feat is every martial weapon, a fighter's class proficiency: `feats.martialweaponproficiency.possessed`. The family is the feats for one weapon, like a rogue's rapier or a feat a character takes, one weapon at a time: `feats.martialweaponproficiency.*.possessed`. Its `count` is the feat's.
 
 Built-in families on the SRD ruleset:
 
-| Family                                                | Matches                                                                |
-| ----------------------------------------------------- | ---------------------------------------------------------------------- |
-| `weaponfocus`, `greaterweaponfocus`                   | Weapon Focus and Greater Weapon Focus variants                         |
-| `weaponspecialization`, `greaterweaponspecialization` | Weapon Specialization variants                                         |
-| `improvedcritical`                                    | Improved Critical variants                                             |
-| `martialweaponproficiency`, `exoticweaponproficiency` | per-weapon proficiency feats                                           |
-| `rapidreload`                                         | Rapid Reload variants                                                  |
-| `spellfocus`, `greaterspellfocus`                     | Spell Focus and Greater Spell Focus per school                         |
-| `skillfocus`                                          | Skill Focus per skill                                                  |
-| `metamagic`, `itemcreation`, `luck`                   | every metamagic / item creation / luck feat                            |
-| `draconic`                                            | Complete Arcane's draconic feats (Draconic Heritage, Draconic Breath…) |
-| `turnorrebukeundead`, `wildshape`                     | class-feature feats                                                    |
+| Family | Matches |
+|---|---|
+| `weaponfocus`, `greaterweaponfocus` | Weapon Focus and Greater Weapon Focus variants |
+| `weaponspecialization`, `greaterweaponspecialization` | Weapon Specialization variants |
+| `improvedcritical` | Improved Critical variants |
+| `martialweaponproficiency`, `exoticweaponproficiency` | per-weapon proficiency feats |
+| `rapidreload` | Rapid Reload variants |
+| `spellfocus`, `greaterspellfocus` | Spell Focus and Greater Spell Focus per school |
+| `skillfocus` | Skill Focus per skill |
+| `metamagic`, `itemcreation`, `luck` | every metamagic / item creation / luck feat |
+| `draconic` | Complete Arcane's draconic feats (Draconic Heritage, Draconic Breath…) |
+| `turnorrebukeundead`, `wildshape` | class-feature feats |
 
 ### Skill subtype wildcards — `skills.<prefix>*.rank`
 
-For requirements like _any Knowledge skill 5 ranks_ or _any Craft 10 ranks_. The `*` after a prefix matches any skill whose slug starts with that prefix.
+For requirements like *any Knowledge skill 5 ranks* or *any Craft 10 ranks*. The `*` after a prefix matches any skill whose slug starts with that prefix.
 
 A prestige class needing 5 ranks of any Knowledge skill:
 
@@ -200,4 +200,4 @@ Used in modifiers, not requirements:
 - `abilities.*.misc` — every ability score's misc bonus.
 - `items.weapons.*.damage.misc` — bonus to damage on every wielded weapon.
 
-**Divine Grace** (_add Cha modifier to all saves_) is one row: target `saves.*.misc`, operator `add`, value `{{ abilities.charisma.modifier }}` — using a [reference](#what-are-modifiers). At evaluation time the engine expands `*` to fortitude, reflex, will and applies the Cha modifier to each.
+**Divine Grace** (*add Cha modifier to all saves*) is one row: target `saves.*.misc`, operator `add`, value `{{ abilities.charisma.modifier }}` — using a [reference](#what-are-modifiers). At evaluation time the engine expands `*` to fortitude, reflex, will and applies the Cha modifier to each.
