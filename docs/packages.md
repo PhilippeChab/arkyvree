@@ -44,7 +44,9 @@ database/packages/
     │   ├── bonds/            # Familiars, animal companions, special mounts
     │   └── feats/            # Favored enemy, deity's weapon, the weapon feats
     └── seed/             # What writes it to the database
-        ├── RulesetSeeder.ts  # seedCore, seedExtension: a ruleset's seeding, step by step
+        ├── core.ts           # seedCore: the core rules
+        ├── extension.ts      # seedExtension: an extension's book
+        ├── RulesetSeeder.ts  # A ruleset's seeding, step by step, which those give their content
         ├── SeederState.ts    # Its database, its context, and the writes its steps share
         ├── concerns/         # A step per kind of row: SeedsFeats, SeedsClasses, CopiesOnWrite…
         ├── context.ts        # SeedContext: the ruleset and the ids of the rows its content names
@@ -62,7 +64,7 @@ database/packages/dnd35-from-parser/
 
 ## How seeds work
 
-A `RulesetSeeder` seeds a ruleset step by step, a method per step (a concern per kind of row, in `seed/concerns/`). It holds a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. `RulesetSeeder.seedCore` creates the core ruleset and seeds it; the dev seeds (`database/seeds`) and the tests load the same context for the seeded ruleset (`loadSeedContext`).
+A `RulesetSeeder` seeds a ruleset step by step, a method per step (a concern per kind of row, in `seed/concerns/`). It holds a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. `seedCore` creates the core ruleset and seeds it with one; the dev seeds (`database/seeds`) and the tests load the same context for the seeded ruleset (`loadSeedContext`).
 
 An extension is a package file that seeds its book:
 
@@ -71,11 +73,11 @@ const dnd35Dmg: ContentPackage = {
   name: "dnd35-dmg",
   type: "extension",
   seedsVersion: 16,
-  seeds: [(db) => RulesetSeeder.seedExtension(db, { name: DND35_DMG_NAME, description: "…" }, BOOK)],
+  seeds: [(db) => seedExtension(db, { name: DND35_DMG_NAME, description: "…" }, BOOK)],
 };
 ```
 
-`BOOK` (`generated/<book>/index.ts`) is the book's content as the generator wrote it. `RulesetSeeder.seedExtension` creates the extension ruleset, loads the core's context, adds the aptitudes the core lacks, seeds the feats, spells, domains and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are added to `BOOK` in its package file (Complete Divine adds `DEITYS_WEAPON_FEATS`).
+`BOOK` (`generated/<book>/index.ts`) is the book's content as the generator wrote it. `seedExtension` creates the extension ruleset, loads the core's context, adds the aptitudes the core lacks, seeds the feats, spells, domains and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are added to `BOOK` in its package file (Complete Divine adds `DEITYS_WEAPON_FEATS`).
 
 ### Adding an extension
 
@@ -96,7 +98,7 @@ const dnd35Dmg: ContentPackage = {
   name: "dnd35-dmg",
   type: "extension",
   seedsVersion: 16,
-  seeds: [(db) => RulesetSeeder.seedExtension(db, { name: DND35_DMG_NAME, description: "…" }, BOOK)],
+  seeds: [(db) => seedExtension(db, { name: DND35_DMG_NAME, description: "…" }, BOOK)],
   updates: {
     17: addTheMissingFeat,
   },
@@ -128,7 +130,7 @@ When an extension changes a core entity (a feat its classes take in more aptitud
 
 ### Aptitude ownership rules
 
-Aptitudes are named pools with no per-ruleset content of their own — just a `name`. So the seed only creates an aptitude row in the ruleset that *introduces* the name. `RulesetSeeder.seedExtension` splits the book's aptitudes into:
+Aptitudes are named pools with no per-ruleset content of their own — just a `name`. So the seed only creates an aptitude row in the ruleset that *introduces* the name. `seedExtension` splits the book's aptitudes into:
 
 - **Already in the core** (e.g. `General`, `Fighter Bonus Feat`, `Cleric Domain`) — skipped; the extension references the core's row. Same pattern a user fork uses when adding a new feat tagged `General`.
 - **Not in the core** — inserted as a new row in the extension. Covers both extension-private names (e.g. `Ronin Bonus Feat`) and sibling-shared class spell lists (e.g. `Assassin Spells`, which multiple extensions independently create because siblings can't FK to each other: a book copies each list of another book its spells are on, a class's by their level line or one drawing on others' lists, `Sublime Chord Spells`).

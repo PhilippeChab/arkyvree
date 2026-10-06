@@ -1,7 +1,7 @@
 import { BOOK } from "@/database/packages/dnd35-from-parser/generated/complete-divine/index.ts";
 import { DEITYS_WEAPON_FEATS } from "@/database/packages/dnd35/data/feats/deitysWeapon.ts";
 import { DND35_COMPLETE_DIVINE_NAME } from "@/database/packages/dnd35/names.ts";
-import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
+import { seedExtension } from "@/database/packages/dnd35/seed/extension.ts";
 import type { ContentPackage } from "@/database/packages/types.ts";
 
 const dnd35CompleteDivine: ContentPackage = {
@@ -10,7 +10,7 @@ const dnd35CompleteDivine: ContentPackage = {
   seedsVersion: 20,
   seeds: [
     (db) =>
-      RulesetSeeder.seedExtension(
+      seedExtension(
         db,
         {
           name: DND35_COMPLETE_DIVINE_NAME,
