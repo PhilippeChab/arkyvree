@@ -10,7 +10,6 @@ import {
   PersonOff as UnassignedIcon,
 } from "@mui/icons-material";
 import {
-  Alert,
   Box,
   Button,
   Chip,
@@ -27,13 +26,13 @@ import {
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
-import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import {
   BlankState,
   ConfirmDialog,
   DiceSpinner,
+  LoadError,
   LoadMoreButton,
   NoMatchesState,
   ROW_ACTIONS_HOVER_SX,
@@ -42,7 +41,7 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useSearchText } from "@/client/src/hooks/index.ts";
+import { useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
@@ -93,18 +92,14 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   const { canManagePlayers, canManageInvites } = useCampaignPermissions(campaign);
   const currentUserId = useAuthStore((s) => s.user?.id);
 
-  const addForm = useForm<PlayerFormData>({
-    defaultValues: {
-      role: "Player Character",
-      email: "",
-    },
+  const addForm = useFormWith<PlayerFormData>({
+    role: "Player Character",
+    email: "",
   });
 
-  const editForm = useForm<PlayerFormData>({
-    defaultValues: {
-      role: "Player Character",
-      email: "",
-    },
+  const editForm = useFormWith<PlayerFormData>({
+    role: "Player Character",
+    email: "",
   });
 
   const {
@@ -270,11 +265,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       {/* Loading State */}
       {playersLoading && <DiceSpinner sx={{ py: 4 }} />}
       {/* Error State */}
-      {playersError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          Failed to load players
-        </Alert>
-      )}
+      {playersError && <LoadError what="Players" error={playersError} sx={{ mb: 3 }} />}
       {/* Table */}
       {!playersLoading && !playersError && (
         <>

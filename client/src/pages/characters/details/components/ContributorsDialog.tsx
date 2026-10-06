@@ -5,7 +5,6 @@ import {
   ExitToApp as LeaveIcon,
 } from "@mui/icons-material";
 import {
-  Alert,
   Box,
   Button,
   DialogActions,
@@ -21,7 +20,14 @@ import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { BlankState, ConfirmDialog, DiceSpinner, LoadMoreButton, Modal } from "@/client/src/components/common/index.ts";
+import {
+  BlankState,
+  ConfirmDialog,
+  DiceSpinner,
+  LoadError,
+  LoadMoreButton,
+  Modal,
+} from "@/client/src/components/common/index.ts";
 import { ContributorsTable, InviteContributorDialog } from "@/client/src/components/contributors/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -135,7 +141,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
               {isLoading ? (
                 <DiceSpinner sx={{ flex: 1 }} />
               ) : error ? (
-                <Alert severity="error">Failed to load contributors</Alert>
+                <LoadError what="Contributors" error={error} />
               ) : contributors.length === 0 && !owner ? (
                 <BlankState
                   icon={ContributorsIcon}

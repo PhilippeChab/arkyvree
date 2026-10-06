@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { useFormWith } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import type { CreateCampaignFormData } from "@/client/src/pages/campaigns/components/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -15,12 +15,10 @@ export function useCampaignOperations() {
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const createForm = useForm<CreateCampaignFormData>({
-    defaultValues: {
-      name: "",
-      description: "",
-      rulesetId: "",
-    },
+  const createForm = useFormWith<CreateCampaignFormData>({
+    name: "",
+    description: "",
+    rulesetId: "",
   });
 
   const createMutation = useMutation({

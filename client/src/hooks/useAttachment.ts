@@ -19,19 +19,20 @@ interface UseAttachmentsParams {
 
 export type AttachmentResponse = InferResponseType<typeof rpc.api.attachments.$get, 200>;
 
-async function fetchSlot(recordType: string, recordId: string, name: string): Promise<AttachmentResponse> {
-  return parseResponse(
-    rpc.api.attachments.$get({
-      query: { recordType, recordId, name },
-    }),
-  );
+/** A record's attachment slot, as one query: its key and its request. */
+function slotQuery(recordType: string, recordId: string, name: string) {
+  return {
+    queryKey: queryKeys.attachments.slot(recordType, recordId, name),
+    queryFn: (): Promise<AttachmentResponse> =>
+      parseResponse(rpc.api.attachments.$get({ query: { recordType, recordId, name } })),
+  };
 }
 
 export function useAttachment(params: UseAttachmentParams) {
   const { recordId } = params;
   return useQuery({
-    queryKey: queryKeys.attachments.slot(params.recordType, params.recordId ?? "", params.name),
-    queryFn: recordId ? () => fetchSlot(params.recordType, recordId, params.name) : skipToken,
+    queryKey: queryKeys.attachments.slot(params.recordType, recordId ?? "", params.name),
+    queryFn: recordId ? slotQuery(params.recordType, recordId, params.name).queryFn : skipToken,
     enabled: params.enabled ?? true,
   });
 }
@@ -42,10 +43,7 @@ export function useAttachment(params: UseAttachmentParams) {
  */
 export function useAttachments(params: UseAttachmentsParams) {
   const queries = useQueries({
-    queries: params.recordIds.map((recordId) => ({
-      queryKey: queryKeys.attachments.slot(params.recordType, recordId, params.name),
-      queryFn: () => fetchSlot(params.recordType, recordId, params.name),
-    })),
+    queries: params.recordIds.map((recordId) => slotQuery(params.recordType, recordId, params.name)),
   });
 
   const data = new Map<string, string | null>();

@@ -1,6 +1,10 @@
 import { useParams } from "react-router-dom";
 
-import { type AptitudeFormData, AptitudeFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  type AptitudeFormData,
+  AptitudeFormFields,
+  EMPTY_APTITUDE,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 import { aptitudeQuery } from "./entityDetailQueries.ts";
@@ -19,6 +23,7 @@ export default function AptitudeDetailPage() {
       label="Aptitude"
       query={(id) => aptitudeQuery(rulesetId, id)}
       editing={{
+        empty: EMPTY_APTITUDE,
         toFormValues: (aptitude): AptitudeFormData => ({
           name: aptitude.name,
           description: aptitude.description ?? "",

@@ -19,7 +19,7 @@ interface CompletionAutocompleteProps<T extends Completion> {
   onChange: (value: string) => void;
   /** The completions for what's typed, a page at a time. */
   queryKey: (search: string) => QueryKey;
-  fetchPage: (search: string, page: number) => Promise<{ items: T[]; nextPage?: number | null }>;
+  pageFn: (search: string, page: number) => Promise<{ items: T[]; nextPage?: number | null }>;
   enabled: boolean;
   label: string;
   placeholder: string;
@@ -39,7 +39,7 @@ export function CompletionAutocomplete<T extends Completion>({
   value,
   onChange,
   queryKey,
-  fetchPage,
+  pageFn,
   enabled,
   label,
   placeholder,
@@ -58,7 +58,7 @@ export function CompletionAutocomplete<T extends Completion>({
 
   const { items, isLoading, onScroll } = useListboxQuery({
     queryKey: queryKey(debouncedInputValue),
-    queryFn: ({ pageParam }) => fetchPage(debouncedInputValue, pageParam),
+    queryFn: ({ pageParam }) => pageFn(debouncedInputValue, pageParam),
     enabled: enabled && !disabled,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,

@@ -5,17 +5,17 @@ import {
   Edit as EditIcon,
   ExitToApp as LeaveIcon,
 } from "@mui/icons-material";
-import { Alert, Box, Button, IconButton, Tooltip } from "@mui/material";
+import { Box, Button, IconButton, Tooltip } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 
 import {
   BlankState,
   ConfirmDialog,
   DiceSpinner,
   EditDialog,
+  LoadError,
   LoadMoreButton,
   SelectField,
 } from "@/client/src/components/common/index.ts";
@@ -25,6 +25,7 @@ import {
   InviteContributorDialog,
 } from "@/client/src/components/contributors/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { useFormWith } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -59,7 +60,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   // Contributor whose role is being edited; the role itself lives in roleForm.
   const [roleTargetId, setRoleTargetId] = useState<string | null>(null);
-  const roleForm = useForm<RoleFormData>({ defaultValues: { role: "Editor" } });
+  const roleForm = useFormWith<RoleFormData>({ role: "Editor" });
   const [removeTarget, setRemoveTarget] = useState<Contributor | null>(null);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
 
@@ -136,7 +137,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   }
 
   if (error) {
-    return <Alert severity="error">Failed to load contributors</Alert>;
+    return <LoadError what="Contributors" error={error} />;
   }
 
   const canLeave = !isOwner && !!ruleset.contributorRole;

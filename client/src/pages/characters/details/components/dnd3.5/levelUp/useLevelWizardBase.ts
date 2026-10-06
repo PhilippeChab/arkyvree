@@ -1,13 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useCallback, useState } from "react";
 
-import { useDebouncedValue, useToggleSet, useValidationIssues } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useFormWith, useToggleSet, useValidationIssues } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 
-import type { AptitudePool, LevelUpFormData } from "./levelUpTypes.ts";
-
-type LevelWizardBase = ReturnType<typeof useLevelWizardBase>;
+import type { LevelUpFormData } from "./levelUpTypes.ts";
 
 const EMPTY_PICKS: LevelUpFormData = {
   selectedClass: null,
@@ -26,80 +23,20 @@ export function pickIds(picks: Record<string, { id: string }[]>) {
 }
 
 /**
- * The feat pools grown by the picked feats' "add" aptitude modifiers. When a
- * pool shrinks (a feat that granted slots was removed), the picks past it are
- * dropped, and the open picker closes once its pool has no room left.
- */
-export function useAdjustedFeatPools(
-  aptitudePools: Record<string, AptitudePool> | undefined,
-  { selectedFeats, getValues, setValue, selectedAptitude, setSelectedAptitude }: LevelWizardBase,
-) {
-  const adjustedFeatPools = useMemo(() => {
-    if (!aptitudePools) return {};
-    const pools = { ...aptitudePools };
-
-    const adjustments = new Map<string, number>();
-    for (const feats of Object.values(selectedFeats)) {
-      for (const feat of feats) {
-        for (const mod of feat.aptitudeModifiers ?? []) {
-          if (mod.operator === "add") {
-            adjustments.set(mod.aptitudeId, (adjustments.get(mod.aptitudeId) ?? 0) + mod.value);
-          }
-        }
-      }
-    }
-
-    for (const [aptitudeId, delta] of adjustments) {
-      if (pools[aptitudeId]) {
-        pools[aptitudeId] = {
-          ...pools[aptitudeId],
-          allowed: pools[aptitudeId].allowed + delta,
-          available: pools[aptitudeId].available + delta,
-        };
-      }
-    }
-
-    return pools;
-  }, [aptitudePools, selectedFeats]);
-
-  useEffect(() => {
-    let changed = false;
-    const updated = { ...getValues("selectedFeats") };
-    for (const [poolId, feats] of Object.entries(updated)) {
-      const pool = adjustedFeatPools[poolId];
-      const max = pool ? Math.max(0, pool.available) : 0;
-      if (feats.length > max) {
-        updated[poolId] = feats.slice(0, max);
-        changed = true;
-      }
-    }
-    if (changed) setValue("selectedFeats", updated);
-    if (
-      selectedAptitude &&
-      adjustedFeatPools[selectedAptitude]?.available !== undefined &&
-      adjustedFeatPools[selectedAptitude].available <= 0
-    ) {
-      setSelectedAptitude(null);
-    }
-  }, [adjustedFeatPools, getValues, setValue, selectedAptitude, setSelectedAptitude]);
-
-  return adjustedFeatPools;
-}
-
-/**
  * What the Add Level and Edit Level wizards share: the picks form, the step,
  * the feat and spell pickers' state, and the save's cache refresh and errors.
  */
 export function useLevelWizardBase(characterId: string) {
   const queryClient = useQueryClient();
 
-  const { control, handleSubmit, getValues, setValue, reset, watch } = useForm<LevelUpFormData>({
-    defaultValues: EMPTY_PICKS,
-    mode: "onChange",
-  });
-  const selectedFeats = watch("selectedFeats");
-  const selectedPowers = watch("selectedPowers");
-  const skillPointAllocations = watch("skillPointAllocations");
+  const form = useFormWith<LevelUpFormData>(EMPTY_PICKS, { mode: "onChange" });
+  const { control, handleSubmit, getValues, setValue, reset, watch } = form;
+  // What was picked: each wizard reads it fitted to its slots (`fitPicks.ts`)
+  const picked = {
+    feats: watch("selectedFeats"),
+    powers: watch("selectedPowers"),
+    skillPoints: watch("skillPointAllocations"),
+  };
 
   const [activeStep, setActiveStep] = useState(0);
   const [selectedAptitude, setSelectedAptitude] = useState<string | null>(null);
@@ -112,34 +49,6 @@ export function useLevelWizardBase(characterId: string) {
   const [powerSearch, setPowerSearch] = useState("");
   const debouncedPowerSearch = useDebouncedValue(powerSearch);
   const { validationErrors, setValidationErrors, handleSaveError } = useValidationIssues("Failed to finalize level up");
-
-  // The picked feats as the "featId:aptitudeId" list the picker endpoints take.
-  const allSelectedFeatPickString = useMemo(() => {
-    const pairs = Object.entries(selectedFeats).flatMap(([aptitudeId, feats]) =>
-      feats.map((f) => `${f.id}:${aptitudeId}`),
-    );
-    return pairs.length > 0 ? pairs.sort().join(",") : undefined;
-  }, [selectedFeats]);
-
-  const handleDeleteFeat = useCallback(
-    (featId: string, aptitudeId: string) => {
-      setValue("selectedFeats", {
-        ...selectedFeats,
-        [aptitudeId]: (selectedFeats[aptitudeId] || []).filter((f) => f.id !== featId),
-      });
-    },
-    [selectedFeats, setValue],
-  );
-
-  const handleDeletePower = useCallback(
-    (powerId: string, aptitudeId: string) => {
-      setValue("selectedPowers", {
-        ...selectedPowers,
-        [aptitudeId]: (selectedPowers[aptitudeId] || []).filter((p) => p.id !== powerId),
-      });
-    },
-    [selectedPowers, setValue],
-  );
 
   const handleBack = useCallback(() => {
     setValidationErrors([]);
@@ -166,14 +75,13 @@ export function useLevelWizardBase(characterId: string) {
   }, [queryClient, characterId]);
 
   return {
+    form,
     control,
     handleSubmit,
     getValues,
     setValue,
     watch,
-    selectedFeats,
-    selectedPowers,
-    skillPointAllocations,
+    picked,
     activeStep,
     setActiveStep,
     selectedAptitude,
@@ -194,9 +102,6 @@ export function useLevelWizardBase(characterId: string) {
     debouncedPowerSearch,
     validationErrors,
     setValidationErrors,
-    allSelectedFeatPickString,
-    handleDeleteFeat,
-    handleDeletePower,
     handleBack,
     resetPicks,
     refreshAfterSave,

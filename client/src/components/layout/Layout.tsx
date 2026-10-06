@@ -38,7 +38,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { ActionMenuItem } from "@/client/src/components/common/index.ts";
 import { Onboarding } from "@/client/src/components/onboarding/index.ts";
-import { useAttachment, useDemoTimeRemaining, useIsMobile } from "@/client/src/hooks/index.ts";
+import { useAttachment, useAuthRequests, useDemoTimeRemaining, useIsMobile } from "@/client/src/hooks/index.ts";
 import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import {
@@ -192,8 +192,7 @@ export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const signOut = useAuthStore((s) => s.signOut);
-  const clearSession = useAuthStore((s) => s.clearSession);
+  const { signOut } = useAuthRequests();
   // Sidebar item of the first path segment ("rulesets" for /rulesets/123);
   // pages outside the sidebar (profile, invites) keep Dashboard highlighted.
   const pathSection = location.pathname.split("/")[1];
@@ -209,16 +208,11 @@ export function Layout() {
     setAnchorEl(null);
   };
 
-  const handleSignOut = async () => {
+  // Clearing the session clears the cache (`createQueryClient`), and the private route sends the user to sign in
+  const handleSignOut = () => {
     handleMenuClose();
-    queryClient.cancelQueries();
-    try {
-      await signOut();
-    } catch {
-      clearSession();
-    }
-    queryClient.clear();
-    navigate("/sign-in");
+    void queryClient.cancelQueries();
+    signOut.mutate();
   };
 
   const handleProfile = () => {

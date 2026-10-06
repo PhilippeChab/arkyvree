@@ -154,11 +154,11 @@ export const TemplateExpressionInput = forwardRef<TemplateExpressionInputRef, Te
             rulesetId={rulesetId}
             kind={kind}
             value={pickerPath}
-            onChange={setPickerPath}
-            label="Pick a path to insert"
-            onPathInfoChange={(info) => {
-              if (info) insertBracketed(info.path);
+            onChange={(path, picked) => {
+              if (picked) insertBracketed(path);
+              else setPickerPath(path);
             }}
+            label="Pick a path to insert"
           />
         </Popover>
       </>

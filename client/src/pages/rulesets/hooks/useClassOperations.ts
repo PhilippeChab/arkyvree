@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useFormWith, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { classLevelsQuery, classSkillsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
@@ -19,14 +18,12 @@ export function useClassLevels(rulesetId: string, classId: string) {
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const createForm = useForm<CreateLevelFormData>({
-    defaultValues: {
-      level: 1,
-      bab: 0,
-      skills: 1,
-      saves: [],
-      feats: [],
-    },
+  const createForm = useFormWith<CreateLevelFormData>({
+    level: 1,
+    bab: 0,
+    skills: 1,
+    saves: [],
+    feats: [],
   });
 
   const { data: levels, isLoading } = useQuery({

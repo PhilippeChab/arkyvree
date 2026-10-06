@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { useFormWith } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { RulesetListItem } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -28,6 +28,7 @@ export function useRulesetOperations() {
   const [forkDialogOpen, setForkDialogOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [publishKind, setPublishKind] = useState<PublishKind>("ruleset");
   const [subscribeDialogOpen, setSubscribeDialogOpen] = useState(false);
   const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState(false);
   const [unsubscribeTarget, setUnsubscribeTarget] = useState<{
@@ -45,8 +46,8 @@ export function useRulesetOperations() {
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.lists }),
     ]);
 
-  const editForm = useForm<EditRulesetFormData>();
-  const forkForm = useForm<ForkRulesetFormData>();
+  const editForm = useFormWith<EditRulesetFormData>({ name: "", description: "", private: false });
+  const forkForm = useFormWith<ForkRulesetFormData>({ name: "", description: "", private: false });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, updatedAt }: { id: string; data: EditRulesetFormData; updatedAt?: string }) => {
@@ -216,6 +217,7 @@ export function useRulesetOperations() {
 
   const handlePublish = (ruleset: Ruleset) => {
     setSelectedRuleset(ruleset);
+    setPublishKind(ruleset.kind ?? "ruleset");
     setPublishDialogOpen(true);
   };
 
@@ -280,6 +282,8 @@ export function useRulesetOperations() {
     setArchiveDialogOpen,
     publishDialogOpen,
     setPublishDialogOpen,
+    publishKind,
+    setPublishKind,
     subscribeDialogOpen,
     setSubscribeDialogOpen,
     unsubscribeDialogOpen,

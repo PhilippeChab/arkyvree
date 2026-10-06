@@ -17,7 +17,7 @@ export default function RulesetContributorInvitePage() {
       listPath="/rulesets"
       icon={ContributorIcon}
       queryKey={queryKeys.invites.detail("rulesetContributor", contributorId)}
-      loadInvite={async () => {
+      inviteFn={async () => {
         const invite = await parseResponse(rpc.api.rulesets.contributors.invites[":id"].$get(param));
         return {
           status: invite.status,
@@ -27,8 +27,8 @@ export default function RulesetContributorInvitePage() {
           role: invite.role,
         };
       }}
-      acceptInvite={() => rpc.api.rulesets.contributors.invites[":id"].accept.$post(param)}
-      rejectInvite={() => rpc.api.rulesets.contributors.invites[":id"].reject.$post(param)}
+      acceptFn={() => rpc.api.rulesets.contributors.invites[":id"].accept.$post(param)}
+      rejectFn={() => rpc.api.rulesets.contributors.invites[":id"].reject.$post(param)}
       acceptedStatus="Active"
       joinVerb="contribute to"
       description="You've been invited to contribute to this ruleset. Would you like to accept or reject this invitation?"

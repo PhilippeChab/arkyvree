@@ -59,14 +59,16 @@ export async function getTargetPathsWithLabels(
 }
 
 /**
- * Validate a target path like a language server
+ * Validate a target path like a language server, among the paths an entity type takes (`entityType`, every path
+ * without one). A valid path's result carries its definition: what it takes.
  */
 export async function validatePath(
   rulesetId: string,
   path: string,
   kind: "modifier" | "requirement" = "modifier",
+  entityType?: string,
 ): Promise<PathValidationResult> {
-  const { paths: allPaths } = await getTargetPathsWithLabels(rulesetId, kind);
+  const { paths: allPaths } = await getTargetPathsWithLabels(rulesetId, kind, entityType);
   const pathMap = new Map(allPaths.map((p) => [p.path, p]));
   const generator = await RulesetFactory.fromRulesetId(rulesetId).then((m) => m.createTargetPaths());
   const validCategories = generator.getCategories();
@@ -95,7 +97,7 @@ export async function validatePath(
 
   const exactMatch = pathMap.get(path);
   if (exactMatch) {
-    return { isValid: true, errors: [], suggestions: [], completions: [] };
+    return { isValid: true, errors: [], suggestions: [], completions: [], target: exactMatch };
   }
 
   const partialMatches = allPaths.filter((p) => p.path.startsWith(path));

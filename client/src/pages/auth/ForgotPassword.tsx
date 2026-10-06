@@ -1,40 +1,33 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 
 import { AuthPage, AuthSubmitButton } from "@/client/src/components/auth/index.ts";
 import { EmailField } from "@/client/src/components/common/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { emailRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 type ForgotPasswordFormData = InferRequestType<(typeof rpc.auth)["forgot-password"]["$post"]>["json"];
 
 export default function ForgotPassword() {
   usePageTitle("Forgot Password");
-  const forgotPassword = useAuthStore((s) => s.forgotPassword);
-  const isLoading = useAuthStore((s) => s.isLoading);
+  const auth = useAuthRequests();
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const { control, handleSubmit } = useForm<ForgotPasswordFormData>({
-    defaultValues: {
-      emailAddress: "",
-    },
+  const { control, handleSubmit } = useFormWith<ForgotPasswordFormData>({
+    emailAddress: "",
   });
 
-  const onSubmit = async (data: ForgotPasswordFormData) => {
-    try {
-      setError(null);
-      await forgotPassword(data.emailAddress);
-      navigate("/reset-password");
-    } catch (error) {
-      setError(errorMessage(error, "Failed to send reset code"));
-    }
+  const onSubmit = (data: ForgotPasswordFormData) => {
+    setError(null);
+    auth.forgotPassword.mutate(data.emailAddress, {
+      onSuccess: () => navigate("/reset-password"),
+      onError: (error) => setError(errorMessage(error, "Failed to send reset code")),
+    });
   };
 
   return (
@@ -46,7 +39,7 @@ export default function ForgotPassword() {
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <EmailField control={control} name="emailAddress" rules={emailRules} />
 
-        <AuthSubmitButton loading={isLoading}>Send Reset Code</AuthSubmitButton>
+        <AuthSubmitButton loading={auth.pending}>Send Reset Code</AuthSubmitButton>
       </form>
       <Box sx={{ mt: 2, textAlign: "center" }}>
         <Typography variant="body2">

@@ -104,4 +104,81 @@ describe("frontend rules", () => {
       "controlled-inputs client/src/watched.tsx",
     ]);
   });
+
+  test("a form is made with useFormWith, whose values are whole, never react-hook-form's useForm", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/hooks/useFormWith.ts":
+            'import { useForm } from "react-hook-form";\nexport function useFormWith(values) {\n  return useForm({ defaultValues: values });\n}\n',
+          "client/src/made.tsx":
+            'import { useFormWith } from "@/client/src/hooks/index.ts";\nexport function Made() {\n  useFormWith({ name: "" });\n  return null;\n}\n',
+          "client/src/partial.tsx":
+            'import { useForm } from "react-hook-form";\nexport function Partial() {\n  useForm();\n  return null;\n}\n',
+        },
+        ["controlled-inputs"],
+      ),
+    ).toEqual(["controlled-inputs client/src/partial.tsx"]);
+  });
+  test("an effect never writes a form's field nor calls back its owner, but a handler it registers may", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/written.tsx":
+            'export function W() {\n  useEffect(() => {\n    setValue("x", 1);\n  }, []);\n  return null;\n}\n',
+          "client/src/renamed.tsx":
+            'export function R({ wizard }) {\n  const { setValue: setPick } = wizard;\n  useEffect(() => {\n    setPick("x", 1);\n  }, [setPick]);\n  return null;\n}\n',
+          "client/src/redirected.tsx":
+            'export function D({ navigate }) {\n  useEffect(() => {\n    navigate("/x", { replace: true });\n  }, [navigate]);\n  return null;\n}\n',
+          "client/src/called.tsx":
+            "export function C({ onChange }) {\n  useEffect(() => {\n    onChange(1);\n  }, [onChange]);\n  return null;\n}\n",
+          "client/src/subscribed.tsx":
+            'export function S({ onMessage }) {\n  useEffect(() => socket.on("m", (m) => onMessage(m)), [onMessage]);\n  return null;\n}\n',
+          "client/src/evented.tsx":
+            'export function E({ onChange }) {\n  return <button onClick={() => { setValue("x", 1); onChange(1); }} />;\n}\n',
+          "client/src/hooks/useFormSync.ts":
+            "export function useFormSync(form) {\n  useEffect(() => {\n    form.reset({});\n  });\n}\n",
+        },
+        ["effect-writes"],
+      ),
+    ).toEqual([
+      "effect-writes client/src/called.tsx",
+      "effect-writes client/src/redirected.tsx",
+      "effect-writes client/src/renamed.tsx",
+      "effect-writes client/src/written.tsx",
+    ]);
+  });
+
+  test("the API is called in a function a query or a mutation runs, named …Fn", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/direct.tsx": "export async function d() {\n  await rpc.api.feats.$get();\n}\n",
+          "client/src/queried.tsx":
+            "export const q = () => useQuery({ queryKey: k, queryFn: () => rpc.api.feats.$get() });\n",
+          "client/src/handed.tsx":
+            "export const h = <Picker pageFn={(s) => rpc.api.feats.$get({ query: { s } })} />;\n",
+          "client/src/linked.tsx": "export const u = rpc.api.feats.$url();\n",
+        },
+        ["api-calls-in-queries"],
+      ),
+    ).toEqual(["api-calls-in-queries client/src/direct.tsx"]);
+  });
+
+  test("a failure to load is a LoadError, whose words are loadFailureMessage's", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/written.tsx": 'export const w = <Alert severity="error">Failed to load feats.</Alert>;\n',
+          "client/src/worded.tsx":
+            'export const x = <Alert severity="error">{loadFailureMessage("Feats", error)}</Alert>;\n',
+          "client/src/other.tsx": 'export const o = <Alert severity="error">Missing required selections.</Alert>;\n',
+          "client/src/info.tsx": 'export const i = <Alert severity="info">Loading feats</Alert>;\n',
+          "client/src/components/common/LoadError.tsx":
+            'export const l = <Alert severity="error">{loadFailureMessage(what, error)}</Alert>;\n',
+        },
+        ["load-errors"],
+      ),
+    ).toEqual(["load-errors client/src/worded.tsx", "load-errors client/src/written.tsx"]);
+  });
 });

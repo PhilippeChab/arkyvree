@@ -1,6 +1,5 @@
 import { History as HistoryIcon } from "@mui/icons-material";
 import {
-  Alert,
   Chip,
   Container,
   Paper,
@@ -21,6 +20,7 @@ import {
   clickableProps,
   CREATED_SORTS,
   DiceSpinner,
+  LoadError,
   LoadMoreButton,
   NoMatchesState,
   PageHeader,
@@ -87,7 +87,7 @@ export default function ActivitiesPage() {
         {isLoading ? (
           <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
         ) : error ? (
-          <Alert severity="error">Failed to load activity logs.</Alert>
+          <LoadError what="Activity logs" error={error} />
         ) : activities.length > 0 ? (
           <>
             <TableContainer component={Paper} sx={{ mb: 3, overflowX: "auto" }}>

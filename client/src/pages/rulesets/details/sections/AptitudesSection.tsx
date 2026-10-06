@@ -6,7 +6,11 @@ import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/clien
 import type { Aptitude } from "@/client/src/components/customization/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { type AptitudeFormData, AptitudeFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  type AptitudeFormData,
+  AptitudeFormFields,
+  EMPTY_APTITUDE,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { aptitudeQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
@@ -26,6 +30,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Aptitude, AptitudeFormData>({
+    createDefaults: EMPTY_APTITUDE,
     rulesetId: ruleset.id,
     sectionName: "aptitudes",
     label: "Aptitude",

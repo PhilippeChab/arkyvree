@@ -17,7 +17,7 @@ export default function CharacterContributorInvitePage() {
       listPath="/characters"
       icon={ContributorIcon}
       queryKey={queryKeys.invites.detail("characterContributor", contributorId)}
-      loadInvite={async () => {
+      inviteFn={async () => {
         const invite = await parseResponse(rpc.api.characters.contributors.invites[":id"].$get(param));
         return {
           status: invite.status,
@@ -27,8 +27,8 @@ export default function CharacterContributorInvitePage() {
           role: invite.role,
         };
       }}
-      acceptInvite={() => rpc.api.characters.contributors.invites[":id"].accept.$post(param)}
-      rejectInvite={() => rpc.api.characters.contributors.invites[":id"].reject.$post(param)}
+      acceptFn={() => rpc.api.characters.contributors.invites[":id"].accept.$post(param)}
+      rejectFn={() => rpc.api.characters.contributors.invites[":id"].reject.$post(param)}
       acceptedStatus="Active"
       joinVerb="contribute to"
       description="You've been invited to edit this character. Accepting will let you make changes and download the PDF."

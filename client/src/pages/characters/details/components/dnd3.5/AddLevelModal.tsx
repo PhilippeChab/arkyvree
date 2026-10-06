@@ -34,13 +34,6 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
     return Array.from({ length: levelCount }, (_, i) => wizard.abilityIncreases[i] ?? "null").join(",");
   }, [wizard.classPlan, wizard.abilityIncreases]);
 
-  const allPendingFeatPicks = useMemo(() => {
-    const pairs = Object.entries(wizard.selectedFeats).flatMap(([aptitudeId, feats]) =>
-      feats.map((f) => `${f.id}:${aptitudeId}`),
-    );
-    return pairs.length > 0 ? pairs.join(",") : undefined;
-  }, [wizard.selectedFeats]);
-
   const pendingSkillAllocations = useMemo(() => {
     const entries = Object.entries(wizard.skillPointAllocations)
       .filter(([, rank]) => rank > 0)
@@ -58,7 +51,7 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
       debouncedKlassSearch,
       wizard.allKlassLevelIds,
       allAbilityIds,
-      allPendingFeatPicks,
+      wizard.allSelectedFeatPickString,
       pendingSkillAllocations,
     ),
     queryFn: async ({ pageParam }) => {
@@ -71,7 +64,7 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
             search: debouncedKlassSearch || undefined,
             pendingLevelClassLevelIds: wizard.allKlassLevelIds || undefined,
             pendingLevelAbilityIds: allAbilityIds || undefined,
-            pendingFeatPicks: allPendingFeatPicks || undefined,
+            pendingFeatPicks: wizard.allSelectedFeatPickString || undefined,
             pendingSkillAllocations: pendingSkillAllocations || undefined,
           },
         }),

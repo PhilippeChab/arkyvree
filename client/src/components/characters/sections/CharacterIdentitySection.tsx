@@ -1,11 +1,11 @@
 import { Autocomplete, Box, Button, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { useController, useForm } from "react-hook-form";
+import { useController } from "react-hook-form";
 
 import { AttachmentField, DiceSpinner, FormTextField, SelectField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { type RulesetLanguage, useRulesetLanguages } from "@/client/src/hooks/index.ts";
+import { type RulesetLanguage, useFormWith, useRulesetLanguages } from "@/client/src/hooks/index.ts";
 import { useDirtyForm, useFormSync } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -76,27 +76,25 @@ export function CharacterIdentitySection({
   const canEditName = !readOnly;
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const form = useForm<CharacterIdentityFormData>({
-    defaultValues: {
-      race: "",
-      alignment: "",
-      experience: 0,
-      age: "",
-      gender: "",
-      height: "",
-      weight: "",
-      deity: "",
-      description: "",
-      notes: "",
-      languageIds: [],
-    },
+  const form = useFormWith<CharacterIdentityFormData>({
+    race: "",
+    alignment: "",
+    experience: 0,
+    age: "",
+    gender: "",
+    height: "",
+    weight: "",
+    deity: "",
+    description: "",
+    notes: "",
+    languageIds: [],
   });
 
   const sync = useFormSync(form, toIdentityForm(character), { key: characterId, updatedAt: character.updatedAt });
 
-  const handleSubmit = async (formData: CharacterIdentityFormData) => {
-    try {
-      const saved = await parseResponse(
+  const saveIdentity = useMutation({
+    mutationFn: (formData: CharacterIdentityFormData) =>
+      parseResponse(
         rpc.api.characters[":id"]["$put"]({
           param: { id: characterId },
           json: {
@@ -113,57 +111,45 @@ export function CharacterIdentitySection({
             updatedAt: sync.updatedAt(),
           },
         }),
-      );
-
+      ),
+    onSuccess: async (saved, formData) => {
       sync.saved(formData, saved.updatedAt);
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.characters.detail(characterId),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.characters.levelUp.all(characterId),
-      });
-    } catch (err) {
-      snackbar.error(err, "Failed to save character details");
-    }
-  };
+      await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.characters.levelUp.all(characterId) });
+    },
+    onError: (err) => snackbar.error(err, "Failed to save character details"),
+  });
 
-  const { isDirty, isSubmitting } = form.formState;
+  const { isDirty } = form.formState;
   useDirtyForm(isDirty);
 
-  // Lives outside the main form so users can rename without opening the
-  // Save flow (and vice versa). Click the name → TextField; Enter/blur
-  // saves, Escape cancels. Save is a direct PUT; response invalidates
-  // the character detail query so the new name flows everywhere.
+  // The name is renamed on its own, outside the Save flow: clicking it opens its field on the name, Enter or leaving
+  // the field saves, Escape cancels. The character's detail refetches, so the new name shows everywhere.
+  const nameForm = useFormWith<{ name: string }>({ name: "" });
+  const { field: nameField } = useController({ control: nameForm.control, name: "name" });
   const [nameEditing, setNameEditing] = useState(false);
-  const [nameDraft, setNameDraft] = useState("");
-  const [nameSaving, setNameSaving] = useState(false);
-
-  const saveName = async () => {
-    const trimmed = nameDraft.trim();
-    if (!trimmed || trimmed === characterName) {
-      setNameEditing(false);
-      return;
-    }
-    setNameSaving(true);
-    try {
-      await rpc.api.characters[":id"]["$put"]({
-        param: { id: characterId },
-        json: { name: trimmed, updatedAt: character.updatedAt },
-      });
+  const rename = useMutation({
+    mutationFn: (name: string) =>
+      parseResponse(
+        rpc.api.characters[":id"]["$put"]({
+          param: { id: characterId },
+          json: { name, updatedAt: character.updatedAt },
+        }),
+      ),
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
       if (character.parentCharacterId) {
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.characters.detail(character.parentCharacterId),
-        });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(character.parentCharacterId) });
       }
-      setNameEditing(false);
-    } catch (err) {
-      snackbar.error(err, "Failed to rename character");
-      setNameEditing(false);
-    } finally {
-      setNameSaving(false);
-    }
-  };
+    },
+    onError: (err) => snackbar.error(err, "Failed to rename character"),
+    onSettled: () => setNameEditing(false),
+  });
+  const saveName = nameForm.handleSubmit(({ name }) => {
+    const trimmed = name.trim();
+    if (!trimmed || trimmed === characterName) setNameEditing(false);
+    else rename.mutate(trimmed);
+  });
 
   // Staged via the form like every other field — selections only persist
   // when the user clicks Save, matching the rest of the identity section.
@@ -197,7 +183,7 @@ export function CharacterIdentitySection({
 
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <form onSubmit={sync.handleSubmit(handleSubmit)}>
+      <form onSubmit={sync.handleSubmit((formData) => saveIdentity.mutate(formData))}>
         <Box
           sx={{
             display: "flex",
@@ -210,9 +196,10 @@ export function CharacterIdentitySection({
         >
           {nameEditing ? (
             <TextField
-              value={nameDraft}
-              onChange={(e) => setNameDraft(e.target.value)}
-              onBlur={saveName}
+              value={nameField.value}
+              onChange={nameField.onChange}
+              inputRef={nameField.ref}
+              onBlur={() => saveName()}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -222,7 +209,7 @@ export function CharacterIdentitySection({
                 }
               }}
               autoFocus
-              disabled={nameSaving}
+              disabled={rename.isPending}
               variant="standard"
               slotProps={{ htmlInput: { "aria-label": "Character name", maxLength: 255 } }}
               sx={{
@@ -239,8 +226,7 @@ export function CharacterIdentitySection({
               onClick={
                 canEditName
                   ? () => {
-                      // The draft starts from the name, each time an edit does
-                      setNameDraft(characterName);
+                      nameForm.reset({ name: characterName });
                       setNameEditing(true);
                     }
                   : undefined
@@ -262,10 +248,10 @@ export function CharacterIdentitySection({
             type="submit"
             variant="contained"
             size="small"
-            disabled={!isDirty || isSubmitting}
+            disabled={!isDirty || saveIdentity.isPending}
             sx={{ visibility: readOnly ? "hidden" : "visible" }}
           >
-            <DiceSpinner size="small" loading={isSubmitting}>
+            <DiceSpinner size="small" loading={saveIdentity.isPending}>
               Save
             </DiceSpinner>
           </Button>

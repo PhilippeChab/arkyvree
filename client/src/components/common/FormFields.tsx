@@ -54,6 +54,8 @@ interface SelectFieldProps<T extends FieldValues> {
   rules?: ControllerProps<T>["rules"];
   /** A first choice for no value ("None"); picking it stores null. */
   emptyLabel?: string;
+  /** Shown under it while its value has no error. */
+  helperText?: ReactNode;
   disabled?: boolean;
   size?: "small" | "medium";
   margin?: "normal";
@@ -178,6 +180,7 @@ export function SelectField<T extends FieldValues>({
   options,
   rules,
   emptyLabel,
+  helperText,
   disabled,
   size,
   margin,
@@ -201,7 +204,7 @@ export function SelectField<T extends FieldValues>({
           value={choices.some((choice) => choice.value === field.value) ? field.value : ""}
           onChange={(event) => field.onChange(emptyLabel && !event.target.value ? null : event.target.value)}
           error={!!fieldState.error}
-          helperText={fieldState.error?.message}
+          helperText={fieldState.error?.message ?? helperText}
           disabled={disabled}
           size={size}
           margin={margin}

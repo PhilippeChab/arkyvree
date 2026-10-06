@@ -4,23 +4,12 @@ import {
   Person as PersonIcon,
   MenuBook as RulesetIcon,
 } from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  Card,
-  CardActionArea,
-  CardContent,
-  Container,
-  Link,
-  Paper,
-  type Theme,
-  Typography,
-} from "@mui/material";
+import { Box, Card, CardActionArea, CardContent, Container, Link, Paper, type Theme, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { ElementType } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { DiceSpinner, GoldDivider, PageTransition } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, GoldDivider, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
@@ -97,9 +86,7 @@ export default function DashboardPage() {
   if (error) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="error" sx={{ borderRadius: 3 }}>
-          Failed to load dashboard statistics. Please try again later.
-        </Alert>
+        <LoadError what="Dashboard statistics" error={error} sx={{ borderRadius: 3 }} />
       </Container>
     );
   }

@@ -1,9 +1,8 @@
 import { Chip } from "@mui/material";
-import { useForm } from "react-hook-form";
 
-import { useFormSync } from "@/client/src/hooks/index.ts";
+import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { EMPTY_RACE, type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Race } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -30,7 +29,7 @@ export function RaceEditor({
   locked,
   onSaved,
 }: EditorProps<Race>) {
-  const form = useForm<RaceFormData>();
+  const form = useFormWith<RaceFormData>(EMPTY_RACE);
   const sync = useFormSync(form, toRaceForm(race), { key: recordKey, adoptKey, updatedAt: race.updatedAt });
   const saveMutation = useEditorSave({
     sync,
@@ -38,7 +37,7 @@ export function RaceEditor({
     onSaved,
     listKey: queryKeys.rulesets.section(rulesetId, "races"),
     label: "Race",
-    save: (data: RaceFormData) =>
+    saveFn: (data: RaceFormData) =>
       parseResponse(
         rpc.api.rulesets[":id"].races[":raceId"].$put({
           param: { id: rulesetId, raceId: entityId },

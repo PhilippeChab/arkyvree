@@ -20,10 +20,9 @@ import {
   useTheme,
 } from "@mui/material";
 import type { Instance } from "@popperjs/core";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Modal } from "@/client/src/components/common/index.ts";
-import { useOnChange } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
@@ -85,6 +84,66 @@ const steps: OnboardingStep[] = [
   },
 ];
 
+/**
+ * The steps beside the sidebar, shown once its expansion, which entering popper mode starts, has finished: it mounts as
+ * the mode starts, so each entry waits for its transition. Between steps it moves to the new anchor.
+ */
+function OnboardingPopper({
+  anchorEl,
+  onClose,
+  children,
+}: {
+  anchorEl: HTMLElement;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const popperRef = useRef<Instance>(null);
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    if (entered) {
+      popperRef.current?.update();
+      return;
+    }
+    const timer = setTimeout(() => setEntered(true), SIDEBAR_TRANSITION_MS);
+    return () => clearTimeout(timer);
+  }, [anchorEl, entered]);
+
+  if (!entered) return null;
+
+  return (
+    <>
+      <Backdrop open sx={{ zIndex: (t) => t.zIndex.drawer + 2 }} onClick={onClose} />
+      <Popper
+        open
+        popperRef={popperRef}
+        anchorEl={anchorEl}
+        placement="right-start"
+        sx={{ zIndex: (t) => t.zIndex.drawer + 3 }}
+        modifiers={[{ name: "offset", options: { offset: [0, 16] } }]}
+      >
+        <Paper elevation={8} sx={{ width: 360, position: "relative" }}>
+          {/* Arrow pointing left */}
+          <Box
+            sx={{
+              position: "absolute",
+              left: -8,
+              top: 20,
+              width: 0,
+              height: 0,
+              borderTop: "8px solid transparent",
+              borderBottom: "8px solid transparent",
+              borderRight: (t) => `8px solid ${t.palette.background.paper}`,
+              filter: "drop-shadow(-2px 0 2px rgba(0,0,0,0.1))",
+            }}
+          />
+          {children}
+        </Paper>
+      </Popper>
+    </>
+  );
+}
+
 export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, isMobile }: OnboardingProps) {
   const theme = useTheme();
   const darkMode = theme.palette.mode === "dark";
@@ -95,29 +154,6 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   const step = steps[activeStep];
   const isLastStep = activeStep === steps.length - 1;
   const effectiveMode = isMobile || !anchorEl ? "dialog" : "popper";
-
-  // The popper shows once the sidebar's expansion, which entering popper mode starts, has finished: leaving the mode
-  // hides it until the next entry's transition ends. Between popper steps, no transition: it moves to the new anchor.
-  const popperRef = useRef<Instance>(null);
-  const [popperEntered, setPopperEntered] = useState(false);
-  const popperVisible = effectiveMode === "popper" && popperEntered;
-
-  useOnChange(effectiveMode, (mode) => {
-    if (mode !== "popper") setPopperEntered(false);
-  });
-
-  useEffect(() => {
-    if (effectiveMode !== "popper") return;
-    if (popperEntered) {
-      popperRef.current?.update();
-      return;
-    }
-    const timer = setTimeout(() => {
-      popperRef.current?.update();
-      setPopperEntered(true);
-    }, SIDEBAR_TRANSITION_MS);
-    return () => clearTimeout(timer);
-  }, [effectiveMode, anchorEl, popperEntered]);
 
   const handleNext = () => {
     if (isLastStep) {
@@ -321,7 +357,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
     </Box>
   );
 
-  if (effectiveMode === "dialog") {
+  if (effectiveMode === "dialog" || !anchorEl) {
     return (
       <Modal open onClose={onClose} aria-labelledby="onboarding-step-title">
         {gradientBar}
@@ -332,40 +368,12 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
     );
   }
 
-  if (!popperVisible) return null;
-
   return (
-    <>
-      <Backdrop open sx={{ zIndex: (t) => t.zIndex.drawer + 2 }} onClick={onClose} />
-      <Popper
-        open
-        popperRef={popperRef}
-        anchorEl={anchorEl}
-        placement="right-start"
-        sx={{ zIndex: (t) => t.zIndex.drawer + 3 }}
-        modifiers={[{ name: "offset", options: { offset: [0, 16] } }]}
-      >
-        <Paper elevation={8} sx={{ width: 360, position: "relative" }}>
-          {/* Arrow pointing left */}
-          <Box
-            sx={{
-              position: "absolute",
-              left: -8,
-              top: 20,
-              width: 0,
-              height: 0,
-              borderTop: "8px solid transparent",
-              borderBottom: "8px solid transparent",
-              borderRight: (t) => `8px solid ${t.palette.background.paper}`,
-              filter: "drop-shadow(-2px 0 2px rgba(0,0,0,0.1))",
-            }}
-          />
-          {gradientBar}
-          {stepContent}
-          {stepperDots}
-          {navButtons}
-        </Paper>
-      </Popper>
-    </>
+    <OnboardingPopper anchorEl={anchorEl} onClose={onClose}>
+      {gradientBar}
+      {stepContent}
+      {stepperDots}
+      {navButtons}
+    </OnboardingPopper>
   );
 }

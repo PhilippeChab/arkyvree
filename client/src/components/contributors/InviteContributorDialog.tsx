@@ -1,8 +1,8 @@
 import { Button, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import type { InferRequestType } from "hono/client";
-import { useForm } from "react-hook-form";
 
 import { DiceSpinner, EmailField, FormDialog, SelectField } from "@/client/src/components/common/index.ts";
+import { useFormWith } from "@/client/src/hooks/index.ts";
 import { emailRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
@@ -26,7 +26,7 @@ export interface InviteContributorFormData {
 }
 
 export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, roles }: InviteContributorDialogProps) {
-  const form = useForm<InviteContributorFormData>({ defaultValues: { email: "", role: "Editor" } });
+  const form = useFormWith<InviteContributorFormData>({ email: "", role: "Editor" });
 
   const handleClose = () => {
     form.reset();

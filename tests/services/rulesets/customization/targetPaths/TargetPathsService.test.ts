@@ -14,8 +14,8 @@ function isAptitudeGrant(p: { category: string; path: string }) {
   return p.category === "aptitudes" && /\.(uses|allowed)$/.test(p.path);
 }
 
-async function validate(path: string, kind: Kind = "modifier") {
-  return TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind);
+async function validate(path: string, kind: Kind = "modifier", entityType?: EntityType) {
+  return TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind, entityType);
 }
 
 async function complete(
@@ -349,9 +349,24 @@ describe("TargetPathsService", () => {
   });
 
   describe("validating a path", () => {
-    test("accepts a full path", async () => {
-      expect(await validate("abilities.strength.misc")).toMatchObject({ isValid: true, errors: [], suggestions: [] });
+    test("accepts a full path, with its definition", async () => {
+      expect(await validate("abilities.strength.misc")).toMatchObject({
+        isValid: true,
+        errors: [],
+        suggestions: [],
+        target: { path: "abilities.strength.misc", valueType: "number" },
+      });
       expect(await validate("abilities.strength.total", "requirement")).toMatchObject({ isValid: true });
+    });
+
+    test("accepts a path among those its entity type takes", async () => {
+      const grant = (await seedPaths("modifier", "feats")).paths.find(isAptitudeGrant);
+      expect(grant).toBeDefined();
+      const path = grant?.path ?? "";
+      expect((await validate(path, "modifier", "feats")).target).toEqual(grant);
+      const refused = await validate(path, "modifier", "items");
+      expect(refused).toMatchObject({ isValid: false, errors: [{ code: "INVALID_PATH" }] });
+      expect(refused.target).toBeUndefined();
     });
 
     test("accepts a family's counts when requiring, not when modifying", async () => {

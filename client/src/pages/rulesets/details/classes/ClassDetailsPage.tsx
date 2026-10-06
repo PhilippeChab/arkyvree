@@ -10,19 +10,22 @@ import {
 } from "@mui/icons-material";
 import { Box, Chip, MenuItem, TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { DeleteDialog, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormSync, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
+import { useFormSync, useFormWith, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
-import { type ClassFormData, ClassFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import {
+  type ClassFormData,
+  ClassFormFields,
+  EMPTY_CLASS,
+} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import {
   EntityDetailLayout,
   EntityDetailsCard,
@@ -117,7 +120,7 @@ export default function ClassDetailsPage() {
   usePageTitle(classData?.name);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const editForm = useForm<ClassFormData>();
+  const editForm = useFormWith<ClassFormData>(EMPTY_CLASS);
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
@@ -202,11 +205,9 @@ export default function ClassDetailsPage() {
   });
 
   // Normalize the URL to a known tab.
-  useEffect(() => {
-    if (rulesetId && classId && !isClassSection(section)) {
-      navigate(`/rulesets/${rulesetId}/classes/${classId}/levels`, { replace: true });
-    }
-  }, [rulesetId, classId, section, navigate]);
+  if (rulesetId && classId && !isClassSection(section)) {
+    return <Navigate to={`/rulesets/${rulesetId}/classes/${classId}/levels`} replace />;
+  }
 
   const isLoading = isRulesetLoading || isClassLoading;
 

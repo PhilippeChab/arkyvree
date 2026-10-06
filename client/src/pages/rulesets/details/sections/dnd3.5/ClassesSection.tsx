@@ -6,7 +6,11 @@ import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { type ClassFormData, ClassFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import {
+  type ClassFormData,
+  ClassFormFields,
+  EMPTY_CLASS,
+} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   classDetailQuery,
@@ -37,7 +41,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
     rulesetId: ruleset.id,
     sectionName: "classes",
     label: "Class",
-    createDefaults: { hd: 8 },
+    createDefaults: EMPTY_CLASS,
     createFn: async (data) => {
       return parseResponse(
         rpc.api.rulesets[":id"].classes.$post({

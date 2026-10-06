@@ -69,9 +69,8 @@ interface FeatPickerState {
   featSearch: string;
   setFeatSearch: (search: string) => void;
   handleFeatsScroll: (event: React.UIEvent<HTMLElement>) => void;
-  /** The picks' form: the feats field. */
+  /** The picks' form: the feats field, which the step changes from `selectedFeats`. */
   control: Control<LevelUpFormData>;
-  handleDeleteFeat: (featId: string, aptitudeId: string) => void;
 }
 
 interface LevelUpReviewState extends LevelReviewState {
@@ -85,7 +84,9 @@ interface SkillPickerState {
   skillData: SkillsData | null | undefined;
   isLoadingSkills: boolean;
   skillsError: Error | null;
-  /** The picks' form: the skill points field. */
+  /** The points as they fit the slots */
+  skillPointAllocations: Record<string, number>;
+  /** The picks' form: the skill points field, which the step changes from `skillPointAllocations`. */
   control: Control<LevelUpFormData>;
   /** Several levels at once (Add Level): each level's class skills and points. */
   perLevelClassSkillIds?: string[][];
@@ -142,9 +143,8 @@ interface PowerPickerState {
   isLoadingAvailablePowers: boolean;
   isFetchingNextPowersPage: boolean;
   powerSearch: string;
-  /** The picks' form: the spells field. */
+  /** The picks' form: the spells field, which the step changes from `selectedPowers`. */
   control: Control<LevelUpFormData>;
-  handleDeletePower: (powerId: string, aptitudeId: string) => void;
   setPowerSearch: (search: string) => void;
   handlePowersScroll: (event: React.UIEvent<HTMLElement>) => void;
 }

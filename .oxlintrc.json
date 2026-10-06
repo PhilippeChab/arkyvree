@@ -43,6 +43,7 @@
 
     // General
     "no-console": "error",
+    "import/no-empty-named-blocks": "error",
     // Routers, services and repositories in CRUD order (lint/memberOrder.mjs): `bun run lint --fix` sorts them.
     "arkyvree/member-order": "error",
     // A public method starts with a verb its layer knows (lint/methodNames.mjs): repositories, services, policies.
@@ -79,6 +80,9 @@
     "arkyvree/query-keys": "error",
     "arkyvree/client-apis": "error",
     "arkyvree/controlled-inputs": "error",
+    "arkyvree/effect-writes": "error",
+    "arkyvree/api-calls-in-queries": "error",
+    "arkyvree/load-errors": "error",
     "arkyvree/test-conventions": "error",
     // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
     "arkyvree/function-length": "error",

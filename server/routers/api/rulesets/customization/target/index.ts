@@ -57,11 +57,12 @@ export default new Hono()
       z.object({
         path: z.string(),
         kind: z.enum(["modifier", "requirement"]),
+        entityType: z.string().optional(),
       }),
     ),
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
-      const { path, kind } = c.req.valid("json");
-      return c.json(await TargetPathsService.validatePath(rulesetId, path, kind), 200);
+      const { path, kind, entityType } = c.req.valid("json");
+      return c.json(await TargetPathsService.validatePath(rulesetId, path, kind, entityType), 200);
     },
   );
