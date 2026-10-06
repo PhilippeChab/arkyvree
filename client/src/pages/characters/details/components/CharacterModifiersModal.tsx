@@ -172,57 +172,59 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         </DialogTitle>
 
         <DialogContent sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
-          <Stack direction="row" sx={{ justifyContent: "flex-end", mb: 2 }}>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
-              Add Modifier
-            </Button>
-          </Stack>
-          <DataTable
-            rows={modifiers}
-            isLoading={isLoading}
-            columns={MODIFIER_COLUMNS}
-            size="small"
-            minWidth={0}
-            renderCell={(mod, column) => {
-              if (column === "target")
-                return <TargetPathBreadcrumbs target={mod.target} targetLabels={mod.targetLabels} />;
-              if (column === "operator") {
-                return (
-                  <Chip
-                    label={MODIFIER_OPERATOR_LABELS[mod.operator] || mod.operator}
-                    size="small"
-                    color="secondary"
-                    variant="outlined"
-                  />
+          <Stack spacing={3}>
+            <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
+                Add Modifier
+              </Button>
+            </Stack>
+            <DataTable
+              rows={modifiers}
+              isLoading={isLoading}
+              columns={MODIFIER_COLUMNS}
+              size="small"
+              minWidth={0}
+              renderCell={(mod, column) => {
+                if (column === "target")
+                  return <TargetPathBreadcrumbs target={mod.target} targetLabels={mod.targetLabels} />;
+                if (column === "operator") {
+                  return (
+                    <Chip
+                      label={MODIFIER_OPERATOR_LABELS[mod.operator] || mod.operator}
+                      size="small"
+                      color="secondary"
+                      variant="outlined"
+                    />
+                  );
+                }
+                const templatePath = extractTemplatePath(mod.value);
+                return templatePath ? (
+                  <TargetPathBreadcrumbs target={templatePath} targetLabels={mod.targetLabels} />
+                ) : (
+                  <Typography variant="body2">{mod.value}</Typography>
                 );
-              }
-              const templatePath = extractTemplatePath(mod.value);
-              return templatePath ? (
-                <TargetPathBreadcrumbs target={templatePath} targetLabels={mod.targetLabels} />
-              ) : (
-                <Typography variant="body2">{mod.value}</Typography>
-              );
-            }}
-            actions={(mod) => [
-              { label: "Edit modifier", icon: <EditIcon fontSize="small" />, onClick: () => handleEdit(mod) },
-              {
-                label: "Duplicate modifier",
-                icon: <DuplicateIcon fontSize="small" />,
-                onClick: () => handleDuplicate(mod),
-              },
-              {
-                label: "Delete modifier",
-                icon: <DeleteIcon fontSize="small" />,
-                onClick: () => handleDelete(mod),
-                color: "error",
-              },
-            ]}
-            empty={{
-              icon: ModifiersIcon,
-              title: "No modifiers",
-              description: "Add custom bonuses or overrides to this character.",
-            }}
-          />
+              }}
+              actions={(mod) => [
+                { label: "Edit modifier", icon: <EditIcon fontSize="small" />, onClick: () => handleEdit(mod) },
+                {
+                  label: "Duplicate modifier",
+                  icon: <DuplicateIcon fontSize="small" />,
+                  onClick: () => handleDuplicate(mod),
+                },
+                {
+                  label: "Delete modifier",
+                  icon: <DeleteIcon fontSize="small" />,
+                  onClick: () => handleDelete(mod),
+                  color: "error",
+                },
+              ]}
+              empty={{
+                icon: ModifiersIcon,
+                title: "No modifiers",
+                description: "Add custom bonuses or overrides to this character.",
+              }}
+            />
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} variant="outlined" color="inherit">

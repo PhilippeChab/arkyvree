@@ -196,7 +196,7 @@ Anything that _throws_ on the basis of ownership is a permission check and shoul
 - Always use `<DiceSpinner>` (`components/common/DiceSpinner.tsx`) — never MUI `CircularProgress` (`arkyvree/client-apis`)
 - A button that starts a request shows it running, whatever the button (an icon one too): `arkyvree/pending-buttons`. For Buttons, use the wrapper API so the button doesn't shrink when loading flips: `<DiceSpinner size="small" loading={isPending}>Save</DiceSpinner>` as the Button child. Pair with `disabled={isPending}`. Keep any static `startIcon` outside the wrapper.
 - A page loads as its kind does: a character sheet as `CharacterDetailSkeleton`, an entity page through `EntityDetailLayout`'s `isLoading`, a table as `DataTable`'s skeleton, any other page or section as a standalone `<DiceSpinner />` at its default size
-- For Suspense fallbacks and full-section loaders, use standalone `<DiceSpinner />` (default medium); it centers itself, so give it the block's spacing through `sx` (`<DiceSpinner sx={{ py: 4 }} />`) instead of wrapping it in a Box
+- For Suspense fallbacks and full-section loaders, use standalone `<DiceSpinner />` (default medium); it centers itself, so give it the block's spacing through `sx` (`<DiceSpinner sx={{ py: 4 }} />`) instead of wrapping it in a Box. It says it's loading (`role="status"`), so no wrapper announces it
 
 **Dialog Conventions:**
 

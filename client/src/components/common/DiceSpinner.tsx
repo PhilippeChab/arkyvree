@@ -42,6 +42,7 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
     <Typography
       ref={size === "small" ? ref : undefined}
       component="span"
+      aria-hidden
       sx={{
         fontSize: SIZES[size],
         lineHeight: 1,
@@ -91,6 +92,8 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
 
   return (
     <Stack
+      role="status"
+      aria-label="Loading"
       direction="row"
       sx={[{ justifyContent: "center", alignItems: "center", py: 2 }, ...(Array.isArray(sx) ? sx : [sx])]}
     >

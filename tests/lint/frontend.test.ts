@@ -48,7 +48,7 @@ describe("frontend rules", () => {
     ]);
   });
 
-  test("a dialog is laid out by the theme: a plain title, no dividers, no top gap, its prose a DialogContentText", async () => {
+  test("a dialog is laid out by the theme: a plain title, no dividers, no top gap, one column, its prose a DialogContentText", async () => {
     expect(
       await lintRepo(
         {
@@ -66,12 +66,18 @@ describe("frontend rules", () => {
           "client/src/texted.tsx":
             'export const x = (\n  <DialogContent>\n    <Stack spacing={3}>\n      <DialogContentText>x</DialogContentText>\n      <Typography variant="subtitle2">y</Typography>\n    </Stack>\n  </DialogContent>\n);\n',
           "client/src/paper.tsx": 'export const a = <Modal sx={{ "& .MuiDialog-paper": { height: "90vh" } }} />;\n',
+          "client/src/loose.tsx":
+            "export const l = (\n  <DialogContent>\n    <Box />\n    <DataTable rows={rows} />\n  </DialogContent>\n);\n",
+          "client/src/narrow.tsx":
+            "export const n = (\n  <DialogContent>\n    <Stack spacing={2}>\n      <Box />\n    </Stack>\n  </DialogContent>\n);\n",
         },
         ["dialog-conventions"],
       ),
     ).toEqual([
       "dialog-conventions client/src/divided.tsx",
       "dialog-conventions client/src/iconed.tsx",
+      "dialog-conventions client/src/loose.tsx",
+      "dialog-conventions client/src/narrow.tsx",
       "dialog-conventions client/src/paper.tsx",
       "dialog-conventions client/src/prose.tsx",
       "dialog-conventions client/src/spaced.tsx",

@@ -93,7 +93,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
       <Modal open={open} onClose={onClose}>
         <DialogTitle>Contributors</DialogTitle>
         <DialogContent>
-          <Stack spacing={2}>
+          <Stack spacing={3}>
             <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
               <DialogContentText>Contributors can edit this character and download its PDF.</DialogContentText>
               {canInvite ? (

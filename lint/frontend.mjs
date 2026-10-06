@@ -729,31 +729,7 @@ function createDialogConventions(context) {
           });
         }
       }
-      if (name === "DialogContent") {
-        if (hasAttribute(node, "dividers")) {
-          context.report({
-            node: node.openingElement,
-            message: "A dialog's content has no `dividers`: one look for every dialog.",
-          });
-        }
-        const [first] = childElements(node);
-        if (first && sxSetsAny(first, TOP_SPACING)) {
-          context.report({
-            node: first.openingElement,
-            message:
-              "The theme spaces a dialog's content from its title: its first element sets no top margin or padding.",
-          });
-        }
-        const prose = [node, ...childElements(node).filter((child) => elementName(child) === "Stack")]
-          .flatMap(childElements)
-          .filter(
-            (child) =>
-              elementName(child) === "Typography" && /^body[12]$/.test(attributeText(child, "variant") ?? "body1"),
-          );
-        for (const text of prose) {
-          context.report({ node: text.openingElement, message: "A dialog's prose is a `DialogContentText`." });
-        }
-      }
+      if (name === "DialogContent") reportDialogContent(context, node);
       // component="form", or component={"form"}
       const valueOf = (a) => (a.value?.type === "JSXExpressionContainer" ? a.value.expression.value : a.value?.value);
       const isForm =
@@ -1503,15 +1479,12 @@ function passesStyleOn(value) {
   );
 }
 
-/**
- * Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`.
- *
- * A node's start and end in its file.
- */
+/** A node's start and end in its file. */
 function rangeOf(node) {
   return node.range ?? [node.start, node.end];
 }
 
+/** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */
 function readsWatch(node) {
   if (!node || typeof node !== "object") return false;
   if (Array.isArray(node)) return node.some(readsWatch);
@@ -1529,6 +1502,30 @@ function readsWatch(node) {
 /** The name a type reference names: `Omit` in `Omit<…>`, `ComponentProps` in `React.ComponentProps<…>`. */
 function referenceName(typeName) {
   return typeName.type === "TSQualifiedName" ? typeName.right.name : typeName.name;
+}
+
+/** A dialog's content as the theme lays it out: no dividers, no gap under the title, one column, its prose a `DialogContentText`. */
+function reportDialogContent(context, node) {
+  const report = (element, message) => context.report({ node: element.openingElement, message });
+  const column = childElements(node);
+  if (hasAttribute(node, "dividers")) report(node, "A dialog's content has no `dividers`: one look for every dialog.");
+  if (column[0] && sxSetsAny(column[0], TOP_SPACING)) {
+    report(
+      column[0],
+      "The theme spaces a dialog's content from its title: its first element sets no top margin or padding.",
+    );
+  }
+  const stack = column.length === 1 && elementName(column[0]) === "Stack" && !hasAttribute(column[0], "direction");
+  const spacing = stack ? numberAttribute(column[0], "spacing") : null;
+  if (column.length > 1 || (spacing !== null && spacing !== 3)) {
+    report(node, "A dialog's content is one column, a `Stack spacing={3}`.");
+  }
+  const prose = [node, ...column.filter((child) => elementName(child) === "Stack")]
+    .flatMap(childElements)
+    .filter(
+      (child) => elementName(child) === "Typography" && /^body[12]$/.test(attributeText(child, "variant") ?? "body1"),
+    );
+  for (const text of prose) report(text, "A dialog's prose is a `DialogContentText`.");
 }
 
 /** Whether a `display` value lays out as flex: `"flex"`, `"inline-flex"`, or one of a responsive object's. */

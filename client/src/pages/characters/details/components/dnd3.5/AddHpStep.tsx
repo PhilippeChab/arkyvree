@@ -1,7 +1,8 @@
-import { Button, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 
 import { DiceIcon } from "@/client/src/components/icons/index.ts";
 
+import { HpGainField } from "./HpGainField.tsx";
 import type { AddHpStepProps } from "./levelUpFactory.ts";
 
 export function AddHpStep({ wizard }: AddHpStepProps) {
@@ -24,33 +25,14 @@ export function AddHpStep({ wizard }: AddHpStepProps) {
         </Button>
       </Stack>
       {levels.map((level, index) => (
-        <Stack key={index} spacing={2}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <Typography component="h3" variant="h6">
-              Set HP for {level.className} Level {level.nextLevel}
-            </Typography>
-            <IconButton onClick={() => onRoll(index)} color="primary" size="small" aria-label={`Roll d${level.hd}`}>
-              <DiceIcon />
-            </IconButton>
-            <Chip label="MAX" size="small" variant="outlined" onClick={() => onHpChange(index, level.hd)} />
-          </Stack>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Enter HP gain (1 to {level.hd}). Average: {Math.ceil(level.hd / 2)}, Maximum: {level.hd}
-          </Typography>
-          <TextField
-            label="HP Gain"
-            type="number"
-            value={hpValues[index] ?? ""}
-            onChange={(e) => {
-              const val = parseInt(e.target.value, 10);
-              onHpChange(index, isNaN(val) ? null : Math.max(1, Math.min(val, level.hd)));
-            }}
-            fullWidth
-            slotProps={{
-              htmlInput: { min: 1, max: level.hd, step: 1 },
-            }}
-          />
-        </Stack>
+        <HpGainField
+          key={index}
+          title={`Set HP for ${level.className} Level ${level.nextLevel}`}
+          hd={level.hd}
+          value={hpValues[index] ?? null}
+          onChange={(hp) => onHpChange(index, hp)}
+          onRoll={() => onRoll(index)}
+        />
       ))}
     </Stack>
   );

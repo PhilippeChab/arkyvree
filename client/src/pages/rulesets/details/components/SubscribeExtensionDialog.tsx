@@ -55,7 +55,7 @@ function SubscribeExtensionForm({
     <>
       <DialogTitle>Subscribe to Extensions</DialogTitle>
       <DialogContent>
-        <Stack spacing={2}>
+        <Stack spacing={3}>
           <DialogContentText>
             Add content from official sourcebooks or community-published extensions. Extension entities will be
             available in your ruleset via inheritance.

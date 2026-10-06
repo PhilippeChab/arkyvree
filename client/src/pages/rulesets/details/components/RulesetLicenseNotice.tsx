@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   DialogActions,
   DialogContent,
@@ -36,27 +37,27 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
       <Modal open={open} onClose={() => setOpen(false)} maxWidth="md" aria-labelledby="ruleset-license-title">
         <DialogTitle id="ruleset-license-title">License & Attribution</DialogTitle>
         <DialogContent>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            {name}
-          </Typography>
-          <DialogContentText sx={{ mb: 3 }}>
-            This notice applies to the SRD-derived Open Game Content in this system source package. It does not license
-            the application code or designate independent user-created content as Open Game Content.
-          </DialogContentText>
-          {isPending && (
-            <Stack role="status" aria-label="Loading license" direction="row" sx={{ justifyContent: "center", py: 4 }}>
-              <DiceSpinner />
-            </Stack>
-          )}
-          {isError && <LoadError what="License text" error={error} onRetry={() => void refetch()} />}
-          {text !== undefined && (
-            <DialogContentText
-              component="pre"
-              sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontFamily: "inherit", m: 0 }}
-            >
-              {text}
-            </DialogContentText>
-          )}
+          <Stack spacing={3}>
+            <Box>
+              <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                {name}
+              </Typography>
+              <DialogContentText>
+                This notice applies to the SRD-derived Open Game Content in this system source package. It does not
+                license the application code or designate independent user-created content as Open Game Content.
+              </DialogContentText>
+            </Box>
+            {isPending && <DiceSpinner sx={{ py: 4 }} />}
+            {isError && <LoadError what="License text" error={error} onRetry={() => void refetch()} />}
+            {text !== undefined && (
+              <DialogContentText
+                component="pre"
+                sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontFamily: "inherit", m: 0 }}
+              >
+                {text}
+              </DialogContentText>
+            )}
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)} variant="outlined" color="inherit">
