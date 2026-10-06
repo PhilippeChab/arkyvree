@@ -24,17 +24,6 @@ function dollarQuote(s: string): string {
   return `$${tag}$${s}$${tag}$`;
 }
 
-/**
- * A row's comparable fields: without its bookkeeping columns, nor any UUID, a reference each seed draws anew.
- */
-export function stripVolatile(row: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(row).filter(
-      ([field, value]) => !VOLATILE.has(field) && !(typeof value === "string" && UUID.test(value)),
-    ),
-  );
-}
-
 /** What differs between the reference's rows and the target's, by business key. */
 export function collectDiff(ref: IdentifiedRow[], tgt: IdentifiedRow[]): TableDiff {
   const refMap = new Map(ref.map((r) => [r.bk, r]));
@@ -100,4 +89,15 @@ export function renderSql(table: string, d: TableDiff, labelled: readonly string
         : `UPDATE ${table} SET ${c.field} = ${sqlLiteral(c.ref)} WHERE id = ${sqlLiteral(c.targetId)};  -- ${c.bk}`,
     ),
   ];
+}
+
+/**
+ * A row's comparable fields: without its bookkeeping columns, nor any UUID, a reference each seed draws anew.
+ */
+export function stripVolatile(row: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(row).filter(
+      ([field, value]) => !VOLATILE.has(field) && !(typeof value === "string" && UUID.test(value)),
+    ),
+  );
 }

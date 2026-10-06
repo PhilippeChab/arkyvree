@@ -22,59 +22,6 @@ function cellText(cell: cheerio.Cheerio<AnyNode>): string {
   return normalizeWs(copy.text());
 }
 
-export function parseWeaponsHtml(html: string): WeaponRow[] {
-  const $ = cheerio.load(html);
-  const table = $("table#tableWeapons");
-  if (!table.length) return [];
-
-  const weapons: WeaponRow[] = [];
-  let currentProficiency = "";
-  let currentCategory = "";
-
-  table.find("tbody tr").each((_, row) => {
-    const $row = $(row);
-
-    // Proficiency header rows: contain <th id="simpleWeapons|martialWeapons|exoticWeapons">
-    const proficiencyTh = $row.find("th[id]");
-    if (proficiencyTh.length) {
-      const id = proficiencyTh.attr("id") ?? "";
-      if (id === "simpleWeapons") currentProficiency = "Simple";
-      else if (id === "martialWeapons") currentProficiency = "Martial";
-      else if (id === "exoticWeapons") currentProficiency = "Exotic";
-      return;
-    }
-
-    // Category header rows: <tr class="h2"><th colspan="8">Category</th></tr>
-    if ($row.hasClass("h2")) {
-      currentCategory = normalizeWs($row.find("th").text());
-      return;
-    }
-
-    // Data rows: 8 <td> cells
-    const cells = $row.find("td");
-    if (cells.length < 8) return;
-
-    const text = (i: number) => cellText($(cells[i]));
-    const name = text(0);
-    if (!name || !currentProficiency) return;
-
-    weapons.push({
-      name,
-      proficiency: currentProficiency,
-      category: currentCategory,
-      cost: text(1),
-      dmgSmall: text(2),
-      dmgMedium: text(3),
-      critical: text(4),
-      rangeIncrement: text(5),
-      weight: text(6),
-      damageType: text(7),
-    });
-  });
-
-  return weapons;
-}
-
 export function parseArmorHtml(html: string): ArmorRow[] {
   const $ = cheerio.load(html);
   const table = $("table#tableArmorandShields");
@@ -154,4 +101,57 @@ export function parseGoodsHtml(html: string): {
   }
 
   return items;
+}
+
+export function parseWeaponsHtml(html: string): WeaponRow[] {
+  const $ = cheerio.load(html);
+  const table = $("table#tableWeapons");
+  if (!table.length) return [];
+
+  const weapons: WeaponRow[] = [];
+  let currentProficiency = "";
+  let currentCategory = "";
+
+  table.find("tbody tr").each((_, row) => {
+    const $row = $(row);
+
+    // Proficiency header rows: contain <th id="simpleWeapons|martialWeapons|exoticWeapons">
+    const proficiencyTh = $row.find("th[id]");
+    if (proficiencyTh.length) {
+      const id = proficiencyTh.attr("id") ?? "";
+      if (id === "simpleWeapons") currentProficiency = "Simple";
+      else if (id === "martialWeapons") currentProficiency = "Martial";
+      else if (id === "exoticWeapons") currentProficiency = "Exotic";
+      return;
+    }
+
+    // Category header rows: <tr class="h2"><th colspan="8">Category</th></tr>
+    if ($row.hasClass("h2")) {
+      currentCategory = normalizeWs($row.find("th").text());
+      return;
+    }
+
+    // Data rows: 8 <td> cells
+    const cells = $row.find("td");
+    if (cells.length < 8) return;
+
+    const text = (i: number) => cellText($(cells[i]));
+    const name = text(0);
+    if (!name || !currentProficiency) return;
+
+    weapons.push({
+      name,
+      proficiency: currentProficiency,
+      category: currentCategory,
+      cost: text(1),
+      dmgSmall: text(2),
+      dmgMedium: text(3),
+      critical: text(4),
+      rangeIncrement: text(5),
+      weight: text(6),
+      damageType: text(7),
+    });
+  });
+
+  return weapons;
 }

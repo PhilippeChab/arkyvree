@@ -37,6 +37,15 @@ type LevelProjection = {
   pendingLevelAbilityIds?: (string | undefined)[];
 };
 
+/** A projected character's spell pools, without the non-leveled aptitudes no spell belongs to (feat pools). */
+function spellPools(aptitudes: DetailedCharacterAptitudes, rulesetData: CachedRulesetData) {
+  const pools = aptitudes.extractPowerPools();
+  for (const aptitudeId of aptitudes.getNonLeveledAptitudeIds()) {
+    if (!rulesetData.aptitudeIdsByHavingPowers.has(aptitudeId)) delete pools[aptitudeId];
+  }
+  return pools;
+}
+
 /**
  * The projected level of class level `klassLevelId`, and the projection it goes in. An edited level's replacement
  * keeps its creation time, so the first character level stays the first (its x4 skill points, its feats); its id is
@@ -104,15 +113,6 @@ async function featSlots(
   });
 }
 
-/** A projected character's spell pools, without the non-leveled aptitudes no spell belongs to (feat pools). */
-function spellPools(aptitudes: DetailedCharacterAptitudes, rulesetData: CachedRulesetData) {
-  const pools = aptitudes.extractPowerPools();
-  for (const aptitudeId of aptitudes.getNonLeveledAptitudeIds()) {
-    if (!rulesetData.aptitudeIdsByHavingPowers.has(aptitudeId)) delete pools[aptitudeId];
-  }
-  return pools;
-}
-
 /** The spell pools of a projected level, and the powers its class level grants. */
 async function powerSlots(
   session: Session,
@@ -139,6 +139,80 @@ async function powerSlots(
 
     return { powersToSelect, autoGrantedPowers, aptitudePools };
   });
+}
+
+export async function getAttributeSlots(
+  session: Session,
+  characterId: string,
+  excludeCharacterLevelId?: string,
+  pendingLevelCount?: number,
+) {
+  const characterRecord = await getEditableCharacter(db, session, characterId);
+
+  const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
+  const characterLevels = await CharacterLevels.findMany(db, { characterId });
+  const excludeIds = excludeCharacterLevelId ? getLevelIdsFromOnward(characterLevels, excludeCharacterLevelId) : [];
+  // totalLevel = number of levels before this one (so totalLevel+1 = the level being added/edited)
+  const totalLevel = characterLevels.length - excludeIds.length + (pendingLevelCount ?? 0);
+
+  if (!rulesetModule.hooks.levels.isAbilityIncreaseLevel(totalLevel)) {
+    return {
+      isAvailable: false,
+      attributes: {},
+    };
+  }
+
+  const projectedData: Dnd35ProjectedCharacterData | undefined =
+    excludeIds.length > 0 ? { excludeCharacterLevelIds: excludeIds } : undefined;
+
+  const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+  await detailedCharacter.build(undefined, projectedData);
+  const abilities = detailedCharacter.getDetailedCharacterAbilities();
+
+  return {
+    isAvailable: true,
+    attributes: abilities.getAbilitiesWithIds(),
+  };
+}
+
+export async function getEditFeatSlots(
+  session: Session,
+  characterId: string,
+  klassId: string,
+  level: number,
+  characterLevelId: string,
+) {
+  return await featSlots(session, characterId, klassId, level, { editedLevelId: characterLevelId });
+}
+
+export async function getEditPowerSlots(
+  session: Session,
+  characterId: string,
+  klassId: string,
+  level: number,
+  characterLevelId: string,
+) {
+  return await powerSlots(session, characterId, klassId, level, { editedLevelId: characterLevelId });
+}
+
+export async function getFeatSlots(
+  session: Session,
+  characterId: string,
+  klassId: string,
+  level: number,
+  pendingLevelKlassLevelIds?: string[],
+) {
+  return await featSlots(session, characterId, klassId, level, { pendingLevelKlassLevelIds });
+}
+
+export async function getPowerSlots(
+  session: Session,
+  characterId: string,
+  klassId: string,
+  level: number,
+  pendingLevelKlassLevelIds?: string[],
+) {
+  return await powerSlots(session, characterId, klassId, level, { pendingLevelKlassLevelIds });
 }
 
 export async function getSkillSlots(
@@ -190,78 +264,4 @@ export async function getSkillSlots(
       skills: skillsWithClassInfo,
     };
   });
-}
-
-export async function getFeatSlots(
-  session: Session,
-  characterId: string,
-  klassId: string,
-  level: number,
-  pendingLevelKlassLevelIds?: string[],
-) {
-  return await featSlots(session, characterId, klassId, level, { pendingLevelKlassLevelIds });
-}
-
-export async function getEditFeatSlots(
-  session: Session,
-  characterId: string,
-  klassId: string,
-  level: number,
-  characterLevelId: string,
-) {
-  return await featSlots(session, characterId, klassId, level, { editedLevelId: characterLevelId });
-}
-
-export async function getPowerSlots(
-  session: Session,
-  characterId: string,
-  klassId: string,
-  level: number,
-  pendingLevelKlassLevelIds?: string[],
-) {
-  return await powerSlots(session, characterId, klassId, level, { pendingLevelKlassLevelIds });
-}
-
-export async function getEditPowerSlots(
-  session: Session,
-  characterId: string,
-  klassId: string,
-  level: number,
-  characterLevelId: string,
-) {
-  return await powerSlots(session, characterId, klassId, level, { editedLevelId: characterLevelId });
-}
-
-export async function getAttributeSlots(
-  session: Session,
-  characterId: string,
-  excludeCharacterLevelId?: string,
-  pendingLevelCount?: number,
-) {
-  const characterRecord = await getEditableCharacter(db, session, characterId);
-
-  const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
-  const characterLevels = await CharacterLevels.findMany(db, { characterId });
-  const excludeIds = excludeCharacterLevelId ? getLevelIdsFromOnward(characterLevels, excludeCharacterLevelId) : [];
-  // totalLevel = number of levels before this one (so totalLevel+1 = the level being added/edited)
-  const totalLevel = characterLevels.length - excludeIds.length + (pendingLevelCount ?? 0);
-
-  if (!rulesetModule.hooks.levels.isAbilityIncreaseLevel(totalLevel)) {
-    return {
-      isAvailable: false,
-      attributes: {},
-    };
-  }
-
-  const projectedData: Dnd35ProjectedCharacterData | undefined =
-    excludeIds.length > 0 ? { excludeCharacterLevelIds: excludeIds } : undefined;
-
-  const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await detailedCharacter.build(undefined, projectedData);
-  const abilities = detailedCharacter.getDetailedCharacterAbilities();
-
-  return {
-    isAvailable: true,
-    attributes: abilities.getAbilitiesWithIds(),
-  };
 }

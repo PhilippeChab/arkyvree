@@ -25,12 +25,12 @@ export function allLevelSaves(rulesetSaves: Pick<RulesetSave, "id">[] | undefine
   return rulesetSaves.map((save) => ({ saveId: save.id, base: saves.find((s) => s.saveId === save.id)?.base ?? 0 }));
 }
 
-/** A granted feat's label, the order a level's feats are kept in. */
-export function levelFeatLabel(featName: string, aptitudeName: string | null | undefined) {
-  return `${featName} (${aptitudeName || "Unknown"})`;
-}
-
 /** Identifies a granted feat: the same feat can be granted for several aptitudes. */
 export function featKey(feat: LevelFeat) {
   return `${feat.featId}-${feat.aptitudeId}`;
+}
+
+/** A granted feat's label, the order a level's feats are kept in. */
+export function levelFeatLabel(featName: string, aptitudeName: string | null | undefined) {
+  return `${featName} (${aptitudeName || "Unknown"})`;
 }

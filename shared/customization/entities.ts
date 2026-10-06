@@ -24,14 +24,14 @@ export const CUSTOMIZATION_PAGE_TYPES = CUSTOMIZATION_OWNER_TYPES.filter(
 /** What property types are defined for: a customizable entity, a ruleset or a skill. */
 export const PROPERTY_ENTITY_TYPES = [...CUSTOMIZABLE_ENTITY_TYPES, "rulesets", "skills"] as const;
 
-/** Whether entities of this type are customizable: they own modifiers (sourced by their own type), not only rows. */
-export function isCustomizableEntityType(entityType: string): entityType is CustomizableEntityType {
-  return customizableEntityTypes.has(entityType);
-}
-
 /** An entity's customization page under its ruleset: "class-levels/:id/customization", "feats/:id/customization". */
 export function buildCustomizationPath(entityType: CustomizationPageType, entityId: string): string {
   return `${getUrlSegment(entityType)}/${entityId}/customization`;
+}
+
+/** Whether entities of this type are customizable: they own modifiers (sourced by their own type), not only rows. */
+export function isCustomizableEntityType(entityType: string): entityType is CustomizableEntityType {
+  return customizableEntityTypes.has(entityType);
 }
 
 /** The entity type a customization page's URL segment names: "class-levels" a class level's, never "klass_levels". */

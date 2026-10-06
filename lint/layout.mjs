@@ -11,9 +11,7 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-import { repoPath } from "./paths.mjs";
-
-const TOOL_WRITTEN = /(^|\/)generated\/|^drizzle\/(schema|relations)\.ts$/;
+import { isToolWritten } from "./paths.mjs";
 
 const FUNCTION_VALUES = new Set(["ArrowFunctionExpression", "FunctionExpression", "ClassExpression"]);
 
@@ -31,23 +29,46 @@ const MESSAGE =
 
 const LOOPS = new Set(["ForStatement", "ForOfStatement", "ForInStatement", "WhileStatement"]);
 
-function rangeOf(node) {
-  return node.range ?? [node.start, node.end];
+/** The nodes around a node, the program first. */
+function ancestorsOf(node) {
+  const ancestors = [];
+  for (let n = node.parent; n; n = n.parent) ancestors.unshift(n);
+  return ancestors;
 }
 
-/** A top-level statement's declaration: an export's, or itself. */
-function declarationOf(statement) {
-  return statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
-    ? statement.declaration
-    : statement;
+/** Its own comment's start: the comment lines right above a statement's line. */
+function attachedStart(text, lineStart) {
+  let from = lineStart;
+  while (from > 0) {
+    const previous = text.lastIndexOf("\n", from - 2) + 1;
+    const line = text.slice(previous, from - 1);
+    if (line.trim() === "" || !/^\s*(\/\/|\/\*|\*)/.test(line)) break;
+    from = previous;
+  }
+  return from;
 }
 
-function holdsFunction(node) {
-  return (
-    node?.type === "FunctionDeclaration" ||
-    node?.type === "TSDeclareFunction" ||
-    (node?.type === "VariableDeclaration" && node.declarations.some((d) => FUNCTION_VALUES.has(d.init?.type)))
+/** Whether a statement awaits at the top level: a step of a script's run (`const rows = await query(…)`). */
+function awaits(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(awaits);
+  if (node.type === "AwaitExpression") return true;
+  if (FUNCTION_VALUES.has(node.type) || node.type === "FunctionDeclaration") return false;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && awaits(child),
   );
+}
+
+/** The names a pattern binds: `a`, `{ a, b: c }`, `[a, ...b]`. */
+function boundNames(pattern, into = []) {
+  if (!pattern) return into;
+  if (pattern.type === "Identifier") into.push(pattern.name);
+  else if (pattern.type === "ObjectPattern")
+    for (const p of pattern.properties) boundNames(p.value ?? p.argument, into);
+  else if (pattern.type === "ArrayPattern") for (const e of pattern.elements) boundNames(e, into);
+  else if (pattern.type === "RestElement") boundNames(pattern.argument, into);
+  else if (pattern.type === "AssignmentPattern") boundNames(pattern.left, into);
+  return into;
 }
 
 /** The function a call starts from: `describe` in `describe.each(cases)(…)`. */
@@ -69,6 +90,85 @@ function hasSuiteCall(node) {
   );
 }
 
+/** Whether a statement sits right in a `describe`'s callback: not in a test's, nor any deeper. */
+function isInDescribe(statement) {
+  const block = statement.parent;
+  const callback = block?.type === "BlockStatement" ? block.parent : undefined;
+  const call = callback?.parent;
+  return (
+    (callback?.type === "ArrowFunctionExpression" || callback?.type === "FunctionExpression") &&
+    call?.type === "CallExpression" &&
+    calleeOf(call) === "describe"
+  );
+}
+
+/** A top-level statement's declaration: an export's, or itself. */
+function declarationOf(statement) {
+  return statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
+    ? statement.declaration
+    : statement;
+}
+
+/** The names a top-level statement declares. */
+function declaredNames(statement) {
+  const declaration = declarationOf(statement);
+  if (!declaration) return [];
+  if (declaration.type === "VariableDeclaration") return declaration.declarations.flatMap((d) => boundNames(d.id));
+  return declaration.id?.name ? [declaration.id.name] : [];
+}
+
+/** The names the functions and blocks around a nested statement declare: what a helper lifted out would lose. */
+function enclosingNames(ancestors, statement) {
+  const names = new Set();
+  for (const node of ancestors) {
+    for (const param of node.params ?? []) for (const n of boundNames(param)) names.add(n);
+  }
+  for (const block of ancestors.filter((a) => a.type === "BlockStatement")) {
+    for (const s of block.body ?? []) {
+      if (s === statement) continue;
+      if (s.type === "VariableDeclaration")
+        for (const d of s.declarations) for (const n of boundNames(d.id)) names.add(n);
+      if (s.type === "FunctionDeclaration" && s.id) names.add(s.id.name);
+    }
+  }
+  return names;
+}
+
+function holdsFunction(node) {
+  return (
+    node?.type === "FunctionDeclaration" ||
+    node?.type === "TSDeclareFunction" ||
+    (node?.type === "VariableDeclaration" && node.declarations.some((d) => FUNCTION_VALUES.has(d.init?.type)))
+  );
+}
+
+/** The names of every helper a file declares in its `describe` blocks, a name twice when two blocks share it. */
+function describeHelperNames(program) {
+  const names = [];
+  const visit = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const child of node) visit(child);
+      return;
+    }
+    if (
+      (node.type === "FunctionDeclaration" || node.type === "VariableDeclaration") &&
+      holdsFunction(node) &&
+      isInDescribe(node)
+    ) {
+      names.push(...declaredNames(node));
+    }
+    for (const [key, child] of Object.entries(node))
+      if (key !== "parent" && child && typeof child === "object") visit(child);
+  };
+  visit(program.body);
+  return names;
+}
+
+function holdsOrClass(item) {
+  return holdsFunction(declarationOf(item.statement)) || declarationOf(item.statement)?.type === "ClassDeclaration";
+}
+
 /** What a top-level statement is: an import, a type, a constant, a helper, the file's purpose, or a side effect. */
 function kindOf(statement) {
   if (statement.type === "ImportDeclaration" || statement.type === "TSImportEqualsDeclaration") return "import";
@@ -87,24 +187,16 @@ function kindOf(statement) {
   return "effect";
 }
 
-/** The names a pattern binds: `a`, `{ a, b: c }`, `[a, ...b]`. */
-function boundNames(pattern, into = []) {
-  if (!pattern) return into;
-  if (pattern.type === "Identifier") into.push(pattern.name);
-  else if (pattern.type === "ObjectPattern")
-    for (const p of pattern.properties) boundNames(p.value ?? p.argument, into);
-  else if (pattern.type === "ArrayPattern") for (const e of pattern.elements) boundNames(e, into);
-  else if (pattern.type === "RestElement") boundNames(pattern.argument, into);
-  else if (pattern.type === "AssignmentPattern") boundNames(pattern.left, into);
-  return into;
+function rangeOf(node) {
+  return node.range ?? [node.start, node.end];
 }
 
-/** The names a top-level statement declares. */
-function declaredNames(statement) {
-  const declaration = declarationOf(statement);
-  if (!declaration) return [];
-  if (declaration.type === "VariableDeclaration") return declaration.declarations.flatMap((d) => boundNames(d.id));
-  return declaration.id?.name ? [declaration.id.name] : [];
+/** The end of a statement, with the comment ending its line (` // note`). */
+function endOf(text, statement) {
+  const [, end] = rangeOf(statement);
+  const lineEnd = text.indexOf("\n", end);
+  const rest = text.slice(end, lineEnd === -1 ? text.length : lineEnd);
+  return /^\s*(\/\/.*|\/\*.*\*\/\s*)$/.test(rest) ? end + rest.trimEnd().length : end;
 }
 
 /** The names a node reads as values: not a member's or a key's name, nor anything in a type. */
@@ -124,69 +216,6 @@ function readNames(node, into = new Set(), types = false) {
     if (child && typeof child === "object") readNames(child, into, types);
   }
   return into;
-}
-
-/** The end of a statement, with the comment ending its line (` // note`). */
-function endOf(text, statement) {
-  const [, end] = rangeOf(statement);
-  const lineEnd = text.indexOf("\n", end);
-  const rest = text.slice(end, lineEnd === -1 ? text.length : lineEnd);
-  return /^\s*(\/\/.*|\/\*.*\*\/\s*)$/.test(rest) ? end + rest.trimEnd().length : end;
-}
-
-function holdsOrClass(item) {
-  return holdsFunction(declarationOf(item.statement)) || declarationOf(item.statement)?.type === "ClassDeclaration";
-}
-
-/** Whether a statement awaits at the top level: a step of a script's run (`const rows = await query(…)`). */
-function awaits(node) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some(awaits);
-  if (node.type === "AwaitExpression") return true;
-  if (FUNCTION_VALUES.has(node.type) || node.type === "FunctionDeclaration") return false;
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && awaits(child),
-  );
-}
-
-/**
- * Each statement's group, which its dependencies can move: an export a helper calls is a helper, and a statement sits
- * in no earlier group than a value it reads (a constant one of the file's functions builds sits with them).
- */
-function rankStatements(statements) {
-  // After a side effect, a declaration is a step of the run (a script's connection, a table a loop fills): it keeps
-  // its place among the effects
-  let afterEffect = false;
-  const items = statements.map((statement, index) => {
-    let kind = kindOf(statement);
-    if (kind === "constant" && (afterEffect || awaits(statement))) kind = "effect";
-    if (kind === "effect") afterEffect = true;
-    return { statement, index, kind, rank: RANK[kind] ?? RANK.main, names: declaredNames(statement) };
-  });
-  const declaredBy = new Map(items.flatMap((item) => item.names.map((name) => [name, item])));
-  for (const item of items) {
-    item.reads = item.kind === "type" ? [] : [...readNames(item.statement)].map((n) => declaredBy.get(n));
-    item.reads = item.reads.filter((dep) => dep && dep !== item && dep.kind !== "type");
-  }
-  const lifted = new Set();
-  for (let changed = true; changed;) {
-    changed = false;
-    for (const item of items) {
-      for (const dep of item.reads) {
-        // A helper's building block is a helper too, once: what it reads may still rank it later
-        if (item.rank === RANK.helper && dep.rank === RANK.main && holdsOrClass(dep) && !lifted.has(dep)) {
-          lifted.add(dep);
-          dep.rank = RANK.helper;
-          changed = true;
-        }
-        if (dep.rank > item.rank) {
-          item.rank = dep.rank;
-          changed = true;
-        }
-      }
-    }
-  }
-  return items;
 }
 
 /** The file's statements reordered by group, each with its comments, or none when a reader must place them. */
@@ -216,54 +245,6 @@ function reorder(text, statements, items) {
   };
 }
 
-/** The names the functions and blocks around a nested statement declare: what a helper lifted out would lose. */
-function enclosingNames(ancestors, statement) {
-  const names = new Set();
-  for (const node of ancestors) {
-    for (const param of node.params ?? []) for (const n of boundNames(param)) names.add(n);
-  }
-  for (const block of ancestors.filter((a) => a.type === "BlockStatement")) {
-    for (const s of block.body ?? []) {
-      if (s === statement) continue;
-      if (s.type === "VariableDeclaration")
-        for (const d of s.declarations) for (const n of boundNames(d.id)) names.add(n);
-      if (s.type === "FunctionDeclaration" && s.id) names.add(s.id.name);
-    }
-  }
-  return names;
-}
-
-/** The nodes around a node, the program first. */
-function ancestorsOf(node) {
-  const ancestors = [];
-  for (let n = node.parent; n; n = n.parent) ancestors.unshift(n);
-  return ancestors;
-}
-
-/** Its own comment's start: the comment lines right above a statement's line. */
-function attachedStart(text, lineStart) {
-  let from = lineStart;
-  while (from > 0) {
-    const previous = text.lastIndexOf("\n", from - 2) + 1;
-    const line = text.slice(previous, from - 1);
-    if (line.trim() === "" || !/^\s*(\/\/|\/\*|\*)/.test(line)) break;
-    from = previous;
-  }
-  return from;
-}
-
-/** Whether a statement sits right in a `describe`'s callback: not in a test's, nor any deeper. */
-function isInDescribe(statement) {
-  const block = statement.parent;
-  const callback = block?.type === "BlockStatement" ? block.parent : undefined;
-  const call = callback?.parent;
-  return (
-    (callback?.type === "ArrowFunctionExpression" || callback?.type === "FunctionExpression") &&
-    call?.type === "CallExpression" &&
-    calleeOf(call) === "describe"
-  );
-}
-
 /** The names a file declares at its top, its imports' included. */
 function topLevelNames(program) {
   const names = new Set();
@@ -271,29 +252,6 @@ function topLevelNames(program) {
     if (statement.type === "ImportDeclaration") for (const spec of statement.specifiers) names.add(spec.local.name);
     else for (const n of declaredNames(statement)) names.add(n);
   }
-  return names;
-}
-
-/** The names of every helper a file declares in its `describe` blocks, a name twice when two blocks share it. */
-function describeHelperNames(program) {
-  const names = [];
-  const visit = (node) => {
-    if (!node || typeof node !== "object") return;
-    if (Array.isArray(node)) {
-      for (const child of node) visit(child);
-      return;
-    }
-    if (
-      (node.type === "FunctionDeclaration" || node.type === "VariableDeclaration") &&
-      holdsFunction(node) &&
-      isInDescribe(node)
-    ) {
-      names.push(...declaredNames(node));
-    }
-    for (const [key, child] of Object.entries(node))
-      if (key !== "parent" && child && typeof child === "object") visit(child);
-  };
-  visit(program.body);
   return names;
 }
 
@@ -344,11 +302,51 @@ function checkNested(context, text, statement) {
   });
 }
 
+/**
+ * Each statement's group, which its dependencies can move: an export a helper calls is a helper, and a statement sits
+ * in no earlier group than a value it reads (a constant one of the file's functions builds sits with them).
+ */
+export function rankStatements(statements) {
+  // After a side effect, a declaration is a step of the run (a script's connection, a table a loop fills): it keeps
+  // its place among the effects
+  let afterEffect = false;
+  const items = statements.map((statement, index) => {
+    let kind = kindOf(statement);
+    if (kind === "constant" && (afterEffect || awaits(statement))) kind = "effect";
+    if (kind === "effect") afterEffect = true;
+    return { statement, index, kind, rank: RANK[kind] ?? RANK.main, names: declaredNames(statement) };
+  });
+  const declaredBy = new Map(items.flatMap((item) => item.names.map((name) => [name, item])));
+  for (const item of items) {
+    item.reads = item.kind === "type" ? [] : [...readNames(item.statement)].map((n) => declaredBy.get(n));
+    item.reads = item.reads.filter((dep) => dep && dep !== item && dep.kind !== "type");
+  }
+  const lifted = new Set();
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const item of items) {
+      for (const dep of item.reads) {
+        // A helper's building block is a helper too, once: what it reads may still rank it later
+        if (item.rank === RANK.helper && dep.rank === RANK.main && holdsOrClass(dep) && !lifted.has(dep)) {
+          lifted.add(dep);
+          dep.rank = RANK.helper;
+          changed = true;
+        }
+        if (dep.rank > item.rank) {
+          item.rank = dep.rank;
+          changed = true;
+        }
+      }
+    }
+  }
+  return items;
+}
+
 const fileLayout = {
   meta: { type: "suggestion", fixable: "code" },
   create(context) {
     // What a tool writes keeps the tool's layout: the parser's output, drizzle's schema and relations
-    if (TOOL_WRITTEN.test(repoPath(context.filename))) return {};
+    if (isToolWritten(context.filename)) return {};
     const text = context.sourceCode.text;
     return {
       Program(node) {

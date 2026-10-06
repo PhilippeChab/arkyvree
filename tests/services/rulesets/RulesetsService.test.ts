@@ -56,13 +56,6 @@ import { createTestUser } from "@/tests/support/users.ts";
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
 const firstPage = { limit: 100, page: 1 };
 
-/** A published ruleset of `userId` (a system one when null), with a template item so forking it doesn't seed the engine's. */
-async function createParent(userId: string | null = null, values: RulesetValues = {}) {
-  const ruleset = await createTestRuleset(userId, { private: false, status: "Published", ...values });
-  await Items.create(db, { name: "Template", rulesetId: ruleset.id, isTemplate: true });
-  return ruleset;
-}
-
 /** A fork of `parent` for `session`'s user. */
 function fork(
   session: Session,
@@ -82,6 +75,28 @@ async function addPlayableContent(rulesetId: string) {
     Feats.create(db, { name: "Toughness", rulesetId }),
   ]);
   return { race, klass, skill, feat };
+}
+
+/** A published ruleset of `userId` (a system one when null), with a template item so forking it doesn't seed the engine's. */
+async function createParent(userId: string | null = null, values: RulesetValues = {}) {
+  const ruleset = await createTestRuleset(userId, { private: false, status: "Published", ...values });
+  await Items.create(db, { name: "Template", rulesetId: ruleset.id, isTemplate: true });
+  return ruleset;
+}
+
+/** A fork of another user's ruleset with three feats, and an aptitude that links one of them. */
+async function setupChanges(values: { private?: boolean } = {}) {
+  const { user: owner } = await createTestUser();
+  const { user, session } = await createTestUser();
+  const parent = await createParent(owner.id);
+  const [aptitude] = await Aptitudes.create(db, { name: "General", rulesetId: parent.id });
+  const [modified, deleted, untouched] = await insertRows(
+    featsInRules,
+    ["Power Attack", "Cleave", "Dodge"].map((name) => ({ name, rulesetId: parent.id })),
+  );
+  await FeatsAptitudes.create(db, { featId: modified.id, aptitudeId: aptitude.id });
+  const forked = await fork(session, parent, values);
+  return { user, session, owner, parent, fork: forked, aptitude, modified, deleted, untouched };
 }
 
 /** The user's view of a dozen rulesets: owned, others', system, contributed to and reached through a campaign. */
@@ -111,21 +126,6 @@ async function setupListing() {
   await Players.create(db, { userId: user.id, campaignId: campaign.id, role: "Player Character" });
   await insertRows(starredRulesetsInAccount, [{ userId: user.id, rulesetId: rulesets.othersExtension.id }]);
   return { session, rulesets };
-}
-
-/** A fork of another user's ruleset with three feats, and an aptitude that links one of them. */
-async function setupChanges(values: { private?: boolean } = {}) {
-  const { user: owner } = await createTestUser();
-  const { user, session } = await createTestUser();
-  const parent = await createParent(owner.id);
-  const [aptitude] = await Aptitudes.create(db, { name: "General", rulesetId: parent.id });
-  const [modified, deleted, untouched] = await insertRows(
-    featsInRules,
-    ["Power Attack", "Cleave", "Dodge"].map((name) => ({ name, rulesetId: parent.id })),
-  );
-  await FeatsAptitudes.create(db, { featId: modified.id, aptitudeId: aptitude.id });
-  const forked = await fork(session, parent, values);
-  return { user, session, owner, parent, fork: forked, aptitude, modified, deleted, untouched };
 }
 
 describe("RulesetsService", () => {

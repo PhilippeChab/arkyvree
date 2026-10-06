@@ -21,6 +21,56 @@ interface AuthPageProps {
 
 // ── Branding panels (rendered once by the layout route) ──
 
+function AuthFooterLinks() {
+  const { start, isPending } = useStartDemo();
+  // The demo is for newcomers, so only sign-up offers it.
+  const showDemo = useLocation().pathname === "/sign-up";
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        columnGap: { xs: 1, sm: 2 },
+        rowGap: 0.5,
+        mt: 2,
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        maxWidth: 450,
+      }}
+    >
+      {showDemo && (
+        <>
+          <MuiLink
+            component="button"
+            type="button"
+            onClick={() => start()}
+            disabled={isPending}
+            variant="body2"
+            underline="hover"
+            sx={{ color: "text.secondary", background: "none", border: 0, cursor: "pointer", p: 0 }}
+          >
+            {isPending ? "Starting…" : "Try the demo"}
+          </MuiLink>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            |
+          </Typography>
+        </>
+      )}
+      <MuiLink
+        href={externalLinks.source}
+        target="_blank"
+        rel="noopener noreferrer"
+        variant="body2"
+        underline="hover"
+        sx={{ color: "text.secondary", display: "inline-flex", alignItems: "center", minHeight: 44 }}
+      >
+        Source
+      </MuiLink>
+    </Box>
+  );
+}
+
 function DesktopBranding() {
   const theme = useTheme();
   const darkMode = theme.palette.mode === "dark";
@@ -198,56 +248,6 @@ function MobileBranding() {
           A programmable engine for tabletop rulesets
         </Typography>
       </Box>
-    </Box>
-  );
-}
-
-function AuthFooterLinks() {
-  const { start, isPending } = useStartDemo();
-  // The demo is for newcomers, so only sign-up offers it.
-  const showDemo = useLocation().pathname === "/sign-up";
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        flexWrap: "wrap",
-        columnGap: { xs: 1, sm: 2 },
-        rowGap: 0.5,
-        mt: 2,
-        alignItems: "center",
-        justifyContent: "center",
-        width: "100%",
-        maxWidth: 450,
-      }}
-    >
-      {showDemo && (
-        <>
-          <MuiLink
-            component="button"
-            type="button"
-            onClick={() => start()}
-            disabled={isPending}
-            variant="body2"
-            underline="hover"
-            sx={{ color: "text.secondary", background: "none", border: 0, cursor: "pointer", p: 0 }}
-          >
-            {isPending ? "Starting…" : "Try the demo"}
-          </MuiLink>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            |
-          </Typography>
-        </>
-      )}
-      <MuiLink
-        href={externalLinks.source}
-        target="_blank"
-        rel="noopener noreferrer"
-        variant="body2"
-        underline="hover"
-        sx={{ color: "text.secondary", display: "inline-flex", alignItems: "center", minHeight: 44 }}
-      >
-        Source
-      </MuiLink>
     </Box>
   );
 }

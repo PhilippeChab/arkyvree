@@ -9,31 +9,45 @@ import { mergeSiblingRequirements } from "./requirements.ts";
 type SiblingCustomizations = Awaited<ReturnType<typeof fetchSiblingCustomizations>>;
 
 /**
- * Merges sibling requirements as a proper recursive forest merge. Builds the target's forest, then for each sibling:
- * deduplicates standalone roots and appends intact trees at fresh top-level positions on the target. Top-level AND
- * across all rows combines them: `(target) AND (sibling_1) AND (sibling_2) AND ...`.
+ * Merges sibling aptitude links of a feat or a power. Sibling reads turn copy-on-write resolution off (loser ids would
+ * otherwise be canonicalized to the winner). Existing reads on targetEntityId go through the repo since the new id
+ * isn't in idResolveMap.
  */
-async function mergeRequirements(
-  tx: Db,
-  targetEntityId: string,
-  entityType: EntityType,
-  siblingCusts: SiblingCustomizations,
-  customizationIds?: Map<string, string>,
-) {
-  const targetReqs = await Requirements.findMany(tx, { entityIds: [targetEntityId], entityType });
-  const newReqs = mergeSiblingRequirements(
-    targetReqs,
-    [...siblingCusts.values()].map((cust) => cust.requirements),
-    targetEntityId,
-    entityType,
-  );
-  if (newReqs.length > 0) {
-    const copies = await Requirements.createMany(
-      tx,
-      newReqs.map((row) => ({ ...row, id: undefined })),
-    );
-    for (let i = 0; i < newReqs.length; i++) {
-      customizationIds?.set(newReqs[i].id, copies[i].id);
+async function mergeAptitudeLinks(tx: Db, targetEntityId: string, entityType: EntityType, siblingIds: string[]) {
+  if (entityType === "feats") {
+    const existingAptitudes = await FeatsAptitudes.findMany(tx, { featId: targetEntityId });
+    const existingAptIds = new Set(existingAptitudes.map((a) => a.aptitudeId));
+    const newAptitudeLinks: Array<{ featId: string; aptitudeId: string }> = [];
+    for (const siblingId of siblingIds) {
+      const sibAptitudes = await withCowContext(undefined, () => FeatsAptitudes.findMany(tx, { featId: siblingId }));
+      for (const sa of sibAptitudes) {
+        if (!existingAptIds.has(sa.aptitudeId)) {
+          existingAptIds.add(sa.aptitudeId);
+          newAptitudeLinks.push({ featId: targetEntityId, aptitudeId: sa.aptitudeId });
+        }
+      }
+    }
+
+    if (newAptitudeLinks.length > 0) {
+      await FeatsAptitudes.createMany(tx, newAptitudeLinks);
+    }
+  } else if (entityType === "powers") {
+    const existingAptitudes = await PowersAptitudes.findMany(tx, { powerId: targetEntityId });
+    const existingAptIds = new Set(existingAptitudes.map((a) => a.aptitudeId));
+
+    const newAptitudeLinks: Array<{ powerId: string; aptitudeId: string; level: number | null }> = [];
+    for (const siblingId of siblingIds) {
+      const sibAptitudes = await withCowContext(undefined, () => PowersAptitudes.findMany(tx, { powerId: siblingId }));
+      for (const sa of sibAptitudes) {
+        if (!existingAptIds.has(sa.aptitudeId)) {
+          existingAptIds.add(sa.aptitudeId);
+          newAptitudeLinks.push({ powerId: targetEntityId, aptitudeId: sa.aptitudeId, level: sa.level });
+        }
+      }
+    }
+
+    if (newAptitudeLinks.length > 0) {
+      await PowersAptitudes.createMany(tx, newAptitudeLinks);
     }
   }
 }
@@ -121,45 +135,31 @@ async function mergeProperties(
 }
 
 /**
- * Merges sibling aptitude links of a feat or a power. Sibling reads turn copy-on-write resolution off (loser ids would
- * otherwise be canonicalized to the winner). Existing reads on targetEntityId go through the repo since the new id
- * isn't in idResolveMap.
+ * Merges sibling requirements as a proper recursive forest merge. Builds the target's forest, then for each sibling:
+ * deduplicates standalone roots and appends intact trees at fresh top-level positions on the target. Top-level AND
+ * across all rows combines them: `(target) AND (sibling_1) AND (sibling_2) AND ...`.
  */
-async function mergeAptitudeLinks(tx: Db, targetEntityId: string, entityType: EntityType, siblingIds: string[]) {
-  if (entityType === "feats") {
-    const existingAptitudes = await FeatsAptitudes.findMany(tx, { featId: targetEntityId });
-    const existingAptIds = new Set(existingAptitudes.map((a) => a.aptitudeId));
-    const newAptitudeLinks: Array<{ featId: string; aptitudeId: string }> = [];
-    for (const siblingId of siblingIds) {
-      const sibAptitudes = await withCowContext(undefined, () => FeatsAptitudes.findMany(tx, { featId: siblingId }));
-      for (const sa of sibAptitudes) {
-        if (!existingAptIds.has(sa.aptitudeId)) {
-          existingAptIds.add(sa.aptitudeId);
-          newAptitudeLinks.push({ featId: targetEntityId, aptitudeId: sa.aptitudeId });
-        }
-      }
-    }
-
-    if (newAptitudeLinks.length > 0) {
-      await FeatsAptitudes.createMany(tx, newAptitudeLinks);
-    }
-  } else if (entityType === "powers") {
-    const existingAptitudes = await PowersAptitudes.findMany(tx, { powerId: targetEntityId });
-    const existingAptIds = new Set(existingAptitudes.map((a) => a.aptitudeId));
-
-    const newAptitudeLinks: Array<{ powerId: string; aptitudeId: string; level: number | null }> = [];
-    for (const siblingId of siblingIds) {
-      const sibAptitudes = await withCowContext(undefined, () => PowersAptitudes.findMany(tx, { powerId: siblingId }));
-      for (const sa of sibAptitudes) {
-        if (!existingAptIds.has(sa.aptitudeId)) {
-          existingAptIds.add(sa.aptitudeId);
-          newAptitudeLinks.push({ powerId: targetEntityId, aptitudeId: sa.aptitudeId, level: sa.level });
-        }
-      }
-    }
-
-    if (newAptitudeLinks.length > 0) {
-      await PowersAptitudes.createMany(tx, newAptitudeLinks);
+async function mergeRequirements(
+  tx: Db,
+  targetEntityId: string,
+  entityType: EntityType,
+  siblingCusts: SiblingCustomizations,
+  customizationIds?: Map<string, string>,
+) {
+  const targetReqs = await Requirements.findMany(tx, { entityIds: [targetEntityId], entityType });
+  const newReqs = mergeSiblingRequirements(
+    targetReqs,
+    [...siblingCusts.values()].map((cust) => cust.requirements),
+    targetEntityId,
+    entityType,
+  );
+  if (newReqs.length > 0) {
+    const copies = await Requirements.createMany(
+      tx,
+      newReqs.map((row) => ({ ...row, id: undefined })),
+    );
+    for (let i = 0; i < newReqs.length; i++) {
+      customizationIds?.set(newReqs[i].id, copies[i].id);
     }
   }
 }

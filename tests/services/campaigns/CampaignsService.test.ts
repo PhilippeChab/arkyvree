@@ -12,16 +12,16 @@ import { createTestUser } from "@/tests/support/users.ts";
 
 const firstPage = { limit: 10, page: 1 };
 
-async function createCampaign(session: Session, name = "Test Campaign", description = "Test description") {
-  const { rulesetId } = await getSeedCtx();
-  return (await CampaignsService.createCampaign(session, { name, description, rulesetId })).campaign;
-}
-
 /** A new user playing a character in the campaign. */
 async function addPlayer(campaignId: string) {
   const { user, session } = await createTestUser("player");
   await Players.create(db, { userId: user.id, campaignId, role: "Player Character" });
   return session;
+}
+
+async function createCampaign(session: Session, name = "Test Campaign", description = "Test description") {
+  const { rulesetId } = await getSeedCtx();
+  return (await CampaignsService.createCampaign(session, { name, description, rulesetId })).campaign;
 }
 
 /** A Game Master's campaign, a player in it and a stranger to it. */

@@ -20,11 +20,6 @@ const WRITES = new Set(methodVerbs.write);
 const stateIds = new WeakMap<IdResolveMap, string>();
 let lastStateId = 0;
 
-/** A method's verb, its first camelCase word: what `methodVerbs.json` classifies it by (lint holds every public one). */
-function verbOf(method: string) {
-  return /^[a-z]+/.exec(method)?.[0] ?? "";
-}
-
 function getStateId(map: IdResolveMap): string {
   let id = stateIds.get(map);
   if (!id) {
@@ -62,6 +57,11 @@ function readThrough(repository: string, method: string, mapsIds: boolean, call:
   if (args[0] !== globalDb) return query();
   const key = getReadKey(repository, method, effectiveArgs);
   return key === undefined ? query() : memoizeRequest(key, query);
+}
+
+/** A method's verb, its first camelCase word: what `methodVerbs.json` classifies it by (lint holds every public one). */
+function verbOf(method: string) {
+  return /^[a-z]+/.exec(method)?.[0] ?? "";
 }
 
 /** A write through the request cache, which it clears: before, so reads in flight finish on what was, and after. */

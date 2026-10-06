@@ -24,23 +24,11 @@ export function apiAs(sessionId: string) {
 /** Signed in as the seeded user, who owns most seeded content. */
 export const api = apiAs(SEED_SESSION_ID);
 
-/** A client signed in as `userId`, through a stored session. */
-export async function signedInApi(userId: string = SEED_USER_ID) {
-  const [session] = await Sessions.create(db, { userId });
-  return apiAs(session.id);
-}
-
 /** The session id a response's `Set-Cookie` signs in with. */
 export function sessionIdFrom(response: { headers: Headers }) {
   const sessionId = response.headers.get("set-cookie")?.match(new RegExp(`${SESSION_COOKIE_NAME}=([^;]+)`))?.[1];
   if (!sessionId) throw new Error("No session cookie in the response");
   return sessionId;
-}
-
-/** A new user and a client signed in as them. */
-export async function createSignedInUser(prefix?: string) {
-  const { user, session } = await createTestUser(prefix);
-  return { user, session, api: await signedInApi(user.id) };
 }
 
 /**
@@ -69,4 +57,16 @@ export async function expectStatus<T extends { status: number; clone(): { text()
     throw new Error(`Expected status ${status}, got ${awaited.status}: ${await awaited.clone().text()}`);
   }
   return awaited;
+}
+
+/** A client signed in as `userId`, through a stored session. */
+export async function signedInApi(userId: string = SEED_USER_ID) {
+  const [session] = await Sessions.create(db, { userId });
+  return apiAs(session.id);
+}
+
+/** A new user and a client signed in as them. */
+export async function createSignedInUser(prefix?: string) {
+  const { user, session } = await createTestUser(prefix);
+  return { user, session, api: await signedInApi(user.id) };
 }

@@ -59,18 +59,16 @@ function sectionKey(rulesetId: string, section: RulesetSection, filters: ListFil
   return [...queryKeys.rulesets.section(rulesetId, section), filters.search, filters.childOnly] as const;
 }
 
-export function languagesQuery(rulesetId: string, filters: ListFilters) {
-  return infiniteQueryOptions({
-    queryKey: sectionKey(rulesetId, "languages", filters),
-    queryFn: ({ pageParam }) =>
+export function abilitiesQuery(rulesetId: string, childOnly: boolean) {
+  return queryOptions({
+    queryKey: [...queryKeys.rulesets.section(rulesetId, "abilities"), childOnly],
+    queryFn: () =>
       parseResponse(
-        rpc.api.rulesets[":id"].languages.$get({
+        rpc.api.rulesets[":id"].abilities.$get({
           param: { id: rulesetId },
-          query: listQuery(pageParam, filters),
+          query: { page: "1", limit: "10", childOnly: childOnly ? "true" : undefined },
         }),
       ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
   });
 }
 
@@ -89,6 +87,92 @@ export function aptitudesQuery(rulesetId: string, filters: ListFilters) {
   });
 }
 
+export function classesQuery(rulesetId: string, filters: EntityFilters) {
+  return infiniteQueryOptions({
+    queryKey: [...sectionKey(rulesetId, "classes", filters), filters.kind, filters.orderBy, filters.orderDir],
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].classes.$get({
+          param: { id: rulesetId },
+          query: {
+            ...listQuery(pageParam, filters),
+            kind: filters.kind,
+            orderBy: filters.orderBy,
+            orderDir: filters.orderDir,
+          },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
+/** Feats with variant families collapsed into one row each — the Feats tab's default view. */
+export function featsGroupedQuery(rulesetId: string, filters: AptitudeFilters) {
+  return infiniteQueryOptions({
+    queryKey: [
+      ...queryKeys.rulesets.sectionGrouped(rulesetId, "feats"),
+      filters.search,
+      filters.childOnly,
+      filters.aptitudeId,
+    ],
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].feats.grouped.$get({
+          param: { id: rulesetId },
+          query: { ...listQuery(pageParam, filters), aptitudeId: filters.aptitudeId },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
+export function featsQuery(rulesetId: string, filters: AptitudeFilters) {
+  return infiniteQueryOptions({
+    queryKey: [...sectionKey(rulesetId, "feats", filters), filters.aptitudeId],
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].feats.$get({
+          param: { id: rulesetId },
+          query: { ...listQuery(pageParam, filters), aptitudeId: filters.aptitudeId },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
+export function itemsQuery(rulesetId: string, filters: ListFilters) {
+  return infiniteQueryOptions({
+    queryKey: sectionKey(rulesetId, "items", filters),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].items.$get({
+          param: { id: rulesetId },
+          query: listQuery(pageParam, filters),
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
+export function languagesQuery(rulesetId: string, filters: ListFilters) {
+  return infiniteQueryOptions({
+    queryKey: sectionKey(rulesetId, "languages", filters),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].languages.$get({
+          param: { id: rulesetId },
+          query: listQuery(pageParam, filters),
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
 export function mechanicsQuery(rulesetId: string, filters: ListFilters) {
   return infiniteQueryOptions({
     queryKey: sectionKey(rulesetId, "mechanics", filters),
@@ -97,6 +181,45 @@ export function mechanicsQuery(rulesetId: string, filters: ListFilters) {
         rpc.api.rulesets[":id"].mechanics.$get({
           param: { id: rulesetId },
           query: listQuery(pageParam, filters),
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
+export function powersQuery(rulesetId: string, filters: PowerFilters) {
+  return infiniteQueryOptions({
+    queryKey: [...sectionKey(rulesetId, "powers", filters), filters.aptitudeId, filters.level],
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].powers.$get({
+          param: { id: rulesetId },
+          query: {
+            ...listQuery(pageParam, filters),
+            aptitudeId: filters.aptitudeId,
+            level: filters.level?.toString(),
+          },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
+export function racesQuery(rulesetId: string, filters: EntityFilters) {
+  return infiniteQueryOptions({
+    queryKey: [...sectionKey(rulesetId, "races", filters), filters.kind, filters.orderBy, filters.orderDir],
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].races.$get({
+          param: { id: rulesetId },
+          query: {
+            ...listQuery(pageParam, filters),
+            kind: filters.kind,
+            orderBy: filters.orderBy,
+            orderDir: filters.orderDir,
+          },
         }),
       ),
     initialPageParam: 1,
@@ -131,129 +254,6 @@ export function skillsQuery(rulesetId: string, filters: ListFilters) {
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
-  });
-}
-
-export function itemsQuery(rulesetId: string, filters: ListFilters) {
-  return infiniteQueryOptions({
-    queryKey: sectionKey(rulesetId, "items", filters),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].items.$get({
-          param: { id: rulesetId },
-          query: listQuery(pageParam, filters),
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-export function racesQuery(rulesetId: string, filters: EntityFilters) {
-  return infiniteQueryOptions({
-    queryKey: [...sectionKey(rulesetId, "races", filters), filters.kind, filters.orderBy, filters.orderDir],
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].races.$get({
-          param: { id: rulesetId },
-          query: {
-            ...listQuery(pageParam, filters),
-            kind: filters.kind,
-            orderBy: filters.orderBy,
-            orderDir: filters.orderDir,
-          },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-export function classesQuery(rulesetId: string, filters: EntityFilters) {
-  return infiniteQueryOptions({
-    queryKey: [...sectionKey(rulesetId, "classes", filters), filters.kind, filters.orderBy, filters.orderDir],
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].classes.$get({
-          param: { id: rulesetId },
-          query: {
-            ...listQuery(pageParam, filters),
-            kind: filters.kind,
-            orderBy: filters.orderBy,
-            orderDir: filters.orderDir,
-          },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-export function powersQuery(rulesetId: string, filters: PowerFilters) {
-  return infiniteQueryOptions({
-    queryKey: [...sectionKey(rulesetId, "powers", filters), filters.aptitudeId, filters.level],
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].powers.$get({
-          param: { id: rulesetId },
-          query: {
-            ...listQuery(pageParam, filters),
-            aptitudeId: filters.aptitudeId,
-            level: filters.level?.toString(),
-          },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-export function featsQuery(rulesetId: string, filters: AptitudeFilters) {
-  return infiniteQueryOptions({
-    queryKey: [...sectionKey(rulesetId, "feats", filters), filters.aptitudeId],
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].feats.$get({
-          param: { id: rulesetId },
-          query: { ...listQuery(pageParam, filters), aptitudeId: filters.aptitudeId },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-/** Feats with variant families collapsed into one row each — the Feats tab's default view. */
-export function featsGroupedQuery(rulesetId: string, filters: AptitudeFilters) {
-  return infiniteQueryOptions({
-    queryKey: [
-      ...queryKeys.rulesets.sectionGrouped(rulesetId, "feats"),
-      filters.search,
-      filters.childOnly,
-      filters.aptitudeId,
-    ],
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].feats.grouped.$get({
-          param: { id: rulesetId },
-          query: { ...listQuery(pageParam, filters), aptitudeId: filters.aptitudeId },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-export function abilitiesQuery(rulesetId: string, childOnly: boolean) {
-  return queryOptions({
-    queryKey: [...queryKeys.rulesets.section(rulesetId, "abilities"), childOnly],
-    queryFn: () =>
-      parseResponse(
-        rpc.api.rulesets[":id"].abilities.$get({
-          param: { id: rulesetId },
-          query: { page: "1", limit: "10", childOnly: childOnly ? "true" : undefined },
-        }),
-      ),
   });
 }
 

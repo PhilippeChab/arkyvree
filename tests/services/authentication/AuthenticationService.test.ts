@@ -37,6 +37,10 @@ const missingSession: Session = {
   expiresAt: "",
 };
 
+function ago(ms: number) {
+  return new Date(Date.now() - ms).toISOString();
+}
+
 function credentials() {
   const suffix = uniqueId();
   return {
@@ -45,19 +49,8 @@ function credentials() {
   };
 }
 
-async function codeFor(userId: string) {
-  return (await EmailVerifications.findOne(db, { userId }))!.code;
-}
-
-/** A new verified user, signed in. */
-async function signUpAndVerify(account = credentials()) {
-  const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
-  await Users.update(db, { emailVerifiedAt: new Date().toISOString() }, { id: user.id });
-  const signedIn = await AuthenticationService.signIn(account.emailAddress, account.password);
-  return { ...signedIn, account };
-}
-function ago(ms: number) {
-  return new Date(Date.now() - ms).toISOString();
+function googleAccount(email = `google-${uniqueId()}@example.com`) {
+  return { sub: `google-${uniqueId()}`, email };
 }
 
 /** A user without a password, as Google sign-up makes them. */
@@ -70,8 +63,16 @@ async function createPasswordlessUser() {
   return { user, session: makeSession(user.id) };
 }
 
-function googleAccount(email = `google-${uniqueId()}@example.com`) {
-  return { sub: `google-${uniqueId()}`, email };
+async function codeFor(userId: string) {
+  return (await EmailVerifications.findOne(db, { userId }))!.code;
+}
+
+/** A new verified user, signed in. */
+async function signUpAndVerify(account = credentials()) {
+  const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
+  await Users.update(db, { emailVerifiedAt: new Date().toISOString() }, { id: user.id });
+  const signedIn = await AuthenticationService.signIn(account.emailAddress, account.password);
+  return { ...signedIn, account };
 }
 
 describe("AuthenticationService", () => {

@@ -20,14 +20,8 @@ export const timingStorage = new AsyncLocalStorage<TimingStore>();
 
 let patched = false;
 
-function onQueryStart(): void {
-  const store = timingStorage.getStore();
-  if (!store) return;
-  store.queryCount += 1;
-  store.activeQueries += 1;
-  if (store.activeQueries === 1) {
-    store.dbWallStart = performance.now();
-  }
+function isThenable(value: unknown): value is Promise<unknown> {
+  return typeof value === "object" && value !== null && "then" in value && typeof value.then === "function";
 }
 
 function onQueryEnd(): void {
@@ -39,16 +33,14 @@ function onQueryEnd(): void {
   }
 }
 
-function trackSlowQuery(sql: string | undefined, queryStart: number): void {
-  const durationMs = performance.now() - queryStart;
-  if (durationMs < SLOW_QUERY_THRESHOLD_MS || !sql) return;
+function onQueryStart(): void {
   const store = timingStorage.getStore();
   if (!store) return;
-  store.slowQueries.push({ sql, durationMs });
-}
-
-function isThenable(value: unknown): value is Promise<unknown> {
-  return typeof value === "object" && value !== null && "then" in value && typeof value.then === "function";
+  store.queryCount += 1;
+  store.activeQueries += 1;
+  if (store.activeQueries === 1) {
+    store.dbWallStart = performance.now();
+  }
 }
 
 /** The SQL text of a `query` call's first argument: a string, or a config with `text`. */
@@ -56,6 +48,14 @@ function queryText(arg: unknown): string | undefined {
   if (typeof arg === "string") return arg;
   if (typeof arg === "object" && arg !== null && "text" in arg && typeof arg.text === "string") return arg.text;
   return undefined;
+}
+
+function trackSlowQuery(sql: string | undefined, queryStart: number): void {
+  const durationMs = performance.now() - queryStart;
+  if (durationMs < SLOW_QUERY_THRESHOLD_MS || !sql) return;
+  const store = timingStorage.getStore();
+  if (!store) return;
+  store.slowQueries.push({ sql, durationMs });
 }
 
 function wrapPrototypeQuery(proto: { query(...args: unknown[]): unknown }): void {
@@ -91,6 +91,22 @@ function wrapPrototypeQuery(proto: { query(...args: unknown[]): unknown }): void
   };
 }
 
+export function getTimingStore(): TimingStore | undefined {
+  return timingStorage.getStore();
+}
+
+export function instrumentQueries(): void {
+  if (patched) return;
+  patched = true;
+
+  // Pool.prototype.query — for regular (non-transaction) queries via drizzle
+  wrapPrototypeQuery(Pool.prototype);
+
+  // Client.prototype.query — for transaction queries where drizzle
+  // holds a direct client from pool.connect()
+  wrapPrototypeQuery(Client.prototype);
+}
+
 /** A request's counters, each at zero: what `timingStorage.run` counts into. */
 export function newTimingStore(): TimingStore {
   return {
@@ -104,10 +120,6 @@ export function newTimingStore(): TimingStore {
     dedupHits: 0,
     dedupMisses: 0,
   };
-}
-
-export function getTimingStore(): TimingStore | undefined {
-  return timingStorage.getStore();
 }
 
 export function onCacheHit(): void {
@@ -132,16 +144,4 @@ export function onDedupMiss(): void {
   const store = timingStorage.getStore();
   if (!store) return;
   store.dedupMisses += 1;
-}
-
-export function instrumentQueries(): void {
-  if (patched) return;
-  patched = true;
-
-  // Pool.prototype.query — for regular (non-transaction) queries via drizzle
-  wrapPrototypeQuery(Pool.prototype);
-
-  // Client.prototype.query — for transaction queries where drizzle
-  // holds a direct client from pool.connect()
-  wrapPrototypeQuery(Client.prototype);
 }

@@ -67,38 +67,6 @@ const OWNERS = {
 
 const strengthBonus = { target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" };
 
-/** The customizations whose owner is gone, or of a type no table above holds. */
-async function orphans() {
-  const owners = sql.join(
-    Object.entries(OWNERS).map(([type, table]) => sql`SELECT ${type}::text AS type, id FROM ${table}`),
-    sql` UNION ALL `,
-  );
-  const { rows } = await db.execute(sql`
-    WITH owners AS (${owners}),
-    customizations AS (
-      SELECT 'modifiers' AS kind, id, source_type AS type, source_id AS owner_id FROM ${modifiersInCustomization}
-      UNION ALL SELECT 'requirements', id, entity_type, entity_id FROM ${requirementsInCustomization}
-      UNION ALL SELECT 'properties', id, entity_type, entity_id FROM ${propertiesInCustomization}
-    )
-    SELECT kind, type, id FROM customizations c
-    WHERE NOT EXISTS (SELECT FROM owners o WHERE o.type = c.type AND o.id = c.owner_id)
-  `);
-  return rows;
-}
-
-/** Gives the row a modifier with a requirement of its own, a requirement and a property. */
-async function customize(type: OwnerType, id: string) {
-  const [modifier] = await Modifiers.create(db, { ...strengthBonus, sourceId: id, sourceType: type });
-  await Requirements.create(db, {
-    entityId: modifier.id,
-    entityType: "modifiers",
-    level: "1",
-    chainingOperator: "and",
-  });
-  await Requirements.create(db, { entityId: id, entityType: type, level: "1", chainingOperator: "and" });
-  await Properties.create(db, { entityId: id, entityType: type, type: "NOTE", value: "doomed" });
-}
-
 /** A new row of the type, in a ruleset of `userId`'s. */
 async function createOwner(type: OwnerType, userId: string, rulesetId: string): Promise<string> {
   const name = "Doomed";
@@ -134,6 +102,38 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
       return (await Skills.create(db, { name, rulesetId, primaryAbilityId: ability.id }))[0].id;
     }
   }
+}
+
+/** Gives the row a modifier with a requirement of its own, a requirement and a property. */
+async function customize(type: OwnerType, id: string) {
+  const [modifier] = await Modifiers.create(db, { ...strengthBonus, sourceId: id, sourceType: type });
+  await Requirements.create(db, {
+    entityId: modifier.id,
+    entityType: "modifiers",
+    level: "1",
+    chainingOperator: "and",
+  });
+  await Requirements.create(db, { entityId: id, entityType: type, level: "1", chainingOperator: "and" });
+  await Properties.create(db, { entityId: id, entityType: type, type: "NOTE", value: "doomed" });
+}
+
+/** The customizations whose owner is gone, or of a type no table above holds. */
+async function orphans() {
+  const owners = sql.join(
+    Object.entries(OWNERS).map(([type, table]) => sql`SELECT ${type}::text AS type, id FROM ${table}`),
+    sql` UNION ALL `,
+  );
+  const { rows } = await db.execute(sql`
+    WITH owners AS (${owners}),
+    customizations AS (
+      SELECT 'modifiers' AS kind, id, source_type AS type, source_id AS owner_id FROM ${modifiersInCustomization}
+      UNION ALL SELECT 'requirements', id, entity_type, entity_id FROM ${requirementsInCustomization}
+      UNION ALL SELECT 'properties', id, entity_type, entity_id FROM ${propertiesInCustomization}
+    )
+    SELECT kind, type, id FROM customizations c
+    WHERE NOT EXISTS (SELECT FROM owners o WHERE o.type = c.type AND o.id = c.owner_id)
+  `);
+  return rows;
 }
 
 describe("customization cleanup", () => {

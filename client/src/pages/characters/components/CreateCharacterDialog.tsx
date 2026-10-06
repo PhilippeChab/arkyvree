@@ -108,6 +108,48 @@ function AbilityCard({
   );
 }
 
+function PointBuyScores({
+  abilities,
+  abilityValues,
+  setValue,
+}: {
+  abilities: AbilityOption[];
+  abilityValues: Record<string, number> | undefined;
+  setValue: (key: `abilities.${string}`, value: number) => void;
+}) {
+  const pointsSpent = useMemo(() => {
+    if (!abilityValues) return 0;
+    return abilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[abilityValues[a.id] ?? 8] ?? 0), 0);
+  }, [abilities, abilityValues]);
+
+  const pointsRemaining = POINT_BUY_TOTAL - pointsSpent;
+
+  return (
+    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+      {abilities.map((ability) => {
+        const score = abilityValues?.[ability.id] ?? 8;
+        const costNow = POINT_BUY_COSTS[score] ?? 0;
+        const costNext = POINT_BUY_COSTS[score + 1];
+        const canIncrease = score < 18 && costNext !== undefined && costNext - costNow <= pointsRemaining;
+        const canDecrease = score > 8;
+
+        return (
+          <AbilityCard
+            key={ability.id}
+            name={ability.name}
+            score={score}
+            onIncrease={() => setValue(`abilities.${ability.id}`, score + 1)}
+            onDecrease={() => setValue(`abilities.${ability.id}`, score - 1)}
+            canIncrease={canIncrease}
+            canDecrease={canDecrease}
+            bottomInfo={`Cost: ${costNow}`}
+          />
+        );
+      })}
+    </Stack>
+  );
+}
+
 function StandardArrayScores({
   abilities,
   abilityValues,
@@ -146,48 +188,6 @@ function StandardArrayScores({
             canIncrease={canIncrease}
             canDecrease={canDecrease}
             bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(score))}`}
-          />
-        );
-      })}
-    </Stack>
-  );
-}
-
-function PointBuyScores({
-  abilities,
-  abilityValues,
-  setValue,
-}: {
-  abilities: AbilityOption[];
-  abilityValues: Record<string, number> | undefined;
-  setValue: (key: `abilities.${string}`, value: number) => void;
-}) {
-  const pointsSpent = useMemo(() => {
-    if (!abilityValues) return 0;
-    return abilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[abilityValues[a.id] ?? 8] ?? 0), 0);
-  }, [abilities, abilityValues]);
-
-  const pointsRemaining = POINT_BUY_TOTAL - pointsSpent;
-
-  return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
-      {abilities.map((ability) => {
-        const score = abilityValues?.[ability.id] ?? 8;
-        const costNow = POINT_BUY_COSTS[score] ?? 0;
-        const costNext = POINT_BUY_COSTS[score + 1];
-        const canIncrease = score < 18 && costNext !== undefined && costNext - costNow <= pointsRemaining;
-        const canDecrease = score > 8;
-
-        return (
-          <AbilityCard
-            key={ability.id}
-            name={ability.name}
-            score={score}
-            onIncrease={() => setValue(`abilities.${ability.id}`, score + 1)}
-            onDecrease={() => setValue(`abilities.${ability.id}`, score - 1)}
-            canIncrease={canIncrease}
-            canDecrease={canDecrease}
-            bottomInfo={`Cost: ${costNow}`}
           />
         );
       })}

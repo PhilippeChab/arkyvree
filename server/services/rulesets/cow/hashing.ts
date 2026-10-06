@@ -31,16 +31,43 @@ const EXCLUDED_FIELDS = new Set([
   "primaryAbilityId",
 ]);
 
+function isPrimitive(value: unknown): boolean {
+  return value === null || typeof value !== "object";
+}
+
+// Normalize feat aptitude associations — strip UUIDs, sort by aptitude name
+function hashFeatAptitudes(entity: Record<string, unknown>): string[] {
+  const associations = entity.featsAptitudesInRules;
+  if (!Array.isArray(associations)) return [];
+  return associations
+    .map((a: Record<string, unknown>) => {
+      const apt = a.aptitudesInRule as Record<string, unknown> | undefined;
+      return (apt?.name as string) ?? "";
+    })
+    .sort();
+}
+
+// Normalize power aptitude associations — strip UUIDs, sort by aptitude name
+function hashPowerAptitudes(entity: Record<string, unknown>): { aptitude: string; level: number | null }[] {
+  const associations = entity.powersAptitudesInRules;
+  if (!Array.isArray(associations)) return [];
+  return associations
+    .map((a: Record<string, unknown>) => {
+      const apt = a.aptitudesInRule as Record<string, unknown> | undefined;
+      return {
+        aptitude: (apt?.name as string) ?? "",
+        level: (a.level as number | null) ?? null,
+      };
+    })
+    .sort((a, b) => a.aptitude.localeCompare(b.aptitude));
+}
+
 function sortByKeys(obj: Record<string, unknown>): Record<string, unknown> {
   const sorted: Record<string, unknown> = {};
   for (const key of Object.keys(obj).sort()) {
     sorted[key] = obj[key];
   }
   return sorted;
-}
-
-function isPrimitive(value: unknown): boolean {
-  return value === null || typeof value !== "object";
 }
 
 function extractContentFields(entity: Record<string, unknown>): Record<string, unknown> {
@@ -109,33 +136,6 @@ function hashCustomizations(customizations: EntityCustomizations) {
     requirements: sortedRequirements(customizations.requirements),
     modifierRequirements: sortedRequirements(customizations.modifierRequirements),
   };
-}
-
-// Normalize feat aptitude associations — strip UUIDs, sort by aptitude name
-function hashFeatAptitudes(entity: Record<string, unknown>): string[] {
-  const associations = entity.featsAptitudesInRules;
-  if (!Array.isArray(associations)) return [];
-  return associations
-    .map((a: Record<string, unknown>) => {
-      const apt = a.aptitudesInRule as Record<string, unknown> | undefined;
-      return (apt?.name as string) ?? "";
-    })
-    .sort();
-}
-
-// Normalize power aptitude associations — strip UUIDs, sort by aptitude name
-function hashPowerAptitudes(entity: Record<string, unknown>): { aptitude: string; level: number | null }[] {
-  const associations = entity.powersAptitudesInRules;
-  if (!Array.isArray(associations)) return [];
-  return associations
-    .map((a: Record<string, unknown>) => {
-      const apt = a.aptitudesInRule as Record<string, unknown> | undefined;
-      return {
-        aptitude: (apt?.name as string) ?? "",
-        level: (a.level as number | null) ?? null,
-      };
-    })
-    .sort((a, b) => a.aptitude.localeCompare(b.aptitude));
 }
 
 export function hashEntity(

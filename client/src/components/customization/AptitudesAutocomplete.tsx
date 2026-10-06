@@ -71,32 +71,6 @@ function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells") {
   return { fetchedOptions, autocompleteProps };
 }
 
-export function AptitudesAutocomplete({ rulesetId, value, onChange, disabled, scope }: AptitudesAutocompleteProps) {
-  const { fetchedOptions, autocompleteProps } = useAptitudeOptions(rulesetId, scope);
-
-  // Merge selected values with fetched options so selected items always appear
-  const selectedIds = new Set(value.map((v) => v.id));
-  const options = [...value, ...fetchedOptions.filter((opt) => !selectedIds.has(opt.id))];
-
-  return (
-    <Autocomplete
-      multiple
-      options={options}
-      {...autocompleteProps}
-      value={value}
-      onChange={(_, newValue) => onChange(newValue)}
-      disabled={disabled}
-      renderValue={(tagValue, getItemProps) =>
-        tagValue.map((option, index) => {
-          const { key, ...chipProps } = getItemProps({ index });
-          return <Chip key={key} label={option.name} size="small" {...chipProps} />;
-        })
-      }
-      renderInput={(params) => <TextField {...params} label="Aptitudes" />}
-    />
-  );
-}
-
 export function AptitudeAutocomplete({
   rulesetId,
   value,
@@ -121,6 +95,32 @@ export function AptitudeAutocomplete({
       disabled={disabled}
       size={size}
       renderInput={(params) => <TextField {...params} label={label} />}
+    />
+  );
+}
+
+export function AptitudesAutocomplete({ rulesetId, value, onChange, disabled, scope }: AptitudesAutocompleteProps) {
+  const { fetchedOptions, autocompleteProps } = useAptitudeOptions(rulesetId, scope);
+
+  // Merge selected values with fetched options so selected items always appear
+  const selectedIds = new Set(value.map((v) => v.id));
+  const options = [...value, ...fetchedOptions.filter((opt) => !selectedIds.has(opt.id))];
+
+  return (
+    <Autocomplete
+      multiple
+      options={options}
+      {...autocompleteProps}
+      value={value}
+      onChange={(_, newValue) => onChange(newValue)}
+      disabled={disabled}
+      renderValue={(tagValue, getItemProps) =>
+        tagValue.map((option, index) => {
+          const { key, ...chipProps } = getItemProps({ index });
+          return <Chip key={key} label={option.name} size="small" {...chipProps} />;
+        })
+      }
+      renderInput={(params) => <TextField {...params} label="Aptitudes" />}
     />
   );
 }

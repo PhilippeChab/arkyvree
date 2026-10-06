@@ -50,17 +50,6 @@ export interface CowData {
 const storage = new AsyncLocalStorage<CowData | undefined>();
 
 /**
- * Run `fn` inside a cowContext scoped to `cowData`. Passing `null` /
- * `undefined` clears the ambient context. An empty map is still a scope:
- * nested reads must never inherit a different ruleset's resolution map.
- *
- * @internal — Use `withRulesetScope` from `server/services/rulesets/cow/` from application code.
- */
-export function withCowContext<T>(cowData: CowData | null | undefined, fn: () => Promise<T>): Promise<T> {
-  return storage.run(cowData ?? undefined, fn);
-}
-
-/**
  * The currently active cowData, or `undefined` outside any wrapper.
  *
  * @internal — Read by the repo Proxy / `idMatches` (`ResolvesCopies`). Service
@@ -69,4 +58,15 @@ export function withCowContext<T>(cowData: CowData | null | undefined, fn: () =>
  */
 export function getCowContext(): CowData | undefined {
   return storage.getStore();
+}
+
+/**
+ * Run `fn` inside a cowContext scoped to `cowData`. Passing `null` /
+ * `undefined` clears the ambient context. An empty map is still a scope:
+ * nested reads must never inherit a different ruleset's resolution map.
+ *
+ * @internal — Use `withRulesetScope` from `server/services/rulesets/cow/` from application code.
+ */
+export function withCowContext<T>(cowData: CowData | null | undefined, fn: () => Promise<T>): Promise<T> {
+  return storage.run(cowData ?? undefined, fn);
 }

@@ -78,6 +78,34 @@ export const EMPTY_INVENTORY_FORM: InventoryFormData = {
   remainingCharges: 0,
 };
 
+/**
+ * Why the slot is taken (by another entry, the same item's in another place included, or a two-handed weapon in the
+ * same set), if it is: the entry being edited (`excludeEntryId`) aside.
+ */
+export function getSlotConflictWarning(
+  location: ItemLocation | "none",
+  /** As the form shows it, from 1. */
+  weaponSet: number,
+  inventoryItems: PlacedEntry[],
+  excludeEntryId?: string,
+): string | null {
+  if (!location || location === "none") return null;
+
+  const equipped = inventoryItems.filter((e) => e.equipped && e.location && e.id !== excludeEntryId);
+  const conflict = findSlotConflict(location, weaponSet - 1, equipped);
+  if (!conflict) return null;
+  if (conflict.reason === "fingers") return "Both finger slots are occupied";
+  return SLOT_CONFLICT_WARNINGS[conflict.reason](location, conflict.entry, weaponSet);
+}
+
+/** The slot an item goes to when picked, or null to leave the choice (a weapon's hand) to the user. */
+export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
+  if (item.type === "Weapon") return null; // hand slot picker
+  if (item.type === "Armor") return "Torso";
+  if (item.type === "Shield") return "Off Hand";
+  return LOCATION_OPTIONS.find((v) => v.toLowerCase() === item.slot.toLowerCase()) ?? null;
+}
+
 /** The placement as the inventory endpoints take it: a slot equips the item, charges only for items that have them. */
 export function placementPayload(data: InventoryFormData, hasCharges: boolean) {
   const location = data.location && data.location !== "none" ? data.location : null;
@@ -112,32 +140,4 @@ export function placementProfile(item: ItemColumns, properties: ItemProperties) 
     locationOptions,
     charges: { has: !!chargesProperty, defaultCount: Number.parseInt(chargesProperty?.value ?? "", 10) || 0 },
   };
-}
-
-/** The slot an item goes to when picked, or null to leave the choice (a weapon's hand) to the user. */
-export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
-  if (item.type === "Weapon") return null; // hand slot picker
-  if (item.type === "Armor") return "Torso";
-  if (item.type === "Shield") return "Off Hand";
-  return LOCATION_OPTIONS.find((v) => v.toLowerCase() === item.slot.toLowerCase()) ?? null;
-}
-
-/**
- * Why the slot is taken (by another entry, the same item's in another place included, or a two-handed weapon in the
- * same set), if it is: the entry being edited (`excludeEntryId`) aside.
- */
-export function getSlotConflictWarning(
-  location: ItemLocation | "none",
-  /** As the form shows it, from 1. */
-  weaponSet: number,
-  inventoryItems: PlacedEntry[],
-  excludeEntryId?: string,
-): string | null {
-  if (!location || location === "none") return null;
-
-  const equipped = inventoryItems.filter((e) => e.equipped && e.location && e.id !== excludeEntryId);
-  const conflict = findSlotConflict(location, weaponSet - 1, equipped);
-  if (!conflict) return null;
-  if (conflict.reason === "fingers") return "Both finger slots are occupied";
-  return SLOT_CONFLICT_WARNINGS[conflict.reason](location, conflict.entry, weaponSet);
 }

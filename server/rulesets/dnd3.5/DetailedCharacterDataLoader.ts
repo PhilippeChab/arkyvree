@@ -375,52 +375,6 @@ export default class DetailedCharacterDataLoader {
     return [...realFeatsWithPMR, ...virtualFeatsWithPMR];
   }
 
-  /**
-   * Round 5: character-sourced modifiers only. Every ruleset-scoped property/modifier/requirement is already indexed
-   * on rulesetData (propertiesByEntity, modifiersBySource, requirementsByEntity). The only pieces the cache can't know
-   * about are character-sourced modifiers (their sourceId is the character ID, not a ruleset entity). With them, the
-   * flat modifier list scoped to this character — used by resolvePossessedFeatIds / resolvePossessedPowers (which
-   * scan for "set feats/powers.<slug>.possessed/known" targets). Built by O(entities) map lookups, not an O(all ruleset
-   * mods) filter. Then the requirements of the character's own modifiers.
-   */
-  private async fetchModifiers(database: Db, rulesetData: CachedRulesetData, sourceIds: string[]) {
-    const characterSourcedModifiers = await Modifiers.findMany(database, {
-      sourceIds: [this.character.id],
-    });
-    const baseModifiers: Modifier[] = [];
-    for (const id of sourceIds) {
-      const group = rulesetData.modifiersBySource.get(id);
-      if (group) baseModifiers.push(...group);
-    }
-    baseModifiers.push(...characterSourcedModifiers);
-
-    // Round 6: Requirements — cache covers ruleset modifiers (including those on virtually possessed feats/powers,
-    // since the unified `feats` and `powers` arrays pull from `rulesetData.modifiersBySource`). Only
-    // character-direct modifiers can have requirements the cache misses.
-    const extraRequirements =
-      characterSourcedModifiers.length > 0
-        ? await Requirements.findMany(database, { entityIds: characterSourcedModifiers.map((m) => m.id) })
-        : [];
-    return { characterSourcedModifiers, baseModifiers, extraRequirements };
-  }
-
-  /** Round 4: character-scoped queries (5); ruleset-scoped lookups resolve from cache. */
-  private async fetchPicks(database: Db, realCharacterLevelIds: string[], characterLevels: CharacterLevel[]) {
-    const skills = await Skills.findPicks(database, {
-      characterLevelIds: realCharacterLevelIds,
-    });
-    const pickedFeats = await Feats.findPicks(database, {
-      characterLevelIds: realCharacterLevelIds,
-    });
-    // A saved level's class level, copied (copy-on-write) or not; a projected level's grants come with it
-    const givenFeats = await Feats.findGrants(database, { levels: characterLevels });
-    const pickedPowers = await Powers.findPicks(database, {
-      characterLevelIds: realCharacterLevelIds,
-    });
-    const givenPowers = await Powers.findGrants(database, { levels: characterLevels });
-    return { skills, pickedFeats, givenFeats, pickedPowers, givenPowers };
-  }
-
   /** The D&D 3.5 reading of the cache's raw property rows: each skill's flags, and the skill-point ability. */
   private interpretProperties(rulesetData: CachedRulesetData, resolveId: (id: string) => string) {
     const skillProperties = readSkillFlags(rulesetData.propertiesByEntityType.get("skills") ?? []);
@@ -629,6 +583,52 @@ export default class DetailedCharacterDataLoader {
         rulesetData.aptitudeIdBySpellSlug,
       ),
     };
+  }
+
+  /**
+   * Round 5: character-sourced modifiers only. Every ruleset-scoped property/modifier/requirement is already indexed
+   * on rulesetData (propertiesByEntity, modifiersBySource, requirementsByEntity). The only pieces the cache can't know
+   * about are character-sourced modifiers (their sourceId is the character ID, not a ruleset entity). With them, the
+   * flat modifier list scoped to this character — used by resolvePossessedFeatIds / resolvePossessedPowers (which
+   * scan for "set feats/powers.<slug>.possessed/known" targets). Built by O(entities) map lookups, not an O(all ruleset
+   * mods) filter. Then the requirements of the character's own modifiers.
+   */
+  private async fetchModifiers(database: Db, rulesetData: CachedRulesetData, sourceIds: string[]) {
+    const characterSourcedModifiers = await Modifiers.findMany(database, {
+      sourceIds: [this.character.id],
+    });
+    const baseModifiers: Modifier[] = [];
+    for (const id of sourceIds) {
+      const group = rulesetData.modifiersBySource.get(id);
+      if (group) baseModifiers.push(...group);
+    }
+    baseModifiers.push(...characterSourcedModifiers);
+
+    // Round 6: Requirements — cache covers ruleset modifiers (including those on virtually possessed feats/powers,
+    // since the unified `feats` and `powers` arrays pull from `rulesetData.modifiersBySource`). Only
+    // character-direct modifiers can have requirements the cache misses.
+    const extraRequirements =
+      characterSourcedModifiers.length > 0
+        ? await Requirements.findMany(database, { entityIds: characterSourcedModifiers.map((m) => m.id) })
+        : [];
+    return { characterSourcedModifiers, baseModifiers, extraRequirements };
+  }
+
+  /** Round 4: character-scoped queries (5); ruleset-scoped lookups resolve from cache. */
+  private async fetchPicks(database: Db, realCharacterLevelIds: string[], characterLevels: CharacterLevel[]) {
+    const skills = await Skills.findPicks(database, {
+      characterLevelIds: realCharacterLevelIds,
+    });
+    const pickedFeats = await Feats.findPicks(database, {
+      characterLevelIds: realCharacterLevelIds,
+    });
+    // A saved level's class level, copied (copy-on-write) or not; a projected level's grants come with it
+    const givenFeats = await Feats.findGrants(database, { levels: characterLevels });
+    const pickedPowers = await Powers.findPicks(database, {
+      characterLevelIds: realCharacterLevelIds,
+    });
+    const givenPowers = await Powers.findGrants(database, { levels: characterLevels });
+    return { skills, pickedFeats, givenFeats, pickedPowers, givenPowers };
   }
 
   async load(

@@ -46,25 +46,18 @@ const SPELL_LEVELS = Object.fromEntries(Array.from({ length: 10 }, (_, level) =>
 function feats(...names: string[]) {
   return names.map((name) => ({ name, description: "", aptitudes: [] }));
 }
-function spell(name: string, level: number, fields: Partial<SpellSeed> = {}): SpellSeed {
-  return {
-    name,
-    description: "",
-    level,
-    aptitudes: [],
-    properties: [],
-    ...fields,
-  };
+
+/** A spell list's slot at each spell level, as `describeCustomizations` reads it, gated from the second on by `classTarget`. */
+function gatedSlots(list: string, classTarget: string) {
+  return Array.from({ length: 9 }, (_, i) => {
+    const gate = i === 0 ? "" : `\n  if 1 ${classTarget} greater_than_or_equal ${2 * i + 1}`;
+    return [
+      `aptitudes.${list}.${i + 1}.allowed set -1 number${gate}`,
+      `aptitudes.${list}.${i + 1}.uses add 1 number${gate}`,
+    ];
+  }).flat();
 }
-function race(name: string, fields: Partial<RaceDefinition> = {}): RaceDefinition {
-  return {
-    name,
-    description: "",
-    size: "Medium",
-    baseSpeed: 30,
-    ...fields,
-  };
-}
+
 function item(name: string, fields: Partial<ItemDef> = {}): ItemDef {
   return {
     name,
@@ -76,6 +69,7 @@ function item(name: string, fields: Partial<ItemDef> = {}): ItemDef {
     ...fields,
   };
 }
+
 function klass(name: string, fields: Partial<ClassSeed> = {}): ClassSeed {
   return {
     name,
@@ -90,12 +84,30 @@ function klass(name: string, fields: Partial<ClassSeed> = {}): ClassSeed {
   };
 }
 
-/** The spell lists a power is in, "aptitude level" each. */
-async function spellListsOf(ctx: SeedContext, powerId: string) {
-  const aptitudes = namesOf(ctx.aptMap);
-  return (await db.select().from(powersAptitudesInRules).where(eq(powersAptitudesInRules.powerId, powerId)))
-    .map((link) => `${aptitudes[link.aptitudeId]} ${link.level}`)
-    .sort();
+/** A level's properties: its base attack and skill points. */
+function levelProperties(bab: number, skillPoints: number) {
+  return [`${KLASS_LEVEL_BAB} ${bab}`, `${KLASS_LEVEL_SKILL_POINTS} ${skillPoints}`];
+}
+
+function race(name: string, fields: Partial<RaceDefinition> = {}): RaceDefinition {
+  return {
+    name,
+    description: "",
+    size: "Medium",
+    baseSpeed: 30,
+    ...fields,
+  };
+}
+
+function spell(name: string, level: number, fields: Partial<SpellSeed> = {}): SpellSeed {
+  return {
+    name,
+    description: "",
+    level,
+    aptitudes: [],
+    properties: [],
+    ...fields,
+  };
 }
 
 async function aptitudesOfFeat(ctx: SeedContext, featId: string) {
@@ -103,17 +115,6 @@ async function aptitudesOfFeat(ctx: SeedContext, featId: string) {
   return (await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.featId, featId)))
     .map((link) => aptitudes[link.aptitudeId])
     .sort();
-}
-
-/** A spell list's slot at each spell level, as `describeCustomizations` reads it, gated from the second on by `classTarget`. */
-function gatedSlots(list: string, classTarget: string) {
-  return Array.from({ length: 9 }, (_, i) => {
-    const gate = i === 0 ? "" : `\n  if 1 ${classTarget} greater_than_or_equal ${2 * i + 1}`;
-    return [
-      `aptitudes.${list}.${i + 1}.allowed set -1 number${gate}`,
-      `aptitudes.${list}.${i + 1}.uses add 1 number${gate}`,
-    ];
-  }).flat();
 }
 
 /** Each level's properties (base attack, skill points), saves, modifiers, requirements and granted feats. */
@@ -148,9 +149,12 @@ async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
   return levels;
 }
 
-/** A level's properties: its base attack and skill points. */
-function levelProperties(bab: number, skillPoints: number) {
-  return [`${KLASS_LEVEL_BAB} ${bab}`, `${KLASS_LEVEL_SKILL_POINTS} ${skillPoints}`];
+/** The spell lists a power is in, "aptitude level" each. */
+async function spellListsOf(ctx: SeedContext, powerId: string) {
+  const aptitudes = namesOf(ctx.aptMap);
+  return (await db.select().from(powersAptitudesInRules).where(eq(powersAptitudesInRules.powerId, powerId)))
+    .map((link) => `${aptitudes[link.aptitudeId]} ${link.level}`)
+    .sort();
 }
 
 describe("Seeding", () => {

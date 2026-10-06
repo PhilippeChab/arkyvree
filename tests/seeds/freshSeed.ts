@@ -18,21 +18,6 @@ function describeModifier(m: { target: string; operator: string; value: string; 
   return `${m.target} ${m.operator} ${m.value} ${m.valueType}`;
 }
 
-/** A new system ruleset for a test to seed into, and its context: empty, or naming the seeded core's rows (`named`). */
-export async function freshSeedContext({ named = false } = {}): Promise<SeedContext> {
-  const rulesetId = await createSystemRuleset(db, {
-    name: `Seed test ${uniqueId()}`,
-    description: "A ruleset a test seeds into",
-  });
-  if (!named) return newSeedContext(rulesetId);
-  return {
-    ...(await loadSeedContext(db, await coreRulesetId(db, "A seed test naming its rows"))),
-    rulesetId,
-    powerMap: {},
-    inheritedPowerMap: {},
-  };
-}
-
 /** A new extension of the context's ruleset, and its context (`seedExtension`'s). */
 export function freshExtensionContext(base: SeedContext) {
   return extensionContext(db, base, {
@@ -76,5 +61,20 @@ export async function describeCustomizations(entityId: string) {
     requirements: await requirementsOf(entityId),
     modifiers: modifierLines.sort(),
     properties: properties.map((p) => `${p.type} ${p.value}`).sort(),
+  };
+}
+
+/** A new system ruleset for a test to seed into, and its context: empty, or naming the seeded core's rows (`named`). */
+export async function freshSeedContext({ named = false } = {}): Promise<SeedContext> {
+  const rulesetId = await createSystemRuleset(db, {
+    name: `Seed test ${uniqueId()}`,
+    description: "A ruleset a test seeds into",
+  });
+  if (!named) return newSeedContext(rulesetId);
+  return {
+    ...(await loadSeedContext(db, await coreRulesetId(db, "A seed test naming its rows"))),
+    rulesetId,
+    powerMap: {},
+    inheritedPowerMap: {},
   };
 }

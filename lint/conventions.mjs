@@ -50,7 +50,7 @@ import path from "node:path";
 
 import { onImports, targetOf } from "./imports.mjs";
 import { startsWithVerb } from "./memberOrder.mjs";
-import { repoPath, rootOf } from "./paths.mjs";
+import { isToolWritten, repoPath, rootOf } from "./paths.mjs";
 
 const noParentImports = {
   meta: { type: "suggestion", fixable: "code" },
@@ -233,7 +233,6 @@ const TEST_MIRRORS = [
 ];
 
 // What a tool writes keeps the tool's code: the parser's output, drizzle's schema and relations
-const TOOL_WRITTEN = /(^|\/)generated\/|^drizzle\/(schema|relations)\.ts$/;
 
 const includeOrder = {
   meta: { type: "suggestion", fixable: "code" },
@@ -374,13 +373,6 @@ const routeConventions = {
   },
 };
 
-/** A parameter's binding: `session: Session`, a constructor's `private session: Session`, or one with a default. */
-function parameter(param) {
-  let binding = param.type === "TSParameterProperty" ? param.parameter : param;
-  if (binding.type === "AssignmentPattern") binding = binding.left;
-  return binding.type === "Identifier" ? binding : null;
-}
-
 /** The calls in `node`'s subtree, itself included. */
 function* callsIn(node) {
   if (node.type === "CallExpression") yield node;
@@ -390,6 +382,13 @@ function* callsIn(node) {
       if (typeof child?.type === "string") yield* callsIn(child);
     }
   }
+}
+
+/** A parameter's binding: `session: Session`, a constructor's `private session: Session`, or one with a default. */
+function parameter(param) {
+  let binding = param.type === "TSParameterProperty" ? param.parameter : param;
+  if (binding.type === "AssignmentPattern") binding = binding.left;
+  return binding.type === "Identifier" ? binding : null;
 }
 
 /** Whether `name` is a parameter of a function `node` sits in: a handle it's given, which may be a transaction. */
@@ -535,6 +534,14 @@ const testPlacement = {
   },
 };
 
+/** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
+function isConcern(fn) {
+  return (
+    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
+    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
+  );
+}
+
 /**
  * The `-ing` forms a third-person verb can take: `Archives` → `Archiving`, `Stars` → `Starring`, `Scopes` → `Scoping`,
  * `Applies` → `Applying`.
@@ -544,14 +551,6 @@ function gerunds(verb) {
   if (verb.endsWith("ies")) return [`${verb.slice(0, -3)}ying`];
   const base = /(ch|sh|ss|x|z)es$/.test(verb) ? verb.slice(0, -2) : verb.slice(0, -1);
   return [`${base}ing`, `${base.replace(/e$/, "")}ing`, `${base}${base.at(-1)}ing`];
-}
-
-/** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
-function isConcern(fn) {
-  return (
-    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
-    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
-  );
 }
 
 const concernShape = {
@@ -590,17 +589,6 @@ const concernShape = {
   },
 };
 
-/** Whether a function's body reads `this`, which a declaration would rebind. */
-function readsThis(node) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some(readsThis);
-  if (node.type === "ThisExpression") return true;
-  if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") return false;
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsThis(child),
-  );
-}
-
 /** A const's arrow or function expression written as the function declaration it is. */
 function declarationText(text, statement, declarator) {
   const fn = declarator.init;
@@ -638,10 +626,21 @@ function declarationText(text, statement, declarator) {
   };
 }
 
+/** Whether a function's body reads `this`, which a declaration would rebind. */
+function readsThis(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(readsThis);
+  if (node.type === "ThisExpression") return true;
+  if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") return false;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsThis(child),
+  );
+}
+
 const functionDeclarations = {
   meta: { type: "suggestion", fixable: "code" },
   create(context) {
-    if (TOOL_WRITTEN.test(repoPath(context.filename))) return {};
+    if (isToolWritten(context.filename)) return {};
     const text = context.sourceCode.text;
     return {
       Program(program) {

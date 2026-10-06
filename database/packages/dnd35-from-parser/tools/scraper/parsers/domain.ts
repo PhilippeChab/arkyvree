@@ -21,14 +21,14 @@ export type DomainPage = {
   spells: DomainPageSpell[];
 };
 
-/** A domain's name without its version's book ("Celerity (CD)" → "Celerity"). */
-export function domainName(label: string) {
-  return label.replace(/\s*\([^()]*\)$/, "").trim();
-}
-
 /** The book's code a domain version's label ends with ("Celerity (CD)" → "CD"), if any. */
 export function domainBookCode(label: string) {
   return label.match(/\(([^()]+)\)$/)?.[1];
+}
+
+/** A domain's name without its version's book ("Celerity (CD)" → "Celerity"). */
+export function domainName(label: string) {
+  return label.replace(/\s*\([^()]*\)$/, "").trim();
 }
 
 /** The domain versions a page of the domain index lists, and how many entries the index holds in all. */

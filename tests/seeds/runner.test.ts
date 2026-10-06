@@ -8,6 +8,10 @@ import { contentPackagesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 
+function record(pkg: ContentPackage, version: number) {
+  return db.insert(contentPackagesInRules).values({ name: pkg.name, type: pkg.type, version });
+}
+
 /** A package whose seeds and updates record that they ran, in `ran`. */
 function testPackage(seedsVersion: number, updateVersions: number[], ran: string[]): ContentPackage {
   const name = `test-package-${uniqueId()}`;
@@ -29,10 +33,6 @@ async function recordedVersion(name: string) {
       .from(contentPackagesInRules)
       .where(eq(contentPackagesInRules.name, name))
   )[0]?.version;
-}
-
-function record(pkg: ContentPackage, version: number) {
-  return db.insert(contentPackagesInRules).values({ name: pkg.name, type: pkg.type, version });
 }
 
 describe("Applying content packages", () => {

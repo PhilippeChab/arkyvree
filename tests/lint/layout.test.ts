@@ -5,6 +5,10 @@ import path from "node:path";
 
 import { lintRepo, runOxlint } from "./lintRepo.ts";
 
+function lines(...rows: string[]) {
+  return rows.join("\n") + "\n";
+}
+
 /** What `oxlint --fix` makes of each file, run until it settles. */
 async function fixed(files: Record<string, string>) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-"));
@@ -23,10 +27,6 @@ async function fixed(files: Record<string, string>) {
   );
   fs.rmSync(dir, { recursive: true });
   return out;
-}
-
-function lines(...rows: string[]) {
-  return rows.join("\n") + "\n";
 }
 
 // Each test runs oxlint, which a busy suite can slow past the default 5s.

@@ -14,11 +14,12 @@ import {
 import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
 import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
 
-function page(...headings: string[]) {
-  return `<html><body>${headings.map((h) => `<h2>${h}</h2>`).join("")}<h4>Benefit</h4><p>You gain a bonus.</p></body></html>`;
-}
 function headingOf(html: string, frame?: RegExp) {
   return contentHeading(cheerio.load(html), frame)?.text();
+}
+
+function page(...headings: string[]) {
+  return `<html><body>${headings.map((h) => `<h2>${h}</h2>`).join("")}<h4>Benefit</h4><p>You gain a bonus.</p></body></html>`;
 }
 
 describe("A page's content heading", () => {

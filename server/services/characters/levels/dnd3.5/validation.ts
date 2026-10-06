@@ -17,6 +17,17 @@ import { loadFeatCustomizations } from "./projection.ts";
 
 type FeatRecord = { id: string; name: string; stackable: boolean };
 
+/** Throws when a non-stackable feat is picked more than once in the level (under two pools). */
+function checkRepeatedPicks(featIds: string[], fetchedFeats: FeatRecord[]) {
+  const submittedFeatCounts = new Map<string, number>();
+  for (const id of featIds) submittedFeatCounts.set(id, (submittedFeatCounts.get(id) ?? 0) + 1);
+  for (const feat of fetchedFeats) {
+    if (!feat.stackable && (submittedFeatCounts.get(feat.id) ?? 0) > 1) {
+      throw new BadRequestError(`Non-stackable feat "${feat.name}" cannot be picked more than once`);
+    }
+  }
+}
+
 /** The rows of these ids, deduplicated, from the character's ruleset; throws when one isn't in it. */
 function fetchAll<T>(ids: string[], byId: Map<string, T>, what: string): T[] {
   const uniqueIds = [...new Set(ids)];
@@ -38,17 +49,6 @@ function fetchSelections(
   const fetchedPowers = fetchAll(Object.values(powers).flat(), rulesetData.powersById, "powers");
   fetchAll([...Object.keys(feats), ...Object.keys(powers)], rulesetData.aptitudesById, "aptitudes");
   return { fetchedSkills, fetchedFeats, fetchedPowers };
-}
-
-/** Throws when a non-stackable feat is picked more than once in the level (under two pools). */
-function checkRepeatedPicks(featIds: string[], fetchedFeats: FeatRecord[]) {
-  const submittedFeatCounts = new Map<string, number>();
-  for (const id of featIds) submittedFeatCounts.set(id, (submittedFeatCounts.get(id) ?? 0) + 1);
-  for (const feat of fetchedFeats) {
-    if (!feat.stackable && (submittedFeatCounts.get(feat.id) ?? 0) > 1) {
-      throw new BadRequestError(`Non-stackable feat "${feat.name}" cannot be picked more than once`);
-    }
-  }
 }
 
 /**
@@ -85,6 +85,17 @@ function linkedPowerLevels(
   return powerLevelMap;
 }
 
+/** The pool each picked id is picked under. */
+function poolsOf(selections: Record<string, string[]>) {
+  const pools = new Map<string, string>();
+  for (const [aptitudeId, ids] of Object.entries(selections)) {
+    for (const id of ids) {
+      pools.set(id, aptitudeId);
+    }
+  }
+  return pools;
+}
+
 /**
  * Throws when a non-stackable feat picked is already on the character: picked or granted at its other levels, or
  * granted at this one.
@@ -118,15 +129,21 @@ async function checkNotTaken(
   }
 }
 
-/** The pool each picked id is picked under. */
-function poolsOf(selections: Record<string, string[]>) {
-  const pools = new Map<string, string>();
-  for (const [aptitudeId, ids] of Object.entries(selections)) {
-    for (const id of ids) {
-      pools.set(id, aptitudeId);
-    }
-  }
-  return pools;
+export function annotateRequirements<T extends { id: string }>(
+  detailedCharacter: DetailedCharacterInterface,
+  candidates: T[],
+  rulesetData: CachedRulesetData,
+): (T & { eligible: boolean; requirementTree?: string })[] {
+  if (candidates.length === 0) return [];
+  return candidates.map((candidate) => {
+    const reqs = rulesetData.requirementsByEntity.get(candidate.id);
+    const eligible = !reqs || reqs.length === 0 || detailedCharacter.areRequirementsMet([reqs]);
+    return {
+      ...candidate,
+      eligible,
+      ...(!eligible && reqs ? { requirementTree: detailedCharacter.formatRequirements(reqs) } : {}),
+    };
+  });
 }
 
 /**
@@ -207,21 +224,4 @@ export async function validateAndFetchLevelSelections(
     featCustomizations,
     autoGrantedRecords,
   };
-}
-
-export function annotateRequirements<T extends { id: string }>(
-  detailedCharacter: DetailedCharacterInterface,
-  candidates: T[],
-  rulesetData: CachedRulesetData,
-): (T & { eligible: boolean; requirementTree?: string })[] {
-  if (candidates.length === 0) return [];
-  return candidates.map((candidate) => {
-    const reqs = rulesetData.requirementsByEntity.get(candidate.id);
-    const eligible = !reqs || reqs.length === 0 || detailedCharacter.areRequirementsMet([reqs]);
-    return {
-      ...candidate,
-      eligible,
-      ...(!eligible && reqs ? { requirementTree: detailedCharacter.formatRequirements(reqs) } : {}),
-    };
-  });
 }

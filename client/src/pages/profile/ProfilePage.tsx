@@ -33,13 +33,6 @@ interface PasswordFormData {
   newPasswordConfirmation: string;
 }
 
-function toProfileForm(user: Pick<AuthUser, "username" | "emailAddress">): ProfileFormData {
-  return {
-    username: user.username ?? "",
-    emailAddress: user.emailAddress,
-  };
-}
-
 function ProfileCard({ title, children, danger = false }: { title: string; children: ReactNode; danger?: boolean }) {
   return (
     <Card sx={{ mb: 3, ...(danger && { borderColor: "error.main", borderWidth: 1, borderStyle: "solid" }) }}>
@@ -59,6 +52,13 @@ function ProfileCard({ title, children, danger = false }: { title: string; child
       </CardContent>
     </Card>
   );
+}
+
+function toProfileForm(user: Pick<AuthUser, "username" | "emailAddress">): ProfileFormData {
+  return {
+    username: user.username ?? "",
+    emailAddress: user.emailAddress,
+  };
 }
 
 export default function ProfilePage() {

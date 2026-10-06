@@ -71,6 +71,18 @@ function fixEncoding(text: string): string {
 }
 
 /**
+ * Sanitize raw HTML before Cheerio parsing.
+ *
+ * Only applies encoding fixes that are safe for HTML structure.
+ * Does NOT collapse newlines — that would break HTML tags that span lines
+ * (e.g. dndtools.net has broken `</\n` closing tags that would merge into
+ * the next element's opening tag if newlines were collapsed).
+ */
+export function sanitizeHtml(html: string): string {
+  return applyAll(html, HTML_FIXES);
+}
+
+/**
  * Full sanitization for descriptions: encoding fixes + book reference stripping.
  * Only use on description/benefit text, not names.
  */
@@ -145,18 +157,6 @@ export function sanitizeText(text: string): string {
       .replace(/  +/g, " ") // collapse multiple spaces
       .trim()
   );
-}
-
-/**
- * Sanitize raw HTML before Cheerio parsing.
- *
- * Only applies encoding fixes that are safe for HTML structure.
- * Does NOT collapse newlines — that would break HTML tags that span lines
- * (e.g. dndtools.net has broken `</\n` closing tags that would merge into
- * the next element's opening tag if newlines were collapsed).
- */
-export function sanitizeHtml(html: string): string {
-  return applyAll(html, HTML_FIXES);
 }
 
 /**

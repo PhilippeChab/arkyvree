@@ -162,20 +162,82 @@ function failed(holder: Holder | null, key: string, error: string): TraversePath
   return [{ holder, object: null, data: null, key, resolvedPath: null, error }];
 }
 
+/** Each path segment's display label: the categories', the components' structural ones, and the ruleset's names. */
+function segmentLabelsOf(rulesetData: CachedRulesetData): Record<string, string> {
+  const { abilities, saves, skills, feats, items, aptitudes, klasses, powers, propertiesByEntityType } = rulesetData;
+  const segmentLabels: Record<string, string> = {
+    "*": "All",
+    ...CATEGORY_LABELS,
+    ...DetailedCharacterAbilities.getSegmentLabels(),
+    ...DetailedCharacterSavingThrows.getSegmentLabels(),
+    ...DetailedCharacterSkills.getSegmentLabels(),
+    ...DetailedCharacterClasses.getSegmentLabels(),
+    ...DetailedCharacterFeats.getSegmentLabels(),
+    ...DetailedCharacterFeatGroupings.getSegmentLabels(),
+    ...DetailedCharacterPowers.getSegmentLabels(),
+    ...DetailedCharacterPowerGroupings.getSegmentLabels(),
+    ...DetailedCharacterAptitudes.getSegmentLabels(),
+    ...DetailedCharacterCombat.getSegmentLabels(),
+    ...DetailedCharacterEncumbrance.getSegmentLabels(),
+    ...DetailedCharacterWeapons.getSegmentLabels(),
+    ...DetailedCharacterArmors.getSegmentLabels(),
+    ...DetailedCharacterShields.getSegmentLabels(),
+    ...DetailedCharacterIdentity.getSegmentLabels(),
+    ...DetailedCharacterBonds.getSegmentLabels(),
+    // D&D 3.5 surfaces power groupings as schools in the path picker.
+    groups: "Schools",
+  };
+
+  for (const entity of [...abilities, ...saves, ...skills, ...feats, ...items, ...aptitudes, ...klasses, ...powers]) {
+    segmentLabels[stripSeparators(entity.name)] = entity.name;
+  }
+  Object.assign(segmentLabels, DetailedCharacterSkills.getFamilyLabels(skills), {
+    [stripSeparators(UNARMED_STRIKE)]: UNARMED_STRIKE,
+  });
+
+  // Spell possession slug labels (e.g. "wizard" → "Wizard" for "Wizard Spells" aptitude)
+  for (const apt of aptitudes) {
+    const slug = toSpellPossessionSlug(apt.name);
+    if (!(slug in segmentLabels)) segmentLabels[slug] = apt.name.replace(/ Spells$/, "");
+  }
+
+  // Property values (weapon types, armor types, etc.)
+  // Skip purely numeric values (e.g. ARMOR_CHECK_PENALTY "-1" → key "1") to avoid
+  // clobbering spell level labels
+  for (const prop of propertiesByEntityType.get("items") ?? []) {
+    const normalized = stripSeparators(prop.value);
+    if (normalized && !/^\d+$/.test(normalized)) segmentLabels[normalized] = prop.value;
+  }
+
+  // Every family the rules know, listed whether or not a feat of the ruleset is in it
+  for (const family of FEAT_FAMILIES) segmentLabels[stripSeparators(family)] ??= family;
+
+  // Feat property values (e.g. "weaponfocus" → "Weapon Focus")
+  // For feat families, also add wildcard label (e.g. "weaponfocus*" → "Weapon Focus (Any)")
+  for (const prop of propertiesByEntityType.get("feats") ?? []) {
+    const normalizedValue = stripSeparators(prop.value);
+    if (normalizedValue && !(normalizedValue in segmentLabels)) segmentLabels[normalizedValue] = prop.value;
+    if (prop.type === FEAT_FAMILY && normalizedValue) {
+      const wildcardKey = `${normalizedValue}*`;
+      if (!(wildcardKey in segmentLabels)) segmentLabels[wildcardKey] = `${prop.value} (Any)`;
+    }
+  }
+
+  // Power property type names (e.g. SPELL_SCHOOL → "Spell School")
+  // and power property values (e.g. "evocation" → "Evocation")
+  for (const prop of propertiesByEntityType.get("powers") ?? []) {
+    if (!(prop.type in segmentLabels)) segmentLabels[prop.type] = formatPropertyType(prop.type);
+    const normalizedValue = stripSeparators(prop.value);
+    if (normalizedValue && !/^\d+$/.test(normalizedValue) && !(normalizedValue in segmentLabels)) {
+      segmentLabels[normalizedValue] = prop.value;
+    }
+  }
+  return segmentLabels;
+}
+
 /** The distinct slugs of the properties' values of `type`. */
 function slugsOf(properties: { type: string; value: string }[], type: string) {
   return [...new Set(properties.filter((p) => p.type === type).map((p) => stripSeparators(p.value)))];
-}
-
-/** The entries of `value` that are objects and whose slug starts with `slug` (but isn't it): a skill's subtypes. */
-function subtypesOf(value: Record<string, unknown>, slug: string) {
-  return Object.entries(value).filter(
-    ([key, entry]) =>
-      entry !== null &&
-      typeof entry === "object" &&
-      stripSeparators(key).startsWith(slug) &&
-      stripSeparators(key) !== slug,
-  );
 }
 
 /**
@@ -305,77 +367,15 @@ function generatePaths(rulesetData: CachedRulesetData, kind: "modifier" | "requi
   return paths;
 }
 
-/** Each path segment's display label: the categories', the components' structural ones, and the ruleset's names. */
-function segmentLabelsOf(rulesetData: CachedRulesetData): Record<string, string> {
-  const { abilities, saves, skills, feats, items, aptitudes, klasses, powers, propertiesByEntityType } = rulesetData;
-  const segmentLabels: Record<string, string> = {
-    "*": "All",
-    ...CATEGORY_LABELS,
-    ...DetailedCharacterAbilities.getSegmentLabels(),
-    ...DetailedCharacterSavingThrows.getSegmentLabels(),
-    ...DetailedCharacterSkills.getSegmentLabels(),
-    ...DetailedCharacterClasses.getSegmentLabels(),
-    ...DetailedCharacterFeats.getSegmentLabels(),
-    ...DetailedCharacterFeatGroupings.getSegmentLabels(),
-    ...DetailedCharacterPowers.getSegmentLabels(),
-    ...DetailedCharacterPowerGroupings.getSegmentLabels(),
-    ...DetailedCharacterAptitudes.getSegmentLabels(),
-    ...DetailedCharacterCombat.getSegmentLabels(),
-    ...DetailedCharacterEncumbrance.getSegmentLabels(),
-    ...DetailedCharacterWeapons.getSegmentLabels(),
-    ...DetailedCharacterArmors.getSegmentLabels(),
-    ...DetailedCharacterShields.getSegmentLabels(),
-    ...DetailedCharacterIdentity.getSegmentLabels(),
-    ...DetailedCharacterBonds.getSegmentLabels(),
-    // D&D 3.5 surfaces power groupings as schools in the path picker.
-    groups: "Schools",
-  };
-
-  for (const entity of [...abilities, ...saves, ...skills, ...feats, ...items, ...aptitudes, ...klasses, ...powers]) {
-    segmentLabels[stripSeparators(entity.name)] = entity.name;
-  }
-  Object.assign(segmentLabels, DetailedCharacterSkills.getFamilyLabels(skills), {
-    [stripSeparators(UNARMED_STRIKE)]: UNARMED_STRIKE,
-  });
-
-  // Spell possession slug labels (e.g. "wizard" → "Wizard" for "Wizard Spells" aptitude)
-  for (const apt of aptitudes) {
-    const slug = toSpellPossessionSlug(apt.name);
-    if (!(slug in segmentLabels)) segmentLabels[slug] = apt.name.replace(/ Spells$/, "");
-  }
-
-  // Property values (weapon types, armor types, etc.)
-  // Skip purely numeric values (e.g. ARMOR_CHECK_PENALTY "-1" → key "1") to avoid
-  // clobbering spell level labels
-  for (const prop of propertiesByEntityType.get("items") ?? []) {
-    const normalized = stripSeparators(prop.value);
-    if (normalized && !/^\d+$/.test(normalized)) segmentLabels[normalized] = prop.value;
-  }
-
-  // Every family the rules know, listed whether or not a feat of the ruleset is in it
-  for (const family of FEAT_FAMILIES) segmentLabels[stripSeparators(family)] ??= family;
-
-  // Feat property values (e.g. "weaponfocus" → "Weapon Focus")
-  // For feat families, also add wildcard label (e.g. "weaponfocus*" → "Weapon Focus (Any)")
-  for (const prop of propertiesByEntityType.get("feats") ?? []) {
-    const normalizedValue = stripSeparators(prop.value);
-    if (normalizedValue && !(normalizedValue in segmentLabels)) segmentLabels[normalizedValue] = prop.value;
-    if (prop.type === FEAT_FAMILY && normalizedValue) {
-      const wildcardKey = `${normalizedValue}*`;
-      if (!(wildcardKey in segmentLabels)) segmentLabels[wildcardKey] = `${prop.value} (Any)`;
-    }
-  }
-
-  // Power property type names (e.g. SPELL_SCHOOL → "Spell School")
-  // and power property values (e.g. "evocation" → "Evocation")
-  for (const prop of propertiesByEntityType.get("powers") ?? []) {
-    if (!(prop.type in segmentLabels)) segmentLabels[prop.type] = formatPropertyType(prop.type);
-    const normalizedValue = stripSeparators(prop.value);
-    if (normalizedValue && !/^\d+$/.test(normalizedValue) && !(normalizedValue in segmentLabels)) {
-      segmentLabels[normalizedValue] = prop.value;
-    }
-  }
-  return segmentLabels;
+/** The entries of `value` that are objects and whose slug starts with `slug` (but isn't it): a skill's subtypes. */
+function subtypesOf(value: Record<string, unknown>, slug: string) {
+  return Object.entries(value).filter(
+    ([key, entry]) =>
+      entry !== null &&
+      typeof entry === "object" &&
+      stripSeparators(key).startsWith(slug) &&
+      stripSeparators(key) !== slug,
+  );
 }
 
 export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPathsTraverser {
@@ -558,13 +558,6 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     return { ...PATH_DESCRIPTIONS };
   }
 
-  async getTargetPathsAndLabels(
-    rulesetData: CachedRulesetData,
-    kind: "modifier" | "requirement",
-  ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
-    return { paths: generatePaths(rulesetData, kind), segmentLabels: segmentLabelsOf(rulesetData) };
-  }
-
   /** Whether a target is an item's own weapon's (`weapon.tohit.misc`, `weapon.wielded`): the slots holding the item. */
   readsSource(target: string): boolean {
     const [category, sub] = target.split(".");
@@ -590,5 +583,12 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     } catch (error) {
       return failed(null, target, `Failed to traverse path: ${error}`);
     }
+  }
+
+  async getTargetPathsAndLabels(
+    rulesetData: CachedRulesetData,
+    kind: "modifier" | "requirement",
+  ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
+    return { paths: generatePaths(rulesetData, kind), segmentLabels: segmentLabelsOf(rulesetData) };
   }
 }

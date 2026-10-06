@@ -23,9 +23,6 @@ import type { RulesetModule } from "@/server/rulesets/types.ts";
 /** Each ruleset's module, built once. */
 const modules = new Map<string, Promise<RulesetModule>>();
 
-async function query<T extends Record<string, unknown>>(statement: SQL) {
-  return (await db.execute<T>(statement)).rows;
-}
 function moduleOf(rulesetId: string): Promise<RulesetModule> {
   let module = modules.get(rulesetId);
   if (!module) {
@@ -33,6 +30,10 @@ function moduleOf(rulesetId: string): Promise<RulesetModule> {
     modules.set(rulesetId, module);
   }
   return module;
+}
+
+async function query<T extends Record<string, unknown>>(statement: SQL) {
+  return (await db.execute<T>(statement)).rows;
 }
 
 const characters = await db.select().from(charactersInCharacter).where(isNull(charactersInCharacter.deletedAt));

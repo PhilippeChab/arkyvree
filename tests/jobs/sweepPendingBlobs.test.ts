@@ -9,6 +9,10 @@ import { createTestUser } from "@/tests/support/users.ts";
 
 const DAY = 24 * 60 * 60 * 1000;
 
+function rowOf(id: string) {
+  return db.query.blobsInStorage.findFirst({ where: (t, { eq }) => eq(t.id, id) });
+}
+
 /** A blob no attachment references, uploaded `ageMs` ago. */
 async function createPendingBlob(filename: string, ageMs = 0) {
   const [blob] = await Blobs.create(db, {
@@ -19,10 +23,6 @@ async function createPendingBlob(filename: string, ageMs = 0) {
   });
   if (ageMs) await Blobs.update(db, { createdAt: new Date(Date.now() - ageMs).toISOString() }, { id: blob.id });
   return blob;
-}
-
-function rowOf(id: string) {
-  return db.query.blobsInStorage.findFirst({ where: (t, { eq }) => eq(t.id, id) });
 }
 
 describe("sweepPendingBlobs", () => {

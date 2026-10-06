@@ -69,14 +69,14 @@ function isValidRequirementPath(path: string): boolean {
   return false;
 }
 
-export function isValidModifierPath(path: string): boolean {
-  return VALID_MODIFIER_PATHS.has(path);
-}
-
 /** Recursively find invalid paths in a requirement tree */
 export function findInvalidRequirementPaths(req: RequirementEntry): string[] {
   if ("chainingOperator" in req) {
     return req.children.flatMap(findInvalidRequirementPaths);
   }
   return isValidRequirementPath(req.target) ? [] : [req.target];
+}
+
+export function isValidModifierPath(path: string): boolean {
+  return VALID_MODIFIER_PATHS.has(path);
 }

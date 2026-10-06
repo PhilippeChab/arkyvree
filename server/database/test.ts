@@ -65,11 +65,12 @@ export const db = new Proxy(_db, {
   },
 });
 
-export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
-  // In a test, the test's own transaction: this one is a savepoint in it, which a failure rolls back as in production.
-  const result = await (globalThis.__getTestDb?.() ?? _db).transaction(callback);
-  clearRequestCache();
-  return result;
+export function createTestDbFromClient(client: NodePgClient) {
+  return drizzlePg(client, { schema: schemaWithRelations });
+}
+
+export function createTestPool() {
+  return new PgPool({ connectionString });
 }
 
 // HELPER FUNCTIONS (used by test setup)
@@ -77,10 +78,9 @@ export function setTestDb(testDb: Db | null) {
   _testDb = testDb;
 }
 
-export function createTestPool() {
-  return new PgPool({ connectionString });
-}
-
-export function createTestDbFromClient(client: NodePgClient) {
-  return drizzlePg(client, { schema: schemaWithRelations });
+export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
+  // In a test, the test's own transaction: this one is a savepoint in it, which a failure rolls back as in production.
+  const result = await (globalThis.__getTestDb?.() ?? _db).transaction(callback);
+  clearRequestCache();
+  return result;
 }

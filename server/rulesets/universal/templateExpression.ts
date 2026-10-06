@@ -187,6 +187,15 @@ class Parser {
 }
 
 /**
+ * True if the modifier value is a template (wrapped in `{{ }}`) with
+ * non-empty inner content. Empty `{{ }}` is treated as a no-op so an
+ * unfinished form submission doesn't generate compose-time warnings.
+ */
+export function isTemplateValue(value: string): boolean {
+  return value.startsWith("{{") && value.endsWith("}}") && value.slice(2, -2).trim().length > 0;
+}
+
+/**
  * Parse and evaluate a template expression. Returns the resolved value, or
  * `null` if any path fails to resolve (warning sent via onWarning).
  *
@@ -286,15 +295,6 @@ export function evaluateTemplateExpression(
   // Pure single-path expression — pass through whatever type the path resolves to.
   if (ast.type === "path") return resolvePath(ast.value);
   return evNumeric(ast);
-}
-
-/**
- * True if the modifier value is a template (wrapped in `{{ }}`) with
- * non-empty inner content. Empty `{{ }}` is treated as a no-op so an
- * unfinished form submission doesn't generate compose-time warnings.
- */
-export function isTemplateValue(value: string): boolean {
-  return value.startsWith("{{") && value.endsWith("}}") && value.slice(2, -2).trim().length > 0;
 }
 
 /** Strip the leading `{{` and trailing `}}` and return the inner expression. */

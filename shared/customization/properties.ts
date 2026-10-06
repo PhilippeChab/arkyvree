@@ -30,6 +30,24 @@ function sortByOptions(values: string[], options: readonly string[] | null): str
   return values.toSorted((a, b) => rank(a) - rank(b));
 }
 
+/** An UPPER_SNAKE_CASE property type as a label ("SPELL_SCHOOL" → "Spell School"). */
+export function formatPropertyType(type: string) {
+  return type
+    .split("_")
+    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+/** Each type's values joined in its options' order (`groupPropertyValues`): an entity's properties as a sheet lists them. */
+export function formatPropertyValues(
+  valuesByType: Record<string, string[]>,
+  optionsOf: (type: string) => readonly string[] | null,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(valuesByType).map(([type, values]) => [type, sortByOptions(values, optionsOf(type)).join(", ")]),
+  );
+}
+
 /**
  * An entity's property values by type, each type's in the order of its options (`optionsOf`, a ruleset's static
  * values for the type: a spell's components as V, S, M…, its descriptors alphabetical, as the books print them),
@@ -45,22 +63,4 @@ export function groupPropertyValues(
   return Object.fromEntries(
     Object.entries(valuesByType).map(([type, values]) => [type, sortByOptions(values, optionsOf(type))]),
   );
-}
-
-/** Each type's values joined in its options' order (`groupPropertyValues`): an entity's properties as a sheet lists them. */
-export function formatPropertyValues(
-  valuesByType: Record<string, string[]>,
-  optionsOf: (type: string) => readonly string[] | null,
-): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(valuesByType).map(([type, values]) => [type, sortByOptions(values, optionsOf(type)).join(", ")]),
-  );
-}
-
-/** An UPPER_SNAKE_CASE property type as a label ("SPELL_SCHOOL" → "Spell School"). */
-export function formatPropertyType(type: string) {
-  return type
-    .split("_")
-    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(" ");
 }

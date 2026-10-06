@@ -27,6 +27,21 @@ type InviteEmailData = {
 };
 
 class CampaignPlayersService {
+  /** Send the invite email (fire-and-forget, call after transaction commits). */
+  private sendInviteEmail(data: InviteEmailData) {
+    emailService.send({
+      to: data.email,
+      subject: `You've been invited to join ${data.campaignName}`,
+      template: EmailTemplate.CampaignInvitation,
+      props: {
+        inviteeName: data.inviteeName,
+        inviterName: data.inviterName,
+        campaignName: data.campaignName,
+        inviteId: data.invite.id,
+      },
+    });
+  }
+
   /** Core invite creation logic — must be called within a transaction. */
   private async createInviteInTransaction(tx: Db, session: Session, player: Player, email: string) {
     const campaign = await Campaigns.findOne(tx, { id: player.campaignId }, Visibility.All);
@@ -112,21 +127,6 @@ class CampaignPlayersService {
       inviterName: inviterUser?.username || inviterUser?.emailAddress.split("@")[0] || "Someone",
       email,
     };
-  }
-
-  /** Send the invite email (fire-and-forget, call after transaction commits). */
-  private sendInviteEmail(data: InviteEmailData) {
-    emailService.send({
-      to: data.email,
-      subject: `You've been invited to join ${data.campaignName}`,
-      template: EmailTemplate.CampaignInvitation,
-      props: {
-        inviteeName: data.inviteeName,
-        inviterName: data.inviterName,
-        campaignName: data.campaignName,
-        inviteId: data.invite.id,
-      },
-    });
   }
 
   async getPlayers(

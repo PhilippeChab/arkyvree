@@ -4,6 +4,11 @@ import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
+/** A requirement as its level and check, "2 classes.fighter.level greater_than_or_equal 4", or its level and chaining for a group, "1 or". */
+export function describeRequirement(r: Requirement) {
+  return r.target ? `${r.level} ${r.target} ${r.operator} ${r.value}` : `${r.level} ${r.chainingOperator}`;
+}
+
 /** The rows the seed wrote into a seeded ruleset, which it finds by name. */
 export async function seededRows(rulesetName = DND35_RULESET_NAME) {
   const ruleset = await Rulesets.findOne(db, { name: rulesetName });
@@ -24,9 +29,4 @@ export async function seededRows(rulesetName = DND35_RULESET_NAME) {
     modifiersOf: (sourceId: string) => rows.modifiers.filter((m) => m.sourceId === sourceId),
     requirementsOf: (entityId: string) => rows.requirements.filter((r) => r.entityId === entityId),
   };
-}
-
-/** A requirement as its level and check, "2 classes.fighter.level greater_than_or_equal 4", or its level and chaining for a group, "1 or". */
-export function describeRequirement(r: Requirement) {
-  return r.target ? `${r.level} ${r.target} ${r.operator} ${r.value}` : `${r.level} ${r.chainingOperator}`;
 }

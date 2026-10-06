@@ -25,14 +25,6 @@ export interface AttackRow {
 /** A weapon slot's label, as an item's location names it. */
 const SLOT_LABELS = { mainhand: "Main Hand", offhand: "Off Hand", twohanded: "Two Handed" } as const;
 
-/** The label a sheet gives a weapon: its slot's, or a natural attack's kind ("Primary", "Secondary"), whatever slot holds it. */
-export function describeWeaponSlot(
-  weapon: { natural: "primary" | "secondary" | null },
-  slot: keyof typeof SLOT_LABELS,
-): string {
-  return weapon.natural ? capitalize(weapon.natural) : SLOT_LABELS[slot];
-}
-
 /**
  * A weapon's attacks, a row each: its own (melee or ranged), then a melee weapon's thrown one if it has a range, then
  * the same with two weapons if its set holds one in each hand (or it's a double weapon), and a double weapon's other end.
@@ -54,4 +46,12 @@ export function buildAttackRows(weapon: WeaponAttacks, slot: string): AttackRow[
   }
   if (weapon.offend) rows.push({ ...row(["other end"], weapon.offend.total, ownRange), damage: weapon.offend.damage });
   return rows;
+}
+
+/** The label a sheet gives a weapon: its slot's, or a natural attack's kind ("Primary", "Secondary"), whatever slot holds it. */
+export function describeWeaponSlot(
+  weapon: { natural: "primary" | "secondary" | null },
+  slot: keyof typeof SLOT_LABELS,
+): string {
+  return weapon.natural ? capitalize(weapon.natural) : SLOT_LABELS[slot];
 }

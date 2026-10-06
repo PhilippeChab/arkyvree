@@ -20,6 +20,18 @@ function refreshSlot(queryClient: QueryClient, slot: SlotParams) {
   }
 }
 
+export function useDetachAttachment(slot: SlotParams) {
+  const queryClient = useQueryClient();
+  const snackbar = useSnackbar();
+
+  return useMutation({
+    mutationFn: (attachmentId: string) =>
+      parseResponse(rpc.api.attachments[":id"].$delete({ param: { id: attachmentId } })),
+    onSuccess: () => refreshSlot(queryClient, slot),
+    onError: (error) => snackbar.error(error),
+  });
+}
+
 export function useDirectUpload(slot: SlotParams) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
@@ -61,17 +73,5 @@ export function useDirectUpload(slot: SlotParams) {
     onError: (error) => {
       snackbar.error(error);
     },
-  });
-}
-
-export function useDetachAttachment(slot: SlotParams) {
-  const queryClient = useQueryClient();
-  const snackbar = useSnackbar();
-
-  return useMutation({
-    mutationFn: (attachmentId: string) =>
-      parseResponse(rpc.api.attachments[":id"].$delete({ param: { id: attachmentId } })),
-    onSuccess: () => refreshSlot(queryClient, slot),
-    onError: (error) => snackbar.error(error),
   });
 }

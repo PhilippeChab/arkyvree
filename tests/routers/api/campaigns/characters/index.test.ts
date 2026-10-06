@@ -13,18 +13,24 @@ import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 const characters = api.api.campaigns[":id"].characters;
 const character = characters[":characterId"];
 
-/** A campaign of the seeded user's and a character of theirs, not linked yet. */
-async function setup() {
-  const { rulesetId } = await getSeedCtx();
-  const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Characters Campaign", rulesetId } }));
-  return { campaignId: campaign.id, characterId: (await postCharacter()).id };
-}
-
 /** Adds a new user to the campaign with `role`, and returns a client signed in as them. */
 async function join(campaignId: string, role: CampaignRole) {
   const member = await createSignedInUser("member");
   const [player] = await Players.create(db, { campaignId, userId: member.user.id, role });
   return { ...member, player };
+}
+
+async function queuedPdfPayload(characterId: string) {
+  const jobs = await queuedPdfJobs(characterId);
+  expect(jobs).toHaveLength(1);
+  return jobs[0].payload;
+}
+
+/** A campaign of the seeded user's and a character of theirs, not linked yet. */
+async function setup() {
+  const { rulesetId } = await getSeedCtx();
+  const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Characters Campaign", rulesetId } }));
+  return { campaignId: campaign.id, characterId: (await postCharacter()).id };
 }
 
 /** The seeded user's character linked as a Private player character, and a new member with `role`. */
@@ -34,12 +40,6 @@ async function setupExport(role: CampaignRole) {
   await Players.update(db, { role: "Player Character" }, { id: owner.id });
   await PlayerCharacters.create(db, { playerId: owner.id, characterId, visibility: "Private" });
   return { campaignId, characterId, member: await join(campaignId, role) };
-}
-
-async function queuedPdfPayload(characterId: string) {
-  const jobs = await queuedPdfJobs(characterId);
-  expect(jobs).toHaveLength(1);
-  return jobs[0].payload;
 }
 
 describe("campaigns characters", () => {

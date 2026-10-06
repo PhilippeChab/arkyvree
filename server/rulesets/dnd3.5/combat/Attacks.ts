@@ -56,23 +56,6 @@ const SLOT_STRENGTH_MULTIPLIERS: Record<string, number> = { "Main Hand": 1, "Off
 /** A natural attack's proficiency: its damage dice are the creature's own, from its stat block, already at its size. */
 const NATURAL_PROFICIENCY = "Natural";
 
-function iterativeAttacks(bab: number): number[] {
-  const attacks: number[] = [];
-  for (let bonus = bab; bonus > 0; bonus -= CONSTANTS.ATTACK_STEP) {
-    attacks.push(bonus);
-  }
-  return attacks.length > 0 ? attacks : [bab];
-}
-
-function formatDamageTotal(damage: WeaponSlot["damage"]): string {
-  const totalBonus = damage.strength + damage.magic + damage.misc;
-  const others = damage.others.length > 0 ? ` ${damage.others.join(" ")}` : "";
-
-  if (totalBonus < 0) return `${damage.base} - ${Math.abs(totalBonus)}${others}`;
-  if (totalBonus > 0) return `${damage.base} + ${totalBonus}${others}`;
-  return `${damage.base}${others}`;
-}
-
 function adjustDamageForSize(baseDamage: string, size: string): string {
   const step = SIZE_STEPS[size] ?? 0;
   if (step === 0) return baseDamage;
@@ -82,6 +65,15 @@ function adjustDamageForSize(baseDamage: string, size: string): string {
 
   const adjusted = Math.max(0, Math.min(DAMAGE_PROGRESSION.length - 1, index + step));
   return DAMAGE_PROGRESSION[adjusted];
+}
+
+function formatDamageTotal(damage: WeaponSlot["damage"]): string {
+  const totalBonus = damage.strength + damage.magic + damage.misc;
+  const others = damage.others.length > 0 ? ` ${damage.others.join(" ")}` : "";
+
+  if (totalBonus < 0) return `${damage.base} - ${Math.abs(totalBonus)}${others}`;
+  if (totalBonus > 0) return `${damage.base} + ${totalBonus}${others}`;
+  return `${damage.base}${others}`;
 }
 
 /**
@@ -99,6 +91,14 @@ function handTraits(
     slot === "Two Handed" && light ? SLOT_STRENGTH_MULTIPLIERS["Main Hand"] : SLOT_STRENGTH_MULTIPLIERS[slot];
   const penalty = slot === "Two Handed" ? 0 : Number(property(WEAPON_ONE_HANDED_PENALTY)?.value ?? 0);
   return { light, share, penalty };
+}
+
+function iterativeAttacks(bab: number): number[] {
+  const attacks: number[] = [];
+  for (let bonus = bab; bonus > 0; bonus -= CONSTANTS.ATTACK_STEP) {
+    attacks.push(bonus);
+  }
+  return attacks.length > 0 ? attacks : [bab];
 }
 
 /** A character's attacks: its base attack bonus, grapple, and each weapon's to-hit and damage. */

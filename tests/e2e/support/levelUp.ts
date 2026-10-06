@@ -35,6 +35,16 @@ async function fillPools(wizard: Locator, { skipOptional }: { skipOptional: bool
 
 /** The d&d 3.5 Add Level wizard: opening it, planning its levels and walking its steps. */
 
+/** Clicks `button` to finish the wizard, which must take the levels without warnings. */
+export async function finishWithoutWarnings(wizard: Locator, button = /^Finish All$/) {
+  await wizard.getByRole("button", { name: button }).click();
+  // Taken, the wizard closes; refused, it stays open on its warnings
+  const proceed = wizard.getByRole("button", { name: /^Proceed Anyway$/ });
+  const state = async () => ((await proceed.isVisible()) ? "warnings" : (await wizard.isVisible()) ? "open" : "closed");
+  await expect.poll(state, { timeout: 15_000 }).not.toBe("open");
+  expect(await state()).toBe("closed");
+}
+
 /** Opens the Add Level wizard of the character on the page. */
 export async function openAddLevelWizard(page: Page) {
   await openActionsMenu(page, /^Add Level/);
@@ -60,28 +70,6 @@ export async function planLevels(wizard: Locator, page: Page, plan: [klass: stri
   await wizard.getByRole("button", { name: /^Next$/ }).click();
 }
 
-/** Walks from hit points to the Feats step: maximum hit points, `ability` for an increase, random skills. */
-export async function walkToFeats(wizard: Locator, ability?: string) {
-  await wizard.getByRole("button", { name: /^Max All$/ }).click();
-  await wizard.getByRole("button", { name: /^Next$/ }).click();
-  // Every fourth level asks for an ability; the step waits for one.
-  if (ability) await wizard.getByLabel(new RegExp(`^${ability}:`)).check();
-  await wizard.getByRole("button", { name: /^Next$/ }).click();
-  await wizard.getByRole("button", { name: /^Auto$/ }).click();
-  await wizard.getByRole("button", { name: /^Next$/ }).click();
-  await expect(wizard.getByRole("heading", { name: /Select Feats by Aptitude/i })).toBeVisible({ timeout: 15_000 });
-}
-
-/** Clicks `button` to finish the wizard, which must take the levels without warnings. */
-export async function finishWithoutWarnings(wizard: Locator, button = /^Finish All$/) {
-  await wizard.getByRole("button", { name: button }).click();
-  // Taken, the wizard closes; refused, it stays open on its warnings
-  const proceed = wizard.getByRole("button", { name: /^Proceed Anyway$/ });
-  const state = async () => ((await proceed.isVisible()) ? "warnings" : (await wizard.isVisible()) ? "open" : "closed");
-  await expect.poll(state, { timeout: 15_000 }).not.toBe("open");
-  expect(await state()).toBe("closed");
-}
-
 /** Walks from the Feats step to the end, filling every required feat pool and every spell pool. Returns the spells picked. */
 export async function walkFromFeats(wizard: Locator) {
   await fillPools(wizard, { skipOptional: true });
@@ -94,6 +82,18 @@ export async function walkFromFeats(wizard: Locator) {
   await wizard.getByRole("button", { name: /^Next$/ }).click();
   await finishWithoutWarnings(wizard);
   return spells;
+}
+
+/** Walks from hit points to the Feats step: maximum hit points, `ability` for an increase, random skills. */
+export async function walkToFeats(wizard: Locator, ability?: string) {
+  await wizard.getByRole("button", { name: /^Max All$/ }).click();
+  await wizard.getByRole("button", { name: /^Next$/ }).click();
+  // Every fourth level asks for an ability; the step waits for one.
+  if (ability) await wizard.getByLabel(new RegExp(`^${ability}:`)).check();
+  await wizard.getByRole("button", { name: /^Next$/ }).click();
+  await wizard.getByRole("button", { name: /^Auto$/ }).click();
+  await wizard.getByRole("button", { name: /^Next$/ }).click();
+  await expect(wizard.getByRole("heading", { name: /Select Feats by Aptitude/i })).toBeVisible({ timeout: 15_000 });
 }
 
 /** Plans `plan`'s levels and walks the whole wizard. Returns the spells picked. */

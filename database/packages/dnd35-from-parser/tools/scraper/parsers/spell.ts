@@ -60,6 +60,18 @@ const STAT_LABEL_PREFIXES = [
 // Shared helpers
 // ---------------------------------------------------------------------------
 
+function isStatLabel(text: string): boolean {
+  return STAT_LABEL_PREFIXES.some((p) => text.startsWith(p));
+}
+
+function parseComponents(text: string): string[] {
+  if (!text) return [];
+  return text
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean);
+}
+
 function parseLevelEntries(text: string): { className: string; level: number }[] {
   if (!text) return [];
   return text
@@ -71,14 +83,6 @@ function parseLevelEntries(text: string): { className: string; level: number }[]
       return { className: match[1].trim(), level: parseInt(match[2], 10) };
     })
     .filter((e): e is { className: string; level: number } => e !== null);
-}
-
-function parseComponents(text: string): string[] {
-  if (!text) return [];
-  return text
-    .split(",")
-    .map((c) => c.trim())
-    .filter(Boolean);
 }
 
 /** Parse stat fields from a dndtools.net detail page by walking the HTML structure */
@@ -150,10 +154,6 @@ function parseStatFields($: cheerio.CheerioAPI): Map<string, string> {
   }
 
   return stats;
-}
-
-function isStatLabel(text: string): boolean {
-  return STAT_LABEL_PREFIXES.some((p) => text.startsWith(p));
 }
 
 // ---------------------------------------------------------------------------

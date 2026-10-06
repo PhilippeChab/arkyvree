@@ -155,19 +155,30 @@ const SERVICES: Record<string, Service> = {
 
 const ENTITY_TYPES = Object.keys(SERVICES);
 
-/** A new user's empty ruleset, holding the rows entity bodies refer to. */
-async function setup() {
-  const { user, session, ruleset } = await createTestUserAndRuleset();
-  const [ability] = await Abilities.create(db, { rulesetId: ruleset.id, name: "Strength", description: "Strength" });
-  const featAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Feat Aptitude" });
-  const powerAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Power Aptitude" });
-  const refs: Refs = { abilityId: ability.id, featAptitudeId: featAptitude.id, powerAptitudeId: powerAptitude.id };
-  return { user, session, ruleset, refs };
+/** The entity's customizations, and the ids of its modifiers' requirements. */
+async function customizationsOf(entityType: (typeof ENTITY_TYPES)[number], id: string) {
+  const modifiers = await Modifiers.findMany(db, { sourceIds: [id], sourceType: entityType });
+  const modifierRequirements = await Requirements.findMany(db, {
+    entityIds: modifiers.map((m) => m.id),
+    entityType: "modifiers",
+  });
+  return {
+    modifiers,
+    modifierRequirementIds: modifierRequirements.map((r) => r.id),
+    requirements: await Requirements.findMany(db, { entityIds: [id], entityType }),
+    properties: await Properties.findMany(db, { entityIds: [id], entityType, type: "NOTE" }),
+  };
 }
 
-/** Whether any of these requirements is left. */
-async function remaining(ids: string[]) {
-  return (await Promise.all(ids.map((id) => Requirements.findOne(db, { id })))).filter(Boolean);
+/** How many of each an entity has. */
+async function counts(entityType: (typeof ENTITY_TYPES)[number], id: string) {
+  const { modifiers, modifierRequirementIds, requirements, properties } = await customizationsOf(entityType, id);
+  return {
+    modifiers: modifiers.length,
+    modifierRequirements: modifierRequirementIds.length,
+    requirements: requirements.length,
+    properties: properties.length,
+  };
 }
 
 /** Gives the entity a requirement, a property and, when its type can own one, a modifier with a requirement of its own. */
@@ -200,30 +211,19 @@ async function customize(entityType: (typeof ENTITY_TYPES)[number], id: string) 
   await Properties.create(db, { entityId: id, entityType, type: "NOTE", value: "doomed" });
 }
 
-/** The entity's customizations, and the ids of its modifiers' requirements. */
-async function customizationsOf(entityType: (typeof ENTITY_TYPES)[number], id: string) {
-  const modifiers = await Modifiers.findMany(db, { sourceIds: [id], sourceType: entityType });
-  const modifierRequirements = await Requirements.findMany(db, {
-    entityIds: modifiers.map((m) => m.id),
-    entityType: "modifiers",
-  });
-  return {
-    modifiers,
-    modifierRequirementIds: modifierRequirements.map((r) => r.id),
-    requirements: await Requirements.findMany(db, { entityIds: [id], entityType }),
-    properties: await Properties.findMany(db, { entityIds: [id], entityType, type: "NOTE" }),
-  };
+/** Whether any of these requirements is left. */
+async function remaining(ids: string[]) {
+  return (await Promise.all(ids.map((id) => Requirements.findOne(db, { id })))).filter(Boolean);
 }
 
-/** How many of each an entity has. */
-async function counts(entityType: (typeof ENTITY_TYPES)[number], id: string) {
-  const { modifiers, modifierRequirementIds, requirements, properties } = await customizationsOf(entityType, id);
-  return {
-    modifiers: modifiers.length,
-    modifierRequirements: modifierRequirementIds.length,
-    requirements: requirements.length,
-    properties: properties.length,
-  };
+/** A new user's empty ruleset, holding the rows entity bodies refer to. */
+async function setup() {
+  const { user, session, ruleset } = await createTestUserAndRuleset();
+  const [ability] = await Abilities.create(db, { rulesetId: ruleset.id, name: "Strength", description: "Strength" });
+  const featAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Feat Aptitude" });
+  const powerAptitude = await AptitudesService.createAptitude(session, ruleset.id, { name: "Power Aptitude" });
+  const refs: Refs = { abilityId: ability.id, featAptitudeId: featAptitude.id, powerAptitudeId: powerAptitude.id };
+  return { user, session, ruleset, refs };
 }
 
 describe.each(ENTITY_TYPES)("%s service", (entityType) => {

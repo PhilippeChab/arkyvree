@@ -33,6 +33,25 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 type ActivityUrl = string | null | { noAccess: true; entityType: "ruleset" | "character" };
 
 class ActivitiesService {
+  /**
+   * A contributor's link: its invitee goes to the invite while it's pending and has lost access once it's revoked or
+   * rejected (signalled, so the caller can say so instead of 404'ing); anyone else, an active contributor or the
+   * owner, goes to what it contributes to.
+   */
+  private contributorUrl(
+    session: Session,
+    contributor: { userId: string | null; status: string },
+    entityType: "ruleset" | "character",
+    inviteUrl: string,
+    entityUrl: string,
+  ): ActivityUrl {
+    if (contributor.userId === session.userId) {
+      if (contributor.status === "Pending") return inviteUrl;
+      if (contributor.status !== "Active") return { noAccess: true, entityType };
+    }
+    return entityUrl;
+  }
+
   private async resolveCustomizationUrl(entityId: string, entityType: string): Promise<string | null> {
     if (entityType === "klass_levels") {
       const klassLevel = await KlassLevels.findOne(db, { id: entityId });
@@ -77,25 +96,6 @@ class ActivitiesService {
     return isOneOf(targetTable, CUSTOMIZATION_PAGE_TYPES)
       ? `/rulesets/${entity.rulesetId}/${buildCustomizationPath(targetTable, targetId)}`
       : `/rulesets/${entity.rulesetId}/${getUrlSegment(targetTable)}/${targetId}`;
-  }
-
-  /**
-   * A contributor's link: its invitee goes to the invite while it's pending and has lost access once it's revoked or
-   * rejected (signalled, so the caller can say so instead of 404'ing); anyone else, an active contributor or the
-   * owner, goes to what it contributes to.
-   */
-  private contributorUrl(
-    session: Session,
-    contributor: { userId: string | null; status: string },
-    entityType: "ruleset" | "character",
-    inviteUrl: string,
-    entityUrl: string,
-  ): ActivityUrl {
-    if (contributor.userId === session.userId) {
-      if (contributor.status === "Pending") return inviteUrl;
-      if (contributor.status !== "Active") return { noAccess: true, entityType };
-    }
-    return entityUrl;
   }
 
   /** A class's section page (its levels, its skills), or null when the class is gone. */

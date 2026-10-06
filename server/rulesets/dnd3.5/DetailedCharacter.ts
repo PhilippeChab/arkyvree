@@ -387,6 +387,15 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterSkills.updateSkillPointTotals();
   }
 
+  protected postRequirementProcessing(): void {
+    // A weapon's proficiency is its base item's requirements (`DetailedCharacterDataLoader`), apart from its others,
+    // read of the entry holding it: a bastard sword's in the hands it's in, each of an item's entries alone
+    const unproficient = this.inventory
+      .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency], { sourceId: inv.id }))
+      .map((inv) => ({ id: inv.id, itemId: inv.item.id }));
+    this.detailedCharacterCombat.applyProficiencyPenalties(unproficient);
+  }
+
   protected async postModifierProcessing(rulesetData: CachedRulesetData): Promise<void> {
     this.detailedCharacterSpellcasting.fetchBonusCasterLevelData(
       rulesetData,
@@ -421,15 +430,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterSpellcasting.buildSpellTags(this.feats, this.featListIds);
   }
 
-  protected postRequirementProcessing(): void {
-    // A weapon's proficiency is its base item's requirements (`DetailedCharacterDataLoader`), apart from its others,
-    // read of the entry holding it: a bastard sword's in the hands it's in, each of an item's entries alone
-    const unproficient = this.inventory
-      .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency], { sourceId: inv.id }))
-      .map((inv) => ({ id: inv.id, itemId: inv.item.id }));
-    this.detailedCharacterCombat.applyProficiencyPenalties(unproficient);
-  }
-
   protected async preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void> {
     this.detailedCharacterSpellcasting.loadClassLists(rulesetData);
     this.detailedCharacterSpellcasting.initSpellcastingHolder(this.holders!, this.modifiers, this.klassCasterTypeMap);
@@ -438,14 +438,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterCombat.applyOversizedTwoWeaponFighting(
       this.hasFeatWith(rulesetData, FEAT_OVERSIZED_TWO_WEAPON_FIGHTING),
     );
-  }
-
-  async build(
-    database?: Db,
-    projectedData?: Dnd35ProjectedCharacterData,
-    preloaded?: PreloadedCharacterData | PreloadedRulesetData,
-  ) {
-    await super.build(database, projectedData, preloaded);
   }
 
   getDetailedCharacterArmors() {
@@ -620,5 +612,13 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     const result = this.areRequirementsMet(requirementGroups);
     this.detailedCharacterClasses.removeProjectedLevel(klassName);
     return result;
+  }
+
+  async build(
+    database?: Db,
+    projectedData?: Dnd35ProjectedCharacterData,
+    preloaded?: PreloadedCharacterData | PreloadedRulesetData,
+  ) {
+    await super.build(database, projectedData, preloaded);
   }
 }

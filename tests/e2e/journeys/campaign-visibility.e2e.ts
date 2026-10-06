@@ -15,6 +15,11 @@ type Campaign = { id: string; characters: Record<(typeof VISIBILITIES)[number], 
  */
 const VISIBILITIES = ["Public", "Partial", "Private"] as const;
 
+/** Whether the campaign character's sheet shows its build, or only its identity. */
+function buildShown(page: Page) {
+  return page.getByText("Classes & Levels", { exact: true });
+}
+
 /**
  * A campaign `gm` runs, which `player` and `other` join: `player` links a character of each visibility. All through
  * the API. The players' pages are closed after.
@@ -53,11 +58,6 @@ async function setUpCampaign(
   await playerPage.context().close();
   await (await join(other)).context().close();
   return { id, characters };
-}
-
-/** Whether the campaign character's sheet shows its build, or only its identity. */
-function buildShown(page: Page) {
-  return page.getByText("Classes & Levels", { exact: true });
 }
 
 test.describe("A campaign character", () => {

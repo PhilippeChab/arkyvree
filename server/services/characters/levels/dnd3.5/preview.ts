@@ -21,6 +21,24 @@ import { buildBaselineAptitudes, projectPlannedLevels } from "./projection.ts";
 
 type PowerPools = ReturnType<DetailedCharacterAptitudes["extractPowerPools"]>;
 
+/** The planned levels (by index) that take an ability increase, after the character's `existingCount` levels. */
+function abilityIncreaseLevels(rulesetModule: RulesetModule, existingCount: number, plannedCount: number) {
+  const levels: number[] = [];
+  for (let i = 0; i < plannedCount; i++) {
+    if (rulesetModule.hooks.levels.isAbilityIncreaseLevel(existingCount + i)) {
+      levels.push(i);
+    }
+  }
+  return levels;
+}
+
+/** The powers the planned class levels grant, each saying whether it's free. */
+function autoGrantedPowers(rulesetData: CachedRulesetData, klassLevelIds: string[]) {
+  return klassLevelIds
+    .flatMap((klassLevelId) => rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevelId) ?? [])
+    .map((rec) => ({ ...rec.powersInRule, free: rec.free }));
+}
+
 /**
  * The planned levels' pools and what's left to pick in them: an unleveled pool is a feat pool, and a power pool too
  * when it has powers (shared); a leveled one is a power pool.
@@ -50,24 +68,6 @@ function splitPools(aptitudesInstance: DetailedCharacterAptitudes, rulesetData: 
     }
   }
   return { featPools, powerPools, featsToSelect, powersToSelect };
-}
-
-/** The planned levels (by index) that take an ability increase, after the character's `existingCount` levels. */
-function abilityIncreaseLevels(rulesetModule: RulesetModule, existingCount: number, plannedCount: number) {
-  const levels: number[] = [];
-  for (let i = 0; i < plannedCount; i++) {
-    if (rulesetModule.hooks.levels.isAbilityIncreaseLevel(existingCount + i)) {
-      levels.push(i);
-    }
-  }
-  return levels;
-}
-
-/** The powers the planned class levels grant, each saying whether it's free. */
-function autoGrantedPowers(rulesetData: CachedRulesetData, klassLevelIds: string[]) {
-  return klassLevelIds
-    .flatMap((klassLevelId) => rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevelId) ?? [])
-    .map((rec) => ({ ...rec.powersInRule, free: rec.free }));
 }
 
 /**

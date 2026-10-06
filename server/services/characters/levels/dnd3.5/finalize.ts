@@ -54,34 +54,33 @@ import { checkAbilityIncrease, checkSelections, validateAndFetchLevelSelections 
 
 type LevelSelections = Awaited<ReturnType<typeof validateAndFetchLevelSelections>>;
 
-/** Inserts skill, feat, and power child records for a character level. */
-async function insertLevelChildren(
-  tx: Db,
-  characterLevelId: string,
-  skills: Record<string, number>,
-  feats: Record<string, string[]>,
-  powers: Record<string, string[]>,
-) {
-  const skillRows = Object.entries(skills)
-    .filter(([, rank]) => rank > 0)
-    .map(([skillId, rank]) => ({ characterLevelId, skillId, rank }));
-  const featRows = Object.entries(feats).flatMap(([aptitudeId, ids]) =>
-    ids.map((featId) => ({ characterLevelId, featId, aptitudeId })),
-  );
-  const powerRows = Object.entries(powers).flatMap(([aptitudeId, ids]) =>
-    ids.map((powerId) => ({ characterLevelId, powerId, aptitudeId })),
-  );
+/**
+ * The feat and power pools of the character with its planned levels: a leveled aptitude is a power pool, an unleveled
+ * one a feat pool, and a power pool too when it has powers.
+ */
+function poolIds(aptitudesInstance: DetailedCharacterAptitudes, rulesetData: CachedRulesetData) {
+  const featPoolIds: string[] = [];
+  const powerPoolIds: string[] = [];
+  const nonLeveledAptitudeIds: string[] = [];
 
-  await CharacterLevelSkills.createMany(tx, skillRows);
-  await CharacterLevelFeats.createMany(tx, featRows);
-  await CharacterLevelPowers.createMany(tx, powerRows);
-}
+  for (const [key, aptitude] of Object.entries(aptitudesInstance.getAptitudes())) {
+    if (aptitudesInstance.isLeveledAptitude(key)) {
+      powerPoolIds.push(aptitude.id);
+    } else {
+      nonLeveledAptitudeIds.push(aptitude.id);
+    }
+  }
 
-/** Deletes a character level's skills, feats and powers. */
-async function deleteLevelChildren(tx: Db, characterLevelId: string) {
-  await CharacterLevelSkills.delete(tx, { characterLevelId });
-  await CharacterLevelFeats.delete(tx, { characterLevelId });
-  await CharacterLevelPowers.delete(tx, { characterLevelId });
+  const sharedAptitudeIds = new Set(
+    nonLeveledAptitudeIds.filter((id) => rulesetData.aptitudeIdsByHavingPowers.has(id)),
+  );
+  for (const aptId of nonLeveledAptitudeIds) {
+    if (sharedAptitudeIds.has(aptId)) {
+      powerPoolIds.push(aptId);
+    }
+    featPoolIds.push(aptId);
+  }
+  return { featPoolIds, powerPoolIds };
 }
 
 /** The edited level's projection: the level with its new HP, ability and selections, in place of its saved row. */
@@ -129,145 +128,27 @@ function projectEdit(
   };
 }
 
-/**
- * The aptitude pools the edited level contributes to: those the character allows more of with the level than before
- * it. Both builds leave out the level and every later one, so only what THIS level grants counts.
- */
-async function ownedPoolNames(
+/** Inserts skill, feat, and power child records for a character level. */
+async function insertLevelChildren(
   tx: Db,
-  rulesetModule: RulesetModule,
-  characterRecord: Character,
-  existingLevels: { id: string; createdAt: string }[],
   characterLevelId: string,
-  klassLevelId: string,
   skills: Record<string, number>,
-  validationResult: LevelSelections,
+  feats: Record<string, string[]>,
+  powers: Record<string, string[]>,
 ) {
-  const { featCustomizations, autoGrantedRecords } = validationResult;
-  const onwardIds = getLevelIdsFromOnward(existingLevels, characterLevelId);
-  const baselineData: Dnd35ProjectedCharacterData = {
-    excludeCharacterLevelIds: onwardIds,
-  };
-  const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await baselineCharacter.build(tx, baselineData);
-  const baselineApts = baselineCharacter.getDetailedCharacterAptitudes().getAptitudes();
-  const baselineAllowed = new Map<string, number>();
-  for (const apt of Object.values(baselineApts)) {
-    baselineAllowed.set(apt.name, apt.allowed);
-  }
-
-  // Mirror the primary projection's shape exactly: auto-grants via
-  // `givenFeats` and the user's submitted feats/skills/powers via
-  // `buildProjectedSelections`. Any entity attached to this level —
-  // auto-granted or user-picked — can carry an
-  // `aptitudes.<x>.allowed += N` modifier (Bonus Feat (Fighter)
-  // auto-grants Fighter Bonus Feat, Wizard specialization picks grant
-  // Prohibited School, War Domain grants War Domain Weapon, etc.).
-  // If withLevelData misses any of them the affected pool stays out of
-  // ownedPoolNames and real under-pick issues get filtered out.
-  const projectedLevelForFilter = buildProjectedCharacterLevel(characterRecord.id, klassLevelId);
-  const withLevelData: Dnd35ProjectedCharacterData = {
-    excludeCharacterLevelIds: onwardIds,
-    characterLevels: [projectedLevelForFilter],
-    givenFeats: buildProjectedGivenFeats(autoGrantedRecords, projectedLevelForFilter.id, featCustomizations),
-    ...buildProjectedSelections(klassLevelId, projectedLevelForFilter.id, skills, validationResult),
-  };
-  const withLevelCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await withLevelCharacter.build(tx, withLevelData);
-  const withLevelApts = withLevelCharacter.getDetailedCharacterAptitudes().getAptitudes();
-  const owned = new Set<string>();
-  for (const apt of Object.values(withLevelApts)) {
-    if (apt.allowed > (baselineAllowed.get(apt.name) ?? 0)) {
-      owned.add(apt.name);
-    }
-  }
-  return owned;
-}
-
-/**
- * The feat and power pools of the character with its planned levels: a leveled aptitude is a power pool, an unleveled
- * one a feat pool, and a power pool too when it has powers.
- */
-function poolIds(aptitudesInstance: DetailedCharacterAptitudes, rulesetData: CachedRulesetData) {
-  const featPoolIds: string[] = [];
-  const powerPoolIds: string[] = [];
-  const nonLeveledAptitudeIds: string[] = [];
-
-  for (const [key, aptitude] of Object.entries(aptitudesInstance.getAptitudes())) {
-    if (aptitudesInstance.isLeveledAptitude(key)) {
-      powerPoolIds.push(aptitude.id);
-    } else {
-      nonLeveledAptitudeIds.push(aptitude.id);
-    }
-  }
-
-  const sharedAptitudeIds = new Set(
-    nonLeveledAptitudeIds.filter((id) => rulesetData.aptitudeIdsByHavingPowers.has(id)),
+  const skillRows = Object.entries(skills)
+    .filter(([, rank]) => rank > 0)
+    .map(([skillId, rank]) => ({ characterLevelId, skillId, rank }));
+  const featRows = Object.entries(feats).flatMap(([aptitudeId, ids]) =>
+    ids.map((featId) => ({ characterLevelId, featId, aptitudeId })),
   );
-  for (const aptId of nonLeveledAptitudeIds) {
-    if (sharedAptitudeIds.has(aptId)) {
-      powerPoolIds.push(aptId);
-    }
-    featPoolIds.push(aptId);
-  }
-  return { featPoolIds, powerPoolIds };
-}
-
-/**
- * Phase 1's distribution data: each planned level's skill points, class skills and pool slots, from the character
- * built with every planned level, and its skills as they are.
- */
-async function levelDistributionData(
-  tx: Db,
-  rulesetModule: RulesetModule,
-  characterRecord: Character,
-  rulesetData: CachedRulesetData,
-  klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
-  baseLevelCount: number,
-): Promise<PerLevelDistributionData> {
-  const { projectedData, allAutoGrantedFeatRecords } = projectPlannedLevels(
-    characterRecord.id,
-    klassLevelEntries,
-    rulesetData,
+  const powerRows = Object.entries(powers).flatMap(([aptitudeId, ids]) =>
+    ids.map((powerId) => ({ characterLevelId, powerId, aptitudeId })),
   );
 
-  // Build full character with all planned levels to get aptitude pools
-  const fullCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await fullCharacter.build(tx, projectedData);
-  const levelUpProjector = rulesetModule.createLevelUpProjector(fullCharacter) as Dnd35LevelUpProjector;
-  const { featPoolIds, powerPoolIds } = poolIds(fullCharacter.getDetailedCharacterAptitudes(), rulesetData);
-
-  // Compute per-level feat/power slots from modifier data directly
-  const baselineApts = await buildBaselineAptitudes(tx, rulesetModule, characterRecord, fullCharacter);
-  const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
-  const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
-    rulesetData,
-    klassLevelIds,
-    allAutoGrantedFeatRecords,
-    featPoolIds,
-    powerPoolIds,
-    baseLevelCount,
-    baselineApts,
-  );
-
-  const perLevelSkillPoints = await levelUpProjector.computeSkillPointsPerLevel(
-    klassLevelIds,
-    baseLevelCount,
-    rulesetData,
-  );
-  const classSkills = getPlannedClassSkills(
-    rulesetData,
-    klassLevelEntries.map(({ klass }) => klass.id),
-  );
-
-  return {
-    perLevelSkillPoints,
-    perLevelClassSkillIds: classSkills.perLevel,
-    perLevelFeatSlots,
-    perLevelPowerSlots,
-    baseCharacterLevel: baseLevelCount,
-    skillContexts: buildSkillContexts(levelUpProjector, rulesetData.skills, classSkills.merged),
-  };
+  await CharacterLevelSkills.createMany(tx, skillRows);
+  await CharacterLevelFeats.createMany(tx, featRows);
+  await CharacterLevelPowers.createMany(tx, powerRows);
 }
 
 /**
@@ -346,6 +227,125 @@ async function insertPlannedLevels(
     await insertLevelChildren(tx, characterLevel.id, levelSkills, levelFeats, levelPowers);
   }
   return createdLevels;
+}
+
+/** Deletes a character level's skills, feats and powers. */
+async function deleteLevelChildren(tx: Db, characterLevelId: string) {
+  await CharacterLevelSkills.delete(tx, { characterLevelId });
+  await CharacterLevelFeats.delete(tx, { characterLevelId });
+  await CharacterLevelPowers.delete(tx, { characterLevelId });
+}
+
+/**
+ * Phase 1's distribution data: each planned level's skill points, class skills and pool slots, from the character
+ * built with every planned level, and its skills as they are.
+ */
+async function levelDistributionData(
+  tx: Db,
+  rulesetModule: RulesetModule,
+  characterRecord: Character,
+  rulesetData: CachedRulesetData,
+  klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
+  baseLevelCount: number,
+): Promise<PerLevelDistributionData> {
+  const { projectedData, allAutoGrantedFeatRecords } = projectPlannedLevels(
+    characterRecord.id,
+    klassLevelEntries,
+    rulesetData,
+  );
+
+  // Build full character with all planned levels to get aptitude pools
+  const fullCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+  await fullCharacter.build(tx, projectedData);
+  const levelUpProjector = rulesetModule.createLevelUpProjector(fullCharacter) as Dnd35LevelUpProjector;
+  const { featPoolIds, powerPoolIds } = poolIds(fullCharacter.getDetailedCharacterAptitudes(), rulesetData);
+
+  // Compute per-level feat/power slots from modifier data directly
+  const baselineApts = await buildBaselineAptitudes(tx, rulesetModule, characterRecord, fullCharacter);
+  const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
+  const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
+    rulesetData,
+    klassLevelIds,
+    allAutoGrantedFeatRecords,
+    featPoolIds,
+    powerPoolIds,
+    baseLevelCount,
+    baselineApts,
+  );
+
+  const perLevelSkillPoints = await levelUpProjector.computeSkillPointsPerLevel(
+    klassLevelIds,
+    baseLevelCount,
+    rulesetData,
+  );
+  const classSkills = getPlannedClassSkills(
+    rulesetData,
+    klassLevelEntries.map(({ klass }) => klass.id),
+  );
+
+  return {
+    perLevelSkillPoints,
+    perLevelClassSkillIds: classSkills.perLevel,
+    perLevelFeatSlots,
+    perLevelPowerSlots,
+    baseCharacterLevel: baseLevelCount,
+    skillContexts: buildSkillContexts(levelUpProjector, rulesetData.skills, classSkills.merged),
+  };
+}
+
+/**
+ * The aptitude pools the edited level contributes to: those the character allows more of with the level than before
+ * it. Both builds leave out the level and every later one, so only what THIS level grants counts.
+ */
+async function ownedPoolNames(
+  tx: Db,
+  rulesetModule: RulesetModule,
+  characterRecord: Character,
+  existingLevels: { id: string; createdAt: string }[],
+  characterLevelId: string,
+  klassLevelId: string,
+  skills: Record<string, number>,
+  validationResult: LevelSelections,
+) {
+  const { featCustomizations, autoGrantedRecords } = validationResult;
+  const onwardIds = getLevelIdsFromOnward(existingLevels, characterLevelId);
+  const baselineData: Dnd35ProjectedCharacterData = {
+    excludeCharacterLevelIds: onwardIds,
+  };
+  const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+  await baselineCharacter.build(tx, baselineData);
+  const baselineApts = baselineCharacter.getDetailedCharacterAptitudes().getAptitudes();
+  const baselineAllowed = new Map<string, number>();
+  for (const apt of Object.values(baselineApts)) {
+    baselineAllowed.set(apt.name, apt.allowed);
+  }
+
+  // Mirror the primary projection's shape exactly: auto-grants via
+  // `givenFeats` and the user's submitted feats/skills/powers via
+  // `buildProjectedSelections`. Any entity attached to this level —
+  // auto-granted or user-picked — can carry an
+  // `aptitudes.<x>.allowed += N` modifier (Bonus Feat (Fighter)
+  // auto-grants Fighter Bonus Feat, Wizard specialization picks grant
+  // Prohibited School, War Domain grants War Domain Weapon, etc.).
+  // If withLevelData misses any of them the affected pool stays out of
+  // ownedPoolNames and real under-pick issues get filtered out.
+  const projectedLevelForFilter = buildProjectedCharacterLevel(characterRecord.id, klassLevelId);
+  const withLevelData: Dnd35ProjectedCharacterData = {
+    excludeCharacterLevelIds: onwardIds,
+    characterLevels: [projectedLevelForFilter],
+    givenFeats: buildProjectedGivenFeats(autoGrantedRecords, projectedLevelForFilter.id, featCustomizations),
+    ...buildProjectedSelections(klassLevelId, projectedLevelForFilter.id, skills, validationResult),
+  };
+  const withLevelCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+  await withLevelCharacter.build(tx, withLevelData);
+  const withLevelApts = withLevelCharacter.getDetailedCharacterAptitudes().getAptitudes();
+  const owned = new Set<string>();
+  for (const apt of Object.values(withLevelApts)) {
+    if (apt.allowed > (baselineAllowed.get(apt.name) ?? 0)) {
+      owned.add(apt.name);
+    }
+  }
+  return owned;
 }
 
 /** Re-saves an existing character level with new selections (HP, ability, skills, feats, powers). Validates all picks and rebuilds the character to check constraints. */

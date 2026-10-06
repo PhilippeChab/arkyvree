@@ -60,6 +60,34 @@ function normalize(v: unknown): string {
 }
 
 /**
+ * Get campaign GMs for the campaign that owns a given invite.
+ */
+async function getCampaignGMsForInvite(db: Db, inviteId: string): Promise<string[]> {
+  const invite = await Invites.findOne(db, { id: inviteId });
+  if (!invite) return [];
+  const player = await Players.findOne(db, { id: invite.playerId });
+  if (!player) return [];
+  const campaignPlayers = await Players.findMany(db, { campaignId: player.campaignId });
+  return campaignPlayers.filter((p) => p.role === "Game Master" && p.userId).map((p) => p.userId!);
+}
+
+/**
+ * Get all active contributor userIds + ruleset owner for a given rulesetId.
+ */
+async function getRulesetStakeholders(db: Db, rulesetId: string): Promise<string[]> {
+  // `db` is the caller's transaction, whose queries run one at a time.
+  const contributors = await Contributors.findMany(db, { rulesetId, status: "Active" });
+  const ruleset = await Rulesets.findOne(db, { id: rulesetId });
+
+  const userIds = new Set<string>();
+  if (ruleset?.userId) userIds.add(ruleset.userId);
+  for (const c of contributors) {
+    if (c.userId) userIds.add(c.userId);
+  }
+  return Array.from(userIds);
+}
+
+/**
  * Resolve the rulesetId from a target entity. Used for ruleset content change notifications.
  */
 async function resolveRulesetId(db: Db, targetTable: string, targetId: string): Promise<string | null> {
@@ -110,34 +138,6 @@ async function resolveRulesetId(db: Db, targetTable: string, targetId: string): 
   }
 
   return null;
-}
-
-/**
- * Get all active contributor userIds + ruleset owner for a given rulesetId.
- */
-async function getRulesetStakeholders(db: Db, rulesetId: string): Promise<string[]> {
-  // `db` is the caller's transaction, whose queries run one at a time.
-  const contributors = await Contributors.findMany(db, { rulesetId, status: "Active" });
-  const ruleset = await Rulesets.findOne(db, { id: rulesetId });
-
-  const userIds = new Set<string>();
-  if (ruleset?.userId) userIds.add(ruleset.userId);
-  for (const c of contributors) {
-    if (c.userId) userIds.add(c.userId);
-  }
-  return Array.from(userIds);
-}
-
-/**
- * Get campaign GMs for the campaign that owns a given invite.
- */
-async function getCampaignGMsForInvite(db: Db, inviteId: string): Promise<string[]> {
-  const invite = await Invites.findOne(db, { id: inviteId });
-  if (!invite) return [];
-  const player = await Players.findOne(db, { id: invite.playerId });
-  if (!player) return [];
-  const campaignPlayers = await Players.findMany(db, { campaignId: player.campaignId });
-  return campaignPlayers.filter((p) => p.role === "Game Master" && p.userId).map((p) => p.userId!);
 }
 
 /**

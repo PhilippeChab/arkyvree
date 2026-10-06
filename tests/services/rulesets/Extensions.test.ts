@@ -87,8 +87,26 @@ const ENTITIES = {
   },
 };
 
-async function seededRuleset(name: string) {
-  return (await Rulesets.findOne(db, { name }))!;
+function unique(keys: string[]) {
+  return new Set(keys).size === keys.length;
+}
+
+/** A published public extension of the seeded base (a system one when `userId` is null). */
+async function createExtension(userId: string | null = null, values: RulesetValues = {}) {
+  const { rulesetId } = await getSeedCtx();
+  return await createTestRuleset(userId, {
+    rulesetId,
+    ancestorRulesetIds: [rulesetId],
+    kind: "extension",
+    status: "Published",
+    private: false,
+    ...values,
+  });
+}
+
+/** The fork's visible feats of this name. */
+async function featsNamed(rulesetId: string, name: string) {
+  return (await FeatsService.getFeats(rulesetId, { search: name }, firstPage)).items.filter((f) => f.name === name);
 }
 
 async function forkBase(session: Session, values: { private?: boolean } = {}) {
@@ -98,6 +116,10 @@ async function forkBase(session: Session, values: { private?: boolean } = {}) {
     private: false,
     ...values,
   });
+}
+
+async function seededRuleset(name: string) {
+  return (await Rulesets.findOne(db, { name }))!;
 }
 
 /** The seeded base, its Complete Warrior extension, and a new user's fork of the base. */
@@ -152,36 +174,6 @@ async function favoredSoulOnMixedFork() {
   return { ...fork, favoredSoul, list, offer };
 }
 
-/** A published public extension of the seeded base (a system one when `userId` is null). */
-async function createExtension(userId: string | null = null, values: RulesetValues = {}) {
-  const { rulesetId } = await getSeedCtx();
-  return await createTestRuleset(userId, {
-    rulesetId,
-    ancestorRulesetIds: [rulesetId],
-    kind: "extension",
-    status: "Published",
-    private: false,
-    ...values,
-  });
-}
-
-/** A seeded Complete Warrior feat, with the aptitude it's picked through. */
-async function warriorFeat(name: string) {
-  const extension = await seededRuleset(DND35_COMPLETE_WARRIOR_NAME);
-  const feat = (await Feats.findOne(db, { name, rulesetId: extension.id }))!;
-  const [link] = await FeatsAptitudes.findMany(db, { featId: feat.id });
-  return { ...feat, aptitudeId: link.aptitudeId };
-}
-
-/** The fork's visible feats of this name. */
-async function featsNamed(rulesetId: string, name: string) {
-  return (await FeatsService.getFeats(rulesetId, { search: name }, firstPage)).items.filter((f) => f.name === name);
-}
-
-function unique(keys: string[]) {
-  return new Set(keys).size === keys.length;
-}
-
 /** Two system extensions that each copy the base entity and give it an aptitude, a requirement and a modifier; and a fork using both. */
 async function setupSiblings(entityType: EntityType) {
   const entity = ENTITIES[entityType];
@@ -227,6 +219,14 @@ async function setupSiblings(entityType: EntityType) {
   const draft = await forkBase(session);
   await RulesetExtensionsService.subscribeExtension(session, draft.id, extensions);
   return { session, draft, baseId, contributions };
+}
+
+/** A seeded Complete Warrior feat, with the aptitude it's picked through. */
+async function warriorFeat(name: string) {
+  const extension = await seededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+  const feat = (await Feats.findOne(db, { name, rulesetId: extension.id }))!;
+  const [link] = await FeatsAptitudes.findMany(db, { featId: feat.id });
+  return { ...feat, aptitudeId: link.aptitudeId };
 }
 
 describe("subscribing to an extension", () => {

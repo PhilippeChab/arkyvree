@@ -100,19 +100,23 @@ type Detailed = Awaited<ReturnType<typeof build>>;
 
 const WIZARD_SCORES = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 16, Wisdom: 10, Charisma: 10 };
 
-async function build(character: Character) {
-  const detailed = new DetailedCharacter(character);
-  await detailed.build();
-  return detailed;
+function allPowers(detailed: Detailed) {
+  return Object.values(detailed.getDetailedCharacterClasses().getCharacterClasses()).flatMap((klass) =>
+    klass.levels.flatMap((level) => level.powers),
+  );
 }
 
-async function buildSeeded(name: string) {
-  return build(await findSeededCharacter(name));
+function dexterityMisc(detailed: Detailed) {
+  return detailed.getDetailedCharacterAbilities().getAbilities().dexterity.misc;
 }
 
 /** A requirement's check that a number is `value`. */
 function exactly(value: number) {
   return { operator: "equal", value: String(value), valueType: "number" } as const;
+}
+
+function requirementIssues(detailed: Detailed) {
+  return detailed.validate().issues.filter((issue) => issue.category === "requirements");
 }
 
 /** One group holding one requirement on `target`: by default, that it's true. */
@@ -140,27 +144,28 @@ function requiring(
   return [[requirement]];
 }
 
-/** Replaces the character's inventory: seeded items by name, or item ids. */
-async function carry(character: Character, carried: Carried[]) {
-  const { itemMap } = await getSeedCtx();
-  await db.delete(inventoryInCharacter).where(eq(inventoryInCharacter.characterId, character.id));
-  if (carried.length === 0) return;
-  await db.insert(inventoryInCharacter).values(
-    carried.map(({ item, equipped = true, quantity = 1, ...rest }) => ({
-      characterId: character.id,
-      itemId: itemMap[item] ?? item,
-      equipped,
-      quantity,
-      ...rest,
-    })),
-  );
+function spellLevel(detailed: Detailed, aptitude: string, level: number) {
+  return (detailed.getDetailedCharacterAptitudes().getAptitudes()[aptitude] as Record<string, unknown>)[
+    String(level)
+  ] as AptitudeLevelData;
 }
 
-/** The seeded character, carrying only these items. */
-async function buildCarrying(name: string, carried: Carried[] = []) {
-  const character = await findSeededCharacter(name);
-  await carry(character, carried);
-  return build(character);
+function spellUses(detailed: Detailed, aptitude: string, levels: number[]) {
+  return levels.map((level) => spellLevel(detailed, aptitude, level).uses);
+}
+
+function weaponSet(detailed: Detailed, set = "0") {
+  return detailed.getDetailedCharacterCombat().getCombat().weaponsets[set];
+}
+
+async function build(character: Character) {
+  const detailed = new DetailedCharacter(character);
+  await detailed.build();
+  return detailed;
+}
+
+async function buildSeeded(name: string) {
+  return build(await findSeededCharacter(name));
 }
 
 /** A new item of the seeded ruleset, with these properties. */
@@ -195,19 +200,6 @@ async function createAbilityItem(ability: string, bonus: number, slot: ItemLocat
   return item;
 }
 
-/** A composite longbow of the seeded ruleset made for this Strength bonus. */
-async function mightyBow(rating: number) {
-  return createItem(
-    {
-      name: `Composite Longbow (+${rating} Str)`,
-      type: "Weapon",
-      slot: "Two Handed",
-      sourceItemId: (await getSeedCtx()).itemMap["Composite Longbow"],
-    },
-    { [WEAPON_MIGHTY]: String(rating) },
-  );
-}
-
 /** The seeded character, now a halfling. */
 async function asHalfling(name: string) {
   const character = await findSeededCharacter(name);
@@ -215,24 +207,28 @@ async function asHalfling(name: string) {
   await db.update(charactersInCharacter).set({ raceId: halfling.id }).where(eq(charactersInCharacter.id, character.id));
   return { ...character, raceId: halfling.id };
 }
-function weaponSet(detailed: Detailed, set = "0") {
-  return detailed.getDetailedCharacterCombat().getCombat().weaponsets[set];
-}
-function spellLevel(detailed: Detailed, aptitude: string, level: number) {
-  return (detailed.getDetailedCharacterAptitudes().getAptitudes()[aptitude] as Record<string, unknown>)[
-    String(level)
-  ] as AptitudeLevelData;
-}
-function spellUses(detailed: Detailed, aptitude: string, levels: number[]) {
-  return levels.map((level) => spellLevel(detailed, aptitude, level).uses);
-}
-function allPowers(detailed: Detailed) {
-  return Object.values(detailed.getDetailedCharacterClasses().getCharacterClasses()).flatMap((klass) =>
-    klass.levels.flatMap((level) => level.powers),
+
+/** Replaces the character's inventory: seeded items by name, or item ids. */
+async function carry(character: Character, carried: Carried[]) {
+  const { itemMap } = await getSeedCtx();
+  await db.delete(inventoryInCharacter).where(eq(inventoryInCharacter.characterId, character.id));
+  if (carried.length === 0) return;
+  await db.insert(inventoryInCharacter).values(
+    carried.map(({ item, equipped = true, quantity = 1, ...rest }) => ({
+      characterId: character.id,
+      itemId: itemMap[item] ?? item,
+      equipped,
+      quantity,
+      ...rest,
+    })),
   );
 }
-function requirementIssues(detailed: Detailed) {
-  return detailed.validate().issues.filter((issue) => issue.category === "requirements");
+
+/** The seeded character, carrying only these items. */
+async function buildCarrying(name: string, carried: Carried[] = []) {
+  const character = await findSeededCharacter(name);
+  await carry(character, carried);
+  return build(character);
 }
 
 /** A fork of the seeded ruleset that uses these extensions. */
@@ -246,6 +242,78 @@ async function forkWith(...extensionNames: string[]) {
   });
   RulesetCache.invalidate(fork.id);
   return fork;
+}
+
+async function met(name: string, target: string, check?: Parameters<typeof requiring>[1]) {
+  return (await buildSeeded(name)).areRequirementsMet(requiring(target, check));
+}
+
+/** A composite longbow of the seeded ruleset made for this Strength bonus. */
+async function mightyBow(rating: number) {
+  return createItem(
+    {
+      name: `Composite Longbow (+${rating} Str)`,
+      type: "Weapon",
+      slot: "Two Handed",
+      sourceItemId: (await getSeedCtx()).itemMap["Composite Longbow"],
+    },
+    { [WEAPON_MIGHTY]: String(rating) },
+  );
+}
+
+/** Whether `name` is proficient with `item` held at `location`. */
+async function proficientWith(name: string, item: string, location: "Main Hand" | "Two Handed") {
+  const set = weaponSet(await buildCarrying(name, [{ item, location, weaponSet: 0 }]));
+  return (location === "Two Handed" ? set.twohanded : set.mainhand)!.proficient;
+}
+
+/** A modifier of the character's race, gated by `requirements` when given: it applies to the seeded character. */
+async function raceModifier(
+  name: string,
+  modifier: { target: string; value: string; operator?: string },
+  requirements: { target: string; operator: string; value: string; valueType: string }[] = [],
+) {
+  const character = await findSeededCharacter(name);
+  const [created] = await Modifiers.create(db, {
+    sourceId: character.raceId,
+    sourceType: "races",
+    operator: "add",
+    valueType: "number",
+    ...modifier,
+  });
+  for (const [index, requirement] of requirements.entries()) {
+    await Requirements.create(db, {
+      entityId: created.id,
+      entityType: "modifiers",
+      level: String(index + 1),
+      ...requirement,
+    });
+  }
+  invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+  return created;
+}
+
+/** An item that requires `target` (equal true, or this check), with +2 to hit for the hand holding it. */
+async function requiringWithBonus(
+  item: Awaited<ReturnType<typeof createItem>>,
+  target: string,
+  check: Pick<Requirement, "operator" | "value" | "valueType"> = {
+    operator: "equal",
+    value: "true",
+    valueType: "boolean",
+  },
+) {
+  await Requirements.create(db, { entityId: item.id, entityType: "items", level: "1", target, ...check });
+  await Modifiers.create(db, {
+    sourceId: item.id,
+    sourceType: "items",
+    target: "weapon.tohit.misc",
+    value: "2",
+    valueType: "number",
+    operator: "add",
+  });
+  invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+  return item;
 }
 
 /** A new character of the seed user's: human, neutral good, with these scores. */
@@ -287,84 +355,6 @@ async function buildRanger(carried: Carried[]) {
   const character = (await Characters.findOne(db, { id: characterId }))!;
   await carry(character, carried);
   return build(character);
-}
-
-/** Whether `name` is proficient with `item` held at `location`. */
-async function proficientWith(name: string, item: string, location: "Main Hand" | "Two Handed") {
-  const set = weaponSet(await buildCarrying(name, [{ item, location, weaponSet: 0 }]));
-  return (location === "Two Handed" ? set.twohanded : set.mainhand)!.proficient;
-}
-
-/** An item that requires `target` (equal true, or this check), with +2 to hit for the hand holding it. */
-async function requiringWithBonus(
-  item: Awaited<ReturnType<typeof createItem>>,
-  target: string,
-  check: Pick<Requirement, "operator" | "value" | "valueType"> = {
-    operator: "equal",
-    value: "true",
-    valueType: "boolean",
-  },
-) {
-  await Requirements.create(db, { entityId: item.id, entityType: "items", level: "1", target, ...check });
-  await Modifiers.create(db, {
-    sourceId: item.id,
-    sourceType: "items",
-    target: "weapon.tohit.misc",
-    value: "2",
-    valueType: "number",
-    operator: "add",
-  });
-  invalidateSeededRuleset((await getSeedCtx()).rulesetId);
-  return item;
-}
-
-/** Bjorn on a fork using Complete Warrior, with its Uncanny Blow, holding a bastard sword. */
-async function setupUncannyBlow(location: "Main Hand" | "Two Handed") {
-  const bjorn = await findSeededCharacter("Bjorn Ironhand");
-  const fork = await forkWith(DND35_COMPLETE_WARRIOR_NAME);
-  await db.update(charactersInCharacter).set({ rulesetId: fork.id }).where(eq(charactersInCharacter.id, bjorn.id));
-  const extension = (await Rulesets.findOne(db, { name: DND35_COMPLETE_WARRIOR_NAME }))!;
-  const uncannyBlow = (await Feats.findOne(db, {
-    name: "Uncanny Blow (Exotic Weapon Master Exotic Weapon Stunt)",
-    rulesetId: extension.id,
-  }))!;
-  const stunt = (await Aptitudes.findOne(db, {
-    name: "Exotic Weapon Master Exotic Weapon Stunt",
-    rulesetId: extension.id,
-  }))!;
-  const [level] = await CharacterLevels.findMany(db, { characterId: bjorn.id });
-  await CharacterLevelFeats.createMany(db, [
-    { characterLevelId: level.id, featId: uncannyBlow.id, aptitudeId: stunt.id },
-  ]);
-  const character = { ...bjorn, rulesetId: fork.id };
-  await carry(character, [{ item: "Bastard Sword", location, weaponSet: 0 }]);
-  return build(character);
-}
-
-/** A modifier of the character's race, gated by `requirements` when given: it applies to the seeded character. */
-async function raceModifier(
-  name: string,
-  modifier: { target: string; value: string; operator?: string },
-  requirements: { target: string; operator: string; value: string; valueType: string }[] = [],
-) {
-  const character = await findSeededCharacter(name);
-  const [created] = await Modifiers.create(db, {
-    sourceId: character.raceId,
-    sourceType: "races",
-    operator: "add",
-    valueType: "number",
-    ...modifier,
-  });
-  for (const [index, requirement] of requirements.entries()) {
-    await Requirements.create(db, {
-      entityId: created.id,
-      entityType: "modifiers",
-      level: String(index + 1),
-      ...requirement,
-    });
-  }
-  invalidateSeededRuleset((await getSeedCtx()).rulesetId);
-  return created;
 }
 
 /** A character of a fork with Complete Divine, with these modifiers of its own (`[target, value, valueType]`). */
@@ -441,12 +431,27 @@ async function setupGrantedSpell({ requirement = false, spellFocus = false } = {
   return build((await Characters.findOne(db, { id: characterId }))!);
 }
 
-function dexterityMisc(detailed: Detailed) {
-  return detailed.getDetailedCharacterAbilities().getAbilities().dexterity.misc;
-}
-
-async function met(name: string, target: string, check?: Parameters<typeof requiring>[1]) {
-  return (await buildSeeded(name)).areRequirementsMet(requiring(target, check));
+/** Bjorn on a fork using Complete Warrior, with its Uncanny Blow, holding a bastard sword. */
+async function setupUncannyBlow(location: "Main Hand" | "Two Handed") {
+  const bjorn = await findSeededCharacter("Bjorn Ironhand");
+  const fork = await forkWith(DND35_COMPLETE_WARRIOR_NAME);
+  await db.update(charactersInCharacter).set({ rulesetId: fork.id }).where(eq(charactersInCharacter.id, bjorn.id));
+  const extension = (await Rulesets.findOne(db, { name: DND35_COMPLETE_WARRIOR_NAME }))!;
+  const uncannyBlow = (await Feats.findOne(db, {
+    name: "Uncanny Blow (Exotic Weapon Master Exotic Weapon Stunt)",
+    rulesetId: extension.id,
+  }))!;
+  const stunt = (await Aptitudes.findOne(db, {
+    name: "Exotic Weapon Master Exotic Weapon Stunt",
+    rulesetId: extension.id,
+  }))!;
+  const [level] = await CharacterLevels.findMany(db, { characterId: bjorn.id });
+  await CharacterLevelFeats.createMany(db, [
+    { characterLevelId: level.id, featId: uncannyBlow.id, aptitudeId: stunt.id },
+  ]);
+  const character = { ...bjorn, rulesetId: fork.id };
+  await carry(character, [{ item: "Bastard Sword", location, weaponSet: 0 }]);
+  return build(character);
 }
 
 describe("DetailedCharacter", () => {

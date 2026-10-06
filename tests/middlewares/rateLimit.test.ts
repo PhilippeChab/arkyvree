@@ -20,20 +20,21 @@ function behind(limiter: MiddlewareHandler) {
 function from(ip: string, init: RequestInit = {}) {
   return { ...init, headers: { ...init.headers, "x-forwarded-for": ip } };
 }
-function withEmail(emailAddress: unknown) {
-  return {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ emailAddress }),
-  };
+
+function limitedPerEmail() {
+  return behind(limitRate({ windowMs: 60_000, limit: 1, per: "email" }, true));
 }
 
 function limitedPerIp() {
   return behind(limitRate({ windowMs: 60_000, limit: 2 }, true));
 }
 
-function limitedPerEmail() {
-  return behind(limitRate({ windowMs: 60_000, limit: 1, per: "email" }, true));
+function withEmail(emailAddress: unknown) {
+  return {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ emailAddress }),
+  };
 }
 
 describe("limitRate", () => {

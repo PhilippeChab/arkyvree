@@ -52,16 +52,6 @@ interface SelectFieldProps<T extends FieldValues> {
   onMenuScroll?: UIEventHandler<HTMLElement>;
 }
 
-/** An entity's name. Register it with `nameRules`. */
-export function NameField({
-  error,
-  label = "Name",
-  helperText,
-  ...field
-}: RegisteredFieldProps & { label?: string; helperText?: string }) {
-  return <TextField {...field} label={label} fullWidth error={!!error} helperText={error?.message ?? helperText} />;
-}
-
 /** An entity's description: several lines, resizable. */
 export function DescriptionField({ error, rows = 3, ...field }: DescriptionFieldProps) {
   return (
@@ -93,6 +83,16 @@ export function EmailField({ error, label = "Email", ...field }: RegisteredField
       slotProps={{ htmlInput: { autoComplete: "email" } }}
     />
   );
+}
+
+/** An entity's name. Register it with `nameRules`. */
+export function NameField({
+  error,
+  label = "Name",
+  helperText,
+  ...field
+}: RegisteredFieldProps & { label?: string; helperText?: string }) {
+  return <TextField {...field} label={label} fullWidth error={!!error} helperText={error?.message ?? helperText} />;
 }
 
 export function PasswordField({ error, label, autoComplete, ...field }: PasswordFieldProps) {

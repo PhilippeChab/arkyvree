@@ -9,20 +9,6 @@ export function newOverrideMap(entries?: Iterable<readonly [string, string]>): O
   return new Map<string, string>(entries) as OverrideMap;
 }
 
-/** The true overrides: each source entity to its closest fork's copy, following a copy of a copy to the last. */
-function snapshotOverrides(allRulesetIds: string[], byRuleset: SnapshotsByRuleset) {
-  const map = newOverrideMap();
-  for (const rid of allRulesetIds) {
-    const snaps = byRuleset.get(rid) ?? [];
-    for (const snap of snaps) {
-      if (!map.has(snap.sourceEntityId)) {
-        map.set(snap.sourceEntityId, map.get(snap.forkedEntityId) ?? snap.forkedEntityId);
-      }
-    }
-  }
-  return map;
-}
-
 /**
  * Pairs snapshot siblings: when multiple snapshots share a sourceEntityId, the
  * winner's forkedEntityId maps to the sibling-loser forkedEntityIds. The
@@ -71,6 +57,41 @@ function pairSnapshotSiblings(
     // the sibling-merge path.
     for (const siblingId of siblingIds) {
       if (!idResolveMap.has(siblingId)) idResolveMap.set(siblingId, winnerId);
+    }
+  }
+}
+
+/** The true overrides: each source entity to its closest fork's copy, following a copy of a copy to the last. */
+function snapshotOverrides(allRulesetIds: string[], byRuleset: SnapshotsByRuleset) {
+  const map = newOverrideMap();
+  for (const rid of allRulesetIds) {
+    const snaps = byRuleset.get(rid) ?? [];
+    for (const snap of snaps) {
+      if (!map.has(snap.sourceEntityId)) {
+        map.set(snap.sourceEntityId, map.get(snap.forkedEntityId) ?? snap.forkedEntityId);
+      }
+    }
+  }
+  return map;
+}
+
+/**
+ * A local COW already owns its customizations. Keep sibling IDs resolvable,
+ * but suppress their source rows instead of merging them back into the copy.
+ * Include tombstones so deleting the local entity cannot revive a sibling.
+ */
+function suppressLocalSiblings(
+  localIds: Set<string>,
+  map: OverrideMap,
+  siblingMap: Map<string, string[]>,
+  idResolveMap: IdResolveMap,
+) {
+  for (const [winnerId, siblingIds] of siblingMap) {
+    const resolvedId = idResolveMap.get(winnerId) ?? winnerId;
+    if (!localIds.has(resolvedId)) continue;
+    for (const siblingId of siblingIds) {
+      map.set(siblingId, resolvedId);
+      idResolveMap.set(siblingId, resolvedId);
     }
   }
 }
@@ -125,28 +146,31 @@ async function pairNamesakes(
 }
 
 /**
- * A local COW already owns its customizations. Keep sibling IDs resolvable,
- * but suppress their source rows instead of merging them back into the copy.
- * Include tombstones so deleting the local entity cannot revive a sibling.
+ * Build the combined source chain for COW lookups:
+ * extensions first (their new entities are visible), then ancestors.
  */
-function suppressLocalSiblings(
-  localIds: Set<string>,
-  map: OverrideMap,
-  siblingMap: Map<string, string[]>,
-  idResolveMap: IdResolveMap,
-) {
-  for (const [winnerId, siblingIds] of siblingMap) {
-    const resolvedId = idResolveMap.get(winnerId) ?? winnerId;
-    if (!localIds.has(resolvedId)) continue;
-    for (const siblingId of siblingIds) {
-      map.set(siblingId, resolvedId);
-      idResolveMap.set(siblingId, resolvedId);
-    }
-  }
+export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ancestorRulesetIds: string[] }): string[] {
+  return [...ruleset.extensionRulesetIds, ...ruleset.ancestorRulesetIds];
 }
 
-export function newIdResolveMap(seed?: OverrideMap | IdResolveMap): IdResolveMap {
-  return new Map<string, string>(seed) as IdResolveMap;
+/**
+ * Generic override resolver: scans all string fields in each row and replaces
+ * any value that matches a key in the override map with the child's ID.
+ * Handles saves.abilityId, skills.primaryAbilityId, powers.saveId, items.sourceItemId,
+ * races.parentId, klasses.parentId — all generically without per-entity hardcoding.
+ */
+export function resolveOverrides<T extends Record<string, unknown>>(rows: T[], overrideMap: IdResolveMap): T[] {
+  if (overrideMap.size === 0) return rows;
+
+  return rows.map((row) => {
+    const resolved = { ...row };
+    for (const [key, value] of Object.entries(resolved)) {
+      if (typeof value === "string" && overrideMap.has(value)) {
+        (resolved as Record<string, unknown>)[key] = overrideMap.get(value);
+      }
+    }
+    return resolved;
+  });
 }
 
 /**
@@ -169,12 +193,38 @@ export function assertCowMapsConsistent(overrideMap: OverrideMap, idResolveMap: 
   }
 }
 
+export function newIdResolveMap(seed?: OverrideMap | IdResolveMap): IdResolveMap {
+  return new Map<string, string>(seed) as IdResolveMap;
+}
+
 /**
- * Build the combined source chain for COW lookups:
- * extensions first (their new entities are visible), then ancestors.
+ * After resolveOverrides swaps FK IDs, data fields (name, description, etc.)
+ * still come from the base entity row because the DB join matched the original ID.
+ * This function refreshes specified fields from authoritative entity data.
  */
-export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ancestorRulesetIds: string[] }): string[] {
-  return [...ruleset.extensionRulesetIds, ...ruleset.ancestorRulesetIds];
+export function refreshEntityData<T extends Record<string, unknown> & { id: string }>(
+  rows: T[],
+  referenceData: { id: string }[],
+  keys: string[],
+): T[] {
+  if (referenceData.length === 0 || keys.length === 0) return rows;
+
+  const dataMap = new Map<string, Record<string, unknown>>();
+  for (const entity of referenceData) {
+    dataMap.set(entity.id, entity as Record<string, unknown>);
+  }
+
+  return rows.map((row) => {
+    const source = dataMap.get(row.id);
+    if (!source) return row;
+    const result = { ...row };
+    for (const key of keys) {
+      if (key in source) {
+        (result as Record<string, unknown>)[key] = source[key];
+      }
+    }
+    return result;
+  });
 }
 
 /**
@@ -248,54 +298,4 @@ export async function buildOverrideMap(
   suppressLocalSiblings(localIds, map, siblingMap, idResolveMap);
 
   return { map, siblingMap, idResolveMap };
-}
-
-/**
- * Generic override resolver: scans all string fields in each row and replaces
- * any value that matches a key in the override map with the child's ID.
- * Handles saves.abilityId, skills.primaryAbilityId, powers.saveId, items.sourceItemId,
- * races.parentId, klasses.parentId — all generically without per-entity hardcoding.
- */
-export function resolveOverrides<T extends Record<string, unknown>>(rows: T[], overrideMap: IdResolveMap): T[] {
-  if (overrideMap.size === 0) return rows;
-
-  return rows.map((row) => {
-    const resolved = { ...row };
-    for (const [key, value] of Object.entries(resolved)) {
-      if (typeof value === "string" && overrideMap.has(value)) {
-        (resolved as Record<string, unknown>)[key] = overrideMap.get(value);
-      }
-    }
-    return resolved;
-  });
-}
-
-/**
- * After resolveOverrides swaps FK IDs, data fields (name, description, etc.)
- * still come from the base entity row because the DB join matched the original ID.
- * This function refreshes specified fields from authoritative entity data.
- */
-export function refreshEntityData<T extends Record<string, unknown> & { id: string }>(
-  rows: T[],
-  referenceData: { id: string }[],
-  keys: string[],
-): T[] {
-  if (referenceData.length === 0 || keys.length === 0) return rows;
-
-  const dataMap = new Map<string, Record<string, unknown>>();
-  for (const entity of referenceData) {
-    dataMap.set(entity.id, entity as Record<string, unknown>);
-  }
-
-  return rows.map((row) => {
-    const source = dataMap.get(row.id);
-    if (!source) return row;
-    const result = { ...row };
-    for (const key of keys) {
-      if (key in source) {
-        (result as Record<string, unknown>)[key] = source[key];
-      }
-    }
-    return result;
-  });
 }

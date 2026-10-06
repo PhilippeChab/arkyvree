@@ -8,6 +8,22 @@ import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
+/** The modifiers, applied, unapplied and inactive, each with the name of its source. */
+function enrichedModifiersOf(dc: Dnd35DetailedCharacter) {
+  const modifiersData = dc.getDetailedCharacterModifiers().getModifiers();
+  const withSource = (mods: Modifier[]) =>
+    mods.map((mod) => ({
+      ...mod,
+      sourceName: dc.resolveModifierSourceName(mod)?.name,
+    }));
+  return {
+    ...modifiersData,
+    appliedModifiers: withSource(modifiersData.appliedModifiers),
+    unappliedModifiers: withSource(modifiersData.unappliedModifiers),
+    inactiveModifiers: withSource(modifiersData.inactiveModifiers),
+  };
+}
+
 /** The requirements, each group and each invalid one with the name of the entity it belongs to. */
 function enrichedRequirementsOf(dc: Dnd35DetailedCharacter) {
   const requirementsData = dc.getDetailedCharacterRequirements().getRequirements();
@@ -25,22 +41,6 @@ function enrichedRequirementsOf(dc: Dnd35DetailedCharacter) {
       requirement,
       sourceName: dc.resolveEntityName(requirement.entityId, requirement.entityType),
     })),
-  };
-}
-
-/** The modifiers, applied, unapplied and inactive, each with the name of its source. */
-function enrichedModifiersOf(dc: Dnd35DetailedCharacter) {
-  const modifiersData = dc.getDetailedCharacterModifiers().getModifiers();
-  const withSource = (mods: Modifier[]) =>
-    mods.map((mod) => ({
-      ...mod,
-      sourceName: dc.resolveModifierSourceName(mod)?.name,
-    }));
-  return {
-    ...modifiersData,
-    appliedModifiers: withSource(modifiersData.appliedModifiers),
-    unappliedModifiers: withSource(modifiersData.unappliedModifiers),
-    inactiveModifiers: withSource(modifiersData.inactiveModifiers),
   };
 }
 

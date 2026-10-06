@@ -113,6 +113,14 @@ async function buildCowData(ruleset: {
   return cowData;
 }
 
+export function invalidateAllCowData(): void {
+  cowDataCache.invalidateAll();
+}
+
+export function invalidateCowData(rulesetId: string): void {
+  cowDataCache.invalidate(rulesetId);
+}
+
 /**
  * Get or build cached COW data for a ruleset: sourceChain + overrideMap + klass level mappings.
  * Cache key includes the ruleset ID and ordered source chain; invalidated on mutations.
@@ -134,14 +142,6 @@ export async function getOrBuildCowData(ruleset: {
   return cowDataCache.getOrFetch(JSON.stringify(dependencies), dependencies, async () => ({
     data: await withCowContext(undefined, () => buildCowData(ruleset)),
   }));
-}
-
-export function invalidateCowData(rulesetId: string): void {
-  cowDataCache.invalidate(rulesetId);
-}
-
-export function invalidateAllCowData(): void {
-  cowDataCache.invalidateAll();
 }
 
 /**

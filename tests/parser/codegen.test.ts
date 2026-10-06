@@ -37,12 +37,13 @@ function check(operator: string, valueType: string, value: string): RequirementC
     valueType,
   };
 }
-function code(req: RequirementEntry) {
-  return stringifyRequirement(req, new Set());
-}
 
 function classRef(book: string, slug: string) {
   return loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class");
+}
+
+function code(req: RequirementEntry) {
+  return stringifyRequirement(req, new Set());
 }
 
 describe("A generated requirement check", () => {

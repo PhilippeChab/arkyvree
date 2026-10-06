@@ -56,19 +56,6 @@ async function recordPage(page: Page) {
   };
 }
 
-/** Starts a run's coverage: forgets the previous run's. */
-export async function startCoverage() {
-  if (COVERAGE) await MCR(options).cleanCache();
-}
-
-/** Records the client code the test's `page` runs until `run` ends. */
-export async function recordCoverage(page: Page, run: () => Promise<void>) {
-  if (!COVERAGE) return run();
-  const stop = await recordPage(page);
-  await run();
-  await stop();
-}
-
 /** Records the pages of a browser context a test opens itself (another user's, a guest's), until it's closed. */
 export function recordContext(context: BrowserContext) {
   if (!COVERAGE) return context;
@@ -87,7 +74,20 @@ export function recordContext(context: BrowserContext) {
   return context;
 }
 
+/** Records the client code the test's `page` runs until `run` ends. */
+export async function recordCoverage(page: Page, run: () => Promise<void>) {
+  if (!COVERAGE) return run();
+  const stop = await recordPage(page);
+  await run();
+  await stop();
+}
+
 /** Reports the run's coverage. */
 export async function reportCoverage() {
   if (COVERAGE) await MCR(options).generate();
+}
+
+/** Starts a run's coverage: forgets the previous run's. */
+export async function startCoverage() {
+  if (COVERAGE) await MCR(options).cleanCache();
 }

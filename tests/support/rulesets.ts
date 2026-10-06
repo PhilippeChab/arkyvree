@@ -10,6 +10,22 @@ import { createTestUser } from "@/tests/support/users.ts";
 
 const writtenSeededRulesets = new Set<string>();
 
+/** Drops the rules of the seeded rulesets the test wrote to, now that the rollback undid its rows. */
+export function forgetSeededRulesetWrites() {
+  for (const rulesetId of writtenSeededRulesets) RulesetCache.invalidate(rulesetId);
+  writtenSeededRulesets.clear();
+}
+
+/**
+ * Drops a seeded ruleset's cached rules after the test wrote rows straight into it, so what it reads next
+ * sees them. The cache outlives the test's rollback, so the setup drops them again once the test ends.
+ * A fork goes away with the rollback: after writing into one, `RulesetCache.invalidate` is enough.
+ */
+export function invalidateSeededRuleset(rulesetId: string) {
+  writtenSeededRulesets.add(rulesetId);
+  RulesetCache.invalidate(rulesetId);
+}
+
 /**
  * An empty private D&D 3.5 draft ruleset owned by `userId` (`null` for a
  * system ruleset). Pass `rulesetId` and `ancestorRulesetIds` to make it a
@@ -28,13 +44,6 @@ export async function createTestRuleset(
     ...values,
   });
   return ruleset;
-}
-
-/** A new user with an empty ruleset of their own. */
-export async function createTestUserAndRuleset() {
-  const { user, session } = await createTestUser();
-  const ruleset = await createTestRuleset(user.id);
-  return { user, session, ruleset };
 }
 
 /**
@@ -78,22 +87,6 @@ export async function createSeededTestRuleset(
   return ruleset;
 }
 
-/**
- * Drops a seeded ruleset's cached rules after the test wrote rows straight into it, so what it reads next
- * sees them. The cache outlives the test's rollback, so the setup drops them again once the test ends.
- * A fork goes away with the rollback: after writing into one, `RulesetCache.invalidate` is enough.
- */
-export function invalidateSeededRuleset(rulesetId: string) {
-  writtenSeededRulesets.add(rulesetId);
-  RulesetCache.invalidate(rulesetId);
-}
-
-/** Drops the rules of the seeded rulesets the test wrote to, now that the rollback undid its rows. */
-export function forgetSeededRulesetWrites() {
-  for (const rulesetId of writtenSeededRulesets) RulesetCache.invalidate(rulesetId);
-  writtenSeededRulesets.clear();
-}
-
 /** A seeded fork that also uses every extension shipped with the seeded base ruleset. */
 export async function createSeededTestRulesetWithExtensions(userId: string) {
   const fork = await createSeededTestRuleset(userId);
@@ -104,4 +97,11 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
   const [ruleset] = await Rulesets.update(db, { extensionRulesetIds: links.map((link) => link.id) }, { id: fork.id });
   RulesetCache.invalidate(fork.id);
   return ruleset;
+}
+
+/** A new user with an empty ruleset of their own. */
+export async function createTestUserAndRuleset() {
+  const { user, session } = await createTestUser();
+  const ruleset = await createTestRuleset(user.id);
+  return { user, session, ruleset };
 }

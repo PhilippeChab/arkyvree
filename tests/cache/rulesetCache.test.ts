@@ -15,15 +15,15 @@ import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
+function createFork(seedId: string) {
+  return createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });
+}
+
 async function getRuleset() {
   const c = await getSeedCtx();
   const ruleset = await Rulesets.findOne(db, { id: c.rulesetId });
   if (!ruleset) throw new Error("Seed ruleset not found");
   return ruleset;
-}
-
-function createFork(seedId: string) {
-  return createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });
 }
 
 async function composeFork(fork: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] }) {

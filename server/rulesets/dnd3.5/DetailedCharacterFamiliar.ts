@@ -20,6 +20,12 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
   /** The master's skill ranks, by skill slug: the familiar's where they're better than its own. */
   private masterSkillRanks: Record<string, number> = {};
 
+  /** The stat block's skills, then its master's ranks where they're better. */
+  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
+    super.applyRaceDefaults(raceStats, rulesetData);
+    this.detailedCharacterSkills.applyBetterRanks(this.masterSkillRanks);
+  }
+
   protected async applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void> {
     const master = await this.loadMaster(parentCharacterId, rulesetData);
     const masterLevel = master.getDetailedCharacterIdentity().getIdentity().meta.level;
@@ -55,11 +61,5 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
 
     // Familiar HP = ½ master HP only — no per-HD Con component.
     this.cachedTotalHD = 0;
-  }
-
-  /** The stat block's skills, then its master's ranks where they're better. */
-  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
-    super.applyRaceDefaults(raceStats, rulesetData);
-    this.detailedCharacterSkills.applyBetterRanks(this.masterSkillRanks);
   }
 }

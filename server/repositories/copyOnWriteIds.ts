@@ -13,22 +13,6 @@ function getActiveIdMap(): IdResolveMap | undefined {
 }
 
 /**
- * A read's elements with their stale ids mapped: a row's references (not its own id: a row stays the row it is), or an
- * id itself, when the read returns ids (`findIds`). Anything else passes through.
- */
-function mapRows(rows: unknown[], map: IdResolveMap): unknown[] {
-  return rows.map((row) => {
-    if (typeof row === "string") return map.get(row) ?? row;
-    if (!row || typeof row !== "object" || Array.isArray(row)) return row;
-    const mapped = { ...row } as Record<string, unknown>;
-    for (const [key, value] of Object.entries(mapped)) {
-      if (key !== "id" && typeof value === "string" && map.has(value)) mapped[key] = map.get(value);
-    }
-    return mapped;
-  });
-}
-
-/**
  * A where's or values' entity ids (`id`, `…Id`, `ids`, `…Ids`) mapped to their winners: the same object when none
  * moves. An exclusion (`exclude…`) keeps the losers' ids it names, on purpose.
  */
@@ -46,6 +30,22 @@ function mapFields(fields: Record<string, unknown>, map: IdResolveMap): Record<s
     if (next !== value) (mapped ??= { ...fields })[key] = next;
   }
   return mapped ?? fields;
+}
+
+/**
+ * A read's elements with their stale ids mapped: a row's references (not its own id: a row stays the row it is), or an
+ * id itself, when the read returns ids (`findIds`). Anything else passes through.
+ */
+function mapRows(rows: unknown[], map: IdResolveMap): unknown[] {
+  return rows.map((row) => {
+    if (typeof row === "string") return map.get(row) ?? row;
+    if (!row || typeof row !== "object" || Array.isArray(row)) return row;
+    const mapped = { ...row } as Record<string, unknown>;
+    for (const [key, value] of Object.entries(mapped)) {
+      if (key !== "id" && typeof value === "string" && map.has(value)) mapped[key] = map.get(value);
+    }
+    return mapped;
+  });
 }
 
 /** A repository call's arguments with their ids mapped: each plain object after the database handle. */

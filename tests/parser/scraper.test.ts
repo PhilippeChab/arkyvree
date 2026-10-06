@@ -37,20 +37,7 @@ import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/share
 function fixture(name: string) {
   return readFileSync(join(import.meta.dirname, "fixtures", `${name}.html`), "utf8");
 }
-/** The URL a fixture's page was fetched from, which its second line names. */
-function urlOf(name: string) {
-  const url = fixture(name).match(/^<!-- (\S+), trimmed/m)?.[1];
-  if (!url) throw new Error(`${name} doesn't name its URL`);
-  return url;
-}
-/** A reference as the scraper stored it, before its overrides. */
-function stored<T extends ReferenceType>(file: string, type: T) {
-  return readStoredReference(join(REFERENCE_DIR, file), type);
-}
-/** What the scraper stores of a parse. */
-function scraped<T>(parsed: T) {
-  return sanitizeJsonValues(parsed);
-}
+
 /** The reference's entries with these names, in order: each the next with its name (a table can list one twice). */
 function named<T extends { name: string }>(entries: T[], names: string[]) {
   let from = 0;
@@ -59,6 +46,23 @@ function named<T extends { name: string }>(entries: T[], names: string[]) {
     from = at + 1;
     return entries[at];
   });
+}
+
+/** What the scraper stores of a parse. */
+function scraped<T>(parsed: T) {
+  return sanitizeJsonValues(parsed);
+}
+
+/** A reference as the scraper stored it, before its overrides. */
+function stored<T extends ReferenceType>(file: string, type: T) {
+  return readStoredReference(join(REFERENCE_DIR, file), type);
+}
+
+/** The URL a fixture's page was fetched from, which its second line names. */
+function urlOf(name: string) {
+  const url = fixture(name).match(/^<!-- (\S+), trimmed/m)?.[1];
+  if (!url) throw new Error(`${name} doesn't name its URL`);
+  return url;
 }
 
 describe("The scraper reads from a page the reference's entries:", () => {

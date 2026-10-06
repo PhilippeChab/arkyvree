@@ -7,6 +7,21 @@ import type { Requirement } from "@/shared/relations.ts";
 const met = { fulfilled: 1, unmet: 0 };
 const unmet = { fulfilled: 0, unmet: 1 };
 
+/** Evaluates one group of requirements, each path resolving as `resolve` says. */
+function evaluate(group: Requirement[], resolve: (target: string) => TraversePathResult[]) {
+  const evaluator = new DetailedCharacterRequirements({
+    readsSource: () => false,
+    traversePathInit: (target) => resolve(target),
+  });
+  evaluator.evaluateRequirements({}, [group]);
+  const { fulfilledRequirementGroups, unmetRequirementGroups, invalidRequirements } = evaluator.getRequirements();
+  return {
+    fulfilled: fulfilledRequirementGroups.length,
+    unmet: unmetRequirementGroups.length,
+    invalid: invalidRequirements.map((r) => r.warning),
+  };
+}
+
 function requirement(values: Partial<Requirement> = {}): Requirement {
   const now = new Date().toISOString();
   return {
@@ -35,21 +50,6 @@ function result(data: unknown, error: string | null = null): TraversePathResult 
     key: "possessed",
     resolvedPath: error ? null : "feats.test.possessed",
     error,
-  };
-}
-
-/** Evaluates one group of requirements, each path resolving as `resolve` says. */
-function evaluate(group: Requirement[], resolve: (target: string) => TraversePathResult[]) {
-  const evaluator = new DetailedCharacterRequirements({
-    readsSource: () => false,
-    traversePathInit: (target) => resolve(target),
-  });
-  evaluator.evaluateRequirements({}, [group]);
-  const { fulfilledRequirementGroups, unmetRequirementGroups, invalidRequirements } = evaluator.getRequirements();
-  return {
-    fulfilled: fulfilledRequirementGroups.length,
-    unmet: unmetRequirementGroups.length,
-    invalid: invalidRequirements.map((r) => r.warning),
   };
 }
 

@@ -31,6 +31,14 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     ];
   }
 
+  enrichWithProperties<T extends { id: string }>(
+    skills: T[],
+    properties: { entityId: string; type: string; value: string }[],
+  ): (T & SkillFlags)[] {
+    const flagsBySkillId = readSkillFlags(properties);
+    return skills.map((skill) => ({ ...skill, ...(flagsBySkillId.get(skill.id) ?? NO_SKILL_FLAGS) }));
+  }
+
   async deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void> {
     const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
     if (!feat) return;
@@ -46,14 +54,6 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     // Soft-archive would block a future generateSkillFeat with the same name
     // (the unique index on feats doesn't filter deleted_at).
     await Feats.delete(tx, { id: targetId });
-  }
-
-  enrichWithProperties<T extends { id: string }>(
-    skills: T[],
-    properties: { entityId: string; type: string; value: string }[],
-  ): (T & SkillFlags)[] {
-    const flagsBySkillId = readSkillFlags(properties);
-    return skills.map((skill) => ({ ...skill, ...(flagsBySkillId.get(skill.id) ?? NO_SKILL_FLAGS) }));
   }
 
   async generateSkillFeat(tx: Db, rulesetId: string, sourceChain: string[], skillName: string): Promise<void> {

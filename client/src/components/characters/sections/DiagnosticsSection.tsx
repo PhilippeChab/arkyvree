@@ -78,6 +78,24 @@ function HeaderRow({ labels }: { labels: string[] }) {
   );
 }
 
+function InvalidRequirementTable({ items }: { items: DiagnosticsSectionProps["requirements"]["invalidRequirements"] }) {
+  return (
+    <DiagnosticsGroup label="Invalid" count={items.length}>
+      <HeaderRow labels={["Source", "Level", "Target", "Warning"]} />
+      <TableBody>
+        {items.map((item, i) => (
+          <TableRow key={i}>
+            <TableCell sx={tableCellSx}>{item.sourceName ?? item.requirement.entityType}</TableCell>
+            <TableCell sx={tableCellSx}>{item.requirement.level}</TableCell>
+            <TableCell sx={tableCellSx}>{item.requirement.target || "—"}</TableCell>
+            <TableCell sx={tableCellSx}>{item.warning}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </DiagnosticsGroup>
+  );
+}
+
 function RuleCellsRow({ cells }: { cells: RuleCells }) {
   const [target, ...rest] = cells;
   return (
@@ -169,6 +187,22 @@ function GroupedRuleTable({
   );
 }
 
+function ModifierTable({ modifiers, label }: { modifiers: Modifier[]; label: string }) {
+  const groups = useMemo(() => {
+    const bySource = new Map<string, RuleCells[]>();
+    for (const mod of modifiers) {
+      const source = mod.sourceName ?? mod.sourceType;
+      const cells: RuleCells = [mod.target, mod.operator, mod.value, mod.valueType];
+      const rules = bySource.get(source);
+      if (rules) rules.push(cells);
+      else bySource.set(source, [cells]);
+    }
+    return [...bySource].map(([source, rules]) => ({ key: source, source, rules }));
+  }, [modifiers]);
+
+  return <GroupedRuleTable label={label} count={modifiers.length} lastColumn="Type" groups={groups} />;
+}
+
 function RequirementTable({ groups, label }: { groups: RequirementGroup[]; label: string }) {
   return (
     <GroupedRuleTable
@@ -189,22 +223,6 @@ function RequirementTable({ groups, label }: { groups: RequirementGroup[]; label
   );
 }
 
-function ModifierTable({ modifiers, label }: { modifiers: Modifier[]; label: string }) {
-  const groups = useMemo(() => {
-    const bySource = new Map<string, RuleCells[]>();
-    for (const mod of modifiers) {
-      const source = mod.sourceName ?? mod.sourceType;
-      const cells: RuleCells = [mod.target, mod.operator, mod.value, mod.valueType];
-      const rules = bySource.get(source);
-      if (rules) rules.push(cells);
-      else bySource.set(source, [cells]);
-    }
-    return [...bySource].map(([source, rules]) => ({ key: source, source, rules }));
-  }, [modifiers]);
-
-  return <GroupedRuleTable label={label} count={modifiers.length} lastColumn="Type" groups={groups} />;
-}
-
 function SkippedModifierTable({ items }: { items: DiagnosticsSectionProps["modifiers"]["skippedModifiers"] }) {
   return (
     <DiagnosticsGroup label="Skipped" count={items.length}>
@@ -214,24 +232,6 @@ function SkippedModifierTable({ items }: { items: DiagnosticsSectionProps["modif
           <TableRow key={i}>
             <TableCell sx={tableCellSx}>{item.modifier.sourceType}</TableCell>
             <TableCell sx={tableCellSx}>{item.modifier.target}</TableCell>
-            <TableCell sx={tableCellSx}>{item.warning}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </DiagnosticsGroup>
-  );
-}
-
-function InvalidRequirementTable({ items }: { items: DiagnosticsSectionProps["requirements"]["invalidRequirements"] }) {
-  return (
-    <DiagnosticsGroup label="Invalid" count={items.length}>
-      <HeaderRow labels={["Source", "Level", "Target", "Warning"]} />
-      <TableBody>
-        {items.map((item, i) => (
-          <TableRow key={i}>
-            <TableCell sx={tableCellSx}>{item.sourceName ?? item.requirement.entityType}</TableCell>
-            <TableCell sx={tableCellSx}>{item.requirement.level}</TableCell>
-            <TableCell sx={tableCellSx}>{item.requirement.target || "—"}</TableCell>
             <TableCell sx={tableCellSx}>{item.warning}</TableCell>
           </TableRow>
         ))}

@@ -45,6 +45,33 @@ export const TOWER_SHIELD_PROF = proficiency("Tower Shield Proficiency");
 
 export { simple, martial, exotic } from "@/database/packages/dnd35/content/weapons.ts";
 
+export function armorProperties(armorTypeName: string): Property[] {
+  const def = getArmorDefinition(armorTypeName);
+  if (!def) throw new Error(`Unknown armor type: ${armorTypeName}`);
+
+  return [
+    { type: ARMOR_PROFICIENCY, value: def.armorType },
+    { type: ARMOR_TYPE, value: armorTypeName },
+    { type: ARMOR_AC_BONUS, value: String(def.acBonus) },
+    { type: ARMOR_MAX_DEX, value: String(def.maxDex) },
+    { type: ARMOR_CHECK_PENALTY, value: String(def.checkPenalty) },
+    { type: ITEM_SPELL_FAILURE, value: String(def.spellFailure) },
+  ];
+}
+
+export function shieldProperties(shieldTypeName: string): Property[] {
+  const def = getShieldDefinition(shieldTypeName);
+  if (!def) throw new Error(`Unknown shield type: ${shieldTypeName}`);
+
+  return [
+    { type: SHIELD_PROFICIENCY, value: def.shieldType },
+    { type: SHIELD_TYPE, value: shieldTypeName },
+    { type: SHIELD_AC_BONUS, value: String(def.acBonus) },
+    { type: ARMOR_CHECK_PENALTY, value: String(def.checkPenalty) },
+    { type: ITEM_SPELL_FAILURE, value: String(def.spellFailure) },
+  ];
+}
+
 export function weaponProperties(weaponTypeName: string): Property[] {
   const def = getWeaponDefinition(weaponTypeName);
   if (!def) throw new Error(`Unknown weapon type: ${weaponTypeName}`);
@@ -77,31 +104,4 @@ export function weaponProperties(weaponTypeName: string): Property[] {
   }
 
   return props;
-}
-
-export function armorProperties(armorTypeName: string): Property[] {
-  const def = getArmorDefinition(armorTypeName);
-  if (!def) throw new Error(`Unknown armor type: ${armorTypeName}`);
-
-  return [
-    { type: ARMOR_PROFICIENCY, value: def.armorType },
-    { type: ARMOR_TYPE, value: armorTypeName },
-    { type: ARMOR_AC_BONUS, value: String(def.acBonus) },
-    { type: ARMOR_MAX_DEX, value: String(def.maxDex) },
-    { type: ARMOR_CHECK_PENALTY, value: String(def.checkPenalty) },
-    { type: ITEM_SPELL_FAILURE, value: String(def.spellFailure) },
-  ];
-}
-
-export function shieldProperties(shieldTypeName: string): Property[] {
-  const def = getShieldDefinition(shieldTypeName);
-  if (!def) throw new Error(`Unknown shield type: ${shieldTypeName}`);
-
-  return [
-    { type: SHIELD_PROFICIENCY, value: def.shieldType },
-    { type: SHIELD_TYPE, value: shieldTypeName },
-    { type: SHIELD_AC_BONUS, value: String(def.acBonus) },
-    { type: ARMOR_CHECK_PENALTY, value: String(def.checkPenalty) },
-    { type: ITEM_SPELL_FAILURE, value: String(def.spellFailure) },
-  ];
 }

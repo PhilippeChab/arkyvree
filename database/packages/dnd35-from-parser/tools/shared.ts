@@ -182,24 +182,6 @@ export function toCamelCase(name: string): string {
 // stripClassSuffix — used by buildSeeds, generator/class
 // ---------------------------------------------------------------------------
 
-/** Strip class suffix: "Track (Ranger)" → "Track" */
-export function stripClassSuffix(name: string, className: string): string | undefined {
-  const suffix = ` (${className})`;
-  if (name.endsWith(suffix)) return name.slice(0, -suffix.length);
-  return undefined;
-}
-
-/** The books with references: the folders of REFERENCE_DIR (a symlinked one too), sorted, so generation is the same on every filesystem. */
-export function referenceBooks(): string[] {
-  return readdirSync(REFERENCE_DIR, { withFileTypes: true })
-    .filter(
-      (entry) =>
-        entry.isDirectory() || (entry.isSymbolicLink() && statSync(join(REFERENCE_DIR, entry.name)).isDirectory()),
-    )
-    .map((entry) => entry.name)
-    .sort();
-}
-
 /** The reference files under `refDir`: each book's. */
 export function discoverRefs(
   refDir = REFERENCE_DIR,
@@ -213,22 +195,26 @@ export function discoverRefs(
     return { path, type: _meta.type, url: _meta.sourceUrl, book: _meta.book };
   });
 }
-for (const name of SKILL_NAMES) {
-  SKILL_MAP[name.toLowerCase()] = stripSeparators(name);
+
+/** The books with references: the folders of REFERENCE_DIR (a symlinked one too), sorted, so generation is the same on every filesystem. */
+export function referenceBooks(): string[] {
+  return readdirSync(REFERENCE_DIR, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isDirectory() || (entry.isSymbolicLink() && statSync(join(REFERENCE_DIR, entry.name)).isDirectory()),
+    )
+    .map((entry) => entry.name)
+    .sort();
 }
 
-/**
- * A skill's slug: its own ("Knowledge (arcana)" → "knowledgearcana"), else its base skill's, for a specialization the
- * skill list doesn't name ("Perform (dance)" → "perform").
- */
-export function skillSlug(name: string): string {
-  const fullKey = name.toLowerCase().trim();
-  if (SKILL_MAP[fullKey]) return SKILL_MAP[fullKey];
-  const baseName = name
-    .replace(/\s*\([^)]*\)\s*$/, "")
-    .toLowerCase()
-    .trim();
-  return SKILL_MAP[baseName] ?? stripSeparators(baseName);
+/** Strip class suffix: "Track (Ranger)" → "Track" */
+export function stripClassSuffix(name: string, className: string): string | undefined {
+  const suffix = ` (${className})`;
+  if (name.endsWith(suffix)) return name.slice(0, -suffix.length);
+  return undefined;
+}
+for (const name of SKILL_NAMES) {
+  SKILL_MAP[name.toLowerCase()] = stripSeparators(name);
 }
 
 /** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
@@ -245,26 +231,23 @@ export function anySkillRequirement(name: string, ranks: number): RequirementEnt
   return or(...checks);
 }
 
+/**
+ * A skill's slug: its own ("Knowledge (arcana)" → "knowledgearcana"), else its base skill's, for a specialization the
+ * skill list doesn't name ("Perform (dance)" → "perform").
+ */
+export function skillSlug(name: string): string {
+  const fullKey = name.toLowerCase().trim();
+  if (SKILL_MAP[fullKey]) return SKILL_MAP[fullKey];
+  const baseName = name
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .toLowerCase()
+    .trim();
+  return SKILL_MAP[baseName] ?? stripSeparators(baseName);
+}
+
 // ---------------------------------------------------------------------------
 // Plural variant helpers — used by buildSeeds, detectClass
 // ---------------------------------------------------------------------------
-
-export function pluralVariants(name: string): string[] {
-  const n = name.toLowerCase();
-  return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
-}
-
-export function matchesWithPluralVariants(a: string, b: string): boolean {
-  return pluralVariants(a).includes(b.toLowerCase());
-}
-
-export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): V | undefined {
-  for (const v of pluralVariants(name)) {
-    const result = map.get(v);
-    if (result !== undefined) return result;
-  }
-  return undefined;
-}
 
 /** `value` checked against `options`: `what` names it in the problem. */
 export function checkOneOf<T extends string>(value: string, options: readonly T[], what: string): Checked<T> {
@@ -282,6 +265,23 @@ export function checkedValue<T>(checked: Checked<T>): T {
 /** Text with its runs of whitespace (newlines included) as single spaces, trimmed. */
 export function normalizeWs(text: string) {
   return text.replace(/\s+/g, " ").trim();
+}
+
+export function pluralVariants(name: string): string[] {
+  const n = name.toLowerCase();
+  return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
+}
+
+export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): V | undefined {
+  for (const v of pluralVariants(name)) {
+    const result = map.get(v);
+    if (result !== undefined) return result;
+  }
+  return undefined;
+}
+
+export function matchesWithPluralVariants(a: string, b: string): boolean {
+  return pluralVariants(a).includes(b.toLowerCase());
 }
 
 // ---------------------------------------------------------------------------

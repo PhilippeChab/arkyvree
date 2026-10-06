@@ -140,6 +140,81 @@ export async function getSeedContext(db: Db): Promise<SeedContext> {
   };
 }
 
+export async function addClassLevels(
+  db: Db,
+  ctx: SeedContext,
+  characterId: string,
+  className: string,
+  levels: number[],
+  hpPerLevel: number[],
+) {
+  const klassId = ctx.klassMap.pc[className];
+  const levelIds: string[] = [];
+
+  for (let i = 0; i < levels.length; i++) {
+    const [klassLevel] = await db
+      .select({ id: klassLevelsInRules.id })
+      .from(klassLevelsInRules)
+      .where(and(eq(klassLevelsInRules.klassId, klassId), eq(klassLevelsInRules.level, levels[i])));
+
+    const [charLevel] = await db
+      .insert(levelsInCharacter)
+      .values({ characterId, klassLevelId: klassLevel.id, hp: hpPerLevel[i] })
+      .returning({ id: levelsInCharacter.id });
+
+    levelIds.push(charLevel.id);
+  }
+
+  return levelIds;
+}
+
+export async function addFeats(
+  db: Db,
+  ctx: SeedContext,
+  charLevelIds: string[],
+  feats: { levelIndex: number; featName: string; aptitude: string }[],
+) {
+  if (feats.length === 0) return;
+  await db.insert(levelFeatsInCharacter).values(
+    feats.map((f) => ({
+      characterLevelId: charLevelIds[f.levelIndex],
+      featId: ctx.featMap[f.featName],
+      aptitudeId: ctx.aptMap[f.aptitude],
+    })),
+  );
+}
+
+export async function addPowers(
+  db: Db,
+  ctx: SeedContext,
+  charLevelIds: string[],
+  powers: { levelIndex: number; powerName: string; aptitude: string }[],
+) {
+  if (powers.length === 0) return;
+  await db.insert(levelPowersInCharacter).values(
+    powers.map((p) => ({
+      characterLevelId: charLevelIds[p.levelIndex],
+      powerId: ctx.powerMap[p.powerName],
+      aptitudeId: ctx.aptMap[p.aptitude],
+    })),
+  );
+}
+
+export async function addSkills(
+  db: Db,
+  ctx: SeedContext,
+  charLevelIds: string[],
+  skills: { levelIndex: number; skillName: string; rank: number }[],
+) {
+  for (const s of skills) {
+    await db.insert(levelSkillsInCharacter).values({
+      characterLevelId: charLevelIds[s.levelIndex],
+      skillId: ctx.skillMap[s.skillName],
+      rank: s.rank,
+    });
+  }
+}
+
 export async function createCharacter(
   db: Db,
   ctx: SeedContext,
@@ -192,81 +267,6 @@ export async function createCharacter(
   }
 
   return character.id;
-}
-
-export async function addClassLevels(
-  db: Db,
-  ctx: SeedContext,
-  characterId: string,
-  className: string,
-  levels: number[],
-  hpPerLevel: number[],
-) {
-  const klassId = ctx.klassMap.pc[className];
-  const levelIds: string[] = [];
-
-  for (let i = 0; i < levels.length; i++) {
-    const [klassLevel] = await db
-      .select({ id: klassLevelsInRules.id })
-      .from(klassLevelsInRules)
-      .where(and(eq(klassLevelsInRules.klassId, klassId), eq(klassLevelsInRules.level, levels[i])));
-
-    const [charLevel] = await db
-      .insert(levelsInCharacter)
-      .values({ characterId, klassLevelId: klassLevel.id, hp: hpPerLevel[i] })
-      .returning({ id: levelsInCharacter.id });
-
-    levelIds.push(charLevel.id);
-  }
-
-  return levelIds;
-}
-
-export async function addSkills(
-  db: Db,
-  ctx: SeedContext,
-  charLevelIds: string[],
-  skills: { levelIndex: number; skillName: string; rank: number }[],
-) {
-  for (const s of skills) {
-    await db.insert(levelSkillsInCharacter).values({
-      characterLevelId: charLevelIds[s.levelIndex],
-      skillId: ctx.skillMap[s.skillName],
-      rank: s.rank,
-    });
-  }
-}
-
-export async function addFeats(
-  db: Db,
-  ctx: SeedContext,
-  charLevelIds: string[],
-  feats: { levelIndex: number; featName: string; aptitude: string }[],
-) {
-  if (feats.length === 0) return;
-  await db.insert(levelFeatsInCharacter).values(
-    feats.map((f) => ({
-      characterLevelId: charLevelIds[f.levelIndex],
-      featId: ctx.featMap[f.featName],
-      aptitudeId: ctx.aptMap[f.aptitude],
-    })),
-  );
-}
-
-export async function addPowers(
-  db: Db,
-  ctx: SeedContext,
-  charLevelIds: string[],
-  powers: { levelIndex: number; powerName: string; aptitude: string }[],
-) {
-  if (powers.length === 0) return;
-  await db.insert(levelPowersInCharacter).values(
-    powers.map((p) => ({
-      characterLevelId: charLevelIds[p.levelIndex],
-      powerId: ctx.powerMap[p.powerName],
-      aptitudeId: ctx.aptMap[p.aptitude],
-    })),
-  );
 }
 
 /** Seeds a character, and the creatures its feats bond it to. */

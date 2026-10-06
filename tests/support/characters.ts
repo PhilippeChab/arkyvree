@@ -10,6 +10,30 @@ import { api, expectOk } from "@/tests/support/api.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 
 /**
+ * A new character of `session`'s, created through the service: a Human on the seeded ruleset, unless `values` says
+ * otherwise.
+ */
+export async function createCharacterAs(
+  session: Session,
+  values: Partial<Parameters<typeof CharactersService.createCharacter>[1]> = {},
+) {
+  const { rulesetId, raceMap } = await getSeedCtx();
+  return await CharactersService.createCharacter(session, {
+    rulesetId,
+    raceId: raceMap.pc["Human"],
+    name: `Test Character ${uniqueId()}`,
+    xp: 0,
+    alignment: "True Neutral",
+    abilities: {},
+    age: 25,
+    gender: "Male",
+    height: "180",
+    weight: "80",
+    ...values,
+  });
+}
+
+/**
  * A human character of `userId`'s on the seeded ruleset, written straight to
  * the database: no abilities, levels or activity. Create one with
  * `createCharacterAs` when the test needs those.
@@ -33,30 +57,6 @@ export async function createTestCharacter(
     ...values,
   });
   return character;
-}
-
-/**
- * A new character of `session`'s, created through the service: a Human on the seeded ruleset, unless `values` says
- * otherwise.
- */
-export async function createCharacterAs(
-  session: Session,
-  values: Partial<Parameters<typeof CharactersService.createCharacter>[1]> = {},
-) {
-  const { rulesetId, raceMap } = await getSeedCtx();
-  return await CharactersService.createCharacter(session, {
-    rulesetId,
-    raceId: raceMap.pc["Human"],
-    name: `Test Character ${uniqueId()}`,
-    xp: 0,
-    alignment: "True Neutral",
-    abilities: {},
-    age: 25,
-    gender: "Male",
-    height: "180",
-    weight: "80",
-    ...values,
-  });
 }
 
 /**

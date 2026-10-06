@@ -46,10 +46,10 @@ export interface RulesetListFilters {
 
 const LIST_PAGE_SIZE = 10;
 
-export function dashboardStatsQuery() {
+export function campaignDetailQuery(id: string) {
   return queryOptions({
-    queryKey: queryKeys.dashboard.stats,
-    queryFn: () => parseResponse(rpc.api.dashboard.stats.$get()),
+    queryKey: queryKeys.campaigns.detail(id),
+    queryFn: () => parseResponse(rpc.api.campaigns[":id"].$get({ param: { id } })),
   });
 }
 
@@ -74,6 +74,13 @@ export function campaignListQuery(filters: CampaignListFilters) {
   });
 }
 
+export function characterDetailQuery(id: string) {
+  return queryOptions({
+    queryKey: queryKeys.characters.detail(id),
+    queryFn: () => parseResponse(rpc.api.characters[":id"].$get({ param: { id } })),
+  });
+}
+
 export function characterListQuery(filters: CharacterListFilters) {
   return infiniteQueryOptions({
     queryKey: queryKeys.characters.list({ ...filters }),
@@ -94,6 +101,20 @@ export function characterListQuery(filters: CharacterListFilters) {
       ),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
+}
+
+export function dashboardStatsQuery() {
+  return queryOptions({
+    queryKey: queryKeys.dashboard.stats,
+    queryFn: () => parseResponse(rpc.api.dashboard.stats.$get()),
+  });
+}
+
+export function rulesetDetailQuery(id: string) {
+  return queryOptions({
+    queryKey: queryKeys.rulesets.detail(id),
+    queryFn: () => parseResponse(rpc.api.rulesets[":id"].$get({ param: { id } })),
   });
 }
 
@@ -135,26 +156,5 @@ export function rulesetPickerQuery(scope: RulesetListParams["scope"], search: st
       ),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
-  });
-}
-
-export function rulesetDetailQuery(id: string) {
-  return queryOptions({
-    queryKey: queryKeys.rulesets.detail(id),
-    queryFn: () => parseResponse(rpc.api.rulesets[":id"].$get({ param: { id } })),
-  });
-}
-
-export function campaignDetailQuery(id: string) {
-  return queryOptions({
-    queryKey: queryKeys.campaigns.detail(id),
-    queryFn: () => parseResponse(rpc.api.campaigns[":id"].$get({ param: { id } })),
-  });
-}
-
-export function characterDetailQuery(id: string) {
-  return queryOptions({
-    queryKey: queryKeys.characters.detail(id),
-    queryFn: () => parseResponse(rpc.api.characters[":id"].$get({ param: { id } })),
   });
 }

@@ -15,8 +15,9 @@
  */
 import { repoPath } from "./paths.mjs";
 
-function inClient(context) {
-  return repoPath(context.filename).startsWith("client/src/");
+/** Whether a JSX element has the attribute `name`. */
+function hasAttribute(node, name) {
+  return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
 }
 
 /** A JSX element's name: `IconButton`, `Dialog`. */
@@ -24,9 +25,8 @@ function elementName(node) {
   return node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;
 }
 
-/** Whether a JSX element has the attribute `name`. */
-function hasAttribute(node, name) {
-  return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
+function inClient(context) {
+  return repoPath(context.filename).startsWith("client/src/");
 }
 
 /** The nearest JSX element around `node`. */

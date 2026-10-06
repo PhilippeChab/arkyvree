@@ -21,13 +21,6 @@ type LevelPicks = {
   skills?: { skillId: string; rank: number }[];
 };
 
-/** A new class of the ruleset, with its first level. */
-export async function createTestKlassLevel(rulesetId: string) {
-  const [klass] = await Klasses.create(db, { name: `Test Class ${uniqueId()}`, rulesetId, hd: 8 });
-  const [klassLevel] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
-  return { klass, klassLevel };
-}
-
 /** A class's level `level`. */
 export async function findKlassLevel(klassId: string, level: number) {
   return await db.query.klassLevelsInRules.findFirst({
@@ -58,14 +51,6 @@ export async function addCharacterLevel(characterId: string, klassLevelId: strin
   return level;
 }
 
-/** A character of `userId`'s on `rulesetId`, who picked the feat at their first level. */
-export async function pickFeat(userId: string, rulesetId: string, featId: string, aptitudeId: string) {
-  const character = await createTestCharacter(userId, { rulesetId });
-  const { klassLevel } = await createTestKlassLevel(rulesetId);
-  await addCharacterLevel(character.id, klassLevel.id, { feats: [{ featId, aptitudeId }] });
-  return character;
-}
-
 /**
  * Adds a single level to a character via the batch finalizer. Tests used
  * `finalizeLevelUp` for this before batch became the only flow; this wraps
@@ -93,4 +78,19 @@ export async function addOneLevel(
     force,
   );
   return createdLevels[0];
+}
+
+/** A new class of the ruleset, with its first level. */
+export async function createTestKlassLevel(rulesetId: string) {
+  const [klass] = await Klasses.create(db, { name: `Test Class ${uniqueId()}`, rulesetId, hd: 8 });
+  const [klassLevel] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
+  return { klass, klassLevel };
+}
+
+/** A character of `userId`'s on `rulesetId`, who picked the feat at their first level. */
+export async function pickFeat(userId: string, rulesetId: string, featId: string, aptitudeId: string) {
+  const character = await createTestCharacter(userId, { rulesetId });
+  const { klassLevel } = await createTestKlassLevel(rulesetId);
+  await addCharacterLevel(character.id, klassLevel.id, { feats: [{ featId, aptitudeId }] });
+  return character;
 }

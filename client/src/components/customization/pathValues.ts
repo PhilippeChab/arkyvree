@@ -7,14 +7,6 @@ const BOOLEAN_CHOICES: PathChoice[] = [
   { value: "false", label: "False" },
 ];
 
-/** The values a path's input offers as a select: its own, True / False for a boolean, or null for free input. */
-export function pathChoices(
-  valueType: PathValueType | undefined,
-  possibleValues: PathChoice[] | undefined,
-): PathChoice[] | null {
-  return possibleValues ?? (valueType === "boolean" ? BOOLEAN_CHOICES : null);
-}
-
 export function defaultValueForPath(
   valueType: PathValueType | undefined,
   possibleValues: PathChoice[] | undefined,
@@ -23,6 +15,14 @@ export function defaultValueForPath(
   if (valueType === "boolean") return "true";
   if (valueType === "number") return "0";
   return "";
+}
+
+/** The values a path's input offers as a select: its own, True / False for a boolean, or null for free input. */
+export function pathChoices(
+  valueType: PathValueType | undefined,
+  possibleValues: PathChoice[] | undefined,
+): PathChoice[] | null {
+  return possibleValues ?? (valueType === "boolean" ? BOOLEAN_CHOICES : null);
 }
 
 /** Whether a literal value suits the path: one of its choices, or a number on a numeric path. */

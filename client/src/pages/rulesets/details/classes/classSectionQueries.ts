@@ -33,6 +33,14 @@ export function classDetailQuery(rulesetId: string, classId: string) {
   });
 }
 
+export function classFeatPoolsQuery(rulesetId: string, classId: string) {
+  return queryOptions({
+    queryKey: queryKeys.rulesets.classFeatPools(rulesetId, classId),
+    queryFn: () =>
+      parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["feat-pools"].$get(classParam(rulesetId, classId))),
+  });
+}
+
 export function classLevelsQuery(rulesetId: string, classId: string) {
   return queryOptions({
     queryKey: queryKeys.rulesets.classLevels(rulesetId, classId),
@@ -49,11 +57,18 @@ export function classSkillsQuery(rulesetId: string, classId: string) {
   });
 }
 
-export function classFeatPoolsQuery(rulesetId: string, classId: string) {
-  return queryOptions({
-    queryKey: queryKeys.rulesets.classFeatPools(rulesetId, classId),
-    queryFn: () =>
-      parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["feat-pools"].$get(classParam(rulesetId, classId))),
+export function classSpellListQuery(rulesetId: string, classId: string, level: number, search: string) {
+  return infiniteQueryOptions({
+    queryKey: queryKeys.rulesets.classSpellList(rulesetId, classId, level, search),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].classes[":classId"]["spell-list"].$get({
+          ...classParam(rulesetId, classId),
+          query: { page: pageParam.toString(), limit: "20", level: level.toString(), search: search || undefined },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 }
 
@@ -70,21 +85,6 @@ export function classSpellsQuery(rulesetId: string, classId: string) {
     queryKey: queryKeys.rulesets.classSpells(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].spells.$get(classParam(rulesetId, classId))),
-  });
-}
-
-export function classSpellListQuery(rulesetId: string, classId: string, level: number, search: string) {
-  return infiniteQueryOptions({
-    queryKey: queryKeys.rulesets.classSpellList(rulesetId, classId, level, search),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].classes[":classId"]["spell-list"].$get({
-          ...classParam(rulesetId, classId),
-          query: { page: pageParam.toString(), limit: "20", level: level.toString(), search: search || undefined },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 }
 

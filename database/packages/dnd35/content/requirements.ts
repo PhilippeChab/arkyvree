@@ -26,14 +26,6 @@ export const eqStr = check("equal", "string");
 // generator writes a check with the builder that makes exactly that check (`builderOf` in generator/codegen.ts), and
 // any other check as an object.
 
-/** The path of having a feat. */
-export function feat(name: string) {
-  return `feats.${stripSeparators(name)}.possessed`;
-}
-
-export function or(...children: RequirementEntry[]): RequirementGroup {
-  return { chainingOperator: "or", children };
-}
 export function and(...children: RequirementEntry[]): RequirementGroup {
   return { chainingOperator: "and", children };
 }
@@ -41,4 +33,13 @@ export function and(...children: RequirementEntry[]): RequirementGroup {
 // Boolean
 export function eq(target: string) {
   return check("equal", "boolean")(target, "true");
+}
+
+/** The path of having a feat. */
+export function feat(name: string) {
+  return `feats.${stripSeparators(name)}.possessed`;
+}
+
+export function or(...children: RequirementEntry[]): RequirementGroup {
+  return { chainingOperator: "or", children };
 }
