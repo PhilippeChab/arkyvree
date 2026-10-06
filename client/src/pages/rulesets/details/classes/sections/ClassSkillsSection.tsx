@@ -36,7 +36,9 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         spacing={2}
         sx={{ flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}
       >
-        <Typography variant="h6">Class Skills</Typography>
+        <Typography component="h2" variant="h6">
+          Class Skills
+        </Typography>
         {canEdit && (
           <Box sx={{ minWidth: { xs: "100%", sm: 300 } }}>
             <Autocomplete

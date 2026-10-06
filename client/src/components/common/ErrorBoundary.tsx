@@ -74,6 +74,7 @@ export class ErrorBoundary extends Component<Props, State> {
           >
             <DiceIcon fontSize="hero" sx={{ color: "primary.main" }} />
             <Typography
+              component="h1"
               variant="h4"
               sx={{ fontFamily: '"Lora Variable", Georgia, serif', color: "primary.main", fontWeight: 600 }}
             >

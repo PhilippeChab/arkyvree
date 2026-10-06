@@ -36,7 +36,10 @@ function FeatRow({ name, label, description, extra }: FeatRowProps) {
   return (
     <Box sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
-        <Typography sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}>
+        <Typography
+          component="h3"
+          sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}
+        >
           {name}
         </Typography>
         {hasExtra && (
@@ -91,7 +94,10 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
             const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
             return (
               <Box key={feat.id} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
-                <Typography sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}>
+                <Typography
+                  component="h3"
+                  sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}
+                >
                   {featLink ? (
                     <MuiLink
                       component={Link}

@@ -13,7 +13,7 @@ interface PageErrorProps {
 export function PageError({ message, backLabel, backTo }: PageErrorProps) {
   return (
     <Paper sx={{ p: { xs: 2, sm: 4 }, textAlign: "center" }}>
-      <Typography role="alert" variant="h5" gutterBottom sx={{ color: "error.main" }}>
+      <Typography component="h1" role="alert" variant="h5" gutterBottom sx={{ color: "error.main" }}>
         {message}
       </Typography>
       {backTo && backLabel && (

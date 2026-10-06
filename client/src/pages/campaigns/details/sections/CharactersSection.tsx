@@ -169,6 +169,7 @@ function CharacterCard({
               {getInitial(character.name)}
             </Avatar>
             <Typography
+              component="h2"
               variant="h6"
               noWrap
               sx={{ fontWeight: 600, color: "text.primary", lineHeight: 1.2, textAlign: "left", flex: 1, minWidth: 0 }}
@@ -448,7 +449,9 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   return (
     <SectionContent>
       {/* Header */}
-      <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>Characters</Typography>
+      <Typography component="h2" sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>
+        Characters
+      </Typography>
 
       <SearchBar
         {...searchTextProps}

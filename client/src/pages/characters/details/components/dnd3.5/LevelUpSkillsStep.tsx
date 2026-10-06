@@ -228,7 +228,9 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
     <Box>
       <Box sx={{ position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper", pb: 1 }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
-          <Typography variant="h6">Skill Points to Spend: {skillData.skillPointsToSpend}</Typography>
+          <Typography component="h3" variant="h6">
+            Skill Points to Spend: {skillData.skillPointsToSpend}
+          </Typography>
           <Button startIcon={<DiceIcon />} onClick={randomAssign} size="small">
             Auto
           </Button>

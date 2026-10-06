@@ -622,4 +622,21 @@ describe("frontend rules", () => {
       "button-intents client/src/leave.tsx",
     ]);
   });
+
+  test("a Typography sized as a heading declares its element", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/variant.tsx": 'export const v = <Typography variant="h6">Diagnostics</Typography>;\n',
+          "client/src/styled.tsx":
+            'export const s = <Typography sx={{ typography: { xs: "h6", sm: "h5" } }}>Players</Typography>;\n',
+          "client/src/declared.tsx":
+            'export const d = <Typography component="h2" variant="h6">Diagnostics</Typography>;\n',
+          "client/src/text.tsx":
+            'export const t = <Typography variant="body2" sx={{ typography: "caption" }}>Note</Typography>;\n',
+        },
+        ["headings"],
+      ),
+    ).toEqual(["headings client/src/styled.tsx", "headings client/src/variant.tsx"]);
+  });
 });

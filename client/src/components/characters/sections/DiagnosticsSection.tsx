@@ -275,7 +275,9 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
       <Accordion defaultExpanded={false} disableGutters sx={accordionSx}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={summarySx}>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <Typography variant="h6">Diagnostics</Typography>
+            <Typography component="h2" variant="h6">
+              Diagnostics
+            </Typography>
             <Chip
               label={validation.valid ? "Valid" : "Invalid"}
               color={validation.valid ? "success" : "error"}

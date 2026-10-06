@@ -132,7 +132,7 @@ function describe(
         subtitle: (
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center" }}>
             <TargetPathBreadcrumbs target={modifier.target} targetLabels={modifier.targetLabels} />
-            <Typography sx={{ typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}>
+            <Typography component="p" sx={{ typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}>
               {MODIFIER_OPERATOR_LABELS[modifier.operator]} {modifier.value}
             </Typography>
           </Stack>

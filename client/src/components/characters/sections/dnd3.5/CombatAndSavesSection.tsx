@@ -36,7 +36,10 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         {/* Left column: Combat Stats */}
         <Box sx={{ flex: 1, minWidth: { md: 350 } }}>
-          <Typography sx={{ fontWeight: 600, mb: 2, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}>
+          <Typography
+            component="h3"
+            sx={{ fontWeight: 600, mb: 2, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}
+          >
             Combat Stats
           </Typography>
           <Stack spacing={2}>
@@ -68,7 +71,10 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
 
         {/* Right column: Saving Throws */}
         <Box sx={{ flex: 1, minWidth: { md: 300 } }}>
-          <Typography sx={{ fontWeight: 600, mb: 2, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}>
+          <Typography
+            component="h3"
+            sx={{ fontWeight: 600, mb: 2, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}
+          >
             Saving Throws
           </Typography>
           {Object.keys(saves).length > 0 ? (

@@ -70,7 +70,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   return (
     <Stack sx={{ flex: 1, minHeight: 0 }}>
       <Box sx={{ flexShrink: 0 }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography component="h3" variant="h6" gutterBottom>
           Select Spells by Aptitude
         </Typography>
 

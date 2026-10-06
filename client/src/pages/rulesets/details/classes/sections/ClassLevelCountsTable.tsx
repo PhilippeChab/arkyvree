@@ -62,7 +62,9 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
   return (
     <Box>
       <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="h6">{title}</Typography>
+        <Typography component="h2" variant="h6">
+          {title}
+        </Typography>
       </Stack>
 
       <RulesetSectionTable

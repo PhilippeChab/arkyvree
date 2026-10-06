@@ -57,7 +57,12 @@ export function ListCard({
           >
             {avatar ?? getInitial(title)}
           </Avatar>
-          <Typography variant="h6" noWrap sx={{ fontWeight: 600, color: "text.primary", lineHeight: 1.3, flex: 1 }}>
+          <Typography
+            component="h2"
+            variant="h6"
+            noWrap
+            sx={{ fontWeight: 600, color: "text.primary", lineHeight: 1.3, flex: 1 }}
+          >
             {title}
           </Typography>
         </Stack>

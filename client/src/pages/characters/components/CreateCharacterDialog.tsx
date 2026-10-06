@@ -129,7 +129,7 @@ function AbilityCard({
         <IconButton size="small" aria-label={`Lower ${name}`} onClick={onDecrease} disabled={!canDecrease}>
           <DecrementIcon fontSize="small" />
         </IconButton>
-        <Typography variant="h6" sx={{ minWidth: 28 }}>
+        <Typography component="p" variant="h6" sx={{ minWidth: 28 }}>
           {score}
         </Typography>
         <IconButton size="small" aria-label={`Raise ${name}`} onClick={onIncrease} disabled={!canIncrease}>
@@ -544,7 +544,9 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
     >
       <BaseRulesetAlert ruleset={selectedRuleset} />
       {/* Basic Info */}
-      <Typography variant="h6">Basic Information</Typography>
+      <Typography component="h3" variant="h6">
+        Basic Information
+      </Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <NameField control={control} name="name" rules={nameRules} label="Character Name" />
         <FormTextField
@@ -616,7 +618,9 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
       </Stack>
 
       {/* Ability Scores */}
-      <Typography variant="h6">Ability Scores</Typography>
+      <Typography component="h3" variant="h6">
+        Ability Scores
+      </Typography>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <TextField
           select
@@ -680,7 +684,9 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
       )}
 
       {/* Physical Details */}
-      <Typography variant="h6">Physical Details</Typography>
+      <Typography component="h3" variant="h6">
+        Physical Details
+      </Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <FormTextField
           control={control}
@@ -697,7 +703,9 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
       </Stack>
 
       {/* Optional Details */}
-      <Typography variant="h6">Optional Details</Typography>
+      <Typography component="h3" variant="h6">
+        Optional Details
+      </Typography>
       <FormTextField control={control} name="deity" label="Deity" fullWidth />
       <DescriptionField
         control={control}

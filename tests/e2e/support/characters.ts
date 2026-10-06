@@ -31,7 +31,7 @@ export async function createCharacter(page: Page, name: string) {
     }),
   );
   await page.goto(`/characters/${character.id}`);
-  await expect(page.locator(`h5:has-text("${name}")`)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("heading", { name: name, level: 1 })).toBeVisible({ timeout: 10_000 });
   return character.id;
 }
 
@@ -63,5 +63,5 @@ export async function openSharedCharacter(page: Page, name: string) {
   await page.goto("/characters");
   await filterList(page, /^Shared$/);
   await page.locator(`text="${name}"`).first().click();
-  await expect(page.locator(`h5:has-text("${name}")`)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("heading", { name: name, level: 1 })).toBeVisible({ timeout: 10_000 });
 }

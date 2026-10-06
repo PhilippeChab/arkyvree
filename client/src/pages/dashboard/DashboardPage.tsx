@@ -64,7 +64,7 @@ function StatCard({ icon: Icon, count, label, tagline, to, colors, animationInde
         <CardActionArea component={Link} to={to} sx={{ height: "100%" }}>
           <CardContent sx={{ textAlign: "center", p: { xs: 2, sm: 4 } }}>
             <Icon fontSize="hero" sx={{ mb: 2 }} />
-            <Typography sx={{ typography: { xs: "h4", md: "h2" }, fontWeight: 800, mb: 1, textShadow }}>
+            <Typography component="p" sx={{ typography: { xs: "h4", md: "h2" }, fontWeight: 800, mb: 1, textShadow }}>
               {count}
             </Typography>
             <Typography component="h2" variant="h6" sx={{ textShadow }}>
@@ -208,6 +208,7 @@ export default function DashboardPage() {
             </Typography>
           </Stack>
           <Typography
+            component="p"
             sx={{
               opacity: 0.9,
               mb: 3,

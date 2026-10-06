@@ -59,7 +59,7 @@ export default function SharedCharacterPage() {
             spacing={1}
             sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
           >
-            <Typography sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
+            <Typography component="p" sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
               {character.rulesetName || "Character Sheet"}
             </Typography>
 

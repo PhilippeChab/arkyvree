@@ -35,7 +35,7 @@ function ReviewItem({ name, note }: ReviewItemProps) {
 export function ReviewGroup({ title, children }: ReviewGroupProps) {
   return (
     <Box sx={{ mb: 3 }}>
-      <Typography variant="h6" gutterBottom>
+      <Typography component="h3" variant="h6" gutterBottom>
         {title}
       </Typography>
       {children}
@@ -55,7 +55,7 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
 
   return (
     <Box>
-      <Typography gutterBottom sx={{ typography: { xs: "h6", sm: "h5" } }}>
+      <Typography component="h3" gutterBottom sx={{ typography: { xs: "h6", sm: "h5" } }}>
         Review Changes
       </Typography>
       {children}

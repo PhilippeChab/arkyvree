@@ -99,6 +99,7 @@
     "arkyvree/label-case": "error",
     "arkyvree/search-fields": "error",
     "arkyvree/button-intents": "error",
+    "arkyvree/headings": "error",
     "arkyvree/test-conventions": "error",
     // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
     "arkyvree/function-length": "error",

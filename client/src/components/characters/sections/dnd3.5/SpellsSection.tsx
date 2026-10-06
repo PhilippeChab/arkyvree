@@ -187,7 +187,7 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
         <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${apt.aptitudeName}`} sx={{ p: 0 }}>
           {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </IconButton>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Typography component="h3" variant="h6" sx={{ fontWeight: 600 }}>
           {apt.aptitudeName} ({totalSpells})
         </Typography>
       </Stack>

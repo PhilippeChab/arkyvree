@@ -182,7 +182,7 @@ export default function CharacterDetailsPage() {
               >
                 <BackIcon />
               </IconButton>
-              <Typography sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
+              <Typography component="p" sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
                 {character.rulesetName || "Character Sheet"}
               </Typography>
             </Stack>

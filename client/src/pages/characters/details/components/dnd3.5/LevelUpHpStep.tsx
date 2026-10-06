@@ -16,7 +16,9 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
   return (
     <Box>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <Typography variant="h6">Set HP for Level {selectedClass.nextLevel}</Typography>
+        <Typography component="h3" variant="h6">
+          Set HP for Level {selectedClass.nextLevel}
+        </Typography>
         <IconButton
           onClick={() => triggerHpRoll(selectedClass.hd)}
           disabled={hpRolling}

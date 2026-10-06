@@ -217,7 +217,7 @@ export function CharacterIdentitySection({
             />
           ) : (
             <Typography
-              component="h5"
+              component="h1"
               onClick={
                 canEditName
                   ? () => {

@@ -58,6 +58,8 @@
  * - `search-fields`: a search box is a `SearchField`, never a `TextField` of its own.
  * - `button-intents`: a button is styled by its intent, as `docs/ui-buttons.md` sets it: the verb its label starts with
  *   (Delete, Archive, Publish, Cancel…) picks its variant and color.
+ * - `headings`: a `Typography` sized as a heading (`variant="h6"`, `typography: { xs: "h6" }`) declares its element
+ *   (`component="h2"`, `"p"`), so the page's outline is a hierarchy.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -322,6 +324,20 @@ function fromRpc(node) {
   return object.type === "Identifier" && object.name === "rpc";
 }
 
+/** The heading variants a style object's `typography` takes, responsive ones included (`{ xs: "h6", sm: "h5" }`). */
+function headingVariants(object) {
+  const typography =
+    object?.type === "ObjectExpression"
+      ? object.properties.find(
+          (p) => p.type === "Property" && p.key.type === "Identifier" && p.key.name === "typography",
+        )
+      : null;
+  if (!typography) return [];
+  const values =
+    typography.value.type === "ObjectExpression" ? typography.value.properties.map((p) => p.value) : [typography.value];
+  return values.filter((v) => v?.type === "Literal" && /^h[1-6]$/.test(v.value));
+}
+
 function inClient(context) {
   return repoPath(context.filename).startsWith("client/src/");
 }
@@ -461,6 +477,29 @@ function createDateFormats(context) {
     VariableDeclarator(node) {
       if (node.init?.type !== "Identifier" || node.init.name !== "Intl" || node.id.type !== "ObjectPattern") return;
       if (node.id.properties.some((p) => p.type === "Property" && INTL_DATE_FORMATS.has(p.key.name))) report(node);
+    },
+  };
+}
+
+function createHeadings(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "Typography") return;
+      const attributes = node.openingElement.attributes.filter((a) => a.type === "JSXAttribute");
+      if (attributes.some((a) => a.name.name === "component")) return;
+      const variant = attributes.find((a) => a.name.name === "variant")?.value;
+      const sx = attributes.find((a) => a.name.name === "sx")?.value;
+      const sxObject = sx?.type === "JSXExpressionContainer" ? sx.expression : null;
+      const looksLikeHeading =
+        (variant?.type === "Literal" && /^h[1-6]$/.test(variant.value)) || headingVariants(sxObject).length > 0;
+      if (!looksLikeHeading) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          'A `Typography` sized as a heading says what it is: `component="h1"` for a page\'s title, `h2` for its ' +
+          "sections and list cards, `h3` within those and in a dialog, `p` when it isn't one.",
+      });
     },
   };
 }
@@ -1251,4 +1290,5 @@ export default {
   "label-case": { meta: { type: "suggestion" }, create: createLabelCase },
   "search-fields": { meta: { type: "suggestion" }, create: createSearchFields },
   "button-intents": { meta: { type: "suggestion" }, create: createButtonIntents },
+  headings: { meta: { type: "suggestion" }, create: createHeadings },
 };

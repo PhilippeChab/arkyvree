@@ -174,7 +174,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       >
         <Toolbar sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flex: 1 }}>
-            <Typography id="character-modifiers-title" variant="h6" sx={{ fontWeight: 600 }}>
+            <Typography component="h2" id="character-modifiers-title" variant="h6" sx={{ fontWeight: 600 }}>
               Manage Modifiers
             </Typography>
             <FaqHelpIcon

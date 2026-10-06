@@ -30,7 +30,7 @@ test.describe("Character contributors", () => {
     await contributor.keyboard.press("Escape");
 
     // Clicking the heading edits the name in place.
-    await contributor.locator(`h5:has-text("${name}")`).first().click();
+    await contributor.getByRole("heading", { name: name, level: 1 }).first().click();
     const field = contributor.locator("input:focus");
     await field.fill(renamed);
     const saved = apiResponse(contributor, "PUT", /\/api\/characters\/[a-f0-9-]+(?:\?|$)/);
@@ -38,7 +38,7 @@ test.describe("Character contributors", () => {
     await saved;
 
     await owner.goto(characterUrl);
-    await expect(owner.locator(`h5:has-text("${renamed}")`)).toBeVisible({ timeout: 10_000 });
+    await expect(owner.getByRole("heading", { name: renamed, level: 1 })).toBeVisible({ timeout: 10_000 });
 
     await owner.context().close();
     await contributor.context().close();

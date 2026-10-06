@@ -58,7 +58,7 @@ function InviteStateCard({ icon, title, children, action }: InviteStateCardProps
       <Card>
         <CardContent sx={{ textAlign: "center", py: { xs: 3, sm: 6 } }}>
           {icon}
-          <Typography variant="h5" gutterBottom>
+          <Typography component="h1" variant="h5" gutterBottom>
             {title}
           </Typography>
           <Typography variant="body1" sx={{ color: "text.secondary", mb: 3 }}>
@@ -230,7 +230,9 @@ export function InviteLandingPage({
                 <Icon />
               </Avatar>
               <Box>
-                <Typography variant="h5">{name}</Typography>
+                <Typography component="h2" variant="h5">
+                  {name}
+                </Typography>
                 {invite.role && (
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center", mt: 0.5 }}>
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>

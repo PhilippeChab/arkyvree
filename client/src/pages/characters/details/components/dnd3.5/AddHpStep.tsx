@@ -26,7 +26,7 @@ export function AddHpStep({ wizard }: AddHpStepProps) {
       {levels.map((level, index) => (
         <Box key={index}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <Typography variant="h6">
+            <Typography component="h3" variant="h6">
               Set HP for {level.className} Level {level.nextLevel}
             </Typography>
             <IconButton onClick={() => onRoll(index)} color="primary" size="small" aria-label={`Roll d${level.hd}`}>

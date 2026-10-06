@@ -346,7 +346,9 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   return (
     <SectionContent>
       {/* Header */}
-      <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>Players</Typography>
+      <Typography component="h2" sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>
+        Players
+      </Typography>
       <SearchBar
         {...searchTextProps}
         searchPlaceholder="Search players..."

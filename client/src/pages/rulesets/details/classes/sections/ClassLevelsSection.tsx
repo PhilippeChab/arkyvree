@@ -107,7 +107,9 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   return (
     <Box>
       <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="h6">Class Levels</Typography>
+        <Typography component="h2" variant="h6">
+          Class Levels
+        </Typography>
         {canEdit && (
           <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
             Add Level

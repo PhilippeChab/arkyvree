@@ -45,7 +45,7 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
           <Icon fontSize="hero" sx={{ color: "text.secondary", mb: 2, opacity: 0.5 }} />
         </Box>
       )}
-      <Typography variant="h6" gutterBottom sx={{ color: "text.secondary" }}>
+      <Typography component="p" variant="h6" gutterBottom sx={{ color: "text.secondary" }}>
         {title}
       </Typography>
       <Typography

@@ -160,6 +160,7 @@ function DesktopBranding() {
 
       {/* Title */}
       <Typography
+        component="p"
         variant="h3"
         sx={{
           mt: 3,
@@ -232,6 +233,7 @@ function MobileBranding() {
       />
       <Box>
         <Typography
+          component="p"
           variant="h5"
           sx={{
             color: "common.white",
