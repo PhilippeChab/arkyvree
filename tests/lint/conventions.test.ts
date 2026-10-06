@@ -337,6 +337,9 @@ describe("conventions", () => {
           "server/repositories/typed.ts": repository(
             "  async findName(db: Db, where: W): Promise<string | null> {\n    return (await db.query.x.findFirst({ where }))?.name;\n  }",
           ),
+          "server/repositories/nullable.ts": repository(
+            "  async findDescription(db: Db, where: W): Promise<string | null | undefined> {\n    return (await db.query.x.findFirst({ where }))?.description;\n  }",
+          ),
           "server/repositories/plain.ts": repository(
             "  async findOne(db: Db, where: W) {\n    const [row] = await db.select().from(t);\n    return row;\n  }",
           ),

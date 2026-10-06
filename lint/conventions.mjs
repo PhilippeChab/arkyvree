@@ -857,11 +857,17 @@ function gerunds(verb) {
   return [`${base}ing`, `${base.replace(/e$/, "")}ing`, `${base}${base.at(-1)}ing`];
 }
 
-/** Whether a type is `null` or a union with it, under a `Promise`: `Promise<Role | null>`. */
+/**
+ * Whether a type says `null` for nothing: `null`, or a union with it and without `undefined`, under a `Promise`
+ * (`Promise<Role | null>`). A nullable column's value (`string | null | undefined`) says both.
+ */
 function hasNullMember(type) {
   if (!type) return false;
   if (type.type === "TSNullKeyword") return true;
-  if (type.type === "TSUnionType") return type.types.some((member) => member.type === "TSNullKeyword");
+  if (type.type === "TSUnionType") {
+    const has = (keyword) => type.types.some((member) => member.type === keyword);
+    return has("TSNullKeyword") && !has("TSUndefinedKeyword");
+  }
   const isPromise = type.type === "TSTypeReference" && type.typeName?.name === "Promise";
   return isPromise && hasNullMember((type.typeArguments ?? type.typeParameters)?.params[0]);
 }
