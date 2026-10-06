@@ -10,8 +10,19 @@ type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string 
 /** The books' references: a folder per book. */
 export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
 
+/** The books with references: the folders of REFERENCE_DIR (a symlinked one too), sorted, so generation is the same on every filesystem. */
+export function listReferenceBooks(): string[] {
+  return readdirSync(REFERENCE_DIR, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isDirectory() || (entry.isSymbolicLink() && statSync(join(REFERENCE_DIR, entry.name)).isDirectory()),
+    )
+    .map((entry) => entry.name)
+    .sort();
+}
+
 /** The reference files under `refDir`: each book's. */
-export function discoverRefs(
+export function listReferenceFiles(
   refDir = REFERENCE_DIR,
 ): { path: string; type: ReferenceType; url?: string; book: string }[] {
   const files = readdirSync(refDir, { withFileTypes: true, recursive: true })
@@ -22,15 +33,4 @@ export function discoverRefs(
     const { _meta }: RefMeta = JSON.parse(readFileSync(path, "utf-8"));
     return { path, type: _meta.type, url: _meta.sourceUrl, book: _meta.book };
   });
-}
-
-/** The books with references: the folders of REFERENCE_DIR (a symlinked one too), sorted, so generation is the same on every filesystem. */
-export function referenceBooks(): string[] {
-  return readdirSync(REFERENCE_DIR, { withFileTypes: true })
-    .filter(
-      (entry) =>
-        entry.isDirectory() || (entry.isSymbolicLink() && statSync(join(REFERENCE_DIR, entry.name)).isDirectory()),
-    )
-    .map((entry) => entry.name)
-    .sort();
 }

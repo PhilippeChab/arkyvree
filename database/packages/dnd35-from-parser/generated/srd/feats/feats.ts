@@ -920,7 +920,7 @@ export const SPECIAL_FEATS: FeatSeed[] = [
   },
 ];
 
-/** A system feat list (`coreSystemFeats`): no reference lists it. */
+/** A system feat list (`buildCoreSystemFeats`): no reference lists it. */
 export const SPELL_WEAPON_FOCUS_FEATS: FeatSeed[] = spellWeaponFocusFeats;
 
 export const spellFocus: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
@@ -934,7 +934,7 @@ export const spellFocus: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   properties: [{ type: "FEAT_FAMILY", value: "Spell Focus" }],
 }));
 
-/** A system feat list (`coreSystemFeats`): no reference lists it. */
+/** A system feat list (`buildCoreSystemFeats`): no reference lists it. */
 export const WEAPON_PROFICIENCY_FEATS: FeatSeed[] = weaponProficiencyFeats;
 
 export const weaponFocus: FeatSeed[] = ALL_WEAPONS.map((w) => ({
@@ -959,5 +959,5 @@ export const weaponSpecialization: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   ],
   properties: [{ type: "FEAT_FAMILY", value: "Weapon Specialization" }],
 }));
-/** A system feat list (`coreSystemFeats`): no reference lists it. */
+/** A system feat list (`buildCoreSystemFeats`): no reference lists it. */
 export const WIZARD_SCHOOL_FEATS: FeatSeed[] = wizardSchoolFeats(WIZARD_SCHOOLS);

@@ -194,6 +194,6 @@ export function sortKeysDeep(val: unknown): unknown {
 }
 
 /** JSON.stringify with sorted keys for deterministic output */
-export function stableStringify(val: unknown): string {
+export function stringifyStably(val: unknown): string {
   return JSON.stringify(sortKeysDeep(val), null, 2) + "\n";
 }

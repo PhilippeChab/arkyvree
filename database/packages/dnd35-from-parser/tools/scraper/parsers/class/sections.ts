@@ -3,7 +3,7 @@
 import type * as cheerio from "cheerio";
 import { type AnyNode } from "domhandler";
 
-import { sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { findSectionElements, getTagName } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 
 /** Find a section header (h3 or h4) whose text matches a pattern */
 export function findSectionHeader($: cheerio.CheerioAPI, pattern: RegExp): cheerio.Cheerio<AnyNode> {
@@ -20,10 +20,10 @@ export function findSectionHeader($: cheerio.CheerioAPI, pattern: RegExp): cheer
 /** Get the text content after a header, from the next sibling(s) until the next header */
 export function getTextAfterHeader(header: cheerio.Cheerio<AnyNode>): string {
   const parts: string[] = [];
-  for (const el of sectionElements(header, ["h2", "h3", "h4"])) {
+  for (const el of findSectionElements(header, ["h2", "h3", "h4"])) {
     const text = el.text().trim();
     if (text) parts.push(text);
-    const tag = tagOf(el);
+    const tag = getTagName(el);
     if (tag === "p" || tag === "div") break;
   }
   // If no sibling had content, try parent's text after the header

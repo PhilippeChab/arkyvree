@@ -13,25 +13,8 @@ export type ModifierDetection<M extends ModifierEffect = ModifierSeed> = {
   unresolvedModifiers: string[];
 };
 
-/** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
-export function detectModifiersOf<E extends { name: string }>(
-  raw: E[],
-  detect: (entry: E) => ModifierDetection<Modifier>,
-) {
-  const detected: Record<string, DetectedModifiers> = {};
-  for (const entry of raw) {
-    const { modifiers, errors, unresolvedModifiers } = detect(entry);
-    detected[entry.name] = {
-      modifiers,
-      ...(errors.length > 0 ? { errors } : {}),
-      ...(unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
-    };
-  }
-  return detected;
-}
-
 /** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override. */
-export function modifierMapping<
+export function buildModifierMapping<
   E extends { name: string; description: string },
   O extends { description?: string; modifiers?: Modifier[] },
   X extends object,
@@ -52,6 +35,23 @@ export function modifierMapping<
     };
   }
   return mapping;
+}
+
+/** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
+export function detectModifiersOf<E extends { name: string }>(
+  raw: E[],
+  detect: (entry: E) => ModifierDetection<Modifier>,
+) {
+  const detected: Record<string, DetectedModifiers> = {};
+  for (const entry of raw) {
+    const { modifiers, errors, unresolvedModifiers } = detect(entry);
+    detected[entry.name] = {
+      modifiers,
+      ...(errors.length > 0 ? { errors } : {}),
+      ...(unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
+    };
+  }
+  return detected;
 }
 
 export function validateModifiers<M extends ModifierEffect>(

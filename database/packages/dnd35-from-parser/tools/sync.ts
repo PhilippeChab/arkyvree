@@ -12,7 +12,7 @@ import { basename, join } from "node:path";
 import { $ } from "bun";
 
 import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli.ts";
-import { discoverRefs } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
+import { listReferenceFiles } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 
 const BASE_DIR = join(import.meta.dirname!, "../");
@@ -79,7 +79,7 @@ function buildScrapeArgs(ref: { path: string; type: string; url?: string; book: 
 async function main() {
   const { bookFilter, typeFilter, nameFilter } = parseCliArgs();
 
-  let refs = discoverRefs();
+  let refs = listReferenceFiles();
   if (refs.length === 0) {
     console.log("No reference files found.");
     return;

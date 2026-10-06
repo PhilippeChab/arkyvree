@@ -1,11 +1,11 @@
 import { isDeepStrictEqual } from "node:util";
 
 import {
-  modifierFields,
+  stringifyModifierFields,
   stringifyProperty,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import {
-  importLines,
+  formatImports,
   type ImportTable,
   REQUIREMENT_IMPORTS,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
@@ -101,12 +101,12 @@ export class CodeFile {
    */
   featModifier(mod: ModifierSeed, indentLevel = 3, target = quote(mod.target)): string {
     const requirements = (mod.requirements ?? []).map((r) => this.requirement(r, indentLevel));
-    return `{ ${[...modifierFields(mod, target), ...(requirements.length > 0 ? [`requirements: [${requirements.join(", ")}]`] : [])].join(", ")} }`;
+    return `{ ${[...stringifyModifierFields(mod, target), ...(requirements.length > 0 ? [`requirements: [${requirements.join(", ")}]`] : [])].join(", ")} }`;
   }
 
   /** The imports of the names the file's code uses. A name its table doesn't list throws. */
   imports(): string[] {
-    return importLines(this.uses, this.importTable);
+    return formatImports(this.uses, this.importTable);
   }
 
   /** `req` written as code, at `indentLevel`: the builders it's written with are names the file uses. */

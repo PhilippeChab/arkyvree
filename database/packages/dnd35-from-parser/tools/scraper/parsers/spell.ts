@@ -23,7 +23,7 @@ import * as cheerio from "cheerio";
 import { type Element, isText } from "domhandler";
 
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
-import { pageTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { getPageTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import { capitalize } from "@/shared/text.ts";
 
@@ -154,7 +154,7 @@ function parseStatFields($: cheerio.CheerioAPI): Map<string, string> {
 export function parseSpellDetailHtml(html: string, sourceUrl: string): SpellReference["raw"][number] | null {
   const $ = cheerio.load(html);
 
-  const name = pageTitle($);
+  const name = getPageTitle($);
   if (!name) return null;
 
   // Derive slug from URL: /spells/{book}/{slug}--{id}/ → slug

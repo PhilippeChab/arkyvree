@@ -141,7 +141,25 @@ export function buildItemDetected(
     };
   }
 
-  return { weapons, armor, goods, unresolved: unresolvedItems({ weapons, armor }) };
+  return { weapons, armor, goods, unresolved: findUnresolvedItems({ weapons, armor }) };
+}
+
+/**
+ * The weapons, armor and shields the generator has no definition of, and leaves out ("weapon: Name"): all of them, or
+ * those `skipped` doesn't name.
+ */
+export function findUnresolvedItems(
+  { weapons, armor }: Pick<ItemReference["detected"], "weapons" | "armor">,
+  skipped = (_name: string) => false,
+): string[] {
+  return [
+    ...Object.entries(weapons)
+      .filter(([name, weapon]) => !weapon.generatorName && !skipped(name))
+      .map(([name]) => `weapon: ${name}`),
+    ...Object.entries(armor)
+      .filter(([name, piece]) => !piece.generatorName && !skipped(name))
+      .map(([name, piece]) => `${piece.type.toLowerCase()}: ${name}`),
+  ];
 }
 
 export function parseCost(cost: string): string {
@@ -183,22 +201,4 @@ export function parseWeight(weight: string): string {
   if (match) return String(parseFloat(match[1]));
 
   return "0";
-}
-
-/**
- * The weapons, armor and shields the generator has no definition of, and leaves out ("weapon: Name"): all of them, or
- * those `skipped` doesn't name.
- */
-export function unresolvedItems(
-  { weapons, armor }: Pick<ItemReference["detected"], "weapons" | "armor">,
-  skipped = (_name: string) => false,
-): string[] {
-  return [
-    ...Object.entries(weapons)
-      .filter(([name, weapon]) => !weapon.generatorName && !skipped(name))
-      .map(([name]) => `weapon: ${name}`),
-    ...Object.entries(armor)
-      .filter(([name, piece]) => !piece.generatorName && !skipped(name))
-      .map(([name, piece]) => `${piece.type.toLowerCase()}: ${name}`),
-  ];
 }

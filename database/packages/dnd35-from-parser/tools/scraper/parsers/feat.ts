@@ -18,10 +18,10 @@ import type { AnyNode } from "domhandler";
 
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import {
-  contentHeading,
-  pageTitle,
-  sectionElements,
-  tagOf,
+  findContentHeading,
+  findSectionElements,
+  getPageTitle,
+  getTagName,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 
@@ -62,10 +62,10 @@ function normalizeFeatType(raw: string): string {
 export function parseFeatDetailHtml(html: string): FeatReference["raw"][number] | null {
   const $ = cheerio.load(html);
 
-  const name = pageTitle($);
+  const name = getPageTitle($);
   if (!name) return null;
 
-  const heading = contentHeading($);
+  const heading = findContentHeading($);
   const categories = heading ? featCategories($, heading) : [];
   // An epic feat or a skill trick is that whatever else it's listed in ([Divine, Epic], [Movement, Skill Trick]); any
   // other feat is its first category naming a type, the general one aside ([Fighter Bonus Feat, General])
@@ -82,8 +82,8 @@ export function parseFeatDetailHtml(html: string): FeatReference["raw"][number] 
     if (!isKnownLabel(label)) return;
 
     const parts: string[] = [];
-    for (const el of sectionElements($(h4), ["h2", "h3", "h4"])) {
-      const tag = tagOf(el);
+    for (const el of findSectionElements($(h4), ["h2", "h3", "h4"])) {
+      const tag = getTagName(el);
       if (tag === "div") {
         // Skip divs that contain another section's label (broken HTML nesting)
         const divText = normalizeWs(el.text());

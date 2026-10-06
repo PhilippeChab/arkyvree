@@ -10,13 +10,20 @@ import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools
 import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { parseAlignmentRequirement } from "@/database/packages/dnd35-from-parser/tools/scraper/alignment.ts";
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
-import { familyOptions, featWithoutChoice } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
+import {
+  parseFamilyOptions,
+  stripFeatChoice,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
 import {
   findInvalidRequirementPaths,
   isValidModifierPath,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
-import { anySkillRequirement, SAVE_MAP, skillSlug } from "@/database/packages/dnd35-from-parser/tools/targets.ts";
+import {
+  buildAnySkillRequirement,
+  SAVE_MAP,
+  toSkillSlug,
+} from "@/database/packages/dnd35-from-parser/tools/targets.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
@@ -357,7 +364,7 @@ function extractFeatPrereqs(text: string): string[] {
     if (trimmed.match(/^[A-Z][a-zA-Z]/) && !isCommonPhrase(trimmed)) {
       const titled = titleCaseFeat(trimmed);
       if (!ABILITY_PREREQ_PATTERNS.some((p) => p.test(titled))) {
-        feats.push(featWithoutChoice(titled) ?? titled);
+        feats.push(stripFeatChoice(titled) ?? titled);
       }
     }
   }
@@ -421,7 +428,7 @@ function multiOptionFeatRequirements(
     const featBase = titleCaseFeat(multiMatch[1].trim());
     // "Ability to fly (naturally, magically, or through shapechanging)" names no feat
     if (isCommonPhrase(featBase)) continue;
-    const options = familyOptions(featBase, multiMatch[2]);
+    const options = parseFamilyOptions(featBase, multiMatch[2]);
     if (options.length >= 2) {
       const children = options.map((opt) => {
         const name = `${featBase}: ${titleCaseFeat(opt)}`;
@@ -493,7 +500,7 @@ function parsePrerequisiteText(text: string): {
     reqs.push(eq(feat(name)));
   }
 
-  reqs.push(...familyFeatRequirements(cleanedText));
+  reqs.push(...buildFamilyFeatRequirements(cleanedText));
 
   // Detect prerequisite patterns we recognize but can't map to requirement entries
   for (const pattern of UNRESOLVED_PREREQUISITES) {
@@ -551,7 +558,7 @@ function skillRankRequirements(text: string): RequirementEntry[] {
     if (name.match(/^(Base|Must|Any|Or|And|The|Can|Has|Level)$/i)) continue;
 
     // "Knowledge (any)" → OR of all Knowledge skills; else the skill, or its base skill for a specialization
-    reqs.push(anySkillRequirement(name, ranks) ?? gte(`skills.${skillSlug(name)}.rank`, ranks));
+    reqs.push(buildAnySkillRequirement(name, ranks) ?? gte(`skills.${toSkillSlug(name)}.rank`, ranks));
   }
   return reqs;
 }
@@ -580,6 +587,19 @@ function titleCaseFeat(s: string): string {
   // Most feat names from SRD are already in a reasonable case
   // Just ensure first letter of each word is uppercase
   return s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+}
+
+/** "Any (other) metamagic feat": one feat of the family; "any two luck feats": that many of them. */
+export function buildFamilyFeatRequirements(text: string): RequirementEntry[] {
+  const counts = Object.keys(NUMBER_WORDS).join("|");
+  return FEAT_FAMILIES.flatMap((family) => {
+    const match = new RegExp(`\\bany (?:other )?(?:(${counts}) )?${family} feats?\\b`, "i").exec(text);
+    if (!match) return [];
+    const slug = stripSeparators(family);
+    return [
+      match[1] ? gte(`feats.${slug}.count`, NUMBER_WORDS[match[1].toLowerCase()]) : eq(`feats.${slug}.*.possessed`),
+    ];
+  });
 }
 
 export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["detected"] {
@@ -813,17 +833,4 @@ export function detectModifiers(benefit: string): ModifierDetection {
   }
 
   return { modifiers: validated, errors, unresolvedModifiers };
-}
-
-/** "Any (other) metamagic feat": one feat of the family; "any two luck feats": that many of them. */
-export function familyFeatRequirements(text: string): RequirementEntry[] {
-  const counts = Object.keys(NUMBER_WORDS).join("|");
-  return FEAT_FAMILIES.flatMap((family) => {
-    const match = new RegExp(`\\bany (?:other )?(?:(${counts}) )?${family} feats?\\b`, "i").exec(text);
-    if (!match) return [];
-    const slug = stripSeparators(family);
-    return [
-      match[1] ? gte(`feats.${slug}.count`, NUMBER_WORDS[match[1].toLowerCase()]) : eq(`feats.${slug}.*.possessed`),
-    ];
-  });
 }

@@ -26,11 +26,16 @@ function nameOf(option: string, names: readonly string[]): string | undefined {
 }
 
 /** The feat of a family a name takes with its option ("Skill Focus (Bluff)": Skill Focus: Bluff), if any. */
-export function familyFeatNamed(name: string): string | undefined {
+export function findFamilyFeat(name: string): string | undefined {
   const [, family, option] = /^(.+?)\s*\((.+)\)$/.exec(name) ?? [];
   const names = family ? OPTIONS_OF.find((options) => options.family.test(family))?.names : undefined;
   const optionName = names && nameOf(option, names);
   return optionName ? `${family}: ${optionName}` : undefined;
+}
+
+/** The weapon a prerequisite names ("orc double axe"), if any. */
+export function findWeapon(text: string) {
+  return nameOf(text, ALL_WEAPONS);
 }
 
 /**
@@ -38,7 +43,7 @@ export function familyFeatNamed(name: string): string | undefined {
  * tell it (Punching Dagger, Necromancy for "Necro."), else as written. "Composite version of either" is the
  * composite of each option before it.
  */
-export function familyOptions(family: string, optionsText: string): string[] {
+export function parseFamilyOptions(family: string, optionsText: string): string[] {
   const names = OPTIONS_OF.find((options) => options.family.test(family))?.names ?? [];
   const options: string[] = [];
   for (const option of optionsText.split(/,\s*(?:or\s+)?|\s+or\s+/).map((o) => o.trim())) {
@@ -53,12 +58,7 @@ export function familyOptions(family: string, optionsText: string): string[] {
 }
 
 /** The feat a prerequisite names with its choice ("Energy Substitution (cold)"), alone; none for any other name. */
-export function featWithoutChoice(name: string): string | undefined {
+export function stripFeatChoice(name: string): string | undefined {
   const base = /^(.+?)\s*\(/.exec(name)?.[1];
   return base ? FEATS_WITH_A_CHOICE.find((feat) => stripSeparators(feat) === stripSeparators(base)) : undefined;
-}
-
-/** The weapon a prerequisite names ("orc double axe"), if any. */
-export function weaponNamed(text: string) {
-  return nameOf(text, ALL_WEAPONS);
 }

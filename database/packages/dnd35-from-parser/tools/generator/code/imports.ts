@@ -18,16 +18,16 @@ export function compareNames(a: string, b: string): number {
 }
 
 /** An import of `names` from `from`, the names in lint's order. */
-export function importLine(names: string[], from: string): string {
+export function formatImport(names: string[], from: string): string {
   return `import { ${[...names].sort(compareNames).join(", ")} } from "${from}";`;
 }
 
 /** The imports of the names a file's code uses (`uses`), from `table`. A name `table` doesn't list throws. */
-export function importLines(uses: Set<string>, table: ImportTable): string[] {
+export function formatImports(uses: Set<string>, table: ImportTable): string[] {
   const unknown = [...uses].filter((name) => !table.some(([, names]) => names.includes(name)));
   if (unknown.length > 0) throw new Error(`The generated code uses ${unknown.join(", ")}, which no import provides`);
   return table.flatMap(([from, names]) => {
     const used = names.filter((name) => uses.has(name));
-    return used.length > 0 ? [importLine(used, from)] : [];
+    return used.length > 0 ? [formatImport(used, from)] : [];
   });
 }

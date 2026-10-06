@@ -3,15 +3,15 @@ import { dirname, join } from "node:path";
 
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import {
+  readStoredOverrides,
   type ReferenceType,
   resolveReference,
-  storedOverrides,
   type StoredReference,
 } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import {
   sanitizeJsonValues,
   sortKeysDeep,
-  stableStringify,
+  stringifyStably,
 } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import type { HttpClient } from "@/database/packages/dnd35-from-parser/tools/scraper/HttpClient.ts";
@@ -69,14 +69,14 @@ export class BaseScraper {
     _meta: StoredReference<T>["_meta"] & { type: T },
     raw: StoredReference<T>["raw"],
   ): StoredReference<T> {
-    const overrides = storedOverrides(outPath, _meta.type);
+    const overrides = readStoredOverrides(outPath, _meta.type);
     if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
     return sanitizeJsonValues({ _meta, raw, ...(overrides ? { overrides } : {}) });
   }
 
   /** Writes a reference, unless all that changed is when it was scraped. */
   private writeIfChanged(outPath: string, data: StoredReference): void {
-    const newJson = stableStringify(data);
+    const newJson = stringifyStably(data);
     if (existsSync(outPath)) {
       const oldData = sortKeysDeep(JSON.parse(readFileSync(outPath, "utf-8")));
       const stripTimestamp = (d: unknown) => {

@@ -2,9 +2,9 @@ import { existsSync, readdirSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 
 import {
-  classSpells,
-  inheritedLevel,
-  inheritedLists,
+  getClassSpells,
+  getInheritedLevel,
+  getInheritedLists,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/spells.ts";
 import {
@@ -13,8 +13,8 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { generateSpellFiles } from "@/database/packages/dnd35-from-parser/tools/generator/code/spellFiles.ts";
-import { REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import { classReferences, loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -28,7 +28,7 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
     private addListAdditions(
       entries: Map<string, CowSpellEntry>,
       inheritable: Set<string>,
-      lists: ReturnType<typeof inheritedLists>,
+      lists: ReturnType<typeof getInheritedLists>,
     ) {
       for (const { aptitude, list } of lists) {
         for (const [level, names] of Object.entries(list.additions ?? {})) {
@@ -51,7 +51,7 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
       const names = new Set<string>();
       const path = join(REFERENCE_DIR, book, "spells.json");
       if (existsSync(path)) {
-        const ref = loadReference(path, "spell");
+        const ref = ReferenceLoader.load(path, "spell");
         for (const spell of ref.raw) names.add(spell.name);
       }
       return names;
@@ -78,15 +78,15 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
      *  so the seed uses the correct level for each class (not the global minimum). */
     writeCowSpells(book: string) {
       if (!this.copiesFromCore(book)) return;
-      const classes = classReferences(book);
+      const classes = ReferenceLoader.loadClasses(book);
 
       // Build map: className → aptitude name for classes that have spell lists
       const classToApt = new Map<string, string>();
       for (const { ref } of classes) {
-        if (classSpells(ref) && ref.raw?.name) classToApt.set(ref.raw.name, `${ref.raw.name} Spells`);
+        if (getClassSpells(ref) && ref.raw?.name) classToApt.set(ref.raw.name, `${ref.raw.name} Spells`);
       }
       // The lists classes draw on (`inheritsFrom`), each its class's aptitude
-      const bookInheritedLists = inheritedLists(book);
+      const bookInheritedLists = getInheritedLists(book);
 
       // This book's own spells don't need COW — they're seeded directly
       const bookSpellNames = this.bookSpellNames(book);
@@ -98,13 +98,15 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
 
       // Find the base book (the one defining core classes like Wizard).
       // COW only makes sense for spells from the base book, not siblings.
-      const baseBook = referenceBooks().find((b) => classReferences(b).some(({ ref }) => ref.raw?.name === "Wizard"));
+      const baseBook = listReferenceBooks().find((b) =>
+        ReferenceLoader.loadClasses(b).some(({ ref }) => ref.raw?.name === "Wizard"),
+      );
       const isBaseBook = book === baseBook;
-      for (const otherBook of referenceBooks()) {
+      for (const otherBook of listReferenceBooks()) {
         const spellPath = join(REFERENCE_DIR, otherBook, "spells.json");
         if (!existsSync(spellPath)) continue;
 
-        const ref = loadReference(spellPath, "spell");
+        const ref = ReferenceLoader.load(spellPath, "spell");
         for (const spell of ref.raw) {
           const isSameBook = bookSpellNames.has(spell.name);
           const isFromBase = otherBook === baseBook;
@@ -126,7 +128,7 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
           if (isSameBook || isFromBase) {
             inheritable.add(spell.name);
             for (const { aptitude, list } of bookInheritedLists) {
-              const level = inheritedLevel(spell, levelEntries, list);
+              const level = getInheritedLevel(spell, levelEntries, list);
               if (level !== undefined) matchedApts.push({ aptitude, level });
             }
           }

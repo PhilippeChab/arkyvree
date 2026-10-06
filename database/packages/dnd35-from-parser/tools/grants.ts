@@ -72,7 +72,7 @@ function detectBondedLevelFormula(description: string, classSlug: string): strin
  * The bonded-level formula is auto-detected from the SRD description via
  * `detectBondedLevelFormula`. Defaults to 1:1 when no pattern matches.
  */
-export function autoCompanionGrantModifiers(featName: string, description: string = ""): ModifierSeed[] {
+export function buildCompanionGrantModifiers(featName: string, description: string = ""): ModifierSeed[] {
   const modifiers: ModifierSeed[] = [];
   for (const { pattern, aptitudeSlug, bondedKind } of COMPANION_GRANT_PATTERNS) {
     const match = featName.match(pattern);
@@ -101,7 +101,7 @@ export function autoCompanionGrantModifiers(featName: string, description: strin
  * Uncanny dodge, a class feature of many classes (Barbarian, Rogue, Assassin…): the character keeps its Dexterity
  * bonus to AC, and its dodge bonuses, when flat-footed. Improved uncanny dodge is flanking, no part of AC.
  */
-export function autoUncannyDodgeModifiers(featName: string): ModifierSeed[] {
+export function buildUncannyDodgeModifiers(featName: string): ModifierSeed[] {
   return /^Uncanny Dodge\b/.test(featName)
     ? [{ target: "combat.ac.uncannydodge", operator: "set", value: "true", valueType: "boolean" }]
     : [];

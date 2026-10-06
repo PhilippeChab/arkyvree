@@ -12,9 +12,9 @@ import { readStoredReference, type ReferenceType } from "@/database/packages/dnd
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/classPage.ts";
 import {
-  domainBookCode,
-  domainName,
+  parseDomainBookCode,
   parseDomainIndexHtml,
+  parseDomainName,
   parseDomainPageHtml,
   parseSpellDomainLevelsHtml,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
@@ -155,7 +155,7 @@ describe("The scraper reads from a page the reference's entries:", () => {
         { path: "complete-divine--56/crown-of-glory--697", name: "Crown of Glory", edition: "Supplementals (3.5)" },
       ],
     });
-    expect([domainName("Glory (CD)"), domainBookCode("Glory (CD)"), domainBookCode("Air")]).toEqual([
+    expect([parseDomainName("Glory (CD)"), parseDomainBookCode("Glory (CD)"), parseDomainBookCode("Air")]).toEqual([
       "Glory",
       "CD",
       undefined,

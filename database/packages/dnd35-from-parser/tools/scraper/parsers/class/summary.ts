@@ -2,27 +2,27 @@
 
 import type * as cheerio from "cheerio";
 
+import { capitalizeTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/capitalizeTitle.ts";
 import {
   findSectionHeader,
   getTextAfterHeader,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
-import { titleCase } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/titleCase.ts";
 import {
-  contentHeading,
-  sectionElements,
-  tagOf,
+  findContentHeading,
+  findSectionElements,
+  getTagName,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 
 /** The class's heading: its page's title, or its only h2. */
 function classHeading($: cheerio.CheerioAPI) {
-  return contentHeading($) ?? $("h2").first();
+  return findContentHeading($) ?? $("h2").first();
 }
 
 export function parseAlignment($: cheerio.CheerioAPI): string | undefined {
   // dndtools.net: <h3>Requirements</h3> → <p><strong>Alignment:</strong> ...</p>
   const reqHeader = findSectionHeader($, /^Requirements?$/i);
   if (reqHeader.length > 0) {
-    for (const el of sectionElements(reqHeader)) {
+    for (const el of findSectionElements(reqHeader)) {
       const alignMatch = el
         .text()
         .trim()
@@ -37,7 +37,7 @@ export function parseAlignment($: cheerio.CheerioAPI): string | undefined {
 /** The class's name: its page's second <h2> (the first is the site's tagline). */
 export function parseClassName($: cheerio.CheerioAPI): string {
   const heading = classHeading($);
-  return heading.length > 0 ? titleCase(heading.text().trim()) : "Unknown";
+  return heading.length > 0 ? capitalizeTitle(heading.text().trim()) : "Unknown";
 }
 
 /** The class's description: the paragraphs between its name's <h2> and the first <h3>. */
@@ -48,8 +48,8 @@ export function parseDescription($: cheerio.CheerioAPI): string {
   const classH2 = classHeading($);
   if (classH2.length > 0) {
     // Up to any section heading
-    for (const el of sectionElements(classH2, ["h2", "h3", "h4"])) {
-      const tag = tagOf(el);
+    for (const el of findSectionElements(classH2, ["h2", "h3", "h4"])) {
+      const tag = getTagName(el);
       if (tag === "p") {
         const text = el.text().trim();
         // Skip short text, page references, and "all of the following" boilerplate

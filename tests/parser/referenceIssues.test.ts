@@ -3,8 +3,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-import { discoverRefs, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import { referenceIssues } from "@/database/packages/dnd35-from-parser/tools/referenceIssues.ts";
+import { listReferenceFiles, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
+import { findReferenceIssues } from "@/database/packages/dnd35-from-parser/tools/referenceIssues.ts";
 import { readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
@@ -24,7 +24,11 @@ function issuesOf(file: string, edit: (overrides: Record<string, unknown>) => vo
   folders.push(folder);
   mkdirSync(dirname(join(folder, file)), { recursive: true });
   writeFileSync(join(folder, file), JSON.stringify(reference));
-  return referenceIssues(discoverRefs(folder)).map(({ kind, entityName, text }) => ({ kind, entityName, text }));
+  return findReferenceIssues(listReferenceFiles(folder)).map(({ kind, entityName, text }) => ({
+    kind,
+    entityName,
+    text,
+  }));
 }
 afterEach(() => {
   for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true });
@@ -99,7 +103,7 @@ describe("parser:validate", () => {
   });
 
   test("finds no issue in the committed references", () => {
-    expect(referenceIssues(discoverRefs())).toEqual([]);
+    expect(findReferenceIssues(listReferenceFiles())).toEqual([]);
   });
 
   test("reports what a reference's review list covers, once cleared: a class's aptitude picks and prerequisites, feats' modifiers", () => {
@@ -177,7 +181,7 @@ describe("parser:validate", () => {
       join(folder, "potions.json"),
       JSON.stringify({ _meta: { type: "potion", sourceUrl: "", book: "srd", scrapedAt: "" }, raw: [] }),
     );
-    expect(referenceIssues(discoverRefs(folder)).map(({ kind, text }) => ({ kind, text }))).toEqual([
+    expect(findReferenceIssues(listReferenceFiles(folder)).map(({ kind, text }) => ({ kind, text }))).toEqual([
       { kind: "unknown type", text: "potion" },
     ]);
   });

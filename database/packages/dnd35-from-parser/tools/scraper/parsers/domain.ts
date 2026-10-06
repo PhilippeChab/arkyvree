@@ -24,13 +24,8 @@ export type DomainPage = {
 export type DomainPageSpell = { path: string; name: string; edition: string };
 
 /** The book's code a domain version's label ends with ("Celerity (CD)" → "CD"), if any. */
-export function domainBookCode(label: string) {
+export function parseDomainBookCode(label: string) {
   return label.match(/\(([^()]+)\)$/)?.[1];
-}
-
-/** A domain's name without its version's book ("Celerity (CD)" → "Celerity"). */
-export function domainName(label: string) {
-  return label.replace(/\s*\([^()]*\)$/, "").trim();
 }
 
 /** The domain versions a page of the domain index lists, and how many entries the index holds in all. */
@@ -49,6 +44,11 @@ export function parseDomainIndexHtml(html: string): { entries: DomainIndexEntry[
       .match(/\(total (\d+) items\)/)?.[1] ?? entries.length,
   );
   return { entries, total };
+}
+
+/** A domain's name without its version's book ("Celerity (CD)" → "Celerity"). */
+export function parseDomainName(label: string) {
+  return label.replace(/\s*\([^()]*\)$/, "").trim();
 }
 
 /** A domain version's page: its heading, the rulebook it links to, its granted power and its spells' table. */

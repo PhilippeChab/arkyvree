@@ -1,7 +1,7 @@
 import {
+  buildModifierMapping,
   detectModifiersOf,
   type ModifierDetection,
-  modifierMapping,
   validateModifiers,
 } from "@/database/packages/dnd35-from-parser/tools/modifierDetection.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
@@ -78,7 +78,11 @@ export function buildDomainMapping(
   detected: DomainReference["detected"],
   overrides: NonNullable<DomainReference["overrides"]>,
 ): DomainReference["mapping"] {
-  return modifierMapping(raw, detected, overrides, (override?: NonNullable<DomainReference["overrides"]>[string]) =>
-    override?.featPool ? { featPool: override.featPool } : {},
+  return buildModifierMapping(
+    raw,
+    detected,
+    overrides,
+    (override?: NonNullable<DomainReference["overrides"]>[string]) =>
+      override?.featPool ? { featPool: override.featPool } : {},
   );
 }

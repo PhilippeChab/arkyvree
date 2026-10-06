@@ -31,9 +31,4 @@ const _allClassFeats: FeatSeed[] = [
   ...SPELLWARP_SNIPER_FEATS,
   ...UNCANNY_TRICKSTER_FEATS,
 ];
-const _seen = new Set<string>();
-export const ALL_CLASS_FEATS: FeatSeed[] = _allClassFeats.filter((f) => {
-  if (_seen.has(f.name)) return false;
-  _seen.add(f.name);
-  return true;
-});
+export const ALL_CLASS_FEATS: FeatSeed[] = [...Map.groupBy(_allClassFeats, (f) => f.name).values()].map(([f]) => f);

@@ -1,6 +1,6 @@
 /** A magic item reference's seeds: its ItemDef[], by category. */
 
-import { checkedValue, checkOneOf } from "@/database/packages/dnd35-from-parser/tools/checks.ts";
+import { checkOneOf, getCheckedValue } from "@/database/packages/dnd35-from-parser/tools/checks.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/scraper/armorStats.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
@@ -74,7 +74,7 @@ export function buildMagicItemSeeds(
     staff: staffs,
   };
 
-  for (const { name, det, override: ovr, slot } of seededMagicItems(ref)) {
+  for (const { name, det, override: ovr, slot } of getSeededMagicItems(ref)) {
     const costGp = ovr?.costGp ?? det.costGp;
     // Find the raw entry for description
     const rawEntry = ref.raw.find((r) => r.name === name);
@@ -139,7 +139,7 @@ export function buildMagicItemSeeds(
       weight,
       costGp,
       type: det.itemType,
-      slot: slot && checkedValue(slot),
+      slot: slot && getCheckedValue(slot),
       ...(ovr?.template && sourceItem
         ? { isTemplate: true as const, properties: withOwnProperties(armorProperties(sourceItem), properties) }
         : { properties, ...(sourceItem ? { sourceItem } : {}) }),
@@ -155,7 +155,7 @@ export function buildMagicItemSeeds(
  * checked when it has one: the override's, else as detected. Generation throws a slot's problem, and
  * `parser:validate` reports it.
  */
-export function seededMagicItems(ref: MagicItemReference) {
+export function getSeededMagicItems(ref: MagicItemReference) {
   return Object.entries(ref.detected).flatMap(([name, det]) => {
     const override = ref.overrides?.[name];
     if (override?.skip) return [];

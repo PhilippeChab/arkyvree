@@ -7,16 +7,16 @@ import {
   type BaseGenerator,
   GENERATED_HEADER,
 } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import { coreSystemFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
+import { buildCoreSystemFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
 import {
-  featAptitudeSources,
   generateFavoredEnemyFeats,
   generateFeatSeeds,
+  getFeatAptitudeSources,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
-import { compareNames, importLine } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
+import { compareNames, formatImport } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -27,10 +27,12 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
     writeAptitudes(book: string) {
       const featRefPath = join(REFERENCE_DIR, book, "feats.json");
       const feats = [
-        ...(existsSync(featRefPath) ? featAptitudeSources(loadReference(featRefPath, "feat")) : []),
+        ...(existsSync(featRefPath) ? getFeatAptitudeSources(ReferenceLoader.load(featRefPath, "feat")) : []),
         ...(book === "srd"
-          ? coreSystemFeats(
-              buildWizardSchoolSeeds(loadReference(join(REFERENCE_DIR, "srd", "wizardSchools.json"), "wizardSchool")),
+          ? buildCoreSystemFeats(
+              buildWizardSchoolSeeds(
+                ReferenceLoader.load(join(REFERENCE_DIR, "srd", "wizardSchools.json"), "wizardSchool"),
+              ),
             )
           : []),
       ];
@@ -91,8 +93,8 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
       const lines = [
         ...GENERATED_HEADER,
         `import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`,
-        ...featFiles.map(({ file, exports }) => importLine(exports, `./${file.replace(".ts", "")}.ts`)),
-        ...(hasClassFeats ? [importLine(["ALL_CLASS_FEATS"], "./classes/index.ts")] : []),
+        ...featFiles.map(({ file, exports }) => formatImport(exports, `./${file.replace(".ts", "")}.ts`)),
+        ...(hasClassFeats ? [formatImport(["ALL_CLASS_FEATS"], "./classes/index.ts")] : []),
         ``,
       ];
       const standalone = allFeatExports.map((name) => `...${name}`);

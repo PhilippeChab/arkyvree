@@ -13,11 +13,11 @@ import { GeneratesRaces } from "@/database/packages/dnd35-from-parser/tools/gene
 import { GeneratesSpells } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesSpells.ts";
 import { GeneratesWizardSchools } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesWizardSchools.ts";
 import {
-  discoverRefs,
+  listReferenceBooks,
+  listReferenceFiles,
   REFERENCE_DIR,
-  referenceBooks,
 } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
@@ -92,7 +92,7 @@ export class Generator extends include(
     this.writeSpellIndex(book);
 
     // Regenerate cowSpells.ts for ALL books (new spells in this book may change COW entries elsewhere)
-    for (const otherBook of referenceBooks()) this.writeCowSpells(otherBook);
+    for (const otherBook of listReferenceBooks()) this.writeCowSpells(otherBook);
 
     this.log(`\nDone! Review the generated files and copy to database/packages/dnd35/ when ready.`);
   }
@@ -102,7 +102,7 @@ export class Generator extends include(
    * reference. A reference that fails doesn't stop the others: the failures are returned.
    */
   generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>): string[] {
-    const refs = discoverRefs().filter(
+    const refs = listReferenceFiles().filter(
       (r) =>
         (!bookFilter || r.book === bookFilter) &&
         (!typeFilter || r.type === typeFilter) &&
@@ -122,7 +122,7 @@ export class Generator extends include(
     // Each book with spells gets its domains file, an empty one when it has no domains reference, and its index
     for (const ref of refs.filter((r) => r.type !== "domain")) generate(ref.path);
     if (typeFilter === "domain" || (!typeFilter && !nameFilter)) {
-      for (const book of referenceBooks()) {
+      for (const book of listReferenceBooks()) {
         if (!existsSync(join(REFERENCE_DIR, book, "spells.json")) || (bookFilter && book !== bookFilter)) continue;
         try {
           this.generateDomains(book);
@@ -143,28 +143,28 @@ export class Generator extends include(
 
     switch (meta.type) {
       case "class":
-        this.generateClass(loadReference(jsonPath, "class"), book);
+        this.generateClass(ReferenceLoader.load(jsonPath, "class"), book);
         break;
       case "feat":
-        this.generateFeats(loadReference(jsonPath, "feat"), book);
+        this.generateFeats(ReferenceLoader.load(jsonPath, "feat"), book);
         break;
       case "spell":
-        this.generateSpells(loadReference(jsonPath, "spell"), book);
+        this.generateSpells(ReferenceLoader.load(jsonPath, "spell"), book);
         break;
       case "wizardSchool":
-        this.writeWizardSchools(loadReference(jsonPath, "wizardSchool"), book);
+        this.writeWizardSchools(ReferenceLoader.load(jsonPath, "wizardSchool"), book);
         break;
       case "domain":
         this.generateDomains(book);
         break;
       case "race":
-        this.writeRaces(loadReference(jsonPath, "race"), book);
+        this.writeRaces(ReferenceLoader.load(jsonPath, "race"), book);
         break;
       case "item":
-        this.writeItems(loadReference(jsonPath, "item"), book);
+        this.writeItems(ReferenceLoader.load(jsonPath, "item"), book);
         break;
       case "magicItem":
-        this.writeMagicItems(loadReference(jsonPath, "magicItem"), book, dirname(jsonPath));
+        this.writeMagicItems(ReferenceLoader.load(jsonPath, "magicItem"), book, dirname(jsonPath));
         break;
       default:
         throw new Error(

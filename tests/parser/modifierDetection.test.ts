@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { detectModifiersOf, modifierMapping } from "@/database/packages/dnd35-from-parser/tools/modifierDetection.ts";
+import {
+  buildModifierMapping,
+  detectModifiersOf,
+} from "@/database/packages/dnd35-from-parser/tools/modifierDetection.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 
 const DEXTERITY: Modifier = { target: "abilities.dexterity.misc", operator: "add", value: "2", valueType: "number" };
@@ -33,7 +36,9 @@ describe("A modifier mapping", () => {
       Overridden: { description: "Corrected", modifiers: [DEXTERITY], skip: true },
       Cleared: { modifiers: [] },
     };
-    expect(modifierMapping(raw, detected, overrides, (override) => (override?.skip ? { skip: true } : {}))).toEqual({
+    expect(
+      buildModifierMapping(raw, detected, overrides, (override) => (override?.skip ? { skip: true } : {})),
+    ).toEqual({
       Detected: { description: "Detected text", modifiers: [STRENGTH] },
       None: { description: "None text" },
       Overridden: { description: "Corrected", modifiers: [DEXTERITY], skip: true },

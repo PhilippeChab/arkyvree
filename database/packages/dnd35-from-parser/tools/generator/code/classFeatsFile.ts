@@ -1,8 +1,8 @@
 /** A class's feats file (feats/classes/<slug>.ts): the feats its features are, and the domains it picks from. */
 
 import {
+  buildClassDomainPickFeats,
   buildClassFeatSeeds,
-  classDomainPickFeats,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { stringifyProperty } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
@@ -27,11 +27,11 @@ function stringifyFeat(file: CodeFile, feat: FeatSeed, classFeatureAptitude: str
   return `  { ${parts.join(", ")} },`;
 }
 
-/** A class's feats file: its own feats (`buildClassFeatSeeds`), and the domains it picks from (`classDomainPickFeats`). */
+/** A class's feats file: its own feats (`buildClassFeatSeeds`), and the domains it picks from (`buildClassDomainPickFeats`). */
 export function generateClassFeatSeeds(ref: ClassReference): string {
   const aptitude = ref.mapping.classFeatureAptitude;
   const file = new CodeFile();
-  const feats = [...buildClassFeatSeeds(ref), ...classDomainPickFeats(ref)].map((feat) =>
+  const feats = [...buildClassFeatSeeds(ref), ...buildClassDomainPickFeats(ref)].map((feat) =>
     stringifyFeat(file, feat, aptitude),
   );
   file.lines.push(

@@ -2,9 +2,9 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { importLine, type ImportTable } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
+import { formatImport, type ImportTable } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import { classReferences } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
 
 /** The files a book's items/ can hold, each with the list it exports, in the order the items' index lists them. */
 const ITEM_FILES = [
@@ -79,7 +79,7 @@ export class BaseGenerator {
    * The core rules are what extensions copy from.
    */
   protected copiesFromCore(book: string): boolean {
-    return book !== "srd" && classReferences(book).length > 0;
+    return book !== "srd" && ReferenceLoader.loadClasses(book).length > 0;
   }
 
   /** An index file's head: its header, the seed type's import, and the import of each file's list. */
@@ -91,7 +91,7 @@ export class BaseGenerator {
       ...GENERATED_HEADER,
       `import type { ${seedType} } from "${SEED_TYPE_MODULES[seedType]}";`,
       ``,
-      ...lists.map(({ constName, file }) => importLine([constName], `./${file}`)),
+      ...lists.map(({ constName, file }) => formatImport([constName], `./${file}`)),
       ``,
     ];
   }

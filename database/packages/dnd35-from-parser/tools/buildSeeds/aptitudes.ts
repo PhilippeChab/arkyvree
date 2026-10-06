@@ -4,15 +4,15 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+  buildClassDomainPickFeats,
   buildClassFeatSeeds,
-  classDomainPickFeats,
-  classSpellLists,
+  getClassSpellLists,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
-import { bookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
+import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/spells.ts";
 import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/wizardSchools.ts";
-import { REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import { classReferences, loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -22,10 +22,10 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
 
   // Collect all feats: standalone feats + class feature feats from reference JSONs
   const allFeats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] = [...feats];
-  for (const { ref } of classReferences(book)) {
-    allFeats.push(...buildClassFeatSeeds(ref), ...classDomainPickFeats(ref));
+  for (const { ref } of ReferenceLoader.loadClasses(book)) {
+    allFeats.push(...buildClassFeatSeeds(ref), ...buildClassDomainPickFeats(ref));
     if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
-    for (const list of classSpellLists(ref)) names.add(list);
+    for (const list of getClassSpellLists(ref)) names.add(list);
 
     // From detected bonusFeatLists
     if (ref.detected?.bonusFeatLists) {
@@ -55,14 +55,14 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
   }
 
   // Domain aptitudes: the book's domains, and their feat pools'
-  const domains = bookDomainSeeds(book);
+  const domains = buildBookDomainSeeds(book);
   if (domains.seeds.length > 0) names.add("Cleric Domain");
   for (const feat of domains.poolFeats) for (const apt of feat.aptitudes) names.add(apt);
 
   // Wizard school aptitudes
   const wsRefPath = join(REFERENCE_DIR, book, "wizardSchools.json");
   if (existsSync(wsRefPath)) {
-    const wsRef = loadReference(wsRefPath, "wizardSchool");
+    const wsRef = ReferenceLoader.load(wsRefPath, "wizardSchool");
     for (const school of buildWizardSchoolSeeds(wsRef)) {
       names.add(`${school.name} Specialist Spells`);
     }
@@ -74,7 +74,7 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
   if (book !== "srd") {
     const spellRefPath = join(REFERENCE_DIR, book, "spells.json");
     if (existsSync(spellRefPath)) {
-      const spellRef = loadReference(spellRefPath, "spell");
+      const spellRef = ReferenceLoader.load(spellRefPath, "spell");
       const { spells } = buildSpellSeeds(spellRef, book);
       for (const spell of spells) {
         for (const apt of spell.aptitudes) spellAptitudes.add(apt);
@@ -84,12 +84,12 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
 
   // Exclude aptitudes created by other books (class features + spell lists).
   // For sibling extension spell lists, keep them if this book's spells reference them.
-  for (const other of referenceBooks()) {
+  for (const other of listReferenceBooks()) {
     if (other === book) continue;
     const isSibling = other !== "srd" && book !== "srd";
-    for (const { ref } of classReferences(other)) {
+    for (const { ref } of ReferenceLoader.loadClasses(other)) {
       if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
-      for (const spellApt of classSpellLists(ref)) {
+      for (const spellApt of getClassSpellLists(ref)) {
         if (isSibling && spellAptitudes.has(spellApt)) {
           names.add(spellApt);
         } else {

@@ -17,17 +17,17 @@
  */
 
 import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli.ts";
-import { discoverRefs } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import { type Issue, referenceIssues } from "@/database/packages/dnd35-from-parser/tools/referenceIssues.ts";
+import { listReferenceFiles } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
+import { findReferenceIssues, type Issue } from "@/database/packages/dnd35-from-parser/tools/referenceIssues.ts";
 
 function main() {
   const { bookFilter, typeFilter } = parseCliArgs();
 
-  let refs = discoverRefs();
+  let refs = listReferenceFiles();
   if (bookFilter) refs = refs.filter((r) => r.book === bookFilter);
   if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
 
-  const issues = referenceIssues(refs);
+  const issues = findReferenceIssues(refs);
   if (issues.length === 0) {
     console.log(`All clear — no issues across ${refs.length} references.`);
     return;

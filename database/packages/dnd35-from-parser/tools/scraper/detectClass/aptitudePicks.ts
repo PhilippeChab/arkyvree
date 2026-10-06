@@ -1,11 +1,11 @@
 /** Detects a class's aptitude picks: the features where its player picks from a pool. */
 
-import { lookupWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/names.ts";
+import { findWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import {
-  aggregateOrdinalVariants,
   buildFeatureMap,
   isScalingFeature,
+  mergeOrdinalVariants,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/features.ts";
 import { type AptitudePick, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
@@ -92,11 +92,11 @@ export function detectAptitudePicks(
   // Build a map of class feature descriptions by lowercase name
   const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf.description);
 
-  const aggregated = aggregateOrdinalVariants(featureOccurrences);
+  const aggregated = mergeOrdinalVariants(featureOccurrences);
 
   for (const occ of aggregated) {
     // Find the description for this feature (try exact, then plural/singular variants)
-    const desc = lookupWithPluralVariants(descMap, occ.name);
+    const desc = findWithPluralVariants(descMap, occ.name);
     if (!desc) continue;
 
     // Detect references to existing SRD aptitudes (e.g. "from the list of fighter bonus feats")
@@ -164,7 +164,7 @@ export function detectLockedFavoredEnemies(
   const results: NonNullable<ClassReference["detected"]["lockedFavoredEnemies"]> = [];
 
   for (const occ of featureOccurrences) {
-    const desc = lookupWithPluralVariants(descMap, occ.name);
+    const desc = findWithPluralVariants(descMap, occ.name);
     if (!desc) continue;
     const normalized = normalizeWs(desc);
 

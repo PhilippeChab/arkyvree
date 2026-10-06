@@ -100,7 +100,7 @@ export default new GoodService();
 });
 
 describe("function-names", () => {
-  test("an exported function of the server or shared/ starts with a verb, or is a context, handler, conversion or constructor", async () => {
+  test("an exported function of the server, shared/ or database/ starts with a verb, or is a context, handler, conversion, constructor or content builder", async () => {
     expect(
       await lintRepo(
         {
@@ -128,10 +128,14 @@ describe("function-names", () => {
           "client/src/lib/initialOf.ts": "export const initialOf = (name: string) => name[0];\n",
           "server/sheet/page.tsx": "export function pageTitle() {}\nexport function Page() {}\n",
           "server/listed.ts": "function scaled() {}\nconst build = () => 1;\nexport { scaled, build as buildIt };\n",
+          "database/packages/dnd35-from-parser/tools/slugs.ts":
+            "export function skillSlug() {}\nexport function detectBab() {}\nexport function quote() {}\n",
+          "database/packages/dnd35/content/customization/requirements.ts": "export function gte() {}\n",
         },
         ["function-names"],
       ),
     ).toEqual([
+      "function-names database/packages/dnd35-from-parser/tools/slugs.ts",
       "function-names server/byOrder.ts",
       "function-names server/listed.ts",
       "function-names server/middlewares/wrapped.ts",

@@ -1,7 +1,7 @@
 import { existsSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 
-import { bookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
+import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
 import {
   type BaseGenerator,
   GENERATED_HEADER,
@@ -61,7 +61,7 @@ export function GeneratesDomains<B extends Constructor<BaseGenerator>>(Base: B) 
 
     /** A book's domains file and its domains' feat pools: those of its domains reference, none for a book without one. */
     writeDomains(book: string) {
-      const { seeds, poolFeats } = bookDomainSeeds(book);
+      const { seeds, poolFeats } = buildBookDomainSeeds(book);
       this.log(`Built ${seeds.length} domain seeds`);
 
       const outDir = join(this.dir, book, "domains");
