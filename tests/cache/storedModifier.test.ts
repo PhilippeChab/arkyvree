@@ -16,7 +16,7 @@ test("stored modifier reads preserve ownership without changing ordinary COW rea
   const sourceId = seed.featMap.Toughness;
   const [modifier] = await Modifiers.findMany(db, { sourceIds: [sourceId], sourceType: "feats" });
   expect(modifier).toBeDefined();
-  const copy = await copyEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
+  const copy = await copyEntity(db, "feats", sourceId, fork);
 
   await runWithRequestCache(() =>
     withRulesetScope(db, fork.id, async () => {

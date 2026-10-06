@@ -12,7 +12,7 @@ test("a read returning ids gives ids in a ruleset's scope, whose copies map othe
   const seed = await getSeedCtx();
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   // A copy in the fork fills its scope's map
-  await copyEntity(db, "feats", seed.featMap.Toughness, fork.id, [seed.rulesetId], []);
+  await copyEntity(db, "feats", seed.featMap.Toughness, fork);
   const [general, wizardSpells] = [seed.aptMap["General"], seed.aptMap["Wizard Spells"]];
 
   await withRulesetScope(db, fork.id, async ({ rulesetData }) => {

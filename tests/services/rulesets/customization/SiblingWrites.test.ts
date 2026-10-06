@@ -50,7 +50,7 @@ async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 
     );
     const copy =
       pairing === "snapshot"
-        ? await copyEntity(db, entityType, base.id, extension.id, extension.ancestorRulesetIds, [])
+        ? await copyEntity(db, entityType, base.id, extension)
         : (await repo.create(db, { name: "Sibling write fixture", rulesetId: extension.id }))[0];
     extensions.push({ extension, copy });
   }

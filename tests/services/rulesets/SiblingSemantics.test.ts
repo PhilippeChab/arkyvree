@@ -224,7 +224,11 @@ for (const [chainingOperator, reverseOrder] of [
     const copies: string[] = [];
     const { session, host } = await setup(async (rulesetId, baseId, index) => {
       const source = (await Feats.findOne(db, { rulesetId: baseId, name: "Toughness" }))!;
-      const copy = await copyEntity(db, "feats", source.id, rulesetId, [baseId], []);
+      const copy = await copyEntity(db, "feats", source.id, {
+        id: rulesetId,
+        extensionRulesetIds: [],
+        ancestorRulesetIds: [baseId],
+      });
       copies.push(copy.id);
       const owner = { entityId: copy.id, entityType: "feats" };
       const conditionA = {
@@ -317,8 +321,16 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
     async (rulesetId, baseId, index) => {
       const feat = (await Feats.findOne(db, { rulesetId: baseId, name: "Toughness" }))!;
       const power = (await Powers.findOne(db, { rulesetId: baseId, name: "Fireball" }))!;
-      const featCopy = await copyEntity(db, "feats", feat.id, rulesetId, [baseId], []);
-      const powerCopy = await copyEntity(db, "powers", power.id, rulesetId, [baseId], []);
+      const featCopy = await copyEntity(db, "feats", feat.id, {
+        id: rulesetId,
+        extensionRulesetIds: [],
+        ancestorRulesetIds: [baseId],
+      });
+      const powerCopy = await copyEntity(db, "powers", power.id, {
+        id: rulesetId,
+        extensionRulesetIds: [],
+        ancestorRulesetIds: [baseId],
+      });
       const owner = { entityId: featCopy.id, entityType: "feats" };
       const description = index === 0 ? "the winner's" : `sibling ${index}'s`;
       await Properties.create(db, { ...owner, type: "AUDIT", value: "shared", description });

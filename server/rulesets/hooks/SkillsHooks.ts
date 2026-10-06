@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData, RulesetSources } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 
 export type PropertyRecord = {
@@ -22,10 +22,5 @@ export interface SkillsHooks {
   /** Stores the skill's flags as its properties, and answers them as stored. */
   syncProperties(tx: Db, skillId: string, flags: SkillFlags): Promise<SkillFlags>;
   generateSkillFeat(tx: Db, rulesetId: string, sourceChain: string[], skillName: string): Promise<void>;
-  deleteSkillFeat(
-    tx: Db,
-    ruleset: { id: string; extensionRulesetIds: string[] },
-    rulesetData: RulesetData,
-    skillName: string,
-  ): Promise<void>;
+  deleteSkillFeat(tx: Db, ruleset: RulesetSources, rulesetData: RulesetData, skillName: string): Promise<void>;
 }

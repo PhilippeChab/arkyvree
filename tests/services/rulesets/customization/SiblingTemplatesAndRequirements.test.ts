@@ -28,7 +28,7 @@ async function setup(
   const extensionIds: string[] = [];
   for (let i = 0; i < extensionCount; i++) {
     const extension = await createSeededTestRuleset(session.userId);
-    const copy = await copyEntity(db, entityType, source.id, extension.id, extension.ancestorRulesetIds, []);
+    const copy = await copyEntity(db, entityType, source.id, extension);
     copies.push(copy.id);
     extensionIds.push(extension.id);
     if (configure) {

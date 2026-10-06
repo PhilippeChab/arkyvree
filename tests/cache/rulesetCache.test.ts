@@ -588,8 +588,8 @@ describe("rulesetCache", () => {
         ancestorRulesetIds: [seed.id],
       });
 
-      const cowA = await copyEntity(db, "feats", baseFeat.id, extA.id, [seed.id], []);
-      const cowB = await copyEntity(db, "feats", baseFeat.id, extB.id, [seed.id], []);
+      const cowA = await copyEntity(db, "feats", baseFeat.id, extA);
+      const cowB = await copyEntity(db, "feats", baseFeat.id, extB);
 
       // Child fork subscribed to both extensions.
       const child = await createTestRuleset(SEED_USER_ID, {
@@ -644,8 +644,8 @@ describe("rulesetCache", () => {
         ancestorRulesetIds: [seed.id],
       });
 
-      const cowA = await copyEntity(db, "items", baseItem.id, extA.id, [seed.id], []);
-      const cowB = await copyEntity(db, "items", baseItem.id, extB.id, [seed.id], []);
+      const cowA = await copyEntity(db, "items", baseItem.id, extA);
+      const cowB = await copyEntity(db, "items", baseItem.id, extB);
 
       const child = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,

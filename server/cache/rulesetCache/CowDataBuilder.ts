@@ -1,4 +1,4 @@
-import { CowData, type Db, db, withCowContext } from "@/server/database/index.ts";
+import { CowData, type Db, withCowContext } from "@/server/database/index.ts";
 import { Aptitudes, EntitySnapshots, KlassLevels, RulesetEntities } from "@/server/repositories/index.ts";
 
 type SnapshotsByRuleset = Map<string, Awaited<ReturnType<typeof EntitySnapshots.findMany>>>;
@@ -60,49 +60,36 @@ export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ances
  *   3. Name-based fallback for `NAME_FALLBACK_ENTITY_TYPES` — pairs same-name native rows across the chain when the
  *      snapshot pass didn't catch them (e.g. a spell reprinted in two D&D sourcebooks).
  *   4. A local copy's siblings become overrides of it.
+ *   5. A copied class's levels, paired by number.
+ *   6. The aptitudes' namesakes.
  *
- * Then the aptitudes' namesakes, for a scope (`build`) and a copy (`buildForCopy`) alike, so that a copy's links name
- * the lists its view shows; a scope's also pairs a copied class's levels first. Every override is also an alias
- * (`override` writes both maps): an id compose skips always resolves.
+ * One build (`build`), through the handle it's given: the shared `db` for a ruleset's scope, a copy's transaction for
+ * the copy, so that what the copy stores (its links, its levels' grants, its siblings' merged rows) names what the
+ * scope's view shows. Every override is also an alias (`override` writes both maps): an id compose skips always
+ * resolves.
  */
 export default class CowDataBuilder {
-  constructor(rulesetId: string, sourceChain: string[], extensionRulesetIds: string[]) {
-    this.rulesetId = rulesetId;
-    this.sourceChain = sourceChain;
-    this.extensionRulesetIds = extensionRulesetIds;
+  constructor(ruleset: RulesetSources) {
+    this.rulesetId = ruleset.id;
+    this.sourceChain = buildSourceChain(ruleset);
+    this.extensionRulesetIds = ruleset.extensionRulesetIds;
   }
 
   /**
-   * A ruleset's `CowData`, as its scope reads through it. Reads committed rows only, through the shared `db`, never a
-   * transaction's: the cache shares it with every reader (`RulesetCache.getCowData`).
+   * A ruleset's `CowData`, read through `database`: the shared `db` for its scope's, which the cache shares with every
+   * reader (`RulesetCache.getCowData`), or a copy's transaction for the copy's, which sees the transaction's own copies
+   * (`EntityCopy`). It reads stored ids, copy-on-write resolution off.
    */
-  static async build(ruleset: RulesetSources): Promise<CowData> {
-    const sourceChain = buildSourceChain(ruleset);
-    const builder = new CowDataBuilder(ruleset.id, sourceChain, ruleset.extensionRulesetIds);
-    if (sourceChain.length > 0) {
-      await builder.load(db);
-      await builder.pairKlassLevels();
-    }
-    if (ruleset.extensionRulesetIds.length > 0) await builder.pairAptitudes(db);
-    return builder.toCowData();
-  }
-
-  /**
-   * What a copy made in `tx` remaps its references and merges its siblings by (`EntityCopy`): the snapshot and name
-   * passes, which see the transaction's own copies, and the aptitudes' namesakes, so that its links name the lists the
-   * view shows (an extension's own copy of a list another book's wins resolves to that one). A chain of ancestors only
-   * pairs the same namesakes: the name pass adds the extensions to it.
-   */
-  static async buildForCopy(
-    tx: Db,
-    rulesetId: string,
-    sourceChain: string[],
-    extensionRulesetIds: string[],
-  ): Promise<CowData> {
-    const builder = new CowDataBuilder(rulesetId, sourceChain, extensionRulesetIds);
-    await builder.load(tx);
-    if (extensionRulesetIds.length > 0) await builder.pairAptitudes(tx);
-    return builder.toCowData();
+  static async build(database: Db, ruleset: RulesetSources): Promise<CowData> {
+    return await withCowContext(undefined, async () => {
+      const builder = new CowDataBuilder(ruleset);
+      if (builder.sourceChain.length > 0) {
+        await builder.load(database);
+        await builder.pairKlassLevels(database);
+      }
+      if (builder.extensionRulesetIds.length > 0) await builder.pairAptitudes(database);
+      return builder.toCowData();
+    });
   }
 
   private readonly rulesetId: string;
@@ -214,9 +201,7 @@ export default class CowDataBuilder {
     const extensionSet = new Set(this.extensionRulesetIds);
     if (extensionSet.size > 0) this.pairSnapshotSiblings(allRulesetIds, byRuleset, extensionSet);
 
-    // Dedupe so the name pass behaves the same whether the chain holds the extensions or not
-    const dedupedChain = [...new Set([...this.extensionRulesetIds, ...this.sourceChain])];
-    if (extensionSet.size > 0 && dedupedChain.length > 1) await this.pairNamesakes(database, dedupedChain);
+    if (extensionSet.size > 0 && this.sourceChain.length > 1) await this.pairNamesakes(database);
 
     const localIds = new Set((byRuleset.get(this.rulesetId) ?? []).map((s) => s.forkedEntityId));
     this.suppressLocalSiblings(localIds);
@@ -230,10 +215,7 @@ export default class CowDataBuilder {
    * compose-skip is for true overrides only.
    */
   private async pairAptitudes(database: Db) {
-    // Stored ids: a copy builds its data in a scope, whose reads would resolve them
-    const allAptitudes = await withCowContext(undefined, () =>
-      Aptitudes.findMany(database, { rulesetIds: this.sourceChain }),
-    );
+    const allAptitudes = await Aptitudes.findMany(database, { rulesetIds: this.sourceChain });
     for (const { winner, losers } of rankNamesakes(allAptitudes, (apt) => apt.name, this.sourceChain)) {
       // Aliases must point directly to the visible copy, including a local COW.
       const resolvedWinnerId = this.aliases.get(winner.id) ?? winner.id;
@@ -249,15 +231,14 @@ export default class CowDataBuilder {
    * Klass-level id pairs for COW'd klasses: levels aren't individually snapshotted, so they pair by level number, as
    * overrides, so that a stored klass-level id resolves to the copy's.
    */
-  private async pairKlassLevels() {
+  private async pairKlassLevels(database: Db) {
     if (this.overrides.size === 0) return;
-    const klassSnaps = await EntitySnapshots.findMany(db, { rulesetId: this.rulesetId, entityType: "klasses" });
+    const klassSnaps = await EntitySnapshots.findMany(database, { rulesetId: this.rulesetId, entityType: "klasses" });
+    const klassIds = klassSnaps.flatMap((snap) => [snap.sourceEntityId, snap.forkedEntityId]);
+    const levelsByKlass = Map.groupBy(await KlassLevels.findMany(database, { klassIds }), (level) => level.klassId);
     for (const snap of klassSnaps) {
-      const [parentLevels, childLevels] = await Promise.all([
-        KlassLevels.findMany(db, { klassId: snap.sourceEntityId }),
-        KlassLevels.findMany(db, { klassId: snap.forkedEntityId }),
-      ]);
-      for (const parentLevel of parentLevels) {
+      const childLevels = levelsByKlass.get(snap.forkedEntityId) ?? [];
+      for (const parentLevel of levelsByKlass.get(snap.sourceEntityId) ?? []) {
         const childLevel = childLevels.find((l) => l.level === parentLevel.level);
         if (childLevel) this.override(parentLevel.id, childLevel.id);
       }
@@ -276,12 +257,12 @@ export default class CowDataBuilder {
    * unrelated user extensions: the merged entity looks weird; the user can COW
    * it and edit. Recoverable, not data loss.
    */
-  private async pairNamesakes(database: Db, dedupedChain: string[]) {
+  private async pairNamesakes(database: Db) {
     const rows = await RulesetEntities.findNativeNames(database, {
-      rulesetIds: dedupedChain,
+      rulesetIds: this.sourceChain,
       entityTypes: [...NAME_FALLBACK_ENTITY_TYPES],
     });
-    for (const { winner, losers } of rankNamesakes(rows, (row) => `${row.entityType}|${row.name}`, dedupedChain)) {
+    for (const { winner, losers } of rankNamesakes(rows, (row) => `${row.entityType}|${row.name}`, this.sourceChain)) {
       for (const loser of losers) this.alias(loser.id, winner.id);
       this.addSiblings(
         winner.id,

@@ -4,6 +4,7 @@ import {
   mergeSiblingModifiers,
   mergeSiblingProperties,
   mergeSiblingRequirements,
+  type RulesetSources,
 } from "@/server/cache/rulesetCache/index.ts";
 import { type CowData, type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -33,37 +34,30 @@ export interface CopiedEntity {
   copiedIds: ReadonlyMap<string, string>;
 }
 
-/** The ruleset a copy is made in: its id, and where its inherited entities come from (its extensions'). */
-export interface CopyTarget {
-  rulesetId: string;
-  sourceChain: string[];
-  extensionRulesetIds: string[];
-}
-
 /**
  * COW trigger: one copy of an inherited entity into a fork (`EntityCopy.create`), with all its customizations and
  * relationships, its sibling copies' data merged in, and the entity_snapshot record. Each copy is its own instance,
  * which records the customizations it copied.
  */
 export default class EntityCopy {
-  private constructor(entityType: RulesetEntityType, entityId: string, target: CopyTarget) {
+  private constructor(entityType: RulesetEntityType, entityId: string, ruleset: RulesetSources) {
     this.entityType = entityType;
     this.entityId = entityId;
-    this.target = target;
+    this.ruleset = ruleset;
     this.sourceType = isCustomizableEntityType(entityType) ? entityType : undefined;
   }
 
   /**
-   * Copies `entityId` into the target ruleset, or returns the copy it already has (then with no copied ids): the
-   * newly created child entity, and the customizations copied with it.
+   * Copies `entityId` into `ruleset`, or returns the copy it already has (then with no copied ids): the newly created
+   * child entity, and the customizations copied with it.
    */
   static async create(
     tx: Db,
     entityType: RulesetEntityType,
     entityId: string,
-    target: CopyTarget,
+    ruleset: RulesetSources,
   ): Promise<CopiedEntity> {
-    const copy = new EntityCopy(entityType, entityId, target);
+    const copy = new EntityCopy(entityType, entityId, ruleset);
     const entity = await copy.copy(tx);
     return { entity, copiedIds: copy.copiedIds };
   }
@@ -72,7 +66,8 @@ export default class EntityCopy {
 
   private readonly entityId: string;
 
-  private readonly target: CopyTarget;
+  /** The ruleset the copy is made in, and where its inherited entities come from. */
+  private readonly ruleset: RulesetSources;
 
   private readonly sourceType: string | undefined;
 
@@ -81,7 +76,7 @@ export default class EntityCopy {
   /** Copies the entity into the target ruleset, or returns the copy it already has: the newly created child entity. */
   private async copy(tx: Db): Promise<EntityWithId> {
     const repo = ENTITY_REPOS[this.entityType];
-    const { rulesetId: childRulesetId } = this.target;
+    const { id: childRulesetId } = this.ruleset;
 
     // A second first edit must wait for the copying transaction, then see its
     // committed snapshot. Keep this separate from the SELECT: under READ
@@ -130,13 +125,9 @@ export default class EntityCopy {
     };
     await copyEntityCustomizations(tx, newEntity.id, this.entityType, cust, this.copiedIds);
 
-    // 4. Copy relationships (aptitudes, klass levels, etc.)
-    const cow = await CowDataBuilder.buildForCopy(
-      tx,
-      childRulesetId,
-      this.target.sourceChain,
-      this.target.extensionRulesetIds,
-    );
+    // 4. Copy relationships (aptitudes, klass levels, etc.), remapped by the ruleset's copy-on-write data as the
+    // transaction sees it: its own copies included
+    const cow = await CowDataBuilder.build(tx, this.ruleset);
     await this.copyRelationships(tx, newEntity.id, cow);
 
     // 4b. Merge sibling data when multiple extensions COW the same base entity

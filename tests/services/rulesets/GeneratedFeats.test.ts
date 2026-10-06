@@ -325,8 +325,7 @@ describe("an inherited skill's Skill Focus", () => {
     await CharacterLevelFeats.createMany(db, [
       { characterLevelId: levelId, aptitudeId: ctx.aptMap.General, featId: feat.id },
     ]);
-    const copy =
-      picked === "inherited" ? undefined : await copyEntity(db, "feats", feat.id, fork.id, fork.ancestorRulesetIds, []);
+    const copy = picked === "inherited" ? undefined : await copyEntity(db, "feats", feat.id, fork);
 
     const mutation =
       operation === "delete"

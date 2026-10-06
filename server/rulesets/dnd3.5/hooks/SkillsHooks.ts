@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData, RulesetSources } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
@@ -39,12 +39,7 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     return skills.map((skill) => ({ ...skill, ...(flagsBySkillId.get(skill.id) ?? NO_SKILL_FLAGS) }));
   }
 
-  async deleteSkillFeat(
-    tx: Db,
-    ruleset: { id: string; extensionRulesetIds: string[] },
-    rulesetData: RulesetData,
-    skillName: string,
-  ): Promise<void> {
+  async deleteSkillFeat(tx: Db, ruleset: RulesetSources, rulesetData: RulesetData, skillName: string): Promise<void> {
     const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
     if (!feat) return;
     if (await hasCharacterPicks(tx, "feats", feat.id, ruleset.id)) {
