@@ -320,6 +320,47 @@ describe("conventions", () => {
     ]);
   });
 
+  test("a repository read says it found nothing with undefined, never null", async () => {
+    const repository = (method: string) => lines("export class XRepository {", method, "}");
+    expect(
+      await lintRepo(
+        {
+          "server/repositories/fallback.ts": repository(
+            "  async findRole(db: Db, where: W) {\n    const row = await db.query.x.findFirst({ where });\n    return row?.role ?? null;\n  }",
+          ),
+          "server/repositories/first.ts": repository(
+            "  async findOneWithBlob(db: Db, where: W) {\n    const rows = await db.select().from(t);\n    return rows[0] || null;\n  }",
+          ),
+          "server/repositories/literal.ts": repository(
+            "  async findOne(db: Db, where: W) {\n    if (!where.id) return null;\n    return await db.query.x.findFirst({ where });\n  }",
+          ),
+          "server/repositories/typed.ts": repository(
+            "  async findName(db: Db, where: W): Promise<string | null> {\n    return (await db.query.x.findFirst({ where }))?.name;\n  }",
+          ),
+          "server/repositories/nullable.ts": repository(
+            "  async findDescription(db: Db, where: W): Promise<string | null | undefined> {\n    return (await db.query.x.findFirst({ where }))?.description;\n  }",
+          ),
+          "server/repositories/plain.ts": repository(
+            "  async findOne(db: Db, where: W) {\n    const [row] = await db.select().from(t);\n    return row;\n  }",
+          ),
+          "server/repositories/column.ts": repository(
+            "  async findMany(db: Db, where: W): Promise<{ description: string | null }[]> {\n    const rows = await db.select().from(t);\n    return rows.map((row) => ({ description: row.description ?? null }));\n  }",
+          ),
+          "server/repositories/write.ts": repository(
+            "  async update(db: Db, values: V, where: W) {\n    const [row] = await db.update(t).set(values).returning();\n    return row ?? null;\n  }",
+          ),
+          "server/services/service.ts": "export function f(row?: R) {\n  return row ?? null;\n}\n",
+        },
+        ["no-null-reads"],
+      ),
+    ).toEqual([
+      "no-null-reads server/repositories/fallback.ts",
+      "no-null-reads server/repositories/first.ts",
+      "no-null-reads server/repositories/literal.ts",
+      "no-null-reads server/repositories/typed.ts",
+    ]);
+  });
+
   test("a transaction's queries run one at a time, never in a Promise.all", async () => {
     expect(
       await lintRepo(

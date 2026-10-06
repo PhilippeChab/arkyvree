@@ -232,7 +232,7 @@ describe("ContributorsService", () => {
       const { user } = await addContributor(ownerSession, ruleset.id, "Editor");
       const { user: stranger } = await createTestUser("stranger");
       expect(await Contributors.findRole(db, { userId: user.id, rulesetId: ruleset.id })).toBe("Editor");
-      expect(await Contributors.findRole(db, { userId: stranger.id, rulesetId: ruleset.id })).toBeNull();
+      expect(await Contributors.findRole(db, { userId: stranger.id, rulesetId: ruleset.id })).toBeUndefined();
     });
   });
 });

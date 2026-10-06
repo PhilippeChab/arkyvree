@@ -34,6 +34,8 @@
  *   check that skips other queries too (a write, a read of something else) is the caller's to keep: an insert of no rows
  *   throws, and a read of something else would run for nothing. The rule sees a repository's calls only: a check that
  *   skips a helper, whose queries it can't see, is left to review.
+ * - `no-null-reads`: a repository read says it found nothing with `undefined`, as drizzle does (`findFirst`, `const [row] =
+ *   …`), never `null`, which is a column's empty value: no `return null`, `?? null` or `| null` return type.
  * - `no-disable-comments`: no comment turns a lint rule off (`oxlint-disable…`, `eslint-disable…`): a case a rule gets
  *   wrong changes the rule, its options or its definition, never one line.
  * - `environment`: the server reads its environment in `server/environment.ts` only (`readEnv`, `isProduction`…),
@@ -450,6 +452,28 @@ function createNoHelpersModules(context) {
   };
 }
 
+function createNoNullReads(context) {
+  if (!repoPath(context.filename).startsWith("server/repositories/")) return {};
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        "A repository read says it found nothing with `undefined`, as drizzle does (`findFirst`, `const [row] = …`), never `null`: `null` is a column's empty value.",
+    });
+  return {
+    MethodDefinition(node) {
+      const fn = node.value;
+      const name = node.key.name;
+      if (!fn.body || node.accessibility === "private" || !READ_VERBS.some((verb) => startsWithVerb(name, verb)))
+        return;
+      if (hasNullMember(fn.returnType?.typeAnnotation)) report(fn.returnType);
+      for (const statement of returnsOf(fn.body)) {
+        if (isNullFallback(statement.argument)) report(statement);
+      }
+    },
+  };
+}
+
 function createNoParentImports(context) {
   const file = repoPath(context.filename);
   // Node loads lint/'s plugins as they are, without the `@/` alias the app's bundlers resolve.
@@ -833,6 +857,21 @@ function gerunds(verb) {
   return [`${base}ing`, `${base.replace(/e$/, "")}ing`, `${base}${base.at(-1)}ing`];
 }
 
+/**
+ * Whether a type says `null` for nothing: `null`, or a union with it and without `undefined`, under a `Promise`
+ * (`Promise<Role | null>`). A nullable column's value (`string | null | undefined`) says both.
+ */
+function hasNullMember(type) {
+  if (!type) return false;
+  if (type.type === "TSNullKeyword") return true;
+  if (type.type === "TSUnionType") {
+    const has = (keyword) => type.types.some((member) => member.type === keyword);
+    return has("TSNullKeyword") && !has("TSUndefinedKeyword");
+  }
+  const isPromise = type.type === "TSTypeReference" && type.typeName?.name === "Promise";
+  return isPromise && hasNullMember((type.typeArguments ?? type.typeParameters)?.params[0]);
+}
+
 /** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
 function isConcern(fn) {
   return (
@@ -861,6 +900,15 @@ function isHonoChain(node) {
     current = current.callee.object;
   }
   return current?.type === "NewExpression" && current.callee.type === "Identifier" && current.callee.name === "Hono";
+}
+
+/** Whether `node` is `null`, or gives `null` for nothing: `x ?? null`, `x || null`, `x ? y : null`. */
+function isNullFallback(node) {
+  if (!node) return false;
+  if (node.type === "Literal") return node.raw === "null";
+  if (node.type === "LogicalExpression") return isNullFallback(node.right);
+  if (node.type === "ConditionalExpression") return isNullFallback(node.consequent) || isNullFallback(node.alternate);
+  return false;
 }
 
 /** Whether `name` is a parameter of a function `node` sits in: a handle it's given, which may be a transaction. */
@@ -968,6 +1016,18 @@ function returnedBy(statement) {
   return statement.type === "ReturnStatement" ? statement : undefined;
 }
 
+/** The `return` statements of `fn` itself, not of the functions inside it. */
+function* returnsOf(node, fn = node) {
+  if (node !== fn && /Function(Expression|Declaration)$/.test(node.type)) return;
+  if (node.type === "ReturnStatement") yield node;
+  for (const [key, value] of Object.entries(node)) {
+    if (key === "parent") continue;
+    for (const child of Array.isArray(value) ? value : [value]) {
+      if (typeof child?.type === "string") yield* returnsOf(child, fn);
+    }
+  }
+}
+
 /** A `c.req.valid(target)` call's target, if `node` is one. */
 function validTargetOf(node) {
   const callee = node?.type === "CallExpression" ? node.callee : null;
@@ -987,6 +1047,7 @@ export default {
   "no-disable-comments": { meta: { type: "problem" }, create: createNoDisableComments },
   "writes-in-transactions": { meta: { type: "problem" }, create: createWritesInTransactions },
   "empty-list-reads": { meta: { type: "suggestion" }, create: createEmptyListReads },
+  "no-null-reads": { meta: { type: "suggestion" }, create: createNoNullReads },
   "order-through-repository": { meta: { type: "suggestion" }, create: createOrderThroughRepository },
   "shared-runtime": { meta: { type: "problem" }, create: createSharedRuntime },
   "session-param": { meta: { type: "suggestion" }, create: createSessionParam },

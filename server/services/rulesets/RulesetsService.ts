@@ -114,7 +114,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       StarredRulesets.count(db, { rulesetId: id }),
       ruleset.userId && ruleset.userId !== session.userId
         ? Contributors.findRole(db, { userId: session.userId, rulesetId: id })
-        : null,
+        : undefined,
       Rulesets.exists(db, { extensionRulesetId: id }),
     ]);
 
@@ -125,7 +125,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       rulesetName: parent?.name,
       isStarred: !!star,
       starCount,
-      contributorRole,
+      // A response says none with null: JSON leaves an undefined key out
+      contributorRole: contributorRole ?? null,
       isStarrable: this.isStarrable(ruleset),
       isUsedAsExtension,
     };

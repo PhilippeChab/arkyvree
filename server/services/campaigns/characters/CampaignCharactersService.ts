@@ -64,9 +64,9 @@ class CampaignCharactersService {
 
     const isCharacterOwner = character.userId === session.userId;
     const contributorRole = isCharacterOwner
-      ? null
+      ? undefined
       : await CharacterContributors.findRole(db, { userId: session.userId, characterId });
-    const canEdit = isCharacterOwner || contributorRole !== null;
+    const canEdit = isCharacterOwner || contributorRole !== undefined;
 
     // Partial visibility hides build details from incidental viewers. The
     // link-slot owner, GM, and anyone with edit rights (character owner or

@@ -163,8 +163,8 @@ class CharacterContributorsRepository extends include(
     return this.paginated(items, pagination);
   }
 
-  /** The user's role on the character as an active contributor, or null. */
-  async findRole(db: Db, where: { userId: string; characterId: string }): Promise<ContributorRole | null> {
+  /** The user's role on the character, when they're an active contributor. */
+  async findRole(db: Db, where: { userId: string; characterId: string }): Promise<ContributorRole | undefined> {
     const contributor = await db.query.contributorsInCharacter.findFirst({
       where: this.where([
         eq(this.table.userId, where.userId),
@@ -174,7 +174,7 @@ class CharacterContributorsRepository extends include(
       ]),
     });
 
-    return contributor?.role ?? null;
+    return contributor?.role;
   }
 
   async update(db: Db, values: Partial<InferInsertModel<typeof contributorsInCharacter>>, where: { id: string }) {
