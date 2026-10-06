@@ -26,7 +26,8 @@ interface CharacterIdentityFormData {
   race: string;
   alignment: Alignment | "";
   experience: number;
-  age: string;
+  /** NaN while empty, as a number field holds it */
+  age: number;
   gender: Gender | "";
   height: string;
   weight: string;
@@ -60,7 +61,7 @@ function toIdentityForm({ identity }: CharacterIdentitySectionProps["character"]
     race: identity?.physiology?.race?.name || "",
     alignment: oneOf(identity?.beliefs?.alignment, ALIGNMENT_OPTIONS) ?? "",
     experience: identity?.meta?.xp || 0,
-    age: String(identity?.physiology?.age || ""),
+    age: identity?.physiology?.age || Number.NaN,
     gender: oneOf(identity?.physiology?.gender, GENDER_OPTIONS) ?? "",
     height: String(identity?.physiology?.height || ""),
     weight: String(identity?.physiology?.weight || ""),
@@ -88,7 +89,7 @@ export function CharacterIdentitySection({
     race: "",
     alignment: "",
     experience: 0,
-    age: "",
+    age: Number.NaN,
     gender: "",
     height: "",
     weight: "",
@@ -106,7 +107,7 @@ export function CharacterIdentitySection({
         rpc.api.characters[":id"]["$put"]({
           param: { id: characterId },
           json: {
-            age: Number(formData.age) || undefined,
+            age: formData.age || undefined,
             gender: formData.gender || undefined,
             height: formData.height || undefined,
             weight: formData.weight || undefined,
@@ -336,7 +337,10 @@ export function CharacterIdentitySection({
               <FormTextField
                 control={form.control}
                 name="age"
+                rules={wholeNumberRules(1)}
+                number
                 label="Age"
+                type="number"
                 disabled={readOnly}
                 sx={disabledFieldStyle}
               />
