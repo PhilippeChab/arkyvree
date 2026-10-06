@@ -7,7 +7,7 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Abilities, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { Abilities, Requirements } from "@/server/repositories/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -20,6 +20,7 @@ import { SavesService } from "@/server/services/rulesets/saves/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
+import { customize, findCustomizations } from "@/tests/support/customizations.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
@@ -155,60 +156,15 @@ const SERVICES: Record<string, Service> = {
 
 const ENTITY_TYPES = Object.keys(SERVICES);
 
-/** How many of each an entity has. */
+/** How many of each an entity has: its notes, of its properties. */
 async function counts(entityType: (typeof ENTITY_TYPES)[number], id: string) {
-  const { modifiers, modifierRequirementIds, requirements, properties } = await customizationsOf(entityType, id);
+  const { modifiers, modifierRequirements, requirements, properties } = await findCustomizations(entityType, id);
   return {
     modifiers: modifiers.length,
-    modifierRequirements: modifierRequirementIds.length,
+    modifierRequirements: modifierRequirements.length,
     requirements: requirements.length,
-    properties: properties.length,
+    properties: properties.filter((p) => p.type === "NOTE").length,
   };
-}
-
-/** The entity's customizations, and the ids of its modifiers' requirements. */
-async function customizationsOf(entityType: (typeof ENTITY_TYPES)[number], id: string) {
-  const modifiers = await Modifiers.findMany(db, { sourceIds: [id], sourceType: entityType });
-  const modifierRequirements = await Requirements.findMany(db, {
-    entityIds: modifiers.map((m) => m.id),
-    entityType: "modifiers",
-  });
-  return {
-    modifiers,
-    modifierRequirementIds: modifierRequirements.map((r) => r.id),
-    requirements: await Requirements.findMany(db, { entityIds: [id], entityType }),
-    properties: await Properties.findMany(db, { entityIds: [id], entityType, type: "NOTE" }),
-  };
-}
-
-/** Gives the entity a requirement, a property and, when its type can own one, a modifier with a requirement of its own. */
-async function customize(entityType: (typeof ENTITY_TYPES)[number], id: string) {
-  if (isCustomizableEntityType(entityType)) {
-    const [modifier] = await Modifiers.create(db, {
-      sourceId: id,
-      sourceType: entityType,
-      target: "abilities.strength.misc",
-      value: "2",
-      valueType: "number",
-      operator: "add",
-    });
-    await Requirements.create(db, {
-      entityId: modifier.id,
-      entityType: "modifiers",
-      level: "1",
-      chainingOperator: "and",
-    });
-  }
-  await Requirements.create(db, {
-    entityId: id,
-    entityType,
-    level: "1",
-    target: "abilities.strength.total",
-    value: "13",
-    valueType: "number",
-    operator: "greater_than_or_equal",
-  });
-  await Properties.create(db, { entityId: id, entityType, type: "NOTE", value: "doomed" });
 }
 
 /** Whether any of these requirements is left. */
@@ -334,8 +290,8 @@ describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %
     const { session, ruleset, refs } = await setup();
     const { id } = await service.create(session, ruleset.id, "Doomed Entity", refs);
     // Customizations point at their entity polymorphically: no foreign key removes them.
-    await customize(entityType, id);
-    const { modifierRequirementIds } = await customizationsOf(entityType, id);
+    await customize(entityType, id, { modifier: ownsModifiers });
+    const modifierRequirementIds = (await findCustomizations(entityType, id)).modifierRequirements.map((r) => r.id);
 
     await service.remove(session, ruleset.id, id);
     expect(await counts(entityType, id)).toEqual(none);
@@ -345,21 +301,22 @@ describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %
   test("copies an inherited entity's customizations into the fork, and deletes them with the copy", async () => {
     const { session: parentSession, ruleset: parent, refs } = await setup();
     const inherited = await service.create(parentSession, parent.id, "Inherited Entity", refs);
-    await customize(entityType, inherited.id);
+    await customize(entityType, inherited.id, { modifier: ownsModifiers });
     const { user, session } = await createTestUserAndRuleset();
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
-    const source = await customizationsOf(entityType, inherited.id);
+    const source = await findCustomizations(entityType, inherited.id);
 
     const copy = await service.update(session, fork.id, inherited.id, "Forked Entity", refs);
     expect(await counts(entityType, copy.id)).toEqual(one);
-    const copied = await customizationsOf(entityType, copy.id);
+    const sourceIds = source.modifierRequirements.map((r) => r.id);
+    const copiedIds = (await findCustomizations(entityType, copy.id)).modifierRequirements.map((r) => r.id);
     // The copy's modifier has its own copy of the modifier's requirements.
-    expect(copied.modifierRequirementIds.filter((id) => source.modifierRequirementIds.includes(id))).toEqual([]);
+    expect(copiedIds.filter((id) => sourceIds.includes(id))).toEqual([]);
 
     await service.remove(session, fork.id, inherited.id);
     expect(await counts(entityType, copy.id)).toEqual(none);
-    expect(await remaining(copied.modifierRequirementIds)).toEqual([]);
-    expect(await customizationsOf(entityType, inherited.id)).toEqual(source);
+    expect(await remaining(copiedIds)).toEqual([]);
+    expect(await findCustomizations(entityType, inherited.id)).toEqual(source);
   });
 });

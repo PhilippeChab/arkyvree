@@ -165,19 +165,6 @@ function extractFeatPrereqs(text: string): string[] {
   return feats;
 }
 
-/** "Any (other) metamagic feat": one feat of the family; "any two luck feats": that many of them. */
-export function familyFeatRequirements(text: string): RequirementEntry[] {
-  const counts = Object.keys(NUMBER_WORDS).join("|");
-  return FEAT_FAMILIES.flatMap((family) => {
-    const match = new RegExp(`\\bany (?:other )?(?:(${counts}) )?${family} feats?\\b`, "i").exec(text);
-    if (!match) return [];
-    const slug = stripSeparators(family);
-    return [
-      match[1] ? gte(`feats.${slug}.count`, NUMBER_WORDS[match[1].toLowerCase()]) : eq(`feats.${slug}.*.possessed`),
-    ];
-  });
-}
-
 function isCommonPhrase(text: string): boolean {
   const lower = text.toLowerCase();
   if (
@@ -746,4 +733,17 @@ export function detectModifiers(benefit: string): ModifierDetection {
   }
 
   return { modifiers: validated, errors, unresolvedModifiers };
+}
+
+/** "Any (other) metamagic feat": one feat of the family; "any two luck feats": that many of them. */
+export function familyFeatRequirements(text: string): RequirementEntry[] {
+  const counts = Object.keys(NUMBER_WORDS).join("|");
+  return FEAT_FAMILIES.flatMap((family) => {
+    const match = new RegExp(`\\bany (?:other )?(?:(${counts}) )?${family} feats?\\b`, "i").exec(text);
+    if (!match) return [];
+    const slug = stripSeparators(family);
+    return [
+      match[1] ? gte(`feats.${slug}.count`, NUMBER_WORDS[match[1].toLowerCase()]) : eq(`feats.${slug}.*.possessed`),
+    ];
+  });
 }

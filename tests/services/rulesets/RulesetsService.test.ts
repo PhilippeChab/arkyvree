@@ -50,7 +50,7 @@ import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
-import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
@@ -375,8 +375,8 @@ describe("RulesetsService", () => {
         RulesetsService.publishRuleset(session, (await createTestRuleset(user.id)).id, { kind: "extension" }),
       ).rejects.toThrow(UnprocessableEntityError);
       const host = await fork(session, { id: rulesetId });
-      const seedExtension = await Rulesets.findOne(db, { name: DND35_COMPLETE_WARRIOR_NAME });
-      await RulesetExtensionsService.subscribeExtension(session, host.id, [seedExtension!.id]);
+      const seedExtension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+      await RulesetExtensionsService.subscribeExtension(session, host.id, [seedExtension.id]);
       await expect(RulesetsService.publishRuleset(session, host.id, { kind: "extension" })).rejects.toThrow(
         UnprocessableEntityError,
       );

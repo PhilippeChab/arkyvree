@@ -16,79 +16,6 @@ import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import { fetchEntityCustomizations } from "./customizations.ts";
 import type { EntityCustomizations, EntityType } from "./hashing.ts";
 
-/** Copy customizations from source entity to target entity */
-export async function copyEntityCustomizations(
-  tx: Db,
-  _sourceEntityId: string,
-  targetEntityId: string,
-  entityType: string,
-  sourceCust: EntityCustomizations,
-  customizationIds?: Map<string, string>,
-): Promise<void> {
-  await copyEntityCustomizationsToMany(tx, [targetEntityId], entityType, sourceCust, customizationIds);
-}
-
-export async function copyEntityCustomizationsToMany(
-  tx: Db,
-  targetEntityIds: string[],
-  entityType: string,
-  sourceCust: EntityCustomizations,
-  customizationIds?: Map<string, string>,
-): Promise<void> {
-  if (targetEntityIds.length === 0) return;
-  // Copies are paired with their sources by position, so reject inputs that
-  // position cannot represent instead of writing rows to the wrong owner.
-  if (customizationIds && targetEntityIds.length > 1) {
-    throw new Error("customizationIds maps each source row to one copy; copy to a single target");
-  }
-  if (!isCustomizableEntityType(entityType) && sourceCust.modifiers.length > 0) {
-    throw new Error(`Cannot copy modifiers onto ${entityType}`);
-  }
-  const sourceModifierIds = new Set(sourceCust.modifiers.map((m) => m.id));
-  const orphan = sourceCust.modifierRequirements.find((r) => !sourceModifierIds.has(r.entityId));
-  if (orphan) {
-    throw new Error(`Modifier requirement ${orphan.id} belongs to a modifier outside the copied set`);
-  }
-
-  const { modifiers, properties, requirements, modifierRequirements } = sourceCust;
-  const newModifiers = await copyRows(
-    tx,
-    Modifiers,
-    modifiers,
-    targetEntityIds,
-    (_, targetId) => ({ sourceId: targetId }),
-    customizationIds,
-  );
-  await copyRows(
-    tx,
-    Properties,
-    properties,
-    targetEntityIds,
-    (_, targetId) => ({ entityId: targetId }),
-    customizationIds,
-  );
-  await copyRows(
-    tx,
-    Requirements,
-    requirements,
-    targetEntityIds,
-    (_, targetId) => ({ entityId: targetId }),
-    customizationIds,
-  );
-  // A modifier requirement belongs to the copy of its modifier made for the same target.
-  const modifierIndex = new Map(modifiers.map((m, i) => [m.id, i]));
-  await copyRows(
-    tx,
-    Requirements,
-    modifierRequirements,
-    targetEntityIds,
-    (r, _, targetIndex) => ({
-      entityId: newModifiers[targetIndex * modifiers.length + modifierIndex.get(r.entityId)!].id,
-    }),
-    customizationIds,
-  );
-}
-
 /** Copies a class's levels onto the target class, with their saves, granted feats and powers, and customizations. */
 async function copyKlassLevels(
   tx: Db,
@@ -179,6 +106,79 @@ async function copyRows<R extends { id: string }>(
     customizationIds?.set(rows[i].id, copies[i].id);
   }
   return copies;
+}
+
+/** Copy customizations from source entity to target entity */
+export async function copyEntityCustomizations(
+  tx: Db,
+  _sourceEntityId: string,
+  targetEntityId: string,
+  entityType: string,
+  sourceCust: EntityCustomizations,
+  customizationIds?: Map<string, string>,
+): Promise<void> {
+  await copyEntityCustomizationsToMany(tx, [targetEntityId], entityType, sourceCust, customizationIds);
+}
+
+export async function copyEntityCustomizationsToMany(
+  tx: Db,
+  targetEntityIds: string[],
+  entityType: string,
+  sourceCust: EntityCustomizations,
+  customizationIds?: Map<string, string>,
+): Promise<void> {
+  if (targetEntityIds.length === 0) return;
+  // Copies are paired with their sources by position, so reject inputs that
+  // position cannot represent instead of writing rows to the wrong owner.
+  if (customizationIds && targetEntityIds.length > 1) {
+    throw new Error("customizationIds maps each source row to one copy; copy to a single target");
+  }
+  if (!isCustomizableEntityType(entityType) && sourceCust.modifiers.length > 0) {
+    throw new Error(`Cannot copy modifiers onto ${entityType}`);
+  }
+  const sourceModifierIds = new Set(sourceCust.modifiers.map((m) => m.id));
+  const orphan = sourceCust.modifierRequirements.find((r) => !sourceModifierIds.has(r.entityId));
+  if (orphan) {
+    throw new Error(`Modifier requirement ${orphan.id} belongs to a modifier outside the copied set`);
+  }
+
+  const { modifiers, properties, requirements, modifierRequirements } = sourceCust;
+  const newModifiers = await copyRows(
+    tx,
+    Modifiers,
+    modifiers,
+    targetEntityIds,
+    (_, targetId) => ({ sourceId: targetId }),
+    customizationIds,
+  );
+  await copyRows(
+    tx,
+    Properties,
+    properties,
+    targetEntityIds,
+    (_, targetId) => ({ entityId: targetId }),
+    customizationIds,
+  );
+  await copyRows(
+    tx,
+    Requirements,
+    requirements,
+    targetEntityIds,
+    (_, targetId) => ({ entityId: targetId }),
+    customizationIds,
+  );
+  // A modifier requirement belongs to the copy of its modifier made for the same target.
+  const modifierIndex = new Map(modifiers.map((m, i) => [m.id, i]));
+  await copyRows(
+    tx,
+    Requirements,
+    modifierRequirements,
+    targetEntityIds,
+    (r, _, targetIndex) => ({
+      entityId: newModifiers[targetIndex * modifiers.length + modifierIndex.get(r.entityId)!].id,
+    }),
+    customizationIds,
+  );
 }
 
 /** Copy relationship data (join tables) for a single entity */

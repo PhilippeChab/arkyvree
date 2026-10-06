@@ -23,6 +23,7 @@ import { RequirementsService } from "@/server/services/rulesets/customization/re
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
+import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
@@ -111,10 +112,7 @@ async function setup() {
   const [modifier] = await Modifiers.create(db, {
     sourceId: feat.id,
     sourceType: "feats",
-    target: "abilities.strength.misc",
-    value: "2",
-    valueType: "number",
-    operator: "add",
+    ...STRENGTH_BONUS,
   });
   await Requirements.create(db, {
     ...requirement,

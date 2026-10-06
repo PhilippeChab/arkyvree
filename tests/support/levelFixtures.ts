@@ -189,44 +189,6 @@ export const WIZARD_1: LevelPlan = {
   },
 };
 
-/** Finalizes one level of `klass` as `plan` says. */
-export function levelUp(
-  session: Session,
-  ctx: SeedContext,
-  characterId: string,
-  klass: string,
-  level: number,
-  plan: LevelPlan,
-  force = false,
-) {
-  const { skills, feats, powers } = picks(ctx, plan);
-  return addOneLevel(
-    session,
-    characterId,
-    ctx.klassMap.pc[klass],
-    level,
-    plan.hp,
-    plan.ability ? ctx.abilityMap[plan.ability] : null,
-    skills,
-    feats,
-    powers,
-    force,
-  );
-}
-
-/** The ids of a plan's picks. */
-export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }: Omit<LevelPlan, "hp">): Picks {
-  const byAptitude = (named: Record<string, string[]>, ids: Record<string, string>) =>
-    Object.fromEntries(
-      Object.entries(named).map(([aptitude, names]) => [ctx.aptMap[aptitude], names.map((name) => ids[name])]),
-    );
-  return {
-    skills: Object.fromEntries(Object.entries(skills).map(([name, rank]) => [ctx.skillMap[name], rank])),
-    feats: byAptitude(feats, ctx.featMap),
-    powers: byAptitude(powers, ctx.powerMap),
-  };
-}
-
 /** A seed-user character of `build` with `levels` of `klass`, and the creature of `kind` bonded to them. */
 async function createMaster(
   kind: "familiar" | "animalcompanion" | "mount",
@@ -242,27 +204,6 @@ async function createMaster(
   const bonded = await Characters.findOne(db, { parentCharacterId: masterId, kind });
   if (!bonded) throw new Error(`No ${kind} was bonded to the ${build}`);
   return { ctx, masterId, bonded };
-}
-
-/** A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes. */
-export async function createSeedCharacter(
-  ctx: SeedContext,
-  build: keyof typeof BUILDS = "fighter",
-  {
-    xp = 0,
-    abilities = {},
-    ...values
-  }: Partial<Omit<CharacterValues, "abilities">> & { xp?: number; abilities?: Record<string, number> } = {},
-) {
-  const base = BUILDS[build];
-  return await createCharacter(db, ctx, {
-    ...base,
-    ...values,
-    abilities: { ...base.abilities, ...abilities },
-    name: `Test ${build} ${uniqueId()}`,
-    xp,
-    description: "Test",
-  });
 }
 
 /**
@@ -308,10 +249,48 @@ export function createWizardWithFamiliar(familiar = "Cat Familiar", plan = WIZAR
   return createMaster("familiar", "wizard", "Wizard", 1, picking(plan, "Familiar Bond", [familiar]));
 }
 
+/** Finalizes one level of `klass` as `plan` says. */
+export function levelUp(
+  session: Session,
+  ctx: SeedContext,
+  characterId: string,
+  klass: string,
+  level: number,
+  plan: LevelPlan,
+  force = false,
+) {
+  const { skills, feats, powers } = picks(ctx, plan);
+  return addOneLevel(
+    session,
+    characterId,
+    ctx.klassMap.pc[klass],
+    level,
+    plan.hp,
+    plan.ability ? ctx.abilityMap[plan.ability] : null,
+    skills,
+    feats,
+    powers,
+    force,
+  );
+}
+
 /** `plan` with these picks through `aptitude` instead of its own, or none. */
 export function picking(plan: LevelPlan, aptitude: string, feats: string[]): LevelPlan {
   const { [aptitude]: _, ...others } = plan.feats ?? {};
   return { ...plan, feats: feats.length > 0 ? { ...others, [aptitude]: feats } : others };
+}
+
+/** The ids of a plan's picks. */
+export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }: Omit<LevelPlan, "hp">): Picks {
+  const byAptitude = (named: Record<string, string[]>, ids: Record<string, string>) =>
+    Object.fromEntries(
+      Object.entries(named).map(([aptitude, names]) => [ctx.aptMap[aptitude], names.map((name) => ids[name])]),
+    );
+  return {
+    skills: Object.fromEntries(Object.entries(skills).map(([name, rank]) => [ctx.skillMap[name], rank])),
+    feats: byAptitude(feats, ctx.featMap),
+    powers: byAptitude(powers, ctx.powerMap),
+  };
 }
 
 /** Finalizes the first `count` fighter levels. */
@@ -319,4 +298,25 @@ export async function addFighterLevels(session: Session, ctx: SeedContext, chara
   for (const [index, plan] of FIGHTER_LEVELS.slice(0, count).entries()) {
     await levelUp(session, ctx, characterId, "Fighter", index + 1, plan);
   }
+}
+
+/** A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes. */
+export async function createSeedCharacter(
+  ctx: SeedContext,
+  build: keyof typeof BUILDS = "fighter",
+  {
+    xp = 0,
+    abilities = {},
+    ...values
+  }: Partial<Omit<CharacterValues, "abilities">> & { xp?: number; abilities?: Record<string, number> } = {},
+) {
+  const base = BUILDS[build];
+  return await createCharacter(db, ctx, {
+    ...base,
+    ...values,
+    abilities: { ...base.abilities, ...abilities },
+    name: `Test ${build} ${uniqueId()}`,
+    xp,
+    description: "Test",
+  });
 }

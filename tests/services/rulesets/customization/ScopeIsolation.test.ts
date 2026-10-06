@@ -7,6 +7,7 @@ import { Feats, Modifiers, Properties, Requirements } from "@/server/repositorie
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
@@ -14,10 +15,7 @@ async function createModifier(sourceId: string) {
   const [modifier] = await Modifiers.create(db, {
     sourceId,
     sourceType: "feats",
-    target: "abilities.strength.misc",
-    value: "2",
-    valueType: "number",
-    operator: "add",
+    ...STRENGTH_BONUS,
   });
   return modifier;
 }
@@ -244,10 +242,7 @@ test("editing the second identical inherited modifier keeps its own requirements
     [1, 2].map(() => ({
       sourceId: feat.id,
       sourceType: "feats",
-      target: "abilities.strength.misc",
-      value: "2",
-      valueType: "number",
-      operator: "add",
+      ...STRENGTH_BONUS,
     })),
   );
   await Requirements.create(db, { entityId: first.id, entityType: "modifiers", level: "1", chainingOperator: "and" });

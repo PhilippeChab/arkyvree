@@ -80,11 +80,6 @@ function modifierFields(mod: ModifierEffect, target: string): string[] {
   ];
 }
 
-/** `s` as a string literal. */
-export function quote(s: string): string {
-  return `"${escapeString(s)}"`;
-}
-
 /** `s` escaped for a template literal: as for a string literal, and its backticks and `${` too. */
 export function escapeTemplate(s: string): string {
   return escapeString(s).replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
@@ -144,6 +139,11 @@ export function importLines(uses: Set<string>, table: ImportTable): string[] {
 /** A `key: [...]` field of `items`, one per line, after `prefix` (its indentation); none when there are no items. */
 export function listField(key: string, items: string[], prefix: string): string[] {
   return items.length === 0 ? [] : [`${prefix}${key}: [`, ...items.map((item) => `${prefix}  ${item},`), `${prefix}],`];
+}
+
+/** `s` as a string literal. */
+export function quote(s: string): string {
+  return `"${escapeString(s)}"`;
 }
 
 /** The import of the requirement builders a file's code uses (`uses`), when it uses some. */

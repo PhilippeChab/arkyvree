@@ -35,10 +35,6 @@ function roll4d6DropLowest(): number {
   return rolls[1] + rolls[2] + rolls[3];
 }
 
-export function rollDie(sides: number): number {
-  return Math.floor(Math.random() * sides) + 1;
-}
-
 export function getRollFunction(method: RollMethodId): (() => number) | null {
   switch (method) {
     case "4d6-drop-lowest":
@@ -52,4 +48,8 @@ export function getRollFunction(method: RollMethodId): (() => number) | null {
 
 export function isDiceMethod(method: RollMethodId): boolean {
   return method === "4d6-drop-lowest" || method === "3d6-straight";
+}
+
+export function rollDie(sides: number): number {
+  return Math.floor(Math.random() * sides) + 1;
 }

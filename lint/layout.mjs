@@ -3,13 +3,13 @@
  * its constants, its helpers, then what the file is for (its exports, its class, a test file's `describe` and `test`
  * blocks, an index's re-exports), then its run. Within its types, and within its constants, the file's own come first,
  * then the ones it exports. A constant is a value: it never uses the file's own functions or classes, and one the file
- * keeps never reads one it exports. A helper is a function the file keeps to itself, or an export another helper calls;
- * a test file's helper never sits in a `describe`. A call, a condition or a loop at the file's top is a step of its
- * run: nothing is declared after one.
- * `oxlint --fix` puts a file in order, each statement above what uses it, and lifts a helper out of a `describe` when it
- * uses nothing the block declares and its name is free (the report says what to change otherwise). It never changes
- * the order code runs in: it moves nothing in a file with a declaration after a step, or whose order would swap two
- * declarations that run code (a call, `new`, `await`); the code moves them.
+ * keeps never reads one it exports. A helper is a function the file keeps to itself (it may call an export below it:
+ * functions are hoisted); a test file's helper never sits in a `describe`. A call, a condition or a loop at the file's
+ * top is a step of its run: nothing is declared after one.
+ * `oxlint --fix` puts a file in order, each value above what reads it as the file loads, and lifts a helper out of a
+ * `describe` when it uses nothing the block declares and its name is free (the report says what to change otherwise).
+ * It never changes the order code runs in: it moves nothing in a file with a declaration after a step, or whose order
+ * would swap two declarations that run code (a call, `new`, `await`); the code moves them.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -180,13 +180,6 @@ function createFileLayout(context) {
   };
 }
 
-/** A top-level statement's declaration: an export's, or itself. */
-export function declarationOf(statement) {
-  return statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
-    ? statement.declaration
-    : statement;
-}
-
 /** The names a top-level statement declares. */
 function declaredNames(statement) {
   const declaration = declarationOf(statement);
@@ -285,10 +278,6 @@ function holdsFunction(node) {
   );
 }
 
-function holdsOrClass(item) {
-  return holdsFunction(declarationOf(item.statement)) || declarationOf(item.statement)?.type === "ClassDeclaration";
-}
-
 /** Whether a statement sits right in a `describe`'s callback: not in a test's, nor any deeper. */
 function isInDescribe(statement) {
   const block = statement.parent;
@@ -323,43 +312,6 @@ function kindOf(statement) {
 
 function rangeOf(node) {
   return node.range ?? [node.start, node.end];
-}
-
-/**
- * Each statement's group, which its dependencies can move: an export a helper calls is a helper, and a statement sits
- * in no earlier group than a value it reads.
- */
-export function rankStatements(statements) {
-  const items = statements.map((statement, index) => {
-    const kind = kindOf(statement);
-    const exported = statement.type === "ExportNamedDeclaration" && (kind === "type" || kind === "constant");
-    const rank = (RANK[kind] ?? RANK.main) + (exported ? EXPORTED : 0);
-    return { statement, index, kind, rank, exported, names: declaredNames(statement) };
-  });
-  const declaredBy = new Map(items.flatMap((item) => item.names.map((name) => [name, item])));
-  for (const item of items) {
-    item.reads = item.kind === "type" ? [] : [...readNames(item.statement)].map((n) => declaredBy.get(n));
-    item.reads = item.reads.filter((dep) => dep && dep !== item && dep.kind !== "type");
-  }
-  const lifted = new Set();
-  for (let changed = true; changed;) {
-    changed = false;
-    for (const item of items) {
-      for (const dep of item.reads) {
-        // A helper's building block is a helper too, once: what it reads may still rank it later
-        if (item.rank === RANK.helper && dep.rank === RANK.main && holdsOrClass(dep) && !lifted.has(dep)) {
-          lifted.add(dep);
-          dep.rank = RANK.helper;
-          changed = true;
-        }
-        if (dep.rank > item.rank) {
-          item.rank = dep.rank;
-          changed = true;
-        }
-      }
-    }
-  }
-  return items;
 }
 
 /** The names a node reads as values: not a member's or a key's name, nor anything in a type. */
@@ -408,31 +360,6 @@ function reorder(text, statements, items) {
   };
 }
 
-/**
- * Whether a declaration runs code where it stands: a constant whose value does, a class whose `extends`, decorators,
- * computed keys or static parts do, an `export default` value.
- */
-export function runsAtLoad(statement) {
-  const declaration = declarationOf(statement);
-  if (declaration?.type === "VariableDeclaration") return runsCode(declaration.declarations);
-  if (declaration?.type === "ClassDeclaration") {
-    return (
-      runsCode(declaration.superClass) ||
-      runsCode(declaration.decorators) ||
-      declaration.body.body.some(
-        (member) =>
-          member.static ||
-          member.type === "StaticBlock" ||
-          runsCode(member.decorators) ||
-          (member.computed && runsCode(member.key)),
-      )
-    );
-  }
-  if (statement.type === "ExportDefaultDeclaration" && !declaration.type.endsWith("Declaration"))
-    return runsCode(declaration);
-  return false;
-}
-
 /** Whether evaluating `node` runs code: a call, `new`, `await`, an assignment (not what a function inside it holds). */
 function runsCode(node) {
   if (!node || typeof node !== "object") return false;
@@ -457,6 +384,70 @@ function topLevelNames(program) {
     else for (const n of declaredNames(statement)) names.add(n);
   }
   return names;
+}
+
+/** A top-level statement's declaration: an export's, or itself. */
+export function declarationOf(statement) {
+  return statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
+    ? statement.declaration
+    : statement;
+}
+
+/**
+ * Each statement's group, which what it reads as the file loads can move: a statement sits in no earlier group than a
+ * value it reads. A function reads once the file has loaded (it's hoisted), so it keeps its group: a helper may call an
+ * export.
+ */
+export function rankStatements(statements) {
+  const items = statements.map((statement, index) => {
+    const kind = kindOf(statement);
+    const exported = statement.type === "ExportNamedDeclaration" && (kind === "type" || kind === "constant");
+    const rank = (RANK[kind] ?? RANK.main) + (exported ? EXPORTED : 0);
+    return { statement, index, kind, rank, exported, names: declaredNames(statement) };
+  });
+  const declaredBy = new Map(items.flatMap((item) => item.names.map((name) => [name, item])));
+  for (const item of items) {
+    item.reads = item.kind === "type" ? [] : [...readNames(item.statement)].map((n) => declaredBy.get(n));
+    item.reads = item.reads.filter((dep) => dep && dep !== item && dep.kind !== "type");
+  }
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const item of items) {
+      if (holdsFunction(declarationOf(item.statement))) continue;
+      for (const dep of item.reads) {
+        if (dep.rank > item.rank) {
+          item.rank = dep.rank;
+          changed = true;
+        }
+      }
+    }
+  }
+  return items;
+}
+
+/**
+ * Whether a declaration runs code where it stands: a constant whose value does, a class whose `extends`, decorators,
+ * computed keys or static parts do, an `export default` value.
+ */
+export function runsAtLoad(statement) {
+  const declaration = declarationOf(statement);
+  if (declaration?.type === "VariableDeclaration") return runsCode(declaration.declarations);
+  if (declaration?.type === "ClassDeclaration") {
+    return (
+      runsCode(declaration.superClass) ||
+      runsCode(declaration.decorators) ||
+      declaration.body.body.some(
+        (member) =>
+          member.static ||
+          member.type === "StaticBlock" ||
+          runsCode(member.decorators) ||
+          (member.computed && runsCode(member.key)),
+      )
+    );
+  }
+  if (statement.type === "ExportDefaultDeclaration" && !declaration.type.endsWith("Declaration"))
+    return runsCode(declaration);
+  return false;
 }
 
 export default {

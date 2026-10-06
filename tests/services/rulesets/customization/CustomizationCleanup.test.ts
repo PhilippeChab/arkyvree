@@ -36,13 +36,13 @@ import {
   Powers,
   Properties,
   Races,
-  Requirements,
   Saves,
   Skills,
   Users,
 } from "@/server/repositories/index.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
+import { customize, STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createSeededTestRuleset, createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -66,8 +66,6 @@ const OWNERS = {
   skills: skillsInRules,
 };
 
-const strengthBonus = { target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" };
-
 /** A new row of the type, in a ruleset of `userId`'s. */
 async function createOwner(type: OwnerType, userId: string, rulesetId: string): Promise<string> {
   const name = "Doomed";
@@ -88,7 +86,7 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
       return (await Languages.create(db, { name, rulesetId, type: "Standard" }))[0].id;
     case "modifiers": {
       const [feat] = await Feats.create(db, { name, rulesetId });
-      return (await Modifiers.create(db, { ...strengthBonus, sourceId: feat.id, sourceType: "feats" }))[0].id;
+      return (await Modifiers.create(db, { ...STRENGTH_BONUS, sourceId: feat.id, sourceType: "feats" }))[0].id;
     }
     case "powers":
       return (await Powers.create(db, { name, rulesetId }))[0].id;
@@ -103,19 +101,6 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
       return (await Skills.create(db, { name, rulesetId, primaryAbilityId: ability.id }))[0].id;
     }
   }
-}
-
-/** Gives the row a modifier with a requirement of its own, a requirement and a property. */
-async function customize(type: OwnerType, id: string) {
-  const [modifier] = await Modifiers.create(db, { ...strengthBonus, sourceId: id, sourceType: type });
-  await Requirements.create(db, {
-    entityId: modifier.id,
-    entityType: "modifiers",
-    level: "1",
-    chainingOperator: "and",
-  });
-  await Requirements.create(db, { entityId: id, entityType: type, level: "1", chainingOperator: "and" });
-  await Properties.create(db, { entityId: id, entityType: type, type: "NOTE", value: "doomed" });
 }
 
 /** The customizations whose owner is gone, or of a type no table above holds. */

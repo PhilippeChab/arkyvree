@@ -11,115 +11,6 @@ import { type EntityType, hashEntity, type KlassRelationships } from "./hashing.
 import { resolveCustomizationId } from "./resolveCustomizationId.ts";
 import { mergeSiblingData } from "./siblingMerge.ts";
 
-/**
- * COW trigger: copies a parent entity to the child fork, including all
- * customizations, relationships, and creates the entity_snapshot record.
- *
- * @returns The newly created child entity (with its new ID)
- */
-export async function cowEntity(
-  tx: Db,
-  entityType: EntityType,
-  entityId: string,
-  childRulesetId: string,
-  ancestorRulesetIds: string[],
-  extensionRulesetIds: string[],
-  customizationIds?: Map<string, string>,
-): Promise<EntityWithId> {
-  const repo = ENTITY_REPOS[entityType];
-  const sourceType = isCustomizableEntityType(entityType) ? entityType : undefined;
-
-  // A second first edit must wait for the copying transaction, then see its
-  // committed snapshot. Keep this separate from the SELECT: under READ
-  // COMMITTED, a SELECT started before the wait retains its old snapshot.
-  await EntitySnapshots.lock(tx, { rulesetId: childRulesetId, sourceEntityId: entityId });
-
-  // 0. Idempotency: if a COW copy already exists, return it.
-  // If the snapshot is a tombstone (the COW row was hard-deleted by a
-  // user-initiated delete on an overridden entity), drop the snapshot so
-  // we can re-COW below with a fresh forkedEntityId.
-  const existingSnapshot = await EntitySnapshots.findOne(tx, {
-    sourceEntityId: entityId,
-    rulesetId: childRulesetId,
-  });
-  if (existingSnapshot) {
-    const exists = await repo.lock(tx, { id: existingSnapshot.forkedEntityId });
-    const existing = exists ? await repo.findOne(tx, { id: existingSnapshot.forkedEntityId }) : undefined;
-    if (existing) return existing;
-    await EntitySnapshots.delete(tx, {
-      sourceEntityId: entityId,
-      rulesetId: childRulesetId,
-    });
-  }
-
-  // 1. Fetch the parent entity
-  if (!(await repo.lock(tx, { id: entityId }, "share"))) {
-    throw new NotFoundError("Customization source no longer exists; refresh the entity");
-  }
-  const parentEntity = await repo.findOne(tx, { id: entityId });
-  if (!parentEntity) {
-    throw new Error(`Parent entity not found: ${entityType}/${entityId}`);
-  }
-
-  // 2. Copy entity to child ruleset
-  const { id: _id, createdAt: _ca, updatedAt: _ua, deletedAt: _da, rulesetId: _rid, ...entityData } = parentEntity;
-  const newRows = await repo.create(tx, { ...entityData, rulesetId: childRulesetId });
-  const newEntity = newRows[0];
-
-  // 3. Copy customizations
-  const customizations = await fetchEntityCustomizations(tx, [entityId], entityType, sourceType);
-  const cust = customizations.get(entityId) ?? {
-    modifiers: [],
-    properties: [],
-    requirements: [],
-    modifierRequirements: [],
-  };
-  await copyEntityCustomizations(tx, entityId, newEntity.id, entityType, cust, customizationIds);
-
-  // 4. Copy relationships (aptitudes, klass levels, etc.)
-  // Resolved through the copy's CowData (true overrides + sibling-loser
-  // aliases) — a child copy's references should always point at the
-  // canonical winner, never at a stale loser.
-  const cow = await CowDataBuilder.buildForCopy(tx, childRulesetId, ancestorRulesetIds, extensionRulesetIds);
-  await copyEntityRelationships(tx, entityType, entityId, newEntity.id, cow, customizationIds);
-
-  // 4b. Merge sibling data when multiple extensions COW the same base entity
-  const siblingIds = cow.getSiblings(entityId);
-  if (siblingIds.length > 0) {
-    await mergeSiblingData(tx, newEntity.id, entityType, sourceType, siblingIds, customizationIds);
-  }
-
-  // 5. Compute content hash and create snapshot
-  let klassRelationships: KlassRelationships | undefined;
-  let entityCustomizations = cust;
-  if (entityType === "klasses") {
-    const relMap = await fetchKlassRelationships(tx, [entityId]);
-    klassRelationships = relMap.get(entityId);
-    const levelCustMap = await fetchKlassLevelCustomizations(tx, [entityId]);
-    const levelCust = levelCustMap.get(entityId);
-    if (levelCust) {
-      entityCustomizations = {
-        modifiers: [...cust.modifiers, ...levelCust.modifiers],
-        properties: [...cust.properties, ...levelCust.properties],
-        requirements: [...cust.requirements, ...levelCust.requirements],
-        modifierRequirements: [...cust.modifierRequirements, ...levelCust.modifierRequirements],
-      };
-    }
-  }
-
-  const contentHash = hashEntity(entityType, parentEntity, entityCustomizations, klassRelationships);
-
-  await EntitySnapshots.create(tx, {
-    rulesetId: childRulesetId,
-    entityType,
-    sourceEntityId: entityId,
-    forkedEntityId: newEntity.id,
-    contentHash,
-  });
-
-  return newEntity;
-}
-
 /** Resolve a modifier as the owner of requirements: COW its owning entity and map the modifier to its copy. */
 async function cowModifierForCustomization(
   tx: Db,
@@ -234,13 +125,6 @@ async function cowOwnerForCustomization(
   return cowResult.id;
 }
 
-/** Serialize child writes with deletion/revert of their stored owner. */
-export async function lockEntityForMutation(tx: Db, entityType: EntityType, entityId: string): Promise<void> {
-  if (!(await ENTITY_REPOS[entityType].lock(tx, { id: entityId }))) {
-    throw new NotFoundError("Customization source no longer exists; refresh the entity");
-  }
-}
-
 /**
  * The customization `customizationId` of `entityId` once that entity resolved to `resolvedEntityId`: its copy when the
  * entity was copied, or itself, which must still exist.
@@ -313,6 +197,115 @@ export async function cowCustomizationForMutation(
 }
 
 /**
+ * COW trigger: copies a parent entity to the child fork, including all
+ * customizations, relationships, and creates the entity_snapshot record.
+ *
+ * @returns The newly created child entity (with its new ID)
+ */
+export async function cowEntity(
+  tx: Db,
+  entityType: EntityType,
+  entityId: string,
+  childRulesetId: string,
+  ancestorRulesetIds: string[],
+  extensionRulesetIds: string[],
+  customizationIds?: Map<string, string>,
+): Promise<EntityWithId> {
+  const repo = ENTITY_REPOS[entityType];
+  const sourceType = isCustomizableEntityType(entityType) ? entityType : undefined;
+
+  // A second first edit must wait for the copying transaction, then see its
+  // committed snapshot. Keep this separate from the SELECT: under READ
+  // COMMITTED, a SELECT started before the wait retains its old snapshot.
+  await EntitySnapshots.lock(tx, { rulesetId: childRulesetId, sourceEntityId: entityId });
+
+  // 0. Idempotency: if a COW copy already exists, return it.
+  // If the snapshot is a tombstone (the COW row was hard-deleted by a
+  // user-initiated delete on an overridden entity), drop the snapshot so
+  // we can re-COW below with a fresh forkedEntityId.
+  const existingSnapshot = await EntitySnapshots.findOne(tx, {
+    sourceEntityId: entityId,
+    rulesetId: childRulesetId,
+  });
+  if (existingSnapshot) {
+    const exists = await repo.lock(tx, { id: existingSnapshot.forkedEntityId });
+    const existing = exists ? await repo.findOne(tx, { id: existingSnapshot.forkedEntityId }) : undefined;
+    if (existing) return existing;
+    await EntitySnapshots.delete(tx, {
+      sourceEntityId: entityId,
+      rulesetId: childRulesetId,
+    });
+  }
+
+  // 1. Fetch the parent entity
+  if (!(await repo.lock(tx, { id: entityId }, "share"))) {
+    throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
+  const parentEntity = await repo.findOne(tx, { id: entityId });
+  if (!parentEntity) {
+    throw new Error(`Parent entity not found: ${entityType}/${entityId}`);
+  }
+
+  // 2. Copy entity to child ruleset
+  const { id: _id, createdAt: _ca, updatedAt: _ua, deletedAt: _da, rulesetId: _rid, ...entityData } = parentEntity;
+  const newRows = await repo.create(tx, { ...entityData, rulesetId: childRulesetId });
+  const newEntity = newRows[0];
+
+  // 3. Copy customizations
+  const customizations = await fetchEntityCustomizations(tx, [entityId], entityType, sourceType);
+  const cust = customizations.get(entityId) ?? {
+    modifiers: [],
+    properties: [],
+    requirements: [],
+    modifierRequirements: [],
+  };
+  await copyEntityCustomizations(tx, entityId, newEntity.id, entityType, cust, customizationIds);
+
+  // 4. Copy relationships (aptitudes, klass levels, etc.)
+  // Resolved through the copy's CowData (true overrides + sibling-loser
+  // aliases) — a child copy's references should always point at the
+  // canonical winner, never at a stale loser.
+  const cow = await CowDataBuilder.buildForCopy(tx, childRulesetId, ancestorRulesetIds, extensionRulesetIds);
+  await copyEntityRelationships(tx, entityType, entityId, newEntity.id, cow, customizationIds);
+
+  // 4b. Merge sibling data when multiple extensions COW the same base entity
+  const siblingIds = cow.getSiblings(entityId);
+  if (siblingIds.length > 0) {
+    await mergeSiblingData(tx, newEntity.id, entityType, sourceType, siblingIds, customizationIds);
+  }
+
+  // 5. Compute content hash and create snapshot
+  let klassRelationships: KlassRelationships | undefined;
+  let entityCustomizations = cust;
+  if (entityType === "klasses") {
+    const relMap = await fetchKlassRelationships(tx, [entityId]);
+    klassRelationships = relMap.get(entityId);
+    const levelCustMap = await fetchKlassLevelCustomizations(tx, [entityId]);
+    const levelCust = levelCustMap.get(entityId);
+    if (levelCust) {
+      entityCustomizations = {
+        modifiers: [...cust.modifiers, ...levelCust.modifiers],
+        properties: [...cust.properties, ...levelCust.properties],
+        requirements: [...cust.requirements, ...levelCust.requirements],
+        modifierRequirements: [...cust.modifierRequirements, ...levelCust.modifierRequirements],
+      };
+    }
+  }
+
+  const contentHash = hashEntity(entityType, parentEntity, entityCustomizations, klassRelationships);
+
+  await EntitySnapshots.create(tx, {
+    rulesetId: childRulesetId,
+    entityType,
+    sourceEntityId: entityId,
+    forkedEntityId: newEntity.id,
+    contentHash,
+  });
+
+  return newEntity;
+}
+
+/**
  * COW helper for customization mutations. Given an entityType and entityId,
  * checks if the entity belongs to the parent ruleset and COWs it if needed.
  * Returns the resolved entityId (original if owned, COW'd copy if inherited).
@@ -361,4 +354,11 @@ export async function cowEntityToEdit(
   if (entity.rulesetId === ruleset.id) return { id: entity.id, copied: false };
   const copy = await cowEntity(tx, entityType, entity.id, ruleset.id, sourceChain, ruleset.extensionRulesetIds);
   return { id: copy.id, copied: true };
+}
+
+/** Serialize child writes with deletion/revert of their stored owner. */
+export async function lockEntityForMutation(tx: Db, entityType: EntityType, entityId: string): Promise<void> {
+  if (!(await ENTITY_REPOS[entityType].lock(tx, { id: entityId }))) {
+    throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
 }

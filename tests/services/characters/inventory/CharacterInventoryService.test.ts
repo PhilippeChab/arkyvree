@@ -6,13 +6,14 @@ import type { itemsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { CharacterInventory, Items, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
+import { CharacterInventory, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { WEAPON_PROFICIENCY, WEAPON_SIZE } from "@/shared/dnd3.5/properties/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/characters.ts";
+import { createTestItem } from "@/tests/support/items.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -25,6 +26,9 @@ type Placement = {
   charges?: [number | null, number | null];
   force?: boolean;
 };
+
+/** What the test's items weigh and cost, unless a test says otherwise. */
+const ITEM_VALUES = { weight: "5", costGp: "10" };
 
 function add(
   session: Session,
@@ -61,29 +65,6 @@ function equipped(location: ItemLocation, weaponSet: number | null = null): Plac
   };
 }
 
-/** A new item of the ruleset, with these properties. */
-async function createItem(
-  rulesetId: string,
-  values: Partial<InferInsertModel<typeof itemsInRules>> = {},
-  properties: Record<string, string> = {},
-) {
-  const [item] = await Items.create(db, {
-    rulesetId,
-    name: `Test Item ${uniqueId()}`,
-    weight: "5",
-    costGp: "10",
-    ...values,
-  });
-  const entries = Object.entries(properties);
-  if (entries.length > 0)
-    await Properties.createMany(
-      db,
-      entries.map(([type, value]) => ({ entityId: item.id, entityType: "items", type, value })),
-    );
-  RulesetCache.invalidate(rulesetId);
-  return item;
-}
-
 /** The character's entry of the item, by the item: a test carries each item once. An id it doesn't carry is its own. */
 async function entryOf(characterId: string, itemId: string) {
   const entries = await CharacterInventory.findMany(db, { characterId });
@@ -108,7 +89,7 @@ async function setup(race?: { size: SizeType }) {
     raceId ? { rulesetId: ruleset.id, raceId } : { rulesetId: ruleset.id },
   );
   const newItem = (values?: Partial<InferInsertModel<typeof itemsInRules>>, properties?: Record<string, string>) =>
-    createItem(ruleset.id, values, properties);
+    createTestItem({ rulesetId: ruleset.id, ...ITEM_VALUES, ...values }, properties);
   return { session, character, newItem, item: await newItem() };
 }
 
@@ -282,7 +263,7 @@ describe("InventoryService", () => {
         size: "Medium",
         baseSpeed: 30,
       });
-      const inherited = await createItem(grandparent.id);
+      const inherited = await createTestItem({ rulesetId: grandparent.id, ...ITEM_VALUES });
       // Forks of forks can't be made through the API, but the lineage check walks every ancestor.
       const parent = await createTestRuleset(author.id, {
         rulesetId: grandparent.id,

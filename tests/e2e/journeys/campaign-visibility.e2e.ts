@@ -3,7 +3,7 @@ import { parseResponse } from "hono/client";
 
 import { expect, test } from "@/tests/e2e/fixtures.ts";
 import { apiOf } from "@/tests/e2e/support/api.ts";
-import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
+import { createCampaign, postPlayerInvite } from "@/tests/e2e/support/campaigns.ts";
 import { createCharacter } from "@/tests/e2e/support/characters.ts";
 import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
@@ -32,15 +32,10 @@ async function setUpCampaign(
 ): Promise<Campaign> {
   const id = await createCampaign(gm, `Visibility Campaign ${Date.now()}`);
   const join = async (user: { email: string; password: string }) => {
-    const { invite } = await parseResponse(
-      apiOf(gm).api.campaigns[":id"].players.$post({
-        param: { id },
-        json: { role: "Player Character", email: user.email },
-      }),
-    );
+    const invite = await postPlayerInvite(gm, id, user.email);
     const page = await signedInPage(browser, user);
     await parseResponse(
-      apiOf(page).api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: invite!.id } }),
+      apiOf(page).api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: invite.id } }),
     );
     return page;
   };

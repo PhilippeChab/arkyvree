@@ -90,17 +90,6 @@ function domainSeeds(ref: DomainReference): DomainDefinition[] {
   return seeds;
 }
 
-/** The spells a book's domains can name, by their lowercase name: the core rules' and the book's. */
-export function domainSpellNames(book: string): Map<string, string> {
-  const spellNames = (b: string) => {
-    const path = join(REFERENCE_DIR, b, "spells.json");
-    return existsSync(path) ? loadReference(path, "spell").raw.map((spell) => spell.name) : [];
-  };
-  return new Map(
-    [...spellNames("srd"), ...(book === "srd" ? [] : spellNames(book))].map((name) => [name.toLowerCase(), name]),
-  );
-}
-
 function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | string[]): string[] {
   if (Array.isArray(items)) return items;
   switch (items) {
@@ -153,4 +142,15 @@ export function domainSpellIssues(ref: DomainReference): { domain: string; text:
     }
   }
   return issues;
+}
+
+/** The spells a book's domains can name, by their lowercase name: the core rules' and the book's. */
+export function domainSpellNames(book: string): Map<string, string> {
+  const spellNames = (b: string) => {
+    const path = join(REFERENCE_DIR, b, "spells.json");
+    return existsSync(path) ? loadReference(path, "spell").raw.map((spell) => spell.name) : [];
+  };
+  return new Map(
+    [...spellNames("srd"), ...(book === "srd" ? [] : spellNames(book))].map((name) => [name.toLowerCase(), name]),
+  );
 }

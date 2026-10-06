@@ -6,12 +6,11 @@
  *   in each, by name. The constructor, statics and fields stay at the top, in their own order (a field's initializer
  *   may read an earlier one).
  * - A file's types, constants and functions, in each run of them: by name, within the sections `file-layout` gives
- *   them (its own types, then the ones it exports; the same for its constants; its helpers, then its exports, an export
- *   a helper calls being a helper), its functions sync before async. What a constant reads goes right above it: the
- *   file reads it as it loads. A function is hoisted: it goes by name, whatever it calls. `--fix` never swaps two
- *   constants whose values run code (a call, `new`, `await`): it suggests it, which `--fix-suggestions` applies once
- *   nothing depends on the order they run in. A comment set apart by a blank line
- *   ends a run: `--fix` would lose its place, and `comment-style` reports it.
+ *   them (its own types, then the ones it exports; the same for its constants; its helpers, then its exports), its
+ *   functions sync before async. What a constant reads goes right above it: the file reads it as it loads. A function
+ *   is hoisted: it goes by name, whatever it calls. `--fix` never swaps two constants whose values run code (a call,
+ *   `new`, `await`): it suggests it, which `--fix-suggestions` applies once nothing depends on the order they run in. A
+ *   comment set apart by a blank line ends a run: `--fix` would lose its place, and `comment-style` reports it.
  * - A router's routes group by HTTP method (GET, POST, PUT, PATCH, DELETE), then sort by path: a fixed segment
  *   before a parameter, which Hono needs anyway (it matches overlapping routes in the order they're registered).
  *   Its sub-routers (`.route()`) come first, in their own order, then its routes, which must not overlap theirs:
@@ -237,23 +236,6 @@ function compareRanks(a, b) {
   return 0;
 }
 
-/** Two routes' order: by method, then by path, a fixed segment before a parameter, a parameter before a wildcard. */
-export function compareRoutes(a, b) {
-  const byMethod = ROUTE_METHODS.indexOf(a.method) - ROUTE_METHODS.indexOf(b.method);
-  if (byMethod) return byMethod;
-  const sa = segments(a.path);
-  const sb = segments(b.path);
-  for (let i = 0; i < Math.max(sa.length, sb.length); i++) {
-    if (!sa[i]) return -1;
-    if (!sb[i]) return 1;
-    const [kindA, textA] = sa[i];
-    const [kindB, textB] = sb[i];
-    if (kindA !== kindB) return kindA - kindB;
-    if (kindA === 0 && textA !== textB) return textA < textB ? -1 : 1;
-  }
-  return 0;
-}
-
 /** A run's order: its sub-routers first, as they come, then its routes, sorted. */
 function compareRunMembers(a, b) {
   if (a.mount !== b.mount) return a.mount ? -1 : 1;
@@ -381,6 +363,23 @@ function trailingComment(text, pos) {
   const lineEnd = text.indexOf("\n", pos);
   const rest = text.slice(pos, lineEnd === -1 ? text.length : lineEnd);
   return /^\s*(\/\/.*|\/\*.*\*\/\s*)$/.test(rest) ? rest.trimEnd().length : 0;
+}
+
+/** Two routes' order: by method, then by path, a fixed segment before a parameter, a parameter before a wildcard. */
+export function compareRoutes(a, b) {
+  const byMethod = ROUTE_METHODS.indexOf(a.method) - ROUTE_METHODS.indexOf(b.method);
+  if (byMethod) return byMethod;
+  const sa = segments(a.path);
+  const sb = segments(b.path);
+  for (let i = 0; i < Math.max(sa.length, sb.length); i++) {
+    if (!sa[i]) return -1;
+    if (!sb[i]) return 1;
+    const [kindA, textA] = sa[i];
+    const [kindB, textB] = sb[i];
+    if (kindA !== kindB) return kindA - kindB;
+    if (kindA === 0 && textA !== textB) return textA < textB ? -1 : 1;
+  }
+  return 0;
 }
 
 export default {
