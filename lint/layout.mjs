@@ -1,12 +1,12 @@
 /**
  * `file-layout`: a file reads in one order, so its parts are always where you look for them: its imports, its types,
  * its constants, its helpers, then what the file is for (its exports, its class, a test file's `describe` and `test`
- * blocks), its export lists and its default export's value last (an index's re-exports, `export default new Hono()`),
- * then its run. Within its types, and within its constants, the file's own come first,
- * then the ones it exports. A constant is a value: it never uses the file's own functions or classes, and one the file
- * keeps never reads one it exports. A helper is a function the file keeps to itself (it may call an export below it:
- * functions are hoisted); a test file's helper never sits in a `describe`. A call, a condition or a loop at the file's
- * top is a step of its run: nothing is declared after one.
+ * blocks; an `export default function` or `class` among them), then its export lists and its default export's value (an
+ * index's re-exports, `export default new Hono()`), then its run. Within its types, and within its constants, the
+ * file's own come first, then the ones it exports. A constant is a value: it never uses the file's own functions or
+ * classes, and one the file keeps never reads one it exports. A helper is a function the file keeps to itself (it may
+ * call an export below it: functions are hoisted); a test file's helper never sits in a `describe`. A call, a condition
+ * or a loop at the file's top is a step of its run: nothing is declared after one.
  * `oxlint --fix` puts a file in order, each value above what reads it as the file loads, and lifts a helper out of a
  * `describe` when it uses nothing the block declares and its name is free (the report says what to change otherwise).
  * It never changes the order code runs in: it moves nothing in a file with a declaration after a step, or whose order
@@ -31,8 +31,8 @@ const LOOPS = new Set(["ForStatement", "ForOfStatement", "ForInStatement", "Whil
 
 const MESSAGE =
   "A file reads in order: its imports, its types, its constants (each the file's own, then its exports), its " +
-  "helpers, then what it's for (its exports, its class, its tests), its export lists and default export last. " +
-  "`oxlint --fix` orders it.";
+  "helpers, then what it's for (its exports, its class, its tests), then its export lists and its default export's " +
+  "value. `oxlint --fix` orders it.";
 
 const MODULE_RUN =
   "A module (a file that exports) has no step at its top: a script imports it, and runs it in a function it calls " +
@@ -239,6 +239,17 @@ function endOf(text, statement) {
 }
 
 /**
+ * Whether a statement exports a value by default (`export default new Hono()`), not a declaration: a function (its
+ * overload signatures too, `TSDeclareFunction`s) or a class.
+ */
+function exportsDefaultValue(statement) {
+  return (
+    statement.type === "ExportDefaultDeclaration" &&
+    !/Declaration$|^TSDeclareFunction$/.test(statement.declaration.type)
+  );
+}
+
+/**
  * What the order can't settle, so the code changes instead: a script's step that isn't in its run's function, a
  * constant one of the file's own functions builds, a constant the file keeps built from one it exports.
  */
@@ -300,8 +311,7 @@ function kindOf(statement) {
   // Its export lists and its default export's value close what it's for: what the file is, once it's all declared
   if (statement.type === "ExportAllDeclaration") return "export";
   if (statement.type === "ExportNamedDeclaration" && !statement.declaration) return "export";
-  if (statement.type === "ExportDefaultDeclaration" && !statement.declaration.type.endsWith("Declaration"))
-    return "export";
+  if (exportsDefaultValue(statement)) return "export";
   if (statement.type === "TSModuleDeclaration") return "type";
   const declaration = declarationOf(statement);
   if (declaration?.type === "TSTypeAliasDeclaration" || declaration?.type === "TSInterfaceDeclaration") return "type";
@@ -450,8 +460,7 @@ export function runsAtLoad(statement) {
       )
     );
   }
-  if (statement.type === "ExportDefaultDeclaration" && !declaration.type.endsWith("Declaration"))
-    return runsCode(declaration);
+  if (exportsDefaultValue(statement)) return runsCode(declaration);
   return false;
 }
 

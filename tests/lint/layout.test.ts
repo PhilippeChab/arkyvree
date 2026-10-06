@@ -75,6 +75,23 @@ describe("file layout", () => {
     ]);
   });
 
+  test("--fix leaves an overloaded default export's signatures with its body", async () => {
+    const source = lines(
+      "export default function f(a: string): string;",
+      "export default function f(a: number): number;",
+      "export default function f(a: unknown) {",
+      "  return a;",
+      "}",
+      "",
+      "export function g() {",
+      "  return 1;",
+      "}",
+    );
+    expect(await fixRepo({ "server/a.ts": source }, ["file-layout", "member-order"], 2)).toEqual({
+      "server/a.ts": source,
+    });
+  });
+
   test("--fix puts a file's own types and constants before its exported ones, a constant below one it reads", async () => {
     const out = await fixRepo(
       {
