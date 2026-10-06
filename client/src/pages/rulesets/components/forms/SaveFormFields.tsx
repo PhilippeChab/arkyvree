@@ -18,8 +18,8 @@ export type SaveFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["sa
 export function SaveFormFields({ form, abilities }: SaveFormFieldsProps) {
   return (
     <>
-      <NameField {...form.register("name", nameRules)} error={form.formState.errors.name} />
-      <DescriptionField {...form.register("description")} />
+      <NameField control={form.control} name="name" rules={nameRules} />
+      <DescriptionField control={form.control} name="description" />
       <SelectField
         control={form.control}
         name="abilityId"

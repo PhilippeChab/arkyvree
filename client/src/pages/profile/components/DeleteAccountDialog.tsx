@@ -1,10 +1,10 @@
-import { Button, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
+import { Button, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
-import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
+import { AnimatedAlert, DiceSpinner, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -28,7 +28,7 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
   const form = useForm<DeleteAccountFormData>({
     defaultValues: { password: "", confirmText: "" },
   });
-  const { register, handleSubmit, watch, reset } = form;
+  const { control, handleSubmit, watch, reset } = form;
   const password = watch("password");
   const confirmText = watch("confirmText");
 
@@ -81,8 +81,9 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
           </AnimatedAlert>
 
           {hasPassword ? (
-            <TextField
-              {...register("password")}
+            <FormTextField
+              control={control}
+              name="password"
               type="password"
               label="Confirm your password"
               variant="outlined"
@@ -91,8 +92,9 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
               autoComplete="current-password"
             />
           ) : (
-            <TextField
-              {...register("confirmText")}
+            <FormTextField
+              control={control}
+              name="confirmText"
               label='Type "DELETE" to confirm'
               variant="outlined"
               fullWidth

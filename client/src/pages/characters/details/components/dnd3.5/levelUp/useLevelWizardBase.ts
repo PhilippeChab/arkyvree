@@ -93,7 +93,7 @@ export function useAdjustedFeatPools(
 export function useLevelWizardBase(characterId: string) {
   const queryClient = useQueryClient();
 
-  const { handleSubmit, getValues, setValue, reset, watch } = useForm<LevelUpFormData>({
+  const { control, handleSubmit, getValues, setValue, reset, watch } = useForm<LevelUpFormData>({
     defaultValues: EMPTY_PICKS,
     mode: "onChange",
   });
@@ -166,6 +166,7 @@ export function useLevelWizardBase(characterId: string) {
   }, [queryClient, characterId]);
 
   return {
+    control,
     handleSubmit,
     getValues,
     setValue,

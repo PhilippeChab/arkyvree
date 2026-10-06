@@ -1,5 +1,5 @@
 import type { InferRequestType } from "hono/client";
-import type { UseFormReturn } from "react-hook-form";
+import { Controller, type UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, NameField } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
@@ -25,23 +25,26 @@ export function FeatFormFields({ form, rulesetId, knownAptitudes = [], generated
   return (
     <>
       <NameField
-        {...form.register("name", nameRules)}
-        error={form.formState.errors.name}
+        control={form.control}
+        name="name"
+        rules={nameRules}
         disabled={generated}
         helperText={generated ? "A generated feat keeps its name" : undefined}
       />
-      <DescriptionField {...form.register("description")} />
-      <AptitudesAutocomplete
-        rulesetId={rulesetId}
-        value={aptitudes.resolve(form.watch("aptitudeIds") ?? [])}
-        onChange={(selected) => {
-          aptitudes.remember(selected);
-          form.setValue(
-            "aptitudeIds",
-            [...selected].sort(byName).map((a) => a.id),
-            { shouldDirty: true },
-          );
-        }}
+      <DescriptionField control={form.control} name="description" />
+      <Controller
+        control={form.control}
+        name="aptitudeIds"
+        render={({ field }) => (
+          <AptitudesAutocomplete
+            rulesetId={rulesetId}
+            value={aptitudes.resolve(field.value ?? [])}
+            onChange={(selected) => {
+              aptitudes.remember(selected);
+              field.onChange([...selected].sort(byName).map((a) => a.id));
+            }}
+          />
+        )}
       />
     </>
   );

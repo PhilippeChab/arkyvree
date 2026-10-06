@@ -1,7 +1,7 @@
-import { TextField } from "@mui/material";
-import type { UseFormReturn } from "react-hook-form";
+import {} from "@mui/material";
+import { useController, type UseFormReturn } from "react-hook-form";
 
-import { CreateDialog, DeleteDialog } from "@/client/src/components/common/index.ts";
+import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { allLevelSaves, ClassLevelFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
@@ -24,6 +24,8 @@ interface ConfirmActionProps {
 
 export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, rulesetId }: CreateLevelDialogProps) {
   const { data: rulesetSaves } = useRulesetSaves(rulesetId, open);
+  const { field: saves } = useController({ control: form.control, name: "saves" });
+  const { field: feats } = useController({ control: form.control, name: "feats" });
 
   // The endpoint takes every ruleset save, 0 when unset.
   const handleSubmit = (data: CreateLevelFormData) =>
@@ -38,54 +40,48 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
       onSubmit={handleSubmit}
       isLoading={isLoading}
     >
-      <TextField
-        {...form.register("level", {
-          required: "Level is required",
-          valueAsNumber: true,
-        })}
+      <FormTextField
+        control={form.control}
+        name="level"
+        rules={{ required: "Level is required" }}
+        number
         label="Level"
         type="number"
         fullWidth
-        error={!!form.formState.errors.level}
-        helperText={form.formState.errors.level?.message}
         slotProps={{
           htmlInput: { min: 1, max: 20 },
         }}
       />
-      <TextField
-        {...form.register("bab", {
-          required: "Base Attack Bonus is required",
-          valueAsNumber: true,
-        })}
+      <FormTextField
+        control={form.control}
+        name="bab"
+        rules={{ required: "Base Attack Bonus is required" }}
+        number
         label="Base Attack Bonus"
         type="number"
         fullWidth
-        error={!!form.formState.errors.bab}
-        helperText={form.formState.errors.bab?.message}
         slotProps={{
           htmlInput: { min: 0 },
         }}
       />
-      <TextField
-        {...form.register("skills", {
-          required: "Skill points are required",
-          valueAsNumber: true,
-        })}
+      <FormTextField
+        control={form.control}
+        name="skills"
+        rules={{ required: "Skill points are required" }}
+        number
         label="Skill Points"
         type="number"
         fullWidth
-        error={!!form.formState.errors.skills}
-        helperText={form.formState.errors.skills?.message}
         slotProps={{
           htmlInput: { min: 1 },
         }}
       />
       <ClassLevelFields
         rulesetId={rulesetId}
-        saves={form.watch("saves") ?? []}
-        onSavesChange={(saves) => form.setValue("saves", saves, { shouldDirty: true })}
-        feats={form.watch("feats") ?? []}
-        onFeatsChange={(feats) => form.setValue("feats", feats, { shouldDirty: true })}
+        saves={saves.value ?? []}
+        onSavesChange={saves.onChange}
+        feats={feats.value ?? []}
+        onFeatsChange={feats.onChange}
       />
     </CreateDialog>
   );

@@ -14,8 +14,8 @@ export type MechanicFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]
 export function MechanicFormFields({ form }: MechanicFormFieldsProps) {
   return (
     <>
-      <NameField {...form.register("name", nameRules)} error={form.formState.errors.name} />
-      <DescriptionField {...form.register("description")} rows={10} />
+      <NameField control={form.control} name="name" rules={nameRules} />
+      <DescriptionField control={form.control} name="description" rows={10} />
     </>
   );
 }

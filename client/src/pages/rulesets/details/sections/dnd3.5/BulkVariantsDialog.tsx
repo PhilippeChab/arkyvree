@@ -7,13 +7,12 @@ import {
   DialogTitle,
   IconButton,
   Stack,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
-import { DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 
 import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
@@ -75,18 +74,19 @@ export function BulkVariantsDialog({
               {fields.map((field, index) => (
                 <Box key={field.id} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
                   <Stack spacing={1} sx={{ flex: 1 }}>
-                    <TextField
-                      {...form.register(`variants.${index}.name`, {
+                    <FormTextField
+                      control={form.control}
+                      name={`variants.${index}.name`}
+                      rules={{
                         required: "Name is required",
-                      })}
+                      }}
                       label="Name"
                       size="small"
                       fullWidth
-                      error={!!form.formState.errors.variants?.[index]?.name}
-                      helperText={form.formState.errors.variants?.[index]?.name?.message}
                     />
-                    <TextField
-                      {...form.register(`variants.${index}.description`)}
+                    <FormTextField
+                      control={form.control}
+                      name={`variants.${index}.description`}
                       label="Description"
                       size="small"
                       fullWidth

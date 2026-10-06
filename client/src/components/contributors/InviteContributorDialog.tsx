@@ -38,12 +38,7 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
       <form onSubmit={form.handleSubmit((data) => onSubmit(data, () => form.reset()))} noValidate>
         <DialogTitle>Invite Contributor</DialogTitle>
         <DialogContent>
-          <EmailField
-            {...form.register("email", emailRules)}
-            error={form.formState.errors.email}
-            label="Email address"
-            autoFocus
-          />
+          <EmailField control={form.control} name="email" rules={emailRules} label="Email address" autoFocus />
           {roles && <SelectField control={form.control} name="role" label="Role" options={roles} margin="normal" />}
         </DialogContent>
         <DialogActions>

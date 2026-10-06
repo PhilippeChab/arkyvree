@@ -1,9 +1,9 @@
 import { Autocomplete, Box, Button, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useMemo, useState } from "react";
+import { useController, useForm } from "react-hook-form";
 
-import { AttachmentField, DiceSpinner, SelectField } from "@/client/src/components/common/index.ts";
+import { AttachmentField, DiceSpinner, FormTextField, SelectField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { type RulesetLanguage, useRulesetLanguages } from "@/client/src/hooks/index.ts";
 import { useDirtyForm, useFormSync } from "@/client/src/hooks/index.ts";
@@ -43,6 +43,9 @@ interface CharacterIdentitySectionProps {
   portraitUrl?: string | null;
   character: CharacterData;
 }
+
+/** No saved languages: one list, so the selection's memo keeps its value. */
+const NO_LANGUAGES: LanguageOption[] = [];
 
 function toIdentityForm({ identity }: CharacterIdentitySectionProps["character"]): CharacterIdentityFormData {
   return {
@@ -132,17 +135,12 @@ export function CharacterIdentitySection({
   // saves, Escape cancels. Save is a direct PUT; response invalidates
   // the character detail query so the new name flows everywhere.
   const [nameEditing, setNameEditing] = useState(false);
-  const [nameDraft, setNameDraft] = useState(characterName);
+  const [nameDraft, setNameDraft] = useState("");
   const [nameSaving, setNameSaving] = useState(false);
-
-  useEffect(() => {
-    if (!nameEditing) setNameDraft(characterName);
-  }, [characterName, nameEditing]);
 
   const saveName = async () => {
     const trimmed = nameDraft.trim();
     if (!trimmed || trimmed === characterName) {
-      setNameDraft(characterName);
       setNameEditing(false);
       return;
     }
@@ -161,7 +159,6 @@ export function CharacterIdentitySection({
       setNameEditing(false);
     } catch (err) {
       snackbar.error(err, "Failed to rename character");
-      setNameDraft(characterName);
       setNameEditing(false);
     } finally {
       setNameSaving(false);
@@ -172,17 +169,15 @@ export function CharacterIdentitySection({
   // when the user clicks Save, matching the rest of the identity section.
   const { data: availableLanguages } = useRulesetLanguages(rulesetId, !readOnly);
 
-  const watchedLanguageIds = form.watch("languageIds");
-  const currentLanguages = useMemo(
-    () => character?.identity?.physiology?.languages ?? [],
-    [character?.identity?.physiology?.languages],
-  );
+  const { field: languageIds } = useController({ control: form.control, name: "languageIds" });
+  const selectedLanguageIds = languageIds.value;
+  const currentLanguages = character?.identity?.physiology?.languages ?? NO_LANGUAGES;
   const selectedLanguages = useMemo(() => {
     const byId = new Map<string, LanguageOption>();
     for (const lang of currentLanguages) byId.set(lang.id, lang);
     for (const lang of availableLanguages ?? []) byId.set(lang.id, lang);
-    return watchedLanguageIds.map((id) => byId.get(id)).filter((l): l is LanguageOption => !!l);
-  }, [watchedLanguageIds, availableLanguages, currentLanguages]);
+    return selectedLanguageIds.map((id) => byId.get(id)).filter((l): l is LanguageOption => !!l);
+  }, [selectedLanguageIds, availableLanguages, currentLanguages]);
 
   // Style object to remove grayed-out appearance from disabled TextFields
   const disabledFieldStyle = readOnly
@@ -223,7 +218,6 @@ export function CharacterIdentitySection({
                   e.preventDefault();
                   if (e.target instanceof HTMLElement) e.target.blur();
                 } else if (e.key === "Escape") {
-                  setNameDraft(characterName);
                   setNameEditing(false);
                 }
               }}
@@ -242,7 +236,15 @@ export function CharacterIdentitySection({
           ) : (
             <Typography
               component="h5"
-              onClick={canEditName ? () => setNameEditing(true) : undefined}
+              onClick={
+                canEditName
+                  ? () => {
+                      // The draft starts from the name, each time an edit does
+                      setNameDraft(characterName);
+                      setNameEditing(true);
+                    }
+                  : undefined
+              }
               sx={{
                 fontWeight: 600,
                 color: "primary.main",
@@ -297,7 +299,7 @@ export function CharacterIdentitySection({
                 mb: 2,
               }}
             >
-              <TextField {...form.register("race")} label="Race" size="small" variant="outlined" disabled />
+              <FormTextField control={form.control} name="race" label="Race" size="small" variant="outlined" disabled />
               {partial ? (
                 <>
                   <Skeleton variant="rounded" height={40} />
@@ -315,8 +317,10 @@ export function CharacterIdentitySection({
                     disabled={readOnly}
                     sx={disabledFieldStyle}
                   />
-                  <TextField
-                    {...form.register("experience", { valueAsNumber: true })}
+                  <FormTextField
+                    control={form.control}
+                    name="experience"
+                    number
                     label="Experience"
                     type="number"
                     size="small"
@@ -325,8 +329,9 @@ export function CharacterIdentitySection({
                     disabled={readOnly}
                     sx={disabledFieldStyle}
                   />
-                  <TextField
-                    {...form.register("deity")}
+                  <FormTextField
+                    control={form.control}
+                    name="deity"
                     label="Deity"
                     size="small"
                     variant="outlined"
@@ -346,8 +351,9 @@ export function CharacterIdentitySection({
                 mb: 2,
               }}
             >
-              <TextField
-                {...form.register("age")}
+              <FormTextField
+                control={form.control}
+                name="age"
                 label="Age"
                 size="small"
                 variant="outlined"
@@ -363,16 +369,18 @@ export function CharacterIdentitySection({
                 disabled={readOnly}
                 sx={disabledFieldStyle}
               />
-              <TextField
-                {...form.register("height")}
+              <FormTextField
+                control={form.control}
+                name="height"
                 label="Height"
                 size="small"
                 variant="outlined"
                 disabled={readOnly}
                 sx={disabledFieldStyle}
               />
-              <TextField
-                {...form.register("weight")}
+              <FormTextField
+                control={form.control}
+                name="weight"
                 label="Weight"
                 size="small"
                 variant="outlined"
@@ -405,13 +413,8 @@ export function CharacterIdentitySection({
                     getOptionLabel={(option) => option.name}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     value={selectedLanguages}
-                    onChange={(_, newValue) => {
-                      form.setValue(
-                        "languageIds",
-                        newValue.map((l) => l.id),
-                        { shouldDirty: true },
-                      );
-                    }}
+                    onChange={(_, newValue) => languageIds.onChange(newValue.map((l) => l.id))}
+                    onBlur={languageIds.onBlur}
                     renderValue={(value, getItemProps) =>
                       value.map((option, index) => (
                         <Chip {...getItemProps({ index })} key={option.id} label={option.name} size="small" />
@@ -432,8 +435,9 @@ export function CharacterIdentitySection({
             ) : (
               <>
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3, mb: 2 }}>
-                  <TextField
-                    {...form.register("description")}
+                  <FormTextField
+                    control={form.control}
+                    name="description"
                     label="Description"
                     size="small"
                     variant="outlined"
@@ -446,8 +450,9 @@ export function CharacterIdentitySection({
                 </Box>
 
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3 }}>
-                  <TextField
-                    {...form.register("notes")}
+                  <FormTextField
+                    control={form.control}
+                    name="notes"
                     label="Notes"
                     size="small"
                     variant="outlined"

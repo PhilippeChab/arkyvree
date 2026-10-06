@@ -5,6 +5,7 @@
 
 import type React from "react";
 import type { ComponentType } from "react";
+import type { Control } from "react-hook-form";
 
 import { AddAttributeStep } from "./AddAttributeStep.tsx";
 import { AddClassPlanStep } from "./AddClassPlanStep.tsx";
@@ -34,20 +35,20 @@ import { LevelUpSpellsStep } from "./LevelUpSpellsStep.tsx";
 
 interface LevelUpHpState {
   selectedClass: SelectedKlass | null;
-  selectedHP: number | null;
+  /** The picks' form: the HP field. */
+  control: Control<LevelUpFormData>;
   hpRolling: boolean;
   hpSettled: boolean;
   hpDisplayValue: number | null;
   triggerHpRoll: (hd: number) => void;
-  setValue: (key: "selectedHP", value: number | null) => void;
 }
 
 interface LevelUpAttributeState {
   attributeData: AttributesData | undefined;
   isLoadingAttributes: boolean;
   attributesError: Error | null;
-  selectedAttribute: string | null;
-  setValue: (key: "selectedAttribute", value: string | null) => void;
+  /** The picks' form: the attribute field. */
+  control: Control<LevelUpFormData>;
 }
 
 /** The feat picker state a level wizard hands the Feats step. */
@@ -68,7 +69,8 @@ interface FeatPickerState {
   featSearch: string;
   setFeatSearch: (search: string) => void;
   handleFeatsScroll: (event: React.UIEvent<HTMLElement>) => void;
-  setValue: (key: "selectedFeats", value: Record<string, SelectedFeat[]>) => void;
+  /** The picks' form: the feats field. */
+  control: Control<LevelUpFormData>;
   handleDeleteFeat: (featId: string, aptitudeId: string) => void;
 }
 
@@ -83,9 +85,8 @@ interface SkillPickerState {
   skillData: SkillsData | null | undefined;
   isLoadingSkills: boolean;
   skillsError: Error | null;
-  skillPointAllocations: Record<string, number>;
-  setValue: (key: "skillPointAllocations", value: Record<string, number>) => void;
-  getValues: (key: "skillPointAllocations") => Record<string, number>;
+  /** The picks' form: the skill points field. */
+  control: Control<LevelUpFormData>;
   /** Several levels at once (Add Level): each level's class skills and points. */
   perLevelClassSkillIds?: string[][];
   perLevelSkillPoints?: number[];
@@ -141,7 +142,8 @@ interface PowerPickerState {
   isLoadingAvailablePowers: boolean;
   isFetchingNextPowersPage: boolean;
   powerSearch: string;
-  setValue: (key: "selectedPowers", value: LevelUpFormData["selectedPowers"]) => void;
+  /** The picks' form: the spells field. */
+  control: Control<LevelUpFormData>;
   handleDeletePower: (powerId: string, aptitudeId: string) => void;
   setPowerSearch: (search: string) => void;
   handlePowersScroll: (event: React.UIEvent<HTMLElement>) => void;

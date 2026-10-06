@@ -5,7 +5,7 @@ import type { InferResponseType } from "hono/client";
 import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
-import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { type SkillFormData, SkillFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
@@ -29,7 +29,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useSearchParam("search");
+  const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Skill, SkillFormData>({
     rulesetId: ruleset.id,
@@ -93,8 +93,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   return (
     <SectionContent>
       <SearchBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
+        {...searchTextProps}
         searchPlaceholder="Search skills..."
         actions={
           <SectionActions

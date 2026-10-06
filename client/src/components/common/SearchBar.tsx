@@ -11,10 +11,7 @@ import {
   Toolbar,
   Tooltip,
 } from "@mui/material";
-import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-
-import { useDebouncedValue } from "@/client/src/hooks/index.ts";
+import { useState } from "react";
 
 interface SearchBarProps<TFilter extends string = string, TSort extends string = string> {
   searchValue: string;
@@ -59,37 +56,6 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
   filters,
   actions,
 }: SearchBarProps<TFilter, TSort>) {
-  // Local state for immediate input responsiveness; debounce before
-  // propagating to parent so URL/query updates don't fire every keystroke.
-  const [inputValue, setInputValue] = useState(searchValue);
-  const debouncedInputValue = useDebouncedValue(inputValue);
-
-  // Sync from parent on external changes (back button, programmatic clear).
-  // The previous value lives in state so a discarded render can't skip the sync.
-  const [prevSearchValue, setPrevSearchValue] = useState(searchValue);
-  if (searchValue !== prevSearchValue) {
-    setPrevSearchValue(searchValue);
-    if (inputValue !== searchValue) setInputValue(searchValue);
-  }
-
-  // Propagate the debounced value to the parent once typing has settled. While
-  // the debounce lags behind an external change (the sync above already reset
-  // inputValue), the stale debounced value must not be written back. Nor once the
-  // user has left the page (clicked a result before the search applied): the page
-  // stays on screen while the next one loads, and writing the search to the URL
-  // would cancel that navigation. The address bar has moved on already (even to
-  // a sub-route, such as the entity clicked), where the router's location hasn't.
-  const { pathname } = useLocation();
-  useEffect(() => {
-    if (
-      debouncedInputValue === inputValue &&
-      debouncedInputValue !== searchValue &&
-      window.location.pathname === pathname
-    ) {
-      onSearchChange(debouncedInputValue);
-    }
-  }, [debouncedInputValue, inputValue, searchValue, onSearchChange, pathname]);
-
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -126,8 +92,8 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
           <TextField
             size="small"
             placeholder={searchPlaceholder}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            value={searchValue}
+            onChange={(e) => onSearchChange(e.target.value)}
             slotProps={{
               input: {
                 startAdornment: (

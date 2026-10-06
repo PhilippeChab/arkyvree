@@ -21,11 +21,7 @@ export default function ForgotPassword() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ForgotPasswordFormData>({
+  const { control, handleSubmit } = useForm<ForgotPasswordFormData>({
     defaultValues: {
       emailAddress: "",
     },
@@ -48,7 +44,7 @@ export default function ForgotPassword() {
       subtitle="Enter your email address and we'll send you a code to reset your password."
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <EmailField {...register("emailAddress", emailRules)} error={errors.emailAddress} />
+        <EmailField control={control} name="emailAddress" rules={emailRules} />
 
         <AuthSubmitButton loading={isLoading}>Send Reset Code</AuthSubmitButton>
       </form>

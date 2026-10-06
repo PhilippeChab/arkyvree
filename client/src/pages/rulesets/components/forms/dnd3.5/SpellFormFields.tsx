@@ -1,7 +1,7 @@
 import { Autocomplete, Box, Chip, MenuItem, TextField, Typography } from "@mui/material";
-import { Controller, type UseFormReturn } from "react-hook-form";
+import { Controller, useController, type UseFormReturn } from "react-hook-form";
 
-import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
+import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
 import type { RulesetSave } from "@/client/src/hooks/index.ts";
 import { nameRules } from "@/client/src/lib/validation.ts";
@@ -99,8 +99,9 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
       </Box>
       <TagsField form={form} name="descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
       <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
-        <TextField
-          {...form.register("castingTime")}
+        <FormTextField
+          control={form.control}
+          name="castingTime"
           label="Casting Time"
           fullWidth
           placeholder='e.g., "1 standard action"'
@@ -121,16 +122,29 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
         />
       </Box>
       <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
-        <TextField {...form.register("target")} label="Target" fullWidth placeholder='e.g., "One creature"' />
-        <TextField
-          {...form.register("areaOfEffect")}
+        <FormTextField
+          control={form.control}
+          name="target"
+          label="Target"
+          fullWidth
+          placeholder='e.g., "One creature"'
+        />
+        <FormTextField
+          control={form.control}
+          name="areaOfEffect"
           label="Area of Effect"
           fullWidth
           placeholder='e.g., "20-ft. radius"'
         />
       </Box>
       <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
-        <TextField {...form.register("duration")} label="Duration" fullWidth placeholder='e.g., "1 round/level"' />
+        <FormTextField
+          control={form.control}
+          name="duration"
+          label="Duration"
+          fullWidth
+          placeholder='e.g., "1 round/level"'
+        />
         <Controller
           name="spellResistance"
           control={form.control}
@@ -154,15 +168,16 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
 export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownAptitudes = [] }: SpellFormFieldsProps) {
   // Aptitudes and their levels live in the form, sorted by aptitude name.
   const aptitudes = useAptitudeLookup(knownAptitudes);
-  const selected = form.watch("aptitudes") ?? [];
+  const { field } = useController({ control: form.control, name: "aptitudes" });
+  const selected = field.value ?? [];
   const selectedAptitudes = aptitudes.resolve(selected.map((a) => a.id));
-  const setSelected = (next: SpellAptitude[]) => form.setValue("aptitudes", next, { shouldDirty: true });
+  const setSelected = (next: SpellAptitude[]) => field.onChange(next);
   const levelOf = (id: string) => selected.find((a) => a.id === id)?.level;
 
   return (
     <>
-      <NameField {...form.register("name", nameRules)} error={form.formState.errors.name} />
-      <DescriptionField {...form.register("description")} />
+      <NameField control={form.control} name="name" rules={nameRules} />
+      <DescriptionField control={form.control} name="description" />
       <SelectField
         control={form.control}
         name="saveId"
@@ -170,8 +185,9 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
         emptyLabel="None"
         options={saves.map((save) => ({ value: save.id, label: save.name }))}
       />
-      <TextField
-        {...form.register("saveEffect")}
+      <FormTextField
+        control={form.control}
+        name="saveEffect"
         label="Save Effect"
         fullWidth
         placeholder='e.g., "negates", "half", "partial"'

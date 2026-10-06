@@ -18,6 +18,7 @@ import {
   CreateDialog,
   DescriptionField,
   EditDialog,
+  FormTextField,
   NameField,
   RulesetPicker,
   SelectField,
@@ -85,8 +86,9 @@ export type EditCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)["
 
 function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
   return (
-    <TextField
-      {...form.register("email")}
+    <FormTextField
+      control={form.control}
+      name="email"
       label="Email address"
       placeholder="Enter an email to send an invite..."
       type="email"
@@ -174,12 +176,7 @@ export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading 
       isLoading={isLoading}
     >
       <BaseRulesetAlert ruleset={selectedRuleset} />
-      <NameField
-        {...form.register("name", nameRules)}
-        error={form.formState.errors.name}
-        autoFocus
-        disabled={isLoading}
-      />
+      <NameField control={form.control} name="name" rules={nameRules} autoFocus disabled={isLoading} />
       <Controller
         name="rulesetId"
         control={form.control}
@@ -201,7 +198,7 @@ export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading 
           />
         )}
       />
-      <DescriptionField {...form.register("description")} disabled={isLoading} rows={4} />
+      <DescriptionField control={form.control} name="description" disabled={isLoading} rows={4} />
     </CreateDialog>
   );
 }
@@ -217,13 +214,8 @@ export function EditCampaignDialog({ open, onClose, form, onSubmit, isLoading }:
       isLoading={isLoading}
       submitLabel="Save Changes"
     >
-      <NameField
-        {...form.register("name", nameRules)}
-        error={form.formState.errors.name}
-        autoFocus
-        disabled={isLoading}
-      />
-      <DescriptionField {...form.register("description")} disabled={isLoading} rows={4} />
+      <NameField control={form.control} name="name" rules={nameRules} autoFocus disabled={isLoading} />
+      <DescriptionField control={form.control} name="description" disabled={isLoading} rows={4} />
     </EditDialog>
   );
 }

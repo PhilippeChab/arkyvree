@@ -15,6 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { memo, useCallback } from "react";
+import { useController } from "react-hook-form";
 
 import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
@@ -148,16 +149,10 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
 const columnHeaderSx = { whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
 
 export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
-  const {
-    skillData,
-    isLoadingSkills,
-    skillsError,
-    skillPointAllocations,
-    setValue,
-    getValues,
-    perLevelClassSkillIds,
-    perLevelSkillPoints,
-  } = wizard;
+  const { skillData, isLoadingSkills, skillsError, control, perLevelClassSkillIds, perLevelSkillPoints } = wizard;
+  const { field: allocationsField } = useController({ control, name: "skillPointAllocations" });
+  const skillPointAllocations = allocationsField.value;
+  const setAllocations = allocationsField.onChange;
   const randomAssign = useCallback(() => {
     if (!skillData) return;
     const isMultiLevel = perLevelClassSkillIds && perLevelSkillPoints;
@@ -188,23 +183,23 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
       remaining--;
     }
 
-    setValue("skillPointAllocations", allocations);
-  }, [skillData, perLevelClassSkillIds, perLevelSkillPoints, setValue]);
+    setAllocations(allocations);
+  }, [skillData, perLevelClassSkillIds, perLevelSkillPoints, setAllocations]);
 
   const skillPointsToSpend = skillData?.skillPointsToSpend ?? 0;
 
   const onAllocate = useCallback(
     (skillId: string, rawPoints: number) => {
       if (!skillPointsToSpend) return;
-      const allocs = getValues("skillPointAllocations");
+      const allocs = skillPointAllocations;
       const currentTotal = Object.entries(allocs)
         .filter(([id]) => id !== skillId)
         .reduce((sum, [, points]) => sum + points, 0);
       const maxFromAvailable = skillPointsToSpend - currentTotal;
       const clamped = Math.max(0, Math.min(rawPoints, maxFromAvailable));
-      setValue("skillPointAllocations", { ...allocs, [skillId]: clamped });
+      setAllocations({ ...allocs, [skillId]: clamped });
     },
-    [skillPointsToSpend, setValue, getValues],
+    [skillPointsToSpend, skillPointAllocations, setAllocations],
   );
 
   if (isLoadingSkills) return <DiceSpinner />;

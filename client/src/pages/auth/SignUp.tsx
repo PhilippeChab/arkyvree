@@ -24,11 +24,7 @@ export default function SignUp() {
   const navigate = useNavigate();
   const redirect = safeRedirectPath(searchParams.get("redirect"));
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignUpFormData>({
+  const { control, handleSubmit } = useForm<SignUpFormData>({
     defaultValues: {
       emailAddress: "",
       password: "",
@@ -49,18 +45,20 @@ export default function SignUp() {
   return (
     <AuthPage error={error} title="Sign Up">
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <EmailField {...register("emailAddress", emailRules)} error={errors.emailAddress} />
+        <EmailField control={control} name="emailAddress" rules={emailRules} />
 
         <PasswordField
-          {...register("password", newPasswordRules)}
-          error={errors.password}
+          control={control}
+          name="password"
+          rules={newPasswordRules}
           label="Password"
           autoComplete="new-password"
         />
 
         <PasswordField
-          {...register("passwordConfirmation", confirmPasswordRules<SignUpFormData>("password"))}
-          error={errors.passwordConfirmation}
+          control={control}
+          name="passwordConfirmation"
+          rules={confirmPasswordRules<SignUpFormData>("password")}
           label="Confirm Password"
           autoComplete="new-password"
         />

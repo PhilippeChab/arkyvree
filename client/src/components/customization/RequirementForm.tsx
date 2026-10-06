@@ -1,6 +1,6 @@
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
-import { type UseFormReturn } from "react-hook-form";
+import { useController, type UseFormReturn } from "react-hook-form";
 
 import { SelectField } from "@/client/src/components/common/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -27,10 +27,20 @@ const CHAINING_OPERATORS = [
   { value: "or", label: "OR" },
 ];
 
+/** A condition's fields, bound while the requirement is a condition (a chaining node drops them). */
+function RequirementConditionFields({
+  form,
+  rulesetId,
+  mode,
+}: Pick<RequirementFormProps, "form" | "rulesetId" | "mode">) {
+  const target = useController({ control: form.control, name: "target" });
+  const operator = useController({ control: form.control, name: "operator" });
+  const value = useController({ control: form.control, name: "value" });
+  return <ConditionFields kind="requirement" rulesetId={rulesetId} mode={mode} fields={{ target, operator, value }} />;
+}
+
 /** A requirement's type, then its condition (target, operator, value) or its chaining operator. */
 export function RequirementForm({ form, type, onTypeChange, rulesetId, mode }: RequirementFormProps) {
-  const { errors } = form.formState;
-
   return (
     <>
       <Box>
@@ -72,21 +82,7 @@ export function RequirementForm({ form, type, onTypeChange, rulesetId, mode }: R
           options={CHAINING_OPERATORS}
         />
       ) : (
-        <ConditionFields
-          kind="requirement"
-          rulesetId={rulesetId}
-          mode={mode}
-          values={{
-            target: form.watch("target") || "",
-            operator: form.watch("operator") || "",
-            value: form.watch("value") || "",
-          }}
-          errors={errors}
-          onChange={(field, value) => {
-            form.setValue(field, value);
-            form.clearErrors(field);
-          }}
-        />
+        <RequirementConditionFields form={form} rulesetId={rulesetId} mode={mode} />
       )}
     </>
   );

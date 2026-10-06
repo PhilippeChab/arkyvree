@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 import type { FieldError } from "react-hook-form";
 
 import { Crossfade } from "@/client/src/components/common/index.ts";
-import { useOnChange } from "@/client/src/hooks/index.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/client/src/lib/templateValues.ts";
 
 import { OperatorSelect } from "./OperatorSelect.tsx";
@@ -19,6 +18,12 @@ type ConditionField = "target" | "operator" | "value";
 
 type PathInfo = Omit<TargetPathInfo, "path">;
 
+/** A form's field, as `useController` binds it: its value, its change and its error. */
+interface BoundField {
+  field: { value: string | undefined; onChange: (value: string) => void };
+  fieldState: { error?: FieldError };
+}
+
 interface ConditionFieldsProps {
   kind: "modifier" | "requirement";
   rulesetId: string;
@@ -26,18 +31,26 @@ interface ConditionFieldsProps {
   entityType?: string;
   /** "create" autofills value/operator from the path's defaults; "edit" preserves the loaded values. */
   mode: "create" | "edit";
-  values: Record<ConditionField, string>;
-  errors: Partial<Record<ConditionField, FieldError>>;
-  /** Writes a field (and clears its error). */
-  onChange: (field: ConditionField, value: string) => void;
+  /** Its form's target, operator and value, each bound to the form (`useController`). */
+  fields: Record<ConditionField, BoundField>;
 }
 
 /**
- * A modifier's or requirement's target path, operator and value. The value is
- * a literal or a `{{ template }}`; either way `onChange("value")` gets the
- * string to save.
+ * A modifier's or requirement's target path, operator and value. The value is a literal or a `{{ template }}`; either
+ * way its field gets the string to save.
  */
-export function ConditionFields({ kind, rulesetId, entityType, mode, values, errors, onChange }: ConditionFieldsProps) {
+export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: ConditionFieldsProps) {
+  const values = {
+    target: fields.target.field.value ?? "",
+    operator: fields.operator.field.value ?? "",
+    value: fields.value.field.value ?? "",
+  };
+  const errors = {
+    target: fields.target.fieldState.error,
+    operator: fields.operator.fieldState.error,
+    value: fields.value.fieldState.error,
+  };
+  const onChange = (field: ConditionField, next: string) => fields[field].field.onChange(next);
   const { value } = values;
 
   const [pathInfo, setPathInfo] = useState<PathInfo | null>(null);
@@ -47,27 +60,12 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
   );
   const [literalValue, setLiteralValue] = useState(() => (isTemplateValue(value) ? "" : value));
 
-  // The value this field last wrote: it comes back as `value`, which mustn't reset what the user is typing. Any other
-  // change (a form reset on edit open) resets the field, a template value switching it to template mode.
-  const [written, setWritten] = useState<string | null>(null);
   const expressionInputRef = useRef<TemplateExpressionInputRef | null>(null);
 
-  useOnChange(value, (next) => {
-    if (next === written) {
-      setWritten(null);
-      return;
-    }
-    const template = isTemplateValue(next);
-    setTemplateMode(template);
-    setTemplateExpression(template ? (extractTemplateExpression(next) ?? "") : "");
-    setLiteralValue(template ? "" : next);
-  });
-
+  // The value's editor (its mode, and each mode's text) is its own: seeded from the value as it mounts, once its dialog
+  // opens on a reset form, then writing the value it makes. The value never comes back into it.
   const writeFormValue = (next: string) => {
-    // Only a change comes back as `value`, so only a change is marked as written.
-    if (next === value) return;
-    setWritten(next);
-    onChange("value", next);
+    if (next !== value) onChange("value", next);
   };
 
   const handleLiteralChange = (v: string) => {

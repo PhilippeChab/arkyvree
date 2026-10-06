@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useSearchParam } from "@/client/src/hooks/index.ts";
+import { useSearchText } from "@/client/src/hooks/index.ts";
 import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { RulesetItem } from "@/client/src/lib/queries.ts";
@@ -42,7 +42,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useSearchParam("search");
+  const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
   const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
 
   const { createDialogOpen, setCreateDialogOpen, createForm, createMutation, handleCreate } = useRulesetSection<
@@ -184,8 +184,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   return (
     <SectionContent>
       <SearchBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
+        {...searchTextProps}
         searchPlaceholder="Search items..."
         actions={
           <SectionActions

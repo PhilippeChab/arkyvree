@@ -1,6 +1,7 @@
 import { MenuItem, Stack, TextField } from "@mui/material";
-import type { UseFormReturn } from "react-hook-form";
+import { useController, type UseFormReturn } from "react-hook-form";
 
+import { FormTextField } from "@/client/src/components/common/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { isHandLocation } from "@/shared/equipment.ts";
@@ -15,26 +16,28 @@ interface InventoryPlacementFieldsProps {
 
 /** How many of the item, where it's worn, its weapon set, and its charges: the add and edit dialogs' fields. */
 export function InventoryPlacementFields({ form, profile }: InventoryPlacementFieldsProps) {
-  const location = form.watch("location");
-  const { errors } = form.formState;
+  const { field: location } = useController({ control: form.control, name: "location" });
 
   return (
     <>
-      <TextField
-        {...form.register("quantity", wholeNumberRules(1, "Quantity is required"))}
+      <FormTextField
+        control={form.control}
+        name="quantity"
+        rules={wholeNumberRules(1, "Quantity is required")}
+        number
         label="Quantity"
         type="number"
         fullWidth
-        error={!!errors.quantity}
-        helperText={errors.quantity?.message}
       />
       {profile && (
         <>
           <TextField
             select
             label={profile.isWeapon ? "Hand Slot" : "Equipment Slot"}
-            value={location}
-            onChange={(e) => form.setValue("location", oneOf(e.target.value, LOCATION_CHOICES, "none"))}
+            value={location.value}
+            onChange={(e) => location.onChange(oneOf(e.target.value, LOCATION_CHOICES, "none"))}
+            onBlur={location.onBlur}
+            inputRef={location.ref}
             fullWidth
           >
             <MenuItem value="none">Not Equipped</MenuItem>
@@ -44,33 +47,36 @@ export function InventoryPlacementFields({ form, profile }: InventoryPlacementFi
               </MenuItem>
             ))}
           </TextField>
-          {profile.showWeaponSet && isHandLocation(location) && (
-            <TextField
-              {...form.register("weaponSet", wholeNumberRules(1, "Weapon set is required"))}
+          {profile.showWeaponSet && isHandLocation(location.value) && (
+            <FormTextField
+              control={form.control}
+              name="weaponSet"
+              rules={wholeNumberRules(1, "Weapon set is required")}
+              number
               label="Weapon Set"
               type="number"
               fullWidth
-              error={!!errors.weaponSet}
-              helperText={errors.weaponSet?.message}
             />
           )}
           {profile.charges.has && (
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <TextField
-                {...form.register("totalCharges", wholeNumberRules(0))}
+              <FormTextField
+                control={form.control}
+                name="totalCharges"
+                rules={wholeNumberRules(0)}
+                number
                 label="Total Charges"
                 type="number"
                 fullWidth
-                error={!!errors.totalCharges}
-                helperText={errors.totalCharges?.message}
               />
-              <TextField
-                {...form.register("remainingCharges", wholeNumberRules(0))}
+              <FormTextField
+                control={form.control}
+                name="remainingCharges"
+                rules={wholeNumberRules(0)}
+                number
                 label="Remaining Charges"
                 type="number"
                 fullWidth
-                error={!!errors.remainingCharges}
-                helperText={errors.remainingCharges?.message}
               />
             </Stack>
           )}

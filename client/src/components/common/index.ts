@@ -6,7 +6,15 @@ export { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 export { Crossfade } from "./Crossfade.tsx";
 export { DetailPageHeader, SectionContent, SectionTabs, type SectionTab } from "./DetailPage.tsx";
 export { DiceSpinner } from "./DiceSpinner.tsx";
-export { DescriptionField, EmailField, NameField, PasswordField, SelectField } from "./FormFields.tsx";
+export {
+  DescriptionField,
+  EmailField,
+  FormTextField,
+  NameField,
+  PasswordField,
+  SelectField,
+  SwitchField,
+} from "./FormFields.tsx";
 export { ErrorBoundary } from "./ErrorBoundary.tsx";
 export { FormDialog } from "./FormDialog.tsx";
 export { InfoPill } from "./InfoPill.tsx";

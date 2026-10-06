@@ -83,4 +83,25 @@ describe("frontend rules", () => {
       "client-apis client/src/e.tsx",
     ]);
   });
+
+  test("a form's field is bound through useController: never register, never a watched value", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/bound.tsx": 'export const b = <NameField control={form.control} name="name" />;\n',
+          "client/src/registered.tsx": 'export const r = <TextField {...form.register("name")} />;\n',
+          "client/src/watched.tsx":
+            'export const w = <Toggle value={form.watch("private")} onChange={(v) => form.setValue("private", v)} />;\n',
+          "client/src/held.tsx":
+            'const digits = watch("digits");\nexport const h = <CodeInput digits={digits} onChange={setDigits} />;\n',
+          "client/src/shown.tsx": 'const name = watch("name");\nexport const s = <Typography>{name}</Typography>;\n',
+        },
+        ["controlled-inputs"],
+      ),
+    ).toEqual([
+      "controlled-inputs client/src/held.tsx",
+      "controlled-inputs client/src/registered.tsx",
+      "controlled-inputs client/src/watched.tsx",
+    ]);
+  });
 });
