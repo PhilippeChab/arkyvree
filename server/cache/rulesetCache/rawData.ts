@@ -77,6 +77,8 @@ export interface RulesetRawData {
   klassLevelPowers: KlassLevelPower[];
   klassLevelSaves: KlassLevelSave[];
   leveledAptitudeIds: Set<string>;
+  /** The lists its feats and spells link to, by stored id: what a view checks it has (`RulesetComposition`). */
+  linkedAptitudeIds: Set<string>;
   /** Every property row owned by this ruleset — all entityTypes. Consumers filter. */
   properties: Property[];
   /** Every modifier whose source is an entity in this ruleset — all sourceTypes. */
@@ -164,7 +166,18 @@ export async function fetchRulesetRawData(
     entities,
     klassLevels.map((kl) => kl.id),
   );
-  const data: RulesetRawData = { ...entities, klassLevels, klassSkills, leveledAptitudeIds, ...customizations };
+  const linkedAptitudeIds = new Set([
+    ...feats.flatMap((feat) => feat.featsAptitudesInRules.map((link) => link.aptitudeId)),
+    ...powers.flatMap((power) => power.powersAptitudesInRules.map((link) => link.aptitudeId)),
+  ]);
+  const data: RulesetRawData = {
+    ...entities,
+    klassLevels,
+    klassSkills,
+    leveledAptitudeIds,
+    linkedAptitudeIds,
+    ...customizations,
+  };
 
   // Pin system-seeded rulesets (bases + extensions) BEFORE writing so the pin flag
   // is in place for the entry's whole lifetime — no window where eviction pressure

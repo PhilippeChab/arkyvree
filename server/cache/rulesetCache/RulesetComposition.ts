@@ -133,6 +133,11 @@ export default class RulesetComposition {
     const links = this.collectSiblingAptitudeLinks();
     if (!this.cow.isEmpty()) {
       this.resolveAptitudeLinks(composed.feats, composed.powers, composed.aptitudes, links);
+    } else if (this.linksOutside(composed.aptitudes)) {
+      // Nothing resolved: the rows are the cache's own, so the links are rewritten on copies
+      composed.feats = composed.feats.map((feat) => ({ ...feat }));
+      composed.powers = composed.powers.map((power) => ({ ...power }));
+      this.resolveAptitudeLinks(composed.feats, composed.powers, composed.aptitudes, links);
     }
     return composed;
   }
@@ -220,7 +225,7 @@ export default class RulesetComposition {
     entityId: string,
     own: L[],
     siblingLinks: Map<string, L[]>,
-    aptitudesById: Map<string, Aptitude>,
+    listOf: (link: L) => Aptitude | undefined,
   ): L[] {
     const links = this.cow.hasSiblings(entityId)
       ? [
@@ -228,19 +233,28 @@ export default class RulesetComposition {
           ...mergeSiblingAptitudeLinks(
             own,
             this.cow.getSiblings(entityId).map((loserId) => siblingLinks.get(loserId) ?? []),
-            (id) => this.cow.resolve(id),
+            (link) => listOf(link)?.id ?? link.aptitudeId,
           ),
         ]
       : own;
-    const aptitudeIds = new Set<string>();
+    const listIds = new Set<string>();
     const resolved: L[] = [];
     for (const link of links) {
-      const aptitudeId = this.cow.resolve(link.aptitudeId);
-      if (aptitudeIds.has(aptitudeId)) continue;
-      aptitudeIds.add(aptitudeId);
-      resolved.push({ ...link, aptitudeId, aptitudesInRule: aptitudesById.get(aptitudeId) ?? link.aptitudesInRule });
+      const list = listOf(link);
+      if (!list || listIds.has(list.id)) continue;
+      listIds.add(list.id);
+      resolved.push({ ...link, aptitudeId: list.id, aptitudesInRule: list });
     }
     return resolved;
+  }
+
+  /**
+   * Whether a feat or a spell of the chain links to a list the view doesn't have: one of a book the ruleset left, whose
+   * links its own entities and copies keep.
+   */
+  private linksOutside(aptitudes: Aptitude[]): boolean {
+    const inView = new Set(aptitudes.map((apt) => apt.id));
+    return this.chain.some((raw) => [...raw.linkedAptitudeIds].some((id) => !inView.has(this.cow.resolve(id))));
   }
 
   /**
@@ -258,16 +272,15 @@ export default class RulesetComposition {
     links: ReturnType<RulesetComposition["collectSiblingAptitudeLinks"]>,
   ) {
     const aptitudesById = new Map(aptitudes.map((apt) => [apt.id, apt]));
+    const aptitudesByName = new Map(aptitudes.map((apt) => [apt.name, apt]));
+    // A link's list: the view's, or, for a list the ruleset doesn't have (a book it left), the view's of its name
+    const listOf = (link: { aptitudeId: string; aptitudesInRule: Aptitude }) =>
+      aptitudesById.get(this.cow.resolve(link.aptitudeId)) ?? aptitudesByName.get(link.aptitudesInRule.name);
     for (const feat of feats) {
-      feat.featsAptitudesInRules = this.linkAptitudes(feat.id, feat.featsAptitudesInRules, links.feats, aptitudesById);
+      feat.featsAptitudesInRules = this.linkAptitudes(feat.id, feat.featsAptitudesInRules, links.feats, listOf);
     }
     for (const power of powers) {
-      power.powersAptitudesInRules = this.linkAptitudes(
-        power.id,
-        power.powersAptitudesInRules,
-        links.powers,
-        aptitudesById,
-      );
+      power.powersAptitudesInRules = this.linkAptitudes(power.id, power.powersAptitudesInRules, links.powers, listOf);
     }
   }
 

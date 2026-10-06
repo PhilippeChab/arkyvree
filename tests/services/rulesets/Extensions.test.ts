@@ -11,7 +11,7 @@ import {
 } from "@/database/packages/dnd35/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { db } from "@/server/database/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
@@ -37,6 +37,7 @@ import {
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { getListPowerIds } from "@/server/services/rulesets/aptitudes/listMembers.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
@@ -46,7 +47,13 @@ import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel, pickFeat } from "@/tests/support/levels.ts";
-import { copyEntity, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import {
+  copyEntity,
+  createSeededTestRulesetWithExtensions,
+  createTestRuleset,
+  editRuleset,
+  invalidateSeededRuleset,
+} from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -492,6 +499,50 @@ describe("unsubscribing from an extension", () => {
       { id: monkeyGrip.id, rulesetId: extension.id },
     ]);
     expect(await RulesetExtensions.findMany(db, { rulesetId: draft.id })).toHaveLength(1);
+  });
+
+  test("keeps a copied spell in the lists of their names its other books have, and drops the links to the rest", async () => {
+    const { user, session } = await createTestUser();
+    const fork = await createSeededTestRulesetWithExtensions(user.id);
+    const warrior = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+    const view = await RulesetCache.getData(fork);
+    const alterSelf = [...view.powersById.values()].find((power) => power.name === "Alter Self")!;
+    // Its Assassin Spells is Complete Warrior's, the winner of the books' lists of that name
+    const assassin = alterSelf.powersAptitudesInRules.find((link) => link.aptitudesInRule.name === "Assassin Spells")!;
+    expect(assassin.aptitudesInRule.rulesetId).toBe(warrior.id);
+    const { id: copyId } = await withTransaction(async (tx) =>
+      (await editRuleset(fork)).cowToEdit(tx, "powers", alterSelf),
+    );
+
+    await RulesetExtensionsService.unsubscribeExtension(session, fork.id, warrior.id);
+    const after = await RulesetCache.getData((await Rulesets.findOne(db, { id: fork.id }))!);
+    const links = after.powersById.get(copyId)!.powersAptitudesInRules;
+    expect(links.filter((link) => !after.aptitudesById.has(link.aptitudeId))).toEqual([]);
+    const assassinAfter = [...after.aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
+    expect(assassinAfter.rulesetId).not.toBe(warrior.id);
+    expect(getListPowerIds(after, { aptitudeId: assassinAfter.id })).toContain(copyId);
+  });
+
+  test("drops a fork's own spell's link to a list of the book it left, which no other book of it has", async () => {
+    const { session, extension, draft } = await setupFork();
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
+    const subscribed = await RulesetCache.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+    const lists = [...subscribed.aptitudesById.values()];
+    const wizard = lists.find((list) => list.name === "Wizard Spells")!;
+    const warriorList = lists.find(
+      (list) => list.rulesetId === extension.id && !lists.some((other) => other !== list && other.name === list.name),
+    )!;
+    const [spell] = await Powers.create(db, { name: `Probe ${uniqueId()}`, rulesetId: draft.id });
+    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: wizard.id, level: 1 });
+    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: warriorList.id, level: 1 });
+    RulesetCache.invalidate(draft.id);
+
+    await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id);
+    const after = await RulesetCache.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+    expect(after.cow.isEmpty()).toBe(true);
+    expect(after.powersById.get(spell.id)!.powersAptitudesInRules.map((link) => link.aptitudesInRule.name)).toEqual([
+      "Wizard Spells",
+    ]);
   });
 
   test("keeps the other extensions and the fork's copies of theirs", async () => {

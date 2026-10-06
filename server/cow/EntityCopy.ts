@@ -266,7 +266,7 @@ export default class EntityCopy {
         (link) => link.featId,
       );
       const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
-      const links = mergeSiblingAptitudeLinks(own, siblings, resolve);
+      const links = mergeSiblingAptitudeLinks(own, siblings, (link) => resolve(link.aptitudeId));
       if (links.length > 0) {
         await FeatsAptitudes.createMany(
           tx,
@@ -280,7 +280,7 @@ export default class EntityCopy {
         (link) => link.powerId,
       );
       const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
-      const links = mergeSiblingAptitudeLinks(own, siblings, resolve);
+      const links = mergeSiblingAptitudeLinks(own, siblings, (link) => resolve(link.aptitudeId));
       if (links.length > 0) {
         await PowersAptitudes.createMany(
           tx,

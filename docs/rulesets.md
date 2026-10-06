@@ -255,7 +255,7 @@ The sibling merge (`EntityCopy`'s `mergeSiblings`) merges four types of customiz
 | **Properties** | `mergeSiblingProperties`: inserts sibling properties | `type + value` |
 | **Aptitude links** | `mergeSiblingAptitudeLinks`: inserts sibling `feats_aptitudes` / `powers_aptitudes` rows, on the aptitude the copy's `CowData` resolves each to, as the copy's own links | resolved `aptitudeId` |
 
-The customizations are copied whole, as the winner's own (`copyEntityCustomizations`), and each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later unsubscribe from one of the extensions, their fork retains the full merged data since it's baked into their own copy.
+The customizations are copied whole, as the winner's own (`copyEntityCustomizations`), and each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later unsubscribe from one of the extensions, their fork retains the full merged data since it's baked into their own copy. Its links to that extension's lists stay too: the view reads a link to a list the fork no longer has as the fork's list of that name (another book's copy of it), and leaves out one whose name no list of the fork has (`RulesetComposition`). A spell the fork made and linked to such a list reads the same way.
 
 ## Extensions
 

@@ -51,15 +51,15 @@ function takeNewRows<T>(own: readonly T[], siblings: Iterable<readonly T[]>, key
 }
 
 /**
- * The siblings' links to aptitudes the winner doesn't link to: an aptitude is the one `resolve` gives (a stale id's
- * copy or winner). The first link to an aptitude wins, a power's with its level.
+ * The siblings' links to lists the winner doesn't link to: a link's list is the one `listOf` gives (a stale id's copy
+ * or winner). The first link to a list wins, a power's with its level.
  */
 export function mergeSiblingAptitudeLinks<T extends { aptitudeId: string }>(
   own: readonly T[],
   siblings: Iterable<readonly T[]>,
-  resolve: (id: string) => string,
+  listOf: (link: T) => string,
 ): T[] {
-  return takeNewRows(own, siblings, (link) => resolve(link.aptitudeId));
+  return takeNewRows(own, siblings, listOf);
 }
 
 /**
