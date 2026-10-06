@@ -15,12 +15,18 @@
  *   before a parameter, which Hono needs anyway (it matches overlapping routes in the order they're registered).
  *   Its sub-routers (`.route()`) come first, in their own order, then its routes, which must not overlap theirs:
  *   Hono would run the sub-router's first (tests/routers/application.test.ts checks every route answers its own
- *   requests). A run of routes ends at a `.use()` or anything else: middleware applies to what follows it.
+ *   requests). Its middleware (`.use()`) comes before them all: Hono applies it only to what's registered after it,
+ *   so routes that need other middleware are a sub-router of their own. A run of routes ends at any other call.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
 import { declarationOf, rankStatements, runsAtLoad } from "./layout.mjs";
+
+/** What a `.use()` after a route or a sub-router is told. */
+const LATE_MIDDLEWARE =
+  "A router's middleware (`.use()`) comes before its sub-routers and routes: Hono applies it only to what's " +
+  "registered after it. Routes that need other middleware are a sub-router of their own.";
 
 const ROUTE_METHODS = ["get", "post", "put", "patch", "delete"];
 
@@ -74,15 +80,19 @@ function checkChain(context, outermost) {
               .join(""),
         },
         mountsFirst
-          ? "Routes go in CRUD order: GET, POST, PUT, PATCH, DELETE, by path in each (a fixed segment before a parameter)."
+          ? "Routes go by HTTP method (GET, POST, PUT, PATCH, DELETE), then by path (a fixed segment before a parameter)."
           : "A router mounts its sub-routers (`.route()`) first, after its middleware, then its own routes.",
       );
     }
     run = [];
   };
+  let routed = false;
   for (const call of calls) {
-    if (isRoute(call) || isMount(call)) run.push(call);
-    else flush();
+    if (isUse(call) && routed) context.report({ node: call.callee.property, message: LATE_MIDDLEWARE });
+    if (isRoute(call) || isMount(call)) {
+      run.push(call);
+      routed = true;
+    } else flush();
   }
   flush();
 }
@@ -260,6 +270,10 @@ function isRoute(call) {
     call.arguments[0]?.type === "Literal" &&
     typeof call.arguments[0].value === "string"
   );
+}
+
+function isUse(call) {
+  return call.callee.type === "MemberExpression" && call.callee.property.name === "use";
 }
 
 /**

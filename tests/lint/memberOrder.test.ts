@@ -34,7 +34,7 @@ describe("member order", () => {
     ]);
   });
 
-  test("puts a class and a router in order with oxlint --fix, keeping fields, comments and middleware runs, sub-routers first", async () => {
+  test("puts a class and a router in order with oxlint --fix, keeping fields and comments, middleware then sub-routers first", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
     fs.mkdirSync(path.join(dir, "server/routers"), { recursive: true });
     const config = path.join(dir, ".oxlintrc.json");
@@ -73,11 +73,11 @@ describe("member order", () => {
       router,
       [
         "export default new Hono()",
+        "  .use(middleware)",
         '  .delete("/:id", (c) => c) // about deleting',
         "  // The list.",
         '  .get("/", (c) => c)',
         '  .route("/", early)',
-        "  .use(middleware)",
         '  .post("/", (c) => c)',
         '  .route("/b", b)',
         '  .get("/:id", (c) => c)',
@@ -110,20 +110,19 @@ describe("member order", () => {
         "",
       ].join("\n"),
     );
-    // Each run between middleware is sorted on its own: the middleware still applies to what follows it. A run's
-    // sub-routers come first, in their order.
+    // Its middleware, then its sub-routers, in their order, then its routes by method and path.
     expect(fs.readFileSync(router, "utf8")).toBe(
       [
         "export default new Hono()",
-        '  .route("/", early)',
-        "  // The list.",
-        '  .get("/", (c) => c)',
-        '  .delete("/:id", (c) => c) // about deleting',
         "  .use(middleware)",
+        '  .route("/", early)',
         '  .route("/b", b)',
         '  .route("/", a)',
+        "  // The list.",
+        '  .get("/", (c) => c)',
         '  .get("/:id", (c) => c)',
-        '  .post("/", (c) => c);',
+        '  .post("/", (c) => c)',
+        '  .delete("/:id", (c) => c); // about deleting',
         "",
       ].join("\n"),
     );
@@ -152,6 +151,12 @@ describe("member order", () => {
 
     const check = await runOxlint(["-c", config, dir]);
     expect(check.exitCode).toBe(0);
+    // Middleware after a route would skip the routes above it: it's reported, and the router splits
+    const late = path.join(dir, "server/routers/late.ts");
+    fs.writeFileSync(late, ["export default new Hono()", '  .get("/", (c) => c)', "  .use(middleware)", ""].join("\n"));
+    expect((await runOxlint(["-f", "unix", "-c", config, late])).stdout).toContain(
+      "A router's middleware (`.use()`) comes before its sub-routers and routes",
+    );
     fs.rmSync(dir, { recursive: true });
   });
   test("orders a file's types and constants by name, a constant another one reads above it, with oxlint --fix", async () => {
