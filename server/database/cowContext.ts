@@ -5,7 +5,8 @@
  *
  * This file is part of the COW auto-resolution machinery:
  * - `withCowContext` is wrapped by `withRulesetScope` (the public entry).
- * - `getCowContext` is read by the repo Proxy + `idMatches` (`ResolvesCopies`).
+ * - `getCowContext` is read by the repo Proxy, `idMatches` (`ResolvesCopies`) and a ruleset entity list's sibling
+ *   losers (`ScopesToRuleset`).
  *
  * Services should use `withRulesetScope` / `withRulesetScopes` from `server/cache/rulesetCache/` instead. Importing
  * from this file directly bypasses the rulesetData loading / invariant checking that the scope helpers provide.
