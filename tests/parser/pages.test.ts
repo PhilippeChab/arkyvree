@@ -4,9 +4,9 @@ import * as cheerio from "cheerio";
 
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class.ts";
 import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
+import { frameHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/frame.ts";
 import {
   contentHeading,
-  frameHeading,
   pageTitle,
   parseListingHtml,
   sectionElements,

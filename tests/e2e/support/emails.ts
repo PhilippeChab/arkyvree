@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-import { queryDatabase } from "@/tests/e2e/support/users.ts";
+import { queryDatabase } from "@/tests/e2e/support/database.ts";
 
 /**
  * The latest active code a user was sent, read from the test database: the e2e suite has no mailer.

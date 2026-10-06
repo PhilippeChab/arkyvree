@@ -64,6 +64,9 @@ describe("file layout", () => {
           // A constant one of the file's functions builds, and one the file keeps built from one it exports
           "server/a/built.ts": lines("function f() {", "  return 1;", "}", "export const N = f();"),
           "server/a/fromExport.ts": lines("export const A = 1;", "const B = A + 1;", "export const f = () => B;"),
+          // A module runs nothing as it loads; a script marked a module by `export {}` runs
+          "server/a/runs.ts": lines("export function f() {", "  return 1;", "}", "f();"),
+          "scripts/marked.ts": lines("async function main() {}", "export {};", "await main();"),
           // What a tool writes keeps its layout
           "database/packages/p/generated/feats.ts": lines("export const a = () => 1;", "type B = number;"),
           // Out of order: a type below a constant, a constant below a helper, a helper below an export
@@ -88,6 +91,7 @@ describe("file layout", () => {
       "file-layout scripts/run.ts",
       "file-layout server/a/built.ts",
       "file-layout server/a/fromExport.ts",
+      "file-layout server/a/runs.ts",
       "file-layout server/a/type.ts",
       "file-layout shared/constant.ts",
       "file-layout tests/a.test.ts",
@@ -192,6 +196,29 @@ describe("file layout", () => {
     expect(out["scripts/b.ts"]).toBe(
       lines("#!/usr/bin/env bun", "go(f());", "function f() {", "  return 1;", "}", "type T = number;"),
     );
+  });
+
+  test("--fix never changes the order code runs in, and a directive prologue opens a file", async () => {
+    const running = lines(
+      "export const A = await a();",
+      "",
+      "const B = await b();",
+      "",
+      "export function f() {",
+      "  return A + B;",
+      "}",
+    );
+    const out = await fixed({ "server/running.ts": running });
+    // Own before exported would run `b()` first: reported, never fixed
+    expect(out["server/running.ts"]).toBe(running);
+    expect(await lintRepo({ "server/running.ts": running }, ["file-layout"])).toEqual([
+      "file-layout server/running.ts",
+    ]);
+    expect(
+      await lintRepo({ "server/strict.ts": lines('"use strict";', "const N = 1;", "export const f = () => N;") }, [
+        "file-layout",
+      ]),
+    ).toEqual([]);
   });
 
   test("--fix lifts a helper out of a `describe`, unless it uses the block's names or its name is taken", async () => {

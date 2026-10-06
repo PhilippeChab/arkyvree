@@ -49,7 +49,7 @@
     "prod:diff": "bun --env-file=.env.production scripts/ops/diff/diff-prod.ts",
     "prod:validate-characters": "bun --env-file=.env.production scripts/ops/validate-characters.ts",
     "parser:scrape": "bun database/packages/dnd35-from-parser/tools/scraper/index.ts",
-    "parser:generate": "bun database/packages/dnd35-from-parser/tools/generator/index.ts",
+    "parser:generate": "bun database/packages/dnd35-from-parser/tools/generate.ts",
     "parser:sync": "bun database/packages/dnd35-from-parser/tools/sync.ts",
     "parser:overrides": "bun database/packages/dnd35-from-parser/tools/overrides.ts",
     "parser:validate": "bun database/packages/dnd35-from-parser/tools/validate.ts",

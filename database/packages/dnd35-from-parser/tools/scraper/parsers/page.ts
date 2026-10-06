@@ -1,20 +1,17 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
+import { frameHeading } from "./frame.ts";
+
 // The structure dndtools.net pages share.
 
-const SITE_FRAME = ["Feats", "D&D", "Welcome", "Home", "About", "Search", "Login"];
-
-/** Matches the headings of the site's frame (its tagline, its navigation) and those starting with one of `extra`. */
-export function frameHeading(...extra: string[]): RegExp {
-  return new RegExp(`^(${[...SITE_FRAME, ...extra].map(RegExp.escape).join("|")})`, "i");
-}
+const FRAME_HEADING = frameHeading();
 
 /**
  * A page's title heading: its first short h2 outside the site's frame (`frame`), else its second h2. None when it
  * has neither, so a page carrying only the site's heading isn't read as an entry.
  */
-export function contentHeading($: cheerio.CheerioAPI, frame = frameHeading()) {
+export function contentHeading($: cheerio.CheerioAPI, frame = FRAME_HEADING) {
   const h2s = $("h2").toArray();
   const title =
     h2s.find((el) => {
@@ -25,7 +22,7 @@ export function contentHeading($: cheerio.CheerioAPI, frame = frameHeading()) {
 }
 
 /** A page's title: its content heading's text (`contentHeading`), or "" for a page without one. */
-export function pageTitle($: cheerio.CheerioAPI, frame = frameHeading()): string {
+export function pageTitle($: cheerio.CheerioAPI, frame = FRAME_HEADING): string {
   return contentHeading($, frame)?.text().trim() ?? "";
 }
 

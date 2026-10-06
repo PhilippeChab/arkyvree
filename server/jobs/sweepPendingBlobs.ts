@@ -1,4 +1,4 @@
-import type { Task } from "graphile-worker";
+import type { JobHelpers } from "graphile-worker";
 
 import { db, withTransaction } from "@/server/database/index.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
@@ -93,6 +93,6 @@ export async function sweepPendingBlobs(
   return { swept, failed };
 }
 
-export const sweepPendingBlobsTask: Task = async (_, helpers) => {
+export async function sweepPendingBlobsTask(_payload: unknown, helpers: JobHelpers): Promise<void> {
   await sweepPendingBlobs({ logger: helpers.logger });
-};
+}

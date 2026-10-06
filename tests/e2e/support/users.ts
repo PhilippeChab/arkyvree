@@ -1,19 +1,7 @@
-import pg from "pg";
-
 import { PASSWORD_DIGEST } from "@/database/seeds/users.ts";
+import { queryDatabase } from "@/tests/e2e/support/database.ts";
 
 export type E2EUser = { email: string; password: string; username: string };
-
-/** Runs `sql` on the run's database, for what the API has no way to do: its rows. */
-export async function queryDatabase<Row extends pg.QueryResultRow>(sql: string, params: unknown[]): Promise<Row[]> {
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
-  try {
-    return (await client.query<Row>(sql, params)).rows;
-  } finally {
-    await client.end();
-  }
-}
 
 /** Creates a verified, onboarded user (if the email isn't taken), with the seeded users' password. */
 export async function createUser(email: string, username: string): Promise<E2EUser> {

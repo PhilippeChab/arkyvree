@@ -7,8 +7,9 @@
  * a test file's helper never sits in a `describe`. A call, a condition or a loop at the file's top is a step of its
  * run: nothing is declared after one.
  * `oxlint --fix` puts a file in order, each statement above what uses it, and lifts a helper out of a `describe` when it
- * uses nothing the block declares and its name is free (the report says what to change otherwise). It moves nothing in
- * a file with a declaration after a step: steps run in order, so the code moves it. What a tool writes
+ * uses nothing the block declares and its name is free (the report says what to change otherwise). It never changes
+ * the order code runs in: it moves nothing in a file with a declaration after a step, or whose order would swap two
+ * declarations that run code (a call, `new`, `await`); the code moves them. What a tool writes
  * keeps the tool's layout: the parser's `generated/`, drizzle's schema and relations.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
@@ -42,8 +43,10 @@ const MESSAGE =
   "helpers, then what it's for (its exports, its class, its tests). `oxlint --fix` orders it.";
 
 const STEP =
-  "A file's run (a call, a condition, a loop at its top) comes last: nothing is declared after it. A script runs in " +
-  "a function it calls last (`main()`).";
+  "A file's run (a call, a condition, a loop at its top) comes last: nothing is declared after it. Its steps go below " +
+  "its declarations, or into a function it calls last (a script's `main()`).";
+const MODULE_RUN =
+  "A module (a file that exports) runs nothing as it loads: a script imports it, and runs in a function it calls last.";
 const BUILT =
   "A constant is a value the file writes, never one its own functions build: move the function to a module of its " +
   "own, or write the value.";
@@ -59,8 +62,15 @@ const LOOPS = new Set(["ForStatement", "ForOfStatement", "ForInStatement", "Whil
  */
 function findStrays(items) {
   const strays = [];
+  // A module, which other files import: what it exports, never a run (an empty `export {}` marks a script a module)
+  const exports = items.some(({ statement }) =>
+    statement.type === "ExportNamedDeclaration"
+      ? statement.declaration !== null || statement.specifiers.length > 0
+      : /^Export(Default|All)Declaration$/.test(statement.type),
+  );
   let afterStep = false;
   for (const item of items) {
+    if (exports && item.kind === "effect") strays.push([item, MODULE_RUN]);
     if (afterStep && item.kind !== "effect" && item.kind !== "import") strays.push([item, STEP]);
     if (item.kind === "effect") afterStep = true;
     if (item.kind !== "constant") continue;
@@ -202,6 +212,8 @@ function holdsOrClass(item) {
 /** What a top-level statement is: an import, a type, a constant, a helper, the file's purpose, or a side effect. */
 function kindOf(statement) {
   if (statement.type === "ImportDeclaration" || statement.type === "TSImportEqualsDeclaration") return "import";
+  // A directive prologue ("use strict") opens the file, as its imports do
+  if (statement.type === "ExpressionStatement" && statement.directive) return "import";
   if (statement.type === "ExportAllDeclaration") return "main";
   if (statement.type === "ExportNamedDeclaration" && !statement.declaration) return "main";
   if (statement.type === "TSModuleDeclaration") return "type";
@@ -250,7 +262,7 @@ function readNames(node, into = new Set(), types = false) {
 
 /**
  * Each statement's group, which its dependencies can move: an export a helper calls is a helper, and a statement sits
- * in no earlier group than a value it reads (a constant one of the file's functions builds sits with them).
+ * in no earlier group than a value it reads.
  */
 export function rankStatements(statements) {
   const items = statements.map((statement, index) => {
@@ -310,6 +322,32 @@ function reorder(text, statements, items) {
       })
       .join(""),
   };
+}
+
+/** Whether evaluating `node` runs code: a call, `new`, `await`, an assignment (not what a function inside it holds). */
+function runsCode(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(runsCode);
+  if (FUNCTION_VALUES.has(node.type) && node.type !== "ClassExpression") return false;
+  if (
+    /^(CallExpression|NewExpression|AwaitExpression|AssignmentExpression|UpdateExpression|TaggedTemplateExpression|ImportExpression)$/.test(
+      node.type,
+    )
+  )
+    return true;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && runsCode(child),
+  );
+}
+
+/** Whether a declaration runs code where it stands: a constant whose value does, a class with a static part. */
+function runsAtLoad(statement) {
+  const declaration = declarationOf(statement);
+  if (declaration?.type === "VariableDeclaration") return runsCode(declaration.declarations);
+  if (declaration?.type === "ClassDeclaration") {
+    return declaration.body.body.some((member) => member.static || member.type === "StaticBlock");
+  }
+  return false;
 }
 
 /** The names a file declares at its top, its imports' included. */
@@ -393,10 +431,16 @@ function createFileLayout(context) {
       }
       if (misplaced.length === 0) return;
       const order = reorder(text, statements, items);
+      // The fix never changes the order code runs in: two declarations that run code keep theirs
+      const sorted = items.slice(firstBody).sort((a, b) => a.rank - b.rank || a.index - b.index);
+      const running = sorted.filter((item) => runsAtLoad(item.statement)).map((item) => item.index);
+      const reordersRuns = running.some((index, i) => i > 0 && index < running[i - 1]);
       context.report({
         node: declarationOf(misplaced[0].statement) ?? misplaced[0].statement,
         message: MESSAGE,
-        ...(order && !afterStep && { fix: (fixer) => fixer.replaceTextRange(order.range, order.text) }),
+        ...(order &&
+          !afterStep &&
+          !reordersRuns && { fix: (fixer) => fixer.replaceTextRange(order.range, order.text) }),
       });
     },
     FunctionDeclaration: (statement) => checkNested(context, text, statement),

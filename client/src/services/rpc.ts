@@ -22,7 +22,7 @@ export { ApiError, type ApiValidationIssue };
 
 /**
  * Parse an RPC response as its success body type. Non-2xx responses never
- * reach callers — `defaultFetch` has already thrown `ApiError` — so there is
+ * reach callers — `apiFetch` has already thrown `ApiError` — so there is
  * no `response.ok` check to write: `queryFn: () => parseResponse(rpc.api.x.$get())`.
  */
 export { parseResponse } from "hono/client";

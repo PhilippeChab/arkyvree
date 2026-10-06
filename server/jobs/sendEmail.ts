@@ -1,4 +1,4 @@
-import type { Task } from "graphile-worker";
+import type { JobHelpers } from "graphile-worker";
 
 import { type EmailJobPayload, renderEmail } from "@/server/emails/index.ts";
 import { isProduction } from "@/server/environment.ts";
@@ -13,7 +13,7 @@ type SendEmailPayload = {
 
 const { resend, smtpTransport } = createEmailTransports();
 
-export const sendEmailTask: Task = async (payload, helpers) => {
+export async function sendEmailTask(payload: unknown, helpers: JobHelpers): Promise<void> {
   const email = payload as SendEmailPayload;
   const { to, from, subject } = email;
 
@@ -44,4 +44,4 @@ export const sendEmailTask: Task = async (payload, helpers) => {
     throw new Error(result.error.message);
   }
   helpers.logger.info(`Email sent via Resend to ${to.join(", ")}: ${subject}`);
-};
+}

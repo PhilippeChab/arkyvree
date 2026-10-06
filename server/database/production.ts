@@ -2,7 +2,6 @@ import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { NodePgClient } from "drizzle-orm/node-postgres";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { type PgQueryResultHKT, type PgTransaction } from "drizzle-orm/pg-core";
-import { Pool } from "pg";
 
 /**
  * PRODUCTION DATABASE IMPLEMENTATION
@@ -11,7 +10,8 @@ import * as relations from "@/drizzle/relations.ts";
 import * as schema from "@/drizzle/schema.ts";
 import { clearRequestCache } from "@/server/database/requestCache.ts";
 import { readEnv, readRequiredEnv } from "@/server/environment.ts";
-import { instrumentQueries } from "@/server/timing.ts";
+
+import { createPool } from "./pool.ts";
 
 export type Db = typeof db | Transaction;
 
@@ -22,7 +22,7 @@ export type Transaction = PgTransaction<
 >;
 
 const schemaWithRelations = { ...schema, ...relations };
-const pool = new Pool({
+const pool = createPool({
   connectionString: readRequiredEnv("DATABASE_URL"),
   max: parseInt(readEnv("DB_POOL_MAX") || "20", 10),
   // Set DB_POOL_MIN to keep a floor of connections warm (character reads
@@ -49,10 +49,3 @@ export async function withTransaction<T>(callback: (tx: Transaction) => Promise<
   clearRequestCache();
   return result;
 }
-
-// Times every query, the pool's and its clients' (it patches their prototypes).
-instrumentQueries();
-
-pool.on("error", (err) => {
-  console.error("[db] Unexpected pool client error:", err.message);
-});

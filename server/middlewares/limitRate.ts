@@ -8,12 +8,13 @@ type KeyGenerator = NonNullable<Parameters<typeof rateLimiter>[0]["keyGenerator"
 
 const noop = createMiddleware(async (_, next) => next());
 
+/** The requester's IP address, as the proxy in front of the app forwards it. */
 function getClientIp(c: { req: { header: (name: string) => string | undefined } }) {
   return c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || c.req.header("x-real-ip") || "unknown";
 }
 
 /** The requester's email address, for the routes that send one an email; other requests aren't counted together. */
-const emailKey: KeyGenerator = async (c) => {
+async function emailKey(c: Parameters<KeyGenerator>[0]): Promise<string> {
   if (c.req.method !== "POST" && c.req.method !== "PUT") {
     return `skip:${crypto.randomUUID()}`;
   }
@@ -28,7 +29,7 @@ const emailKey: KeyGenerator = async (c) => {
   }
 
   return `skip:${crypto.randomUUID()}`;
-};
+}
 
 /**
  * At most `limit` requests per `windowMs` from each client IP, or `per` email address; past it,

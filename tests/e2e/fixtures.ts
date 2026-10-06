@@ -8,7 +8,8 @@ import { randomUUID } from "node:crypto";
 import { test as base, type Page } from "@playwright/test";
 
 import { recordCoverage } from "@/tests/e2e/coverage.ts";
-import { createUser, type E2EUser, queryDatabase } from "@/tests/e2e/support/users.ts";
+import { queryDatabase } from "@/tests/e2e/support/database.ts";
+import { createUser, type E2EUser } from "@/tests/e2e/support/users.ts";
 import { TEST_USERS } from "@/tests/fixtures/auth.fixture.ts";
 
 /*

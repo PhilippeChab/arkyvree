@@ -1,5 +1,5 @@
 import { pdf } from "@react-pdf/renderer";
-import type { Task } from "graphile-worker";
+import type { JobHelpers } from "graphile-worker";
 
 import { withTransaction } from "@/server/database/index.ts";
 import { Exports, Notifications } from "@/server/repositories/index.ts";
@@ -24,7 +24,7 @@ function sanitizeFileName(name: string): string {
   return name.replace(/[/\\?%*:|"<>]/g, "_").slice(0, 200);
 }
 
-export const generatePdfTask: Task = async (payload, helpers) => {
+export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Promise<void> {
   const { userId, characterId, characterName, campaignId } = payload as GeneratePdfPayload;
 
   helpers.logger.info(`Generating PDF for character ${characterId}`);
@@ -130,4 +130,4 @@ export const generatePdfTask: Task = async (payload, helpers) => {
 
     throw error;
   }
-};
+}

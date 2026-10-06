@@ -6,7 +6,7 @@
  */
 import os from "node:os";
 
-import { cloneDatabase, databaseOf } from "@/scripts/db/clone-database.ts";
+import { cloneDatabase, databaseOf } from "@/scripts/db/databases.ts";
 
 /** The `--workers` count, else one per CPU. */
 function workers(): number {

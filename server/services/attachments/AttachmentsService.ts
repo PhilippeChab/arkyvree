@@ -8,6 +8,7 @@ import { getStorage } from "@/server/storage/s3.ts";
 import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { canAnySessionRead } from "./readers.ts";
 import { getPublicUrl } from "./records.ts";
 
 type OwnershipChecker = (session: Session, recordId: string) => Promise<boolean>;
@@ -34,17 +35,13 @@ const imagePolicy: UploadPolicy = {
 
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
-/**
- * The records that take attachments: who may attach to one and read them, what they take, under which names. Avatars
- * and portraits are display assets meant to be visible to signed-in users — the URL adds no exposure beyond the page
- * (a share token gates that) — so any signed-in session reads them.
- */
+/** The records that take attachments: who may attach to one and read them, what they take, under which names. */
 const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
   [
     "User",
     {
       isOwner: async (session, recordId) => session.userId === recordId,
-      isReader: async () => true,
+      isReader: canAnySessionRead,
       policy: imagePolicy,
       names: ["avatar"],
     },
@@ -64,7 +61,7 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
         });
         return !!master;
       },
-      isReader: async () => true,
+      isReader: canAnySessionRead,
       policy: imagePolicy,
       names: ["portrait"],
     },

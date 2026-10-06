@@ -31,8 +31,8 @@
  * - `test-placement`: a test named after a module sits at that module's mirror (`tests/services/…` ↔
  *   `server/services/…`); a test of a behavior across modules is free in its area.
  * - `function-declarations`: a file's own function is a `function` declaration (`function verbOf(method) {…}`), never
- *   a const holding an arrow: an arrow is for a callback, or a function a function type types (`const run: Task = …`,
- *   whose parameters the type gives). `oxlint --fix` declares one.
+ *   a variable holding an arrow: an arrow is for a callback. `oxlint --fix` declares one (a typed one's parameters are
+ *   typed by hand).
  * - `include-order`: a class includes its concerns by name, after its base (`include(BaseRepository<…>, Paginates,
  *   Searches)`): a concern builds on the base alone, so their order is the reader's. `oxlint --fix` sorts them.
  * - `policy-shape`: a service builds a policy with `XPolicy.for(db, session, entity)`, which loads the session's standing
@@ -601,19 +601,23 @@ function createFunctionDeclarations(context) {
     Program(program) {
       for (const statement of program.body) {
         const declaration = statement.type === "ExportNamedDeclaration" ? statement.declaration : statement;
-        if (declaration?.type !== "VariableDeclaration" || declaration.kind !== "const") continue;
+        if (declaration?.type !== "VariableDeclaration") continue;
         if (declaration.declarations.length !== 1) continue;
         const [declarator] = declaration.declarations;
         const fn = declarator.init;
         if (fn?.type !== "ArrowFunctionExpression" && fn?.type !== "FunctionExpression") continue;
-        // A function type types it (`const run: Task = …`): its parameters take their types from it
-        if (declarator.id.type !== "Identifier" || declarator.id.typeAnnotation) continue;
-        const fixable = !(fn.type === "ArrowFunctionExpression" && readsThis(fn.body));
+        if (declarator.id.type !== "Identifier") continue;
+        // The fix declares what it can as it is: not a function a type annotates (its parameters take their types from
+        // it, which a declaration writes out), one a `let` reassigns, or an arrow reading `this`
+        const fixable =
+          declaration.kind === "const" &&
+          !declarator.id.typeAnnotation &&
+          !(fn.type === "ArrowFunctionExpression" && readsThis(fn.body));
         context.report({
           node: declarator.id,
           message:
-            "A file's own function is a `function` declaration, not a const holding an arrow: an arrow is for a " +
-            "callback, or a function a function type types (`const run: Task = …`). `oxlint --fix` declares it.",
+            "A file's own function is a `function` declaration, never a variable holding an arrow: an arrow is for a " +
+            "callback. `oxlint --fix` declares one (a typed one's parameters are typed by hand).",
           ...(fixable && {
             fix: (fixer) => {
               const { range, text: replacement } = declarationText(text, statement, declarator);

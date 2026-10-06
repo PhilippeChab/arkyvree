@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
-import { limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
+import { isUuid, limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
 import { characterIdParam, page } from "@/server/routers/api/validation.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
@@ -12,20 +12,17 @@ const queryNumber = z.string().pipe(z.coerce.number());
 
 const levelParams = characterIdParam.extend({ characterLevelId: z.string().uuid() });
 
-/** An id: what a list keeps. */
-const UUID = z.string().uuid();
-
 /** Comma-separated ids: what isn't one is dropped. */
 const idList = z
   .string()
   .optional()
-  .transform((value) => value?.split(",").filter((id) => UUID.safeParse(id).success));
+  .transform((value) => value?.split(",").filter(isUuid));
 
 /** Comma-separated, one per pending level: its ability increase's id, or anything else (`null`) for none. */
 const abilityIdList = z
   .string()
   .optional()
-  .transform((value) => value?.split(",").map((id) => (UUID.safeParse(id).success ? id : undefined)));
+  .transform((value) => value?.split(",").map((id) => (isUuid(id) ? id : undefined)));
 
 /** Comma-separated `featId:aptitudeId` picks: what isn't one is dropped. */
 const featPicks = z
@@ -38,7 +35,7 @@ const featPicks = z
         const [featId, aptitudeId] = pair.split(":");
         return { featId, aptitudeId };
       })
-      .filter((pick) => UUID.safeParse(pick.featId).success && UUID.safeParse(pick.aptitudeId).success),
+      .filter((pick) => isUuid(pick.featId) && isUuid(pick.aptitudeId)),
   );
 
 /** Comma-separated `skillId:rank` allocations: what isn't one is dropped. */
@@ -52,7 +49,7 @@ const skillAllocations = z
         const [skillId, rank] = pair.split(":");
         return { skillId, rank: Number(rank) };
       })
-      .filter((allocation) => UUID.safeParse(allocation.skillId).success && !isNaN(allocation.rank)),
+      .filter((allocation) => isUuid(allocation.skillId) && !isNaN(allocation.rank)),
   );
 
 /** The class level a level-up step is for, and the levels planned before it. */

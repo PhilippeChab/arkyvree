@@ -44,19 +44,7 @@ const COMPANION_GRANT_PATTERNS: {
   { pattern: /^Special Mount \((.+)\)$/, aptitudeSlug: "specialmountbond", bondedKind: "mount" },
 ];
 
-// ---------------------------------------------------------------------------
-// SAVE_MAP — used by detectFeat
-// ---------------------------------------------------------------------------
-
 const SAVE_NAMES = ["Fortitude", "Reflex", "Will"];
-
-// ---------------------------------------------------------------------------
-// Ordinal suffix — used by scraper/parsers, detectFeat, detectClass
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Template description expansion — used by buildSeeds, generator/feat
-// ---------------------------------------------------------------------------
 
 const WEAPON_DESC_PATTERNS = [/the selected weapon/gi, /selected weapon/gi, /the weapon you selected/gi];
 
@@ -73,16 +61,8 @@ export const NUMBER_WORDS: Record<string, number> = {
   ten: 10,
 };
 
-// ---------------------------------------------------------------------------
-// discoverRefs — used by the generator, sync, validate, overrides
-// ---------------------------------------------------------------------------
-
 /** The books' references: a folder per book. */
 export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
-
-// ---------------------------------------------------------------------------
-// SKILL_MAP — used by detectFeat, detectDomain
-// ---------------------------------------------------------------------------
 
 export const SKILL_MAP: Record<string, string> = Object.fromEntries(
   SKILL_NAMES.map((name) => [name.toLowerCase(), stripSeparators(name)]),
@@ -148,6 +128,36 @@ export { stripSeparators } from "@/shared/text.ts";
 
 export { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 
+export function validateModifiers<M extends ModifierEffect>(
+  modifiers: M[],
+  isValid: (target: string) => boolean,
+): { validated: M[]; errors: string[] } {
+  const validated: M[] = [];
+  const errors: string[] = [];
+  for (const m of modifiers) {
+    if (isValid(m.target)) {
+      validated.push(m);
+    } else {
+      errors.push(`Invalid modifier path "${m.target}": ${m.operator} ${m.value}`);
+    }
+  }
+  return { validated, errors };
+}
+
+/** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
+export function anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
+  if (!/\(any\)/i.test(name)) return undefined;
+  const baseName = name
+    .replace(/\s*\(any\)/i, "")
+    .trim()
+    .toLowerCase();
+  const checks = SKILL_NAMES.filter((s) => s.toLowerCase().startsWith(baseName)).map((s) =>
+    gte(`skills.${stripSeparators(s)}.rank`, ranks),
+  );
+  if (checks.length <= 1) return checks[0];
+  return or(...checks);
+}
+
 /**
  * Every class-feature feat matching one of these patterns emits two
  * modifiers: the aptitude grant so the picker UI unlocks, and a template
@@ -193,34 +203,34 @@ export function autoUncannyDodgeModifiers(featName: string): ModifierSeed[] {
     : [];
 }
 
-// ---------------------------------------------------------------------------
-// toCamelCase — used by scraper, generator
-// ---------------------------------------------------------------------------
-
-export function toCamelCase(name: string): string {
-  return name
-    .replace(/['']/g, "")
-    .split(/[\s-]+/)
-    .map((word, i) => (i === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
-    .join("");
+/** `value` checked against `options`: `what` names it in the problem. */
+export function checkOneOf<T extends string>(value: string, options: readonly T[], what: string): Checked<T> {
+  return isOneOf(value, options)
+    ? { ok: true, value }
+    : { ok: false, problem: `${what}: "${value}" isn't one of ${options.join(", ")}` };
 }
 
-// ---------------------------------------------------------------------------
-// stripClassSuffix — used by buildSeeds, generator/class
-// ---------------------------------------------------------------------------
+/** A checked value, for the seed: its problem throws. */
+export function checkedValue<T>(checked: Checked<T>): T {
+  if (!checked.ok) throw new Error(checked.problem);
+  return checked.value;
+}
 
-/** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
-export function anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
-  if (!/\(any\)/i.test(name)) return undefined;
-  const baseName = name
-    .replace(/\s*\(any\)/i, "")
-    .trim()
-    .toLowerCase();
-  const checks = SKILL_NAMES.filter((s) => s.toLowerCase().startsWith(baseName)).map((s) =>
-    gte(`skills.${stripSeparators(s)}.rank`, ranks),
-  );
-  if (checks.length <= 1) return checks[0];
-  return or(...checks);
+/** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
+export function detectModifiersOf<E extends { name: string }>(
+  raw: E[],
+  detect: (entry: E) => ModifierDetection<Modifier>,
+) {
+  const detected: Record<string, DetectedModifiers> = {};
+  for (const entry of raw) {
+    const { modifiers, errors, unresolvedModifiers } = detect(entry);
+    detected[entry.name] = {
+      modifiers,
+      ...(errors.length > 0 ? { errors } : {}),
+      ...(unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
+    };
+  }
+  return detected;
 }
 
 /** The reference files under `refDir`: each book's. */
@@ -235,6 +245,115 @@ export function discoverRefs(
     const { _meta }: RefMeta = JSON.parse(readFileSync(path, "utf-8"));
     return { path, type: _meta.type, url: _meta.sourceUrl, book: _meta.book };
   });
+}
+
+export function expandTemplateDescription(description: string, type: string, item: string): string {
+  if (type === "weapon" || type === "crossbow") {
+    return WEAPON_DESC_PATTERNS.reduce((text, pattern) => text.replace(pattern, item), description);
+  }
+  if (type === "skill") {
+    return description.replace(/that skill|\{skill\}/gi, item);
+  }
+  if (type === "school") {
+    return description.replace(/\{school\}/g, item);
+  }
+  return description;
+}
+
+/** Extract feat names from "gains/receives X as a [bonus] feat" patterns.
+ *  Only matches definite grants, not choices ("may select") or parameterized refs. */
+export function extractGrantedFeatNames(desc: string): string[] {
+  const pattern = /(?:gains?|receives?|gets?)\s+(?:the\s+)?(.+?)\s+as a (?:bonus )?feat\b/gi;
+  const names: string[] = [];
+  let m;
+  while ((m = pattern.exec(desc)) !== null) {
+    const raw = m[1].trim();
+    if (/\b(?:either|or|select|choose)\b/i.test(raw)) continue;
+    if (/\b(?:for|corresponding|appropriate|related)\b/i.test(raw)) continue;
+    const featName = raw
+      .replace(/[,(]?\s*see page \d+\)?/gi, "")
+      .replace(/\s+feat$/i, "")
+      .trim();
+    if (featName) names.push(featName);
+  }
+  return names;
+}
+
+/** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override. */
+export function modifierMapping<
+  E extends { name: string; description: string },
+  O extends { description?: string; modifiers?: Modifier[] },
+  X extends object,
+>(
+  raw: E[],
+  detected: Record<string, { modifiers: Modifier[] } | undefined>,
+  overrides: Record<string, O | undefined>,
+  extra: (override: O | undefined) => X,
+) {
+  const mapping: Record<string, { description: string; modifiers?: Modifier[] } & X> = {};
+  for (const entry of raw) {
+    const override = overrides[entry.name];
+    const modifiers = override?.modifiers ?? detected[entry.name]?.modifiers ?? [];
+    mapping[entry.name] = {
+      description: override?.description ?? entry.description,
+      ...(modifiers.length > 0 ? { modifiers } : {}),
+      ...extra(override),
+    };
+  }
+  return mapping;
+}
+
+/**
+ * Capitalize the first letter of each word inside parentheses.
+ * e.g. "Armor Proficiency (heavy)" → "Armor Proficiency (Heavy)"
+ */
+export function normalizeName(name: string): string {
+  return name.replace(/\(([^)]+)\)/g, (_, inner: string) => {
+    const capitalized = inner.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+    return `(${capitalized})`;
+  });
+}
+
+/** Text with its runs of whitespace (newlines included) as single spaces, trimmed. */
+export function normalizeWs(text: string) {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+export function normalizeDescription(text: string, maxLen = MAX_DESC): string {
+  const clean = normalizeWs(sanitizeText(text));
+  return clean.length > maxLen ? clean.substring(0, maxLen - 3).trim() + "..." : clean;
+}
+
+export function parseCliArgs(): { bookFilter?: string; typeFilter?: string; nameFilter?: string; keyFilter?: string } {
+  const args = process.argv.slice(2);
+
+  const typeIdx = args.indexOf("--type");
+  const typeFilter = typeIdx >= 0 ? args.splice(typeIdx, 2)[1] : undefined;
+
+  const keyIdx = args.indexOf("--key");
+  const keyFilter = keyIdx >= 0 ? args.splice(keyIdx, 2)[1] : undefined;
+
+  const bookFilter = args[0];
+  const nameFilter = args[1]?.toLowerCase();
+
+  return { bookFilter, typeFilter, nameFilter, keyFilter };
+}
+
+export function pluralVariants(name: string): string[] {
+  const n = name.toLowerCase();
+  return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
+}
+
+export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): V | undefined {
+  for (const v of pluralVariants(name)) {
+    const result = map.get(v);
+    if (result !== undefined) return result;
+  }
+  return undefined;
+}
+
+export function matchesWithPluralVariants(a: string, b: string): boolean {
+  return pluralVariants(a).includes(b.toLowerCase());
 }
 
 /** The books with references: the folders of REFERENCE_DIR (a symlinked one too), sorted, so generation is the same on every filesystem. */
@@ -269,181 +388,10 @@ export function stripClassSuffix(name: string, className: string): string | unde
   return undefined;
 }
 
-// ---------------------------------------------------------------------------
-// Plural variant helpers — used by buildSeeds, detectClass
-// ---------------------------------------------------------------------------
-
-/** `value` checked against `options`: `what` names it in the problem. */
-export function checkOneOf<T extends string>(value: string, options: readonly T[], what: string): Checked<T> {
-  return isOneOf(value, options)
-    ? { ok: true, value }
-    : { ok: false, problem: `${what}: "${value}" isn't one of ${options.join(", ")}` };
-}
-
-/** A checked value, for the seed: its problem throws. */
-export function checkedValue<T>(checked: Checked<T>): T {
-  if (!checked.ok) throw new Error(checked.problem);
-  return checked.value;
-}
-
-/** Text with its runs of whitespace (newlines included) as single spaces, trimmed. */
-export function normalizeWs(text: string) {
-  return text.replace(/\s+/g, " ").trim();
-}
-
-export function pluralVariants(name: string): string[] {
-  const n = name.toLowerCase();
-  return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
-}
-
-export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): V | undefined {
-  for (const v of pluralVariants(name)) {
-    const result = map.get(v);
-    if (result !== undefined) return result;
-  }
-  return undefined;
-}
-
-export function matchesWithPluralVariants(a: string, b: string): boolean {
-  return pluralVariants(a).includes(b.toLowerCase());
-}
-
-// ---------------------------------------------------------------------------
-// Per-entity modifiers — used by detectDomain, detectRace
-// ---------------------------------------------------------------------------
-
-/** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
-export function detectModifiersOf<E extends { name: string }>(
-  raw: E[],
-  detect: (entry: E) => ModifierDetection<Modifier>,
-) {
-  const detected: Record<string, DetectedModifiers> = {};
-  for (const entry of raw) {
-    const { modifiers, errors, unresolvedModifiers } = detect(entry);
-    detected[entry.name] = {
-      modifiers,
-      ...(errors.length > 0 ? { errors } : {}),
-      ...(unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
-    };
-  }
-  return detected;
-}
-
-/** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override. */
-export function modifierMapping<
-  E extends { name: string; description: string },
-  O extends { description?: string; modifiers?: Modifier[] },
-  X extends object,
->(
-  raw: E[],
-  detected: Record<string, { modifiers: Modifier[] } | undefined>,
-  overrides: Record<string, O | undefined>,
-  extra: (override: O | undefined) => X,
-) {
-  const mapping: Record<string, { description: string; modifiers?: Modifier[] } & X> = {};
-  for (const entry of raw) {
-    const override = overrides[entry.name];
-    const modifiers = override?.modifiers ?? detected[entry.name]?.modifiers ?? [];
-    mapping[entry.name] = {
-      description: override?.description ?? entry.description,
-      ...(modifiers.length > 0 ? { modifiers } : {}),
-      ...extra(override),
-    };
-  }
-  return mapping;
-}
-
-// ---------------------------------------------------------------------------
-// validateModifiers — used by detectFeat, detectDomain
-// ---------------------------------------------------------------------------
-
-export function validateModifiers<M extends ModifierEffect>(
-  modifiers: M[],
-  isValid: (target: string) => boolean,
-): { validated: M[]; errors: string[] } {
-  const validated: M[] = [];
-  const errors: string[] = [];
-  for (const m of modifiers) {
-    if (isValid(m.target)) {
-      validated.push(m);
-    } else {
-      errors.push(`Invalid modifier path "${m.target}": ${m.operator} ${m.value}`);
-    }
-  }
-  return { validated, errors };
-}
-
-export function expandTemplateDescription(description: string, type: string, item: string): string {
-  if (type === "weapon" || type === "crossbow") {
-    return WEAPON_DESC_PATTERNS.reduce((text, pattern) => text.replace(pattern, item), description);
-  }
-  if (type === "skill") {
-    return description.replace(/that skill|\{skill\}/gi, item);
-  }
-  if (type === "school") {
-    return description.replace(/\{school\}/g, item);
-  }
-  return description;
-}
-
-// ---------------------------------------------------------------------------
-// normalizeDescription — used by buildSeeds, codegen
-// ---------------------------------------------------------------------------
-
-export function normalizeDescription(text: string, maxLen = MAX_DESC): string {
-  const clean = normalizeWs(sanitizeText(text));
-  return clean.length > maxLen ? clean.substring(0, maxLen - 3).trim() + "..." : clean;
-}
-
-/**
- * Capitalize the first letter of each word inside parentheses.
- * e.g. "Armor Proficiency (heavy)" → "Armor Proficiency (Heavy)"
- */
-export function normalizeName(name: string): string {
-  return name.replace(/\(([^)]+)\)/g, (_, inner: string) => {
-    const capitalized = inner.replace(/\b[a-z]/g, (c) => c.toUpperCase());
-    return `(${capitalized})`;
-  });
-}
-
-// ---------------------------------------------------------------------------
-// parseCliArgs — used by sync, overrides, diff
-// ---------------------------------------------------------------------------
-
-export function parseCliArgs(): { bookFilter?: string; typeFilter?: string; nameFilter?: string; keyFilter?: string } {
-  const args = process.argv.slice(2);
-
-  const typeIdx = args.indexOf("--type");
-  const typeFilter = typeIdx >= 0 ? args.splice(typeIdx, 2)[1] : undefined;
-
-  const keyIdx = args.indexOf("--key");
-  const keyFilter = keyIdx >= 0 ? args.splice(keyIdx, 2)[1] : undefined;
-
-  const bookFilter = args[0];
-  const nameFilter = args[1]?.toLowerCase();
-
-  return { bookFilter, typeFilter, nameFilter, keyFilter };
-}
-
-// ---------------------------------------------------------------------------
-// Bonus feat grant extraction from description text
-// ---------------------------------------------------------------------------
-
-/** Extract feat names from "gains/receives X as a [bonus] feat" patterns.
- *  Only matches definite grants, not choices ("may select") or parameterized refs. */
-export function extractGrantedFeatNames(desc: string): string[] {
-  const pattern = /(?:gains?|receives?|gets?)\s+(?:the\s+)?(.+?)\s+as a (?:bonus )?feat\b/gi;
-  const names: string[] = [];
-  let m;
-  while ((m = pattern.exec(desc)) !== null) {
-    const raw = m[1].trim();
-    if (/\b(?:either|or|select|choose)\b/i.test(raw)) continue;
-    if (/\b(?:for|corresponding|appropriate|related)\b/i.test(raw)) continue;
-    const featName = raw
-      .replace(/[,(]?\s*see page \d+\)?/gi, "")
-      .replace(/\s+feat$/i, "")
-      .trim();
-    if (featName) names.push(featName);
-  }
-  return names;
+export function toCamelCase(name: string): string {
+  return name
+    .replace(/['']/g, "")
+    .split(/[\s-]+/)
+    .map((word, i) => (i === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
+    .join("");
 }

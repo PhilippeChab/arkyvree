@@ -122,9 +122,9 @@ Attachments (avatars, character portraits) don't go through a `BasePolicy` subcl
 | `User` (avatar) | `session.userId === recordId` | any authenticated session |
 | `Character` (portrait) | a player character's **owner only**; a bonded character's: whoever can edit its master (owner or contributor) | any authenticated session |
 
-Note the divergence: a character's active contributor **can edit the character** (`getEditableCharacter`) but **cannot upload or replace its portrait** — a player character's portrait writes are owner-only. If that's not the desired behavior, update the registered `isOwner` for `Character` to also accept active contributors.
+Note the divergence: a character's active contributor **can edit the character** (`getEditableCharacter`) but **cannot upload or replace its portrait** — a player character's portrait writes are owner-only. If that's not the desired behavior, change `Character`'s `isOwner` in `ATTACHABLE_TYPES` to also accept active contributors.
 
-Reads are intentionally permissive (`allowAuthenticated`) since avatar/portrait URLs add no exposure beyond pages that are already gated.
+Reads are intentionally permissive (`canAnySessionRead`, `attachments/readers.ts`) since avatar/portrait URLs add no exposure beyond pages that are already gated.
 
 ## Invites (rulesets / campaigns / character contributors)
 

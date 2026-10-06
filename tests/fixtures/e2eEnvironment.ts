@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 
 import dotenv from "dotenv";
 
-import { databaseOf, withDatabase } from "@/scripts/db/clone-database.ts";
+import { databaseOf, withDatabase } from "@/scripts/db/databases.ts";
 
 /**
  * Sets up the e2e run's environment, and returns its port. It reads `.env.test`, then:
