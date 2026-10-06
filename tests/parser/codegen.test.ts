@@ -9,7 +9,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/generated/srd/feats/feats.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
 import { buildClassFeatSeeds, classModifiers } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
-import { generateClassSeed } from "@/database/packages/dnd35-from-parser/tools/generator/code/classFiles.ts";
+import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { coreSystemFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
 import { stringifyModifier } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
@@ -21,6 +21,7 @@ import {
 import { escapeTemplate, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   Modifier,
@@ -35,6 +36,11 @@ function check(operator: string, valueType: string, value: string): RequirementC
     value,
     valueType,
   };
+}
+
+/** A class reference's generated ClassSeed file. */
+function classCode(ref: ClassReference) {
+  return new ClassFile(ref).classCode();
 }
 
 function classRef(book: string, slug: string) {
@@ -237,7 +243,7 @@ describe("The generated feats", () => {
     expect(daringWarrior.slice(0, daringWarrior.indexOf("},"))).toContain(
       `eq("feats.weaponspecialization.*.possessed"),`,
     );
-    const warChanter = generateClassSeed(
+    const warChanter = classCode(
       loadReference(join(REFERENCE_DIR, "complete-warrior", "classes", "warChanter.json"), "class"),
     );
     expect(warChanter).toContain(`eq("feats.weaponfocus.*.possessed"),`);
@@ -248,7 +254,7 @@ describe("The generated feats", () => {
     const feats = generateFeatSeeds(loadReference(join(REFERENCE_DIR, "complete-scoundrel", "feats.json"), "feat"));
     const asceticStalker = feats.slice(feats.indexOf(`name: "Ascetic Stalker"`));
     expect(asceticStalker.slice(0, asceticStalker.indexOf("},"))).toContain(`eq("feats.kipower.*.possessed"),`);
-    const arcaneTrickster = generateClassSeed(
+    const arcaneTrickster = classCode(
       loadReference(join(REFERENCE_DIR, "dmg", "classes", "arcaneTrickster.json"), "class"),
     );
     expect(arcaneTrickster).toContain(`gte("feats.sneakattack.count", 2),`);
@@ -271,17 +277,11 @@ describe("The generated feats", () => {
 
 describe("A generated class", () => {
   test("requires one of a family's feats, or a number of them", () => {
-    expect(generateClassSeed(classRef("complete-scoundrel", "fortunesFriend"))).toContain(
-      `eq("feats.luck.*.possessed"),`,
-    );
-    expect(generateClassSeed(classRef("complete-adventurer", "exemplar"))).toContain(
-      `eq("feats.skillfocus.*.possessed"),`,
-    );
-    expect(generateClassSeed(classRef("complete-adventurer", "maester"))).toContain(
-      `gte("feats.itemcreation.count", 2),`,
-    );
+    expect(classCode(classRef("complete-scoundrel", "fortunesFriend"))).toContain(`eq("feats.luck.*.possessed"),`);
+    expect(classCode(classRef("complete-adventurer", "exemplar"))).toContain(`eq("feats.skillfocus.*.possessed"),`);
+    expect(classCode(classRef("complete-adventurer", "maester"))).toContain(`gte("feats.itemcreation.count", 2),`);
     // "Spell Focus (two schools of magic)"
-    expect(generateClassSeed(classRef("dmg", "archmage"))).toContain(`gte("feats.spellfocus.count", 2),`);
+    expect(classCode(classRef("dmg", "archmage"))).toContain(`gte("feats.spellfocus.count", 2),`);
   });
 
   test("reads its table's columns into level modifiers: a number's rise, a text where it changes", () => {
@@ -343,7 +343,7 @@ describe("A generated class", () => {
       ],
     ] as const) {
       const ref = classRef(book, slug);
-      expect(generateClassSeed(ref)).toContain(granted);
+      expect(classCode(ref)).toContain(granted);
       expect(buildClassFeatSeeds(ref).map((f) => f.name)).not.toContain(feature);
     }
   });

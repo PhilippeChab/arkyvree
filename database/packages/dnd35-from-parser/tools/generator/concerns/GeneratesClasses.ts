@@ -5,10 +5,8 @@ import {
   type BaseGenerator,
   GENERATED_HEADER,
 } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import {
-  generateClassFeatSeeds,
-  generateClassSeed,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/classFiles.ts";
+import { generateClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/classFeatsFile.ts";
+import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import { quote, toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
@@ -30,7 +28,7 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
         rmSync(classPath, { force: true });
         rmSync(featPath, { force: true });
       } else {
-        this.write(classPath, generateClassSeed(ref));
+        this.write(classPath, new ClassFile(ref).classCode());
         this.write(featPath, generateClassFeatSeeds(ref));
       }
     }

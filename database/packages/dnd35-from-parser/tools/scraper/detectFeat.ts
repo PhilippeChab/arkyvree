@@ -25,7 +25,20 @@ import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-/** Patterns that extractFeatPrereqs should skip — these are class abilities, not feat names */
+/**
+ * Patterns that extractFeatPrereqs should skip — these are class abilities, not feat names
+ *
+ * The abilities a prerequisite names by their abbreviation ("Str 13").
+ */
+const ABILITY_ABBREVIATIONS: Record<string, string> = {
+  str: "strength",
+  dex: "dexterity",
+  con: "constitution",
+  int: "intelligence",
+  wis: "wisdom",
+  cha: "charisma",
+};
+
 const ABILITY_PREREQ_PATTERNS = [
   /^sneak attack ability$/i,
   /^sneak attack \+\d+d\d+$/i,
@@ -47,7 +60,85 @@ const ABILITY_PREREQ_PATTERNS = [
   /^Weapon Proficiency\b/i,
 ];
 
-/** Complete Arcane's draconic feats have no type of their own: their name makes them a family */
+/**
+ * Complete Arcane's draconic feats have no type of their own: their name makes them a family
+ *
+ * The class abilities a feat's prerequisite can name, each the requirements it is (none: a class's own feature).
+ */
+const CLASS_ABILITY_PREREQUISITES: {
+  pattern: RegExp;
+  resolve: (match: RegExpMatchArray) => RequirementEntry | RequirementEntry[] | null;
+}[] = [
+  {
+    pattern: /[Aa]bility to (?:turn|rebuke)|[Tt]urn or rebuke undead ability|[Tt]urn or rebuke undead\b/,
+    resolve: () => or(eq(feat("Turn or Rebuke Undead (Cleric)")), eq(feat("Turn Undead (Paladin)"))),
+  },
+  {
+    // "Sneak attack or sudden strike +Nd6" — either ability's dice, every class's together
+    pattern: /[Ss]neak [Aa]ttack or [Ss]udden [Ss]trike \+(\d+)d\d+/,
+    resolve: (m) => {
+      const count = parseInt(m[1], 10);
+      return or(gte("feats.sneakattack.count", count), gte("feats.suddenstrike.count", count));
+    },
+  },
+  {
+    // "Sneak Attack +Nd6" — N sneak attack dice, every class's together
+    pattern: /[Ss]neak [Aa]ttack \+(\d+)d\d+/,
+    resolve: (m) => gte("feats.sneakattack.count", parseInt(m[1], 10)),
+  },
+  {
+    pattern: /[Ss]neak [Aa]ttack ability/i,
+    resolve: () => eq("feats.sneakattack.possessed"),
+  },
+  {
+    // Bare "Sneak Attack" — just requires having it
+    pattern: /[Ss]neak [Aa]ttack(?!\s*\+|\s*ability|\s*or)/,
+    resolve: () => eq("feats.sneakattack.possessed"),
+  },
+  {
+    // "Sudden Strike +Nd6" — N sudden strike dice, every class's together
+    pattern: /[Ss]udden [Ss]trike \+(\d+)d\d+/,
+    resolve: (m) => gte("feats.suddenstrike.count", parseInt(m[1], 10)),
+  },
+  {
+    pattern: /[Gg]race \+\d+/,
+    resolve: () => eq("feats.grace.possessed"),
+  },
+  {
+    // "Skirmish +Nd6" — N skirmish dice, every class's together
+    pattern: /[Ss]kirmish \+(\d+)d\d+/,
+    resolve: (m) => gte("feats.skirmish.count", parseInt(m[1], 10)),
+  },
+  {
+    pattern: /[Rr]age or frenzy ability/i,
+    resolve: () => eq(feat("Rage (Barbarian)")),
+  },
+  {
+    pattern: /[Ss]mite ability/i,
+    resolve: () => eq(feat("Smite Evil (Paladin)")),
+  },
+  {
+    pattern: /[Ff]lurry of blows ability/i,
+    resolve: () => eq(feat("Flurry of Blows (Monk)")),
+  },
+  {
+    pattern: /[Ww]ild [Ss]hape ability|[Aa]bility to (?:use )?wild shape|[Ww]ild [Ss]hape\./i,
+    resolve: () => eq(feat("Wild Shape (Druid)")),
+  },
+  {
+    // Any class's Summon Familiar (the generator makes it a check of its family)
+    pattern: /[Aa]bility to acquire a (?:new )?familiar/,
+    resolve: () => eq(feat("Summon Familiar")),
+  },
+  {
+    // A monk's ki strike is lawful from monk level 10
+    pattern: /[Kk]i strike \(lawful\)/,
+    resolve: () => gte("classes.monk.level", 10),
+  },
+  // These are class features inherent to a class — not feat prerequisites
+  { pattern: /[Ff]avored enemy ability/i, resolve: () => null },
+];
+
 const DRACONIC_FAMILY = "Draconic";
 
 const FEAT_TYPE_APTITUDES: Record<string, string[]> = {
@@ -65,7 +156,118 @@ const RELEVANT_ALIGNMENTS: Record<string, string> = {
   law: "Any lawful",
 };
 
-/** The feats a feat's benefit or special text implies it requires. */
+/**
+ * The feats a feat's benefit or special text implies it requires.
+ *
+ * The race's size, which a size prerequisite checks.
+ */
+const SIZE_TARGET = "identity.physiology.race.size";
+
+/** Prerequisites recognized, which no requirement says: left unresolved. */
+const UNRESOLVED_PREREQUISITES = [/[Pp]roficien(?:t|cy) with (?:selected )?(?:weapon|armor)/, /[Aa]bility to fly\b/];
+
+/** A feat's ability score requirements: "Str 13", "Dex 15". */
+function abilityScoreRequirements(text: string): RequirementEntry[] {
+  const reqs: RequirementEntry[] = [];
+  const abilityRegex = /\b(Str|Dex|Con|Int|Wis|Cha)\s+(\d+)/gi;
+  let abilityMatch: RegExpExecArray | null;
+  while ((abilityMatch = abilityRegex.exec(text)) !== null) {
+    const ability = ABILITY_ABBREVIATIONS[abilityMatch[1].toLowerCase()];
+    if (ability) {
+      reqs.push(gte(`abilities.${ability}.total`, parseInt(abilityMatch[2], 10)));
+    }
+  }
+  return reqs;
+}
+
+/** A feat's base save requirements: "Base Fortitude save bonus +2". */
+function baseSaveRequirements(text: string): RequirementEntry[] {
+  const reqs: RequirementEntry[] = [];
+  const saveMap: Record<string, string> = { fortitude: "fortitude", reflex: "reflex", will: "will" };
+  const baseSaveRegex = /[Bb]ase\s+(Fortitude|Reflex|Will)\s+save\s+bonus\s+\+(\d+)/gi;
+  let baseSaveMatch: RegExpExecArray | null;
+  while ((baseSaveMatch = baseSaveRegex.exec(text)) !== null) {
+    const save = saveMap[baseSaveMatch[1].toLowerCase()];
+    if (save) {
+      reqs.push(gte(`saves.${save}.base`, parseInt(baseSaveMatch[2], 10)));
+    }
+  }
+  return reqs;
+}
+
+/** A feat's spellcasting requirements: "Caster level Nth", then "Ability to cast (Nth-level) arcane/divine spells". */
+function castingRequirements(text: string): RequirementEntry[] {
+  const reqs: RequirementEntry[] = [];
+  // Caster level: "Caster level Nth"
+  const casterMatch = text.match(/[Cc]aster level (\d+)(?:st|nd|rd|th)/);
+  if (casterMatch) {
+    const level = parseInt(casterMatch[1], 10);
+    reqs.push(or(gte("spellcasting.arcane", level), gte("spellcasting.divine", level)));
+  }
+
+  // Able to cast spells: "Ability to cast arcane spells" or specific level
+  const castMatch = text.match(
+    /[Aa](?:bility|ble) to cast (?:(\d+)(?:st|nd|rd|th)[- ]level )?(arcane|divine)?\s*spells/i,
+  );
+  if (castMatch) {
+    const level = castMatch[1] ? parseInt(castMatch[1], 10) : 1;
+    const type = castMatch[2]?.toLowerCase();
+    if (type === "arcane") {
+      reqs.push(gte("spellcasting.arcane", level));
+    } else if (type === "divine") {
+      reqs.push(gte("spellcasting.divine", level));
+    } else {
+      reqs.push(or(gte("spellcasting.arcane", level), gte("spellcasting.divine", level)));
+    }
+  }
+  return reqs;
+}
+
+/**
+ * A feat's class ability prerequisites, each the class feature feats that give it (`CLASS_ABILITY_PREREQUISITES`, in
+ * order): a text one matched is no longer read by the ones after.
+ */
+function classAbilityRequirements(text: string): RequirementEntry[] {
+  const reqs: RequirementEntry[] = [];
+  let abilityText = text;
+  for (const { pattern, resolve } of CLASS_ABILITY_PREREQUISITES) {
+    const match = abilityText.match(pattern);
+    if (match) {
+      const result = resolve(match);
+      if (result) {
+        if (Array.isArray(result)) {
+          reqs.push(...result);
+        } else {
+          reqs.push(result);
+        }
+      }
+      abilityText = abilityText.replace(match[0], "");
+    }
+  }
+  return reqs;
+}
+
+/** A feat's class level requirements: "fighter level 4th", "Wizard level 1st", "Character Level 6" (overall). */
+function classLevelRequirements(text: string): RequirementEntry[] {
+  const reqs: RequirementEntry[] = [];
+  const classLevelRegex = /(\w+)\s+level\s+(\d+)(?:st|nd|rd|th)?/gi;
+  let classLevelMatch: RegExpExecArray | null;
+  while ((classLevelMatch = classLevelRegex.exec(text)) !== null) {
+    const className = classLevelMatch[1].toLowerCase();
+    const level = parseInt(classLevelMatch[2], 10);
+    // Skip "caster level" (handled above)
+    if (className === "caster") continue;
+    // "Character level" = overall level, not a class
+    if (className === "character") {
+      reqs.push(gte("identity.meta.level", level));
+    } else {
+      const slug = stripSeparators(className);
+      reqs.push(gte(`classes.${slug}.level`, level));
+    }
+  }
+  return reqs;
+}
+
 function detectImplicitFeatPrereqs(entry: FeatReference["raw"][number]): string[] {
   const feats: string[] = [];
   const text = entry.benefit + " " + (entry.special ?? "");
@@ -188,6 +390,53 @@ function isStackable(entry: FeatReference["raw"][number]): boolean {
   );
 }
 
+/** The feats a prerequisite lists, split on commas but not inside parentheses, their names in `featNameMap`. */
+function listedFeatRequirements(text: string, featNameMap: Record<string, string>): RequirementEntry[] {
+  const reqs: RequirementEntry[] = [];
+  for (const f of extractFeatPrereqs(text)) {
+    // Strip numeric/dice suffixes (e.g. "Sudden Strike +8d6" → "Sudden Strike")
+    // and book abbreviation suffixes (e.g. "Brutal Throw (CAd)" → "Brutal Throw")
+    const cleaned = f.replace(/\s*\+\d+(?:d\d+)?$/, "").replace(BOOK_ABBREV_PATTERN, "");
+    const slug = stripSeparators(cleaned);
+    featNameMap[slug] = cleaned;
+    reqs.push(eq(feat(cleaned)));
+  }
+  return reqs;
+}
+
+/**
+ * A prerequisite's multi-option feats, "Weapon Focus (heavy mace, morningstar, or greatclub)" →
+ * or(eq(feat("Weapon Focus: Heavy Mace")), …), their names in `featNameMap`; and `featText` without them, so the
+ * feats it lists aren't read from their fragments.
+ */
+function multiOptionFeatRequirements(
+  text: string,
+  featText: string,
+  featNameMap: Record<string, string>,
+): { requirements: RequirementEntry[]; featText: string } {
+  const reqs: RequirementEntry[] = [];
+  const multiOptionFeatRegex = /([A-Z][a-zA-Z ]+?)\s*\(([a-z][^)]*(?:,|or)[^)]+)\)/g;
+  let multiMatch: RegExpExecArray | null;
+  while ((multiMatch = multiOptionFeatRegex.exec(text)) !== null) {
+    const featBase = titleCaseFeat(multiMatch[1].trim());
+    // "Ability to fly (naturally, magically, or through shapechanging)" names no feat
+    if (isCommonPhrase(featBase)) continue;
+    const options = familyOptions(featBase, multiMatch[2]);
+    if (options.length >= 2) {
+      const children = options.map((opt) => {
+        const name = `${featBase}: ${titleCaseFeat(opt)}`;
+        const slug = stripSeparators(name);
+        featNameMap[slug] = name;
+        return eq(feat(name));
+      });
+      reqs.push(or(...children));
+      // Strip this match so extractFeatPrereqs doesn't also parse partial fragments
+      featText = featText.replace(multiMatch[0], "");
+    }
+  }
+  return { requirements: reqs, featText };
+}
+
 function parsePrerequisiteText(text: string): {
   requirements: RequirementEntry[];
   featNameMap: Record<string, string>;
@@ -214,263 +463,27 @@ function parsePrerequisiteText(text: string): {
     reqs.push(gte("combat.bab", parseInt(babMatch[1], 10)));
   }
 
-  // Base save bonus: "Base Fortitude save bonus +2"
-  const saveMap: Record<string, string> = { fortitude: "fortitude", reflex: "reflex", will: "will" };
-  const baseSaveRegex = /[Bb]ase\s+(Fortitude|Reflex|Will)\s+save\s+bonus\s+\+(\d+)/gi;
-  let baseSaveMatch: RegExpExecArray | null;
-  while ((baseSaveMatch = baseSaveRegex.exec(cleanedText)) !== null) {
-    const save = saveMap[baseSaveMatch[1].toLowerCase()];
-    if (save) {
-      reqs.push(gte(`saves.${save}.base`, parseInt(baseSaveMatch[2], 10)));
-    }
-  }
+  reqs.push(...baseSaveRequirements(cleanedText));
+  reqs.push(...sizeRequirements(cleanedText));
+  reqs.push(...abilityScoreRequirements(cleanedText));
 
-  // Size requirements: "Small or Medium size", "Medium or smaller size", "Small size"
-  const SIZE_TARGET = "identity.physiology.race.size";
-  const sizeNames = SIZE_OPTIONS.join("|");
-
-  // "X or Y size"
-  const explicitSizeMatch = cleanedText.match(new RegExp(`\\b(${sizeNames})\\s+or\\s+(${sizeNames})\\s+size`, "i"));
-  if (explicitSizeMatch) {
-    const s1 = SIZE_OPTIONS.find((s) => s.toLowerCase() === explicitSizeMatch[1].toLowerCase())!;
-    const s2 = SIZE_OPTIONS.find((s) => s.toLowerCase() === explicitSizeMatch[2].toLowerCase())!;
-    reqs.push(or(eqStr(SIZE_TARGET, s1), eqStr(SIZE_TARGET, s2)));
-  }
-
-  // "X or smaller size"
-  const orSmallerMatch =
-    !explicitSizeMatch && cleanedText.match(new RegExp(`\\b(${sizeNames})\\s+or\\s+smaller\\s+size`, "i"));
-  if (orSmallerMatch) {
-    const maxSize = SIZE_OPTIONS.find((s) => s.toLowerCase() === orSmallerMatch[1].toLowerCase())!;
-    const maxIdx = SIZE_OPTIONS.indexOf(maxSize);
-    const sizes = SIZE_OPTIONS.slice(0, maxIdx + 1);
-    reqs.push(or(...sizes.map((s) => eqStr(SIZE_TARGET, s))));
-  }
-
-  // "X size" (standalone)
-  const exactSizeMatch =
-    !explicitSizeMatch && !orSmallerMatch && cleanedText.match(new RegExp(`\\b(${sizeNames})\\s+size\\b`, "i"));
-  if (exactSizeMatch) {
-    const size = SIZE_OPTIONS.find((s) => s.toLowerCase() === exactSizeMatch[1].toLowerCase())!;
-    reqs.push(eqStr(SIZE_TARGET, size));
-  }
-
-  // Ability scores: "Str 13", "Dex 15", etc.
-  const abilityMap: Record<string, string> = {
-    str: "strength",
-    dex: "dexterity",
-    con: "constitution",
-    int: "intelligence",
-    wis: "wisdom",
-    cha: "charisma",
-  };
-  const abilityRegex = /\b(Str|Dex|Con|Int|Wis|Cha)\s+(\d+)/gi;
-  let abilityMatch: RegExpExecArray | null;
-  while ((abilityMatch = abilityRegex.exec(cleanedText)) !== null) {
-    const ability = abilityMap[abilityMatch[1].toLowerCase()];
-    if (ability) {
-      reqs.push(gte(`abilities.${ability}.total`, parseInt(abilityMatch[2], 10)));
-    }
-  }
-
-  // Multi-option feat prerequisites: "Weapon Focus (heavy mace, morningstar, or greatclub)"
-  // or "Weapon Focus (warhammer or light hammer)"
-  // → or(eq(feat("Weapon Focus: Heavy Mace")), eq(feat("Weapon Focus: Morningstar")), ...)
-  const multiOptionFeatRegex = /([A-Z][a-zA-Z ]+?)\s*\(([a-z][^)]*(?:,|or)[^)]+)\)/g;
-  let multiMatch: RegExpExecArray | null;
-  let textForFeatExtraction = cleanedText;
-
-  // "Spellcasting ability (Int or Cha) 15" → or(Int >= 15, Cha >= 15)
-  const spellcastingAbilityMatch = cleanedText.match(/[Ss]pellcasting ability\s*\(([^)]+)\)\s*(\d+)/);
-  if (spellcastingAbilityMatch) {
-    const options = spellcastingAbilityMatch[1]
-      .split(/,\s*(?:or\s+)?|\s+or\s+/)
-      .map((o) => o.trim())
-      .filter(Boolean);
-    const value = parseInt(spellcastingAbilityMatch[2], 10);
-    const children = options
-      .map((o) => abilityMap[o.toLowerCase()])
-      .filter((a): a is string => !!a)
-      .map((a) => gte(`abilities.${a}.total`, value));
-    if (children.length > 1) {
-      reqs.push(or(...children));
-    } else if (children.length === 1) {
-      reqs.push(children[0]);
-    }
-    textForFeatExtraction = textForFeatExtraction.replace(spellcastingAbilityMatch[0], "");
-  }
-  while ((multiMatch = multiOptionFeatRegex.exec(cleanedText)) !== null) {
-    const featBase = titleCaseFeat(multiMatch[1].trim());
-    // "Ability to fly (naturally, magically, or through shapechanging)" names no feat
-    if (isCommonPhrase(featBase)) continue;
-    const options = familyOptions(featBase, multiMatch[2]);
-    if (options.length >= 2) {
-      const children = options.map((opt) => {
-        const name = `${featBase}: ${titleCaseFeat(opt)}`;
-        const slug = stripSeparators(name);
-        featNameMap[slug] = name;
-        return eq(feat(name));
-      });
-      reqs.push(or(...children));
-      // Strip this match so extractFeatPrereqs doesn't also parse partial fragments
-      textForFeatExtraction = textForFeatExtraction.replace(multiMatch[0], "");
-    }
-  }
+  const spellcastingAbility = spellcastingAbilityRequirements(cleanedText);
+  reqs.push(...spellcastingAbility.requirements);
+  const multiOption = multiOptionFeatRequirements(
+    cleanedText,
+    spellcastingAbility.matched ? cleanedText.replace(spellcastingAbility.matched, "") : cleanedText,
+    featNameMap,
+  );
+  reqs.push(...multiOption.requirements);
 
   // Feat prerequisites — split on commas but respect parentheses
-  const featPrereqs = extractFeatPrereqs(textForFeatExtraction);
-  for (const f of featPrereqs) {
-    // Strip numeric/dice suffixes (e.g. "Sudden Strike +8d6" → "Sudden Strike")
-    // and book abbreviation suffixes (e.g. "Brutal Throw (CAd)" → "Brutal Throw")
-    const cleaned = f.replace(/\s*\+\d+(?:d\d+)?$/, "").replace(BOOK_ABBREV_PATTERN, "");
-    const slug = stripSeparators(cleaned);
-    featNameMap[slug] = cleaned;
-    reqs.push(eq(feat(cleaned)));
-  }
-
-  // Caster level: "Caster level Nth"
-  const casterMatch = cleanedText.match(/[Cc]aster level (\d+)(?:st|nd|rd|th)/);
-  if (casterMatch) {
-    const level = parseInt(casterMatch[1], 10);
-    reqs.push(or(gte("spellcasting.arcane", level), gte("spellcasting.divine", level)));
-  }
-
-  // Able to cast spells: "Ability to cast arcane spells" or specific level
-  const castMatch = cleanedText.match(
-    /[Aa](?:bility|ble) to cast (?:(\d+)(?:st|nd|rd|th)[- ]level )?(arcane|divine)?\s*spells/i,
-  );
-  if (castMatch) {
-    const level = castMatch[1] ? parseInt(castMatch[1], 10) : 1;
-    const type = castMatch[2]?.toLowerCase();
-    if (type === "arcane") {
-      reqs.push(gte("spellcasting.arcane", level));
-    } else if (type === "divine") {
-      reqs.push(gte("spellcasting.divine", level));
-    } else {
-      reqs.push(or(gte("spellcasting.arcane", level), gte("spellcasting.divine", level)));
-    }
-  }
-
-  // Class level: "fighter level 4th", "Wizard level 1st", "Character Level 6"
-  const classLevelRegex = /(\w+)\s+level\s+(\d+)(?:st|nd|rd|th)?/gi;
-  let classLevelMatch: RegExpExecArray | null;
-  while ((classLevelMatch = classLevelRegex.exec(cleanedText)) !== null) {
-    const className = classLevelMatch[1].toLowerCase();
-    const level = parseInt(classLevelMatch[2], 10);
-    // Skip "caster level" (handled above)
-    if (className === "caster") continue;
-    // "Character level" = overall level, not a class
-    if (className === "character") {
-      reqs.push(gte("identity.meta.level", level));
-    } else {
-      const slug = stripSeparators(className);
-      reqs.push(gte(`classes.${slug}.level`, level));
-    }
-  }
-
-  // Skill ranks: "SkillName N ranks"
-  const skillRegex = /([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?)\s+(\d+)\s+ranks?/gi;
-  let skillMatch: RegExpExecArray | null;
-  while ((skillMatch = skillRegex.exec(cleanedText)) !== null) {
-    const name = skillMatch[1].trim();
-    const ranks = parseInt(skillMatch[2], 10);
-    // Skip false positives
-    if (name.match(/^(Base|Must|Any|Or|And|The|Can|Has|Level)$/i)) continue;
-
-    // "Knowledge (any)" → OR of all Knowledge skills; else the skill, or its base skill for a specialization
-    reqs.push(anySkillRequirement(name, ranks) ?? gte(`skills.${skillSlug(name)}.rank`, ranks));
-  }
+  reqs.push(...listedFeatRequirements(multiOption.featText, featNameMap));
+  reqs.push(...castingRequirements(cleanedText));
+  reqs.push(...classLevelRequirements(cleanedText));
+  reqs.push(...skillRankRequirements(cleanedText));
 
   // Class ability prerequisites — map to actual class feature feats
-  const abilityReqMap: {
-    pattern: RegExp;
-    resolve: (match: RegExpMatchArray) => RequirementEntry | RequirementEntry[] | null;
-  }[] = [
-    {
-      pattern: /[Aa]bility to (?:turn|rebuke)|[Tt]urn or rebuke undead ability|[Tt]urn or rebuke undead\b/,
-      resolve: () => or(eq(feat("Turn or Rebuke Undead (Cleric)")), eq(feat("Turn Undead (Paladin)"))),
-    },
-    {
-      // "Sneak attack or sudden strike +Nd6" — either ability's dice, every class's together
-      pattern: /[Ss]neak [Aa]ttack or [Ss]udden [Ss]trike \+(\d+)d\d+/,
-      resolve: (m) => {
-        const count = parseInt(m[1], 10);
-        return or(gte("feats.sneakattack.count", count), gte("feats.suddenstrike.count", count));
-      },
-    },
-    {
-      // "Sneak Attack +Nd6" — N sneak attack dice, every class's together
-      pattern: /[Ss]neak [Aa]ttack \+(\d+)d\d+/,
-      resolve: (m) => gte("feats.sneakattack.count", parseInt(m[1], 10)),
-    },
-    {
-      pattern: /[Ss]neak [Aa]ttack ability/i,
-      resolve: () => eq("feats.sneakattack.possessed"),
-    },
-    {
-      // Bare "Sneak Attack" — just requires having it
-      pattern: /[Ss]neak [Aa]ttack(?!\s*\+|\s*ability|\s*or)/,
-      resolve: () => eq("feats.sneakattack.possessed"),
-    },
-    {
-      // "Sudden Strike +Nd6" — N sudden strike dice, every class's together
-      pattern: /[Ss]udden [Ss]trike \+(\d+)d\d+/,
-      resolve: (m) => gte("feats.suddenstrike.count", parseInt(m[1], 10)),
-    },
-    {
-      pattern: /[Gg]race \+\d+/,
-      resolve: () => eq("feats.grace.possessed"),
-    },
-    {
-      // "Skirmish +Nd6" — N skirmish dice, every class's together
-      pattern: /[Ss]kirmish \+(\d+)d\d+/,
-      resolve: (m) => gte("feats.skirmish.count", parseInt(m[1], 10)),
-    },
-    {
-      pattern: /[Rr]age or frenzy ability/i,
-      resolve: () => eq(feat("Rage (Barbarian)")),
-    },
-    {
-      pattern: /[Ss]mite ability/i,
-      resolve: () => eq(feat("Smite Evil (Paladin)")),
-    },
-    {
-      pattern: /[Ff]lurry of blows ability/i,
-      resolve: () => eq(feat("Flurry of Blows (Monk)")),
-    },
-    {
-      pattern: /[Ww]ild [Ss]hape ability|[Aa]bility to (?:use )?wild shape|[Ww]ild [Ss]hape\./i,
-      resolve: () => eq(feat("Wild Shape (Druid)")),
-    },
-    {
-      // Any class's Summon Familiar (the generator makes it a check of its family)
-      pattern: /[Aa]bility to acquire a (?:new )?familiar/,
-      resolve: () => eq(feat("Summon Familiar")),
-    },
-    {
-      // A monk's ki strike is lawful from monk level 10
-      pattern: /[Kk]i strike \(lawful\)/,
-      resolve: () => gte("classes.monk.level", 10),
-    },
-    // These are class features inherent to a class — not feat prerequisites
-    { pattern: /[Ff]avored enemy ability/i, resolve: () => null },
-  ];
-
-  let abilityText = cleanedText;
-  for (const { pattern, resolve } of abilityReqMap) {
-    const match = abilityText.match(pattern);
-    if (match) {
-      const result = resolve(match);
-      if (result) {
-        if (Array.isArray(result)) {
-          reqs.push(...result);
-        } else {
-          reqs.push(result);
-        }
-      }
-      abilityText = abilityText.replace(match[0], "");
-    }
-  }
+  reqs.push(...classAbilityRequirements(cleanedText));
 
   // Shield proficiency prerequisites
   if (/[Pp]roficien(?:t|cy) with (?:a )?(?:heavy )?shield/i.test(cleanedText)) {
@@ -483,8 +496,7 @@ function parsePrerequisiteText(text: string): {
   reqs.push(...familyFeatRequirements(cleanedText));
 
   // Detect prerequisite patterns we recognize but can't map to requirement entries
-  const unresolvedPatterns = [/[Pp]roficien(?:t|cy) with (?:selected )?(?:weapon|armor)/, /[Aa]bility to fly\b/];
-  for (const pattern of unresolvedPatterns) {
+  for (const pattern of UNRESOLVED_PREREQUISITES) {
     const match = cleanedText.match(pattern);
     if (match) {
       unresolvedPrereqs.push(match[0]);
@@ -492,6 +504,76 @@ function parsePrerequisiteText(text: string): {
   }
 
   return { requirements: reqs, featNameMap, unresolvedPrereqs };
+}
+
+/** A feat's size requirements: "Small or Medium size", "Medium or smaller size", "Small size". */
+function sizeRequirements(text: string): RequirementEntry[] {
+  const reqs: RequirementEntry[] = [];
+  const sizeNames = SIZE_OPTIONS.join("|");
+
+  // "X or Y size"
+  const explicitSizeMatch = text.match(new RegExp(`\\b(${sizeNames})\\s+or\\s+(${sizeNames})\\s+size`, "i"));
+  if (explicitSizeMatch) {
+    const s1 = SIZE_OPTIONS.find((s) => s.toLowerCase() === explicitSizeMatch[1].toLowerCase())!;
+    const s2 = SIZE_OPTIONS.find((s) => s.toLowerCase() === explicitSizeMatch[2].toLowerCase())!;
+    reqs.push(or(eqStr(SIZE_TARGET, s1), eqStr(SIZE_TARGET, s2)));
+  }
+
+  // "X or smaller size"
+  const orSmallerMatch =
+    !explicitSizeMatch && text.match(new RegExp(`\\b(${sizeNames})\\s+or\\s+smaller\\s+size`, "i"));
+  if (orSmallerMatch) {
+    const maxSize = SIZE_OPTIONS.find((s) => s.toLowerCase() === orSmallerMatch[1].toLowerCase())!;
+    const maxIdx = SIZE_OPTIONS.indexOf(maxSize);
+    const sizes = SIZE_OPTIONS.slice(0, maxIdx + 1);
+    reqs.push(or(...sizes.map((s) => eqStr(SIZE_TARGET, s))));
+  }
+
+  // "X size" (standalone)
+  const exactSizeMatch =
+    !explicitSizeMatch && !orSmallerMatch && text.match(new RegExp(`\\b(${sizeNames})\\s+size\\b`, "i"));
+  if (exactSizeMatch) {
+    const size = SIZE_OPTIONS.find((s) => s.toLowerCase() === exactSizeMatch[1].toLowerCase())!;
+    reqs.push(eqStr(SIZE_TARGET, size));
+  }
+  return reqs;
+}
+
+/** A feat's skill rank requirements: "SkillName N ranks", "Knowledge (any)" any Knowledge skill. */
+function skillRankRequirements(text: string): RequirementEntry[] {
+  const reqs: RequirementEntry[] = [];
+  const skillRegex = /([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?)\s+(\d+)\s+ranks?/gi;
+  let skillMatch: RegExpExecArray | null;
+  while ((skillMatch = skillRegex.exec(text)) !== null) {
+    const name = skillMatch[1].trim();
+    const ranks = parseInt(skillMatch[2], 10);
+    // Skip false positives
+    if (name.match(/^(Base|Must|Any|Or|And|The|Can|Has|Level)$/i)) continue;
+
+    // "Knowledge (any)" → OR of all Knowledge skills; else the skill, or its base skill for a specialization
+    reqs.push(anySkillRequirement(name, ranks) ?? gte(`skills.${skillSlug(name)}.rank`, ranks));
+  }
+  return reqs;
+}
+
+/**
+ * A feat's spellcasting ability requirement, "Spellcasting ability (Int or Cha) 15" → or(Int ≥ 15, Cha ≥ 15), and the
+ * text it was read from (`matched`), which no feat is read from.
+ */
+function spellcastingAbilityRequirements(text: string): { requirements: RequirementEntry[]; matched?: string } {
+  const spellcastingAbilityMatch = text.match(/[Ss]pellcasting ability\s*\(([^)]+)\)\s*(\d+)/);
+  if (!spellcastingAbilityMatch) return { requirements: [] };
+  const options = spellcastingAbilityMatch[1]
+    .split(/,\s*(?:or\s+)?|\s+or\s+/)
+    .map((o) => o.trim())
+    .filter(Boolean);
+  const value = parseInt(spellcastingAbilityMatch[2], 10);
+  const children = options
+    .map((o) => ABILITY_ABBREVIATIONS[o.toLowerCase()])
+    .filter((a): a is string => !!a)
+    .map((a) => gte(`abilities.${a}.total`, value));
+  const requirements = children.length > 1 ? [or(...children)] : children.length === 1 ? [children[0]] : [];
+  return { requirements, matched: spellcastingAbilityMatch[0] };
 }
 
 function titleCaseFeat(s: string): string {

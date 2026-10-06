@@ -15,9 +15,7 @@ export const MAX_OWN_LINES = 80;
 
 function createFunctionLength(context) {
   const file = repoPath(context.filename);
-  // The parser's tools join once their long functions are split into steps
-  const pending = file.startsWith("database/packages/dnd35-from-parser/");
-  if (!/^(server|shared|database)\//.test(file) || pending || !file.endsWith(".ts")) return {};
+  if (!/^(server|shared|database)\//.test(file) || !file.endsWith(".ts")) return {};
   const text = context.sourceCode.text;
   const lines = text.split("\n");
   const lineStarts = [0];
