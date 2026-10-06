@@ -56,6 +56,19 @@ class CharacterLanguagesRepository extends include(
     return rows.length > 0;
   }
 
+  async create(db: Db, values: InferInsertModel<typeof languagesInCharacter>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  // Exception to soft-delete: character languages are disposable reference data
+  async delete(db: Db, where: { characterId: string; languageId: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.languageId, where.languageId)),
+      );
+  }
+
   /**
    * Whether a character on the ruleset (or a descendant) picked the entity, or, with an extension, one of its entities:
    * an in-use check.
@@ -74,19 +87,6 @@ class CharacterLanguagesRepository extends include(
     return await db.query.languagesInCharacter.findMany({
       where: eq(this.table.characterId, where.characterId),
     });
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof languagesInCharacter>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  // Exception to soft-delete: character languages are disposable reference data
-  async delete(db: Db, where: { characterId: string; languageId: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.languageId, where.languageId)),
-      );
   }
 }
 

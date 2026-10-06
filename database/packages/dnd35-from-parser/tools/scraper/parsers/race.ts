@@ -20,12 +20,6 @@ import { normalizeWs, PART_SEPARATOR } from "@/database/packages/dnd35-from-pars
 import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
 
-/** A race page's frame also heads its listing "Races". */
-const RACE_FRAME_HEADING = frameHeading("Races");
-
-/** The control character the SRD's race pages open each trait with: read as the part separator it stands for. */
-const PAGE_TRAIT_MARK = "\u0001";
-
 const ABILITY_NAMES = new Set(["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]);
 
 /** dndtools' Django ids of the sizes, for its "RaceSize object (N)" rendering: the site's keys, not ours. */
@@ -40,6 +34,12 @@ const DNDTOOLS_SIZE_IDS: Record<string, SizeType> = {
   "8": "Gargantuan",
   "9": "Colossal",
 };
+
+/** The control character the SRD's race pages open each trait with: read as the part separator it stands for. */
+const PAGE_TRAIT_MARK = "\u0001";
+
+/** A race page's frame also heads its listing "Races". */
+const RACE_FRAME_HEADING = frameHeading("Races");
 
 function parseAbilityValue(text: string): number {
   // Handle "+2", "−2" (Unicode minus), "-2" (ASCII hyphen), "+0"

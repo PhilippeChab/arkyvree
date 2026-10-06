@@ -1,6 +1,127 @@
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 
+export const DIVINE_FEATS: FeatSeed[] = [
+  {
+    name: "Disciple of the Sun",
+    description:
+      "When you use your turn undead ability, you may expend two turn attempts instead of one. Doing so destroys the affected undead outright rather than merely turning them.",
+    aptitudes: ["General"],
+    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+  },
+  {
+    name: "Divine Metamagic",
+    description:
+      "Upon selecting this feat, pick one metamagic feat you already possess. As a free action, you can channel the energy from your turn or rebuke undead ability to fuel that metamagic feat when applied to divine spells you know. The cost is one turn or rebuke attempt plus one additional attempt per spell level increase imposed by the metamagic feat. Since you power the metamagic through channeled energy, the spell does not require a higher-level spell slot.",
+    aptitudes: ["General"],
+    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+  },
+  {
+    name: "Divine Spell Power",
+    description:
+      "As a free action, you may expend a turn or rebuke undead attempt and make a turning check (gaining a special +3 bonus along with any other modifiers that normally apply to your turning checks). The turning check result serves as a modifier to your caster level for the next divine spell you cast that round. For example, a turning check result of 16 grants a +2 caster level bonus, while a result of 8 imposes a -1 caster level penalty. If no divine spell is cast before your next turn, the bonus is wasted. This feat does not influence arcane spellcasting.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("spellcasting.divine", 1),
+      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
+    ],
+  },
+  {
+    name: "Domain Spontaneity",
+    description:
+      "Choose one domain you have access to each time you take this feat. You can sacrifice a prepared divine spell of equal or higher level, along with one daily turn undead attempt, to spontaneously cast any spell from that domain. This functions like the way good clerics spontaneously convert spells into cure spells.",
+    stackable: true,
+    aptitudes: ["General"],
+    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+  },
+  {
+    name: "Elemental Healing",
+    description:
+      "As a standard action, you can expend a rebuke attempt to release a 60-foot burst of restorative energy. All creatures with an elemental subtype within range that you could normally rebuke are healed for 1d8 hit points per two cleric levels.",
+    aptitudes: ["General"],
+    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+  },
+  {
+    name: "Elemental Smiting",
+    description:
+      "Once per round as a free action when making a melee attack, you may spend a turn attempt. If your attack hits a creature that you could normally turn due to its elemental subtype, you add your cleric level as bonus damage. A missed attack wastes the turn attempt with no effect.",
+    aptitudes: ["General"],
+    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+  },
+  {
+    name: "Glorious Weapons",
+    description:
+      "As a standard action, you may expend a turn or rebuke attempt to imbue the melee weapons (including natural weapons) of every ally within a 60-foot burst with an alignment. Weapons become good-aligned if you channel positive energy, or evil-aligned if you channel negative energy, allowing them to overcome the corresponding damage reduction. This lasts until the end of your next turn.",
+    aptitudes: ["General"],
+    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+  },
+  {
+    name: "Profane Boost",
+    description:
+      "As a standard action, you can expend a rebuke undead attempt to envelop every creature in a 60-foot burst with an aura of negative energy. Any inflict spell cast on an affected creature before the end of your next turn is automatically maximized, without increasing the spell's level or casting time.",
+    aptitudes: ["General"],
+    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+  },
+  {
+    name: "Sacred Boost",
+    description:
+      "As a standard action, you may spend a turn undead attempt to surround every creature within a 60-foot burst with an aura of positive energy. Any cure spell cast on an affected creature before the end of your next turn is automatically maximized, with no change to the spell's level or casting time.",
+    aptitudes: ["General"],
+    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+  },
+  {
+    name: "Sacred Healing",
+    description:
+      "By spending a turn undead attempt as a full-round action, you grant fast healing 3 to every living creature within a 60-foot burst. This fast healing persists for a number of rounds equal to 1 + your Charisma modifier (minimum 1 round).",
+    aptitudes: ["General"],
+    requirements: [
+      gte("skills.heal.rank", 8),
+      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
+    ],
+  },
+  {
+    name: "True Believer",
+    description:
+      "Once per day, immediately before making a saving throw, you may invoke this feat to gain a +2 insight bonus on that save. This feat also qualifies you to use relics associated with your chosen deity.",
+    aptitudes: ["General"],
+  },
+];
+
+export const EPIC_FEATS: FeatSeed[] = [
+  {
+    name: "Bonus Domain",
+    description:
+      "Select one additional domain from those offered by your deity. You receive the granted power and spell access of that domain, functioning identically to your other domain spells.",
+    stackable: true,
+    aptitudes: ["General"],
+    requirements: [gte("abilities.wisdom.total", 21), gte("spellcasting.divine", 9)],
+  },
+];
+
+export const FAITH_FEATS: FeatSeed[] = [
+  {
+    name: "Pious Defense",
+    description:
+      "When incoming damage would reduce you to 0 or fewer hit points, you may spend 1 faith point to suffer only half the damage from that attack.",
+    aptitudes: ["General"],
+    requirements: [gte("skills.knowledgereligion.rank", 2)],
+  },
+  {
+    name: "Pious Soul",
+    description:
+      "You may spend a faith point to add 1d6 to any d20 roll you make for an attack, saving throw, or ability check. This can be done after seeing the d20 result, provided the GM has not yet announced success or failure. Multiple faith points can be spent at once for cumulative dice.",
+    aptitudes: ["General"],
+    requirements: [gte("skills.knowledgereligion.rank", 2)],
+  },
+  {
+    name: "Pious Spellsurge",
+    description:
+      "When casting a spell, you may expend 2 faith points to gain a +1d6 bonus that applies either to the save DC of that spell or to your effective caster level for it (your choice).",
+    aptitudes: ["General"],
+    requirements: [gte("skills.knowledgereligion.rank", 4)],
+  },
+];
+
 export const GENERAL_FEATS: FeatSeed[] = [
   {
     name: "Arcane Disciple",
@@ -138,6 +259,54 @@ export const GENERAL_FEATS: FeatSeed[] = [
   },
 ];
 
+export const ITEM_CREATION_FEATS: FeatSeed[] = [
+  {
+    name: "Sanctify Relic",
+    description: "You can create relics, which are special magic items imbued with divine significance.",
+    aptitudes: ["General", "Wizard Bonus Feat"],
+    requirements: [eq("feats.itemcreation.*.possessed")],
+    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
+  },
+];
+
+export const METAMAGIC_FEATS: FeatSeed[] = [
+  {
+    name: "Consecrate Spell",
+    description:
+      "Applying this metamagic feat gives a spell the good descriptor. If the modified spell inflicts damage, half that damage (rounded down) stems from pure divine energy and therefore bypasses resistance or immunity to energy-based attacks. For instance, a consecrated fire storm from a 16th-level cleric inflicts 16d6 damage: half is fire and the other half is untyped divine power, so fire-immune creatures still take the divine portion. The modified spell occupies a slot one level higher than its actual level.",
+    aptitudes: ["General", "Wizard Bonus Feat"],
+    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+  },
+  {
+    name: "Corrupt Spell",
+    description:
+      "This metamagic feat applies the evil descriptor to a spell. When the spell inflicts damage, half of it (rounded down) comes from raw divine power and cannot be reduced by energy resistance or immunity. The modified spell requires a spell slot one level above the spell's normal level.",
+    aptitudes: ["General", "Wizard Bonus Feat"],
+    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+  },
+  {
+    name: "Rapid Spell",
+    description:
+      "This metamagic feat can only be applied to spells whose casting time exceeds 1 standard action. A rapid spell that normally takes 1 full round to cast instead requires only a standard action. Spells measured in rounds become 1 full round, those measured in minutes become 1 minute, and those measured in hours become 1 hour. A rapid spell occupies a spell slot one level higher than normal.",
+    aptitudes: ["General", "Wizard Bonus Feat"],
+    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+  },
+  {
+    name: "Reach Spell",
+    description:
+      "A touch-range spell modified by this feat can be delivered at a range of up to 30 feet. The spell functions as a ray, requiring a successful ranged touch attack to affect the target. A reach spell uses a spell slot two levels higher than its actual level.",
+    aptitudes: ["General", "Wizard Bonus Feat"],
+    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+  },
+  {
+    name: "Transdimensional Spell",
+    description:
+      "A spell enhanced with this metamagic feat fully affects incorporeal creatures, creatures on the Ethereal Plane or the Plane of Shadow, and creatures occupying extradimensional spaces within the spell's area. This includes ethereal beings, creatures using blink or shadow walk, manifested ghosts, and creatures inside spaces created by effects like rope trick or portable hole. You still need to perceive a creature to target it directly, but area effects (bursts, cones, emanations, and spreads) can catch creatures you cannot perceive. The modified spell uses a slot one level higher than normal.",
+    aptitudes: ["General", "Wizard Bonus Feat"],
+    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
+  },
+];
+
 export const WILD_FEATS: FeatSeed[] = [
   {
     name: "Boar's Ferocity",
@@ -213,174 +382,5 @@ export const WILD_FEATS: FeatSeed[] = [
     description:
       "If you sustained damage during the previous round, you may expend one wild shape use as a free action on your turn to enter a frenzy. While in this state, you gain +2 to Strength, +2 to Constitution, and suffer a -2 penalty to AC. The frenzy lasts 5 rounds and cannot be ended early.",
     aptitudes: ["General"],
-  },
-];
-
-export const EPIC_FEATS: FeatSeed[] = [
-  {
-    name: "Bonus Domain",
-    description:
-      "Select one additional domain from those offered by your deity. You receive the granted power and spell access of that domain, functioning identically to your other domain spells.",
-    stackable: true,
-    aptitudes: ["General"],
-    requirements: [gte("abilities.wisdom.total", 21), gte("spellcasting.divine", 9)],
-  },
-];
-
-export const METAMAGIC_FEATS: FeatSeed[] = [
-  {
-    name: "Consecrate Spell",
-    description:
-      "Applying this metamagic feat gives a spell the good descriptor. If the modified spell inflicts damage, half that damage (rounded down) stems from pure divine energy and therefore bypasses resistance or immunity to energy-based attacks. For instance, a consecrated fire storm from a 16th-level cleric inflicts 16d6 damage: half is fire and the other half is untyped divine power, so fire-immune creatures still take the divine portion. The modified spell occupies a slot one level higher than its actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
-  },
-  {
-    name: "Corrupt Spell",
-    description:
-      "This metamagic feat applies the evil descriptor to a spell. When the spell inflicts damage, half of it (rounded down) comes from raw divine power and cannot be reduced by energy resistance or immunity. The modified spell requires a spell slot one level above the spell's normal level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
-  },
-  {
-    name: "Rapid Spell",
-    description:
-      "This metamagic feat can only be applied to spells whose casting time exceeds 1 standard action. A rapid spell that normally takes 1 full round to cast instead requires only a standard action. Spells measured in rounds become 1 full round, those measured in minutes become 1 minute, and those measured in hours become 1 hour. A rapid spell occupies a spell slot one level higher than normal.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
-  },
-  {
-    name: "Reach Spell",
-    description:
-      "A touch-range spell modified by this feat can be delivered at a range of up to 30 feet. The spell functions as a ray, requiring a successful ranged touch attack to affect the target. A reach spell uses a spell slot two levels higher than its actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
-  },
-  {
-    name: "Transdimensional Spell",
-    description:
-      "A spell enhanced with this metamagic feat fully affects incorporeal creatures, creatures on the Ethereal Plane or the Plane of Shadow, and creatures occupying extradimensional spaces within the spell's area. This includes ethereal beings, creatures using blink or shadow walk, manifested ghosts, and creatures inside spaces created by effects like rope trick or portable hole. You still need to perceive a creature to target it directly, but area effects (bursts, cones, emanations, and spreads) can catch creatures you cannot perceive. The modified spell uses a slot one level higher than normal.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
-    properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
-  },
-];
-
-export const DIVINE_FEATS: FeatSeed[] = [
-  {
-    name: "Disciple of the Sun",
-    description:
-      "When you use your turn undead ability, you may expend two turn attempts instead of one. Doing so destroys the affected undead outright rather than merely turning them.",
-    aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
-  },
-  {
-    name: "Divine Metamagic",
-    description:
-      "Upon selecting this feat, pick one metamagic feat you already possess. As a free action, you can channel the energy from your turn or rebuke undead ability to fuel that metamagic feat when applied to divine spells you know. The cost is one turn or rebuke attempt plus one additional attempt per spell level increase imposed by the metamagic feat. Since you power the metamagic through channeled energy, the spell does not require a higher-level spell slot.",
-    aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
-  },
-  {
-    name: "Divine Spell Power",
-    description:
-      "As a free action, you may expend a turn or rebuke undead attempt and make a turning check (gaining a special +3 bonus along with any other modifiers that normally apply to your turning checks). The turning check result serves as a modifier to your caster level for the next divine spell you cast that round. For example, a turning check result of 16 grants a +2 caster level bonus, while a result of 8 imposes a -1 caster level penalty. If no divine spell is cast before your next turn, the bonus is wasted. This feat does not influence arcane spellcasting.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("spellcasting.divine", 1),
-      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
-    ],
-  },
-  {
-    name: "Domain Spontaneity",
-    description:
-      "Choose one domain you have access to each time you take this feat. You can sacrifice a prepared divine spell of equal or higher level, along with one daily turn undead attempt, to spontaneously cast any spell from that domain. This functions like the way good clerics spontaneously convert spells into cure spells.",
-    stackable: true,
-    aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
-  },
-  {
-    name: "Elemental Healing",
-    description:
-      "As a standard action, you can expend a rebuke attempt to release a 60-foot burst of restorative energy. All creatures with an elemental subtype within range that you could normally rebuke are healed for 1d8 hit points per two cleric levels.",
-    aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
-  },
-  {
-    name: "Elemental Smiting",
-    description:
-      "Once per round as a free action when making a melee attack, you may spend a turn attempt. If your attack hits a creature that you could normally turn due to its elemental subtype, you add your cleric level as bonus damage. A missed attack wastes the turn attempt with no effect.",
-    aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
-  },
-  {
-    name: "Glorious Weapons",
-    description:
-      "As a standard action, you may expend a turn or rebuke attempt to imbue the melee weapons (including natural weapons) of every ally within a 60-foot burst with an alignment. Weapons become good-aligned if you channel positive energy, or evil-aligned if you channel negative energy, allowing them to overcome the corresponding damage reduction. This lasts until the end of your next turn.",
-    aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
-  },
-  {
-    name: "Profane Boost",
-    description:
-      "As a standard action, you can expend a rebuke undead attempt to envelop every creature in a 60-foot burst with an aura of negative energy. Any inflict spell cast on an affected creature before the end of your next turn is automatically maximized, without increasing the spell's level or casting time.",
-    aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
-  },
-  {
-    name: "Sacred Boost",
-    description:
-      "As a standard action, you may spend a turn undead attempt to surround every creature within a 60-foot burst with an aura of positive energy. Any cure spell cast on an affected creature before the end of your next turn is automatically maximized, with no change to the spell's level or casting time.",
-    aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
-  },
-  {
-    name: "Sacred Healing",
-    description:
-      "By spending a turn undead attempt as a full-round action, you grant fast healing 3 to every living creature within a 60-foot burst. This fast healing persists for a number of rounds equal to 1 + your Charisma modifier (minimum 1 round).",
-    aptitudes: ["General"],
-    requirements: [
-      gte("skills.heal.rank", 8),
-      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
-    ],
-  },
-  {
-    name: "True Believer",
-    description:
-      "Once per day, immediately before making a saving throw, you may invoke this feat to gain a +2 insight bonus on that save. This feat also qualifies you to use relics associated with your chosen deity.",
-    aptitudes: ["General"],
-  },
-];
-
-export const FAITH_FEATS: FeatSeed[] = [
-  {
-    name: "Pious Defense",
-    description:
-      "When incoming damage would reduce you to 0 or fewer hit points, you may spend 1 faith point to suffer only half the damage from that attack.",
-    aptitudes: ["General"],
-    requirements: [gte("skills.knowledgereligion.rank", 2)],
-  },
-  {
-    name: "Pious Soul",
-    description:
-      "You may spend a faith point to add 1d6 to any d20 roll you make for an attack, saving throw, or ability check. This can be done after seeing the d20 result, provided the GM has not yet announced success or failure. Multiple faith points can be spent at once for cumulative dice.",
-    aptitudes: ["General"],
-    requirements: [gte("skills.knowledgereligion.rank", 2)],
-  },
-  {
-    name: "Pious Spellsurge",
-    description:
-      "When casting a spell, you may expend 2 faith points to gain a +1d6 bonus that applies either to the save DC of that spell or to your effective caster level for it (your choice).",
-    aptitudes: ["General"],
-    requirements: [gte("skills.knowledgereligion.rank", 4)],
-  },
-];
-
-export const ITEM_CREATION_FEATS: FeatSeed[] = [
-  {
-    name: "Sanctify Relic",
-    description: "You can create relics, which are special magic items imbued with divine significance.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [eq("feats.itemcreation.*.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
   },
 ];

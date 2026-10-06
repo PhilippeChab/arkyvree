@@ -12,14 +12,6 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ClassSkillsService {
-  async getClassSkills(rulesetId: string, classId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-      return rulesetData.klassSkillsWithSkillsByKlass.get(klass.id) ?? [];
-    });
-  }
-
   async addClassSkill(session: Session, rulesetId: string, classId: string, skillId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
@@ -58,6 +50,14 @@ class ClassSkillsService {
     });
     RulesetCache.invalidate(rulesetId);
     return result;
+  }
+
+  async getClassSkills(rulesetId: string, classId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+      return rulesetData.klassSkillsWithSkillsByKlass.get(klass.id) ?? [];
+    });
   }
 
   async removeClassSkill(session: Session, rulesetId: string, classId: string, skillId: string) {

@@ -3,53 +3,14 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { compareRoutes, lifecycleStep, verbGroup } from "@/lint/memberOrder.mjs";
+import { compareRoutes } from "@/lint/memberOrder.mjs";
 
 import { runOxlint } from "./lintRepo.ts";
-
-const [LIFECYCLE, READ, CREATE, UPDATE, DELETE, ACTION] = [0, 1, 2, 3, 4, 5];
 
 // The fix tests run oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);
 
 describe("member order", () => {
-  test("groups a method by its leading verb", async () => {
-    expect(["findOne", "getRulesetFeats", "exists", "countActive", "isOwner", "validatePath"].map(verbGroup)).toEqual([
-      READ,
-      READ,
-      READ,
-      READ,
-      READ,
-      READ,
-    ]);
-    expect(["create", "createMany", "bulkCreateVariants", "duplicateRulesetItem"].map(verbGroup)).toEqual([
-      CREATE,
-      CREATE,
-      CREATE,
-      CREATE,
-    ]);
-    expect(["update", "markAllRead", "setPassword"].map(verbGroup)).toEqual([UPDATE, UPDATE, UPDATE]);
-    expect(["delete", "archiveCharacter", "unarchive", "hardDeleteCampaign"].map(verbGroup)).toEqual([
-      DELETE,
-      DELETE,
-      DELETE,
-      DELETE,
-    ]);
-    // The lifecycle comes first, in pipeline order rather than by name.
-    expect(["loadSharedData", "preload", "initialize", "build", "applyLoadedData"].map(verbGroup)).toEqual([
-      LIFECYCLE,
-      LIFECYCLE,
-      LIFECYCLE,
-      LIFECYCLE,
-      LIFECYCLE,
-    ]);
-    expect(
-      ["build", "applyLoadedData", "preload", "loadSharedData"].sort((a, b) => lifecycleStep(a) - lifecycleStep(b)),
-    ).toEqual(["loadSharedData", "preload", "build", "applyLoadedData"]);
-    // A verb is a whole word: `getter` isn't `get`, and the rest are actions.
-    expect(["getter", "publishRuleset", "lockById", "me"].map(verbGroup)).toEqual([ACTION, ACTION, ACTION, ACTION]);
-  });
-
   test("orders routes by method, then by path: fixed segments before parameters, parameters before wildcards", async () => {
     const routes = [
       { method: "delete", path: "/:id" },
@@ -73,7 +34,7 @@ describe("member order", () => {
     ]);
   });
 
-  test("puts a class and a router in order with oxlint --fix, keeping fields, comments and middleware runs, sub-routers first", async () => {
+  test("puts a class and a router in order with oxlint --fix, keeping fields and comments, middleware then sub-routers first", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
     fs.mkdirSync(path.join(dir, "server/routers"), { recursive: true });
     const config = path.join(dir, ".oxlintrc.json");
@@ -112,11 +73,11 @@ describe("member order", () => {
       router,
       [
         "export default new Hono()",
+        "  .use(middleware)",
         '  .delete("/:id", (c) => c) // about deleting',
         "  // The list.",
         '  .get("/", (c) => c)',
         '  .route("/", early)',
-        "  .use(middleware)",
         '  .post("/", (c) => c)',
         '  .route("/b", b)',
         '  .get("/:id", (c) => c)',
@@ -134,35 +95,34 @@ describe("member order", () => {
         "",
         "  readonly aa = this.zz + 1;",
         "",
-        // Then private methods, then public ones, each in CRUD order.
+        // Then private methods, then public ones, each by name.
         "  private helper() {}",
-        "",
-        "  async getFeats() {}",
         "",
         "  async createFeat() {}",
         "",
         "  /** Deletes. */",
         "  async deleteFeat() {} // about deleting",
         "",
+        "  async getFeats() {}",
+        "",
         "  async publish() {} // about publishing",
         "}",
         "",
       ].join("\n"),
     );
-    // Each run between middleware is sorted on its own: the middleware still applies to what follows it. A run's
-    // sub-routers come first, in their order.
+    // Its middleware, then its sub-routers, in their order, then its routes by method and path.
     expect(fs.readFileSync(router, "utf8")).toBe(
       [
         "export default new Hono()",
-        '  .route("/", early)',
-        "  // The list.",
-        '  .get("/", (c) => c)',
-        '  .delete("/:id", (c) => c) // about deleting',
         "  .use(middleware)",
+        '  .route("/", early)',
         '  .route("/b", b)',
         '  .route("/", a)',
+        "  // The list.",
+        '  .get("/", (c) => c)',
         '  .get("/:id", (c) => c)',
-        '  .post("/", (c) => c);',
+        '  .post("/", (c) => c)',
+        '  .delete("/:id", (c) => c); // about deleting',
         "",
       ].join("\n"),
     );
@@ -191,8 +151,76 @@ describe("member order", () => {
 
     const check = await runOxlint(["-c", config, dir]);
     expect(check.exitCode).toBe(0);
+    // Middleware after a route would skip the routes above it: it's reported, and the router splits
+    const late = path.join(dir, "server/routers/late.ts");
+    fs.writeFileSync(late, ["export default new Hono()", '  .get("/", (c) => c)', "  .use(middleware)", ""].join("\n"));
+    expect((await runOxlint(["-f", "unix", "-c", config, late])).stdout).toContain(
+      "A router's middleware (`.use()`) comes before its sub-routers and routes",
+    );
     fs.rmSync(dir, { recursive: true });
   });
+  test("orders a file's types and constants by name, a constant another one reads above it, with oxlint --fix", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
+    const config = path.join(dir, ".oxlintrc.json");
+    fs.writeFileSync(
+      config,
+      JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/member-order": "error" } }),
+    );
+    const declarations = path.join(dir, "declarations.ts");
+    fs.writeFileSync(
+      declarations,
+      [
+        "type Row = { id: string };",
+        "/** A page of rows. */",
+        "type Page = Row[];",
+        "",
+        "export type Zone = string;",
+        "export interface Area {}",
+        "",
+        "const owner = 1; // the owner",
+        "const KINDS = [owner, other];",
+        "const other = 2;",
+        "const apple = 3;",
+        "",
+        "export const Zebra = 1;",
+        "export const alpha = 2;",
+        "",
+      ].join("\n"),
+    );
+    // Constants whose values run code keep their order: only `--fix-suggestions` sorts them
+    const running = path.join(dir, "running.ts");
+    fs.writeFileSync(running, ["const b = make();", "const a = make();", ""].join("\n"));
+    await runOxlint(["-c", config, "--fix", dir]);
+
+    expect(fs.readFileSync(declarations, "utf8")).toBe(
+      [
+        // Each section by name (ignoring case), the file's own above its exports; the spacing keeps its place.
+        "/** A page of rows. */",
+        "type Page = Row[];",
+        "type Row = { id: string };",
+        "",
+        "export interface Area {}",
+        "export type Zone = string;",
+        "",
+        "const apple = 3;",
+        "const other = 2;",
+        "const owner = 1; // the owner",
+        "const KINDS = [owner, other];",
+        "",
+        "export const alpha = 2;",
+        "export const Zebra = 1;",
+        "",
+      ].join("\n"),
+    );
+    expect(fs.readFileSync(running, "utf8")).toBe("const b = make();\nconst a = make();\n");
+    expect((await runOxlint(["-f", "unix", "-c", config, running])).stdout).toContain(
+      "Two of them run code, which `--fix` never reorders: move them, or `--fix-suggestions` does.",
+    );
+    await runOxlint(["-c", config, "--fix", "--fix-suggestions", running]);
+    expect(fs.readFileSync(running, "utf8")).toBe("const a = make();\nconst b = make();\n");
+    fs.rmSync(dir, { recursive: true });
+  });
+
   test("orders a file's functions and a class's methods sync first, a callee above its caller, with oxlint --fix", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
     fs.mkdirSync(path.join(dir, "server"), { recursive: true });
@@ -237,8 +265,8 @@ describe("member order", () => {
       "}",
       "",
     ]);
-    // A comment set apart by a blank line ends a run (`comment-style` reports it); functions that call each other are
-    // reported, and keep their order.
+    // A comment set apart by a blank line ends a run (`comment-style` reports it); functions that call each other go by
+    // name too: they're hoisted.
     const runs = write("runs.ts", [
       "function b() {}",
       "",
@@ -267,13 +295,13 @@ describe("member order", () => {
       "}",
       "",
     ]);
-    // A declaration file's functions are in order too
+    // A declaration file's functions are in order too, each place keeping its spacing
     const declarations = write("types.d.ts", ["export function b(): void;", "export function a(): void;", ""]);
     await runOxlint(["-c", config, "--fix", dir]);
 
     expect(fs.readFileSync(functions, "utf8")).toBe(
       [
-        // Its helpers, sync first, then its exports: sync first, by verb (reads, creates, deletes), a callee above.
+        // Its helpers, sync first, then its exports: sync first, by name, whatever they call.
         "function helperB() {",
         "  return 1;",
         "}",
@@ -287,16 +315,16 @@ describe("member order", () => {
         "  return helperB();",
         "}",
         "",
-        "export function findThing() {",
-        "  return 1;",
-        "}",
-        "",
         "export function createThing() {",
         "  return findThing();",
         "}",
         "",
         "export function deleteThing() {",
         "  return helperC();",
+        "}",
+        "",
+        "export function findThing() {",
+        "  return 1;",
         "}",
         "",
         "export async function getThing() {",
@@ -313,12 +341,12 @@ describe("member order", () => {
         "",
         "// The second section.",
         "",
-        "function y() {",
-        "  return x();",
-        "}",
-        "",
         "function x() {",
         "  return y();",
+        "}",
+        "",
+        "function y() {",
+        "  return x();",
         "}",
         "",
       ].join("\n"),
@@ -337,10 +365,8 @@ describe("member order", () => {
         "",
       ].join("\n"),
     );
-    expect(fs.readFileSync(declarations, "utf8")).toBe("export function a(): void;\n\nexport function b(): void;\n");
-    expect((await runOxlint(["-f", "unix", "-c", config, dir])).stdout).toContain(
-      "Functions that call each other (y, x): untangle them, so the file reads bottom-up.",
-    );
+    expect(fs.readFileSync(declarations, "utf8")).toBe("export function a(): void;\nexport function b(): void;\n");
+    expect((await runOxlint(["-c", config, dir])).exitCode).toBe(0);
     fs.rmSync(dir, { recursive: true });
   });
 });

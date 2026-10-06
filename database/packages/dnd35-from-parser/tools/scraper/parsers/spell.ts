@@ -27,18 +27,6 @@ import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { capitalize } from "@/shared/text.ts";
 
-const VALID_SCHOOLS = new Set([
-  "Abjuration",
-  "Conjuration",
-  "Divination",
-  "Enchantment",
-  "Evocation",
-  "Illusion",
-  "Necromancy",
-  "Transmutation",
-  "Universal",
-]);
-
 const STAT_LABEL_PREFIXES = [
   "Level:",
   "Components:",
@@ -51,6 +39,18 @@ const STAT_LABEL_PREFIXES = [
   "Saving Throw:",
   "Spell Resistance:",
 ];
+
+const VALID_SCHOOLS = new Set([
+  "Abjuration",
+  "Conjuration",
+  "Divination",
+  "Enchantment",
+  "Evocation",
+  "Illusion",
+  "Necromancy",
+  "Transmutation",
+  "Universal",
+]);
 
 function isStatLabel(text: string): boolean {
   return STAT_LABEL_PREFIXES.some((p) => text.startsWith(p));

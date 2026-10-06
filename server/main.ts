@@ -4,7 +4,7 @@ import "@/server/log.ts";
 import { waitForDatabase } from "@/server/database/index.ts";
 import { isProduction, readEnv, REQUIRED_IN_PRODUCTION } from "@/server/environment.ts";
 import { application } from "@/server/routers/application.ts";
-import { onShutdown } from "@/server/shutdown.ts";
+import Shutdown from "@/server/shutdown.ts";
 import { BroadcastListener, websocket } from "@/server/websockets/index.ts";
 
 /** Stops a production start that lacks a variable production needs. */
@@ -47,7 +47,7 @@ async function main() {
     development: !isProduction(),
   });
 
-  onShutdown("server", async () => {
+  Shutdown.onSignal("server", async () => {
     await BroadcastListener.stop();
     await server.stop(true);
   });

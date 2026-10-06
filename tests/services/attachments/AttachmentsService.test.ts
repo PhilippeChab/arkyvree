@@ -5,7 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
 import { AttachmentsService } from "@/server/services/attachments/index.ts";
-import { setStorageForTest } from "@/server/storage/s3.ts";
+import ObjectStorage from "@/server/storage/s3.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { fakeStorage } from "@/tests/support/storage.ts";
@@ -46,7 +46,7 @@ describe("AttachmentsService", () => {
     stats = new Map();
     deletedKeys = [];
     deleteShouldFail = false;
-    setStorageForTest(
+    ObjectStorage.setForTest(
       fakeStorage({
         presignPut(key, opts) {
           presignCalls.push({ key, ...opts });

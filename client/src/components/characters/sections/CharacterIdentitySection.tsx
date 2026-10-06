@@ -28,9 +28,6 @@ interface CharacterIdentityFormData {
   languageIds: string[];
 }
 
-/** A language as the picker shows it: the character's, or one the ruleset offers. */
-type LanguageOption = Pick<RulesetLanguage, "id" | "name">;
-
 interface CharacterIdentitySectionProps {
   characterName: string;
   characterId: string;
@@ -43,6 +40,9 @@ interface CharacterIdentitySectionProps {
   portraitUrl?: string | null;
   character: CharacterData;
 }
+
+/** A language as the picker shows it: the character's, or one the ruleset offers. */
+type LanguageOption = Pick<RulesetLanguage, "id" | "name">;
 
 /** No saved languages: one list, so the selection's memo keeps its value. */
 const NO_LANGUAGES: LanguageOption[] = [];

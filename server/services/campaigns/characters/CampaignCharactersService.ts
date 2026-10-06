@@ -36,6 +36,14 @@ class CampaignCharactersService {
     return (await CampaignsPolicy.for(db, session, campaign)).canRead();
   }
 
+  async enqueuePdf(session: Session, campaignId: string, characterId: string) {
+    // Not found for every refusal, as for the character's own export.
+    const character = await findExportableCharacter(session.userId, characterId, campaignId);
+    if (!character) throw new NotFoundError("Character not found in this campaign");
+
+    await enqueueCharacterPdf(session, character, campaignId);
+  }
+
   async getCharacter(session: Session, campaignId: string, characterId: string) {
     const member = await this.getMember(session, campaignId);
 
@@ -177,49 +185,6 @@ class CampaignCharactersService {
     );
   }
 
-  async updateCharacterVisibility(
-    session: Session,
-    campaignId: string,
-    characterId: string,
-    visibility: VisibilityType,
-  ) {
-    return await withTransaction(async (tx) => {
-      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) {
-        throw new NotFoundError("Campaign not found");
-      }
-      const policy = await CampaignsPolicy.for(tx, session, campaign);
-      policy.canModify();
-
-      const player = policy.canRead();
-
-      const link = await PlayerCharacters.findOne(tx, { characterId });
-      if (!link || link.playerId !== player.id) {
-        throw new ForbiddenError("You do not own this character in this campaign");
-      }
-
-      const [updated] = await PlayerCharacters.update(tx, { visibility }, { playerId: player.id, characterId });
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: characterId,
-        targetTable: getTableName(playerCharactersInCampaign),
-        type: "updateCharacterVisibility",
-        data: { campaignId, characterId, visibility },
-      });
-
-      return updated;
-    });
-  }
-
-  async enqueuePdf(session: Session, campaignId: string, characterId: string) {
-    // Not found for every refusal, as for the character's own export.
-    const character = await findExportableCharacter(session.userId, characterId, campaignId);
-    if (!character) throw new NotFoundError("Character not found in this campaign");
-
-    await enqueueCharacterPdf(session, character, campaignId);
-  }
-
   async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: VisibilityType) {
     return await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
@@ -273,6 +238,41 @@ class CampaignCharactersService {
       });
 
       return linkedCharacter;
+    });
+  }
+
+  async updateCharacterVisibility(
+    session: Session,
+    campaignId: string,
+    characterId: string,
+    visibility: VisibilityType,
+  ) {
+    return await withTransaction(async (tx) => {
+      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
+      if (!campaign) {
+        throw new NotFoundError("Campaign not found");
+      }
+      const policy = await CampaignsPolicy.for(tx, session, campaign);
+      policy.canModify();
+
+      const player = policy.canRead();
+
+      const link = await PlayerCharacters.findOne(tx, { characterId });
+      if (!link || link.playerId !== player.id) {
+        throw new ForbiddenError("You do not own this character in this campaign");
+      }
+
+      const [updated] = await PlayerCharacters.update(tx, { visibility }, { playerId: player.id, characterId });
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: characterId,
+        targetTable: getTableName(playerCharactersInCampaign),
+        type: "updateCharacterVisibility",
+        data: { campaignId, characterId, visibility },
+      });
+
+      return updated;
     });
   }
 }

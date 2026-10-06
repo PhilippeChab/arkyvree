@@ -129,22 +129,6 @@ class CampaignPlayersService {
     };
   }
 
-  async getPlayers(
-    session: Session,
-    campaignId: string,
-    where: { search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
-    pagination: { limit: number; page: number },
-  ) {
-    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (!campaign) {
-      throw new NotFoundError("Campaign not found");
-    }
-
-    (await CampaignsPolicy.for(db, session, campaign)).canRead();
-
-    return await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
-  }
-
   async addPlayer(session: Session, campaignId: string, role: CampaignRole, email?: string) {
     let emailData: InviteEmailData | null = null;
 
@@ -185,6 +169,67 @@ class CampaignPlayersService {
     }
 
     return { player, invite };
+  }
+
+  async getPlayers(
+    session: Session,
+    campaignId: string,
+    where: { search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    pagination: { limit: number; page: number },
+  ) {
+    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
+    if (!campaign) {
+      throw new NotFoundError("Campaign not found");
+    }
+
+    (await CampaignsPolicy.for(db, session, campaign)).canRead();
+
+    return await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
+  }
+
+  async removePlayer(session: Session, campaignId: string, playerId: string) {
+    return await withTransaction(async (tx) => {
+      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
+      if (!campaign) {
+        throw new NotFoundError("Campaign not found");
+      }
+      const policy = await CampaignsPolicy.for(tx, session, campaign);
+      policy.canModify();
+
+      const player = await Players.findOne(tx, { id: playerId });
+      if (!player || player.campaignId !== campaignId) {
+        throw new NotFoundError("Player not found in this campaign");
+      }
+
+      const isSelfRemoval = player.userId === session.userId;
+      if (!isSelfRemoval) {
+        policy.canUpdate();
+      }
+
+      if (player.role === "Game Master") {
+        const campaignPlayers = await Players.findMany(tx, { campaignId });
+        const gmCount = campaignPlayers.filter((p) => p.role === "Game Master").length;
+        if (gmCount <= 1) {
+          throw new ConflictError("Cannot remove the last Game Master from a campaign");
+        }
+      }
+
+      const removedPlayer = player;
+
+      await Players.delete(tx, { id: playerId });
+      await Invites.delete(tx, { playerId });
+      await PlayerCharacters.delete(tx, { playerId });
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: removedPlayer.id,
+        targetTable: getTableName(playersInCampaign),
+        type: "removeCampaignPlayer",
+        data: { userId: removedPlayer.userId, role: removedPlayer.role },
+      });
+
+      return removedPlayer;
+    });
   }
 
   async updatePlayer(session: Session, campaignId: string, playerId: string, role: CampaignRole, email?: string) {
@@ -246,51 +291,6 @@ class CampaignPlayersService {
     }
 
     return { player: updatedPlayer, invite };
-  }
-
-  async removePlayer(session: Session, campaignId: string, playerId: string) {
-    return await withTransaction(async (tx) => {
-      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) {
-        throw new NotFoundError("Campaign not found");
-      }
-      const policy = await CampaignsPolicy.for(tx, session, campaign);
-      policy.canModify();
-
-      const player = await Players.findOne(tx, { id: playerId });
-      if (!player || player.campaignId !== campaignId) {
-        throw new NotFoundError("Player not found in this campaign");
-      }
-
-      const isSelfRemoval = player.userId === session.userId;
-      if (!isSelfRemoval) {
-        policy.canUpdate();
-      }
-
-      if (player.role === "Game Master") {
-        const campaignPlayers = await Players.findMany(tx, { campaignId });
-        const gmCount = campaignPlayers.filter((p) => p.role === "Game Master").length;
-        if (gmCount <= 1) {
-          throw new ConflictError("Cannot remove the last Game Master from a campaign");
-        }
-      }
-
-      const removedPlayer = player;
-
-      await Players.delete(tx, { id: playerId });
-      await Invites.delete(tx, { playerId });
-      await PlayerCharacters.delete(tx, { playerId });
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: removedPlayer.id,
-        targetTable: getTableName(playersInCampaign),
-        type: "removeCampaignPlayer",
-        data: { userId: removedPlayer.userId, role: removedPlayer.role },
-      });
-
-      return removedPlayer;
-    });
   }
 }
 

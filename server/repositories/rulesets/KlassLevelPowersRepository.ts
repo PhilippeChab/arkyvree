@@ -10,17 +10,6 @@ class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersI
     super(klassLevelPowersInRules);
   }
 
-  async findMany(db: Db, where: { klassLevelIds: string[] }) {
-    return await db.query.klassLevelPowersInRules.findMany({
-      where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
-      orderBy: [
-        this.orderBy(this.table.createdAt),
-        this.orderBy(this.table.klassLevelId),
-        this.orderBy(this.table.powerId),
-      ],
-    });
-  }
-
   async createMany(db: Db, values: InferInsertModel<typeof klassLevelPowersInRules>[]) {
     if (values.length === 0) return [];
     return await db.insert(this.table).values(values).returning();
@@ -38,6 +27,17 @@ class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersI
         ]),
       )
       .returning();
+  }
+
+  async findMany(db: Db, where: { klassLevelIds: string[] }) {
+    return await db.query.klassLevelPowersInRules.findMany({
+      where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
+      orderBy: [
+        this.orderBy(this.table.createdAt),
+        this.orderBy(this.table.klassLevelId),
+        this.orderBy(this.table.powerId),
+      ],
+    });
   }
 }
 

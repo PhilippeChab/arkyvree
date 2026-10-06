@@ -10,6 +10,19 @@ class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules> {
     super(klassLevelsInRules);
   }
 
+  async create(db: Db, values: InferInsertModel<typeof klassLevelsInRules>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async createMany(db: Db, values: InferInsertModel<typeof klassLevelsInRules>[]) {
+    if (values.length === 0) return [];
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
+  }
+
   async findMany(db: Db, where: { klassId: string } | { klassIds: string[] }) {
     if ("klassIds" in where && where.klassIds.length === 0) return [];
     return await db.query.klassLevelsInRules.findMany({
@@ -31,19 +44,6 @@ class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules> {
         ["klassId" in where && eq(this.table.klassId, where.klassId), isNull(this.table.deletedAt)],
       ),
     });
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof klassLevelsInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof klassLevelsInRules>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 }
 

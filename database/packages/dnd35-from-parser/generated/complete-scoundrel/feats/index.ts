@@ -14,17 +14,6 @@ import {
   SKILL_TRICK_FEATS,
 } from "./feats.ts";
 
-export const ALL_STANDALONE_FEATS: FeatSeed[] = [
-  ...SKILL_TRICK_FEATS,
-  ...LUCK_FEATS,
-  ...GENERAL_FEATS,
-  ...BARDIC_FEATS,
-  ...AMBUSH_FEATS,
-  ...FIGHTER_FEATS,
-  ...disembowelingStrike,
-  ...headShot,
-];
-
 export const ALL_FEATS: FeatSeed[] = [
   ...SKILL_TRICK_FEATS,
   ...LUCK_FEATS,
@@ -35,6 +24,17 @@ export const ALL_FEATS: FeatSeed[] = [
   ...disembowelingStrike,
   ...headShot,
   ...ALL_CLASS_FEATS,
+];
+
+export const ALL_STANDALONE_FEATS: FeatSeed[] = [
+  ...SKILL_TRICK_FEATS,
+  ...LUCK_FEATS,
+  ...GENERAL_FEATS,
+  ...BARDIC_FEATS,
+  ...AMBUSH_FEATS,
+  ...FIGHTER_FEATS,
+  ...disembowelingStrike,
+  ...headShot,
 ];
 
 export {

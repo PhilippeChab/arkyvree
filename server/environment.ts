@@ -47,11 +47,6 @@ export const REQUIRED_IN_PRODUCTION = [
   "S3_SECRET_ACCESS_KEY", "S3_PUBLIC_URL",
 ] as const satisfies EnvironmentVariable[];
 
-/** A variable's value, undefined when it's unset. */
-export function readEnv(name: EnvironmentVariable): string | undefined {
-  return process.env[name];
-}
-
 /** The deployment's name for monitoring (Sentry, OpenTelemetry): NODE_ENV, or `development` when it's unset. */
 export function getEnvironmentName() {
   return readEnv("NODE_ENV") || "development";
@@ -76,6 +71,11 @@ export function isProduction() {
  */
 export function isTest() {
   return readEnv("NODE_ENV") === "test";
+}
+
+/** A variable's value, undefined when it's unset. */
+export function readEnv(name: EnvironmentVariable): string | undefined {
+  return process.env[name];
 }
 
 /** A variable's value, which must be set: unset, it stops whatever reads it. */

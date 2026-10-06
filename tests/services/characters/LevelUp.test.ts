@@ -3,7 +3,6 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import { type SeedContext } from "@/database/seeds/seedContext.ts";
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
@@ -29,7 +28,7 @@ import { makeSession } from "@/tests/support/users.ts";
 /** A level of a batch: class, level, hit points and the ability it increases. */
 type BatchLevel = [klass: string, level: number, hp: number, ability?: string];
 
-const session = makeSession(SEED_USER_ID);
+const session = makeSession();
 
 function fighter(count: number) {
   return Array.from({ length: count }, (_, i): [string, number] => ["Fighter", i + 1]);

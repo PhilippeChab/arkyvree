@@ -8,6 +8,9 @@ interface EntityCustomizations {
   modifierRequirements: Requirement[];
 }
 
+/** A ruleset entity's type: the repositories' tables name them. */
+type EntityType = RulesetEntityType;
+
 interface KlassRelationships {
   levels: { level: number; id: string }[];
   levelSaves: { klassLevelId: string; saveId: string; base: number }[];
@@ -15,9 +18,6 @@ interface KlassRelationships {
   levelPowers: { klassLevelId: string; powerId: string; aptitudeId: string; free: boolean }[];
   klassSkills: { klassId: string; skillId: string }[];
 }
-
-/** A ruleset entity's type: the repositories' tables name them. */
-type EntityType = RulesetEntityType;
 
 /** Fields to exclude from hashing — metadata and FK references whose UUIDs differ across forks */
 const EXCLUDED_FIELDS = new Set([
@@ -31,8 +31,23 @@ const EXCLUDED_FIELDS = new Set([
   "primaryAbilityId",
 ]);
 
-function isPrimitive(value: unknown): boolean {
-  return value === null || typeof value !== "object";
+function extractContentFields(entity: Record<string, unknown>): Record<string, unknown> {
+  const content: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(entity)) {
+    if (!EXCLUDED_FIELDS.has(key) && isPrimitive(value)) {
+      content[key] = value;
+    }
+  }
+  return sortByKeys(content);
+}
+
+function hashCustomizations(customizations: EntityCustomizations) {
+  return {
+    modifiers: sortedModifiers(customizations.modifiers),
+    properties: sortedProperties(customizations.properties),
+    requirements: sortedRequirements(customizations.requirements),
+    modifierRequirements: sortedRequirements(customizations.modifierRequirements),
+  };
 }
 
 /** Normalize feat aptitude associations — strip UUIDs, sort by aptitude name */
@@ -62,22 +77,16 @@ function hashPowerAptitudes(entity: Record<string, unknown>): { aptitude: string
     .sort((a, b) => a.aptitude.localeCompare(b.aptitude));
 }
 
+function isPrimitive(value: unknown): boolean {
+  return value === null || typeof value !== "object";
+}
+
 function sortByKeys(obj: Record<string, unknown>): Record<string, unknown> {
   const sorted: Record<string, unknown> = {};
   for (const key of Object.keys(obj).sort()) {
     sorted[key] = obj[key];
   }
   return sorted;
-}
-
-function extractContentFields(entity: Record<string, unknown>): Record<string, unknown> {
-  const content: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(entity)) {
-    if (!EXCLUDED_FIELDS.has(key) && isPrimitive(value)) {
-      content[key] = value;
-    }
-  }
-  return sortByKeys(content);
 }
 
 function sortedModifiers(modifiers: Modifier[]) {
@@ -127,15 +136,6 @@ function sortedRequirements(requirements: Requirement[]) {
       chainingOperator: r.chainingOperator,
       entityType: r.entityType,
     }));
-}
-
-function hashCustomizations(customizations: EntityCustomizations) {
-  return {
-    modifiers: sortedModifiers(customizations.modifiers),
-    properties: sortedProperties(customizations.properties),
-    requirements: sortedRequirements(customizations.requirements),
-    modifierRequirements: sortedRequirements(customizations.modifierRequirements),
-  };
 }
 
 export function hashEntity(

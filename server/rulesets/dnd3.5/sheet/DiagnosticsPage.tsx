@@ -8,20 +8,20 @@ import { FONT_SIZE, styles } from "./styles.ts";
 
 type DiagnosticColumn = { label: string; width: string; centered?: boolean };
 
-const REQUIREMENT_COLUMNS: DiagnosticColumn[] = [
-  { label: "LEVEL", width: "15%" },
-  { label: "TARGET", width: "35%" },
-  { label: "OPERATOR", width: "15%", centered: true },
-  { label: "VALUE", width: "15%", centered: true },
-  { label: "CHAINING OP", width: "20%", centered: true },
-];
-
 const MODIFIER_COLUMNS: DiagnosticColumn[] = [
   { label: "SOURCE TYPE", width: "20%" },
   { label: "TARGET", width: "35%" },
   { label: "OPERATOR", width: "15%", centered: true },
   { label: "VALUE", width: "15%", centered: true },
   { label: "TYPE", width: "15%", centered: true },
+];
+
+const REQUIREMENT_COLUMNS: DiagnosticColumn[] = [
+  { label: "LEVEL", width: "15%" },
+  { label: "TARGET", width: "35%" },
+  { label: "OPERATOR", width: "15%", centered: true },
+  { label: "VALUE", width: "15%", centered: true },
+  { label: "CHAINING OP", width: "20%", centered: true },
 ];
 
 /** The diagnostics page's counts above a section's tables. */
@@ -33,72 +33,6 @@ function DiagnosticCounts({ counts }: { counts: { label: string; color: string }
           {label}
         </Text>
       ))}
-    </View>
-  );
-}
-
-/** One of the diagnostics page's tables, when it has rows: the first `max`, and how many more there are. */
-function DiagnosticTable({
-  title,
-  columns,
-  rows,
-  max = rows.length,
-  noun,
-}: {
-  title: string;
-  columns: DiagnosticColumn[];
-  rows: (string | null | undefined)[][];
-  max?: number;
-  noun?: string;
-}) {
-  if (rows.length === 0) return null;
-  const cellStyle = (column: DiagnosticColumn) => ({
-    width: column.width,
-    paddingHorizontal: 4,
-    textAlign: column.centered ? ("center" as const) : undefined,
-  });
-  return (
-    <View style={{ marginBottom: 10 }}>
-      <Text style={{ fontSize: FONT_SIZE.lg, fontWeight: "bold", marginBottom: 5 }}>{title}</Text>
-      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-        <View
-          style={{
-            flexDirection: "row",
-            backgroundColor: "#eee",
-            borderBottomWidth: 1,
-            borderBottomColor: "#ccc",
-            paddingVertical: 4,
-          }}
-        >
-          {columns.map((column) => (
-            <Text
-              key={column.label}
-              style={{ ...cellStyle(column), fontSize: FONT_SIZE.sm, fontWeight: "bold", color: "#333" }}
-            >
-              {column.label}
-            </Text>
-          ))}
-        </View>
-        {rows.slice(0, max).map((row, index) => (
-          <View
-            key={index}
-            style={{ flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#eee", paddingVertical: 3 }}
-          >
-            {row.map((cell, column) => (
-              <Text key={column} style={{ ...cellStyle(columns[column]), fontSize: FONT_SIZE.base }}>
-                {cell || "—"}
-              </Text>
-            ))}
-          </View>
-        ))}
-        {rows.length > max && (
-          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-              ... and {rows.length - max} more {noun}
-            </Text>
-          </View>
-        )}
-      </View>
     </View>
   );
 }
@@ -237,6 +171,72 @@ function DiagnosticsPage({ detailedCharacter }: { detailedCharacter: DetailedCha
         })()}
       </View>
     </Page>
+  );
+}
+
+/** One of the diagnostics page's tables, when it has rows: the first `max`, and how many more there are. */
+function DiagnosticTable({
+  title,
+  columns,
+  rows,
+  max = rows.length,
+  noun,
+}: {
+  title: string;
+  columns: DiagnosticColumn[];
+  rows: (string | null | undefined)[][];
+  max?: number;
+  noun?: string;
+}) {
+  if (rows.length === 0) return null;
+  const cellStyle = (column: DiagnosticColumn) => ({
+    width: column.width,
+    paddingHorizontal: 4,
+    textAlign: column.centered ? ("center" as const) : undefined,
+  });
+  return (
+    <View style={{ marginBottom: 10 }}>
+      <Text style={{ fontSize: FONT_SIZE.lg, fontWeight: "bold", marginBottom: 5 }}>{title}</Text>
+      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            backgroundColor: "#eee",
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+            paddingVertical: 4,
+          }}
+        >
+          {columns.map((column) => (
+            <Text
+              key={column.label}
+              style={{ ...cellStyle(column), fontSize: FONT_SIZE.sm, fontWeight: "bold", color: "#333" }}
+            >
+              {column.label}
+            </Text>
+          ))}
+        </View>
+        {rows.slice(0, max).map((row, index) => (
+          <View
+            key={index}
+            style={{ flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#eee", paddingVertical: 3 }}
+          >
+            {row.map((cell, column) => (
+              <Text key={column} style={{ ...cellStyle(columns[column]), fontSize: FONT_SIZE.base }}>
+                {cell || "—"}
+              </Text>
+            ))}
+          </View>
+        ))}
+        {rows.length > max && (
+          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
+            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
+              ... and {rows.length - max} more {noun}
+            </Text>
+          </View>
+        )}
+      </View>
+    </View>
   );
 }
 

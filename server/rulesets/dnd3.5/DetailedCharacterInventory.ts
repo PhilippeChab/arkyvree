@@ -12,9 +12,21 @@ import {
   type Requirement,
 } from "@/shared/relations.ts";
 
+type DetailedCharacterComprehensiveInventory = Record<string, InventorySlotData> & {
+  weaponsets: WeaponSetInventory;
+};
+
 type InventorySlotData = {
   properties: Record<string, string>;
 } | null;
+
+type RawInventoryEntry = CharacterInventory & {
+  item: Item & {
+    properties: Property[];
+    modifiers: Modifier[];
+    requirements: Requirement[];
+  };
+};
 
 type WeaponSetInventory = Record<
   string,
@@ -24,18 +36,6 @@ type WeaponSetInventory = Record<
     twohanded: InventorySlotData;
   }
 >;
-
-type DetailedCharacterComprehensiveInventory = Record<string, InventorySlotData> & {
-  weaponsets: WeaponSetInventory;
-};
-
-type RawInventoryEntry = CharacterInventory & {
-  item: Item & {
-    properties: Property[];
-    modifiers: Modifier[];
-    requirements: Requirement[];
-  };
-};
 
 export default class DetailedCharacterInventory {
   constructor(
@@ -50,6 +50,14 @@ export default class DetailedCharacterInventory {
   } as DetailedCharacterComprehensiveInventory;
 
   private rawItems: RawInventoryEntry[] = [];
+
+  getFlatInventory() {
+    return this.rawItems;
+  }
+
+  getInventory() {
+    return this.detailedCharacterInventory;
+  }
 
   initialize(inventory: RawInventoryEntry[]) {
     this.rawItems = inventory;
@@ -119,13 +127,5 @@ export default class DetailedCharacterInventory {
     if (set0Mainhand?.name === UNARMED_STRIKE && set0Mainhand.itemId === null) {
       this.characterWeapons.registerWeapon(0, "Main Hand", { name: UNARMED_STRIKE });
     }
-  }
-
-  getFlatInventory() {
-    return this.rawItems;
-  }
-
-  getInventory() {
-    return this.detailedCharacterInventory;
   }
 }

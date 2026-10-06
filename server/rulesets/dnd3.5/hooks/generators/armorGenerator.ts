@@ -1,6 +1,4 @@
 type ArmorCategory = "Light" | "Medium" | "Heavy";
-type ShieldCategory = "Light" | "Heavy" | "Tower";
-
 interface ArmorDefinition {
   armorType: ArmorCategory;
   acBonus: number;
@@ -8,6 +6,8 @@ interface ArmorDefinition {
   checkPenalty: number;
   spellFailure: number;
 }
+
+type ShieldCategory = "Light" | "Heavy" | "Tower";
 
 interface ShieldDefinition {
   shieldType: ShieldCategory;

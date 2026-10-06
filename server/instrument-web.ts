@@ -1,5 +1,5 @@
-import { initOtel } from "@/server/otel.ts";
-import { initSentry } from "@/server/sentry.ts";
+import Telemetry from "@/server/otel.ts";
+import ErrorReporting from "@/server/sentry.ts";
 
-initSentry("web");
-initOtel("web");
+ErrorReporting.init("web");
+Telemetry.init("web");

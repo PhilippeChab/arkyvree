@@ -1,8 +1,5 @@
-import { parseResponse } from "hono/client";
-
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { apiOf } from "@/tests/e2e/support/api.ts";
-import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
+import { createCampaign, postPlayerInvite } from "@/tests/e2e/support/campaigns.ts";
 import { unreadCount } from "@/tests/e2e/support/notifications.ts";
 import { uniqueName } from "@/tests/e2e/support/page.ts";
 import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
@@ -28,12 +25,7 @@ test.describe("An open page", () => {
     const gm = await signedInPage(browser, ownerUser);
     try {
       const id = await createCampaign(gm, uniqueName("Realtime Campaign"));
-      await parseResponse(
-        apiOf(gm).api.campaigns[":id"].players.$post({
-          param: { id },
-          json: { role: "Player Character", email: user.email },
-        }),
-      );
+      await postPlayerInvite(gm, id, user.email);
     } finally {
       await gm.context().close();
     }

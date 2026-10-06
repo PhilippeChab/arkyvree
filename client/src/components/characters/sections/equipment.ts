@@ -17,14 +17,14 @@ type PlacedEntry = Pick<InventoryEntry, "id" | "equipped" | "location" | "weapon
   item: Pick<InventoryEntry["item"], "name">;
 };
 
-/** A sheet's equipment row: the inventory entry with its item's fields. */
-export type EquipmentRow = CharacterDetail["equipment"][number];
-
 /** The sheet's carried weight and load thresholds (the combat section's `encumbrance`). */
 export type EncumbranceData = Omit<CharacterDetail["combat"]["encumbrance"], "maxdex"> & {
   /** No cap (the server's Infinity, sent as null) under a light load. */
   maxdex: number | null;
 };
+
+/** A sheet's equipment row: the inventory entry with its item's fields. */
+export type EquipmentRow = CharacterDetail["equipment"][number];
 
 /** The add and edit inventory dialogs' form: the item (add only) and where and how it's carried. */
 export interface InventoryFormData {
@@ -54,9 +54,6 @@ const SLOT_CONFLICT_WARNINGS: Record<
   sameHand: (location, entry, weaponSet) => `${location} is occupied by ${entry.item.name} (Set ${weaponSet})`,
 };
 
-/** A slot, or not equipped. */
-export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
-
 export const EMPTY_INVENTORY_FORM: InventoryFormData = {
   selectedItem: null,
   quantity: 1,
@@ -65,6 +62,26 @@ export const EMPTY_INVENTORY_FORM: InventoryFormData = {
   totalCharges: 0,
   remainingCharges: 0,
 };
+
+/** A slot, or not equipped. */
+export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
+
+/** The slot an item goes to when picked, or null to leave the choice (a weapon's hand) to the user. */
+export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
+  if (item.type === "Weapon") return null; // hand slot picker
+  if (item.type === "Armor") return "Torso";
+  if (item.type === "Shield") return "Off Hand";
+  return LOCATION_OPTIONS.find((v) => v.toLowerCase() === item.slot.toLowerCase()) ?? null;
+}
+
+/** Where an entry is worn ("Main Hand (Set 1)"), or a dash when it's carried. */
+export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "location" | "weaponSet">): string {
+  if (!entry.equipped || !entry.location) return "—";
+  if (isHandLocation(entry.location) && entry.weaponSet !== null) {
+    return `${entry.location} (Set ${shownWeaponSet(entry.weaponSet)})`;
+  }
+  return entry.location;
+}
 
 /**
  * Why the slot is taken (by another entry, the same item's in another place included, or a two-handed weapon in the
@@ -84,23 +101,6 @@ export function getSlotConflictWarning(
   if (!conflict) return null;
   if (conflict.reason === "fingers") return "Both finger slots are occupied";
   return SLOT_CONFLICT_WARNINGS[conflict.reason](location, conflict.entry, weaponSet);
-}
-
-/** The slot an item goes to when picked, or null to leave the choice (a weapon's hand) to the user. */
-export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
-  if (item.type === "Weapon") return null; // hand slot picker
-  if (item.type === "Armor") return "Torso";
-  if (item.type === "Shield") return "Off Hand";
-  return LOCATION_OPTIONS.find((v) => v.toLowerCase() === item.slot.toLowerCase()) ?? null;
-}
-
-/** Where an entry is worn ("Main Hand (Set 1)"), or a dash when it's carried. */
-export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "location" | "weaponSet">): string {
-  if (!entry.equipped || !entry.location) return "—";
-  if (isHandLocation(entry.location) && entry.weaponSet !== null) {
-    return `${entry.location} (Set ${shownWeaponSet(entry.weaponSet)})`;
-  }
-  return entry.location;
 }
 
 /** The placement as the inventory endpoints take it: a slot equips the item, charges only for items that have them. */

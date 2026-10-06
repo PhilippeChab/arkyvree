@@ -9,6 +9,19 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
     super(starredRulesetsInAccount);
   }
 
+  async archive(db: Db, where: { userId: string; rulesetId: string } | { userId: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(
+        this.branchWhere(
+          [eq(this.table.userId, where.userId)],
+          ["rulesetId" in where && eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)],
+        ),
+      )
+      .returning();
+  }
+
   async count(db: Db, where: { rulesetId: string }) {
     const [row] = await db
       .select({ count: count() })
@@ -56,19 +69,6 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
           updatedAt: new Date().toISOString(),
         },
       })
-      .returning();
-  }
-
-  async archive(db: Db, where: { userId: string; rulesetId: string } | { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        this.branchWhere(
-          [eq(this.table.userId, where.userId)],
-          ["rulesetId" in where && eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)],
-        ),
-      )
       .returning();
   }
 }

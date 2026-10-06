@@ -2,8 +2,8 @@ import { gte } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatSeed, WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
 import { WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 
-const SPECIALIZATION = "Wizard Specialization";
 const PROHIBITED_SCHOOL = "Prohibited School";
+const SPECIALIZATION = "Wizard Specialization";
 
 /**
  * A wizard's choice of school: a specialist feat per school, which allows as many prohibited schools as it names, or

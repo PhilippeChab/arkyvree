@@ -46,6 +46,53 @@ import { stripSeparators } from "@/shared/text.ts";
 import { Dnd35LevelsHooks } from "./hooks/index.ts";
 import { collectClassListIds, collectFeatListIds } from "./spellcasting/spellLists.ts";
 
+const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  abilities: "Ability scores and modifiers",
+  skills: "Skill ranks and modifiers",
+  saves: "Fortitude, Reflex, and Will saving throws",
+  combat: "AC, hit points, attack bonuses, initiative, speed, armor and shield",
+  weapon: "On an item: its own weapon's to-hit, damage, and how it's wielded, wherever it's held",
+  items: "Equipped weapon, armor, and shield stats",
+  classes: "Class levels and bonus caster levels",
+  feats: "Feat possession and stackable count",
+  powers: "Spell DC, possession, and properties",
+  identity: "Physiology, level, XP, and background",
+  aptitudes: "Uses and selection slots",
+  spellcasting: "Maximum arcane or divine spell level castable",
+  bonded: "Familiar, animal companion, or mount race",
+};
+
+/** Each category's holder, and the getter that hands its data to a path. */
+const CATEGORY_HOLDERS: Record<string, { holderKey: string; getter: string }> = {
+  abilities: { holderKey: "abilities", getter: "getAbilities" },
+  skills: { holderKey: "skills", getter: "getSkills" },
+  saves: { holderKey: "savingThrows", getter: "getSavingThrows" },
+  combat: { holderKey: "combat", getter: "getCombat" },
+  classes: { holderKey: "classes", getter: "getClasses" },
+  feats: { holderKey: "feats", getter: "getFeats" },
+  powers: { holderKey: "powers", getter: "getPowers" },
+  identity: { holderKey: "identity", getter: "getIdentity" },
+  aptitudes: { holderKey: "aptitudes", getter: "getAptitudes" },
+  spellcasting: { holderKey: "spellcasting", getter: "getSpellcasting" },
+  bonded: { holderKey: "bonded", getter: "getBonds" },
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  abilities: "Abilities",
+  skills: "Skills",
+  saves: "Saving Throws",
+  combat: "Combat",
+  weapon: "Weapon",
+  items: "Items",
+  classes: "Classes",
+  feats: "Feats",
+  powers: "Spells",
+  identity: "Identity",
+  aptitudes: "Aptitudes",
+  spellcasting: "Spellcasting",
+  bonded: "Bonded",
+};
+
 /** The categories of the 3.5 rules' target paths (`getCategories`). */
 const DND35_CATEGORIES = [
   "abilities",
@@ -62,6 +109,23 @@ const DND35_CATEGORIES = [
   "spellcasting",
   "bonded",
 ] as const;
+
+/**
+ * Template for entity-level descriptions (dynamic segments like ability/skill/class names). {name} is replaced with the
+ * segment's display label.
+ */
+const GROUP_DESCRIPTION_TEMPLATES: Record<string, string> = {
+  abilities: "{name} ability score and modifier",
+  skills: "{name} skill rank and modifiers",
+  saves: "{name} saving throw components",
+  classes: "{name} class level and caster level",
+  feats: "{name} feat possession",
+  powers: "{name} spell DC and properties",
+  aptitudes: "{name} uses and slots",
+  "items.weapons": "{name} weapon stats",
+  "items.armors": "{name} armor stats",
+  "items.shields": "{name} shield stats",
+};
 
 const PATH_DESCRIPTIONS: Record<string, string> = {
   // Combat
@@ -99,72 +163,135 @@ const PATH_DESCRIPTIONS: Record<string, string> = {
 };
 
 /**
- * Template for entity-level descriptions (dynamic segments like ability/skill/class names). {name} is replaced with the
- * segment's display label.
+ * The groupings the ruleset's properties and powers define, which the paths are generated for: weapons by type
+ * (e.g. "longsword") and proficiency category (e.g. "exotic"), each armor and shield type, spell schools and
+ * descriptors (wildcard DC paths), each leveled power (flat DC paths), and feat families with their display names.
  */
-const GROUP_DESCRIPTION_TEMPLATES: Record<string, string> = {
-  abilities: "{name} ability score and modifier",
-  skills: "{name} skill rank and modifiers",
-  saves: "{name} saving throw components",
-  classes: "{name} class level and caster level",
-  feats: "{name} feat possession",
-  powers: "{name} spell DC and properties",
-  aptitudes: "{name} uses and slots",
-  "items.weapons": "{name} weapon stats",
-  "items.armors": "{name} armor stats",
-  "items.shields": "{name} shield stats",
-};
+function collectGroupings(rulesetData: CachedRulesetData) {
+  const { powers, propertiesByEntityType } = rulesetData;
+  const itemProperties = propertiesByEntityType.get("items") ?? [];
+  const powerProperties = propertiesByEntityType.get("powers") ?? [];
+  const featProperties = propertiesByEntityType.get("feats") ?? [];
 
-const CATEGORY_DESCRIPTIONS: Record<string, string> = {
-  abilities: "Ability scores and modifiers",
-  skills: "Skill ranks and modifiers",
-  saves: "Fortitude, Reflex, and Will saving throws",
-  combat: "AC, hit points, attack bonuses, initiative, speed, armor and shield",
-  weapon: "On an item: its own weapon's to-hit, damage, and how it's wielded, wherever it's held",
-  items: "Equipped weapon, armor, and shield stats",
-  classes: "Class levels and bonus caster levels",
-  feats: "Feat possession and stackable count",
-  powers: "Spell DC, possession, and properties",
-  identity: "Physiology, level, XP, and background",
-  aptitudes: "Uses and selection slots",
-  spellcasting: "Maximum arcane or divine spell level castable",
-  bonded: "Familiar, animal companion, or mount race",
-};
+  // Every family the rules know, a feat of the ruleset in it or not: an extension's checks of another book's
+  const featGroupingLabels: Record<string, string> = Object.fromEntries(
+    FEAT_FAMILIES.map((family) => [stripSeparators(family), family]),
+  );
+  for (const prop of featProperties) {
+    if (prop.type === FEAT_FAMILY) featGroupingLabels[stripSeparators(prop.value)] = prop.value;
+  }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  abilities: "Abilities",
-  skills: "Skills",
-  saves: "Saving Throws",
-  combat: "Combat",
-  weapon: "Weapon",
-  items: "Items",
-  classes: "Classes",
-  feats: "Feats",
-  powers: "Spells",
-  identity: "Identity",
-  aptitudes: "Aptitudes",
-  spellcasting: "Spellcasting",
-  bonded: "Bonded",
-};
+  // The leveled aptitudes: those with spells at a level, and those a class gives slots in before they have any
+  const leveledAptitudeIds = collectClassListIds(rulesetData);
+  for (const power of powers) {
+    for (const pa of power.powersAptitudesInRules) {
+      if (pa.level != null) leveledAptitudeIds.add(pa.aptitudeId);
+    }
+  }
 
-/** Each category's holder, and the getter that hands its data to a path. */
-const CATEGORY_HOLDERS: Record<string, { holderKey: string; getter: string }> = {
-  abilities: { holderKey: "abilities", getter: "getAbilities" },
-  skills: { holderKey: "skills", getter: "getSkills" },
-  saves: { holderKey: "savingThrows", getter: "getSavingThrows" },
-  combat: { holderKey: "combat", getter: "getCombat" },
-  classes: { holderKey: "classes", getter: "getClasses" },
-  feats: { holderKey: "feats", getter: "getFeats" },
-  powers: { holderKey: "powers", getter: "getPowers" },
-  identity: { holderKey: "identity", getter: "getIdentity" },
-  aptitudes: { holderKey: "aptitudes", getter: "getAptitudes" },
-  spellcasting: { holderKey: "spellcasting", getter: "getSpellcasting" },
-  bonded: { holderKey: "bonded", getter: "getBonds" },
-};
+  return {
+    powersWithProperties: powers.map((power) => ({
+      ...power,
+      properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
+    })),
+    // Every character strikes unarmed, without an item: its grouping is always there
+    weaponGroupings: [
+      ...new Set([
+        stripSeparators(UNARMED_STRIKE),
+        ...slugsOf(itemProperties, WEAPON_TYPE),
+        ...slugsOf(itemProperties, WEAPON_PROFICIENCY),
+      ]),
+    ],
+    armorGroupings: slugsOf(itemProperties, ARMOR_TYPE),
+    shieldGroupings: slugsOf(itemProperties, SHIELD_TYPE),
+    schoolGroupings: slugsOf(powerProperties, SPELL_SCHOOL),
+    descriptorGroupings: slugsOf(powerProperties, SPELL_DESCRIPTOR),
+    individualPowerDcNames: [
+      ...new Set(
+        powers
+          .filter((p) => p.powersAptitudesInRules.some((pa) => pa.level != null))
+          .map((p) => stripSeparators(p.name)),
+      ),
+    ],
+    featGroupings: Object.keys(featGroupingLabels),
+    featGroupingLabels,
+    leveledAptitudeIds,
+  };
+}
 
 /** A path that reaches no value, with why. */
 function failed(holder: Holder | null, key: string, error: string): TraversePathResult[] {
   return [{ holder, object: null, data: null, key, resolvedPath: null, error }];
+}
+
+/** Every target path, from the DetailedCharacter components' static generators, and the requirement-only spellcasting. */
+function generatePaths(rulesetData: CachedRulesetData, kind: "modifier" | "requirement"): TargetPath[] {
+  const { abilities, saves, skills, feats, aptitudes, klasses } = rulesetData;
+  const groupings = collectGroupings(rulesetData);
+  const paths: TargetPath[] = [
+    ...DetailedCharacterSkills.generateTargetPaths(skills, kind),
+    ...DetailedCharacterClasses.generateTargetPaths(klasses, kind),
+    ...DetailedCharacterFeats.generateTargetPaths(feats, kind),
+    ...DetailedCharacterFeatGroupings.generateTargetPaths(
+      groupings.featGroupings,
+      kind,
+      groupings.featGroupingLabels,
+      new Set(feats.map((feat) => stripSeparators(feat.name))),
+    ),
+    ...DetailedCharacterWeapons.generateTargetPaths(groupings.weaponGroupings, kind),
+    ...DetailedCharacterArmors.generateTargetPaths(groupings.armorGroupings, kind),
+    ...DetailedCharacterShields.generateTargetPaths(groupings.shieldGroupings, kind),
+    ...DetailedCharacterPowers.generateTargetPaths(
+      groupings.powersWithProperties,
+      aptitudes,
+      collectFeatListIds(rulesetData),
+      kind,
+    ),
+    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.schoolGroupings, kind, true, "school"),
+    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.descriptorGroupings, kind, true, "descriptor"),
+    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.individualPowerDcNames, kind, false),
+    ...DetailedCharacterAptitudes.generateTargetPaths(
+      aptitudes,
+      kind,
+      groupings.leveledAptitudeIds,
+      Dnd35LevelsHooks.MAX_SPELL_LEVEL,
+    ),
+    ...DetailedCharacterCombat.generateTargetPaths(kind),
+    ...DetailedCharacterWeapons.generateItemWeaponPaths(kind),
+    ...DetailedCharacterEncumbrance.generateTargetPaths(kind),
+    ...DetailedCharacterAbilities.generateTargetPaths(abilities, kind),
+    ...DetailedCharacterSavingThrows.generateTargetPaths(saves, kind),
+    ...DetailedCharacterIdentity.generateTargetPaths(kind),
+    ...DetailedCharacterBonds.generateTargetPaths(kind),
+  ];
+
+  if (kind === "requirement") {
+    const numericOps = [
+      "equal",
+      "not_equal",
+      "greater_than",
+      "less_than",
+      "greater_than_or_equal",
+      "less_than_or_equal",
+    ];
+    paths.push(
+      {
+        path: "spellcasting.arcane",
+        category: "spellcasting",
+        description: "Max arcane spell level castable",
+        valueType: "number",
+        operators: numericOps,
+      },
+      {
+        path: "spellcasting.divine",
+        category: "spellcasting",
+        description: "Max divine spell level castable",
+        valueType: "number",
+        operators: numericOps,
+      },
+    );
+  }
+  return paths;
 }
 
 /** Each path segment's display label: the categories', the components' structural ones, and the ruleset's names. */
@@ -243,133 +370,6 @@ function segmentLabelsOf(rulesetData: CachedRulesetData): Record<string, string>
 /** The distinct slugs of the properties' values of `type`. */
 function slugsOf(properties: { type: string; value: string }[], type: string) {
   return [...new Set(properties.filter((p) => p.type === type).map((p) => stripSeparators(p.value)))];
-}
-
-/**
- * The groupings the ruleset's properties and powers define, which the paths are generated for: weapons by type
- * (e.g. "longsword") and proficiency category (e.g. "exotic"), each armor and shield type, spell schools and
- * descriptors (wildcard DC paths), each leveled power (flat DC paths), and feat families with their display names.
- */
-function collectGroupings(rulesetData: CachedRulesetData) {
-  const { powers, propertiesByEntityType } = rulesetData;
-  const itemProperties = propertiesByEntityType.get("items") ?? [];
-  const powerProperties = propertiesByEntityType.get("powers") ?? [];
-  const featProperties = propertiesByEntityType.get("feats") ?? [];
-
-  // Every family the rules know, a feat of the ruleset in it or not: an extension's checks of another book's
-  const featGroupingLabels: Record<string, string> = Object.fromEntries(
-    FEAT_FAMILIES.map((family) => [stripSeparators(family), family]),
-  );
-  for (const prop of featProperties) {
-    if (prop.type === FEAT_FAMILY) featGroupingLabels[stripSeparators(prop.value)] = prop.value;
-  }
-
-  // The leveled aptitudes: those with spells at a level, and those a class gives slots in before they have any
-  const leveledAptitudeIds = collectClassListIds(rulesetData);
-  for (const power of powers) {
-    for (const pa of power.powersAptitudesInRules) {
-      if (pa.level != null) leveledAptitudeIds.add(pa.aptitudeId);
-    }
-  }
-
-  return {
-    powersWithProperties: powers.map((power) => ({
-      ...power,
-      properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
-    })),
-    // Every character strikes unarmed, without an item: its grouping is always there
-    weaponGroupings: [
-      ...new Set([
-        stripSeparators(UNARMED_STRIKE),
-        ...slugsOf(itemProperties, WEAPON_TYPE),
-        ...slugsOf(itemProperties, WEAPON_PROFICIENCY),
-      ]),
-    ],
-    armorGroupings: slugsOf(itemProperties, ARMOR_TYPE),
-    shieldGroupings: slugsOf(itemProperties, SHIELD_TYPE),
-    schoolGroupings: slugsOf(powerProperties, SPELL_SCHOOL),
-    descriptorGroupings: slugsOf(powerProperties, SPELL_DESCRIPTOR),
-    individualPowerDcNames: [
-      ...new Set(
-        powers
-          .filter((p) => p.powersAptitudesInRules.some((pa) => pa.level != null))
-          .map((p) => stripSeparators(p.name)),
-      ),
-    ],
-    featGroupings: Object.keys(featGroupingLabels),
-    featGroupingLabels,
-    leveledAptitudeIds,
-  };
-}
-
-/** Every target path, from the DetailedCharacter components' static generators, and the requirement-only spellcasting. */
-function generatePaths(rulesetData: CachedRulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-  const { abilities, saves, skills, feats, aptitudes, klasses } = rulesetData;
-  const groupings = collectGroupings(rulesetData);
-  const paths: TargetPath[] = [
-    ...DetailedCharacterSkills.generateTargetPaths(skills, kind),
-    ...DetailedCharacterClasses.generateTargetPaths(klasses, kind),
-    ...DetailedCharacterFeats.generateTargetPaths(feats, kind),
-    ...DetailedCharacterFeatGroupings.generateTargetPaths(
-      groupings.featGroupings,
-      kind,
-      groupings.featGroupingLabels,
-      new Set(feats.map((feat) => stripSeparators(feat.name))),
-    ),
-    ...DetailedCharacterWeapons.generateTargetPaths(groupings.weaponGroupings, kind),
-    ...DetailedCharacterArmors.generateTargetPaths(groupings.armorGroupings, kind),
-    ...DetailedCharacterShields.generateTargetPaths(groupings.shieldGroupings, kind),
-    ...DetailedCharacterPowers.generateTargetPaths(
-      groupings.powersWithProperties,
-      aptitudes,
-      collectFeatListIds(rulesetData),
-      kind,
-    ),
-    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.schoolGroupings, kind, true, "school"),
-    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.descriptorGroupings, kind, true, "descriptor"),
-    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.individualPowerDcNames, kind, false),
-    ...DetailedCharacterAptitudes.generateTargetPaths(
-      aptitudes,
-      kind,
-      groupings.leveledAptitudeIds,
-      Dnd35LevelsHooks.MAX_SPELL_LEVEL,
-    ),
-    ...DetailedCharacterCombat.generateTargetPaths(kind),
-    ...DetailedCharacterWeapons.generateItemWeaponPaths(kind),
-    ...DetailedCharacterEncumbrance.generateTargetPaths(kind),
-    ...DetailedCharacterAbilities.generateTargetPaths(abilities, kind),
-    ...DetailedCharacterSavingThrows.generateTargetPaths(saves, kind),
-    ...DetailedCharacterIdentity.generateTargetPaths(kind),
-    ...DetailedCharacterBonds.generateTargetPaths(kind),
-  ];
-
-  if (kind === "requirement") {
-    const numericOps = [
-      "equal",
-      "not_equal",
-      "greater_than",
-      "less_than",
-      "greater_than_or_equal",
-      "less_than_or_equal",
-    ];
-    paths.push(
-      {
-        path: "spellcasting.arcane",
-        category: "spellcasting",
-        description: "Max arcane spell level castable",
-        valueType: "number",
-        operators: numericOps,
-      },
-      {
-        path: "spellcasting.divine",
-        category: "spellcasting",
-        description: "Max divine spell level castable",
-        valueType: "number",
-        operators: numericOps,
-      },
-    );
-  }
-  return paths;
 }
 
 /** The entries of `value` that are objects and whose slug starts with `slug` (but isn't it): a skill's subtypes. */

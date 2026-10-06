@@ -9,8 +9,8 @@ import { activityTypes } from "@/tests/support/activities.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 
-const chain = { level: "1", chainingOperator: "and" };
 const babAtLeast5 = { level: "1", target: "combat.bab", value: "5", operator: "greater_than_or_equal" };
+const chain = { level: "1", chainingOperator: "and" };
 
 /** A new user's ruleset with a feat and a race of its own. */
 async function setup() {

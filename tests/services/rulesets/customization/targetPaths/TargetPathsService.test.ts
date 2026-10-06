@@ -7,15 +7,15 @@ import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
-type Kind = "modifier" | "requirement";
 type EntityType = Parameters<typeof getTargetPathsWithLabels>[2];
+type Kind = "modifier" | "requirement";
 
 function isAptitudeGrant(p: { category: string; path: string }) {
   return p.category === "aptitudes" && /\.(uses|allowed)$/.test(p.path);
 }
 
-async function validate(path: string, kind: Kind = "modifier", entityType?: EntityType) {
-  return TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind, entityType);
+function pathsOf(result: Awaited<ReturnType<typeof complete>>) {
+  return result.items.map((item) => item.path);
 }
 
 async function complete(
@@ -42,14 +42,14 @@ async function complete(
   );
 }
 
-function pathsOf(result: Awaited<ReturnType<typeof complete>>) {
-  return result.items.map((item) => item.path);
-}
-
 /** The seeded D&D 3.5 ruleset's target paths and segment labels. */
 async function seedPaths(kind: Kind, entityType?: EntityType) {
   const { rulesetId } = await getSeedCtx();
   return await getTargetPathsWithLabels(rulesetId, kind, entityType);
+}
+
+async function validate(path: string, kind: Kind = "modifier", entityType?: EntityType) {
+  return TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind, entityType);
 }
 
 // Completing and validating a path through the API are covered in the customization target router test.

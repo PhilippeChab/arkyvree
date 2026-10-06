@@ -11,25 +11,6 @@ import type { Dnd35LevelUpProjector as Dnd35LevelUpProjectorInterface } from "./
 export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInterface {
   constructor(private readonly character: DetailedCharacter) {}
 
-  getCharacterEnrichedSkills<T extends { id: string; name: string }>(
-    allSkills: T[],
-    classSkillIds: Set<string>,
-  ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[] {
-    return this.character.getDetailedCharacterSkills().getEnrichedSkills(allSkills, classSkillIds);
-  }
-
-  getCharacterSkills(): Record<string, unknown> {
-    return this.character.getDetailedCharacterSkills().getSkills();
-  }
-
-  getSkillBudget() {
-    return this.character.getDetailedCharacterSkills().getSkillBudget();
-  }
-
-  getSkillPointBases() {
-    return this.character.getDetailedCharacterSkills().getSkillPointBases();
-  }
-
   /**
    * Each planned level's points per level before the minimum, in the batch's order: its class's and the skill point
    * ability's modifier.
@@ -51,6 +32,63 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     return klassLevelIds.map((klassLevelId) =>
       skills.getLevelPointsPerLevel(skillPointsByKlassLevelId.get(klassLevelId) ?? 0),
     );
+  }
+
+  getCharacterEnrichedSkills<T extends { id: string; name: string }>(
+    allSkills: T[],
+    classSkillIds: Set<string>,
+  ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[] {
+    return this.character.getDetailedCharacterSkills().getEnrichedSkills(allSkills, classSkillIds);
+  }
+
+  getCharacterSkills(): Record<string, unknown> {
+    return this.character.getDetailedCharacterSkills().getSkills();
+  }
+
+  getSkillBudget() {
+    return this.character.getDetailedCharacterSkills().getSkillBudget();
+  }
+
+  getSkillPointBases() {
+    return this.character.getDetailedCharacterSkills().getSkillPointBases();
+  }
+
+  /** Each planned level's skill points, in the batch's order: the first counts four times over on a new character. */
+  async computeSkillPointsPerLevel(
+    klassLevelIds: string[],
+    existingLevelCount: number,
+    rulesetData: CachedRulesetData,
+  ): Promise<number[]> {
+    const { bonusPerLevel } = this.getSkillPointBases();
+    return this.computeSkillPointBasesPerLevel(klassLevelIds, rulesetData).map((points, i) =>
+      computeLevelSkillPoints(points, bonusPerLevel, existingLevelCount === 0 && i === 0),
+    );
+  }
+
+  async evaluateClassAvailability(
+    candidates: { klassName: string; klassLevel: KlassLevel; requirementGroups: Requirement[][] }[],
+    projectedCharacterLevel: CharacterLevel,
+  ): Promise<Map<string, boolean>> {
+    const results = new Map<string, boolean>();
+    if (candidates.length === 0) return results;
+
+    const identity = this.character.getDetailedCharacterIdentity().getIdentity();
+    identity.meta.level++;
+
+    for (const candidate of candidates) {
+      results.set(
+        candidate.klassLevel.id,
+        this.character.evaluateWithProjectedLevel(
+          candidate.klassName,
+          candidate.klassLevel,
+          projectedCharacterLevel,
+          candidate.requirementGroups,
+        ),
+      );
+    }
+
+    identity.meta.level--;
+    return results;
   }
 
   async getExcludedPowerIds(
@@ -104,43 +142,5 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
       for (const id of ids) excludedPowerIds.add(id);
     }
     return [...excludedPowerIds];
-  }
-
-  /** Each planned level's skill points, in the batch's order: the first counts four times over on a new character. */
-  async computeSkillPointsPerLevel(
-    klassLevelIds: string[],
-    existingLevelCount: number,
-    rulesetData: CachedRulesetData,
-  ): Promise<number[]> {
-    const { bonusPerLevel } = this.getSkillPointBases();
-    return this.computeSkillPointBasesPerLevel(klassLevelIds, rulesetData).map((points, i) =>
-      computeLevelSkillPoints(points, bonusPerLevel, existingLevelCount === 0 && i === 0),
-    );
-  }
-
-  async evaluateClassAvailability(
-    candidates: { klassName: string; klassLevel: KlassLevel; requirementGroups: Requirement[][] }[],
-    projectedCharacterLevel: CharacterLevel,
-  ): Promise<Map<string, boolean>> {
-    const results = new Map<string, boolean>();
-    if (candidates.length === 0) return results;
-
-    const identity = this.character.getDetailedCharacterIdentity().getIdentity();
-    identity.meta.level++;
-
-    for (const candidate of candidates) {
-      results.set(
-        candidate.klassLevel.id,
-        this.character.evaluateWithProjectedLevel(
-          candidate.klassName,
-          candidate.klassLevel,
-          projectedCharacterLevel,
-          candidate.requirementGroups,
-        ),
-      );
-    }
-
-    identity.meta.level--;
-    return results;
   }
 }

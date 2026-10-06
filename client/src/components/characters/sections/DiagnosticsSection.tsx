@@ -27,9 +27,9 @@ interface DiagnosticsSectionProps {
   modifiers: CharacterDetail["modifiers"];
 }
 
-type RequirementGroup = DiagnosticsSectionProps["requirements"]["unmetRequirementGroups"][number];
 /** A modifier in the applied, unapplied or inactive list, with its source's name. */
 type Modifier = DiagnosticsSectionProps["modifiers"]["appliedModifiers"][number];
+type RequirementGroup = DiagnosticsSectionProps["requirements"]["unmetRequirementGroups"][number];
 
 /** A requirement's or modifier's target, operator, value and last column (chaining or value type). */
 type RuleCells = [target: ReactNode, operator: ReactNode, value: ReactNode, last: ReactNode];
@@ -40,9 +40,9 @@ interface RuleGroup {
   rules: RuleCells[];
 }
 
+const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
 const tableCellSx = { py: 0.5, px: 1, fontSize: "0.8rem" } as const;
 const headerCellSx = { ...tableCellSx, fontWeight: 600 } as const;
-const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
 const summarySx = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
 
 /** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
@@ -61,52 +61,6 @@ function DiagnosticsGroup({ label, count, children }: { label: string; count: nu
         </TableContainer>
       </AccordionDetails>
     </Accordion>
-  );
-}
-
-function HeaderRow({ labels }: { labels: string[] }) {
-  return (
-    <TableHead>
-      <TableRow>
-        {labels.map((label) => (
-          <TableCell key={label} sx={headerCellSx}>
-            {label}
-          </TableCell>
-        ))}
-      </TableRow>
-    </TableHead>
-  );
-}
-
-function InvalidRequirementTable({ items }: { items: DiagnosticsSectionProps["requirements"]["invalidRequirements"] }) {
-  return (
-    <DiagnosticsGroup label="Invalid" count={items.length}>
-      <HeaderRow labels={["Source", "Level", "Target", "Warning"]} />
-      <TableBody>
-        {items.map((item, i) => (
-          <TableRow key={i}>
-            <TableCell sx={tableCellSx}>{item.sourceName ?? item.requirement.entityType}</TableCell>
-            <TableCell sx={tableCellSx}>{item.requirement.level}</TableCell>
-            <TableCell sx={tableCellSx}>{item.requirement.target || "—"}</TableCell>
-            <TableCell sx={tableCellSx}>{item.warning}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </DiagnosticsGroup>
-  );
-}
-
-function RuleCellsRow({ cells }: { cells: RuleCells }) {
-  const [target, ...rest] = cells;
-  return (
-    <>
-      <TableCell sx={tableCellSx}>{target}</TableCell>
-      {rest.map((cell, i) => (
-        <TableCell key={i} sx={tableCellSx} align="center">
-          {cell}
-        </TableCell>
-      ))}
-    </>
   );
 }
 
@@ -187,6 +141,38 @@ function GroupedRuleTable({
   );
 }
 
+function HeaderRow({ labels }: { labels: string[] }) {
+  return (
+    <TableHead>
+      <TableRow>
+        {labels.map((label) => (
+          <TableCell key={label} sx={headerCellSx}>
+            {label}
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableHead>
+  );
+}
+
+function InvalidRequirementTable({ items }: { items: DiagnosticsSectionProps["requirements"]["invalidRequirements"] }) {
+  return (
+    <DiagnosticsGroup label="Invalid" count={items.length}>
+      <HeaderRow labels={["Source", "Level", "Target", "Warning"]} />
+      <TableBody>
+        {items.map((item, i) => (
+          <TableRow key={i}>
+            <TableCell sx={tableCellSx}>{item.sourceName ?? item.requirement.entityType}</TableCell>
+            <TableCell sx={tableCellSx}>{item.requirement.level}</TableCell>
+            <TableCell sx={tableCellSx}>{item.requirement.target || "—"}</TableCell>
+            <TableCell sx={tableCellSx}>{item.warning}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </DiagnosticsGroup>
+  );
+}
+
 function ModifierTable({ modifiers, label }: { modifiers: Modifier[]; label: string }) {
   const groups = useMemo(() => {
     const bySource = new Map<string, RuleCells[]>();
@@ -220,6 +206,20 @@ function RequirementTable({ groups, label }: { groups: RequirementGroup[]; label
         ]),
       }))}
     />
+  );
+}
+
+function RuleCellsRow({ cells }: { cells: RuleCells }) {
+  const [target, ...rest] = cells;
+  return (
+    <>
+      <TableCell sx={tableCellSx}>{target}</TableCell>
+      {rest.map((cell, i) => (
+        <TableCell key={i} sx={tableCellSx} align="center">
+          {cell}
+        </TableCell>
+      ))}
+    </>
   );
 }
 

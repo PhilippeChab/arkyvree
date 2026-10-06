@@ -24,14 +24,13 @@ import { RequirementsService } from "@/server/services/rulesets/customization/re
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 type EntityType = "feats" | "powers";
 type Pairing = "snapshot" | "name";
-
-const modifierValues = { target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" };
 
 async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 2) {
   const session = makeSession();
@@ -211,7 +210,7 @@ for (const entityType of ["feats", "powers"] as const) {
       test(`${pairing} ${entityType}: ${action} a sibling modifier requirement without changing its source`, async () => {
         const { session, host, winnerId, loser } = await setup(entityType, pairing);
         const [modifier] = await Modifiers.create(db, {
-          ...modifierValues,
+          ...STRENGTH_BONUS,
           sourceId: loser.id,
           sourceType: entityType,
         });
@@ -268,7 +267,7 @@ for (const entityType of ["feats", "powers"] as const) {
       test(`${pairing} ${entityType}: ${action} a sibling modifier survives a fresh read`, async () => {
         const { session, host, winnerId, loser } = await setup(entityType, pairing);
         const [modifier] = await Modifiers.create(db, {
-          ...modifierValues,
+          ...STRENGTH_BONUS,
           sourceId: loser.id,
           sourceType: entityType,
         });
@@ -282,7 +281,7 @@ for (const entityType of ["feats", "powers"] as const) {
         const result =
           action === "update"
             ? await ModifiersService.updateModifier(session, host.id, entityType, winnerId, modifier.id, {
-                ...modifierValues,
+                ...STRENGTH_BONUS,
                 value: "5",
               })
             : await ModifiersService.deleteModifier(session, host.id, entityType, winnerId, modifier.id);
@@ -309,7 +308,7 @@ test("deduplicated sibling property and modifier IDs are not writable", async ()
   );
   const [, hiddenModifier] = await Modifiers.createMany(
     db,
-    [winnerId, loser.id].map((sourceId) => ({ ...modifierValues, sourceId, sourceType: "feats" })),
+    [winnerId, loser.id].map((sourceId) => ({ ...STRENGTH_BONUS, sourceId, sourceType: "feats" })),
   );
   RulesetCache.invalidateAll();
   const visible = await PropertiesService.getProperties(host.id, "feats", winnerId);
@@ -337,7 +336,7 @@ test("copying sibling modifiers and their requirements stays batched", async () 
     const modifiers = await Modifiers.createMany(
       db,
       Array.from({ length: width }, (_, i) => ({
-        ...modifierValues,
+        ...STRENGTH_BONUS,
         value: String(i + 1),
         sourceId: loser.id,
         sourceType: "feats",
@@ -402,7 +401,7 @@ for (const entityType of ["feats", "powers"] as const) {
             description: `Extension ${index}`,
           });
           const [modifier] = await Modifiers.create(db, {
-            ...modifierValues,
+            ...STRENGTH_BONUS,
             sourceId: copy.id,
             sourceType: entityType,
           });
@@ -428,7 +427,7 @@ for (const entityType of ["feats", "powers"] as const) {
           const winnerId = extensions[0].copy.id;
           const visible = await withRulesetScope(db, fork.id, async ({ rulesetData }) => ({
             property: rulesetData.propertiesByEntity.get(winnerId)!.find((p) => p.type === "PRECEDENCE")!,
-            modifier: rulesetData.modifiersBySource.get(winnerId)!.find((m) => m.target === modifierValues.target)!,
+            modifier: rulesetData.modifiersBySource.get(winnerId)!.find((m) => m.target === STRENGTH_BONUS.target)!,
           }));
           expect(visible.property.description).toBe(`Extension ${order[1]}`);
           const sourceRequirements = await Requirements.findMany(db, {

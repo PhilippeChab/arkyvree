@@ -54,6 +54,10 @@ abstract class RulesetEntityRepository<T extends RulesetEntityTable> extends Rul
     return await db.insert(this.table).values(values).returning();
   }
 
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
+  }
+
   async update(db: Db, values: Partial<InferInsertModel<T>>, where: { id: string; expectedUpdatedAt?: string }) {
     return await db
       .update(this.table)
@@ -66,10 +70,6 @@ abstract class RulesetEntityRepository<T extends RulesetEntityTable> extends Rul
         ]),
       )
       .returning();
-  }
-
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 }
 

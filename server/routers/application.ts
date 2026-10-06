@@ -19,17 +19,6 @@ import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
 
 export type Application = typeof application;
 
-const isDev = !isProduction();
-
-const origin = isDev ? ["http://localhost:5173"] : readEnv("APP_URL") ? [readEnv("APP_URL")!] : [];
-
-const cors = buildCors({
-  origin,
-  credentials: true,
-  allowHeaders: ["Content-Type", "Authorization", "Cookie"],
-  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-});
-
 /**
  * Canonical host for the app, parsed from APP_URL. Non-matching hosts (e.g. Fly's default `*.fly.dev`) are 301'd to the
  * canonical origin so search engines consolidate authority at one URL. `/health` is exempt because Fly's probes hit it
@@ -37,7 +26,18 @@ const cors = buildCors({
  * rewrites the Host to the backend's, which would otherwise trigger an infinite redirect loop.
  */
 const enforceCanonicalHost = isProduction() && !!readEnv("APP_URL");
+
 const canonicalHost = enforceCanonicalHost ? new URL(readEnv("APP_URL")!).host : null;
+
+const isDev = !isProduction();
+
+const origin = isDev ? ["http://localhost:5173"] : readEnv("APP_URL") ? [readEnv("APP_URL")!] : [];
+const cors = buildCors({
+  origin,
+  credentials: true,
+  allowHeaders: ["Content-Type", "Authorization", "Cookie"],
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+});
 
 /** The session is set only on the routes behind the session middleware. */
 export const application = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()

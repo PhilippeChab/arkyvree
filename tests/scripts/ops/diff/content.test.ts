@@ -10,8 +10,41 @@ import { db } from "@/server/database/index.ts";
 /** The columns that aren't content: a row's bookkeeping, and what scopes it (its ruleset, a user's own data). */
 const BOOKKEEPING = ["id", "created_at", "updated_at", "deleted_at", "ruleset_id", "campaign_id", "user_id"];
 
+/** The values a check constraint allows a text column, which a change picks another of. */
+const CHECKED: Record<string, string[]> = {
+  value_type: ["number", "string", "boolean"],
+  chaining_operator: ["and", "or"],
+};
+
 /** Columns no other value fits, which can't change: base_rules has one value today. */
 const FIXED = ["rules.rulesets.base_rules"];
+
+/** Rows a table's test adds: one the seeds leave out of it, or a free target for a row moved under a unique key. */
+const FIXTURES: Record<string, string> = {
+  // A class with its 20th level alone: a level number and classes free to move it to
+  "rules.klass_levels": `with klass as (
+                           insert into rules.klasses (ruleset_id, name, hd)
+                           select id, 'Late Bloomer', 8 from rules.rulesets where system limit 1 returning id
+                         )
+                         insert into rules.klass_levels (klass_id, level) select id, 20 from klass`,
+  // A level without saves and a fourth save, which a level's save can move to
+  "rules.klass_level_saves": `insert into rules.saves (ruleset_id, name, ability_id)
+                              select ruleset_id, 'Sanity', ability_id from rules.saves limit 1;
+                              insert into rules.klass_levels (klass_id, level)
+                              select k.id, 20 from rules.klasses k join rules.rulesets r on r.id = k.ruleset_id
+                               where r.system and not exists (
+                                 select 1 from rules.klass_levels kl where kl.klass_id = k.id and kl.level = 20
+                               ) limit 1`,
+  "rules.mechanics": `insert into rules.mechanics (ruleset_id, name, description)
+                      select id, 'Flanking', 'Two allies on opposite sides' from rules.rulesets where system limit 1`,
+  "rules.klass_level_powers": `insert into rules.klass_level_powers (klass_level_id, power_id, aptitude_id, free)
+                               select kl.id, pa.power_id, pa.aptitude_id, true
+                                 from rules.klass_levels kl join rules.klasses k on k.id = kl.klass_id
+                                 join rules.powers p on p.ruleset_id = k.ruleset_id
+                                 join rules.powers_aptitudes pa on pa.power_id = p.id
+                                 join rules.rulesets r on r.id = k.ruleset_id
+                                where r.system limit 1`,
+};
 
 /** The system rows of each compared table (its alias `t`), with the ruleset whose comparison reads them. */
 const SCOPES: Record<string, { from: string; ruleset: string }> = {
@@ -77,39 +110,6 @@ const SCOPES: Record<string, { from: string; ruleset: string }> = {
   ),
 };
 
-/** The values a check constraint allows a text column, which a change picks another of. */
-const CHECKED: Record<string, string[]> = {
-  value_type: ["number", "string", "boolean"],
-  chaining_operator: ["and", "or"],
-};
-
-/** Rows a table's test adds: one the seeds leave out of it, or a free target for a row moved under a unique key. */
-const FIXTURES: Record<string, string> = {
-  // A class with its 20th level alone: a level number and classes free to move it to
-  "rules.klass_levels": `with klass as (
-                           insert into rules.klasses (ruleset_id, name, hd)
-                           select id, 'Late Bloomer', 8 from rules.rulesets where system limit 1 returning id
-                         )
-                         insert into rules.klass_levels (klass_id, level) select id, 20 from klass`,
-  // A level without saves and a fourth save, which a level's save can move to
-  "rules.klass_level_saves": `insert into rules.saves (ruleset_id, name, ability_id)
-                              select ruleset_id, 'Sanity', ability_id from rules.saves limit 1;
-                              insert into rules.klass_levels (klass_id, level)
-                              select k.id, 20 from rules.klasses k join rules.rulesets r on r.id = k.ruleset_id
-                               where r.system and not exists (
-                                 select 1 from rules.klass_levels kl where kl.klass_id = k.id and kl.level = 20
-                               ) limit 1`,
-  "rules.mechanics": `insert into rules.mechanics (ruleset_id, name, description)
-                      select id, 'Flanking', 'Two allies on opposite sides' from rules.rulesets where system limit 1`,
-  "rules.klass_level_powers": `insert into rules.klass_level_powers (klass_level_id, power_id, aptitude_id, free)
-                               select kl.id, pa.power_id, pa.aptitude_id, true
-                                 from rules.klass_levels kl join rules.klasses k on k.id = kl.klass_id
-                                 join rules.powers p on p.ruleset_id = k.ruleset_id
-                                 join rules.powers_aptitudes pa on pa.power_id = p.id
-                                 join rules.rulesets r on r.id = k.ruleset_id
-                                where r.system limit 1`,
-};
-
 /** Runs `statement` in a savepoint, kept when it changed a row, else rolled back: whether it did. */
 async function attempt(statement: string): Promise<boolean> {
   await db.execute(sql`savepoint attempt`);
@@ -120,39 +120,6 @@ async function attempt(statement: string): Promise<boolean> {
   }
   await db.execute(sql`rollback to savepoint attempt`);
   return false;
-}
-
-/** The test's database, queried as diff-prod's pg client is: positional parameters ($1…), the rows. */
-async function query<R extends Record<string, unknown>>(text: string, params: unknown[] = []): Promise<R[]> {
-  const chunks = text
-    .split(/\$(\d+)/)
-    .map((part, i) => (i % 2 === 0 ? sql.raw(part) : sql.param(params[Number(part) - 1])));
-  return (await db.execute(sql.join(chunks))).rows as R[];
-}
-
-/** The operators a customization table's check constraint allows. */
-async function operators(table: string): Promise<string[]> {
-  const [check] = await query<{ definition: string }>(
-    `select pg_get_constraintdef(oid) as definition from pg_constraint
-      where conrelid = $1::regclass and conname like '%operator_check'`,
-    [table],
-  );
-  return [...check.definition.matchAll(/'([a-z_]+)'::text/g)].map((match) => match[1]);
-}
-
-/** The table `column`'s ids point to: its foreign key's, else (a customization's owner, a snapshot's entity) its type's. */
-async function referencedTable(table: string, column: string, row: Record<string, unknown>): Promise<string> {
-  const [fk] = await query<{ referenced: string }>(
-    `select ccu.table_schema || '.' || ccu.table_name as referenced
-       from information_schema.table_constraints tc
-       join information_schema.key_column_usage kcu
-         on kcu.constraint_name = tc.constraint_name and kcu.constraint_schema = tc.constraint_schema
-       join information_schema.constraint_column_usage ccu
-         on ccu.constraint_name = tc.constraint_name and ccu.constraint_schema = tc.constraint_schema
-      where tc.constraint_type = 'FOREIGN KEY' and kcu.table_schema || '.' || kcu.table_name = $1 and kcu.column_name = $2`,
-    [table, column],
-  );
-  return fk?.referenced ?? `rules.${String(row.source_type ?? row.entity_type)}`;
 }
 
 /** The values to try in turn as `column`'s new one, as SQL: other values its type and constraints allow. */
@@ -186,6 +153,39 @@ async function candidates(
   return allowed
     ? allowed.filter((value) => value !== row[column.name]).map((value) => `'${value}'`)
     : [`coalesce(${current}, '') || ' (changed)'`];
+}
+
+/** The operators a customization table's check constraint allows. */
+async function operators(table: string): Promise<string[]> {
+  const [check] = await query<{ definition: string }>(
+    `select pg_get_constraintdef(oid) as definition from pg_constraint
+      where conrelid = $1::regclass and conname like '%operator_check'`,
+    [table],
+  );
+  return [...check.definition.matchAll(/'([a-z_]+)'::text/g)].map((match) => match[1]);
+}
+
+/** The test's database, queried as diff-prod's pg client is: positional parameters ($1…), the rows. */
+async function query<R extends Record<string, unknown>>(text: string, params: unknown[] = []): Promise<R[]> {
+  const chunks = text
+    .split(/\$(\d+)/)
+    .map((part, i) => (i % 2 === 0 ? sql.raw(part) : sql.param(params[Number(part) - 1])));
+  return (await db.execute(sql.join(chunks))).rows as R[];
+}
+
+/** The table `column`'s ids point to: its foreign key's, else (a customization's owner, a snapshot's entity) its type's. */
+async function referencedTable(table: string, column: string, row: Record<string, unknown>): Promise<string> {
+  const [fk] = await query<{ referenced: string }>(
+    `select ccu.table_schema || '.' || ccu.table_name as referenced
+       from information_schema.table_constraints tc
+       join information_schema.key_column_usage kcu
+         on kcu.constraint_name = tc.constraint_name and kcu.constraint_schema = tc.constraint_schema
+       join information_schema.constraint_column_usage ccu
+         on ccu.constraint_name = tc.constraint_name and ccu.constraint_schema = tc.constraint_schema
+      where tc.constraint_type = 'FOREIGN KEY' and kcu.table_schema || '.' || kcu.table_name = $1 and kcu.column_name = $2`,
+    [table, column],
+  );
+  return fk?.referenced ?? `rules.${String(row.source_type ?? row.entity_type)}`;
 }
 
 describe("The content comparison (diff-prod)", () => {

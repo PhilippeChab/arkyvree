@@ -1,5 +1,13 @@
 import { keyframes } from "@mui/material";
 
+export const diceRoll = keyframes`
+  0%   { transform: translateY(0)    rotate(0deg); }
+  25%  { transform: translateY(-8px) rotate(90deg); }
+  50%  { transform: translateY(0)    rotate(180deg); }
+  75%  { transform: translateY(-8px) rotate(270deg); }
+  100% { transform: translateY(0)    rotate(360deg); }
+`;
+
 export const DURATION = {
   fast: 150,
   normal: 250,
@@ -12,8 +20,6 @@ export const EASING = {
   decelerate: "cubic-bezier(0.0, 0.0, 0.2, 1)",
 } as const;
 
-export const prefersReducedMotion = "@media (prefers-reduced-motion: reduce)" as const;
-
 export const fadeIn = keyframes`
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -24,17 +30,11 @@ export const fadeInUp = keyframes`
   to   { opacity: 1; transform: translateY(0); }
 `;
 
+export const prefersReducedMotion = "@media (prefers-reduced-motion: reduce)" as const;
+
 export const pulse = keyframes`
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
-`;
-
-export const diceRoll = keyframes`
-  0%   { transform: translateY(0)    rotate(0deg); }
-  25%  { transform: translateY(-8px) rotate(90deg); }
-  50%  { transform: translateY(0)    rotate(180deg); }
-  75%  { transform: translateY(-8px) rotate(270deg); }
-  100% { transform: translateY(0)    rotate(360deg); }
 `;
 
 export const settledPulse = keyframes`

@@ -12,22 +12,6 @@ const FUNCTIONS = ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionEx
 
 export const MAX_OWN_LINES = 80;
 
-function isConcern(fn) {
-  return (
-    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
-    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
-  );
-}
-
-/** A function's name, for the message: its own, its variable's, its method's or its property's. */
-function nameOf(fn) {
-  if (fn.id?.name) return fn.id.name;
-  const parent = fn.parent;
-  if (parent?.type === "VariableDeclarator") return parent.id.name;
-  if (parent?.type === "MethodDefinition" || parent?.type === "Property") return parent.key.name ?? "(anonymous)";
-  return "(anonymous)";
-}
-
 function createFunctionLength(context) {
   const file = repoPath(context.filename);
   if (!/^(server|shared)\//.test(file) || !file.endsWith(".ts")) return {};
@@ -77,6 +61,22 @@ function createFunctionLength(context) {
       [`${type}:exit`, exit],
     ]),
   );
+}
+
+function isConcern(fn) {
+  return (
+    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
+    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
+  );
+}
+
+/** A function's name, for the message: its own, its variable's, its method's or its property's. */
+function nameOf(fn) {
+  if (fn.id?.name) return fn.id.name;
+  const parent = fn.parent;
+  if (parent?.type === "VariableDeclarator") return parent.id.name;
+  if (parent?.type === "MethodDefinition" || parent?.type === "Property") return parent.key.name ?? "(anonymous)";
+  return "(anonymous)";
 }
 
 export default {

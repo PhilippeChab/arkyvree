@@ -11,7 +11,7 @@ import { loadBondedByKind } from "@/server/services/characters/bonded.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterSharingService {
-  async getSharedCharacter(shareToken: string) {
+  async generateSharedPdf(shareToken: string) {
     const characterRecord = await Characters.findOne(db, { shareToken });
 
     if (!characterRecord) {
@@ -19,17 +19,16 @@ class CharacterSharingService {
     }
 
     const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build();
+    const { detailedCharacter, CharacterSheetComponent } =
+      await rulesetModule.createDetailedCharacterWithSheet(characterRecord);
 
-    const bondedByKind = await loadBondedByKind(rulesetModule, characterRecord.id);
     const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
 
     return {
-      character: characterRecord,
       detailedCharacter,
-      bondedByKind,
+      CharacterSheetComponent,
       portraitUrl,
+      kind: characterRecord.kind as CharacterKind,
     };
   }
 
@@ -58,7 +57,7 @@ class CharacterSharingService {
     });
   }
 
-  async generateSharedPdf(shareToken: string) {
+  async getSharedCharacter(shareToken: string) {
     const characterRecord = await Characters.findOne(db, { shareToken });
 
     if (!characterRecord) {
@@ -66,16 +65,17 @@ class CharacterSharingService {
     }
 
     const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
-    const { detailedCharacter, CharacterSheetComponent } =
-      await rulesetModule.createDetailedCharacterWithSheet(characterRecord);
+    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+    await detailedCharacter.build();
 
+    const bondedByKind = await loadBondedByKind(rulesetModule, characterRecord.id);
     const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
 
     return {
+      character: characterRecord,
       detailedCharacter,
-      CharacterSheetComponent,
+      bondedByKind,
       portraitUrl,
-      kind: characterRecord.kind as CharacterKind,
     };
   }
 

@@ -28,11 +28,6 @@ class RulesetCache {
 
   private readonly targetPaths = new DependentCache<TargetPathsAndLabels>();
 
-  /** Whether a ruleset's own rows are pinned, kept whatever else the cache evicts. */
-  isRawDataPinned(rulesetId: string, campaignId?: string): boolean {
-    return this.rawData.isPinned(getRawDataKey(rulesetId, campaignId));
-  }
-
   /** Drops what a change to a ruleset can touch: its copy-on-write data, its rows and its target paths. */
   invalidate(rulesetId: string): void {
     this.invalidateEntities(rulesetId);
@@ -50,6 +45,11 @@ class RulesetCache {
   invalidateEntities(rulesetId: string): void {
     this.cowData.invalidate(rulesetId);
     this.rawData.invalidate(rulesetId);
+  }
+
+  /** Whether a ruleset's own rows are pinned, kept whatever else the cache evicts. */
+  isRawDataPinned(rulesetId: string, campaignId?: string): boolean {
+    return this.rawData.isPinned(getRawDataKey(rulesetId, campaignId));
   }
 
   /**

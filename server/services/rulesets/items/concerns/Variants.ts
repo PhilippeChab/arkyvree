@@ -22,22 +22,15 @@ import type { Session } from "@/shared/relations.ts";
 /** An item's templates and their variants: what a variant may copy, and the variants made in bulk. */
 export function Variants<B extends Constructor>(Base: B) {
   abstract class WithVariants extends Base {
-    protected validateTemplateSource(isTemplate: boolean, sourceItemId?: string) {
-      if (isTemplate && sourceItemId) {
-        throw new UnprocessableEntityError("Template items cannot have a source item");
-      }
-    }
-
     /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
     protected templateOf(item: { id: string; isTemplate: boolean; sourceItemId: string | null }) {
       return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
     }
 
-    async getTemplates(rulesetId: string, type?: string) {
-      return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-        return await Items.findMany(db, { rulesetId, ancestorRulesetIds: sourceChain, type, isTemplate: true });
-      });
+    protected validateTemplateSource(isTemplate: boolean, sourceItemId?: string) {
+      if (isTemplate && sourceItemId) {
+        throw new UnprocessableEntityError("Template items cannot have a source item");
+      }
     }
 
     async createVariants(
@@ -158,6 +151,13 @@ export function Variants<B extends Constructor>(Base: B) {
       });
       RulesetCache.invalidate(rulesetId);
       return result;
+    }
+
+    async getTemplates(rulesetId: string, type?: string) {
+      return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+        return await Items.findMany(db, { rulesetId, ancestorRulesetIds: sourceChain, type, isTemplate: true });
+      });
     }
   }
   return WithVariants;

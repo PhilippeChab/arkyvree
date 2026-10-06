@@ -31,15 +31,6 @@ class PropertiesService {
     throw new NotFoundError("Property not found for this entity");
   }
 
-  async getProperties(rulesetId: string, entityType: string, entityId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const effectiveEntityId = rulesetData.canonicalize(entityId);
-      await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
-      const all = rulesetData.propertiesByEntity.get(effectiveEntityId) ?? [];
-      return all.filter((p) => p.entityType === entityType);
-    });
-  }
-
   async createProperty(
     session: Session,
     rulesetId: string,
@@ -82,6 +73,64 @@ class PropertiesService {
     });
     RulesetCache.invalidate(rulesetId);
     return result;
+  }
+
+  async deleteProperty(session: Session, rulesetId: string, entityType: string, entityId: string, propertyId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
+
+        const effectiveEntityId = rulesetData.canonicalize(entityId);
+        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+
+        const { property, fromTemplate } = this.findEntityProperty(
+          rulesetData,
+          entityType,
+          effectiveEntityId,
+          propertyId,
+        );
+        if (fromTemplate) {
+          // Template property: nothing to delete on the derived item since it doesn't own it.
+          throw new BadRequestError("Cannot delete a property inherited from a template");
+        }
+
+        await checkCustomizedEntity(property);
+
+        const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await cowCustomizationForMutation(
+          tx,
+          rulesetId,
+          entityType,
+          effectiveEntityId,
+          "property",
+          propertyId,
+        );
+
+        const rows = await Properties.delete(tx, { id: resolvedPropertyId });
+        const deletedProperty = rows[0];
+
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: deletedProperty.id,
+          targetTable: getTableName(propertiesInCustomization),
+          type: "deleteProperty",
+          data: { rulesetId, entityName, entityType, propertyType: property.type, value: property.value },
+        });
+
+        return { ...deletedProperty, resolvedEntityId };
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async getProperties(rulesetId: string, entityType: string, entityId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const effectiveEntityId = rulesetData.canonicalize(entityId);
+      await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+      const all = rulesetData.propertiesByEntity.get(effectiveEntityId) ?? [];
+      return all.filter((p) => p.entityType === entityType);
+    });
   }
 
   async updateProperty(
@@ -165,55 +214,6 @@ class PropertiesService {
         });
 
         return { ...updatedProperty, resolvedEntityId };
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteProperty(session: Session, rulesetId: string, entityType: string, entityId: string, propertyId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
-
-        const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
-
-        const { property, fromTemplate } = this.findEntityProperty(
-          rulesetData,
-          entityType,
-          effectiveEntityId,
-          propertyId,
-        );
-        if (fromTemplate) {
-          // Template property: nothing to delete on the derived item since it doesn't own it.
-          throw new BadRequestError("Cannot delete a property inherited from a template");
-        }
-
-        await checkCustomizedEntity(property);
-
-        const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await cowCustomizationForMutation(
-          tx,
-          rulesetId,
-          entityType,
-          effectiveEntityId,
-          "property",
-          propertyId,
-        );
-
-        const rows = await Properties.delete(tx, { id: resolvedPropertyId });
-        const deletedProperty = rows[0];
-
-        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: deletedProperty.id,
-          targetTable: getTableName(propertiesInCustomization),
-          type: "deleteProperty",
-          data: { rulesetId, entityName, entityType, propertyType: property.type, value: property.value },
-        });
-
-        return { ...deletedProperty, resolvedEntityId };
       });
     });
     RulesetCache.invalidate(rulesetId);

@@ -1,26 +1,10 @@
 import { type Db, db } from "@/server/database/index.ts";
 import { Attachments } from "@/server/repositories/index.ts";
-import { getStorage } from "@/server/storage/s3.ts";
+import ObjectStorage from "@/server/storage/s3.ts";
 
-/**
- * 5-minute cooldown so a credentials rotation that breaks getStorage() re-warns instead of staying silent forever after
- * the first miss.
- */
-const PUBLIC_URL_WARN_COOLDOWN_MS = 5 * 60 * 1000;
-let publicUrlLastWarnedAt = 0;
+/** An attachment's public URL, or null when storage isn't configured. */
 export function getPublicUrl(blob: { key: string }): string | null {
-  try {
-    return getStorage().publicUrl(blob.key);
-  } catch (err) {
-    const now = Date.now();
-    if (now - publicUrlLastWarnedAt > PUBLIC_URL_WARN_COOLDOWN_MS) {
-      publicUrlLastWarnedAt = now;
-      console.warn(
-        `[attachments] getPublicUrl() returning null — storage not configured: ${err instanceof Error ? err.message : err}`,
-      );
-    }
-    return null;
-  }
+  return ObjectStorage.findPublicUrl(blob.key);
 }
 
 export async function getSlotUrl(recordType: string, recordId: string, name: string): Promise<string | null> {

@@ -10,13 +10,6 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules> {
     super(klassSkillsInRules);
   }
 
-  async findMany(db: Db, where: { klassIds: string[] }) {
-    return await db.query.klassSkillsInRules.findMany({
-      where: and(inArray(this.table.klassId, where.klassIds), isNull(this.table.deletedAt)),
-      orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.klassId), this.orderBy(this.table.skillId)],
-    });
-  }
-
   async create(db: Db, values: InferInsertModel<typeof klassSkillsInRules>) {
     return await db.insert(this.table).values(values).returning();
   }
@@ -37,6 +30,13 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules> {
         ]),
       )
       .returning();
+  }
+
+  async findMany(db: Db, where: { klassIds: string[] }) {
+    return await db.query.klassSkillsInRules.findMany({
+      where: and(inArray(this.table.klassId, where.klassIds), isNull(this.table.deletedAt)),
+      orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.klassId), this.orderBy(this.table.skillId)],
+    });
   }
 }
 

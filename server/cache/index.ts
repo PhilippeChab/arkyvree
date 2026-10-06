@@ -5,4 +5,4 @@
 export type { CachedRulesetData } from "./rulesetCache/index.ts";
 
 export { default as DependentCache } from "./DependentCache.ts";
-export { setCacheEnabled } from "./MemoryCache.ts";
+export { default as MemoryCache } from "./MemoryCache.ts";

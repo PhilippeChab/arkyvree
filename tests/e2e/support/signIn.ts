@@ -9,17 +9,17 @@ export async function openContext(browser: Browser, options?: BrowserContextOpti
   return recordContext(await browser.newContext(options));
 }
 
-/** Signs the page's browser context in, through the API (the sign-in form has tests of its own), and opens the dashboard. */
-export async function signIn(page: Page, email: string, password: string) {
-  await parseResponse(apiOf(page).auth["sign-in"].$post({ json: { emailAddress: email, password } }));
-  await page.goto("/dashboard");
-}
-
 /** A page of a new browser context signed in as `user`. Close it with `page.context().close()`. */
 export async function signedInPage(browser: Browser, user: { email: string; password: string }) {
   const page = await (await openContext(browser)).newPage();
   await signIn(page, user.email, user.password);
   return page;
+}
+
+/** Signs the page's browser context in, through the API (the sign-in form has tests of its own), and opens the dashboard. */
+export async function signIn(page: Page, email: string, password: string) {
+  await parseResponse(apiOf(page).auth["sign-in"].$post({ json: { emailAddress: email, password } }));
+  await page.goto("/dashboard");
 }
 
 /** Signs in through the sign-in form, which the page shows: for the tests of what the form does after. */

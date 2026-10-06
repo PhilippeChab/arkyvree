@@ -37,6 +37,9 @@ export const ALIGNMENT_OPTIONS = [
   "Chaotic Evil",
 ] as const satisfies readonly Alignment[];
 
+/** The ruleset family a record without one belongs to. */
+export const DEFAULT_BASE_RULES: BaseRules = "Dungeons & Dragons: 3.5";
+
 export const GENDER_OPTIONS = ["Male", "Female", "Other"] as const satisfies readonly Gender[];
 
 export const LOCATION_OPTIONS = [
@@ -66,6 +69,3 @@ export const SIZE_OPTIONS = [
   "Gargantuan",
   "Colossal",
 ] as const satisfies readonly SizeType[];
-
-/** The ruleset family a record without one belongs to. */
-export const DEFAULT_BASE_RULES: BaseRules = "Dungeons & Dragons: 3.5";

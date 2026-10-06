@@ -11,21 +11,9 @@ export const SPELL_SCHOOLS = [
   "Transmutation",
   "Universal",
 ] as const;
-export const SPELL_SUBSCHOOLS = [
-  "Calling",
-  "Charm",
-  "Compulsion",
-  "Creation",
-  "Figment",
-  "Glamer",
-  "Healing",
-  "Pattern",
-  "Phantasm",
-  "Scrying",
-  "Shadow",
-  "Summoning",
-  "Teleportation",
-] as const;
+/** Schools that get Spell Focus / Greater Spell Focus feats (excludes Universal) */
+export const MAGIC_SCHOOLS = SPELL_SCHOOLS.filter((s) => s !== "Universal");
+export const SPELL_COMPONENTS = ["Verbal", "Somatic", "Material", "Focus", "Divine Focus", "XP Cost"] as const;
 export const SPELL_DESCRIPTORS = [
   "Acid",
   "Air",
@@ -47,8 +35,6 @@ export const SPELL_DESCRIPTORS = [
   "Sonic",
   "Water",
 ] as const;
-export const SPELL_COMPONENTS = ["Verbal", "Somatic", "Material", "Focus", "Divine Focus", "XP Cost"] as const;
-export const SPELL_RANGE_TYPES = ["Personal", "Touch", "Close", "Medium", "Long", "Unlimited"] as const;
 export const SPELL_DURATION_TYPES = [
   "Instantaneous",
   "Concentration",
@@ -57,6 +43,7 @@ export const SPELL_DURATION_TYPES = [
   "Dismissible",
   "See Text",
 ] as const;
+export const SPELL_RANGE_TYPES = ["Personal", "Touch", "Close", "Medium", "Long", "Unlimited"] as const;
 export const SPELL_RESISTANCE_OPTIONS = ["Yes", "No"] as const;
 export const SPELL_SAVING_THROWS = [
   "None",
@@ -72,8 +59,21 @@ export const SPELL_SAVING_THROWS = [
   "Will disbelief",
 ] as const;
 
-/** Schools that get Spell Focus / Greater Spell Focus feats (excludes Universal) */
-export const MAGIC_SCHOOLS = SPELL_SCHOOLS.filter((s) => s !== "Universal");
+export const SPELL_SUBSCHOOLS = [
+  "Calling",
+  "Charm",
+  "Compulsion",
+  "Creation",
+  "Figment",
+  "Glamer",
+  "Healing",
+  "Pattern",
+  "Phantasm",
+  "Scrying",
+  "Shadow",
+  "Summoning",
+  "Teleportation",
+] as const;
 
 /**
  * The slug of a spell list's possession paths, from its aptitude's name without the " Spells" suffix ("Wizard Spells"

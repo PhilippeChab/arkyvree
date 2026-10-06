@@ -8,17 +8,6 @@ import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-/** A spell a class level picked or granted. */
-interface LevelSpell {
-  id: string;
-  name: string;
-  aptitudeId: string;
-  powerLevel?: number | null;
-  saveName?: string | null;
-  saveEffect?: string | null;
-  description?: string | null;
-}
-
 /** A spell a modifier gives without a pick. */
 interface GivenSpell {
   id: string;
@@ -32,20 +21,27 @@ interface GivenSpell {
   properties: Record<string, string>;
 }
 
-/**
- * Where a feat's tag on the spells of a list it gives slots in or joins to its class's list shows (a cleric's domain,
- * "Fire Domain"; a specialist wizard's school, "Evocation Specialist"): on that list and on the lists of the class whose
- * level gave the feat. `joinsClassList`: whether the list's spells join that class's list, as a domain's do.
- */
-export interface SpellTagLists {
-  aptitudeIds: string[];
-  joinsClassList: boolean;
+/** A spell a class level picked or granted. */
+interface LevelSpell {
+  id: string;
+  name: string;
+  aptitudeId: string;
+  powerLevel?: number | null;
+  saveName?: string | null;
+  saveEffect?: string | null;
+  description?: string | null;
 }
 
-/** A tag a spell row shows. */
-export interface SpellRowTag {
-  name: string;
-  joinsClassList: boolean;
+export interface AptitudeSpells {
+  aptitudeName: string;
+  levels: SpellGroup[];
+}
+
+export interface SpellGroup {
+  aptitudeName: string;
+  level: number;
+  uses: number | null;
+  spells: SpellRow[];
 }
 
 export interface SpellRow {
@@ -59,16 +55,10 @@ export interface SpellRow {
   tags?: SpellRowTag[];
 }
 
-export interface SpellGroup {
-  aptitudeName: string;
-  level: number;
-  uses: number | null;
-  spells: SpellRow[];
-}
-
-export interface AptitudeSpells {
-  aptitudeName: string;
-  levels: SpellGroup[];
+/** A tag a spell row shows. */
+export interface SpellRowTag {
+  name: string;
+  joinsClassList: boolean;
 }
 
 /** What the groups read of a character: its classes' levels, its computed powers, its aptitudes and spell tags. */
@@ -89,25 +79,14 @@ export interface SpellSheet {
   spellTagLists?: Record<string, SpellTagLists>;
 }
 
-function saveOf(saveName: string | null | undefined, saveEffect: string | null | undefined) {
-  return saveName && saveEffect ? `${saveName} ${saveEffect}` : saveEffect || "None";
-}
-
-/** A spell's tags that show on this list: a domain's on the cleric's, a school's on the wizard's. */
-function tagsFor(sheet: SpellSheet, powerId: string | undefined, aptitudeId: string): SpellRowTag[] | undefined {
-  const kept = (powerId ? sheet.spellTags?.[powerId] : undefined)?.flatMap((name) => {
-    const lists = sheet.spellTagLists?.[name];
-    return lists?.aptitudeIds.includes(aptitudeId) ? [{ name, joinsClassList: lists.joinsClassList }] : [];
-  });
-  return kept?.length ? kept : undefined;
-}
-
-/** The uses per day an aptitude allows at a spell level, read off its per-level entry. */
-function usesPerDay(aptitudes: SpellSheet["aptitudes"], aptitudeName: string, spellLevel: number): number | null {
-  // Leveled aptitudes carry a per-spell-level entry the sheet's type doesn't declare.
-  const aptitude: Record<string, unknown> | undefined = aptitudes?.[stripSeparators(aptitudeName)];
-  const levelData = aptitude?.[String(spellLevel)];
-  return isRecord(levelData) && typeof levelData.uses === "number" ? levelData.uses : null;
+/**
+ * Where a feat's tag on the spells of a list it gives slots in or joins to its class's list shows (a cleric's domain,
+ * "Fire Domain"; a specialist wizard's school, "Evocation Specialist"): on that list and on the lists of the class whose
+ * level gave the feat. `joinsClassList`: whether the list's spells join that class's list, as a domain's do.
+ */
+export interface SpellTagLists {
+  aptitudeIds: string[];
+  joinsClassList: boolean;
 }
 
 /** The levels' spells, a spell once per group with all its tags, then the spells modifiers give. */
@@ -164,6 +143,27 @@ function groupSpells(sheet: SpellSheet, aptitudeNameById: Map<string, string>) {
     });
   }
   return groupMap;
+}
+
+function saveOf(saveName: string | null | undefined, saveEffect: string | null | undefined) {
+  return saveName && saveEffect ? `${saveName} ${saveEffect}` : saveEffect || "None";
+}
+
+/** A spell's tags that show on this list: a domain's on the cleric's, a school's on the wizard's. */
+function tagsFor(sheet: SpellSheet, powerId: string | undefined, aptitudeId: string): SpellRowTag[] | undefined {
+  const kept = (powerId ? sheet.spellTags?.[powerId] : undefined)?.flatMap((name) => {
+    const lists = sheet.spellTagLists?.[name];
+    return lists?.aptitudeIds.includes(aptitudeId) ? [{ name, joinsClassList: lists.joinsClassList }] : [];
+  });
+  return kept?.length ? kept : undefined;
+}
+
+/** The uses per day an aptitude allows at a spell level, read off its per-level entry. */
+function usesPerDay(aptitudes: SpellSheet["aptitudes"], aptitudeName: string, spellLevel: number): number | null {
+  // Leveled aptitudes carry a per-spell-level entry the sheet's type doesn't declare.
+  const aptitude: Record<string, unknown> | undefined = aptitudes?.[stripSeparators(aptitudeName)];
+  const levelData = aptitude?.[String(spellLevel)];
+  return isRecord(levelData) && typeof levelData.uses === "number" ? levelData.uses : null;
 }
 
 /** The character's spells by aptitude (by name), each aptitude's levels in order and their spells by name. */

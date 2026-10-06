@@ -27,16 +27,6 @@ import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-const FEAT_TYPE_APTITUDES: Record<string, string[]> = {
-  general: ["General"],
-  fighter: ["General", "Fighter Bonus Feat"],
-  metamagic: ["General", "Wizard Bonus Feat"],
-  "item creation": ["General", "Wizard Bonus Feat"],
-};
-
-/** Complete Arcane's draconic feats have no type of their own: their name makes them a family */
-const DRACONIC_FAMILY = "Draconic";
-
 /** Patterns that extractFeatPrereqs should skip — these are class abilities, not feat names */
 const ABILITY_PREREQ_PATTERNS = [
   /^sneak attack ability$/i,
@@ -59,6 +49,16 @@ const ABILITY_PREREQ_PATTERNS = [
   /^Weapon Proficiency\b/i,
 ];
 
+/** Complete Arcane's draconic feats have no type of their own: their name makes them a family */
+const DRACONIC_FAMILY = "Draconic";
+
+const FEAT_TYPE_APTITUDES: Record<string, string[]> = {
+  general: ["General"],
+  fighter: ["General", "Fighter Bonus Feat"],
+  metamagic: ["General", "Wizard Bonus Feat"],
+  "item creation": ["General", "Wizard Bonus Feat"],
+};
+
 /** The alignment "Relevant alignment" asks of a feat for an alignment's spells ("Spell Focus (Chaos)") */
 const RELEVANT_ALIGNMENTS: Record<string, string> = {
   chaos: "Any chaotic",
@@ -67,29 +67,18 @@ const RELEVANT_ALIGNMENTS: Record<string, string> = {
   law: "Any lawful",
 };
 
-function isCommonPhrase(text: string): boolean {
-  const lower = text.toLowerCase();
-  if (
-    /^(or|any|must|have|the|can|has|level|none|proficient|proficiency|ability|able|size|medium|large|small|tiny|at least|damage|innate)/.test(
-      lower,
-    )
-  )
-    return true;
-  // "X class ability" / "X class feature" — these are class features, not feats
-  if (/\bclass (?:ability|feature)\b/i.test(lower)) return true;
-  // "Spell-like ability at caster level X or higher" — not a feat
-  if (/^spell-like ability/i.test(lower)) return true;
-  return false;
-}
+/** The feats a feat's benefit or special text implies it requires. */
+function detectImplicitFeatPrereqs(entry: FeatReference["raw"][number]): string[] {
+  const feats: string[] = [];
+  const text = entry.benefit + " " + (entry.special ?? "");
 
-function isStackable(entry: FeatReference["raw"][number]): boolean {
-  const special = (entry.special ?? "").toLowerCase();
-  if (/do not stack|don't stack|effects are not cumulative/i.test(special)) return false;
-  return (
-    /(?:can|may) (?:gain|take).*multiple times/i.test(special) ||
-    /select this feat multiple times/i.test(special) ||
-    special.includes("its effects stack")
-  );
+  // "already have applied the X feat"
+  const appliedMatch = text.match(/already (?:have )?applied the\s+([A-Z][A-Za-z\s]+?)\s+feat/i);
+  if (appliedMatch) {
+    feats.push(titleCaseFeat(appliedMatch[1].trim()));
+  }
+
+  return feats;
 }
 
 function detectTemplate(entry: FeatReference["raw"][number]): FeatReference["detected"][string]["template"] {
@@ -123,39 +112,6 @@ function detectTemplate(entry: FeatReference["raw"][number]): FeatReference["det
   }
 
   return undefined;
-}
-
-/** "Any (other) metamagic feat": one feat of the family; "any two luck feats": that many of them. */
-export function familyFeatRequirements(text: string): RequirementEntry[] {
-  const counts = Object.keys(NUMBER_WORDS).join("|");
-  return FEAT_FAMILIES.flatMap((family) => {
-    const match = new RegExp(`\\bany (?:other )?(?:(${counts}) )?${family} feats?\\b`, "i").exec(text);
-    if (!match) return [];
-    const slug = stripSeparators(family);
-    return [
-      match[1] ? gte(`feats.${slug}.count`, NUMBER_WORDS[match[1].toLowerCase()]) : eq(`feats.${slug}.*.possessed`),
-    ];
-  });
-}
-
-function titleCaseFeat(s: string): string {
-  // Most feat names from SRD are already in a reasonable case
-  // Just ensure first letter of each word is uppercase
-  return s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
-}
-
-/** The feats a feat's benefit or special text implies it requires. */
-function detectImplicitFeatPrereqs(entry: FeatReference["raw"][number]): string[] {
-  const feats: string[] = [];
-  const text = entry.benefit + " " + (entry.special ?? "");
-
-  // "already have applied the X feat"
-  const appliedMatch = text.match(/already (?:have )?applied the\s+([A-Z][A-Za-z\s]+?)\s+feat/i);
-  if (appliedMatch) {
-    feats.push(titleCaseFeat(appliedMatch[1].trim()));
-  }
-
-  return feats;
 }
 
 function extractFeatPrereqs(text: string): string[] {
@@ -207,6 +163,31 @@ function extractFeatPrereqs(text: string): string[] {
   }
 
   return feats;
+}
+
+function isCommonPhrase(text: string): boolean {
+  const lower = text.toLowerCase();
+  if (
+    /^(or|any|must|have|the|can|has|level|none|proficient|proficiency|ability|able|size|medium|large|small|tiny|at least|damage|innate)/.test(
+      lower,
+    )
+  )
+    return true;
+  // "X class ability" / "X class feature" — these are class features, not feats
+  if (/\bclass (?:ability|feature)\b/i.test(lower)) return true;
+  // "Spell-like ability at caster level X or higher" — not a feat
+  if (/^spell-like ability/i.test(lower)) return true;
+  return false;
+}
+
+function isStackable(entry: FeatReference["raw"][number]): boolean {
+  const special = (entry.special ?? "").toLowerCase();
+  if (/do not stack|don't stack|effects are not cumulative/i.test(special)) return false;
+  return (
+    /(?:can|may) (?:gain|take).*multiple times/i.test(special) ||
+    /select this feat multiple times/i.test(special) ||
+    special.includes("its effects stack")
+  );
 }
 
 function parsePrerequisiteText(text: string): {
@@ -515,6 +496,84 @@ function parsePrerequisiteText(text: string): {
   return { requirements: reqs, featNameMap, unresolvedPrereqs };
 }
 
+function titleCaseFeat(s: string): string {
+  // Most feat names from SRD are already in a reasonable case
+  // Just ensure first letter of each word is uppercase
+  return s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+}
+
+export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["detected"] {
+  const detected: FeatReference["detected"] = {};
+
+  for (const entry of raw) {
+    const { requirements: rawReqs, featNameMap, unresolvedPrereqs } = parsePrerequisiteText(entry.prerequisiteText);
+    const aptitudes = [...(FEAT_TYPE_APTITUDES[entry.featType] ?? ["General"])];
+
+    // Detect fighter bonus feat from Special text: "A fighter may select", or "can select" (Complete Scoundrel)
+    if (
+      entry.special &&
+      /fighter (?:may|can) select/i.test(entry.special) &&
+      !aptitudes.includes("Fighter Bonus Feat")
+    ) {
+      aptitudes.push("Fighter Bonus Feat");
+    }
+
+    const { modifiers, errors: modErrors, unresolvedModifiers } = detectModifiers(entry.benefit);
+    const errors: string[] = [...modErrors];
+
+    // Validate requirement paths
+    const requirements: RequirementEntry[] = [];
+    for (const req of rawReqs) {
+      const invalid = findInvalidRequirementPaths(req);
+      if (invalid.length > 0) {
+        for (const p of invalid) errors.push(`Invalid requirement path: "${p}"`);
+      } else {
+        requirements.push(req);
+      }
+    }
+
+    // "Relevant alignment" (Spell Focus (Chaos), (Evil)…): an alignment of the feat's
+    const relevantAlignment = /\brelevant alignment\b/i.test(entry.prerequisiteText ?? "")
+      ? RELEVANT_ALIGNMENTS[/\((\w+)\)$/.exec(entry.name)?.[1].toLowerCase() ?? ""]
+      : undefined;
+    const alignment = relevantAlignment && parseAlignmentRequirement(relevantAlignment);
+    if (alignment) requirements.push(alignment);
+
+    // Detect implicit feat prerequisites from benefit/special text
+    // e.g. "to which you already have applied the Spell Focus feat"
+    const implicitFeatReqs = detectImplicitFeatPrereqs(entry);
+    for (const f of implicitFeatReqs) {
+      if (!featNameMap[stripSeparators(f)]) {
+        const slug = stripSeparators(f);
+        featNameMap[slug] = f;
+        requirements.push(eq(feat(f)));
+      }
+    }
+
+    const template = detectTemplate(entry);
+
+    const family =
+      FEAT_FAMILIES.find((name) => name.toLowerCase() === entry.featType) ??
+      (entry.name.startsWith(`${DRACONIC_FAMILY} `) ? DRACONIC_FAMILY : undefined);
+    const properties = family ? [{ type: FEAT_FAMILY, value: family }] : [];
+
+    detected[entry.name] = {
+      aptitudes,
+      requirements,
+      modifiers,
+      ...(properties.length > 0 ? { properties } : {}),
+      ...(errors.length > 0 ? { errors } : {}),
+      ...(!template && unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
+      ...(!template && unresolvedPrereqs.length > 0 ? { unresolvedPrereqs } : {}),
+      featNameMap,
+      ...(isStackable(entry) ? { stackable: true } : {}),
+      ...(template ? { template } : {}),
+    };
+  }
+
+  return detected;
+}
+
 /** A feat reference's mapping: what was detected, with its overrides merged in. */
 export function buildFeatMapping(
   raw: FeatReference["raw"],
@@ -676,74 +735,15 @@ export function detectModifiers(benefit: string): ModifierDetection {
   return { modifiers: validated, errors, unresolvedModifiers };
 }
 
-export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["detected"] {
-  const detected: FeatReference["detected"] = {};
-
-  for (const entry of raw) {
-    const { requirements: rawReqs, featNameMap, unresolvedPrereqs } = parsePrerequisiteText(entry.prerequisiteText);
-    const aptitudes = [...(FEAT_TYPE_APTITUDES[entry.featType] ?? ["General"])];
-
-    // Detect fighter bonus feat from Special text: "A fighter may select", or "can select" (Complete Scoundrel)
-    if (
-      entry.special &&
-      /fighter (?:may|can) select/i.test(entry.special) &&
-      !aptitudes.includes("Fighter Bonus Feat")
-    ) {
-      aptitudes.push("Fighter Bonus Feat");
-    }
-
-    const { modifiers, errors: modErrors, unresolvedModifiers } = detectModifiers(entry.benefit);
-    const errors: string[] = [...modErrors];
-
-    // Validate requirement paths
-    const requirements: RequirementEntry[] = [];
-    for (const req of rawReqs) {
-      const invalid = findInvalidRequirementPaths(req);
-      if (invalid.length > 0) {
-        for (const p of invalid) errors.push(`Invalid requirement path: "${p}"`);
-      } else {
-        requirements.push(req);
-      }
-    }
-
-    // "Relevant alignment" (Spell Focus (Chaos), (Evil)…): an alignment of the feat's
-    const relevantAlignment = /\brelevant alignment\b/i.test(entry.prerequisiteText ?? "")
-      ? RELEVANT_ALIGNMENTS[/\((\w+)\)$/.exec(entry.name)?.[1].toLowerCase() ?? ""]
-      : undefined;
-    const alignment = relevantAlignment && parseAlignmentRequirement(relevantAlignment);
-    if (alignment) requirements.push(alignment);
-
-    // Detect implicit feat prerequisites from benefit/special text
-    // e.g. "to which you already have applied the Spell Focus feat"
-    const implicitFeatReqs = detectImplicitFeatPrereqs(entry);
-    for (const f of implicitFeatReqs) {
-      if (!featNameMap[stripSeparators(f)]) {
-        const slug = stripSeparators(f);
-        featNameMap[slug] = f;
-        requirements.push(eq(feat(f)));
-      }
-    }
-
-    const template = detectTemplate(entry);
-
-    const family =
-      FEAT_FAMILIES.find((name) => name.toLowerCase() === entry.featType) ??
-      (entry.name.startsWith(`${DRACONIC_FAMILY} `) ? DRACONIC_FAMILY : undefined);
-    const properties = family ? [{ type: FEAT_FAMILY, value: family }] : [];
-
-    detected[entry.name] = {
-      aptitudes,
-      requirements,
-      modifiers,
-      ...(properties.length > 0 ? { properties } : {}),
-      ...(errors.length > 0 ? { errors } : {}),
-      ...(!template && unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
-      ...(!template && unresolvedPrereqs.length > 0 ? { unresolvedPrereqs } : {}),
-      featNameMap,
-      ...(isStackable(entry) ? { stackable: true } : {}),
-      ...(template ? { template } : {}),
-    };
-  }
-
-  return detected;
+/** "Any (other) metamagic feat": one feat of the family; "any two luck feats": that many of them. */
+export function familyFeatRequirements(text: string): RequirementEntry[] {
+  const counts = Object.keys(NUMBER_WORDS).join("|");
+  return FEAT_FAMILIES.flatMap((family) => {
+    const match = new RegExp(`\\bany (?:other )?(?:(${counts}) )?${family} feats?\\b`, "i").exec(text);
+    if (!match) return [];
+    const slug = stripSeparators(family);
+    return [
+      match[1] ? gte(`feats.${slug}.count`, NUMBER_WORDS[match[1].toLowerCase()]) : eq(`feats.${slug}.*.possessed`),
+    ];
+  });
 }

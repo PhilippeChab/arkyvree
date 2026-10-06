@@ -13,16 +13,6 @@ import {
   TACTICAL_FEATS,
 } from "./feats.ts";
 
-export const ALL_STANDALONE_FEATS: FeatSeed[] = [
-  ...STYLE_FEATS,
-  ...GENERAL_FEATS,
-  ...FIGHTER_FEATS,
-  ...DIVINE_FEATS,
-  ...TACTICAL_FEATS,
-  ...greaterResiliency,
-  ...powerCritical,
-];
-
 export const ALL_FEATS: FeatSeed[] = [
   ...STYLE_FEATS,
   ...GENERAL_FEATS,
@@ -32,6 +22,16 @@ export const ALL_FEATS: FeatSeed[] = [
   ...greaterResiliency,
   ...powerCritical,
   ...ALL_CLASS_FEATS,
+];
+
+export const ALL_STANDALONE_FEATS: FeatSeed[] = [
+  ...STYLE_FEATS,
+  ...GENERAL_FEATS,
+  ...FIGHTER_FEATS,
+  ...DIVINE_FEATS,
+  ...TACTICAL_FEATS,
+  ...greaterResiliency,
+  ...powerCritical,
 ];
 
 export {

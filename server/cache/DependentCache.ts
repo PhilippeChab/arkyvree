@@ -1,6 +1,6 @@
 import { runWithRequestCache } from "@/server/database/index.ts";
 
-import MemoryCache, { isCacheEnabled } from "./MemoryCache.ts";
+import MemoryCache from "./MemoryCache.ts";
 
 interface Loaded<T> {
   data: T;
@@ -12,10 +12,6 @@ export default class DependentCache<T> {
   private cache = new MemoryCache<{ data: T; dependencies: ReadonlySet<string> }>();
 
   private pending = new Map<string, { promise: Promise<T>; dependencies: ReadonlySet<string> }>();
-
-  isPinned(key: string): boolean {
-    return this.cache.isPinned(key);
-  }
 
   invalidate(dependencyId: string): void {
     // MemoryCache is capped at 200 entries. No unbounded dependency registry,
@@ -31,8 +27,12 @@ export default class DependentCache<T> {
     this.pending.clear();
   }
 
+  isPinned(key: string): boolean {
+    return this.cache.isPinned(key);
+  }
+
   async getOrFetch(key: string, dependencyIds: readonly string[], fetcher: () => Promise<Loaded<T>>): Promise<T> {
-    if (!isCacheEnabled()) {
+    if (!MemoryCache.isEnabled()) {
       return (await fetcher()).data;
     }
     const cached = this.cache.get(key);

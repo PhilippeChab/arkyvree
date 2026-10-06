@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
+import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { cowEntity } from "@/server/cow/index.ts";
@@ -11,7 +11,7 @@ import { makeSession } from "@/tests/support/users.ts";
 
 afterEach(() => {
   RulesetCache.invalidateAll();
-  setCacheEnabled(true);
+  MemoryCache.setEnabled(true);
 });
 
 test("extension COW invalidates the warm subscriber mapping", async () => {
@@ -37,7 +37,7 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
 });
 
 test("worker cache mode reads changes between builds without web invalidation", async () => {
-  setCacheEnabled(false);
+  MemoryCache.setEnabled(false);
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const [feat] = await Feats.create(db, { name: "Worker freshness", description: "Before", rulesetId: fork.id });
@@ -49,7 +49,7 @@ test("worker cache mode reads changes between builds without web invalidation", 
 });
 
 test("disabled caches do not coalesce raw reads across worker jobs", async () => {
-  setCacheEnabled(false);
+  MemoryCache.setEnabled(false);
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const [first, second] = await Promise.all([RulesetCache.getRawData(fork.id), RulesetCache.getRawData(fork.id)]);

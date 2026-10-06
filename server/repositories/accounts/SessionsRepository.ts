@@ -11,17 +11,6 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
     super(sessionsInAccount);
   }
 
-  async findOne(db: Db, where: { id: string }) {
-    return await db.query.sessionsInAccount.findFirst({
-      where: and(eq(this.table.id, where.id), isNull(this.table.deletedAt)),
-    });
-  }
-
-  async create(db: Db, values: { userId: string; expiresAt?: string }) {
-    const expiresAt = values.expiresAt ?? new Date(Date.now() + SESSION_TTL_MS).toISOString();
-    return await db.insert(this.table).values({ userId: values.userId, expiresAt }).returning();
-  }
-
   async archive(db: Db, where: { id: string } | { userId: string; exceptId?: string }) {
     return await db
       .update(this.table)
@@ -35,6 +24,11 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
       .returning();
   }
 
+  async create(db: Db, values: { userId: string; expiresAt?: string }) {
+    const expiresAt = values.expiresAt ?? new Date(Date.now() + SESSION_TTL_MS).toISOString();
+    return await db.insert(this.table).values({ userId: values.userId, expiresAt }).returning();
+  }
+
   async delete(db: Db, where: { id: string } | { expiredOrArchivedBefore: string }) {
     return await db
       .delete(this.table)
@@ -45,6 +39,12 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
             (or(isNotNull(this.table.deletedAt), lt(this.table.expiresAt, where.expiredOrArchivedBefore)) ?? false),
         ]),
       );
+  }
+
+  async findOne(db: Db, where: { id: string }) {
+    return await db.query.sessionsInAccount.findFirst({
+      where: and(eq(this.table.id, where.id), isNull(this.table.deletedAt)),
+    });
   }
 }
 

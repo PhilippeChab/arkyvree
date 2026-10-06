@@ -3,10 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { DND35_COMPLETE_DIVINE_NAME } from "@/database/packages/dnd35/names.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
-import { Klasses, Rulesets } from "@/server/repositories/index.ts";
+import { Klasses } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 const klass = api.api.rulesets[":id"].classes[":classId"];
 const levels = klass.levels;
@@ -89,7 +89,7 @@ describe("rulesets class levels", () => {
   });
 
   test("reads the first spell list a class's levels give slots in, by level: the Pious Templar's own", async () => {
-    const divine = (await Rulesets.findOne(db, { name: DND35_COMPLETE_DIVINE_NAME }))!;
+    const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
     const templar = (await Klasses.findOne(db, { name: "Pious Templar", rulesetId: divine.id }))!;
     const spells = await expectOk(
       klass["spell-list"].$get({ param: { id: divine.id, classId: templar.id }, query: { limit: "100" } }),

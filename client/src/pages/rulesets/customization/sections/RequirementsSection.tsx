@@ -38,19 +38,11 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
+type Requirement = RequirementsArray[number];
 type RequirementsArray = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"]["$get"],
   200
 >;
-type Requirement = RequirementsArray[number];
-
-/** Tree node interface for hierarchical requirements */
-interface RequirementTreeNode {
-  id: string;
-  level: string;
-  requirement: Requirement;
-  children: RequirementTreeNode[];
-}
 
 interface RequirementsSectionProps {
   ruleset: RulesetDetail;
@@ -59,6 +51,14 @@ interface RequirementsSectionProps {
   data?: Requirement[];
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
+}
+
+/** Tree node interface for hierarchical requirements */
+interface RequirementTreeNode {
+  id: string;
+  level: string;
+  requirement: Requirement;
+  children: RequirementTreeNode[];
 }
 
 function PublishedWarning() {

@@ -18,30 +18,6 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class MechanicsService {
-  async getMechanic(rulesetId: string, mechanicId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
-      return mechanic;
-    });
-  }
-
-  async getMechanics(
-    rulesetId: string,
-    where: {
-      childOnly?: boolean;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      return await Mechanics.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-    });
-  }
-
   async createMechanic(
     session: Session,
     rulesetId: string,
@@ -84,6 +60,60 @@ class MechanicsService {
     return result;
   }
 
+  async deleteMechanic(session: Session, rulesetId: string, mechanicId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        // Mechanics have no character-level pick table, so no in-use check.
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
+
+        const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
+
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "mechanics", mechanic);
+
+        const rows = await Mechanics.delete(tx, { id: targetId });
+        const deletedMechanic = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(mechanicsInRules),
+          type: "deleteMechanic",
+          data: { rulesetId, entityName: mechanic.name },
+        });
+
+        return deletedMechanic;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async getMechanic(rulesetId: string, mechanicId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
+      return mechanic;
+    });
+  }
+
+  async getMechanics(
+    rulesetId: string,
+    where: {
+      childOnly?: boolean;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      return await Mechanics.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+    });
+  }
+
   async updateMechanic(
     session: Session,
     rulesetId: string,
@@ -124,36 +154,6 @@ class MechanicsService {
         });
 
         return updatedMechanic;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteMechanic(session: Session, rulesetId: string, mechanicId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        // Mechanics have no character-level pick table, so no in-use check.
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
-
-        const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "mechanics", mechanic);
-
-        const rows = await Mechanics.delete(tx, { id: targetId });
-        const deletedMechanic = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(mechanicsInRules),
-          type: "deleteMechanic",
-          data: { rulesetId, entityName: mechanic.name },
-        });
-
-        return deletedMechanic;
       });
     });
     RulesetCache.invalidate(rulesetId);

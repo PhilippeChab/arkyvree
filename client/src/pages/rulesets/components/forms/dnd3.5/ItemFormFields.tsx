@@ -11,18 +11,18 @@ import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 import { DECIMAL_PATTERN, isTemplateType, type ItemFormInternal, type TemplateType } from "./itemForm.ts";
 
-interface TemplateSelectorProps {
-  form: UseFormReturn<ItemFormInternal>;
-  rulesetId: string;
-  type: TemplateType;
-  disabled?: boolean;
-}
-
 interface ItemFormFieldsProps {
   form: UseFormReturn<ItemFormInternal>;
   rulesetId: string;
   /** Keeps the type, slot and template as they are (a duplicate copies them from its source). */
   lockType?: boolean;
+}
+
+interface TemplateSelectorProps {
+  form: UseFormReturn<ItemFormInternal>;
+  rulesetId: string;
+  type: TemplateType;
+  disabled?: boolean;
 }
 
 function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorProps) {

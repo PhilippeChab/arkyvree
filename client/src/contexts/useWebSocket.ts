@@ -2,21 +2,21 @@ import { useEffect } from "react";
 
 import { useLatest } from "@/client/src/hooks/index.ts";
 
-interface WsMessage {
-  type: string;
-  [key: string]: unknown;
-}
-
 interface UseWebSocketOptions {
   enabled: boolean;
   identity: string | null;
   onMessage: (data: WsMessage) => void;
 }
 
-const RECONNECT_BASE_MS = 1000;
-const RECONNECT_MAX_MS = 30000;
+interface WsMessage {
+  type: string;
+  [key: string]: unknown;
+}
+
 const PING_INTERVAL_MS = 30000;
 const PONG_TIMEOUT_MS = 10000;
+const RECONNECT_BASE_MS = 1000;
+const RECONNECT_MAX_MS = 30000;
 
 export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptions) {
   const onMessageRef = useLatest(onMessage);
