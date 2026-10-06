@@ -462,4 +462,20 @@ describe("frontend rules", () => {
       "type-scale client/src/worded.tsx",
     ]);
   });
+
+  test("a corner and a layer are the theme's", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/pixels.tsx": 'export const p = <Box sx={{ borderRadius: "8px 8px 0 0" }} />;\n',
+          "client/src/layered.tsx": "export const l = <Box sx={{ zIndex: 1300 }} />;\n",
+          "client/src/units.tsx":
+            "export const u = <Box sx={{ borderRadius: 1, borderBottomLeftRadius: 0, zIndex: 1, top: 0 }} />;\n",
+          "client/src/round.tsx":
+            'export const r = <Box sx={{ borderRadius: "50%", zIndex: (t) => t.zIndex.drawer + 1 }} />;\n',
+        },
+        ["shape"],
+      ),
+    ).toEqual(["shape client/src/layered.tsx", "shape client/src/pixels.tsx"]);
+  });
 });

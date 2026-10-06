@@ -103,7 +103,8 @@ export function ClassesSection({
                   "&::before": { display: "none" },
                   border: "1px solid",
                   borderColor: "divider",
-                  borderRadius: "8px !important",
+                  // Over MUI's first and last panel corners
+                  "&, &:first-of-type, &:last-of-type": { borderRadius: 1 },
                 }}
               >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>

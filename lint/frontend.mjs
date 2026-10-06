@@ -46,6 +46,8 @@
  * - `browser-storage`: what the browser keeps is a store's (`client/src/stores/`, zustand's `persist`).
  * - `type-scale`: a size is the theme's: text takes a typography variant, an icon its size (`fontSize="tiny"`); a
  *   font weight is a number, and a `Typography` takes a fixed variant as its `variant`.
+ * - `shape`: a corner is in the theme's units (`borderRadius: 1`) or a circle (`"50%"`), and a layer above the page is
+ *   the theme's (`theme.zIndex`); a `zIndex` number orders siblings only (`0`, `1`).
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -357,6 +359,30 @@ function createQueryKeyRule(context) {
         node: node.value,
         message: "A query key comes from `lib/queryKeys.ts`: spread one first (`[...queryKeys.x.y(id), filter]`).",
       });
+    },
+  };
+}
+
+function createShape(context) {
+  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
+  return {
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      const value = node.value.type === "Literal" ? node.value.value : undefined;
+      if (key === "borderRadius" && typeof value === "string" && value !== "50%") {
+        context.report({
+          node: node.value,
+          message:
+            'A corner is the theme\'s: `borderRadius` in its units (`1` is `shape.borderRadius`), a circle `"50%"`, ' +
+            "and one corner `0` beside it (`borderBottomLeftRadius: 0`).",
+        });
+      }
+      if (key === "zIndex" && typeof value === "number" && value > 1) {
+        context.report({
+          node: node.value,
+          message: "A layer is the theme's (`theme.zIndex.drawer + 1`); a number orders siblings only (`0`, `1`).",
+        });
+      }
     },
   };
 }
@@ -912,4 +938,5 @@ export default {
   "browser-storage": { meta: { type: "suggestion" }, create: createBrowserStorage },
   motion: { meta: { type: "suggestion" }, create: createMotion },
   "type-scale": { meta: { type: "suggestion" }, create: createTypeScale },
+  shape: { meta: { type: "suggestion" }, create: createShape },
 };

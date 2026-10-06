@@ -219,7 +219,9 @@ function MobileBranding() {
         px: 2,
         py: 2.5,
         background: `linear-gradient(135deg, ${theme.palette.backdrop.top}, ${theme.palette.backdrop.middle})`,
-        borderRadius: "8px 8px 0 0",
+        borderRadius: 1,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
       }}
     >
       <Box
