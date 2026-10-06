@@ -46,7 +46,7 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       return await db.query.activitiesInAccount.findMany({
         where: whereConditions,
-        orderBy: orderByClause,
+        orderBy: this.pageOrder(orderByClause),
         limit,
         offset,
       });

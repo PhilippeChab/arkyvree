@@ -198,7 +198,7 @@ class RulesetsRepository extends include(
             ),
           )
           .where(condition)
-          .orderBy(order)
+          .orderBy(...this.pageOrder(order))
           .limit(paginate.limit)
           .offset(paginate.offset),
     );
@@ -299,7 +299,7 @@ class RulesetsRepository extends include(
           .select()
           .from(rulesetsInRules)
           .where(condition)
-          .orderBy(order)
+          .orderBy(...this.pageOrder(order))
           .limit(paginate.limit)
           .offset(paginate.offset),
     );

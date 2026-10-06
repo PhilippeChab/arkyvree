@@ -67,7 +67,7 @@ class KlassesRepository extends RulesetEntityRepository<typeof klassesInRules> {
           kind !== undefined && eq(this.table.kind, kind),
           searchConditions,
         ]),
-        orderBy: orderByClause,
+        orderBy: this.pageOrder(orderByClause),
         limit,
         offset,
       });

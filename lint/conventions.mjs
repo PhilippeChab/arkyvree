@@ -18,7 +18,8 @@
  *   `…Schema`), and it lets an error reach `onError` instead of catching it (`server/routers/api/`; a `finally` alone
  *   is fine).
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
- *   drizzle's `asc` / `desc`.
+ *   drizzle's `asc` / `desc`, and a repository method that reads a page orders it by `this.pageOrder(keys)`, which ends
+ *   on a key no two rows share: OFFSET paging repeats or skips rows that tie.
  * - `shared-runtime`: `shared/` runs in the client too, so it uses neither Bun's APIs (`bun`, the `Bun` global) nor
  *   Node's (`node:fs`, `fs`).
  * - `session-param`: a `Session` parameter is named `session` (`_session` when it's unused).
@@ -194,33 +195,6 @@ function createNoParentImports(context) {
   });
 }
 
-function createOrderThroughRepository(context) {
-  const file = repoPath(context.filename);
-  if (!file.startsWith("server/") || file === "server/repositories/BaseRepository.ts") return {};
-  const message = "Sort with the repository's `this.orderBy(column, direction)`, not drizzle's `asc` / `desc`.";
-  const namespaces = new Set();
-  return {
-    ImportDeclaration(node) {
-      if (node.source.value !== "drizzle-orm") return;
-      for (const s of node.specifiers ?? []) {
-        if (s.type === "ImportSpecifier" && ["asc", "desc"].includes(s.imported.name))
-          context.report({ node: s, message });
-        if (s.type === "ImportNamespaceSpecifier") namespaces.add(s.local.name);
-      }
-    },
-    // import * as orm from "drizzle-orm"; orm.desc(…)
-    MemberExpression(node) {
-      if (
-        node.object.type === "Identifier" &&
-        namespaces.has(node.object.name) &&
-        ["asc", "desc"].includes(node.property.name)
-      ) {
-        context.report({ node, message });
-      }
-    },
-  };
-}
-
 function createPolicyShape(context) {
   const file = repoPath(context.filename);
   if (!file.startsWith("server/")) return {};
@@ -296,6 +270,50 @@ function* callsIn(node) {
       if (typeof child?.type === "string") yield* callsIn(child);
     }
   }
+}
+
+function createOrderThroughRepository(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("server/") || file === "server/repositories/BaseRepository.ts") return {};
+  const message = "Sort with the repository's `this.orderBy(column, direction)`, not drizzle's `asc` / `desc`.";
+  const namespaces = new Set();
+  return {
+    ImportDeclaration(node) {
+      if (node.source.value !== "drizzle-orm") return;
+      for (const s of node.specifiers ?? []) {
+        if (s.type === "ImportSpecifier" && ["asc", "desc"].includes(s.imported.name))
+          context.report({ node: s, message });
+        if (s.type === "ImportNamespaceSpecifier") namespaces.add(s.local.name);
+      }
+    },
+    // A method that pages (`this.withPagination`, `this.paginate`, `this.paginated`) orders by `this.pageOrder(…)`
+    MethodDefinition(node) {
+      if (!file.startsWith("server/repositories/") || file === "server/repositories/concerns/Paginates.ts") return;
+      const called = new Set();
+      for (const call of callsIn(node.value)) {
+        const callee = call.callee;
+        if (callee.type === "MemberExpression" && callee.object.type === "ThisExpression")
+          called.add(callee.property.name);
+      }
+      if (["withPagination", "paginate", "paginated"].some((name) => called.has(name)) && !called.has("pageOrder")) {
+        context.report({
+          node: node.key,
+          message:
+            "A page is ordered by `this.pageOrder(keys)`, which ends on a key no two rows share: OFFSET paging repeats or skips rows that tie.",
+        });
+      }
+    },
+    // import * as orm from "drizzle-orm"; orm.desc(…)
+    MemberExpression(node) {
+      if (
+        node.object.type === "Identifier" &&
+        namespaces.has(node.object.name) &&
+        ["asc", "desc"].includes(node.property.name)
+      ) {
+        context.report({ node, message });
+      }
+    },
+  };
 }
 
 /** What a call or member chain starts from: `itemBody` in `itemBody.partial()`, `z` in `z.object({…})`. */

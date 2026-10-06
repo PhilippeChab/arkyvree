@@ -3,9 +3,9 @@ import { type CowData, db, withCowContext } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 
-import { buildRulesetData, type CachedRulesetData } from "./compose.ts";
 import CowDataBuilder, { buildSourceChain, type RulesetSources } from "./CowDataBuilder.ts";
 import { fetchRulesetRawData, type RulesetRawData } from "./rawData.ts";
+import RulesetComposition, { type CachedRulesetData } from "./RulesetComposition.ts";
 
 type TargetPathsAndLabels = { paths: TargetPath[]; segmentLabels: Record<string, string> };
 
@@ -72,7 +72,7 @@ class RulesetCache {
       this.getRawData(ruleset.id, campaignId),
       ...cowData.sourceChain.map((id) => this.getRawData(id)),
     ]);
-    return buildRulesetData(chain, cowData);
+    return new RulesetComposition(chain, cowData).build();
   }
 
   /** A ruleset's own rows (a campaign's, with one), none of its ancestors': pinned when it's a system ruleset. */

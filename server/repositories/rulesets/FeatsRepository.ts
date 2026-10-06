@@ -93,7 +93,10 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
         ]),
       )
       .groupBy(sql`coalesce(${prop.value}, ${this.table.id}::text)`)
-      .orderBy(sql`coalesce(min(${prop.value}), min(${this.table.name}))`)
+      // A group is a family or a feat alone: its smallest id is its own
+      .orderBy(
+        ...this.pageOrder(sql`coalesce(min(${prop.value}), min(${this.table.name}))`, sql`min(${this.table.id}::text)`),
+      )
       .limit(limit)
       .offset(offset);
 
@@ -177,7 +180,13 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
         ]),
       )
       .groupBy(sql`coalesce(${prop.value}, ${featsInRules.id}::text)`)
-      .orderBy(sql`coalesce(min(${prop.value}), min(${featsInRules.name}))`)
+      // A group is a family or a feat alone: its smallest id is its own
+      .orderBy(
+        ...this.pageOrder(
+          sql`coalesce(min(${prop.value}), min(${featsInRules.name}))`,
+          sql`min(${featsInRules.id}::text)`,
+        ),
+      )
       .limit(limit)
       .offset(offset);
 
@@ -228,7 +237,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
           this.excludeIds(excludeFeatIds),
         ]),
       )
-      .orderBy(this.orderBy(featsInRules.name), this.orderBy(featsInRules.id))
+      .orderBy(...this.pageOrder(this.orderBy(featsInRules.name)))
       .limit(limit)
       .offset(offset);
 
@@ -272,11 +281,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
           where.ids !== undefined && inArray(this.table.id, where.ids),
           familyCondition,
         ]),
-        // The id breaks ties, so paging never repeats or skips a row.
-        orderBy: [
-          this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
-          this.orderBy(this.table.id),
-        ],
+        orderBy: this.pageOrder(this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir))),
         with: {
           featsAptitudesInRules: {
             with: {

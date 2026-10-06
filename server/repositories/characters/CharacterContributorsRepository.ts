@@ -114,7 +114,7 @@ class CharacterContributorsRepository extends include(
           searchCondition,
         ),
       )
-      .orderBy(this.orderBy(this.table[orderBy], orderDir))
+      .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))
       .limit(limit)
       .offset(offset);
 
