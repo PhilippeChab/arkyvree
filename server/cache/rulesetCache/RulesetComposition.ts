@@ -11,7 +11,13 @@ import type {
 
 import { type RulesetRawData } from "./rawData.ts";
 import RulesetData, { type RulesetLists } from "./RulesetData.ts";
-import { mergeSiblingRequirements } from "./siblingRequirements.ts";
+import {
+  mergeSiblingAptitudeLinks,
+  mergeSiblingModifiers,
+  mergeSiblingProperties,
+  mergeSiblingRequirements,
+} from "./siblingMerge.ts";
+import SiblingRows from "./SiblingRows.ts";
 
 /**
  * A ruleset's view: its own rows and its source chain's (`chain`, the ruleset's first), composed by its copy-on-write
@@ -29,9 +35,8 @@ export default class RulesetComposition {
   private readonly cow: CowData;
 
   /**
-   * Collect sibling aptitude links (keyed by winner id, featId/powerId already remapped to winner) so they can be merged
-   * into the winner's inline aptitudes-in-rule array alongside the FK remap pass. Built once from the raw chain because
-   * compose filters out sibling entities before this point.
+   * Each sibling loser's aptitude links, by the loser, on its winner (`featId` / `powerId`), for the winner's links to
+   * merge: read from the raw chain, since compose leaves the losers out.
    */
   private collectSiblingAptitudeLinks() {
     const feats = new Map<string, FeatWithAptitudes["featsAptitudesInRules"]>();
@@ -39,22 +44,20 @@ export default class RulesetComposition {
     if (this.cow.siblingIds.size === 0) return { feats, powers };
     for (const raw of this.chain) {
       for (const f of raw.feats) {
-        if (this.cow.isOverridden(f.id)) continue;
-        const w = this.cow.getWinner(f.id);
-        if (!w) continue;
-        const remapped = f.featsAptitudesInRules.map((l) => ({ ...l, featId: w }));
-        const g = feats.get(w);
-        if (g) g.push(...remapped);
-        else feats.set(w, remapped);
+        const winnerId = this.cow.isOverridden(f.id) ? undefined : this.cow.getWinner(f.id);
+        if (!winnerId) continue;
+        feats.set(
+          f.id,
+          f.featsAptitudesInRules.map((l) => ({ ...l, featId: winnerId })),
+        );
       }
       for (const p of raw.powers) {
-        if (this.cow.isOverridden(p.id)) continue;
-        const w = this.cow.getWinner(p.id);
-        if (!w) continue;
-        const remapped = p.powersAptitudesInRules.map((l) => ({ ...l, powerId: w }));
-        const g = powers.get(w);
-        if (g) g.push(...remapped);
-        else powers.set(w, remapped);
+        const winnerId = this.cow.isOverridden(p.id) ? undefined : this.cow.getWinner(p.id);
+        if (!winnerId) continue;
+        powers.set(
+          p.id,
+          p.powersAptitudesInRules.map((l) => ({ ...l, powerId: winnerId })),
+        );
       }
     }
     return { feats, powers };
@@ -135,125 +138,72 @@ export default class RulesetComposition {
   }
 
   /**
-   * Modifiers: drop when the source was COW'd. Sibling-sourced modifiers are merged into the winner's bucket with
-   * sourceId remapped, deduped by target|value|operator|valueType. Sibling mods that dedup-skip have their ids recorded
-   * in excludedModifierIds so their requirements drop too.
+   * Modifiers, the fork's first: a copied source's and an invisible class level's are left out, and a sibling loser's
+   * the merge leaves out (`mergeSiblingModifiers`); the rest of a loser's move to its winner. Every modifier left out is
+   * excluded, its requirements with it.
    */
   private composeModifiers(visibleKlassLevelIds: Set<string>) {
-    const modifiers: Modifier[] = [];
+    const siblingRows = new SiblingRows<Modifier>(this.cow);
     const excludedModifierIds = new Set<string>();
-    const modDedupByWinner = new Map<string, Set<string>>();
     for (const raw of this.chain) {
       for (const m of raw.modifiers) {
-        if (this.cow.isOverridden(m.sourceId)) {
-          excludedModifierIds.add(m.id);
-          continue;
-        }
-        if (m.sourceType === "klass_levels" && !visibleKlassLevelIds.has(m.sourceId)) {
-          excludedModifierIds.add(m.id);
-          continue;
-        }
-        const winnerId = this.cow.getWinner(m.sourceId);
-        if (winnerId) {
-          const key = `${m.target}|${m.value}|${m.operator}|${m.valueType}`;
-          const seen = modDedupByWinner.get(winnerId) ?? new Set<string>();
-          if (seen.has(key)) {
-            excludedModifierIds.add(m.id);
-            continue;
-          }
-          seen.add(key);
-          modDedupByWinner.set(winnerId, seen);
-          modifiers.push({ ...m, sourceId: winnerId });
-        } else {
-          modifiers.push(m);
-          if (this.cow.hasSiblings(m.sourceId)) {
-            const seen = modDedupByWinner.get(m.sourceId) ?? new Set<string>();
-            seen.add(`${m.target}|${m.value}|${m.operator}|${m.valueType}`);
-            modDedupByWinner.set(m.sourceId, seen);
-          }
-        }
+        const isVisible =
+          !this.cow.isOverridden(m.sourceId) &&
+          (m.sourceType !== "klass_levels" || visibleKlassLevelIds.has(m.sourceId));
+        if (isVisible) siblingRows.add(m, m.sourceId);
+        else excludedModifierIds.add(m.id);
       }
     }
-    return { modifiers, excludedModifierIds };
+    const groups = siblingRows.getGroups();
+    const taken = new Set(groups.flatMap(({ own, siblings }) => mergeSiblingModifiers(own, siblings)));
+    for (const m of groups.flatMap(({ siblings }) => siblings.flat())) {
+      if (!taken.has(m)) excludedModifierIds.add(m.id);
+    }
+    return { modifiers: siblingRows.moveTaken(taken, (m, sourceId) => ({ ...m, sourceId })), excludedModifierIds };
   }
 
   /**
-   * Properties: concat, remap sibling props to winner entityId, dedup (type|value) within each winner group.
-   * Ruleset-level properties (entityId === rulesetId) are never excluded because a ruleset's ID is never overridden. Also
-   * drop klass-level properties whose parent klass is a sibling loser — those klass levels have already been filtered
-   * out of `klassLevels`, so their props would be orphans in `propertiesByEntity`.
+   * Properties, the fork's first: a copied entity's and an invisible class level's are left out (a sibling loser's
+   * class levels aren't in `klassLevels`), and a sibling loser's the merge leaves out (`mergeSiblingProperties`); the
+   * rest of a loser's move to its winner. A ruleset's own properties always stay: a ruleset is never overridden.
    */
   private composeProperties(visibleKlassLevelIds: Set<string>): Property[] {
-    const properties: Property[] = [];
-    const propDedupByWinner = new Map<string, Set<string>>();
+    const siblingRows = new SiblingRows<Property>(this.cow);
     for (const raw of this.chain) {
-      for (const prop of raw.properties) {
-        if (this.cow.isOverridden(prop.entityId)) continue;
-        if (prop.entityType === "klass_levels" && !visibleKlassLevelIds.has(prop.entityId)) continue;
-        const winnerId = this.cow.getWinner(prop.entityId);
-        if (winnerId) {
-          const key = `${prop.type}|${prop.value}`;
-          const seen = propDedupByWinner.get(winnerId) ?? new Set<string>();
-          if (seen.has(key)) continue;
-          seen.add(key);
-          propDedupByWinner.set(winnerId, seen);
-          properties.push({ ...prop, entityId: winnerId });
-        } else {
-          properties.push(prop);
-          if (this.cow.hasSiblings(prop.entityId)) {
-            const seen = propDedupByWinner.get(prop.entityId) ?? new Set<string>();
-            seen.add(`${prop.type}|${prop.value}`);
-            propDedupByWinner.set(prop.entityId, seen);
-          }
-        }
+      for (const p of raw.properties) {
+        if (this.cow.isOverridden(p.entityId)) continue;
+        if (p.entityType === "klass_levels" && !visibleKlassLevelIds.has(p.entityId)) continue;
+        siblingRows.add(p, p.entityId);
       }
     }
-    return properties;
+    const taken = new Set(
+      siblingRows.getGroups().flatMap(({ own, siblings }) => mergeSiblingProperties(own, siblings)),
+    );
+    return siblingRows.moveTaken(taken, (p, entityId) => ({ ...p, entityId }));
   }
 
   /**
-   * Requirements: entityType='modifiers' rows survive when their modifier wasn't excluded (keyed by modifier.id).
-   * Entity-level rows go through the same recursive forest merge that EntityCopy's sibling merge uses at write time:
-   *   - Build the winner's forest from its own reqs
-   *   - For each sibling, build its forest, dedup leaves against existing conditions on the winner, and append each
-   *     tree at a fresh top-level position with renumbered child paths.
-   * The result is the same in-memory list shape as before.
+   * Requirements, the fork's first: a modifier's stay unless the modifier was excluded. An entity's are left out with a
+   * copied entity and an invisible class level; a sibling loser's merge into its winner's as trees
+   * (`mergeSiblingRequirements`, which `EntityCopy` writes the same way), after the rest.
    */
   private composeRequirements(visibleKlassLevelIds: Set<string>, excludedModifierIds: Set<string>): Requirement[] {
-    const requirements: Requirement[] = [];
-    // Group winner-side rows by winnerId so we can build forests per entity.
-    const winnerOwnReqs = new Map<string, Requirement[]>();
-    // Group sibling rows by (winner, sibling source entity) to preserve each sibling's tree identity during the merge.
-    const siblingReqsByWinner = new Map<string, Map<string, Requirement[]>>();
-
+    const siblingRows = new SiblingRows<Requirement>(this.cow);
     for (const raw of this.chain) {
       for (const r of raw.requirements) {
-        if (r.entityType === "modifiers") {
-          if (!excludedModifierIds.has(r.entityId)) requirements.push(r);
-          continue;
-        }
-        if (this.cow.isOverridden(r.entityId)) continue;
-        if (r.entityType === "klass_levels" && !visibleKlassLevelIds.has(r.entityId)) continue;
-        const winnerId = this.cow.getWinner(r.entityId);
-        if (winnerId) {
-          if (!siblingReqsByWinner.has(winnerId)) siblingReqsByWinner.set(winnerId, new Map());
-          const bySibling = siblingReqsByWinner.get(winnerId)!;
-          if (!bySibling.has(r.entityId)) bySibling.set(r.entityId, []);
-          bySibling.get(r.entityId)!.push(r);
-        } else {
-          requirements.push(r);
-          if (!winnerOwnReqs.has(r.entityId)) winnerOwnReqs.set(r.entityId, []);
-          winnerOwnReqs.get(r.entityId)!.push(r);
-        }
+        const isVisible =
+          r.entityType === "modifiers"
+            ? !excludedModifierIds.has(r.entityId)
+            : !this.cow.isOverridden(r.entityId) &&
+              (r.entityType !== "klass_levels" || visibleKlassLevelIds.has(r.entityId));
+        if (isVisible) siblingRows.add(r, r.entityId);
       }
     }
-
-    for (const [winnerId, bySibling] of siblingReqsByWinner) {
-      const winnerReqs = winnerOwnReqs.get(winnerId) ?? [];
-      const entityType = bySibling.values().next().value![0].entityType;
-      requirements.push(...mergeSiblingRequirements(winnerReqs, bySibling.values(), winnerId, entityType));
-    }
-    return requirements;
+    return siblingRows.withMerged(
+      siblingRows
+        .getGroups()
+        .flatMap(({ winnerId, own, siblings }) => mergeSiblingRequirements(own, siblings, winnerId)),
+    );
   }
 
   /** A list's rows across the chain, the fork's first, without the overridden ones and the sibling losers. */
@@ -262,14 +212,44 @@ export default class RulesetComposition {
   }
 
   /**
-   * Resolve IDs nested inside the feat/power join arrays. `CowData.resolveRows` only touches top-level string fields; the
-   * inline powersAptitudesInRules / featsAptitudesInRules arrays still hold pre-COW aptitudeIds + pre-COW Aptitude join
-   * objects after a sibling-dedup or aptitude COW. Downstream consumers compare these against post-COW IDs from the
-   * composed cache (`pa.aptitudeId === rulesetData.aptitudesById...`) and silently miss. Walk the arrays once here so
-   * every `aptitudeId`, `powerId`, `featId`, and `aptitudesInRule` entry is post-COW. Also merge sibling aptitude links
-   * here; dedup by resolved aptitudeId so sibling duplicates collapse naturally. Siblings always imply stale ids
-   * (`CowDataBuilder` aliases each sibling loser to its winner), so the caller runs this only when the scope resolves an
-   * id, and the shallow-copied feats and powers are safe to mutate.
+   * An entity's aptitude links, its siblings' merged in (`mergeSiblingAptitudeLinks`, which `EntityCopy` writes the
+   * same way), each to the aptitude that stands for it. Its own links that resolve to one aptitude collapse too, the
+   * first one kept.
+   */
+  private linkAptitudes<L extends { aptitudeId: string; aptitudesInRule: Aptitude }>(
+    entityId: string,
+    own: L[],
+    siblingLinks: Map<string, L[]>,
+    aptitudesById: Map<string, Aptitude>,
+  ): L[] {
+    const links = this.cow.hasSiblings(entityId)
+      ? [
+          ...own,
+          ...mergeSiblingAptitudeLinks(
+            own,
+            this.cow.getSiblings(entityId).map((loserId) => siblingLinks.get(loserId) ?? []),
+            (id) => this.cow.resolve(id),
+          ),
+        ]
+      : own;
+    const aptitudeIds = new Set<string>();
+    const resolved: L[] = [];
+    for (const link of links) {
+      const aptitudeId = this.cow.resolve(link.aptitudeId);
+      if (aptitudeIds.has(aptitudeId)) continue;
+      aptitudeIds.add(aptitudeId);
+      resolved.push({ ...link, aptitudeId, aptitudesInRule: aptitudesById.get(aptitudeId) ?? link.aptitudesInRule });
+    }
+    return resolved;
+  }
+
+  /**
+   * Resolve the ids inside the feats' and powers' aptitude links, which `CowData.resolveRows` doesn't reach: each link's
+   * aptitude, and the aptitude row on it, to the one that stands for it (after an aptitude's copy or a sibling
+   * merge), so that a reader comparing it with the view's ids (`rulesetData.aptitudesById`) matches. A sibling loser's
+   * links merge into its winner's here. Siblings always imply stale ids (`CowDataBuilder` aliases each sibling loser to
+   * its winner), so the caller runs this only when the scope resolves an id, and the shallow-copied feats and powers
+   * are safe to mutate.
    */
   private resolveAptitudeLinks(
     feats: FeatWithAptitudes[],
@@ -277,38 +257,17 @@ export default class RulesetComposition {
     aptitudes: Aptitude[],
     links: ReturnType<RulesetComposition["collectSiblingAptitudeLinks"]>,
   ) {
-    const aptitudesByIdMap = new Map(aptitudes.map((apt) => [apt.id, apt]));
-
+    const aptitudesById = new Map(aptitudes.map((apt) => [apt.id, apt]));
     for (const feat of feats) {
-      const sibLinks = links.feats.get(feat.id);
-      const source = sibLinks ? [...feat.featsAptitudesInRules, ...sibLinks] : feat.featsAptitudesInRules;
-      const seen = new Set<string>();
-      const rewritten: typeof feat.featsAptitudesInRules = [];
-      for (const link of source) {
-        const resolvedAptId = this.cow.resolve(link.aptitudeId);
-        if (seen.has(resolvedAptId)) continue;
-        seen.add(resolvedAptId);
-        const resolvedFeatId = this.cow.resolve(link.featId);
-        const aptitudesInRule = aptitudesByIdMap.get(resolvedAptId) ?? link.aptitudesInRule;
-        rewritten.push({ ...link, aptitudeId: resolvedAptId, featId: resolvedFeatId, aptitudesInRule });
-      }
-      feat.featsAptitudesInRules = rewritten;
+      feat.featsAptitudesInRules = this.linkAptitudes(feat.id, feat.featsAptitudesInRules, links.feats, aptitudesById);
     }
-
     for (const power of powers) {
-      const sibLinks = links.powers.get(power.id);
-      const source = sibLinks ? [...power.powersAptitudesInRules, ...sibLinks] : power.powersAptitudesInRules;
-      const seen = new Set<string>();
-      const rewritten: typeof power.powersAptitudesInRules = [];
-      for (const link of source) {
-        const resolvedAptId = this.cow.resolve(link.aptitudeId);
-        if (seen.has(resolvedAptId)) continue;
-        seen.add(resolvedAptId);
-        const resolvedPowerId = this.cow.resolve(link.powerId);
-        const aptitudesInRule = aptitudesByIdMap.get(resolvedAptId) ?? link.aptitudesInRule;
-        rewritten.push({ ...link, aptitudeId: resolvedAptId, powerId: resolvedPowerId, aptitudesInRule });
-      }
-      power.powersAptitudesInRules = rewritten;
+      power.powersAptitudesInRules = this.linkAptitudes(
+        power.id,
+        power.powersAptitudesInRules,
+        links.powers,
+        aptitudesById,
+      );
     }
   }
 

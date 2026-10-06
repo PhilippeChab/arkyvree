@@ -1,4 +1,10 @@
-import { CowDataBuilder, mergeSiblingRequirements } from "@/server/cache/rulesetCache/index.ts";
+import {
+  CowDataBuilder,
+  mergeSiblingAptitudeLinks,
+  mergeSiblingModifiers,
+  mergeSiblingProperties,
+  mergeSiblingRequirements,
+} from "@/server/cache/rulesetCache/index.ts";
 import { type CowData, type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -9,10 +15,7 @@ import {
   KlassLevels,
   KlassLevelSaves,
   KlassSkills,
-  Modifiers,
   PowersAptitudes,
-  Properties,
-  Requirements,
 } from "@/server/repositories/index.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 
@@ -25,8 +28,6 @@ import {
   fetchSiblingCustomizations,
 } from "./customizations.ts";
 import { type EntityCustomizations, type EntityType, hashEntity, type KlassRelationships } from "./hashing.ts";
-
-type SiblingCustomizations = Awaited<ReturnType<typeof fetchSiblingCustomizations>>;
 
 /**
  * A copy made: the copied entity, and each customization it copied, by its source's id (equal values don't make the
@@ -141,7 +142,7 @@ export default class EntityCopy {
     // 4b. Merge sibling data when multiple extensions COW the same base entity
     const siblingIds = cow.getSiblings(this.entityId);
     if (siblingIds.length > 0) {
-      await this.mergeSiblings(tx, newEntity.id, siblingIds);
+      await this.mergeSiblings(tx, newEntity.id, cust, siblingIds, cow);
     }
 
     // 5. Compute content hash and create snapshot
@@ -287,157 +288,57 @@ export default class EntityCopy {
   }
 
   /**
-   * Merges sibling aptitude links of a feat or a power. Sibling reads turn copy-on-write resolution off (loser ids would
+   * Merges sibling aptitude links of a feat or a power (`mergeSiblingAptitudeLinks`), each to the aptitude that stands
+   * for it, as the copy's own (`copyRelationships`). Sibling reads turn copy-on-write resolution off (loser ids would
    * otherwise be canonicalized to the winner). Existing reads on targetEntityId go through the repo since the new id
    * isn't a stale id.
    */
-  private async mergeAptitudeLinks(tx: Db, targetEntityId: string, siblingIds: string[]) {
+  private async mergeAptitudeLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
+    const resolve = (id: string) => cow.resolve(id);
     if (this.entityType === "feats") {
-      const existingAptitudes = await FeatsAptitudes.findMany(tx, { featId: targetEntityId });
-      const existingAptIds = new Set(existingAptitudes.map((a) => a.aptitudeId));
-      const newAptitudeLinks: Array<{ featId: string; aptitudeId: string }> = [];
-      for (const siblingId of siblingIds) {
-        const sibAptitudes = await withCowContext(undefined, () => FeatsAptitudes.findMany(tx, { featId: siblingId }));
-        for (const sa of sibAptitudes) {
-          if (!existingAptIds.has(sa.aptitudeId)) {
-            existingAptIds.add(sa.aptitudeId);
-            newAptitudeLinks.push({ featId: targetEntityId, aptitudeId: sa.aptitudeId });
-          }
-        }
-      }
-
-      if (newAptitudeLinks.length > 0) {
-        await FeatsAptitudes.createMany(tx, newAptitudeLinks);
+      const own = await FeatsAptitudes.findMany(tx, { featId: targetEntityId });
+      const siblingLinks = Map.groupBy(
+        await withCowContext(undefined, () => FeatsAptitudes.findMany(tx, { featIds: siblingIds })),
+        (link) => link.featId,
+      );
+      const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
+      const links = mergeSiblingAptitudeLinks(own, siblings, resolve);
+      if (links.length > 0) {
+        await FeatsAptitudes.createMany(
+          tx,
+          links.map((link) => ({ featId: targetEntityId, aptitudeId: resolve(link.aptitudeId) })),
+        );
       }
     } else if (this.entityType === "powers") {
-      const existingAptitudes = await PowersAptitudes.findMany(tx, { powerId: targetEntityId });
-      const existingAptIds = new Set(existingAptitudes.map((a) => a.aptitudeId));
-
-      const newAptitudeLinks: Array<{ powerId: string; aptitudeId: string; level: number | null }> = [];
-      for (const siblingId of siblingIds) {
-        const sibAptitudes = await withCowContext(undefined, () =>
-          PowersAptitudes.findMany(tx, { powerId: siblingId }),
-        );
-        for (const sa of sibAptitudes) {
-          if (!existingAptIds.has(sa.aptitudeId)) {
-            existingAptIds.add(sa.aptitudeId);
-            newAptitudeLinks.push({ powerId: targetEntityId, aptitudeId: sa.aptitudeId, level: sa.level });
-          }
-        }
-      }
-
-      if (newAptitudeLinks.length > 0) {
-        await PowersAptitudes.createMany(tx, newAptitudeLinks);
-      }
-    }
-  }
-
-  /** Merges sibling modifiers, deduplicated by target+value+operator+valueType, with their own requirements. */
-  private async mergeModifiers(
-    tx: Db,
-    targetEntityId: string,
-    sourceType: string,
-    siblingCusts: SiblingCustomizations,
-  ) {
-    const targetModifiers = await Modifiers.findMany(tx, { sourceIds: [targetEntityId], sourceType });
-    const existingModKeys = new Set(targetModifiers.map((m) => `${m.target}|${m.value}|${m.operator}|${m.valueType}`));
-
-    for (const [, sibCust] of siblingCusts) {
-      const uniqueModifiers = sibCust.modifiers.filter((m) => {
-        const key = `${m.target}|${m.value}|${m.operator}|${m.valueType}`;
-        if (existingModKeys.has(key)) return false;
-        existingModKeys.add(key);
-        return true;
-      });
-
-      if (uniqueModifiers.length > 0) {
-        const modifierIds = new Set(uniqueModifiers.map((m) => m.id));
-        await copyEntityCustomizations(
-          tx,
-          targetEntityId,
-          this.entityType,
-          {
-            modifiers: uniqueModifiers,
-            modifierRequirements: sibCust.modifierRequirements.filter((r) => modifierIds.has(r.entityId)),
-            properties: [],
-            requirements: [],
-          },
-          this.copiedIds,
-        );
-      }
-    }
-  }
-
-  /** Merges sibling properties, deduplicated by type+value. */
-  private async mergeProperties(tx: Db, targetEntityId: string, siblingCusts: SiblingCustomizations) {
-    const targetProperties = await Properties.findMany(tx, {
-      entityIds: [targetEntityId],
-      entityType: this.entityType,
-    });
-    const existingPropKeys = new Set(targetProperties.map((p) => `${p.type}|${p.value}`));
-
-    const sourcePropertyIds: string[] = [];
-    const newProperties: Array<{
-      entityId: string;
-      entityType: string;
-      type: string;
-      value: string;
-      description: string | null;
-    }> = [];
-    for (const [, sibCust] of siblingCusts) {
-      for (const prop of sibCust.properties) {
-        const key = `${prop.type}|${prop.value}`;
-        if (existingPropKeys.has(key)) continue;
-        existingPropKeys.add(key);
-        sourcePropertyIds.push(prop.id);
-        newProperties.push({
-          entityId: targetEntityId,
-          entityType: this.entityType,
-          type: prop.type,
-          value: prop.value,
-          description: prop.description,
-        });
-      }
-    }
-
-    if (newProperties.length > 0) {
-      const copies = await Properties.createMany(tx, newProperties);
-      for (let i = 0; i < sourcePropertyIds.length; i++) {
-        this.copiedIds.set(sourcePropertyIds[i], copies[i].id);
-      }
-    }
-  }
-
-  /**
-   * Merges sibling requirements as a proper recursive forest merge. Builds the target's forest, then for each sibling:
-   * deduplicates standalone roots and appends intact trees at fresh top-level positions on the target. Top-level AND
-   * across all rows combines them: `(target) AND (sibling_1) AND (sibling_2) AND ...`.
-   */
-  private async mergeRequirements(tx: Db, targetEntityId: string, siblingCusts: SiblingCustomizations) {
-    const targetReqs = await Requirements.findMany(tx, { entityIds: [targetEntityId], entityType: this.entityType });
-    const newReqs = mergeSiblingRequirements(
-      targetReqs,
-      [...siblingCusts.values()].map((cust) => cust.requirements),
-      targetEntityId,
-      this.entityType,
-    );
-    if (newReqs.length > 0) {
-      const copies = await Requirements.createMany(
-        tx,
-        newReqs.map((row) => ({ ...row, id: undefined })),
+      const own = await PowersAptitudes.findMany(tx, { powerId: targetEntityId });
+      const siblingLinks = Map.groupBy(
+        await withCowContext(undefined, () => PowersAptitudes.findMany(tx, { powerIds: siblingIds })),
+        (link) => link.powerId,
       );
-      for (let i = 0; i < newReqs.length; i++) {
-        this.copiedIds.set(newReqs[i].id, copies[i].id);
+      const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
+      const links = mergeSiblingAptitudeLinks(own, siblings, resolve);
+      if (links.length > 0) {
+        await PowersAptitudes.createMany(
+          tx,
+          links.map((link) => ({ powerId: targetEntityId, aptitudeId: resolve(link.aptitudeId), level: link.level })),
+        );
       }
     }
   }
 
   /**
    * Merge sibling data into the copy. When multiple extensions COW the same base entity, the "winner" is copied first.
-   * This merges unique data from sibling extension copies (requirements, modifiers, aptitude links) so the child fork
-   * starts from the full merged view.
+   * This merges what its siblings add, by the rules a ruleset's view merges them by (`siblingMerge.ts`), so the child
+   * fork starts from the merged view: their modifiers (each with its requirements), properties and requirements against
+   * the winner's (`own`, which the copy holds), then their aptitude links. Each copied row's id is recorded.
    */
-  private async mergeSiblings(tx: Db, targetEntityId: string, siblingIds: string[]) {
+  private async mergeSiblings(
+    tx: Db,
+    targetEntityId: string,
+    own: EntityCustomizations,
+    siblingIds: string[],
+    cow: CowData,
+  ) {
     // Sibling-loser ids resolve to their winners in a scope's CowData, so the
     // repo proxy would rewrite `Modifiers.findMany({ sourceIds: siblingIds })` to fetch the
     // winner's rows. This merge explicitly wants the literal stored
@@ -445,12 +346,33 @@ export default class EntityCopy {
     // wraps repos for application-code convenience; this is infrastructure
     // copying raw rows by id).
     const siblingCusts = await fetchSiblingCustomizations(tx, siblingIds, this.entityType, this.sourceType);
-
-    await this.mergeRequirements(tx, targetEntityId, siblingCusts);
-    if (this.sourceType) {
-      await this.mergeModifiers(tx, targetEntityId, this.sourceType, siblingCusts);
-    }
-    await this.mergeProperties(tx, targetEntityId, siblingCusts);
-    await this.mergeAptitudeLinks(tx, targetEntityId, siblingIds);
+    const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
+    const modifiers = mergeSiblingModifiers(
+      own.modifiers,
+      siblings.map((cust) => cust.modifiers),
+    );
+    const modifierIds = new Set(modifiers.map((m) => m.id));
+    await copyEntityCustomizations(
+      tx,
+      targetEntityId,
+      this.entityType,
+      {
+        modifiers,
+        modifierRequirements: siblings
+          .flatMap((cust) => cust.modifierRequirements)
+          .filter((r) => modifierIds.has(r.entityId)),
+        properties: mergeSiblingProperties(
+          own.properties,
+          siblings.map((cust) => cust.properties),
+        ),
+        requirements: mergeSiblingRequirements(
+          own.requirements,
+          siblings.map((cust) => cust.requirements),
+          targetEntityId,
+        ),
+      },
+      this.copiedIds,
+    );
+    await this.mergeAptitudeLinks(tx, targetEntityId, siblingIds, cow);
   }
 }
