@@ -9,7 +9,7 @@ export default class CowData {
   /**
    * `overrides` maps each overridden id to its copy, `aliases` every stale id to the id that stands for it (each
    * override among them), `siblings` each winner to its sibling losers, in the order they were paired. A loser paired
-   * twice is listed once, under the later winner.
+   * twice is listed once, where it was paired under the later winner.
    */
   constructor(
     sourceChain: string[],
@@ -24,10 +24,9 @@ export default class CowData {
       for (const loserId of loserIds) this.winners.set(loserId, winnerId);
     }
     const losersOf = new Map<string, string[]>();
-    for (const [loserId, winnerId] of this.winners) {
-      const loserIds = losersOf.get(winnerId);
-      if (loserIds) loserIds.push(loserId);
-      else losersOf.set(winnerId, [loserId]);
+    for (const [winnerId, loserIds] of siblings) {
+      const own = [...new Set(loserIds)].filter((loserId) => this.winners.get(loserId) === winnerId);
+      if (own.length > 0) losersOf.set(winnerId, own);
     }
     this.siblings = losersOf;
     this.siblingIds = new Set(this.winners.keys());
