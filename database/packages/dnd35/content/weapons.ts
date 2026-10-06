@@ -157,6 +157,13 @@ export function martial(weapon: string): RequirementEntry[] {
   return [or(eq(feat("Martial Weapon Proficiency")), eq(feat(`Martial Weapon Proficiency: ${weapon}`)))];
 }
 
+/** Being proficient with `weapon`, by its group. */
+export function proficiencyRequirements(weapon: string): RequirementEntry[] {
+  if (SIMPLE_WEAPONS.some((simpleWeapon) => simpleWeapon === weapon)) return simple(weapon);
+  if (MARTIAL_WEAPONS.some((martialWeapon) => martialWeapon === weapon)) return martial(weapon);
+  return exoticProficiency(weapon, false);
+}
+
 /**
  * Being proficient with a simple weapon: with them all, or with it alone. A strike with a gauntlet "is otherwise
  * considered an unarmed attack": the unarmed strike's proficiency is the gauntlet's too.
@@ -169,11 +176,4 @@ export function simple(weapon: string): RequirementEntry[] {
       ...(weapon === "Gauntlet" ? [eq(feat("Simple Weapon Proficiency: Unarmed Strike"))] : []),
     ),
   ];
-}
-
-/** Being proficient with `weapon`, by its group. */
-export function proficiencyRequirements(weapon: string): RequirementEntry[] {
-  if (SIMPLE_WEAPONS.some((simpleWeapon) => simpleWeapon === weapon)) return simple(weapon);
-  if (MARTIAL_WEAPONS.some((martialWeapon) => martialWeapon === weapon)) return martial(weapon);
-  return exoticProficiency(weapon, false);
 }

@@ -350,16 +350,6 @@ async function systemRulesets(query: Query) {
   return new Map(rows.map((r) => [`${r.name}|${r.base_rules}`, r]));
 }
 
-/** A compared table's rows of the ruleset. */
-export async function pullTable(query: Query, table: string, rulesetId: string): Promise<IdentifiedRow[]> {
-  if (table === "rules.rulesets") return pullRulesetRow(query, rulesetId);
-  const content = CONTENT_TABLES.find((t) => `rules.${t}` === table);
-  if (content) return pullContent(query, content, rulesetId);
-  const keyedTable = KEYED_TABLES.find((t) => t.table === table);
-  if (!keyedTable) throw new Error(`${table} isn't compared`);
-  return keyedTable.pull(query, rulesetId);
-}
-
 /** How the target's system rulesets differ from the reference's: those on one side only, and the others' drifts. */
 export async function diffContent(target: Query, reference: Query) {
   const refByName = await systemRulesets(reference);
@@ -386,4 +376,14 @@ export async function diffContent(target: Query, reference: Query) {
     }
   }
   return result;
+}
+
+/** A compared table's rows of the ruleset. */
+export async function pullTable(query: Query, table: string, rulesetId: string): Promise<IdentifiedRow[]> {
+  if (table === "rules.rulesets") return pullRulesetRow(query, rulesetId);
+  const content = CONTENT_TABLES.find((t) => `rules.${t}` === table);
+  if (content) return pullContent(query, content, rulesetId);
+  const keyedTable = KEYED_TABLES.find((t) => t.table === table);
+  if (!keyedTable) throw new Error(`${table} isn't compared`);
+  return keyedTable.pull(query, rulesetId);
 }

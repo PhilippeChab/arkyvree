@@ -139,6 +139,32 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
+/** A book's class references with their file's name, sorted by it: none for a book without classes. */
+export function classReferences(book: string): { file: string; ref: ClassReference }[] {
+  const dir = join(REFERENCE_DIR, book, "classes");
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((file) => file.endsWith(".json"))
+    .sort()
+    .map((file) => ({ file, ref: loadReference(join(dir, file), "class") }))
+    .filter(({ ref }) => !ref.overrides?.skip);
+}
+
+/**
+ * Loads a reference of `type`, with what the generator reads derived from it. A process loads each file once (the
+ * generator reads the same references many times, and writes none). The reference is shared, so it's frozen:
+ * changing it throws. Its type stays mutable, as the generator's functions and the content types take mutable data.
+ */
+export function loadReference<T extends ReferenceType>(path: string, type: T): ReferenceByType[T] {
+  const cache: Map<string, ReferenceByType[T]> = loaded[type];
+  const key = resolve(path);
+  const cached = cache.get(key);
+  if (cached) return cached;
+  const reference = deepFreeze(resolveReference(type, readStoredReference(key, type)));
+  cache.set(key, reference);
+  return reference;
+}
+
 /**
  * The reference stored at `path`, checked to be of `type` and to store nothing else: anything else (a correction
  * written in `mapping`, say) would be ignored, then lost at the next scrape.
@@ -159,32 +185,6 @@ export function readStoredReference<T extends ReferenceType>(path: string, type:
 export function resolveReference<T extends ReferenceType>(type: T, stored: StoredReference<T>): ReferenceByType[T] {
   const resolve: (stored: StoredReference<T>) => ReferenceByType[T] = RESOLVERS[type];
   return JSON.parse(stableStringify(resolve(stored)));
-}
-
-/**
- * Loads a reference of `type`, with what the generator reads derived from it. A process loads each file once (the
- * generator reads the same references many times, and writes none). The reference is shared, so it's frozen:
- * changing it throws. Its type stays mutable, as the generator's functions and the content types take mutable data.
- */
-export function loadReference<T extends ReferenceType>(path: string, type: T): ReferenceByType[T] {
-  const cache: Map<string, ReferenceByType[T]> = loaded[type];
-  const key = resolve(path);
-  const cached = cache.get(key);
-  if (cached) return cached;
-  const reference = deepFreeze(resolveReference(type, readStoredReference(key, type)));
-  cache.set(key, reference);
-  return reference;
-}
-
-/** A book's class references with their file's name, sorted by it: none for a book without classes. */
-export function classReferences(book: string): { file: string; ref: ClassReference }[] {
-  const dir = join(REFERENCE_DIR, book, "classes");
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((file) => file.endsWith(".json"))
-    .sort()
-    .map((file) => ({ file, ref: loadReference(join(dir, file), "class") }))
-    .filter(({ ref }) => !ref.overrides?.skip);
 }
 
 /** The overrides of the reference of `type` stored at `path`, which a re-scrape keeps. */

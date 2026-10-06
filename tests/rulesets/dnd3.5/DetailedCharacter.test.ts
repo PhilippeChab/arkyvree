@@ -166,50 +166,11 @@ async function build(character: Character) {
   return detailed;
 }
 
-/** Replaces the character's inventory: seeded items by name, or item ids. */
-async function carry(character: Character, carried: Carried[]) {
-  const { itemMap } = await getSeedCtx();
-  await db.delete(inventoryInCharacter).where(eq(inventoryInCharacter.characterId, character.id));
-  if (carried.length === 0) return;
-  await db.insert(inventoryInCharacter).values(
-    carried.map(({ item, equipped = true, quantity = 1, ...rest }) => ({
-      characterId: character.id,
-      itemId: itemMap[item] ?? item,
-      equipped,
-      quantity,
-      ...rest,
-    })),
-  );
-}
-
 /** The seeded character, carrying only these items. */
 async function buildCarrying(name: string, carried: Carried[] = []) {
   const character = await findSeededCharacter(name);
   await carry(character, carried);
   return build(character);
-}
-
-/** A new character of the seed user's: human, neutral good, with these scores. */
-async function seedHuman(
-  name: string,
-  abilities: Record<string, number>,
-  values: { xp?: number; rulesetId?: string; alignment?: "Neutral Good" | "Chaotic Neutral" | "Neutral Evil" } = {},
-) {
-  const ctx = await getSeedCtx();
-  return createCharacter(db, ctx, {
-    raceName: "Human",
-    name,
-    xp: values.xp ?? 0,
-    alignment: values.alignment ?? "Neutral Good",
-    age: 30,
-    gender: "Male",
-    height: "180",
-    weight: "80",
-    description: "Test",
-    abilities,
-    languages: ["Common"],
-    rulesetId: values.rulesetId,
-  });
 }
 
 /** A ranger 6 with Two-Weapon Fighting and its improved feat, through the combat style: STR 14, DEX 16, BAB +6. */
@@ -234,21 +195,20 @@ async function buildSeeded(name: string) {
   return build(await findSeededCharacter(name));
 }
 
-/** A new item of the seeded ruleset, with these properties. */
-async function createItem(
-  values: { name: string; type: string; slot: ItemLocation; sourceItemId?: string; isTemplate?: boolean },
-  properties: Record<string, string> = {},
-) {
-  const { rulesetId } = await getSeedCtx();
-  const [item] = await Items.create(db, { ...values, rulesetId });
-  const entries = Object.entries(properties);
-  if (entries.length > 0)
-    await Properties.createMany(
-      db,
-      entries.map(([type, value]) => ({ entityId: item.id, entityType: "items", type, value })),
-    );
-  invalidateSeededRuleset(rulesetId);
-  return item;
+/** Replaces the character's inventory: seeded items by name, or item ids. */
+async function carry(character: Character, carried: Carried[]) {
+  const { itemMap } = await getSeedCtx();
+  await db.delete(inventoryInCharacter).where(eq(inventoryInCharacter.characterId, character.id));
+  if (carried.length === 0) return;
+  await db.insert(inventoryInCharacter).values(
+    carried.map(({ item, equipped = true, quantity = 1, ...rest }) => ({
+      characterId: character.id,
+      itemId: itemMap[item] ?? item,
+      equipped,
+      quantity,
+      ...rest,
+    })),
+  );
 }
 
 /** A new wondrous item of the seeded ruleset, worn at `slot`, that raises an ability by `bonus`. */
@@ -266,17 +226,21 @@ async function createAbilityItem(ability: string, bonus: number, slot: ItemLocat
   return item;
 }
 
-/** A fork of the seeded ruleset that uses these extensions. */
-async function forkWith(...extensionNames: string[]) {
+/** A new item of the seeded ruleset, with these properties. */
+async function createItem(
+  values: { name: string; type: string; slot: ItemLocation; sourceItemId?: string; isTemplate?: boolean },
+  properties: Record<string, string> = {},
+) {
   const { rulesetId } = await getSeedCtx();
-  const extensions = await Promise.all(extensionNames.map(async (name) => (await Rulesets.findOne(db, { name }))!.id));
-  const fork = await createTestRuleset(SEED_USER_ID, {
-    rulesetId,
-    ancestorRulesetIds: [rulesetId],
-    extensionRulesetIds: extensions,
-  });
-  RulesetCache.invalidate(fork.id);
-  return fork;
+  const [item] = await Items.create(db, { ...values, rulesetId });
+  const entries = Object.entries(properties);
+  if (entries.length > 0)
+    await Properties.createMany(
+      db,
+      entries.map(([type, value]) => ({ entityId: item.id, entityType: "items", type, value })),
+    );
+  invalidateSeededRuleset(rulesetId);
+  return item;
 }
 
 /** A character of a fork with Complete Divine, with these modifiers of its own (`[target, value, valueType]`). */
@@ -300,6 +264,19 @@ async function divineCharacter(
     });
   }
   return characterId;
+}
+
+/** A fork of the seeded ruleset that uses these extensions. */
+async function forkWith(...extensionNames: string[]) {
+  const { rulesetId } = await getSeedCtx();
+  const extensions = await Promise.all(extensionNames.map(async (name) => (await Rulesets.findOne(db, { name }))!.id));
+  const fork = await createTestRuleset(SEED_USER_ID, {
+    rulesetId,
+    ancestorRulesetIds: [rulesetId],
+    extensionRulesetIds: extensions,
+  });
+  RulesetCache.invalidate(fork.id);
+  return fork;
 }
 
 async function met(name: string, target: string, check?: Parameters<typeof requiring>[1]) {
@@ -372,6 +349,29 @@ async function requiringWithBonus(
   });
   invalidateSeededRuleset((await getSeedCtx()).rulesetId);
   return item;
+}
+
+/** A new character of the seed user's: human, neutral good, with these scores. */
+async function seedHuman(
+  name: string,
+  abilities: Record<string, number>,
+  values: { xp?: number; rulesetId?: string; alignment?: "Neutral Good" | "Chaotic Neutral" | "Neutral Evil" } = {},
+) {
+  const ctx = await getSeedCtx();
+  return createCharacter(db, ctx, {
+    raceName: "Human",
+    name,
+    xp: values.xp ?? 0,
+    alignment: values.alignment ?? "Neutral Good",
+    age: 30,
+    gender: "Male",
+    height: "180",
+    weight: "80",
+    description: "Test",
+    abilities,
+    languages: ["Common"],
+    rulesetId: values.rulesetId,
+  });
 }
 
 /** A new wizard 1 whose Toughness grants Magic Missile, which gets `requirement` of its own when given. */

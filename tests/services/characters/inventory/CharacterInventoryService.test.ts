@@ -26,14 +26,6 @@ type Placement = {
   force?: boolean;
 };
 
-function equipped(location: ItemLocation, weaponSet: number | null = null): Placement {
-  return {
-    equipped: true,
-    location,
-    weaponSet,
-  };
-}
-
 function add(
   session: Session,
   characterId: string,
@@ -59,6 +51,14 @@ function add(
     weaponSet,
     force,
   );
+}
+
+function equipped(location: ItemLocation, weaponSet: number | null = null): Placement {
+  return {
+    equipped: true,
+    location,
+    weaponSet,
+  };
 }
 
 /** A new item of the ruleset, with these properties. */

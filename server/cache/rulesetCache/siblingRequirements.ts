@@ -33,11 +33,6 @@ type ReqNode = ReqLeafNode | ReqChainNode;
 
 const MAX_REQ_TREE_DEPTH = 5;
 
-function parentLevelOf(level: string): string | null {
-  const idx = level.lastIndexOf(".");
-  return idx === -1 ? null : level.slice(0, idx);
-}
-
 /**
  * Build the requirement forest from a flat list of rows for a single entity.
  * Top-level entries (rows with no parent in the set) become forest roots.
@@ -103,6 +98,11 @@ function dedupAgainstExisting(node: ReqNode, existingKeys: Set<string>): ReqNode
   // A AND (A OR B) is satisfied whenever A is true. Removing A from the
   // OR would incorrectly require B; keep nested trees intact.
   return node;
+}
+
+function parentLevelOf(level: string): string | null {
+  const idx = level.lastIndexOf(".");
+  return idx === -1 ? null : level.slice(0, idx);
 }
 
 /**

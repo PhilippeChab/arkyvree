@@ -122,39 +122,6 @@ async function attempt(statement: string): Promise<boolean> {
   return false;
 }
 
-/** The test's database, queried as diff-prod's pg client is: positional parameters ($1…), the rows. */
-async function query<R extends Record<string, unknown>>(text: string, params: unknown[] = []): Promise<R[]> {
-  const chunks = text
-    .split(/\$(\d+)/)
-    .map((part, i) => (i % 2 === 0 ? sql.raw(part) : sql.param(params[Number(part) - 1])));
-  return (await db.execute(sql.join(chunks))).rows as R[];
-}
-
-/** The operators a customization table's check constraint allows. */
-async function operators(table: string): Promise<string[]> {
-  const [check] = await query<{ definition: string }>(
-    `select pg_get_constraintdef(oid) as definition from pg_constraint
-      where conrelid = $1::regclass and conname like '%operator_check'`,
-    [table],
-  );
-  return [...check.definition.matchAll(/'([a-z_]+)'::text/g)].map((match) => match[1]);
-}
-
-/** The table `column`'s ids point to: its foreign key's, else (a customization's owner, a snapshot's entity) its type's. */
-async function referencedTable(table: string, column: string, row: Record<string, unknown>): Promise<string> {
-  const [fk] = await query<{ referenced: string }>(
-    `select ccu.table_schema || '.' || ccu.table_name as referenced
-       from information_schema.table_constraints tc
-       join information_schema.key_column_usage kcu
-         on kcu.constraint_name = tc.constraint_name and kcu.constraint_schema = tc.constraint_schema
-       join information_schema.constraint_column_usage ccu
-         on ccu.constraint_name = tc.constraint_name and ccu.constraint_schema = tc.constraint_schema
-      where tc.constraint_type = 'FOREIGN KEY' and kcu.table_schema || '.' || kcu.table_name = $1 and kcu.column_name = $2`,
-    [table, column],
-  );
-  return fk?.referenced ?? `rules.${String(row.source_type ?? row.entity_type)}`;
-}
-
 /** The values to try in turn as `column`'s new one, as SQL: other values its type and constraints allow. */
 async function candidates(
   table: string,
@@ -186,6 +153,39 @@ async function candidates(
   return allowed
     ? allowed.filter((value) => value !== row[column.name]).map((value) => `'${value}'`)
     : [`coalesce(${current}, '') || ' (changed)'`];
+}
+
+/** The operators a customization table's check constraint allows. */
+async function operators(table: string): Promise<string[]> {
+  const [check] = await query<{ definition: string }>(
+    `select pg_get_constraintdef(oid) as definition from pg_constraint
+      where conrelid = $1::regclass and conname like '%operator_check'`,
+    [table],
+  );
+  return [...check.definition.matchAll(/'([a-z_]+)'::text/g)].map((match) => match[1]);
+}
+
+/** The test's database, queried as diff-prod's pg client is: positional parameters ($1…), the rows. */
+async function query<R extends Record<string, unknown>>(text: string, params: unknown[] = []): Promise<R[]> {
+  const chunks = text
+    .split(/\$(\d+)/)
+    .map((part, i) => (i % 2 === 0 ? sql.raw(part) : sql.param(params[Number(part) - 1])));
+  return (await db.execute(sql.join(chunks))).rows as R[];
+}
+
+/** The table `column`'s ids point to: its foreign key's, else (a customization's owner, a snapshot's entity) its type's. */
+async function referencedTable(table: string, column: string, row: Record<string, unknown>): Promise<string> {
+  const [fk] = await query<{ referenced: string }>(
+    `select ccu.table_schema || '.' || ccu.table_name as referenced
+       from information_schema.table_constraints tc
+       join information_schema.key_column_usage kcu
+         on kcu.constraint_name = tc.constraint_name and kcu.constraint_schema = tc.constraint_schema
+       join information_schema.constraint_column_usage ccu
+         on ccu.constraint_name = tc.constraint_name and ccu.constraint_schema = tc.constraint_schema
+      where tc.constraint_type = 'FOREIGN KEY' and kcu.table_schema || '.' || kcu.table_name = $1 and kcu.column_name = $2`,
+    [table, column],
+  );
+  return fk?.referenced ?? `rules.${String(row.source_type ?? row.entity_type)}`;
 }
 
 describe("The content comparison (diff-prod)", () => {

@@ -162,11 +162,6 @@ const PATH_DESCRIPTIONS: Record<string, string> = {
   "identity.physiology.race": "Character race name and size",
 };
 
-/** The distinct slugs of the properties' values of `type`. */
-function slugsOf(properties: { type: string; value: string }[], type: string) {
-  return [...new Set(properties.filter((p) => p.type === type).map((p) => stripSeparators(p.value)))];
-}
-
 /**
  * The groupings the ruleset's properties and powers define, which the paths are generated for: weapons by type
  * (e.g. "longsword") and proficiency category (e.g. "exotic"), each armor and shield type, spell schools and
@@ -370,6 +365,11 @@ function segmentLabelsOf(rulesetData: CachedRulesetData): Record<string, string>
     }
   }
   return segmentLabels;
+}
+
+/** The distinct slugs of the properties' values of `type`. */
+function slugsOf(properties: { type: string; value: string }[], type: string) {
+  return [...new Set(properties.filter((p) => p.type === type).map((p) => stripSeparators(p.value)))];
 }
 
 /** The entries of `value` that are objects and whose slug starts with `slug` (but isn't it): a skill's subtypes. */

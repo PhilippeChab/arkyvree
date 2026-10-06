@@ -58,19 +58,6 @@ function isFavoredEnemyOpenPick(featureName: string, desc: string): boolean {
   return /(?:select|choose|designate|pick)s?\s+[^.]*?(?:type of creature|favored enemy)/i.test(desc);
 }
 
-/** Parse "treated as having the X feat" patterns from a description.
- *  Returns feat names if >= 2 found (choice), undefined otherwise.
- *  The >= 2 threshold excludes single auto-grants (samurai, exotic weapon master). */
-export function parseTreatedAsHavingFeats(description: string): string[] | undefined {
-  const pattern = /treated as having the (.+?) feat/gi;
-  const feats: string[] = [];
-  let m;
-  while ((m = pattern.exec(description)) !== null) {
-    feats.push(m[1]);
-  }
-  return feats.length >= 2 ? feats : undefined;
-}
-
 export function detectAptitudePicks(
   raw: ClassReference["raw"],
   featureOccurrences: { name: string; levels: number[] }[],
@@ -172,4 +159,17 @@ export function detectLockedFavoredEnemies(
   }
 
   return results.length > 0 ? { lockedFavoredEnemies: results } : {};
+}
+
+/** Parse "treated as having the X feat" patterns from a description.
+ *  Returns feat names if >= 2 found (choice), undefined otherwise.
+ *  The >= 2 threshold excludes single auto-grants (samurai, exotic weapon master). */
+export function parseTreatedAsHavingFeats(description: string): string[] | undefined {
+  const pattern = /treated as having the (.+?) feat/gi;
+  const feats: string[] = [];
+  let m;
+  while ((m = pattern.exec(description)) !== null) {
+    feats.push(m[1]);
+  }
+  return feats.length >= 2 ? feats : undefined;
 }

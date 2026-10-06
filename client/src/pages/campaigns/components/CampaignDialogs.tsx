@@ -98,15 +98,6 @@ function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
   );
 }
 
-function RoleLabel({ icon: Icon, label }: { icon: ElementType; label: string }) {
-  return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <Icon sx={{ fontSize: 20 }} />
-      {label}
-    </Box>
-  );
-}
-
 function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
   return (
     <SelectField
@@ -120,6 +111,15 @@ function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
         { value: "Game Master", label: <RoleLabel icon={GMIcon} label="Game Master" /> },
       ]}
     />
+  );
+}
+
+function RoleLabel({ icon: Icon, label }: { icon: ElementType; label: string }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Icon sx={{ fontSize: 20 }} />
+      {label}
+    </Box>
   );
 }
 

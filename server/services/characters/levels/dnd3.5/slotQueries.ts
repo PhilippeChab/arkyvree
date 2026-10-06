@@ -46,30 +46,6 @@ function spellPools(aptitudes: DetailedCharacterAptitudes, rulesetData: CachedRu
   return pools;
 }
 
-/**
- * The projected level of class level `klassLevelId`, and the projection it goes in. An edited level's replacement
- * keeps its creation time, so the first character level stays the first (its x4 skill points, its feats); its id is
- * fresh, so the data loader doesn't count the stored level's granted feats twice.
- */
-async function projectLevel(characterId: string, klassLevelId: string, projection: LevelProjection) {
-  const { editedLevelId, abilityId, pendingLevelKlassLevelIds, pendingLevelAbilityIds } = projection;
-  const pendingLevels = pendingLevelKlassLevelIds?.length
-    ? buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds, pendingLevelAbilityIds)
-    : [];
-  let level = buildProjectedCharacterLevel(characterId, klassLevelId, abilityId);
-  if (editedLevelId) {
-    const levels = await CharacterLevels.findMany(db, { characterId });
-    const editedLevel = levels.find((l) => l.id === editedLevelId);
-    if (!editedLevel) throw new NotFoundError("Character level not found");
-    level = { ...level, createdAt: editedLevel.createdAt };
-  }
-  const data: Dnd35ProjectedCharacterData = {
-    ...(editedLevelId && { excludeCharacterLevelIds: [editedLevelId] }),
-    characterLevels: [...pendingLevels, level],
-  };
-  return { level, data };
-}
-
 /** The feat pools of a projected level: a pool is shared when its aptitude has spells too, and isn't counted then. */
 async function featSlots(
   session: Session,
@@ -139,6 +115,30 @@ async function powerSlots(
 
     return { powersToSelect, autoGrantedPowers, aptitudePools };
   });
+}
+
+/**
+ * The projected level of class level `klassLevelId`, and the projection it goes in. An edited level's replacement
+ * keeps its creation time, so the first character level stays the first (its x4 skill points, its feats); its id is
+ * fresh, so the data loader doesn't count the stored level's granted feats twice.
+ */
+async function projectLevel(characterId: string, klassLevelId: string, projection: LevelProjection) {
+  const { editedLevelId, abilityId, pendingLevelKlassLevelIds, pendingLevelAbilityIds } = projection;
+  const pendingLevels = pendingLevelKlassLevelIds?.length
+    ? buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds, pendingLevelAbilityIds)
+    : [];
+  let level = buildProjectedCharacterLevel(characterId, klassLevelId, abilityId);
+  if (editedLevelId) {
+    const levels = await CharacterLevels.findMany(db, { characterId });
+    const editedLevel = levels.find((l) => l.id === editedLevelId);
+    if (!editedLevel) throw new NotFoundError("Character level not found");
+    level = { ...level, createdAt: editedLevel.createdAt };
+  }
+  const data: Dnd35ProjectedCharacterData = {
+    ...(editedLevelId && { excludeCharacterLevelIds: [editedLevelId] }),
+    characterLevels: [...pendingLevels, level],
+  };
+  return { level, data };
 }
 
 export async function getAttributeSlots(

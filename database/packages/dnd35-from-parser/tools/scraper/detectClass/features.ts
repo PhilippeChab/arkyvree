@@ -28,10 +28,6 @@ function detectStackable(description: string): boolean {
   return STACKABLE_PATTERNS.some((p) => p.test(description));
 }
 
-export function stripOrdinalPrefix(name: string): string {
-  return name.replace(ORDINAL_PREFIX, "");
-}
-
 /** Merges "1st Foo" / "2nd Foo" occurrences into one entry with combined levels. */
 export function aggregateOrdinalVariants(
   featureOccurrences: { name: string; levels: number[] }[],
@@ -64,37 +60,6 @@ export function buildFeatureMap<T>(
     }
   }
   return map;
-}
-
-export function normalizeFeatureName(name: string): string {
-  return (
-    name
-      // Replace replacement characters with spaces (encoding artifacts)
-      .replace(/\uFFFD/g, " ")
-      // Strip leading "+N " prefix (e.g. "+1 save against poison" → "Save Against Poison")
-      .replace(/^\+\d+\s+/, "")
-      // Strip "+Nd6" suffixes (e.g. "Sneak attack +1d6" → "Sneak Attack")
-      .replace(/\s*\+\d+d\d+$/i, "")
-      // Strip "+N" suffixes (e.g. "Enhance arrow +1" → "Enhance Arrow")
-      .replace(/\s*\+\d+$/, "")
-      // Strip "(Nd8)" etc. (e.g. "Breath weapon (2d8)")
-      .replace(/\s*\(\d+d\d+\)$/i, "")
-      // Strip "(+N)" suffixes (e.g. "Natural armor increase (+1)")
-      .replace(/\s*\(\+\d+\)$/, "")
-      // Strip "(Stat +N)" suffixes (e.g. "Ability boost (Con +2)")
-      .replace(/\s*\([A-Z][a-z]+ \+\d+\)$/, "")
-      // Strip "N/day" with or without parens
-      .replace(/\s*\(?\d+\/day\)?$/i, "")
-      // Strip "N ft." suffixes (e.g. "Shadow jump 20 ft.")
-      .replace(/\s*\d+\s*ft\.?$/i, "")
-      // Strip trailing ordinals (e.g. "2nd")
-      .replace(/\s*\d+(st|nd|rd|th)$/i, "")
-      // Strip "N/–" damage reduction values (e.g. "Damage reduction 3/–")
-      .replace(/\s*\d+\/[–-]$/, "")
-      .trim()
-      // Title-case each word for consistent naming (but not after apostrophes)
-      .replace(/(?<!['''])\b\w/g, (c) => c.toUpperCase())
-  );
 }
 
 export function detectFeatureOccurrences(
@@ -162,6 +127,37 @@ export function isScalingFeature(normalizedName: string, progression: ClassRefer
   return false;
 }
 
+export function normalizeFeatureName(name: string): string {
+  return (
+    name
+      // Replace replacement characters with spaces (encoding artifacts)
+      .replace(/\uFFFD/g, " ")
+      // Strip leading "+N " prefix (e.g. "+1 save against poison" → "Save Against Poison")
+      .replace(/^\+\d+\s+/, "")
+      // Strip "+Nd6" suffixes (e.g. "Sneak attack +1d6" → "Sneak Attack")
+      .replace(/\s*\+\d+d\d+$/i, "")
+      // Strip "+N" suffixes (e.g. "Enhance arrow +1" → "Enhance Arrow")
+      .replace(/\s*\+\d+$/, "")
+      // Strip "(Nd8)" etc. (e.g. "Breath weapon (2d8)")
+      .replace(/\s*\(\d+d\d+\)$/i, "")
+      // Strip "(+N)" suffixes (e.g. "Natural armor increase (+1)")
+      .replace(/\s*\(\+\d+\)$/, "")
+      // Strip "(Stat +N)" suffixes (e.g. "Ability boost (Con +2)")
+      .replace(/\s*\([A-Z][a-z]+ \+\d+\)$/, "")
+      // Strip "N/day" with or without parens
+      .replace(/\s*\(?\d+\/day\)?$/i, "")
+      // Strip "N ft." suffixes (e.g. "Shadow jump 20 ft.")
+      .replace(/\s*\d+\s*ft\.?$/i, "")
+      // Strip trailing ordinals (e.g. "2nd")
+      .replace(/\s*\d+(st|nd|rd|th)$/i, "")
+      // Strip "N/–" damage reduction values (e.g. "Damage reduction 3/–")
+      .replace(/\s*\d+\/[–-]$/, "")
+      .trim()
+      // Title-case each word for consistent naming (but not after apostrophes)
+      .replace(/(?<!['''])\b\w/g, (c) => c.toUpperCase())
+  );
+}
+
 export function parsePoolSubOptions(
   description: string,
 ): { intro: string; options: { name: string; description: string; stackable?: true }[] } | undefined {
@@ -192,4 +188,8 @@ export function parsePoolSubOptions(
   }
 
   return { intro, options };
+}
+
+export function stripOrdinalPrefix(name: string): string {
+  return name.replace(ORDINAL_PREFIX, "");
 }

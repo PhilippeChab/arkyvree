@@ -21,18 +21,6 @@ function ReviewItem({ name, note }: { name: string; note?: string }) {
   );
 }
 
-/** A titled group of a level review ("Class Advancement", "New Feats"). */
-export function ReviewGroup({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        {title}
-      </Typography>
-      {children}
-    </Box>
-  );
-}
-
 /** The last step of the Add Level and Edit Level wizards: the wizard's groups, then the skills, feats and spells picked. */
 export function LevelReview({ wizard, children }: LevelReviewProps) {
   const { skillPointAllocations, skillData, selectedFeats, featData, selectedPowers, powerData } = wizard;
@@ -98,6 +86,18 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
           ))}
         </ReviewGroup>
       )}
+    </Box>
+  );
+}
+
+/** A titled group of a level review ("Class Advancement", "New Feats"). */
+export function ReviewGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="h6" gutterBottom>
+        {title}
+      </Typography>
+      {children}
     </Box>
   );
 }

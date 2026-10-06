@@ -120,11 +120,34 @@ export async function cowEntity(
   return newEntity;
 }
 
-/** Serialize child writes with deletion/revert of their stored owner. */
-export async function lockEntityForMutation(tx: Db, entityType: EntityType, entityId: string): Promise<void> {
-  if (!(await ENTITY_REPOS[entityType].lock(tx, { id: entityId }))) {
-    throw new NotFoundError("Customization source no longer exists; refresh the entity");
-  }
+/** Resolve a modifier as the owner of requirements: COW its owning entity and map the modifier to its copy. */
+async function cowModifierForCustomization(
+  tx: Db,
+  rulesetId: string,
+  modifierId: string,
+  customizationIds: Map<string, string>,
+): Promise<string> {
+  // Keep the stored source ID: the repository proxy remaps it after COW,
+  // which would make an ancestor modifier appear locally owned on repeat edits.
+  const modifier = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifierId }));
+  if (!modifier || modifier.sourceType === "modifiers")
+    throw new NotFoundError("Customization source not found in this ruleset");
+
+  const resolvedOwnerId = await cowOwnerForCustomization(
+    tx,
+    rulesetId,
+    modifier.sourceType,
+    modifier.sourceId,
+    customizationIds,
+  );
+  return resolveExistingCustomization(
+    tx,
+    modifier.sourceId,
+    resolvedOwnerId,
+    "modifier",
+    modifier.id,
+    customizationIds,
+  );
 }
 
 /**
@@ -211,6 +234,13 @@ async function cowOwnerForCustomization(
   return cowResult.id;
 }
 
+/** Serialize child writes with deletion/revert of their stored owner. */
+export async function lockEntityForMutation(tx: Db, entityType: EntityType, entityId: string): Promise<void> {
+  if (!(await ENTITY_REPOS[entityType].lock(tx, { id: entityId }))) {
+    throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
+}
+
 /**
  * The customization `customizationId` of `entityId` once that entity resolved to `resolvedEntityId`: its copy when the
  * entity was copied, or itself, which must still exist.
@@ -239,36 +269,6 @@ async function resolveExistingCustomization(
   return resolvedCustomizationId;
 }
 
-/** Resolve a modifier as the owner of requirements: COW its owning entity and map the modifier to its copy. */
-async function cowModifierForCustomization(
-  tx: Db,
-  rulesetId: string,
-  modifierId: string,
-  customizationIds: Map<string, string>,
-): Promise<string> {
-  // Keep the stored source ID: the repository proxy remaps it after COW,
-  // which would make an ancestor modifier appear locally owned on repeat edits.
-  const modifier = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifierId }));
-  if (!modifier || modifier.sourceType === "modifiers")
-    throw new NotFoundError("Customization source not found in this ruleset");
-
-  const resolvedOwnerId = await cowOwnerForCustomization(
-    tx,
-    rulesetId,
-    modifier.sourceType,
-    modifier.sourceId,
-    customizationIds,
-  );
-  return resolveExistingCustomization(
-    tx,
-    modifier.sourceId,
-    resolvedOwnerId,
-    "modifier",
-    modifier.id,
-    customizationIds,
-  );
-}
-
 /** The entity `entityId` names in the ruleset's composed view: the ruleset's own, or one inherited through its source chain. */
 export function findScopedEntity<T extends { rulesetId: string }>(
   entities: ReadonlyMap<string, T>,
@@ -282,25 +282,6 @@ export function findScopedEntity<T extends { rulesetId: string }>(
     throw new NotFoundError(`${name} not found in this ruleset`);
   }
   return entity;
-}
-
-/**
- * COW helper for customization mutations. Given an entityType and entityId,
- * checks if the entity belongs to the parent ruleset and COWs it if needed.
- * Returns the resolved entityId (original if owned, COW'd copy if inherited).
- *
- * For klass_levels: COWs the entire parent klass, then maps the old level ID
- * to the new one via the override map.
- */
-export async function cowEntityForCustomization(
-  tx: Db,
-  rulesetId: string,
-  entityType: string,
-  entityId: string,
-  customizationIds: Map<string, string> = new Map(),
-): Promise<string> {
-  if (entityType === "modifiers") return cowModifierForCustomization(tx, rulesetId, entityId, customizationIds);
-  return cowOwnerForCustomization(tx, rulesetId, entityType, entityId, customizationIds);
 }
 
 /**
@@ -332,19 +313,22 @@ export async function cowCustomizationForMutation(
 }
 
 /**
- * The row an edit of `entity` (from `findScopedEntity`) writes: the ruleset's own entity, or the copy of an inherited
- * one, made on its first edit. A copy takes no stale-edit check: the client's `updatedAt` is the source's.
+ * COW helper for customization mutations. Given an entityType and entityId,
+ * checks if the entity belongs to the parent ruleset and COWs it if needed.
+ * Returns the resolved entityId (original if owned, COW'd copy if inherited).
+ *
+ * For klass_levels: COWs the entire parent klass, then maps the old level ID
+ * to the new one via the override map.
  */
-export async function cowEntityToEdit(
+export async function cowEntityForCustomization(
   tx: Db,
-  ruleset: { id: string; extensionRulesetIds: string[] },
-  sourceChain: string[],
-  entityType: EntityType,
-  entity: { id: string; rulesetId: string },
-): Promise<{ id: string; copied: boolean }> {
-  if (entity.rulesetId === ruleset.id) return { id: entity.id, copied: false };
-  const copy = await cowEntity(tx, entityType, entity.id, ruleset.id, sourceChain, ruleset.extensionRulesetIds);
-  return { id: copy.id, copied: true };
+  rulesetId: string,
+  entityType: string,
+  entityId: string,
+  customizationIds: Map<string, string> = new Map(),
+): Promise<string> {
+  if (entityType === "modifiers") return cowModifierForCustomization(tx, rulesetId, entityId, customizationIds);
+  return cowOwnerForCustomization(tx, rulesetId, entityType, entityId, customizationIds);
 }
 
 /**
@@ -361,4 +345,20 @@ export async function cowEntityToDelete(
   const target = await cowEntityToEdit(tx, ruleset, sourceChain, entityType, entity);
   if (!target.copied) await lockEntityForMutation(tx, entityType, target.id);
   return target.id;
+}
+
+/**
+ * The row an edit of `entity` (from `findScopedEntity`) writes: the ruleset's own entity, or the copy of an inherited
+ * one, made on its first edit. A copy takes no stale-edit check: the client's `updatedAt` is the source's.
+ */
+export async function cowEntityToEdit(
+  tx: Db,
+  ruleset: { id: string; extensionRulesetIds: string[] },
+  sourceChain: string[],
+  entityType: EntityType,
+  entity: { id: string; rulesetId: string },
+): Promise<{ id: string; copied: boolean }> {
+  if (entity.rulesetId === ruleset.id) return { id: entity.id, copied: false };
+  const copy = await cowEntity(tx, entityType, entity.id, ruleset.id, sourceChain, ruleset.extensionRulesetIds);
+  return { id: copy.id, copied: true };
 }

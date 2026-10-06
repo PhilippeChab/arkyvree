@@ -25,12 +25,6 @@ export function sessionIdFrom(response: { headers: Headers }) {
   return sessionId;
 }
 
-/** A client signed in as `userId`, through a stored session. */
-export async function signedInApi(userId: string = SEED_USER_ID) {
-  const [session] = await Sessions.create(db, { userId });
-  return apiAs(session.id);
-}
-
 /** A new user and a client signed in as them. */
 export async function createSignedInUser(prefix?: string) {
   const { user, session } = await createTestUser(prefix);
@@ -63,4 +57,10 @@ export async function expectStatus<T extends { status: number; clone(): { text()
     throw new Error(`Expected status ${status}, got ${awaited.status}: ${await awaited.clone().text()}`);
   }
   return awaited;
+}
+
+/** A client signed in as `userId`, through a stored session. */
+export async function signedInApi(userId: string = SEED_USER_ID) {
+  const [session] = await Sessions.create(db, { userId });
+  return apiAs(session.id);
 }

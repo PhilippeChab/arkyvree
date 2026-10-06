@@ -27,26 +27,6 @@ export function invalidateSeededRuleset(rulesetId: string) {
 }
 
 /**
- * An empty private D&D 3.5 draft ruleset owned by `userId` (`null` for a
- * system ruleset). Pass `rulesetId` and `ancestorRulesetIds` to make it a
- * fork. For one that already has the seeded content, use `createSeededTestRuleset`.
- */
-export async function createTestRuleset(
-  userId: string | null,
-  values: Partial<InferInsertModel<typeof rulesetsInRules>> = {},
-) {
-  const [ruleset] = await Rulesets.create(db, {
-    name: `Test Ruleset ${uniqueId()}`,
-    description: "Test ruleset description",
-    private: true,
-    baseRules: "Dungeons & Dragons: 3.5",
-    userId,
-    ...values,
-  });
-  return ruleset;
-}
-
-/**
  * Creates a test ruleset by forking the seeded D&D 3.5 base ruleset.
  * The fork inherits all entities (abilities, saves, skills, feats, etc.)
  * via COW without duplicating any data.
@@ -96,6 +76,26 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
     .where(eq(rulesetExtensionsInRules.rulesetId, fork.rulesetId!));
   const [ruleset] = await Rulesets.update(db, { extensionRulesetIds: links.map((link) => link.id) }, { id: fork.id });
   RulesetCache.invalidate(fork.id);
+  return ruleset;
+}
+
+/**
+ * An empty private D&D 3.5 draft ruleset owned by `userId` (`null` for a
+ * system ruleset). Pass `rulesetId` and `ancestorRulesetIds` to make it a
+ * fork. For one that already has the seeded content, use `createSeededTestRuleset`.
+ */
+export async function createTestRuleset(
+  userId: string | null,
+  values: Partial<InferInsertModel<typeof rulesetsInRules>> = {},
+) {
+  const [ruleset] = await Rulesets.create(db, {
+    name: `Test Ruleset ${uniqueId()}`,
+    description: "Test ruleset description",
+    private: true,
+    baseRules: "Dungeons & Dragons: 3.5",
+    userId,
+    ...values,
+  });
   return ruleset;
 }
 

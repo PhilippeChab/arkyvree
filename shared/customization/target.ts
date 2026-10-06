@@ -67,11 +67,6 @@ export interface TargetPath {
   allowedEntityTypes?: string[];
 }
 
-/** A path segment as a label ("privateNotes" → "Private Notes"). */
-export function formatSegment(segment: string) {
-  return segment.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
-}
-
 /** The label of each segment of `paths`: its override, else the segment formatted. */
 export function deriveSegmentLabels(
   paths: { path: string }[],
@@ -84,6 +79,11 @@ export function deriveSegmentLabels(
     }
   }
   return labels;
+}
+
+/** A path segment as a label ("privateNotes" → "Private Notes"). */
+export function formatSegment(segment: string) {
+  return segment.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
 }
 
 /**

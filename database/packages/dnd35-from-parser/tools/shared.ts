@@ -269,11 +269,6 @@ export function extractGrantedFeatNames(desc: string): string[] {
   return names;
 }
 
-export function pluralVariants(name: string): string[] {
-  const n = name.toLowerCase();
-  return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
-}
-
 export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): V | undefined {
   for (const v of pluralVariants(name)) {
     const result = map.get(v);
@@ -310,11 +305,6 @@ export function modifierMapping<
   return mapping;
 }
 
-/** Text with its runs of whitespace (newlines included) as single spaces, trimmed. */
-export function normalizeWs(text: string) {
-  return text.replace(/\s+/g, " ").trim();
-}
-
 export function normalizeDescription(text: string, maxLen = MAX_DESC): string {
   const clean = normalizeWs(sanitizeText(text));
   return clean.length > maxLen ? clean.substring(0, maxLen - 3).trim() + "..." : clean;
@@ -331,6 +321,11 @@ export function normalizeName(name: string): string {
   });
 }
 
+/** Text with its runs of whitespace (newlines included) as single spaces, trimmed. */
+export function normalizeWs(text: string) {
+  return text.replace(/\s+/g, " ").trim();
+}
+
 export function parseCliArgs(): { bookFilter?: string; typeFilter?: string; nameFilter?: string; keyFilter?: string } {
   const args = process.argv.slice(2);
 
@@ -344,6 +339,11 @@ export function parseCliArgs(): { bookFilter?: string; typeFilter?: string; name
   const nameFilter = args[1]?.toLowerCase();
 
   return { bookFilter, typeFilter, nameFilter, keyFilter };
+}
+
+export function pluralVariants(name: string): string[] {
+  const n = name.toLowerCase();
+  return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
 }
 
 /** The books with references: the folders of REFERENCE_DIR (a symlinked one too), sorted, so generation is the same on every filesystem. */

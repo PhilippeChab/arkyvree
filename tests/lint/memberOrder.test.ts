@@ -260,8 +260,8 @@ describe("member order", () => {
       "}",
       "",
     ]);
-    // A comment set apart by a blank line ends a run (`comment-style` reports it); functions that call each other are
-    // reported, and keep their order.
+    // A comment set apart by a blank line ends a run (`comment-style` reports it); functions that call each other go by
+    // name too: they're hoisted.
     const runs = write("runs.ts", [
       "function b() {}",
       "",
@@ -296,7 +296,7 @@ describe("member order", () => {
 
     expect(fs.readFileSync(functions, "utf8")).toBe(
       [
-        // Its helpers, sync first, then its exports: sync first, by name, a callee right above its first caller.
+        // Its helpers, sync first, then its exports: sync first, by name, whatever they call.
         "function helperB() {",
         "  return 1;",
         "}",
@@ -310,16 +310,16 @@ describe("member order", () => {
         "  return helperB();",
         "}",
         "",
-        "export function findThing() {",
-        "  return 1;",
-        "}",
-        "",
         "export function createThing() {",
         "  return findThing();",
         "}",
         "",
         "export function deleteThing() {",
         "  return helperC();",
+        "}",
+        "",
+        "export function findThing() {",
+        "  return 1;",
         "}",
         "",
         "export async function getThing() {",
@@ -336,12 +336,12 @@ describe("member order", () => {
         "",
         "// The second section.",
         "",
-        "function y() {",
-        "  return x();",
-        "}",
-        "",
         "function x() {",
         "  return y();",
+        "}",
+        "",
+        "function y() {",
+        "  return x();",
         "}",
         "",
       ].join("\n"),
@@ -361,9 +361,7 @@ describe("member order", () => {
       ].join("\n"),
     );
     expect(fs.readFileSync(declarations, "utf8")).toBe("export function a(): void;\nexport function b(): void;\n");
-    expect((await runOxlint(["-f", "unix", "-c", config, dir])).stdout).toContain(
-      "Functions that call each other (x, y): untangle them, so the file reads bottom-up.",
-    );
+    expect((await runOxlint(["-c", config, dir])).exitCode).toBe(0);
     fs.rmSync(dir, { recursive: true });
   });
 });

@@ -113,41 +113,6 @@ function chainRootOf(node) {
   return current;
 }
 
-/** The function `node` sits in. */
-function enclosingFunction(node) {
-  let current = node.parent;
-  while (current && !/Function(Expression|Declaration)$/.test(current.type)) current = current.parent;
-  return current;
-}
-
-/** Whether `node`'s subtree reads the variable `name` whole (passes, spreads or returns it), not only its fields. */
-function readsWhole(node, name) {
-  if (node.type === "Identifier" && node.name === name) {
-    const parent = node.parent;
-    if (parent?.type === "VariableDeclarator" && (parent.id === node || parent.id.type === "ObjectPattern"))
-      return false;
-    if (parent?.type === "MemberExpression" && !parent.computed) return false;
-    return !(parent?.type === "Property" && parent.key === node && !parent.shorthand);
-  }
-  return Object.entries(node).some(
-    ([key, value]) =>
-      key !== "parent" &&
-      (Array.isArray(value) ? value : [value]).some(
-        (child) => typeof child?.type === "string" && readsWhole(child, name),
-      ),
-  );
-}
-
-/** A `c.req.valid(target)` call's target, if `node` is one. */
-function validTargetOf(node) {
-  const callee = node?.type === "CallExpression" ? node.callee : null;
-  if (callee?.type !== "MemberExpression" || callee.property.name !== "valid") return null;
-  const request = callee.object;
-  if (request.type !== "MemberExpression" || request.property.name !== "req" || request.object.name !== "c")
-    return null;
-  return node.arguments[0]?.value ?? null;
-}
-
 /** A handler's read of its validated input: `const { id } = c.req.valid("param")`, `body` or `query` when it's whole. */
 function checkInputRead(context, declarator) {
   const target = validTargetOf(declarator.init);
@@ -192,15 +157,6 @@ function checkNamedInputs(context, named, constants) {
       });
     }
   }
-}
-
-/** Whether `node` chains a router's routes on its `new Hono()`. */
-function isHonoChain(node) {
-  let current = node;
-  while (current?.type === "CallExpression" && current.callee.type === "MemberExpression") {
-    current = current.callee.object;
-  }
-  return current?.type === "NewExpression" && current.callee.type === "Identifier" && current.callee.name === "Hono";
 }
 
 /** A router's top-level constants: a router is its module's export, and a schema is named for what it validates. */
@@ -258,25 +214,6 @@ function checkValidation(context, node, named) {
   }
 }
 
-/**
- * The `-ing` forms a third-person verb can take: `Archives` → `Archiving`, `Stars` → `Starring`, `Scopes` → `Scoping`,
- * `Applies` → `Applying`.
- */
-function gerunds(verb) {
-  // Applies → Applying
-  if (verb.endsWith("ies")) return [`${verb.slice(0, -3)}ying`];
-  const base = /(ch|sh|ss|x|z)es$/.test(verb) ? verb.slice(0, -2) : verb.slice(0, -1);
-  return [`${base}ing`, `${base.replace(/e$/, "")}ing`, `${base}${base.at(-1)}ing`];
-}
-
-/** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
-function isConcern(fn) {
-  return (
-    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
-    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
-  );
-}
-
 function createConcernShape(context) {
   const file = repoPath(context.filename);
   return {
@@ -324,54 +261,6 @@ function createEnvironment(context) {
       });
     },
   };
-}
-
-/** A const's arrow or function expression written as the function declaration it is. */
-function declarationText(text, statement, declarator) {
-  const fn = declarator.init;
-  const name = declarator.id.name;
-  const [start] = statement.range ?? [statement.start, statement.end];
-  const [, end] = statement.range ?? [statement.start, statement.end];
-  const exported = statement.type === "ExportNamedDeclaration" ? "export " : "";
-  const [fnStart, fnEnd] = fn.range ?? [fn.start, fn.end];
-  if (fn.type === "FunctionExpression") {
-    const rest = text.slice(fnStart, fnEnd).replace(/^(async\s+)?function\s*(\*?)\s*(?:[A-Za-z_$][\w$]*)?\s*/, "");
-    return {
-      range: [start, end],
-      text: `${exported}${fn.async ? "async " : ""}function${fn.generator ? "*" : ""} ${name}${rest}`,
-    };
-  }
-  let headStart = fnStart;
-  if (fn.async) headStart = text.indexOf("async", fnStart) + "async".length;
-  let typeParameters = "";
-  if (fn.typeParameters) {
-    const [tpStart, tpEnd] = fn.typeParameters.range ?? [fn.typeParameters.start, fn.typeParameters.end];
-    typeParameters = text.slice(tpStart, tpEnd).replace(/,\s*>$/, ">");
-    headStart = tpEnd;
-  }
-  const [bodyStart, bodyEnd] = fn.body.range ?? [fn.body.start, fn.body.end];
-  const arrow = text.lastIndexOf("=>", bodyStart);
-  let head = text.slice(headStart, arrow).trim();
-  if (!head.startsWith("(")) head = `(${head})`;
-  const body =
-    fn.body.type === "BlockStatement"
-      ? text.slice(bodyStart, bodyEnd)
-      : `{\n  return ${text.slice(arrow + 2, fnEnd).trim()};\n}`;
-  return {
-    range: [start, end],
-    text: `${exported}${fn.async ? "async " : ""}function ${name}${typeParameters}${head} ${body}`,
-  };
-}
-
-/** Whether a function's body reads `this`, which a declaration would rebind. */
-function readsThis(node) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some(readsThis);
-  if (node.type === "ThisExpression") return true;
-  if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") return false;
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsThis(child),
-  );
 }
 
 function createFunctionDeclarations(context) {
@@ -561,13 +450,6 @@ function createRepositoryInstances(context) {
   };
 }
 
-/** A route's path, written as a string or a template literal (its fixed parts). */
-function pathOf(node) {
-  if (node?.type === "Literal" && typeof node.value === "string") return node.value;
-  if (node?.type === "TemplateLiteral") return node.quasis.map((q) => q.value.cooked).join("");
-  return null;
-}
-
 function createRouteConventions(context) {
   const file = repoPath(context.filename);
   if (!file.startsWith("server/")) return {};
@@ -650,19 +532,6 @@ function createRouteConventions(context) {
   };
 }
 
-/** Whether a type is `Session`, or a union with it (`Session | null`). */
-function isSessionType(type) {
-  if (type?.type === "TSUnionType") return type.types.some(isSessionType);
-  return type?.type === "TSTypeReference" && type.typeName.type === "Identifier" && type.typeName.name === "Session";
-}
-
-/** A parameter's binding: `session: Session`, a constructor's `private session: Session`, or one with a default. */
-function parameter(param) {
-  let binding = param.type === "TSParameterProperty" ? param.parameter : param;
-  if (binding.type === "AssignmentPattern") binding = binding.left;
-  return binding.type === "Identifier" ? binding : null;
-}
-
 function createSessionParam(context) {
   if (!repoPath(context.filename).startsWith("server/")) return {};
   const check = (fn) => {
@@ -707,28 +576,6 @@ function createSharedRuntime(context) {
   };
 }
 
-/**
- * Every module under `tree` (a repo path), by its name without the extension: `FeatsService` → its paths. Read again
- * for each test file, not cached: an editor's language server lints for as long as it runs, and a module added since
- * must count.
- */
-function modulesIn(root, tree) {
-  const byName = new Map();
-  const walk = (dir) => {
-    if (!fs.existsSync(path.join(root, dir))) return;
-    for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
-      const rel = `${dir}${entry.name}`;
-      if (entry.isDirectory()) walk(`${rel}/`);
-      else if (/\.(tsx?|mjs)$/.test(entry.name) && !/\.d\.m?ts$/.test(entry.name)) {
-        const name = entry.name.replace(/\.(tsx?|mjs)$/, "");
-        byName.set(name, [...(byName.get(name) ?? []), rel]);
-      }
-    }
-  };
-  walk(tree);
-  return byName;
-}
-
 function createTestPlacement(context) {
   const file = repoPath(context.filename);
   const mirror = TEST_MIRRORS.find(([tests]) => file.startsWith(tests));
@@ -757,14 +604,6 @@ function createTestPlacement(context) {
       }
     },
   };
-}
-
-/** Whether `name` is a parameter of a function `node` sits in: a handle it's given, which may be a transaction. */
-function isParameterOf(node, name) {
-  for (let p = node.parent; p; p = p.parent) {
-    if (p.params?.some((param) => parameter(param)?.name === name)) return true;
-  }
-  return false;
 }
 
 function createWritesInTransactions(context) {
@@ -810,6 +649,167 @@ function createWritesInTransactions(context) {
       });
     },
   };
+}
+
+/** A const's arrow or function expression written as the function declaration it is. */
+function declarationText(text, statement, declarator) {
+  const fn = declarator.init;
+  const name = declarator.id.name;
+  const [start] = statement.range ?? [statement.start, statement.end];
+  const [, end] = statement.range ?? [statement.start, statement.end];
+  const exported = statement.type === "ExportNamedDeclaration" ? "export " : "";
+  const [fnStart, fnEnd] = fn.range ?? [fn.start, fn.end];
+  if (fn.type === "FunctionExpression") {
+    const rest = text.slice(fnStart, fnEnd).replace(/^(async\s+)?function\s*(\*?)\s*(?:[A-Za-z_$][\w$]*)?\s*/, "");
+    return {
+      range: [start, end],
+      text: `${exported}${fn.async ? "async " : ""}function${fn.generator ? "*" : ""} ${name}${rest}`,
+    };
+  }
+  let headStart = fnStart;
+  if (fn.async) headStart = text.indexOf("async", fnStart) + "async".length;
+  let typeParameters = "";
+  if (fn.typeParameters) {
+    const [tpStart, tpEnd] = fn.typeParameters.range ?? [fn.typeParameters.start, fn.typeParameters.end];
+    typeParameters = text.slice(tpStart, tpEnd).replace(/,\s*>$/, ">");
+    headStart = tpEnd;
+  }
+  const [bodyStart, bodyEnd] = fn.body.range ?? [fn.body.start, fn.body.end];
+  const arrow = text.lastIndexOf("=>", bodyStart);
+  let head = text.slice(headStart, arrow).trim();
+  if (!head.startsWith("(")) head = `(${head})`;
+  const body =
+    fn.body.type === "BlockStatement"
+      ? text.slice(bodyStart, bodyEnd)
+      : `{\n  return ${text.slice(arrow + 2, fnEnd).trim()};\n}`;
+  return {
+    range: [start, end],
+    text: `${exported}${fn.async ? "async " : ""}function ${name}${typeParameters}${head} ${body}`,
+  };
+}
+
+/** The function `node` sits in. */
+function enclosingFunction(node) {
+  let current = node.parent;
+  while (current && !/Function(Expression|Declaration)$/.test(current.type)) current = current.parent;
+  return current;
+}
+
+/**
+ * The `-ing` forms a third-person verb can take: `Archives` → `Archiving`, `Stars` → `Starring`, `Scopes` → `Scoping`,
+ * `Applies` → `Applying`.
+ */
+function gerunds(verb) {
+  // Applies → Applying
+  if (verb.endsWith("ies")) return [`${verb.slice(0, -3)}ying`];
+  const base = /(ch|sh|ss|x|z)es$/.test(verb) ? verb.slice(0, -2) : verb.slice(0, -1);
+  return [`${base}ing`, `${base.replace(/e$/, "")}ing`, `${base}${base.at(-1)}ing`];
+}
+
+/** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
+function isConcern(fn) {
+  return (
+    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
+    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
+  );
+}
+
+/** Whether `node` chains a router's routes on its `new Hono()`. */
+function isHonoChain(node) {
+  let current = node;
+  while (current?.type === "CallExpression" && current.callee.type === "MemberExpression") {
+    current = current.callee.object;
+  }
+  return current?.type === "NewExpression" && current.callee.type === "Identifier" && current.callee.name === "Hono";
+}
+
+/** Whether `name` is a parameter of a function `node` sits in: a handle it's given, which may be a transaction. */
+function isParameterOf(node, name) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (p.params?.some((param) => parameter(param)?.name === name)) return true;
+  }
+  return false;
+}
+
+/** Whether a type is `Session`, or a union with it (`Session | null`). */
+function isSessionType(type) {
+  if (type?.type === "TSUnionType") return type.types.some(isSessionType);
+  return type?.type === "TSTypeReference" && type.typeName.type === "Identifier" && type.typeName.name === "Session";
+}
+
+/**
+ * Every module under `tree` (a repo path), by its name without the extension: `FeatsService` → its paths. Read again
+ * for each test file, not cached: an editor's language server lints for as long as it runs, and a module added since
+ * must count.
+ */
+function modulesIn(root, tree) {
+  const byName = new Map();
+  const walk = (dir) => {
+    if (!fs.existsSync(path.join(root, dir))) return;
+    for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
+      const rel = `${dir}${entry.name}`;
+      if (entry.isDirectory()) walk(`${rel}/`);
+      else if (/\.(tsx?|mjs)$/.test(entry.name) && !/\.d\.m?ts$/.test(entry.name)) {
+        const name = entry.name.replace(/\.(tsx?|mjs)$/, "");
+        byName.set(name, [...(byName.get(name) ?? []), rel]);
+      }
+    }
+  };
+  walk(tree);
+  return byName;
+}
+
+/** A parameter's binding: `session: Session`, a constructor's `private session: Session`, or one with a default. */
+function parameter(param) {
+  let binding = param.type === "TSParameterProperty" ? param.parameter : param;
+  if (binding.type === "AssignmentPattern") binding = binding.left;
+  return binding.type === "Identifier" ? binding : null;
+}
+
+/** A route's path, written as a string or a template literal (its fixed parts). */
+function pathOf(node) {
+  if (node?.type === "Literal" && typeof node.value === "string") return node.value;
+  if (node?.type === "TemplateLiteral") return node.quasis.map((q) => q.value.cooked).join("");
+  return null;
+}
+
+/** Whether a function's body reads `this`, which a declaration would rebind. */
+function readsThis(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(readsThis);
+  if (node.type === "ThisExpression") return true;
+  if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") return false;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsThis(child),
+  );
+}
+
+/** Whether `node`'s subtree reads the variable `name` whole (passes, spreads or returns it), not only its fields. */
+function readsWhole(node, name) {
+  if (node.type === "Identifier" && node.name === name) {
+    const parent = node.parent;
+    if (parent?.type === "VariableDeclarator" && (parent.id === node || parent.id.type === "ObjectPattern"))
+      return false;
+    if (parent?.type === "MemberExpression" && !parent.computed) return false;
+    return !(parent?.type === "Property" && parent.key === node && !parent.shorthand);
+  }
+  return Object.entries(node).some(
+    ([key, value]) =>
+      key !== "parent" &&
+      (Array.isArray(value) ? value : [value]).some(
+        (child) => typeof child?.type === "string" && readsWhole(child, name),
+      ),
+  );
+}
+
+/** A `c.req.valid(target)` call's target, if `node` is one. */
+function validTargetOf(node) {
+  const callee = node?.type === "CallExpression" ? node.callee : null;
+  if (callee?.type !== "MemberExpression" || callee.property.name !== "valid") return null;
+  const request = callee.object;
+  if (request.type !== "MemberExpression" || request.property.name !== "req" || request.object.name !== "c")
+    return null;
+  return node.arguments[0]?.value ?? null;
 }
 
 export default {

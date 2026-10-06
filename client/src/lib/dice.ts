@@ -25,10 +25,6 @@ export const ROLL_METHODS: { id: RollMethodId; label: string }[] = [
 
 export const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
 
-export function rollDie(sides: number): number {
-  return Math.floor(Math.random() * sides) + 1;
-}
-
 function roll3d6(): number {
   return rollDie(6) + rollDie(6) + rollDie(6);
 }
@@ -37,6 +33,10 @@ function roll4d6DropLowest(): number {
   const rolls = Array.from({ length: 4 }, () => rollDie(6));
   rolls.sort((a, b) => a - b);
   return rolls[1] + rolls[2] + rolls[3];
+}
+
+export function rollDie(sides: number): number {
+  return Math.floor(Math.random() * sides) + 1;
 }
 
 export function getRollFunction(method: RollMethodId): (() => number) | null {

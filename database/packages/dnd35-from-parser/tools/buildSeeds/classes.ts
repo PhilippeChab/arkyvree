@@ -132,51 +132,6 @@ function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[
 }
 
 /**
- * A class's aptitude picks: detected, with the overrides', then split per level where a bonus feat list has one per
- * level (`aptitudePicks`); the first level each aptitude gets a pick (`aptitudeMinLevel`, by slug); and how the split
- * retargets the merged picks (`remap` one to one, `perLevel` one to several).
- */
-export function classAptitudePicks(ref: ClassReference) {
-  const { overrides } = ref;
-  const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides?.aptitudePicks);
-  const aptitudePicks = expandPerLevelAptitudePicks(
-    mergedPicks,
-    overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists,
-  );
-  const aptitudeMinLevel = new Map<string, number>();
-  for (const pick of aptitudePicks ?? []) {
-    const slug = pick.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1];
-    if (slug) aptitudeMinLevel.set(slug, Math.min(...pick.levels));
-  }
-  return { aptitudePicks, aptitudeMinLevel, ...buildAptitudeExpansionMaps(mergedPicks, aptitudePicks) };
-}
-
-/**
- * The existing feat a class's feature named `name` grants instead of being a feat of its own: that feat (with or without
- * the class's suffix), or one its description says it gains as a bonus feat.
- */
-export function existingFeatGranted(ref: ClassReference, name: string, description: string | undefined) {
-  const book = ref._meta.book;
-  const baseName = stripClassSuffix(name, ref.raw.name);
-  return (
-    (baseName && existingFeatNamed(book, baseName)) ||
-    existingFeatNamed(book, name) ||
-    (description
-      ? extractGrantedFeatNames(description)
-          .map((n) => existingFeatNamed(book, n))
-          .find(Boolean)
-      : undefined)
-  );
-}
-
-/** Insert an ordinal suffix before the parenthetical class suffix in a feat name. */
-export function insertOrdinalInName(name: string, ordinal: string): string {
-  const match = name.match(/^(.+?)(\s*\(.+\))$/);
-  if (match) return `${match[1]} ${ordinal}${match[2]}`;
-  return `${name} ${ordinal}`;
-}
-
-/**
  * A class's own feats: its class features (other than the existing feats it grants), one per level for a feature
  * that gives a pick at several (its first, second… pick), and the feat advancing its spellcasting.
  */
@@ -309,10 +264,24 @@ export function buildPoolParentNameMap(
   return nameMap;
 }
 
-/** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
-export function classSpells(ref: ClassReference) {
-  const { spells } = ref.mapping;
-  return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
+/**
+ * A class's aptitude picks: detected, with the overrides', then split per level where a bonus feat list has one per
+ * level (`aptitudePicks`); the first level each aptitude gets a pick (`aptitudeMinLevel`, by slug); and how the split
+ * retargets the merged picks (`remap` one to one, `perLevel` one to several).
+ */
+export function classAptitudePicks(ref: ClassReference) {
+  const { overrides } = ref;
+  const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides?.aptitudePicks);
+  const aptitudePicks = expandPerLevelAptitudePicks(
+    mergedPicks,
+    overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists,
+  );
+  const aptitudeMinLevel = new Map<string, number>();
+  for (const pick of aptitudePicks ?? []) {
+    const slug = pick.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1];
+    if (slug) aptitudeMinLevel.set(slug, Math.min(...pick.levels));
+  }
+  return { aptitudePicks, aptitudeMinLevel, ...buildAptitudeExpansionMaps(mergedPicks, aptitudePicks) };
 }
 
 /**
@@ -376,6 +345,30 @@ export function classSpellLists(ref: ClassReference): string[] {
   return spells.lists?.map((list) => list.name) ?? [`${ref.raw.name} Spells`];
 }
 
+/** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
+export function classSpells(ref: ClassReference) {
+  const { spells } = ref.mapping;
+  return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
+}
+
+/**
+ * The existing feat a class's feature named `name` grants instead of being a feat of its own: that feat (with or without
+ * the class's suffix), or one its description says it gains as a bonus feat.
+ */
+export function existingFeatGranted(ref: ClassReference, name: string, description: string | undefined) {
+  const book = ref._meta.book;
+  const baseName = stripClassSuffix(name, ref.raw.name);
+  return (
+    (baseName && existingFeatNamed(book, baseName)) ||
+    existingFeatNamed(book, name) ||
+    (description
+      ? extractGrantedFeatNames(description)
+          .map((n) => existingFeatNamed(book, n))
+          .find(Boolean)
+      : undefined)
+  );
+}
+
 /**
  * A spell's level on a list a class draws on (`inheritsFrom`): on the first of its classes' lists that has it, when
  * it's of the list's schools and has none of its excluded descriptors.
@@ -404,4 +397,11 @@ export function inheritedLists(book: string): { aptitude: string; list: Inherite
     for (const list of spells.lists ?? []) lists.push({ aptitude: list.name, list: list.inheritsFrom });
   }
   return lists;
+}
+
+/** Insert an ordinal suffix before the parenthetical class suffix in a feat name. */
+export function insertOrdinalInName(name: string, ordinal: string): string {
+  const match = name.match(/^(.+?)(\s*\(.+\))$/);
+  if (match) return `${match[1]} ${ordinal}${match[2]}`;
+  return `${name} ${ordinal}`;
 }

@@ -85,6 +85,26 @@ export function sanitizeHtml(html: string): string {
 }
 
 /**
+ * Recursively sanitize all string values inside a parsed JSON object.
+ * - ALL strings get encoding fixes (smart quotes, garbled apostrophes, etc.)
+ * - Description-like keys also get book-reference stripping via sanitizeText
+ */
+export function sanitizeJsonValues<T>(obj: T, parentKey?: string): T {
+  if (typeof obj === "string") {
+    return (parentKey && DESCRIPTION_KEYS.has(parentKey) ? sanitizeText(obj) : fixEncoding(obj)) as T;
+  }
+  if (Array.isArray(obj)) return obj.map((item) => sanitizeJsonValues(item, parentKey)) as T;
+  if (isRecord(obj)) {
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      result[fixEncoding(k)] = sanitizeJsonValues(v, k);
+    }
+    return result as T;
+  }
+  return obj;
+}
+
+/**
  * Full sanitization for descriptions: encoding fixes + book reference stripping.
  * Only use on description/benefit text, not names.
  */
@@ -159,26 +179,6 @@ export function sanitizeText(text: string): string {
       .replace(/  +/g, " ") // collapse multiple spaces
       .trim()
   );
-}
-
-/**
- * Recursively sanitize all string values inside a parsed JSON object.
- * - ALL strings get encoding fixes (smart quotes, garbled apostrophes, etc.)
- * - Description-like keys also get book-reference stripping via sanitizeText
- */
-export function sanitizeJsonValues<T>(obj: T, parentKey?: string): T {
-  if (typeof obj === "string") {
-    return (parentKey && DESCRIPTION_KEYS.has(parentKey) ? sanitizeText(obj) : fixEncoding(obj)) as T;
-  }
-  if (Array.isArray(obj)) return obj.map((item) => sanitizeJsonValues(item, parentKey)) as T;
-  if (isRecord(obj)) {
-    const result: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(obj)) {
-      result[fixEncoding(k)] = sanitizeJsonValues(v, k);
-    }
-    return result as T;
-  }
-  return obj;
 }
 
 /** Recursively sort all object keys for deterministic JSON output */

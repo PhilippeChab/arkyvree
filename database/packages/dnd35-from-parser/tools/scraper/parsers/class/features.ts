@@ -73,12 +73,6 @@ function cleanSpecialEntry(s: string): string {
     .replace(/^(?:huge |large |small )?elemental$/i, ""); // orphaned fragments from broken wild shape cells
 }
 
-/** Normalize a feature name for matching — strips plurals, collapses whitespace */
-function normalizeFeatureName(name: string): string {
-  // "Special Abilities" → "special ability"
-  return normalizeWs(name.toLowerCase()).replace(/ies$/, "y");
-}
-
 /** Find the exact key in the known features set that matches this name */
 function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): string | undefined {
   const norm = normalizeFeatureName(name);
@@ -137,6 +131,12 @@ function findSubOptionColumns(
 /** Check if a feature name matches any known feature (case-insensitive, with plural matching) */
 function isKnownFeature(name: string, knownFeatures: Set<string>): boolean {
   return findMatchingFeatureKey(name, knownFeatures) !== undefined;
+}
+
+/** Normalize a feature name for matching — strips plurals, collapses whitespace */
+function normalizeFeatureName(name: string): string {
+  // "Special Abilities" → "special ability"
+  return normalizeWs(name.toLowerCase()).replace(/ies$/, "y");
 }
 
 /** A sub-option table's options of the feature `parentKey`: each its key ("Feature: Option") and effect. */

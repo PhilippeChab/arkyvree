@@ -189,19 +189,6 @@ export const WIZARD_1: LevelPlan = {
   },
 };
 
-/** The ids of a plan's picks. */
-export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }: Omit<LevelPlan, "hp">): Picks {
-  const byAptitude = (named: Record<string, string[]>, ids: Record<string, string>) =>
-    Object.fromEntries(
-      Object.entries(named).map(([aptitude, names]) => [ctx.aptMap[aptitude], names.map((name) => ids[name])]),
-    );
-  return {
-    skills: Object.fromEntries(Object.entries(skills).map(([name, rank]) => [ctx.skillMap[name], rank])),
-    feats: byAptitude(feats, ctx.featMap),
-    powers: byAptitude(powers, ctx.powerMap),
-  };
-}
-
 /** Finalizes one level of `klass` as `plan` says. */
 export function levelUp(
   session: Session,
@@ -225,6 +212,36 @@ export function levelUp(
     powers,
     force,
   );
+}
+
+/** The ids of a plan's picks. */
+export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }: Omit<LevelPlan, "hp">): Picks {
+  const byAptitude = (named: Record<string, string[]>, ids: Record<string, string>) =>
+    Object.fromEntries(
+      Object.entries(named).map(([aptitude, names]) => [ctx.aptMap[aptitude], names.map((name) => ids[name])]),
+    );
+  return {
+    skills: Object.fromEntries(Object.entries(skills).map(([name, rank]) => [ctx.skillMap[name], rank])),
+    feats: byAptitude(feats, ctx.featMap),
+    powers: byAptitude(powers, ctx.powerMap),
+  };
+}
+
+/** A seed-user character of `build` with `levels` of `klass`, and the creature of `kind` bonded to them. */
+async function createMaster(
+  kind: "familiar" | "animalcompanion" | "mount",
+  build: keyof typeof BUILDS,
+  klass: string,
+  levels: number,
+  first: LevelPlan,
+  at: Record<number, Omit<LevelPlan, "hp">> = {},
+) {
+  const ctx = await getSeedCtx();
+  const masterId = await createSeedCharacter(ctx, build);
+  await levelTo(makeSession(), ctx, masterId, klass, levels, first, at);
+  const bonded = await Characters.findOne(db, { parentCharacterId: masterId, kind });
+  if (!bonded) throw new Error(`No ${kind} was bonded to the ${build}`);
+  return { ctx, masterId, bonded };
 }
 
 /** A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes. */
@@ -268,29 +285,6 @@ async function levelTo(
   }
 }
 
-/** A seed-user character of `build` with `levels` of `klass`, and the creature of `kind` bonded to them. */
-async function createMaster(
-  kind: "familiar" | "animalcompanion" | "mount",
-  build: keyof typeof BUILDS,
-  klass: string,
-  levels: number,
-  first: LevelPlan,
-  at: Record<number, Omit<LevelPlan, "hp">> = {},
-) {
-  const ctx = await getSeedCtx();
-  const masterId = await createSeedCharacter(ctx, build);
-  await levelTo(makeSession(), ctx, masterId, klass, levels, first, at);
-  const bonded = await Characters.findOne(db, { parentCharacterId: masterId, kind });
-  if (!bonded) throw new Error(`No ${kind} was bonded to the ${build}`);
-  return { ctx, masterId, bonded };
-}
-
-/** `plan` with these picks through `aptitude` instead of its own, or none. */
-export function picking(plan: LevelPlan, aptitude: string, feats: string[]): LevelPlan {
-  const { [aptitude]: _, ...others } = plan.feats ?? {};
-  return { ...plan, feats: feats.length > 0 ? { ...others, [aptitude]: feats } : others };
-}
-
 /** A druid with this animal companion. */
 export function createDruidWithCompanion(levels = 1, companion = "Wolf Animal Companion") {
   return createMaster(
@@ -312,6 +306,12 @@ export function createPaladinWithMount(levels = 5, mount = "Heavy Warhorse Speci
 /** A wizard whose first level, `plan`, picks this familiar. */
 export function createWizardWithFamiliar(familiar = "Cat Familiar", plan = WIZARD_1) {
   return createMaster("familiar", "wizard", "Wizard", 1, picking(plan, "Familiar Bond", [familiar]));
+}
+
+/** `plan` with these picks through `aptitude` instead of its own, or none. */
+export function picking(plan: LevelPlan, aptitude: string, feats: string[]): LevelPlan {
+  const { [aptitude]: _, ...others } = plan.feats ?? {};
+  return { ...plan, feats: feats.length > 0 ? { ...others, [aptitude]: feats } : others };
 }
 
 /** Finalizes the first `count` fighter levels. */

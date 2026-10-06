@@ -91,23 +91,6 @@ const VOCABULARIES = [
   },
 ];
 
-/** The functions a module exports: declared, or an arrow or function expression a const holds. */
-function exportedFunctions(node) {
-  const declaration = node.declaration;
-  if (declaration?.type === "FunctionDeclaration" && declaration.id) return [declaration.id];
-  if (declaration?.type !== "VariableDeclaration") return [];
-  return declaration.declarations
-    .filter(
-      (d) => d.id.type === "Identifier" && ["ArrowFunctionExpression", "FunctionExpression"].includes(d.init?.type),
-    )
-    .map((d) => d.id);
-}
-
-/** Whether `name` starts with the word `verb`: `find` starts `findOne`, not `finder`. */
-export function startsWithVerb(name, verb) {
-  return new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);
-}
-
 function createFunctionNames(context) {
   const file = repoPath(context.filename);
   if (!/^(server|shared)\//.test(file) || !/\.tsx?$/.test(file)) return {};
@@ -146,18 +129,6 @@ function createFunctionNames(context) {
   };
 }
 
-function isMethod(member) {
-  return (
-    (member.type === "MethodDefinition" || member.type === "TSAbstractMethodDefinition"
-      ? member.kind === "method"
-      : member.type === "PropertyDefinition" && FUNCTION_VALUES.includes(member.value?.type)) && !member.computed
-  );
-}
-
-function isPublic(member) {
-  return (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
-}
-
 function createMethodNames(context) {
   const file = repoPath(context.filename);
   const vocabulary = VOCABULARIES.find((v) => file.startsWith(v.layer));
@@ -184,6 +155,35 @@ function createMethodNames(context) {
       }
     },
   };
+}
+
+/** The functions a module exports: declared, or an arrow or function expression a const holds. */
+function exportedFunctions(node) {
+  const declaration = node.declaration;
+  if (declaration?.type === "FunctionDeclaration" && declaration.id) return [declaration.id];
+  if (declaration?.type !== "VariableDeclaration") return [];
+  return declaration.declarations
+    .filter(
+      (d) => d.id.type === "Identifier" && ["ArrowFunctionExpression", "FunctionExpression"].includes(d.init?.type),
+    )
+    .map((d) => d.id);
+}
+
+function isMethod(member) {
+  return (
+    (member.type === "MethodDefinition" || member.type === "TSAbstractMethodDefinition"
+      ? member.kind === "method"
+      : member.type === "PropertyDefinition" && FUNCTION_VALUES.includes(member.value?.type)) && !member.computed
+  );
+}
+
+function isPublic(member) {
+  return (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
+}
+
+/** Whether `name` starts with the word `verb`: `find` starts `findOne`, not `finder`. */
+export function startsWithVerb(name, verb) {
+  return new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);
 }
 
 export default {

@@ -94,122 +94,6 @@ function calleeOf(expression) {
   return node?.type === "Identifier" ? node.name : undefined;
 }
 
-/** A top-level statement's declaration: an export's, or itself. */
-export function declarationOf(statement) {
-  return statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
-    ? statement.declaration
-    : statement;
-}
-
-/** The names a top-level statement declares. */
-function declaredNames(statement) {
-  const declaration = declarationOf(statement);
-  if (!declaration) return [];
-  if (declaration.type === "VariableDeclaration") return declaration.declarations.flatMap((d) => boundNames(d.id));
-  return declaration.id?.name ? [declaration.id.name] : [];
-}
-
-function holdsFunction(node) {
-  return (
-    node?.type === "FunctionDeclaration" ||
-    node?.type === "TSDeclareFunction" ||
-    (node?.type === "VariableDeclaration" && node.declarations.some((d) => FUNCTION_VALUES.has(d.init?.type)))
-  );
-}
-
-/** Whether a statement sits right in a `describe`'s callback: not in a test's, nor any deeper. */
-function isInDescribe(statement) {
-  const block = statement.parent;
-  const callback = block?.type === "BlockStatement" ? block.parent : undefined;
-  const call = callback?.parent;
-  return (
-    (callback?.type === "ArrowFunctionExpression" || callback?.type === "FunctionExpression") &&
-    call?.type === "CallExpression" &&
-    calleeOf(call) === "describe"
-  );
-}
-
-/** The names of every helper a file declares in its `describe` blocks, a name twice when two blocks share it. */
-function describeHelperNames(program) {
-  const names = [];
-  const visit = (node) => {
-    if (!node || typeof node !== "object") return;
-    if (Array.isArray(node)) {
-      for (const child of node) visit(child);
-      return;
-    }
-    if (
-      (node.type === "FunctionDeclaration" || node.type === "VariableDeclaration") &&
-      holdsFunction(node) &&
-      isInDescribe(node)
-    ) {
-      names.push(...declaredNames(node));
-    }
-    for (const [key, child] of Object.entries(node))
-      if (key !== "parent" && child && typeof child === "object") visit(child);
-  };
-  visit(program.body);
-  return names;
-}
-
-/** The names the functions and blocks around a nested statement declare: what a helper lifted out would lose. */
-function enclosingNames(ancestors, statement) {
-  const names = new Set();
-  for (const node of ancestors) {
-    for (const param of node.params ?? []) for (const n of boundNames(param)) names.add(n);
-  }
-  for (const block of ancestors.filter((a) => a.type === "BlockStatement")) {
-    for (const s of block.body ?? []) {
-      if (s === statement) continue;
-      if (s.type === "VariableDeclaration")
-        for (const d of s.declarations) for (const n of boundNames(d.id)) names.add(n);
-      if (s.type === "FunctionDeclaration" && s.id) names.add(s.id.name);
-    }
-  }
-  return names;
-}
-
-function rangeOf(node) {
-  return node.range ?? [node.start, node.end];
-}
-
-/** The end of a statement, with the comment ending its line (` // note`). */
-function endOf(text, statement) {
-  const [, end] = rangeOf(statement);
-  const lineEnd = text.indexOf("\n", end);
-  const rest = text.slice(end, lineEnd === -1 ? text.length : lineEnd);
-  return /^\s*(\/\/.*|\/\*.*\*\/\s*)$/.test(rest) ? end + rest.trimEnd().length : end;
-}
-
-/** The names a node reads as values: not a member's or a key's name, nor anything in a type. */
-function readNames(node, into = new Set(), types = false) {
-  if (!node || typeof node !== "object") return into;
-  if (Array.isArray(node)) {
-    for (const child of node) readNames(child, into, types);
-    return into;
-  }
-  if (!types && typeof node.type === "string" && node.type.startsWith("TS") && !("expression" in node)) return into;
-  // A component a JSX element renders is read by its name too (`<PrivateRoute />`)
-  if (node.type === "Identifier" || node.type === "JSXIdentifier") into.add(node.name);
-  for (const [key, child] of Object.entries(node)) {
-    if (key === "parent" || (!types && TYPE_KEYS.has(key))) continue;
-    if (key === "property" && node.type === "MemberExpression" && !node.computed) continue;
-    if (key === "key" && !node.computed && /Property|MethodDefinition/.test(node.type)) continue;
-    if (child && typeof child === "object") readNames(child, into, types);
-  }
-  return into;
-}
-
-/** The names a file declares at its top, its imports' included. */
-function topLevelNames(program) {
-  const names = new Set();
-  for (const statement of program.body) {
-    if (statement.type === "ImportDeclaration") for (const spec of statement.specifiers) names.add(spec.local.name);
-    else for (const n of declaredNames(statement)) names.add(n);
-  }
-  return names;
-}
-
 /** A helper in a `describe`: reported, and lifted above the top-level statement holding it when it can be. */
 function checkNested(context, text, statement) {
   if (!holdsFunction(statement) || !isInDescribe(statement)) return;
@@ -257,6 +141,108 @@ function checkNested(context, text, statement) {
   });
 }
 
+function createFileLayout(context) {
+  const text = context.sourceCode.text;
+  return {
+    Program(node) {
+      const statements = node.body;
+      const items = rankStatements(statements);
+      const strays = findStrays(items);
+      for (const [item, message] of strays) {
+        context.report({ node: declarationOf(item.statement) ?? item.statement, message });
+      }
+      // Steps run in order: what follows one moves by hand, never by the fix
+      const afterStep = strays.some(([, message]) => message === STEP);
+      const firstBody = items.findIndex((item) => item.kind !== "import");
+      if (firstBody === -1) return;
+      const misplaced = [];
+      let highest = 0;
+      for (const item of items.slice(firstBody)) {
+        if (item.kind === "import" || item.rank < highest) misplaced.push(item);
+        highest = Math.max(highest, item.rank);
+      }
+      if (misplaced.length === 0) return;
+      const order = reorder(text, statements, items);
+      // The fix never changes the order code runs in: two declarations that run code keep theirs
+      const sorted = items.slice(firstBody).sort((a, b) => a.rank - b.rank || a.index - b.index);
+      const running = sorted.filter((item) => runsAtLoad(item.statement)).map((item) => item.index);
+      const reordersRuns = running.some((index, i) => i > 0 && index < running[i - 1]);
+      context.report({
+        node: declarationOf(misplaced[0].statement) ?? misplaced[0].statement,
+        message: MESSAGE,
+        ...(order &&
+          !afterStep &&
+          !reordersRuns && { fix: (fixer) => fixer.replaceTextRange(order.range, order.text) }),
+      });
+    },
+    FunctionDeclaration: (statement) => checkNested(context, text, statement),
+    VariableDeclaration: (statement) => checkNested(context, text, statement),
+  };
+}
+
+/** A top-level statement's declaration: an export's, or itself. */
+export function declarationOf(statement) {
+  return statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
+    ? statement.declaration
+    : statement;
+}
+
+/** The names a top-level statement declares. */
+function declaredNames(statement) {
+  const declaration = declarationOf(statement);
+  if (!declaration) return [];
+  if (declaration.type === "VariableDeclaration") return declaration.declarations.flatMap((d) => boundNames(d.id));
+  return declaration.id?.name ? [declaration.id.name] : [];
+}
+
+/** The names of every helper a file declares in its `describe` blocks, a name twice when two blocks share it. */
+function describeHelperNames(program) {
+  const names = [];
+  const visit = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const child of node) visit(child);
+      return;
+    }
+    if (
+      (node.type === "FunctionDeclaration" || node.type === "VariableDeclaration") &&
+      holdsFunction(node) &&
+      isInDescribe(node)
+    ) {
+      names.push(...declaredNames(node));
+    }
+    for (const [key, child] of Object.entries(node))
+      if (key !== "parent" && child && typeof child === "object") visit(child);
+  };
+  visit(program.body);
+  return names;
+}
+
+/** The names the functions and blocks around a nested statement declare: what a helper lifted out would lose. */
+function enclosingNames(ancestors, statement) {
+  const names = new Set();
+  for (const node of ancestors) {
+    for (const param of node.params ?? []) for (const n of boundNames(param)) names.add(n);
+  }
+  for (const block of ancestors.filter((a) => a.type === "BlockStatement")) {
+    for (const s of block.body ?? []) {
+      if (s === statement) continue;
+      if (s.type === "VariableDeclaration")
+        for (const d of s.declarations) for (const n of boundNames(d.id)) names.add(n);
+      if (s.type === "FunctionDeclaration" && s.id) names.add(s.id.name);
+    }
+  }
+  return names;
+}
+
+/** The end of a statement, with the comment ending its line (` // note`). */
+function endOf(text, statement) {
+  const [, end] = rangeOf(statement);
+  const lineEnd = text.indexOf("\n", end);
+  const rest = text.slice(end, lineEnd === -1 ? text.length : lineEnd);
+  return /^\s*(\/\/.*|\/\*.*\*\/\s*)$/.test(rest) ? end + rest.trimEnd().length : end;
+}
+
 /**
  * What the order can't settle, so the code changes instead: a script's step that isn't in its run's function, a
  * constant one of the file's own functions builds, a constant the file keeps built from one it exports.
@@ -281,10 +267,6 @@ function findStrays(items) {
   return strays;
 }
 
-function holdsOrClass(item) {
-  return holdsFunction(declarationOf(item.statement)) || declarationOf(item.statement)?.type === "ClassDeclaration";
-}
-
 /** Whether a node calls `describe`, `test` or a hook somewhere inside it. */
 function hasSuiteCall(node) {
   if (!node || typeof node !== "object") return false;
@@ -292,6 +274,30 @@ function hasSuiteCall(node) {
   if (node.type === "CallExpression" && SUITE_CALLS.has(calleeOf(node))) return true;
   return Object.entries(node).some(
     ([key, child]) => key !== "parent" && child && typeof child === "object" && hasSuiteCall(child),
+  );
+}
+
+function holdsFunction(node) {
+  return (
+    node?.type === "FunctionDeclaration" ||
+    node?.type === "TSDeclareFunction" ||
+    (node?.type === "VariableDeclaration" && node.declarations.some((d) => FUNCTION_VALUES.has(d.init?.type)))
+  );
+}
+
+function holdsOrClass(item) {
+  return holdsFunction(declarationOf(item.statement)) || declarationOf(item.statement)?.type === "ClassDeclaration";
+}
+
+/** Whether a statement sits right in a `describe`'s callback: not in a test's, nor any deeper. */
+function isInDescribe(statement) {
+  const block = statement.parent;
+  const callback = block?.type === "BlockStatement" ? block.parent : undefined;
+  const call = callback?.parent;
+  return (
+    (callback?.type === "ArrowFunctionExpression" || callback?.type === "FunctionExpression") &&
+    call?.type === "CallExpression" &&
+    calleeOf(call) === "describe"
   );
 }
 
@@ -313,6 +319,10 @@ function kindOf(statement) {
   // A loop declaring tests (`for (const c of cases) test(…)`) is a test file's purpose too
   if (LOOPS.has(statement.type) && hasSuiteCall(statement.body)) return "main";
   return "effect";
+}
+
+function rangeOf(node) {
+  return node.range ?? [node.start, node.end];
 }
 
 /**
@@ -352,6 +362,25 @@ export function rankStatements(statements) {
   return items;
 }
 
+/** The names a node reads as values: not a member's or a key's name, nor anything in a type. */
+function readNames(node, into = new Set(), types = false) {
+  if (!node || typeof node !== "object") return into;
+  if (Array.isArray(node)) {
+    for (const child of node) readNames(child, into, types);
+    return into;
+  }
+  if (!types && typeof node.type === "string" && node.type.startsWith("TS") && !("expression" in node)) return into;
+  // A component a JSX element renders is read by its name too (`<PrivateRoute />`)
+  if (node.type === "Identifier" || node.type === "JSXIdentifier") into.add(node.name);
+  for (const [key, child] of Object.entries(node)) {
+    if (key === "parent" || (!types && TYPE_KEYS.has(key))) continue;
+    if (key === "property" && node.type === "MemberExpression" && !node.computed) continue;
+    if (key === "key" && !node.computed && /Property|MethodDefinition/.test(node.type)) continue;
+    if (child && typeof child === "object") readNames(child, into, types);
+  }
+  return into;
+}
+
 /** The file's statements reordered by group, each with its comments, or none when a reader must place them. */
 function reorder(text, statements, items) {
   const firstBody = items.findIndex((item) => item.kind !== "import");
@@ -379,22 +408,6 @@ function reorder(text, statements, items) {
   };
 }
 
-/** Whether evaluating `node` runs code: a call, `new`, `await`, an assignment (not what a function inside it holds). */
-function runsCode(node) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some(runsCode);
-  if (FUNCTION_VALUES.has(node.type) && node.type !== "ClassExpression") return false;
-  if (
-    /^(CallExpression|NewExpression|AwaitExpression|AssignmentExpression|UpdateExpression|TaggedTemplateExpression|ImportExpression)$/.test(
-      node.type,
-    )
-  )
-    return true;
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && runsCode(child),
-  );
-}
-
 /**
  * Whether a declaration runs code where it stands: a constant whose value does, a class whose `extends`, decorators,
  * computed keys or static parts do, an `export default` value.
@@ -420,43 +433,30 @@ export function runsAtLoad(statement) {
   return false;
 }
 
-function createFileLayout(context) {
-  const text = context.sourceCode.text;
-  return {
-    Program(node) {
-      const statements = node.body;
-      const items = rankStatements(statements);
-      const strays = findStrays(items);
-      for (const [item, message] of strays) {
-        context.report({ node: declarationOf(item.statement) ?? item.statement, message });
-      }
-      // Steps run in order: what follows one moves by hand, never by the fix
-      const afterStep = strays.some(([, message]) => message === STEP);
-      const firstBody = items.findIndex((item) => item.kind !== "import");
-      if (firstBody === -1) return;
-      const misplaced = [];
-      let highest = 0;
-      for (const item of items.slice(firstBody)) {
-        if (item.kind === "import" || item.rank < highest) misplaced.push(item);
-        highest = Math.max(highest, item.rank);
-      }
-      if (misplaced.length === 0) return;
-      const order = reorder(text, statements, items);
-      // The fix never changes the order code runs in: two declarations that run code keep theirs
-      const sorted = items.slice(firstBody).sort((a, b) => a.rank - b.rank || a.index - b.index);
-      const running = sorted.filter((item) => runsAtLoad(item.statement)).map((item) => item.index);
-      const reordersRuns = running.some((index, i) => i > 0 && index < running[i - 1]);
-      context.report({
-        node: declarationOf(misplaced[0].statement) ?? misplaced[0].statement,
-        message: MESSAGE,
-        ...(order &&
-          !afterStep &&
-          !reordersRuns && { fix: (fixer) => fixer.replaceTextRange(order.range, order.text) }),
-      });
-    },
-    FunctionDeclaration: (statement) => checkNested(context, text, statement),
-    VariableDeclaration: (statement) => checkNested(context, text, statement),
-  };
+/** Whether evaluating `node` runs code: a call, `new`, `await`, an assignment (not what a function inside it holds). */
+function runsCode(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(runsCode);
+  if (FUNCTION_VALUES.has(node.type) && node.type !== "ClassExpression") return false;
+  if (
+    /^(CallExpression|NewExpression|AwaitExpression|AssignmentExpression|UpdateExpression|TaggedTemplateExpression|ImportExpression)$/.test(
+      node.type,
+    )
+  )
+    return true;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && runsCode(child),
+  );
+}
+
+/** The names a file declares at its top, its imports' included. */
+function topLevelNames(program) {
+  const names = new Set();
+  for (const statement of program.body) {
+    if (statement.type === "ImportDeclaration") for (const spec of statement.specifiers) names.add(spec.local.name);
+    else for (const n of declaredNames(statement)) names.add(n);
+  }
+  return names;
 }
 
 export default {

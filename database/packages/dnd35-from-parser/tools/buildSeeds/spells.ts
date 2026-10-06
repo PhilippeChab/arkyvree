@@ -124,14 +124,14 @@ function expandComponents(components: string[]): string[] {
   return result;
 }
 
-function getClassSpellMaps() {
-  if (!_classSpellMaps) _classSpellMaps = buildClassSpellMaps();
-  return _classSpellMaps;
-}
-
 /** Class name → aptitude name (auto-discovered from class references) */
 function getClassAbbrevMap(): Record<string, string> {
   return getClassSpellMaps().classMap;
+}
+
+function getClassSpellMaps() {
+  if (!_classSpellMaps) _classSpellMaps = buildClassSpellMaps();
+  return _classSpellMaps;
 }
 
 /** Combined class entries that map to multiple aptitudes */

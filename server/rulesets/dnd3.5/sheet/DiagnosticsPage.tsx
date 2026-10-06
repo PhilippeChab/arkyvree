@@ -37,72 +37,6 @@ function DiagnosticCounts({ counts }: { counts: { label: string; color: string }
   );
 }
 
-/** One of the diagnostics page's tables, when it has rows: the first `max`, and how many more there are. */
-function DiagnosticTable({
-  title,
-  columns,
-  rows,
-  max = rows.length,
-  noun,
-}: {
-  title: string;
-  columns: DiagnosticColumn[];
-  rows: (string | null | undefined)[][];
-  max?: number;
-  noun?: string;
-}) {
-  if (rows.length === 0) return null;
-  const cellStyle = (column: DiagnosticColumn) => ({
-    width: column.width,
-    paddingHorizontal: 4,
-    textAlign: column.centered ? ("center" as const) : undefined,
-  });
-  return (
-    <View style={{ marginBottom: 10 }}>
-      <Text style={{ fontSize: FONT_SIZE.lg, fontWeight: "bold", marginBottom: 5 }}>{title}</Text>
-      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-        <View
-          style={{
-            flexDirection: "row",
-            backgroundColor: "#eee",
-            borderBottomWidth: 1,
-            borderBottomColor: "#ccc",
-            paddingVertical: 4,
-          }}
-        >
-          {columns.map((column) => (
-            <Text
-              key={column.label}
-              style={{ ...cellStyle(column), fontSize: FONT_SIZE.sm, fontWeight: "bold", color: "#333" }}
-            >
-              {column.label}
-            </Text>
-          ))}
-        </View>
-        {rows.slice(0, max).map((row, index) => (
-          <View
-            key={index}
-            style={{ flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#eee", paddingVertical: 3 }}
-          >
-            {row.map((cell, column) => (
-              <Text key={column} style={{ ...cellStyle(columns[column]), fontSize: FONT_SIZE.base }}>
-                {cell || "—"}
-              </Text>
-            ))}
-          </View>
-        ))}
-        {rows.length > max && (
-          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-              ... and {rows.length - max} more {noun}
-            </Text>
-          </View>
-        )}
-      </View>
-    </View>
-  );
-}
-
 function DiagnosticsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.getDetailedCharacterIdentity();
   const requirements = detailedCharacter.getDetailedCharacterRequirements();
@@ -237,6 +171,72 @@ function DiagnosticsPage({ detailedCharacter }: { detailedCharacter: DetailedCha
         })()}
       </View>
     </Page>
+  );
+}
+
+/** One of the diagnostics page's tables, when it has rows: the first `max`, and how many more there are. */
+function DiagnosticTable({
+  title,
+  columns,
+  rows,
+  max = rows.length,
+  noun,
+}: {
+  title: string;
+  columns: DiagnosticColumn[];
+  rows: (string | null | undefined)[][];
+  max?: number;
+  noun?: string;
+}) {
+  if (rows.length === 0) return null;
+  const cellStyle = (column: DiagnosticColumn) => ({
+    width: column.width,
+    paddingHorizontal: 4,
+    textAlign: column.centered ? ("center" as const) : undefined,
+  });
+  return (
+    <View style={{ marginBottom: 10 }}>
+      <Text style={{ fontSize: FONT_SIZE.lg, fontWeight: "bold", marginBottom: 5 }}>{title}</Text>
+      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            backgroundColor: "#eee",
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+            paddingVertical: 4,
+          }}
+        >
+          {columns.map((column) => (
+            <Text
+              key={column.label}
+              style={{ ...cellStyle(column), fontSize: FONT_SIZE.sm, fontWeight: "bold", color: "#333" }}
+            >
+              {column.label}
+            </Text>
+          ))}
+        </View>
+        {rows.slice(0, max).map((row, index) => (
+          <View
+            key={index}
+            style={{ flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#eee", paddingVertical: 3 }}
+          >
+            {row.map((cell, column) => (
+              <Text key={column} style={{ ...cellStyle(columns[column]), fontSize: FONT_SIZE.base }}>
+                {cell || "—"}
+              </Text>
+            ))}
+          </View>
+        ))}
+        {rows.length > max && (
+          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
+            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
+              ... and {rows.length - max} more {noun}
+            </Text>
+          </View>
+        )}
+      </View>
+    </View>
   );
 }
 

@@ -59,49 +59,6 @@ export function configureHttp(opts: HttpOptions): void {
   globalOptions = { ...globalOptions, ...opts };
 }
 
-/** A page's HTML: from the disk cache, else fetched, rate limited, with up to MAX_RETRIES attempts. */
-export async function fetchHtml(url: string): Promise<string> {
-  // Check cache first
-  const cached = readCache(url);
-  if (cached) return cached;
-
-  await rateLimit();
-
-  let lastError: Error | null = null;
-
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      const response = await fetch(url);
-
-      if (response.status === 429 || response.status >= 500) {
-        const backoff = Math.pow(2, attempt) * 500;
-        console.warn(
-          `HTTP ${response.status} for ${url} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`,
-        );
-        await new Promise((resolve) => setTimeout(resolve, backoff));
-        continue;
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText} — ${url}`);
-      }
-
-      const html = sanitizeHtml(await response.text());
-      writeCache(url, html);
-      return html;
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      if (attempt < MAX_RETRIES) {
-        const backoff = Math.pow(2, attempt) * 500;
-        console.warn(`Fetch error for ${url} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`);
-        await new Promise((resolve) => setTimeout(resolve, backoff));
-      }
-    }
-  }
-
-  throw lastError ?? new Error(`Failed to fetch ${url} after ${MAX_RETRIES} attempts`);
-}
-
 /**
  * Fetch all pages from a paginated dndtools.net listing.
  *
@@ -143,4 +100,47 @@ export async function fetchAllPages(baseUrl: string): Promise<string[]> {
   }
 
   return pages;
+}
+
+/** A page's HTML: from the disk cache, else fetched, rate limited, with up to MAX_RETRIES attempts. */
+export async function fetchHtml(url: string): Promise<string> {
+  // Check cache first
+  const cached = readCache(url);
+  if (cached) return cached;
+
+  await rateLimit();
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url);
+
+      if (response.status === 429 || response.status >= 500) {
+        const backoff = Math.pow(2, attempt) * 500;
+        console.warn(
+          `HTTP ${response.status} for ${url} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, backoff));
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText} — ${url}`);
+      }
+
+      const html = sanitizeHtml(await response.text());
+      writeCache(url, html);
+      return html;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < MAX_RETRIES) {
+        const backoff = Math.pow(2, attempt) * 500;
+        console.warn(`Fetch error for ${url} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`);
+        await new Promise((resolve) => setTimeout(resolve, backoff));
+      }
+    }
+  }
+
+  throw lastError ?? new Error(`Failed to fetch ${url} after ${MAX_RETRIES} attempts`);
 }

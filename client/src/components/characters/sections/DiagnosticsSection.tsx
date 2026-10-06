@@ -64,20 +64,6 @@ function DiagnosticsGroup({ label, count, children }: { label: string; count: nu
   );
 }
 
-function RuleCellsRow({ cells }: { cells: RuleCells }) {
-  const [target, ...rest] = cells;
-  return (
-    <>
-      <TableCell sx={tableCellSx}>{target}</TableCell>
-      {rest.map((cell, i) => (
-        <TableCell key={i} sx={tableCellSx} align="center">
-          {cell}
-        </TableCell>
-      ))}
-    </>
-  );
-}
-
 /** Rules by source: a source with one rule is a row, one with several expands to list them. */
 function GroupedRuleTable({
   label,
@@ -220,6 +206,20 @@ function RequirementTable({ groups, label }: { groups: RequirementGroup[]; label
         ]),
       }))}
     />
+  );
+}
+
+function RuleCellsRow({ cells }: { cells: RuleCells }) {
+  const [target, ...rest] = cells;
+  return (
+    <>
+      <TableCell sx={tableCellSx}>{target}</TableCell>
+      {rest.map((cell, i) => (
+        <TableCell key={i} sx={tableCellSx} align="center">
+          {cell}
+        </TableCell>
+      ))}
+    </>
   );
 }
 

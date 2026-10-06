@@ -50,44 +50,6 @@ async function createBonded(
   return bonded.id;
 }
 
-async function syncBondedLevels(
-  tx: Db,
-  bondedId: string,
-  bondedKlassId: string,
-  targetHD: number,
-  rulesetData: CachedRulesetData,
-): Promise<void> {
-  const existingLevels = await CharacterLevels.findMany(tx, {
-    characterId: bondedId,
-  });
-  const currentHD = existingLevels.length;
-
-  if (currentHD === targetHD) return;
-
-  if (currentHD < targetHD) {
-    const klassLevels = rulesetData.klassLevelsByKlassId.get(bondedKlassId) ?? [];
-    const klassLevelByLevel = new Map(klassLevels.map((kl) => [kl.level, kl]));
-    for (let lv = currentHD + 1; lv <= targetHD; lv++) {
-      const kl = klassLevelByLevel.get(lv);
-      if (!kl) {
-        throw new BadRequestError(`Bonded class is missing level ${lv} — content seed incomplete`);
-      }
-      await CharacterLevels.create(tx, {
-        characterId: bondedId,
-        klassLevelId: kl.id,
-        hp: 1,
-        abilityId: null,
-      });
-    }
-    return;
-  }
-
-  const sorted = [...existingLevels].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  for (let i = 0; i < currentHD - targetHD; i++) {
-    await CharacterLevels.delete(tx, { id: sorted[i].id });
-  }
-}
-
 async function reconcileBonded(
   tx: Db,
   masterRecord: Character,
@@ -143,6 +105,44 @@ async function reconcileBonded(
 
   const bondedId = await createBonded(tx, masterRecord, kind, targetRace.id, targetRaceName, rulesetData);
   await syncBondedLevels(tx, bondedId, bondedKlass.id, targetHD, rulesetData);
+}
+
+async function syncBondedLevels(
+  tx: Db,
+  bondedId: string,
+  bondedKlassId: string,
+  targetHD: number,
+  rulesetData: CachedRulesetData,
+): Promise<void> {
+  const existingLevels = await CharacterLevels.findMany(tx, {
+    characterId: bondedId,
+  });
+  const currentHD = existingLevels.length;
+
+  if (currentHD === targetHD) return;
+
+  if (currentHD < targetHD) {
+    const klassLevels = rulesetData.klassLevelsByKlassId.get(bondedKlassId) ?? [];
+    const klassLevelByLevel = new Map(klassLevels.map((kl) => [kl.level, kl]));
+    for (let lv = currentHD + 1; lv <= targetHD; lv++) {
+      const kl = klassLevelByLevel.get(lv);
+      if (!kl) {
+        throw new BadRequestError(`Bonded class is missing level ${lv} — content seed incomplete`);
+      }
+      await CharacterLevels.create(tx, {
+        characterId: bondedId,
+        klassLevelId: kl.id,
+        hp: 1,
+        abilityId: null,
+      });
+    }
+    return;
+  }
+
+  const sorted = [...existingLevels].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  for (let i = 0; i < currentHD - targetHD; i++) {
+    await CharacterLevels.delete(tx, { id: sorted[i].id });
+  }
 }
 
 export async function reconcileAllBondedKinds(

@@ -346,35 +346,6 @@ function parseMetadataWeight(metadataText: string): string {
   return "0";
 }
 
-export function detectBaseItem(name: string, description: string, category: MagicItemCategory): string | undefined {
-  let candidates: string[];
-  if (category === "specificWeapon") candidates = BASE_WEAPONS;
-  else if (category === "specificArmor") candidates = BASE_ARMOR;
-  else if (category === "specificShield") candidates = BASE_SHIELDS;
-  else return undefined;
-
-  const lowerDesc = description.toLowerCase();
-
-  // Check category-scoped aliases first (e.g., "chainmail" → "Chain Mail" for armor only)
-  const categoryAliases = ALIASES[category];
-  if (categoryAliases) {
-    for (const [alias, canonical] of Object.entries(categoryAliases)) {
-      if (lowerDesc.includes(alias)) return canonical;
-    }
-  }
-
-  for (const base of candidates) {
-    if (lowerDesc.includes(base.toLowerCase())) return base;
-  }
-
-  const lowerName = name.toLowerCase();
-  for (const base of candidates) {
-    if (lowerName.includes(base.toLowerCase())) return base;
-  }
-
-  return undefined;
-}
-
 export function buildMagicItemDetected(raw: MagicItemReference["raw"]): MagicItemReference["detected"] {
   const detected: MagicItemReference["detected"] = {};
 
@@ -423,4 +394,33 @@ export function buildMagicItemDetected(raw: MagicItemReference["raw"]): MagicIte
   }
 
   return detected;
+}
+
+export function detectBaseItem(name: string, description: string, category: MagicItemCategory): string | undefined {
+  let candidates: string[];
+  if (category === "specificWeapon") candidates = BASE_WEAPONS;
+  else if (category === "specificArmor") candidates = BASE_ARMOR;
+  else if (category === "specificShield") candidates = BASE_SHIELDS;
+  else return undefined;
+
+  const lowerDesc = description.toLowerCase();
+
+  // Check category-scoped aliases first (e.g., "chainmail" → "Chain Mail" for armor only)
+  const categoryAliases = ALIASES[category];
+  if (categoryAliases) {
+    for (const [alias, canonical] of Object.entries(categoryAliases)) {
+      if (lowerDesc.includes(alias)) return canonical;
+    }
+  }
+
+  for (const base of candidates) {
+    if (lowerDesc.includes(base.toLowerCase())) return base;
+  }
+
+  const lowerName = name.toLowerCase();
+  for (const base of candidates) {
+    if (lowerName.includes(base.toLowerCase())) return base;
+  }
+
+  return undefined;
 }

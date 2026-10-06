@@ -155,6 +155,17 @@ const SERVICES: Record<string, Service> = {
 
 const ENTITY_TYPES = Object.keys(SERVICES);
 
+/** How many of each an entity has. */
+async function counts(entityType: (typeof ENTITY_TYPES)[number], id: string) {
+  const { modifiers, modifierRequirementIds, requirements, properties } = await customizationsOf(entityType, id);
+  return {
+    modifiers: modifiers.length,
+    modifierRequirements: modifierRequirementIds.length,
+    requirements: requirements.length,
+    properties: properties.length,
+  };
+}
+
 /** The entity's customizations, and the ids of its modifiers' requirements. */
 async function customizationsOf(entityType: (typeof ENTITY_TYPES)[number], id: string) {
   const modifiers = await Modifiers.findMany(db, { sourceIds: [id], sourceType: entityType });
@@ -167,17 +178,6 @@ async function customizationsOf(entityType: (typeof ENTITY_TYPES)[number], id: s
     modifierRequirementIds: modifierRequirements.map((r) => r.id),
     requirements: await Requirements.findMany(db, { entityIds: [id], entityType }),
     properties: await Properties.findMany(db, { entityIds: [id], entityType, type: "NOTE" }),
-  };
-}
-
-/** How many of each an entity has. */
-async function counts(entityType: (typeof ENTITY_TYPES)[number], id: string) {
-  const { modifiers, modifierRequirementIds, requirements, properties } = await customizationsOf(entityType, id);
-  return {
-    modifiers: modifiers.length,
-    modifierRequirements: modifierRequirementIds.length,
-    requirements: requirements.length,
-    properties: properties.length,
   };
 }
 

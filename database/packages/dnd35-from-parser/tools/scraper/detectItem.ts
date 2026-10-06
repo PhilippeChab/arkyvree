@@ -92,6 +92,58 @@ function resolveWeaponName(srdName: string, overrideNameMap?: Record<string, str
   return srdName;
 }
 
+export function buildItemDetected(
+  raw: ItemReference["raw"],
+  overrideNameMap?: Record<string, string>,
+): ItemReference["detected"] {
+  const weapons: ItemReference["detected"]["weapons"] = {};
+  const armor: ItemReference["detected"]["armor"] = {};
+  const goods: ItemReference["detected"]["goods"] = {};
+
+  for (const w of raw.weapons) {
+    if (DEFAULT_WEAPON_SKIPS.has(w.name)) continue;
+    if (isAmmunition(w.name)) continue;
+
+    const resolved = resolveWeaponName(w.name, overrideNameMap);
+    const def = getWeaponDefinition(resolved);
+
+    weapons[w.name] = {
+      generatorName: def ? resolved : null,
+      proficiency: w.proficiency,
+      costGp: parseCost(w.cost),
+      weight: parseWeight(w.weight),
+    };
+  }
+
+  for (const a of raw.armor) {
+    if (DEFAULT_ARMOR_SKIPS.has(a.name)) continue;
+    if (a.category === "Extras") continue;
+
+    const isShieldCategory = a.category === "Shields";
+    const resolved = resolveArmorName(a.name, overrideNameMap);
+    const def = isShieldCategory ? getShieldDefinition(resolved) : getArmorDefinition(resolved);
+    const itemType: "Armor" | "Shield" = isShieldCategory ? "Shield" : "Armor";
+
+    armor[a.name] = {
+      generatorName: def ? resolved : null,
+      type: itemType,
+      proficiencyCategory: a.category,
+      costGp: parseCost(a.cost),
+      weight: parseWeight(a.weight),
+    };
+  }
+
+  for (const g of raw.goods) {
+    goods[g.name] = {
+      costGp: parseCost(g.cost),
+      weight: parseWeight(g.weight),
+      category: TABLE_CATEGORIES[g.tableId] ?? g.tableId,
+    };
+  }
+
+  return { weapons, armor, goods, unresolved: unresolvedItems({ weapons, armor }) };
+}
+
 export function parseCost(cost: string): string {
   if (!cost || cost === "—" || cost === "-") return "0";
 
@@ -149,56 +201,4 @@ export function unresolvedItems(
       .filter(([name, piece]) => !piece.generatorName && !skipped(name))
       .map(([name, piece]) => `${piece.type.toLowerCase()}: ${name}`),
   ];
-}
-
-export function buildItemDetected(
-  raw: ItemReference["raw"],
-  overrideNameMap?: Record<string, string>,
-): ItemReference["detected"] {
-  const weapons: ItemReference["detected"]["weapons"] = {};
-  const armor: ItemReference["detected"]["armor"] = {};
-  const goods: ItemReference["detected"]["goods"] = {};
-
-  for (const w of raw.weapons) {
-    if (DEFAULT_WEAPON_SKIPS.has(w.name)) continue;
-    if (isAmmunition(w.name)) continue;
-
-    const resolved = resolveWeaponName(w.name, overrideNameMap);
-    const def = getWeaponDefinition(resolved);
-
-    weapons[w.name] = {
-      generatorName: def ? resolved : null,
-      proficiency: w.proficiency,
-      costGp: parseCost(w.cost),
-      weight: parseWeight(w.weight),
-    };
-  }
-
-  for (const a of raw.armor) {
-    if (DEFAULT_ARMOR_SKIPS.has(a.name)) continue;
-    if (a.category === "Extras") continue;
-
-    const isShieldCategory = a.category === "Shields";
-    const resolved = resolveArmorName(a.name, overrideNameMap);
-    const def = isShieldCategory ? getShieldDefinition(resolved) : getArmorDefinition(resolved);
-    const itemType: "Armor" | "Shield" = isShieldCategory ? "Shield" : "Armor";
-
-    armor[a.name] = {
-      generatorName: def ? resolved : null,
-      type: itemType,
-      proficiencyCategory: a.category,
-      costGp: parseCost(a.cost),
-      weight: parseWeight(a.weight),
-    };
-  }
-
-  for (const g of raw.goods) {
-    goods[g.name] = {
-      costGp: parseCost(g.cost),
-      weight: parseWeight(g.weight),
-      category: TABLE_CATEGORIES[g.tableId] ?? g.tableId,
-    };
-  }
-
-  return { weapons, armor, goods, unresolved: unresolvedItems({ weapons, armor }) };
 }

@@ -288,12 +288,6 @@ export function evaluateTemplateExpression(
   return evNumeric(ast);
 }
 
-/** Strip the leading `{{` and trailing `}}` and return the inner expression. */
-export function extractTemplateExpression(value: string): string | null {
-  const match = value.match(/^\{\{\s*([\s\S]+?)\s*\}\}$/);
-  return match?.[1] ?? null;
-}
-
 /** Pull every referenced path out of a template value. Compound expressions
  *  like `{{ floor([classes.ranger.level] / 2) }}` yield each bracketed path;
  *  legacy bare-path values like `{{ x.y.z }}` yield the single path. Used for
@@ -310,6 +304,12 @@ export function extractReferencedPaths(value: string): string[] {
   // No brackets — treat the whole inner as a bare path only if it looks like
   // one. Allow leading `_` to match the tokenizer's IDENT character class.
   return /^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(inner) ? [inner] : [];
+}
+
+/** Strip the leading `{{` and trailing `}}` and return the inner expression. */
+export function extractTemplateExpression(value: string): string | null {
+  const match = value.match(/^\{\{\s*([\s\S]+?)\s*\}\}$/);
+  return match?.[1] ?? null;
 }
 
 /**

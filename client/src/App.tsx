@@ -62,41 +62,23 @@ const SkillDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/e
 
 const VerifyEmail = lazy(() => import("@/client/src/pages/auth/VerifyEmail.tsx"));
 
-function PrivateRoute() {
-  const location = useLocation();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const signedOutByUser = useAuthStore((s) => s.signedOutByUser);
-  const [checked, setChecked] = useState(false);
-
-  useEffect(() => {
-    authProbe ??= checkSession(queryClient);
-    let cancelled = false;
-    void authProbe.finally(() => {
-      if (!cancelled) setChecked(true);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (!checked && !isAuthenticated) return null;
-  if (isAuthenticated) return <Outlet />;
-
-  // Read-only here; DemoExpiredPage clears the flag on mount. Mutating during
-  // render is unsafe under StrictMode's double-invoke (the second pass would
-  // see an already-cleared flag and fall through to /sign-in).
-  let demoExpired = false;
-  try {
-    demoExpired = !!localStorage.getItem(DEMO_EXPIRED_FLAG);
-  } catch {
-    // storage disabled
-  }
-  if (demoExpired) return <Navigate to="/demo-expired" replace />;
-
-  // Back to the page once signed in, unless the user signed out of it
-  const target = location.pathname + location.search;
-  const redirectParam = target !== "/" && !signedOutByUser ? `?redirect=${encodeURIComponent(target)}` : "";
-  return <Navigate to={`/sign-in${redirectParam}`} replace />;
+function App() {
+  return (
+    <ErrorBoundary>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <CustomThemeProvider>
+            <SnackbarProvider>
+              <WebSocketProvider>
+                <CssBaseline />
+                <AppRoutes />
+              </WebSocketProvider>
+            </SnackbarProvider>
+          </CustomThemeProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
+  );
 }
 
 function AppRoutes() {
@@ -159,23 +141,41 @@ function AppRoutes() {
   );
 }
 
-function App() {
-  return (
-    <ErrorBoundary>
-      <BrowserRouter>
-        <QueryClientProvider client={queryClient}>
-          <CustomThemeProvider>
-            <SnackbarProvider>
-              <WebSocketProvider>
-                <CssBaseline />
-                <AppRoutes />
-              </WebSocketProvider>
-            </SnackbarProvider>
-          </CustomThemeProvider>
-        </QueryClientProvider>
-      </BrowserRouter>
-    </ErrorBoundary>
-  );
+function PrivateRoute() {
+  const location = useLocation();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const signedOutByUser = useAuthStore((s) => s.signedOutByUser);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    authProbe ??= checkSession(queryClient);
+    let cancelled = false;
+    void authProbe.finally(() => {
+      if (!cancelled) setChecked(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!checked && !isAuthenticated) return null;
+  if (isAuthenticated) return <Outlet />;
+
+  // Read-only here; DemoExpiredPage clears the flag on mount. Mutating during
+  // render is unsafe under StrictMode's double-invoke (the second pass would
+  // see an already-cleared flag and fall through to /sign-in).
+  let demoExpired = false;
+  try {
+    demoExpired = !!localStorage.getItem(DEMO_EXPIRED_FLAG);
+  } catch {
+    // storage disabled
+  }
+  if (demoExpired) return <Navigate to="/demo-expired" replace />;
+
+  // Back to the page once signed in, unless the user signed out of it
+  const target = location.pathname + location.search;
+  const redirectParam = target !== "/" && !signedOutByUser ? `?redirect=${encodeURIComponent(target)}` : "";
+  return <Navigate to={`/sign-in${redirectParam}`} replace />;
 }
 
 export default App;

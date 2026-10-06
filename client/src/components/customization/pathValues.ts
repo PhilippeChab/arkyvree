@@ -17,14 +17,6 @@ export function defaultValueForPath(
   return "";
 }
 
-/** The values a path's input offers as a select: its own, True / False for a boolean, or null for free input. */
-export function pathChoices(
-  valueType: PathValueType | undefined,
-  possibleValues: PathChoice[] | undefined,
-): PathChoice[] | null {
-  return possibleValues ?? (valueType === "boolean" ? BOOLEAN_CHOICES : null);
-}
-
 /** Whether a literal value suits the path: one of its choices, or a number on a numeric path. */
 export function fitsPath(
   value: string,
@@ -35,4 +27,12 @@ export function fitsPath(
   if (choices) return choices.some((choice) => choice.value === value);
   if (valueType === "number") return value.trim() !== "" && Number.isFinite(Number(value));
   return true;
+}
+
+/** The values a path's input offers as a select: its own, True / False for a boolean, or null for free input. */
+export function pathChoices(
+  valueType: PathValueType | undefined,
+  possibleValues: PathChoice[] | undefined,
+): PathChoice[] | null {
+  return possibleValues ?? (valueType === "boolean" ? BOOLEAN_CHOICES : null);
 }

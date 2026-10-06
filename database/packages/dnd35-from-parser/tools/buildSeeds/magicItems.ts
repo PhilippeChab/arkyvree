@@ -42,20 +42,6 @@ function withOwnProperties(base: Property[], own: Property[]): Property[] {
 }
 
 /**
- * The magic items a magic item reference seeds (those its overrides don't skip), each with its override and its slot,
- * checked when it has one: the override's, else as detected. Generation throws a slot's problem, and
- * `parser:validate` reports it.
- */
-export function seededMagicItems(ref: MagicItemReference) {
-  return Object.entries(ref.detected).flatMap(([name, det]) => {
-    const override = ref.overrides?.[name];
-    if (override?.skip) return [];
-    const slot = override?.slot ?? det.slot;
-    return [{ name, det, override, slot: slot ? checkOneOf(slot, LOCATION_OPTIONS, `${name}'s slot`) : undefined }];
-  });
-}
-
-/**
  * The magic item seeds, by kind. A specific armor or shield takes the stats its text gives (`readArmorStats`) and its
  * enhancement bonus to AC, a specific weapon made from a base one its enhancement bonus to attack and damage
  * (`readWeaponEnhancement`); an item made from a base one weighs what its base does (`baseWeights`, by name) unless it
@@ -157,4 +143,18 @@ export function buildMagicItemSeeds(
   }
 
   return { magicArmor, magicShields, magicWeapons, wondrousItems, rings, rods, staffs };
+}
+
+/**
+ * The magic items a magic item reference seeds (those its overrides don't skip), each with its override and its slot,
+ * checked when it has one: the override's, else as detected. Generation throws a slot's problem, and
+ * `parser:validate` reports it.
+ */
+export function seededMagicItems(ref: MagicItemReference) {
+  return Object.entries(ref.detected).flatMap(([name, det]) => {
+    const override = ref.overrides?.[name];
+    if (override?.skip) return [];
+    const slot = override?.slot ?? det.slot;
+    return [{ name, det, override, slot: slot ? checkOneOf(slot, LOCATION_OPTIONS, `${name}'s slot`) : undefined }];
+  });
 }

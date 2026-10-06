@@ -116,108 +116,6 @@ function AbilityCard({
   );
 }
 
-function PointBuyScores({
-  abilities,
-  abilityValues,
-  onChange,
-}: {
-  abilities: AbilityOption[];
-  abilityValues: Record<string, number> | undefined;
-  onChange: (scores: Record<string, number>) => void;
-}) {
-  const pointsSpent = useMemo(() => {
-    if (!abilityValues) return 0;
-    return abilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[abilityValues[a.id] ?? 8] ?? 0), 0);
-  }, [abilities, abilityValues]);
-
-  const pointsRemaining = POINT_BUY_TOTAL - pointsSpent;
-
-  return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
-      {abilities.map((ability) => {
-        const score = abilityValues?.[ability.id] ?? 8;
-        const costNow = POINT_BUY_COSTS[score] ?? 0;
-        const costNext = POINT_BUY_COSTS[score + 1];
-        const canIncrease = score < 18 && costNext !== undefined && costNext - costNow <= pointsRemaining;
-        const canDecrease = score > 8;
-
-        return (
-          <AbilityCard
-            key={ability.id}
-            name={ability.name}
-            score={score}
-            onIncrease={() => onChange({ ...abilityValues, [ability.id]: score + 1 })}
-            onDecrease={() => onChange({ ...abilityValues, [ability.id]: score - 1 })}
-            canIncrease={canIncrease}
-            canDecrease={canDecrease}
-            bottomInfo={`Cost: ${costNow}`}
-          />
-        );
-      })}
-    </Stack>
-  );
-}
-
-/** An ability's score before one is set: 8 to point-buy from, the standard array's in order, else 10. */
-function defaultScore(method: RollMethodId, index: number) {
-  if (method === "point-buy") return 8;
-  if (method === "standard-array") return STANDARD_ARRAY[index] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1];
-  return 10;
-}
-
-/** Every ability's score: the one set, or its method's default. */
-function scoresOf(abilities: AbilityOption[], values: Record<string, number> | undefined, method: RollMethodId) {
-  return Object.fromEntries(
-    abilities.map((ability, index) => [ability.id, values?.[ability.id] ?? defaultScore(method, index)]),
-  );
-}
-
-function StandardArrayScores({
-  abilities,
-  abilityValues,
-  onChange,
-}: {
-  abilities: AbilityOption[];
-  abilityValues: Record<string, number> | undefined;
-  onChange: (scores: Record<string, number>) => void;
-}) {
-  // A score already given to another ability swaps with this one's
-  const handleChange = (abilityId: string, newValue: number) => {
-    if (!abilityValues) return;
-    const next = { ...abilityValues };
-    const swapId = abilities.find((a) => a.id !== abilityId && abilityValues[a.id] === newValue)?.id;
-    if (swapId) next[swapId] = abilityValues[abilityId] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1];
-    next[abilityId] = newValue;
-    onChange(next);
-  };
-
-  const sortedAsc = useMemo(() => [...STANDARD_ARRAY].sort((a, b) => a - b), []);
-
-  return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
-      {abilities.map((ability) => {
-        const score = abilityValues?.[ability.id] ?? STANDARD_ARRAY[0];
-        const idx = sortedAsc.indexOf(score);
-        const canIncrease = idx !== -1 && idx < sortedAsc.length - 1;
-        const canDecrease = idx > 0;
-
-        return (
-          <AbilityCard
-            key={ability.id}
-            name={ability.name}
-            score={score}
-            onIncrease={() => canIncrease && handleChange(ability.id, sortedAsc[idx + 1])}
-            onDecrease={() => canDecrease && handleChange(ability.id, sortedAsc[idx - 1])}
-            canIncrease={canIncrease}
-            canDecrease={canDecrease}
-            bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(score))}`}
-          />
-        );
-      })}
-    </Stack>
-  );
-}
-
 function AbilityScoresSection({
   ref,
   abilities,
@@ -334,6 +232,108 @@ function AbilityScoresSection({
             canDecrease={!rolling && displayValue > 1}
             bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(displayValue))}`}
             isSettled={isSettled}
+          />
+        );
+      })}
+    </Stack>
+  );
+}
+
+/** An ability's score before one is set: 8 to point-buy from, the standard array's in order, else 10. */
+function defaultScore(method: RollMethodId, index: number) {
+  if (method === "point-buy") return 8;
+  if (method === "standard-array") return STANDARD_ARRAY[index] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1];
+  return 10;
+}
+
+function PointBuyScores({
+  abilities,
+  abilityValues,
+  onChange,
+}: {
+  abilities: AbilityOption[];
+  abilityValues: Record<string, number> | undefined;
+  onChange: (scores: Record<string, number>) => void;
+}) {
+  const pointsSpent = useMemo(() => {
+    if (!abilityValues) return 0;
+    return abilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[abilityValues[a.id] ?? 8] ?? 0), 0);
+  }, [abilities, abilityValues]);
+
+  const pointsRemaining = POINT_BUY_TOTAL - pointsSpent;
+
+  return (
+    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+      {abilities.map((ability) => {
+        const score = abilityValues?.[ability.id] ?? 8;
+        const costNow = POINT_BUY_COSTS[score] ?? 0;
+        const costNext = POINT_BUY_COSTS[score + 1];
+        const canIncrease = score < 18 && costNext !== undefined && costNext - costNow <= pointsRemaining;
+        const canDecrease = score > 8;
+
+        return (
+          <AbilityCard
+            key={ability.id}
+            name={ability.name}
+            score={score}
+            onIncrease={() => onChange({ ...abilityValues, [ability.id]: score + 1 })}
+            onDecrease={() => onChange({ ...abilityValues, [ability.id]: score - 1 })}
+            canIncrease={canIncrease}
+            canDecrease={canDecrease}
+            bottomInfo={`Cost: ${costNow}`}
+          />
+        );
+      })}
+    </Stack>
+  );
+}
+
+/** Every ability's score: the one set, or its method's default. */
+function scoresOf(abilities: AbilityOption[], values: Record<string, number> | undefined, method: RollMethodId) {
+  return Object.fromEntries(
+    abilities.map((ability, index) => [ability.id, values?.[ability.id] ?? defaultScore(method, index)]),
+  );
+}
+
+function StandardArrayScores({
+  abilities,
+  abilityValues,
+  onChange,
+}: {
+  abilities: AbilityOption[];
+  abilityValues: Record<string, number> | undefined;
+  onChange: (scores: Record<string, number>) => void;
+}) {
+  // A score already given to another ability swaps with this one's
+  const handleChange = (abilityId: string, newValue: number) => {
+    if (!abilityValues) return;
+    const next = { ...abilityValues };
+    const swapId = abilities.find((a) => a.id !== abilityId && abilityValues[a.id] === newValue)?.id;
+    if (swapId) next[swapId] = abilityValues[abilityId] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1];
+    next[abilityId] = newValue;
+    onChange(next);
+  };
+
+  const sortedAsc = useMemo(() => [...STANDARD_ARRAY].sort((a, b) => a - b), []);
+
+  return (
+    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+      {abilities.map((ability) => {
+        const score = abilityValues?.[ability.id] ?? STANDARD_ARRAY[0];
+        const idx = sortedAsc.indexOf(score);
+        const canIncrease = idx !== -1 && idx < sortedAsc.length - 1;
+        const canDecrease = idx > 0;
+
+        return (
+          <AbilityCard
+            key={ability.id}
+            name={ability.name}
+            score={score}
+            onIncrease={() => canIncrease && handleChange(ability.id, sortedAsc[idx + 1])}
+            onDecrease={() => canDecrease && handleChange(ability.id, sortedAsc[idx - 1])}
+            canIncrease={canIncrease}
+            canDecrease={canDecrease}
+            bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(score))}`}
           />
         );
       })}

@@ -89,27 +89,6 @@ export interface SpellTagLists {
   joinsClassList: boolean;
 }
 
-function saveOf(saveName: string | null | undefined, saveEffect: string | null | undefined) {
-  return saveName && saveEffect ? `${saveName} ${saveEffect}` : saveEffect || "None";
-}
-
-/** A spell's tags that show on this list: a domain's on the cleric's, a school's on the wizard's. */
-function tagsFor(sheet: SpellSheet, powerId: string | undefined, aptitudeId: string): SpellRowTag[] | undefined {
-  const kept = (powerId ? sheet.spellTags?.[powerId] : undefined)?.flatMap((name) => {
-    const lists = sheet.spellTagLists?.[name];
-    return lists?.aptitudeIds.includes(aptitudeId) ? [{ name, joinsClassList: lists.joinsClassList }] : [];
-  });
-  return kept?.length ? kept : undefined;
-}
-
-/** The uses per day an aptitude allows at a spell level, read off its per-level entry. */
-function usesPerDay(aptitudes: SpellSheet["aptitudes"], aptitudeName: string, spellLevel: number): number | null {
-  // Leveled aptitudes carry a per-spell-level entry the sheet's type doesn't declare.
-  const aptitude: Record<string, unknown> | undefined = aptitudes?.[stripSeparators(aptitudeName)];
-  const levelData = aptitude?.[String(spellLevel)];
-  return isRecord(levelData) && typeof levelData.uses === "number" ? levelData.uses : null;
-}
-
 /** The levels' spells, a spell once per group with all its tags, then the spells modifiers give. */
 function groupSpells(sheet: SpellSheet, aptitudeNameById: Map<string, string>) {
   const groupMap = new Map<string, SpellGroup>();
@@ -164,6 +143,27 @@ function groupSpells(sheet: SpellSheet, aptitudeNameById: Map<string, string>) {
     });
   }
   return groupMap;
+}
+
+function saveOf(saveName: string | null | undefined, saveEffect: string | null | undefined) {
+  return saveName && saveEffect ? `${saveName} ${saveEffect}` : saveEffect || "None";
+}
+
+/** A spell's tags that show on this list: a domain's on the cleric's, a school's on the wizard's. */
+function tagsFor(sheet: SpellSheet, powerId: string | undefined, aptitudeId: string): SpellRowTag[] | undefined {
+  const kept = (powerId ? sheet.spellTags?.[powerId] : undefined)?.flatMap((name) => {
+    const lists = sheet.spellTagLists?.[name];
+    return lists?.aptitudeIds.includes(aptitudeId) ? [{ name, joinsClassList: lists.joinsClassList }] : [];
+  });
+  return kept?.length ? kept : undefined;
+}
+
+/** The uses per day an aptitude allows at a spell level, read off its per-level entry. */
+function usesPerDay(aptitudes: SpellSheet["aptitudes"], aptitudeName: string, spellLevel: number): number | null {
+  // Leveled aptitudes carry a per-spell-level entry the sheet's type doesn't declare.
+  const aptitude: Record<string, unknown> | undefined = aptitudes?.[stripSeparators(aptitudeName)];
+  const levelData = aptitude?.[String(spellLevel)];
+  return isRecord(levelData) && typeof levelData.uses === "number" ? levelData.uses : null;
 }
 
 /** The character's spells by aptitude (by name), each aptitude's levels in order and their spells by name. */

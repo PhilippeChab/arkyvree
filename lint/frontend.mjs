@@ -51,26 +51,6 @@ function calleeName(node) {
   return null;
 }
 
-/** A JSX element's name: `IconButton`, `Dialog`. */
-function elementName(node) {
-  return node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;
-}
-
-/** Whether a JSX element has the attribute `name`. */
-function hasAttribute(node, name) {
-  return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
-}
-
-function inClient(context) {
-  return repoPath(context.filename).startsWith("client/src/");
-}
-
-/** The nearest JSX element around `node`. */
-function parentElement(node) {
-  for (let p = node.parent; p; p = p.parent) if (p.type === "JSXElement") return p;
-  return null;
-}
-
 function createAccessibleIconButtons(context) {
   if (!inClient(context)) return {};
   return {
@@ -87,30 +67,6 @@ function createAccessibleIconButtons(context) {
       });
     },
   };
-}
-
-/** Whether a member chain starts at `rpc`: `rpc.api.rulesets[":id"].$get`. */
-function fromRpc(node) {
-  let object = node;
-  while (object.type === "MemberExpression") object = object.object;
-  return object.type === "Identifier" && object.name === "rpc";
-}
-
-/**
- * Whether `node` is in a function a query or a mutation runs: one a property or a prop named `…Fn` holds (`queryFn`,
- * `mutationFn`, or a hook's or a component's that becomes one, as `useRulesetSection`'s `createFn`).
- */
-function inQueryFunction(node) {
-  for (let p = node.parent; p; p = p.parent) {
-    const name =
-      p.type === "Property" && p.key.type === "Identifier"
-        ? p.key.name
-        : p.type === "JSXAttribute" && p.name.type === "JSXIdentifier"
-          ? p.name.name
-          : null;
-    if (name?.endsWith("Fn")) return true;
-  }
-  return false;
 }
 
 function createApiCallsInQueries(context) {
@@ -174,31 +130,6 @@ function createClientApis(context) {
       }
     },
   };
-}
-
-/** Whether `node` names one of `names`. */
-function namesOne(node, names) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some((child) => namesOne(child, names));
-  if (node.type === "Identifier" && names.has(node.name)) return true;
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && namesOne(child, names),
-  );
-}
-
-/** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */
-function readsWatch(node) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some(readsWatch);
-  if (node.type === "CallExpression") {
-    const callee = node.callee;
-    const name =
-      callee.type === "Identifier" ? callee.name : callee.type === "MemberExpression" ? callee.property.name : null;
-    if (name === "watch" || name === "useWatch") return true;
-  }
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsWatch(child),
-  );
 }
 
 function createControlledInputs(context) {
@@ -277,20 +208,6 @@ function createDialogConventions(context) {
       }
     },
   };
-}
-
-/**
- * Whether `node` runs as an effect runs: in its callback (`useEffect(() => …)`, `useLayoutEffect`), not in a function
- * it hands on (a subscription's handler, a timer's callback, which an event calls).
- */
-function inEffect(node) {
-  for (let p = node.parent; p; p = p.parent) {
-    if (p.type === "ArrowFunctionExpression" || p.type === "FunctionExpression" || p.type === "FunctionDeclaration") {
-      const call = p.parent;
-      return call?.type === "CallExpression" && call.arguments[0] === p && EFFECTS.has(calleeName(call));
-    }
-  }
-  return false;
 }
 
 function createEffectWrites(context) {
@@ -372,6 +289,89 @@ function createQueryKeyRule(context) {
       });
     },
   };
+}
+
+/** A JSX element's name: `IconButton`, `Dialog`. */
+function elementName(node) {
+  return node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;
+}
+
+/** Whether a member chain starts at `rpc`: `rpc.api.rulesets[":id"].$get`. */
+function fromRpc(node) {
+  let object = node;
+  while (object.type === "MemberExpression") object = object.object;
+  return object.type === "Identifier" && object.name === "rpc";
+}
+
+/** Whether a JSX element has the attribute `name`. */
+function hasAttribute(node, name) {
+  return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
+}
+
+function inClient(context) {
+  return repoPath(context.filename).startsWith("client/src/");
+}
+
+/**
+ * Whether `node` runs as an effect runs: in its callback (`useEffect(() => …)`, `useLayoutEffect`), not in a function
+ * it hands on (a subscription's handler, a timer's callback, which an event calls).
+ */
+function inEffect(node) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (p.type === "ArrowFunctionExpression" || p.type === "FunctionExpression" || p.type === "FunctionDeclaration") {
+      const call = p.parent;
+      return call?.type === "CallExpression" && call.arguments[0] === p && EFFECTS.has(calleeName(call));
+    }
+  }
+  return false;
+}
+
+/**
+ * Whether `node` is in a function a query or a mutation runs: one a property or a prop named `…Fn` holds (`queryFn`,
+ * `mutationFn`, or a hook's or a component's that becomes one, as `useRulesetSection`'s `createFn`).
+ */
+function inQueryFunction(node) {
+  for (let p = node.parent; p; p = p.parent) {
+    const name =
+      p.type === "Property" && p.key.type === "Identifier"
+        ? p.key.name
+        : p.type === "JSXAttribute" && p.name.type === "JSXIdentifier"
+          ? p.name.name
+          : null;
+    if (name?.endsWith("Fn")) return true;
+  }
+  return false;
+}
+
+/** Whether `node` names one of `names`. */
+function namesOne(node, names) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some((child) => namesOne(child, names));
+  if (node.type === "Identifier" && names.has(node.name)) return true;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && namesOne(child, names),
+  );
+}
+
+/** The nearest JSX element around `node`. */
+function parentElement(node) {
+  for (let p = node.parent; p; p = p.parent) if (p.type === "JSXElement") return p;
+  return null;
+}
+
+/** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */
+function readsWatch(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(readsWatch);
+  if (node.type === "CallExpression") {
+    const callee = node.callee;
+    const name =
+      callee.type === "Identifier" ? callee.name : callee.type === "MemberExpression" ? callee.property.name : null;
+    if (name === "watch" || name === "useWatch") return true;
+  }
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsWatch(child),
+  );
 }
 
 export default {

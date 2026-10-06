@@ -43,27 +43,6 @@ const SAVE: Record<SaveType, (level: number) => number> = {
   poor: (level) => Math.floor(level / 3),
 };
 
-/** What a table (by class level, then spell level) adds at each class level: `delta` more at `spellLevel`. */
-function tableGains(table: number[][]) {
-  return table.flatMap((row, i) =>
-    row.flatMap((count, spellLevel) => {
-      const delta = count - (table[i - 1]?.[spellLevel] ?? 0);
-      return delta > 0 ? [{ level: i + 1, spellLevel, delta }] : [];
-    }),
-  );
-}
-
-/** The spell levels a table opens at each class level. */
-function tableOpenings(table: number[][]) {
-  return table.flatMap((row, i) => {
-    const opened = table[i - 1]?.length ?? 0;
-    return Array.from({ length: Math.max(row.length - opened, 0) }, (_, j) => ({
-      level: i + 1,
-      spellLevel: opened + j,
-    }));
-  });
-}
-
 /** A spellcaster's slots in one of its lists, gated by its requirements. */
 function listSlots(
   spells: NonNullable<ClassSeed["spells"]>,
@@ -98,6 +77,27 @@ function listSlots(
 function spellSlots(spells: NonNullable<ClassSeed["spells"]>): (ModifierSeed & { level: number })[] {
   const lists = spells.lists ?? [{ slug: spells.slug, requirements: [] }];
   return lists.flatMap((list) => listSlots(spells, list));
+}
+
+/** What a table (by class level, then spell level) adds at each class level: `delta` more at `spellLevel`. */
+function tableGains(table: number[][]) {
+  return table.flatMap((row, i) =>
+    row.flatMap((count, spellLevel) => {
+      const delta = count - (table[i - 1]?.[spellLevel] ?? 0);
+      return delta > 0 ? [{ level: i + 1, spellLevel, delta }] : [];
+    }),
+  );
+}
+
+/** The spell levels a table opens at each class level. */
+function tableOpenings(table: number[][]) {
+  return table.flatMap((row, i) => {
+    const opened = table[i - 1]?.length ?? 0;
+    return Array.from({ length: Math.max(row.length - opened, 0) }, (_, j) => ({
+      level: i + 1,
+      spellLevel: opened + j,
+    }));
+  });
 }
 
 /** The class level each spell level opens at, by class. */

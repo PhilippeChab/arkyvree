@@ -42,23 +42,6 @@ function expandAnyFeatRequirement(text: string): RequirementEntry | undefined {
   return /\btwo\s+\w/i.test(text) ? gte(`feats.${slug}.count`, 2) : eq(`feats.${slug}.*.possessed`);
 }
 
-/** Normalize abbreviated Craft subtypes from prerequisite text to proper D&D skill names */
-function normalizeCraftSubtype(subtype: string): string {
-  const lower = subtype.toLowerCase().trim();
-  const map: Record<string, string> = {
-    leather: "leatherworking",
-    metal: "metalworking",
-    wood: "woodworking",
-    stone: "stoneworking",
-    bone: "bonecarving",
-    gem: "gemcutting",
-    cloth: "weaving",
-    pottery: "pottery",
-    basket: "basketweaving",
-  };
-  return map[lower] ?? subtype;
-}
-
 /** Expand "Knowledge (any)" to OR of all matching knowledge skills, or handle multi-option parentheticals */
 function expandSkillRequirement(name: string, ranks: number): RequirementEntry | null {
   // "Knowledge (any)" → OR of all Knowledge skills
@@ -110,6 +93,23 @@ function featPrerequisites(scraped: string[]): string[] {
  *  Mechanical ones are tracked as unresolved so they show up as TODOs. */
 function isMechanicalPrereq(text: string): boolean {
   return /animal companion|spell-like|psionic/i.test(text);
+}
+
+/** Normalize abbreviated Craft subtypes from prerequisite text to proper D&D skill names */
+function normalizeCraftSubtype(subtype: string): string {
+  const lower = subtype.toLowerCase().trim();
+  const map: Record<string, string> = {
+    leather: "leatherworking",
+    metal: "metalworking",
+    wood: "woodworking",
+    stone: "stoneworking",
+    bone: "bonecarving",
+    gem: "gemcutting",
+    cloth: "weaving",
+    pottery: "pottery",
+    basket: "basketweaving",
+  };
+  return map[lower] ?? subtype;
 }
 
 /** A compound feat requirement: "Weapon Focus (longbow or shortbow)". */

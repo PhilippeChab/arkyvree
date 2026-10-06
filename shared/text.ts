@@ -10,14 +10,14 @@ export function getInitial(name: string) {
   return name.charAt(0).toUpperCase();
 }
 
-/** Text as it's stored: Unicode-normalized (NFKC) and trimmed. The server stores it so; the client measures it so. */
-export function sanitizeText(text: string) {
-  return text.normalize("NFKC").trim();
-}
-
 /** An email address as it's stored: sanitized text, lowercased. */
 export function sanitizeEmail(email: string) {
   return sanitizeText(email).toLowerCase();
+}
+
+/** Text as it's stored: Unicode-normalized (NFKC) and trimmed. The server stores it so; the client measures it so. */
+export function sanitizeText(text: string) {
+  return text.normalize("NFKC").trim();
 }
 
 /** `s` as a slug: its letters and digits, lowercased ("Weapon Focus: Longsword" → "weaponfocuslongsword"). */

@@ -31,112 +31,9 @@ const SEPARATOR = /^\s*[-─━=═*#~_]{3,}\s*$/;
 /** The formatter's width, which a doc comment wraps to */
 const WIDTH = 120;
 
-/** A comment's words, line by line: a separator's none, a decorated title's title, a block's without its stars. */
-function wordsOf(comment) {
-  if (comment.type === "Line") {
-    if (SEPARATOR.test(comment.value)) return [];
-    return [DECORATED.test(comment.value) ? " " + DECORATED.exec(comment.value)[1] : comment.value];
-  }
-  const lines = comment.value.split("\n").map((line) => line.replace(/^\s*\*? ?/, "").trimEnd());
-  while (lines.length && !lines[0].trim()) lines.shift();
-  while (lines.length && !lines.at(-1).trim()) lines.pop();
-  return lines.map((line) => " " + line);
-}
-
 /** Whether a stack's words hold `*\/`, which would end the doc comment they'd make. */
 function closesEarly(stack) {
   return stack.some((comment) => wordsOf(comment).some((line) => line.includes("*/")));
-}
-
-function rangeOf(node) {
-  return node.range ?? [node.start, node.end];
-}
-
-/** Whether a comment is alone on its lines: nothing but spaces before it on its first, after it on its last. */
-function isAlone(text, comment) {
-  const [start, end] = rangeOf(comment);
-  const lineStart = text.lastIndexOf("\n", start - 1) + 1;
-  const lineEnd = text.indexOf("\n", end);
-  return (
-    !/\S/.test(text.slice(lineStart, start)) && !/\S/.test(text.slice(end, lineEnd === -1 ? text.length : lineEnd))
-  );
-}
-
-/** Whether a top-level statement declares or exports something: what a `/** … *\/` describes. */
-function isDeclaration(statement) {
-  if (statement.type === "ExportNamedDeclaration")
-    return statement.declaration !== null || statement.specifiers.length > 0;
-  return DECLARATIONS.has(statement.type) || statement.type === "ExportAllDeclaration";
-}
-
-/** Whether a comment is a doc comment, `/** … *\/`. */
-function isDoc(comment) {
-  return comment.type === "Block" && comment.value.startsWith("*");
-}
-
-/**
- * `lines` wrapped to `width`: a paragraph's lines joined and wrapped again, a list item, a table row, a tag or an
- * indented line kept as it is.
- */
-function wrap(lines, width) {
-  const wrapped = [];
-  let words = [];
-  const flush = () => {
-    let line = "";
-    for (const word of words) {
-      if (line && line.length + 1 + word.length > width) {
-        wrapped.push(line);
-        line = word;
-      } else line = line ? `${line} ${word}` : word;
-    }
-    if (line) wrapped.push(line);
-    words = [];
-  };
-  for (const line of lines) {
-    if (line.trim() && !/^(\s|[-*•+|>#@]|\d+[.)]\s)/.test(line)) {
-      // A capital after a line that ends no sentence starts a new one: on a line of its own
-      if (/^[A-Z]/.test(line) && words.length && !/[a-z0-9.,;:!?—–-]$/.test(words.at(-1))) flush();
-      words.push(...line.split(/\s+/).filter(Boolean));
-      continue;
-    }
-    flush();
-    wrapped.push(line);
-  }
-  flush();
-  return wrapped;
-}
-
-/** A comment's words as `//` lines at `indent`, wrapped as a doc comment is. */
-function lineComment(comment, indent) {
-  const lines = wrap(
-    wordsOf(comment).map((line) => line.replace(/^ /, "")),
-    WIDTH - indent.length - "// ".length,
-  );
-  return lines.map((line) => (line ? `// ${line}` : "//")).join(`\n${indent}`);
-}
-
-/** A doc comment holding `lines`, at `indent`, wrapped to the formatter's 120 columns. */
-function docComment(lines, indent) {
-  const kept = wrap(
-    lines.map((line) => line.trimEnd().replace(/^ /, "")),
-    WIDTH - indent.length - " * ".length,
-  );
-  while (kept.length && !kept.at(-1).trim()) kept.pop();
-  if (kept.length === 1 && indent.length + kept[0].length + "/**  */".length <= WIDTH) return `/** ${kept[0]} */`;
-  return ["/**", ...kept.map((line) => (line.trim() ? ` * ${line}` : " *"))].join(`\n${indent}`) + `\n${indent} */`;
-}
-
-/** A stack's comments as one doc comment: each comment's words, a blank line between two. */
-function mergedDoc(stack, indent) {
-  const lines = [];
-  for (const comment of stack) {
-    const words = wordsOf(comment);
-    if (words.length === 0) continue;
-    if (lines.length && comment.type === "Block") lines.push("");
-    else if (lines.length && stack[stack.indexOf(comment) - 1]?.type === "Block") lines.push("");
-    lines.push(...words);
-  }
-  return docComment(lines, indent);
 }
 
 function createCommentStyle(context) {
@@ -300,6 +197,109 @@ function createCommentStyle(context) {
       }
     },
   };
+}
+
+/** A doc comment holding `lines`, at `indent`, wrapped to the formatter's 120 columns. */
+function docComment(lines, indent) {
+  const kept = wrap(
+    lines.map((line) => line.trimEnd().replace(/^ /, "")),
+    WIDTH - indent.length - " * ".length,
+  );
+  while (kept.length && !kept.at(-1).trim()) kept.pop();
+  if (kept.length === 1 && indent.length + kept[0].length + "/**  */".length <= WIDTH) return `/** ${kept[0]} */`;
+  return ["/**", ...kept.map((line) => (line.trim() ? ` * ${line}` : " *"))].join(`\n${indent}`) + `\n${indent} */`;
+}
+
+/** Whether a comment is alone on its lines: nothing but spaces before it on its first, after it on its last. */
+function isAlone(text, comment) {
+  const [start, end] = rangeOf(comment);
+  const lineStart = text.lastIndexOf("\n", start - 1) + 1;
+  const lineEnd = text.indexOf("\n", end);
+  return (
+    !/\S/.test(text.slice(lineStart, start)) && !/\S/.test(text.slice(end, lineEnd === -1 ? text.length : lineEnd))
+  );
+}
+
+/** Whether a top-level statement declares or exports something: what a `/** … *\/` describes. */
+function isDeclaration(statement) {
+  if (statement.type === "ExportNamedDeclaration")
+    return statement.declaration !== null || statement.specifiers.length > 0;
+  return DECLARATIONS.has(statement.type) || statement.type === "ExportAllDeclaration";
+}
+
+/** Whether a comment is a doc comment, `/** … *\/`. */
+function isDoc(comment) {
+  return comment.type === "Block" && comment.value.startsWith("*");
+}
+
+/** A comment's words as `//` lines at `indent`, wrapped as a doc comment is. */
+function lineComment(comment, indent) {
+  const lines = wrap(
+    wordsOf(comment).map((line) => line.replace(/^ /, "")),
+    WIDTH - indent.length - "// ".length,
+  );
+  return lines.map((line) => (line ? `// ${line}` : "//")).join(`\n${indent}`);
+}
+
+/** A stack's comments as one doc comment: each comment's words, a blank line between two. */
+function mergedDoc(stack, indent) {
+  const lines = [];
+  for (const comment of stack) {
+    const words = wordsOf(comment);
+    if (words.length === 0) continue;
+    if (lines.length && comment.type === "Block") lines.push("");
+    else if (lines.length && stack[stack.indexOf(comment) - 1]?.type === "Block") lines.push("");
+    lines.push(...words);
+  }
+  return docComment(lines, indent);
+}
+
+function rangeOf(node) {
+  return node.range ?? [node.start, node.end];
+}
+
+/** A comment's words, line by line: a separator's none, a decorated title's title, a block's without its stars. */
+function wordsOf(comment) {
+  if (comment.type === "Line") {
+    if (SEPARATOR.test(comment.value)) return [];
+    return [DECORATED.test(comment.value) ? " " + DECORATED.exec(comment.value)[1] : comment.value];
+  }
+  const lines = comment.value.split("\n").map((line) => line.replace(/^\s*\*? ?/, "").trimEnd());
+  while (lines.length && !lines[0].trim()) lines.shift();
+  while (lines.length && !lines.at(-1).trim()) lines.pop();
+  return lines.map((line) => " " + line);
+}
+
+/**
+ * `lines` wrapped to `width`: a paragraph's lines joined and wrapped again, a list item, a table row, a tag or an
+ * indented line kept as it is.
+ */
+function wrap(lines, width) {
+  const wrapped = [];
+  let words = [];
+  const flush = () => {
+    let line = "";
+    for (const word of words) {
+      if (line && line.length + 1 + word.length > width) {
+        wrapped.push(line);
+        line = word;
+      } else line = line ? `${line} ${word}` : word;
+    }
+    if (line) wrapped.push(line);
+    words = [];
+  };
+  for (const line of lines) {
+    if (line.trim() && !/^(\s|[-*•+|>#@]|\d+[.)]\s)/.test(line)) {
+      // A capital after a line that ends no sentence starts a new one: on a line of its own
+      if (/^[A-Z]/.test(line) && words.length && !/[a-z0-9.,;:!?—–-]$/.test(words.at(-1))) flush();
+      words.push(...line.split(/\s+/).filter(Boolean));
+      continue;
+    }
+    flush();
+    wrapped.push(line);
+  }
+  flush();
+  return wrapped;
 }
 
 export default {

@@ -74,13 +74,6 @@ const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll",
 
 const UNINDEXED_TREES = ["server/routers/"];
 
-function hasIndex(dir) {
-  if (!indexCache.has(dir)) {
-    indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));
-  }
-  return indexCache.get(dir);
-}
-
 function createFolderIndex(context) {
   const root = rootOf(context.filename);
   const file = repoPath(context.filename);
@@ -195,6 +188,13 @@ function createQueriesInRepositories(context) {
       }
     },
   };
+}
+
+function hasIndex(dir) {
+  if (!indexCache.has(dir)) {
+    indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));
+  }
+  return indexCache.get(dir);
 }
 
 export default {

@@ -18,20 +18,6 @@ import {
 } from "@/database/packages/dnd35/content/weapons.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
-function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | string[]): string[] {
-  if (Array.isArray(items)) return items;
-  switch (items) {
-    case "martial":
-      return MARTIAL_WEAPONS;
-    case "simple":
-      return SIMPLE_WEAPONS;
-    case "exotic":
-      return EXOTIC_WEAPONS;
-    case "all":
-      return ALL_WEAPONS;
-  }
-}
-
 function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
   const results: FeatSeed[] = [];
 
@@ -91,17 +77,6 @@ function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number])
   };
 }
 
-/** The spells a book's domains can name, by their lowercase name: the core rules' and the book's. */
-export function domainSpellNames(book: string): Map<string, string> {
-  const spellNames = (b: string) => {
-    const path = join(REFERENCE_DIR, b, "spells.json");
-    return existsSync(path) ? loadReference(path, "spell").raw.map((spell) => spell.name) : [];
-  };
-  return new Map(
-    [...spellNames("srd"), ...(book === "srd" ? [] : spellNames(book))].map((name) => [name.toLowerCase(), name]),
-  );
-}
-
 /**
  * A domains reference's domains, as their mapping and overrides make them, their spells named as the spell references
  * name them. `parser:validate` reports a spell neither the core rules nor the book has.
@@ -113,6 +88,31 @@ function domainSeeds(ref: DomainReference): DomainDefinition[] {
     for (const spell of seed.spells) spell.name = spellNames.get(spell.name.toLowerCase()) ?? spell.name;
   }
   return seeds;
+}
+
+/** The spells a book's domains can name, by their lowercase name: the core rules' and the book's. */
+export function domainSpellNames(book: string): Map<string, string> {
+  const spellNames = (b: string) => {
+    const path = join(REFERENCE_DIR, b, "spells.json");
+    return existsSync(path) ? loadReference(path, "spell").raw.map((spell) => spell.name) : [];
+  };
+  return new Map(
+    [...spellNames("srd"), ...(book === "srd" ? [] : spellNames(book))].map((name) => [name.toLowerCase(), name]),
+  );
+}
+
+function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | string[]): string[] {
+  if (Array.isArray(items)) return items;
+  switch (items) {
+    case "martial":
+      return MARTIAL_WEAPONS;
+    case "simple":
+      return SIMPLE_WEAPONS;
+    case "exotic":
+      return EXOTIC_WEAPONS;
+    case "all":
+      return ALL_WEAPONS;
+  }
 }
 
 /** A book's domains as it prints them (`reference/<book>/domains.json`; none for a book without), and their feat pools' feats. */

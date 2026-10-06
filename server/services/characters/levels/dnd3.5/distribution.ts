@@ -138,23 +138,6 @@ function capAtMaxRanks(
   }
 }
 
-/** Hands `ids` out in order to the levels' slots, as many to a level as `slotsAt` gives it. */
-function fillSlots(
-  levelCount: number,
-  ids: string[],
-  slotsAt: (level: number) => number,
-  place: (level: number, id: string) => void,
-) {
-  let pickIndex = 0;
-  for (let i = 0; i < levelCount && pickIndex < ids.length; i++) {
-    const slots = slotsAt(i);
-    for (let s = 0; s < slots && pickIndex < ids.length; s++) {
-      place(i, ids[pickIndex]);
-      pickIndex++;
-    }
-  }
-}
-
 /**
  * Puts each pool's feats into the levels' slots. A pool with no slots, one a feat's modifier created, goes on the
  * level its source feat went to (the first when that's unknown).
@@ -256,6 +239,23 @@ function distributeSkills(data: PerLevelDistributionData, skills: Record<string,
         result[i].skills[skillId] = (result[i].skills[skillId] ?? 0) + perLevel[i];
         remainingPointsPerLevel[i] -= perLevel[i];
       }
+    }
+  }
+}
+
+/** Hands `ids` out in order to the levels' slots, as many to a level as `slotsAt` gives it. */
+function fillSlots(
+  levelCount: number,
+  ids: string[],
+  slotsAt: (level: number) => number,
+  place: (level: number, id: string) => void,
+) {
+  let pickIndex = 0;
+  for (let i = 0; i < levelCount && pickIndex < ids.length; i++) {
+    const slots = slotsAt(i);
+    for (let s = 0; s < slots && pickIndex < ids.length; s++) {
+      place(i, ids[pickIndex]);
+      pickIndex++;
     }
   }
 }

@@ -22,15 +22,6 @@ const READS = new Set(methodVerbs.read);
 const stateIds = new WeakMap<CowData, string>();
 const WRITES = new Set(methodVerbs.write);
 
-function getStateId(cow: CowData): string {
-  let id = stateIds.get(cow);
-  if (!id) {
-    id = String(++lastStateId);
-    stateIds.set(cow, id);
-  }
-  return id;
-}
-
 /**
  * What a read is cached under for the request: its repository, method and arguments but the database handle, and the
  * copy-on-write state it runs in. None when its arguments don't serialize: it isn't cached.
@@ -44,6 +35,15 @@ function getReadKey(repository: string, method: string, args: unknown[]): string
   }
   const cow = getCowContext();
   return cow && !cow.isEmpty() ? `${key}|cow:${getStateId(cow)}` : key;
+}
+
+function getStateId(cow: CowData): string {
+  let id = stateIds.get(cow);
+  if (!id) {
+    id = String(++lastStateId);
+    stateIds.set(cow, id);
+  }
+  return id;
 }
 
 /**

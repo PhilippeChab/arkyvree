@@ -77,36 +77,6 @@ function numberRules<T extends FieldValues>(rules: BoundFieldProps<T>["rules"]):
   return { ...rules, validate: typeof validate === "function" ? { validate, isNumber } : { ...validate, isNumber } };
 }
 
-/** A text field bound to a form's field: the form holds its value, and its error shows under it. */
-export function FormTextField<T extends FieldValues>({
-  control,
-  name,
-  rules,
-  number = false,
-  helperText,
-  ...props
-}: FormTextFieldProps<T>) {
-  const {
-    field: { ref, value, onChange, ...field },
-    fieldState,
-  } = useController({ control, name, rules: number ? numberRules(rules) : rules });
-  return (
-    <TextField
-      {...props}
-      {...field}
-      // On the input, so a failed submit focuses it
-      inputRef={ref}
-      value={value === undefined || value === null || (number && Number.isNaN(value)) ? "" : value}
-      onChange={(event) => {
-        const text = event.target.value;
-        onChange(number ? (text === "" ? Number.NaN : Number(text)) : text);
-      }}
-      error={!!fieldState.error}
-      helperText={fieldState.error?.message ?? helperText}
-    />
-  );
-}
-
 /** An entity's description: several lines, resizable. */
 export function DescriptionField<T extends FieldValues>({
   rows = 3,
@@ -140,6 +110,36 @@ export function EmailField<T extends FieldValues>({
       fullWidth
       margin="normal"
       slotProps={{ htmlInput: { autoComplete: "email" } }}
+    />
+  );
+}
+
+/** A text field bound to a form's field: the form holds its value, and its error shows under it. */
+export function FormTextField<T extends FieldValues>({
+  control,
+  name,
+  rules,
+  number = false,
+  helperText,
+  ...props
+}: FormTextFieldProps<T>) {
+  const {
+    field: { ref, value, onChange, ...field },
+    fieldState,
+  } = useController({ control, name, rules: number ? numberRules(rules) : rules });
+  return (
+    <TextField
+      {...props}
+      {...field}
+      // On the input, so a failed submit focuses it
+      inputRef={ref}
+      value={value === undefined || value === null || (number && Number.isNaN(value)) ? "" : value}
+      onChange={(event) => {
+        const text = event.target.value;
+        onChange(number ? (text === "" ? Number.NaN : Number(text)) : text);
+      }}
+      error={!!fieldState.error}
+      helperText={fieldState.error?.message ?? helperText}
     />
   );
 }
