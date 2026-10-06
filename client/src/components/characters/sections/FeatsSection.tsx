@@ -32,7 +32,7 @@ function FeatRow({ name, description, extra }: FeatRowProps) {
   const hasExtra = extra != null && extra !== false;
 
   return (
-    <Box sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
+    <Stack spacing={1} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
       <Stack
         direction="row"
         spacing={1}
@@ -47,7 +47,7 @@ function FeatRow({ name, description, extra }: FeatRowProps) {
         </Typography>
         {hasExtra && <ExpandArrow open={open} />}
       </Stack>
-      <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
         {description || "—"}
       </Typography>
       {hasExtra && (
@@ -55,7 +55,7 @@ function FeatRow({ name, description, extra }: FeatRowProps) {
           {extra}
         </Collapse>
       )}
-    </Box>
+    </Stack>
   );
 }
 
@@ -63,13 +63,13 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Box>
+    <Stack spacing={2}>
       <Stack
         {...toggleProps(open, () => setOpen((prev) => !prev))}
         direction="row"
-        sx={{ alignItems: "center", justifyContent: "space-between", mb: 2, ...CLICKABLE_SX }}
+        sx={{ alignItems: "center", justifyContent: "space-between", ...CLICKABLE_SX }}
       >
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+        <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}>
           Granted ({feats.length})
         </Typography>
         <ExpandArrow open={open} />
@@ -98,7 +98,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
                     feat.name
                   )}
                 </Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
                   {feat.description || "—"}
                 </Typography>
               </Box>
@@ -106,7 +106,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
           })}
         </Stack>
       </Collapse>
-    </Box>
+    </Stack>
   );
 }
 

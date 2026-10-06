@@ -240,7 +240,6 @@ export default function ClassDetailsPage() {
           <>
             <EntityDetailsCard
               title="Class Overview"
-              sx={{ mb: 4 }}
               description={classData.description}
               chips={
                 <>

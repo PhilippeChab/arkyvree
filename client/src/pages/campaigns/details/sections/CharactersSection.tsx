@@ -293,7 +293,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
             }}
           />
 
-          <Stack>
+          <Stack spacing={0.5}>
             <TextField
               select
               fullWidth
@@ -316,10 +316,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
               describeChild
               title={faqTooltip("Controls how much of your character sheet other campaign members can see.")}
             >
-              <Typography
-                variant="caption"
-                sx={{ color: "text.secondary", mt: 0.5, cursor: "help", alignSelf: "flex-end" }}
-              >
+              <Typography variant="caption" sx={{ color: "text.secondary", cursor: "help", alignSelf: "flex-end" }}>
                 What's this?
               </Typography>
             </Tooltip>
@@ -370,7 +367,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   return (
     <SectionContent>
       {/* Header */}
-      <Typography component="h2" sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>
+      <Typography component="h2" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
         Characters
       </Typography>
 
@@ -392,7 +389,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
       {charactersLoading && <DiceSpinner sx={{ py: 4 }} />}
 
       {/* Error State */}
-      {charactersError && <LoadError what="Characters" error={charactersError} sx={{ mb: 3 }} />}
+      {charactersError && <LoadError what="Characters" error={charactersError} />}
 
       {/* Characters Grid */}
       {!charactersLoading && !charactersError && (
@@ -408,7 +405,6 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
                     lg: "repeat(3, 1fr)",
                   },
                   gap: 3,
-                  mb: 3,
                 }}
               >
                 {characters.map((character, index) => (

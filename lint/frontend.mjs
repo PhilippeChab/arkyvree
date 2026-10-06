@@ -65,7 +65,8 @@
  * - `search-fields`: a search box is a `SearchField`, never a `TextField` of its own.
  * - `button-intents`: a button is styled by its intent, as `docs/ui-buttons.md` sets it: the verb its label starts with
  *   (Delete, Archive, Publish, Cancel…) picks its variant and color.
- * - `headings`: a `Typography` sized as a heading (`variant="h6"`, `typography: { xs: "h6" }`) declares its element
+ * - `headings`: a `Typography` sized as a heading or a subtitle (`variant="h6"`, `typography: { xs: "h6" }`, which MUI
+ *   renders as an `<h6>`) declares its element
  *   (`component="h2"`, `"p"`), so the page's outline is a hierarchy; a heading's gutter, the space to its own text, is `gutterBottom`.
  * - `toast-wording`: a toast is a phrase ("Ruleset archived"), no final period, "!" or "successfully"; an error's
  *   fallback names what failed ("Failed to remove item").
@@ -80,6 +81,8 @@
  * - `pending-buttons`: a button that starts a request shows it running, its label in a `DiceSpinner`.
  * - `menus`: a menu lists its items alone: an action is an `ActionMenuItem`, one of several to choose a `MenuItem`
  *   marked `selected` (a filter, a sort, a visibility); a panel that opens from a button is a `Popover`.
+ * - `spacing`: the gap between blocks is their `Stack`'s `spacing` (a page's blocks are a `PageBody`'s), never a
+ *   block's own margin (`mt`, `mb`, `my`); a heading's gutter is `gutterBottom`.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -336,6 +339,9 @@ const TOP_SPACING = new Set(["marginTop", "mt", "my", "paddingTop", "pt"]);
 
 /** The props an input takes its value through. */
 const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
+
+/** The style keys that space a block from the ones above and below it */
+const VERTICAL_MARGINS = new Set(["marginBottom", "marginTop", "mb", "mt", "my"]);
 
 /** The string a JSX attribute holds, when it's written out (`variant="outlined"`). */
 function attributeText(element, name) {
@@ -966,13 +972,13 @@ function createHeadings(context) {
         });
       }
       if (attributes.some((a) => a.name.name === "component")) return;
-      const looksLikeHeading =
-        (variant?.type === "Literal" && /^h[1-6]$/.test(variant.value)) || headingVariants(sxObject).length > 0;
+      // A subtitle is an h6 to MUI, whatever it holds
+      const looksLikeHeading = titled || headingVariants(sxObject).length > 0;
       if (!looksLikeHeading) return;
       context.report({
         node: node.openingElement,
         message:
-          'A `Typography` sized as a heading says what it is: `component="h1"` for a page\'s title, `h2` for its ' +
+          'A `Typography` sized as a heading or a subtitle says what it is: `component="h1"` for a page\'s title, `h2` for its ' +
           "sections and list cards, `h3` within those and in a dialog, `p` when it isn't one.",
       });
     },
@@ -1088,7 +1094,7 @@ function createNavLinks(context) {
       context.report({
         node,
         message:
-          'A control that only navigates is a link: `component={Link} to="…"` (a page\'s way back too: `backTo`), ' +
+          "A control that navigates is a link: `component={Link} to=\"…\"` (a page's way back too: `backTo`), its click only closing what it's in, " +
           "so it opens in a new tab and reads as a link. A card, which holds content of its own, opens on click.",
       });
     },
@@ -1211,6 +1217,23 @@ function createShape(context) {
           message: "A layer is the theme's (`theme.zIndex.drawer + 1`); a number orders siblings only (`0`, `1`).",
         });
       }
+    },
+  };
+}
+
+function createSpacing(context) {
+  if (!inClient(context)) return {};
+  return {
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      if (!VERTICAL_MARGINS.has(key) || node.parent.type !== "ObjectExpression" || !sxOwner(node.parent)) return;
+      if (node.value.type === "Literal" && node.value.value === 0) return;
+      context.report({
+        node,
+        message:
+          "The gap between blocks is their `Stack`'s `spacing` (a page's blocks are a `PageBody`'s), never a " +
+          "block's own margin; a heading's gutter is `gutterBottom`.",
+      });
     },
   };
 }
@@ -1547,17 +1570,18 @@ function numberAttribute(element, name) {
   return value?.type === "Literal" && typeof value.value === "number" ? value.value : null;
 }
 
-/** Whether a handler only navigates to a path: `() => navigate(path)` (not `navigate(-1)`, which goes back in history). */
+/** Whether a handler navigates to a path, besides closing what it's in: `() => { close(); navigate(path); }` (not `navigate(-1)`, which goes back in history). */
 function onlyNavigates(handler) {
-  if (handler?.type !== "ArrowFunctionExpression" || handler.params.length > 0) return false;
-  let call = handler.body;
-  if (call.type === "BlockStatement") {
-    if (call.body.length !== 1 || call.body[0].type !== "ExpressionStatement") return false;
-    call = call.body[0].expression;
-  }
-  const isNavigate = call.type === "CallExpression" && calleeName(call) === "navigate" && call.arguments.length === 1;
-  const [to] = call.arguments ?? [];
-  return isNavigate && !(to.type === "Literal" && typeof to.value === "number") && to.type !== "UnaryExpression";
+  if (handler?.type !== "ArrowFunctionExpression") return false;
+  const body = handler.body;
+  const calls =
+    body.type === "BlockStatement"
+      ? body.body.map((statement) => (statement.type === "ExpressionStatement" ? statement.expression : null))
+      : [body];
+  if (calls.some((call) => call?.type !== "CallExpression")) return false;
+  const navigation = calls.find((call) => calleeName(call) === "navigate" && call.arguments.length === 1);
+  const [to] = navigation?.arguments ?? [];
+  return !!to && !(to.type === "Literal" && typeof to.value === "number") && to.type !== "UnaryExpression";
 }
 
 /** The nearest JSX element around `node`. */
@@ -1820,6 +1844,7 @@ export default {
   "toast-wording": { meta: { type: "suggestion" }, create: createToastWording },
   "confirm-wording": { meta: { type: "suggestion" }, create: createConfirmWording },
   "page-errors": { meta: { type: "suggestion" }, create: createPageErrors },
+  spacing: { meta: { type: "suggestion" }, create: createSpacing },
   "tag-chips": { meta: { type: "suggestion" }, create: createTagChips },
   "expand-arrows": { meta: { type: "suggestion" }, create: createExpandArrows },
   "pending-buttons": { meta: { type: "suggestion" }, create: createPendingButtons },

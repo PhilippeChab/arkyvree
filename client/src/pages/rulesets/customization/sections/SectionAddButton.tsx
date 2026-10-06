@@ -10,7 +10,7 @@ interface SectionAddButtonProps {
 /** A customization section's add button, right-aligned above its list. */
 export function SectionAddButton({ label, onClick }: SectionAddButtonProps) {
   return (
-    <Stack direction="row" sx={{ mb: 2, justifyContent: "flex-end" }}>
+    <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
       <Button variant="contained" startIcon={<AddIcon />} onClick={onClick}>
         {label}
       </Button>

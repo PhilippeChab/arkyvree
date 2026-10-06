@@ -137,7 +137,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
       <Stack
         direction="row"
         spacing={1}
-        sx={{ alignItems: "center", justifyContent: "space-between", mb: -1, flexWrap: "wrap" }}
+        sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}
       >
         <FormControlLabel
           control={

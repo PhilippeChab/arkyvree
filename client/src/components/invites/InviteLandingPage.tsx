@@ -1,9 +1,9 @@
-import { Avatar, Box, Button, Card, CardContent, Container, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { DiceSpinner, LoadError, PageTransition, TagChip } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, PageBody, TagChip } from "@/client/src/components/common/index.ts";
 import { CheckIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
@@ -54,18 +54,22 @@ interface InviteStateCardProps {
 
 function InviteStateCard({ icon, title, children, action }: InviteStateCardProps) {
   return (
-    <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
+    <PageBody width="sm">
       <Card>
-        <CardContent sx={{ textAlign: "center", py: { xs: 3, sm: 6 } }}>
-          {icon}
-          <Typography component="h1" variant="h5" gutterBottom>
-            {title}
-          </Typography>
-          <Typography sx={{ color: "text.secondary", mb: 3 }}>{children}</Typography>
-          {action}
+        <CardContent sx={{ py: { xs: 3, sm: 6 } }}>
+          <Stack spacing={3} sx={{ alignItems: "center", textAlign: "center" }}>
+            {icon}
+            <Box>
+              <Typography component="h1" variant="h5" gutterBottom>
+                {title}
+              </Typography>
+              <Typography sx={{ color: "text.secondary" }}>{children}</Typography>
+            </Box>
+            {action}
+          </Stack>
         </CardContent>
       </Card>
-    </Container>
+    </PageBody>
   );
 }
 
@@ -144,21 +148,21 @@ export function InviteLandingPage({
       Go to Dashboard
     </Button>
   );
-  const stateIcon = <Icon fontSize="hero" sx={{ color: "text.secondary", mb: 2 }} />;
+  const stateIcon = <Icon fontSize="hero" sx={{ color: "text.secondary" }} />;
 
   if (isLoading) {
     return (
-      <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
+      <PageBody width="sm">
         <DiceSpinner size="large" sx={{ minHeight: 300 }} />
-      </Container>
+      </PageBody>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
+      <PageBody width="sm">
         <LoadError what="Invitation" error={error} />
-      </Container>
+      </PageBody>
     );
   }
 
@@ -176,7 +180,7 @@ export function InviteLandingPage({
   if (!isAnswering && invite.status === acceptedStatus) {
     return (
       <InviteStateCard
-        icon={<CheckIcon fontSize="hero" sx={{ color: "success.main", mb: 2 }} />}
+        icon={<CheckIcon fontSize="hero" sx={{ color: "success.main" }} />}
         title="Already Accepted"
         action={
           entityId && (
@@ -208,20 +212,20 @@ export function InviteLandingPage({
   }
 
   return (
-    <PageTransition>
-      <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
-        <Card>
-          <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-            <Stack direction="row" sx={{ alignItems: "center", mb: 3 }}>
-              <Avatar sx={{ width: 56, height: 56, mr: 2 }}>
+    <PageBody width="sm">
+      <Card>
+        <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
+          <Stack spacing={3}>
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Avatar sx={{ width: 56, height: 56 }}>
                 <Icon />
               </Avatar>
-              <Box>
+              <Stack spacing={0.5}>
                 <Typography component="h2" variant="h5">
                   {name}
                 </Typography>
                 {invite.role && (
-                  <Stack direction="row" spacing={1} sx={{ alignItems: "center", mt: 0.5 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
                       Invited as
                     </Typography>
@@ -233,10 +237,10 @@ export function InviteLandingPage({
                     Invited on {formatDate(invite.invitedAt)}
                   </Typography>
                 )}
-              </Box>
+              </Stack>
             </Stack>
 
-            <Typography sx={{ mb: 4 }}>{description}</Typography>
+            <Typography>{description}</Typography>
 
             <InviteActionButtons
               prominent
@@ -248,9 +252,9 @@ export function InviteLandingPage({
               onReject={() => rejectMutation.mutate()}
               disabled={isAnswering}
             />
-          </CardContent>
-        </Card>
-      </Container>
-    </PageTransition>
+          </Stack>
+        </CardContent>
+      </Card>
+    </PageBody>
   );
 }

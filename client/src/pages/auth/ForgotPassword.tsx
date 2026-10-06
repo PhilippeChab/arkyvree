@@ -41,7 +41,7 @@ export default function ForgotPassword() {
 
         <AuthSubmitButton loading={auth.pending}>Send Reset Code</AuthSubmitButton>
       </Stack>
-      <Box sx={{ mt: 2, textAlign: "center" }}>
+      <Box sx={{ textAlign: "center" }}>
         <Typography variant="body2">
           <MuiLink component={Link} to="/sign-in" underline="hover">
             Back to Sign In

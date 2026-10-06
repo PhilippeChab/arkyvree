@@ -1,4 +1,4 @@
-import { Button, Container } from "@mui/material";
+import { Button } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -16,8 +16,8 @@ import {
   NAME_SORTS,
   NoMatchesState,
   PageActionButton,
+  PageBody,
   PageHeader,
-  PageTransition,
   SearchBar,
   type SortOption,
   UPDATED_SORTS,
@@ -82,86 +82,84 @@ export default function CharactersPage() {
   );
 
   return (
-    <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageHeader
-          variant="tinted"
-          title="Characters"
-          subtitle="View and manage your character collection"
-          action={createButton("Create Character")}
+    <PageBody>
+      <PageHeader
+        variant="tinted"
+        title="Characters"
+        subtitle="View and manage your character collection"
+        action={createButton("Create Character")}
+      />
+
+      <SearchBar
+        {...searchBarProps}
+        searchPlaceholder="Search characters..."
+        filterOptions={CHARACTER_FILTER_OPTIONS}
+        filterValue={view}
+        onFilterChange={(value) => updateSearchParams({ view: value })}
+        sortOptions={CHARACTER_SORT_OPTIONS}
+      />
+
+      {isLoading ? (
+        <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
+      ) : error ? (
+        <LoadError what="Characters" error={error} />
+      ) : characters.length > 0 ? (
+        <>
+          <ListCardGrid>
+            {characters.map((character, index) => (
+              <ListCard
+                key={character.id}
+                isArchived={view === "archived"}
+                animationIndex={index}
+                animationOffset={offset}
+                onClick={() => navigate(`/characters/${character.id}`)}
+                onMouseEnter={() => prefetchCharacter(character.id)}
+                onFocus={() => prefetchCharacter(character.id)}
+                avatarSrc={portraitsByCharacterId.get(character.id) ?? undefined}
+                title={character.name}
+                description={character.description}
+                tags={characterTags({
+                  race: character.race,
+                  levels: character.levels,
+                  shared: character.accessRole === "contributor",
+                })}
+              />
+            ))}
+          </ListCardGrid>
+          <LoadMoreButton
+            size="large"
+            label="Load More Characters"
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
+        </>
+      ) : search ? (
+        <NoMatchesState search={search} />
+      ) : view === "archived" ? (
+        <BlankState
+          icon={ArchiveIcon}
+          title="No archived characters"
+          description="Characters you archive will appear here. You can restore them at any time."
+          action={viewActiveButton}
         />
-
-        <SearchBar
-          {...searchBarProps}
-          searchPlaceholder="Search characters..."
-          filterOptions={CHARACTER_FILTER_OPTIONS}
-          filterValue={view}
-          onFilterChange={(value) => updateSearchParams({ view: value })}
-          sortOptions={CHARACTER_SORT_OPTIONS}
+      ) : view === "shared" ? (
+        <BlankState
+          icon={ContributorsIcon}
+          title="No shared characters"
+          description="Characters other users invite you to contribute to will appear here."
+          action={viewActiveButton}
         />
+      ) : (
+        <BlankState
+          icon={CharactersIcon}
+          title="No characters yet"
+          description="Create your first character to start your adventure"
+          action={createButton("Create Your First Character")}
+        />
+      )}
 
-        {isLoading ? (
-          <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
-        ) : error ? (
-          <LoadError what="Characters" error={error} />
-        ) : characters.length > 0 ? (
-          <>
-            <ListCardGrid>
-              {characters.map((character, index) => (
-                <ListCard
-                  key={character.id}
-                  isArchived={view === "archived"}
-                  animationIndex={index}
-                  animationOffset={offset}
-                  onClick={() => navigate(`/characters/${character.id}`)}
-                  onMouseEnter={() => prefetchCharacter(character.id)}
-                  onFocus={() => prefetchCharacter(character.id)}
-                  avatarSrc={portraitsByCharacterId.get(character.id) ?? undefined}
-                  title={character.name}
-                  description={character.description}
-                  tags={characterTags({
-                    race: character.race,
-                    levels: character.levels,
-                    shared: character.accessRole === "contributor",
-                  })}
-                />
-              ))}
-            </ListCardGrid>
-            <LoadMoreButton
-              size="large"
-              label="Load More Characters"
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              onClick={() => fetchNextPage()}
-            />
-          </>
-        ) : search ? (
-          <NoMatchesState search={search} />
-        ) : view === "archived" ? (
-          <BlankState
-            icon={ArchiveIcon}
-            title="No archived characters"
-            description="Characters you archive will appear here. You can restore them at any time."
-            action={viewActiveButton}
-          />
-        ) : view === "shared" ? (
-          <BlankState
-            icon={ContributorsIcon}
-            title="No shared characters"
-            description="Characters other users invite you to contribute to will appear here."
-            action={viewActiveButton}
-          />
-        ) : (
-          <BlankState
-            icon={CharactersIcon}
-            title="No characters yet"
-            description="Create your first character to start your adventure"
-            action={createButton("Create Your First Character")}
-          />
-        )}
-
-        <CreateCharacterDialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
-      </Container>
-    </PageTransition>
+      <CreateCharacterDialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
+    </PageBody>
   );
 }

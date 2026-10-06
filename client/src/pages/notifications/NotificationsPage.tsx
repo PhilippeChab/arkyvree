@@ -1,4 +1,4 @@
-import { alpha, Button, Container, Stack, Tooltip, Typography } from "@mui/material";
+import { alpha, Button, Stack, Tooltip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
@@ -10,8 +10,8 @@ import {
   type FilterOption,
   LoadError,
   LoadMoreButton,
+  PageBody,
   PageHeader,
-  PageTransition,
   SearchBar,
 } from "@/client/src/components/common/index.ts";
 import { NotificationsIcon, UnreadIcon } from "@/client/src/components/icons/index.ts";
@@ -68,107 +68,105 @@ export default function NotificationsPage() {
   const notifications = pageItems(data);
 
   return (
-    <PageTransition>
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <PageHeader
-          title="Notifications"
-          subtitle="Updates from your campaigns and rulesets"
-          action={
-            <Button
-              variant="outlined"
-              size="large"
-              onClick={() => actions.markAllRead.mutate()}
-              disabled={actions.markAllRead.isPending}
-              sx={{
-                color: "common.white",
-                borderColor: (theme) => alpha(theme.palette.common.white, 0.5),
-                "&:hover": { borderColor: "common.white", bgcolor: (theme) => alpha(theme.palette.common.white, 0.1) },
-                px: 3,
-                py: 1.5,
-                borderRadius: 2,
-              }}
-            >
-              <DiceSpinner size="small" loading={actions.markAllRead.isPending}>
-                Mark All as Read
-              </DiceSpinner>
-            </Button>
-          }
-        />
+    <PageBody width="lg">
+      <PageHeader
+        title="Notifications"
+        subtitle="Updates from your campaigns and rulesets"
+        action={
+          <Button
+            variant="outlined"
+            size="large"
+            onClick={() => actions.markAllRead.mutate()}
+            disabled={actions.markAllRead.isPending}
+            sx={{
+              color: "common.white",
+              borderColor: (theme) => alpha(theme.palette.common.white, 0.5),
+              "&:hover": { borderColor: "common.white", bgcolor: (theme) => alpha(theme.palette.common.white, 0.1) },
+              px: 3,
+              py: 1.5,
+              borderRadius: 2,
+            }}
+          >
+            <DiceSpinner size="small" loading={actions.markAllRead.isPending}>
+              Mark All as Read
+            </DiceSpinner>
+          </Button>
+        }
+      />
 
-        <SearchBar
-          {...searchBarProps}
-          searchPlaceholder="Search notifications..."
-          filterOptions={FILTER_OPTIONS}
-          filterValue={unreadOnly ? "unread" : undefined}
-          onFilterChange={(value) => updateSearchParams({ filter: value })}
-          sortOptions={CREATED_SORTS}
-          sortField="createdAt"
-        />
+      <SearchBar
+        {...searchBarProps}
+        searchPlaceholder="Search notifications..."
+        filterOptions={FILTER_OPTIONS}
+        filterValue={unreadOnly ? "unread" : undefined}
+        onFilterChange={(value) => updateSearchParams({ filter: value })}
+        sortOptions={CREATED_SORTS}
+        sortField="createdAt"
+      />
 
-        {error ? (
-          <LoadError what="Notifications" error={error} />
-        ) : (
-          <>
-            <DataTable
-              rows={notifications}
-              isLoading={isLoading}
-              columns={NOTIFICATION_COLUMNS}
-              minWidth={0}
-              renderCell={(notification, column) => {
-                if (column === "when") {
-                  return (
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      {formatRelativeTime(notification.createdAt)}
-                    </Typography>
-                  );
-                }
-                if (column === "invite") {
-                  return (
-                    actions.isActionable(notification) && (
-                      <InviteActionButtons
-                        onAccept={() => actions.accept(notification)}
-                        onReject={() => actions.reject(notification)}
-                        disabled={actions.isAnswering(notification)}
-                      />
-                    )
-                  );
-                }
+      {error ? (
+        <LoadError what="Notifications" error={error} />
+      ) : (
+        <>
+          <DataTable
+            rows={notifications}
+            isLoading={isLoading}
+            columns={NOTIFICATION_COLUMNS}
+            minWidth={0}
+            renderCell={(notification, column) => {
+              if (column === "when") {
                 return (
-                  <Tooltip
-                    describeChild
-                    title={formatActivityDetails(notification.data) ?? ""}
-                    slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
-                  >
-                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                      {!notification.readAt && (
-                        <UnreadIcon titleAccess="Unread" fontSize="dot" sx={{ color: "primary.main", flexShrink: 0 }} />
-                      )}
-                      <Typography variant="body2">
-                        {formatNotificationMessage(notification.type, notification.data)}
-                      </Typography>
-                    </Stack>
-                  </Tooltip>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    {formatRelativeTime(notification.createdAt)}
+                  </Typography>
                 );
-              }}
-              onRowClick={(notification) => actions.open(notification)}
-              isRowClickable={(notification) => actions.isOpenable(notification)}
-              rowSx={(notification) => (notification.readAt ? {} : { bgcolor: "action.selected" })}
-              search={search}
-              empty={{
-                icon: NotificationsIcon,
-                title: unreadOnly ? "No unread notifications" : "No notifications yet",
-                description: "Notifications from your campaigns and collaborators will appear here.",
-              }}
-            />
-            <LoadMoreButton
-              size="large"
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              onClick={() => fetchNextPage()}
-            />
-          </>
-        )}
-      </Container>
-    </PageTransition>
+              }
+              if (column === "invite") {
+                return (
+                  actions.isActionable(notification) && (
+                    <InviteActionButtons
+                      onAccept={() => actions.accept(notification)}
+                      onReject={() => actions.reject(notification)}
+                      disabled={actions.isAnswering(notification)}
+                    />
+                  )
+                );
+              }
+              return (
+                <Tooltip
+                  describeChild
+                  title={formatActivityDetails(notification.data) ?? ""}
+                  slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
+                >
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                    {!notification.readAt && (
+                      <UnreadIcon titleAccess="Unread" fontSize="dot" sx={{ color: "primary.main", flexShrink: 0 }} />
+                    )}
+                    <Typography variant="body2">
+                      {formatNotificationMessage(notification.type, notification.data)}
+                    </Typography>
+                  </Stack>
+                </Tooltip>
+              );
+            }}
+            onRowClick={(notification) => actions.open(notification)}
+            isRowClickable={(notification) => actions.isOpenable(notification)}
+            rowSx={(notification) => (notification.readAt ? {} : { bgcolor: "action.selected" })}
+            search={search}
+            empty={{
+              icon: NotificationsIcon,
+              title: unreadOnly ? "No unread notifications" : "No notifications yet",
+              description: "Notifications from your campaigns and collaborators will appear here.",
+            }}
+          />
+          <LoadMoreButton
+            size="large"
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
+        </>
+      )}
+    </PageBody>
   );
 }

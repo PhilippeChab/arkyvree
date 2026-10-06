@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { ActionMenuItem } from "@/client/src/components/common/index.ts";
 import {
@@ -193,7 +193,6 @@ export function Layout() {
   }, [completeOnboarding, updateUser]);
 
   const location = useLocation();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { signOut } = useAuthRequests();
   // Sidebar item of the first path segment ("rulesets" for /rulesets/123);
@@ -216,16 +215,6 @@ export function Layout() {
     handleMenuClose();
     void queryClient.cancelQueries();
     signOut.mutate();
-  };
-
-  const handleProfile = () => {
-    handleMenuClose();
-    navigate("/profile");
-  };
-
-  const handleSettings = () => {
-    handleMenuClose();
-    navigate("/settings");
   };
 
   return (
@@ -288,16 +277,9 @@ export function Layout() {
           </Stack>
 
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-            <ActionMenuItem icon={AccountIcon} label="Profile" onClick={handleProfile} />
-            <ActionMenuItem
-              icon={ActivityIcon}
-              label="Activity"
-              onClick={() => {
-                handleMenuClose();
-                navigate("/activities");
-              }}
-            />
-            <ActionMenuItem icon={SettingsIcon} label="Settings" onClick={handleSettings} />
+            <ActionMenuItem icon={AccountIcon} label="Profile" to="/profile" onClick={handleMenuClose} />
+            <ActionMenuItem icon={ActivityIcon} label="Activity" to="/activities" onClick={handleMenuClose} />
+            <ActionMenuItem icon={SettingsIcon} label="Settings" to="/settings" onClick={handleMenuClose} />
             <Divider />
             <ActionMenuItem icon={SignOutIcon} label="Sign Out" onClick={handleSignOut} />
           </Menu>
@@ -325,18 +307,16 @@ export function Layout() {
       >
         <Toolbar />
         <Stack sx={{ flex: 1, minHeight: 0, position: "relative" }}>
-          <List sx={{ flex: 1, pt: 2, px: 1 }}>
+          <Stack component={List} disablePadding spacing={1} sx={{ flex: 1, pt: 2, px: 1 }}>
             {sidebarItems.map((item) => (
-              <ListItem key={item.id} disablePadding sx={{ mb: 1 }}>
+              <ListItem key={item.id} disablePadding>
                 <ListItemButton
                   ref={sidebarItemRefs[item.id]}
+                  {...("external" in item && item.external
+                    ? { component: "a", href: item.path, target: "_blank", rel: "noopener noreferrer" }
+                    : { component: Link, to: item.path })}
                   selected={!("external" in item) && activeSection === item.id}
                   onClick={() => {
-                    if ("external" in item && item.external) {
-                      window.open(item.path, "_blank", "noopener,noreferrer");
-                    } else {
-                      navigate(item.path);
-                    }
                     if (isMobile) setMobileDrawerOpen(false);
                   }}
                   onMouseEnter={() => prefetchers[item.id]?.(queryClient)}
@@ -447,7 +427,7 @@ export function Layout() {
                 </ListItemButton>
               </ListItem>
             ))}
-          </List>
+          </Stack>
 
           {/* Toggle button at the bottom — hidden on mobile and during popover steps */}
           {!isMobile && !isPopoverStep && (

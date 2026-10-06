@@ -54,7 +54,7 @@ export function DetailPageHeader({
   return (
     <Stack
       direction="row"
-      sx={{ mb: 4, alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
+      sx={{ alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
     >
       <IconButton component={Link} to={backTo} size="large" aria-label="Back" sx={{ ...cornerButtonSx, left: 0 }}>
         <BackIcon />
@@ -64,15 +64,15 @@ export function DetailPageHeader({
           <MoreIcon />
         </IconButton>
       )}
-      <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, md: 8 } }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center", mb: 1 }}>
+      <Stack spacing={2} sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, md: 8 } }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center" }}>
           <Typography component="h1" sx={{ fontWeight: 700, typography: { xs: "h4", md: "h3" } }}>
             {title}
           </Typography>
           {titleAdornment}
         </Stack>
         {tags && tags.length > 0 && (
-          <Stack direction="row" spacing={1} sx={{ justifyContent: "center", mb: 2, flexWrap: "wrap" }}>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: "center", flexWrap: "wrap" }}>
             {tags.map((tag) => (
               <TagChip key={tag.label} tag={tag} size="medium" />
             ))}
@@ -80,14 +80,18 @@ export function DetailPageHeader({
         )}
         <Typography sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>{description}</Typography>
         {children}
-      </Box>
+      </Stack>
     </Stack>
   );
 }
 
 /** A detail page tab's content: the page's centered column, up to 1200px. */
 export function SectionContent({ children }: SectionContentProps) {
-  return <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>{children}</Box>;
+  return (
+    <Stack spacing={3} sx={{ width: "100%", maxWidth: 1200, mx: "auto" }}>
+      {children}
+    </Stack>
+  );
 }
 
 /** Scrollable pill tabs switching the sections of a detail page. */
@@ -128,7 +132,7 @@ export function SectionTabs<K extends string>({
   }, [settleDelay]);
 
   return (
-    <Box sx={{ borderRadius: 2, bgcolor: "action.hover", p: 1, mb: 4 }}>
+    <Box sx={{ borderRadius: 2, bgcolor: "action.hover", p: 1 }}>
       <Tabs
         ref={tabsRef}
         value={value}

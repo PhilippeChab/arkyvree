@@ -84,7 +84,6 @@ export function ClassLevelEditor({
   return (
     <EntityDetailsCard
       title="Class Level Details"
-      sx={{ mb: 4 }}
       chips={level.saves.map(
         (save) =>
           saveName(save.saveId) && (

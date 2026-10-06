@@ -1,4 +1,4 @@
-import { alpha, Box, Typography } from "@mui/material";
+import { alpha, Box, Stack, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
 import type { ElementType, ReactNode } from "react";
 
@@ -21,9 +21,11 @@ interface NoMatchesStateProps {
 
 export function BlankState({ icon: Icon, title, description, action, sx }: BlankStateProps) {
   return (
-    <Box
+    <Stack
+      spacing={2}
       sx={[
         {
+          alignItems: "center",
           textAlign: "center",
           py: { xs: 4, sm: 8 },
           px: { xs: 2, sm: 4 },
@@ -41,20 +43,19 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
     >
       {Icon && (
         <Box sx={{ filter: (theme) => `drop-shadow(0 2px 4px ${alpha(theme.palette.secondary.main, 0.25)})` }}>
-          <Icon fontSize="hero" sx={{ color: "text.secondary", mb: 2, opacity: 0.5 }} />
+          <Icon fontSize="hero" sx={{ color: "text.secondary", opacity: 0.5 }} />
         </Box>
       )}
-      <Typography component="p" variant="h6" gutterBottom sx={{ color: "text.secondary" }}>
-        {title}
-      </Typography>
-      <Typography
-        variant="body2"
-        sx={{ color: "text.secondary", mb: action ? 3 : 0, maxWidth: 400, mx: "auto", fontStyle: "italic" }}
-      >
-        {description}
-      </Typography>
+      <Box>
+        <Typography component="p" variant="h6" gutterBottom sx={{ color: "text.secondary" }}>
+          {title}
+        </Typography>
+        <Typography variant="body2" sx={{ color: "text.secondary", maxWidth: 400, mx: "auto", fontStyle: "italic" }}>
+          {description}
+        </Typography>
+      </Box>
       {action}
-    </Box>
+    </Stack>
   );
 }
 

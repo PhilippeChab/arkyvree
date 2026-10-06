@@ -217,7 +217,7 @@ function CustomizationView({
         aria-label="customization tabs"
       />
 
-      <Box role="tabpanel" sx={{ py: 3 }}>
+      <Box role="tabpanel">
         {/* The source's customizations don't belong to the copy: wait for it. */}
         {locked ? (
           <DiceSpinner sx={{ py: 4 }} />

@@ -116,7 +116,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                     spacing={1}
                     sx={{ px: 2, py: 1, bgcolor: "action.hover", alignItems: "center" }}
                   >
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    <Typography component="h3" variant="subtitle2" sx={{ fontWeight: 600 }}>
                       {entityTypeLabel(entityType, baseRules, true)} ({items.length})
                     </Typography>
                   </Stack>

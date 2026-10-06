@@ -15,6 +15,7 @@ import { SpellsIcon } from "@/client/src/components/icons/index.ts";
 
 import { type PowerAptitudePool, withoutPick } from "./levelUp/index.ts";
 import type { LevelUpPowersStepProps } from "./levelUpFactory.ts";
+import { pickTag } from "./pickTag.ts";
 
 export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   const {
@@ -70,15 +71,15 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   }
 
   return (
-    <Stack sx={{ flex: 1, minHeight: 0 }}>
-      <Box sx={{ flexShrink: 0 }}>
-        <Typography component="h3" variant="h6" gutterBottom>
+    <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
+      <Stack spacing={1} sx={{ flexShrink: 0 }}>
+        <Typography component="h3" variant="h6">
           Select Spells by Aptitude
         </Typography>
 
         {autoGrantedFree.length > 0 && (
-          <Box sx={{ mb: 1 }}>
-            <Typography variant="subtitle1" gutterBottom>
+          <Box>
+            <Typography component="h4" variant="subtitle1" gutterBottom>
               Auto-Granted Class Abilities
             </Typography>
             <List dense>
@@ -90,8 +91,8 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
         )}
 
         {autoGrantedNonFree.length > 0 && (
-          <Box sx={{ mb: 1 }}>
-            <Typography variant="subtitle1" gutterBottom>
+          <Box>
+            <Typography component="h4" variant="subtitle1" gutterBottom>
               Auto-Granted Spells
             </Typography>
             <List dense>
@@ -104,7 +105,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
 
         {totalPowersToSelect > 0 && (
           <>
-            <Typography variant="subtitle1" gutterBottom>
+            <Typography component="p" variant="subtitle1">
               Choose an aptitude to select spells from:
             </Typography>
             <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
@@ -153,7 +154,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
             </Stack>
           </>
         )}
-      </Box>
+      </Stack>
       {/* Spell Selection Interface for Selected Aptitude */}
       {selectedPowerAptitude &&
         (() => {
@@ -181,37 +182,22 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
             selectedPowerLevel != null ? (selectedPowerLevel === 0 ? "Cantrip" : `Level ${selectedPowerLevel}`) : "";
 
           return (
-            <Stack sx={{ mt: 3, flex: 1, minHeight: 0 }}>
+            <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
               {/* Selected Spells (always reserve space) */}
-              <Box sx={{ flexShrink: 0, mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>
+              <Box sx={{ flexShrink: 0 }}>
+                <Typography component="p" variant="subtitle2" gutterBottom>
                   Selected {currentPool?.name}
                   {levelLabel ? ` ${levelLabel}` : ""} Spells ({levelPowers.length}/{poolAvailable}):
                 </Typography>
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                   {levelPowers.length > 0
                     ? levelPowers.map((power) => (
-                        <Tooltip
-                          describeChild
+                        <TagChip
                           key={power.id}
-                          title={
-                            power.description
-                              ? power.description.length > 200
-                                ? `${power.description.slice(0, 200)}…`
-                                : power.description
-                              : ""
-                          }
-                          placement="right"
-                        >
-                          <TagChip
-                            tag={{
-                              label: power.name,
-                              color: "primary",
-                              onDelete: () =>
-                                powers.onChange(withoutPick(selectedPowers, selectedPowerAptitude, power.id)),
-                            }}
-                          />
-                        </Tooltip>
+                          tag={pickTag(power, () =>
+                            powers.onChange(withoutPick(selectedPowers, selectedPowerAptitude, power.id)),
+                          )}
+                        />
                       ))
                     : Array.from({ length: poolAvailable }, (_, i) => (
                         <Skeleton key={i} variant="rounded" width={100} height={32} />
@@ -221,13 +207,13 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
 
               {/* Add Spell List */}
               {levelPowers.length < poolAvailable && (
-                <Stack sx={{ flex: 1, minHeight: 0 }}>
+                <Stack spacing={1} sx={{ flex: 1, minHeight: 0 }}>
                   <SearchField
                     placeholder={`Search ${currentPool?.name}${levelLabel ? ` ${levelLabel}` : ""} spells...`}
                     value={powerSearch}
                     onChange={setPowerSearch}
                     fullWidth
-                    sx={{ mb: 1, flexShrink: 0 }}
+                    sx={{ flexShrink: 0 }}
                   />
                   {isLoadingAvailablePowers && availablePowers.length === 0 ? (
                     <DiceSpinner />

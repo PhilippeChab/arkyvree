@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { type ElementType, useMemo } from "react";
 
 import { TagChip } from "@/client/src/components/common/index.ts";
@@ -61,8 +61,8 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
   };
 
   return (
-    <Box>
-      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+    <Stack spacing={3}>
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
         <Typography component="h2" variant="h6">
           {title}
         </Typography>
@@ -77,6 +77,6 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
         emptyTitle={emptyTitle}
         emptyDescription={emptyDescription}
       />
-    </Box>
+    </Stack>
   );
 }

@@ -2,7 +2,6 @@ import {
   Alert,
   Box,
   Button,
-  Container,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -24,8 +23,8 @@ import {
   DiceSpinner,
   HelpLabel,
   Modal,
+  PageBody,
   PageError,
-  PageTransition,
   type SectionTab,
   SectionTabs,
   TagChip,
@@ -244,311 +243,309 @@ export default function RulesetDetailsPage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <PageBody>
         <DiceSpinner sx={{ minHeight: 400 }} />
-      </Container>
+      </PageBody>
     );
   }
 
   // A failed background refetch keeps the loaded page (and any edits in progress) on screen.
   if (!ruleset) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <PageBody>
         <PageError message={loadFailureMessage("Ruleset", error)} backLabel="Back to Rulesets" backTo={"/rulesets"} />
-      </Container>
+      </PageBody>
     );
   }
 
   return (
-    <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <DetailPageHeader
-          title={ruleset.name}
-          titleAdornment={
-            ruleset.isStarrable && (
-              <IconButton
-                onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
-                size="small"
-                aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
-                sx={{
-                  flexShrink: 0,
-                  p: 0,
-                  color: ruleset.isStarred ? "warning.main" : "action.disabled",
-                  "&:hover": { color: "warning.main", backgroundColor: "transparent" },
-                }}
-              >
-                {ruleset.isStarred ? <StarredIcon fontSize="medium" /> : <UnstarredIcon fontSize="medium" />}
-              </IconButton>
-            )
-          }
-          backTo={"/rulesets"}
-          onMenuOpen={hasMenuItems ? (e) => setAnchorEl(e.currentTarget) : undefined}
-          tags={[
-            ...rulesetTags(ruleset, prefetchParent),
-            ...(subscribedExtensions && subscribedExtensions.length > 0
-              ? [
-                  {
-                    icon: ExtensionIcon,
-                    label: formatCount(subscribedExtensions.length, "extension"),
-                    color: subscribedExtensions.some((ext) => ext.updateAvailable)
-                      ? ("warning" as const)
-                      : ("default" as const),
-                    onClick: (event: MouseEvent<HTMLElement>) => setExtensionsAnchor(event.currentTarget),
-                  },
-                ]
-              : []),
-          ]}
-          description={ruleset.description || "Explore the complete rules and content for this game system"}
-        >
-          {ruleset.system && ruleset.baseRules === "Dungeons & Dragons: 3.5" && (
-            <RulesetLicenseNotice key={ruleset.id} name={ruleset.name} />
-          )}
-        </DetailPageHeader>
-        {subscribedExtensions && subscribedExtensions.length > 0 && (
-          <Popover
-            open={Boolean(extensionsAnchor)}
-            anchorEl={extensionsAnchor}
-            onClose={() => setExtensionsAnchor(null)}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            transformOrigin={{ vertical: "top", horizontal: "center" }}
-          >
-            <Stack spacing={1} sx={{ p: 1.5, maxWidth: 360, alignItems: "flex-start" }}>
-              {subscribedExtensions.map((ext) => (
-                <TagChip
-                  key={ext.extensionId}
-                  size="medium"
-                  tag={{
-                    icon: ExtensionIcon,
-                    label: ext.extensionName,
-                    color: ext.updateAvailable ? "warning" : "default",
-                    to: `/rulesets/${ext.extensionId}`,
-                    onDelete: isOwner
-                      ? () => handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName)
-                      : undefined,
-                  }}
-                />
-              ))}
-            </Stack>
-          </Popover>
-        )}
-
-        {/* Read-Only Banner for Archived Rulesets */}
-        {ruleset.status === "Archived" && (
-          <Alert severity="info" sx={{ mb: 3 }}>
-            <Typography variant="body2">
-              <strong>This ruleset is archived and read-only.</strong> You can view all content but cannot make changes.
-              {isOwner && " Unarchive it to edit it again."}
-            </Typography>
-          </Alert>
-        )}
-
-        <SectionTabs
-          tabs={tabConfig}
-          value={currentTab.key}
-          onChange={(key) => navigate(`/rulesets/${id}/${key}`)}
-          // Changing tab clears the URL's filters, so it opens with the ruleset's default "Local Changes".
-          onTabHover={(key) => void prefetchSection(queryClient, id, key, isExtension)}
-          aria-label="ruleset details tabs"
-        />
-
-        <Box role="tabpanel" sx={{ py: 3 }}>
-          {/* Keyed by ruleset: a tab's list keeps its previous data while a search loads, never another ruleset's. */}
-          <currentTab.component
-            key={ruleset.id}
-            ruleset={ruleset}
-            childOnly={childOnly}
-            onChildOnlyChange={setChildOnly}
-          />
-        </Box>
-
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
-          slotProps={{ paper: { sx: { minWidth: 200 } } }}
-        >
-          {ruleset.status === "Published" && !isExtension && !isFork && (
-            <ActionMenuItem
-              icon={ForkIcon}
-              label="Fork"
-              description="Create your own editable copy"
-              onClick={closeMenuAnd(() => handleFork(ruleset))}
-            />
-          )}
-          {!!ruleset.rulesetId && (
-            <ActionMenuItem
-              icon={CompareIcon}
-              label="Local Changes"
-              description="View added, modified, and deleted entities"
-              onClick={closeMenuAnd(() => setOverridesDialogOpen(true))}
-            />
-          )}
-          {isOwner &&
-            ruleset.rulesetId &&
-            ruleset.status !== "Archived" &&
-            !ruleset.isUsedAsExtension &&
-            !isExtension && (
-              <ActionMenuItem
-                icon={ExtensionIcon}
-                label="Subscribe"
-                description="Add content from a sourcebook"
-                onClick={closeMenuAnd(() => handleSubscribe(ruleset))}
-              />
-            )}
-          {showContributorsMenu && (
-            <ActionMenuItem
-              icon={ContributorsIcon}
-              label="Contributors"
-              description="Admin, Editor, Viewer"
-              onClick={closeMenuAnd(() => setContributorsDialogOpen(true))}
-            />
-          )}
-          {isOwner &&
-            ruleset.rulesetId &&
-            ruleset.status !== "Archived" && [
-              <Divider key="sync-divider" />,
-              <ActionMenuItem
-                key="faq-link"
-                icon={HelpIcon}
-                label="Help Center"
-                href={externalLinks.help}
-                onClick={() => setAnchorEl(null)}
-              />,
-            ]}
-          {canEditRuleset &&
-            ruleset.status !== "Archived" && [
-              <ActionMenuItem
-                key="edit"
-                icon={EditIcon}
-                label="Edit"
-                onClick={closeMenuAnd(() => handleEdit(ruleset))}
-              />,
-              canPublish && ruleset.status === "Draft" && (
-                <ActionMenuItem
-                  key="publish"
-                  icon={PublishIcon}
-                  label="Publish"
-                  intent="positive"
-                  onClick={closeMenuAnd(() => handlePublish(ruleset))}
-                />
-              ),
-              <ActionMenuItem
-                key="archive"
-                icon={ArchiveIcon}
-                label="Archive"
-                intent="caution"
-                onClick={closeMenuAnd(() => handleArchive(ruleset))}
-              />,
-            ]}
-          {isOwner && ruleset.status === "Archived" && (
-            <ActionMenuItem
-              icon={UnarchiveIcon}
-              label="Unarchive"
-              intent="positive"
-              onClick={closeMenuAnd(() => unarchiveMutation.mutate(ruleset.id))}
-            />
-          )}
-        </Menu>
-
-        <EditRulesetDialog
-          open={editDialogOpen}
-          onClose={() => setEditDialogOpen(false)}
-          form={editForm}
-          onSubmit={(data) => {
-            if (selectedRuleset) {
-              updateMutation.mutate({ id: selectedRuleset.id, data });
-            }
-          }}
-          isLoading={updateMutation.isPending}
-          isPublic={selectedRuleset ? !selectedRuleset.private : false}
-          canBeExtension={
-            !!selectedRuleset?.rulesetId &&
-            selectedRuleset.userId !== null &&
-            selectedRuleset.extensionRulesetIds.length === 0
-          }
-        />
-
-        <ArchiveRulesetDialog
-          open={archiveDialogOpen}
-          onClose={() => setArchiveDialogOpen(false)}
-          onConfirm={() => {
-            if (selectedRuleset) {
-              archiveMutation.mutate(selectedRuleset.id, {
-                onSuccess: () => navigate("/rulesets"),
-              });
-            }
-          }}
-          isLoading={archiveMutation.isPending}
-        />
-
-        <PublishRulesetDialog
-          open={publishDialogOpen}
-          onClose={() => setPublishDialogOpen(false)}
-          onConfirm={(kind) => {
-            if (selectedRuleset) {
-              publishMutation.mutate({ id: selectedRuleset.id, kind });
-            }
-          }}
-          isLoading={publishMutation.isPending}
-          canBeExtension={
-            !!selectedRuleset?.rulesetId &&
-            selectedRuleset.userId !== null &&
-            selectedRuleset.extensionRulesetIds.length === 0
-          }
-          kind={publishKind}
-          onKindChange={setPublishKind}
-        />
-
-        <ForkRulesetDialog
-          open={forkDialogOpen}
-          onClose={() => setForkDialogOpen(false)}
-          form={forkForm}
-          onSubmit={confirmFork}
-          isLoading={forkMutation.isPending}
-        />
-
-        {ruleset.rulesetId && (
-          <>
-            <OverridesDialog
-              open={overridesDialogOpen}
-              onClose={() => setOverridesDialogOpen(false)}
-              rulesetId={ruleset.id}
-              baseRules={ruleset.baseRules}
-              canEdit={canEditRuleset}
-            />
-
-            <SubscribeExtensionDialog
-              open={subscribeDialogOpen}
-              onClose={() => setSubscribeDialogOpen(false)}
-              onConfirm={confirmSubscribe}
-              isLoading={subscribeMutation.isPending}
-              subscribedExtensionIds={subscribedExtensions?.map((ext) => ext.extensionId) ?? []}
-            />
-
-            <UnsubscribeExtensionDialog
-              open={unsubscribeDialogOpen}
-              onClose={() => {
-                setUnsubscribeDialogOpen(false);
+    <PageBody>
+      <DetailPageHeader
+        title={ruleset.name}
+        titleAdornment={
+          ruleset.isStarrable && (
+            <IconButton
+              onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
+              size="small"
+              aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
+              sx={{
+                flexShrink: 0,
+                p: 0,
+                color: ruleset.isStarred ? "warning.main" : "action.disabled",
+                "&:hover": { color: "warning.main", backgroundColor: "transparent" },
               }}
-              onConfirm={confirmUnsubscribe}
-              isLoading={unsubscribeMutation.isPending}
-              extensionName={unsubscribeTarget?.extensionName ?? ""}
-            />
-          </>
+            >
+              {ruleset.isStarred ? <StarredIcon fontSize="medium" /> : <UnstarredIcon fontSize="medium" />}
+            </IconButton>
+          )
+        }
+        backTo={"/rulesets"}
+        onMenuOpen={hasMenuItems ? (e) => setAnchorEl(e.currentTarget) : undefined}
+        tags={[
+          ...rulesetTags(ruleset, prefetchParent),
+          ...(subscribedExtensions && subscribedExtensions.length > 0
+            ? [
+                {
+                  icon: ExtensionIcon,
+                  label: formatCount(subscribedExtensions.length, "extension"),
+                  color: subscribedExtensions.some((ext) => ext.updateAvailable)
+                    ? ("warning" as const)
+                    : ("default" as const),
+                  onClick: (event: MouseEvent<HTMLElement>) => setExtensionsAnchor(event.currentTarget),
+                },
+              ]
+            : []),
+        ]}
+        description={ruleset.description || "Explore the complete rules and content for this game system"}
+      >
+        {ruleset.system && ruleset.baseRules === "Dungeons & Dragons: 3.5" && (
+          <RulesetLicenseNotice key={ruleset.id} name={ruleset.name} />
         )}
+      </DetailPageHeader>
+      {subscribedExtensions && subscribedExtensions.length > 0 && (
+        <Popover
+          open={Boolean(extensionsAnchor)}
+          anchorEl={extensionsAnchor}
+          onClose={() => setExtensionsAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          transformOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Stack spacing={1} sx={{ p: 1.5, maxWidth: 360, alignItems: "flex-start" }}>
+            {subscribedExtensions.map((ext) => (
+              <TagChip
+                key={ext.extensionId}
+                size="medium"
+                tag={{
+                  icon: ExtensionIcon,
+                  label: ext.extensionName,
+                  color: ext.updateAvailable ? "warning" : "default",
+                  to: `/rulesets/${ext.extensionId}`,
+                  onDelete: isOwner
+                    ? () => handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName)
+                    : undefined,
+                }}
+              />
+            ))}
+          </Stack>
+        </Popover>
+      )}
 
-        <Modal open={contributorsDialogOpen} onClose={() => setContributorsDialogOpen(false)} maxWidth="md">
-          <DialogTitle>Contributors</DialogTitle>
-          <DialogContent>
-            <ContributorsSection ruleset={ruleset} onLeave={() => navigate("/rulesets")} />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setContributorsDialogOpen(false)} variant="outlined" color="inherit">
-              Close
-            </Button>
-          </DialogActions>
-        </Modal>
-      </Container>
-    </PageTransition>
+      {/* Read-Only Banner for Archived Rulesets */}
+      {ruleset.status === "Archived" && (
+        <Alert severity="info">
+          <Typography variant="body2">
+            <strong>This ruleset is archived and read-only.</strong> You can view all content but cannot make changes.
+            {isOwner && " Unarchive it to edit it again."}
+          </Typography>
+        </Alert>
+      )}
+
+      <SectionTabs
+        tabs={tabConfig}
+        value={currentTab.key}
+        onChange={(key) => navigate(`/rulesets/${id}/${key}`)}
+        // Changing tab clears the URL's filters, so it opens with the ruleset's default "Local Changes".
+        onTabHover={(key) => void prefetchSection(queryClient, id, key, isExtension)}
+        aria-label="ruleset details tabs"
+      />
+
+      <Box role="tabpanel">
+        {/* Keyed by ruleset: a tab's list keeps its previous data while a search loads, never another ruleset's. */}
+        <currentTab.component
+          key={ruleset.id}
+          ruleset={ruleset}
+          childOnly={childOnly}
+          onChildOnlyChange={setChildOnly}
+        />
+      </Box>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+        slotProps={{ paper: { sx: { minWidth: 200 } } }}
+      >
+        {ruleset.status === "Published" && !isExtension && !isFork && (
+          <ActionMenuItem
+            icon={ForkIcon}
+            label="Fork"
+            description="Create your own editable copy"
+            onClick={closeMenuAnd(() => handleFork(ruleset))}
+          />
+        )}
+        {!!ruleset.rulesetId && (
+          <ActionMenuItem
+            icon={CompareIcon}
+            label="Local Changes"
+            description="View added, modified, and deleted entities"
+            onClick={closeMenuAnd(() => setOverridesDialogOpen(true))}
+          />
+        )}
+        {isOwner &&
+          ruleset.rulesetId &&
+          ruleset.status !== "Archived" &&
+          !ruleset.isUsedAsExtension &&
+          !isExtension && (
+            <ActionMenuItem
+              icon={ExtensionIcon}
+              label="Subscribe"
+              description="Add content from a sourcebook"
+              onClick={closeMenuAnd(() => handleSubscribe(ruleset))}
+            />
+          )}
+        {showContributorsMenu && (
+          <ActionMenuItem
+            icon={ContributorsIcon}
+            label="Contributors"
+            description="Admin, Editor, Viewer"
+            onClick={closeMenuAnd(() => setContributorsDialogOpen(true))}
+          />
+        )}
+        {isOwner &&
+          ruleset.rulesetId &&
+          ruleset.status !== "Archived" && [
+            <Divider key="sync-divider" />,
+            <ActionMenuItem
+              key="faq-link"
+              icon={HelpIcon}
+              label="Help Center"
+              href={externalLinks.help}
+              onClick={() => setAnchorEl(null)}
+            />,
+          ]}
+        {canEditRuleset &&
+          ruleset.status !== "Archived" && [
+            <ActionMenuItem
+              key="edit"
+              icon={EditIcon}
+              label="Edit"
+              onClick={closeMenuAnd(() => handleEdit(ruleset))}
+            />,
+            canPublish && ruleset.status === "Draft" && (
+              <ActionMenuItem
+                key="publish"
+                icon={PublishIcon}
+                label="Publish"
+                intent="positive"
+                onClick={closeMenuAnd(() => handlePublish(ruleset))}
+              />
+            ),
+            <ActionMenuItem
+              key="archive"
+              icon={ArchiveIcon}
+              label="Archive"
+              intent="caution"
+              onClick={closeMenuAnd(() => handleArchive(ruleset))}
+            />,
+          ]}
+        {isOwner && ruleset.status === "Archived" && (
+          <ActionMenuItem
+            icon={UnarchiveIcon}
+            label="Unarchive"
+            intent="positive"
+            onClick={closeMenuAnd(() => unarchiveMutation.mutate(ruleset.id))}
+          />
+        )}
+      </Menu>
+
+      <EditRulesetDialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        form={editForm}
+        onSubmit={(data) => {
+          if (selectedRuleset) {
+            updateMutation.mutate({ id: selectedRuleset.id, data });
+          }
+        }}
+        isLoading={updateMutation.isPending}
+        isPublic={selectedRuleset ? !selectedRuleset.private : false}
+        canBeExtension={
+          !!selectedRuleset?.rulesetId &&
+          selectedRuleset.userId !== null &&
+          selectedRuleset.extensionRulesetIds.length === 0
+        }
+      />
+
+      <ArchiveRulesetDialog
+        open={archiveDialogOpen}
+        onClose={() => setArchiveDialogOpen(false)}
+        onConfirm={() => {
+          if (selectedRuleset) {
+            archiveMutation.mutate(selectedRuleset.id, {
+              onSuccess: () => navigate("/rulesets"),
+            });
+          }
+        }}
+        isLoading={archiveMutation.isPending}
+      />
+
+      <PublishRulesetDialog
+        open={publishDialogOpen}
+        onClose={() => setPublishDialogOpen(false)}
+        onConfirm={(kind) => {
+          if (selectedRuleset) {
+            publishMutation.mutate({ id: selectedRuleset.id, kind });
+          }
+        }}
+        isLoading={publishMutation.isPending}
+        canBeExtension={
+          !!selectedRuleset?.rulesetId &&
+          selectedRuleset.userId !== null &&
+          selectedRuleset.extensionRulesetIds.length === 0
+        }
+        kind={publishKind}
+        onKindChange={setPublishKind}
+      />
+
+      <ForkRulesetDialog
+        open={forkDialogOpen}
+        onClose={() => setForkDialogOpen(false)}
+        form={forkForm}
+        onSubmit={confirmFork}
+        isLoading={forkMutation.isPending}
+      />
+
+      {ruleset.rulesetId && (
+        <>
+          <OverridesDialog
+            open={overridesDialogOpen}
+            onClose={() => setOverridesDialogOpen(false)}
+            rulesetId={ruleset.id}
+            baseRules={ruleset.baseRules}
+            canEdit={canEditRuleset}
+          />
+
+          <SubscribeExtensionDialog
+            open={subscribeDialogOpen}
+            onClose={() => setSubscribeDialogOpen(false)}
+            onConfirm={confirmSubscribe}
+            isLoading={subscribeMutation.isPending}
+            subscribedExtensionIds={subscribedExtensions?.map((ext) => ext.extensionId) ?? []}
+          />
+
+          <UnsubscribeExtensionDialog
+            open={unsubscribeDialogOpen}
+            onClose={() => {
+              setUnsubscribeDialogOpen(false);
+            }}
+            onConfirm={confirmUnsubscribe}
+            isLoading={unsubscribeMutation.isPending}
+            extensionName={unsubscribeTarget?.extensionName ?? ""}
+          />
+        </>
+      )}
+
+      <Modal open={contributorsDialogOpen} onClose={() => setContributorsDialogOpen(false)} maxWidth="md">
+        <DialogTitle>Contributors</DialogTitle>
+        <DialogContent>
+          <ContributorsSection ruleset={ruleset} onLeave={() => navigate("/rulesets")} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setContributorsDialogOpen(false)} variant="outlined" color="inherit">
+            Close
+          </Button>
+        </DialogActions>
+      </Modal>
+    </PageBody>
   );
 }

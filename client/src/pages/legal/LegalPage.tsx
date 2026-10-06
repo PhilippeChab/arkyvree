@@ -1,23 +1,21 @@
-import { Container, Paper, Typography } from "@mui/material";
+import { Paper, Typography } from "@mui/material";
 
-import { DiceSpinner, PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, PageBody, PageHeader } from "@/client/src/components/common/index.ts";
 import { useOglLicense, usePageTitle } from "@/client/src/hooks/index.ts";
 
 export default function LegalPage() {
   usePageTitle("Legal");
-  const { data: text, isError } = useOglLicense();
+  const { data: text, error, refetch } = useOglLicense();
 
   return (
-    <PageTransition>
-      <Container maxWidth="md" sx={{ py: { xs: 2, sm: 4 } }}>
-        <PageHeader title="Legal" subtitle="Open Game License v1.0a, covering the SRD content used in Arkyvree." />
+    <PageBody width="md">
+      <PageHeader title="Legal" subtitle="Open Game License v1.0a, covering the SRD content used in Arkyvree." />
 
+      {error ? (
+        <LoadError what="License text" error={error} onRetry={() => void refetch()} />
+      ) : (
         <Paper sx={{ p: { xs: 2, sm: 4 } }}>
-          {isError ? (
-            <Typography variant="body2" sx={{ color: "error.main" }}>
-              Failed to load the license text. Please refresh.
-            </Typography>
-          ) : text === undefined ? (
+          {text === undefined ? (
             <DiceSpinner sx={{ py: 4 }} />
           ) : (
             <Typography
@@ -28,14 +26,13 @@ export default function LegalPage() {
                 whiteSpace: "pre-wrap",
                 overflowWrap: "anywhere",
                 fontFamily: "inherit",
-                margin: 0,
               }}
             >
               {text}
             </Typography>
           )}
         </Paper>
-      </Container>
-    </PageTransition>
+      )}
+    </PageBody>
   );
 }

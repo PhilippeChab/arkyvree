@@ -31,7 +31,6 @@ function AuthFooterLinks() {
         flexWrap: "wrap",
         columnGap: { xs: 1, sm: 2 },
         rowGap: 0.5,
-        mt: 2,
         alignItems: "center",
         justifyContent: "center",
         width: "100%",
@@ -89,6 +88,7 @@ function DesktopBranding() {
 
   return (
     <Stack
+      spacing={2}
       sx={{
         position: "relative",
         width: "45%",
@@ -162,7 +162,6 @@ function DesktopBranding() {
         component="p"
         variant="h3"
         sx={{
-          mt: 3,
           color: "common.white",
           fontWeight: 700,
           letterSpacing: "0.04em",
@@ -178,7 +177,6 @@ function DesktopBranding() {
       {/* Gold gradient divider */}
       <Box
         sx={{
-          mt: 2,
           width: 120,
           height: 2,
           background: `linear-gradient(90deg, transparent, ${gold}, transparent)`,
@@ -190,9 +188,9 @@ function DesktopBranding() {
 
       {/* Tagline */}
       <Typography
+        component="p"
         variant="subtitle1"
         sx={{
-          mt: 2,
           color: alpha(theme.palette.common.white, 0.7),
           fontStyle: "italic",
           textAlign: "center",
@@ -288,7 +286,7 @@ export function AuthLayoutRoute() {
 
   if (isMobile) {
     return (
-      <Stack sx={{ minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}>
+      <Stack spacing={2} sx={{ minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}>
         <Card sx={{ width: "100%", maxWidth: 450, mx: "auto", overflow: "hidden" }}>
           <MobileBranding />
           <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
@@ -304,7 +302,7 @@ export function AuthLayoutRoute() {
     <Stack direction="row" sx={{ minHeight: "100vh" }}>
       <DesktopBranding />
 
-      <Stack sx={{ flex: 1, alignItems: "center", justifyContent: "center", px: 4 }}>
+      <Stack spacing={2} sx={{ flex: 1, alignItems: "center", justifyContent: "center", px: 4 }}>
         <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
           <Outlet />
         </Suspense>
@@ -320,35 +318,29 @@ export function AuthPage({ children, title, subtitle, error, notice }: AuthPageP
     <PageTransition>
       <Card sx={{ width: "100%", maxWidth: 450 }}>
         <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-          <Box
+          <Stack
+            spacing={3}
             sx={{
               animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} both`,
               [prefersReducedMotion]: { animation: "none" },
             }}
           >
-            <Typography sx={{ typography: { xs: "h5", sm: "h4" } }} component="h1" gutterBottom align="center">
-              {title}
-            </Typography>
-
-            {subtitle && (
-              <Typography variant="body2" align="center" sx={{ mb: 3 }}>
-                {subtitle}
+            <Box>
+              <Typography sx={{ typography: { xs: "h5", sm: "h4" } }} component="h1" gutterBottom align="center">
+                {title}
               </Typography>
-            )}
+              {subtitle && (
+                <Typography variant="body2" align="center">
+                  {subtitle}
+                </Typography>
+              )}
+            </Box>
 
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
-            {notice && (
-              <Alert severity="success" sx={{ mb: 2 }}>
-                {notice}
-              </Alert>
-            )}
+            {error && <Alert severity="error">{error}</Alert>}
+            {notice && <Alert severity="success">{notice}</Alert>}
 
             {children}
-          </Box>
+          </Stack>
         </CardContent>
       </Card>
     </PageTransition>

@@ -226,8 +226,8 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
 
   return (
     <Box>
-      <Box sx={{ position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper", pb: 1 }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
+      <Stack spacing={1} sx={{ position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper", pb: 1 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <Typography component="h3" variant="h6">
             Skill Points to Spend: {skillData.skillPointsToSpend}
           </Typography>
@@ -236,8 +236,8 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
           </Button>
         </Stack>
         <Typography
+          component="p"
           variant="subtitle2"
-          gutterBottom
           sx={{
             color:
               pointsSpent > skillData.skillPointsToSpend
@@ -254,7 +254,7 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
             </Box>
           )}
         </Typography>
-      </Box>
+      </Stack>
       <TableContainer sx={{ overflowX: "auto", mx: { xs: -2, sm: 0 }, width: { xs: "calc(100% + 32px)", sm: "100%" } }}>
         <Table size="small" sx={{ minWidth: 420, tableLayout: "fixed" }}>
           <colgroup>

@@ -1,4 +1,4 @@
-import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
+import { Link as MuiLink, Stack, Typography } from "@mui/material";
 import { Controller } from "react-hook-form";
 import { Link, Navigate, useLocation } from "react-router-dom";
 
@@ -68,17 +68,17 @@ export default function VerifyEmail() {
           Verify
         </AuthSubmitButton>
       </Stack>
-      <Box sx={{ textAlign: "center" }}>
-        <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+      <Stack spacing={1} sx={{ textAlign: "center" }}>
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
           Don't see it? Check your spam or junk folder.
         </Typography>
         <ResendCodeLink onResend={handleResend} disabled={auth.pending} />
-        <Typography variant="body2" sx={{ mt: 1 }}>
+        <Typography variant="body2">
           <MuiLink component={Link} to={fromSignIn ? "/sign-in" : "/sign-up"} underline="hover">
             {fromSignIn ? "Back to Sign In" : "Back to Sign Up"}
           </MuiLink>
         </Typography>
-      </Box>
+      </Stack>
     </AuthPage>
   );
 }

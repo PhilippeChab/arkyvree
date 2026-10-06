@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
@@ -42,28 +42,32 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
   const autoGrantedPowers = powerData?.autoGrantedPowers ?? [];
 
   return (
-    <Box>
-      <Typography component="h3" gutterBottom sx={{ typography: { xs: "h6", sm: "h5" } }}>
+    <Stack spacing={3}>
+      <Typography component="h3" sx={{ typography: { xs: "h6", sm: "h5" } }}>
         Review Changes
       </Typography>
       {children}
       {selectedSkills.length > 0 && (
         <ReviewGroup title="Skill Improvements">
-          {selectedSkills.map(([skillId, points]) => {
-            const skill = skillData?.skills.find((s) => s.id === skillId);
-            if (!skill) return null;
-            const ranksGained = skill.isClassSkill ? points : points * 0.5;
-            return (
-              <ReviewItem
-                key={skillId}
-                name={skill.name}
-                note={`: +${formatCount(ranksGained, "rank")}${skill.isClassSkill ? "" : ` (${formatCount(points, "point")})`}`}
-              />
-            );
-          })}
-          <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
-            Total Points Used: {pointsUsed} / {skillData?.skillPointsToSpend}
-          </Typography>
+          <Stack spacing={1}>
+            <Box>
+              {selectedSkills.map(([skillId, points]) => {
+                const skill = skillData?.skills.find((s) => s.id === skillId);
+                if (!skill) return null;
+                const ranksGained = skill.isClassSkill ? points : points * 0.5;
+                return (
+                  <ReviewItem
+                    key={skillId}
+                    name={skill.name}
+                    note={`: +${formatCount(ranksGained, "rank")}${skill.isClassSkill ? "" : ` (${formatCount(points, "point")})`}`}
+                  />
+                );
+              })}
+            </Box>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              Total Points Used: {pointsUsed} / {skillData?.skillPointsToSpend}
+            </Typography>
+          </Stack>
         </ReviewGroup>
       )}
       {selectedFeatsData.length > 0 && (
@@ -96,14 +100,14 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
           ))}
         </ReviewGroup>
       )}
-    </Box>
+    </Stack>
   );
 }
 
 /** A titled group of a level review ("Class Advancement", "New Feats"). */
 export function ReviewGroup({ title, children }: ReviewGroupProps) {
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box>
       <Typography component="h3" variant="h6" gutterBottom>
         {title}
       </Typography>

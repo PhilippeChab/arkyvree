@@ -4,7 +4,6 @@ import {
   Card,
   CardActionArea,
   CardContent,
-  Container,
   Link as MuiLink,
   Paper,
   Stack,
@@ -15,7 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ElementType } from "react";
 import { Link } from "react-router-dom";
 
-import { DiceSpinner, GoldDivider, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, GoldDivider, LoadError, PageBody } from "@/client/src/components/common/index.ts";
 import { CampaignsIcon, CharactersIcon, HelpIcon, RulesetsIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { DURATION, fadeInUpSx, transitionOf } from "@/client/src/lib/animations.ts";
@@ -57,21 +56,19 @@ function StatCard({ icon: Icon, count, label, tagline, to, colors, animationInde
         }}
       >
         <CardActionArea component={Link} to={to} sx={{ height: "100%" }}>
-          <CardContent sx={{ textAlign: "center", p: { xs: 2, sm: 4 } }}>
-            <Icon fontSize="hero" sx={{ mb: 2 }} />
-            <Typography
-              component="p"
-              gutterBottom
-              sx={{ typography: { xs: "h4", md: "h2" }, fontWeight: 800, textShadow }}
-            >
-              {count}
-            </Typography>
-            <Typography component="h2" variant="h6" sx={{ textShadow }}>
-              {label}
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9, mt: 1, textShadow }}>
-              {tagline}
-            </Typography>
+          <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
+            <Stack spacing={1} sx={{ alignItems: "center", textAlign: "center" }}>
+              <Icon fontSize="hero" />
+              <Typography component="p" sx={{ typography: { xs: "h4", md: "h2" }, fontWeight: 800, textShadow }}>
+                {count}
+              </Typography>
+              <Typography component="h2" variant="h6" sx={{ textShadow }}>
+                {label}
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9, textShadow }}>
+                {tagline}
+              </Typography>
+            </Stack>
           </CardContent>
         </CardActionArea>
       </Card>
@@ -91,82 +88,81 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <PageBody>
         <DiceSpinner size="large" sx={{ minHeight: "80vh" }} />
-      </Container>
+      </PageBody>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <PageBody>
         <LoadError what="Dashboard statistics" error={error} sx={{ borderRadius: 3 }} />
-      </Container>
+      </PageBody>
     );
   }
 
   return (
-    <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        {/* Hero Section */}
-        <Paper
-          sx={{
+    <PageBody>
+      {/* Hero Section */}
+      <Paper
+        sx={{
+          background: (theme) =>
+            `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+          color: "common.white",
+          p: { xs: 3, sm: 4 },
+          borderRadius: 4,
+          overflow: "hidden",
+          position: "relative",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "120%",
+            height: "120%",
             background: (theme) =>
-              `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            color: "common.white",
-            p: { xs: 3, sm: 4 },
-            borderRadius: 4,
-            mb: 4,
-            overflow: "hidden",
-            position: "relative",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "120%",
-              height: "120%",
-              background: (theme) =>
-                `radial-gradient(circle, ${alpha(theme.palette.common.white, 0.08)} 0%, transparent 60%)`,
-              pointerEvents: "none",
-            },
+              `radial-gradient(circle, ${alpha(theme.palette.common.white, 0.08)} 0%, transparent 60%)`,
+            pointerEvents: "none",
+          },
+        }}
+      >
+        {/* Corner filigree top-left */}
+        <Box
+          sx={{
+            display: { xs: "none", sm: "block" },
+            position: "absolute",
+            top: 16,
+            left: 16,
+            width: 40,
+            height: 40,
+            borderTop: 2,
+            borderLeft: 2,
+            borderColor: (theme) => alpha(theme.palette.common.white, 0.3),
+            borderTopLeftRadius: 4,
+            pointerEvents: "none",
           }}
-        >
-          {/* Corner filigree top-left */}
-          <Box
-            sx={{
-              display: { xs: "none", sm: "block" },
-              position: "absolute",
-              top: 16,
-              left: 16,
-              width: 40,
-              height: 40,
-              borderTop: 2,
-              borderLeft: 2,
-              borderColor: (theme) => alpha(theme.palette.common.white, 0.3),
-              borderTopLeftRadius: 4,
-              pointerEvents: "none",
-            }}
-          />
-          {/* Corner filigree bottom-right */}
-          <Box
-            sx={{
-              display: { xs: "none", sm: "block" },
-              position: "absolute",
-              bottom: 16,
-              right: 16,
-              width: 40,
-              height: 40,
-              borderBottom: 2,
-              borderRight: 2,
-              borderColor: (theme) => alpha(theme.palette.common.white, 0.3),
-              borderBottomRightRadius: 4,
-              pointerEvents: "none",
-            }}
-          />
+        />
+        {/* Corner filigree bottom-right */}
+        <Box
+          sx={{
+            display: { xs: "none", sm: "block" },
+            position: "absolute",
+            bottom: 16,
+            right: 16,
+            width: 40,
+            height: 40,
+            borderBottom: 2,
+            borderRight: 2,
+            borderColor: (theme) => alpha(theme.palette.common.white, 0.3),
+            borderBottomRightRadius: 4,
+            pointerEvents: "none",
+          }}
+        />
 
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 2, position: "relative" }}>
+        <Stack spacing={2} sx={{ alignItems: "flex-start", position: "relative" }}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             {/* Icon with radial glow */}
             <Stack
               direction="row"
@@ -215,7 +211,6 @@ export default function DashboardPage() {
             component="p"
             sx={{
               opacity: 0.9,
-              mb: 3,
               typography: { xs: "body1", sm: "h5" },
               textShadow: (theme) => `0 1px 4px ${alpha(theme.palette.common.black, 0.2)}`,
               position: "relative",
@@ -238,44 +233,44 @@ export default function DashboardPage() {
             <HelpIcon fontSize="compact" sx={{ mr: 0.5, verticalAlign: "middle" }} />
             Help
           </MuiLink>
-        </Paper>
-
-        <GoldDivider />
-
-        <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap", mb: 4 }}>
-          <StatCard
-            icon={CharactersIcon}
-            count={dashboardStats?.totalCharacters ?? 0}
-            label="Characters"
-            tagline="Heroes ready for adventure"
-            to="/characters"
-            colors={(theme) => [theme.palette.primary.light, theme.palette.primary.main]}
-            animationIndex={0}
-          />
-          <StatCard
-            icon={CampaignsIcon}
-            count={dashboardStats?.totalCampaigns ?? 0}
-            label="Campaigns"
-            tagline="Epic quests in progress"
-            to="/campaigns"
-            colors={(theme) => [theme.palette.secondary.light, theme.palette.secondary.main]}
-            animationIndex={1}
-          />
-          <StatCard
-            icon={RulesetsIcon}
-            count={dashboardStats?.totalRulesets ?? 0}
-            label="Rulesets"
-            tagline="Game systems available"
-            to="/rulesets"
-            colors={(theme) => [theme.palette.primary.dark, theme.palette.primary.dark]}
-            animationIndex={2}
-          />
         </Stack>
+      </Paper>
 
-        <GoldDivider />
+      <GoldDivider />
 
-        <RecentNotificationsCard />
-      </Container>
-    </PageTransition>
+      <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap" }}>
+        <StatCard
+          icon={CharactersIcon}
+          count={dashboardStats?.totalCharacters ?? 0}
+          label="Characters"
+          tagline="Heroes ready for adventure"
+          to="/characters"
+          colors={(theme) => [theme.palette.primary.light, theme.palette.primary.main]}
+          animationIndex={0}
+        />
+        <StatCard
+          icon={CampaignsIcon}
+          count={dashboardStats?.totalCampaigns ?? 0}
+          label="Campaigns"
+          tagline="Epic quests in progress"
+          to="/campaigns"
+          colors={(theme) => [theme.palette.secondary.light, theme.palette.secondary.main]}
+          animationIndex={1}
+        />
+        <StatCard
+          icon={RulesetsIcon}
+          count={dashboardStats?.totalRulesets ?? 0}
+          label="Rulesets"
+          tagline="Game systems available"
+          to="/rulesets"
+          colors={(theme) => [theme.palette.primary.dark, theme.palette.primary.dark]}
+          animationIndex={2}
+        />
+      </Stack>
+
+      <GoldDivider />
+
+      <RecentNotificationsCard />
+    </PageBody>
   );
 }

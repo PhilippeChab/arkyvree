@@ -327,7 +327,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   return (
     <SectionContent>
       {/* Header */}
-      <Typography component="h2" sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>
+      <Typography component="h2" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
         Players
       </Typography>
       <SearchBar
@@ -343,7 +343,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         }
       />
       {playersError ? (
-        <LoadError what="Players" error={playersError} sx={{ mb: 3 }} />
+        <LoadError what="Players" error={playersError} />
       ) : (
         <>
           <DataTable

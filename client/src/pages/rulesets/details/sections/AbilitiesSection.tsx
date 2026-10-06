@@ -51,7 +51,7 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   return (
     <SectionContent>
       {/* No search bar here: the actions sit alone, and take no space when there are none. */}
-      <Stack direction="row" sx={{ justifyContent: "flex-end", mb: 1, "&:empty": { display: "none" } }}>
+      <Stack direction="row" sx={{ justifyContent: "flex-end", "&:empty": { display: "none" } }}>
         <SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange} />
       </Stack>
       <RulesetSectionTable

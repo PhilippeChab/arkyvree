@@ -1,4 +1,4 @@
-import { Alert, Container, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
+import { Alert, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -8,8 +8,8 @@ import {
   ActionMenuItem,
   ConfirmDialog,
   DeleteDialog,
+  PageBody,
   PageError,
-  PageTransition,
 } from "@/client/src/components/common/index.ts";
 import {
   AddIcon,
@@ -149,13 +149,13 @@ export default function CharacterDetailsPage() {
   // A failed background refetch keeps the loaded page (and any edits in progress) on screen.
   if (!character) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <PageBody>
         <PageError
           message={loadFailureMessage("Character", error)}
           backLabel="Back to Characters"
           backTo={"/characters"}
         />
-      </Container>
+      </PageBody>
     );
   }
 
@@ -165,237 +165,234 @@ export default function CharacterDetailsPage() {
   const parentCharacterId = "parentCharacterId" in character ? character.parentCharacterId : null;
 
   return (
-    <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 2 }}>
-        {/* Header with controls */}
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
-          >
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
-              <IconButton
-                aria-label="Back"
-                component={Link}
-                to={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
-              >
-                <BackIcon />
-              </IconButton>
-              <Typography component="p" sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
-                {character.rulesetName || "Character Sheet"}
-              </Typography>
-            </Stack>
+    <PageBody>
+      {/* Header with controls */}
+      <Paper sx={{ p: 2 }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
+        >
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
+            <IconButton
+              aria-label="Back"
+              component={Link}
+              to={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
+            >
+              <BackIcon />
+            </IconButton>
+            <Typography component="p" sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
+              {character.rulesetName || "Character Sheet"}
+            </Typography>
+          </Stack>
 
-            {!(isBonded && isArchived) && (
-              <Stack direction="row" spacing={1}>
-                <IconButton aria-label="More actions" onClick={handleClick} sx={{ color: "text.secondary" }}>
-                  <MoreIcon />
-                </IconButton>
-                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-                  {isBonded ? (
+          {!(isBonded && isArchived) && (
+            <Stack direction="row" spacing={1}>
+              <IconButton aria-label="More actions" onClick={handleClick} sx={{ color: "text.secondary" }}>
+                <MoreIcon />
+              </IconButton>
+              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+                {isBonded ? (
+                  <ActionMenuItem
+                    key="download-pdf"
+                    icon={DownloadIcon}
+                    label="Download PDF"
+                    onClick={closeMenuAnd(() => pdfExport.mutate())}
+                  />
+                ) : isArchived ? (
+                  [
+                    isOwner && (
+                      <ActionMenuItem
+                        key="unarchive"
+                        icon={UnarchiveIcon}
+                        label="Unarchive"
+                        intent="positive"
+                        onClick={closeMenuAnd(() => unarchiveMutation.mutate())}
+                      />
+                    ),
+                    !isDemo && (
+                      <ActionMenuItem
+                        key="contributors"
+                        icon={ContributorsIcon}
+                        label="Contributors"
+                        onClick={closeMenuAnd(() => setContributorsOpen(true))}
+                      />
+                    ),
+                    isOwner && (
+                      <ActionMenuItem
+                        key="hard-delete"
+                        icon={DeleteForeverIcon}
+                        label="Delete Permanently"
+                        intent="destructive"
+                        onClick={closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
+                      />
+                    ),
+                  ]
+                ) : (
+                  [
+                    <ActionMenuItem
+                      key="add-level"
+                      icon={AddIcon}
+                      label="Add Level"
+                      onClick={closeMenuAnd(() => setAddLevelOpen(true))}
+                    />,
+                    <ActionMenuItem
+                      key="remove-level"
+                      icon={DecrementIcon}
+                      label="Remove Level"
+                      onClick={closeMenuAnd(() => setConfirmOpen(true))}
+                    />,
+                    <ActionMenuItem
+                      key="manage-modifiers"
+                      icon={ModifiersIcon}
+                      label="Manage Modifiers"
+                      onClick={closeMenuAnd(() => setModifiersOpen(true))}
+                    />,
                     <ActionMenuItem
                       key="download-pdf"
                       icon={DownloadIcon}
                       label="Download PDF"
                       onClick={closeMenuAnd(() => pdfExport.mutate())}
-                    />
-                  ) : isArchived ? (
-                    [
-                      isOwner && (
-                        <ActionMenuItem
-                          key="unarchive"
-                          icon={UnarchiveIcon}
-                          label="Unarchive"
-                          intent="positive"
-                          onClick={closeMenuAnd(() => unarchiveMutation.mutate())}
-                        />
-                      ),
-                      !isDemo && (
-                        <ActionMenuItem
-                          key="contributors"
-                          icon={ContributorsIcon}
-                          label="Contributors"
-                          onClick={closeMenuAnd(() => setContributorsOpen(true))}
-                        />
-                      ),
-                      isOwner && (
-                        <ActionMenuItem
-                          key="hard-delete"
-                          icon={DeleteForeverIcon}
-                          label="Delete Permanently"
-                          intent="destructive"
-                          onClick={closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
-                        />
-                      ),
-                    ]
-                  ) : (
-                    [
+                    />,
+                    !isDemo && (
                       <ActionMenuItem
-                        key="add-level"
-                        icon={AddIcon}
-                        label="Add Level"
-                        onClick={closeMenuAnd(() => setAddLevelOpen(true))}
-                      />,
+                        key="contributors"
+                        icon={ContributorsIcon}
+                        label="Contributors"
+                        onClick={closeMenuAnd(() => setContributorsOpen(true))}
+                      />
+                    ),
+                    isOwner && !isDemo && (
                       <ActionMenuItem
-                        key="remove-level"
-                        icon={DecrementIcon}
-                        label="Remove Level"
-                        onClick={closeMenuAnd(() => setConfirmOpen(true))}
-                      />,
+                        key="share"
+                        icon={ShareIcon}
+                        label="Share"
+                        onClick={closeMenuAnd(() => setShareOpen(true))}
+                      />
+                    ),
+                    isOwner && (
                       <ActionMenuItem
-                        key="manage-modifiers"
-                        icon={ModifiersIcon}
-                        label="Manage Modifiers"
-                        onClick={closeMenuAnd(() => setModifiersOpen(true))}
-                      />,
-                      <ActionMenuItem
-                        key="download-pdf"
-                        icon={DownloadIcon}
-                        label="Download PDF"
-                        onClick={closeMenuAnd(() => pdfExport.mutate())}
-                      />,
-                      !isDemo && (
-                        <ActionMenuItem
-                          key="contributors"
-                          icon={ContributorsIcon}
-                          label="Contributors"
-                          onClick={closeMenuAnd(() => setContributorsOpen(true))}
-                        />
-                      ),
-                      isOwner && !isDemo && (
-                        <ActionMenuItem
-                          key="share"
-                          icon={ShareIcon}
-                          label="Share"
-                          onClick={closeMenuAnd(() => setShareOpen(true))}
-                        />
-                      ),
-                      isOwner && (
-                        <ActionMenuItem
-                          key="archive"
-                          icon={ArchiveIcon}
-                          label="Archive"
-                          intent="caution"
-                          onClick={closeMenuAnd(() => setArchiveConfirmOpen(true))}
-                        />
-                      ),
-                    ]
-                  )}
-                </Menu>
-              </Stack>
-            )}
-          </Stack>
-        </Paper>
+                        key="archive"
+                        icon={ArchiveIcon}
+                        label="Archive"
+                        intent="caution"
+                        onClick={closeMenuAnd(() => setArchiveConfirmOpen(true))}
+                      />
+                    ),
+                  ]
+                )}
+              </Menu>
+            </Stack>
+          )}
+        </Stack>
+      </Paper>
 
-        <DeleteDialog
-          open={isConfirmOpen}
-          onClose={() => setConfirmOpen(false)}
-          onConfirm={() => removeLevelMutation.mutate()}
-          title="Remove Level"
-          message="Are you sure you want to remove the last level? This action cannot be undone."
-          isLoading={removeLevelMutation.isPending}
-          confirmLabel="Remove Level"
-        />
+      <DeleteDialog
+        open={isConfirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => removeLevelMutation.mutate()}
+        title="Remove Level"
+        message="Are you sure you want to remove the last level? This action cannot be undone."
+        isLoading={removeLevelMutation.isPending}
+        confirmLabel="Remove Level"
+      />
 
-        <ConfirmDialog
-          open={isArchiveConfirmOpen}
-          onClose={() => setArchiveConfirmOpen(false)}
-          onConfirm={() => archiveMutation.mutate()}
-          title="Archive Character"
-          message="Are you sure you want to archive this character? You can restore it later from the Archived view."
-          isLoading={archiveMutation.isPending}
-          confirmLabel="Archive Character"
-          confirmColor="warning"
-          confirmIcon={<ArchiveIcon />}
-        />
+      <ConfirmDialog
+        open={isArchiveConfirmOpen}
+        onClose={() => setArchiveConfirmOpen(false)}
+        onConfirm={() => archiveMutation.mutate()}
+        title="Archive Character"
+        message="Are you sure you want to archive this character? You can restore it later from the Archived view."
+        isLoading={archiveMutation.isPending}
+        confirmLabel="Archive Character"
+        confirmColor="warning"
+        confirmIcon={<ArchiveIcon />}
+      />
 
-        <DeleteDialog
-          open={isHardDeleteConfirmOpen}
-          onClose={() => setHardDeleteConfirmOpen(false)}
-          onConfirm={() => hardDeleteMutation.mutate()}
-          title="Delete Permanently"
-          message="Are you sure you want to delete this character permanently? Its levels, abilities, inventory, attachments and customizations go with it. This action cannot be undone."
-          isLoading={hardDeleteMutation.isPending}
-          confirmLabel="Delete Permanently"
-        />
+      <DeleteDialog
+        open={isHardDeleteConfirmOpen}
+        onClose={() => setHardDeleteConfirmOpen(false)}
+        onConfirm={() => hardDeleteMutation.mutate()}
+        title="Delete Permanently"
+        message="Are you sure you want to delete this character permanently? Its levels, abilities, inventory, attachments and customizations go with it. This action cannot be undone."
+        isLoading={hardDeleteMutation.isPending}
+        confirmLabel="Delete Permanently"
+      />
 
-        <ShareDialog
-          open={isShareOpen}
-          onClose={() => setShareOpen(false)}
+      <ShareDialog
+        open={isShareOpen}
+        onClose={() => setShareOpen(false)}
+        characterId={id}
+        shareToken={character.shareToken}
+      />
+
+      <ContributorsDialog
+        open={isContributorsOpen}
+        onClose={() => setContributorsOpen(false)}
+        characterId={id}
+        isOwner={isOwner}
+        isArchived={isArchived}
+      />
+
+      <CharacterModifiersModal
+        open={isModifiersOpen}
+        onClose={() => setModifiersOpen(false)}
+        characterId={id}
+        rulesetId={character.rulesetId}
+      />
+
+      {/* Read-Only Banner for Archived Characters */}
+      {isArchived && (
+        <Alert severity="info">
+          <Typography variant="body2">
+            <strong>This character is archived and read-only.</strong> You can view all content but cannot make changes.
+          </Typography>
+        </Alert>
+      )}
+
+      {isAddLevelOpen && (
+        <AddLevelModal
+          open
+          onClose={closeAddLevel}
           characterId={id}
-          shareToken={character.shareToken}
+          baseRules={character.baseRules ?? DEFAULT_BASE_RULES}
         />
-
-        <ContributorsDialog
-          open={isContributorsOpen}
-          onClose={() => setContributorsOpen(false)}
+      )}
+      {editingLevel && (
+        <EditLevelModal
+          open
+          onClose={() => setEditingLevel(null)}
           characterId={id}
-          isOwner={isOwner}
-          isArchived={isArchived}
+          baseRules={character.baseRules ?? DEFAULT_BASE_RULES}
+          editingLevel={editingLevel}
         />
+      )}
 
-        <CharacterModifiersModal
-          open={isModifiersOpen}
-          onClose={() => setModifiersOpen(false)}
+      {isBonded ? (
+        <CharacterSheetBody
+          character={character}
           characterId={id}
+          readOnly
+          identityReadOnly={isArchived}
+          equipmentMode="readonly"
           rulesetId={character.rulesetId}
         />
-
-        {/* Read-Only Banner for Archived Characters */}
-        {isArchived && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Typography variant="body2">
-              <strong>This character is archived and read-only.</strong> You can view all content but cannot make
-              changes.
-            </Typography>
-          </Alert>
-        )}
-
-        {isAddLevelOpen && (
-          <AddLevelModal
-            open
-            onClose={closeAddLevel}
-            characterId={id}
-            baseRules={character.baseRules ?? DEFAULT_BASE_RULES}
-          />
-        )}
-        {editingLevel && (
-          <EditLevelModal
-            open
-            onClose={() => setEditingLevel(null)}
-            characterId={id}
-            baseRules={character.baseRules ?? DEFAULT_BASE_RULES}
-            editingLevel={editingLevel}
-          />
-        )}
-
-        {isBonded ? (
-          <CharacterSheetBody
-            character={character}
-            characterId={id}
-            readOnly
-            identityReadOnly={isArchived}
-            equipmentMode="readonly"
-            rulesetId={character.rulesetId}
-          />
-        ) : (
-          <CharacterSheetBody
-            character={character}
-            characterId={id}
-            readOnly={isArchived}
-            // Contributors edit the sheet, but only the owner changes a player character's portrait.
-            portraitReadOnly={isArchived || !isOwner}
-            onEditLevel={!isArchived ? setEditingLevel : undefined}
-            onAddLevel={() => setAddLevelOpen(true)}
-            onRemoveLevel={() => setConfirmOpen(true)}
-            onViewBondedSheet={(bondedId) => navigate(`/characters/${bondedId}`)}
-            equipmentMode="editable"
-            rulesetId={character.rulesetId}
-            diagnostics={character}
-          />
-        )}
-      </Container>
-    </PageTransition>
+      ) : (
+        <CharacterSheetBody
+          character={character}
+          characterId={id}
+          readOnly={isArchived}
+          // Contributors edit the sheet, but only the owner changes a player character's portrait.
+          portraitReadOnly={isArchived || !isOwner}
+          onEditLevel={!isArchived ? setEditingLevel : undefined}
+          onAddLevel={() => setAddLevelOpen(true)}
+          onRemoveLevel={() => setConfirmOpen(true)}
+          onViewBondedSheet={(bondedId) => navigate(`/characters/${bondedId}`)}
+          equipmentMode="editable"
+          rulesetId={character.rulesetId}
+          diagnostics={character}
+        />
+      )}
+    </PageBody>
   );
 }

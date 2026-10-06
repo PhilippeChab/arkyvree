@@ -1,6 +1,5 @@
 import { Alert, Card, CardContent, IconButton, Stack, Typography } from "@mui/material";
-import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
-import { TreeItem } from "@mui/x-tree-view/TreeItem";
+import { SimpleTreeView, TreeItem } from "@mui/x-tree-view";
 import type { InferResponseType } from "hono/client";
 import { parseResponse } from "hono/client";
 import { useCallback, useMemo, useState } from "react";
@@ -283,8 +282,6 @@ export function RequirementsSection({
           <Card
             variant="outlined"
             sx={{
-              my: 0.5,
-              mx: 0,
               ml: node.requirement.level.split(".").length > 1 ? { xs: 0, sm: 1 } : 0, // Indent children
               borderLeft: node.requirement.level.split(".").length > 1 ? 3 : 0, // Visual hierarchy
               borderColor: "primary.main",
@@ -404,7 +401,8 @@ export function RequirementsSection({
                 collapseIcon: ExpandMoreIcon,
                 expandIcon: ChevronRightIcon,
               }}
-              sx={{ flexGrow: 1, maxWidth: "100%", overflowY: "auto" }}
+              // A requirement's card sits apart from the next one's
+              sx={{ flexGrow: 1, maxWidth: "100%", overflowY: "auto", "& .MuiTreeItem-content": { py: 0.5 } }}
               expandedItems={expandedItems}
               onExpandedItemsChange={(_, ids) => setCollapsedIds(new Set(parentIds.filter((id) => !ids.includes(id))))}
             >

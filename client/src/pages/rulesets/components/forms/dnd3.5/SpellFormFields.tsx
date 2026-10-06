@@ -149,7 +149,7 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
       />
       {selectedAptitudes.length > 0 && (
         <Stack spacing={1.5}>
-          <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>
+          <Typography component="h3" variant="subtitle2" sx={{ color: "text.secondary" }}>
             Aptitude Settings
           </Typography>
           {selectedAptitudes.map((apt) => {

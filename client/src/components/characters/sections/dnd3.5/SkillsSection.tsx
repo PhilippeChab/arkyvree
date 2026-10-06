@@ -18,7 +18,7 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
     <SheetSection title="Skills">
       {sortedSkills.length > 0 ? (
         <>
-          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary", fontStyle: "italic" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
             * indicates a class skill
           </Typography>
           <TableContainer

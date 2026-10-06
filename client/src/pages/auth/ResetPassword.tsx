@@ -1,4 +1,4 @@
-import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
+import { Link as MuiLink, Stack, Typography } from "@mui/material";
 import { Controller } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
@@ -99,14 +99,14 @@ export default function ResetPassword() {
           Reset Password
         </AuthSubmitButton>
       </Stack>
-      <Box sx={{ textAlign: "center" }}>
+      <Stack spacing={1} sx={{ textAlign: "center" }}>
         <ResendCodeLink onResend={handleResend} disabled={auth.pending} />
-        <Typography variant="body2" sx={{ mt: 1 }}>
+        <Typography variant="body2">
           <MuiLink component={Link} to="/sign-in" underline="hover">
             Back to Sign In
           </MuiLink>
         </Typography>
-      </Box>
+      </Stack>
     </AuthPage>
   );
 }

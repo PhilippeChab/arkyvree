@@ -19,7 +19,7 @@ export function GoogleSignInSection({ label, disabled, onError }: GoogleSignInSe
 
   return (
     <>
-      <Divider sx={{ my: 2 }}>or</Divider>
+      <Divider>or</Divider>
       <GoogleSignInButton overlayRef={overlayRef} disabled={disabled} label={label} />
     </>
   );

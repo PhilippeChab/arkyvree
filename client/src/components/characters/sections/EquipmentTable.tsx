@@ -111,7 +111,6 @@ export function EquipmentTable<T extends EquipmentTableRow>({
         <Stack
           direction="row"
           sx={{
-            mt: 2,
             flexWrap: "wrap",
             justifyContent: "flex-end",
             alignItems: "center",

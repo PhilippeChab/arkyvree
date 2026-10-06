@@ -472,6 +472,7 @@ describe("frontend rules", () => {
     ).toEqual([
       "nav-links client/src/block.tsx",
       "nav-links client/src/button.tsx",
+      "nav-links client/src/more.tsx",
       "nav-links client/src/mui.tsx",
       "nav-links client/src/router.tsx",
     ]);
@@ -738,6 +739,7 @@ describe("frontend rules", () => {
             'export const g = <Typography component="h3" variant="subtitle2" sx={{ mb: 1 }}>Skills</Typography>;\n',
           "client/src/gapped.tsx":
             'export const p = <Typography component="h2" variant="h5" sx={{ mb: 3 }}>Players</Typography>;\n',
+          "client/src/subtitled.tsx": 'export const u = <Typography variant="subtitle2">Set 1</Typography>;\n',
           "client/src/bottomed.tsx":
             'export const b = <Typography component="h3" variant="h6" gutterBottom>Skills</Typography>;\n',
         },
@@ -746,6 +748,7 @@ describe("frontend rules", () => {
     ).toEqual([
       "headings client/src/guttered.tsx",
       "headings client/src/styled.tsx",
+      "headings client/src/subtitled.tsx",
       "headings client/src/variant.tsx",
     ]);
   });
@@ -898,6 +901,23 @@ describe("frontend rules", () => {
         ["menus"],
       ),
     ).toEqual(["menus client/src/action.tsx", "menus client/src/mapped.tsx", "menus client/src/panel.tsx"]);
+  });
+
+  test("the gap between blocks is their Stack's spacing, never a margin", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/below.tsx": "export const b = <Typography sx={{ mb: 2 }}>Title</Typography>;\n",
+          "client/src/above.tsx": "export const a = <Button sx={{ mt: 1 }}>Save</Button>;\n",
+          "client/src/both.tsx": "export const o = <Box sx={{ my: { xs: 1, sm: 2 }, px: 2 }} />;\n",
+          "client/src/stacked.tsx":
+            "export const s = (\n  <Stack spacing={3}>\n    <Typography>Title</Typography>\n    <Button>Save</Button>\n  </Stack>\n);\n",
+          "client/src/reset.tsx": 'export const r = <Box component="ul" sx={{ mb: 0, mx: "auto", pl: 2 }} />;\n',
+          "client/src/nested.tsx": 'export const n = <Box sx={{ "& .MuiTreeItem-content": { py: 0.5 } }} />;\n',
+        },
+        ["spacing"],
+      ),
+    ).toEqual(["spacing client/src/above.tsx", "spacing client/src/below.tsx", "spacing client/src/both.tsx"]);
   });
 
   test("a button that starts a request shows it running", async () => {

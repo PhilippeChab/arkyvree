@@ -65,7 +65,7 @@ export default function SignIn() {
         disabled={auth.pending}
         onError={(error) => setError(errorMessage(error, "Failed to sign in with Google"))}
       />
-      <Box sx={{ mt: 2, textAlign: "center" }}>
+      <Box sx={{ textAlign: "center" }}>
         <Typography variant="body2">
           Don't have an account?{" "}
           <MuiLink

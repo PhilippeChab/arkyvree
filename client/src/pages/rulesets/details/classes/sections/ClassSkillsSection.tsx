@@ -29,11 +29,11 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
   const unassignedSkills = availableSkills.filter((skill) => !classSkills?.some((cs) => cs.skillId === skill.id));
 
   return (
-    <Box>
+    <Stack spacing={3}>
       <Stack
         direction="row"
         spacing={2}
-        sx={{ flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}
+        sx={{ flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start" }}
       >
         <Typography component="h2" variant="h6">
           Class Skills
@@ -94,11 +94,11 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         )}
       </Stack>
       {isLoading ? (
-        <Box>
+        <Stack spacing={1}>
           {[...Array(3)].map((_, index) => (
-            <Skeleton key={index} variant="rectangular" height={40} sx={{ mb: 1 }} />
+            <Skeleton key={index} variant="rectangular" height={40} />
           ))}
-        </Box>
+        </Stack>
       ) : !classSkills || classSkills.length === 0 ? (
         <BlankState
           title="No class skills assigned"
@@ -130,6 +130,6 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         onConfirm={confirmRemoveSkill}
         isLoading={removeSkillMutation.isPending}
       />
-    </Box>
+    </Stack>
   );
 }

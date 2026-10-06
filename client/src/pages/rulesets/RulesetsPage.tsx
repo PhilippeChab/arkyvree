@@ -1,4 +1,4 @@
-import { Container, IconButton, Stack, Typography } from "@mui/material";
+import { IconButton, Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
@@ -12,8 +12,8 @@ import {
   LoadError,
   LoadMoreButton,
   NoMatchesState,
+  PageBody,
   PageHeader,
-  PageTransition,
   SearchBar,
   type SortOption,
   UPDATED_SORTS,
@@ -167,25 +167,23 @@ export default function RulesetsPage() {
   const scope = oneOf(searchParams.get("scope"), SCOPES);
 
   return (
-    <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageHeader
-          variant="tinted"
-          title="Game Rulesets"
-          subtitle="Choose your adventure system and dive into infinite possibilities"
-        />
+    <PageBody>
+      <PageHeader
+        variant="tinted"
+        title="Game Rulesets"
+        subtitle="Choose your adventure system and dive into infinite possibilities"
+      />
 
-        <SearchBar
-          {...searchBarProps}
-          searchPlaceholder="Search rulesets..."
-          filterOptions={RULESET_FILTER_OPTIONS}
-          filterValue={scope}
-          onFilterChange={(value) => updateSearchParams({ scope: value })}
-          sortOptions={RULESET_SORT_OPTIONS}
-        />
+      <SearchBar
+        {...searchBarProps}
+        searchPlaceholder="Search rulesets..."
+        filterOptions={RULESET_FILTER_OPTIONS}
+        filterValue={scope}
+        onFilterChange={(value) => updateSearchParams({ scope: value })}
+        sortOptions={RULESET_SORT_OPTIONS}
+      />
 
-        <RulesetList filters={{ scope, search, orderBy, orderDir }} />
-      </Container>
-    </PageTransition>
+      <RulesetList filters={{ scope, search, orderBy, orderDir }} />
+    </PageBody>
   );
 }

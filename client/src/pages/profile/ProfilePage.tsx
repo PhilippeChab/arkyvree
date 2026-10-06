@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Card, CardContent, Container, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { type ReactNode, useState } from "react";
@@ -8,10 +8,11 @@ import {
   AttachmentField,
   DiceSpinner,
   EmailField,
+  FormActions,
   FormTextField,
+  PageBody,
   PageError,
   PageHeader,
-  PageTransition,
   PasswordField,
   TagChip,
 } from "@/client/src/components/common/index.ts";
@@ -44,20 +45,17 @@ interface ProfileFormData {
 
 function ProfileCard({ title, children, danger = false }: ProfileCardProps) {
   return (
-    <Card sx={{ mb: 3, ...(danger && { borderColor: "error.main" }) }}>
+    <Card sx={danger ? { borderColor: "error.main" } : undefined}>
       <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-        <Typography
-          component="h2"
-          sx={{
-            fontWeight: 700,
-            mb: danger ? 1 : 3,
-            typography: { xs: "h6", sm: "h5" },
-            color: danger ? "error.main" : undefined,
-          }}
-        >
-          {title}
-        </Typography>
-        {children}
+        <Stack spacing={3}>
+          <Typography
+            component="h2"
+            sx={{ fontWeight: 700, typography: { xs: "h6", sm: "h5" }, color: danger ? "error.main" : undefined }}
+          >
+            {title}
+          </Typography>
+          {children}
+        </Stack>
       </CardContent>
     </Card>
   );
@@ -188,96 +186,92 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
+      <PageBody width="lg">
         <DiceSpinner sx={{ minHeight: 400 }} />
-      </Container>
+      </PageBody>
     );
   }
 
   // A failed background refetch keeps the loaded profile (and any edits in progress) on screen.
   if (!userData) {
     return (
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
+      <PageBody width="lg">
         <PageError message={loadFailureMessage("Profile", error)} />
-      </Container>
+      </PageBody>
     );
   }
 
   const profileErrors = profileForm.formState.errors;
 
   return (
-    <PageTransition>
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <PageHeader title="Profile" subtitle="Manage your account information and security settings" />
+    <PageBody width="lg">
+      <PageHeader title="Profile" subtitle="Manage your account information and security settings" />
 
-        {userData?.pendingEmailAddress && (
-          <Alert
-            severity="info"
-            sx={{ mb: 3 }}
-            action={
-              <Stack direction="row" spacing={1}>
-                <Button size="small" variant="contained" onClick={() => setVerifyDialogOpen(true)}>
-                  Verify
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="inherit"
-                  onClick={() => cancelEmailChangeMutation.mutate()}
-                  disabled={cancelEmailChangeMutation.isPending}
-                >
-                  <DiceSpinner size="small" loading={cancelEmailChangeMutation.isPending}>
-                    Cancel
-                  </DiceSpinner>
-                </Button>
-              </Stack>
-            }
-          >
-            Pending email change to <strong>{userData.pendingEmailAddress}</strong>
-          </Alert>
-        )}
-
-        <ProfileCard title="Basic Information">
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={{ xs: 2, sm: 4 }}
-            sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
-          >
-            <AttachmentField recordType="User" recordId={userData?.id} name="avatar" variant="avatar" size={140} />
-
-            <Box sx={{ flex: 1, width: "100%" }}>
-              <Stack
-                component="form"
-                spacing={3}
-                onSubmit={profileSync.handleSubmit((data) => profileMutation.mutate(data))}
-                noValidate
+      {userData?.pendingEmailAddress && (
+        <Alert
+          severity="info"
+          action={
+            <Stack direction="row" spacing={1}>
+              <Button size="small" variant="contained" onClick={() => setVerifyDialogOpen(true)}>
+                Verify
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                color="inherit"
+                onClick={() => cancelEmailChangeMutation.mutate()}
+                disabled={cancelEmailChangeMutation.isPending}
               >
-                <FormTextField
-                  control={profileForm.control}
-                  name="username"
-                  rules={usernameRules}
-                  label="Username"
-                  helperText={profileErrors.username?.message || "Optional: Choose a display name"}
-                />
+                <DiceSpinner size="small" loading={cancelEmailChangeMutation.isPending}>
+                  Cancel
+                </DiceSpinner>
+              </Button>
+            </Stack>
+          }
+        >
+          Pending email change to <strong>{userData.pendingEmailAddress}</strong>
+        </Alert>
+      )}
 
-                <EmailField
-                  control={profileForm.control}
-                  name="emailAddress"
-                  rules={emailRules}
-                  label="Email Address"
-                />
+      <ProfileCard title="Basic Information">
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={{ xs: 2, sm: 4 }}
+          sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
+        >
+          <AttachmentField recordType="User" recordId={userData?.id} name="avatar" variant="avatar" size={140} />
 
-                <Button type="submit" variant="contained" sx={{ mt: 2 }} disabled={profileMutation.isPending}>
+          <Box sx={{ flex: 1, width: "100%" }}>
+            <Stack
+              component="form"
+              spacing={3}
+              onSubmit={profileSync.handleSubmit((data) => profileMutation.mutate(data))}
+              noValidate
+            >
+              <FormTextField
+                control={profileForm.control}
+                name="username"
+                rules={usernameRules}
+                label="Username"
+                helperText={profileErrors.username?.message || "Optional: Choose a display name"}
+              />
+
+              <EmailField control={profileForm.control} name="emailAddress" rules={emailRules} label="Email Address" />
+
+              <FormActions>
+                <Button type="submit" variant="contained" disabled={profileMutation.isPending}>
                   <DiceSpinner size="small" loading={profileMutation.isPending}>
                     Save Changes
                   </DiceSpinner>
                 </Button>
-              </Stack>
-            </Box>
-          </Stack>
-        </ProfileCard>
+              </FormActions>
+            </Stack>
+          </Box>
+        </Stack>
+      </ProfileCard>
 
-        <ProfileCard title="Linked Accounts">
+      <ProfileCard title="Linked Accounts">
+        <Stack spacing={1}>
           <Stack
             direction="row"
             spacing={2}
@@ -306,75 +300,79 @@ export default function ProfilePage() {
             </Box>
           </Stack>
           {isGoogleLinked && !hasPassword && (
-            <Typography variant="caption" sx={{ color: "text.secondary", mt: 1, display: "block" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
               Set a password before unlinking Google
             </Typography>
           )}
-        </ProfileCard>
+        </Stack>
+      </ProfileCard>
 
-        <ProfileCard title={hasPassword ? "Change Password" : "Set Password"}>
-          <Stack
-            component="form"
-            spacing={3}
-            onSubmit={passwordForm.handleSubmit((data) => passwordMutation.mutate(data))}
-            noValidate
-          >
-            {hasPassword && (
-              <PasswordField
-                control={passwordForm.control}
-                name="currentPassword"
-                rules={{ required: "Current password is required" }}
-                label="Current Password"
-                autoComplete="current-password"
-              />
-            )}
-
+      <ProfileCard title={hasPassword ? "Change Password" : "Set Password"}>
+        <Stack
+          component="form"
+          spacing={3}
+          onSubmit={passwordForm.handleSubmit((data) => passwordMutation.mutate(data))}
+          noValidate
+        >
+          {hasPassword && (
             <PasswordField
               control={passwordForm.control}
-              name="newPassword"
-              rules={newPasswordRules}
-              label="New Password"
-              autoComplete="new-password"
+              name="currentPassword"
+              rules={{ required: "Current password is required" }}
+              label="Current Password"
+              autoComplete="current-password"
             />
+          )}
 
-            <PasswordField
-              control={passwordForm.control}
-              name="newPasswordConfirmation"
-              rules={confirmPasswordRules<PasswordFormData>("newPassword")}
-              label="Confirm New Password"
-              autoComplete="new-password"
-            />
+          <PasswordField
+            control={passwordForm.control}
+            name="newPassword"
+            rules={newPasswordRules}
+            label="New Password"
+            autoComplete="new-password"
+          />
 
-            <Button type="submit" variant="contained" sx={{ mt: 2 }} disabled={passwordMutation.isPending}>
+          <PasswordField
+            control={passwordForm.control}
+            name="newPasswordConfirmation"
+            rules={confirmPasswordRules<PasswordFormData>("newPassword")}
+            label="Confirm New Password"
+            autoComplete="new-password"
+          />
+
+          <FormActions>
+            <Button type="submit" variant="contained" disabled={passwordMutation.isPending}>
               <DiceSpinner size="small" loading={passwordMutation.isPending}>
                 {hasPassword ? "Update Password" : "Set Password"}
               </DiceSpinner>
             </Button>
-          </Stack>
-        </ProfileCard>
+          </FormActions>
+        </Stack>
+      </ProfileCard>
 
-        <ProfileCard title="Delete Account" danger>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Permanently delete your account and all associated data. This action cannot be undone.
-          </Typography>
+      <ProfileCard title="Delete Account" danger>
+        <Typography variant="body2">
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </Typography>
+        <FormActions>
           <Button variant="contained" color="error" onClick={() => setDeleteDialogOpen(true)}>
             Delete Account
           </Button>
-        </ProfileCard>
+        </FormActions>
+      </ProfileCard>
 
-        {userData?.pendingEmailAddress && (
-          <EmailChangeVerificationDialog
-            open={verifyDialogOpen}
-            onClose={() => setVerifyDialogOpen(false)}
-            pendingEmail={userData.pendingEmailAddress}
-          />
-        )}
-        <DeleteAccountDialog
-          open={deleteDialogOpen}
-          onClose={() => setDeleteDialogOpen(false)}
-          hasPassword={hasPassword}
+      {userData?.pendingEmailAddress && (
+        <EmailChangeVerificationDialog
+          open={verifyDialogOpen}
+          onClose={() => setVerifyDialogOpen(false)}
+          pendingEmail={userData.pendingEmailAddress}
         />
-      </Container>
-    </PageTransition>
+      )}
+      <DeleteAccountDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        hasPassword={hasPassword}
+      />
+    </PageBody>
   );
 }

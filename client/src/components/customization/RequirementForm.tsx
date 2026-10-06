@@ -42,7 +42,7 @@ export function RequirementForm({ form, type, onTypeChange, rulesetId, mode }: R
   return (
     <>
       <Box>
-        <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
+        <Typography component="p" variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
           Type
         </Typography>
         <ToggleButtonGroup

@@ -58,7 +58,6 @@ export function FeatEditor({
   return (
     <EntityDetailsCard
       title="Feat Details"
-      sx={{ mb: 4 }}
       description={feat.description}
       chips={featAptitudes(feat).map((apt) => (
         <TagChip key={apt.id} tag={aptitudeTag(apt.name)} />

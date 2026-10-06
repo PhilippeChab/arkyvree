@@ -8,7 +8,8 @@ interface AnimatedAlertProps extends AlertProps {
 
 export function AnimatedAlert({ in: show, sx, ...alertProps }: AnimatedAlertProps) {
   return (
-    <Collapse in={show}>
+    // Gone once hidden, so a Stack spaces nothing for it
+    <Collapse in={show} unmountOnExit>
       <Alert {...alertProps} sx={{ animation: `${fadeIn} ${DURATION.normal}ms ${EASING.standard}`, ...sx }} />
     </Collapse>
   );

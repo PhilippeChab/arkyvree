@@ -1,4 +1,4 @@
-import { Container, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
@@ -8,8 +8,8 @@ import {
   type DataTableColumn,
   LoadError,
   LoadMoreButton,
+  PageBody,
   PageHeader,
-  PageTransition,
   SearchBar,
   type SortOption,
   TagChip,
@@ -67,59 +67,53 @@ export default function ActivitiesPage() {
   const activities = pageItems(data);
 
   return (
-    <PageTransition>
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <PageHeader title="Activity" subtitle="View your activity history and track actions" />
+    <PageBody width="lg">
+      <PageHeader title="Activity" subtitle="View your activity history and track actions" />
 
-        <SearchBar
-          {...searchBarProps}
-          searchPlaceholder="Search activity logs..."
-          sortOptions={ACTIVITY_SORT_OPTIONS}
-        />
+      <SearchBar {...searchBarProps} searchPlaceholder="Search activity logs..." sortOptions={ACTIVITY_SORT_OPTIONS} />
 
-        {error ? (
-          <LoadError what="Activity logs" error={error} />
-        ) : (
-          <>
-            <DataTable
-              rows={activities}
-              isLoading={isLoading}
-              columns={ACTIVITY_COLUMNS}
-              minWidth={0}
-              renderCell={(activity, column) =>
-                column === "date" ? (
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    {formatDateTime(activity.createdAt)}
-                  </Typography>
-                ) : (
-                  <TagChip
-                    tag={{
-                      label: formatActivityType(activity.type, activity.data),
-                      color: "default",
-                      tooltip: formatActivityDetails(activity.data) ?? undefined,
-                    }}
-                  />
-                )
-              }
-              onRowClick={(activity) => openTarget(activity.targetTable, activity.targetId)}
-              isRowClickable={(activity) => isNavigableTarget(activity.targetTable)}
-              search={search}
-              empty={{
-                icon: ActivityIcon,
-                title: "No activity logs found",
-                description: "Your activity history will appear here as you interact with the application.",
-              }}
-            />
-            <LoadMoreButton
-              size="large"
-              label="Load More Activities"
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              onClick={() => fetchNextPage()}
-            />
-          </>
-        )}
-      </Container>
-    </PageTransition>
+      {error ? (
+        <LoadError what="Activity logs" error={error} />
+      ) : (
+        <>
+          <DataTable
+            rows={activities}
+            isLoading={isLoading}
+            columns={ACTIVITY_COLUMNS}
+            minWidth={0}
+            renderCell={(activity, column) =>
+              column === "date" ? (
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  {formatDateTime(activity.createdAt)}
+                </Typography>
+              ) : (
+                <TagChip
+                  tag={{
+                    label: formatActivityType(activity.type, activity.data),
+                    color: "default",
+                    tooltip: formatActivityDetails(activity.data) ?? undefined,
+                  }}
+                />
+              )
+            }
+            onRowClick={(activity) => openTarget(activity.targetTable, activity.targetId)}
+            isRowClickable={(activity) => isNavigableTarget(activity.targetTable)}
+            search={search}
+            empty={{
+              icon: ActivityIcon,
+              title: "No activity logs found",
+              description: "Your activity history will appear here as you interact with the application.",
+            }}
+          />
+          <LoadMoreButton
+            size="large"
+            label="Load More Activities"
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
+        </>
+      )}
+    </PageBody>
   );
 }

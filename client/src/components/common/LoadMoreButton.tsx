@@ -22,7 +22,7 @@ export function LoadMoreButton({
   if (!hasNextPage) return null;
 
   return (
-    <Stack direction="row" sx={{ justifyContent: "center", mt: 2 }}>
+    <Stack direction="row" sx={{ justifyContent: "center" }}>
       <Button
         variant="outlined"
         size={size}

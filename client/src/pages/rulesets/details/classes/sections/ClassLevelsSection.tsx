@@ -1,4 +1,4 @@
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
@@ -98,8 +98,8 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   };
 
   return (
-    <Box>
-      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+    <Stack spacing={3}>
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
         <Typography component="h2" variant="h6">
           Class Levels
         </Typography>
@@ -134,6 +134,6 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
         isLoading={createMutation.isPending}
         rulesetId={rulesetId}
       />
-    </Box>
+    </Stack>
   );
 }

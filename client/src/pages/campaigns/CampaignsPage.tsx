@@ -1,4 +1,4 @@
-import { Button, Container } from "@mui/material";
+import { Button } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
@@ -14,8 +14,8 @@ import {
   NAME_SORTS,
   NoMatchesState,
   PageActionButton,
+  PageBody,
   PageHeader,
-  PageTransition,
   SearchBar,
   type SortOption,
   UPDATED_SORTS,
@@ -73,91 +73,89 @@ export default function CampaignsPage() {
   const createButton = (label: string) => <PageActionButton onClick={handleCreate}>{label}</PageActionButton>;
 
   return (
-    <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageHeader
-          variant="tinted"
-          title="Campaigns"
-          subtitle="Manage your campaigns and organize your adventuring parties"
-          action={!isDemo && createButton("Create New Campaign")}
-        />
+    <PageBody>
+      <PageHeader
+        variant="tinted"
+        title="Campaigns"
+        subtitle="Manage your campaigns and organize your adventuring parties"
+        action={!isDemo && createButton("Create New Campaign")}
+      />
 
-        <SearchBar
-          {...searchBarProps}
-          searchPlaceholder="Search campaigns..."
-          filterOptions={CAMPAIGN_FILTER_OPTIONS}
-          filterValue={view}
-          onFilterChange={(value) => updateSearchParams({ view: value })}
-          sortOptions={CAMPAIGN_SORT_OPTIONS}
-        />
+      <SearchBar
+        {...searchBarProps}
+        searchPlaceholder="Search campaigns..."
+        filterOptions={CAMPAIGN_FILTER_OPTIONS}
+        filterValue={view}
+        onFilterChange={(value) => updateSearchParams({ view: value })}
+        sortOptions={CAMPAIGN_SORT_OPTIONS}
+      />
 
-        {isLoading ? (
-          <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
-        ) : error ? (
-          <LoadError what="Campaigns" error={error} />
-        ) : campaigns.length > 0 ? (
-          <>
-            <ListCardGrid>
-              {campaigns.map((campaign, index) => {
-                return (
-                  <ListCard
-                    key={campaign.id}
-                    isArchived={view === "archived"}
-                    animationIndex={index}
-                    animationOffset={offset}
-                    onClick={() => navigate(`/campaigns/${campaign.id}`)}
-                    onMouseEnter={() => prefetchCampaign(campaign.id)}
-                    onFocus={() => prefetchCampaign(campaign.id)}
-                    avatarTone="secondary"
-                    title={campaign.name}
-                    description={campaign.description}
-                    tags={campaignTags(campaign)}
-                  />
-                );
-              })}
-            </ListCardGrid>
-            <LoadMoreButton
-              size="large"
-              label="Load More Campaigns"
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              onClick={() => fetchNextPage()}
-            />
-          </>
-        ) : search ? (
-          <NoMatchesState search={search} />
-        ) : view === "archived" ? (
-          <BlankState
-            icon={ArchiveIcon}
-            title="No archived campaigns"
-            description="Campaigns you archive will appear here. You can restore them at any time."
-            action={
-              <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
-                View Active Campaigns
-              </Button>
-            }
+      {isLoading ? (
+        <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
+      ) : error ? (
+        <LoadError what="Campaigns" error={error} />
+      ) : campaigns.length > 0 ? (
+        <>
+          <ListCardGrid>
+            {campaigns.map((campaign, index) => {
+              return (
+                <ListCard
+                  key={campaign.id}
+                  isArchived={view === "archived"}
+                  animationIndex={index}
+                  animationOffset={offset}
+                  onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                  onMouseEnter={() => prefetchCampaign(campaign.id)}
+                  onFocus={() => prefetchCampaign(campaign.id)}
+                  avatarTone="secondary"
+                  title={campaign.name}
+                  description={campaign.description}
+                  tags={campaignTags(campaign)}
+                />
+              );
+            })}
+          </ListCardGrid>
+          <LoadMoreButton
+            size="large"
+            label="Load More Campaigns"
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
           />
-        ) : (
-          <BlankState
-            icon={CampaignsIcon}
-            title="No campaigns yet"
-            description={
-              isDemo
-                ? "Sign up to create campaigns and run multiplayer sessions."
-                : "Create your first campaign to start organizing your adventures"
-            }
-            action={!isDemo && createButton("Create Your First Campaign")}
-          />
-        )}
-
-        <CreateCampaignDialog
-          open={createDialogOpen}
-          onClose={() => setCreateDialogOpen(false)}
-          form={createForm}
-          onSubmit={confirmCreate}
-          isLoading={createMutation.isPending}
+        </>
+      ) : search ? (
+        <NoMatchesState search={search} />
+      ) : view === "archived" ? (
+        <BlankState
+          icon={ArchiveIcon}
+          title="No archived campaigns"
+          description="Campaigns you archive will appear here. You can restore them at any time."
+          action={
+            <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
+              View Active Campaigns
+            </Button>
+          }
         />
-      </Container>
-    </PageTransition>
+      ) : (
+        <BlankState
+          icon={CampaignsIcon}
+          title="No campaigns yet"
+          description={
+            isDemo
+              ? "Sign up to create campaigns and run multiplayer sessions."
+              : "Create your first campaign to start organizing your adventures"
+          }
+          action={!isDemo && createButton("Create Your First Campaign")}
+        />
+      )}
+
+      <CreateCampaignDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        form={createForm}
+        onSubmit={confirmCreate}
+        isLoading={createMutation.isPending}
+      />
+    </PageBody>
   );
 }

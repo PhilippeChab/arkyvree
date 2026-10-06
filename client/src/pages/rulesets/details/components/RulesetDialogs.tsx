@@ -85,7 +85,7 @@ export type ForkRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":i
 function PrivacyToggle({ value, onChange, disabled }: PrivacyToggleProps) {
   return (
     <Box>
-      <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
+      <Typography component="p" variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
         Privacy
       </Typography>
       <ToggleButtonGroup
@@ -115,8 +115,8 @@ function PrivacyToggle({ value, onChange, disabled }: PrivacyToggleProps) {
 /** Ruleset / Extension choice made when publishing; the selected option can't be toggled off. */
 function RulesetKindToggle({ value, onChange, disabled }: RulesetKindToggleProps) {
   return (
-    <Box>
-      <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
+    <Stack spacing={1} sx={{ alignItems: "flex-start" }}>
+      <Typography component="p" variant="subtitle2" sx={{ color: "text.secondary" }}>
         Publish as
       </Typography>
       <ToggleButtonGroup
@@ -139,10 +139,10 @@ function RulesetKindToggle({ value, onChange, disabled }: RulesetKindToggleProps
           </Stack>
         </ToggleButton>
       </ToggleButtonGroup>
-      <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
+      <Typography variant="caption" sx={{ color: "text.secondary" }}>
         Rulesets are playable directly. Extensions are content packs that other rulesets subscribe to.
       </Typography>
-    </Box>
+    </Stack>
   );
 }
 
@@ -250,11 +250,7 @@ export function PublishRulesetDialog({
       confirmColor="success"
       confirmIcon={<PublishIcon />}
     >
-      {canBeExtension && (
-        <Box sx={{ mt: 2 }}>
-          <RulesetKindToggle value={kind} onChange={onKindChange} disabled={isLoading} />
-        </Box>
-      )}
+      {canBeExtension && <RulesetKindToggle value={kind} onChange={onKindChange} disabled={isLoading} />}
     </ConfirmDialog>
   );
 }

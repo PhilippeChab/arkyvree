@@ -72,37 +72,40 @@ export function BulkVariantsDialog({
             </DialogContentText>
             <Stack spacing={3} divider={<Divider />}>
               {fields.map((field, index) => (
-                <Stack key={field.id} direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
-                  <Stack spacing={3} sx={{ flex: 1 }}>
-                    <FormTextField
-                      control={form.control}
-                      name={`variants.${index}.name`}
-                      rules={{
-                        required: "Name is required",
-                      }}
-                      label="Name"
-                    />
-                    <FormTextField
-                      control={form.control}
-                      name={`variants.${index}.description`}
-                      label="Description"
-                      multiline
-                      minRows={1}
-                    />
-                  </Stack>
-                  <Tooltip title="Remove variant">
-                    <span>
-                      <IconButton
-                        size="small"
-                        aria-label="Remove variant"
-                        onClick={() => remove(index)}
-                        disabled={fields.length === 1 || isLoading}
-                        sx={{ mt: 0.5 }}
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
+                <Stack key={field.id} spacing={3}>
+                  <FormTextField
+                    control={form.control}
+                    name={`variants.${index}.name`}
+                    rules={{
+                      required: "Name is required",
+                    }}
+                    label="Name"
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <Tooltip title="Remove variant">
+                            <span>
+                              <IconButton
+                                size="small"
+                                aria-label="Remove variant"
+                                onClick={() => remove(index)}
+                                disabled={fields.length === 1 || isLoading}
+                              >
+                                <CloseIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        ),
+                      },
+                    }}
+                  />
+                  <FormTextField
+                    control={form.control}
+                    name={`variants.${index}.description`}
+                    label="Description"
+                    multiline
+                    minRows={1}
+                  />
                 </Stack>
               ))}
             </Stack>

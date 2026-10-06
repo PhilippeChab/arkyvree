@@ -120,8 +120,10 @@ export function ConfirmDialog({
     <Modal open={open} onClose={() => !isLoading && onClose()} maxWidth={maxWidth}>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <DialogContentText>{message}</DialogContentText>
-        {children}
+        <Stack spacing={3}>
+          <DialogContentText>{message}</DialogContentText>
+          {children}
+        </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">

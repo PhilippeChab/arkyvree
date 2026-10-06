@@ -12,17 +12,22 @@ interface SheetSectionProps {
 export function SheetSection({ title, action, children }: SheetSectionProps) {
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", mb: 3 }}
-      >
-        <Typography component="h2" sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "h6", sm: "h5" } }}>
-          {title}
-        </Typography>
-        {action}
+      <Stack spacing={3}>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}
+        >
+          <Typography
+            component="h2"
+            sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "h6", sm: "h5" } }}
+          >
+            {title}
+          </Typography>
+          {action}
+        </Stack>
+        {children}
       </Stack>
-      {children}
     </Paper>
   );
 }

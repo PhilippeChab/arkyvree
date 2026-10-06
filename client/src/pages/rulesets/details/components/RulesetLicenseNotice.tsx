@@ -24,14 +24,7 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
 
   return (
     <>
-      <MuiLink
-        component="button"
-        type="button"
-        variant="body2"
-        underline="hover"
-        onClick={() => setOpen(true)}
-        sx={{ mt: 1 }}
-      >
+      <MuiLink component="button" type="button" variant="body2" underline="hover" onClick={() => setOpen(true)}>
         License & Attribution
       </MuiLink>
       <Modal open={open} onClose={() => setOpen(false)} maxWidth="md" aria-labelledby="ruleset-license-title">
@@ -52,7 +45,7 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
             {text !== undefined && (
               <DialogContentText
                 component="pre"
-                sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontFamily: "inherit", m: 0 }}
+                sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontFamily: "inherit" }}
               >
                 {text}
               </DialogContentText>

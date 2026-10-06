@@ -44,6 +44,10 @@ interface FieldRowProps {
   children: ReactNode;
 }
 
+interface FormActionsProps {
+  children: ReactNode;
+}
+
 /** A text field's own props: the form gives its value, change, error and ref. */
 type FormTextFieldProps<T extends FieldValues> = BoundFieldProps<T> &
   Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "inputRef" | "error"> & {
@@ -129,6 +133,15 @@ export function EmailField<T extends FieldValues>({ label = "Email", ...field }:
 export function FieldRow({ children }: FieldRowProps) {
   return (
     <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
+      {children}
+    </Stack>
+  );
+}
+
+/** A form's buttons, at its end on the right, as a dialog's actions are. */
+export function FormActions({ children }: FormActionsProps) {
+  return (
+    <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
       {children}
     </Stack>
   );

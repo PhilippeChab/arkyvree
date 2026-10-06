@@ -21,7 +21,6 @@ export function PageHeader({ title, subtitle, action, variant = "hero" }: PageHe
       elevation={hero ? 1 : 0}
       sx={{
         p: { xs: 2, sm: 4 },
-        mb: hero ? 4 : 3,
         borderRadius: hero ? 4 : 2,
         color: hero ? "common.white" : undefined,
         background: (theme) =>

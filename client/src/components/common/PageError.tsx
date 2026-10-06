@@ -1,4 +1,4 @@
-import { Button, Paper, Typography } from "@mui/material";
+import { Button, Paper, Stack, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 
 interface PageErrorProps {
@@ -12,15 +12,17 @@ interface PageErrorProps {
 /** A page that couldn't load what it shows: the reason, and a way back. */
 export function PageError({ message, backLabel, backTo }: PageErrorProps) {
   return (
-    <Paper sx={{ p: { xs: 2, sm: 4 }, textAlign: "center" }}>
-      <Typography component="h1" role="alert" variant="h5" gutterBottom sx={{ color: "error.main" }}>
-        {message}
-      </Typography>
-      {backTo && backLabel && (
-        <Button variant="contained" component={Link} to={backTo} sx={{ mt: 2 }}>
-          {backLabel}
-        </Button>
-      )}
+    <Paper sx={{ p: { xs: 2, sm: 4 } }}>
+      <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
+        <Typography component="h1" role="alert" variant="h5" sx={{ color: "error.main" }}>
+          {message}
+        </Typography>
+        {backTo && backLabel && (
+          <Button variant="contained" component={Link} to={backTo}>
+            {backLabel}
+          </Button>
+        )}
+      </Stack>
     </Paper>
   );
 }

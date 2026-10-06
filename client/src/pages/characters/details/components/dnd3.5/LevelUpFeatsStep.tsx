@@ -27,6 +27,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 import { type AptitudePool, type FeatsData, type SelectedFeat, withoutPick } from "./levelUp/index.ts";
 import type { LevelUpFeatsStepProps } from "./levelUpFactory.ts";
+import { pickTag } from "./pickTag.ts";
 
 interface AutoGrantedFeatsProps {
   feats: FeatsData["autoGrantedFeats"];
@@ -51,13 +52,13 @@ interface FeatFamilyExpansionProps {
 function AutoGrantedFeats({ feats, defaultCollapsed }: AutoGrantedFeatsProps) {
   const [open, setOpen] = useState(!defaultCollapsed);
   return (
-    <Box sx={{ mb: 1 }}>
+    <Box>
       <Stack
         {...toggleProps(open, () => setOpen(!open))}
         direction="row"
         sx={{ alignItems: "center", ...CLICKABLE_SX }}
       >
-        <Typography variant="subtitle1" sx={{ flex: 1 }}>
+        <Typography component="h4" variant="subtitle1" sx={{ flex: 1 }}>
           Auto-Granted Feats ({feats.length})
         </Typography>
         <ExpandArrow open={open} />
@@ -231,9 +232,9 @@ export function LevelUpFeatsStep({
   }
 
   return (
-    <Stack sx={{ flex: 1, minHeight: 0 }}>
-      <Box sx={{ flexShrink: 0 }}>
-        <Typography component="h3" variant="h6" gutterBottom>
+    <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
+      <Stack spacing={1} sx={{ flexShrink: 0 }}>
+        <Typography component="h3" variant="h6">
           Select Feats by Aptitude
         </Typography>
 
@@ -243,7 +244,7 @@ export function LevelUpFeatsStep({
 
         {aptitudePools.some((pool) => pool.available > 0) && (
           <>
-            <Typography variant="subtitle1" gutterBottom>
+            <Typography component="p" variant="subtitle1">
               Choose an aptitude to select feats from:
             </Typography>
             <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
@@ -270,7 +271,7 @@ export function LevelUpFeatsStep({
             </Stack>
           </>
         )}
-      </Box>
+      </Stack>
 
       {/* Feat Selection Interface for Selected Aptitude */}
       {selectedAptitude &&
@@ -279,35 +280,21 @@ export function LevelUpFeatsStep({
           const currentPoolFeats = selectedFeats[selectedAptitude] || [];
 
           return (
-            <Stack sx={{ mt: 3, flex: 1, minHeight: 0 }}>
+            <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
               {/* Selected Feats (always reserve space) */}
-              <Box sx={{ flexShrink: 0, mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>
+              <Box sx={{ flexShrink: 0 }}>
+                <Typography component="p" variant="subtitle2" gutterBottom>
                   Selected {currentPool?.name} Feats ({currentPoolFeats.length}/{currentPool?.available || 0}):
                 </Typography>
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                   {currentPoolFeats.length > 0
                     ? currentPoolFeats.map((feat) => (
-                        <Tooltip
-                          describeChild
+                        <TagChip
                           key={feat.id}
-                          title={
-                            feat.description
-                              ? feat.description.length > 200
-                                ? `${feat.description.slice(0, 200)}…`
-                                : feat.description
-                              : ""
-                          }
-                          placement="right"
-                        >
-                          <TagChip
-                            tag={{
-                              label: feat.name,
-                              color: "primary",
-                              onDelete: () => feats.onChange(withoutPick(selectedFeats, selectedAptitude, feat.id)),
-                            }}
-                          />
-                        </Tooltip>
+                          tag={pickTag(feat, () =>
+                            feats.onChange(withoutPick(selectedFeats, selectedAptitude, feat.id)),
+                          )}
+                        />
                       ))
                     : Array.from({ length: currentPool?.available || 0 }, (_, i) => (
                         <Skeleton key={i} variant="rounded" width={100} height={32} />
@@ -317,13 +304,13 @@ export function LevelUpFeatsStep({
 
               {/* Add Feat List (Grouped) */}
               {currentPoolFeats.length < (currentPool?.available || 0) && (
-                <Stack sx={{ flex: 1, minHeight: 0 }}>
+                <Stack spacing={1} sx={{ flex: 1, minHeight: 0 }}>
                   <SearchField
                     placeholder={`Search ${currentPool?.name} feats...`}
                     value={featSearch}
                     onChange={setFeatSearch}
                     fullWidth
-                    sx={{ mb: 1, flexShrink: 0 }}
+                    sx={{ flexShrink: 0 }}
                   />
                   {isLoadingAvailableFeats && groupedFeats.length === 0 ? (
                     <DiceSpinner />

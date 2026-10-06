@@ -1,5 +1,6 @@
 import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import type { ElementType } from "react";
+import { Link } from "react-router-dom";
 
 interface ActionMenuItemProps {
   icon: ElementType;
@@ -8,7 +9,9 @@ interface ActionMenuItemProps {
   description?: string;
   intent?: Intent;
   onClick: () => void;
-  /** A page it opens in a new tab (the help center), rather than an action it takes */
+  /** A page of the app it opens, rather than an action it takes */
+  to?: string;
+  /** A page elsewhere it opens in a new tab (the help center) */
   href?: string;
 }
 
@@ -28,10 +31,15 @@ export function ActionMenuItem({
   description,
   intent = "default",
   onClick,
+  to,
   href,
 }: ActionMenuItemProps) {
   const color = intent === "default" ? undefined : INTENT_COLORS[intent];
-  const link = href ? { component: "a", href, target: "_blank", rel: "noopener noreferrer" } : {};
+  const link = to
+    ? { component: Link, to }
+    : href
+      ? { component: "a", href, target: "_blank", rel: "noopener noreferrer" }
+      : {};
   return (
     <MenuItem {...link} onClick={onClick} sx={color ? { color } : undefined}>
       <ListItemIcon sx={color ? { color: "inherit" } : undefined}>

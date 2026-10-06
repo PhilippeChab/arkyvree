@@ -1,24 +1,7 @@
-import {
-  Box,
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Stack,
-  Step,
-  StepLabel,
-  Stepper,
-  Typography,
-} from "@mui/material";
+import { Box, Button, DialogActions, DialogContent, DialogTitle, Stack, Step, StepLabel, Stepper } from "@mui/material";
 import type { ReactNode } from "react";
 
-import {
-  AnimatedAlert,
-  ConfirmDialog,
-  DiceSpinner,
-  Modal,
-  ValidationIssueList,
-} from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, DiceSpinner, Modal, ValidationWarnings } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 import type { LevelWizard } from "./levelUp/index.ts";
@@ -76,41 +59,21 @@ export function LevelWizardDialog({
     >
       <DialogTitle>{title}</DialogTitle>
       <DialogContent sx={{ height: "100%", overflow: "hidden" }}>
-        <Stack sx={{ height: "100%" }}>
+        <Stack spacing={3} sx={{ height: "100%" }}>
           {/* Validation errors */}
-          <AnimatedAlert
-            in={wizard.validationErrors.length > 0}
-            severity="warning"
+          <ValidationWarnings
+            title="Validation warnings"
+            issues={wizard.validationErrors}
             onClose={() => wizard.setValidationErrors([])}
-            action={
-              <Button
-                size="small"
-                variant="outlined"
-                color="warning"
-                onClick={wizard.handleForceSubmit}
-                disabled={isSaving}
-                sx={{ whiteSpace: "nowrap" }}
-              >
-                Proceed Anyway
-              </Button>
-            }
-            sx={{
-              mb: 2,
-              "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 },
-            }}
-          >
-            <Typography variant="subtitle2" gutterBottom>
-              Validation warnings
-            </Typography>
-            <ValidationIssueList issues={wizard.validationErrors} />
-          </AnimatedAlert>
+            onForce={wizard.handleForceSubmit}
+            forcing={isSaving}
+          />
 
           {/* Stepper */}
           <Stepper
             activeStep={wizard.activeStep}
             alternativeLabel={isMobile}
             sx={{
-              mb: 3,
               flexShrink: 0,
               "& .MuiStepLabel-iconContainer": {
                 display: "flex",

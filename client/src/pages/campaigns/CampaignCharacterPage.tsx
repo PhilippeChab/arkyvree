@@ -1,11 +1,11 @@
-import { Container, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
+import { IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
-import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
+import { ActionMenuItem, PageBody, PageError } from "@/client/src/components/common/index.ts";
 import { BackIcon, DownloadIcon, EditIcon, MoreIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
@@ -49,19 +49,19 @@ export default function CampaignCharacterPage() {
   // A passing refetch failure keeps the loaded sheet; a revoked visibility or unlink hides it.
   if (!data || accessLost(error)) {
     return (
-      <Container maxWidth="xl" sx={{ py: 2 }}>
+      <PageBody>
         <PageError
           message={loadFailureMessage("Character", error)}
           backLabel="Back to Campaign"
           backTo={`/campaigns/${campaignId}/characters`}
         />
-      </Container>
+      </PageBody>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 2 }}>
-      <Paper sx={{ p: 2, mb: 2 }}>
+    <PageBody>
+      <Paper sx={{ p: 2 }}>
         <Stack
           direction="row"
           spacing={1}
@@ -110,6 +110,6 @@ export default function CampaignCharacterPage() {
         partial={data.isPartial}
         equipmentMode="readonly"
       />
-    </Container>
+    </PageBody>
   );
 }

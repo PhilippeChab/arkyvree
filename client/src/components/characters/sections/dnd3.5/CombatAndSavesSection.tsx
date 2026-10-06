@@ -35,10 +35,10 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
     <SheetSection title="Combat & Saves">
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         {/* Left column: Combat Stats */}
-        <Box sx={{ flex: 1, minWidth: { md: 350 } }}>
+        <Stack spacing={2} sx={{ flex: 1, minWidth: { md: 350 } }}>
           <Typography
             component="h3"
-            sx={{ fontWeight: 600, mb: 2, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}
+            sx={{ fontWeight: 600, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}
           >
             Combat Stats
           </Typography>
@@ -67,13 +67,13 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
               ))}
             </Box>
           </Stack>
-        </Box>
+        </Stack>
 
         {/* Right column: Saving Throws */}
-        <Box sx={{ flex: 1, minWidth: { md: 300 } }}>
+        <Stack spacing={2} sx={{ flex: 1, minWidth: { md: 300 } }}>
           <Typography
             component="h3"
-            sx={{ fontWeight: 600, mb: 2, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}
+            sx={{ fontWeight: 600, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}
           >
             Saving Throws
           </Typography>
@@ -83,8 +83,8 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
                 const total = saveData?.total ?? 0;
                 const displayName = saveData?.name || capitalize(save);
                 return (
-                  <Box key={save}>
-                    <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary", mb: 1 }}>
+                  <Stack key={save} spacing={1}>
+                    <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
                       {displayName}: {formatSigned(total)}
                     </Typography>
                     <Stack direction="row" spacing={3} sx={{ ml: 2 }}>
@@ -98,14 +98,14 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
                         Misc: {formatSigned(saveData?.misc)}
                       </Typography>
                     </Stack>
-                  </Box>
+                  </Stack>
                 );
               })}
             </Stack>
           ) : (
             <BlankState title="No saving throws available" />
           )}
-        </Box>
+        </Stack>
       </Stack>
     </SheetSection>
   );

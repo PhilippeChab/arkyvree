@@ -113,7 +113,7 @@ export function NotificationBell() {
         ) : (
           <>
             <Stack direction="row" sx={{ px: 2, py: 1, justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>
+              <Typography component="h2" variant="subtitle2" sx={{ color: "text.secondary" }}>
                 Notifications
               </Typography>
               <Button
@@ -130,14 +130,15 @@ export function NotificationBell() {
             <List disablePadding>
               {notifications.map((notification) =>
                 actions.isActionable(notification) ? (
-                  <ListItem key={notification.id} sx={{ display: "block", px: 2, py: 1.5 }}>
-                    <NotificationSummary notification={notification} />
-                    <InviteActionButtons
-                      sx={{ mt: 1 }}
-                      onAccept={() => actions.accept(notification, (path) => closeAnd(() => navigate(path)))}
-                      onReject={() => actions.reject(notification)}
-                      disabled={actions.isAnswering(notification)}
-                    />
+                  <ListItem key={notification.id} sx={{ px: 2, py: 1.5 }}>
+                    <Stack spacing={1} sx={{ flex: 1 }}>
+                      <NotificationSummary notification={notification} />
+                      <InviteActionButtons
+                        onAccept={() => actions.accept(notification, (path) => closeAnd(() => navigate(path)))}
+                        onReject={() => actions.reject(notification)}
+                        disabled={actions.isAnswering(notification)}
+                      />
+                    </Stack>
                   </ListItem>
                 ) : (
                   <Tooltip

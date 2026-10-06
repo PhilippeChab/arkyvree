@@ -42,12 +42,12 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
   const totalSpells = apt.levels.reduce((sum, g) => sum + g.spells.length, 0);
 
   return (
-    <Box sx={{ mb: 3, "&:last-child": { mb: 0 } }}>
+    <Stack spacing={1}>
       <Stack
         {...toggleProps(open, () => setOpen((prev) => !prev))}
         direction="row"
         spacing={0.5}
-        sx={{ alignItems: "center", mb: 1, ...CLICKABLE_SX }}
+        sx={{ alignItems: "center", ...CLICKABLE_SX }}
       >
         <ExpandArrow open={open} />
         <Typography component="h3" variant="h6" sx={{ fontWeight: 600 }}>
@@ -55,13 +55,13 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
         </Typography>
       </Stack>
       <Collapse in={open} unmountOnExit>
-        <Box sx={{ pl: 1 }}>
+        <Stack spacing={1} sx={{ pl: 1 }}>
           {apt.levels.map((group) => (
             <CollapsibleLevel key={group.level} group={group} rulesetId={rulesetId} />
           ))}
-        </Box>
+        </Stack>
       </Collapse>
-    </Box>
+    </Stack>
   );
 }
 
@@ -70,15 +70,15 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
   const label = group.level === 0 ? "Cantrips" : `Level ${group.level}`;
 
   return (
-    <Box sx={{ mb: 1, "&:last-child": { mb: 0 } }}>
+    <Stack spacing={0.5}>
       <Stack
         {...toggleProps(open, () => setOpen((prev) => !prev))}
         direction="row"
         spacing={0.5}
-        sx={{ alignItems: "center", mb: 0.5, ...CLICKABLE_SX }}
+        sx={{ alignItems: "center", ...CLICKABLE_SX }}
       >
         <ExpandArrow open={open} />
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+        <Typography component="h4" variant="subtitle2" sx={{ fontWeight: 600 }}>
           {label} ({group.spells.length})
           {group.uses != null && (
             <Typography component="span" variant="body2" sx={{ color: "text.secondary", ml: 1 }}>
@@ -112,7 +112,7 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
           </Table>
         </TableContainer>
       </Collapse>
-    </Box>
+    </Stack>
   );
 }
 
@@ -157,14 +157,13 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
       <TableRow>
         <TableCell colSpan={4} sx={{ py: 0, borderBottom: open ? undefined : "none" }}>
           <Collapse in={open} unmountOnExit>
-            <Box sx={{ py: 1.5, px: 1 }}>
+            <Stack spacing={1.5} sx={{ py: 1.5, px: 1 }}>
               {detailProps.length > 0 && (
                 <Box
                   sx={{
                     display: "grid",
                     gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(3, 1fr)" },
                     gap: 0.5,
-                    mb: spell.description ? 1.5 : 0,
                   }}
                 >
                   {detailProps.map(([key, value]) => (
@@ -179,7 +178,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
                   {spell.description}
                 </Typography>
               )}
-            </Box>
+            </Stack>
           </Collapse>
         </TableCell>
       </TableRow>

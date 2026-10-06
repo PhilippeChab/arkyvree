@@ -192,6 +192,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
     >
       <Stack
         key={activeStep}
+        spacing={2}
         sx={{
           alignItems: "center",
           animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} both`,
@@ -199,7 +200,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         }}
       >
         {/* Icon circle */}
-        <Stack direction="row" sx={{ position: "relative", alignItems: "center", justifyContent: "center", mb: 3 }}>
+        <Stack direction="row" sx={{ position: "relative", alignItems: "center", justifyContent: "center" }}>
           <Box
             sx={{
               position: "absolute",
@@ -249,7 +250,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         <Typography
           id="onboarding-step-title"
           variant={effectiveMode === "dialog" ? "h5" : "h6"}
-          sx={{ fontWeight: 700, mb: 2, letterSpacing: "0.02em" }}
+          sx={{ fontWeight: 700, letterSpacing: "0.02em" }}
         >
           {step.title}
         </Typography>
@@ -259,7 +260,6 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
             width: 60,
             height: 2,
             background: `linear-gradient(90deg, transparent, ${gold}, transparent)`,
-            mb: 2,
           }}
         />
 
@@ -298,7 +298,6 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
                 typography: "body2",
                 display: "inline-flex",
                 alignItems: "center",
-                mt: 2,
                 color: gold,
                 cursor: "help",
               }}

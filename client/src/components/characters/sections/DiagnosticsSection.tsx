@@ -90,7 +90,7 @@ function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
   return (
     <Accordion disableGutters sx={accordionSx}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={summarySx}>
-        <Typography variant="subtitle2">
+        <Typography component="h4" variant="subtitle2">
           {label} ({count})
         </Typography>
       </AccordionSummary>
@@ -286,7 +286,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             {/* Validation Issues */}
             {validation.issues.length > 0 && (
               <div>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+                <Typography component="h3" variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
                   Issues
                 </Typography>
                 {validation.issues.map((issue, i) => (
@@ -298,9 +298,9 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             )}
 
             {/* Requirements System Status */}
-            <div>
-              <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            <Stack spacing={1}>
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Requirements
                 </Typography>
                 <Stack direction="row" spacing={1}>
@@ -316,12 +316,12 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               <RequirementTable groups={requirements.fulfilledRequirementGroups} label="Fulfilled" />
               <RequirementTable groups={requirements.unmetRequirementGroups} label="Unmet" />
               <InvalidRequirementTable items={requirements.invalidRequirements} />
-            </div>
+            </Stack>
 
             {/* Modifier System Status */}
-            <div>
-              <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            <Stack spacing={1}>
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Modifiers
                 </Typography>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
@@ -341,7 +341,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               <ModifierTable modifiers={modifiers.unappliedModifiers} label="Unapplied" />
               <ModifierTable modifiers={modifiers.inactiveModifiers} label="Inactive" />
               <SkippedModifierTable items={modifiers.skippedModifiers} />
-            </div>
+            </Stack>
           </Stack>
         </AccordionDetails>
       </Accordion>

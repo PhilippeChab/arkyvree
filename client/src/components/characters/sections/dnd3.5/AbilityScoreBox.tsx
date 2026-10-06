@@ -52,36 +52,34 @@ export function AbilityScoreBox({
         >
           {label}
         </Typography>
-        <Box>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              lineHeight: 1,
-              typography: compact ? { xs: "h6", sm: "h5" } : { xs: "h5", sm: "h4" },
-            }}
-          >
-            {score}
-          </Typography>
+        <Stack spacing={2} sx={{ alignItems: "center" }}>
+          <Stack spacing={compact ? 0.5 : 1} sx={{ alignItems: "center" }}>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                lineHeight: 1,
+                typography: compact ? { xs: "h6", sm: "h5" } : { xs: "h5", sm: "h4" },
+              }}
+            >
+              {score}
+            </Typography>
 
-          <Typography
-            variant={compact ? "caption" : "body1"}
-            sx={{
-              fontWeight: 600,
-              color: modifier >= 0 ? "success.main" : "error.main",
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-              py: compact ? 0.25 : 0.5,
-              px: 1,
-              mt: compact ? 0.5 : 1,
-              mb: compact ? 0 : 2,
-              display: "inline-block",
-              minWidth: compact ? 32 : 40,
-            }}
-          >
-            {formatSigned(modifier)}
-          </Typography>
-
+            <Typography
+              variant={compact ? "caption" : "body1"}
+              sx={{
+                fontWeight: 600,
+                color: modifier >= 0 ? "success.main" : "error.main",
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                py: compact ? 0.25 : 0.5,
+                px: 1,
+                minWidth: compact ? 32 : 40,
+              }}
+            >
+              {formatSigned(modifier)}
+            </Typography>
+          </Stack>
           {breakdown && (
             <Box sx={{ typography: "caption", textAlign: "center" }}>
               {edit ? (
@@ -121,7 +119,7 @@ export function AbilityScoreBox({
               </Typography>
             </Box>
           )}
-        </Box>
+        </Stack>
       </Stack>
     </Paper>
   );

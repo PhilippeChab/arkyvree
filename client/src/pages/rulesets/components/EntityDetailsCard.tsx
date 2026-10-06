@@ -1,7 +1,7 @@
-import { Box, Button, Card, CardContent, Stack, type SxProps, type Theme, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
 import type { FormEventHandler, ReactNode } from "react";
 
-import { DiceSpinner, NO_DESCRIPTION } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, FormActions, NO_DESCRIPTION } from "@/client/src/components/common/index.ts";
 
 interface EntityDetailsCardProps {
   title: string;
@@ -17,13 +17,12 @@ interface EntityDetailsCardProps {
     canSave: boolean;
     isSaving: boolean;
   };
-  sx?: SxProps<Theme>;
 }
 
 /** Card at the top of a ruleset entity page: its edit form, or its description. */
-export function EntityDetailsCard({ title, chips, description, readOnlyBody, edit, sx }: EntityDetailsCardProps) {
+export function EntityDetailsCard({ title, chips, description, readOnlyBody, edit }: EntityDetailsCardProps) {
   return (
-    <Card sx={[{ borderRadius: 2 }, ...(Array.isArray(sx) ? sx : [sx])]}>
+    <Card sx={{ borderRadius: 2 }}>
       <CardContent sx={{ p: 0 }}>
         <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
           <Stack
@@ -45,13 +44,13 @@ export function EntityDetailsCard({ title, chips, description, readOnlyBody, edi
           {edit ? (
             <Stack component="form" spacing={3} onSubmit={edit.onSubmit} noValidate>
               {edit.fields}
-              <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
+              <FormActions>
                 <Button type="submit" variant="contained" disabled={!edit.canSave || edit.isSaving}>
                   <DiceSpinner size="small" loading={edit.isSaving}>
                     Save
                   </DiceSpinner>
                 </Button>
-              </Stack>
+              </FormActions>
             </Stack>
           ) : (
             (readOnlyBody ?? (

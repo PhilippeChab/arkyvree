@@ -3,10 +3,9 @@ import type { ComponentProps, ReactNode } from "react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
+import { ActionMenuItem, PageBody, PageError } from "@/client/src/components/common/index.ts";
 import { BackIcon, DeleteIcon, MoreIcon } from "@/client/src/components/icons/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
-import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
 interface EntityDetailLayoutProps {
   entityName?: string;
@@ -26,8 +25,6 @@ interface EntityDetailLayoutProps {
 type EntityPageErrorProps = ComponentProps<typeof PageError>;
 
 /** An entity page's column: centered, up to 1200px. */
-const PAGE_SX = { maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } } as const;
-
 export function EntityDetailLayout({
   entityName,
   rulesetName,
@@ -44,10 +41,10 @@ export function EntityDetailLayout({
 
   if (isLoading) {
     return (
-      <Box sx={PAGE_SX}>
+      <PageBody width="lg">
         <Stack
           direction="row"
-          sx={{ mb: 4, alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
+          sx={{ alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
         >
           <Skeleton variant="circular" width={40} height={40} sx={{ position: "absolute", left: 0 }} />
           <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, sm: 8 } }}>
@@ -56,21 +53,15 @@ export function EntityDetailLayout({
           </Box>
         </Stack>
         <Skeleton variant="rounded" height={200} sx={{ borderRadius: 2 }} />
-      </Box>
+      </PageBody>
     );
   }
 
   return (
-    <Box
-      sx={{
-        ...PAGE_SX,
-        animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} both`,
-        [prefersReducedMotion]: { animation: "none" },
-      }}
-    >
+    <PageBody width="lg">
       <Stack
         direction="row"
-        sx={{ mb: 4, alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
+        sx={{ alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
       >
         <IconButton
           aria-label="Back"
@@ -137,15 +128,15 @@ export function EntityDetailLayout({
         )}
       </Stack>
       {children}
-    </Box>
+    </PageBody>
   );
 }
 
 /** An entity page that couldn't load its entity, in the page's column. */
 export function EntityPageError(props: EntityPageErrorProps) {
   return (
-    <Box sx={PAGE_SX}>
+    <PageBody width="lg">
       <PageError {...props} />
-    </Box>
+    </PageBody>
   );
 }

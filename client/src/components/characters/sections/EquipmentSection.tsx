@@ -14,7 +14,7 @@ import {
   DiceSpinner,
   EditDialog,
   ScrollSafeListbox,
-  ValidationIssueList,
+  ValidationWarnings,
 } from "@/client/src/components/common/index.ts";
 import { AddIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -266,33 +266,13 @@ export function EquipmentSection({
 
   const requirementAlert = (visible: boolean, onForce?: () => void) =>
     visible ? (
-      <AnimatedAlert
-        in
-        severity="warning"
+      <ValidationWarnings
+        title="Equipment warnings"
+        issues={validationErrors}
         onClose={() => setValidationErrors([])}
-        action={
-          onForce && (
-            <Button
-              size="small"
-              variant="outlined"
-              color="warning"
-              onClick={onForce}
-              disabled={addMutation.isPending || updateMutation.isPending}
-              sx={{ whiteSpace: "nowrap" }}
-            >
-              <DiceSpinner size="small" loading={addMutation.isPending || updateMutation.isPending}>
-                Proceed Anyway
-              </DiceSpinner>
-            </Button>
-          )
-        }
-        sx={{ mb: 0, "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 } }}
-      >
-        <Typography variant="subtitle2" gutterBottom>
-          Equipment warnings
-        </Typography>
-        <ValidationIssueList issues={validationErrors} />
-      </AnimatedAlert>
+        onForce={onForce}
+        forcing={addMutation.isPending || updateMutation.isPending}
+      />
     ) : null;
 
   const hasItems = inventoryItems.length > 0;

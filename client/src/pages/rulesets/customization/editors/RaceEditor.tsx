@@ -50,7 +50,6 @@ export function RaceEditor({
   return (
     <EntityDetailsCard
       title="Race Details"
-      sx={{ mb: 4 }}
       description={race.description}
       chips={
         <>

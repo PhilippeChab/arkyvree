@@ -40,9 +40,9 @@ export function ListCard({
 }: ListCardProps) {
   return (
     <StyledCard {...cardProps}>
-      <Box sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 1.5, sm: 2 }, position: "relative" }}>
+      <Stack spacing={2} sx={{ p: { xs: 2, sm: 3 }, flex: 1, position: "relative" }}>
         {corner && <Box sx={{ position: "absolute", top: 8, right: 8 }}>{corner}</Box>}
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5, minWidth: 0, pr: corner ? 4 : 0 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0, pr: corner ? 4 : 0 }}>
           <Avatar
             src={avatarSrc}
             sx={{
@@ -69,14 +69,12 @@ export function ListCard({
           </Typography>
         </Stack>
         {tags && tags.length > 0 && (
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", mb: 2 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
             {tags.map((tag) => (
               <TagChip key={tag.label} tag={tag} />
             ))}
           </Stack>
         )}
-      </Box>
-      <Box sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1 }}>
         <Typography
           variant="body2"
           sx={{
@@ -91,7 +89,7 @@ export function ListCard({
         >
           {description || NO_DESCRIPTION}
         </Typography>
-      </Box>
+      </Stack>
     </StyledCard>
   );
 }
@@ -104,7 +102,6 @@ export function ListCardGrid({ children }: ListCardGridProps) {
         display: "grid",
         gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
         gap: 3,
-        mb: 3,
       }}
     >
       {children}

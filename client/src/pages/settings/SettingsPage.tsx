@@ -1,6 +1,6 @@
-import { Card, CardContent, Container, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, Card, CardContent, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 
-import { PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
+import { PageBody, PageHeader } from "@/client/src/components/common/index.ts";
 import { DarkModeIcon, LightModeIcon, SystemModeIcon } from "@/client/src/components/icons/index.ts";
 import { useTheme } from "@/client/src/contexts/useTheme.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
@@ -17,18 +17,20 @@ export default function SettingsPage() {
   const { themeMode, setThemeMode } = useTheme();
 
   return (
-    <PageTransition>
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <PageHeader title="Settings" subtitle="Customize your experience" />
+    <PageBody width="lg">
+      <PageHeader title="Settings" subtitle="Customize your experience" />
 
-        <Card>
-          <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-            <Typography component="h2" gutterBottom sx={{ fontWeight: 700, typography: { xs: "h6", sm: "h5" } }}>
-              Theme
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-              Choose how Arkyvree looks to you. Select a single theme, or sync with your system settings.
-            </Typography>
+      <Card>
+        <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
+          <Stack spacing={3} sx={{ alignItems: "flex-start" }}>
+            <Box>
+              <Typography component="h2" gutterBottom sx={{ fontWeight: 700, typography: { xs: "h6", sm: "h5" } }}>
+                Theme
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                Choose how Arkyvree looks to you. Select a single theme, or sync with your system settings.
+              </Typography>
+            </Box>
 
             <ToggleButtonGroup
               value={themeMode}
@@ -53,9 +55,9 @@ export default function SettingsPage() {
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
-          </CardContent>
-        </Card>
-      </Container>
-    </PageTransition>
+          </Stack>
+        </CardContent>
+      </Card>
+    </PageBody>
   );
 }

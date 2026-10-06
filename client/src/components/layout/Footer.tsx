@@ -12,7 +12,6 @@ export function Footer() {
         width: "100%",
         py: 2,
         px: { xs: 2, md: 3 },
-        mt: 2,
         flexWrap: "wrap",
         alignItems: "center",
         justifyContent: "center",
