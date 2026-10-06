@@ -20,7 +20,7 @@ class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules> {
         ],
         [isNull(this.table.deletedAt)],
       ),
-      orderBy: [this.orderBy(this.table.level)],
+      orderBy: [this.orderBy(this.table.level), this.orderBy(this.table.klassId)],
     });
   }
 
