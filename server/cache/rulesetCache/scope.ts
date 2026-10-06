@@ -2,8 +2,8 @@ import { type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 
-import type { CachedRulesetData } from "./compose.ts";
 import RulesetCache from "./RulesetCache.ts";
+import type { CachedRulesetData } from "./RulesetComposition.ts";
 
 /**
  * Scope helper: loads the ruleset and its view (`RulesetCache.getData`), and runs `fn` inside a

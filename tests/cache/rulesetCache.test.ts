@@ -592,7 +592,7 @@ describe("rulesetCache", () => {
 
       // Same sibling scenario as above, but on an item to prove compose's
       // exclusion logic works uniformly across entity types (races, items,
-      // languages, klasses — all go through the same isExcluded filter).
+      // languages, klasses — all go through the same hidden-row filter, CowData.isHidden).
       const [baseItem] = await insertRows(itemsInRules, [
         {
           name: `Sibling Base Item ${uniqueId()}`,
