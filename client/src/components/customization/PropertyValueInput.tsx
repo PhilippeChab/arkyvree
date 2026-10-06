@@ -51,7 +51,7 @@ export function PropertyValueInput({
       placeholder={placeholder}
       fullWidth={fullWidth}
       queryKey={(search) => queryKeys.rulesets.propertyValueCompletions(rulesetId, propertyType, search)}
-      fetchPage={(search, page) =>
+      pageFn={(search, page) =>
         parseResponse(
           rpc.api.rulesets[":id"].customization.properties.values.completions.$get({
             param: { id: rulesetId },

@@ -1,6 +1,8 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { ApiError, parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 /** Activities about accounts and sessions have no page to open. */
@@ -19,23 +21,27 @@ export function isNavigableTarget(targetTable: string): boolean {
 export function useOpenActivityTarget() {
   const navigate = useNavigate();
   const snackbar = useSnackbar();
+  const queryClient = useQueryClient();
 
-  return async (targetTable: string, targetId: string) => {
-    try {
-      const { url } = await parseResponse(
-        rpc.api.activities.resolve[":targetTable"][":targetId"].$get({
-          param: { targetTable, targetId },
-        }),
+  return (targetTable: string, targetId: string) => {
+    queryClient
+      .fetchQuery({
+        queryKey: queryKeys.activities.target(targetTable, targetId),
+        queryFn: () =>
+          parseResponse(
+            rpc.api.activities.resolve[":targetTable"][":targetId"].$get({ param: { targetTable, targetId } }),
+          ),
+        staleTime: 0,
+      })
+      .then(
+        ({ url }) => navigate(url),
+        // 403 says why ("You no longer have access to this character."); anything else means the entity is gone.
+        (error) =>
+          snackbar.warning(
+            error instanceof ApiError && error.status === 403
+              ? error.message
+              : "This item has been deleted and is no longer available.",
+          ),
       );
-      navigate(url);
-    } catch (error) {
-      // 403 says why ("You no longer have access to this character.");
-      // anything else means the entity is gone.
-      snackbar.warning(
-        error instanceof ApiError && error.status === 403
-          ? error.message
-          : "This item has been deleted and is no longer available.",
-      );
-    }
   };
 }

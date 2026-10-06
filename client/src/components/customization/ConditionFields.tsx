@@ -9,14 +9,12 @@ import { extractTemplateExpression, isTemplateValue } from "@/client/src/lib/tem
 import { OperatorSelect } from "./OperatorSelect.tsx";
 import { PathValueInput } from "./PathValueInput.tsx";
 import { defaultValueForPath, fitsPath } from "./pathValues.ts";
-import type { PathInfo as TargetPathInfo } from "./TargetPathInput.tsx";
 import { TargetPathInput } from "./TargetPathInput.tsx";
 import { TemplateExpressionInput, type TemplateExpressionInputRef } from "./TemplateExpressionInput.tsx";
 import { TemplateExpressionToolbar } from "./TemplateExpressionToolbar.tsx";
+import { type PathInfo, useTargetPath } from "./useTargetPath.ts";
 
 type ConditionField = "target" | "operator" | "value";
-
-type PathInfo = Omit<TargetPathInfo, "path">;
 
 /** A form's field, as `useController` binds it: its value, its change and its error. */
 interface BoundField {
@@ -53,7 +51,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
   const onChange = (field: ConditionField, next: string) => fields[field].field.onChange(next);
   const { value } = values;
 
-  const [pathInfo, setPathInfo] = useState<PathInfo | null>(null);
+  const { target: pathInfo } = useTargetPath(rulesetId, kind, entityType, values.target);
   const [templateMode, setTemplateMode] = useState(() => isTemplateValue(value));
   const [templateExpression, setTemplateExpression] = useState(() =>
     isTemplateValue(value) ? (extractTemplateExpression(value) ?? "") : "",
@@ -79,6 +77,24 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
     writeFormValue(expr.trim() ? `{{ ${expr} }}` : "");
   };
 
+  // A path picked keeps the operator when it offers it, else takes its first. In create mode the literal (even while the
+  // template shows: it's what turning the template off restores) takes the path's default unless it already suits the
+  // path (a duplicated row's, one typed before): in edit mode the saved value stays.
+  const fitToPath = (picked: PathInfo) => {
+    const operator = picked.operators.includes(values.operator) ? values.operator : (picked.operators[0] ?? "");
+    // A set the path restricts takes its own values
+    const choices = operator === "set" && picked.setValues ? picked.setValues : picked.possibleValues;
+    if (mode === "create") {
+      const currentValue = templateMode ? literalValue : values.value;
+      if (!currentValue || !fitsPath(currentValue, picked.valueType, choices)) {
+        const seeded = defaultValueForPath(picked.valueType, choices);
+        setLiteralValue(seeded);
+        if (!templateMode) writeFormValue(seeded);
+      }
+    }
+    if (operator !== values.operator) onChange("operator", operator);
+  };
+
   // The other mode's input keeps its text, so switching back restores it.
   const handleToggleTemplate = (checked: boolean) => {
     setTemplateMode(checked);
@@ -96,37 +112,9 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
         kind={kind}
         entityType={entityType}
         value={values.target}
-        onChange={(nextTarget) => onChange("target", nextTarget)}
-        onPathInfoChange={(info) => {
-          if (info) {
-            setPathInfo({
-              valueType: info.valueType,
-              operators: info.operators,
-              possibleValues: info.possibleValues,
-              setValues: info.setValues,
-              literalOnly: info.literalOnly,
-            });
-            // In edit mode the form already carries a saved value/operator —
-            // don't overwrite. In create mode, seed a default only when the
-            // field is empty or the existing value doesn't suit the new path
-            // (not one of its choices, or not a number) — preserves
-            // duplicate-from-row and any in-progress user input.
-            const operator = info.operators.includes(values.operator) ? values.operator : (info.operators[0] ?? "");
-            // A set the path restricts takes its own values
-            const choices = operator === "set" && info.setValues ? info.setValues : info.possibleValues;
-            if (mode === "create") {
-              // The literal, even while the template shows: it's what turning the template off restores.
-              const currentValue = templateMode ? literalValue : values.value;
-              if (!currentValue || !fitsPath(currentValue, info.valueType, choices)) {
-                const seeded = defaultValueForPath(info.valueType, choices);
-                setLiteralValue(seeded);
-                if (!templateMode) writeFormValue(seeded);
-              }
-            }
-            if (operator !== values.operator) onChange("operator", operator);
-          } else {
-            setPathInfo(null);
-          }
+        onChange={(nextTarget, picked) => {
+          onChange("target", nextTarget);
+          if (picked) fitToPath(picked);
         }}
         error={!!errors.target}
         helperText={errors.target?.message}

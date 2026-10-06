@@ -4,7 +4,7 @@ import {
   Group as GroupIcon,
   AutoStories as RulesetIcon,
 } from "@mui/icons-material";
-import { Alert, Button, Container } from "@mui/material";
+import { Button, Container } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
@@ -16,6 +16,7 @@ import {
   InfoPill,
   ListCard,
   ListCardGrid,
+  LoadError,
   LoadMoreButton,
   NAME_SORTS,
   NoMatchesState,
@@ -100,7 +101,7 @@ export default function CampaignsPage() {
         {isLoading ? (
           <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
         ) : error ? (
-          <Alert severity="error">Failed to load campaigns.</Alert>
+          <LoadError what="Campaigns" error={error} />
         ) : campaigns.length > 0 ? (
           <>
             <ListCardGrid>

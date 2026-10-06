@@ -45,7 +45,7 @@ export function FeatEditor({
     onSaved,
     listKey: queryKeys.rulesets.section(rulesetId, "feats"),
     label: "Feat",
-    save: (data: FeatFormData) =>
+    saveFn: (data: FeatFormData) =>
       parseResponse(
         rpc.api.rulesets[":id"].feats[":featId"].$put({
           param: { id: rulesetId, featId: entityId },

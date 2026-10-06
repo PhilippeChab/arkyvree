@@ -1,6 +1,5 @@
 import { Add as AddIcon, Person as CharacterIcon, Visibility as VisibilityIcon } from "@mui/icons-material";
 import {
-  Alert,
   Autocomplete,
   Avatar,
   Box,
@@ -25,6 +24,7 @@ import {
   BlankState,
   DiceSpinner,
   faqTooltip,
+  LoadError,
   LoadMoreButton,
   Modal,
   NoMatchesState,
@@ -467,11 +467,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
       {charactersLoading && <DiceSpinner sx={{ py: 4 }} />}
 
       {/* Error State */}
-      {charactersError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          Failed to load characters
-        </Alert>
-      )}
+      {charactersError && <LoadError what="Characters" error={charactersError} sx={{ mb: 3 }} />}
 
       {/* Characters Grid */}
       {!charactersLoading && !charactersError && (

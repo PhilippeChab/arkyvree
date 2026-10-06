@@ -37,7 +37,7 @@ export function RaceEditor({
     onSaved,
     listKey: queryKeys.rulesets.section(rulesetId, "races"),
     label: "Race",
-    save: (data: RaceFormData) =>
+    saveFn: (data: RaceFormData) =>
       parseResponse(
         rpc.api.rulesets[":id"].races[":raceId"].$put({
           param: { id: rulesetId, raceId: entityId },

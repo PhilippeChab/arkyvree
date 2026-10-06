@@ -10,7 +10,6 @@ import {
   PersonOff as UnassignedIcon,
 } from "@mui/icons-material";
 import {
-  Alert,
   Box,
   Button,
   Chip,
@@ -33,6 +32,7 @@ import {
   BlankState,
   ConfirmDialog,
   DiceSpinner,
+  LoadError,
   LoadMoreButton,
   NoMatchesState,
   ROW_ACTIONS_HOVER_SX,
@@ -265,11 +265,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       {/* Loading State */}
       {playersLoading && <DiceSpinner sx={{ py: 4 }} />}
       {/* Error State */}
-      {playersError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          Failed to load players
-        </Alert>
-      )}
+      {playersError && <LoadError what="Players" error={playersError} sx={{ mb: 3 }} />}
       {/* Table */}
       {!playersLoading && !playersError && (
         <>

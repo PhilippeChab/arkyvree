@@ -1,10 +1,10 @@
 import { Check } from "@mui/icons-material";
-import { Alert, Avatar, Box, Button, Card, CardContent, Chip, Container, Typography } from "@mui/material";
+import { Avatar, Box, Button, Card, CardContent, Chip, Container, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { DiceSpinner, PageTransition } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/activityFormatters.ts";
@@ -33,9 +33,9 @@ interface InviteLandingPageProps {
   listPath: string;
   icon: ElementType;
   queryKey: readonly unknown[];
-  loadInvite: () => Promise<InviteDetails>;
-  acceptInvite: () => Promise<unknown>;
-  rejectInvite: () => Promise<unknown>;
+  inviteFn: () => Promise<InviteDetails>;
+  acceptFn: () => Promise<unknown>;
+  rejectFn: () => Promise<unknown>;
   /** Status an accepted invite ends in ("Accepted" for campaigns, "Active" for contributors). */
   acceptedStatus: string;
   /** Completes "invitation to …": "join", "contribute to". */
@@ -85,9 +85,9 @@ export function InviteLandingPage({
   listPath,
   icon: Icon,
   queryKey,
-  loadInvite,
-  acceptInvite,
-  rejectInvite,
+  inviteFn,
+  acceptFn,
+  rejectFn,
   acceptedStatus,
   joinVerb,
   description,
@@ -99,7 +99,7 @@ export function InviteLandingPage({
   const queryClient = useQueryClient();
 
   const acceptMutation = useMutation({
-    mutationFn: acceptInvite,
+    mutationFn: acceptFn,
     onSuccess: () => {
       snackbar.success("Invitation accepted!");
       queryClient.invalidateQueries({ queryKey: invalidateOnAccept });
@@ -109,7 +109,7 @@ export function InviteLandingPage({
   });
 
   const rejectMutation = useMutation({
-    mutationFn: rejectInvite,
+    mutationFn: rejectFn,
     onSuccess: () => {
       snackbar.success("Invitation rejected");
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
@@ -131,7 +131,7 @@ export function InviteLandingPage({
     queryKey,
     queryFn: async () => {
       try {
-        return await loadInvite();
+        return await inviteFn();
       } catch (err) {
         // Revoked, or addressed to someone else.
         if (err instanceof ApiError && err.status === 404) return null;
@@ -162,7 +162,7 @@ export function InviteLandingPage({
   if (error) {
     return (
       <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
-        <Alert severity="error">Failed to load invitation. Please try again later.</Alert>
+        <LoadError what="Invitation" error={error} />
       </Container>
     );
   }

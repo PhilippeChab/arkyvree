@@ -5,7 +5,7 @@ import {
   Edit as EditIcon,
   ExitToApp as LeaveIcon,
 } from "@mui/icons-material";
-import { Alert, Box, Button, IconButton, Tooltip } from "@mui/material";
+import { Box, Button, IconButton, Tooltip } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
@@ -15,6 +15,7 @@ import {
   ConfirmDialog,
   DiceSpinner,
   EditDialog,
+  LoadError,
   LoadMoreButton,
   SelectField,
 } from "@/client/src/components/common/index.ts";
@@ -136,7 +137,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   }
 
   if (error) {
-    return <Alert severity="error">Failed to load contributors</Alert>;
+    return <LoadError what="Contributors" error={error} />;
   }
 
   const canLeave = !isOwner && !!ruleset.contributorRole;

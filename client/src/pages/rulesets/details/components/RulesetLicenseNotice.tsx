@@ -1,7 +1,7 @@
-import { Alert, Box, Button, DialogActions, DialogContent, DialogTitle, Link, Typography } from "@mui/material";
+import { Box, Button, DialogActions, DialogContent, DialogTitle, Link, Typography } from "@mui/material";
 import { useState } from "react";
 
-import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, Modal } from "@/client/src/components/common/index.ts";
 import { useOglLicense } from "@/client/src/hooks/index.ts";
 
 interface RulesetLicenseNoticeProps {
@@ -10,7 +10,7 @@ interface RulesetLicenseNoticeProps {
 
 export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
   const [open, setOpen] = useState(false);
-  const { data: text, isPending, isError, refetch } = useOglLicense(open);
+  const { data: text, isPending, isError, error, refetch } = useOglLicense(open);
 
   return (
     <>
@@ -39,18 +39,7 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
               <DiceSpinner />
             </Box>
           )}
-          {isError && (
-            <Alert
-              severity="error"
-              action={
-                <Button color="inherit" onClick={() => void refetch()}>
-                  Retry
-                </Button>
-              }
-            >
-              Failed to load the license text.
-            </Alert>
-          )}
+          {isError && <LoadError what="License text" error={error} onRetry={() => void refetch()} />}
           {text !== undefined && (
             <Typography
               component="pre"

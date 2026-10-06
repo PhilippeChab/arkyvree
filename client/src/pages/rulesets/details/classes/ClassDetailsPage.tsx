@@ -10,8 +10,8 @@ import {
 } from "@mui/icons-material";
 import { Box, Chip, MenuItem, TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { DeleteDialog, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -205,11 +205,9 @@ export default function ClassDetailsPage() {
   });
 
   // Normalize the URL to a known tab.
-  useEffect(() => {
-    if (rulesetId && classId && !isClassSection(section)) {
-      navigate(`/rulesets/${rulesetId}/classes/${classId}/levels`, { replace: true });
-    }
-  }, [rulesetId, classId, section, navigate]);
+  if (rulesetId && classId && !isClassSection(section)) {
+    return <Navigate to={`/rulesets/${rulesetId}/classes/${classId}/levels`} replace />;
+  }
 
   const isLoading = isRulesetLoading || isClassLoading;
 

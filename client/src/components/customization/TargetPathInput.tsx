@@ -1,17 +1,12 @@
 import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
-import { skipToken, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
-
-import { useLatest } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import type { PathCompletion, TargetPath } from "@/shared/customization/target.ts";
 
 import { TargetPathBrowser } from "./TargetPathBrowser.tsx";
+import { type PathInfo, useTargetPath } from "./useTargetPath.ts";
 
 interface TargetPathInputProps {
   value: string;
-  onChange: (value: string) => void;
+  /** The new path, and what it takes when it's a complete one picked from the list. */
+  onChange: (value: string, picked?: PathInfo) => void;
   rulesetId: string;
   kind: "modifier" | "requirement";
   entityType?: string;
@@ -21,14 +16,7 @@ interface TargetPathInputProps {
   helperText?: string;
   disabled?: boolean;
   fullWidth?: boolean;
-  onPathInfoChange?: (pathInfo: PathInfo | null) => void;
 }
-
-/** What the input reports about a completed path. */
-export type PathInfo = Pick<
-  TargetPath,
-  "path" | "valueType" | "operators" | "possibleValues" | "setValues" | "literalOnly"
->;
 
 export function TargetPathInput({
   value,
@@ -42,97 +30,25 @@ export function TargetPathInput({
   helperText,
   disabled = false,
   fullWidth = true,
-  onPathInfoChange,
 }: TargetPathInputProps) {
-  const [selectedCompletion, setSelectedCompletion] = useState<PathCompletion | null>(null);
-  const [userChanged, setUserChanged] = useState(false);
-  const onPathInfoChangeRef = useLatest(onPathInfoChange);
-
-  const segments = useMemo(() => (value ? value.split(".").filter(Boolean) : []), [value]);
-
-  // A path is complete when the browser reports a selected leaf completion
-  const isComplete = selectedCompletion?.kind === "property" && selectedCompletion?.path === value;
-
-  // A complete path the user changed is validated as it is
-  const validating = isComplete && userChanged && value !== "";
-  const { data: validation } = useQuery({
-    queryKey: queryKeys.rulesets.targetPathValidation(rulesetId, kind, value),
-    queryFn: validating
-      ? () =>
-          parseResponse(
-            rpc.api.rulesets[":id"].customization["target"].paths.validate.$post({
-              param: { id: rulesetId },
-              json: { path: value, kind },
-            }),
-          )
-      : skipToken,
-  });
-  const validationResult = validating ? (validation ?? null) : null;
-
-  // Fire onPathInfoChange exactly once per path change. The browser produces
-  // a new selectedCompletion reference on every completions refetch, and
-  // when the search clears after a path pick the cached completions briefly
-  // don't contain the matching leaf — selectedCompletion goes momentarily
-  // null and re-resolves. Without this dedupe, callers' "seed default
-  // value/operator" logic re-runs and clobbers anything the user has typed.
-  // We only fire null when `value` is actually empty (user cleared the path).
-  const lastReportedPathRef = useRef<string | null>(null);
-
-  // Reset the dedupe ref when the value is externally reassigned without a
-  // user edit — e.g., parent reopens an edit dialog on a different
-  // requirement that happens to share the same target. Without this, the
-  // callback's seed logic skips re-firing and the parent's pathInfo stays
-  // stale from the previous session.
-  useEffect(() => {
-    if (!userChanged) lastReportedPathRef.current = null;
-  }, [value, userChanged, entityType, rulesetId, kind]);
-
-  useEffect(() => {
-    const callback = onPathInfoChangeRef.current;
-    if (!callback) return;
-    if (isComplete && selectedCompletion?.valueType && selectedCompletion?.operators) {
-      const path = selectedCompletion.path ?? null;
-      if (lastReportedPathRef.current === path) return;
-      lastReportedPathRef.current = path;
-      if (!path) return;
-      callback({
-        path,
-        valueType: selectedCompletion.valueType,
-        operators: selectedCompletion.operators,
-        possibleValues: selectedCompletion.possibleValues,
-        setValues: selectedCompletion.setValues,
-        literalOnly: selectedCompletion.literalOnly,
-      });
-    } else if (!value) {
-      if (lastReportedPathRef.current === null) return;
-      lastReportedPathRef.current = null;
-      callback(null);
-    }
-  }, [isComplete, selectedCompletion, value, onPathInfoChangeRef]);
-
-  const hasError = error || (validationResult !== null && !validationResult.isValid);
-  const errorMessage =
-    helperText ||
-    (validationResult && !validationResult.isValid && validationResult.errors?.[0]?.message) ||
-    (validationResult && !validationResult.isValid && validationResult.suggestions?.length
-      ? `Did you mean: ${validationResult.suggestions[0]}?`
-      : undefined);
+  const { target, pick } = useTargetPath(rulesetId, kind, entityType, value);
+  const segments = value ? value.split(".").filter(Boolean) : [];
 
   return (
-    <FormControl fullWidth={fullWidth} error={hasError}>
+    <FormControl fullWidth={fullWidth} error={error}>
       <InputLabel shrink required={required} sx={{ backgroundColor: "background.paper", px: 0.5 }}>
         {label}
       </InputLabel>
       <Box
         sx={{
           border: 1,
-          borderColor: hasError ? "error.main" : "divider",
+          borderColor: error ? "error.main" : "divider",
           borderRadius: 1,
           px: 1.5,
           py: 1,
           mt: "16px",
           "&:hover": {
-            borderColor: hasError ? "error.main" : "text.primary",
+            borderColor: error ? "error.main" : "text.primary",
           },
         }}
       >
@@ -141,16 +57,15 @@ export function TargetPathInput({
           kind={kind}
           entityType={entityType}
           segments={segments}
-          isComplete={isComplete}
+          isComplete={target !== null}
           disabled={disabled}
-          onChange={(v) => {
-            setUserChanged(true);
-            onChange(v);
+          onChange={(path, picked) => {
+            if (picked) pick(picked);
+            onChange(path, picked);
           }}
-          onSelectedCompletion={setSelectedCompletion}
         />
       </Box>
-      {errorMessage && <FormHelperText>{errorMessage}</FormHelperText>}
+      {helperText && <FormHelperText>{helperText}</FormHelperText>}
     </FormControl>
   );
 }

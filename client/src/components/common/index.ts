@@ -19,6 +19,7 @@ export { ErrorBoundary } from "./ErrorBoundary.tsx";
 export { FormDialog } from "./FormDialog.tsx";
 export { InfoPill } from "./InfoPill.tsx";
 export { ListCard, ListCardGrid } from "./ListCard.tsx";
+export { LoadError } from "./LoadError.tsx";
 export { LoadMoreButton } from "./LoadMoreButton.tsx";
 export { Modal } from "./Modal.tsx";
 export { faqTooltip } from "./faqTooltip.tsx";

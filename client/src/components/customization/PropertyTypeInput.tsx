@@ -32,7 +32,7 @@ export function PropertyTypeInput({
       label={label}
       placeholder={placeholder}
       queryKey={(search) => queryKeys.rulesets.propertyTypeCompletions(rulesetId, search, entityType)}
-      fetchPage={(search, page) =>
+      pageFn={(search, page) =>
         parseResponse(
           rpc.api.rulesets[":id"].customization.properties.types.completions.$get({
             param: { id: rulesetId },

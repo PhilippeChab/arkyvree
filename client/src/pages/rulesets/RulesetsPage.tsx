@@ -7,7 +7,7 @@ import {
   StarBorder as StarBorderIcon,
   Star as StarIcon,
 } from "@mui/icons-material";
-import { Alert, Container, IconButton, Stack, Typography } from "@mui/material";
+import { Container, IconButton, Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
@@ -19,6 +19,7 @@ import {
   InfoPill,
   ListCard,
   ListCardGrid,
+  LoadError,
   LoadMoreButton,
   NoMatchesState,
   PageHeader,
@@ -84,7 +85,7 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
   }
 
   if (error) {
-    return <Alert severity="error">Failed to load rulesets</Alert>;
+    return <LoadError what="Rulesets" error={error} />;
   }
 
   if (rulesets.length === 0) {

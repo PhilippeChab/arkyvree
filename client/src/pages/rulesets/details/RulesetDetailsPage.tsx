@@ -41,8 +41,8 @@ import {
   Typography,
 } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useCallback, useMemo, useState } from "react";
+import { Navigate, Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import {
   ActionMenuItem,
@@ -143,6 +143,8 @@ export default function RulesetDetailsPage() {
     setArchiveDialogOpen,
     publishDialogOpen,
     setPublishDialogOpen,
+    publishKind,
+    setPublishKind,
     subscribeDialogOpen,
     setSubscribeDialogOpen,
     unsubscribeDialogOpen,
@@ -258,11 +260,9 @@ export default function RulesetDetailsPage() {
   const currentTab = tabConfig.find((tab) => tab.key === section) ?? tabConfig[0];
 
   // Normalize the URL to a known tab.
-  useEffect(() => {
-    if (id && !tabConfig.some((tab) => tab.key === section)) {
-      navigate(`/rulesets/${id}/races`, { replace: true });
-    }
-  }, [id, section, navigate, tabConfig]);
+  if (id && !tabConfig.some((tab) => tab.key === section)) {
+    return <Navigate to={`/rulesets/${id}/races`} replace />;
+  }
 
   if (isLoading) {
     return (
@@ -570,7 +570,8 @@ export default function RulesetDetailsPage() {
             selectedRuleset.userId !== null &&
             selectedRuleset.extensionRulesetIds.length === 0
           }
-          initialKind={selectedRuleset?.kind ?? "ruleset"}
+          kind={publishKind}
+          onKindChange={setPublishKind}
         />
 
         <ForkRulesetDialog

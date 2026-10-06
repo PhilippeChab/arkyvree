@@ -8,7 +8,6 @@ import {
 } from "@mui/icons-material";
 import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
-import { useState } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 
 import {
@@ -18,7 +17,6 @@ import {
   EditDialog,
   NameField,
 } from "@/client/src/components/common/index.ts";
-import { useOnChange } from "@/client/src/hooks/index.ts";
 import { nameRules } from "@/client/src/lib/validation.ts";
 import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -54,7 +52,9 @@ interface PublishRulesetDialogProps {
   onConfirm: (kind: PublishKind) => void;
   isLoading: boolean;
   canBeExtension: boolean;
-  initialKind?: PublishKind;
+  /** What it's published as, which its opener sets to the ruleset's kind */
+  kind: PublishKind;
+  onKindChange: (kind: PublishKind) => void;
 }
 
 interface UnsubscribeExtensionDialogProps {
@@ -239,15 +239,9 @@ export function PublishRulesetDialog({
   onConfirm,
   isLoading,
   canBeExtension,
-  initialKind = "ruleset",
+  kind,
+  onKindChange,
 }: PublishRulesetDialogProps) {
-  const [kind, setKind] = useState<PublishKind>(initialKind);
-
-  // Opening the dialog resets its kind to the caller's
-  useOnChange(open ? initialKind : null, (openedAs) => {
-    if (openedAs) setKind(openedAs);
-  });
-
   return (
     <ConfirmDialog
       open={open}
@@ -262,7 +256,7 @@ export function PublishRulesetDialog({
     >
       {canBeExtension && (
         <Box sx={{ mt: 2 }}>
-          <RulesetKindToggle value={kind} onChange={setKind} disabled={isLoading} />
+          <RulesetKindToggle value={kind} onChange={onKindChange} disabled={isLoading} />
         </Box>
       )}
     </ConfirmDialog>

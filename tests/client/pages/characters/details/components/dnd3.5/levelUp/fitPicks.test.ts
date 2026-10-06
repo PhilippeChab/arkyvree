@@ -1,0 +1,123 @@
+import { describe, expect, test } from "bun:test";
+
+import {
+  featPickString,
+  fitFeats,
+  fitPowers,
+  fitSkillPoints,
+  openPoolOf,
+  withoutPick,
+} from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/fitPicks.ts";
+
+/** A feat that grants `grants` slots in pool `poolId`. */
+function feat(id: string, grants?: { poolId: string; slots: number }) {
+  return {
+    id,
+    name: id,
+    aptitudeModifiers: grants ? [{ aptitudeId: grants.poolId, value: grants.slots, operator: "add" }] : [],
+  };
+}
+
+/** A feat pool with `available` slots. */
+function featPool(id: string, available: number) {
+  return { id, name: id, allowed: available, spent: 0, available, shared: false };
+}
+
+/** A spell picked at `powerLevel`. */
+function power(id: string, powerLevel?: number) {
+  return { id, name: id, powerLevel };
+}
+
+describe("fitting a level's feats to its pools", () => {
+  test("keeps picks that fit, as the same object", () => {
+    const feats = { general: [feat("Dodge")] };
+    expect(fitFeats(feats, { general: featPool("general", 1) }).feats).toBe(feats);
+  });
+
+  test("drops the later picks a pool has no room for, and every pick of a pool gone", () => {
+    const feats = { general: [feat("Dodge"), feat("Mobility")], fighter: [feat("Cleave")] };
+    expect(fitFeats(feats, { general: featPool("general", 1) }).feats).toEqual({
+      general: [feat("Dodge")],
+      fighter: [],
+    });
+  });
+
+  test("grows a pool by a picked feat's slots, and drops them with it", () => {
+    const granter = feat("Bonus", { poolId: "bonus", slots: 1 });
+    const feats = { general: [feat("Dodge"), granter], bonus: [feat("Cleave")] };
+    const pools = { general: featPool("general", 2), bonus: featPool("bonus", 0) };
+    const fitted = fitFeats(feats, pools);
+    expect(fitted.feats).toBe(feats);
+    expect(fitted.pools.bonus.available).toBe(1);
+    // The granter no longer fits: its slot, and the feat in it, go
+    expect(fitFeats(feats, { ...pools, general: featPool("general", 1) }).feats).toEqual({
+      general: [feat("Dodge")],
+      bonus: [],
+    });
+  });
+
+  test("leaves the picks while the pools load", () => {
+    const feats = { general: [feat("Dodge")] };
+    expect(fitFeats(feats, undefined)).toEqual({ feats, pools: {} });
+  });
+
+  test("closes the picker of a pool with no slots, and lists the picks for the endpoints", () => {
+    const pools = { general: featPool("general", 1), bonus: featPool("bonus", 0) };
+    expect([openPoolOf("general", pools), openPoolOf("bonus", pools), openPoolOf(null, pools)]).toEqual([
+      "general",
+      null,
+      null,
+    ]);
+    expect(featPickString({ general: [feat("b"), feat("a")] })).toBe("a:general,b:general");
+    expect(featPickString({})).toBeUndefined();
+  });
+});
+
+describe("fitting a level's spells to its pools", () => {
+  test("drops a leveled pool's latest picks at a spell level past its room", () => {
+    const powers = { wizard: [power("a", 1), power("b", 1), power("c", 2)], gone: [power("d")] };
+    const pools = {
+      wizard: {
+        id: "wizard",
+        name: "Wizard",
+        allowed: 3,
+        spent: 0,
+        available: 3,
+        leveled: true,
+        levels: { 1: { allowed: 1, spent: 0, available: 1 }, 2: { allowed: 1, spent: 0, available: 1 } },
+      },
+    };
+    expect(fitPowers(powers, pools)).toEqual({ wizard: [power("a", 1), power("c", 2)], gone: [] });
+  });
+
+  test("keeps picks that fit, and every pick while the pools load", () => {
+    const powers = { bard: [power("a")] };
+    expect(fitPowers(powers, { bard: { id: "bard", name: "Bard", allowed: 1, spent: 0, available: 1 } })).toBe(powers);
+    expect(fitPowers(powers, undefined)).toBe(powers);
+  });
+
+  test("removes one pick", () => {
+    expect(withoutPick({ bard: [power("a"), power("b")] }, "bard", "a")).toEqual({ bard: [power("b")] });
+  });
+});
+
+describe("fitting a level's skill points", () => {
+  const limits = {
+    skills: [
+      { id: "climb", isClassSkill: true, currentRank: 0 },
+      { id: "swim", isClassSkill: true, currentRank: 0 },
+    ],
+    totalCharacterLevel: 1,
+    skillPointsToSpend: 6,
+  };
+
+  test("caps a skill at its rank and the points left, in the order given", () => {
+    expect(fitSkillPoints({ climb: 5, swim: 3 }, limits, [["climb", "swim"]], [6])).toEqual({ climb: 4, swim: 2 });
+  });
+
+  test("keeps points that fit, and every point while the slots load", () => {
+    const allocations = { climb: 2 };
+    expect(fitSkillPoints(allocations, limits, [["climb", "swim"]], [6])).toBe(allocations);
+    expect(fitSkillPoints(allocations, null, undefined, undefined)).toBe(allocations);
+  });
+});
