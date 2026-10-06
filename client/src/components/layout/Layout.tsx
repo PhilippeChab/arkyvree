@@ -51,7 +51,8 @@ import {
 } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { brandGold, brandGoldTint } from "@/client/src/theme/brandGold.ts";
+import { brandGold } from "@/client/src/theme/brandGold.ts";
+import { glow, ring } from "@/client/src/theme/shadows.ts";
 
 import { AppBrand, AppMain } from "./AppShell.tsx";
 import { DemoBanner } from "./DemoBanner.tsx";
@@ -184,7 +185,6 @@ export function Layout() {
 
   const darkMode = theme.palette.mode === "dark";
   const gold = brandGold(darkMode);
-  const goldFaint = brandGoldTint(darkMode, darkMode ? 0.25 : 0.2);
 
   const { mutate: completeOnboarding } = useMutation({
     mutationFn: () => rpc.auth["complete-onboarding"].$post(),
@@ -255,13 +255,13 @@ export function Layout() {
                 ? {
                     flex: 1,
                     textAlign: "center",
-                    fontWeight: 700,
+                    fontWeight: "fontWeightBold",
                   }
                 : {
                     position: "absolute",
                     left: "50%",
                     transform: "translateX(-50%)",
-                    fontWeight: 700,
+                    fontWeight: "fontWeightBold",
                   }
             }
           >
@@ -301,7 +301,6 @@ export function Layout() {
             transition: transitionOf(["all"], DURATION.slow, EASING.emphasized),
             overflow: "hidden",
             bgcolor: "background.paper",
-            boxShadow: (theme) => `2px 0 8px ${theme.palette.shadow}`,
           },
         }}
         variant={isMobile ? "temporary" : "permanent"}
@@ -328,7 +327,7 @@ export function Layout() {
                     height: 48,
                     minHeight: "unset",
                     ...(onboardingHighlightId === item.id && {
-                      boxShadow: `0 0 0 2px ${gold}, 0 0 12px ${goldFaint}`,
+                      boxShadow: ring(gold),
                     }),
                     justifyContent: isMobile || effectiveExpanded ? "flex-start" : "center",
                     px: isMobile || effectiveExpanded ? 2 : 1.5,
@@ -353,7 +352,7 @@ export function Layout() {
                     "&.Mui-selected": {
                       backgroundColor: "primary.main",
                       color: "common.white",
-                      boxShadow: (theme) => `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
+                      boxShadow: (theme) => glow(theme.palette.primary.main),
                       "&::before": {
                         opacity: 1,
                       },
@@ -374,7 +373,7 @@ export function Layout() {
                         color: "common.white",
                       },
                       "& .MuiListItemText-primary": {
-                        fontWeight: 600,
+                        fontWeight: "fontWeightBold",
                         color: "common.white",
                       },
                       "& .MuiListItemText-secondary": {

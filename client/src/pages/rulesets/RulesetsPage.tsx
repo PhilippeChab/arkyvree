@@ -121,7 +121,10 @@ function RulesetList({ filters }: RulesetListProps) {
                 ruleset.isStarrable && (
                   <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
                     {ruleset.starCount > 0 && (
-                      <Typography variant="caption" sx={{ color: "warning.main", fontWeight: 600, lineHeight: 1 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "warning.main", fontWeight: "fontWeightBold", lineHeight: 1 }}
+                      >
                         {ruleset.starCount}
                       </Typography>
                     )}

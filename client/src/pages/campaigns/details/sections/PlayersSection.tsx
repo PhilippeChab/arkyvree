@@ -256,7 +256,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         const { name, email } = playerDisplay(player, slot);
         return (
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium" }}>
               {name}
             </Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -327,7 +327,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   return (
     <SectionContent>
       {/* Header */}
-      <Typography component="h2" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
+      <Typography component="h2" variant="h5">
         Players
       </Typography>
       <SearchBar

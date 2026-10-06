@@ -1,7 +1,7 @@
-import { Alert, Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 
 import { GoogleSignInButton } from "@/client/src/components/auth/index.ts";
 import {
@@ -14,6 +14,7 @@ import {
   PageError,
   PageHeader,
   PasswordField,
+  Section,
   TagChip,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -32,33 +33,9 @@ interface PasswordFormData {
   newPasswordConfirmation: string;
 }
 
-interface ProfileCardProps {
-  title: string;
-  children: ReactNode;
-  danger?: boolean;
-}
-
 interface ProfileFormData {
   username: string;
   emailAddress: string;
-}
-
-function ProfileCard({ title, children, danger = false }: ProfileCardProps) {
-  return (
-    <Card sx={danger ? { borderColor: "error.main" } : undefined}>
-      <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-        <Stack spacing={3}>
-          <Typography
-            component="h2"
-            sx={{ fontWeight: 700, typography: { xs: "h6", sm: "h5" }, color: danger ? "error.main" : undefined }}
-          >
-            {title}
-          </Typography>
-          {children}
-        </Stack>
-      </CardContent>
-    </Card>
-  );
 }
 
 function toProfileForm(user: Pick<AuthUser, "username" | "emailAddress">): ProfileFormData {
@@ -233,7 +210,7 @@ export default function ProfilePage() {
         </Alert>
       )}
 
-      <ProfileCard title="Basic Information">
+      <Section title="Basic Information">
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={{ xs: 2, sm: 4 }}
@@ -268,9 +245,9 @@ export default function ProfilePage() {
             </Stack>
           </Box>
         </Stack>
-      </ProfileCard>
+      </Section>
 
-      <ProfileCard title="Linked Accounts">
+      <Section title="Linked Accounts">
         <Stack spacing={1}>
           <Stack
             direction="row"
@@ -305,9 +282,9 @@ export default function ProfilePage() {
             </Typography>
           )}
         </Stack>
-      </ProfileCard>
+      </Section>
 
-      <ProfileCard title={hasPassword ? "Change Password" : "Set Password"}>
+      <Section title={hasPassword ? "Change Password" : "Set Password"}>
         <Stack
           component="form"
           spacing={3}
@@ -348,9 +325,9 @@ export default function ProfilePage() {
             </Button>
           </FormActions>
         </Stack>
-      </ProfileCard>
+      </Section>
 
-      <ProfileCard title="Delete Account" danger>
+      <Section title="Delete Account" danger>
         <Typography variant="body2">
           Permanently delete your account and all associated data. This action cannot be undone.
         </Typography>
@@ -359,7 +336,7 @@ export default function ProfilePage() {
             Delete Account
           </Button>
         </FormActions>
-      </ProfileCard>
+      </Section>
 
       {userData?.pendingEmailAddress && (
         <EmailChangeVerificationDialog

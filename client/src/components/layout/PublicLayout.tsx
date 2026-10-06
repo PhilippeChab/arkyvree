@@ -24,7 +24,7 @@ export function PublicLayout() {
             noWrap
             component={Link}
             to="/"
-            sx={{ fontWeight: 700, color: "inherit", textDecoration: "none" }}
+            sx={{ fontWeight: "fontWeightBold", color: "inherit", textDecoration: "none" }}
           >
             <AppBrand />
           </Typography>

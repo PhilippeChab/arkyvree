@@ -1,6 +1,6 @@
-import { Autocomplete, Box, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Skeleton, Stack, TextField, Typography } from "@mui/material";
 
-import { BlankState, ScrollSafeListbox, TagChip } from "@/client/src/components/common/index.ts";
+import { BlankState, ScrollSafeListbox, Section, TagChip } from "@/client/src/components/common/index.ts";
 import { RemoveSkillDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { useClassSkills, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
@@ -35,7 +35,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         spacing={2}
         sx={{ flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start" }}
       >
-        <Typography component="h2" variant="h6">
+        <Typography component="h2" variant="h5">
           Class Skills
         </Typography>
         {canEdit && (
@@ -50,7 +50,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
                 return (
                   <Box component="li" key={key} {...otherProps}>
                     <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium" }}>
                         {option.name}
                       </Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -109,7 +109,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
           }
         />
       ) : (
-        <Paper sx={{ p: 2, borderRadius: 2 }}>
+        <Section>
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
             {classSkills.map((classSkill) => (
               <TagChip
@@ -122,7 +122,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
               />
             ))}
           </Stack>
-        </Paper>
+        </Section>
       )}
       <RemoveSkillDialog
         open={deleteDialogOpen}

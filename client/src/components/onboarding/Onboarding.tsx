@@ -1,5 +1,4 @@
 import {
-  alpha,
   Backdrop,
   Box,
   Button,
@@ -22,6 +21,7 @@ import type { SvgIconComponent } from "@/client/src/components/icons/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { brandGold, brandGoldTint } from "@/client/src/theme/brandGold.ts";
+import { glow, iconGlow } from "@/client/src/theme/shadows.ts";
 
 interface OnboardingPopperProps {
   anchorEl: HTMLElement;
@@ -130,7 +130,6 @@ function OnboardingPopper({ anchorEl, onClose, children }: OnboardingPopperProps
               borderRight: 8,
               borderColor: "transparent",
               borderRightColor: "background.paper",
-              filter: (theme) => `drop-shadow(-2px 0 2px ${alpha(theme.palette.common.black, 0.1)})`,
             }}
           />
           {children}
@@ -220,7 +219,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
               alignItems: "center",
               justifyContent: "center",
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              boxShadow: `0 4px 20px ${goldFaint}`,
+              boxShadow: glow(gold),
               position: "relative",
             }}
           >
@@ -232,7 +231,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
                 sx={{
                   width: effectiveMode === "dialog" ? 48 : 34,
                   height: effectiveMode === "dialog" ? 48 : 34,
-                  filter: `drop-shadow(0 2px 8px ${brandGoldTint(false, 0.35)})`,
+                  filter: iconGlow(brandGold(false)),
                 }}
               />
             ) : step.icon ? (
@@ -240,18 +239,14 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
                 fontSize={effectiveMode === "dialog" ? "hero" : "large"}
                 sx={{
                   color: "common.white",
-                  filter: (theme) => `drop-shadow(0 2px 4px ${alpha(theme.palette.common.black, 0.3)})`,
+                  filter: (theme) => iconGlow(theme.palette.common.black),
                 }}
               />
             ) : null}
           </Stack>
         </Stack>
 
-        <Typography
-          id="onboarding-step-title"
-          variant={effectiveMode === "dialog" ? "h5" : "h6"}
-          sx={{ fontWeight: 700, letterSpacing: "0.02em" }}
-        >
+        <Typography id="onboarding-step-title" component="h2" variant="h5">
           {step.title}
         </Typography>
 
@@ -268,7 +263,6 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
           sx={{
             color: "text.secondary",
             maxWidth: effectiveMode === "dialog" ? 400 : 300,
-            lineHeight: 1.7,
           }}
         >
           {step.description.includes("{faq}")
@@ -303,7 +297,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
               }}
             >
               <HelpIcon fontSize="compact" />
-              <Typography variant="caption" sx={{ color: "inherit", fontWeight: 500 }}>
+              <Typography variant="caption" sx={{ color: "inherit", fontWeight: "fontWeightMedium" }}>
                 Forking & Extensions
               </Typography>
             </Stack>

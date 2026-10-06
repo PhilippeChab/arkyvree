@@ -34,14 +34,14 @@ export function DemoBanner() {
           border: 1,
           borderColor: (theme) => brandGoldTint(theme.palette.mode === "dark", 0.3),
           backdropFilter: "blur(12px)",
-          boxShadow: (theme) => `0 2px 12px ${theme.palette.shadow}`,
+          boxShadow: 2,
         }}
       >
         <DemoIcon fontSize="compact" sx={{ color: "warning.main" }} />
         <Typography
           variant="body2"
           sx={{
-            fontWeight: 500,
+            fontWeight: "fontWeightMedium",
             color: (theme) => (theme.palette.mode === "dark" ? "warning.light" : "warning.dark"),
           }}
         >
@@ -55,7 +55,7 @@ export function DemoBanner() {
             px: 1.5,
             minHeight: 26,
             typography: "caption",
-            fontWeight: 600,
+            fontWeight: "fontWeightBold",
             borderRadius: 4,
             color: (theme) => (theme.palette.mode === "dark" ? "warning.light" : "warning.dark"),
             bgcolor: (theme) =>

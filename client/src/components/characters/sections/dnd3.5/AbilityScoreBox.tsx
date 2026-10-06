@@ -45,7 +45,7 @@ export function AbilityScoreBox({
         <Typography
           variant={compact ? "caption" : "body2"}
           sx={{
-            fontWeight: 600,
+            fontWeight: "fontWeightBold",
             textTransform: "uppercase",
             ...(compact && { lineHeight: 1 }),
           }}
@@ -56,7 +56,7 @@ export function AbilityScoreBox({
           <Stack spacing={compact ? 0.5 : 1} sx={{ alignItems: "center" }}>
             <Typography
               sx={{
-                fontWeight: 700,
+                fontWeight: "fontWeightBold",
                 lineHeight: 1,
                 typography: compact ? { xs: "h6", sm: "h5" } : { xs: "h5", sm: "h4" },
               }}
@@ -67,7 +67,7 @@ export function AbilityScoreBox({
             <Typography
               variant={compact ? "caption" : "body1"}
               sx={{
-                fontWeight: 600,
+                fontWeight: "fontWeightBold",
                 color: modifier >= 0 ? "success.main" : "error.main",
                 border: 1,
                 borderColor: "divider",

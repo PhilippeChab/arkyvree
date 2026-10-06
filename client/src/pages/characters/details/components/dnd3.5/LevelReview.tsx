@@ -43,7 +43,7 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
 
   return (
     <Stack spacing={3}>
-      <Typography component="h3" sx={{ typography: { xs: "h6", sm: "h5" } }}>
+      <Typography component="h3" variant="h6">
         Review Changes
       </Typography>
       {children}

@@ -30,7 +30,14 @@ export function LoadMoreButton({
         disabled={isFetchingNextPage}
         sx={
           size === "large"
-            ? { px: 4, py: 1.5, borderRadius: 2, fontWeight: 600, borderWidth: 2, "&:hover": { borderWidth: 2 } }
+            ? {
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                fontWeight: "fontWeightBold",
+                borderWidth: 2,
+                "&:hover": { borderWidth: 2 },
+              }
             : undefined
         }
       >

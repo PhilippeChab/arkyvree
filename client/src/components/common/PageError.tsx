@@ -1,5 +1,7 @@
-import { Button, Paper, Stack, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
+
+import { Section } from "./Section.tsx";
 
 interface PageErrorProps {
   message: string;
@@ -12,9 +14,9 @@ interface PageErrorProps {
 /** A page that couldn't load what it shows: the reason, and a way back. */
 export function PageError({ message, backLabel, backTo }: PageErrorProps) {
   return (
-    <Paper sx={{ p: { xs: 2, sm: 4 } }}>
+    <Section>
       <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
-        <Typography component="h1" role="alert" variant="h5" sx={{ color: "error.main" }}>
+        <Typography component="h1" role="alert" variant="h3" sx={{ color: "error.main" }}>
           {message}
         </Typography>
         {backTo && backLabel && (
@@ -23,6 +25,6 @@ export function PageError({ message, backLabel, backTo }: PageErrorProps) {
           </Button>
         )}
       </Stack>
-    </Paper>
+    </Section>
   );
 }

@@ -21,7 +21,8 @@ import { DURATION, fadeInUpSx, transitionOf } from "@/client/src/lib/animations.
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { dashboardStatsQuery } from "@/client/src/lib/queries.ts";
 import { RecentNotificationsCard } from "@/client/src/pages/dashboard/components/index.ts";
-import { brandGoldTint } from "@/client/src/theme/brandGold.ts";
+import { brandGold, brandGoldTint } from "@/client/src/theme/brandGold.ts";
+import { glow, iconGlow, textLift } from "@/client/src/theme/shadows.ts";
 
 interface StatCardProps {
   icon: ElementType;
@@ -50,7 +51,7 @@ function StatCard({ icon: Icon, count, label, tagline, to, colors, animationInde
           transition: transitionOf(["transform", "box-shadow"], DURATION.fast),
           "&:hover": {
             transform: "translateY(-8px)",
-            boxShadow: (theme) => `0px 8px 24px ${alpha(colors(theme)[1], 0.38)}`,
+            boxShadow: (theme) => glow(colors(theme)[1]),
           },
           ...fadeInUpSx(animationIndex),
         }}
@@ -59,13 +60,16 @@ function StatCard({ icon: Icon, count, label, tagline, to, colors, animationInde
           <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
             <Stack spacing={1} sx={{ alignItems: "center", textAlign: "center" }}>
               <Icon fontSize="hero" />
-              <Typography component="p" sx={{ typography: { xs: "h4", md: "h2" }, fontWeight: 800, textShadow }}>
+              <Typography
+                component="p"
+                sx={{ typography: { xs: "h4", md: "h2" }, fontWeight: "fontWeightBold", textShadow: textLift }}
+              >
                 {count}
               </Typography>
-              <Typography component="h2" variant="h6" sx={{ textShadow }}>
+              <Typography component="h2" variant="h5" sx={{ textShadow: textLift }}>
                 {label}
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9, textShadow }}>
+              <Typography variant="body2" sx={{ opacity: 0.9, textShadow: textLift }}>
                 {tagline}
               </Typography>
             </Stack>
@@ -74,11 +78,6 @@ function StatCard({ icon: Icon, count, label, tagline, to, colors, animationInde
       </Card>
     </Box>
   );
-}
-
-/** A stat card's text, raised off its gradient. */
-function textShadow(theme: Theme) {
-  return `0px 2px 4px ${alpha(theme.palette.common.black, 0.3)}`;
 }
 
 export default function DashboardPage() {
@@ -192,18 +191,11 @@ export default function DashboardPage() {
                   width: { sm: 48, md: 64 },
                   height: { sm: 48, md: 64 },
                   position: "relative",
-                  filter: `drop-shadow(0 4px 12px ${brandGoldTint(false, 0.35)})`,
+                  filter: iconGlow(brandGold(false)),
                 }}
               />
             </Stack>
-            <Typography
-              component="h1"
-              sx={{
-                typography: { xs: "h4", md: "h2" },
-                fontWeight: 800,
-                textShadow: (theme) => `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`,
-              }}
-            >
+            <Typography component="h1" variant="h3" sx={{ textShadow: textLift }}>
               Welcome to Arkyvree
             </Typography>
           </Stack>
@@ -212,7 +204,7 @@ export default function DashboardPage() {
             sx={{
               opacity: 0.9,
               typography: { xs: "body1", sm: "h5" },
-              textShadow: (theme) => `0 1px 4px ${alpha(theme.palette.common.black, 0.2)}`,
+              textShadow: textLift,
               position: "relative",
             }}
           >

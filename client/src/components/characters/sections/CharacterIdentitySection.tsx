@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Button, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Button, Chip, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
@@ -8,6 +8,7 @@ import {
   AttachmentField,
   DiceSpinner,
   FormTextField,
+  Section,
   SelectField,
   TagChip,
 } from "@/client/src/components/common/index.ts";
@@ -191,7 +192,7 @@ export function CharacterIdentitySection({
     : undefined;
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+    <Section>
       <Stack
         component="form"
         spacing={3}
@@ -222,7 +223,7 @@ export function CharacterIdentitySection({
               slotProps={{ htmlInput: { "aria-label": "Character name", maxLength: 255 } }}
               sx={{
                 "& .MuiInputBase-input": {
-                  fontWeight: 600,
+                  fontWeight: "fontWeightBold",
                   color: "primary.main",
                   typography: { xs: "h6", sm: "h5" },
                 },
@@ -231,6 +232,7 @@ export function CharacterIdentitySection({
           ) : (
             <Typography
               component="h1"
+              variant="h3"
               onClick={
                 canEditName
                   ? () => {
@@ -240,9 +242,6 @@ export function CharacterIdentitySection({
                   : undefined
               }
               sx={{
-                fontWeight: 600,
-                color: "primary.main",
-                typography: { xs: "h6", sm: "h5" },
                 cursor: canEditName ? "pointer" : "default",
                 "&:hover": canEditName
                   ? { textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: "4px" }
@@ -436,6 +435,6 @@ export function CharacterIdentitySection({
           </Stack>
         </Stack>
       </Stack>
-    </Paper>
+    </Section>
   );
 }

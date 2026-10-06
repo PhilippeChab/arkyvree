@@ -35,7 +35,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
     .sort();
 
   const nameSx = {
-    fontWeight: 600,
+    fontWeight: "fontWeightBold",
     color: "primary.main",
     typography: { xs: "body1", sm: "h6" },
     width: "fit-content",
@@ -54,7 +54,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         <Stack spacing={1.5} sx={{ flex: "0 0 auto" }}>
-          <Typography sx={{ fontWeight: 600, color: "text.secondary" }}>Abilities</Typography>
+          <Typography sx={{ fontWeight: "fontWeightBold", color: "text.secondary" }}>Abilities</Typography>
           <Box
             sx={{
               display: "grid",
@@ -72,7 +72,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
 
         <Stack spacing={3} sx={{ flex: 1, minWidth: { md: 260 } }}>
           <Stack spacing={1.5}>
-            <Typography sx={{ fontWeight: 600, color: "text.secondary" }}>Combat &amp; Saves</Typography>
+            <Typography sx={{ fontWeight: "fontWeightBold", color: "text.secondary" }}>Combat &amp; Saves</Typography>
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1.5 }}>
               <Stack spacing={1.5}>
                 <StatField label="HP" value={combat?.hp?.total ?? 0} />
@@ -90,7 +90,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
 
           {featNames.length > 0 && (
             <Stack spacing={1}>
-              <Typography sx={{ fontWeight: 600, color: "text.secondary" }}>Features</Typography>
+              <Typography sx={{ fontWeight: "fontWeightBold", color: "text.secondary" }}>Features</Typography>
               <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
                 {featNames.map((n) => (
                   <TagChip key={n} tag={{ label: n, color: "default" }} />

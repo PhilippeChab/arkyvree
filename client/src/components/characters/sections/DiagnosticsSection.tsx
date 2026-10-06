@@ -3,7 +3,6 @@ import {
   AccordionDetails,
   AccordionSummary,
   Collapse,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -15,7 +14,7 @@ import {
 } from "@mui/material";
 import { Fragment, type ReactNode, useMemo } from "react";
 
-import { CLICKABLE_SX, ExpandArrow, TagChip, toggleProps } from "@/client/src/components/common/index.ts";
+import { CLICKABLE_SX, ExpandArrow, Section, TagChip, toggleProps } from "@/client/src/components/common/index.ts";
 import { ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
@@ -79,18 +78,18 @@ interface SkippedModifierTableProps {
   items: DiagnosticsSectionProps["modifiers"]["skippedModifiers"];
 }
 
-const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
+const accordionSx = { "&::before": { display: "none" } } as const;
 const tableCellSx = { py: 0.5, px: 1 } as const;
-const headerCellSx = { ...tableCellSx, fontWeight: 600 } as const;
+const headerCellSx = { ...tableCellSx, fontWeight: "fontWeightBold" } as const;
 const summarySx = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
 
 /** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
 function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
   if (count === 0) return null;
   return (
-    <Accordion disableGutters sx={accordionSx}>
+    <Accordion disableGutters elevation={0} sx={accordionSx}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={summarySx}>
-        <Typography component="h4" variant="subtitle2">
+        <Typography component="h4" variant="subtitle1">
           {label} ({count})
         </Typography>
       </AccordionSummary>
@@ -139,7 +138,7 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
                 <TableCell sx={{ ...tableCellSx, pr: 0 }}>
                   <ExpandArrow open={isOpen} />
                 </TableCell>
-                <TableCell sx={{ ...tableCellSx, fontWeight: 600 }}>{source}</TableCell>
+                <TableCell sx={{ ...tableCellSx, fontWeight: "fontWeightBold" }}>{source}</TableCell>
                 <TableCell sx={tableCellSx} colSpan={4}>
                   {formatCount(rules.length, "rule")}
                 </TableCell>
@@ -269,11 +268,11 @@ function SkippedModifierTable({ items }: SkippedModifierTableProps) {
 
 export function DiagnosticsSection({ validation, requirements, modifiers }: DiagnosticsSectionProps) {
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Accordion defaultExpanded={false} disableGutters sx={accordionSx}>
+    <Section>
+      <Accordion defaultExpanded={false} disableGutters elevation={0} sx={accordionSx}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={summarySx}>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <Typography component="h2" variant="h6">
+            <Typography component="h2" variant="h5">
               Diagnostics
             </Typography>
             <TagChip
@@ -286,7 +285,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             {/* Validation Issues */}
             {validation.issues.length > 0 && (
               <div>
-                <Typography component="h3" variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+                <Typography component="h3" variant="h6" gutterBottom>
                   Issues
                 </Typography>
                 {validation.issues.map((issue, i) => (
@@ -300,7 +299,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             {/* Requirements System Status */}
             <Stack spacing={1}>
               <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}>
+                <Typography component="h3" variant="h6">
                   Requirements
                 </Typography>
                 <Stack direction="row" spacing={1}>
@@ -321,7 +320,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             {/* Modifier System Status */}
             <Stack spacing={1}>
               <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}>
+                <Typography component="h3" variant="h6">
                   Modifiers
                 </Typography>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
@@ -345,6 +344,6 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
           </Stack>
         </AccordionDetails>
       </Accordion>
-    </Paper>
+    </Section>
   );
 }

@@ -1,12 +1,11 @@
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 
-import { BlankState } from "@/client/src/components/common/index.ts";
+import { BlankState, Section } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { buildAttackRows, describeWeaponSlot } from "@/shared/dnd3.5/weaponAttacks.ts";
 
 import type { SheetCombat } from "./dnd3.5/index.ts";
-import { SheetSection } from "./SheetSection.tsx";
 import { shownWeaponSet } from "./weaponSets.ts";
 
 type WeaponSet = CharacterDetail["combat"]["weaponsets"][string];
@@ -23,7 +22,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
   const hasWeapons = setEntries.some(([, set]) => set.mainhand || set.offhand || set.twohanded);
 
   return (
-    <SheetSection title="Weapons">
+    <Section title="Weapons">
       {hasWeapons ? (
         setEntries.map(([setIndex, set]) => {
           const weapons: { weapon: WeaponSlot; slot: string }[] = [];
@@ -37,7 +36,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
 
           return (
             <TableContainer key={setIndex} sx={{ overflowX: "auto" }}>
-              <Typography component="h3" variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
+              <Typography component="h3" variant="h6" gutterBottom>
                 Set {shownWeaponSet(Number(setIndex))}
               </Typography>
               <Table size="small" sx={{ minWidth: 600 }}>
@@ -63,7 +62,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
                   {weapons.flatMap(({ weapon, slot }) =>
                     buildAttackRows(weapon, slot).map((row) => (
                       <TableRow key={row.key}>
-                        <TableCell sx={{ fontWeight: 500 }}>
+                        <TableCell sx={{ fontWeight: "fontWeightMedium" }}>
                           {weapon.name}
                           <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
                             ({row.label})
@@ -71,7 +70,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
                           {weapon.proficient === false && (
                             <Typography
                               variant="caption"
-                              sx={{ display: "block", color: "error.main", fontWeight: 600 }}
+                              sx={{ display: "block", color: "error.main", fontWeight: "fontWeightBold" }}
                             >
                               Not Proficient (-4)
                             </Typography>
@@ -105,6 +104,6 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
       ) : (
         <BlankState title="No weapons equipped" />
       )}
-    </SheetSection>
+    </Section>
   );
 }

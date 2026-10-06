@@ -2,10 +2,8 @@ import { Box, Collapse, Link as MuiLink, Stack, Typography } from "@mui/material
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { BlankState, CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
+import { BlankState, CLICKABLE_SX, ExpandArrow, Section, toggleProps } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-
-import { SheetSection } from "./SheetSection.tsx";
 
 type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number];
 
@@ -39,10 +37,7 @@ function FeatRow({ name, description, extra }: FeatRowProps) {
         sx={{ alignItems: "center", justifyContent: "space-between", ...(hasExtra && CLICKABLE_SX) }}
         {...(hasExtra && toggleProps(open, () => setOpen((p) => !p)))}
       >
-        <Typography
-          component="h3"
-          sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}
-        >
+        <Typography component="h3" variant="h6">
           {name}
         </Typography>
         {hasExtra && <ExpandArrow open={open} />}
@@ -69,7 +64,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
         direction="row"
         sx={{ alignItems: "center", justifyContent: "space-between", ...CLICKABLE_SX }}
       >
-        <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}>
+        <Typography component="h3" variant="h6">
           Granted ({feats.length})
         </Typography>
         <ExpandArrow open={open} />
@@ -80,10 +75,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
             const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
             return (
               <Box key={feat.id} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
-                <Typography
-                  component="h3"
-                  sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}
-                >
+                <Typography component="h3" variant="h6">
                   {featLink ? (
                     <MuiLink
                       component={Link}
@@ -165,7 +157,7 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
   const hasVirtual = grantedFeats.length > 0;
 
   return (
-    <SheetSection title="Feats & Special Abilities">
+    <Section title="Feats & Special Abilities">
       {featElements.length > 0 || hasVirtual ? (
         <Stack spacing={3}>
           {featElements}
@@ -174,6 +166,6 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
       ) : (
         <BlankState title="No feats or special abilities available" />
       )}
-    </SheetSection>
+    </Section>
   );
 }

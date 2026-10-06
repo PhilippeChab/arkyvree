@@ -1,6 +1,7 @@
-import { alpha, Button, type ButtonProps } from "@mui/material";
+import { Button, type ButtonProps } from "@mui/material";
 
 import { AddIcon } from "@/client/src/components/icons/index.ts";
+import { glow } from "@/client/src/theme/shadows.ts";
 
 type PageActionButtonProps = Omit<ButtonProps, "variant" | "size">;
 
@@ -17,7 +18,7 @@ export function PageActionButton({ children, sx, ...props }: PageActionButtonPro
           px: 3,
           py: 1.5,
           borderRadius: 2,
-          boxShadow: (theme) => `0 4px 14px 0 ${alpha(theme.palette.primary.main, 0.25)}`,
+          boxShadow: (theme) => glow(theme.palette.primary.main),
         },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}

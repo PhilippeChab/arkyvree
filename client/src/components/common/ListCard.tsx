@@ -53,18 +53,13 @@ export function ListCard({
               borderColor: "secondary.main",
               background: (theme) =>
                 `linear-gradient(135deg, ${theme.palette[avatarTone].light}, ${theme.palette[avatarTone].main})`,
-              fontWeight: 700,
+              fontWeight: "fontWeightBold",
               flexShrink: 0,
             }}
           >
             {avatar ?? getInitial(title)}
           </Avatar>
-          <Typography
-            component="h2"
-            variant="h6"
-            noWrap
-            sx={{ fontWeight: 600, color: "text.primary", lineHeight: 1.3, flex: 1 }}
-          >
+          <Typography component="h2" variant="h5" noWrap sx={{ flex: 1 }}>
             {title}
           </Typography>
         </Stack>
@@ -83,8 +78,7 @@ export function ListCard({
             WebkitLineClamp: 4,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
-            lineHeight: 1.6,
-            minHeight: "6.4em",
+            minHeight: "6em", // Four lines, at body2's line height
           }}
         >
           {description || NO_DESCRIPTION}

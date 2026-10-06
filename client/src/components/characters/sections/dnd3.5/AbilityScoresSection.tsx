@@ -3,8 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
 
-import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { BlankState, ConfirmDialog } from "@/client/src/components/common/index.ts";
+import { BlankState, ConfirmDialog, Section } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
@@ -82,7 +81,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
   };
 
   return (
-    <SheetSection title="Ability Scores">
+    <Section title="Ability Scores">
       {sortedEntries.length > 0 ? (
         <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
           {sortedEntries.map(([ability, abilityData]) => {
@@ -120,6 +119,6 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
         }}
         isLoading={false}
       />
-    </SheetSection>
+    </Section>
   );
 }

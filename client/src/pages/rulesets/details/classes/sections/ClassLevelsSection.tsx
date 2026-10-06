@@ -100,7 +100,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   return (
     <Stack spacing={3}>
       <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
-        <Typography component="h2" variant="h6">
+        <Typography component="h2" variant="h5">
           Class Levels
         </Typography>
         {canEdit && (

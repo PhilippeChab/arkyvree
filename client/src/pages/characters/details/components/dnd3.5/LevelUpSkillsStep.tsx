@@ -141,7 +141,10 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
       <TableCell>
         <Typography
           variant="body2"
-          sx={{ fontWeight: ranksGained > 0 ? 600 : 400, color: ranksGained > 0 ? "primary.main" : "text.secondary" }}
+          sx={{
+            fontWeight: ranksGained > 0 ? "fontWeightBold" : "fontWeightRegular",
+            color: ranksGained > 0 ? "primary.main" : "text.secondary",
+          }}
         >
           {skill.currentRank + ranksGained}
         </Typography>

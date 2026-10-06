@@ -15,7 +15,7 @@ export function ValidationIssueList({ issues }: ValidationIssueListProps) {
           <Stack spacing={0.5}>
             <Box>
               {issue.entityName && (
-                <Typography component="span" variant="body2" sx={{ fontWeight: 700 }}>
+                <Typography component="span" variant="body2" sx={{ fontWeight: "fontWeightBold" }}>
                   {issue.entityName}
                   {issue.entityType ? ` (${issue.entityType})` : ""}
                   {": "}

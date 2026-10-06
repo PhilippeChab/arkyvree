@@ -97,7 +97,7 @@ export function ContributorsTable<T extends ContributorRow>({
       case "user":
         return (
           <>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium" }}>
               {row.username || "—"}
             </Typography>
             {isMobile && (

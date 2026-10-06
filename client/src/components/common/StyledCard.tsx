@@ -1,7 +1,8 @@
-import { alpha, Card, type CardProps, Stack } from "@mui/material";
+import { Card, type CardProps, Stack } from "@mui/material";
 import { type ReactNode } from "react";
 
 import { fadeInUpSx, prefersReducedMotion, transitionOf } from "@/client/src/lib/animations.ts";
+import { glow } from "@/client/src/theme/shadows.ts";
 
 import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 
@@ -43,10 +44,7 @@ export function StyledCard({
         "&:hover": onClick
           ? {
               borderColor: isArchived ? "warning.main" : "secondary.main",
-              boxShadow: (theme) =>
-                isArchived
-                  ? `0 8px 24px ${alpha(theme.palette.warning.main, 0.13)}`
-                  : `0 4px 16px ${alpha(theme.palette.secondary.main, 0.15)}, 0 8px 32px ${alpha(theme.palette.secondary.main, 0.08)}`,
+              boxShadow: (theme) => glow(isArchived ? theme.palette.warning.main : theme.palette.secondary.main),
               transform: "translateY(-4px)",
               opacity: 1,
             }

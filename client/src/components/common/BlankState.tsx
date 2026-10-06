@@ -1,9 +1,10 @@
-import { alpha, Box, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
 import type { ElementType, ReactNode } from "react";
 
 import { NoMatchesIcon } from "@/client/src/components/icons/index.ts";
 import { DURATION, EASING, fadeIn, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { iconGlow } from "@/client/src/theme/shadows.ts";
 
 interface BlankStateProps {
   /** Icon component, sized and tinted here so every empty state looks alike. */
@@ -42,7 +43,7 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
       ]}
     >
       {Icon && (
-        <Box sx={{ filter: (theme) => `drop-shadow(0 2px 4px ${alpha(theme.palette.secondary.main, 0.25)})` }}>
+        <Box sx={{ filter: (theme) => iconGlow(theme.palette.secondary.main) }}>
           <Icon fontSize="hero" sx={{ color: "text.secondary", opacity: 0.5 }} />
         </Box>
       )}

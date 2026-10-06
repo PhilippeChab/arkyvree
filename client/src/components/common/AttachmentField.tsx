@@ -90,7 +90,7 @@ export function AttachmentField({
   return (
     <Stack spacing={1} sx={{ alignItems: "flex-start", width: "fit-content" }}>
       {label && (
-        <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 600, letterSpacing: 0.8 }}>
+        <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: "fontWeightBold" }}>
           {label}
         </Typography>
       )}
@@ -122,7 +122,7 @@ export function AttachmentField({
             border: showRing ? 4 : 2,
             borderStyle: canUpload && !showRing ? "dashed" : "solid",
             borderColor: showRing ? "background.paper" : dragOver ? "primary.main" : url ? "transparent" : "divider",
-            boxShadow: (theme) => (showRing ? `0 6px 24px ${alpha(theme.palette.common.black, 0.18)}` : "none"),
+            boxShadow: showRing ? 6 : 0,
             transition: transitionOf(["border-color", "transform", "box-shadow"], DURATION.fast),
             transform: dragOver ? "scale(1.02)" : "none",
             outline: "none",
@@ -164,14 +164,14 @@ export function AttachmentField({
               {canUpload ? (
                 <>
                   <UploadIcon sx={{ fontSize: dimension * 0.32 }} />
-                  <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
+                  <Typography variant="caption" sx={{ fontWeight: "fontWeightMedium" }}>
                     {dragOver ? "Drop to upload" : isAvatar ? "Add photo" : "Drop or click to upload"}
                   </Typography>
                 </>
               ) : (
                 <>
                   <ImageIcon sx={{ fontSize: dimension * 0.32 }} />
-                  <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
+                  <Typography variant="caption" sx={{ fontWeight: "fontWeightMedium" }}>
                     No {label ?? name}
                   </Typography>
                 </>
@@ -199,7 +199,7 @@ export function AttachmentField({
               }}
             >
               <PhotoIcon sx={{ fontSize: dimension * 0.22 }} />
-              <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: 0.5 }}>
+              <Typography variant="caption" sx={{ fontWeight: "fontWeightBold" }}>
                 Change
               </Typography>
             </Stack>

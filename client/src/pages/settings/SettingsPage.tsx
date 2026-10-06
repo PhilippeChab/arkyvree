@@ -1,6 +1,6 @@
-import { Box, Card, CardContent, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 
-import { PageBody, PageHeader } from "@/client/src/components/common/index.ts";
+import { PageBody, PageHeader, Section } from "@/client/src/components/common/index.ts";
 import { DarkModeIcon, LightModeIcon, SystemModeIcon } from "@/client/src/components/icons/index.ts";
 import { useTheme } from "@/client/src/contexts/useTheme.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
@@ -20,44 +20,35 @@ export default function SettingsPage() {
     <PageBody width="lg">
       <PageHeader title="Settings" subtitle="Customize your experience" />
 
-      <Card>
-        <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-          <Stack spacing={3} sx={{ alignItems: "flex-start" }}>
-            <Box>
-              <Typography component="h2" gutterBottom sx={{ fontWeight: 700, typography: { xs: "h6", sm: "h5" } }}>
-                Theme
-              </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Choose how Arkyvree looks to you. Select a single theme, or sync with your system settings.
-              </Typography>
-            </Box>
+      <Section title="Theme">
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          Choose how Arkyvree looks to you. Select a single theme, or sync with your system settings.
+        </Typography>
 
-            <ToggleButtonGroup
-              value={themeMode}
-              exclusive
-              onChange={(_, value: ThemeMode | null) => {
-                if (value) setThemeMode(value);
-              }}
-              sx={{
-                "& .MuiToggleButton-root": {
-                  px: { xs: 1.5, sm: 3 },
-                  py: { xs: 1, sm: 1.5 },
-                  gap: 1,
-                  textTransform: "none",
-                  fontWeight: 500,
-                },
-              }}
-            >
-              {themeModeOptions.map((option) => (
-                <ToggleButton key={option.value} value={option.value}>
-                  {option.icon}
-                  {option.label}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-          </Stack>
-        </CardContent>
-      </Card>
+        <ToggleButtonGroup
+          value={themeMode}
+          exclusive
+          onChange={(_, value: ThemeMode | null) => {
+            if (value) setThemeMode(value);
+          }}
+          sx={{
+            "& .MuiToggleButton-root": {
+              px: { xs: 1.5, sm: 3 },
+              py: { xs: 1, sm: 1.5 },
+              gap: 1,
+              textTransform: "none",
+              fontWeight: "fontWeightMedium",
+            },
+          }}
+        >
+          {themeModeOptions.map((option) => (
+            <ToggleButton key={option.value} value={option.value}>
+              {option.icon}
+              {option.label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Section>
     </PageBody>
   );
 }

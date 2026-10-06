@@ -29,7 +29,7 @@ interface EquipmentTableProps<T extends EquipmentTableRow> {
 
 type EquipmentTableRow = Omit<EquipmentRow, "type" | "updatedAt">;
 
-const headerSx = { fontWeight: 600 };
+const headerSx = { fontWeight: "fontWeightBold" };
 /** Slots and figures stay on one line; the table scrolls on narrow screens. */
 const noWrap = { whiteSpace: "nowrap" };
 
@@ -119,7 +119,7 @@ export function EquipmentTable<T extends EquipmentTableRow>({
             whiteSpace: "nowrap",
           }}
         >
-          <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
+          <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium", color: "text.secondary" }}>
             Carried Weight: {encumbrance.carriedweight ?? 0} lbs
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>

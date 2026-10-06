@@ -136,7 +136,7 @@ function GroupedRow({
           <TableCell>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <ExpandArrow open={isExpanded} />
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium" }}>
                 {row.displayName}
               </Typography>
             </Stack>

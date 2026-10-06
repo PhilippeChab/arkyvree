@@ -30,13 +30,12 @@ export function GoogleSignInButton({
         sx={{
           typography: "body1",
           textTransform: "none",
-          fontWeight: 500,
+          fontWeight: "fontWeightMedium",
           py: 1.5,
           background: (theme) => theme.palette.background.paper,
           color: (theme) => theme.palette.text.secondary,
           border: 1,
           borderColor: "divider",
-          boxShadow: "none",
           textShadow: "none",
         }}
       >

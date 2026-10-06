@@ -14,8 +14,7 @@ import {
 import { Fragment, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { CLICKABLE_SX, ExpandArrow, TagChip, toggleProps } from "@/client/src/components/common/index.ts";
+import { CLICKABLE_SX, ExpandArrow, Section, TagChip, toggleProps } from "@/client/src/components/common/index.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
@@ -50,7 +49,7 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
         sx={{ alignItems: "center", ...CLICKABLE_SX }}
       >
         <ExpandArrow open={open} />
-        <Typography component="h3" variant="h6" sx={{ fontWeight: 600 }}>
+        <Typography component="h3" variant="h6">
           {apt.aptitudeName} ({totalSpells})
         </Typography>
       </Stack>
@@ -79,7 +78,7 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
       >
         <ExpandArrow open={open} />
         <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
-          <Typography component="h4" variant="subtitle2" sx={{ fontWeight: 600 }}>
+          <Typography component="h4" variant="subtitle1">
             {label} ({group.spells.length})
           </Typography>
           {group.uses != null && (
@@ -205,10 +204,10 @@ export function SpellsSection({
   if (groups.length === 0) return null;
 
   return (
-    <SheetSection title="Spells">
+    <Section title="Spells">
       {groups.map((apt) => (
         <CollapsibleClass key={apt.aptitudeName} apt={apt} rulesetId={rulesetId} />
       ))}
-    </SheetSection>
+    </Section>
   );
 }

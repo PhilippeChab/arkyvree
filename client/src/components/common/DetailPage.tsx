@@ -66,7 +66,7 @@ export function DetailPageHeader({
       )}
       <Stack spacing={2} sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, md: 8 } }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center" }}>
-          <Typography component="h1" sx={{ fontWeight: 700, typography: { xs: "h4", md: "h3" } }}>
+          <Typography component="h1" variant="h3">
             {title}
           </Typography>
           {titleAdornment}
@@ -145,7 +145,7 @@ export function SectionTabs<K extends string>({
           "& .MuiTabs-indicator": { height: 3, borderRadius: 1.5 },
           "& .MuiTab-root": {
             textTransform: "none",
-            fontWeight: 600,
+            fontWeight: "fontWeightBold",
             minHeight: 48,
             borderRadius: 1,
             mx: 0.5,

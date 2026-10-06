@@ -3,12 +3,12 @@ import { Box, Paper, Skeleton, Stack, Typography } from "@mui/material";
 import { DiceSpinner, PageBody } from "@/client/src/components/common/index.ts";
 import { ANIMATIONS, fadeInUpSx, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
-interface SectionProps {
+interface SkeletonPanelProps {
   index: number;
   children: React.ReactNode;
 }
 
-function Section({ index, children }: SectionProps) {
+function SkeletonPanel({ index, children }: SkeletonPanelProps) {
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 }, ...fadeInUpSx(index) }}>
       <Stack spacing={2}>{children}</Stack>
@@ -35,45 +35,45 @@ export function CharacterDetailSkeleton() {
       </Stack>
       <Stack spacing={3}>
         {/* Header bar */}
-        <Section index={0}>
+        <SkeletonPanel index={0}>
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <Skeleton variant="circular" width={40} height={40} />
             <Skeleton variant="text" width="40%" height={36} />
           </Stack>
-        </Section>
+        </SkeletonPanel>
 
         {/* Identity section */}
-        <Section index={1}>
+        <SkeletonPanel index={1}>
           <Skeleton variant="text" width="30%" height={32} />
           <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
             {[1, 2, 3, 4].map((i) => (
               <Skeleton key={i} variant="rounded" width={160} height={40} />
             ))}
           </Stack>
-        </Section>
+        </SkeletonPanel>
 
         {/* Ability scores — 6 blocks */}
-        <Section index={2}>
+        <SkeletonPanel index={2}>
           <Skeleton variant="text" width="20%" height={28} />
           <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Skeleton key={i} variant="rounded" sx={{ width: { xs: 70, sm: 90 }, height: { xs: 70, sm: 90 } }} />
             ))}
           </Stack>
-        </Section>
+        </SkeletonPanel>
 
         {/* Combat & saves */}
-        <Section index={3}>
+        <SkeletonPanel index={3}>
           <Skeleton variant="text" width="25%" height={28} />
           <Stack spacing={1.5}>
             <Skeleton variant="rounded" height={24} width="80%" />
             <Skeleton variant="rounded" height={24} width="65%" />
             <Skeleton variant="rounded" height={24} width="70%" />
           </Stack>
-        </Section>
+        </SkeletonPanel>
 
         {/* Skills grid */}
-        <Section index={4}>
+        <SkeletonPanel index={4}>
           <Skeleton variant="text" width="15%" height={28} />
           <Box
             sx={{
@@ -90,17 +90,17 @@ export function CharacterDetailSkeleton() {
               <Skeleton key={i} variant="text" height={24} />
             ))}
           </Box>
-        </Section>
+        </SkeletonPanel>
 
         {/* Feats */}
-        <Section index={5}>
+        <SkeletonPanel index={5}>
           <Skeleton variant="text" width="15%" height={28} />
           <Stack spacing={1}>
             <Skeleton variant="rounded" height={20} width="55%" />
             <Skeleton variant="rounded" height={20} width="40%" />
             <Skeleton variant="rounded" height={20} width="50%" />
           </Stack>
-        </Section>
+        </SkeletonPanel>
       </Stack>
     </PageBody>
   );

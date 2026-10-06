@@ -71,7 +71,7 @@ export default function CampaignCharacterPage() {
             <IconButton aria-label="Back" component={Link} to={`/campaigns/${campaignId}`}>
               <BackIcon />
             </IconButton>
-            <Typography component="p" sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
+            <Typography component="p" sx={{ fontWeight: "fontWeightBold", typography: { xs: "h5", md: "h4" } }} noWrap>
               {data.rulesetName || "Character Sheet"}
             </Typography>
           </Stack>

@@ -524,7 +524,7 @@ describe("frontend rules", () => {
     ]);
   });
 
-  test("a size is the theme's: text takes a variant, an icon its size, a weight is a number", async () => {
+  test("a size is the theme's: text takes a variant, an icon its size, a weight, a leading and a tracking the theme's", async () => {
     expect(
       await lintRepo(
         {
@@ -534,19 +534,26 @@ describe("frontend rules", () => {
           "client/src/worded.tsx": 'export const w = <Typography sx={{ fontWeight: "bold" }} />;\n',
           "client/src/fixed.tsx": 'export const f = <Typography sx={{ typography: "body2" }} />;\n',
           "client/src/variants.tsx":
-            'export const v = <Typography variant="body2" sx={{ fontWeight: 600, typography: { xs: "body1", sm: "h6" } }} />;\n',
+            'export const v = <Typography variant="body2" sx={{ fontWeight: "fontWeightBold", typography: { xs: "body1", sm: "h6" } }} />;\n',
+          "client/src/numbered.tsx": "export const n = <Typography sx={{ fontWeight: selected ? 600 : 400 }} />;\n",
           "client/src/boxed.tsx": 'export const b = <Box sx={{ typography: "caption" }} />;\n',
           "client/src/sized.tsx": 'export const z = <HelpIcon fontSize="compact" sx={{ fontSize: "inherit" }} />;\n',
           "client/src/computed.tsx": "export const c = <PhotoIcon sx={{ fontSize: dimension * 0.22 }} />;\n",
+          "client/src/tracked.tsx": 'export const k = <Typography variant="overline" sx={{ letterSpacing: 0.8 }} />;\n',
+          "client/src/leaded.tsx": "export const l = <Typography sx={{ lineHeight: dense ? 1 : 1.7 }} />;\n",
+          "client/src/glyph.tsx": 'export const g = <Typography variant="h4" sx={{ lineHeight: 1 }} />;\n',
           "client/src/theme/appTheme.ts": 'export const t = { h1: { fontSize: "2.5rem" } };\n',
         },
         ["type-scale"],
       ),
     ).toEqual([
       "type-scale client/src/fixed.tsx",
+      "type-scale client/src/leaded.tsx",
+      "type-scale client/src/numbered.tsx",
       "type-scale client/src/pixels.tsx",
       "type-scale client/src/rem.tsx",
       "type-scale client/src/responsive.tsx",
+      "type-scale client/src/tracked.tsx",
       "type-scale client/src/worded.tsx",
     ]);
   });
@@ -568,7 +575,7 @@ describe("frontend rules", () => {
     ).toEqual(["shape client/src/layered.tsx", "shape client/src/pixels.tsx", "shape client/src/spaced.tsx"]);
   });
 
-  test("a border is the theme's shorthand, and a surface takes its elevation and outline as props", async () => {
+  test("a border is the theme's shorthand, and a surface takes its outline as a prop", async () => {
     expect(
       await lintRepo(
         {
@@ -576,7 +583,6 @@ describe("frontend rules", () => {
           "client/src/branched.tsx": 'export const b = <Box sx={{ border: ring ? "4px solid" : 2 }} />;\n',
           "client/src/templated.tsx":
             "export const t = <Box sx={{ borderTop: (t) => `2px solid ${t.palette.divider}` }} />;\n",
-          "client/src/shadowed.tsx": "export const p = <Paper sx={{ p: 2, boxShadow: 1 }} />;\n",
           "client/src/outlined.tsx": 'export const o = <Card sx={[{ border: 1, borderColor: "divider" }, sx]} />;\n',
           "client/src/widths.tsx":
             'export const w = <Box sx={{ border: 1, borderLeft: ring ? 3 : 0, borderStyle: "dashed", borderColor: "divider", boxShadow: 2 }} />;\n',
@@ -589,7 +595,6 @@ describe("frontend rules", () => {
     ).toEqual([
       "borders client/src/branched.tsx",
       "borders client/src/outlined.tsx",
-      "borders client/src/shadowed.tsx",
       "borders client/src/stringed.tsx",
       "borders client/src/templated.tsx",
     ]);
@@ -724,32 +729,43 @@ describe("frontend rules", () => {
     ]);
   });
 
-  test("a Typography sized as a heading declares its element, and its gutter is gutterBottom", async () => {
+  test("a Typography sized as a heading declares its element, and its level picks its look", async () => {
     expect(
       await lintRepo(
         {
           "client/src/variant.tsx": 'export const v = <Typography variant="h6">Diagnostics</Typography>;\n',
           "client/src/styled.tsx":
             'export const s = <Typography sx={{ typography: { xs: "h6", sm: "h5" } }}>Players</Typography>;\n',
-          "client/src/declared.tsx":
-            'export const d = <Typography component="h2" variant="h6">Diagnostics</Typography>;\n',
+          "client/src/subtitled.tsx": 'export const u = <Typography variant="subtitle2">Set 1</Typography>;\n',
+          "client/src/branched.tsx":
+            'export const b = <Typography variant={dialog ? "h5" : "h6"}>Welcome</Typography>;\n',
           "client/src/text.tsx":
             'export const t = <Typography variant="body2" sx={{ typography: "caption" }}>Note</Typography>;\n',
-          "client/src/guttered.tsx":
-            'export const g = <Typography component="h3" variant="subtitle2" sx={{ mb: 1 }}>Skills</Typography>;\n',
-          "client/src/gapped.tsx":
-            'export const p = <Typography component="h2" variant="h5" sx={{ mb: 3 }}>Players</Typography>;\n',
-          "client/src/subtitled.tsx": 'export const u = <Typography variant="subtitle2">Set 1</Typography>;\n',
-          "client/src/bottomed.tsx":
-            'export const b = <Typography component="h3" variant="h6" gutterBottom>Skills</Typography>;\n',
+          "client/src/declared.tsx":
+            'export const d = <Typography component="h2" variant="h5">Diagnostics</Typography>;\n',
+          "client/src/linked.tsx":
+            'export const l = <Typography variant="h6" component={Link} to="/">Home</Typography>;\n',
+          "client/src/mislevelled.tsx":
+            'export const m = <Typography component="h2" variant="h6">Class Skills</Typography>;\n',
+          "client/src/weighted.tsx":
+            'export const w = <Typography component="h3" variant="h6" sx={{ fontWeight: 700 }}>Stats</Typography>;\n',
+          "client/src/deep.tsx": 'export const e = <Typography component="h5" variant="subtitle1">Deep</Typography>;\n',
+          "client/src/painted.tsx":
+            'export const p = <Typography component="h1" variant="h3" sx={{ color: "primary.main" }}>Name</Typography>;\n',
+          "client/src/failed.tsx":
+            'export const f = <Typography component="h1" variant="h3" sx={{ color: "error.main" }}>Failed</Typography>;\n',
         },
         ["headings"],
       ),
     ).toEqual([
-      "headings client/src/guttered.tsx",
+      "headings client/src/branched.tsx",
+      "headings client/src/deep.tsx",
+      "headings client/src/mislevelled.tsx",
+      "headings client/src/painted.tsx",
       "headings client/src/styled.tsx",
       "headings client/src/subtitled.tsx",
       "headings client/src/variant.tsx",
+      "headings client/src/weighted.tsx",
     ]);
   });
 
@@ -926,6 +942,49 @@ describe("frontend rules", () => {
       "spacing client/src/bleed.tsx",
       "spacing client/src/both.tsx",
       "spacing client/src/side.tsx",
+    ]);
+  });
+
+  test("a Card is a card one opens; a panel is a Section", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/panel.tsx": "export const p = (\n  <Card>\n    <CardContent>Theme</CardContent>\n  </Card>\n);\n",
+          "client/src/stat.tsx":
+            'export const s = (\n  <Card>\n    <CardActionArea component={Link} to="/x">\n      <CardContent>12</CardContent>\n    </CardActionArea>\n  </Card>\n);\n',
+          "client/src/section.tsx": 'export const t = <Section title="Theme">x</Section>;\n',
+          "client/src/components/common/StyledCard.tsx": "export const c = <Card onClick={open} />;\n",
+        },
+        ["surfaces"],
+      ),
+    ).toEqual(["surfaces client/src/panel.tsx"]);
+  });
+
+  test("a shadow is an elevation or one of the theme's colored ones", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/written.tsx":
+            "export const w = <Box sx={{ boxShadow: (t) => `0 4px 12px ${alpha(t.palette.primary.main, 0.25)}` }} />;\n",
+          "client/src/none.tsx": 'export const n = <Box sx={{ boxShadow: open ? 2 : "none" }} />;\n',
+          "client/src/dropped.tsx":
+            "export const d = <Box sx={{ filter: `drop-shadow(0 2px 4px ${alpha(gold, 0.3)})` }} />;\n",
+          "client/src/lifted.tsx": "export const l = <Typography sx={{ textShadow: `0 1px 3px ${shade}` }} />;\n",
+          "client/src/paper.tsx": "export const p = <Accordion sx={{ boxShadow: 0 }} />;\n",
+          "client/src/theme/appTheme.ts": 'export const t = { boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.25)" };\n',
+          "client/src/themed.tsx":
+            'export const t = (\n  <Box\n    sx={{\n      boxShadow: open ? 6 : 0,\n      "&:hover": { boxShadow: (t) => glow(t.palette.primary.main) },\n      filter: (t) => iconGlow(t.palette.secondary.main),\n      textShadow: textLift,\n    }}\n  />\n);\n',
+          "client/src/reset.tsx": 'export const r = <Button sx={{ textShadow: "none", filter: "blur(4px)" }} />;\n',
+          "client/src/elevated.tsx": "export const e = <Paper elevation={8} />;\n",
+        },
+        ["shadows"],
+      ),
+    ).toEqual([
+      "shadows client/src/dropped.tsx",
+      "shadows client/src/lifted.tsx",
+      "shadows client/src/none.tsx",
+      "shadows client/src/paper.tsx",
+      "shadows client/src/written.tsx",
     ]);
   });
 

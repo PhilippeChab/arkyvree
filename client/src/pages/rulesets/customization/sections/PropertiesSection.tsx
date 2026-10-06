@@ -133,7 +133,7 @@ export function PropertiesSection({
     switch (columnKey) {
       case "value":
         return (
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium" }}>
             {property.value}
           </Typography>
         );

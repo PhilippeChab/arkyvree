@@ -88,7 +88,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
     switch (columnKey) {
       case "name":
         return (
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium" }}>
             {klass.name}
           </Typography>
         );

@@ -1,6 +1,6 @@
-import { Paper, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 
-import { DiceSpinner, LoadError, PageBody, PageHeader } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, PageBody, PageHeader, Section } from "@/client/src/components/common/index.ts";
 import { useOglLicense, usePageTitle } from "@/client/src/hooks/index.ts";
 
 export default function LegalPage() {
@@ -14,7 +14,7 @@ export default function LegalPage() {
       {error ? (
         <LoadError what="License text" error={error} onRetry={() => void refetch()} />
       ) : (
-        <Paper sx={{ p: { xs: 2, sm: 4 } }}>
+        <Section>
           {text === undefined ? (
             <DiceSpinner sx={{ py: 4 }} />
           ) : (
@@ -31,7 +31,7 @@ export default function LegalPage() {
               {text}
             </Typography>
           )}
-        </Paper>
+        </Section>
       )}
     </PageBody>
   );

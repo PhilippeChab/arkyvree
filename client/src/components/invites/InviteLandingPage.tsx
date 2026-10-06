@@ -1,9 +1,9 @@
-import { Avatar, Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Button, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { DiceSpinner, LoadError, PageBody, TagChip } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, PageBody, Section, TagChip } from "@/client/src/components/common/index.ts";
 import { CheckIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
@@ -55,20 +55,18 @@ interface InviteStateCardProps {
 function InviteStateCard({ icon, title, children, action }: InviteStateCardProps) {
   return (
     <PageBody width="sm">
-      <Card>
-        <CardContent sx={{ py: { xs: 3, sm: 6 } }}>
-          <Stack spacing={3} sx={{ alignItems: "center", textAlign: "center" }}>
-            {icon}
-            <Box>
-              <Typography component="h1" variant="h5" gutterBottom>
-                {title}
-              </Typography>
-              <Typography sx={{ color: "text.secondary" }}>{children}</Typography>
-            </Box>
-            {action}
-          </Stack>
-        </CardContent>
-      </Card>
+      <Section>
+        <Stack spacing={3} sx={{ alignItems: "center", textAlign: "center" }}>
+          {icon}
+          <Box>
+            <Typography component="h1" variant="h3" gutterBottom>
+              {title}
+            </Typography>
+            <Typography sx={{ color: "text.secondary" }}>{children}</Typography>
+          </Box>
+          {action}
+        </Stack>
+      </Section>
     </PageBody>
   );
 }
@@ -213,48 +211,46 @@ export function InviteLandingPage({
 
   return (
     <PageBody width="sm">
-      <Card>
-        <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-          <Stack spacing={3}>
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-              <Avatar sx={{ width: 56, height: 56 }}>
-                <Icon />
-              </Avatar>
-              <Stack spacing={0.5}>
-                <Typography component="h2" variant="h5">
-                  {name}
-                </Typography>
-                {invite.role && (
-                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      Invited as
-                    </Typography>
-                    <TagChip tag={{ label: invite.role, color: "default" }} />
-                  </Stack>
-                )}
-                {invite.invitedAt && (
+      <Section>
+        <Stack spacing={3}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+            <Avatar sx={{ width: 56, height: 56 }}>
+              <Icon />
+            </Avatar>
+            <Stack spacing={0.5}>
+              <Typography component="h2" variant="h5">
+                {name}
+              </Typography>
+              {invite.role && (
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Invited on {formatDate(invite.invitedAt)}
+                    Invited as
                   </Typography>
-                )}
-              </Stack>
+                  <TagChip tag={{ label: invite.role, color: "default" }} />
+                </Stack>
+              )}
+              {invite.invitedAt && (
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  Invited on {formatDate(invite.invitedAt)}
+                </Typography>
+              )}
             </Stack>
-
-            <Typography>{description}</Typography>
-
-            <InviteActionButtons
-              prominent
-              onAccept={() =>
-                acceptMutation.mutate(undefined, {
-                  onSuccess: () => navigate(entityId ? entityPath(entityId) : listPath),
-                })
-              }
-              onReject={() => rejectMutation.mutate()}
-              disabled={isAnswering}
-            />
           </Stack>
-        </CardContent>
-      </Card>
+
+          <Typography>{description}</Typography>
+
+          <InviteActionButtons
+            prominent
+            onAccept={() =>
+              acceptMutation.mutate(undefined, {
+                onSuccess: () => navigate(entityId ? entityPath(entityId) : listPath),
+              })
+            }
+            onReject={() => rejectMutation.mutate()}
+            disabled={isAnswering}
+          />
+        </Stack>
+      </Section>
     </PageBody>
   );
 }

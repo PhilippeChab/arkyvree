@@ -11,12 +11,11 @@ import {
 import type React from "react";
 import { Link } from "react-router-dom";
 
-import { BlankState, TagChip } from "@/client/src/components/common/index.ts";
+import { BlankState, Section, TagChip } from "@/client/src/components/common/index.ts";
 import { AddIcon, DecrementIcon, EditIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
 
 import type { CharacterData } from "./characterData.ts";
-import { SheetSection } from "./SheetSection.tsx";
 
 interface ClassesSectionProps {
   classes: SheetClasses;
@@ -38,7 +37,7 @@ export function ClassesSection({
   readOnly,
 }: ClassesSectionProps) {
   return (
-    <SheetSection
+    <Section
       title="Classes & Levels"
       action={
         !readOnly && (
@@ -82,18 +81,16 @@ export function ClassesSection({
               <Accordion
                 key={className}
                 disableGutters
+                variant="outlined"
                 sx={{
                   width: "100%",
-                  boxShadow: "none",
                   "&::before": { display: "none" },
-                  border: 1,
-                  borderColor: "divider",
                   // Over MUI's first and last panel corners
                   "&, &:first-of-type, &:last-of-type": { borderRadius: 1 },
                 }}
               >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography sx={{ fontWeight: 500 }}>
+                  <Typography sx={{ fontWeight: "fontWeightMedium" }}>
                     {classLink ? (
                       <>
                         <MuiLink
@@ -158,6 +155,6 @@ export function ClassesSection({
       ) : (
         <BlankState title="No classes available" />
       )}
-    </SheetSection>
+    </Section>
   );
 }

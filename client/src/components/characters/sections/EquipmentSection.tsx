@@ -14,6 +14,7 @@ import {
   DiceSpinner,
   EditDialog,
   ScrollSafeListbox,
+  Section,
   ValidationWarnings,
 } from "@/client/src/components/common/index.ts";
 import { AddIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
@@ -37,7 +38,6 @@ import {
 } from "./equipment.ts";
 import { EquipmentTable } from "./EquipmentTable.tsx";
 import { InventoryPlacementFields } from "./InventoryPlacementFields.tsx";
-import { SheetSection } from "./SheetSection.tsx";
 import { shownWeaponSet } from "./weaponSets.ts";
 
 interface EquipmentSectionProps {
@@ -278,7 +278,7 @@ export function EquipmentSection({
   const hasItems = inventoryItems.length > 0;
 
   return (
-    <SheetSection
+    <Section
       title="Equipment & Inventory"
       action={
         !isArchived &&
@@ -496,6 +496,6 @@ export function EquipmentSection({
         onConfirm={() => deletingEntryId && removeMutation.mutate(deletingEntryId)}
         isLoading={removeMutation.isPending}
       />
-    </SheetSection>
+    </Section>
   );
 }

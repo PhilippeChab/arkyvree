@@ -367,7 +367,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   return (
     <SectionContent>
       {/* Header */}
-      <Typography component="h2" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
+      <Typography component="h2" variant="h5">
         Characters
       </Typography>
 

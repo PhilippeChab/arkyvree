@@ -38,7 +38,7 @@
  *   form's error. So an error `Alert` sits only in `LoadError`, the auth pages' layout and the toast, and every other
  *   `Alert` writes out its `severity` and `color`, so the rule can read them.
  * - `theme-colors`: a color is the theme's (`client/src/theme/`): elsewhere it's a palette token (`"text.secondary"`,
- *   `theme.palette.shadow`), translucent through `alpha()`. No hex, `rgb()` or `hsl()` literal, no CSS color name
+ *   `theme.palette.primary.main`), translucent through `alpha()`. No hex, `rgb()` or `hsl()` literal, no CSS color name
  *   (`"white"`), and no hex alpha appended to a color (`${theme.palette.primary.main}40`).
  * - `component-props`: a component's props are one named type, its own (`interface XProps`, `type XProps = Omit<…>`)
  *   or one its family shares (`RulesetSectionProps`, `EditorProps<Feat>`), never written in place: an object type, an
@@ -48,11 +48,13 @@
  *   `navigate`; a card holds content of its own and opens on click. React Router's `Link` is `Link`, MUI's `MuiLink`.
  * - `browser-storage`: what the browser keeps is a store's (`client/src/stores/`, zustand's `persist`).
  * - `type-scale`: a size is the theme's: text takes a typography variant, an icon its size (`fontSize="tiny"`); a
- *   font weight is a number, and a `Typography` takes a fixed variant as its `variant`.
+ *   font weight is the theme's (`"fontWeightBold"`, `"fontWeightMedium"`, `"fontWeightRegular"`), a leading and a
+ *   tracking the variant's (no `letterSpacing`, a `lineHeight` only `1`), and a `Typography` takes a fixed variant as
+ *   its `variant`.
  * - `shape`: a corner is in the theme's units (`borderRadius: 1`) or a circle (`"50%"`), and a layer above the page is
  *   the theme's (`theme.zIndex`); a `zIndex` number orders siblings only (`0`, `1`).
  * - `borders`: a border is the theme's shorthand (`border: 1`), its color `borderColor`, its style `borderStyle`; a
- *   `Paper` or `Card` takes its elevation and its outline as props (`elevation`, `variant="outlined"`).
+ *   `Paper`, a `Card` or an `Accordion` takes its outline as a prop (`variant="outlined"`).
  * - `flex-layout`: a flex container is a `Stack`, its `direction` and `spacing` props (`useFlexGap`, the theme's
  *   default, makes `spacing` a gap), never another element with a flex `display`: a surface (`Paper`, `Card`,
  *   `DialogContent`) holds a `Stack`.
@@ -66,8 +68,8 @@
  * - `button-intents`: a button is styled by its intent, as `docs/ui-buttons.md` sets it: the verb its label starts with
  *   (Delete, Archive, Publish, Cancel…) picks its variant and color.
  * - `headings`: a `Typography` sized as a heading or a subtitle (`variant="h6"`, `typography: { xs: "h6" }`, which MUI
- *   renders as an `<h6>`) declares its element
- *   (`component="h2"`, `"p"`), so the page's outline is a hierarchy; a heading's gutter, the space to its own text, is `gutterBottom`.
+ *   renders as an `<h6>`) declares its element, and a heading's element picks its look: `h1` is `variant="h3"`, `h2`
+ *   `h5`, `h3` `h6`, `h4` `subtitle1`, sized, weighted and colored by the theme; the outline stops at `h4`.
  * - `toast-wording`: a toast is a phrase ("Ruleset archived"), no final period, "!" or "successfully"; an error's
  *   fallback names what failed ("Failed to remove item").
  * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
@@ -84,6 +86,11 @@
  * - `spacing`: the gap between blocks is their `Stack`'s `spacing` (a page's blocks are a `PageBody`'s, a row's its
  *   `spacing` or a flex component's `gap`), never a block's own margin, on any side; an indent is padding, a heading's
  *   gutter `gutterBottom`. A margin only aligns (`auto`) or resets (`0`).
+ * - `surfaces`: a panel of a page is a `Section` (a `Paper`, its padding, its title); a `Card` is a card one opens:
+ *   `StyledCard`, or one holding a `CardActionArea`.
+ * - `shadows`: a shadow is the theme's: an elevation (`boxShadow: 2`, `0` for none; a `Paper`, a `Card` or an
+ *   `Accordion` takes its `elevation`), or one of `theme/shadows.ts`'s colored ones (`glow`, `ring`, `iconGlow`,
+ *   `textLift`), never written out.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -94,9 +101,6 @@ import { repoPath } from "./paths.mjs";
 
 /** The border shorthands, which the theme writes from a width (`border: 1` is `1px solid`) */
 const BORDER_SIDES = new Set(["border", "borderBottom", "borderLeft", "borderRight", "borderTop"]);
-
-/** The style keys that space a box from what's under it */
-const BOTTOM_SPACING = new Set(["marginBottom", "mb"]);
 
 /** The fields bound to a form's (`components/common/FormFields.tsx`) */
 const BOUND_FIELDS = new Set([
@@ -187,6 +191,9 @@ const DATE_FORMATTERS = new Set(["toLocaleDateString", "toLocaleTimeString"]);
 /** The hooks whose callback is an effect. */
 const EFFECTS = new Set(["useEffect", "useLayoutEffect"]);
 
+/** The surfaces MUI raises as a `Paper`: they take their depth as `elevation` and their outline as `variant` */
+const ELEVATED = new Set(["Accordion", "Card", "Paper"]);
+
 /** The components that show an error in an `Alert`: a load failure, the auth pages' form error, and the toast. */
 const ERROR_ALERT_FILES = new Set([
   "client/src/components/common/LoadError.tsx",
@@ -202,6 +209,18 @@ const EXPAND_ICON_PROPS = new Set(["collapseIcon", "expandIcon"]);
 
 /** The form writes an effect never makes, but `useFormSync`'s. */
 const FIELD_WRITES = new Set(["setValue", "resetField", "reset"]);
+
+/** The theme's font weights, as `sx` finds them (a CSS word, `"bold"`, would bypass the theme) */
+const FONT_WEIGHTS = new Set(["fontWeightBold", "fontWeightMedium", "fontWeightRegular"]);
+
+/** The colors a heading may take: a state's, or what its banner gives it */
+const HEADING_COLORS = new Set(["common.white", "error.main", "inherit"]);
+
+/** The style keys that set a text's size and weight */
+const HEADING_FONT_KEYS = new Set(["fontSize", "fontWeight", "typography"]);
+
+/** The variant each heading level takes: a page's title, a section's, a subsection's, a group's */
+const HEADING_VARIANTS = { h1: "h3", h2: "h5", h3: "h6", h4: "subtitle1" };
 
 /** A hex alpha appended to a color: the text that follows `${color}` in `${color}40` */
 const HEX_ALPHA_SUFFIX = /^[0-9a-f]{2}(?![\w])/i;
@@ -290,6 +309,12 @@ const PICKED_VALUE_PROPS = new Set(["getItemProps", "getTagProps"]);
 /** The requests an `rpc` endpoint makes. */
 const REQUEST_METHODS = new Set(["$get", "$post", "$put", "$patch", "$delete"]);
 
+/** The shadow keys, and the helpers of `theme/shadows.ts` that give each one (a `filter`'s is `iconGlow`) */
+const SHADOW_HELPERS = {
+  boxShadow: new Set(["glow", "ring"]),
+  textShadow: new Set(["textLift"]),
+};
+
 /** The words a Title Case label leaves lowercase */
 const SMALL_WORDS = new Set([
   "a",
@@ -357,11 +382,7 @@ const TOP_SPACING = new Set(["marginTop", "mt", "my", "paddingTop", "pt"]);
 /** The props an input takes its value through. */
 const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
 
-/**
- * The string a JSX attribute holds, when it's written out (`variant="outlined"`).
- *
- * Whether a margin only aligns (`auto`) or resets (`0`), on every side and screen it names
- */
+/** Whether a margin only aligns (`auto`) or resets (`0`), on every side and screen it names */
 function alignsOrResets(value) {
   if (value.type === "ObjectExpression")
     return value.properties.every((p) => p.type === "Property" && alignsOrResets(p.value));
@@ -369,10 +390,21 @@ function alignsOrResets(value) {
   return value.value === 0 || (typeof value.value === "string" && /^(0|auto)( (0|auto)){0,3}$/.test(value.value));
 }
 
+/** The string a JSX attribute holds, when it's written out (`variant="outlined"`). */
 function attributeText(element, name) {
   const attribute = element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
   if (!attribute) return undefined;
   return attribute.value?.type === "Literal" ? attribute.value.value : null;
+}
+
+/** The strings a JSX attribute may hold: written out, or each branch of a condition (`variant={dialog ? "h5" : "h6"}`). */
+function attributeTexts(element, name) {
+  const attribute = element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
+  const value = attribute?.value?.type === "JSXExpressionContainer" ? attribute.value.expression : attribute?.value;
+  if (!value) return [];
+  return styleValues(value)
+    .filter((v) => v.type === "Literal" && typeof v.value === "string")
+    .map((v) => v.value);
 }
 
 /** A call's name: `setValue` for `setValue(…)`, `form.setValue(…)` and `field.onChange?.(…)`. */
@@ -474,18 +506,12 @@ function createBorders(context) {
         }
       }
       const surface = node.parent.type === "ObjectExpression" ? sxElement(node.parent) : null;
-      if (surface !== "Paper" && surface !== "Card") return;
-      if (key === "boxShadow" && node.value.type === "Literal" && typeof node.value.value === "number") {
-        context.report({
-          node,
-          message: "A `Paper` or a `Card` takes its elevation as `elevation`, never `sx` `boxShadow`.",
-        });
-      }
-      if (key === "border" || key === "borderWidth" || key === "borderStyle") {
+      if (ELEVATED.has(surface) && (key === "border" || key === "borderWidth" || key === "borderStyle")) {
         context.report({
           node,
           message:
-            'A `Paper` or a `Card` is outlined by `variant="outlined"` (or the theme\'s card), never an `sx` border.',
+            'A `Paper`, a `Card` or an `Accordion` is outlined by `variant="outlined"` (or the theme\'s card), never an ' +
+            "`sx` border.",
         });
       }
     },
@@ -984,28 +1010,37 @@ function createHeadings(context) {
   return {
     JSXElement(node) {
       if (elementName(node) !== "Typography") return;
-      const attributes = node.openingElement.attributes.filter((a) => a.type === "JSXAttribute");
-      const variant = attributes.find((a) => a.name.name === "variant")?.value;
-      const sx = attributes.find((a) => a.name.name === "sx")?.value;
-      const sxObject = sx?.type === "JSXExpressionContainer" ? sx.expression : null;
-      const titled = variant?.type === "Literal" && /^(h[1-6]|subtitle[12])$/.test(variant.value);
-      const gutter = sxNumber(node, BOTTOM_SPACING);
-      if ((titled || headingVariants(sxObject).length > 0) && gutter !== null && gutter < 2) {
-        context.report({
-          node: node.openingElement,
-          message: "A heading's gutter, the space to its own text, is `gutterBottom`: the same under every one.",
-        });
+      const report = (message) => context.report({ node: node.openingElement, message });
+      const component = attributeText(node, "component");
+      const variant = attributeText(node, "variant");
+      if (component && /^h[1-6]$/.test(component)) {
+        const expected = HEADING_VARIANTS[component];
+        if (!expected) report("A page's outline stops at `h4`: a page, its sections, their subsections, their groups.");
+        else if (variant !== expected) {
+          report(`An \`${component}\` is \`variant="${expected}"\`: one look per level, the theme's.`);
+        }
+        if (sxSetsAny(node, HEADING_FONT_KEYS)) {
+          report(
+            "A heading's size and weight are its level's, from the theme: no `typography`, `fontSize` or `fontWeight`.",
+          );
+        }
+        const color = sxString(node, "color");
+        if (color !== null && !HEADING_COLORS.has(color)) {
+          report("A heading takes the text's color: only a state colors one (`error.main`), or the banner it sits on.");
+        }
+        return;
       }
-      if (attributes.some((a) => a.name.name === "component")) return;
+      const sx = node.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === "sx")?.value;
+      const sxObject = sx?.type === "JSXExpressionContainer" ? sx.expression : null;
       // A subtitle is an h6 to MUI, whatever it holds
-      const looksLikeHeading = titled || headingVariants(sxObject).length > 0;
-      if (!looksLikeHeading) return;
-      context.report({
-        node: node.openingElement,
-        message:
-          'A `Typography` sized as a heading or a subtitle says what it is: `component="h1"` for a page\'s title, `h2` for its ' +
-          "sections and list cards, `h3` within those and in a dialog, `p` when it isn't one.",
-      });
+      const sized =
+        attributeTexts(node, "variant").some((v) => /^(h[1-6]|subtitle[12])$/.test(v)) ||
+        headingVariants(sxObject).length > 0;
+      if (hasAttribute(node, "component") || !sized) return;
+      report(
+        'A `Typography` sized as a heading or a subtitle says what it is: `component="h1"` for a page\'s title, `h2` ' +
+          "for its sections and cards, `h3` within those and in a dialog, `h4` for a group, `p` when it isn't one.",
+      );
     },
   };
 }
@@ -1219,6 +1254,35 @@ function createSearchFields(context) {
   };
 }
 
+function createShadows(context) {
+  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
+  const messages = {
+    boxShadow:
+      "A shadow is the theme's: an elevation (`boxShadow: 2`, `0` for none), or a colored one from " +
+      "`theme/shadows.ts` (`glow(color)`, `ring(color)`), never written out.",
+    filter: "A logo's or an icon's shadow is `iconGlow(color)` (`theme/shadows.ts`), never a written `drop-shadow`.",
+    textShadow:
+      "A text's shadow is `textLift` (`theme/shadows.ts`), or `\"none\"` over the theme's, never written out.",
+  };
+  return {
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      if (key !== "filter" && !Object.hasOwn(SHADOW_HELPERS, key)) return;
+      const surface = node.parent.type === "ObjectExpression" ? sxElement(node.parent) : null;
+      if (key === "boxShadow" && ELEVATED.has(surface)) {
+        context.report({
+          node,
+          message: "A `Paper`, a `Card` or an `Accordion` takes its depth as `elevation`, never `sx` `boxShadow`.",
+        });
+        return;
+      }
+      for (const value of styleValues(node.value)) {
+        if (writesShadow(key, value)) context.report({ node: value, message: messages[key] });
+      }
+    },
+  };
+}
+
 function createShape(context) {
   if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
   return {
@@ -1259,6 +1323,24 @@ function createSpacing(context) {
           "The gap between blocks is their `Stack`'s `spacing` (a page's blocks are a `PageBody`'s, a row's its " +
           "`spacing` or a flex component's `gap`), never a block's own margin; an indent is padding, a heading's " +
           "gutter `gutterBottom`. A margin only aligns (`auto`) or resets (`0`).",
+      });
+    },
+  };
+}
+
+function createSurfaces(context) {
+  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/StyledCard.tsx") return {};
+  const holdsActionArea = (node) =>
+    node.children.some(
+      (child) => child.type === "JSXElement" && (elementName(child) === "CardActionArea" || holdsActionArea(child)),
+    );
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "Card" || holdsActionArea(node)) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "A `Card` is a card one opens (`StyledCard`, a `CardActionArea` in it): a panel is a `Section`, a surface a `Paper`.",
       });
     },
   };
@@ -1441,10 +1523,23 @@ function createTypeScale(context) {
             'an icon its size (`fontSize="tiny"`, the theme\'s `compact`, `hero`…): never a size written out.',
         });
       }
-      if (key === "fontWeight" && node.value.type === "Literal" && typeof node.value.value === "string") {
+      const weights = key === "fontWeight" ? styleValues(node.value) : [];
+      const written = weights.find((value) => value.type === "Literal" && !FONT_WEIGHTS.has(value.value));
+      if (written) {
+        return context.report({
+          node: written,
+          message:
+            'A font weight is the theme\'s: `fontWeight: "fontWeightBold"`, `"fontWeightMedium"` or `"fontWeightRegular"`, never a number or a CSS word.',
+        });
+      }
+      const leading =
+        key === "lineHeight" && styleValues(node.value).some((v) => v.type !== "Literal" || v.value !== 1);
+      if (key === "letterSpacing" || leading) {
         return context.report({
           node: node.value,
-          message: "A font weight is a number (`fontWeight: 700`), never a word.",
+          message:
+            "A text's leading and tracking are its variant's: no `letterSpacing`, and a `lineHeight` only `1`, a " +
+            "glyph set in its box (a score, a count).",
         });
       }
       const fixedVariant = key === "typography" && node.value.type === "Literal";
@@ -1749,17 +1844,6 @@ function sxElement(object) {
   return attribute.name.name === "sx" ? elementName(attribute.parent.parent) : null;
 }
 
-/** The number an element's own `sx`, written as an object, gives one of `keys` (`mb: 1`), when it's written out. */
-function sxNumber(element, keys) {
-  const attribute = element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === "sx");
-  const value = attribute?.value?.type === "JSXExpressionContainer" ? attribute.value.expression : null;
-  if (value?.type !== "ObjectExpression") return null;
-  const property = value.properties.find(
-    (p) => p.type === "Property" && p.key.type === "Identifier" && keys.has(p.key.name),
-  );
-  return property?.value.type === "Literal" && typeof property.value.value === "number" ? property.value.value : null;
-}
-
 /**
  * The JSX element whose own `sx` a style object is: right in the attribute, in its array, a branch of a condition, or
  * what its theme callback returns. A nested selector's object (`"&:hover": {…}`) styles something else.
@@ -1795,6 +1879,17 @@ function sxSetsAny(element, keys) {
   return value.properties.some((p) => p.type === "Property" && p.key.type === "Identifier" && keys.has(p.key.name));
 }
 
+/** The string an element's own `sx`, written as an object, gives `key` (`color: "error.main"`), when it's written out. */
+function sxString(element, key) {
+  const attribute = element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === "sx");
+  const value = attribute?.value?.type === "JSXExpressionContainer" ? attribute.value.expression : null;
+  if (value?.type !== "ObjectExpression") return null;
+  const property = value.properties.find(
+    (p) => p.type === "Property" && p.key.type === "Identifier" && p.key.name === key,
+  );
+  return property?.value.type === "Literal" && typeof property.value.value === "string" ? property.value.value : null;
+}
+
 /** Whether a template literal times something by its own numbers: a literal time, or a time no `DURATION` gives (`${i * 80}ms`). */
 function timesItself(template, sourceCode) {
   const texts = template.quasis.map((quasi) => quasi.value.cooked ?? "");
@@ -1818,6 +1913,23 @@ function toastTexts(argument) {
 function worded(value) {
   if (value?.type === "ConditionalExpression") return worded(value.consequent) && worded(value.alternate);
   return value?.type === "CallExpression" && calleeName(value) === "loadFailureMessage";
+}
+
+/**
+ * Whether a shadow key's value is written out, rather than the theme's: an elevation (`boxShadow: 2`), a helper of
+ * `theme/shadows.ts` (`glow(color)`, `textShadow: textLift`), the reset of a text's (`"none"`), or a filter that
+ * casts no shadow (`blur(…)`).
+ */
+function writesShadow(key, value) {
+  if (key === "filter") {
+    const text = value.type === "TemplateLiteral" ? value.quasis.map((q) => q.value.raw).join("") : value.value;
+    return typeof text === "string" && text.includes("drop-shadow");
+  }
+  const helpers = SHADOW_HELPERS[key];
+  if (value.type === "CallExpression" && value.callee.type === "Identifier") return !helpers.has(value.callee.name);
+  if (value.type === "Identifier") return !helpers.has(value.name);
+  if (value.type !== "Literal") return true;
+  return key === "boxShadow" ? typeof value.value !== "number" : value.value !== "none";
 }
 
 /** Whether a style value is a size written out: `14`, `"0.75rem"`, `{ xs: 48, sm: 64 }` (not `"inherit"`, not computed). */
@@ -1871,6 +1983,8 @@ export default {
   "confirm-wording": { meta: { type: "suggestion" }, create: createConfirmWording },
   "page-errors": { meta: { type: "suggestion" }, create: createPageErrors },
   spacing: { meta: { type: "suggestion" }, create: createSpacing },
+  surfaces: { meta: { type: "suggestion" }, create: createSurfaces },
+  shadows: { meta: { type: "suggestion" }, create: createShadows },
   "tag-chips": { meta: { type: "suggestion" }, create: createTagChips },
   "expand-arrows": { meta: { type: "suggestion" }, create: createExpandArrows },
   "pending-buttons": { meta: { type: "suggestion" }, create: createPendingButtons },

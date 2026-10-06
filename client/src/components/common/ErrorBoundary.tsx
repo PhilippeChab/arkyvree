@@ -73,14 +73,10 @@ export class ErrorBoundary extends Component<Props, State> {
             }}
           >
             <DiceIcon fontSize="hero" sx={{ color: "primary.main" }} />
-            <Typography
-              component="h1"
-              variant="h4"
-              sx={{ fontFamily: '"Lora Variable", Georgia, serif', color: "primary.main", fontWeight: 600 }}
-            >
+            <Typography component="h1" variant="h3" sx={{ fontFamily: '"Lora Variable", Georgia, serif' }}>
               A Critical Failure
             </Typography>
-            <Typography sx={{ color: "text.secondary", maxWidth: 420, lineHeight: 1.7 }}>
+            <Typography sx={{ color: "text.secondary", maxWidth: 420 }}>
               You rolled a natural 1.
               <br />
               Something broke unexpectedly.

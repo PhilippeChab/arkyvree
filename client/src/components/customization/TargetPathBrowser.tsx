@@ -261,12 +261,18 @@ export function TargetPathBrowser({
                       <ListItemText
                         primary={
                           flatBreadcrumb ? (
-                            <Typography variant="body2" sx={{ fontWeight: isSelected ? 600 : 400 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: isSelected ? "fontWeightBold" : "fontWeightRegular" }}
+                            >
                               {flatBreadcrumb}
                             </Typography>
                           ) : (
                             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-                              <Typography variant="body2" sx={{ fontWeight: isGroup || isSelected ? 600 : 400 }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: isGroup || isSelected ? "fontWeightBold" : "fontWeightRegular" }}
+                              >
                                 {segmentLabels[option.label] || formatSegment(option.label)}
                               </Typography>
                               {isGroup && <ChevronRightIcon fontSize="compact" sx={{ color: "text.secondary" }} />}

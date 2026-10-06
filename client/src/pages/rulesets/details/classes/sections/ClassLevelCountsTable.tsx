@@ -63,7 +63,7 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
   return (
     <Stack spacing={3}>
       <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
-        <Typography component="h2" variant="h6">
+        <Typography component="h2" variant="h5">
           {title}
         </Typography>
       </Stack>

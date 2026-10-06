@@ -1,21 +1,20 @@
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { useMemo } from "react";
 
-import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { BlankState } from "@/client/src/components/common/index.ts";
+import { BlankState, Section } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 
 import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
 import type { Dnd35SkillsSectionProps } from "./types.ts";
 
 /** The narrow number columns' headers. */
-const columnHeaderSx = { typography: { xs: "caption", sm: "body2" }, fontWeight: 600 };
+const columnHeaderSx = { typography: { xs: "caption", sm: "body2" }, fontWeight: "fontWeightBold" };
 
 export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
   const sortedSkills = useMemo(() => Object.values(skills).sort((a, b) => a.name.localeCompare(b.name)), [skills]);
 
   return (
-    <SheetSection title="Skills">
+    <Section title="Skills">
       {sortedSkills.length > 0 ? (
         <>
           <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
@@ -66,7 +65,7 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
                       <TableCell align="center">{formatSigned(skill.ability)}</TableCell>
                       <TableCell align="center">{skill.misc !== 0 ? formatSigned(skill.misc) : "—"}</TableCell>
                       <TableCell align="center">{skill.weight ? `-${skill.weight}` : "—"}</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 600 }}>
+                      <TableCell align="center" sx={{ fontWeight: "fontWeightBold" }}>
                         {formatSigned(skill.total)}
                       </TableCell>
                     </SkillRow>
@@ -79,6 +78,6 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
       ) : (
         <BlankState title="No skills available" />
       )}
-    </SheetSection>
+    </Section>
   );
 }

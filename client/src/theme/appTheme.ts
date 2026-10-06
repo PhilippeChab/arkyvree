@@ -14,13 +14,10 @@ declare module "@mui/material/SvgIcon" {
 
 declare module "@mui/material/styles" {
   interface Palette {
-    /** The color of the app's own shadows (the sidebar's, a banner's): deeper on the dark theme. */
-    shadow: string;
     /** The auth pages' brand backdrop, its gradient's stops from top to bottom. */
     backdrop: { top: string; middle: string; bottom: string };
   }
   interface PaletteOptions {
-    shadow?: string;
     backdrop?: { top: string; middle: string; bottom: string };
   }
 }
@@ -140,13 +137,16 @@ export function createAppTheme(darkMode: boolean): Theme {
               primary: "#3e2723", // Dark brown, like aged ink
               secondary: "#5d4037", // Lighter brown for secondary text
             },
-        shadow: darkMode ? "rgba(0, 0, 0, 0.3)" : "rgba(0, 0, 0, 0.08)",
         backdrop: darkMode
           ? { top: "#3d2020", middle: "#2a1515", bottom: "#1a0f0f" }
           : { top: "#8d1e1e", middle: "#6b1717", bottom: "#4a1010" },
       },
       typography: {
         fontFamily: '"Lora Variable", "Georgia", serif',
+        // The weights text takes (`fontWeight: "fontWeightBold"`): regular, medium for a label, bold for what stands out
+        fontWeightRegular: 400,
+        fontWeightMedium: 500,
+        fontWeightBold: 600,
         h1: {
           fontSize: "2.5rem",
           fontWeight: 600,
@@ -157,21 +157,24 @@ export function createAppTheme(darkMode: boolean): Theme {
           fontWeight: 600,
           letterSpacing: "0.01em",
         },
+        // A page's title
         h3: {
           fontSize: "1.75rem",
-          fontWeight: 600,
+          fontWeight: 700,
         },
         h4: {
           fontSize: "1.5rem",
-          fontWeight: 500,
+          fontWeight: 600,
         },
+        // A section's or a card's title
         h5: {
           fontSize: "1.25rem",
-          fontWeight: 500,
+          fontWeight: 600,
         },
+        // A subsection's title
         h6: {
           fontSize: "1rem",
-          fontWeight: 500,
+          fontWeight: 600,
         },
         subtitle1: {
           fontSize: "1rem",
@@ -329,6 +332,7 @@ export function createAppTheme(darkMode: boolean): Theme {
             paper: {
               backgroundColor: darkMode ? "#3d352a" : "#ede7d9",
               backgroundImage: "none",
+              boxShadow: `2px 0 8px ${darkMode ? "rgba(0, 0, 0, 0.3)" : "rgba(0, 0, 0, 0.08)"}`,
             },
           },
         },

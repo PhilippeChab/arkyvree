@@ -1,4 +1,4 @@
-import { Alert, Card, CardContent, IconButton, Stack, Typography } from "@mui/material";
+import { Alert, Box, IconButton, Paper, Stack, Typography } from "@mui/material";
 import { SimpleTreeView, TreeItem } from "@mui/x-tree-view";
 import type { InferResponseType } from "hono/client";
 import { parseResponse } from "hono/client";
@@ -279,14 +279,14 @@ export function RequirementsSection({
         key={node.requirement.id}
         itemId={node.requirement.id}
         label={
-          <Card
+          <Paper
             variant="outlined"
             sx={{
               borderLeft: node.requirement.level.split(".").length > 1 ? 3 : 0, // Visual hierarchy
               borderColor: "primary.main",
             }}
           >
-            <CardContent sx={{ py: 1.5, px: 2, "&:last-child": { pb: 1.5 } }}>
+            <Box sx={{ py: 1.5, px: 2 }}>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
                 <TagChip tag={{ label: requirement.level ?? "—", color: "default", tooltip: "Level" }} />
 
@@ -302,7 +302,7 @@ export function RequirementsSection({
                     {requirement.target ? (
                       <TargetPathBreadcrumbs target={requirement.target} targetLabels={requirement.targetLabels} />
                     ) : (
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium" }}>
                         —
                       </Typography>
                     )}
@@ -371,8 +371,8 @@ export function RequirementsSection({
                   )}
                 </Stack>
               </Stack>
-            </CardContent>
-          </Card>
+            </Box>
+          </Paper>
         }
       >
         {node.children.length > 0 && node.children.map(renderRequirementNode)}

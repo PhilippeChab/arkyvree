@@ -1,14 +1,15 @@
-import { Alert, alpha, Box, Card, CardContent, Link as MuiLink, Stack, Typography, useTheme } from "@mui/material";
+import { Alert, alpha, Box, Link as MuiLink, Paper, Stack, Typography, useTheme } from "@mui/material";
 import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom";
 
-import { DiceSpinner, PageTransition } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, PageTransition, Section } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useIsMobile, useStartDemo } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { brandGold, brandGoldTint } from "@/client/src/theme/brandGold.ts";
+import { iconGlow, textLift } from "@/client/src/theme/shadows.ts";
 
 interface AuthPageProps {
   children: ReactNode;
@@ -152,7 +153,7 @@ function DesktopBranding() {
           width: 120,
           height: 120,
           position: "relative",
-          filter: `drop-shadow(0 4px 12px ${brandGoldTint(false, darkMode ? 0.4 : 0.3)})`,
+          filter: iconGlow(brandGold(false)),
           ...stagger(0),
         }}
       />
@@ -163,9 +164,8 @@ function DesktopBranding() {
         variant="h3"
         sx={{
           color: "common.white",
-          fontWeight: 700,
-          letterSpacing: "0.04em",
-          textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.4)}`,
+          fontWeight: "fontWeightBold",
+          textShadow: textLift,
           textAlign: "center",
           position: "relative",
           ...stagger(1),
@@ -226,7 +226,7 @@ function MobileBranding() {
         component="img"
         src="/pwa-192x192.png"
         alt="Arkyvree"
-        sx={{ width: 48, height: 48, filter: `drop-shadow(0 2px 6px ${brandGoldTint(false, 0.3)})` }}
+        sx={{ width: 48, height: 48, filter: iconGlow(brandGold(false)) }}
       />
       <Box>
         <Typography
@@ -234,10 +234,8 @@ function MobileBranding() {
           variant="h5"
           sx={{
             color: "common.white",
-            fontWeight: 700,
-            letterSpacing: "0.03em",
-            textShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.3)}`,
-            lineHeight: 1.2,
+            fontWeight: "fontWeightBold",
+            textShadow: textLift,
           }}
         >
           Arkyvree
@@ -287,12 +285,12 @@ export function AuthLayoutRoute() {
   if (isMobile) {
     return (
       <Stack spacing={2} sx={{ minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}>
-        <Card sx={{ width: "100%", maxWidth: 450, mx: "auto", overflow: "hidden" }}>
+        <Paper sx={{ width: "100%", maxWidth: 450, mx: "auto", overflow: "hidden" }}>
           <MobileBranding />
           <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
             <Outlet />
           </Suspense>
-        </Card>
+        </Paper>
         <AuthFooterLinks />
       </Stack>
     );
@@ -315,34 +313,32 @@ export function AuthLayoutRoute() {
 /** The frame each auth page puts its content in: its title, subtitle, error and notice. */
 export function AuthPage({ children, title, subtitle, error, notice }: AuthPageProps) {
   return (
-    <PageTransition>
-      <Card sx={{ width: "100%", maxWidth: 450 }}>
-        <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-          <Stack
-            spacing={3}
-            sx={{
-              animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} both`,
-              [prefersReducedMotion]: { animation: "none" },
-            }}
-          >
-            <Box>
-              <Typography sx={{ typography: { xs: "h5", sm: "h4" } }} component="h1" gutterBottom align="center">
-                {title}
+    <PageTransition sx={{ width: "100%", maxWidth: 450 }}>
+      <Section>
+        <Stack
+          spacing={3}
+          sx={{
+            animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} both`,
+            [prefersReducedMotion]: { animation: "none" },
+          }}
+        >
+          <Box>
+            <Typography component="h1" variant="h3" gutterBottom align="center">
+              {title}
+            </Typography>
+            {subtitle && (
+              <Typography variant="body2" align="center">
+                {subtitle}
               </Typography>
-              {subtitle && (
-                <Typography variant="body2" align="center">
-                  {subtitle}
-                </Typography>
-              )}
-            </Box>
+            )}
+          </Box>
 
-            {error && <Alert severity="error">{error}</Alert>}
-            {notice && <Alert severity="success">{notice}</Alert>}
+          {error && <Alert severity="error">{error}</Alert>}
+          {notice && <Alert severity="success">{notice}</Alert>}
 
-            {children}
-          </Stack>
-        </CardContent>
-      </Card>
+          {children}
+        </Stack>
+      </Section>
     </PageTransition>
   );
 }

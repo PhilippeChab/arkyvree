@@ -37,7 +37,7 @@ export function TagChip({ tag, size = "small" }: TagChipProps) {
     size,
     color,
     variant: "outlined",
-    sx: { fontWeight: 500 },
+    sx: { fontWeight: "fontWeightMedium" },
     onMouseEnter: prefetch,
     onFocus: prefetch,
     onDelete:
