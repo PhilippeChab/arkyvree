@@ -143,7 +143,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
                   </Stack>
                 ) : (
                   <Button
-                    variant="outlined"
+                    variant="contained"
                     size="small"
                     color="error"
                     startIcon={<UnlinkIcon />}

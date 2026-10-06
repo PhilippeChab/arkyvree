@@ -142,7 +142,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
         <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end", mb: 2 }}>
           {canLeave && (
             <Button
-              variant="outlined"
+              variant="contained"
               color="warning"
               size="small"
               startIcon={<LeaveIcon />}

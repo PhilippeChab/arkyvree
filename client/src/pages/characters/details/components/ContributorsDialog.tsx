@@ -104,7 +104,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                 </Button>
               ) : !isOwner ? (
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   color="warning"
                   size="small"
                   startIcon={<LeaveIcon />}

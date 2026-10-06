@@ -56,6 +56,8 @@
  *   isn't set again on one.
  * - `label-case`: a button's, a menu item's and a dialog's words are in Title Case ("Mark All as Read").
  * - `search-fields`: a search box is a `SearchField`, never a `TextField` of its own.
+ * - `button-intents`: a button is styled by its intent, as `docs/ui-buttons.md` sets it: the verb its label starts with
+ *   (Delete, Archive, Publish, Cancel…) picks its variant and color.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -247,12 +249,28 @@ const SMALL_WORDS = new Set([
   "with",
 ]);
 
+/** A button's look by its intent, as `docs/ui-buttons.md` sets it: the verb its label starts with picks the row */
+// oxfmt-ignore
+const BUTTON_INTENTS = [
+  { verbs: ["Delete", "Remove", "Reject", "Revoke", "Unsubscribe", "Unlink"], variant: "contained", color: "error" },
+  { verbs: ["Archive", "Leave"], variant: "contained", color: "warning" },
+  { verbs: ["Publish", "Accept", "Unarchive", "Restore"], variant: "contained", color: "success" },
+  { verbs: ["Cancel", "Close", "Dismiss"], variant: "outlined", color: "inherit" },
+];
+
 /** `Intl`'s date formatters */
 const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
 
 /** Whether a JSX element has the attribute `name`. */
 function hasAttribute(node, name) {
   return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
+}
+
+/** The string a JSX attribute holds, when it's written out (`variant="outlined"`). */
+function attributeText(element, name) {
+  const attribute = element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
+  if (!attribute) return undefined;
+  return attribute.value?.type === "Literal" ? attribute.value.value : null;
 }
 
 /** A call's name: `setValue` for `setValue(…)`, `form.setValue(…)` and `field.onChange?.(…)`. */
@@ -324,6 +342,34 @@ function createBrowserStorage(context) {
         message:
           "What the browser keeps is a store's (`client/src/stores/`, persisted through zustand's `persist`): never " +
           "`localStorage` or `sessionStorage` elsewhere.",
+      });
+    },
+  };
+}
+
+function createButtonIntents(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "Button") return;
+      const label = node.children
+        .filter((child) => child.type === "JSXText")
+        .map((child) => child.value.trim())
+        .join(" ")
+        .trim();
+      const verb = label.split(/\s+/)[0];
+      const intent = BUTTON_INTENTS.find((row) => row.verbs.includes(verb));
+      if (!intent) return;
+      const variant = attributeText(node, "variant");
+      const color = attributeText(node, "color");
+      // A computed variant or color is the component's own choice, made elsewhere
+      if (variant === null || color === null) return;
+      if ((variant ?? "text") === intent.variant && (color ?? "primary") === intent.color) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          `A "${verb}" button is \`variant="${intent.variant}" color="${intent.color}"\` (\`docs/ui-buttons.md\`), ` +
+          "the same everywhere, whether or not it confirms first.",
       });
     },
   };
@@ -1204,4 +1250,5 @@ export default {
   "component-defaults": { meta: { type: "suggestion" }, create: createComponentDefaults },
   "label-case": { meta: { type: "suggestion" }, create: createLabelCase },
   "search-fields": { meta: { type: "suggestion" }, create: createSearchFields },
+  "button-intents": { meta: { type: "suggestion" }, create: createButtonIntents },
 };

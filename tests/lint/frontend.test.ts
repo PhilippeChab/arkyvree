@@ -601,4 +601,25 @@ describe("frontend rules", () => {
       ),
     ).toEqual(["search-fields client/src/plain.tsx", "search-fields client/src/templated.tsx"]);
   });
+
+  test("a button is styled by its intent, as docs/ui-buttons.md sets it", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/leave.tsx": 'export const l = <Button variant="outlined" color="warning">Leave</Button>;\n',
+          "client/src/cancel.tsx": 'export const c = <Button color="inherit">Cancel</Button>;\n',
+          "client/src/delete.tsx": "export const d = <Button>Delete Account</Button>;\n",
+          "client/src/kept.tsx":
+            'export const k = <><Button variant="contained" color="error">Delete</Button><Button variant="outlined" color="inherit">Cancel</Button></>;\n',
+          "client/src/other.tsx": 'export const o = <Button variant="text">View All</Button>;\n',
+          "client/src/computed.tsx": 'export const p = <Button variant={variant} color="success">Publish</Button>;\n',
+        },
+        ["button-intents"],
+      ),
+    ).toEqual([
+      "button-intents client/src/cancel.tsx",
+      "button-intents client/src/delete.tsx",
+      "button-intents client/src/leave.tsx",
+    ]);
+  });
 });

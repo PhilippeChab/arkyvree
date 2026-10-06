@@ -215,6 +215,7 @@ export default function ProfilePage() {
                 </Button>
                 <Button
                   size="small"
+                  variant="outlined"
                   color="inherit"
                   onClick={() => cancelEmailChangeMutation.mutate()}
                   disabled={cancelEmailChangeMutation.isPending}
