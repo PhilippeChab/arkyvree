@@ -3,7 +3,7 @@ import { Chip, IconButton, MenuItem, Paper, Skeleton, Stack, TextField, Typograp
 import { keepPreviousData, skipToken, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
 import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { type Control, Controller, useController, useForm } from "react-hook-form";
+import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -19,6 +19,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
   type RulesetAbility,
   useDebouncedValue,
+  useFormWith,
   useListboxQuery,
   useRulesetAbilities,
 } from "@/client/src/hooks/index.ts";
@@ -43,7 +44,13 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
-type CreateCharacterFormData = InferRequestType<typeof rpc.api.characters.$post>["json"];
+type CreateCharacterRequest = InferRequestType<typeof rpc.api.characters.$post>["json"];
+
+/** What the character is created with, its alignment and gender unpicked ("") until they're chosen. */
+type CreateCharacterFormData = Omit<CreateCharacterRequest, "alignment" | "gender"> & {
+  alignment: CreateCharacterRequest["alignment"] | "";
+  gender: CreateCharacterRequest["gender"] | "";
+};
 
 type AbilityOption = Pick<RulesetAbility, "id" | "name">;
 
@@ -326,20 +333,20 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
   const abilityScoresRef = useRef<AbilityScoresHandle>(null);
   const [abilityRolling, setAbilityRolling] = useState(false);
   const [rollMethod, setRollMethod] = useState<RollMethodId>("4d6-drop-lowest");
-  const form = useForm<CreateCharacterFormData>({
-    defaultValues: {
-      rulesetId: "",
-      raceId: "",
-      name: "",
-      xp: 0,
-      abilities: {},
-      age: 1,
-      height: "",
-      weight: "",
-      deity: "",
-      description: "",
-      notes: "",
-    },
+  const form = useFormWith<CreateCharacterFormData>({
+    rulesetId: "",
+    raceId: "",
+    name: "",
+    xp: 0,
+    alignment: "",
+    gender: "",
+    abilities: {},
+    age: 1,
+    height: "",
+    weight: "",
+    deity: "",
+    description: "",
+    notes: "",
   });
   const { control, reset, watch, setValue } = form;
 
@@ -448,11 +455,12 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
   }, [races, racesSettled, selectedRaceId, setValue]);
 
   const { data: abilityItems } = useRulesetAbilities(selectedRulesetId || undefined);
+  const baseRules = selectedRuleset?.baseRules;
   const rulesetAbilities = useMemo(() => {
     const items = abilityItems ?? [];
-    if (!selectedRuleset?.baseRules) return items;
-    return sortAbilities(items, selectedRuleset.baseRules, (a) => a.name);
-  }, [abilityItems, selectedRuleset?.baseRules]);
+    if (!baseRules) return items;
+    return sortAbilities(items, baseRules, (a) => a.name);
+  }, [abilityItems, baseRules]);
 
   // Set default ability scores based on roll method
   useEffect(() => {
@@ -494,7 +502,7 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
   ]);
 
   const createCharacterMutation = useMutation({
-    mutationFn: async (data: CreateCharacterFormData) => {
+    mutationFn: async (data: CreateCharacterRequest) => {
       return parseResponse(
         rpc.api.characters.$post({
           json: {
@@ -526,8 +534,9 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
     },
   });
 
-  const onSubmit = (data: CreateCharacterFormData) => {
-    createCharacterMutation.mutate(data);
+  // The alignment and gender are required: a submit always has them
+  const onSubmit = ({ alignment, gender, ...data }: CreateCharacterFormData) => {
+    if (alignment && gender) createCharacterMutation.mutate({ ...data, alignment, gender });
   };
 
   return (

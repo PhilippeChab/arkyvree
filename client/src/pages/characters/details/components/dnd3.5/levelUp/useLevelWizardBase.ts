@@ -1,8 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
 
-import { useDebouncedValue, useToggleSet, useValidationIssues } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useFormWith, useToggleSet, useValidationIssues } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 
 import type { AptitudePool, LevelUpFormData } from "./levelUpTypes.ts";
@@ -93,8 +92,7 @@ export function useAdjustedFeatPools(
 export function useLevelWizardBase(characterId: string) {
   const queryClient = useQueryClient();
 
-  const { control, handleSubmit, getValues, setValue, reset, watch } = useForm<LevelUpFormData>({
-    defaultValues: EMPTY_PICKS,
+  const { control, handleSubmit, getValues, setValue, reset, watch } = useFormWith<LevelUpFormData>(EMPTY_PICKS, {
     mode: "onChange",
   });
   const selectedFeats = watch("selectedFeats");

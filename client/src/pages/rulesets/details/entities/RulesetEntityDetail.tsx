@@ -1,11 +1,18 @@
-import { type QueryKey, useMutation, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  type QueryKey,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseQueryOptions,
+} from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
-import { type DefaultValues, type FieldValues, useForm, type UseFormReturn } from "react-hook-form";
+import type { DefaultValues, FieldValues, UseFormReturn } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { DeleteDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormSync, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useFormSync, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -25,6 +32,8 @@ interface EntityBase {
 }
 
 interface EntityEditing<TEntity, TForm extends FieldValues> {
+  /** The form before its entity's values fill it in */
+  empty: TForm & DefaultValues<TForm>;
   toFormValues: (entity: TEntity) => TForm;
   /** Saves the form; resolves to the saved entity, whose id changes when a fork copies an inherited one. */
   update: (data: TForm, updatedAt: string | undefined) => Promise<TEntity>;
@@ -45,6 +54,75 @@ interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends Fie
   editing?: EntityEditing<TEntity, TForm>;
   /** Facts shown next to the title in the read-only view. */
   renderChips?: (entity: TEntity) => ReactNode;
+}
+
+/** Refetches the section that lists the entity. */
+function invalidateSection(queryClient: QueryClient, rulesetId: string, section: string) {
+  return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
+}
+
+/** An editor's details: the entity's form, following the entity, which saves it. */
+function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey>({
+  rulesetId,
+  entityId,
+  section,
+  label,
+  query,
+  editing,
+  entity,
+  chips,
+}: Pick<RulesetEntityDetailProps<TEntity, TForm, TKey>, "rulesetId" | "entityId" | "section" | "label" | "query"> & {
+  editing: EntityEditing<TEntity, TForm>;
+  entity: TEntity;
+  chips: ReactNode;
+}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const snackbar = useSnackbar();
+
+  const form = useFormWith<TForm>(editing.empty);
+  const sync = useFormSync(form, editing.toFormValues(entity), {
+    // An inherited entity keeps its id in every fork.
+    key: `${rulesetId}/${entityId}`,
+    updatedAt: entity.updatedAt,
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: TForm) => {
+      const saved = await editing.update(data, sync.updatedAt());
+      return { sourceId: entityId, saved, values: editing.toFormValues(saved) };
+    },
+    onSuccess: ({ saved, sourceId, values }) => {
+      sync.saved(values, saved.updatedAt);
+      const savedKey = query(saved.id).queryKey;
+      queryClient.setQueryData<TEntity>(savedKey, saved);
+      // Supersede any refetch that left before the save committed.
+      void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
+      // Editing an inherited entity copies it into this ruleset under a new id:
+      // follow it, unless the page has left that entity since.
+      if (isStillOpen(`/rulesets/${rulesetId}/${section}/${sourceId}`) && saved.id !== sourceId) {
+        navigate(`/rulesets/${rulesetId}/${section}/${saved.id}`, { replace: true, state: location.state });
+      }
+      void invalidateSection(queryClient, rulesetId, section);
+      snackbar.success(`${label} updated`);
+    },
+    onError: (err) => snackbar.error(err, `Failed to update ${label.toLowerCase()}`),
+  });
+
+  return (
+    <EntityDetailsCard
+      title={`${label} Details`}
+      chips={chips}
+      description={entity.description}
+      edit={{
+        fields: editing.renderFields(form),
+        onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
+        canSave: form.formState.isDirty,
+        isSaving: saveMutation.isPending,
+      }}
+    />
+  );
 }
 
 /**
@@ -76,43 +154,10 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   const { canEditEntities } = useRulesetPermissions(ruleset);
   const canEdit = !!editing && canEditEntities;
 
-  const form = useForm<TForm>({ defaultValues: {} as DefaultValues<TForm> });
-  const sync = useFormSync(form, entity && editing ? editing.toFormValues(entity) : undefined, {
-    // An inherited entity keeps its id in every fork.
-    key: `${rulesetId}/${entityId}`,
-    updatedAt: entity?.updatedAt,
-  });
-
-  const invalidateSection = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
-
-  const saveMutation = useMutation({
-    mutationFn: async (data: TForm) => {
-      if (!editing) throw new Error(`${label} can't be edited`);
-      const saved = await editing.update(data, sync.updatedAt());
-      return { sourceId: entityId, saved, values: editing.toFormValues(saved) };
-    },
-    onSuccess: ({ saved, sourceId, values }) => {
-      sync.saved(values, saved.updatedAt);
-      const savedKey = query(saved.id).queryKey;
-      queryClient.setQueryData<TEntity>(savedKey, saved);
-      // Supersede any refetch that left before the save committed.
-      void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
-      // Editing an inherited entity copies it into this ruleset under a new id:
-      // follow it, unless the page has left that entity since.
-      if (isStillOpen(`/rulesets/${rulesetId}/${section}/${sourceId}`) && saved.id !== sourceId) {
-        navigate(`/rulesets/${rulesetId}/${section}/${saved.id}`, { replace: true, state: location.state });
-      }
-      void invalidateSection();
-      snackbar.success(`${label} updated`);
-    },
-    onError: (err) => snackbar.error(err, `Failed to update ${label.toLowerCase()}`),
-  });
-
   const deleteMutation = useMutation({
     mutationFn: () => (editing ? editing.remove() : Promise.reject(new Error(`${label} can't be deleted`))),
     onSuccess: () => {
-      void invalidateSection();
+      void invalidateSection(queryClient, rulesetId, section);
       snackbar.success(`${label} deleted`);
       navigate(backUrl);
     },
@@ -139,23 +184,25 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
         onDelete={() => setDeleteDialogOpen(true)}
         isLoading={isRulesetLoading || isEntityLoading}
       >
-        {entity && (
-          <EntityDetailsCard
-            title={`${label} Details`}
-            chips={renderChips?.(entity)}
-            description={entity.description}
-            edit={
-              canEdit
-                ? {
-                    fields: editing.renderFields(form),
-                    onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-                    canSave: form.formState.isDirty,
-                    isSaving: saveMutation.isPending,
-                  }
-                : undefined
-            }
-          />
-        )}
+        {entity &&
+          (canEdit ? (
+            <EditableDetails
+              rulesetId={rulesetId}
+              entityId={entityId}
+              section={section}
+              label={label}
+              query={query}
+              editing={editing}
+              entity={entity}
+              chips={renderChips?.(entity)}
+            />
+          ) : (
+            <EntityDetailsCard
+              title={`${label} Details`}
+              chips={renderChips?.(entity)}
+              description={entity.description}
+            />
+          ))}
       </EntityDetailLayout>
       {editing && (
         <DeleteDialog

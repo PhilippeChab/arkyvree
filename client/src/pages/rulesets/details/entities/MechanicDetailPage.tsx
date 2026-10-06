@@ -1,6 +1,10 @@
 import { useParams } from "react-router-dom";
 
-import { type MechanicFormData, MechanicFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  EMPTY_MECHANIC,
+  type MechanicFormData,
+  MechanicFormFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 import { mechanicQuery } from "./entityDetailQueries.ts";
@@ -19,6 +23,7 @@ export default function MechanicDetailPage() {
       label="Mechanic"
       query={(id) => mechanicQuery(rulesetId, id)}
       editing={{
+        empty: EMPTY_MECHANIC,
         toFormValues: (mechanic): MechanicFormData => ({
           name: mechanic.name,
           description: mechanic.description ?? "",

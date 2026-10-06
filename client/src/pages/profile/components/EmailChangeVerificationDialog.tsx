@@ -1,11 +1,12 @@
 import { Box, Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller } from "react-hook-form";
 
 import { VerificationCodeInput } from "@/client/src/components/auth/index.ts";
 import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { useFormWith } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -28,9 +29,7 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
   const [error, setError] = useState<string | null>(null);
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const form = useForm<EmailVerificationFormData>({
-    defaultValues: { digits: EMPTY_VERIFICATION_CODE },
-  });
+  const form = useFormWith<EmailVerificationFormData>({ digits: EMPTY_VERIFICATION_CODE });
   const digits = form.watch("digits");
 
   const handleClose = () => {

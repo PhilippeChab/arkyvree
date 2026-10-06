@@ -46,6 +46,9 @@ const PROPERTIES_COLUMNS = [
   { key: "description", label: "Description", width: "40%" },
 ];
 
+/** A property's form, empty: what the create dialog opens on. */
+const EMPTY_PROPERTY: PropertyFormData = { type: "", value: "", description: "" };
+
 export function PropertiesSection({
   ruleset,
   entityType,
@@ -75,6 +78,7 @@ export function PropertiesSection({
     confirmDelete,
     createDialogProps,
   } = useRulesetSection({
+    createDefaults: EMPTY_PROPERTY,
     rulesetId: ruleset.id,
     sectionName: `customization-${entityType}-${entityId}-properties`,
     label: "Property",

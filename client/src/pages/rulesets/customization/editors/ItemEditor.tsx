@@ -1,10 +1,10 @@
 import { Chip } from "@mui/material";
-import { useForm } from "react-hook-form";
 
-import { useFormSync } from "@/client/src/hooks/index.ts";
+import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import {
+  EMPTY_ITEM,
   ItemFormFields,
   type ItemFormInternal,
   toItemForm,
@@ -27,7 +27,7 @@ export function ItemEditor({
   locked,
   onSaved,
 }: EditorProps<Item>) {
-  const form = useForm<ItemFormInternal>();
+  const form = useFormWith<ItemFormInternal>(EMPTY_ITEM);
   const sync = useFormSync(form, toItemForm(item), { key: recordKey, adoptKey, updatedAt: item.updatedAt });
   const saveMutation = useEditorSave({
     sync,

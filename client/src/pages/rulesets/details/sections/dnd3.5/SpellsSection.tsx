@@ -8,7 +8,11 @@ import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/clien
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
 import { useRulesetSaves, useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { type SpellFormData, SpellFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import {
+  EMPTY_SPELL,
+  type SpellFormData,
+  SpellFormFields,
+} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import {
   AptitudeChipsCell,
   DescriptionCell,
@@ -45,6 +49,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     Spell,
     SpellFormData
   >({
+    createDefaults: EMPTY_SPELL,
     rulesetId: ruleset.id,
     sectionName: "powers",
     label: "Spell",

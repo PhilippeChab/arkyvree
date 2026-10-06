@@ -1,9 +1,13 @@
 import { Chip } from "@mui/material";
-import { useForm } from "react-hook-form";
 
-import { useFormSync } from "@/client/src/hooks/index.ts";
+import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { byName, type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  byName,
+  EMPTY_FEAT,
+  type FeatFormData,
+  FeatFormFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Feat } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -33,7 +37,7 @@ export function FeatEditor({
   locked,
   onSaved,
 }: EditorProps<Feat>) {
-  const form = useForm<FeatFormData>();
+  const form = useFormWith<FeatFormData>(EMPTY_FEAT);
   const sync = useFormSync(form, toFeatForm(feat), { key: recordKey, adoptKey, updatedAt: feat.updatedAt });
   const saveMutation = useEditorSave({
     sync,

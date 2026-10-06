@@ -1,9 +1,9 @@
 import { Chip } from "@mui/material";
-import { useForm } from "react-hook-form";
 
-import { useFormSync, useRulesetSaves } from "@/client/src/hooks/index.ts";
+import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import {
+  EMPTY_SPELL,
   spellAptitude,
   type SpellFormData,
   SpellFormFields,
@@ -43,7 +43,7 @@ export function SpellEditor({
   locked,
   onSaved,
 }: EditorProps<Power>) {
-  const form = useForm<SpellFormData>();
+  const form = useFormWith<SpellFormData>(EMPTY_SPELL);
   const sync = useFormSync(form, toSpellForm(power), { key: recordKey, adoptKey, updatedAt: power.updatedAt });
   const { data: saves = [] } = useRulesetSaves(rulesetId);
   const saveMutation = useEditorSave({

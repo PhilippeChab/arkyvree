@@ -3,7 +3,7 @@ import { Autocomplete, Box, Button, IconButton, Stack, TextField, Typography } f
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useEffect, useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller } from "react-hook-form";
 import { Link } from "react-router-dom";
 
 import {
@@ -17,7 +17,7 @@ import {
   ValidationIssueList,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDebouncedValue, useListboxQuery, useValidationIssues } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useFormWith, useListboxQuery, useValidationIssues } from "@/client/src/hooks/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -80,8 +80,8 @@ export function EquipmentSection({
   const [itemSearch, setItemSearch] = useState("");
   const debouncedItemSearch = useDebouncedValue(itemSearch);
 
-  const addForm = useForm<InventoryFormData>({ defaultValues: EMPTY_INVENTORY_FORM });
-  const editForm = useForm<InventoryFormData>({ defaultValues: EMPTY_INVENTORY_FORM });
+  const addForm = useFormWith<InventoryFormData>(EMPTY_INVENTORY_FORM);
+  const editForm = useFormWith<InventoryFormData>(EMPTY_INVENTORY_FORM);
 
   const selectedItem = addForm.watch("selectedItem");
   const addLocation = addForm.watch("location");

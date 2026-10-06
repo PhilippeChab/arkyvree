@@ -1,7 +1,7 @@
 import { Box, Chip, Typography } from "@mui/material";
-import { useController, useForm } from "react-hook-form";
+import { useController } from "react-hook-form";
 
-import { useFormSync, useRulesetSaves } from "@/client/src/hooks/index.ts";
+import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import {
   allLevelSaves,
@@ -54,7 +54,7 @@ export function ClassLevelEditor({
   locked,
   onSaved,
 }: EditorProps<ClassLevel>) {
-  const form = useForm<ClassLevelForm>();
+  const form = useFormWith<ClassLevelForm>({ saves: [], feats: [] });
   const { field: saves } = useController({ control: form.control, name: "saves" });
   const { field: feats } = useController({ control: form.control, name: "feats" });
   const sync = useFormSync(form, toClassLevelForm(level), { key: recordKey, adoptKey });

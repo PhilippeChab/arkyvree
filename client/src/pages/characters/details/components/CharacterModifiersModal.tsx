@@ -25,7 +25,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 
 import {
   BlankState,
@@ -39,11 +38,13 @@ import {
   ROW_ACTIONS_SX,
 } from "@/client/src/components/common/index.ts";
 import {
+  EMPTY_MODIFIER,
   ModifierForm,
   type ModifierFormData,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { useFormWith } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
@@ -70,8 +71,8 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedModifier, setSelectedModifier] = useState<Modifier | null>(null);
 
-  const createForm = useForm<ModifierFormData>({ defaultValues: { target: "", value: "", operator: "" } });
-  const editForm = useForm<ModifierFormData>({ defaultValues: { target: "", value: "", operator: "" } });
+  const createForm = useFormWith<ModifierFormData>(EMPTY_MODIFIER);
+  const editForm = useFormWith<ModifierFormData>(EMPTY_MODIFIER);
 
   const { data: modifiers = [], isLoading } = useQuery({
     queryKey: queryKeys.characters.modifiers(characterId),

@@ -6,7 +6,11 @@ import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/clien
 import type { RulesetLanguage } from "@/client/src/hooks/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { type LanguageFormData, LanguageFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  EMPTY_LANGUAGE,
+  type LanguageFormData,
+  LanguageFormFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { languageQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
@@ -29,6 +33,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Language, LanguageFormData>({
+    createDefaults: EMPTY_LANGUAGE,
     rulesetId: ruleset.id,
     sectionName: "languages",
     label: "Language",

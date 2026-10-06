@@ -7,7 +7,7 @@ import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/clien
 import type { RulesetSave } from "@/client/src/hooks/index.ts";
 import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { EMPTY_SAVE, type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { saveQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
@@ -30,6 +30,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Save, SaveFormData>({
+    createDefaults: EMPTY_SAVE,
     rulesetId: ruleset.id,
     sectionName: "saves",
     label: "Save",

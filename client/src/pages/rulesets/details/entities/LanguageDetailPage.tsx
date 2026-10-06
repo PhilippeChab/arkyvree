@@ -1,7 +1,11 @@
 import { Chip } from "@mui/material";
 import { useParams } from "react-router-dom";
 
-import { type LanguageFormData, LanguageFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  EMPTY_LANGUAGE,
+  type LanguageFormData,
+  LanguageFormFields,
+} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 import { languageQuery } from "./entityDetailQueries.ts";
@@ -20,6 +24,7 @@ export default function LanguageDetailPage() {
       label="Language"
       query={(id) => languageQuery(rulesetId, id)}
       editing={{
+        empty: EMPTY_LANGUAGE,
         toFormValues: (language): LanguageFormData => ({
           name: language.name,
           description: language.description ?? "",

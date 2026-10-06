@@ -21,6 +21,7 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import {
+  EMPTY_REQUIREMENT,
   RequirementForm,
   type RequirementFormData,
   type RequirementType,
@@ -117,6 +118,7 @@ export function RequirementsSection({
     handleDelete,
     confirmDelete,
   } = useRulesetSection({
+    createDefaults: EMPTY_REQUIREMENT,
     rulesetId: ruleset.id,
     sectionName: `customization-${entityType}-${entityId}-requirements`,
     label: "Requirement",

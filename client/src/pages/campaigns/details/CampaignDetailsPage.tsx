@@ -9,7 +9,6 @@ import {
 import { Alert, Box, Chip, Container, Menu, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -24,7 +23,7 @@ import {
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { campaignDetailQuery } from "@/client/src/lib/queries.ts";
@@ -70,7 +69,7 @@ export default function CampaignDetailsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [hardDeleteDialogOpen, setHardDeleteDialogOpen] = useState(false);
-  const editForm = useForm<EditCampaignFormData>();
+  const editForm = useFormWith<EditCampaignFormData>({ name: "", description: "" });
 
   const invalidateCampaign = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(id) });
