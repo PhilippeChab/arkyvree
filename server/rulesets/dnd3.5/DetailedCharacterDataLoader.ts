@@ -64,6 +64,9 @@ interface SharedCharacterData {
   rawCharacterLevels: CharacterLevel[];
 }
 
+/** Resolves stored ids through the override map, when there is one. */
+type Resolve = <T extends Record<string, unknown>>(rows: T[]) => T[];
+
 /** D&D 3.5-specific extension of LoadedCharacterData with spellcasting and skill properties. */
 export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
   skillPointAbilityId: string | null;
@@ -72,9 +75,6 @@ export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
   klassBonusSpellAbilityMap: Map<string, string>;
   klassCasterTypeMap: Map<string, "Arcane" | "Divine">;
 }
-
-/** Resolves stored ids through the override map, when there is one. */
-type Resolve = <T extends Record<string, unknown>>(rows: T[]) => T[];
 
 // PMR types re-exported for the two files that reach in for them
 // (`DetailedCharacter.ts`, `DetailedCharacterSpellcasting.ts`).

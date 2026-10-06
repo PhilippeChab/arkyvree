@@ -15,9 +15,10 @@ export type SessionContext = {
   };
 };
 
-export const SESSION_COOKIE_NAME = "session-id";
 const SESSION_CONTEXT_KEY = "requestSession";
 const USER_CONTEXT_KEY = "requestUser";
+
+export const SESSION_COOKIE_NAME = "session-id";
 
 export function getSessionCookie(c: Context) {
   return getCookie(c, SESSION_COOKIE_NAME);

@@ -7,8 +7,6 @@ type EquipmentSlot = Lowercase<Exclude<ItemLocation, HandLocation>>;
 
 type InventorySlot = EquipmentSlot | WeaponSetSlot;
 
-export const SIZE_ORDER: Record<string, number> = Object.fromEntries(SIZE_OPTIONS.map((size, i) => [size, i]));
-
 const WEAPON_LOCATION_MAP = {
   "Main Hand": "mainhand",
   "Off Hand": "offhand",
@@ -21,6 +19,8 @@ const LOCATION_TO_SLOT: Record<string, InventorySlot> = Object.fromEntries(
     isHandLocation(loc) ? WEAPON_LOCATION_MAP[loc] : (loc.toLowerCase() as EquipmentSlot),
   ]),
 );
+
+export const SIZE_ORDER: Record<string, number> = Object.fromEntries(SIZE_OPTIONS.map((size, i) => [size, i]));
 
 export const WEAPON_SET_SLOTS: WeaponSetSlot[] = Object.values(WEAPON_LOCATION_MAP);
 

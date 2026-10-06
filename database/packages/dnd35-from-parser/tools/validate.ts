@@ -37,6 +37,8 @@ type DetectedEntry = {
 
 type Review = ReturnType<typeof reviewOf>;
 
+type Found = { kind: Issue["kind"]; text: string };
+
 export type Issue = {
   book: string;
   file: string;
@@ -57,8 +59,6 @@ export type Issue = {
   text: string;
   entityName?: string;
 };
-
-type Found = { kind: Issue["kind"]; text: string };
 
 /** A detection's kinds of issue, each with the issue it's reported as. */
 const DETECTED_ISSUES = [

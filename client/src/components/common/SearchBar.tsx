@@ -16,17 +16,6 @@ import { useLocation } from "react-router-dom";
 
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 
-export interface FilterOption<T extends string = string> {
-  value: T | undefined;
-  label: string;
-}
-
-export interface SortOption<T extends string = string> {
-  field: T;
-  direction: "asc" | "desc";
-  label: string;
-}
-
 interface SearchBarProps<TFilter extends string = string, TSort extends string = string> {
   searchValue: string;
   onSearchChange: (value: string) => void;
@@ -43,6 +32,17 @@ interface SearchBarProps<TFilter extends string = string, TSort extends string =
 
   filters?: React.ReactNode;
   actions?: React.ReactNode;
+}
+
+export interface FilterOption<T extends string = string> {
+  value: T | undefined;
+  label: string;
+}
+
+export interface SortOption<T extends string = string> {
+  field: T;
+  direction: "asc" | "desc";
+  label: string;
 }
 
 export function SearchBar<TFilter extends string = string, TSort extends string = string>({

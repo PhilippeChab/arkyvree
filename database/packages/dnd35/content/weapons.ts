@@ -2,6 +2,16 @@ import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content
 import type { FeatSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
+/** The exotic weapons "a character can use two-handed as a martial weapon". */
+const MARTIAL_IN_TWO_HANDS = new Set(["Bastard Sword", "Dwarven Waraxe"]);
+
+/** The exotic weapons a race treats as martial weapons (its weapon familiarity), by the race. */
+const WEAPON_FAMILIARITY: Record<string, string> = {
+  "Dwarven Waraxe": "Dwarf",
+  "Dwarven Urgrosh": "Dwarf",
+  "Gnome Hooked Hammer": "Gnome",
+};
+
 // The weapons by proficiency, which the weapon feats and the proficiency requirements name.
 
 export const SIMPLE_WEAPONS = [
@@ -87,15 +97,6 @@ export const CROSSBOW_WEAPONS = ALL_WEAPONS.filter((w) => w.toLowerCase().includ
 
 const SIMPLE_SET = new Set(SIMPLE_WEAPONS);
 const MARTIAL_SET = new Set(MARTIAL_WEAPONS);
-/** The exotic weapons "a character can use two-handed as a martial weapon". */
-const MARTIAL_IN_TWO_HANDS = new Set(["Bastard Sword", "Dwarven Waraxe"]);
-
-/** The exotic weapons a race treats as martial weapons (its weapon familiarity), by the race. */
-const WEAPON_FAMILIARITY: Record<string, string> = {
-  "Dwarven Waraxe": "Dwarf",
-  "Dwarven Urgrosh": "Dwarf",
-  "Gnome Hooked Hammer": "Gnome",
-};
 
 /**
  * A proficiency feat per simple and martial weapon. A simple one is what a class's proficiencies grant: a character

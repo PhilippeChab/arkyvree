@@ -7,9 +7,9 @@
  */
 import { repoPath } from "./paths.mjs";
 
-export const MAX_OWN_LINES = 80;
-
 const FUNCTIONS = ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"];
+
+export const MAX_OWN_LINES = 80;
 
 function isConcern(fn) {
   return (

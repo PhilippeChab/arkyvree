@@ -10,19 +10,6 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 import { DEFAULT_ENTITY_FILTERS, type EntityKind, type EntitySortField } from "./entityFilters.ts";
 
-export type RulesetSection =
-  | "races"
-  | "languages"
-  | "skills"
-  | "feats"
-  | "powers"
-  | "items"
-  | "classes"
-  | "aptitudes"
-  | "saves"
-  | "abilities"
-  | "mechanics";
-
 interface ListFilters {
   search: string;
   childOnly: boolean;
@@ -41,6 +28,19 @@ interface AptitudeFilters extends ListFilters {
 interface PowerFilters extends AptitudeFilters {
   level?: number;
 }
+
+export type RulesetSection =
+  | "races"
+  | "languages"
+  | "skills"
+  | "feats"
+  | "powers"
+  | "items"
+  | "classes"
+  | "aptitudes"
+  | "saves"
+  | "abilities"
+  | "mechanics";
 
 function listQuery(pageParam: number, { search, childOnly }: ListFilters) {
   return {

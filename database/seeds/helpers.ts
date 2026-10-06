@@ -30,6 +30,10 @@ import { reconcileAllBondedKinds } from "@/server/services/characters/levels/ind
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Alignment, Gender, ItemLocation } from "@/shared/enums.ts";
 
+type CharacterData = Parameters<typeof createCharacter>[2];
+
+type Picks<K extends string> = { levelIndex: number } & Record<K, string>;
+
 /** The seeded core rules' ids by name: its seed context, and the languages, races, classes and items characters name. */
 export type SeedContext = RulesetSeedContext & {
   langMap: Record<string, string>;
@@ -39,10 +43,6 @@ export type SeedContext = RulesetSeedContext & {
   klassMap: Record<string, Record<string, string>>;
   itemMap: Record<string, string>;
 };
-
-type CharacterData = Parameters<typeof createCharacter>[2];
-
-type Picks<K extends string> = { levelIndex: number } & Record<K, string>;
 
 /**
  * A character of the seed user's: who it is, its levels (each class's in order, from the first, by the hit points

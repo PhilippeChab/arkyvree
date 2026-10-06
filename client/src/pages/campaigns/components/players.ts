@@ -4,12 +4,12 @@ import type { RPC } from "@/client/src/services/rpc.ts";
 
 type PlayersApi = RPC["api"]["campaigns"][":id"]["players"];
 
+type PendingInvite = NonNullable<CampaignPlayer["invitesInCampaigns"]>[number];
+
 /** The Add / Edit Player form. The edit request takes the same body. */
 export type PlayerFormData = InferRequestType<PlayersApi["$post"]>["json"];
 
 export type CampaignPlayer = InferResponseType<PlayersApi["$get"], 200>["items"][number];
-
-type PendingInvite = NonNullable<CampaignPlayer["invitesInCampaigns"]>[number];
 
 /**
  * Where a player slot stands, with the name the dialogs give it. A pending

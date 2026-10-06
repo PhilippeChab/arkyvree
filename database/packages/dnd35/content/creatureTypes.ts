@@ -4,6 +4,22 @@ import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
 type CreatureType = (typeof CREATURE_TYPES)[number];
 
+const FAVORED_ENEMY_APTITUDE = "Favored Enemy";
+const FAVORED_ENEMY_SPECIALIZATION_APTITUDE = "Favored Enemy Specialization";
+
+const FAVORED_ENEMY_SPECIALIZATION_UMBRELLA = "Favored Enemy Specialization (Ranger)";
+const favoredEnemySpecializationUmbrella: FeatSeed = {
+  name: FAVORED_ENEMY_SPECIALIZATION_UMBRELLA,
+  description:
+    "At 5th level and every 5 levels thereafter, the ranger may increase the bonus against one of their favored enemies by +2.",
+  stackable: true,
+  selectable: false,
+  aptitudes: ["Ranger Class Feature"],
+  modifiers: [
+    { target: "aptitudes.favoredenemyspecialization.allowed", operator: "add", value: "1", valueType: "number" },
+  ],
+};
+
 export const CREATURE_TYPES = [
   "Aberration",
   "Animal",
@@ -39,8 +55,6 @@ export const CREATURE_TYPES = [
   "Vermin",
 ] as const;
 
-const FAVORED_ENEMY_APTITUDE = "Favored Enemy";
-const FAVORED_ENEMY_SPECIALIZATION_APTITUDE = "Favored Enemy Specialization";
 export const FAVORED_ENEMY_FAMILY = "Favored Enemy";
 
 const favoredEnemy: FeatSeed[] = CREATURE_TYPES.map((t) => ({
@@ -60,19 +74,6 @@ const favoredEnemySpecializationVariants: FeatSeed[] = CREATURE_TYPES.map((t) =>
   requirements: [eq(feat(`Favored Enemy: ${t}`))],
   properties: [{ type: FEAT_FAMILY, value: FAVORED_ENEMY_FAMILY }],
 }));
-
-const FAVORED_ENEMY_SPECIALIZATION_UMBRELLA = "Favored Enemy Specialization (Ranger)";
-const favoredEnemySpecializationUmbrella: FeatSeed = {
-  name: FAVORED_ENEMY_SPECIALIZATION_UMBRELLA,
-  description:
-    "At 5th level and every 5 levels thereafter, the ranger may increase the bonus against one of their favored enemies by +2.",
-  stackable: true,
-  selectable: false,
-  aptitudes: ["Ranger Class Feature"],
-  modifiers: [
-    { target: "aptitudes.favoredenemyspecialization.allowed", operator: "add", value: "1", valueType: "number" },
-  ],
-};
 
 /** A favored enemy feat per creature type, its specialization per type, and the ranger's pick of one. */
 export const favoredEnemyFeats: FeatSeed[] = [

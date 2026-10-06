@@ -18,12 +18,6 @@ import {
 
 import type { EntityType } from "./hashing.ts";
 
-export interface EntityWithId {
-  id: string;
-  rulesetId: string;
-  [key: string]: unknown;
-}
-
 /**
  * What the COW code calls on any ruleset entity's repository. Properties, which TypeScript checks strictly, except
  * `create`: a method, whose looser check lets each repository's insert model stand for a copied row.
@@ -35,6 +29,12 @@ interface EntityRepository {
   findMany: (db: Db, where: { ids: string[] }) => Promise<EntityWithId[]>;
   create(db: Db, values: Record<string, unknown>): Promise<EntityWithId[]>;
   delete: (db: Db, where: { id: string }) => Promise<unknown>;
+}
+
+export interface EntityWithId {
+  id: string;
+  rulesetId: string;
+  [key: string]: unknown;
 }
 
 export type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;

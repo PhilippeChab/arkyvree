@@ -8,8 +8,6 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 
 import { byName, useAptitudeLookup } from "./aptitudeLookup.ts";
 
-export type FeatFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["feats"]["$post"]>["json"];
-
 interface FeatFormFieldsProps {
   form: UseFormReturn<FeatFormData>;
   rulesetId: string;
@@ -18,6 +16,8 @@ interface FeatFormFieldsProps {
   /** A generated feat's name names its option (`Weapon Focus: Longsword`): it can't be changed. */
   generated?: boolean;
 }
+
+export type FeatFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["feats"]["$post"]>["json"];
 
 /** Name, description and aptitudes of a feat; the aptitudes live in the form as `aptitudeIds`, sorted by name. */
 export function FeatFormFields({ form, rulesetId, knownAptitudes = [], generated = false }: FeatFormFieldsProps) {

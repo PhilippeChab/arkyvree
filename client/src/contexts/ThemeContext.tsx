@@ -4,8 +4,6 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 
 import { prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
-export type ThemeMode = "light" | "dark" | "system";
-
 interface ThemeContextType {
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
@@ -26,6 +24,8 @@ type ContainedColor =
 interface CustomThemeProviderProps {
   children: React.ReactNode;
 }
+
+export type ThemeMode = "light" | "dark" | "system";
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 

@@ -30,6 +30,16 @@ import { stripSeparators } from "@/shared/text.ts";
 
 import { type RulesetRawData } from "./rawData.ts";
 
+type Chain = RulesetRawData[];
+
+/** What a composed customization keeps, drops or moves to a sibling loser's winner. */
+interface CustomizationScope {
+  overriddenIds: CachedCowData["overrideMap"];
+  siblingMap: CachedCowData["siblingMap"];
+  siblingToWinner: Map<string, string>;
+  visibleKlassLevelIds: Set<string>;
+}
+
 /** A ruleset's copy-on-write state, which its view composes by. */
 export type CachedCowData = CowData;
 
@@ -127,16 +137,6 @@ export interface CachedRulesetData {
    *  resolve, but lineage/sibling-aware code can reach it through here
    *  without taking `cowData` as a separate parameter. */
   cow: CachedCowData;
-}
-
-type Chain = RulesetRawData[];
-
-/** What a composed customization keeps, drops or moves to a sibling loser's winner. */
-interface CustomizationScope {
-  overriddenIds: CachedCowData["overrideMap"];
-  siblingMap: CachedCowData["siblingMap"];
-  siblingToWinner: Map<string, string>;
-  visibleKlassLevelIds: Set<string>;
 }
 
 function buildById<T extends { id: string }>(list: T[]): Map<string, T> {

@@ -1,16 +1,12 @@
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
-export type HandLocation = (typeof HAND_LOCATIONS)[number];
-
 /** An equipped inventory entry, as the slot rules read it. */
 interface EquippedEntry {
   location: string | null;
   /** Stored from 0; null outside the hands. */
   weaponSet: number | null;
 }
-
-export type SlotConflictReason = "occupied" | "fingers" | "hands" | "twoHanded" | "sameHand";
 
 /**
  * Why `location` can't take one more item, given the `equipped` entries (the item itself left out), with the entry in
@@ -25,10 +21,9 @@ type SlotConflict<T extends EquippedEntry> =
   | { reason: Exclude<SlotConflictReason, "fingers">; entry: T }
   | { reason: "fingers" };
 
-// Where equipped items go: the rules the server enforces and the inventory dialogs warn about.
+export type HandLocation = (typeof HAND_LOCATIONS)[number];
 
-/** The locations a weapon set applies to: the hands. */
-export const HAND_LOCATIONS = ["Main Hand", "Off Hand", "Two Handed"] as const satisfies readonly ItemLocation[];
+export type SlotConflictReason = "occupied" | "fingers" | "hands" | "twoHanded" | "sameHand";
 
 /** The locations that hold one item. */
 const SINGLE_OCCUPANCY_LOCATIONS = [
@@ -41,6 +36,11 @@ const SINGLE_OCCUPANCY_LOCATIONS = [
   "Waist",
   "Trinket",
 ] as const satisfies readonly ItemLocation[];
+
+// Where equipped items go: the rules the server enforces and the inventory dialogs warn about.
+
+/** The locations a weapon set applies to: the hands. */
+export const HAND_LOCATIONS = ["Main Hand", "Off Hand", "Two Handed"] as const satisfies readonly ItemLocation[];
 
 /** How many rings a character can wear. */
 export const MAX_FINGER_ITEMS = 2;

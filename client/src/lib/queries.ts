@@ -15,13 +15,13 @@ type CampaignListParams = InferRequestType<typeof rpc.api.campaigns.$get>["query
 type CharacterListParams = InferRequestType<typeof rpc.api.characters.$get>["query"];
 type RulesetListParams = InferRequestType<typeof rpc.api.rulesets.$get>["query"];
 
+type Direction = "asc" | "desc";
+
 export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];
 export type RulesetItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
 export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
 export type CampaignDetail = InferResponseType<(typeof rpc.api.campaigns)[":id"]["$get"], 200>;
 export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id"]["$get"], 200>;
-
-type Direction = "asc" | "desc";
 
 export interface CampaignListFilters {
   view: "active" | "archived";

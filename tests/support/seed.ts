@@ -6,10 +6,10 @@ import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Characters } from "@/server/repositories/index.ts";
 
+let seedContext: Promise<SeedContext> | undefined;
+
 /** An id no row has: for "not found" cases. */
 export const NIL_UUID = "00000000-0000-0000-0000-000000000000";
-
-let seedContext: Promise<SeedContext> | undefined;
 
 /** Ids of the seeded D&D 3.5 content, by name. Loaded once per test process. */
 export function getSeedCtx() {

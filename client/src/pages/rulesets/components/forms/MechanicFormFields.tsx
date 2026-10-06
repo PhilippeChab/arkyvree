@@ -5,11 +5,11 @@ import { DescriptionField, NameField } from "@/client/src/components/common/inde
 import { nameRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
-export type MechanicFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$post"]>["json"];
-
 interface MechanicFormFieldsProps {
   form: UseFormReturn<MechanicFormData>;
 }
+
+export type MechanicFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$post"]>["json"];
 
 export function MechanicFormFields({ form }: MechanicFormFieldsProps) {
   return (

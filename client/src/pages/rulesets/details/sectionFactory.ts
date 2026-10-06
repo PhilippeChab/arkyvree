@@ -6,13 +6,6 @@ import { ClassesSection, ItemsSection, SkillsSection, SpellsSection } from "./se
 
 type BaseRules = RulesetDetail["baseRules"];
 
-/** What the ruleset page passes every section tab. */
-export interface RulesetSectionProps {
-  ruleset: RulesetDetail;
-  childOnly: boolean;
-  onChildOnlyChange: (childOnly: boolean) => void;
-}
-
 type SectionComponent = (props: RulesetSectionProps) => ReactNode;
 
 interface SectionMap {
@@ -20,6 +13,13 @@ interface SectionMap {
   ItemsSection: SectionComponent;
   PowersSection: SectionComponent;
   SkillsSection: SectionComponent;
+}
+
+/** What the ruleset page passes every section tab. */
+export interface RulesetSectionProps {
+  ruleset: RulesetDetail;
+  childOnly: boolean;
+  onChildOnlyChange: (childOnly: boolean) => void;
 }
 
 const rulesetSections: Record<BaseRules, SectionMap> = {

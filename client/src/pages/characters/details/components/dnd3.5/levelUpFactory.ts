@@ -40,21 +40,12 @@ interface LevelUpHpState {
   setValue: (key: "selectedHP", value: number | null) => void;
 }
 
-export interface LevelUpHpStepProps {
-  wizard: LevelUpHpState;
-}
-
 interface LevelUpAttributeState {
   attributeData: AttributesData | undefined;
   isLoadingAttributes: boolean;
   attributesError: Error | null;
   selectedAttribute: string | null;
   setValue: (key: "selectedAttribute", value: string | null) => void;
-}
-
-export interface LevelUpAttributeStepProps {
-  wizard: LevelUpAttributeState;
-  baseRules: BaseRules;
 }
 
 /** The feat picker state a level wizard hands the Feats step. */
@@ -79,36 +70,11 @@ interface FeatPickerState {
   handleDeleteFeat: (featId: string, aptitudeId: string) => void;
 }
 
-export interface LevelUpFeatsStepProps {
-  wizard: FeatPickerState;
-  characterId: string;
-  /** The class and level the next pick lands on, for the feat detail's prerequisites. */
-  klassId: string;
-  klassLevel: number;
-  editingLevelId?: string;
-  pendingLevelKlassLevelIds?: string;
-  pendingLevelFeatPicks?: string;
-}
-
-/** The skills, feats and spells picked, as every level review lists them. */
-export interface LevelReviewState {
-  skillPointAllocations: Record<string, number>;
-  skillData: SkillsData | null | undefined;
-  selectedFeats: LevelUpFormData["selectedFeats"];
-  featData: FeatsData | null | undefined;
-  selectedPowers: LevelUpFormData["selectedPowers"];
-  powerData: PowersData | null | undefined;
-}
-
 interface LevelUpReviewState extends LevelReviewState {
   selectedClass: SelectedKlass | null;
   selectedHP: number | null;
   selectedAttribute: string | null;
   attributeData: AttributesData | undefined;
-}
-
-export interface LevelUpReviewStepProps {
-  wizard: LevelUpReviewState;
 }
 
 interface SkillPickerState {
@@ -123,10 +89,6 @@ interface SkillPickerState {
   perLevelSkillPoints?: number[];
 }
 
-export interface LevelUpSkillsStepProps {
-  wizard: SkillPickerState;
-}
-
 interface AddClassPlanState {
   classPlan: (SelectedKlass | null)[];
   slotKeys: number[];
@@ -134,18 +96,6 @@ interface AddClassPlanState {
   handleAddLevel: () => void;
   handleQuickAddLevel: (klass: SelectedKlass) => void;
   handleRemoveLevel: (index: number) => void;
-}
-
-export interface AddClassPlanStepProps {
-  wizard: AddClassPlanState;
-  /** Search-filtered list for the Autocomplete dropdown. */
-  availableKlasses: AvailableKlass[];
-  /** Unfiltered snapshot for the quick-add button row so searching doesn't
-   *  drop the character's existing classes from the "+ X" row. */
-  quickAddKlasses: AvailableKlass[];
-  isLoadingKlasses: boolean;
-  handleKlassListScroll: (event: React.UIEvent<HTMLElement>) => void;
-  setKlassSearch: (search: string) => void;
 }
 
 interface AddAttributeState {
@@ -158,20 +108,11 @@ interface AddAttributeState {
   levelDetails: Pick<PreviewLevelDetail, "klassName" | "level">[];
 }
 
-export interface AddAttributeStepProps {
-  wizard: AddAttributeState;
-  baseRules: BaseRules;
-}
-
 interface AddReviewState extends LevelReviewState {
   classPlan: (SelectedKlass | null)[];
   hpValues: (number | null)[];
   abilityIncreases: Record<number, string | null>;
   attributeData: AttributesData | undefined;
-}
-
-export interface AddReviewStepProps {
-  wizard: AddReviewState;
 }
 
 interface AddHpState {
@@ -181,10 +122,6 @@ interface AddHpState {
   handleHpRoll: (index: number) => void;
   handleHpRollAll: () => void;
   handleHpMaxAll: () => void;
-}
-
-export interface AddHpStepProps {
-  wizard: AddHpState;
 }
 
 /** The spell picker state a level wizard hands the Spells step. */
@@ -208,10 +145,6 @@ interface PowerPickerState {
   handlePowersScroll: (event: React.UIEvent<HTMLElement>) => void;
 }
 
-export interface LevelUpPowersStepProps {
-  wizard: PowerPickerState;
-}
-
 interface SectionMap {
   LevelUpHpStep: ComponentType<LevelUpHpStepProps>;
   LevelUpAttributeStep: ComponentType<LevelUpAttributeStepProps>;
@@ -223,6 +156,73 @@ interface SectionMap {
   AddHpStep: ComponentType<AddHpStepProps>;
   AddAttributeStep: ComponentType<AddAttributeStepProps>;
   AddReviewStep: ComponentType<AddReviewStepProps>;
+}
+
+export interface LevelUpHpStepProps {
+  wizard: LevelUpHpState;
+}
+
+export interface LevelUpAttributeStepProps {
+  wizard: LevelUpAttributeState;
+  baseRules: BaseRules;
+}
+
+export interface LevelUpFeatsStepProps {
+  wizard: FeatPickerState;
+  characterId: string;
+  /** The class and level the next pick lands on, for the feat detail's prerequisites. */
+  klassId: string;
+  klassLevel: number;
+  editingLevelId?: string;
+  pendingLevelKlassLevelIds?: string;
+  pendingLevelFeatPicks?: string;
+}
+
+/** The skills, feats and spells picked, as every level review lists them. */
+export interface LevelReviewState {
+  skillPointAllocations: Record<string, number>;
+  skillData: SkillsData | null | undefined;
+  selectedFeats: LevelUpFormData["selectedFeats"];
+  featData: FeatsData | null | undefined;
+  selectedPowers: LevelUpFormData["selectedPowers"];
+  powerData: PowersData | null | undefined;
+}
+
+export interface LevelUpReviewStepProps {
+  wizard: LevelUpReviewState;
+}
+
+export interface LevelUpSkillsStepProps {
+  wizard: SkillPickerState;
+}
+
+export interface AddClassPlanStepProps {
+  wizard: AddClassPlanState;
+  /** Search-filtered list for the Autocomplete dropdown. */
+  availableKlasses: AvailableKlass[];
+  /** Unfiltered snapshot for the quick-add button row so searching doesn't
+   *  drop the character's existing classes from the "+ X" row. */
+  quickAddKlasses: AvailableKlass[];
+  isLoadingKlasses: boolean;
+  handleKlassListScroll: (event: React.UIEvent<HTMLElement>) => void;
+  setKlassSearch: (search: string) => void;
+}
+
+export interface AddAttributeStepProps {
+  wizard: AddAttributeState;
+  baseRules: BaseRules;
+}
+
+export interface AddReviewStepProps {
+  wizard: AddReviewState;
+}
+
+export interface AddHpStepProps {
+  wizard: AddHpState;
+}
+
+export interface LevelUpPowersStepProps {
+  wizard: PowerPickerState;
 }
 
 const rulesetSections: Record<BaseRules, SectionMap> = {

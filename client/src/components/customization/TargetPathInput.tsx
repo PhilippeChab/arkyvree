@@ -8,11 +8,6 @@ import type { PathCompletion, PathValidationResult, TargetPath } from "@/shared/
 
 import { TargetPathBrowser } from "./TargetPathBrowser.tsx";
 
-export type PathInfo = Pick<
-  TargetPath,
-  "path" | "valueType" | "operators" | "possibleValues" | "setValues" | "literalOnly"
->;
-
 interface TargetPathInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -27,6 +22,11 @@ interface TargetPathInputProps {
   fullWidth?: boolean;
   onPathInfoChange?: (pathInfo: PathInfo | null) => void;
 }
+
+export type PathInfo = Pick<
+  TargetPath,
+  "path" | "valueType" | "operators" | "possibleValues" | "setValues" | "literalOnly"
+>;
 
 export function TargetPathInput({
   value,

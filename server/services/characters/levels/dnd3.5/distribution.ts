@@ -18,16 +18,6 @@ import { stripSeparators } from "@/shared/text.ts";
 type FeatSlots = Record<string, number[]>;
 type PowerSlots = Record<string, Record<string, number>[]>;
 
-export interface PerLevelDistributionData {
-  perLevelSkillPoints: number[];
-  perLevelClassSkillIds: string[][];
-  perLevelFeatSlots: FeatSlots;
-  perLevelPowerSlots: PowerSlots;
-  baseCharacterLevel: number;
-  /** Map of skillId → { isClassSkill, currentRank } for existing character skills */
-  skillContexts: Map<string, { isClassSkill: boolean; currentRank: number }>;
-}
-
 interface DistributedLevel {
   skills: Record<string, number>;
   feats: Record<string, string[]>;
@@ -38,6 +28,16 @@ interface DistributedLevel {
 interface SlotDeltas {
   feats: Record<string, number>;
   powers: Record<string, Record<string, number>>;
+}
+
+export interface PerLevelDistributionData {
+  perLevelSkillPoints: number[];
+  perLevelClassSkillIds: string[][];
+  perLevelFeatSlots: FeatSlots;
+  perLevelPowerSlots: PowerSlots;
+  baseCharacterLevel: number;
+  /** Map of skillId → { isClassSkill, currentRank } for existing character skills */
+  skillContexts: Map<string, { isClassSkill: boolean; currentRank: number }>;
 }
 
 /** The slots an all-known spell level counts as: every spell of its level. */

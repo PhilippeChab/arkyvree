@@ -6,14 +6,14 @@ import type { RulesetAbility } from "@/client/src/hooks/index.ts";
 import { nameRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
-export type SaveFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["saves"]["$post"]>["json"];
-
 type Ability = RulesetAbility;
 
 interface SaveFormFieldsProps {
   form: UseFormReturn<SaveFormData>;
   abilities: Ability[];
 }
+
+export type SaveFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["saves"]["$post"]>["json"];
 
 export function SaveFormFields({ form, abilities }: SaveFormFieldsProps) {
   return (

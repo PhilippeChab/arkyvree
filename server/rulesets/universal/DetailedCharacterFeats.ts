@@ -3,16 +3,16 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Feat } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-export type FeatEntry = {
-  name: string;
-  possessed: boolean;
-  count: number;
-};
-
 type FeatGroupEntry = Record<string, FeatEntry>;
 
 type DetailedCharacterComprehensiveFeats = {
   [key: string]: FeatEntry | FeatGroupEntry;
+};
+
+export type FeatEntry = {
+  name: string;
+  possessed: boolean;
+  count: number;
 };
 
 const NAVIGATABLE_PATHS = [

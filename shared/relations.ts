@@ -31,6 +31,10 @@ import type {
   usersInAccount,
 } from "@/drizzle/schema.ts";
 
+type PowerAptitude = typeof powersAptitudesInRules.$inferSelect;
+
+type FeatAptitude = typeof featsAptitudesInRules.$inferSelect;
+
 export type User = typeof usersInAccount.$inferSelect;
 export type Session = typeof sessionsInAccount.$inferSelect;
 export type Character = typeof charactersInCharacter.$inferSelect;
@@ -40,13 +44,13 @@ export type Campaign = typeof campaignsInCampaign.$inferSelect;
 export type Player = typeof playersInCampaign.$inferSelect;
 export type Skill = typeof skillsInRules.$inferSelect;
 export type Power = typeof powersInRules.$inferSelect;
-type PowerAptitude = typeof powersAptitudesInRules.$inferSelect;
+
 export type PowerWithAptitudes = Power & {
   powersAptitudesInRules: (PowerAptitude & { aptitudesInRule: Aptitude })[];
 };
 export type KlassLevelPower = typeof klassLevelPowersInRules.$inferSelect;
 export type Feat = typeof featsInRules.$inferSelect;
-type FeatAptitude = typeof featsAptitudesInRules.$inferSelect;
+
 export type FeatWithAptitudes = Feat & {
   featsAptitudesInRules: (FeatAptitude & { aptitudesInRule: Aptitude })[];
 };

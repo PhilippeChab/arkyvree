@@ -2,8 +2,6 @@ import { isRecord } from "@/shared/isRecord.ts";
 
 /** Replacements, applied in order. */
 type Replacements = [RegExp, string][];
-/** Book abbreviation suffixes found in scraped feat prerequisites (e.g., "Dodge (PH)"). */
-export const BOOK_ABBREV_PATTERN = /\s*\((?:CAd|CAr|CA|CC|CD|CS|CW|DMG|DMG2|ECS|ELH|FR|MIC|MM|PH|PH2|PHB|PHB2|CV)\)/;
 
 // All known source book names — used across multiple sanitization rules
 const BOOK =
@@ -58,6 +56,10 @@ const HTML_FIXES: Replacements = [
 
 /** Keys whose string values get full sanitization (encoding + book-reference stripping) */
 const DESCRIPTION_KEYS = new Set(["description", "benefit", "normal", "special", "prerequisiteText", "text"]);
+
+/** Book abbreviation suffixes found in scraped feat prerequisites (e.g., "Dodge (PH)"). */
+export const BOOK_ABBREV_PATTERN = /\s*\((?:CAd|CAr|CA|CC|CD|CS|CW|DMG|DMG2|ECS|ELH|FR|MIC|MM|PH|PH2|PHB|PHB2|CV)\)/;
+
 function applyAll(text: string, replacements: Replacements) {
   return replacements.reduce((result, [pattern, replacement]) => result.replace(pattern, replacement), text);
 }

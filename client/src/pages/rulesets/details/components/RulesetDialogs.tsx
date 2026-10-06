@@ -22,10 +22,6 @@ import { nameRules } from "@/client/src/lib/validation.ts";
 import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
-export type EditRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["$put"]>["json"];
-
-export type ForkRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["fork"]["$post"]>["json"];
-
 interface EditRulesetDialogProps {
   open: boolean;
   onClose: () => void;
@@ -67,6 +63,10 @@ interface UnsubscribeExtensionDialogProps {
   isLoading: boolean;
   extensionName: string;
 }
+
+export type EditRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["$put"]>["json"];
+
+export type ForkRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["fork"]["$post"]>["json"];
 
 /** Public / Private choice; the selected option can't be toggled off. */
 function PrivacyToggle({

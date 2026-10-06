@@ -7,6 +7,30 @@ import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+/** A spell a class level picked or granted. */
+interface LevelSpell {
+  id: string;
+  name: string;
+  aptitudeId: string;
+  powerLevel?: number | null;
+  saveName?: string | null;
+  saveEffect?: string | null;
+  description?: string | null;
+}
+
+/** A spell a modifier gives without a pick. */
+interface GivenSpell {
+  id: string;
+  name: string;
+  aptitudeId: string;
+  level: number;
+  saveName: string | null;
+  saveEffect: string | null;
+  dc: number | null;
+  description: string | null;
+  properties: Record<string, string>;
+}
+
 /** The property a spell's school is in, which the sheets show as its own column. */
 
 /**
@@ -46,30 +70,6 @@ export interface SpellGroup {
 export interface AptitudeSpells {
   aptitudeName: string;
   levels: SpellGroup[];
-}
-
-/** A spell a class level picked or granted. */
-interface LevelSpell {
-  id: string;
-  name: string;
-  aptitudeId: string;
-  powerLevel?: number | null;
-  saveName?: string | null;
-  saveEffect?: string | null;
-  description?: string | null;
-}
-
-/** A spell a modifier gives without a pick. */
-interface GivenSpell {
-  id: string;
-  name: string;
-  aptitudeId: string;
-  level: number;
-  saveName: string | null;
-  saveEffect: string | null;
-  dc: number | null;
-  description: string | null;
-  properties: Record<string, string>;
 }
 
 /** What the groups read of a character: its classes' levels, its computed powers, its aptitudes and spell tags. */

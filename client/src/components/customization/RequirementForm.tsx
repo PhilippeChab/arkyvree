@@ -7,13 +7,6 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 
 import { ConditionFields } from "./ConditionFields.tsx";
 
-export type RequirementFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"]["$post"]
->["json"];
-
-/** A condition checks a path; a chaining node joins its children with AND / OR. */
-export type RequirementType = "condition" | "chaining";
-
 interface RequirementFormProps {
   form: UseFormReturn<RequirementFormData>;
   type: RequirementType;
@@ -21,6 +14,13 @@ interface RequirementFormProps {
   rulesetId: string;
   mode: "create" | "edit";
 }
+
+export type RequirementFormData = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"]["$post"]
+>["json"];
+
+/** A condition checks a path; a chaining node joins its children with AND / OR. */
+export type RequirementType = "condition" | "chaining";
 
 const CHAINING_OPERATORS = [
   { value: "and", label: "AND" },
