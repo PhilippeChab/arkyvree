@@ -171,21 +171,21 @@ const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => 
         (r) => `extends with ${r.extension}`,
       ),
   },
-  // An extension's copy of a base entity, with the hash copy-on-write compares
+  // An extension's copy of a base entity
   {
     table: "rules.entity_snapshots",
     pull: async (query, rulesetId) =>
       keyed(
-        await query<{ entity_type: string; source: string | null; forked: string | null; content_hash: string }>(
+        await query<{ entity_type: string; source: string | null; forked: string | null }>(
           `with labels as (${ENTITY_LABELS})
-           select s.entity_type, src.label as source, frk.label as forked, s.content_hash
+           select s.entity_type, src.label as source, frk.label as forked
              from rules.entity_snapshots s
              left join labels src on src.id = s.source_entity_id
              left join labels frk on frk.id = s.forked_entity_id
             where s.ruleset_id = $1`,
           [rulesetId],
         ),
-        (r) => `${r.entity_type}: ${r.source ?? "<unresolved>"} → ${r.forked ?? "<unresolved>"} #${r.content_hash}`,
+        (r) => `${r.entity_type}: ${r.source ?? "<unresolved>"} → ${r.forked ?? "<unresolved>"}`,
       ),
   },
   {

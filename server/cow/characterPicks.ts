@@ -7,9 +7,8 @@ import {
   CharacterLevels,
   CharacterLevelSkills,
   Characters,
+  type RulesetEntityType,
 } from "@/server/repositories/index.ts";
-
-import type { EntityType } from "./hashing.ts";
 
 /**
  * Returns true if any character on a ruleset that depends on `rulesetId` has
@@ -21,10 +20,10 @@ import type { EntityType } from "./hashing.ts";
  * Used as an inUse guard before any code path that would hard-delete an entity
  * — entity-delete services and revertOverride.
  * Saves / mechanics / abilities don't have a character-side pick path and
- * always return false. Accepts "klass_levels" alongside the EntityType union
+ * always return false. Accepts "klass_levels" alongside the entity types
  * so class-level removal paths can use the same helper.
  */
-type CharacterPickTarget = EntityType | "klass_levels";
+type CharacterPickTarget = RulesetEntityType | "klass_levels";
 
 export async function hasCharacterPicks(
   tx: Db,

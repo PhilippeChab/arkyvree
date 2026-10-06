@@ -1,22 +1,16 @@
 import { type Db, withCowContext } from "@/server/database/index.ts";
-import {
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassLevels,
-  KlassLevelSaves,
-  KlassSkills,
-  Modifiers,
-  Properties,
-  Requirements,
-} from "@/server/repositories/index.ts";
+import { Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
-import type { EntityCustomizations, KlassRelationships } from "./hashing.ts";
+/** An entity's customizations: its modifiers, with their requirements apart, its properties and its requirements. */
+export interface EntityCustomizations {
+  modifiers: Modifier[];
+  properties: Property[];
+  requirements: Requirement[];
+  modifierRequirements: Requirement[];
+}
 
-/**
- * Shape-only helper: groups four sets of customization rows into the `Map<entityId, EntityCustomizations>` structure
- * callers expect. Pure JS, no DB access — the two fetchers below differ only in *how* the rows are fetched (proxied
- * repo vs raw Drizzle).
- */
+/** Each entity's customizations, by its id: the rows grouped by the entity they belong to, a modifier's by its source. */
 function buildCustomizationsMap(
   entityIds: string[],
   modifiers: EntityCustomizations["modifiers"],
@@ -41,6 +35,10 @@ function buildCustomizationsMap(
   return map;
 }
 
+/**
+ * The customizations of `entityIds` (of `entityType`), by entity: their properties and requirements, and, for a type
+ * modifiers have (`sourceType`), their modifiers with each one's requirements.
+ */
 export async function fetchEntityCustomizations(
   tx: Db,
   entityIds: string[],
@@ -58,104 +56,6 @@ export async function fetchEntityCustomizations(
     modifierIds.length > 0 ? await Requirements.findMany(tx, { entityIds: modifierIds, entityType: "modifiers" }) : [];
 
   return buildCustomizationsMap(entityIds, modifiers, properties, requirements, modifierRequirements);
-}
-
-/** Also fetch klass_level customizations (modifiers, properties, requirements) for snapshot hashing */
-export async function fetchKlassLevelCustomizations(
-  tx: Db,
-  klassIds: string[],
-): Promise<Map<string, EntityCustomizations>> {
-  if (klassIds.length === 0) return new Map();
-
-  // Fetch all levels for these klasses
-  const allLevelIds: string[] = [];
-  const klassToLevelIds = new Map<string, string[]>();
-  for (const klassId of klassIds) {
-    const levels = await KlassLevels.findMany(tx, { klassId });
-    const levelIds = levels.map((l) => l.id);
-    klassToLevelIds.set(klassId, levelIds);
-    allLevelIds.push(...levelIds);
-  }
-
-  if (allLevelIds.length === 0) return new Map();
-
-  const levelCustomizations = await fetchEntityCustomizations(tx, allLevelIds, "klass_levels", "klass_levels");
-
-  // Merge per-klass
-  const map = new Map<string, EntityCustomizations>();
-  for (const klassId of klassIds) {
-    const levelIds = klassToLevelIds.get(klassId) ?? [];
-    const merged: EntityCustomizations = { modifiers: [], properties: [], requirements: [], modifierRequirements: [] };
-    for (const levelId of levelIds) {
-      const lc = levelCustomizations.get(levelId);
-      if (lc) {
-        merged.modifiers.push(...lc.modifiers);
-        merged.properties.push(...lc.properties);
-        merged.requirements.push(...lc.requirements);
-        merged.modifierRequirements.push(...lc.modifierRequirements);
-      }
-    }
-    map.set(klassId, merged);
-  }
-
-  return map;
-}
-
-export async function fetchKlassRelationships(tx: Db, klassIds: string[]): Promise<Map<string, KlassRelationships>> {
-  if (klassIds.length === 0) return new Map();
-
-  const map = new Map<string, KlassRelationships>();
-  for (const klassId of klassIds) {
-    map.set(klassId, { levels: [], levelSaves: [], levelFeats: [], levelPowers: [], klassSkills: [] });
-  }
-
-  const klassSkills = await KlassSkills.findMany(tx, { klassIds });
-
-  for (const ks of klassSkills) {
-    map.get(ks.klassId)?.klassSkills.push(ks);
-  }
-
-  // Fetch levels for all klasses (serial: tx client can only run one query at a time)
-  const allLevels: { klassId: string; levels: Awaited<ReturnType<typeof KlassLevels.findMany>> }[] = [];
-  for (const klassId of klassIds) {
-    const levels = await KlassLevels.findMany(tx, { klassId });
-    allLevels.push({ klassId, levels });
-  }
-
-  const allLevelIds: string[] = [];
-  for (const { klassId, levels } of allLevels) {
-    const rel = map.get(klassId)!;
-    rel.levels = levels.map((l) => ({ level: l.level, id: l.id }));
-    allLevelIds.push(...levels.map((l) => l.id));
-  }
-
-  if (allLevelIds.length > 0) {
-    const levelSaves = await KlassLevelSaves.findMany(tx, { klassLevelIds: allLevelIds });
-    const levelFeats = await KlassLevelFeats.findMany(tx, { klassLevelIds: allLevelIds });
-    const levelPowers = await KlassLevelPowers.findMany(tx, { klassLevelIds: allLevelIds });
-
-    const levelToKlass = new Map<string, string>();
-    for (const { klassId, levels } of allLevels) {
-      for (const level of levels) {
-        levelToKlass.set(level.id, klassId);
-      }
-    }
-
-    for (const ls of levelSaves) {
-      const klassId = levelToKlass.get(ls.klassLevelId);
-      if (klassId) map.get(klassId)?.levelSaves.push(ls);
-    }
-    for (const lf of levelFeats) {
-      const klassId = levelToKlass.get(lf.klassLevelId);
-      if (klassId) map.get(klassId)?.levelFeats.push(lf);
-    }
-    for (const lp of levelPowers) {
-      const klassId = levelToKlass.get(lp.klassLevelId);
-      if (klassId) map.get(klassId)?.levelPowers.push(lp);
-    }
-  }
-
-  return map;
 }
 
 /**

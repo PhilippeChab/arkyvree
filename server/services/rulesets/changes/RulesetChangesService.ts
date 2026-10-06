@@ -1,5 +1,5 @@
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { type EntityType, hasCharacterPicks } from "@/server/cow/index.ts";
+import { hasCharacterPicks } from "@/server/cow/index.ts";
 import { db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -103,7 +103,7 @@ class RulesetChangesService {
     return changes;
   }
 
-  async revertOverride(session: Session, rulesetId: string, entityType: EntityType, entityId: string) {
+  async revertOverride(session: Session, rulesetId: string, entityType: RulesetEntityType, entityId: string) {
     const result = await withTransaction(async (tx) => {
       const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
       if (!ruleset) {

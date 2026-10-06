@@ -1,4 +1,4 @@
-import { ENTITY_REPOS, type EntityType } from "@/server/cow/index.ts";
+import { ENTITY_REPOS } from "@/server/cow/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import {
   FeatsAptitudes,
@@ -8,13 +8,14 @@ import {
   KlassLevelSaves,
   KlassSkills,
   PowersAptitudes,
+  type RulesetEntityType,
 } from "@/server/repositories/index.ts";
 
 /**
  * Hard-deletes an entity along with its junctions and customizations (and, for klasses, its klass_levels). Used by
  * revertOverride and unsubscribeExtension.
  */
-export async function deleteEntityWithCascade(tx: Db, entityType: EntityType, entityId: string) {
+export async function deleteEntityWithCascade(tx: Db, entityType: RulesetEntityType, entityId: string) {
   // A tombstone may already have no row. Still clean up any remaining children
   // when restoring it; creation cannot succeed against an absent owner.
   await ENTITY_REPOS[entityType].lock(tx, { id: entityId });
