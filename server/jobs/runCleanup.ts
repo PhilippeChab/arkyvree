@@ -1,4 +1,4 @@
-import type { Task } from "graphile-worker";
+import type { JobHelpers } from "graphile-worker";
 
 import { withTransaction } from "@/server/database/index.ts";
 import {
@@ -18,7 +18,7 @@ function retentionCutoff(): string {
   return date.toISOString();
 }
 
-export const runCleanupTask: Task = async (_, helpers) => {
+export async function runCleanupTask(_payload: unknown, helpers: JobHelpers): Promise<void> {
   const now = new Date().toISOString();
   const cutoff = retentionCutoff();
 
@@ -75,4 +75,4 @@ export const runCleanupTask: Task = async (_, helpers) => {
       .join(", ");
     helpers.logger.info(`Purged: ${summary}`);
   }
-};
+}

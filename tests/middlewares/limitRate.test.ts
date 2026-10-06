@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { Hono, type MiddlewareHandler } from "hono";
 
 import { toJson } from "@/server/errors/index.ts";
-import { limitRate } from "@/server/middlewares/rateLimit.ts";
+import { limitRate } from "@/server/middlewares/limitRate.ts";
 import { expectStatus } from "@/tests/support/api.ts";
 
 /** An app behind `limiter`, answering errors as the application does. */

@@ -37,7 +37,7 @@ describe("file layout", () => {
     expect(
       await lintRepo(
         {
-          // In order; a constant a helper builds sits with the helpers, an export a helper calls is one
+          // In order; an export a helper calls is one
           "server/a/ordered.ts": lines(
             'import { x } from "@/x.ts";',
             "type A = number;",
@@ -48,11 +48,25 @@ describe("file layout", () => {
             "function helper() {",
             "  return build(2);",
             "}",
-            "const TABLE = helper();",
-            "export const main = () => TABLE;",
+            "export const main = () => helper();",
           ),
-          // A script: what follows its first effect is its run
+          // A script runs last, in a function it calls
+          "scripts/main.ts": lines(
+            "const URL = process.env.X;",
+            "async function main() {",
+            "  check(URL);",
+            "  go(connect(URL));",
+            "}",
+            "await main();",
+          ),
+          // Declared after a step of its run
           "scripts/run.ts": lines("const URL = process.env.X;", "check(URL);", "const db = connect(URL);", "go(db);"),
+          // A constant one of the file's functions builds, and one the file keeps built from one it exports
+          "server/a/built.ts": lines("function f() {", "  return 1;", "}", "export const N = f();"),
+          "server/a/fromExport.ts": lines("export const A = 1;", "const B = A + 1;", "export const f = () => B;"),
+          // A module runs nothing as it loads; a script marked a module by `export {}` runs
+          "server/a/runs.ts": lines("export function f() {", "  return 1;", "}", "f();"),
+          "scripts/marked.ts": lines("async function main() {}", "export {};", "await main();"),
           // What a tool writes keeps its layout
           "database/packages/p/generated/feats.ts": lines("export const a = () => 1;", "type B = number;"),
           // Out of order: a type below a constant, a constant below a helper, a helper below an export
@@ -73,6 +87,11 @@ describe("file layout", () => {
       ),
     ).toEqual([
       "file-layout client/src/helper.tsx",
+      "file-layout scripts/run.ts",
+      "file-layout scripts/run.ts",
+      "file-layout server/a/built.ts",
+      "file-layout server/a/fromExport.ts",
+      "file-layout server/a/runs.ts",
       "file-layout server/a/type.ts",
       "file-layout shared/constant.ts",
       "file-layout tests/a.test.ts",
@@ -92,7 +111,7 @@ describe("file layout", () => {
         "",
         "export const BASE = 1;",
         "",
-        "const DOUBLED = BASE * 2;",
+        "export const DOUBLED = BASE * 2;",
         "",
         "const LOCAL = 3;",
         "",
@@ -117,7 +136,7 @@ describe("file layout", () => {
         "",
         "export const BASE = 1;",
         "",
-        "const DOUBLED = BASE * 2;",
+        "export const DOUBLED = BASE * 2;",
         "",
         "export const TOTAL = LOCAL + 1;",
         "",
@@ -128,14 +147,14 @@ describe("file layout", () => {
     );
   });
 
-  test("--fix orders a file, keeping a statement above what uses it, its comments with it and a #! line first", async () => {
+  test("--fix orders a file, keeping a statement above what uses it and its comments with it, a #! line first, but nothing after a step", async () => {
     const out = await fixed({
       "server/a.ts": lines(
         'import { x } from "@/x.ts";',
         "",
         "/** The entry. */",
         "export function main(s: Shape) {",
-        "  return helper(s.n) + TABLE;",
+        "  return helper(s.n);",
         "}",
         "",
         "// Shared",
@@ -143,13 +162,12 @@ describe("file layout", () => {
         "  return n * LIMIT + x;",
         "}",
         "",
-        "const TABLE = helper(2);",
-        "",
         "type Shape = { n: number }; // why",
         "",
         "const LIMIT = 3;",
       ),
       "scripts/b.ts": lines("#!/usr/bin/env bun", "go(f());", "function f() {", "  return 1;", "}", "type T = number;"),
+      "scripts/c.ts": lines("#!/usr/bin/env bun", "function f() {", "  return 1;", "}", "type T = number;"),
     });
     expect(out["server/a.ts"]).toBe(
       lines(
@@ -164,17 +182,58 @@ describe("file layout", () => {
         "  return n * LIMIT + x;",
         "}",
         "",
-        "const TABLE = helper(2);",
-        "",
         "/** The entry. */",
         "export function main(s: Shape) {",
-        "  return helper(s.n) + TABLE;",
+        "  return helper(s.n);",
         "}",
       ),
     );
-    expect(out["scripts/b.ts"]).toBe(
-      lines("#!/usr/bin/env bun", "type T = number;", "", "function f() {", "  return 1;", "}", "", "go(f());"),
+    // A `#!` line stays first
+    expect(out["scripts/c.ts"]).toBe(
+      lines("#!/usr/bin/env bun", "type T = number;", "", "function f() {", "  return 1;", "}"),
     );
+    // A script's steps run in order: what follows one is reported, and moved by hand
+    expect(out["scripts/b.ts"]).toBe(
+      lines("#!/usr/bin/env bun", "go(f());", "function f() {", "  return 1;", "}", "type T = number;"),
+    );
+  });
+
+  test("--fix never changes the order code runs in, and a directive prologue opens a file", async () => {
+    const running = lines(
+      "export const A = await a();",
+      "",
+      "const B = await b();",
+      "",
+      "export function f() {",
+      "  return A + B;",
+      "}",
+    );
+    // A class's `extends` and an `export default` value run too
+    const extending = lines(
+      "export class Repo extends make() {}",
+      "",
+      "const B = compute();",
+      "",
+      "export const C = B;",
+    );
+    const defaulting = lines("export default defineConfig({});", "", "const B = compute();");
+    const out = await fixed({
+      "server/running.ts": running,
+      "server/extending.ts": extending,
+      "server/defaulting.ts": defaulting,
+    });
+    // Own before exported would run `b()` first: reported, never fixed
+    expect(out["server/running.ts"]).toBe(running);
+    expect(out["server/extending.ts"]).toBe(extending);
+    expect(out["server/defaulting.ts"]).toBe(defaulting);
+    expect(await lintRepo({ "server/running.ts": running }, ["file-layout"])).toEqual([
+      "file-layout server/running.ts",
+    ]);
+    expect(
+      await lintRepo({ "server/strict.ts": lines('"use strict";', "const N = 1;", "export const f = () => N;") }, [
+        "file-layout",
+      ]),
+    ).toEqual([]);
   });
 
   test("--fix lifts a helper out of a `describe`, unless it uses the block's names or its name is taken", async () => {

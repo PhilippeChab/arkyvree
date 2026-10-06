@@ -1,36 +1,9 @@
-import { resolve } from "path";
-
 import { defineConfig, devices } from "@playwright/test";
-import dotenv from "dotenv";
 
-import { databaseOf, withDatabase } from "./scripts/db/clone-database.ts";
+import { prepareE2eEnvironment } from "./tests/fixtures/e2eEnvironment.ts";
 
-/**
- * Read environment variables from test environment file
- */
-dotenv.config({ path: resolve(process.cwd(), ".env.test") });
-
-/** The server the run starts, on a port of its own: the API, its websocket, and the built client, served as in production. */
-const port = process.env.E2E_PORT ?? "8010";
-process.env.PORT = port;
-process.env.E2E_BASE_URL = process.env.APP_URL = `http://localhost:${port}`;
-
-/*
- * The run has a database of its own: a copy, made when its server starts, of the e2e template, which `bun run
- * test:db:reset` copies from the seeded test database. So a run never locks the unit tests' database, nor holds what
- * another run writes: runs on other ports have other copies. Its name keeps "test", which turns off the rate limits.
- * The workers re-read this file with the environment it sets: only the first read derives the names.
- */
-process.env.TEMPLATE_DATABASE_URL ??= withDatabase(
-  process.env.DATABASE_URL!,
-  `${databaseOf(process.env.DATABASE_URL!).name}_e2e`,
-);
-process.env.DATABASE_URL = withDatabase(
-  process.env.TEMPLATE_DATABASE_URL,
-  `${databaseOf(process.env.TEMPLATE_DATABASE_URL).name}_${port}`,
-);
-// The websocket listener prefers a direct URL: it must listen on the run's database too
-process.env.DIRECT_DATABASE_URL = process.env.DATABASE_URL;
+// Before anything reads the environment: `.env.test`, and the run's port, URLs and database
+const port = prepareE2eEnvironment();
 
 const coverage = process.env.E2E_COVERAGE === "1";
 

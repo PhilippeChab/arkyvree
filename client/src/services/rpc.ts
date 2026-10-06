@@ -1,7 +1,7 @@
 import { hc } from "hono/client";
 
 import { ApiError, type ApiValidationIssue } from "@/client/src/services/apiError.ts";
-import type { ErrorJson } from "@/server/errors/index.ts";
+import { apiFetch } from "@/client/src/services/apiFetch.ts";
 import type { Application } from "@/server/routers/application.ts";
 
 export type RPC = typeof _rpc;
@@ -16,40 +16,13 @@ const host = document.location.origin;
 // We need to do this in order for tsserver to be usuable
 const _rpc = hc<Application>("");
 
-function _rpcWithTypes(...args: Parameters<typeof hc>): RPC {
-  return hc<Application>(...args);
-}
-
-async function defaultFetch(input: URL | RequestInfo, init?: RequestInit) {
-  const response = await fetch(input, {
-    ...init,
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    // Errors from the API are JSON, but a proxy in front of it (502, 413, …)
-    // can answer with HTML. Fall back to a generic message instead of
-    // surfacing a JSON parse error.
-    const errorData: Partial<ErrorJson> = await response.json().catch(() => ({}));
-
-    throw new ApiError(
-      errorData.message || "An unexpected error occurred",
-      response.status,
-      errorData.error || "UnknownError",
-      errorData.issues,
-    );
-  }
-
-  return response;
-}
-
-export const rpc = _rpcWithTypes(`${host}/`, { fetch: defaultFetch });
+export const rpc: RPC = hc<Application>(`${host}/`, { fetch: apiFetch });
 
 export { ApiError, type ApiValidationIssue };
 
 /**
  * Parse an RPC response as its success body type. Non-2xx responses never
- * reach callers — `defaultFetch` has already thrown `ApiError` — so there is
+ * reach callers — `apiFetch` has already thrown `ApiError` — so there is
  * no `response.ok` check to write: `queryFn: () => parseResponse(rpc.api.x.$get())`.
  */
 export { parseResponse } from "hono/client";

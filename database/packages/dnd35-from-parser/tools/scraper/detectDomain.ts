@@ -15,36 +15,22 @@ import { stripSeparators } from "@/shared/text.ts";
 // Skill name → slug mapping (extends base with paren-stripped variants)
 // ---------------------------------------------------------------------------
 
-const SKILL_MAP: Record<string, string> = { ...BASE_SKILL_MAP };
-
 // "Knowledge (nature)" → "knowledgenature", etc.
 // Also index without parens: "knowledge nature" → "knowledgenature"
-for (const name of SKILL_NAMES) {
-  const noParen = name.replace(/\s*\([^)]*\)\s*/, " ").trim();
-  if (noParen !== name) {
-    SKILL_MAP[noParen.toLowerCase()] = stripSeparators(name);
-  }
-}
+const SKILL_MAP: Record<string, string> = {
+  ...BASE_SKILL_MAP,
+  ...Object.fromEntries(
+    SKILL_NAMES.map((name) => [name, name.replace(/\s*\([^)]*\)\s*/, " ").trim()] as const)
+      .filter(([name, noParen]) => noParen !== name)
+      .map(([name, noParen]) => [noParen.toLowerCase(), stripSeparators(name)]),
+  ),
+};
 
 // ---------------------------------------------------------------------------
 // All Knowledge skills for "Add all Knowledge skills" pattern
 // ---------------------------------------------------------------------------
 
 const ALL_KNOWLEDGE_SKILLS = SKILL_NAMES.filter((n) => n.startsWith("Knowledge"));
-
-// ---------------------------------------------------------------------------
-// Detect domain modifiers from description text
-// ---------------------------------------------------------------------------
-
-export function buildDomainMapping(
-  raw: DomainReference["raw"],
-  detected: DomainReference["detected"],
-  overrides: NonNullable<DomainReference["overrides"]>,
-): DomainReference["mapping"] {
-  return modifierMapping(raw, detected, overrides, (override?: NonNullable<DomainReference["overrides"]>[string]) =>
-    override?.featPool ? { featPool: override.featPool } : {},
-  );
-}
 
 function detectDomainModifiers(description: string): ModifierDetection<Modifier> {
   const modifiers: Modifier[] = [];
@@ -91,6 +77,20 @@ function detectDomainModifiers(description: string): ModifierDetection<Modifier>
   return { modifiers: validated, errors, unresolvedModifiers };
 }
 
+// ---------------------------------------------------------------------------
+// Detect domain modifiers from description text
+// ---------------------------------------------------------------------------
+
 export function buildDomainDetected(raw: DomainReference["raw"]): DomainReference["detected"] {
   return detectModifiersOf(raw, (entry) => detectDomainModifiers(entry.description));
+}
+
+export function buildDomainMapping(
+  raw: DomainReference["raw"],
+  detected: DomainReference["detected"],
+  overrides: NonNullable<DomainReference["overrides"]>,
+): DomainReference["mapping"] {
+  return modifierMapping(raw, detected, overrides, (override?: NonNullable<DomainReference["overrides"]>[string]) =>
+    override?.featPool ? { featPool: override.featPool } : {},
+  );
 }

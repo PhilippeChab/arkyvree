@@ -1,11 +1,7 @@
 import * as cheerio from "cheerio";
 
-import {
-  frameHeading,
-  pageTitle,
-  sectionElements,
-  tagOf,
-} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { frameHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/frame.ts";
+import { pageTitle, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";

@@ -94,59 +94,6 @@ const FUNCTION_EXCEPTIONS = new Set(["zValidator"]);
 /** A function a field holds: written there, or another one's (`readonly finalizeLevelUp = finalizeLevelUp`). */
 const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "Identifier", "MemberExpression"];
 
-/** The functions a module exports: declared, or an arrow or function expression a const holds. */
-function exportedFunctions(node) {
-  const declaration = node.declaration;
-  if (declaration?.type === "FunctionDeclaration" && declaration.id) return [declaration.id];
-  if (declaration?.type !== "VariableDeclaration") return [];
-  return declaration.declarations
-    .filter(
-      (d) => d.id.type === "Identifier" && ["ArrowFunctionExpression", "FunctionExpression"].includes(d.init?.type),
-    )
-    .map((d) => d.id);
-}
-
-const functionNames = {
-  meta: { type: "suggestion" },
-  create(context) {
-    const file = repoPath(context.filename);
-    if (!/^(server|shared)\//.test(file) || !/\.tsx?$/.test(file)) return {};
-    const report = (id) => {
-      if (/^[A-Z]/.test(id.name) || FUNCTION_EXCEPTIONS.has(id.name)) return;
-      if (FUNCTION_VERBS.some((verb) => startsWithVerb(id.name, verb))) return;
-      context.report({
-        node: id,
-        message: `An exported function starts with a verb (lint/methodNames.mjs's FUNCTION_VERBS): \`${id.name}\` doesn't.`,
-      });
-    };
-    // The module's own functions, which a later `export { f }` exports by name.
-    const locals = new Set();
-    const listed = [];
-    return {
-      Program(program) {
-        for (const statement of program.body) {
-          for (const id of exportedFunctions({ declaration: statement })) locals.add(id.name);
-        }
-      },
-      ExportNamedDeclaration(node) {
-        for (const id of exportedFunctions(node)) report(id);
-        if (node.source) return;
-        for (const specifier of node.specifiers ?? []) {
-          if (specifier.local?.type === "Identifier" && specifier.exported?.type === "Identifier") {
-            listed.push(specifier);
-          }
-        }
-      },
-      ExportDefaultDeclaration(node) {
-        for (const id of exportedFunctions(node)) report(id);
-      },
-      "Program:exit"() {
-        for (const specifier of listed) if (locals.has(specifier.local.name)) report(specifier.exported);
-      },
-    };
-  },
-};
-
 function isMethod(member) {
   return (
     (member.type === "MethodDefinition" || member.type === "TSAbstractMethodDefinition"
@@ -159,35 +106,85 @@ function isPublic(member) {
   return (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
 }
 
-const methodNames = {
-  meta: { type: "suggestion" },
-  create(context) {
-    const file = repoPath(context.filename);
-    const vocabulary = VOCABULARIES.find((v) => file.startsWith(v.layer));
-    if (!vocabulary) return {};
-    const listed = vocabulary.where ?? "lint/methodNames.mjs";
-    return {
-      ClassBody(body) {
-        for (const member of body.body) {
-          if (!isMethod(member) || !isPublic(member)) continue;
-          const name = member.key.name ?? member.key.value;
-          if (typeof name !== "string") continue;
-          if (!vocabulary.verbs.some((verb) => startsWithVerb(name, verb))) {
-            context.report({
-              node: member.key,
-              message: `${vocabulary.what} starts with one of its layer's verbs (${listed}): \`${name}\` doesn't.`,
-            });
-          } else if (vocabulary.filters?.words.test(name)) {
-            const word = vocabulary.filters.words.exec(name)[1];
-            context.report({
-              node: member.key,
-              message: `\`${name}\` names a filter (\`${word}\`): ${vocabulary.filters.why}.`,
-            });
-          }
+function createMethodNames(context) {
+  const file = repoPath(context.filename);
+  const vocabulary = VOCABULARIES.find((v) => file.startsWith(v.layer));
+  if (!vocabulary) return {};
+  const listed = vocabulary.where ?? "lint/methodNames.mjs";
+  return {
+    ClassBody(body) {
+      for (const member of body.body) {
+        if (!isMethod(member) || !isPublic(member)) continue;
+        const name = member.key.name ?? member.key.value;
+        if (typeof name !== "string") continue;
+        if (!vocabulary.verbs.some((verb) => startsWithVerb(name, verb))) {
+          context.report({
+            node: member.key,
+            message: `${vocabulary.what} starts with one of its layer's verbs (${listed}): \`${name}\` doesn't.`,
+          });
+        } else if (vocabulary.filters?.words.test(name)) {
+          const word = vocabulary.filters.words.exec(name)[1];
+          context.report({
+            node: member.key,
+            message: `\`${name}\` names a filter (\`${word}\`): ${vocabulary.filters.why}.`,
+          });
         }
-      },
-    };
-  },
-};
+      }
+    },
+  };
+}
 
-export const rules = { "method-names": methodNames, "function-names": functionNames };
+/** The functions a module exports: declared, or an arrow or function expression a const holds. */
+function exportedFunctions(node) {
+  const declaration = node.declaration;
+  if (declaration?.type === "FunctionDeclaration" && declaration.id) return [declaration.id];
+  if (declaration?.type !== "VariableDeclaration") return [];
+  return declaration.declarations
+    .filter(
+      (d) => d.id.type === "Identifier" && ["ArrowFunctionExpression", "FunctionExpression"].includes(d.init?.type),
+    )
+    .map((d) => d.id);
+}
+
+function createFunctionNames(context) {
+  const file = repoPath(context.filename);
+  if (!/^(server|shared)\//.test(file) || !/\.tsx?$/.test(file)) return {};
+  const report = (id) => {
+    if (/^[A-Z]/.test(id.name) || FUNCTION_EXCEPTIONS.has(id.name)) return;
+    if (FUNCTION_VERBS.some((verb) => startsWithVerb(id.name, verb))) return;
+    context.report({
+      node: id,
+      message: `An exported function starts with a verb (lint/methodNames.mjs's FUNCTION_VERBS): \`${id.name}\` doesn't.`,
+    });
+  };
+  // The module's own functions, which a later `export { f }` exports by name.
+  const locals = new Set();
+  const listed = [];
+  return {
+    Program(program) {
+      for (const statement of program.body) {
+        for (const id of exportedFunctions({ declaration: statement })) locals.add(id.name);
+      }
+    },
+    ExportNamedDeclaration(node) {
+      for (const id of exportedFunctions(node)) report(id);
+      if (node.source) return;
+      for (const specifier of node.specifiers ?? []) {
+        if (specifier.local?.type === "Identifier" && specifier.exported?.type === "Identifier") {
+          listed.push(specifier);
+        }
+      }
+    },
+    ExportDefaultDeclaration(node) {
+      for (const id of exportedFunctions(node)) report(id);
+    },
+    "Program:exit"() {
+      for (const specifier of listed) if (locals.has(specifier.local.name)) report(specifier.exported);
+    },
+  };
+}
+
+export default {
+  "method-names": { meta: { type: "suggestion" }, create: createMethodNames },
+  "function-names": { meta: { type: "suggestion" }, create: createFunctionNames },
+};

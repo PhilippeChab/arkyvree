@@ -115,16 +115,16 @@ Campaign character responses redact private notes for viewers without character 
 
 ## Attachments — `AttachmentsService` registry
 
-Attachments (avatars, character portraits) don't go through a `BasePolicy` subclass — they use a `registerAttachable(recordType, config)` registry where each `recordType` declares its own `isOwner` (write) and `isReader` (read) checkers. Writes throw `ForbiddenError "Not authorized to attach to this record"` when `isOwner` returns false.
+Attachments (avatars, character portraits) don't go through a `BasePolicy` subclass — they use the `ATTACHABLE_TYPES` map in `AttachmentsService`, where each record type declares its own `isOwner` (write) and `isReader` (read) checkers. Writes throw `ForbiddenError "Not authorized to attach to this record"` when `isOwner` returns false.
 
 | Record type | Write (`isOwner`) | Read (`isReader`) |
 |---|---|---|
 | `User` (avatar) | `session.userId === recordId` | any authenticated session |
 | `Character` (portrait) | a player character's **owner only**; a bonded character's: whoever can edit its master (owner or contributor) | any authenticated session |
 
-Note the divergence: a character's active contributor **can edit the character** (`getEditableCharacter`) but **cannot upload or replace its portrait** — a player character's portrait writes are owner-only. If that's not the desired behavior, update the registered `isOwner` for `Character` to also accept active contributors.
+Note the divergence: a character's active contributor **can edit the character** (`getEditableCharacter`) but **cannot upload or replace its portrait** — a player character's portrait writes are owner-only. If that's not the desired behavior, change `Character`'s `isOwner` in `ATTACHABLE_TYPES` to also accept active contributors.
 
-Reads are intentionally permissive (`allowAuthenticated`) since avatar/portrait URLs add no exposure beyond pages that are already gated.
+Reads are intentionally permissive (`canAnySessionRead`, `attachments/readers.ts`) since avatar/portrait URLs add no exposure beyond pages that are already gated.
 
 ## Invites (rulesets / campaigns / character contributors)
 
@@ -165,6 +165,6 @@ Anything that *throws* on the basis of ownership is a permission gate and belong
 | `RulesetsPolicy` | `RulesetsService`, `RulesetExtensionsService` (subscribe / unsubscribe), `RulesetChangesService`, the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `RulesetsPolicy.for`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset |
 | `CharactersPolicy` | `CharacterContributorsService`. Most other character writes use `getEditableCharacter` instead and skip the policy class — same effective rule, fewer object instantiations |
 | `CampaignsPolicy` | `CampaignsService`, `CampaignPlayersService`, campaigns sub-services |
-| `AttachmentsService` registry | not a `BasePolicy` — uses `registerAttachable()` config map. Currently registered: `User` (avatar), `Character` (portrait) |
+| `AttachmentsService` registry | not a `BasePolicy` — uses its `ATTACHABLE_TYPES` config map. Currently registered: `User` (avatar), `Character` (portrait) |
 
 Campaign creation validates ruleset access before inserting the campaign or GM membership. It uses the character-creation access policy: public published, owner, contributor, or existing active campaign membership. Archived rulesets and extensions cannot be used to create campaigns or characters. A newly requested campaign cannot grant its own ruleset access.

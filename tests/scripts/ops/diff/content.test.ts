@@ -2,15 +2,9 @@ import { describe, expect, test } from "bun:test";
 
 import { sql } from "drizzle-orm";
 
-import {
-  COMPARED_TABLES,
-  CONTENT_TABLES,
-  LABELLED_COLUMNS,
-  pullTable,
-  type Query,
-  UNCOMPARED_TABLES,
-} from "@/scripts/ops/diff/content.ts";
+import { COMPARED_TABLES, LABELLED_COLUMNS, pullTable, UNCOMPARED_TABLES } from "@/scripts/ops/diff/content.ts";
 import { collectDiff, diffIsEmpty, renderSql } from "@/scripts/ops/diff/rows.ts";
+import { CONTENT_TABLES } from "@/scripts/ops/diff/tables.ts";
 import { db } from "@/server/database/index.ts";
 
 /** The columns that aren't content: a row's bookkeeping, and what scopes it (its ruleset, a user's own data). */
@@ -116,14 +110,6 @@ const FIXTURES: Record<string, string> = {
                                 where r.system limit 1`,
 };
 
-/** The test's database, queried as diff-prod's pg client is: positional parameters ($1…), the rows. */
-const query: Query = async <R extends Record<string, unknown>>(text: string, params: unknown[] = []) => {
-  const chunks = text
-    .split(/\$(\d+)/)
-    .map((part, i) => (i % 2 === 0 ? sql.raw(part) : sql.param(params[Number(part) - 1])));
-  return (await db.execute(sql.join(chunks))).rows as R[];
-};
-
 /** Runs `statement` in a savepoint, kept when it changed a row, else rolled back: whether it did. */
 async function attempt(statement: string): Promise<boolean> {
   await db.execute(sql`savepoint attempt`);
@@ -134,6 +120,14 @@ async function attempt(statement: string): Promise<boolean> {
   }
   await db.execute(sql`rollback to savepoint attempt`);
   return false;
+}
+
+/** The test's database, queried as diff-prod's pg client is: positional parameters ($1…), the rows. */
+async function query<R extends Record<string, unknown>>(text: string, params: unknown[] = []): Promise<R[]> {
+  const chunks = text
+    .split(/\$(\d+)/)
+    .map((part, i) => (i % 2 === 0 ? sql.raw(part) : sql.param(params[Number(part) - 1])));
+  return (await db.execute(sql.join(chunks))).rows as R[];
 }
 
 /** The operators a customization table's check constraint allows. */

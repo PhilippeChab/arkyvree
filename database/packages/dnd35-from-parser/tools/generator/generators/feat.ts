@@ -218,11 +218,31 @@ function featSlug(req: RequirementCondition): string {
 // Emit template feat expansion
 // ---------------------------------------------------------------------------
 
+/** A book's template families, from its feat reference: none for a book without feats. */
+function bookTemplateNames(book: string): Set<string> {
+  let names = bookTemplateNamesCache.get(book);
+  if (!names) {
+    const path = join(REFERENCE_DIR, book, "feats.json");
+    names = existsSync(path) ? referenceFeats(loadReference(path, "feat")).templateNames : new Set<string>();
+    bookTemplateNamesCache.set(book, names);
+  }
+  return names;
+}
+
 /** Ends a template: its feats' family. */
 function closeTemplate({ lines }: FeatFile, familyName: string): void {
   lines.push(`  properties: [${stringifyProperty({ type: FEAT_FAMILY, value: familyName })}],`);
   lines.push(`}));`);
   lines.push("");
+}
+
+/** The system feats of the core rules' feat file `fileName`. */
+function emitSystemFeats(file: FeatFile, fileName: string): void {
+  for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
+    file.lines.push(`export const ${name}: FeatSeed[] = ${code};`);
+    for (const used of uses) file.uses.add(used);
+  }
+  file.lines.push("");
 }
 
 /**
@@ -252,6 +272,16 @@ function emitTemplateModifiers(
 function emitTemplateRequirements({ lines }: FeatFile, reqLines: string[]): void {
   if (reqLines.length === 0) return;
   lines.push(`  requirements: [`, ...reqLines, `  ],`);
+}
+
+/** A feats file's code: its imports, written from the names its code uses, then its code. */
+function featFileCode(file: FeatFile): string {
+  return [
+    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    ...importLines(file.uses, IMPORTS),
+    "",
+    ...file.lines,
+  ].join("\n");
 }
 
 /** Having the feat `featName`, or its feat for the item (`variable`) when `perItem`: `eq(feat(...))`. */
@@ -384,42 +414,21 @@ function emitWeaponTemplate(file: FeatFile, family: TemplateFamily, families: Se
   closeTemplate(file, familyName);
 }
 
-const TEMPLATE_EMITTERS: Record<TemplateType, (file: FeatFile, family: TemplateFamily, families: Set<string>) => void> =
-  {
-    weapon: emitWeaponTemplate,
-    crossbow: emitCrossbowTemplate,
-    skill: emitSkillTemplate,
-    school: emitSchoolTemplate,
-  };
-
-/** A book's template families, from its feat reference: none for a book without feats. */
-function bookTemplateNames(book: string): Set<string> {
-  let names = bookTemplateNamesCache.get(book);
-  if (!names) {
-    const path = join(REFERENCE_DIR, book, "feats.json");
-    names = existsSync(path) ? referenceFeats(loadReference(path, "feat")).templateNames : new Set<string>();
-    bookTemplateNamesCache.set(book, names);
+/** Writes a template family's feats, by its type. */
+function emitTemplate(file: FeatFile, family: TemplateFamily, families: Set<string>) {
+  const type: TemplateType = family.type;
+  switch (type) {
+    case "weapon":
+      return emitWeaponTemplate(file, family, families);
+    case "crossbow":
+      return emitCrossbowTemplate(file, family);
+    case "skill":
+      return emitSkillTemplate(file, family, families);
+    case "school":
+      return emitSchoolTemplate(file, family, families);
+    default:
+      return type satisfies never;
   }
-  return names;
-}
-
-/** The system feats of the core rules' feat file `fileName`. */
-function emitSystemFeats(file: FeatFile, fileName: string): void {
-  for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
-    file.lines.push(`export const ${name}: FeatSeed[] = ${code};`);
-    for (const used of uses) file.uses.add(used);
-  }
-  file.lines.push("");
-}
-
-/** A feats file's code: its imports, written from the names its code uses, then its code. */
-function featFileCode(file: FeatFile): string {
-  return [
-    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
-    ...importLines(file.uses, IMPORTS),
-    "",
-    ...file.lines,
-  ].join("\n");
 }
 
 /**
@@ -484,7 +493,7 @@ export function generateFeatSeeds(ref: FeatReference): string {
     file.lines.push(`];`, "");
   }
 
-  for (const family of templates) TEMPLATE_EMITTERS[family.type](file, family, families);
+  for (const family of templates) emitTemplate(file, family, families);
 
   // System feats are only generated for the SRD — other books reuse them
   if (ref._meta.book === "srd") {

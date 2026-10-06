@@ -95,9 +95,6 @@ export const ALL_WEAPONS = [...SIMPLE_WEAPONS, ...MARTIAL_WEAPONS, ...EXOTIC_WEA
 
 export const CROSSBOW_WEAPONS = ALL_WEAPONS.filter((w) => w.toLowerCase().includes("crossbow"));
 
-const SIMPLE_SET = new Set(SIMPLE_WEAPONS);
-const MARTIAL_SET = new Set(MARTIAL_WEAPONS);
-
 /**
  * A proficiency feat per simple and martial weapon. A simple one is what a class's proficiencies grant: a character
  * takes Simple Weapon Proficiency, every simple weapon. A martial one is also the feat a character takes, one weapon at
@@ -176,7 +173,7 @@ export function simple(weapon: string): RequirementEntry[] {
 
 /** Being proficient with `weapon`, by its group. */
 export function proficiencyRequirements(weapon: string): RequirementEntry[] {
-  if (SIMPLE_SET.has(weapon)) return simple(weapon);
-  if (MARTIAL_SET.has(weapon)) return martial(weapon);
+  if (SIMPLE_WEAPONS.some((simpleWeapon) => simpleWeapon === weapon)) return simple(weapon);
+  if (MARTIAL_WEAPONS.some((martialWeapon) => martialWeapon === weapon)) return martial(weapon);
   return exoticProficiency(weapon, false);
 }

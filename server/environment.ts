@@ -77,3 +77,10 @@ export function isProduction() {
 export function isTest() {
   return readEnv("NODE_ENV") === "test";
 }
+
+/** A variable's value, which must be set: unset, it stops whatever reads it. */
+export function readRequiredEnv(name: EnvironmentVariable): string {
+  const value = readEnv(name);
+  if (!value) throw new Error(`${name} is not set`);
+  return value;
+}

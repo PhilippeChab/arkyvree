@@ -6,34 +6,11 @@ import { randomUUID } from "node:crypto";
  * don't depend on other fixtures.
  */
 import { test as base, type Page } from "@playwright/test";
-import pg from "pg";
 
-import { PASSWORD_DIGEST } from "@/database/seeds/users.ts";
 import { recordCoverage } from "@/tests/e2e/coverage.ts";
+import { queryDatabase } from "@/tests/e2e/support/database.ts";
+import { createUser, type E2EUser } from "@/tests/e2e/support/users.ts";
 import { TEST_USERS } from "@/tests/fixtures/auth.fixture.ts";
-
-type E2EUser = { email: string; password: string; username: string };
-
-/** Runs `sql` on the run's database, for what the API has no way to do: its rows. */
-export async function queryDatabase<Row extends pg.QueryResultRow>(sql: string, params: unknown[]): Promise<Row[]> {
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
-  try {
-    return (await client.query<Row>(sql, params)).rows;
-  } finally {
-    await client.end();
-  }
-}
-
-/** Creates a verified, onboarded user (if the email isn't taken), with the seeded users' password. */
-async function createUser(email: string, username: string): Promise<E2EUser> {
-  await queryDatabase(
-    `INSERT INTO account.users (email_address, password_digest, username, email_verified_at, onboarding_completed_at)
-     VALUES ($1, $2, $3, now(), now()) ON CONFLICT (email_address) DO NOTHING`,
-    [email, PASSWORD_DIGEST, username],
-  );
-  return { email, password: "LocalTest123!", username };
-}
 
 /*
  * Users the tests sign in as, created as they're used, so parallel tests can't collide on a user's state and a run

@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
-import { buildEntityTypeSchema, idParam, limit, page } from "@/server/routers/api/validation.ts";
+import { buildEntityTypeSchema } from "@/server/routers/api/schemaBuilders.ts";
+import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { PropertyTypesService } from "@/server/services/rulesets/customization/properties/types/index.ts";
 import { PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 

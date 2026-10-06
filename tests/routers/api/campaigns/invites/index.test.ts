@@ -2,15 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { EmailVerifications, Users } from "@/server/repositories/index.ts";
-import {
-  api,
-  apiAs,
-  createSignedInUser,
-  expectOk,
-  expectStatus,
-  guestApi,
-  sessionIdFrom,
-} from "@/tests/support/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi, sessionIdFrom } from "@/tests/support/api.ts";
+import { apiAs } from "@/tests/support/clients.ts";
 import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 
 const invites = api.api.campaigns.invites;

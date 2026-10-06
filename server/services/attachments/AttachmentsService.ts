@@ -8,6 +8,7 @@ import { getStorage } from "@/server/storage/s3.ts";
 import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { canAnySessionRead } from "./readers.ts";
 import { getPublicUrl } from "./records.ts";
 
 type OwnershipChecker = (session: Session, recordId: string) => Promise<boolean>;
@@ -27,48 +28,45 @@ interface SignedTokenPayload {
   iat: number;
 }
 
-const ATTACHABLE_TYPES = new Map<string, AttachableConfig>();
-
 const imagePolicy: UploadPolicy = {
   maxBytes: MAX_UPLOAD_BYTES,
   contentTypes: [...ALLOWED_IMAGE_TYPES],
 };
 
-function registerAttachable(recordType: string, config: AttachableConfig): void {
-  ATTACHABLE_TYPES.set(recordType, config);
-}
-
-// Avatars/portraits are display assets meant to be visible to authed users —
-// the URL adds no exposure beyond the page (share-token gates that), so any
-// signed-in session can read them.
-const allowAuthenticated: OwnershipChecker = async () => true;
-
-registerAttachable("User", {
-  isOwner: async (session, recordId) => session.userId === recordId,
-  isReader: allowAuthenticated,
-  policy: imagePolicy,
-  names: ["avatar"],
-});
-
-registerAttachable("Character", {
-  isOwner: async (session, recordId) => {
-    const character = await Characters.findOne(db, { id: recordId });
-    if (!character) return false;
-    if (character.kind === "pc") return character.userId === session.userId;
-    // Bonded children flow permission through the master (owner or active contributor).
-    if (!character.parentCharacterId) return false;
-    const master = await Characters.findOne(db, {
-      id: character.parentCharacterId,
-      editorId: session.userId,
-    });
-    return !!master;
-  },
-  isReader: allowAuthenticated,
-  policy: imagePolicy,
-  names: ["portrait"],
-});
-
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** The records that take attachments: who may attach to one and read them, what they take, under which names. */
+const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
+  [
+    "User",
+    {
+      isOwner: async (session, recordId) => session.userId === recordId,
+      isReader: canAnySessionRead,
+      policy: imagePolicy,
+      names: ["avatar"],
+    },
+  ],
+  [
+    "Character",
+    {
+      isOwner: async (session, recordId) => {
+        const character = await Characters.findOne(db, { id: recordId });
+        if (!character) return false;
+        if (character.kind === "pc") return character.userId === session.userId;
+        // Bonded children flow permission through the master (owner or active contributor).
+        if (!character.parentCharacterId) return false;
+        const master = await Characters.findOne(db, {
+          id: character.parentCharacterId,
+          editorId: session.userId,
+        });
+        return !!master;
+      },
+      isReader: canAnySessionRead,
+      policy: imagePolicy,
+      names: ["portrait"],
+    },
+  ],
+]);
 
 class AttachmentsService {
   private buildKey(blobId: string, filename: string): string {

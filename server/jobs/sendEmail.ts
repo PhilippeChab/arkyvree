@@ -1,9 +1,9 @@
-import type { Task } from "graphile-worker";
-import nodemailer, { type Transporter } from "nodemailer";
-import { Resend } from "resend";
+import type { JobHelpers } from "graphile-worker";
 
 import { type EmailJobPayload, renderEmail } from "@/server/emails/index.ts";
-import { isProduction, isTest, readEnv } from "@/server/environment.ts";
+import { isProduction } from "@/server/environment.ts";
+
+import { createEmailTransports } from "./emailTransports.ts";
 
 type SendEmailPayload = {
   to: string[];
@@ -11,26 +11,9 @@ type SendEmailPayload = {
   subject: string;
 } & EmailJobPayload;
 
-let resend: Resend | null = null;
-let smtpTransport: Transporter | null = null;
+const { resend, smtpTransport } = createEmailTransports();
 
-if (isProduction()) {
-  const apiKey = readEnv("RESEND_API_KEY");
-  if (apiKey) resend = new Resend(apiKey);
-} else if (!isTest()) {
-  const smtpHost = readEnv("SMTP_HOST");
-  if (smtpHost) {
-    smtpTransport = nodemailer.createTransport({
-      host: smtpHost,
-      port: Number(readEnv("SMTP_PORT")) || 1025,
-      secure: false,
-    });
-  } else {
-    console.warn("[email] SMTP_HOST not set — emails will not be sent. Run `bun dev:mail` to start Mailpit.");
-  }
-}
-
-export const sendEmailTask: Task = async (payload, helpers) => {
+export async function sendEmailTask(payload: unknown, helpers: JobHelpers): Promise<void> {
   const email = payload as SendEmailPayload;
   const { to, from, subject } = email;
 
@@ -61,4 +44,4 @@ export const sendEmailTask: Task = async (payload, helpers) => {
     throw new Error(result.error.message);
   }
   helpers.logger.info(`Email sent via Resend to ${to.join(", ")}: ${subject}`);
-};
+}

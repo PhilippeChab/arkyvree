@@ -3,11 +3,7 @@
  */
 import { sql } from "drizzle-orm";
 
-import { isTest, readEnv } from "@/server/environment.ts";
-
-if (!readEnv("DATABASE_URL")) {
-  throw new Error("DATABASE_URL is not set");
-}
+import { isTest } from "@/server/environment.ts";
 
 // Use dynamic imports to avoid loading test module in production. The test module refuses a database not named a test one.
 const dbModule = isTest() ? await import("./test.ts") : await import("./production.ts");

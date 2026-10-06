@@ -364,13 +364,18 @@ describe("conventions", () => {
       await lintRepo(
         {
           "server/a.ts": "export function f() {}\nconst g = () => 1;\nexport const h = async (a: number) => a;\n",
-          // A function type types it, or a `let` holds it to reassign: an arrow it stays
+          // Typed by a function type, or held by a `let`: still a variable holding an arrow
           "server/b.ts": 'import type { Task } from "@/t.ts";\nexport const run: Task = async () => {};\n',
           "shared/c.ts": "let k = () => 1;\nk = () => 2;\nexport { k };\n",
         },
         ["function-declarations"],
       ),
-    ).toEqual(["function-declarations server/a.ts", "function-declarations server/a.ts"]);
+    ).toEqual([
+      "function-declarations server/a.ts",
+      "function-declarations server/a.ts",
+      "function-declarations server/b.ts",
+      "function-declarations shared/c.ts",
+    ]);
 
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-"));
     const file = path.join(dir, "a.tsx");

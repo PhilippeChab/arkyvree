@@ -1,12 +1,15 @@
 /**
  * `file-layout`: a file reads in one order, so its parts are always where you look for them: its imports, its types,
  * its constants, its helpers, then what the file is for (its exports, its class, a test file's `describe` and `test`
- * blocks, an index's re-exports). Within its types, and within its constants, the file's own come first, then the ones
- * it exports; a constant still sits below any it reads. A helper is a function the file keeps to itself, or a constant one builds, or an
- * export another helper calls; a test file's helper never sits in a `describe`. A top-level side effect (a script's
- * call, an `await`) is the file's purpose too, and a declaration after one is a step of its run, keeping its place.
+ * blocks, an index's re-exports), then its run. Within its types, and within its constants, the file's own come first,
+ * then the ones it exports. A constant is a value: it never uses the file's own functions or classes, and one the file
+ * keeps never reads one it exports. A helper is a function the file keeps to itself, or an export another helper calls;
+ * a test file's helper never sits in a `describe`. A call, a condition or a loop at the file's top is a step of its
+ * run: nothing is declared after one.
  * `oxlint --fix` puts a file in order, each statement above what uses it, and lifts a helper out of a `describe` when it
- * uses nothing the block declares and its name is free (the report says what to change otherwise). What a tool writes
+ * uses nothing the block declares and its name is free (the report says what to change otherwise). It never changes
+ * the order code runs in: it moves nothing in a file with a declaration after a step, or whose order would swap two
+ * declarations that run code (a call, `new`, `await`); the code moves them. What a tool writes
  * keeps the tool's layout: the parser's `generated/`, drizzle's schema and relations.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
@@ -16,7 +19,16 @@ import { isToolWritten } from "./paths.mjs";
 
 const FUNCTION_VALUES = new Set(["ArrowFunctionExpression", "FunctionExpression", "ClassExpression"]);
 
-const SUITE_CALLS = new Set(["describe", "test", "it", "beforeAll", "beforeEach", "afterAll", "afterEach"]);
+const SUITE_CALLS = new Set([
+  "describe",
+  "test",
+  "it",
+  "beforeAll",
+  "beforeEach",
+  "afterAll",
+  "afterEach",
+  "setDefaultTimeout",
+]);
 
 // The groups, in a file's order
 const RANK = { type: 1, constant: 2, helper: 3, main: 4 };
@@ -30,7 +42,44 @@ const MESSAGE =
   "A file reads in order: its imports, its types, its constants (each the file's own, then its exports), its " +
   "helpers, then what it's for (its exports, its class, its tests). `oxlint --fix` orders it.";
 
+const STEP =
+  "A file's run (a call, a condition, a loop at its top) comes last: nothing is declared after it. Its steps go below " +
+  "its declarations, or into a function it calls last (a script's `main()`; a test file's setup, a `beforeAll`).";
+const MODULE_RUN =
+  "A module (a file that exports) has no step at its top: a script imports it, and runs it in a function it calls " +
+  "last.";
+const BUILT =
+  "A constant is a value the file writes, never one its own functions build: move the function to a module of its " +
+  "own, or write the value.";
+const FROM_EXPORT =
+  "A constant the file keeps is built from constants it keeps: export it with the one it reads, or build it where " +
+  "it's used.";
+
 const LOOPS = new Set(["ForStatement", "ForOfStatement", "ForInStatement", "WhileStatement"]);
+
+/**
+ * What the order can't settle, so the code changes instead: a script's step that isn't in its run's function, a
+ * constant one of the file's own functions builds, a constant the file keeps built from one it exports.
+ */
+function findStrays(items) {
+  const strays = [];
+  // A module, which other files import: what it exports, never a run (an empty `export {}` marks a script a module)
+  const exports = items.some(({ statement }) =>
+    statement.type === "ExportNamedDeclaration"
+      ? statement.declaration !== null || statement.specifiers.length > 0
+      : /^Export(Default|All)Declaration$/.test(statement.type),
+  );
+  let afterStep = false;
+  for (const item of items) {
+    if (exports && item.kind === "effect") strays.push([item, MODULE_RUN]);
+    if (afterStep && item.kind !== "effect" && item.kind !== "import") strays.push([item, STEP]);
+    if (item.kind === "effect") afterStep = true;
+    if (item.kind !== "constant") continue;
+    if (item.reads.some((dep) => dep.kind === "helper" || dep.kind === "main")) strays.push([item, BUILT]);
+    else if (!item.exported && item.reads.some((dep) => dep.exported)) strays.push([item, FROM_EXPORT]);
+  }
+  return strays;
+}
 
 /** The nodes around a node, the program first. */
 function ancestorsOf(node) {
@@ -49,17 +98,6 @@ function attachedStart(text, lineStart) {
     from = previous;
   }
   return from;
-}
-
-/** Whether a statement awaits at the top level: a step of a script's run (`const rows = await query(…)`). */
-function awaits(node) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some(awaits);
-  if (node.type === "AwaitExpression") return true;
-  if (FUNCTION_VALUES.has(node.type) || node.type === "FunctionDeclaration") return false;
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && awaits(child),
-  );
 }
 
 /** The names a pattern binds: `a`, `{ a, b: c }`, `[a, ...b]`. */
@@ -175,6 +213,8 @@ function holdsOrClass(item) {
 /** What a top-level statement is: an import, a type, a constant, a helper, the file's purpose, or a side effect. */
 function kindOf(statement) {
   if (statement.type === "ImportDeclaration" || statement.type === "TSImportEqualsDeclaration") return "import";
+  // A directive prologue ("use strict") opens the file, as its imports do
+  if (statement.type === "ExpressionStatement" && statement.directive) return "import";
   if (statement.type === "ExportAllDeclaration") return "main";
   if (statement.type === "ExportNamedDeclaration" && !statement.declaration) return "main";
   if (statement.type === "TSModuleDeclaration") return "type";
@@ -221,6 +261,43 @@ function readNames(node, into = new Set(), types = false) {
   return into;
 }
 
+/**
+ * Each statement's group, which its dependencies can move: an export a helper calls is a helper, and a statement sits
+ * in no earlier group than a value it reads.
+ */
+export function rankStatements(statements) {
+  const items = statements.map((statement, index) => {
+    const kind = kindOf(statement);
+    const exported = statement.type === "ExportNamedDeclaration" && (kind === "type" || kind === "constant");
+    const rank = (RANK[kind] ?? RANK.main) + (exported ? EXPORTED : 0);
+    return { statement, index, kind, rank, exported, names: declaredNames(statement) };
+  });
+  const declaredBy = new Map(items.flatMap((item) => item.names.map((name) => [name, item])));
+  for (const item of items) {
+    item.reads = item.kind === "type" ? [] : [...readNames(item.statement)].map((n) => declaredBy.get(n));
+    item.reads = item.reads.filter((dep) => dep && dep !== item && dep.kind !== "type");
+  }
+  const lifted = new Set();
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const item of items) {
+      for (const dep of item.reads) {
+        // A helper's building block is a helper too, once: what it reads may still rank it later
+        if (item.rank === RANK.helper && dep.rank === RANK.main && holdsOrClass(dep) && !lifted.has(dep)) {
+          lifted.add(dep);
+          dep.rank = RANK.helper;
+          changed = true;
+        }
+        if (dep.rank > item.rank) {
+          item.rank = dep.rank;
+          changed = true;
+        }
+      }
+    }
+  }
+  return items;
+}
+
 /** The file's statements reordered by group, each with its comments, or none when a reader must place them. */
 function reorder(text, statements, items) {
   const firstBody = items.findIndex((item) => item.kind !== "import");
@@ -246,6 +323,47 @@ function reorder(text, statements, items) {
       })
       .join(""),
   };
+}
+
+/** Whether evaluating `node` runs code: a call, `new`, `await`, an assignment (not what a function inside it holds). */
+function runsCode(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(runsCode);
+  if (FUNCTION_VALUES.has(node.type) && node.type !== "ClassExpression") return false;
+  if (
+    /^(CallExpression|NewExpression|AwaitExpression|AssignmentExpression|UpdateExpression|TaggedTemplateExpression|ImportExpression)$/.test(
+      node.type,
+    )
+  )
+    return true;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && runsCode(child),
+  );
+}
+
+/**
+ * Whether a declaration runs code where it stands: a constant whose value does, a class whose `extends`, decorators,
+ * computed keys or static parts do, an `export default` value.
+ */
+function runsAtLoad(statement) {
+  const declaration = declarationOf(statement);
+  if (declaration?.type === "VariableDeclaration") return runsCode(declaration.declarations);
+  if (declaration?.type === "ClassDeclaration") {
+    return (
+      runsCode(declaration.superClass) ||
+      runsCode(declaration.decorators) ||
+      declaration.body.body.some(
+        (member) =>
+          member.static ||
+          member.type === "StaticBlock" ||
+          runsCode(member.decorators) ||
+          (member.computed && runsCode(member.key)),
+      )
+    );
+  }
+  if (statement.type === "ExportDefaultDeclaration" && !declaration.type.endsWith("Declaration"))
+    return runsCode(declaration);
+  return false;
 }
 
 /** The names a file declares at its top, its imports' included. */
@@ -305,78 +423,47 @@ function checkNested(context, text, statement) {
   });
 }
 
-/**
- * Each statement's group, which its dependencies can move: an export a helper calls is a helper, and a statement sits
- * in no earlier group than a value it reads (a constant one of the file's functions builds sits with them).
- */
-export function rankStatements(statements) {
-  // After a side effect, a declaration is a step of the run (a script's connection, a table a loop fills): it keeps
-  // its place among the effects
-  let afterEffect = false;
-  const items = statements.map((statement, index) => {
-    let kind = kindOf(statement);
-    if (kind === "constant" && (afterEffect || awaits(statement))) kind = "effect";
-    if (kind === "effect") afterEffect = true;
-    const exported = statement.type === "ExportNamedDeclaration" && (kind === "type" || kind === "constant");
-    const rank = (RANK[kind] ?? RANK.main) + (exported ? EXPORTED : 0);
-    return { statement, index, kind, rank, names: declaredNames(statement) };
-  });
-  const declaredBy = new Map(items.flatMap((item) => item.names.map((name) => [name, item])));
-  for (const item of items) {
-    item.reads = item.kind === "type" ? [] : [...readNames(item.statement)].map((n) => declaredBy.get(n));
-    item.reads = item.reads.filter((dep) => dep && dep !== item && dep.kind !== "type");
-  }
-  const lifted = new Set();
-  for (let changed = true; changed;) {
-    changed = false;
-    for (const item of items) {
-      for (const dep of item.reads) {
-        // A helper's building block is a helper too, once: what it reads may still rank it later
-        if (item.rank === RANK.helper && dep.rank === RANK.main && holdsOrClass(dep) && !lifted.has(dep)) {
-          lifted.add(dep);
-          dep.rank = RANK.helper;
-          changed = true;
-        }
-        if (dep.rank > item.rank) {
-          item.rank = dep.rank;
-          changed = true;
-        }
+function createFileLayout(context) {
+  // What a tool writes keeps the tool's layout: the parser's output, drizzle's schema and relations
+  if (isToolWritten(context.filename)) return {};
+  const text = context.sourceCode.text;
+  return {
+    Program(node) {
+      const statements = node.body;
+      const items = rankStatements(statements);
+      const strays = findStrays(items);
+      for (const [item, message] of strays) {
+        context.report({ node: declarationOf(item.statement) ?? item.statement, message });
       }
-    }
-  }
-  return items;
+      // Steps run in order: what follows one moves by hand, never by the fix
+      const afterStep = strays.some(([, message]) => message === STEP);
+      const firstBody = items.findIndex((item) => item.kind !== "import");
+      if (firstBody === -1) return;
+      const misplaced = [];
+      let highest = 0;
+      for (const item of items.slice(firstBody)) {
+        if (item.kind === "import" || item.rank < highest) misplaced.push(item);
+        highest = Math.max(highest, item.rank);
+      }
+      if (misplaced.length === 0) return;
+      const order = reorder(text, statements, items);
+      // The fix never changes the order code runs in: two declarations that run code keep theirs
+      const sorted = items.slice(firstBody).sort((a, b) => a.rank - b.rank || a.index - b.index);
+      const running = sorted.filter((item) => runsAtLoad(item.statement)).map((item) => item.index);
+      const reordersRuns = running.some((index, i) => i > 0 && index < running[i - 1]);
+      context.report({
+        node: declarationOf(misplaced[0].statement) ?? misplaced[0].statement,
+        message: MESSAGE,
+        ...(order &&
+          !afterStep &&
+          !reordersRuns && { fix: (fixer) => fixer.replaceTextRange(order.range, order.text) }),
+      });
+    },
+    FunctionDeclaration: (statement) => checkNested(context, text, statement),
+    VariableDeclaration: (statement) => checkNested(context, text, statement),
+  };
 }
 
-const fileLayout = {
-  meta: { type: "suggestion", fixable: "code" },
-  create(context) {
-    // What a tool writes keeps the tool's layout: the parser's output, drizzle's schema and relations
-    if (isToolWritten(context.filename)) return {};
-    const text = context.sourceCode.text;
-    return {
-      Program(node) {
-        const statements = node.body;
-        const items = rankStatements(statements);
-        const firstBody = items.findIndex((item) => item.kind !== "import");
-        if (firstBody === -1) return;
-        const misplaced = [];
-        let highest = 0;
-        for (const item of items.slice(firstBody)) {
-          if (item.kind === "import" || item.rank < highest) misplaced.push(item);
-          highest = Math.max(highest, item.rank);
-        }
-        if (misplaced.length === 0) return;
-        const order = reorder(text, statements, items);
-        context.report({
-          node: declarationOf(misplaced[0].statement) ?? misplaced[0].statement,
-          message: MESSAGE,
-          ...(order && { fix: (fixer) => fixer.replaceTextRange(order.range, order.text) }),
-        });
-      },
-      FunctionDeclaration: (statement) => checkNested(context, text, statement),
-      VariableDeclaration: (statement) => checkNested(context, text, statement),
-    };
-  },
+export default {
+  "file-layout": { meta: { type: "suggestion", fixable: "code" }, create: createFileLayout },
 };
-
-export const rules = { "file-layout": fileLayout };

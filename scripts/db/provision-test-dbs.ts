@@ -6,10 +6,7 @@
  */
 import os from "node:os";
 
-import { cloneDatabase, databaseOf } from "@/scripts/db/clone-database.ts";
-
-const url = process.env.DATABASE_URL;
-if (!url) throw new Error("DATABASE_URL is not set: run with --env-file=.env.test");
+import { cloneDatabase, databaseOf } from "@/scripts/db/databases.ts";
 
 /** The `--workers` count, else one per CPU. */
 function workers(): number {
@@ -18,7 +15,13 @@ function workers(): number {
   return Number.isInteger(count) && count > 0 ? count : os.cpus().length;
 }
 
-const count = workers();
-const workerDbs = Array.from({ length: count }, (_, i) => `${databaseOf(url).name}_w${i + 1}`);
-await cloneDatabase(url, workerDbs);
-console.log(`Provisioned ${count} worker DB${count === 1 ? "" : "s"} (${workerDbs[0]}..${workerDbs.at(-1)})`);
+async function main() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL is not set: run with --env-file=.env.test");
+  const count = workers();
+  const workerDbs = Array.from({ length: count }, (_, i) => `${databaseOf(url).name}_w${i + 1}`);
+  await cloneDatabase(url, workerDbs);
+  console.log(`Provisioned ${count} worker DB${count === 1 ? "" : "s"} (${workerDbs[0]}..${workerDbs.at(-1)})`);
+}
+
+await main();

@@ -7,10 +7,10 @@ import { compareRoutes, lifecycleStep, verbGroup } from "@/lint/memberOrder.mjs"
 
 import { runOxlint } from "./lintRepo.ts";
 
+const [LIFECYCLE, READ, CREATE, UPDATE, DELETE, ACTION] = [0, 1, 2, 3, 4, 5];
+
 // The fix tests run oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);
-
-const [LIFECYCLE, READ, CREATE, UPDATE, DELETE, ACTION] = [0, 1, 2, 3, 4, 5];
 
 describe("member order", () => {
   test("groups a method by its leading verb", async () => {

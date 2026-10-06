@@ -33,11 +33,11 @@ import {
   LOCATION_CHOICES,
   placementPayload,
   placementProfile,
-  shownWeaponSet,
 } from "./equipment.ts";
 import { EquipmentTable } from "./EquipmentTable.tsx";
 import { InventoryPlacementFields } from "./InventoryPlacementFields.tsx";
 import { SheetSection } from "./SheetSection.tsx";
+import { shownWeaponSet } from "./weaponSets.ts";
 
 type InventoryItems = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>;
 type InventoryEntry = InventoryItems[number];

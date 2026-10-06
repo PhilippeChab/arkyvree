@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { assertLocalDatabase, cloneDatabase, databaseOf, withDatabase } from "@/scripts/db/clone-database.ts";
-import resetDatabase from "@/scripts/db/reset.ts";
+import { assertLocalDatabase, cloneDatabase, databaseOf, withDatabase } from "@/scripts/db/databases.ts";
+import resetDatabase from "@/scripts/db/resetDatabase.ts";
 
 const LOCAL = "postgresql://dev:secret@localhost:5433/arkyvree_test?sslmode=disable";
 

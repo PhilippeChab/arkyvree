@@ -63,28 +63,26 @@ const loaded: { [T in ReferenceType]: Map<string, ReferenceByType[T]> } = {
   wizardSchool: new Map(),
 };
 
-/** A class's mapping: its features as detected, with the overrides applied (a null field removes the detected one). */
-function resolveClass({ _meta, raw, overrides }: StoredReference<"class">): ClassReference {
-  const scraped = structuredClone(raw);
-  if (overrides?.alignment && !scraped.prerequisites.parsed.alignment)
-    scraped.prerequisites.parsed.alignment = overrides.alignment;
-  const detected = buildDetected(scraped);
-  const mapping = buildInitialMapping(scraped, detected);
-  if (overrides?.noSpells) {
-    delete mapping.spells;
-    delete mapping.bonusSpellAbility;
-  }
-  for (const [name, fields] of Object.entries(overrides?.features ?? {})) {
-    const feature: Record<string, unknown> = Object.assign(mapping.features[name] ?? {}, fields);
-    for (const [key, value] of Object.entries(feature)) if (value === null) delete feature[key];
-    mapping.features[name] = feature;
-  }
-  mapping.occurrenceMap = buildOccurrenceMap(mapping.features, detected.featureOccurrences);
-  return { _meta, raw: scraped, ...sanitizeJsonValues({ overrides, detected, mapping }) };
-}
-
 const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => ReferenceByType[T] } = {
-  class: resolveClass,
+  // A class's mapping: its features as detected, with the overrides applied (a null field removes the detected one).
+  class: ({ _meta, raw, overrides }) => {
+    const scraped = structuredClone(raw);
+    if (overrides?.alignment && !scraped.prerequisites.parsed.alignment)
+      scraped.prerequisites.parsed.alignment = overrides.alignment;
+    const detected = buildDetected(scraped);
+    const mapping = buildInitialMapping(scraped, detected);
+    if (overrides?.noSpells) {
+      delete mapping.spells;
+      delete mapping.bonusSpellAbility;
+    }
+    for (const [name, fields] of Object.entries(overrides?.features ?? {})) {
+      const feature: Record<string, unknown> = Object.assign(mapping.features[name] ?? {}, fields);
+      for (const [key, value] of Object.entries(feature)) if (value === null) delete feature[key];
+      mapping.features[name] = feature;
+    }
+    mapping.occurrenceMap = buildOccurrenceMap(mapping.features, detected.featureOccurrences);
+    return { _meta, raw: scraped, ...sanitizeJsonValues({ overrides, detected, mapping }) };
+  },
   feat: ({ _meta, raw, overrides }) => {
     const feats = sanitizeJsonValues(raw);
     const detected = buildFeatDetected(feats);

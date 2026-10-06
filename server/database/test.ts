@@ -1,23 +1,22 @@
 /**
- * TEST-ONLY DATABASE MODULE
- * Contains both test database implementation and helper functions.
- * Should NEVER be imported in production code.
+ * The test database, never loaded in production (index.ts picks it under NODE_ENV=test): the test's own transaction
+ * once the setup sets it (`setTestDb`), the run's pool otherwise.
  */
-
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { NodePgClient } from "drizzle-orm/node-postgres";
 import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
 import { type PgQueryResultHKT, type PgTransaction } from "drizzle-orm/pg-core";
-import { Pool as PgPool } from "pg";
 
 import * as relations from "@/drizzle/relations.ts";
 import * as schema from "@/drizzle/schema.ts";
 import { clearRequestCache } from "@/server/database/requestCache.ts";
-import { readEnv } from "@/server/environment.ts";
-import { instrumentQueries } from "@/server/timing.ts";
+
+import { createPool } from "./pool.ts";
+import { readTestDatabaseUrl } from "./testDatabaseUrl.ts";
 
 declare global {
-  var __getTestDb: (() => Db | null) | undefined;
+  /** The test's transaction, which `db` and `withTransaction` run in once the setup sets it. */
+  var __testDb: Db | null | undefined;
 }
 
 type Transaction = PgTransaction<
@@ -28,59 +27,40 @@ type Transaction = PgTransaction<
 
 type Db = typeof db | Transaction;
 
-// Safety check, before anything here connects (imports load first wherever they sit)
-if (!readEnv("DATABASE_URL")?.includes("test")) {
-  throw new Error(
-    "FATAL: Test database module loaded with non-test DATABASE_URL. " +
-      "This is a safety violation. Ensure DATABASE_URL contains 'test'.",
-  );
-}
+/** Read first: anything but a test database stops the run before the pool below is built. */
+const connectionString = readTestDatabaseUrl();
 
-instrumentQueries();
-
-// Route to the per-worker DB when running under `bun test --parallel`.
-// BUN_TEST_WORKER_ID is 1-based. Falls back to the base URL for direct
-// single-file test runs (no --parallel, no worker ID set).
-const baseUrl = readEnv("DATABASE_URL")!;
-const workerId = readEnv("BUN_TEST_WORKER_ID");
-const connectionString = workerId ? baseUrl.replace(/\/([^/?]+)(\?|$)/, `/$1_w${workerId}$2`) : baseUrl;
 const schemaWithRelations = { ...schema, ...relations };
 
-// Test database setup - use pg for manual transaction control
-const pool = new PgPool({ connectionString });
-const _db = drizzlePg(pool as NodePgClient, { schema: schemaWithRelations });
+const pool = createPool({ connectionString });
 
-// Test database override state
-let _testDb: Db | null = null;
+const poolDb = drizzlePg(pool as NodePgClient, { schema: schemaWithRelations });
 
-// Register getter on global for index.ts to use
-globalThis.__getTestDb = () => _testDb;
-
-// DATABASE IMPLEMENTATION (used by index.ts in test env)
-export const db = new Proxy(_db, {
+/** The database the code reads: the test's transaction once one is set, the run's pool otherwise. */
+export const db = new Proxy(poolDb, {
   get(_target, prop) {
-    const testDb = globalThis.__getTestDb?.();
-    const currentDb = testDb ?? _db;
-    return (currentDb as unknown as Record<string | symbol, unknown>)[prop];
+    return ((globalThis.__testDb ?? poolDb) as unknown as Record<string | symbol, unknown>)[prop];
   },
 });
 
+/** A database on `client`, a connection of the test's own (a competing transaction). */
 export function createTestDbFromClient(client: NodePgClient) {
   return drizzlePg(client, { schema: schemaWithRelations });
 }
 
+/** A pool of connections to the test database, apart from the run's. */
 export function createTestPool() {
-  return new PgPool({ connectionString });
+  return createPool({ connectionString });
 }
 
-// HELPER FUNCTIONS (used by test setup)
+/** Runs the code's queries in `testDb`, the test's transaction (none: the run's pool). */
 export function setTestDb(testDb: Db | null) {
-  _testDb = testDb;
+  globalThis.__testDb = testDb;
 }
 
 export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
   // In a test, the test's own transaction: this one is a savepoint in it, which a failure rolls back as in production.
-  const result = await (globalThis.__getTestDb?.() ?? _db).transaction(callback);
+  const result = await (globalThis.__testDb ?? poolDb).transaction(callback);
   clearRequestCache();
   return result;
 }

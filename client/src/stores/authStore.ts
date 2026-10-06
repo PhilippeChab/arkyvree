@@ -1,11 +1,10 @@
-import type { InferResponseType } from "hono/client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { AUTH_STORAGE_KEY } from "@/shared/auth.ts";
 
-type MeResponse = InferResponseType<typeof rpc.auth.me.$get, 200>;
+import { type AuthUser, toAuthUser } from "./authUser.ts";
 
 interface AuthState {
   user: AuthUser | null;
@@ -32,36 +31,12 @@ interface AuthState {
   updateUser: (patch: Partial<AuthUser>) => void;
 }
 
-export type AuthUser = Pick<
-  MeResponse,
-  "id" | "emailAddress" | "username" | "pendingEmailAddress" | "onboardingCompletedAt" | "expiresAt"
->;
-
 const signedOut = {
   user: null,
   isAuthenticated: false,
   pendingVerificationEmail: null,
   pendingPasswordResetEmail: null,
 } as const;
-
-/** The fields the store keeps (and persists) from a user response, whatever else it carries. */
-function toAuthUser({
-  id,
-  emailAddress,
-  username,
-  pendingEmailAddress,
-  onboardingCompletedAt,
-  expiresAt,
-}: AuthUser): AuthUser {
-  return {
-    id,
-    emailAddress,
-    username,
-    pendingEmailAddress,
-    onboardingCompletedAt,
-    expiresAt,
-  };
-}
 
 export const useAuthStore = create<AuthState>()(
   persist(

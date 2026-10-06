@@ -3,17 +3,14 @@ import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
-import { characterIdParam, limitDefaultingTo, page } from "@/server/routers/api/validation.ts";
+import { isUuid, limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
+import { characterIdParam, page } from "@/server/routers/api/validation.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
 /** A number in the query string. */
 const queryNumber = z.string().pipe(z.coerce.number());
 
 const levelParams = characterIdParam.extend({ characterLevelId: z.string().uuid() });
-
-function isUuid(v: string) {
-  return z.string().uuid().safeParse(v).success;
-}
 
 /** Comma-separated ids: what isn't one is dropped. */
 const idList = z

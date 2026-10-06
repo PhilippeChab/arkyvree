@@ -2,7 +2,6 @@ import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { NodePgClient } from "drizzle-orm/node-postgres";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { type PgQueryResultHKT, type PgTransaction } from "drizzle-orm/pg-core";
-import { Pool } from "pg";
 
 /**
  * PRODUCTION DATABASE IMPLEMENTATION
@@ -10,8 +9,9 @@ import { Pool } from "pg";
 import * as relations from "@/drizzle/relations.ts";
 import * as schema from "@/drizzle/schema.ts";
 import { clearRequestCache } from "@/server/database/requestCache.ts";
-import { readEnv } from "@/server/environment.ts";
-import { instrumentQueries } from "@/server/timing.ts";
+import { readEnv, readRequiredEnv } from "@/server/environment.ts";
+
+import { createPool } from "./pool.ts";
 
 export type Db = typeof db | Transaction;
 
@@ -21,17 +21,9 @@ export type Transaction = PgTransaction<
   ExtractTablesWithRelations<typeof schemaWithRelations>
 >;
 
-instrumentQueries();
-
-const connectionString = readEnv("DATABASE_URL");
-
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not set");
-}
-
 const schemaWithRelations = { ...schema, ...relations };
-const pool = new Pool({
-  connectionString,
+const pool = createPool({
+  connectionString: readRequiredEnv("DATABASE_URL"),
   max: parseInt(readEnv("DB_POOL_MAX") || "20", 10),
   // Set DB_POOL_MIN to keep a floor of connections warm (character reads
   // dispatch 4+ parallel queries; a warm pool avoids paying ~200-300ms per
@@ -46,10 +38,6 @@ const pool = new Pool({
   keepAliveInitialDelayMillis: 10_000,
   statement_timeout: 10000,
   query_timeout: 10000,
-});
-
-pool.on("error", (err) => {
-  console.error("[db] Unexpected pool client error:", err.message);
 });
 
 export const db = drizzle(pool as NodePgClient, { schema: schemaWithRelations });
