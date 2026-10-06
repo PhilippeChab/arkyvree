@@ -102,7 +102,7 @@ The request-dedup key for these calls includes a per-cowData identity tag, so tw
 
 Every downstream read inside `fn` — including nested `detailedCharacter.build()`, `validateAndFetchLevelSelections`, `insertLevelChildren`, anything — sees the same context.
 
-`withRulesetScopes(tx, rulesetIds, fn)` is the multi-ruleset variant for list endpoints that span characters from several rulesets at once. It pre-loads `rulesetData` for every unique id and hands the map to `fn`, without activating a cowContext (a single context can only represent one ruleset). Inside `fn`, all lookups go through the per-ruleset `rulesetData.*` Maps, which each wrap their own overrideMap and therefore still auto-resolve.
+`withRulesetScopes(tx, rulesetIds, fn)` is the multi-ruleset variant for list endpoints that span characters from several rulesets at once. It pre-loads `rulesetData` for every unique id and hands the map to `fn`, without activating a cowContext (a single context can only represent one ruleset). Inside `fn`, all lookups go through the per-ruleset `rulesetData.*` Maps, which each resolve stored ids through their own ruleset's `CowData` and therefore still auto-resolve.
 
 `withCowContext` / `getCowContext` are infrastructure primitives (`server/database/cowContext.ts`, marked `@internal`) — application code never calls them directly.
 
@@ -116,7 +116,7 @@ Rare but real:
 
 - **Multi-ruleset list enrichment.** Can't fit under a single `withRulesetScope`. Use `withRulesetScopes` — see `CharactersService.getCharacters` and `CampaignCharactersService.getCharacters`.
 
-Other historic manual patterns (`overrideMap.get(id) ?? id`, `resolveOverrides(rows, overrideMap)`, now `cow.resolve(id)` / `cow.resolveRows(rows)`, and `canonicalize(id)`) are now handled by the repo Proxy and the `rulesetData.*` Map wrappers. If you find yourself tempted to write one, step back and check — you probably just need to be inside a scope.
+Manual resolution (`cow.resolve(id)` before a lookup, `cow.resolveRows(rows)`, `canonicalize(id)`) is handled by the repo Proxy and the `rulesetData.*` Map wrappers. If you find yourself tempted to write one, step back and check — you probably just need to be inside a scope.
 
 ## API surface
 
@@ -146,7 +146,9 @@ From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cac
 | `RulesetCache.invalidateEntities`            | Same, but keep target-paths cache (used by customization mutations that don't change the entity set). |
 | `RulesetCache.invalidateAll`                 | Nuclear option — every ruleset. Used by tests and broad recomputations.                               |
 | `RulesetCache.warm`                          | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`.                      |
-| `CachedRulesetData`, `CowData` (types)       | Parameter / return types for scope callbacks and framework extension points.                          |
+| `CachedRulesetData` (type)                   | Parameter / return type for scope callbacks and framework extension points.                           |
+
+`CowData`, the class `rulesetData.cow` is (`server/database/CowData.ts`), comes from `server/database/index.ts`: the cowContext holds it.
 
 ### Framework / copy primitives
 

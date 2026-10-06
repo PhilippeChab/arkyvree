@@ -189,7 +189,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
         }
       }
 
-      // 3. Copy ruleset-level properties as-is (parent entity IDs — resolveOverrides handles at read time)
+      // 3. Copy ruleset-level properties as-is (parent entity IDs — `CowData.resolveRows` resolves them at read time)
       const sourceRulesetProperties = await Properties.findMany(tx, {
         entityIds: [id],
         entityType: "rulesets",
