@@ -16,7 +16,7 @@ import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parse
 
 const BASE_DIR = join(import.meta.dirname!, "../");
 const SCRAPER = join(BASE_DIR, "tools/scraper/index.ts");
-const GENERATOR = join(BASE_DIR, "tools/generator/index.ts");
+const GENERATOR = join(BASE_DIR, "tools/generate.ts");
 
 /**
  * Build CLI args for the scraper.

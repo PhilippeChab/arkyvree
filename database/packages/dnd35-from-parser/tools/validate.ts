@@ -1,4 +1,3 @@
-import { type Issue, referenceIssues } from "@/database/packages/dnd35-from-parser/tools/referenceIssues.ts";
 /**
  * Validates all reference files for unresolved issues that would produce incomplete seed data, and for
  * overrides that change nothing.
@@ -16,6 +15,7 @@ import { type Issue, referenceIssues } from "@/database/packages/dnd35-from-pars
  *   bun run parser:validate --type class                  # only class references
  *   bun run parser:validate complete-warrior              # only a specific book
  */
+import { type Issue, referenceIssues } from "@/database/packages/dnd35-from-parser/tools/referenceIssues.ts";
 import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 function main() {

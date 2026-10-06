@@ -208,9 +208,24 @@ describe("file layout", () => {
       "  return A + B;",
       "}",
     );
-    const out = await fixed({ "server/running.ts": running });
+    // A class's `extends` and an `export default` value run too
+    const extending = lines(
+      "export class Repo extends make() {}",
+      "",
+      "const B = compute();",
+      "",
+      "export const C = B;",
+    );
+    const defaulting = lines("export default defineConfig({});", "", "const B = compute();");
+    const out = await fixed({
+      "server/running.ts": running,
+      "server/extending.ts": extending,
+      "server/defaulting.ts": defaulting,
+    });
     // Own before exported would run `b()` first: reported, never fixed
     expect(out["server/running.ts"]).toBe(running);
+    expect(out["server/extending.ts"]).toBe(extending);
+    expect(out["server/defaulting.ts"]).toBe(defaulting);
     expect(await lintRepo({ "server/running.ts": running }, ["file-layout"])).toEqual([
       "file-layout server/running.ts",
     ]);

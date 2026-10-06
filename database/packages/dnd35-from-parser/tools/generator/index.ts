@@ -71,10 +71,6 @@ import { ARMOR_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
 /** Where a generation writes (generated/, or a test's folder), and whether it logs what it does. */
 type Output = { dir: string; quiet: boolean };
 
-// ---------------------------------------------------------------------------
-// CLI: bun database/packages/dnd35-from-parser/tools/generator/index.ts [<json-path> [--book <book>] | [book [name]] [--type <type>]]
-// ---------------------------------------------------------------------------
-
 const BASE_DIR = join(import.meta.dirname!, "../../");
 
 /** The first line of an index or data file the generator writes. */

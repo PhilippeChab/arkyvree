@@ -44,9 +44,10 @@ const MESSAGE =
 
 const STEP =
   "A file's run (a call, a condition, a loop at its top) comes last: nothing is declared after it. Its steps go below " +
-  "its declarations, or into a function it calls last (a script's `main()`).";
+  "its declarations, or into a function it calls last (a script's `main()`; a test file's setup, a `beforeAll`).";
 const MODULE_RUN =
-  "A module (a file that exports) runs nothing as it loads: a script imports it, and runs in a function it calls last.";
+  "A module (a file that exports) has no step at its top: a script imports it, and runs it in a function it calls " +
+  "last.";
 const BUILT =
   "A constant is a value the file writes, never one its own functions build: move the function to a module of its " +
   "own, or write the value.";
@@ -340,13 +341,28 @@ function runsCode(node) {
   );
 }
 
-/** Whether a declaration runs code where it stands: a constant whose value does, a class with a static part. */
+/**
+ * Whether a declaration runs code where it stands: a constant whose value does, a class whose `extends`, decorators,
+ * computed keys or static parts do, an `export default` value.
+ */
 function runsAtLoad(statement) {
   const declaration = declarationOf(statement);
   if (declaration?.type === "VariableDeclaration") return runsCode(declaration.declarations);
   if (declaration?.type === "ClassDeclaration") {
-    return declaration.body.body.some((member) => member.static || member.type === "StaticBlock");
+    return (
+      runsCode(declaration.superClass) ||
+      runsCode(declaration.decorators) ||
+      declaration.body.body.some(
+        (member) =>
+          member.static ||
+          member.type === "StaticBlock" ||
+          runsCode(member.decorators) ||
+          (member.computed && runsCode(member.key)),
+      )
+    );
   }
+  if (statement.type === "ExportDefaultDeclaration" && !declaration.type.endsWith("Declaration"))
+    return runsCode(declaration);
   return false;
 }
 
