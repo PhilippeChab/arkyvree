@@ -2,8 +2,8 @@ import { expect, type Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
 import { apiOf } from "@/tests/e2e/support/api.ts";
-import { coreRulesetId } from "@/tests/e2e/support/campaigns.ts";
 import { filterList, selectOption } from "@/tests/e2e/support/page.ts";
+import { coreRulesetId } from "@/tests/e2e/support/rulesets.ts";
 
 /** Opens a character shared with the user, from the Shared view of their characters. */
 export async function openSharedCharacter(page: Page, name: string) {

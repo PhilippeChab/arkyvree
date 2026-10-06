@@ -3,16 +3,7 @@ import { parseResponse } from "hono/client";
 
 import { apiOf } from "@/tests/e2e/support/api.ts";
 import { apiResponse } from "@/tests/e2e/support/page.ts";
-
-/** The core rules' id. */
-export async function coreRulesetId(page: Page) {
-  const { items } = await parseResponse(
-    apiOf(page).api.rulesets.$get({ query: { scope: "base", search: "Core SRD 3.5" } }),
-  );
-  const core = items.find((ruleset) => ruleset.name === "Core SRD 3.5");
-  if (!core) throw new Error("Core SRD 3.5 isn't seeded");
-  return core.id;
-}
+import { coreRulesetId } from "@/tests/e2e/support/rulesets.ts";
 
 /** Creates a campaign on the core rules through the API, and opens its page. Returns its id. */
 export async function createCampaign(page: Page, name: string) {

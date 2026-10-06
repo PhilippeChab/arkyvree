@@ -2,8 +2,17 @@ import { expect, type Locator, type Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
 import { apiOf } from "@/tests/e2e/support/api.ts";
-import { coreRulesetId } from "@/tests/e2e/support/campaigns.ts";
 import { apiResponse } from "@/tests/e2e/support/page.ts";
+
+/** The core rules' id. */
+export async function coreRulesetId(page: Page) {
+  const { items } = await parseResponse(
+    apiOf(page).api.rulesets.$get({ query: { scope: "base", search: "Core SRD 3.5" } }),
+  );
+  const core = items.find((ruleset) => ruleset.name === "Core SRD 3.5");
+  if (!core) throw new Error("Core SRD 3.5 isn't seeded");
+  return core.id;
+}
 
 /** Keep Core SRD reachable when forks push it beyond the first results page. */
 export async function visitCoreRulesetList(page: Page) {
