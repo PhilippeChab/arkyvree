@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SAMURAI: ClassSeed = {
   name: "Samurai",
-  description: "Trained to fight with their paired katana and wakizashi at the same time, samurai rival fighters in close combat effectiveness but possess a narrower range of martial techniques.",
-  hd: 10, levels: 20, skillPoints: 2,
+  description:
+    "Trained to fight with their paired katana and wakizashi at the same time, samurai rival fighters in close combat effectiveness but possess a narrower range of martial techniques.",
+  hd: 10,
+  levels: 20,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -17,7 +25,11 @@ export const SAMURAI: ClassSeed = {
     "Sense Motive",
   ],
   requirements: [
-    or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Lawful Neutral"), eqStr("identity.beliefs.alignment", "Lawful Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Good"),
+      eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+    ),
   ],
   classFeatureAptitude: "Samurai Class Feature",
   classFeatures: [
@@ -36,9 +48,5 @@ export const SAMURAI: ClassSeed = {
     [17, "Kiai Smite (Samurai)"],
     [20, "Frightful Presence (Samurai)"],
   ],
-  freeFeats: [
-    [8, "Improved Initiative", "Samurai Class Feature"],
-  ],
+  freeFeats: [[8, "Improved Initiative", "Samurai Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const INVISIBLE_BLADE: ClassSeed = {
   name: "Invisible Blade",
-  description: "Invisible blades are lethal combatants who specialize in fighting with daggers and similar small bladed weapons.",
-  hd: 6, levels: 5, skillPoints: 4,
+  description:
+    "Invisible blades are lethal combatants who specialize in fighting with daggers and similar small bladed weapons.",
+  hd: 6,
+  levels: 5,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -28,7 +36,11 @@ export const INVISIBLE_BLADE: ClassSeed = {
     gte("skills.sensemotive.rank", 6),
     eq("feats.farshot.possessed"),
     eq("feats.pointblankshot.possessed"),
-    or(eq("feats.weaponfocusdagger.possessed"), eq("feats.weaponfocuskukri.possessed"), eq("feats.weaponfocuspunchingdagger.possessed")),
+    or(
+      eq("feats.weaponfocusdagger.possessed"),
+      eq("feats.weaponfocuskukri.possessed"),
+      eq("feats.weaponfocuspunchingdagger.possessed"),
+    ),
   ],
   classFeatureAptitude: "Invisible Blade Class Feature",
   classFeatures: [
@@ -43,5 +55,3 @@ export const INVISIBLE_BLADE: ClassSeed = {
     [5, "Uncanny Feint (Invisible Blade)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

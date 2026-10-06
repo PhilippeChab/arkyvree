@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const PALADIN: ClassSeed = {
   name: "Paladin",
-  description: "Driven by righteousness, bound by a strict moral code, and empowered to vanquish wickedness - these define the paladin's calling. Only a rare few possess the unwavering virtue needed to follow this path, but those who do gain the ability to shield the innocent, mend the wounded, and strike down the corrupt. In a world teeming with scheming spellcasters, profane clergy, savage dragons, and demonic horrors, the paladin stands as an unyielding beacon of hope. Paladins approach every adventure with earnest purpose, often treating even simple tasks as sacred quests. Each mission represents a chance to prove their valor, sharpen their combat prowess, refine their strategy, and seek opportunities for benevolence. Yet a paladin truly shines when spearheading a grand crusade against the forces of darkness, rather than simply plundering forgotten ruins. Holy power shields the paladin and grants extraordinary capabilities. It deflects harm, renders the paladin resistant to disease, enables self-healing, and fortifies the spirit against terror. The paladin can extend this power to aid companions, restoring their vitality or purging their ailments. Ultimately, this divine energy can be channeled to annihilate evil. Even a novice paladin can sense the presence of evil, while veterans can deliver devastating blows against wicked foes and repel undead. Furthermore, this sacred bond attracts a powerful steed to the paladin's side, imbuing the mount with enhanced strength, intellect, and mystical resilience.",
-  hd: 10, levels: 20, skillPoints: 2,
+  description:
+    "Driven by righteousness, bound by a strict moral code, and empowered to vanquish wickedness - these define the paladin's calling. Only a rare few possess the unwavering virtue needed to follow this path, but those who do gain the ability to shield the innocent, mend the wounded, and strike down the corrupt. In a world teeming with scheming spellcasters, profane clergy, savage dragons, and demonic horrors, the paladin stands as an unyielding beacon of hope. Paladins approach every adventure with earnest purpose, often treating even simple tasks as sacred quests. Each mission represents a chance to prove their valor, sharpen their combat prowess, refine their strategy, and seek opportunities for benevolence. Yet a paladin truly shines when spearheading a grand crusade against the forces of darkness, rather than simply plundering forgotten ruins. Holy power shields the paladin and grants extraordinary capabilities. It deflects harm, renders the paladin resistant to disease, enables self-healing, and fortifies the spirit against terror. The paladin can extend this power to aid companions, restoring their vitality or purging their ailments. Ultimately, this divine energy can be channeled to annihilate evil. Even a novice paladin can sense the presence of evil, while veterans can deliver devastating blows against wicked foes and repel undead. Furthermore, this sacred bond attracts a powerful steed to the paladin's side, imbuing the mount with enhanced strength, intellect, and mystical resilience.",
+  hd: 10,
+  levels: 20,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -19,9 +27,7 @@ export const PALADIN: ClassSeed = {
     "Ride",
     "Sense Motive",
   ],
-  requirements: [
-    eqStr("identity.beliefs.alignment", "Lawful Good"),
-  ],
+  requirements: [eqStr("identity.beliefs.alignment", "Lawful Good")],
   classFeatureAptitude: "Paladin Class Feature",
   classFeatures: [
     [1, "Aura of Good (Paladin)"],
@@ -75,5 +81,3 @@ export const PALADIN: ClassSeed = {
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

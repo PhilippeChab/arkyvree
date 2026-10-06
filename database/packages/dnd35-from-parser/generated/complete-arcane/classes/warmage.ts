@@ -1,9 +1,16 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const WARMAGE: ClassSeed = {
   name: "Warmage",
   description: "A militant spellcaster whose training focuses on battlefield magic.",
-  hd: 6, levels: 20, skillPoints: 2,
+  hd: 6,
+  levels: 20,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -62,5 +69,3 @@ export const WARMAGE: ClassSeed = {
     knowAll: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

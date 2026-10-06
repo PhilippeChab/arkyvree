@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const RAVAGER: ClassSeed = {
   name: "Ravager",
-  description: "A ravager is a devoted servant of a god of slaughter, dedicated wholly to spreading carnage and destruction in that deity's name.",
-  hd: 10, levels: 10, skillPoints: 2,
+  description:
+    "A ravager is a devoted servant of a god of slaughter, dedicated wholly to spreading carnage and destruction in that deity's name.",
+  hd: 10,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: ["Intimidate", "Knowledge (Religion)", "Move Silently", "Profession", "Ride"],
@@ -33,5 +41,3 @@ export const RAVAGER: ClassSeed = {
     [7, "Pain Touch", "Ravager Class Feature"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const BLACK_FLAME_ZEALOT: ClassSeed = {
   name: "Black Flame Zealot",
-  description: "Practitioners of dark sacred rituals, black flame zealots combine stealth, divine spellcasting, and fanatical devotion to eliminate those who have offended their deity.",
-  hd: 6, levels: 10, skillPoints: 4,
+  description:
+    "Practitioners of dark sacred rituals, black flame zealots combine stealth, divine spellcasting, and fanatical devotion to eliminate those who have offended their deity.",
+  hd: 6,
+  levels: 10,
+  skillPoints: 4,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "good" },
   classSkills: [
@@ -61,5 +69,3 @@ export const BLACK_FLAME_ZEALOT: ClassSeed = {
     [10, "Unholy Immolation (Black Flame Zealot)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

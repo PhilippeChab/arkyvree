@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const DUELIST: ClassSeed = {
   name: "Duelist",
-  description: "A duelist is an agile and cunning combatant who specializes in delivering accurate strikes using light weaponry.",
-  hd: 10, levels: 10, skillPoints: 4,
+  description:
+    "A duelist is an agile and cunning combatant who specializes in delivering accurate strikes using light weaponry.",
+  hd: 10,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: ["Balance", "Bluff", "Escape Artist", "Jump", "Listen", "Perform", "Sense Motive", "Spot", "Tumble"],
@@ -29,9 +37,5 @@ export const DUELIST: ClassSeed = {
     [8, "Improved Reaction (Duelist)"],
     [10, "Precise Strike (Duelist)"],
   ],
-  freeFeats: [
-    [9, "Deflect Arrows", "Duelist Class Feature"],
-  ],
+  freeFeats: [[9, "Deflect Arrows", "Duelist Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

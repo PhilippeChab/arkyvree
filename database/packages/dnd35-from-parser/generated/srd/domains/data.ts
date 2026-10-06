@@ -3,7 +3,8 @@ import type { DomainDefinition } from "@/database/packages/dnd35/content/types.t
 export const ALL_DOMAINS: DomainDefinition[] = [
   {
     name: "Air",
-    description: "You can turn or destroy earth creatures in the same manner that a good cleric turns undead. Likewise, you can rebuke, command, or bolster air creatures just as an evil cleric rebukes undead. You may use these abilities a number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature.",
+    description:
+      "You can turn or destroy earth creatures in the same manner that a good cleric turns undead. Likewise, you can rebuke, command, or bolster air creatures just as an evil cleric rebukes undead. You may use these abilities a number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature.",
     spells: [
       { name: "Obscuring Mist", level: 1 },
       { name: "Wind Wall", level: 2 },
@@ -18,10 +19,9 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Animal",
-    description: "Once per day, you gain the spell-like ability to use speak with animals. Knowledge (nature) is added to your cleric class skill list.",
-    modifiers: [
-      { target: "skills.knowledgenature.innate", operator: "set", value: "true", valueType: "boolean" },
-    ],
+    description:
+      "Once per day, you gain the spell-like ability to use speak with animals. Knowledge (nature) is added to your cleric class skill list.",
+    modifiers: [{ target: "skills.knowledgenature.innate", operator: "set", value: "true", valueType: "boolean" }],
     spells: [
       { name: "Calm Animals", level: 1 },
       { name: "Hold Animal", level: 2 },
@@ -51,7 +51,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Death",
-    description: "Once per day, you can employ a death touch, which is a supernatural ability producing a death effect. To use it, you must make a successful melee touch attack against a living creature, following the standard touch spell rules. Upon a successful touch, roll 1d6 for each cleric level you have. If the result equals or exceeds the target's current hit points, the creature dies with no saving throw allowed.",
+    description:
+      "Once per day, you can employ a death touch, which is a supernatural ability producing a death effect. To use it, you must make a successful melee touch attack against a living creature, following the standard touch spell rules. Upon a successful touch, roll 1d6 for each cleric level you have. If the result equals or exceeds the target's current hit points, the creature dies with no saving throw allowed.",
     spells: [
       { name: "Cause Fear", level: 1 },
       { name: "Death Knell", level: 2 },
@@ -66,7 +67,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Destruction",
-    description: "You receive the smite ability, a supernatural power allowing you to make one melee attack with a +4 attack roll bonus and a damage bonus equal to your cleric level on a successful hit. The smite must be declared prior to the attack roll. This power can be used once per day.",
+    description:
+      "You receive the smite ability, a supernatural power allowing you to make one melee attack with a +4 attack roll bonus and a damage bonus equal to your cleric level on a successful hit. The smite must be declared prior to the attack roll. This power can be used once per day.",
     spells: [
       { name: "Inflict Light Wounds", level: 1 },
       { name: "Shatter", level: 2 },
@@ -81,7 +83,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Earth",
-    description: "You can turn or destroy air creatures in the same way a good cleric turns undead. You can also rebuke, command, or bolster earth creatures as an evil cleric rebukes undead. These abilities can be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature.",
+    description:
+      "You can turn or destroy air creatures in the same way a good cleric turns undead. You can also rebuke, command, or bolster earth creatures as an evil cleric rebukes undead. These abilities can be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature.",
     spells: [
       { name: "Magic Stone", level: 1 },
       { name: "Soften Earth and Stone", level: 2 },
@@ -111,7 +114,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Fire",
-    description: "You can turn or destroy water creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster fire creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature.",
+    description:
+      "You can turn or destroy water creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster fire creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature.",
     spells: [
       { name: "Burning Hands", level: 1 },
       { name: "Produce Flame", level: 2 },
@@ -156,10 +160,16 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Knowledge",
-    description: "All Knowledge skills become cleric class skills for you. Additionally, your divination spells are cast at +1 caster level.",
+    description:
+      "All Knowledge skills become cleric class skills for you. Additionally, your divination spells are cast at +1 caster level.",
     modifiers: [
       { target: "skills.knowledgearcana.innate", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.knowledgearchitectureandengineering.innate", operator: "set", value: "true", valueType: "boolean" },
+      {
+        target: "skills.knowledgearchitectureandengineering.innate",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
       { target: "skills.knowledgedungeoneering.innate", operator: "set", value: "true", valueType: "boolean" },
       { target: "skills.knowledgegeography.innate", operator: "set", value: "true", valueType: "boolean" },
       { target: "skills.knowledgehistory.innate", operator: "set", value: "true", valueType: "boolean" },
@@ -199,7 +209,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Luck",
-    description: "Once per day, you gain the extraordinary ability of good fortune. This lets you reroll a single roll you just made, provided the GM has not yet announced whether the result is a success or failure. You must accept the reroll result, even if it is lower than your original roll.",
+    description:
+      "Once per day, you gain the extraordinary ability of good fortune. This lets you reroll a single roll you just made, provided the GM has not yet announced whether the result is a success or failure. You must accept the reroll result, even if it is lower than your original roll.",
     spells: [
       { name: "Entropic Shield", level: 1 },
       { name: "Aid", level: 2 },
@@ -214,7 +225,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Magic",
-    description: "You can activate scrolls, wands, and other spell completion or spell trigger items as though you were a wizard of half your cleric level (minimum 1st level). If you also have actual wizard levels, those levels stack with this effective wizard level for the purpose of activating such magic items.",
+    description:
+      "You can activate scrolls, wands, and other spell completion or spell trigger items as though you were a wizard of half your cleric level (minimum 1st level). If you also have actual wizard levels, those levels stack with this effective wizard level for the purpose of activating such magic items.",
     spells: [
       { name: "Nystul's Magic Aura", level: 1 },
       { name: "Identify", level: 2 },
@@ -229,10 +241,9 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Plant",
-    description: "You can rebuke or command plant creatures in the same way an evil cleric rebukes or commands undead. This ability can be used a number of times per day equal to 3 + your Charisma modifier and is a supernatural power. Knowledge (nature) is also added to your cleric class skill list.",
-    modifiers: [
-      { target: "skills.knowledgenature.innate", operator: "set", value: "true", valueType: "boolean" },
-    ],
+    description:
+      "You can rebuke or command plant creatures in the same way an evil cleric rebukes or commands undead. This ability can be used a number of times per day equal to 3 + your Charisma modifier and is a supernatural power. Knowledge (nature) is also added to your cleric class skill list.",
+    modifiers: [{ target: "skills.knowledgenature.innate", operator: "set", value: "true", valueType: "boolean" }],
     spells: [
       { name: "Entangle", level: 1 },
       { name: "Barkskin", level: 2 },
@@ -247,7 +258,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Protection",
-    description: "As a supernatural ability, you can create a protective ward. By touching a creature as a standard action, you grant it a resistance bonus on its next saving throw equal to your cleric level. This abjuration effect lasts for 1 hour and may be used once per day.",
+    description:
+      "As a supernatural ability, you can create a protective ward. By touching a creature as a standard action, you grant it a resistance bonus on its next saving throw equal to your cleric level. This abjuration effect lasts for 1 hour and may be used once per day.",
     spells: [
       { name: "Sanctuary", level: 1 },
       { name: "Shield Other", level: 2 },
@@ -262,7 +274,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Strength",
-    description: "As a supernatural ability, you can perform a feat of great strength. You receive an enhancement bonus to Strength equal to your cleric level. Activating this power is a free action, it persists for 1 round, and it can be used once per day.",
+    description:
+      "As a supernatural ability, you can perform a feat of great strength. You receive an enhancement bonus to Strength equal to your cleric level. Activating this power is a free action, it persists for 1 round, and it can be used once per day.",
     spells: [
       { name: "Enlarge Person", level: 1 },
       { name: "Bull's Strength", level: 2 },
@@ -277,7 +290,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Sun",
-    description: "Once per day, you may perform a greater turning against undead instead of a normal turning attempt. A greater turning functions identically to a regular turning, except that any undead that would normally be turned are instead destroyed.",
+    description:
+      "Once per day, you may perform a greater turning against undead instead of a normal turning attempt. A greater turning functions identically to a regular turning, except that any undead that would normally be turned are instead destroyed.",
     spells: [
       { name: "Endure Elements", level: 1 },
       { name: "Heat Metal", level: 2 },
@@ -292,10 +306,9 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Travel",
-    description: "Each day, for a total duration of 1 round per cleric level, you can move and act freely despite magical effects that would normally hinder movement, as though under the effects of freedom of movement. This benefit activates automatically when relevant, persists until its duration is spent or no longer applicable, and can trigger multiple times per day up to the total daily round limit. This is a supernatural ability. Survival is also added to your cleric class skill list.",
-    modifiers: [
-      { target: "skills.survival.innate", operator: "set", value: "true", valueType: "boolean" },
-    ],
+    description:
+      "Each day, for a total duration of 1 round per cleric level, you can move and act freely despite magical effects that would normally hinder movement, as though under the effects of freedom of movement. This benefit activates automatically when relevant, persists until its duration is spent or no longer applicable, and can trigger multiple times per day up to the total daily round limit. This is a supernatural ability. Survival is also added to your cleric class skill list.",
+    modifiers: [{ target: "skills.survival.innate", operator: "set", value: "true", valueType: "boolean" }],
     spells: [
       { name: "Longstrider", level: 1 },
       { name: "Locate Object", level: 2 },
@@ -330,10 +343,9 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "War",
-    description: "You gain Martial Weapon Proficiency with your deity's favored weapon at no cost (if you do not already have it), as well as Weapon Focus with that same weapon.",
-    modifiers: [
-      { target: "aptitudes.wardomainweapon.allowed", operator: "add", value: "1", valueType: "number" },
-    ],
+    description:
+      "You gain Martial Weapon Proficiency with your deity's favored weapon at no cost (if you do not already have it), as well as Weapon Focus with that same weapon.",
+    modifiers: [{ target: "aptitudes.wardomainweapon.allowed", operator: "add", value: "1", valueType: "number" }],
     spells: [
       { name: "Magic Weapon", level: 1 },
       { name: "Spiritual Weapon", level: 2 },
@@ -348,7 +360,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Water",
-    description: "You can turn or destroy fire creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster water creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature.",
+    description:
+      "You can turn or destroy fire creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster water creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature.",
     spells: [
       { name: "Obscuring Mist", level: 1 },
       { name: "Fog Cloud", level: 2 },

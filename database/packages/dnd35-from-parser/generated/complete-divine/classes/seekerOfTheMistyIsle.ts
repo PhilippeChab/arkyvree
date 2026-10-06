@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SEEKER_OF_THE_MISTY_ISLE: ClassSeed = {
   name: "Seeker of the Misty Isle",
-  description: "These devoted elven questers dedicate themselves to finding the lost elves rumored to dwell on the legendary Misty Isle.",
-  hd: 8, levels: 10, skillPoints: 6,
+  description:
+    "These devoted elven questers dedicate themselves to finding the lost elves rumored to dwell on the legendary Misty Isle.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: [
@@ -46,5 +54,3 @@ export const SEEKER_OF_THE_MISTY_ISLE: ClassSeed = {
     [10, "Discern Location (Seeker of the Misty Isle)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

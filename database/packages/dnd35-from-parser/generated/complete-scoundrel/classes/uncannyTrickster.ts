@@ -1,9 +1,17 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const UNCANNY_TRICKSTER: ClassSeed = {
   name: "Uncanny Trickster",
-  description: "The uncanny trickster combines the features of his primary class with a wider range of skill tricks than any other character can achieve.",
-  hd: 6, levels: 3, skillPoints: 8,
+  description:
+    "The uncanny trickster combines the features of his primary class with a wider range of skill tricks than any other character can achieve.",
+  hd: 6,
+  levels: 3,
+  skillPoints: 8,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -47,5 +55,3 @@ export const UNCANNY_TRICKSTER: ClassSeed = {
     [3, "Tricky Defense (Uncanny Trickster)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - Unresolved aptitude pick: "Virtuoso Performance (Persuasive Song)"
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const VIRTUOSO: ClassSeed = {
   name: "Virtuoso",
   description: "The typical virtuoso is outgoing, charismatic, and gregarious.",
-  hd: 6, levels: 10, skillPoints: 6,
+  hd: 6,
+  levels: 10,
+  skillPoints: 6,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -22,11 +30,7 @@ export const VIRTUOSO: ClassSeed = {
     "Spellcraft",
     "Tumble",
   ],
-  requirements: [
-    gte("skills.diplomacy.rank", 4),
-    gte("skills.intimidate.rank", 4),
-    gte("skills.perform.rank", 10),
-  ],
+  requirements: [gte("skills.diplomacy.rank", 4), gte("skills.intimidate.rank", 4), gte("skills.perform.rank", 10)],
   casterLevelAdvancement: { type: "arcane", levels: [2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Virtuoso Class Feature",
   classFeatures: [
@@ -41,6 +45,3 @@ export const VIRTUOSO: ClassSeed = {
     [10, "Virtuoso Performance (Revealing Melody) (Virtuoso)"],
   ],
 };
-
-// TODO: Unresolved aptitude pick: "Virtuoso Performance (Persuasive Song)"
-// TODO: No modifiers defined — review if this class needs any

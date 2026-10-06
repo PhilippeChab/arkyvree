@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const MALCONVOKER: ClassSeed = {
   name: "Malconvoker",
   description: "Daring summoners known as malconvokers bargain with their lives.",
-  hd: 4, levels: 9, skillPoints: 2,
+  hd: 4,
+  levels: 9,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -48,9 +55,5 @@ export const MALCONVOKER: ClassSeed = {
     [8, "Improved Calling (Malconvoker)"],
     [9, "Safe Summoning (Malconvoker)"],
   ],
-  freeFeats: [
-    [3, "Skill Focus: Bluff", "Malconvoker Class Feature"],
-  ],
+  freeFeats: [[3, "Skill Focus: Bluff", "Malconvoker Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

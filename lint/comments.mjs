@@ -10,8 +10,6 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-import { isToolWritten } from "./paths.mjs";
-
 /** A tool reads it: its syntax is the tool's */
 const DIRECTIVE =
   /^\s*(?:(?:eslint|oxlint)-(?:disable|enable)|@ts-|oxfmt-ignore|prettier-ignore|[#@]__PURE__|@vite-ignore|webpack[A-Z]|(?:istanbul|c8|v8) ignore)|^\/ <reference/;
@@ -142,8 +140,6 @@ function mergedDoc(stack, indent) {
 }
 
 function createCommentStyle(context) {
-  // What a tool writes keeps the tool's layout
-  if (isToolWritten(context.filename)) return {};
   return {
     Program(program) {
       const text = context.sourceCode.text;

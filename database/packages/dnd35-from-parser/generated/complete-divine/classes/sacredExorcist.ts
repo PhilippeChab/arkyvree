@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SACRED_EXORCIST: ClassSeed = {
   name: "Sacred Exorcist",
   description: "",
-  hd: 8, levels: 10, skillPoints: 2,
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -21,7 +28,11 @@ export const SACRED_EXORCIST: ClassSeed = {
   requirements: [
     gte("skills.knowledgetheplanes.rank", 10),
     gte("skills.knowledgereligion.rank", 7),
-    or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Neutral Good"), eqStr("identity.beliefs.alignment", "Chaotic Good")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Good"),
+      eqStr("identity.beliefs.alignment", "Neutral Good"),
+      eqStr("identity.beliefs.alignment", "Chaotic Good"),
+    ),
   ],
   casterLevelAdvancement: { type: "any", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Sacred Exorcist Class Feature",
@@ -42,5 +53,3 @@ export const SACRED_EXORCIST: ClassSeed = {
     [10, "Dispel Evil (Sacred Exorcist)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

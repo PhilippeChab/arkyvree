@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const DARK_HUNTER: ClassSeed = {
   name: "Dark Hunter",
-  description: "Dark hunters are expert trackers and slayers who operate in the lightless depths of underground caverns, specializing in locating and eliminating subterranean threats.",
-  hd: 8, levels: 5, skillPoints: 4,
+  description:
+    "Dark hunters are expert trackers and slayers who operate in the lightless depths of underground caverns, specializing in locating and eliminating subterranean threats.",
+  hd: 8,
+  levels: 5,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -41,5 +49,3 @@ export const DARK_HUNTER: ClassSeed = {
     [5, "Death Attack (Dark Hunter)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

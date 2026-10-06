@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const BATTLE_TRICKSTER: ClassSeed = {
   name: "Battle Trickster",
-  description: "The battle trickster engages in combat not only to defeat enemies but to impress them with martial and acrobatic prowess.",
-  hd: 10, levels: 3, skillPoints: 4,
+  description:
+    "The battle trickster engages in combat not only to defeat enemies but to impress them with martial and acrobatic prowess.",
+  hd: 10,
+  levels: 3,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -20,9 +28,7 @@ export const BATTLE_TRICKSTER: ClassSeed = {
     "Tumble",
     "Use Rope",
   ],
-  requirements: [
-    gte("combat.bab", 5),
-  ],
+  requirements: [gte("combat.bab", 5)],
   classFeatureAptitude: "Battle Trickster Class Feature",
   classFeatures: [
     [1, "Bonus Trick (Battle Trickster)"],
@@ -30,9 +36,5 @@ export const BATTLE_TRICKSTER: ClassSeed = {
     [3, "Bonus Trick (Battle Trickster)"],
     [3, "Tricky Fighting (Battle Trickster)"],
   ],
-  aptitudePicks: [
-    { levels: [2], target: "aptitudes.fighterbonusfeat.allowed" },
-  ],
+  aptitudePicks: [{ levels: [2], target: "aptitudes.fighterbonusfeat.allowed" }],
 };
-
-// TODO: No modifiers defined — review if this class needs any

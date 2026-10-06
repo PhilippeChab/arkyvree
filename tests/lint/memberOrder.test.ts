@@ -267,7 +267,7 @@ describe("member order", () => {
       "}",
       "",
     ]);
-    // A declaration file follows the module it types.
+    // A declaration file's functions are in order too
     const declarations = write("types.d.ts", ["export function b(): void;", "export function a(): void;", ""]);
     await runOxlint(["-c", config, "--fix", dir]);
 
@@ -337,7 +337,7 @@ describe("member order", () => {
         "",
       ].join("\n"),
     );
-    expect(fs.readFileSync(declarations, "utf8")).toBe("export function b(): void;\nexport function a(): void;\n");
+    expect(fs.readFileSync(declarations, "utf8")).toBe("export function a(): void;\n\nexport function b(): void;\n");
     expect((await runOxlint(["-f", "unix", "-c", config, dir])).stdout).toContain(
       "Functions that call each other (y, x): untangle them, so the file reads bottom-up.",
     );

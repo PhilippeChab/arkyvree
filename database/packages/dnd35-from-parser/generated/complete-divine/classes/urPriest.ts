@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const UR_PRIEST: ClassSeed = {
   name: "Ur-priest",
-  description: "A rare few individuals known as ur-priests have discovered how to channel divine magical energy directly, bypassing the need to worship or petition any deity.",
-  hd: 8, levels: 10, skillPoints: 2,
+  description:
+    "A rare few individuals known as ur-priests have discovered how to channel divine magical energy directly, bypassing the need to worship or petition any deity.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -26,7 +34,11 @@ export const UR_PRIEST: ClassSeed = {
     eq("feats.ironwill.possessed"),
     eq("feats.spellfocusevil.possessed"),
     gte("spellcasting.divine", 1),
-    or(eqStr("identity.beliefs.alignment", "Lawful Evil"), eqStr("identity.beliefs.alignment", "Neutral Evil"), eqStr("identity.beliefs.alignment", "Chaotic Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+      eqStr("identity.beliefs.alignment", "Neutral Evil"),
+      eqStr("identity.beliefs.alignment", "Chaotic Evil"),
+    ),
     gte("saves.fortitude.base", 3),
     gte("saves.will.base", 3),
   ],
@@ -59,5 +71,3 @@ export const UR_PRIEST: ClassSeed = {
     knowAll: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

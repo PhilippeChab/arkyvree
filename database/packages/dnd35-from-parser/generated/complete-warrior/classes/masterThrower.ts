@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const MASTER_THROWER: ClassSeed = {
   name: "Master Thrower",
-  description: "Master throwers rely on swift reactions, careful tactics, and precise ranged attacks to overcome their foes.",
-  hd: 8, levels: 5, skillPoints: 4,
+  description:
+    "Master throwers rely on swift reactions, careful tactics, and precise ranged attacks to overcome their foes.",
+  hd: 8,
+  levels: 5,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -41,5 +49,3 @@ export const MASTER_THROWER: ClassSeed = {
     [4, "Snatch Arrows", "Master Thrower Class Feature"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

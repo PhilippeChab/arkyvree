@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const REAPING_MAULER: ClassSeed = {
   name: "Reaping Mauler",
-  description: "Reaping maulers specialize in brutal unarmed grappling techniques, excelling at breaking bones, wrenching limbs, and overpowering foes in close-quarters combat.",
-  hd: 10, levels: 5, skillPoints: 2,
+  description:
+    "Reaping maulers specialize in brutal unarmed grappling techniques, excelling at breaking bones, wrenching limbs, and overpowering foes in close-quarters combat.",
+  hd: 10,
+  levels: 5,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: ["Climb", "Craft", "Escape Artist", "Intimidate", "Jump", "Perform", "Profession", "Swim", "Tumble"],
@@ -29,5 +37,3 @@ export const REAPING_MAULER: ClassSeed = {
     [1, "Mobility", "Reaping Mauler Class Feature"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const OCCULT_SLAYER: ClassSeed = {
   name: "Occult Slayer",
-  description: "An occult slayer is a dedicated warrior who relentlessly pursues and confronts wielders of arcane and divine magic.",
-  hd: 8, levels: 5, skillPoints: 2,
+  description:
+    "An occult slayer is a dedicated warrior who relentlessly pursues and confronts wielders of arcane and divine magic.",
+  hd: 8,
+  levels: 5,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -38,5 +46,3 @@ export const OCCULT_SLAYER: ClassSeed = {
     [5, "Magical Defense (Occult Slayer)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

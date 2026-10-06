@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const HOSPITALER: ClassSeed = {
   name: "Hospitaler",
-  description: "Hospitalers are militant protectors bound by vows of poverty and obedience, dedicated to safeguarding those under their charge.",
-  hd: 8, levels: 10, skillPoints: 2,
+  description:
+    "Hospitalers are militant protectors bound by vows of poverty and obedience, dedicated to safeguarding those under their charge.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -45,9 +53,5 @@ export const HOSPITALER: ClassSeed = {
     [7, "Remove Disease (Hospitaler)"],
     [9, "Bonus Feat (Hospitaler)"],
   ],
-  aptitudePicks: [
-    { levels: [1, 5, 9], target: "aptitudes.fighterbonusfeat.allowed" },
-  ],
+  aptitudePicks: [{ levels: [1, 5, 9], target: "aptitudes.fighterbonusfeat.allowed" }],
 };
-
-// TODO: No modifiers defined — review if this class needs any

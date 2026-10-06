@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SHADOWBANE_INQUISITOR: ClassSeed = {
   name: "Shadowbane Inquisitor",
   description: "Shadowbane inquisitors battle incessantly against evil in whatever form it takes.",
-  hd: 10, levels: 10, skillPoints: 4,
+  hd: 10,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -49,9 +56,5 @@ export const SHADOWBANE_INQUISITOR: ClassSeed = {
     [10, "Smite (Shadowbane Inquisitor)"],
     [10, "Sneak Attack (Shadowbane Inquisitor)"],
   ],
-  freeFeats: [
-    [3, "Improved Sunder", "Shadowbane Inquisitor Class Feature"],
-  ],
+  freeFeats: [[3, "Improved Sunder", "Shadowbane Inquisitor Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

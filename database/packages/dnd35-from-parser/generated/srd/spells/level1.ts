@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_1_SPELLS: PowerSeed[] = [
   {
     name: "Alarm",
-    description: "This spell sets a ward that triggers a mental or audible alert whenever a creature of Tiny size or larger enters or touches the protected area. A creature that speaks a password you set during casting does not activate the alarm. You choose the alarm type at the time of casting. Mental Alarm: Only you are alerted, as long as you remain within 1 mile of the area. You perceive a single mental signal that can wake you from normal sleep but otherwise does not break concentration. Silence effects cannot suppress a mental alarm. Audible Alarm: The alarm produces the sound of a small bell, audible within 60 feet. Closed doors reduce this range by 10 feet each, and substantial walls reduce it by 20 feet. Under quiet conditions, the sound can be faintly heard up to 180 feet away. It lasts for 1 round. Creatures inside a silence effect cannot hear it. Ethereal and astral creatures do not set off the alarm. This spell can be made permanent with a permanency spell. Arcane Focus: A miniature bell and a length of fine silver wire.",
+    description:
+      "This spell sets a ward that triggers a mental or audible alert whenever a creature of Tiny size or larger enters or touches the protected area. A creature that speaks a password you set during casting does not activate the alarm. You choose the alarm type at the time of casting. Mental Alarm: Only you are alerted, as long as you remain within 1 mile of the area. You perceive a single mental signal that can wake you from normal sleep but otherwise does not break concentration. Silence effects cannot suppress a mental alarm. Audible Alarm: The alarm produces the sound of a small bell, audible within 60 feet. Closed doors reduce this range by 10 feet each, and substantial walls reduce it by 20 feet. Under quiet conditions, the sound can be faintly heard up to 180 feet away. It lasts for 1 round. Creatures inside a silence effect cannot hear it. Ethereal and astral creatures do not set off the alarm. This spell can be made permanent with a permanency spell. Arcane Focus: A miniature bell and a length of fine silver wire.",
     aptitudes: ["Bard Spells", "Ranger Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -20,7 +21,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Animal Messenger",
-    description: "You compel a Tiny animal to travel to a location you specify. The creature cannot be one already tamed or trained by another, including familiars and animal companions. You lure it with appropriate food, and it approaches to await instructions. You mentally imprint a well-known place or obvious landmark as the destination. The directions must be simple since the animal relies on your knowledge. You may attach a small item or note to it. The animal travels to the location and waits until the spell expires, then resumes its natural behavior. While waiting, it allows others to approach and remove any attached scroll or token. Recipients gain no special ability to communicate with the animal or read any attached message in an unfamiliar language. Material Component: A morsel of food the animal finds appealing.",
+    description:
+      "You compel a Tiny animal to travel to a location you specify. The creature cannot be one already tamed or trained by another, including familiars and animal companions. You lure it with appropriate food, and it approaches to await instructions. You mentally imprint a well-known place or obvious landmark as the destination. The directions must be simple since the animal relies on your knowledge. You may attach a small item or note to it. The animal travels to the location and waits until the spell expires, then resumes its natural behavior. While waiting, it allows others to approach and remove any attached scroll or token. Recipients gain no special ability to communicate with the animal or read any attached message in an unfamiliar language. Material Component: A morsel of food the animal finds appealing.",
     aptitudes: ["Bard Spells", "Druid Spells", "Ranger Spells"],
     aptitudeLevels: { "Bard Spells": 2, "Druid Spells": 2, "Ranger Spells": 1 },
     savingThrow: "None; see text",
@@ -40,7 +42,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Animate Rope",
-    description: "You animate a nonliving ropelike object such as string, yarn, cord, line, rope, or cable. The maximum length assumes a 1-inch diameter rope. Each additional inch of thickness reduces the maximum length by 50%, while each halving of diameter increases it by 50%. Available commands include coil, coil and knot, loop, loop and knot, tie and knot, and their opposites. You issue one command per round as a move action. The rope can only ensnare a creature or object within 1 foot of it and must be thrown near the target (requiring a ranged touch attack with a 10-foot range increment). A standard 1-inch hempen rope has 2 hp, AC 10, and requires a DC 23 Strength check to burst. It deals no damage but can serve as a trip line or entangle a creature that fails a Reflex save. A bound spellcaster must succeed on a DC 15 Concentration check to cast. An entangled creature can escape with a DC 20 Escape Artist check. The rope and its knots are mundane. You gain a +2 bonus on Use Rope checks with the affected rope. Objects carried or worn by creatures cannot be animated.",
+    description:
+      "You animate a nonliving ropelike object such as string, yarn, cord, line, rope, or cable. The maximum length assumes a 1-inch diameter rope. Each additional inch of thickness reduces the maximum length by 50%, while each halving of diameter increases it by 50%. Available commands include coil, coil and knot, loop, loop and knot, tie and knot, and their opposites. You issue one command per round as a move action. The rope can only ensnare a creature or object within 1 foot of it and must be thrown near the target (requiring a ranged touch attack with a 10-foot range increment). A standard 1-inch hempen rope has 2 hp, AC 10, and requires a DC 23 Strength check to burst. It deals no damage but can serve as a trip line or entangle a creature that fails a Reflex save. A bound spellcaster must succeed on a DC 15 Concentration check to cast. An entangled creature can escape with a DC 20 Escape Artist check. The rope and its knots are mundane. You gain a +2 bonus on Use Rope checks with the affected rope. Objects carried or worn by creatures cannot be animated.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -56,7 +59,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bane",
-    description: "Your enemies become filled with doubt and dread. Each affected creature suffers a -1 penalty on attack rolls and a -1 penalty on saving throws against fear effects. Bane counters and dispels bless.",
+    description:
+      "Your enemies become filled with doubt and dread. Each affected creature suffers a -1 penalty on attack rolls and a -1 penalty on saving throws against fear effects. Bane counters and dispels bless.",
     aptitudes: ["Blighter Spells", "Cleric Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -76,7 +80,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bless",
-    description: "You fill your allies with courage. Each ally gains a +1 morale bonus on attack rolls and a +1 morale bonus on saving throws against fear effects. Bless counters and dispels bane.",
+    description:
+      "You fill your allies with courage. Each ally gains a +1 morale bonus on attack rolls and a +1 morale bonus on saving throws against fear effects. Bless counters and dispels bane.",
     aptitudes: ["Cleric Spells", "Paladin Spells"],
     savingThrow: "None",
     properties: [
@@ -85,7 +90,10 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       { type: "SPELL_DESCRIPTOR", value: "Mind-Affecting" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "50 ft." },
-      { type: "SPELL_AREA_OF_EFFECT", value: "The caster and all allies within a 50-ft. burst, centered on the caster" },
+      {
+        type: "SPELL_AREA_OF_EFFECT",
+        value: "The caster and all allies within a 50-ft. burst, centered on the caster",
+      },
       { type: "SPELL_DURATION", value: "1 min./level" },
       { type: "SPELL_RESISTANCE", value: "Yes (harmless)" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -95,7 +103,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bless Water",
-    description: "This spell imbues a flask (1 pint) of water with positive energy, transforming it into holy water. Holy water damages undead and evil outsiders. Material Component: 5 pounds of powdered silver (worth 25 gp).",
+    description:
+      "This spell imbues a flask (1 pint) of water with positive energy, transforming it into holy water. Holy water damages undead and evil outsiders. Material Component: 5 pounds of powdered silver (worth 25 gp).",
     aptitudes: ["Cleric Spells", "Knight of the Chalice Spells", "Paladin Spells"],
     savingThrow: "Will negates (object)",
     properties: [
@@ -113,7 +122,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bless Weapon",
-    description: "This spell makes a weapon strike true against evil foes. The weapon is treated as having a +1 enhancement bonus for overcoming the damage reduction of evil creatures, though this does not modify attack or damage rolls. It also counts as good-aligned for the purpose of overcoming damage reduction. In addition, all critical hit rolls against evil foes are automatically confirmed. This spell can affect up to fifty projectiles at once, with each losing the effect after being used.",
+    description:
+      "This spell makes a weapon strike true against evil foes. The weapon is treated as having a +1 enhancement bonus for overcoming the damage reduction of evil creatures, though this does not modify attack or damage rolls. It also counts as good-aligned for the purpose of overcoming damage reduction. In addition, all critical hit rolls against evil foes are automatically confirmed. This spell can affect up to fifty projectiles at once, with each losing the effect after being used.",
     aptitudes: ["Knight of the Chalice Spells", "Paladin Spells"],
     savingThrow: "None",
     properties: [
@@ -129,7 +139,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Burning Hands",
-    description: "A cone of searing flame shoots from your fingertips, dealing 1d4 points of fire damage per caster level (maximum 5d4) to every creature in the area. Flammable materials like cloth, paper, and thin wood ignite. A character can extinguish burning items as a full-round action.",
+    description:
+      "A cone of searing flame shoots from your fingertips, dealing 1d4 points of fire damage per caster level (maximum 5d4) to every creature in the area. Flammable materials like cloth, paper, and thin wood ignite. A character can extinguish burning items as a full-round action.",
     aptitudes: ["Blighter Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "Reflex half",
     properties: [
@@ -146,7 +157,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Calm Animals",
-    description: "You soothe animals, rendering them docile and harmless. Only ordinary animals (Intelligence 1 or 2) are eligible, and all must be of the same kind within 30 feet of each other. You can affect up to 2d4 + caster level HD of animals. Dire animals and those trained to attack or guard receive a saving throw; others do not. Calmed animals remain in place without attacking or fleeing, defend themselves if attacked, and break free if threatened by fire, predators, or imminent attack.",
+    description:
+      "You soothe animals, rendering them docile and harmless. Only ordinary animals (Intelligence 1 or 2) are eligible, and all must be of the same kind within 30 feet of each other. You can affect up to 2d4 + caster level HD of animals. Dire animals and those trained to attack or guard receive a saving throw; others do not. Calmed animals remain in place without attacking or fleeing, defend themselves if attacked, and break free if threatened by fire, predators, or imminent attack.",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     savingThrow: "Will negates; see text",
     properties: [
@@ -164,7 +176,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Cause Fear",
-    description: "The target becomes frightened. On a successful Will save, it is only shaken for 1 round. Creatures with 6 or more HD are immune. This spell counters and dispels remove fear.",
+    description:
+      "The target becomes frightened. On a successful Will save, it is only shaken for 1 round. Creatures with 6 or more HD are immune. This spell counters and dispels remove fear.",
     aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     savingThrow: "Will partial",
     properties: [
@@ -200,7 +213,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Charm Person",
-    description: "You cause a humanoid to regard you as a trusted friend and ally. Creatures currently threatened or attacked by you or your allies get a +5 bonus on the saving throw. You cannot control the charmed person like an automaton, but it interprets your words and actions favorably. Convincing it to do something it would not normally do requires an opposed Charisma check (no retries). It never obeys suicidal or obviously harmful orders, but might be convinced of urgent necessity. Any threatening act by you or your apparent allies ends the spell. You must speak the subject's language or communicate through pantomime.",
+    description:
+      "You cause a humanoid to regard you as a trusted friend and ally. Creatures currently threatened or attacked by you or your allies get a +5 bonus on the saving throw. You cannot control the charmed person like an automaton, but it interprets your words and actions favorably. Convincing it to do something it would not normally do requires an opposed Charisma check (no retries). It never obeys suicidal or obviously harmful orders, but might be convinced of urgent necessity. Any threatening act by you or your apparent allies ends the spell. You must speak the subject's language or communicate through pantomime.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -218,7 +232,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Chill Touch",
-    description: "Your hand glows with blue energy, disrupting the life force of living creatures you touch. Each touch deals 1d6 points of damage, plus 1 point of Strength damage unless the target succeeds on a Fortitude save. You can make one touch attack per caster level. An undead creature you touch takes no damage but must succeed on a Will save or flee as if panicked for 1d4 rounds + 1 round per caster level.",
+    description:
+      "Your hand glows with blue energy, disrupting the life force of living creatures you touch. Each touch deals 1d6 points of damage, plus 1 point of Strength damage unless the target succeeds on a Fortitude save. You can make one touch attack per caster level. An undead creature you touch takes no damage but must succeed on a Will save or flee as if panicked for 1d4 rounds + 1 round per caster level.",
     aptitudes: ["Blighter Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     aptitudeLevels: { "Blighter Spells": 2, "Sorcerer Spells": 1, "Warmage Spells": 1, "Wizard Spells": 1 },
     savingThrow: "Fortitude partial or Will negates; see text",
@@ -235,7 +250,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Color Spray",
-    description: "A vivid cone of clashing colors erupts from your hand, affecting creatures based on their HD. 2 HD or less: unconscious, blinded, and stunned for 2d4 rounds, then blinded and stunned for 1d4 rounds, then stunned for 1 round (only living creatures are knocked unconscious). 3 or 4 HD: blinded and stunned for 1d4 rounds, then stunned for 1 round. 5+ HD: stunned for 1 round. Sightless creatures are unaffected. Material Component: A pinch each of red, yellow, and blue powder or sand.",
+    description:
+      "A vivid cone of clashing colors erupts from your hand, affecting creatures based on their HD. 2 HD or less: unconscious, blinded, and stunned for 2d4 rounds, then blinded and stunned for 1d4 rounds, then stunned for 1 round (only living creatures are knocked unconscious). 3 or 4 HD: blinded and stunned for 1d4 rounds, then stunned for 1 round. 5+ HD: stunned for 1 round. Sightless creatures are unaffected. Material Component: A pinch each of red, yellow, and blue powder or sand.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -254,7 +270,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Command",
-    description: "You issue a single one-word command that the subject obeys as best it can on its next turn. Options include: Approach (moves toward you), Drop (drops held items), Fall (falls prone), Flee (moves away), and Halt (stands still taking no actions). If the subject cannot comply, the spell fails.",
+    description:
+      "You issue a single one-word command that the subject obeys as best it can on its next turn. Options include: Approach (moves toward you), Drop (drops held items), Fall (falls prone), Flee (moves away), and Halt (stands still taking no actions). If the subject cannot comply, the spell fails.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -272,8 +289,16 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Comprehend Languages",
-    description: "You gain the ability to understand spoken words or read otherwise incomprehensible text by touching the creature or writing. You can read one page (250 words) per minute. This grants literal understanding only, not insight. It does not allow you to speak or write the language. Magical writing cannot be read (though it is revealed as magical). The spell does not decipher codes or uncover hidden messages within normal text. It can be made permanent with permanency. Arcane Material Component: A pinch of soot and a few grains of salt.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
+    description:
+      "You gain the ability to understand spoken words or read otherwise incomprehensible text by touching the creature or writing. You can read one page (250 words) per minute. This grants literal understanding only, not insight. It does not allow you to speak or write the language. Magical writing cannot be read (though it is revealed as magical). The spell does not decipher codes or uncover hidden messages within normal text. It can be made permanent with permanency. Arcane Material Component: A pinch of soot and a few grains of salt.",
+    aptitudes: [
+      "Bard Spells",
+      "Cleric Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -309,9 +334,24 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Cure Light Wounds",
-    description: "By laying your hand on a living creature, you channel positive energy to heal 1d8 points of damage + 1 per caster level (maximum +5). Against undead, this spell deals damage instead. An undead creature can apply spell resistance and attempt a Will save for half damage.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Druid Spells", "Hunter of the Dead Spells", "Paladin Spells", "Ranger Spells"],
-    aptitudeLevels: { "Bard Spells": 1, "Cleric Spells": 1, "Druid Spells": 1, "Hunter of the Dead Spells": 1, "Paladin Spells": 1, "Ranger Spells": 2 },
+    description:
+      "By laying your hand on a living creature, you channel positive energy to heal 1d8 points of damage + 1 per caster level (maximum +5). Against undead, this spell deals damage instead. An undead creature can apply spell resistance and attempt a Will save for half damage.",
+    aptitudes: [
+      "Bard Spells",
+      "Cleric Spells",
+      "Druid Spells",
+      "Hunter of the Dead Spells",
+      "Paladin Spells",
+      "Ranger Spells",
+    ],
+    aptitudeLevels: {
+      "Bard Spells": 1,
+      "Cleric Spells": 1,
+      "Druid Spells": 1,
+      "Hunter of the Dead Spells": 1,
+      "Paladin Spells": 1,
+      "Ranger Spells": 2,
+    },
     savingThrow: "Will half (harmless); see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
@@ -327,7 +367,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Curse Water",
-    description: "You imbue a flask (1 pint) of water with negative energy, creating unholy water. Unholy water damages good outsiders in the same way holy water damages undead and evil outsiders. Material Component: 5 pounds of powdered silver (worth 25 gp).",
+    description:
+      "You imbue a flask (1 pint) of water with negative energy, creating unholy water. Unholy water damages good outsiders in the same way holy water damages undead and evil outsiders. Material Component: 5 pounds of powdered silver (worth 25 gp).",
     aptitudes: ["Blighter Spells", "Cleric Spells"],
     savingThrow: "Will negates (object)",
     properties: [
@@ -345,7 +386,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Deathwatch",
-    description: "Using the sight of unlife, you instantly determine the condition of nearby creatures: dead, fragile (alive with 3 or fewer hp), fighting off death (alive with 4+ hp), undead, or neither alive nor dead (such as a construct). This sight penetrates abilities that allow creatures to feign death.",
+    description:
+      "Using the sight of unlife, you instantly determine the condition of nearby creatures: dead, fragile (alive with 3 or fewer hp), fighting off death (alive with 4+ hp), undead, or neither alive nor dead (such as a construct). This sight penetrates abilities that allow creatures to feign death.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None",
     properties: [
@@ -362,9 +404,16 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Delay Poison",
-    description: "The target becomes temporarily immune to poison. Any poison in its system or encountered during the spell's duration has no effect until the spell expires. This does not cure damage already inflicted by poison.",
+    description:
+      "The target becomes temporarily immune to poison. Any poison in its system or encountered during the spell's duration has no effect until the spell expires. This does not cure damage already inflicted by poison.",
     aptitudes: ["Bard Spells", "Cleric Spells", "Druid Spells", "Paladin Spells", "Ranger Spells"],
-    aptitudeLevels: { "Bard Spells": 2, "Cleric Spells": 2, "Druid Spells": 2, "Paladin Spells": 2, "Ranger Spells": 1 },
+    aptitudeLevels: {
+      "Bard Spells": 2,
+      "Cleric Spells": 2,
+      "Druid Spells": 2,
+      "Paladin Spells": 2,
+      "Ranger Spells": 1,
+    },
     savingThrow: "Fortitude negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
@@ -381,7 +430,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Detect Animals Or Plants",
-    description: "You detect a specific kind of animal or plant in a cone. You can change the target kind each round. 1st Round: Presence or absence. 2nd Round: Number and condition of the healthiest. 3rd Round: Condition and location of each. Conditions are Normal (90%+ hp), Fair (30-90%), Poor (below 30% or diseased), and Weak (0 or fewer hp, terminal disease, or crippled). The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt.",
+    description:
+      "You detect a specific kind of animal or plant in a cone. You can change the target kind each round. 1st Round: Presence or absence. 2nd Round: Number and condition of the healthiest. 3rd Round: Condition and location of each. Conditions are Normal (90%+ hp), Fair (30-90%), Poor (below 30% or diseased), and Weak (0 or fewer hp, terminal disease, or crippled). The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt.",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     savingThrow: "None",
     properties: [
@@ -397,7 +447,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Detect Chaos",
-    description: "This functions like detect evil, except it detects chaotic auras from creatures, clerics, spells, and magic items. Lawful creatures are vulnerable to overwhelming chaotic auras.",
+    description:
+      "This functions like detect evil, except it detects chaotic auras from creatures, clerics, spells, and magic items. Lawful creatures are vulnerable to overwhelming chaotic auras.",
     aptitudes: ["Cleric Spells", "Knight of the Chalice Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -414,7 +465,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Detect Evil",
-    description: "You sense evil presence in a cone. 1st Round: Presence or absence. 2nd Round: Number and power of evil auras; good characters may be stunned by overwhelming evil auras from sources with HD at least twice their level. 3rd Round: Power and location of each aura. Aura strength depends on the source's type, HD, caster level, or class level. Lingering auras persist as dim after the source dissipates. Animals, traps, and poisons are not evil. The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt.",
+    description:
+      "You sense evil presence in a cone. 1st Round: Presence or absence. 2nd Round: Number and power of evil auras; good characters may be stunned by overwhelming evil auras from sources with HD at least twice their level. 3rd Round: Power and location of each aura. Aura strength depends on the source's type, HD, caster level, or class level. Lingering auras persist as dim after the source dissipates. Animals, traps, and poisons are not evil. The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt.",
     aptitudes: ["Cleric Spells", "Knight of the Chalice Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -431,7 +483,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Detect Good",
-    description: "This functions like detect evil, except it detects good auras. Evil creatures are vulnerable to overwhelming good auras. Healing potions and similar beneficial items do not register as good.",
+    description:
+      "This functions like detect evil, except it detects good auras. Evil creatures are vulnerable to overwhelming good auras. Healing potions and similar beneficial items do not register as good.",
     aptitudes: ["Cleric Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -449,7 +502,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Detect Law",
-    description: "This functions like detect evil, except it detects lawful auras. Chaotic creatures are vulnerable to overwhelming lawful auras.",
+    description:
+      "This functions like detect evil, except it detects lawful auras. Chaotic creatures are vulnerable to overwhelming lawful auras.",
     aptitudes: ["Cleric Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -466,7 +520,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Detect Secret Doors",
-    description: "You detect doors, compartments, and caches specifically constructed to escape detection. 1st Round: Presence or absence. 2nd Round: Number and location (direction if not in line of sight). Additional Rounds: The mechanism or trigger for one closely examined portal per round. The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt.",
+    description:
+      "You detect doors, compartments, and caches specifically constructed to escape detection. 1st Round: Presence or absence. 2nd Round: Number and location (direction if not in line of sight). Additional Rounds: The mechanism or trigger for one closely examined portal per round. The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -482,7 +537,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Detect Snares and Pits",
-    description: "You detect simple pits, deadfalls, snares, and mechanical traps of natural materials, plus natural hazards like quicksand, sinkholes, and unstable rock walls. It does not detect complex traps, magic traps (except pit/deadfall/snare types), inactive traps, or non-trap hazards. 1st Round: Presence. 2nd Round: Number and location. Additional Rounds: Type and trigger per hazard examined. Penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt.",
+    description:
+      "You detect simple pits, deadfalls, snares, and mechanical traps of natural materials, plus natural hazards like quicksand, sinkholes, and unstable rock walls. It does not detect complex traps, magic traps (except pit/deadfall/snare types), inactive traps, or non-trap hazards. 1st Round: Presence. 2nd Round: Number and location. Additional Rounds: Type and trigger per hazard examined. Penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt.",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     savingThrow: "None",
     properties: [
@@ -498,7 +554,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Detect Undead",
-    description: "You detect undead auras in a cone. 1st Round: Presence. 2nd Round: Number and strength of the strongest; good characters may be stunned by overwhelming auras from undead with HD at least twice their level. 3rd Round: Strength and location of each. Lingering auras persist as dim. The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt. Arcane Material Component: A bit of grave earth.",
+    description:
+      "You detect undead auras in a cone. 1st Round: Presence. 2nd Round: Number and strength of the strongest; good characters may be stunned by overwhelming auras from undead with HD at least twice their level. 3rd Round: Strength and location of each. Lingering auras persist as dim. The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt. Arcane Material Component: A bit of grave earth.",
     aptitudes: ["Blighter Spells", "Cleric Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -516,7 +573,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Disguise Self",
-    description: "You alter your appearance including clothing, armor, weapons, and equipment. You can appear up to 1 foot shorter or taller, thinner, heavier, or in between, but cannot change your body type. The spell provides no new abilities, mannerisms, or altered tactile/audible properties. Equipment appears different but functions normally. This grants a +10 bonus on Disguise checks. Creatures that interact with the illusion get a Will save to recognize it.",
+    description:
+      "You alter your appearance including clothing, armor, weapons, and equipment. You can appear up to 1 foot shorter or taller, thinner, heavier, or in between, but cannot change your body type. The spell provides no new abilities, mannerisms, or altered tactile/audible properties. Equipment appears different but functions normally. This grants a +10 bonus on Disguise checks. Creatures that interact with the illusion get a Will save to recognize it.",
     aptitudes: ["Assassin Spells", "Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -533,7 +591,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Divine Favor",
-    description: "Drawing upon divine strength, you gain a +1 luck bonus on attack and weapon damage rolls for every three caster levels (minimum +1, maximum +3). This does not apply to spell damage.",
+    description:
+      "Drawing upon divine strength, you gain a +1 luck bonus on attack and weapon damage rolls for every three caster levels (minimum +1, maximum +3). This does not apply to spell damage.",
     aptitudes: ["Cleric Spells", "Knight of the Chalice Spells", "Paladin Spells"],
     savingThrow: "None",
     properties: [
@@ -569,8 +628,18 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Endure Elements",
-    description: "The protected creature suffers no harm from temperatures between -50 and 140 degrees Fahrenheit without Fortitude saves. Equipment is also protected. This provides no protection from fire or cold damage or other environmental hazards like smoke or lack of air.",
-    aptitudes: ["Blighter Spells", "Cleric Spells", "Druid Spells", "Knight of the Chalice Spells", "Paladin Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
+    description:
+      "The protected creature suffers no harm from temperatures between -50 and 140 degrees Fahrenheit without Fortitude saves. Equipment is also protected. This provides no protection from fire or cold damage or other environmental hazards like smoke or lack of air.",
+    aptitudes: [
+      "Blighter Spells",
+      "Cleric Spells",
+      "Druid Spells",
+      "Knight of the Chalice Spells",
+      "Paladin Spells",
+      "Ranger Spells",
+      "Sorcerer Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -585,7 +654,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Enlarge Person",
-    description: "A humanoid instantly doubles in height and multiplies its weight by 8, advancing one size category. The target gains +2 size bonus to Strength, -2 size penalty to Dexterity (minimum 1), and -1 on attack rolls and AC. A creature becoming Large gains 10-foot space and reach. Speed is unchanged. If space is insufficient, the creature grows to maximum possible size and may Strength check to burst enclosures. Equipment enlarges with the creature; weapons deal increased damage but other magical properties are unchanged. Enlarged items leaving possession return to normal size. Multiple size-increasing effects do not stack. Counters and dispels reduce person. Can be made permanent with permanency. Material Component: A pinch of powdered iron.",
+    description:
+      "A humanoid instantly doubles in height and multiplies its weight by 8, advancing one size category. The target gains +2 size bonus to Strength, -2 size penalty to Dexterity (minimum 1), and -1 on attack rolls and AC. A creature becoming Large gains 10-foot space and reach. Speed is unchanged. If space is insufficient, the creature grows to maximum possible size and may Strength check to burst enclosures. Equipment enlarges with the creature; weapons deal increased damage but other magical properties are unchanged. Enlarged items leaving possession return to normal size. Multiple size-increasing effects do not stack. Counters and dispels reduce person. Can be made permanent with permanency. Material Component: A pinch of powdered iron.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -602,7 +672,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Entangle",
-    description: "Plants in the area wrap around creatures, holding them fast. Entangled creatures can break free with a full-round DC 20 Strength or Escape Artist check to move at half speed. A successful Reflex save avoids entanglement but still limits movement to half speed. Each round on your turn, plants attempt to re-entangle freed creatures.",
+    description:
+      "Plants in the area wrap around creatures, holding them fast. Entangled creatures can break free with a full-round DC 20 Strength or Escape Artist check to move at half speed. A successful Reflex save avoids entanglement but still limits movement to half speed. Each round on your turn, plants attempt to re-entangle freed creatures.",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     savingThrow: "Reflex partial; see text",
     properties: [
@@ -619,7 +690,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Entropic Shield",
-    description: "A multicolored chaotic field surrounds you, deflecting ranged attacks requiring attack rolls (arrows, rays, etc.) with a 20% miss chance. Attacks that simply work at a distance (like breath weapons) are unaffected.",
+    description:
+      "A multicolored chaotic field surrounds you, deflecting ranged attacks requiring attack rolls (arrows, rays, etc.) with a 20% miss chance. Attacks that simply work at a distance (like breath weapons) are unaffected.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None",
     properties: [
@@ -635,7 +707,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Erase",
-    description: "You remove magical or mundane writing from a scroll or one to two pages. Can remove explosive runes, glyphs of warding, sepia snake sigils, and arcane marks, but not illusory script or symbol spells. Mundane writing is automatically erased if touched and unheld; otherwise 90% chance. Magic writing requires touching and a caster level check (1d20 + CL) against DC 15 (natural 1 or 2 always fails). Failing to erase explosive runes, glyphs, or sepia snake sigils activates them.",
+    description:
+      "You remove magical or mundane writing from a scroll or one to two pages. Can remove explosive runes, glyphs of warding, sepia snake sigils, and arcane marks, but not illusory script or symbol spells. Mundane writing is automatically erased if touched and unheld; otherwise 90% chance. Magic writing requires touching and a caster level check (1d20 + CL) against DC 15 (natural 1 or 2 always fails). Failing to erase explosive runes, glyphs, or sepia snake sigils activates them.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     savingThrow: "See text",
     properties: [
@@ -651,7 +724,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Expeditious Retreat",
-    description: "Your base land speed increases by 30 feet (enhancement bonus). Other movement modes are unaffected. This affects jumping distance normally.",
+    description:
+      "Your base land speed increases by 30 feet (enhancement bonus). Other movement modes are unaffected. This affects jumping distance normally.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -667,7 +741,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Faerie Fire",
-    description: "A pale glow outlines subjects, shedding candlelight illumination. Outlined creatures lose concealment from darkness (though 2nd+ level magical darkness still works), blur, displacement, invisibility, and similar effects. The light is too dim to affect light-sensitive creatures. You choose blue, green, or violet. No harm is dealt.",
+    description:
+      "A pale glow outlines subjects, shedding candlelight illumination. Outlined creatures lose concealment from darkness (though 2nd+ level magical darkness still works), blur, displacement, invisibility, and similar effects. The light is too dim to affect light-sensitive creatures. You choose blue, green, or violet. No harm is dealt.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -685,14 +760,19 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Feather Fall",
-    description: "Affected creatures or objects fall at only 60 feet per round and take no landing damage while the spell lasts. Normal falling resumes when it expires. Affects Medium or smaller creatures and objects, with larger ones counting as multiples. Can be cast as a free action (like a quickened spell), even when it is not your turn. Falling objects deal half normal weight-based damage with no height bonus.",
+    description:
+      "Affected creatures or objects fall at only 60 feet per round and take no landing damage while the spell lasts. Normal falling resumes when it expires. Affects Medium or smaller creatures and objects, with larger ones counting as multiples. Can be cast as a free action (like a quickened spell), even when it is not your turn. Falling objects deal half normal weight-based damage with no height bonus.",
     aptitudes: ["Assassin Spells", "Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless) or Will negates (object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
       { type: "SPELL_CASTING_TIME", value: "1 free action" },
       { type: "SPELL_RANGE_TYPE", value: "Close" },
-      { type: "SPELL_TARGET", value: "One Medium or smaller freefalling object or creature/level, no two of which may be more than 20 ft. apart" },
+      {
+        type: "SPELL_TARGET",
+        value:
+          "One Medium or smaller freefalling object or creature/level, no two of which may be more than 20 ft. apart",
+      },
       { type: "SPELL_DURATION", value: "Until landing or 1 round/level" },
       { type: "SPELL_RESISTANCE", value: "Yes (object)" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -700,7 +780,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Goodberry",
-    description: "You make 2d4 freshly picked berries magical. Each provides one full meal's nourishment for a Medium creature and heals 1 hp when eaten, to a maximum of 8 hp per 24-hour period.",
+    description:
+      "You make 2d4 freshly picked berries magical. Each provides one full meal's nourishment for a Medium creature and heals 1 hp when eaten, to a maximum of 8 hp per 24-hour period.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -717,7 +798,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Grease",
-    description: "A slippery coating covers a solid surface or object. Creatures in the area must Reflex save or fall, repeating each round. Walking through requires a DC 10 Balance check at half speed. On an object, the wielder gets a Reflex save; failure drops the item, with saves each round to pick it up. Greased armor/clothing grants +10 to Escape Artist and grapple escape checks. Material Component: Pork rind or butter.",
+    description:
+      "A slippery coating covers a solid surface or object. Creatures in the area must Reflex save or fall, repeating each round. Walking through requires a DC 10 Balance check at half speed. On an object, the wielder gets a Reflex save; failure drops the item, with saves each round to pick it up. Greased armor/clothing grants +10 to Escape Artist and grapple escape checks. Material Component: Pork rind or butter.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "See text",
     properties: [
@@ -735,7 +817,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Hide from Animals",
-    description: "Animals cannot perceive warded creatures through any sense, including extraordinary and supernatural abilities like blindsense, blindsight, scent, and tremorsense. Ends for all recipients if any warded creature touches an animal or attacks.",
+    description:
+      "Animals cannot perceive warded creatures through any sense, including extraordinary and supernatural abilities like blindsense, blindsight, scent, and tremorsense. Ends for all recipients if any warded creature touches an animal or attacks.",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -751,7 +834,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Hide from Undead",
-    description: "Undead cannot perceive warded creatures through any sense. Mindless undead are automatically affected. Intelligent undead get one Will save; failure means they cannot detect any warded creature but may attempt to find them if suspicious. Ends for all if any warded creature turns/commands undead, touches undead, or attacks.",
+    description:
+      "Undead cannot perceive warded creatures through any sense. Mindless undead are automatically affected. Intelligent undead get one Will save; failure means they cannot detect any warded creature but may attempt to find them if suspicious. Ends for all if any warded creature turns/commands undead, touches undead, or attacks.",
     aptitudes: ["Cleric Spells", "Hunter of the Dead Spells"],
     savingThrow: "Will negates (harmless); see text",
     properties: [
@@ -768,7 +852,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Hold Portal",
-    description: "You magically hold shut a door, gate, window, or shutter of wood, metal, or stone as if securely closed and locked. Knock or dispel magic negates it. Add 5 to the normal DC to force the portal open.",
+    description:
+      "You magically hold shut a door, gate, window, or shutter of wood, metal, or stone as if securely closed and locked. Knock or dispel magic negates it. Add 5 to the normal DC to force the portal open.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -783,7 +868,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Hypnotism",
-    description: "Your gestures and droning fascinate nearby creatures. Roll 2d4 for total HD affected (fewest first). Combat targets get +2 on saves; a single non-combat target takes -2. Fascinated subjects react as two steps more friendly, allowing one brief, reasonable request. After the spell, the creature retains the new attitude regarding that request. Affected creatures do not remember being enchanted.",
+    description:
+      "Your gestures and droning fascinate nearby creatures. Roll 2d4 for total HD affected (fewest first). Combat targets get +2 on saves; a single non-combat target takes -2. Fascinated subjects react as two steps more friendly, allowing one brief, reasonable request. After the spell, the creature retains the new attitude regarding that request. Affected creatures do not remember being enchanted.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -792,7 +878,10 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       { type: "SPELL_DESCRIPTOR", value: "Mind-Affecting" },
       { type: "SPELL_CASTING_TIME", value: "1 round" },
       { type: "SPELL_RANGE_TYPE", value: "Close" },
-      { type: "SPELL_AREA_OF_EFFECT", value: "Several living creatures, no two of which may be more than 30 ft. apart" },
+      {
+        type: "SPELL_AREA_OF_EFFECT",
+        value: "Several living creatures, no two of which may be more than 30 ft. apart",
+      },
       { type: "SPELL_DURATION", value: "2d4 rounds (D)" },
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -801,7 +890,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Identify",
-    description: "You determine all magical properties of a single magic item, including activation methods and remaining charges. Does not function on artifacts. Arcane Material Component: A pearl worth at least 100 gp, crushed and mixed with wine and an owl feather, drunk before casting.",
+    description:
+      "You determine all magical properties of a single magic item, including activation methods and remaining charges. Does not function on artifacts. Arcane Material Component: A pearl worth at least 100 gp, crushed and mixed with wine and an owl feather, drunk before casting.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -819,7 +909,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Inflict Light Wounds",
-    description: "You channel negative energy through your touch, dealing 1d8 + 1 per caster level (maximum +5) damage. Against undead, this heals instead.",
+    description:
+      "You channel negative energy through your touch, dealing 1d8 + 1 per caster level (maximum +5) damage. Against undead, this heals instead.",
     aptitudes: ["Blighter Spells", "Cleric Spells"],
     savingThrow: "Will half",
     properties: [
@@ -835,7 +926,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Jump",
-    description: "The subject gains a +10 enhancement bonus on Jump checks, increasing to +20 at caster level 5th and +30 at 9th. Material Component: A grasshopper's hind leg.",
+    description:
+      "The subject gains a +10 enhancement bonus on Jump checks, increasing to +20 at caster level 5th and +30 at 9th. Material Component: A grasshopper's hind leg.",
     aptitudes: ["Assassin Spells", "Druid Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -852,7 +944,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Longstrider",
-    description: "Your base land speed increases by 10 feet (enhancement bonus). Other movement modes are unaffected. Material Component: A pinch of dirt.",
+    description:
+      "Your base land speed increases by 10 feet (enhancement bonus). Other movement modes are unaffected. Material Component: A pinch of dirt.",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     savingThrow: "None",
     properties: [
@@ -869,7 +962,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mage Armor",
-    description: "An invisible field of force provides a +4 armor bonus to AC with no check penalty, spell failure, or speed reduction. Being made of force, incorporeal creatures cannot bypass it. Focus: A piece of cured leather.",
+    description:
+      "An invisible field of force provides a +4 armor bonus to AC with no check penalty, spell failure, or speed reduction. Being made of force, incorporeal creatures cannot bypass it. Focus: A piece of cured leather.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -887,7 +981,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Magic Fang",
-    description: "One natural weapon gains a +1 enhancement bonus on attack and damage rolls. Can be made permanent with permanency.",
+    description:
+      "One natural weapon gains a +1 enhancement bonus on attack and damage rolls. Can be made permanent with permanency.",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -904,7 +999,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Magic Missile",
-    description: "A missile of force strikes unerringly for 1d4+1 damage, even against targets with less than total cover or concealment. You gain additional missiles at 3rd (two), 5th (three), 7th (four), and 9th level (five maximum). Multiple missiles can target one or several creatures. Targets must be designated before rolling.",
+    description:
+      "A missile of force strikes unerringly for 1d4+1 damage, even against targets with less than total cover or concealment. You gain additional missiles at 3rd (two), 5th (three), 7th (four), and 9th level (five maximum). Multiple missiles can target one or several creatures. Targets must be designated before rolling.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -921,7 +1017,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Magic Mouth",
-    description: "An enchanted mouth appears on an object or creature, speaking a message of up to 25 words when specified conditions are met. It cannot use verbal components, command words, or activate magic. Triggers must be visual or audible (range 15 feet per caster level). Can be made permanent with permanency. Material Component: Honeycomb and jade dust (10 gp).",
+    description:
+      "An enchanted mouth appears on an object or creature, speaking a message of up to 25 words when specified conditions are met. It cannot use verbal components, command words, or activate magic. Triggers must be visual or audible (range 15 feet per caster level). Can be made permanent with permanency. Material Component: Honeycomb and jade dust (10 gp).",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     aptitudeLevels: { "Bard Spells": 1, "Sorcerer Spells": 2, "Vigilante Spells": 1, "Wizard Spells": 2 },
     savingThrow: "Will negates (object)",
@@ -940,7 +1037,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Magic Stone",
-    description: "Up to three pebbles strike with great force (+1 enhancement on attack and damage). Range increment: 20 feet thrown or 50 feet slung. Each deals 1d6+1 damage, or 2d6+2 against undead.",
+    description:
+      "Up to three pebbles strike with great force (+1 enhancement on attack and damage). Range increment: 20 feet thrown or 50 feet slung. Each deals 1d6+1 damage, or 2d6+2 against undead.",
     aptitudes: ["Cleric Spells", "Druid Spells", "Hunter of the Dead Spells"],
     savingThrow: "Will negates (harmless, object)",
     properties: [
@@ -957,8 +1055,16 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Magic Weapon",
-    description: "A weapon gains a +1 enhancement bonus on attack and damage rolls (does not stack with masterwork). Cannot affect natural weapons (use magic fang instead). Monk unarmed strikes can be enhanced.",
-    aptitudes: ["Cleric Spells", "Hunter of the Dead Spells", "Knight of the Chalice Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
+    description:
+      "A weapon gains a +1 enhancement bonus on attack and damage rolls (does not stack with masterwork). Cannot affect natural weapons (use magic fang instead). Monk unarmed strikes can be enhanced.",
+    aptitudes: [
+      "Cleric Spells",
+      "Hunter of the Dead Spells",
+      "Knight of the Chalice Spells",
+      "Paladin Spells",
+      "Sorcerer Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "Will negates (harmless, object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -974,7 +1080,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mount",
-    description: "You summon a light horse or pony as a mount, with bit, bridle, and riding saddle. Material Component: Horse hair.",
+    description:
+      "You summon a light horse or pony as a mount, with bit, bridle, and riding saddle. Material Component: Horse hair.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -992,7 +1099,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Nystul's Magic Aura",
-    description: "You alter an item's detected aura to appear nonmagical, as a different kind of magic item, or as under a specified spell. Identify allows a Will save to recognize the false aura. Exceptionally powerful items (artifacts) are not affected. Focus: A small silk square.",
+    description:
+      "You alter an item's detected aura to appear nonmagical, as a different kind of magic item, or as under a specified spell. Identify allows a Will save to recognize the false aura. Exceptionally powerful items (artifacts) are not affected. Focus: A small silk square.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     savingThrow: "None; see text",
     properties: [
@@ -1009,9 +1117,16 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Obscure Object",
-    description: "You hide an object from location by divination (scrying) effects. Targeted divinations fail automatically; area divinations fail to perceive the object. Arcane Material Component: Chameleon skin.",
+    description:
+      "You hide an object from location by divination (scrying) effects. Targeted divinations fail automatically; area divinations fail to perceive the object. Arcane Material Component: Chameleon skin.",
     aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
-    aptitudeLevels: { "Bard Spells": 1, "Cleric Spells": 3, "Sorcerer Spells": 2, "Vigilante Spells": 1, "Wizard Spells": 2 },
+    aptitudeLevels: {
+      "Bard Spells": 1,
+      "Cleric Spells": 3,
+      "Sorcerer Spells": 2,
+      "Vigilante Spells": 1,
+      "Wizard Spells": 2,
+    },
     savingThrow: "Will negates (object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -1028,7 +1143,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Obscuring Mist",
-    description: "Stationary mist obscures all sight (including darkvision) beyond 5 feet. Creatures within 5 feet have 20% concealment; farther away have 50% (total concealment). Moderate wind disperses in 4 rounds; strong wind in 1 round. Fire spells burn away fog in their area. Does not function underwater.",
+    description:
+      "Stationary mist obscures all sight (including darkvision) beyond 5 feet. Creatures within 5 feet have 20% concealment; farther away have 50% (total concealment). Moderate wind disperses in 4 rounds; strong wind in 1 round. Fire spells burn away fog in their area. Does not function underwater.",
     aptitudes: ["Assassin Spells", "Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -1062,7 +1178,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Produce Flame",
-    description: "Flames appear in your open hand, providing torch illumination and dealing 1d6 + 1 per caster level (maximum +5) fire damage via melee touch or ranged touch (120 feet, no range penalty). Each attack reduces duration by 1 minute. Does not function underwater.",
+    description:
+      "Flames appear in your open hand, providing torch illumination and dealing 1d6 + 1 per caster level (maximum +5) fire damage via melee touch or ranged touch (120 feet, no range penalty). Each attack reduces duration by 1 minute. Does not function underwater.",
     aptitudes: ["Blighter Spells", "Druid Spells"],
     aptitudeLevels: { "Blighter Spells": 2, "Druid Spells": 1 },
     savingThrow: "None",
@@ -1080,7 +1197,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Protection from Chaos",
-    description: "This functions like protection from evil, except bonuses apply against chaotic creatures and chaotic summoned creatures cannot touch the subject.",
+    description:
+      "This functions like protection from evil, except bonuses apply against chaotic creatures and chaotic summoned creatures cannot touch the subject.",
     aptitudes: ["Cleric Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -1099,7 +1217,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Protection from Evil",
-    description: "Wards the subject with three effects: +2 deflection to AC and +2 resistance on saves against evil creatures; blocks possession and ongoing mental control by evil creatures (suppresses but does not dispel); prevents bodily contact by evil summoned creatures (good summoned creatures are exempt). The protection against summoned creatures ends if the subject attacks. Arcane Material Component: Powdered silver for a 3-foot circle.",
+    description:
+      "Wards the subject with three effects: +2 deflection to AC and +2 resistance on saves against evil creatures; blocks possession and ongoing mental control by evil creatures (suppresses but does not dispel); prevents bodily contact by evil summoned creatures (good summoned creatures are exempt). The protection against summoned creatures ends if the subject attacks. Arcane Material Component: Powdered silver for a 3-foot circle.",
     aptitudes: ["Cleric Spells", "Knight of the Chalice Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -1118,7 +1237,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Protection from Good",
-    description: "This functions like protection from evil, except bonuses apply against good creatures and good summoned creatures cannot touch the subject.",
+    description:
+      "This functions like protection from evil, except bonuses apply against good creatures and good summoned creatures cannot touch the subject.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -1137,7 +1257,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Protection from Law",
-    description: "This functions like protection from evil, except bonuses apply against lawful creatures and lawful summoned creatures cannot touch the subject.",
+    description:
+      "This functions like protection from evil, except bonuses apply against lawful creatures and lawful summoned creatures cannot touch the subject.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -1156,7 +1277,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Ray of Enfeeblement",
-    description: "A ray (ranged touch attack) imposes a Strength penalty of 1d6 + 1 per two caster levels (maximum 1d6+5). Cannot reduce Strength below 1.",
+    description:
+      "A ray (ranged touch attack) imposes a Strength penalty of 1d6 + 1 per two caster levels (maximum 1d6+5). Cannot reduce Strength below 1.",
     aptitudes: ["Blighter Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -1172,7 +1294,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Reduce Person",
-    description: "A humanoid halves in height, length, and width, dividing weight by 8 and dropping one size category. The target gains +2 Dexterity, -2 Strength (minimum 1), and +1 on attacks and AC. Equipment shrinks accordingly; weapons deal less damage. Multiple size-reducing effects do not stack. Counters and dispels enlarge person. Can be made permanent. Material Component: Powdered iron.",
+    description:
+      "A humanoid halves in height, length, and width, dividing weight by 8 and dropping one size category. The target gains +2 Dexterity, -2 Strength (minimum 1), and +1 on attacks and AC. Equipment shrinks accordingly; weapons deal less damage. Multiple size-reducing effects do not stack. Counters and dispels enlarge person. Can be made permanent. Material Component: Powdered iron.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -1189,14 +1312,25 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Remove Fear",
-    description: "Grants a +4 morale bonus against fear for 10 minutes. Suppresses existing fear effects for the duration. Counters and dispels cause fear.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Hunter of the Dead Spells", "Knight of the Chalice Spells", "Vigilante Spells"],
+    description:
+      "Grants a +4 morale bonus against fear for 10 minutes. Suppresses existing fear effects for the duration. Counters and dispels cause fear.",
+    aptitudes: [
+      "Bard Spells",
+      "Cleric Spells",
+      "Hunter of the Dead Spells",
+      "Knight of the Chalice Spells",
+      "Vigilante Spells",
+    ],
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Close" },
-      { type: "SPELL_TARGET", value: "One creature plus one additional creature per four levels, no two of which can be more than 30 ft. apart" },
+      {
+        type: "SPELL_TARGET",
+        value:
+          "One creature plus one additional creature per four levels, no two of which can be more than 30 ft. apart",
+      },
       { type: "SPELL_DURATION", value: "10 minutes; see text" },
       { type: "SPELL_RESISTANCE", value: "Yes (harmless)" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -1205,9 +1339,26 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Resist Energy",
-    description: "Grants energy resistance 10 against one chosen type (acid, cold, electricity, fire, or sonic), increasing to 20 at 7th level and 30 at 11th. Absorbs damage only; side effects still apply. Overlaps (does not stack) with protection from energy.",
-    aptitudes: ["Cleric Spells", "Druid Spells", "Knight of the Chalice Spells", "Paladin Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Cleric Spells": 2, "Druid Spells": 2, "Knight of the Chalice Spells": 2, "Paladin Spells": 2, "Ranger Spells": 1, "Sorcerer Spells": 2, "Wizard Spells": 2 },
+    description:
+      "Grants energy resistance 10 against one chosen type (acid, cold, electricity, fire, or sonic), increasing to 20 at 7th level and 30 at 11th. Absorbs damage only; side effects still apply. Overlaps (does not stack) with protection from energy.",
+    aptitudes: [
+      "Cleric Spells",
+      "Druid Spells",
+      "Knight of the Chalice Spells",
+      "Paladin Spells",
+      "Ranger Spells",
+      "Sorcerer Spells",
+      "Wizard Spells",
+    ],
+    aptitudeLevels: {
+      "Cleric Spells": 2,
+      "Druid Spells": 2,
+      "Knight of the Chalice Spells": 2,
+      "Paladin Spells": 2,
+      "Ranger Spells": 1,
+      "Sorcerer Spells": 2,
+      "Wizard Spells": 2,
+    },
     savingThrow: "Fortitude negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -1223,7 +1374,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Restoration, Lesser",
-    description: "Dispels magical ability reductions or cures 1d4 temporary ability damage to one score. Eliminates fatigue; improves exhaustion to fatigue. Does not restore permanent drain.",
+    description:
+      "Dispels magical ability reductions or cures 1d4 temporary ability damage to one score. Eliminates fatigue; improves exhaustion to fatigue. Does not restore permanent drain.",
     aptitudes: ["Cleric Spells", "Druid Spells", "Hunter of the Dead Spells", "Paladin Spells"],
     aptitudeLevels: { "Cleric Spells": 2, "Druid Spells": 2, "Hunter of the Dead Spells": 2, "Paladin Spells": 1 },
     savingThrow: "Will negates (harmless)",
@@ -1241,7 +1393,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Sanctuary",
-    description: "Opponents attempting to directly attack the warded creature must Will save. Failure means the attack is lost and the opponent cannot directly attack the subject for the duration. Success allows normal attacks. Area effects are not prevented. The subject cannot attack without breaking the spell but may use non-attack spells and actions.",
+    description:
+      "Opponents attempting to directly attack the warded creature must Will save. Failure means the attack is lost and the opponent cannot directly attack the subject for the duration. Success allows normal attacks. Area effects are not prevented. The subject cannot attack without breaking the spell but may use non-attack spells and actions.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -1258,7 +1411,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shield",
-    description: "An invisible tower-shield-sized disk of force provides +4 shield bonus to AC (applies against incorporeal touch) and negates magic missiles. No check penalty or spell failure.",
+    description:
+      "An invisible tower-shield-sized disk of force provides +4 shield bonus to AC (applies against incorporeal touch) and negates magic missiles. No check penalty or spell failure.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -1275,7 +1429,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shield of Faith",
-    description: "A shimmering magical field grants +2 deflection bonus to AC, +1 per six levels (maximum +5 at 18th). Material Component: Parchment with holy text.",
+    description:
+      "A shimmering magical field grants +2 deflection bonus to AC, +1 per six levels (maximum +5 at 18th). Material Component: Parchment with holy text.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -1292,7 +1447,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shillelagh",
-    description: "Your nonmagical club or quarterstaff gains +1 enhancement and deals damage as if two size categories larger (Small: 1d8, Medium: 2d6, Large: 3d6). Only functions while you wield it.",
+    description:
+      "Your nonmagical club or quarterstaff gains +1 enhancement and deals damage as if two size categories larger (Small: 1d8, Medium: 2d6, Large: 3d6). Only functions while you wield it.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Will negates (object)",
     properties: [
@@ -1309,7 +1465,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shocking Grasp",
-    description: "A melee touch attack deals 1d6 electricity per caster level (maximum 5d6). You gain +3 on the attack roll against targets wearing or made of metal.",
+    description:
+      "A melee touch attack deals 1d6 electricity per caster level (maximum 5d6). You gain +3 on the attack roll against targets wearing or made of metal.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -1326,7 +1483,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Silent Image",
-    description: "You create a visual illusion of an object, creature, or force. No sound, smell, texture, or temperature. You can move the image within the effect's limits. Focus: A bit of fleece.",
+    description:
+      "You create a visual illusion of an object, creature, or force. No sound, smell, texture, or temperature. You can move the image within the effect's limits. Focus: A bit of fleece.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will disbelief (if interacted with)",
     properties: [
@@ -1334,7 +1492,10 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       { type: "SPELL_SUBSCHOOL", value: "Figment" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Long" },
-      { type: "SPELL_TARGET", value: "Visual figment that cannot extend beyond four 10-ft. cubes + one 10-ft. cube/level (S)" },
+      {
+        type: "SPELL_TARGET",
+        value: "Visual figment that cannot extend beyond four 10-ft. cubes + one 10-ft. cube/level (S)",
+      },
       { type: "SPELL_DURATION", value: "Concentration" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -1343,7 +1504,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Sleep",
-    description: "4 HD of creatures fall into magical slumber (fewest HD first, then closest). Sleeping creatures are helpless. Slapping or wounding wakes them; normal noise does not. Does not affect unconscious creatures, constructs, or undead. Material Component: Fine sand, rose petals, or a live cricket.",
+    description:
+      "4 HD of creatures fall into magical slumber (fewest HD first, then closest). Sleeping creatures are helpless. Slapping or wounding wakes them; normal noise does not. Does not affect unconscious creatures, constructs, or undead. Material Component: Fine sand, rose petals, or a live cricket.",
     aptitudes: ["Assassin Spells", "Bard Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -1362,7 +1524,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Speak With Animals",
-    description: "You can converse with animals. They are not made more friendly. Wary animals may be terse; unintelligent ones may make inane comments. Friendly animals may do favors.",
+    description:
+      "You can converse with animals. They are not made more friendly. Wary animals may be terse; unintelligent ones may make inane comments. Friendly animals may do favors.",
     aptitudes: ["Bard Spells", "Druid Spells", "Ranger Spells", "Vigilante Spells"],
     aptitudeLevels: { "Bard Spells": 3, "Druid Spells": 1, "Ranger Spells": 1, "Vigilante Spells": 3 },
     savingThrow: "None",
@@ -1379,8 +1542,16 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Summon Monster I",
-    description: "You summon an extraplanar creature that acts immediately on your turn, attacking opponents or following your directions. It cannot summon others or use teleportation/planar travel. The spell takes on type descriptors matching the summoned creature's alignment subtypes. Arcane Focus: A tiny bag and a small candle.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Knight of the Chalice Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
+    description:
+      "You summon an extraplanar creature that acts immediately on your turn, attacking opponents or following your directions. It cannot summon others or use teleportation/planar travel. The spell takes on type descriptors matching the summoned creature's alignment subtypes. Arcane Focus: A tiny bag and a small candle.",
+    aptitudes: [
+      "Bard Spells",
+      "Cleric Spells",
+      "Knight of the Chalice Spells",
+      "Sorcerer Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
@@ -1397,7 +1568,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Summon Nature's Ally I",
-    description: "You summon a natural creature that acts immediately on your turn, attacking opponents or following your directions. It cannot summon others or use teleportation/planar travel. All creatures are neutral unless otherwise noted.",
+    description:
+      "You summon a natural creature that acts immediately on your turn, attacking opponents or following your directions. It cannot summon others or use teleportation/planar travel. All creatures are neutral unless otherwise noted.",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     savingThrow: "None",
     properties: [
@@ -1415,7 +1587,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Tasha's Hideous Laughter",
-    description: "The subject collapses with uncontrollable laughter, falling prone and unable to act (not helpless). Creatures with Intelligence 2 or lower are unaffected. Different creature types from the caster get +4 on saves. Material Component: Tiny tarts and a feather.",
+    description:
+      "The subject collapses with uncontrollable laughter, falling prone and unable to act (not helpless). Creatures with Intelligence 2 or lower are unaffected. Different creature types from the caster get +4 on saves. Material Component: Tiny tarts and a feather.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     aptitudeLevels: { "Bard Spells": 1, "Sorcerer Spells": 2, "Wizard Spells": 2 },
     savingThrow: "Will negates",
@@ -1435,7 +1608,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Tenser's Floating Disk",
-    description: "A 3-foot diameter, 1-inch deep concave force disk follows you, carrying up to 100 lbs per caster level (or 2 gallons of liquid). Floats 3 feet above ground, maintaining 5-foot distance. Winks out at spell expiration, beyond range, or more than 3 feet from a surface. Material Component: A drop of mercury.",
+    description:
+      "A 3-foot diameter, 1-inch deep concave force disk follows you, carrying up to 100 lbs per caster level (or 2 gallons of liquid). Floats 3 feet above ground, maintaining 5-foot distance. Winks out at spell expiration, beyond range, or more than 3 feet from a surface. Material Component: A drop of mercury.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -1453,7 +1627,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "True Strike",
-    description: "Your next attack roll (before the end of the next round) gains a +20 insight bonus and ignores concealment miss chance. Focus: A small wooden archery target replica.",
+    description:
+      "Your next attack roll (before the end of the next round) gains a +20 insight bonus and ignores concealment miss chance. Focus: A small wooden archery target replica.",
     aptitudes: ["Assassin Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -1470,7 +1645,13 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
     name: "Undetectable Alignment",
     description: "Conceals the alignment of a creature or object from all divination.",
     aptitudes: ["Bard Spells", "Cleric Spells", "Knight of the Chalice Spells", "Paladin Spells", "Vigilante Spells"],
-    aptitudeLevels: { "Bard Spells": 1, "Cleric Spells": 2, "Knight of the Chalice Spells": 2, "Paladin Spells": 2, "Vigilante Spells": 1 },
+    aptitudeLevels: {
+      "Bard Spells": 1,
+      "Cleric Spells": 2,
+      "Knight of the Chalice Spells": 2,
+      "Paladin Spells": 2,
+      "Vigilante Spells": 1,
+    },
     savingThrow: "Will negates (object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -1485,7 +1666,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Unseen Servant",
-    description: "An invisible, mindless force performs simple tasks (fetch, open doors, clean, hold items) with effective Strength 2 (lifts 20 lbs, drags 100). Speed 15 feet. Cannot attack, use skills above DC 10, or use untrained-only skills. Dissipates at 6 hp damage from area attacks. Ceases to exist beyond range. Material Component: String and a bit of wood.",
+    description:
+      "An invisible, mindless force performs simple tasks (fetch, open doors, clean, hold items) with effective Strength 2 (lifts 20 lbs, drags 100). Speed 15 feet. Cannot attack, use skills above DC 10, or use untrained-only skills. Dissipates at 6 hp damage from area attacks. Ceases to exist beyond range. Material Component: String and a bit of wood.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -1503,7 +1685,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   },
   {
     name: "Ventriloquism",
-    description: "Your voice or sounds you can make appear to come from another location. Any language you know can be used. Successful saves recognize it as illusory but still hear it. Focus: A rolled parchment cone.",
+    description:
+      "Your voice or sounds you can make appear to come from another location. Any language you know can be used. Successful saves recognize it as illusory but still hear it. Focus: A rolled parchment cone.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will disbelief (if interacted with)",
     properties: [

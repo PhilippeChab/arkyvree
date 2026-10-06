@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SUBLIME_CHORD: ClassSeed = {
   name: "Sublime Chord",
-  description: "In return for abandoning her continuing study of bardic music, a sublime chord instead masters a number of spells more powerful than most bards can ever use.",
-  hd: 6, levels: 10, skillPoints: 4,
+  description:
+    "In return for abandoning her continuing study of bardic music, a sublime chord instead masters a number of spells more powerful than most bards can ever use.",
+  hd: 6,
+  levels: 10,
+  skillPoints: 4,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -80,5 +88,3 @@ export const SUBLIME_CHORD: ClassSeed = {
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

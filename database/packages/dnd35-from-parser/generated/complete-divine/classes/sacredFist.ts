@@ -1,10 +1,13 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 import { eq, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SACRED_FIST: ClassSeed = {
   name: "Sacred Fist",
-  description: "Sacred fists belong to self-governing orders that operate within the walls of various temples, combining martial discipline with divine power.",
-  hd: 8, levels: 10, skillPoints: 4,
+  description:
+    "Sacred fists belong to self-governing orders that operate within the walls of various temples, combining martial discipline with divine power.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: ["Balance", "Concentration", "Escape Artist", "Heal", "Jump", "Profession", "Spellcraft", "Tumble"],
@@ -31,8 +34,41 @@ export const SACRED_FIST: ClassSeed = {
     [10, "Inner Armor (Sacred Fist)"],
   ],
   modifiers: [
-    { level: 3, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armor.category", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armor.category", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
-    { level: 6, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armor.category", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armor.category", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
-    { level: 8, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armor.category", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armor.category", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
+    {
+      level: 3,
+      target: "combat.speed.base",
+      value: "10",
+      valueType: "number",
+      operator: "add",
+      requirements: [
+        { target: "combat.armor.category", operator: "not_equal", value: "medium", valueType: "string" },
+        { target: "combat.armor.category", operator: "not_equal", value: "heavy", valueType: "string" },
+        eqStr("combat.encumbrance.load", "light"),
+      ],
+    },
+    {
+      level: 6,
+      target: "combat.speed.base",
+      value: "10",
+      valueType: "number",
+      operator: "add",
+      requirements: [
+        { target: "combat.armor.category", operator: "not_equal", value: "medium", valueType: "string" },
+        { target: "combat.armor.category", operator: "not_equal", value: "heavy", valueType: "string" },
+        eqStr("combat.encumbrance.load", "light"),
+      ],
+    },
+    {
+      level: 8,
+      target: "combat.speed.base",
+      value: "10",
+      valueType: "number",
+      operator: "add",
+      requirements: [
+        { target: "combat.armor.category", operator: "not_equal", value: "medium", valueType: "string" },
+        { target: "combat.armor.category", operator: "not_equal", value: "heavy", valueType: "string" },
+        eqStr("combat.encumbrance.load", "light"),
+      ],
+    },
   ],
 };

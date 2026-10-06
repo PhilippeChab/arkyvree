@@ -50,7 +50,7 @@ import path from "node:path";
 
 import { onImports, targetOf } from "./imports.mjs";
 import { startsWithVerb } from "./memberOrder.mjs";
-import { isToolWritten, repoPath, rootOf } from "./paths.mjs";
+import { repoPath, rootOf } from "./paths.mjs";
 
 /** A module or folder named for no particular thing: `helpers.ts`, `utils/`. */
 const GRAB_BAG = /(^|\/)(helpers|utils?)(\.tsx?$|\/)/;
@@ -590,7 +590,6 @@ function readsThis(node) {
 }
 
 function createFunctionDeclarations(context) {
-  if (isToolWritten(context.filename)) return {};
   const text = context.sourceCode.text;
   return {
     Program(program) {

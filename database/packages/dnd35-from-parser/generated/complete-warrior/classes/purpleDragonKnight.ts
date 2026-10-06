@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const PURPLE_DRAGON_KNIGHT: ClassSeed = {
   name: "Purple Dragon Knight",
-  description: "Purple Dragon knights hone exceptional talents for commanding and coordinating military forces in the field.",
-  hd: 10, levels: 5, skillPoints: 2,
+  description:
+    "Purple Dragon knights hone exceptional talents for commanding and coordinating military forces in the field.",
+  hd: 10,
+  levels: 5,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: ["Climb", "Diplomacy", "Handle Animal", "Intimidate", "Jump", "Knowledge (Local)", "Ride", "Swim"],
@@ -35,5 +43,3 @@ export const PURPLE_DRAGON_KNIGHT: ClassSeed = {
     [5, "Final Stand (Purple Dragon Knight)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

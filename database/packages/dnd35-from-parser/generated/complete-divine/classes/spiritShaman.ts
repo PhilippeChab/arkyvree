@@ -1,9 +1,17 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SPIRIT_SHAMAN: ClassSeed = {
   name: "Spirit Shaman",
-  description: "Through negotiation and communion with spirits of the living world, the spirit shaman channels potent divine magic and wields authority over the forces of nature.",
-  hd: 8, levels: 20, skillPoints: 4,
+  description:
+    "Through negotiation and communion with spirits of the living world, the spirit shaman channels potent divine magic and wields authority over the forces of nature.",
+  hd: 8,
+  levels: 20,
+  skillPoints: 4,
   bab: "medium",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: [
@@ -96,5 +104,3 @@ export const SPIRIT_SHAMAN: ClassSeed = {
     ],
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

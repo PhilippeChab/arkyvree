@@ -1,9 +1,17 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const ROGUE: ClassSeed = {
   name: "Rogue",
-  description: "No two rogues are exactly alike. Some operate as stealthy burglars, while others rely on charm and deception. Still others serve as scouts, spies, diplomats, or enforcers. What unites them is their exceptional versatility, quick thinking, and natural resourcefulness. Generally speaking, rogues excel at obtaining things others would rather keep hidden: access to secured vaults, safe navigation through lethal traps, confidential military plans, a sentry's confidence, or the coins in a stranger's pouch. Rogues take up adventuring for the same reasons they pursue most endeavors: personal gain. Some seek treasure; others desire the growth that comes from experience. A few chase renown, while others prefer notoriety. Many simply relish a good challenge. Working out how to circumvent a trap or bypass a warning system is deeply satisfying for a number of rogues. They are exceptionally skilled individuals who can focus their training across a wide variety of disciplines. Although they cannot match many other classes in direct combat, rogues know precisely where to strike for maximum effect, and their sneak attacks can inflict devastating damage. Rogues possess an almost supernatural instinct for sensing and avoiding danger. As they advance in skill, veteran rogues develop near-mystical abilities rooted in their mastery of stealth, evasion, and precision strikes. Furthermore, while rogues lack the ability to cast spells innately, they can convincingly improvise well enough to activate scrolls, wands, and nearly any other magical item.",
-  hd: 6, levels: 20, skillPoints: 8,
+  description:
+    "No two rogues are exactly alike. Some operate as stealthy burglars, while others rely on charm and deception. Still others serve as scouts, spies, diplomats, or enforcers. What unites them is their exceptional versatility, quick thinking, and natural resourcefulness. Generally speaking, rogues excel at obtaining things others would rather keep hidden: access to secured vaults, safe navigation through lethal traps, confidential military plans, a sentry's confidence, or the coins in a stranger's pouch. Rogues take up adventuring for the same reasons they pursue most endeavors: personal gain. Some seek treasure; others desire the growth that comes from experience. A few chase renown, while others prefer notoriety. Many simply relish a good challenge. Working out how to circumvent a trap or bypass a warning system is deeply satisfying for a number of rogues. They are exceptionally skilled individuals who can focus their training across a wide variety of disciplines. Although they cannot match many other classes in direct combat, rogues know precisely where to strike for maximum effect, and their sneak attacks can inflict devastating damage. Rogues possess an almost supernatural instinct for sensing and avoiding danger. As they advance in skill, veteran rogues develop near-mystical abilities rooted in their mastery of stealth, evasion, and precision strikes. Furthermore, while rogues lack the ability to cast spells innately, they can convincingly improvise well enough to activate scrolls, wands, and nearly any other magical item.",
+  hd: 6,
+  levels: 20,
+  skillPoints: 8,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -66,5 +74,3 @@ export const ROGUE: ClassSeed = {
     [19, "Special Ability (Rogue)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

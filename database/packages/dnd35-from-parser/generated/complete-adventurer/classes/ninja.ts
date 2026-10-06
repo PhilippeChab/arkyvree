@@ -1,9 +1,17 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const NINJA: ClassSeed = {
   name: "Ninja",
-  description: "Ninjas move through the shadows, striking down the unwary and vanishing again with ease. Ninjas walk where others cannot. They blend their training in stealth and assassination with a focused mind. Their rigorous preparation sharpens their minds and bodies, giving them supernatural abilities of stealth and making them phantoms in the eyes of many. Although ninjas in battle lack the staying power of martial characters such as fighters or barbarians, they excel at making combat occur on their terms?appearing and disappearing seemingly at a whim. Historically, ninjas came from clans of assassins and guerrilla warriors in feudal Japan. In a fantasy setting, they blend a gift for stealth and infiltration with devastating surprise attacks and supernatural means of avoiding blows. Although the specific abilities of the class differ from those attributed to the historical ninja, they mirror the ninja's fearsome reputation as a spy, assassin, and martial artist.",
-  hd: 6, levels: 20, skillPoints: 6,
+  description:
+    "Ninjas move through the shadows, striking down the unwary and vanishing again with ease. Ninjas walk where others cannot. They blend their training in stealth and assassination with a focused mind. Their rigorous preparation sharpens their minds and bodies, giving them supernatural abilities of stealth and making them phantoms in the eyes of many. Although ninjas in battle lack the staying power of martial characters such as fighters or barbarians, they excel at making combat occur on their terms?appearing and disappearing seemingly at a whim. Historically, ninjas came from clans of assassins and guerrilla warriors in feudal Japan. In a fantasy setting, they blend a gift for stealth and infiltration with devastating surprise attacks and supernatural means of avoiding blows. Although the specific abilities of the class differ from those attributed to the historical ninja, they mirror the ninja's fearsome reputation as a spy, assassin, and martial artist.",
+  hd: 6,
+  levels: 20,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -62,5 +70,3 @@ export const NINJA: ClassSeed = {
     [20, "Ghost Walk (Ninja)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const COMBAT_TRAPSMITH: ClassSeed = {
   name: "Combat Trapsmith",
   description: "Combat trapsmiths can litter a battlefield or dungeon with devices of their own cunning design.",
-  hd: 6, levels: 5, skillPoints: 6,
+  hd: 6,
+  levels: 5,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: [
@@ -44,5 +51,3 @@ export const COMBAT_TRAPSMITH: ClassSeed = {
     [5, "Trap Sense (Combat Trapsmith)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

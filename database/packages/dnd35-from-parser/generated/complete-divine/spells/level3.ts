@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Beast Claws",
-    description: "Your hands and fingers transform, growing long curved claws and heavy knuckles. These claws function as slashing melee weapons dealing 1d6 damage plus applicable bonuses (such as Strength), with a critical threat range of 19-20. Attacks made with these transformed hands do not provoke attacks of opportunity, and the claws do not impair your manual dexterity or ability to cast spells. Material Component: A raptor's claw, such as from an eagle or falcon.",
+    description:
+      "Your hands and fingers transform, growing long curved claws and heavy knuckles. These claws function as slashing melee weapons dealing 1d6 damage plus applicable bonuses (such as Strength), with a critical threat range of 19-20. Attacks made with these transformed hands do not provoke attacks of opportunity, and the claws do not impair your manual dexterity or ability to cast spells. Material Component: A raptor's claw, such as from an eagle or falcon.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     aptitudeLevels: { "Cleric Spells": 4, "Druid Spells": 3 },
     savingThrow: "None",
@@ -21,7 +22,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Blast of Force",
-    description: "You launch an unseen bolt of pure force at a target. This ranged touch attack inflicts 1d6 points of damage per two caster levels (maximum 5d6). A successful hit also forces the target to attempt a Fortitude save or be knocked prone (size and stability modifiers apply as though the spell were a bull rush).",
+    description:
+      "You launch an unseen bolt of pure force at a target. This ranged touch attack inflicts 1d6 points of damage per two caster levels (maximum 5d6). A successful hit also forces the target to attempt a Fortitude save or be knocked prone (size and stability modifiers apply as though the spell were a bull rush).",
     aptitudes: [],
     savingThrow: "Fortitude partial",
     properties: [
@@ -38,7 +40,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Blessing of Bahamut",
-    description: "Your skin takes on a metallic platinum sheen, providing protection against physical harm. You gain damage reduction 10/magic for the spell's duration. Material Component: A canary feather, tossed into the air.",
+    description:
+      "Your skin takes on a metallic platinum sheen, providing protection against physical harm. You gain damage reduction 10/magic for the spell's duration. Material Component: A canary feather, tossed into the air.",
     aptitudes: ["Paladin Spells"],
     savingThrow: "None",
     properties: [
@@ -55,7 +58,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bottle of Smoke",
-    description: "Using a fire source, you generate a plume of smoke and capture it inside a special bottle. If the bottle is opened before the spell expires, the smoke billows out and coalesces into a vaguely horse-shaped creature made of wispy smoke. It produces no sound, and physical contact passes through it. Mounting the smoke horse requires a Ride check (DC 10) while holding the bottle in one hand. Without the bottle, a rider simply passes through the creature. Releasing the bottle after mounting causes the rider to fall through the smoky form; remounting requires the intact bottle in hand. Breaking the bottle ends the spell immediately and dumps any mounted rider to the ground. The smoke horse moves at 20 feet per caster level (maximum 240 feet). At the rider's command, it can trail a 5-foot-wide, 20-foot-high bank of smoke behind it. Wind of severe strength (31+ mph) or any magical wind disperses both the horse and any smoke it produced instantly. Otherwise, the smoke trail persists for 10 minutes from when it was laid down. Starting or stopping the trail is a free action. The mount and its smoke trail provide one-half concealment (20% miss chance) to anyone behind them. The mount is immune to all damage and attacks because material objects and spells pass through it, and it cannot attack. The rider can return the horse to the bottle by uncorking it (a move-equivalent action) and stoppering it again (another move-equivalent action) the following round, pausing the spell's duration. Reopening the bottle later reactivates the spell with its remaining duration. Regardless of unused time, the spell ceases to function 24 hours after casting. Dispelling the spell while the bottle is corked ends it permanently. Focus: A decorative, corked bottle worth at least 50 gp.",
+    description:
+      "Using a fire source, you generate a plume of smoke and capture it inside a special bottle. If the bottle is opened before the spell expires, the smoke billows out and coalesces into a vaguely horse-shaped creature made of wispy smoke. It produces no sound, and physical contact passes through it. Mounting the smoke horse requires a Ride check (DC 10) while holding the bottle in one hand. Without the bottle, a rider simply passes through the creature. Releasing the bottle after mounting causes the rider to fall through the smoky form; remounting requires the intact bottle in hand. Breaking the bottle ends the spell immediately and dumps any mounted rider to the ground. The smoke horse moves at 20 feet per caster level (maximum 240 feet). At the rider's command, it can trail a 5-foot-wide, 20-foot-high bank of smoke behind it. Wind of severe strength (31+ mph) or any magical wind disperses both the horse and any smoke it produced instantly. Otherwise, the smoke trail persists for 10 minutes from when it was laid down. Starting or stopping the trail is a free action. The mount and its smoke trail provide one-half concealment (20% miss chance) to anyone behind them. The mount is immune to all damage and attacks because material objects and spells pass through it, and it cannot attack. The rider can return the horse to the bottle by uncorking it (a move-equivalent action) and stoppering it again (another move-equivalent action) the following round, pausing the spell's duration. Reopening the bottle later reactivates the spell with its remaining duration. Regardless of unused time, the spell ceases to function 24 hours after casting. Dispelling the spell while the bottle is corked ends it permanently. Focus: A decorative, corked bottle worth at least 50 gp.",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     aptitudeLevels: { "Druid Spells": 4, "Ranger Spells": 3 },
     savingThrow: "None",
@@ -73,7 +77,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Chain of Eyes",
-    description: "You borrow a creature's vision in place of your own. While you cannot control the creature, each time it physically contacts another living being, you may transfer your sensory link to the new creature. This allows your perception to infiltrate closely guarded locations. On your turn, you can switch between the linked creature's sight and your own normal vision as a free action.",
+    description:
+      "You borrow a creature's vision in place of your own. While you cannot control the creature, each time it physically contacts another living being, you may transfer your sensory link to the new creature. This allows your perception to infiltrate closely guarded locations. On your turn, you can switch between the linked creature's sight and your own normal vision as a free action.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     aptitudeLevels: { "Cleric Spells": 3, "Druid Spells": 4 },
     savingThrow: "Will negates",
@@ -90,7 +95,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Detect Favored Enemy",
-    description: "You can sense the presence of your favored enemies within the area. The information revealed depends on how long you concentrate. 1st Round: Whether or not a favored enemy is present. 2nd Round: The types of favored enemies in the area and the quantity of each type. 3rd Round: The precise location and HD of each individual. You may turn to scan a new area each round. The spell penetrates barriers, but 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt blocks it.",
+    description:
+      "You can sense the presence of your favored enemies within the area. The information revealed depends on how long you concentrate. 1st Round: Whether or not a favored enemy is present. 2nd Round: The types of favored enemies in the area and the quantity of each type. 3rd Round: The precise location and HD of each individual. You may turn to scan a new area each round. The spell penetrates barriers, but 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt blocks it.",
     aptitudes: ["Ranger Spells"],
     savingThrow: "None",
     properties: [
@@ -107,7 +113,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Fire Wings",
-    description: "Your arms transform into wings of brilliant flame. The fire does not harm you or your possessions. Because your arms become wings, you cannot hold items or cast spells with somatic components while using fire wings, though rings, bracers, and other arm-worn items continue to function normally. The wings grant a fly speed of 60 feet (40 feet in medium or heavy armor) with good maneuverability. You can charge but not run while flying and cannot carry more than a light load aloft. Flying requires only as much concentration as walking, so you can take other actions normally. When the spell expires while airborne, you descend at 60 feet per round for 1d6 rounds, then fall any remaining distance. Dispelling also triggers this gradual descent, but an antimagic field does not. You can make unarmed strikes with the fire wings at a -4 penalty (non-proficient), dealing 2d6 fire damage in addition to normal unarmed damage on a hit. The wings can be extinguished (ending the spell) by a quench spell, submersion in water, or hurricane-force or stronger winds. Material Component: A bird feather, burned during casting. Focus: A golden phoenix-shaped amulet.",
+    description:
+      "Your arms transform into wings of brilliant flame. The fire does not harm you or your possessions. Because your arms become wings, you cannot hold items or cast spells with somatic components while using fire wings, though rings, bracers, and other arm-worn items continue to function normally. The wings grant a fly speed of 60 feet (40 feet in medium or heavy armor) with good maneuverability. You can charge but not run while flying and cannot carry more than a light load aloft. Flying requires only as much concentration as walking, so you can take other actions normally. When the spell expires while airborne, you descend at 60 feet per round for 1d6 rounds, then fall any remaining distance. Dispelling also triggers this gradual descent, but an antimagic field does not. You can make unarmed strikes with the fire wings at a -4 penalty (non-proficient), dealing 2d6 fire damage in addition to normal unarmed damage on a hit. The wings can be extinguished (ending the spell) by a quench spell, submersion in water, or hurricane-force or stronger winds. Material Component: A bird feather, burned during casting. Focus: A golden phoenix-shaped amulet.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -125,7 +132,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Flame of Faith",
-    description: "You temporarily transform any normal or masterwork melee weapon into a magical flaming weapon. For the duration, it functions as a +1 flaming burst weapon, dealing an additional +1d6 fire damage per hit. On a critical hit, it deals bonus fire damage: +1d10 for a x2 multiplier, +2d10 for x3, and +3d10 for x4. This effect does not stack with existing weapon enhancement bonuses or the flaming/flaming burst property. Material Component: A lump of phosphorus, touched to the weapon.",
+    description:
+      "You temporarily transform any normal or masterwork melee weapon into a magical flaming weapon. For the duration, it functions as a +1 flaming burst weapon, dealing an additional +1d6 fire damage per hit. On a critical hit, it deals bonus fire damage: +1d10 for a x2 multiplier, +2d10 for x3, and +3d10 for x4. This effect does not stack with existing weapon enhancement bonuses or the flaming/flaming burst property. Material Component: A lump of phosphorus, touched to the weapon.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None",
     properties: [
@@ -142,7 +150,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Forestfold",
-    description: "You receive a +20 competence bonus on Hide and Move Silently checks. The spell ends if you move more than 10 feet from the location where you cast it. Otherwise identical to camouflage.",
+    description:
+      "You receive a +20 competence bonus on Hide and Move Silently checks. The spell ends if you move more than 10 feet from the location where you cast it. Otherwise identical to camouflage.",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     aptitudeLevels: { "Druid Spells": 4, "Ranger Spells": 3 },
     savingThrow: "None",
@@ -155,7 +164,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Infestation of Maggots",
-    description: "With a successful melee touch attack, you infest a creature with parasitic larvae. They deal 1d4 points of temporary Constitution damage each round. The target attempts a new Fortitude save each round to negate that round's damage and end the effect. The infestation can also be eliminated by cure disease or heal. Material Component: A handful of dead, dried flies.",
+    description:
+      "With a successful melee touch attack, you infest a creature with parasitic larvae. They deal 1d4 points of temporary Constitution damage each round. The target attempts a new Fortitude save each round to negate that round's damage and end the effect. The infestation can also be eliminated by cure disease or heal. Material Component: A handful of dead, dried flies.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -172,7 +182,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mark of the Hunter",
-    description: "By pointing at a favored enemy, you brand it with a glowing rune visible only to you. Your favored enemy bonuses against that foe increase by +4. Additionally, the rune outlines your target, denying it any AC bonus from cover less than total cover against your attacks and removing any miss chance from concealment less than total concealment. Other miss-chance effects (such as incorporealness) apply normally. Material Component: A fragment of skin or bone from the appropriate favored enemy type.",
+    description:
+      "By pointing at a favored enemy, you brand it with a glowing rune visible only to you. Your favored enemy bonuses against that foe increase by +4. Additionally, the rune outlines your target, denying it any AC bonus from cover less than total cover against your attacks and removing any miss chance from concealment less than total concealment. Other miss-chance effects (such as incorporealness) apply normally. Material Component: A fragment of skin or bone from the appropriate favored enemy type.",
     aptitudes: ["Ranger Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -189,7 +200,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Phantasmal Decoy",
-    description: "You create an illusory image of the subject's most despised enemy by reading the subject's subconscious. Only you and the subject can see the phantom, which appears blurry and indistinct to you. Creatures of Intelligence 3 or lower automatically chase the decoy. More intelligent creatures are likely to do so as well, unless pursuit would be obviously foolish. As a move action, you can direct the decoy up to 60 feet in any direction. Since it is not real, terrain that slows movement does not affect it (though you can voluntarily slow it for realism). The target receives a Will save upon successfully attacking the decoy or moving adjacent to it.",
+    description:
+      "You create an illusory image of the subject's most despised enemy by reading the subject's subconscious. Only you and the subject can see the phantom, which appears blurry and indistinct to you. Creatures of Intelligence 3 or lower automatically chase the decoy. More intelligent creatures are likely to do so as well, unless pursuit would be obviously foolish. As a move action, you can direct the decoy up to 60 feet in any direction. Since it is not real, terrain that slows movement does not affect it (though you can voluntarily slow it for realism). The target receives a Will save upon successfully attacking the decoy or moving adjacent to it.",
     aptitudes: ["Ranger Spells"],
     savingThrow: "Will disbelief (if interacted with)",
     properties: [
@@ -207,7 +219,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Resurgence, Mass",
-    description: "Functions like resurgence, but affects multiple creatures. You choose a single spell or ability, and all affected allies receive a new saving throw against that one effect. For instance, if three allies were hit by a mind blast and two others by baleful polymorph, you must choose one of these effects: either the mind blast (giving three allies a new save) or the baleful polymorph (giving two allies a new save).",
+    description:
+      "Functions like resurgence, but affects multiple creatures. You choose a single spell or ability, and all affected allies receive a new saving throw against that one effect. For instance, if three allies were hit by a mind blast and two others by baleful polymorph, you must choose one of these effects: either the mind blast (giving three allies a new save) or the baleful polymorph (giving two allies a new save).",
     aptitudes: ["Blackguard Spells", "Cleric Spells", "Paladin Spells"],
     aptitudeLevels: { "Blackguard Spells": 3, "Cleric Spells": 4, "Paladin Spells": 3 },
     savingThrow: "Will negates (harmless)",
@@ -225,7 +238,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Spikes",
-    description: "Functions as brambles, except the affected weapon receives a +2 enhancement bonus on attacks and its critical threat range is doubled.",
+    description:
+      "Functions as brambles, except the affected weapon receives a +2 enhancement bonus on attacks and its critical threat range is doubled.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -242,7 +256,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Standing Wave",
-    description: "You command water to rise up beneath a creature or object, lifting and propelling it forward. What the wave can support depends on your caster level. The wave carries its burden in a straight line at 60 feet per round over water. When the wave contacts land, it dissipates and gently deposits its payload on shore.",
+    description:
+      "You command water to rise up beneath a creature or object, lifting and propelling it forward. What the wave can support depends on your caster level. The wave carries its burden in a straight line at 60 feet per round over water. When the wave contacts land, it dissipates and gently deposits its payload on shore.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Reflex negates",
     properties: [
@@ -259,8 +274,16 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Telepathic Bond, Lesser",
-    description: "You establish a telepathic link with one willing creature that has an Intelligence of 6 or higher. Communication through the bond transcends language barriers. The bond confers no special power or influence over the subject. Once formed, the link functions at any distance on the same plane.",
-    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
+    description:
+      "You establish a telepathic link with one willing creature that has an Intelligence of 6 or higher. Communication through the bond transcends language barriers. The bond confers no special power or influence over the subject. Once formed, the link functions at any distance on the same plane.",
+    aptitudes: [
+      "Cleric Spells",
+      "Sorcerer Spells",
+      "Spellthief Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -289,7 +312,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Vigor, Mass Lesser",
-    description: "You channel healing energy across a group of creatures, granting each fast healing 1 for the duration. Each subject heals 1 hit point per round and is automatically stabilized if dying from hit point loss. This spell does not restore hit points lost from starvation, thirst, or suffocation, and it does not allow a creature to regrow or reattach lost body parts. Multiple vigor spells do not stack; only the highest-level version applies. Casting a second vigor of equal level extends the first spell's remaining duration by the full duration of the second spell.",
+    description:
+      "You channel healing energy across a group of creatures, granting each fast healing 1 for the duration. Each subject heals 1 hit point per round and is automatically stabilized if dying from hit point loss. This spell does not restore hit points lost from starvation, thirst, or suffocation, and it does not allow a creature to regrow or reattach lost body parts. Multiple vigor spells do not stack; only the highest-level version applies. Casting a second vigor of equal level extends the first spell's remaining duration by the full duration of the second spell.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -306,7 +330,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Visage of the Deity, Lesser",
-    description: "Your body partially transforms to resemble your deity's form. You gain a +4 enhancement bonus to Charisma and resistance 10 to two or three energy types: acid, cold, and electricity if you are good; cold and fire if you are evil.",
+    description:
+      "Your body partially transforms to resemble your deity's form. You gain a +4 enhancement bonus to Charisma and resistance 10 to two or three energy types: acid, cold, and electricity if you are good; cold and fire if you are evil.",
     aptitudes: ["Blackguard Spells", "Cleric Spells", "Paladin Spells"],
     aptitudeLevels: { "Blackguard Spells": 4, "Cleric Spells": 3, "Paladin Spells": 4 },
     savingThrow: "None",
@@ -326,7 +351,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Weather Eye",
-    description: "You can accurately predict natural weather up to one week in advance. If unnatural forces are currently influencing the weather, the spell reveals as much information as detect magic would. Material Component: Incense. Divine Focus: A scrying device of some kind (bowl, mirror, crystal ball, etc.).",
+    description:
+      "You can accurately predict natural weather up to one week in advance. If unnatural forces are currently influencing the weather, the spell reveals as much information as detect magic would. Material Component: Incense. Divine Focus: A scrying device of some kind (bowl, mirror, crystal ball, etc.).",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     aptitudeLevels: { "Cleric Spells": 4, "Druid Spells": 3 },
     savingThrow: "None",
@@ -345,7 +371,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Wrack",
-    description: "The targeted humanoid is seized by such intense agony that it doubles over and collapses. Its face and hands blister and weep fluid while its eyes cloud with blood, causing blindness. For the duration, the subject is helpless and unable to take actions. Even after the spell ends, the subject remains visibly shaken, suffering a -2 penalty on attack rolls, saves, and checks for 3d10 minutes. Sight returns when the spell's duration expires.",
+    description:
+      "The targeted humanoid is seized by such intense agony that it doubles over and collapses. Its face and hands blister and weep fluid while its eyes cloud with blood, causing blindness. For the duration, the subject is helpless and unable to take actions. Even after the spell ends, the subject remains visibly shaken, suffering a -2 penalty on attack rolls, saves, and checks for 3d10 minutes. Sight returns when the spell's duration expires.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Sublime Chord Spells", "Wizard Spells"],
     aptitudeLevels: { "Cleric Spells": 3, "Sorcerer Spells": 4, "Sublime Chord Spells": 4, "Wizard Spells": 4 },
     savingThrow: "Fortitude negates",

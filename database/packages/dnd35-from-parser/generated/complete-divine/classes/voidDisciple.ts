@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const VOID_DISCIPLE: ClassSeed = {
   name: "Void Disciple",
-  description: "Among all elemental forces composing the universe, the most potent and hardest to master is the binding essence that exists between and connects the others: Void. Those who follow this path recognize that every object in existence contains all fundamental elements, unified by this most intangible of essences. Void functions like the silence separating musical notes, providing structure and form to the whole composition. For those who grasp how Void relates to all other things and who possess the innate capacity to directly perceive that connection, concepts of distance and physical form become meaningless.",
-  hd: 6, levels: 13, skillPoints: 2,
+  description:
+    "Among all elemental forces composing the universe, the most potent and hardest to master is the binding essence that exists between and connects the others: Void. Those who follow this path recognize that every object in existence contains all fundamental elements, unified by this most intangible of essences. Void functions like the silence separating musical notes, providing structure and form to the whole composition. For those who grasp how Void relates to all other things and who possess the innate capacity to directly perceive that connection, concepts of distance and physical form become meaningless.",
+  hd: 6,
+  levels: 13,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -52,5 +60,3 @@ export const VOID_DISCIPLE: ClassSeed = {
     [13, "Void Strike (Void Disciple)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

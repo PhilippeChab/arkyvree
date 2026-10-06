@@ -6,7 +6,7 @@
   "categories": {
     "correctness": "error"
   },
-  "ignorePatterns": ["node_modules", "dist", "drizzle/generated"],
+  "ignorePatterns": ["node_modules", "dist"],
   "rules": {
     // A parameter's empty `{}` is the shape its caller sets (a Playwright fixture that depends on no other).
     "no-empty-pattern": ["error", { "allowObjectPatternsAsParameters": true }],
@@ -87,11 +87,12 @@
     "arkyvree/test-conventions": "error",
     // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
     "arkyvree/function-length": "error",
-    // A file reads bottom-up: a helper sits above the code that uses it. Classes
-    // are left out: a repository's instance class follows it.
+    // A file reads bottom-up: a helper sits above the code that uses it. Classes are left out (a repository's instance
+    // class follows it), and so is a variable read inside a function, which runs once the file has loaded: drizzle's
+    // tables point their foreign keys both ways.
     "no-use-before-define": [
       "error",
-      { "functions": true, "classes": false, "variables": true, "enums": false, "typedefs": false, "ignoreTypeReferences": true }
+      { "functions": true, "classes": false, "variables": false, "enums": false, "typedefs": false, "ignoreTypeReferences": true }
     ],
     // The names inside an import, alphabetically. The formatter orders the imports themselves.
     "sort-imports": ["error", { "ignoreCase": true, "ignoreDeclarationSort": true }],
@@ -161,15 +162,6 @@
       ],
       "rules": {
         "import/no-default-export": "error"
-      }
-    },
-    // Written by tools, which lay them out: drizzle-kit pull (the schema, whose
-    // foreign keys point both ways, and its relations) and the parser's generator
-    {
-      "files": ["drizzle/schema.ts", "drizzle/relations.ts", "database/packages/*/generated/**"],
-      "rules": {
-        "no-use-before-define": "off",
-        "sort-imports": "off"
       }
     },
     // Server/scripts/tests/database: allow console

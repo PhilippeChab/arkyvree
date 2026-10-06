@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const DWEOMERKEEPER: ClassSeed = {
   name: "Dweomerkeeper",
-  description: "Dweomerkeepers serve as guardians devoted to protecting the fabric of magic from those who would damage or corrupt it.",
-  hd: 6, levels: 10, skillPoints: 2,
+  description:
+    "Dweomerkeepers serve as guardians devoted to protecting the fabric of magic from those who would damage or corrupt it.",
+  hd: 6,
+  levels: 10,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -50,5 +58,3 @@ export const DWEOMERKEEPER: ClassSeed = {
     [10, "Supernatural Spell (Dweomerkeeper)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

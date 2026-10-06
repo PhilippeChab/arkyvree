@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const TEMPEST: ClassSeed = {
   name: "Tempest",
   description: "A tempest is the point of calm within a whirling barrier of deadly blades.",
-  hd: 10, levels: 5, skillPoints: 2,
+  hd: 10,
+  levels: 5,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: ["Balance", "Climb", "Craft", "Intimidate", "Jump", "Swim", "Tumble"],
@@ -28,5 +35,3 @@ export const TEMPEST: ClassSeed = {
     [5, "Two-weapon Spring Attack (Tempest)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

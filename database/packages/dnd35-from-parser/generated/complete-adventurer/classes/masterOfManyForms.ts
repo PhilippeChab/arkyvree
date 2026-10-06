@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const MASTER_OF_MANY_FORMS: ClassSeed = {
   name: "Master of Many Forms",
-  description: "A master of many forms has no shape that she calls her own. Instead, she occupies whatever body is most expedient for her at the time. While others base their identities largely on their external forms, a master of many forms actually comes closer to her true self through her transformations. Of necessity, her sense of self is based not on her outward form, but on her soul, which is truly the only constant about her. It is the inner strength of that soul that enables her to take on any shape and remain herself within. The path of the master of many forms is ideal for a spellcaster of any race who has experienced shapechanging and yearns for more of it. Such a character can be a great force for either good or ill in the world. An evil master of many forms in particular poses a terrible threat, for she can appear anywhere, in any body. The same opponents may face her again and again, in one shape after another, never realizing that they are actually facing a single enemy.",
-  hd: 8, levels: 10, skillPoints: 4,
+  description:
+    "A master of many forms has no shape that she calls her own. Instead, she occupies whatever body is most expedient for her at the time. While others base their identities largely on their external forms, a master of many forms actually comes closer to her true self through her transformations. Of necessity, her sense of self is based not on her outward form, but on her soul, which is truly the only constant about her. It is the inner strength of that soul that enables her to take on any shape and remain herself within. The path of the master of many forms is ideal for a spellcaster of any race who has experienced shapechanging and yearns for more of it. Such a character can be a great force for either good or ill in the world. An evil master of many forms in particular poses a terrible threat, for she can appear anywhere, in any body. The same opponents may face her again and again, in one shape after another, never realizing that they are actually facing a single enemy.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "medium",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: [
@@ -22,11 +30,7 @@ export const MASTER_OF_MANY_FORMS: ClassSeed = {
     "Survival",
     "Swim",
   ],
-  requirements: [
-    eq("feats.alertness.possessed"),
-    eq("feats.endurance.possessed"),
-    eq("feats.wildshape.*.possessed"),
-  ],
+  requirements: [eq("feats.alertness.possessed"), eq("feats.endurance.possessed"), eq("feats.wildshape.*.possessed")],
   classFeatureAptitude: "Master of Many Forms Class Feature",
   classFeatures: [
     [1, "Improved Wild Shape (Humanoid) (Master of Many Forms)"],
@@ -48,5 +52,3 @@ export const MASTER_OF_MANY_FORMS: ClassSeed = {
     [10, "Improved Wild Shape (Master of Many Forms)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

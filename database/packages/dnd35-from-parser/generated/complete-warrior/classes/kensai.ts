@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const KENSAI: ClassSeed = {
   name: "Kensai",
   description: "The kensai achieves unity of physical prowess, mental discipline, martial skill, and inner resolve.",
-  hd: 10, levels: 10, skillPoints: 4,
+  hd: 10,
+  levels: 10,
+  skillPoints: 4,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -27,7 +34,11 @@ export const KENSAI: ClassSeed = {
     gte("skills.ride.rank", 5),
     eq("feats.combatexpertise.possessed"),
     eq("feats.weaponfocus.*.possessed"),
-    or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Lawful Neutral"), eqStr("identity.beliefs.alignment", "Lawful Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Good"),
+      eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+    ),
   ],
   classFeatureAptitude: "Kensai Class Feature",
   classFeatures: [
@@ -41,5 +52,3 @@ export const KENSAI: ClassSeed = {
     [10, "Ki Warlord (Kensai)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

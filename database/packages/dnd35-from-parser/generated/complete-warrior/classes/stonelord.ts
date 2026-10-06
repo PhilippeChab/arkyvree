@@ -1,10 +1,19 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - The character must undergo an arduous ritual involving immersion in sacred loam, long fasting periods deep underground, and the ingestion of 1,000 gp worth of powdered gemstones. The gem type chosen is then the stonelord's totem gem, and she must carry that type of stone with her at all times to access the spell-like abilities she gains as a stonelord
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const STONELORD: ClassSeed = {
   name: "Stonelord",
-  description: "Certain dwarves develop a profound attunement to the living rock, becoming stonelords who channel the primordial power of the earth itself.",
-  hd: 8, levels: 10, skillPoints: 2,
+  description:
+    "Certain dwarves develop a profound attunement to the living rock, becoming stonelords who channel the primordial power of the earth itself.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -47,6 +56,3 @@ export const STONELORD: ClassSeed = {
     [10, "Stone Power (Stonelord)"],
   ],
 };
-
-// TODO: The character must undergo an arduous ritual involving immersion in sacred loam, long fasting periods deep underground, and the ingestion of 1,000 gp worth of powdered gemstones. The gem type chosen is then the stonelord's totem gem, and she must carry that type of stone with her at all times to access the spell-like abilities she gains as a stonelord
-// TODO: No modifiers defined — review if this class needs any
