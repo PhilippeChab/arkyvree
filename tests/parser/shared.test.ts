@@ -8,8 +8,8 @@ import {
   modifierMapping,
   skillSlug,
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
+import { gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { stripSeparators } from "@/shared/text.ts";

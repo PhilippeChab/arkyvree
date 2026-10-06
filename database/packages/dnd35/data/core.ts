@@ -20,14 +20,12 @@ import {
 import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races/data.ts";
 import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/spells/index.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
-import { spellLevelsOf } from "@/database/packages/dnd35/content/spellLevels.ts";
-import type {
-  AbilityDefinition,
-  CoreContent,
-  LanguageDefinition,
-  SaveDefinition,
-  SkillDefinition,
-} from "@/database/packages/dnd35/content/types.ts";
+import type { AbilityDefinition } from "@/database/packages/dnd35/content/abilities/types.ts";
+import { spellLevelsOf } from "@/database/packages/dnd35/content/classes/spellLevels.ts";
+import type { LanguageDefinition } from "@/database/packages/dnd35/content/languages/types.ts";
+import type { CoreContent } from "@/database/packages/dnd35/content/rulesets/types.ts";
+import type { SaveDefinition } from "@/database/packages/dnd35/content/saves/types.ts";
+import type { SkillDefinition } from "@/database/packages/dnd35/content/skills/types.ts";
 import { ANIMAL_COMPANIONS } from "@/database/packages/dnd35/data/bonds/animalCompanions.ts";
 import { FAMILIARS } from "@/database/packages/dnd35/data/bonds/familiars.ts";
 import { SPECIAL_MOUNTS } from "@/database/packages/dnd35/data/bonds/mounts.ts";

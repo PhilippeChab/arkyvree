@@ -1,4 +1,4 @@
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { favoredEnemyFeats } from "@/database/packages/dnd35/data/feats/favoredEnemy.ts";
 
 /** A system feat list (`coreSystemFeats`): no reference lists it. */

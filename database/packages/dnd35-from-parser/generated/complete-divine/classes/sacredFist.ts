@@ -1,5 +1,5 @@
-import { eq, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
+import { eq, eqStr, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 
 export const SACRED_FIST: ClassSeed = {
   name: "Sacred Fist",

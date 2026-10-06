@@ -3,8 +3,8 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
+import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 
 export const THAYAN_KNIGHT: ClassSeed = {
   name: "Thayan Knight",

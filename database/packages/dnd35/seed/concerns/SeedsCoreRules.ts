@@ -1,9 +1,7 @@
-import type {
-  AbilityDefinition,
-  LanguageDefinition,
-  SaveDefinition,
-  SkillDefinition,
-} from "@/database/packages/dnd35/content/types.ts";
+import type { AbilityDefinition } from "@/database/packages/dnd35/content/abilities/types.ts";
+import type { LanguageDefinition } from "@/database/packages/dnd35/content/languages/types.ts";
+import type { SaveDefinition } from "@/database/packages/dnd35/content/saves/types.ts";
+import type { SkillDefinition } from "@/database/packages/dnd35/content/skills/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   abilitiesInRules,

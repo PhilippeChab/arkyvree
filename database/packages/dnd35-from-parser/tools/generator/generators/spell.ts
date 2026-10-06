@@ -5,7 +5,7 @@ import { quote, stringifyProperty } from "@/database/packages/dnd35-from-parser/
 
 function generateLevelFile(constName: string, spells: SpellSeedWithLevel[]): string {
   const lines: string[] = [];
-  lines.push(`import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";`);
+  lines.push(`import type { PowerSeed } from "@/database/packages/dnd35/content/spells/types.ts";`);
   lines.push(``);
   lines.push(`export const ${constName}: PowerSeed[] = [`);
 

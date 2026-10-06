@@ -8,13 +8,13 @@ import { join } from "node:path";
 import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import type { DetectedModifiers } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   Modifier,
   ModifierEffect,
   ModifierSeed,
   RequirementEntry,
-} from "@/database/packages/dnd35/content/types.ts";
+} from "@/database/packages/dnd35/content/customization/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { stripSeparators } from "@/shared/text.ts";

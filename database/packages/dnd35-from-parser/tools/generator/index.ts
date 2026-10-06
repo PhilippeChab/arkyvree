@@ -65,7 +65,8 @@ import type {
   SpellReference,
   WizardSchoolReference,
 } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { DomainDefinition, FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
 import { ARMOR_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
 
@@ -86,7 +87,7 @@ const GENERATED_HEADER = [
 /** The builders an item file can import, in the order its import lists them. */
 const ITEM_IMPORTS: ImportTable = [
   [
-    "@/database/packages/dnd35/content/proficiencies.ts",
+    "@/database/packages/dnd35/content/items/proficiencies.ts",
     [
       "simple",
       "martial",
@@ -98,13 +99,23 @@ const ITEM_IMPORTS: ImportTable = [
       "TOWER_SHIELD_PROF",
     ],
   ],
-  ["@/database/packages/dnd35/content/properties.ts", ["weaponProperties", "armorProperties", "shieldProperties"]],
+  [
+    "@/database/packages/dnd35/content/items/properties.ts",
+    ["weaponProperties", "armorProperties", "shieldProperties"],
+  ],
 ];
 
 /** The repo's linter and its config, whose `member-order` sorts a generated tree's declarations. */
 const LINTER = join(BASE_DIR, "../../../node_modules/.bin/oxlint");
 
 const LINTER_CONFIG = join(BASE_DIR, "../../../.oxlintrc.json");
+
+/** Where the seed type an index file lists comes from. */
+const SEED_TYPE_MODULES = {
+  ClassSeed: "@/database/packages/dnd35/content/classes/types.ts",
+  FeatSeed: "@/database/packages/dnd35/content/feats/types.ts",
+  SpellSeed: "@/database/packages/dnd35/content/spells/types.ts",
+};
 
 export const GENERATED_DIR = join(BASE_DIR, "generated");
 
@@ -156,9 +167,11 @@ function domainsCode(seeds: DomainDefinition[]): string {
   }
   lines.push(`];`);
   lines.push(``);
-  return [`import type { DomainDefinition } from "@/database/packages/dnd35/content/types.ts";`, ``, ...lines].join(
-    "\n",
-  );
+  return [
+    `import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";`,
+    ``,
+    ...lines,
+  ].join("\n");
 }
 
 /**
@@ -244,7 +257,7 @@ function generateDomain(out: Output, book: string) {
       dataPath,
       [
         ...GENERATED_HEADER,
-        `import type { DomainDefinition } from "@/database/packages/dnd35/content/types.ts";`,
+        `import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";`,
         ``,
         `export const ALL_DOMAINS: DomainDefinition[] = [];`,
         ``,
@@ -282,7 +295,7 @@ function generateDomainFeatPool(out: Output, feats: FeatSeed[], book: string) {
 
   const head = [
     ...GENERATED_HEADER,
-    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    `import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`,
     ...requirementImports(uses),
     ``,
   ];
@@ -456,7 +469,7 @@ function generateRace(out: Output, ref: RaceReference, book: string) {
   lines.push(`];`);
   lines.push(``);
 
-  const head = [`import type { RaceDefinition } from "@/database/packages/dnd35/content/types.ts";`, ``];
+  const head = [`import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";`, ``];
   writeGenerated(out, join(out.dir, book, "races", "data.ts"), [...head, ...lines].join("\n"));
 
   if (!out.quiet) console.log(`\nDone!`);
@@ -528,7 +541,7 @@ function generateWizardSchool(out: Output, ref: WizardSchoolReference, book: str
 
   // Generate data.ts
   const lines: string[] = [];
-  lines.push(`import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";`);
+  lines.push(`import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/wizardSchools/types.ts";`);
   lines.push(``);
   lines.push(`export const WIZARD_SCHOOLS: WizardSchoolDefinition[] = [`);
   for (const s of seeds) {
@@ -557,10 +570,10 @@ function getShieldProf(generatorName: string): string {
 }
 
 /** An index file's head: its header, the seed type's import, and the import of each file's list. */
-function indexHead(seedType: string, lists: { constName: string; file: string }[]): string[] {
+function indexHead(seedType: keyof typeof SEED_TYPE_MODULES, lists: { constName: string; file: string }[]): string[] {
   return [
     ...GENERATED_HEADER,
-    `import type { ${seedType} } from "@/database/packages/dnd35/content/types.ts";`,
+    `import type { ${seedType} } from "${SEED_TYPE_MODULES[seedType]}";`,
     ``,
     ...lists.map(({ constName, file }) => importLine([constName], `./${file}`)),
     ``,
@@ -616,7 +629,7 @@ function regenerateBookIndex(out: Output, book: string) {
 
   const lines: string[] = [];
   lines.push(...GENERATED_HEADER);
-  lines.push(`import type { BookContent } from "@/database/packages/dnd35/content/types.ts";`);
+  lines.push(`import type { BookContent } from "@/database/packages/dnd35/content/rulesets/types.ts";`);
   for (const file of files) {
     const names = present
       .filter((part) => part.file === file)
@@ -787,7 +800,7 @@ function regenerateCowFeats(out: Output, book: string) {
 
   const lines: string[] = [];
   lines.push(...GENERATED_HEADER);
-  lines.push(`import type { CowFeatEntry } from "@/database/packages/dnd35/content/types.ts";`);
+  lines.push(`import type { CowFeatEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";`);
   lines.push(``);
   lines.push(`export const COW_FEATS: CowFeatEntry[] = [`);
   for (const entry of deduped.values()) {
@@ -899,7 +912,7 @@ function regenerateCowSpells(out: Output, book: string) {
 
   const lines: string[] = [];
   lines.push(...GENERATED_HEADER);
-  lines.push(`import type { CowSpellEntry } from "@/database/packages/dnd35/content/types.ts";`);
+  lines.push(`import type { CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";`);
   lines.push(``);
   lines.push(`export const COW_SPELLS: CowSpellEntry[] = [`);
   for (const entry of entries.values()) {
@@ -956,7 +969,7 @@ function regenerateFeatIndex(out: Output, book: string) {
   // Each feat file's lists, imported once: the index exports them, and the lists of them all
   const lines = [
     ...GENERATED_HEADER,
-    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    `import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`,
     ...featFiles.map(({ file, exports }) => importLine(exports, `./${file.replace(".ts", "")}.ts`)),
     ...(hasClassFeats ? [importLine(["ALL_CLASS_FEATS"], "./classes/index.ts")] : []),
     ``,
@@ -1030,7 +1043,7 @@ function writeGenerated(out: Output, path: string, code: string) {
 
 /**
  * Writes a file of items, `constName`: each its name and description, then the lines `fields` gives. `uses` are the
- * builders it takes from content/proficiencies.ts and content/properties.ts.
+ * builders it takes from content/items/proficiencies.ts and content/items/properties.ts.
  */
 function writeItemFile<T extends { name: string; description: string }>(
   out: Output,
@@ -1042,7 +1055,7 @@ function writeItemFile<T extends { name: string; description: string }>(
 ) {
   const lines = [
     ...GENERATED_HEADER,
-    `import type { ItemDef } from "@/database/packages/dnd35/content/types.ts";`,
+    `import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";`,
     ...importLines(new Set(uses), ITEM_IMPORTS),
     ``,
     `export const ${constName}: ItemDef[] = [`,

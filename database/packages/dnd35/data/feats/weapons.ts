@@ -1,7 +1,7 @@
 /** The weapon feats made for every weapon: a proficiency per simple and martial weapon, Weapon Focus for spells. */
 
-import { gte } from "@/database/packages/dnd35/content/requirements.ts";
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/data/weapons.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 

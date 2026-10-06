@@ -1,4 +1,4 @@
-import type { RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
+import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { modifiersInCustomization, propertiesInCustomization, racesInRules } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/server/mixins.ts";

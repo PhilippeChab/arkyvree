@@ -1,5 +1,5 @@
-import { eq, feat } from "@/database/packages/dnd35/content/requirements.ts";
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { eq, feat } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 

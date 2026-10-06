@@ -2,8 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import { eq, inArray } from "drizzle-orm";
 
-import * as r from "@/database/packages/dnd35/content/requirements.ts";
-import type { ClassSeed, ItemDef, RaceDefinition, SpellSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
+import * as r from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
+import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
+import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 import type { SeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   entitySnapshotsInRules,

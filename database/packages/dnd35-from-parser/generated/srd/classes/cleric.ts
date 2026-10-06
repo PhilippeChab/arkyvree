@@ -1,4 +1,4 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 
 export const CLERIC: ClassSeed = {
   name: "Cleric",

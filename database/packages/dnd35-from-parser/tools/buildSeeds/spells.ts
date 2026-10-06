@@ -12,7 +12,7 @@ import {
   referenceBooks,
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { type PowerSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { PowerSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 import {
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,

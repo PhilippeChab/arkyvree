@@ -30,15 +30,15 @@ database/packages/
     ├── index.ts          # The core rules package
     ├── names.ts          # Ruleset display names
     ├── extensions/       # One file per extension package
-    ├── content/          # What the data is written with
-    │   ├── types.ts          # FeatSeed, ClassSeed, SpellSeed, CoreContent, BookContent…
-    │   ├── requirements.ts   # Requirement builders: eq(), gte(), or(), feat()…
-    │   ├── modifiers.ts      # Modifier builders: bonus(), grantFeat()
-    │   ├── proficiencies.ts  # Weapon, armor and shield proficiencies: simple(), martial(), exotic()…
-    │   ├── properties.ts     # Weapon, armor and shield properties
-    │   ├── spellLevels.ts    # The class level each of a class's spell levels opens at
-    │   ├── wizardSchools.ts  # The wizard's school feats, from the schools
-    │   └── articles.ts
+    ├── content/          # What the data is written with: a folder per kind of content, its types and builders
+    │   ├── customization/    # Requirement, modifier and property types; eq(), gte(), or(), feat(), bonus()…
+    │   ├── items/            # ItemDef; weapon, armor and shield properties and proficiencies (simple(), martial()…)
+    │   ├── classes/          # ClassSeed; the class level each of a class's spell levels opens at
+    │   ├── feats/, spells/, races/, domains/   # FeatSeed; PowerSeed, SpellSeed; RaceDefinition; DomainDefinition
+    │   ├── wizardSchools/    # WizardSchoolDefinition; the wizard's school feats
+    │   ├── bonds/            # BondContent; "a Cat", "an Owl" for the bonds' descriptions
+    │   ├── abilities/, saves/, skills/, languages/   # The core rules' own: AbilityDefinition, SaveDefinition…
+    │   └── rulesets/         # CoreContent, BookContent: what a ruleset is seeded with
     ├── data/             # The hand-written data
     │   ├── core.ts           # The core ruleset, its abilities, saves, skills, languages, and CORE: all it's seeded with
     │   ├── skills.ts, weapons.ts, creatureTypes.ts, templateItems.ts
