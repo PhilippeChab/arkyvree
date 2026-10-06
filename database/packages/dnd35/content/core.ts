@@ -1,6 +1,6 @@
-import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
+/** The core rules' hand-written content: the ruleset and its abilities, saves, skills and languages. */
 
-// The core rules' hand-written content: the ruleset and its abilities, saves, skills and languages.
+import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 
 export const CORE_RULESET = {
   name: DND35_RULESET_NAME,

@@ -3,11 +3,9 @@ import { apiResponse, selectOption, uniqueName } from "@/tests/e2e/support/page.
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
 
-/*
- * Writing a class of one's own in a fork: its hit die, a level (its base attack bonus, a save and skill points), and
- * its class skills. A class of its own, not an inherited one: the copy-on-write of inherited entities has tests of its
- * own (fork-changes, cow-*).
- */
+// Writing a class of one's own in a fork: its hit die, a level (its base attack bonus, a save and skill points), and
+// its class skills. A class of its own, not an inherited one: the copy-on-write of inherited entities has tests of its
+// own (fork-changes, cow-*).
 test.describe("A class created in a fork", () => {
   test("gets a level and a class skill, which it can lose again", async ({ page, ownerUser }) => {
     await signIn(page, ownerUser.email, ownerUser.password);

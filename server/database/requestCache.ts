@@ -1,11 +1,10 @@
 /**
  * Request-scoped query deduplication.
  *
- * A request handler runs inside `runWithRequestCache`, which installs an
- * AsyncLocalStorage-backed Map used to coalesce duplicate reads within that
- * one request. Example: `Rulesets.findOne` gets called twice in the same
- * request — once in the service layer, once inside DetailedCharacterDataLoader.
- * The second call finds the first call's in-flight promise and piggybacks.
+ * A request handler runs inside `runWithRequestCache`, which installs an AsyncLocalStorage-backed Map used to coalesce
+ * duplicate reads within that one request. Example: `Rulesets.findOne` gets called twice in the same request — once in
+ * the service layer, once inside DetailedCharacterDataLoader. The second call finds the first call's in-flight promise
+ * and piggybacks.
  *
  * Constraints:
  * - Only applies when the caller passes the global `db` (not a tx handle).
@@ -17,6 +16,7 @@
  *   would return stale data.
  * - The store dies with the request — zero cross-request leakage.
  */
+
 import { AsyncLocalStorage } from "node:async_hooks";
 
 import { onDedupHit, onDedupMiss } from "@/server/timing.ts";

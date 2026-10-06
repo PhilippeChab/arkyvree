@@ -15,7 +15,10 @@ function featIds(feats: Record<string, { id: string }[]>, aptitudeId: string) {
   return (feats[aptitudeId] ?? []).map((f) => f.id);
 }
 
-// A human fighter (INT 12): 16 skill points, 2 General feats and a bonus feat at the first level; 4 points and a bonus feat at the second.
+/**
+ * A human fighter (INT 12): 16 skill points, 2 General feats and a bonus feat at the first level; 4 points and a bonus
+ * feat at the second.
+ */
 function fighter1(ctx: SeedContext) {
   return picks(ctx, FIGHTER_LEVELS[0]);
 }

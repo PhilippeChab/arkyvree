@@ -1,4 +1,6 @@
-// D&D 3.5 spell properties
+/** D&D 3.5 spell properties. */
+
+/** The property a spell's school is in, which the sheets show as its own column. */
 export const SPELL_SCHOOL = "SPELL_SCHOOL";
 export const SPELL_SUBSCHOOL = "SPELL_SUBSCHOOL";
 export const SPELL_DESCRIPTOR = "SPELL_DESCRIPTOR";

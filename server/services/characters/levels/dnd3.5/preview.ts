@@ -144,7 +144,7 @@ export async function getLevelUpPreview(
       levels.length,
     );
 
-    // ── Per-level aptitude slots for auto-assignment ──
+    // Per-level aptitude slots for auto-assignment
     // Build baseline character (without planned levels) to capture existing spent
     const baselineApts = await buildBaselineAptitudes(db, rulesetModule, characterRecord, detailedCharacter);
 
@@ -158,7 +158,7 @@ export async function getLevelUpPreview(
       baselineApts,
     );
 
-    // ── Build level details ──
+    // Build level details
     const levelDetails = klassLevelEntries.map(({ klass, klassLevel }, i) => ({
       klassId: klass.id,
       klassName: klass.name,

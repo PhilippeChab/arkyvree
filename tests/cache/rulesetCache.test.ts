@@ -251,10 +251,7 @@ describe("rulesetCache", () => {
     expect(campaignRaw2).not.toBe(campaignRaw);
   });
 
-  // ──────────────────────────────────────────────────────────────
   // Fork lifecycle: create/edit/delete entities and verify compose + cache
-  // ──────────────────────────────────────────────────────────────
-
   describe("fork lifecycle", () => {
     test("fork compose inherits all ancestor entities", async () => {
       const seed = await getRuleset();

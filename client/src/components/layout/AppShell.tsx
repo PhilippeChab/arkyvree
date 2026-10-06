@@ -6,8 +6,10 @@ import { DiceSpinner } from "@/client/src/components/common/index.ts";
 
 import { Footer } from "./Footer.tsx";
 
-// Place the main area right under the fixed app bar: the theme's toolbar
-// mixin with `top` for `minHeight`, media queries included.
+/**
+ * Place the main area right under the fixed app bar: the theme's toolbar mixin with `top` for `minHeight`, media
+ * queries included.
+ */
 function belowToolbar(toolbar: CSSObject): CSSObject {
   return Object.fromEntries(
     Object.entries(toolbar).map(([key, value]) =>

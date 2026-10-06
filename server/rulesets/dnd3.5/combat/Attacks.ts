@@ -28,8 +28,10 @@ import {
 } from "@/shared/dnd3.5/properties/index.ts";
 import { type Item } from "@/shared/relations.ts";
 
-// D&D 3.5 damage die progression for size adjustments.
-// All weapon/unarmed damages are defined for Medium size; shift up for Large, down for Small, etc.
+/**
+ * D&D 3.5 damage die progression for size adjustments. All weapon/unarmed damages are defined for Medium size; shift up
+ * for Large, down for Small, etc.
+ */
 const DAMAGE_PROGRESSION = [
   "1",
   "1d2",

@@ -1,9 +1,10 @@
 /**
- * 3.5 character-sheet section prop shapes. These fields (BAB, grapple, AC
- * breakdown with touch/flatfooted/deflection, encumbrance loads, Fortitude/
- * Reflex/Will saves, skill ranks) are D&D 3.5 specific — other rulesets would
- * define their own section prop types alongside their own section components.
+ * 3.5 character-sheet section prop shapes. These fields (BAB, grapple, AC breakdown with touch/flatfooted/deflection,
+ * encumbrance loads, Fortitude/
+ * Reflex/Will saves, skill ranks) are D&D 3.5 specific — other rulesets would define their own section prop types
+ * alongside their own section components.
  */
+
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 /** The sheet's combat stats; empty on a sheet that carries none. */

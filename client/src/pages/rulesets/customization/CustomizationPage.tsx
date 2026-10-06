@@ -64,7 +64,7 @@ interface CustomizationViewProps {
   locked: boolean;
 }
 
-// Entities with an editor on this page, which can also be deleted from it.
+/** Entities with an editor on this page, which can also be deleted from it. */
 const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
 
 const TABS: SectionTab<TabSection>[] = [
@@ -168,7 +168,7 @@ function renderEditor(data: EditableEntity, props: Omit<EditorProps<unknown>, "e
   }
 }
 
-// A modifier can only carry requirements.
+/** A modifier can only carry requirements. */
 function tabsFor(type: CustomizationPageType) {
   return type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
 }

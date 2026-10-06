@@ -4,9 +4,10 @@ import { expect, test } from "@/tests/e2e/fixtures.ts";
 import { apiOf } from "@/tests/e2e/support/api.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
 
-/*
+/**
  * The seeded characters bonded to a creature: its master's sheet sums it up under the feat that bonds it, and links to
- * its own sheet, read-only, whose Back returns to the master. The tests only read the seeded characters, as their owner.
+ * its own sheet, read-only, whose Back returns to the master. The tests only read the seeded characters, as their
+ * owner.
  */
 const BONDS = [
   { master: "Elara Starweaver", creature: "Owl", feat: "Owl Familiar" },

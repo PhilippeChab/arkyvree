@@ -1,6 +1,6 @@
 import type { CharacterSeed } from "@/database/seeds/helpers.ts";
 
-// Elf Rogue 3 — Skills: (8+2)*4 + (8+2)*2 = 60
+/** Elf Rogue 3 — Skills: (8+2)*4 + (8+2)*2 = 60 */
 export default {
   raceName: "Elf",
   name: "Lyra Shadowstep",

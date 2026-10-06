@@ -1,10 +1,9 @@
 /**
- * Query definitions shared between the page that shows the data and the
- * places that prefetch or reuse it (sidebar hover, card hover, entity pages).
- * Defining them once keeps the key and the request in step: a prefetch whose
- * key or page size drifts from the page's query is wasted, or worse, seeds the
- * cache with pages of the wrong size.
+ * Query definitions shared between the page that shows the data and the places that prefetch or reuse it (sidebar
+ * hover, card hover, entity pages). Defining them once keeps the key and the request in step: a prefetch whose key or
+ * page size drifts from the page's query is wasted, or worse, seeds the cache with pages of the wrong size.
  */
+
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
 

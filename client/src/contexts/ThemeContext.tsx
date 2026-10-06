@@ -87,7 +87,7 @@ function containedGradient(color: ContainedColor, darkMode: boolean) {
   }
 }
 
-// Ancient Tome Theme - Adapted for both light and dark modes
+/** Ancient Tome Theme - Adapted for both light and dark modes */
 function createAppTheme(darkMode: boolean): Theme {
   return responsiveFontSizes(
     createTheme({

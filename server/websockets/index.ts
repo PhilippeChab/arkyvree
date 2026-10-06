@@ -1,8 +1,9 @@
 /**
- * The app's WebSockets: the sockets each process holds (`Connections`), the events pushed to them
- * (`publishWsEvent`, relayed to every process through Postgres, which each one's `BroadcastListener` listens on), and
- * the users a request notified, pushed to once it's answered (`collectNotified`).
+ * The app's WebSockets: the sockets each process holds (`Connections`), the events pushed to them (`publishWsEvent`,
+ * relayed to every process through Postgres, which each one's `BroadcastListener` listens on), and the users a request
+ * notified, pushed to once it's answered (`collectNotified`).
  */
+
 import { upgradeWebSocket, websocket } from "hono/bun";
 
 /** This server build's id, which a socket gets when it opens: a client seeing a new one offers a refresh. */

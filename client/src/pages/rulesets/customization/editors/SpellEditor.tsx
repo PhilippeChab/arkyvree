@@ -16,7 +16,7 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { EditorProps } from "./types.ts";
 import { useEditorSave } from "./useEditorSave.ts";
 
-// The spell's aptitudes with their levels, in the form's (name) order.
+/** The spell's aptitudes with their levels, in the form's (name) order. */
 function linkedAptitudes(power: Power) {
   return power.powersAptitudesInRules
     .flatMap((pa) => (pa.aptitudesInRule ? [{ ...pa.aptitudesInRule, level: pa.level }] : []))

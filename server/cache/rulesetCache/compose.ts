@@ -62,7 +62,7 @@ export interface CachedRulesetData {
   klassLevelSaves: KlassLevelSave[];
   leveledAptitudeIds: Set<string>;
 
-  // ── O(1) lookup indices built from the arrays above ──────────────
+  // O(1) lookup indices built from the arrays above
   // Consumers that used to do `Feats.findOne(db, {id})` / `Properties.findMany(db, ...)`
   // can read directly from these maps (cache is always warm on character/level paths).
   abilitiesById: Map<string, RulesetAbility>;

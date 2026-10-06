@@ -1,6 +1,6 @@
 import type { CharacterSeed } from "@/database/seeds/helpers.ts";
 
-// Half-Elf Bard 3 — Skills: (6+2)*4 + (6+2)*2 = 48
+/** Half-Elf Bard 3 — Skills: (6+2)*4 + (6+2)*2 = 48 */
 export default {
   raceName: "Half-Elf",
   name: "Melody Silverveil",

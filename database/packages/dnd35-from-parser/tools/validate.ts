@@ -1,20 +1,21 @@
 /**
- * Validates all reference files for unresolved issues that would produce incomplete seed data, and for
- * overrides that change nothing.
+ * Validates all reference files for unresolved issues that would produce incomplete seed data, and for overrides that
+ * change nothing.
  *
  * Checks: errors, unresolvedModifiers, unresolvedPrereqs, unresolvedAptitudePicks, items without a definition and the
- * columns of a class's table no modifier reads (`overrides.columns`), except those listed in `overrides.reviewed`; entries of `overrides.reviewed` that cover none of them (or repeat
- * one), classes the generator refuses, class overrides that hold what's derived without them (and leave its
- * generated files the same) or that the generator ignores, values the seed refuses (a race's size, a magic item's
- * slot), what a domain's list lacks (a spell no parsed book has, a level without a spell, a spell its book's level
- * line puts on it), and references of a type the tools don't read: these can't be marked reviewed, correct them with
- * an override or skip the entry.
+ * columns of a class's table no modifier reads (`overrides.columns`), except those listed in `overrides.reviewed`;
+ * entries of `overrides.reviewed` that cover none of them (or repeat one), classes the generator refuses, class
+ * overrides that hold what's derived without them (and leave its generated files the same) or that the generator
+ * ignores, values the seed refuses (a race's size, a magic item's slot), what a domain's list lacks (a spell no parsed
+ * book has, a level without a spell, a spell its book's level line puts on it), and references of a type the tools
+ * don't read: these can't be marked reviewed, correct them with an override or skip the entry.
  *
  * Usage:
  *   bun run parser:validate                              # all issues
  *   bun run parser:validate --type class                  # only class references
  *   bun run parser:validate complete-warrior              # only a specific book
  */
+
 import { type Issue, referenceIssues } from "@/database/packages/dnd35-from-parser/tools/referenceIssues.ts";
 import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 

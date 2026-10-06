@@ -6,7 +6,7 @@ import { buildAttackRows, describeWeaponSlot } from "@/shared/dnd3.5/weaponAttac
 import { formatModifier } from "./format.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-// The parts of the AC the breakdown lists, by their short label
+/** The parts of the AC the breakdown lists, by their short label */
 const AC_PARTS = [
   ["Arm", "armor"],
   ["Shld", "shield"],

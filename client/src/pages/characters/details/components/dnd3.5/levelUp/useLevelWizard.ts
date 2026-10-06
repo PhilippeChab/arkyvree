@@ -67,7 +67,7 @@ export function useLevelWizard({
   const featsStep = editStepContent.indexOf("feats");
   const powersStep = editStepContent.indexOf("powers");
 
-  // ── HP roll animation ─────────────────────────────────────────────
+  // HP roll animation
   const [hpRolling, setHpRolling] = useState(false);
   const [hpSettled, setHpSettled] = useState(false);
   const [hpDisplayValue, setHpDisplayValue] = useState<number | null>(null);
@@ -282,8 +282,7 @@ export function useLevelWizard({
     onClose();
   }, [resetWizard, onClose]);
 
-  // ── HP roll trigger ───────────────────────────────────────────────
-
+  // HP roll trigger
   const triggerHpRoll = useCallback(
     (hd: number) => {
       if (hpRolling) return;

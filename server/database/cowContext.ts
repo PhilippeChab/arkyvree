@@ -7,12 +7,12 @@
  * - `withCowContext` is wrapped by `withRulesetScope` (the public entry).
  * - `getCowContext` is read by the repo Proxy + `idMatches` (`ResolvesCopies`).
  *
- * Services should use `withRulesetScope` / `withRulesetScopes` from
- * `server/services/rulesets/cow/` instead. Importing from this file directly bypasses the
- * rulesetData loading / invariant checking that the scope helpers provide.
+ * Services should use `withRulesetScope` / `withRulesetScopes` from `server/services/rulesets/cow/` instead. Importing
+ * from this file directly bypasses the rulesetData loading / invariant checking that the scope helpers provide.
  *
  * The async-local store dies with the callback — zero cross-request leakage.
  */
+
 import { AsyncLocalStorage } from "node:async_hooks";
 
 /**

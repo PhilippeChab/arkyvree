@@ -11,8 +11,10 @@ import { NIL_UUID } from "@/tests/support/seed.ts";
 import { fakeStorage } from "@/tests/support/storage.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
-// Replicates the service's HMAC signing so tests can craft tokens with
-// arbitrary `iat` values (e.g. expired) without exposing internals.
+/**
+ * Replicates the service's HMAC signing so tests can craft tokens with arbitrary `iat` values (e.g. expired) without
+ * exposing internals.
+ */
 function signTestToken(payload: Record<string, unknown>): string {
   const data = Buffer.from(JSON.stringify(payload, Object.keys(payload).sort())).toString("base64url");
   const sig = createHmac("sha256", process.env.SIGNING_SECRET!).update(data).digest("base64url");

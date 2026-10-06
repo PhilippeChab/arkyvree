@@ -15,8 +15,10 @@ type Call = (args: unknown[]) => unknown;
 const READS = new Set(methodVerbs.read);
 const WRITES = new Set(methodVerbs.write);
 
-// A short id per copy-on-write state, so that a request's reads in two of them (a character's ruleset and another's)
-// never share a cached result.
+/**
+ * A short id per copy-on-write state, so that a request's reads in two of them (a character's ruleset and another's)
+ * never share a cached result.
+ */
 const stateIds = new WeakMap<IdResolveMap, string>();
 let lastStateId = 0;
 

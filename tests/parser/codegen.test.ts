@@ -8,7 +8,7 @@ import {
   WIZARD_SCHOOL_FEATS,
 } from "@/database/packages/dnd35-from-parser/generated/srd/feats/feats.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
-import { buildClassFeatSeeds, classModifiers } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { buildClassFeatSeeds, classModifiers } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
 import {
   escapeTemplate,
   importLines,

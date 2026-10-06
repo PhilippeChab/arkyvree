@@ -44,6 +44,7 @@
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
+
 import fs from "node:fs";
 import { isBuiltin } from "node:module";
 import path from "node:path";
@@ -58,7 +59,7 @@ const GRAB_BAG = /(^|\/)(helpers|utils?)(\.tsx?$|\/)/;
 
 const ROUTE_METHODS = new Set(["get", "post", "put", "patch", "delete", "route"]);
 const CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
-// kebab-case, a file's name (`sitemap.xml`) or a wildcard
+/** kebab-case, a file's name (`sitemap.xml`) or a wildcard */
 const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*)$/;
 
 const METHOD_VERBS = JSON.parse(
@@ -68,7 +69,7 @@ const WRITE_VERBS = [...METHOD_VERBS.write, ...METHOD_VERBS.lock];
 
 const CONCURRENT = new Set(["all", "allSettled", "any", "race"]);
 
-// An `eslint-disable` / `oxlint-disable` comment's text: its rules, then its reason after `--`.
+/** An `eslint-disable` / `oxlint-disable` comment's text: its rules, then its reason after `--`. */
 const DIRECTIVE = /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
 
 /** Each test area and the source tree it mirrors. */
@@ -85,6 +86,20 @@ const TEST_MIRRORS = [
   ["tests/lint/", "lint/"],
   ["tests/scripts/", "scripts/"],
 ];
+
+/** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
+function isConcern(fn) {
+  return (
+    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
+    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
+  );
+}
+
+/** Whether a type is `Session`, or a union with it (`Session | null`). */
+function isSessionType(type) {
+  if (type?.type === "TSUnionType") return type.types.some(isSessionType);
+  return type?.type === "TSTypeReference" && type.typeName.type === "Identifier" && type.typeName.name === "Session";
+}
 
 function createDirectiveReasons(context) {
   return {
@@ -115,6 +130,24 @@ function createEnvironment(context) {
       context.report({
         node,
         message: `Read the environment through \`@/server/environment.ts\` (\`readEnv\`, \`isProduction\`…), which lists every variable: not \`${object.name}.env\`.`,
+      });
+    },
+  };
+}
+
+function createIncludeOrder(context) {
+  return {
+    CallExpression(call) {
+      if (call.callee.type !== "Identifier" || call.callee.name !== "include") return;
+      const concerns = call.arguments.slice(1);
+      if (concerns.length < 2 || concerns.some((c) => c.type !== "Identifier")) return;
+      const names = concerns.map((c) => c.name);
+      const sorted = [...names].sort((a, b) => a.localeCompare(b));
+      if (names.every((name, i) => name === sorted[i])) return;
+      context.report({
+        node: concerns[names.findIndex((name, i) => name !== sorted[i])],
+        message: `A class includes its concerns by name, after its base: \`${sorted.join(", ")}\`.`,
+        fix: (fixer) => concerns.map((c, i) => fixer.replaceText(c, sorted[i])),
       });
     },
   };
@@ -176,6 +209,37 @@ function createOrderThroughRepository(context) {
   };
 }
 
+function createPolicyShape(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("server/")) return {};
+  const inPolicies = file.startsWith("server/services/policies/");
+  return {
+    MethodDefinition(node) {
+      if (!inPolicies || node.key.type !== "Identifier" || node.key.name === "for") return;
+      if (node.static) {
+        context.report({
+          node: node.key,
+          message: "A policy's only static is `for`, which builds it: a check is the policy's (`policy.canRead()`).",
+        });
+      } else if (node.value.async) {
+        context.report({
+          node: node.key,
+          message:
+            "A policy's check is sync: `for` loads the standing it reads, and the service passes it the rest " +
+            "(`canDeleteEntity({ inUse })`).",
+        });
+      }
+    },
+    NewExpression(node) {
+      if (inPolicies || node.callee.type !== "Identifier" || !node.callee.name.endsWith("Policy")) return;
+      context.report({
+        node,
+        message: `Build a policy with \`${node.callee.name}.for(db, session, entity)\`: it loads the session's standing on it.`,
+      });
+    },
+  };
+}
+
 function createRepositoryInstances(context) {
   if (repoPath(context.filename) === "server/repositories/index.ts") return {};
   return {
@@ -207,71 +271,6 @@ function createSharedRuntime(context) {
       if (node.name === "Bun" && !isName) {
         context.report({ node, message: "`shared/` runs in the client too: it doesn't use `Bun`." });
       }
-    },
-  };
-}
-
-// What a tool writes keeps the tool's code: the parser's output, drizzle's schema and relations
-
-/** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
-function isConcern(fn) {
-  return (
-    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
-    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
-  );
-}
-
-/** Whether a type is `Session`, or a union with it (`Session | null`). */
-function isSessionType(type) {
-  if (type?.type === "TSUnionType") return type.types.some(isSessionType);
-  return type?.type === "TSTypeReference" && type.typeName.type === "Identifier" && type.typeName.name === "Session";
-}
-
-function createIncludeOrder(context) {
-  return {
-    CallExpression(call) {
-      if (call.callee.type !== "Identifier" || call.callee.name !== "include") return;
-      const concerns = call.arguments.slice(1);
-      if (concerns.length < 2 || concerns.some((c) => c.type !== "Identifier")) return;
-      const names = concerns.map((c) => c.name);
-      const sorted = [...names].sort((a, b) => a.localeCompare(b));
-      if (names.every((name, i) => name === sorted[i])) return;
-      context.report({
-        node: concerns[names.findIndex((name, i) => name !== sorted[i])],
-        message: `A class includes its concerns by name, after its base: \`${sorted.join(", ")}\`.`,
-        fix: (fixer) => concerns.map((c, i) => fixer.replaceText(c, sorted[i])),
-      });
-    },
-  };
-}
-
-function createPolicyShape(context) {
-  const file = repoPath(context.filename);
-  if (!file.startsWith("server/")) return {};
-  const inPolicies = file.startsWith("server/services/policies/");
-  return {
-    MethodDefinition(node) {
-      if (!inPolicies || node.key.type !== "Identifier" || node.key.name === "for") return;
-      if (node.static) {
-        context.report({
-          node: node.key,
-          message: "A policy's only static is `for`, which builds it: a check is the policy's (`policy.canRead()`).",
-        });
-      } else if (node.value.async) {
-        context.report({
-          node: node.key,
-          message:
-            "A policy's check is sync: `for` loads the standing it reads, and the service passes it the rest " +
-            "(`canDeleteEntity({ inUse })`).",
-        });
-      }
-    },
-    NewExpression(node) {
-      if (inPolicies || node.callee.type !== "Identifier" || !node.callee.name.endsWith("Policy")) return;
-      context.report({
-        node,
-        message: `Build a policy with \`${node.callee.name}.for(db, session, entity)\`: it loads the session's standing on it.`,
-      });
     },
   };
 }

@@ -8,7 +8,7 @@ import { capitalize } from "@/shared/text.ts";
 import { StatField } from "./statHelpers.tsx";
 import type { Dnd35CombatAndSavesSectionProps } from "./types.ts";
 
-// The parts of the AC the breakdown lists, by their label
+/** The parts of the AC the breakdown lists, by their label */
 const AC_PARTS = [
   ["Armor", "armor"],
   ["Shield", "shield"],

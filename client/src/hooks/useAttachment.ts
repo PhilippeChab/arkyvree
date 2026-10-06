@@ -36,9 +36,10 @@ export function useAttachment(params: UseAttachmentParams) {
   });
 }
 
-// Per-id queries (not a single batch) so paginated callers reuse cached
-// entries when their list grows — adding 20 ids on "load more" only fetches
-// the 20 new ones, not the whole list.
+/**
+ * Per-id queries (not a single batch) so paginated callers reuse cached entries when their list grows — adding 20 ids
+ * on "load more" only fetches the 20 new ones, not the whole list.
+ */
 export function useAttachments(params: UseAttachmentsParams) {
   const queries = useQueries({
     queries: params.recordIds.map((recordId) => ({

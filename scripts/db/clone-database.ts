@@ -1,11 +1,12 @@
 /**
  * Copies a test database into others, replacing them, which takes a fraction of a second where seeding takes several:
- * the seeded test database into the unit tests' worker databases and the e2e template, and the e2e template into an
- * e2e run's own database.
+ * the seeded test database into the unit tests' worker databases and the e2e template, and the e2e template into an e2e
+ * run's own database.
  *
  * Usage: bun --env-file=.env.test scripts/db/clone-database.ts <suffix>
  *   Copies $TEMPLATE_DATABASE_URL's database (by default $DATABASE_URL's) into <its name>_<suffix>.
  */
+
 import { cloneDatabase, databaseOf } from "@/scripts/db/databases.ts";
 
 async function main() {

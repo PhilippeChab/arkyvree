@@ -1,7 +1,8 @@
 /**
- * Test databases: where one is (only a local server's are replaced or reset), and copying one into others, which
- * takes a fraction of a second where seeding takes several.
+ * Test databases: where one is (only a local server's are replaced or reset), and copying one into others, which takes
+ * a fraction of a second where seeding takes several.
  */
+
 import pg from "pg";
 
 /** The hosts of a local database server: the only one whose databases are replaced or reset. */

@@ -1,9 +1,6 @@
-import {
-  domainSpellIssues,
-  seededMagicItems,
-  seededRaces,
-  skippedRaces,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { domainSpellIssues } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
+import { seededMagicItems } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
+import { seededRaces, skippedRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
 import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/checkOverrides.ts";
 import { loadReference, readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";

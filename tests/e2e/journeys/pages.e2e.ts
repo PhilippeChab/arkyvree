@@ -1,3 +1,9 @@
+/**
+ * Every page loads, with what it shows: each opened with seeded or API-made data, showing its content, with no uncaught
+ * error, console error or failed API call. The journeys test what the pages do; this catches the pages none of them
+ * opens, and a page that breaks as it renders.
+ */
+
 import type { Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
@@ -8,12 +14,6 @@ import { createCharacter } from "@/tests/e2e/support/characters.ts";
 import { uniqueName } from "@/tests/e2e/support/page.ts";
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { openContext, signIn } from "@/tests/e2e/support/signIn.ts";
-
-/*
- * Every page loads, with what it shows: each opened with seeded or API-made data, showing its content, with no
- * uncaught error, console error or failed API call. The journeys test what the pages do; this catches the pages none
- * of them opens, and a page that breaks as it renders.
- */
 
 /** What goes wrong on `page` from now on: uncaught errors, console errors, and API calls answered with an error. */
 function watchErrors(page: Page) {

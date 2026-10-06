@@ -1,9 +1,9 @@
+/** The structure dndtools.net pages share. */
+
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
 import { frameHeading } from "./frame.ts";
-
-// The structure dndtools.net pages share.
 
 const FRAME_HEADING = frameHeading();
 

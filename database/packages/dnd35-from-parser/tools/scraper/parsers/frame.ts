@@ -1,4 +1,4 @@
-// The frame dndtools.net pages share: the site's tagline and navigation.
+/** The frame dndtools.net pages share: the site's tagline and navigation. */
 
 const SITE_FRAME = ["Feats", "D&D", "Welcome", "Home", "About", "Search", "Login"];
 

@@ -1,10 +1,10 @@
-export type EnvironmentVariable = keyof typeof VARIABLES;
-
 /**
  * The server's environment, read in one place (`arkyvree/environment`): every variable it reads, and what for. A
  * variable is read when asked for, never kept, so a test that changes one is seen (tests/emails/EmailService.test.ts
  * steps outside the tests' NODE_ENV). A default belongs to the code that reads the variable.
  */
+
+export type EnvironmentVariable = keyof typeof VARIABLES;
 
 // oxfmt-ignore
 const VARIABLES = {

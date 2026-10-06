@@ -1,9 +1,10 @@
+/** The job runner's setup: its tasks and their schedule, its logger and events, and its database pool. */
+
 import { EventEmitter } from "node:events";
 
 import { Logger } from "graphile-worker";
 import { Pool } from "pg";
 
-/** The job runner's setup: its tasks and their schedule, its logger and events, and its database pool. */
 import { readEnv } from "@/server/environment.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { runCleanupTask } from "@/server/jobs/runCleanup.ts";

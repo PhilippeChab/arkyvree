@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { ApiError, parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-// Activities about accounts and sessions have no page to open.
+/** Activities about accounts and sessions have no page to open. */
 const NON_NAVIGABLE_TABLES = new Set(["users", "sessions"]);
 
 /** Whether an activity or notification target has a page to open. */

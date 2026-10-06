@@ -12,14 +12,15 @@
  *
  * Private and protected methods are the class's own business: any name.
  *
- * `function-names`: an exported function of the server or `shared/` (declared, held by a const, or listed in an
- * `export { f }`) starts with a verb too (`FUNCTION_VERBS`), or is
- * one of the shapes the code writes: a context it runs a callback in (`withTransaction`), a handler it registers
- * (`onShutdown`), a conversion (`toSafeUser`) or a constructor (`newOverrideMap`). A PascalCase one (a concern, a
- * class's factory) is a type's name; a module's own functions name themselves.
+ * `function-names`: an exported function of the server or `shared/` (declared, held by a const, or listed in an `export
+ * { f }`) starts with a verb too (`FUNCTION_VERBS`), or is one of the shapes the code writes: a context it runs a
+ * callback in (`withTransaction`), a handler it registers (`onShutdown`), a conversion (`toSafeUser`) or a constructor
+ * (`newOverrideMap`). A PascalCase one (a concern, a class's factory) is a type's name; a module's own functions name
+ * themselves.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
+
 import fs from "node:fs";
 
 import { startsWithVerb } from "./memberOrder.mjs";

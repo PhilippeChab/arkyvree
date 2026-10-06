@@ -1,10 +1,15 @@
+/**
+ * The fixtures are the scraper's pages (each names its URL), trimmed to a few of their entries: each parses to the
+ * committed reference's entries.
+ */
+
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { readStoredReference, type ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class.ts";
+import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/classPage.ts";
 import {
   domainBookCode,
   domainName,
@@ -30,9 +35,6 @@ import {
 import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
 import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-
-// The fixtures are the scraper's pages (each names its URL), trimmed to a few of their entries: each parses to the
-// committed reference's entries.
 
 function fixture(name: string) {
   return readFileSync(join(import.meta.dirname, "fixtures", `${name}.html`), "utf8");

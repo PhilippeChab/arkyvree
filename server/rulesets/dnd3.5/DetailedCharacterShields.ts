@@ -22,7 +22,7 @@ type ShieldSlot = {
   spellfailure: number;
 };
 
-// Grouping key (normalized) → shared ShieldSlot reference
+/** Grouping key (normalized) → shared ShieldSlot reference */
 type ShieldsData = Record<string, ShieldSlot>;
 
 const NAVIGATABLE_SHIELD_PATHS = [

@@ -1,3 +1,5 @@
+/** Where equipped items go: the rules the server enforces and the inventory dialogs warn about. */
+
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
@@ -36,8 +38,6 @@ const SINGLE_OCCUPANCY_LOCATIONS = [
   "Waist",
   "Trinket",
 ] as const satisfies readonly ItemLocation[];
-
-// Where equipped items go: the rules the server enforces and the inventory dialogs warn about.
 
 /** The locations a weapon set applies to: the hands. */
 export const HAND_LOCATIONS = ["Main Hand", "Off Hand", "Two Handed"] as const satisfies readonly ItemLocation[];

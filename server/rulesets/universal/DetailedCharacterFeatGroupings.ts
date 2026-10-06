@@ -13,8 +13,11 @@ const NAVIGATABLE_PATHS = [
   { path: "count", description: "Times this feat was taken", type: "number" as const, requirementOnly: true },
 ];
 
-// A family's `count`: how many times the character has its feats, all together (every class's sneak attack dice).
-// It's read when checked, and isn't enumerable: the family's wildcard (`feats.<family>.*`) reaches its feats only
+/**
+ * A family's `count`: how many times the character has its feats, all together (every class's sneak attack dice). It's
+ * read when checked, and isn't enumerable: the family's wildcard (`feats.<family>.*`) reaches its feats only, never
+ * their count.
+ */
 const FAMILY_COUNT = "count";
 
 function familyGroup(): FeatGroup {

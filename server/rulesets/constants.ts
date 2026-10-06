@@ -21,8 +21,10 @@ export const CONSTANTS = {
   ATTACK_STEP: 5,
 } as const;
 
-// D&D 3.5 PHB Table 9-1: Carrying Capacity by Strength score (index = Str score, value = heavy load in lbs)
-// Index 0 is unused (no Str 0), indices 1–29 map to Str 1–29
+/**
+ * D&D 3.5 PHB Table 9-1: Carrying Capacity by Strength score (index = Str score, value = heavy load in lbs)
+ * Index 0 is unused (no Str 0), indices 1–29 map to Str 1–29
+ */
 export const CARRYING_CAPACITY: number[] = [
   0, // 0 (unused)
   10, // 1
@@ -56,7 +58,7 @@ export const CARRYING_CAPACITY: number[] = [
   1400, // 29
 ];
 
-// Multiplier applied to a biped's carrying capacity based on its size
+/** Multiplier applied to a biped's carrying capacity based on its size */
 export const SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
   Fine: 1 / 8,
   Diminutive: 1 / 4,
@@ -69,7 +71,7 @@ export const SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
   Colossal: 16,
 };
 
-// A quadruped's carrying capacity by size: it carries more than a biped (SRD, "Bigger and Smaller Creatures").
+/** A quadruped's carrying capacity by size: it carries more than a biped (SRD, "Bigger and Smaller Creatures"). */
 export const QUADRUPED_SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
   Fine: 1 / 4,
   Diminutive: 1 / 2,
@@ -82,7 +84,7 @@ export const QUADRUPED_SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
   Colossal: 24,
 };
 
-// Weapon damage size step (Medium = 0; +1 step = bigger damage die).
+/** Weapon damage size step (Medium = 0; +1 step = bigger damage die). */
 export const SIZE_STEPS: Record<string, number> = {
   Fine: -4,
   Diminutive: -3,
@@ -95,7 +97,7 @@ export const SIZE_STEPS: Record<string, number> = {
   Colossal: 4,
 };
 
-// Size modifier applied to grapple checks (opposite direction to AC/attack).
+/** Size modifier applied to grapple checks (opposite direction to AC/attack). */
 export const SIZE_GRAPPLE_MOD: Record<string, number> = {
   Fine: -16,
   Diminutive: -12,
@@ -108,7 +110,7 @@ export const SIZE_GRAPPLE_MOD: Record<string, number> = {
   Colossal: 16,
 };
 
-// Size modifier applied to AC and to-hit (same magnitude, same direction).
+/** Size modifier applied to AC and to-hit (same magnitude, same direction). */
 export const SIZE_AC_ATTACK_MOD: Record<string, number> = {
   Fine: 8,
   Diminutive: 4,
@@ -121,7 +123,7 @@ export const SIZE_AC_ATTACK_MOD: Record<string, number> = {
   Colossal: -8,
 };
 
-// Size modifier applied to the Hide skill (opposite direction to AC/attack).
+/** Size modifier applied to the Hide skill (opposite direction to AC/attack). */
 export const SIZE_HIDE_MOD: Record<string, number> = {
   Fine: 16,
   Diminutive: 12,
@@ -134,7 +136,7 @@ export const SIZE_HIDE_MOD: Record<string, number> = {
   Colossal: -16,
 };
 
-// Max Dex bonus and check penalty by load category
+/** Max Dex bonus and check penalty by load category */
 export const ENCUMBRANCE_PENALTIES = {
   light: { maxdex: Infinity, checkpenalty: 0 },
   medium: { maxdex: 3, checkpenalty: -3 },
@@ -142,7 +144,7 @@ export const ENCUMBRANCE_PENALTIES = {
   overloaded: { maxdex: 0, checkpenalty: -6 },
 } as const;
 
-// D&D 3.5 reduced speed for medium/heavy encumbrance (base → reduced)
+/** D&D 3.5 reduced speed for medium/heavy encumbrance (base → reduced) */
 export const ENCUMBERED_SPEED: Record<number, number> = {
   20: 15,
   30: 20,

@@ -8,7 +8,8 @@
  *   statics and fields stay at the top, in their own order (a field's initializer may read an earlier one).
  * - A file's own functions, in each run of them: its helpers, then its exports, as `file-layout` sections them (an
  *   export a helper calls is a helper), each in that order. A function another one calls stays above it (the file
- *   reads bottom-up); a comment set apart by a blank line ends a run, a section's heading.
+ *   reads bottom-up), so functions never call each other. A comment set apart by a blank line ends a run: `--fix`
+ *   would lose its place, and `comment-style` reports it.
  * - A router's routes group by HTTP method (GET, POST, PUT, PATCH, DELETE), then sort by path: a fixed segment
  *   before a parameter, which Hono needs anyway (it matches overlapping routes in the order they're registered).
  *   Its sub-routers (`.route()`) come first, in their own order, then its routes, which must not overlap theirs:
@@ -17,6 +18,7 @@
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
+
 import { rankStatements } from "./layout.mjs";
 import { isToolWritten } from "./paths.mjs";
 
@@ -134,10 +136,7 @@ function compareRunMembers(a, b) {
   return (a.mount ? 0 : compareRoutes(a.route, b.route)) || a.index - b.index;
 }
 
-/**
- * A run's order: by rank, a function another one calls above it. A run whose functions call each other (a cycle, which
- * says so in a disable comment) keeps its order: where its functions belong depends on it.
- */
+/** A run's order: by rank, a function another one calls above it; the functions left calling each other, if any. */
 function sortRun(items) {
   const byName = new Map(items.map((item) => [item.name, item]));
   for (const item of items) {
@@ -148,23 +147,31 @@ function sortRun(items) {
   while (order.length < items.length) {
     const left = items.filter((item) => !placed.has(item));
     const ready = left.filter((item) => item.callees.every((callee) => placed.has(callee)));
-    if (ready.length === 0) return items;
+    if (ready.length === 0) return { order, cycle: left };
     const next = ready.reduce((best, item) =>
       (compareRanks(item.rank, best.rank) || item.index - best.index) < 0 ? item : best,
     );
     placed.add(next);
     order.push(next);
   }
-  return order;
+  return { order, cycle: [] };
 }
 
 function checkRun(context, items) {
   if (items.length < 2) return;
   const text = context.sourceCode.text;
+  const { order, cycle } = sortRun(items);
+  if (cycle.length > 0) {
+    context.report({
+      node: cycle[0].node,
+      message: `Functions that call each other (${cycle.map((item) => item.name).join(", ")}): untangle them, so the file reads bottom-up.`,
+    });
+    return;
+  }
   reportOrder(
     context,
     items,
-    sortRun(items),
+    order,
     {
       range: [items[0].start, items.at(-1).end],
       text: (order) => order.map((item) => text.slice(item.start, item.end)).join("\n\n"),
@@ -259,7 +266,7 @@ function functionRank(name, isAsync) {
 
 /**
  * A file's own functions, run by run: consecutive top-level function declarations, which a comment set apart by a
- * blank line (a section's heading) or any other statement ends.
+ * blank line or any other statement ends.
  */
 function checkFunctions(context, program) {
   const text = context.sourceCode.text;

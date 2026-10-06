@@ -1,8 +1,8 @@
 /**
- * The entity a customization page is about, shared by the page and the row
- * hover prefetches of the ruleset sections so they cache the same shape.
- * Tagged with its type, so the page narrows on `type` instead of casting.
+ * The entity a customization page is about, shared by the page and the row hover prefetches of the ruleset sections so
+ * they cache the same shape. Tagged with its type, so the page narrows on `type` instead of casting.
  */
+
 import { queryOptions } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 

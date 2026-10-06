@@ -1,10 +1,3 @@
-import { basename, join } from "node:path";
-
-import { $ } from "bun";
-
-import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
-import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-
 /**
  * Re-scrapes all existing reference JSON files (keeping their overrides),
  * then regenerates all TypeScript output.
@@ -13,6 +6,13 @@ import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parse
  *        bun run parser:sync srd              (filter by book)
  *        bun run parser:sync srd --type class  (filter by type)
  */
+
+import { basename, join } from "node:path";
+
+import { $ } from "bun";
+
+import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
+import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 const BASE_DIR = join(import.meta.dirname!, "../");
 const SCRAPER = join(BASE_DIR, "tools/scraper/index.ts");

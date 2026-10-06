@@ -149,10 +149,6 @@ function parseItemEntries($: cheerio.CheerioAPI, startH4Text: string, category: 
   return items;
 }
 
-// ---------------------------------------------------------------------------
-// Page-specific parsers
-// ---------------------------------------------------------------------------
-
 export function parseMagicArmorHtml(html: string): RawMagicItem[] {
   const $ = cheerio.load(html);
   return parseItemEntries($, "Specific Armors", "specificArmor");

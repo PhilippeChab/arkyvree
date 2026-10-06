@@ -176,8 +176,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     setAbilityIncreases((prev) => ({ ...prev, [index]: abilityId }));
   }, []);
 
-  // ── Derived: valid class count and class plan key ────────────────
-
+  // Derived: valid class count and class plan key
   const validClassCount = useMemo(() => classPlan.filter((k) => k !== null).length, [classPlan]);
 
   // In plan order: the preview's levels pair by index with the plan's HP and ability increases.
@@ -216,8 +215,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     placeholderData: keepPreviousData,
   });
 
-  // ── Attribute data (from preview) ────────────────────────────────
-
+  // Attribute data (from preview)
   const abilityIncreaseLevels = useMemo(
     () => previewQuery.data?.attributes.abilityIncreaseLevels ?? [],
     [previewQuery.data],
@@ -258,8 +256,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   const isLoadingAttributes = previewQuery.isLoading;
   const attributesError = previewQuery.error;
 
-  // ── Skill data (from preview) ────────────────────────────────────
-
+  // Skill data (from preview)
   const perLevelClassSkillIds = previewQuery.data?.perLevelClassSkillIds;
 
   // Adjust skill points client-side when INT is increased (preview is cached per class plan only).
@@ -310,22 +307,19 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   const isLoadingSkills = previewQuery.isLoading;
   const skillsError = previewQuery.error;
 
-  // ── Feat data (from preview) ─────────────────────────────────────
-
+  // Feat data (from preview)
   const featData = useMemo(() => previewQuery.data?.feats ?? null, [previewQuery.data]);
 
   const isLoadingFeats = previewQuery.isLoading;
   const featsError = previewQuery.error;
 
-  // ── Power data (from preview) ────────────────────────────────────
-
+  // Power data (from preview)
   const powerData = useMemo(() => previewQuery.data?.powers ?? null, [previewQuery.data]);
 
   const isLoadingPowers = previewQuery.isLoading;
   const powersError = previewQuery.error;
 
-  // ── Pending level context for feat/power queries ─────────────────
-
+  // Pending level context for feat/power queries
   const previewLevelDetails = previewQuery.data?.levelDetails;
   const allKlassLevelIds = useMemo(() => {
     if (!previewLevelDetails) return undefined;
@@ -333,8 +327,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     return ids.length > 0 ? ids.join(",") : undefined;
   }, [previewLevelDetails]);
 
-  // ── Current slot level context (for feat/power queries) ──────────
-
+  // Current slot level context (for feat/power queries)
   const firstClass = useMemo(
     () => adjustedClassPlan.find((k): k is SelectedKlass => k !== null) ?? null,
     [adjustedClassPlan],

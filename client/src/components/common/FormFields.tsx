@@ -1,8 +1,9 @@
 /**
- * The form fields many forms share. The text fields take a registration spread in —
- * `<NameField {...form.register("name", nameRules)} error={errors.name} />` —
- * so they work with any form type; `SelectField` takes the form's `control`.
+ * The form fields many forms share. The text fields take a registration spread in — `<NameField
+ * {...form.register("name", nameRules)} error={errors.name} />` — so they work with any form type; `SelectField` takes
+ * the form's `control`.
  */
+
 import { MenuItem, type SxProps, TextField, type Theme } from "@mui/material";
 import type { ReactNode, UIEventHandler } from "react";
 import {

@@ -12,12 +12,11 @@ import {
 
 import type { EntityCustomizations, KlassRelationships } from "./hashing.ts";
 
-// Helper functions (extracted from RulesetsService)
-
-// Shape-only helper: groups four sets of customization rows into the
-// `Map<entityId, EntityCustomizations>` structure callers expect. Pure JS,
-// no DB access — the two fetchers below differ only in *how* the rows are
-// fetched (proxied repo vs raw Drizzle).
+/**
+ * Shape-only helper: groups four sets of customization rows into the `Map<entityId, EntityCustomizations>` structure
+ * callers expect. Pure JS, no DB access — the two fetchers below differ only in *how* the rows are fetched (proxied
+ * repo vs raw Drizzle).
+ */
 function buildCustomizationsMap(
   entityIds: string[],
   modifiers: EntityCustomizations["modifiers"],
@@ -61,7 +60,7 @@ export async function fetchEntityCustomizations(
   return buildCustomizationsMap(entityIds, modifiers, properties, requirements, modifierRequirements);
 }
 
-// Also fetch klass_level customizations (modifiers, properties, requirements) for snapshot hashing
+/** Also fetch klass_level customizations (modifiers, properties, requirements) for snapshot hashing */
 export async function fetchKlassLevelCustomizations(
   tx: Db,
   klassIds: string[],

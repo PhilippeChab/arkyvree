@@ -19,7 +19,7 @@ interface KlassRelationships {
 /** A ruleset entity's type: the repositories' tables name them. */
 type EntityType = RulesetEntityType;
 
-// Fields to exclude from hashing — metadata and FK references whose UUIDs differ across forks
+/** Fields to exclude from hashing — metadata and FK references whose UUIDs differ across forks */
 const EXCLUDED_FIELDS = new Set([
   "id",
   "rulesetId",
@@ -35,7 +35,7 @@ function isPrimitive(value: unknown): boolean {
   return value === null || typeof value !== "object";
 }
 
-// Normalize feat aptitude associations — strip UUIDs, sort by aptitude name
+/** Normalize feat aptitude associations — strip UUIDs, sort by aptitude name */
 function hashFeatAptitudes(entity: Record<string, unknown>): string[] {
   const associations = entity.featsAptitudesInRules;
   if (!Array.isArray(associations)) return [];
@@ -47,7 +47,7 @@ function hashFeatAptitudes(entity: Record<string, unknown>): string[] {
     .sort();
 }
 
-// Normalize power aptitude associations — strip UUIDs, sort by aptitude name
+/** Normalize power aptitude associations — strip UUIDs, sort by aptitude name */
 function hashPowerAptitudes(entity: Record<string, unknown>): { aptitude: string; level: number | null }[] {
   const associations = entity.powersAptitudesInRules;
   if (!Array.isArray(associations)) return [];

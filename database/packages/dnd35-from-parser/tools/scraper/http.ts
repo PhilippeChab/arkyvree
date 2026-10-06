@@ -4,10 +4,6 @@ import { join } from "node:path";
 
 import { sanitizeHtml } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 
-// ---------------------------------------------------------------------------
-// Configuration
-// ---------------------------------------------------------------------------
-
 interface HttpOptions {
   /** Disable disk cache (default: false) */
   noCache?: boolean;
@@ -21,24 +17,7 @@ const MAX_RETRIES = 3;
 
 let globalOptions: HttpOptions = {};
 
-// ---------------------------------------------------------------------------
-// Rate limiting
-// ---------------------------------------------------------------------------
-
 let lastRequestTime = 0;
-
-async function rateLimit(): Promise<void> {
-  const delay = globalOptions.delay ?? 200;
-  const elapsed = Date.now() - lastRequestTime;
-  if (elapsed < delay) {
-    await new Promise((resolve) => setTimeout(resolve, delay - elapsed));
-  }
-  lastRequestTime = Date.now();
-}
-
-// ---------------------------------------------------------------------------
-// Disk cache
-// ---------------------------------------------------------------------------
 
 function cacheKey(url: string): string {
   return createHash("sha256").update(url).digest("hex");
@@ -67,14 +46,20 @@ function writeCache(url: string, html: string): void {
   writeFileSync(cachePath(url), html);
 }
 
+async function rateLimit(): Promise<void> {
+  const delay = globalOptions.delay ?? 200;
+  const elapsed = Date.now() - lastRequestTime;
+  if (elapsed < delay) {
+    await new Promise((resolve) => setTimeout(resolve, delay - elapsed));
+  }
+  lastRequestTime = Date.now();
+}
+
 export function configureHttp(opts: HttpOptions): void {
   globalOptions = { ...globalOptions, ...opts };
 }
 
-// ---------------------------------------------------------------------------
-// Fetch with retry
-// ---------------------------------------------------------------------------
-
+/** A page's HTML: from the disk cache, else fetched, rate limited, with up to MAX_RETRIES attempts. */
 export async function fetchHtml(url: string): Promise<string> {
   // Check cache first
   const cached = readCache(url);
@@ -116,10 +101,6 @@ export async function fetchHtml(url: string): Promise<string> {
 
   throw lastError ?? new Error(`Failed to fetch ${url} after ${MAX_RETRIES} attempts`);
 }
-
-// ---------------------------------------------------------------------------
-// Paginated fetching
-// ---------------------------------------------------------------------------
 
 /**
  * Fetch all pages from a paginated dndtools.net listing.

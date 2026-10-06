@@ -506,8 +506,7 @@ export async function finalizeLevelUp(
 
       const preloadedRuleset: PreloadedRulesetData = { ruleset, cowData: rulesetData.cow, rulesetData };
 
-      // ── Phase 1: Compute per-level distribution from pool selections ──
-
+      // Phase 1: Compute per-level distribution from pool selections
       // Resolve all klasses/klassLevels upfront — all reads from the composed
       // cache (no DB round trips inside the loop).
       const klassLevelEntries = getPlannedKlassLevels(rulesetData, levels, rulesetIds);
@@ -541,7 +540,7 @@ export async function finalizeLevelUp(
         getDeferredAptitudeSources(rulesetData, feats, distributionData.perLevelFeatSlots),
       );
 
-      // ── Phase 2: Per-level validation and insertion ──
+      // Phase 2: Per-level validation and insertion
       const createdLevels = await insertPlannedLevels(
         tx,
         rulesetModule,

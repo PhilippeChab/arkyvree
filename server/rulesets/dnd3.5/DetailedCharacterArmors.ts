@@ -24,7 +24,7 @@ type ArmorSlot = {
   maxdex: number;
 };
 
-// Grouping key (normalized) → shared ArmorSlot reference
+/** Grouping key (normalized) → shared ArmorSlot reference */
 type ArmorsData = Record<string, ArmorSlot>;
 
 const NAVIGATABLE_ARMOR_PATHS = [

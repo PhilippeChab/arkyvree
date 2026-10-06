@@ -1,3 +1,8 @@
+/**
+ * The pages an invitation email links to: the invite, answered there, or why it can't be anymore. The sender, the
+ * worker's owner, sets it up through the API; the invitee is the test's own user.
+ */
+
 import type { Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
@@ -8,11 +13,6 @@ import { createCharacter } from "@/tests/e2e/support/characters.ts";
 import { uniqueName } from "@/tests/e2e/support/page.ts";
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { signedInPage, signIn, submitSignIn } from "@/tests/e2e/support/signIn.ts";
-
-/*
- * The pages an invitation email links to: the invite, answered there, or why it can't be anymore. The sender, the
- * worker's owner, sets it up through the API; the invitee is the test's own user.
- */
 
 /** The page of a campaign, ruleset or character, on whichever section it opens. */
 function entityPage(kind: string, id: string) {

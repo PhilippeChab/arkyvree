@@ -1,5 +1,3 @@
-import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
 /**
  * Universal "bonded" target paths — express that a character has a familiar /
  * animal companion / mount, plus the granting classes' contribution to the
@@ -21,6 +19,9 @@ import type { TargetPath } from "@/shared/customization/target.ts";
  *     Adding a new class that grants a bonded slot needs zero compose
  *     changes — just the right template modifier on the new feat.
  */
+
+import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
+import type { TargetPath } from "@/shared/customization/target.ts";
 import { BONDED_KINDS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 
 type DetailedCharacterBondedSlot = {

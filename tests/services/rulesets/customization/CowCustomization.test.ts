@@ -1,7 +1,8 @@
 /**
- * Customizing an entity a fork inherits copies the entity into the fork and
- * changes the copy: the parent's rows never move.
+ * Customizing an entity a fork inherits copies the entity into the fork and changes the copy: the parent's rows never
+ * move.
  */
+
 import { describe, expect, test } from "bun:test";
 
 import { abilitiesInRules } from "@/drizzle/schema.ts";
@@ -78,7 +79,7 @@ const KINDS: Record<string, Kind> = {
   },
 };
 
-// A class level is copied with its whole class, and a modifier with the entity it modifies.
+/** A class level is copied with its whole class, and a modifier with the entity it modifies. */
 const CASES = [
   ["feats", "modifiers"],
   ["feats", "properties"],

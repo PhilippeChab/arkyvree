@@ -1,0 +1,377 @@
+/**
+ * Class features — driven by the advancement table's Special column
+ *
+ * Strategy:
+ *   1. Collect unique feature names from the Special column (authoritative list)
+ *   2. Always include "Weapon and Armor Proficiency" and "Spells" (not in Special)
+ *   3. Collect all text blocks from the Class Features section
+ *   4. Match each feature name to its description in the text
+ */
+
+import type * as cheerio from "cheerio";
+import { type AnyNode } from "domhandler";
+
+import { findSectionHeader } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
+import { titleCase } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/titleCase.ts";
+import { sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+
+type RawFeature = ClassReference["raw"]["classFeatures"][number];
+
+/** Names that always count as features even if not in the Special column.
+ *  These are common features described on class pages but not listed in
+ *  the progression table's Special column. */
+const IMPLICIT_FEATURES = [
+  "Weapon and Armor Proficiency",
+  "Spells",
+  "Spells per Day",
+  "Spells per Day/Spells Known",
+  "Spells and Caster Level",
+  "AC Bonus",
+  "Spontaneous Casting",
+  "Chaotic, Evil, Good, and Lawful Spells",
+  "Spellbooks",
+  "Aura",
+  "Deity, Domains, and Domain Spells",
+  "Fast Movement",
+  "Flurry of Blows",
+];
+
+/** Find name and effect column indices from a sub-option table */
+function findSubOptionColumns(
+  $: cheerio.CheerioAPI,
+  table: cheerio.Cheerio<AnyNode>,
+): { nameCol: number; effectCol: number } {
+  // Find the header row with the most <th> cells (skip title rows with 1 spanning th, and footnote rows)
+  const headerRows = table.find("tr").filter((_, row) => $(row).children("th").length > 1);
+  if (headerRows.length === 0) return { nameCol: -1, effectCol: -1 };
+
+  // Use the row with the most th cells
+  let bestRow = headerRows.first();
+  let bestCount = bestRow.children("th").length;
+  headerRows.each((_, row) => {
+    const count = $(row).children("th").length;
+    if (count > bestCount) {
+      bestRow = $(row);
+      bestCount = count;
+    }
+  });
+
+  const headers = bestRow
+    .children("th")
+    .toArray()
+    .map((th) => $(th).text().trim().toLowerCase());
+  const nameCol = headers.findIndex((h) => /^(secret|name|ability|trick|mastery|option|maneuver)$/i.test(h));
+  const effectCol = headers.findIndex((h) => /^(effect|benefit|description)$/i.test(h));
+  return { nameCol, effectCol };
+}
+
+/**
+ * Clean a Special column entry to its base feature name.
+ * "Sneak Attack +1d6" → "Sneak Attack"
+ * "hexblade's curse 2/day" → "hexblade's curse"
+ * "Ignore spell failure 10%" → "Ignore spell failure"
+ * "Slow Fall 20 ft." → "Slow Fall"
+ * "Damage Reduction 3/-" → "Damage Reduction"
+ */
+function cleanSpecialEntry(s: string): string {
+  return s
+    .replace(/\s*\+\d+(?:d\d+)?(?:\/\+\d+(?:d\d+)?)*$/, "") // +1, +1d6, +1/+1d6
+    .replace(/\s*\+?\d+\/day$/i, "") // 2/day, +1/day
+    .replace(/\s*\d+%$/, "") // 10%
+    .replace(/\s*\d+\s*(?:ft\.?|feet)$/i, "") // 20 ft.
+    .replace(/\s*\d+\/[-–]$/, "") // 3/-
+    .replace(/\s*\d+\/(?:week|round)$/i, "") // 1/week
+    .replace(/\s*\(\d+(?:st|nd|rd|th)\)$/, "") // (1st)
+    .replace(/\s*\(\d+(?:st|nd|rd|th) type\)$/i, "") // (1st type)
+    .replace(/\s*\([^)]*\d+\/day[^)]*\)$/i, "") // (elemental 1/day)
+    .replace(
+      /\s*\((?:black|brown|dire|large|small|tiny|huge|plant|elemental|magic|lawful|adamantine|move action|free action|two|four|radius)[^)]*\)$/i,
+      "",
+    ) // (black), (magic), (huge elemental), etc.
+    .replace(/\s*(?:any distance)$/i, "") // any distance
+    .replace(/^(?:1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\s+/i, "") // "1st Favored Enemy" → "Favored Enemy"
+    .replace(/\s*\+\d+\s+(?:level of existing .*spellcasting class)$/i, "") // "+1 level of existing..."
+    .replace(/^[^A-Za-z]*/, "") // strip leading non-alpha chars (broken parens, etc.)
+    .replace(/\s*\([^)]*\d[^)]*\)?\s*$/, "") // strip trailing parenthetical containing numbers: (+1), (2d8), (1/day)
+    .replace(/\s*\([^)]*$/, "") // strip any unclosed paren at end
+    .replace(/^([^(]*)\)$/, "$1") // strip orphaned trailing ) only when no opening (
+    .replace(/\d+\/day$/, "") // leftover "2/day" after paren strip
+    .trim()
+    .replace(/^(?:huge |large |small )?elemental$/i, ""); // orphaned fragments from broken wild shape cells
+}
+
+/** Normalize a feature name for matching — strips plurals, collapses whitespace */
+function normalizeFeatureName(name: string): string {
+  // "Special Abilities" → "special ability"
+  return normalizeWs(name.toLowerCase()).replace(/ies$/, "y");
+}
+
+/** Find the exact key in the known features set that matches this name */
+function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): string | undefined {
+  const norm = normalizeFeatureName(name);
+  const lower = name.toLowerCase();
+  // The name, or a plural variant
+  const exact = [norm, lower, lower + "s", lower.replace(/s$/, ""), norm + "s", norm.replace(/s$/, "")].find((n) =>
+    knownFeatures.has(n),
+  );
+  if (exact !== undefined) return exact;
+  // A known feature starting with this name
+  // e.g. "Mounted Weapon Bonus" matches "Mounted Weapon Bonus (Lance)"
+  for (const known of knownFeatures) {
+    if (known.startsWith(norm + " ") || known.startsWith(lower + " ")) return known;
+  }
+  // A known feature this name starts with, then a non-alpha suffix
+  // e.g. "Rage +1/Day" matches "Rage" (suffix starts with +)
+  // But NOT "Terrain Mastery Benefits" matching "Terrain Mastery" (suffix is a word)
+  for (const known of knownFeatures) {
+    if (norm.startsWith(known) && norm.length > known.length) {
+      const suffix = norm.substring(known.length);
+      if (/^[^a-z\s]/.test(suffix.trim())) return known; // +1/day, (lance), etc. — but not "Benefits"
+    }
+  }
+  return undefined;
+}
+
+/** Check if a feature name matches any known feature (case-insensitive, with plural matching) */
+function isKnownFeature(name: string, knownFeatures: Set<string>): boolean {
+  return findMatchingFeatureKey(name, knownFeatures) !== undefined;
+}
+
+/** A sub-option table's options of the feature `parentKey`: each its key ("Feature: Option") and effect. */
+function subOptionRows(
+  $: cheerio.CheerioAPI,
+  table: cheerio.Cheerio<AnyNode>,
+  parentKey: string,
+): { key: string; desc: string }[] {
+  const { nameCol, effectCol } = findSubOptionColumns($, table);
+  if (nameCol < 0) return [];
+  return table
+    .find("tr")
+    .toArray()
+    .flatMap((row) => {
+      const cells = $(row)
+        .find("td")
+        .toArray()
+        .map((td) => $(td).text().trim());
+      if (cells.length <= nameCol || !cells[nameCol] || $(row).find("td[colspan]").length > 0) return [];
+      const subName = cells[nameCol].replace(/\s*\*$/, "");
+      return [
+        {
+          key: normalizeFeatureName(`${parentKey}: ${subName}`),
+          desc: effectCol >= 0 && cells[effectCol] ? cells[effectCol] : "",
+        },
+      ];
+    });
+}
+
+export function parseClassFeatures(
+  $: cheerio.CheerioAPI,
+  progression: ClassReference["raw"]["progression"],
+): ClassReference["raw"]["classFeatures"] {
+  // Step 1: Build the authoritative feature name list from the Special column
+  const featureNames = new Set<string>();
+  for (const name of IMPLICIT_FEATURES) featureNames.add(normalizeFeatureName(name));
+
+  for (const row of progression) {
+    for (const s of row.special) {
+      const cleaned = cleanSpecialEntry(s);
+      if (cleaned && cleaned.length > 1) featureNames.add(normalizeFeatureName(cleaned));
+    }
+  }
+
+  // Step 2: Collect all text blocks from the Class Features section
+  let cfHeader = findSectionHeader($, /^Class Features$/i);
+  if (cfHeader.length === 0) {
+    cfHeader = $("h6")
+      .filter((_, el) => /^Class Features$/i.test($(el).text().trim()))
+      .first();
+  }
+  if (cfHeader.length === 0) return [];
+
+  // Build a map of feature name → { type, description } from the page content
+  // Sources: <h4> headings, <p><strong>Name:</strong> desc, plain "Name:" paragraphs
+  const featureHeaderPattern = /^(.+?)\s*(\((Ex|Su|Sp)\))?\s*$/;
+  const contentMap = new Map<string, { type?: string; desc: string }>();
+
+  let currentFeature: string | null = null;
+
+  for (const el of sectionElements(cfHeader)) {
+    const tag = tagOf(el);
+
+    // h4 heading — potential feature or sub-section header
+    if (tag === "h4") {
+      const h4Text = el.text().trim();
+      const match = h4Text.match(featureHeaderPattern);
+      if (match) {
+        const name = match[1].trim();
+        if (isKnownFeature(name, featureNames)) {
+          currentFeature = normalizeFeatureName(name);
+          contentMap.set(currentFeature, {
+            type: match[3] ? `(${match[3]})` : undefined,
+            desc: "",
+          });
+        } else {
+          // Check for "Feature Benefits" / "Feature Options" sub-section header
+          // e.g. "Terrain Mastery Benefits" → parse children as "Terrain Mastery: X"
+          const subMatch = name.match(/^(.+?)\s+(?:Benefits|Options|Choices|Selections)$/i);
+          if (subMatch) {
+            const parentName = subMatch[1];
+            for (const next of sectionElements(el, ["h2", "h3", "h4", "table"])) {
+              if (tagOf(next) === "p") {
+                const pText = next.text().trim();
+                const subFeatureMatch = pText.match(/^([A-Z][^:]{1,60}?)\s*:\s*([\s\S]*)/);
+                if (subFeatureMatch) {
+                  // Keep parentheticals that are part of the name like "(Planar)"
+                  const subName = `${parentName}: ${subFeatureMatch[1].trim()}`;
+                  const subDesc = subFeatureMatch[2].trim();
+                  contentMap.set(normalizeFeatureName(subName), { desc: subDesc });
+                }
+              }
+            }
+          }
+          currentFeature = null;
+        }
+      }
+      continue;
+    }
+
+    // Paragraph — could be inline feature or continuation
+    if (tag === "p") {
+      let handled = false;
+
+      // Check for <strong>Name:</strong> pattern
+      const strong = el.find("strong, b").first();
+      if (strong.length > 0) {
+        const headerText = strong.text().trim().replace(/:$/, "");
+        const match = headerText.match(featureHeaderPattern);
+        if (match && match[1].length < 100) {
+          const name = match[1].trim();
+          if (isKnownFeature(name, featureNames)) {
+            currentFeature = findMatchingFeatureKey(name, featureNames) ?? normalizeFeatureName(name);
+            const fullText = el.text().trim();
+            const desc = fullText
+              .substring(fullText.indexOf(headerText) + headerText.length)
+              .replace(/^[:\s]+/, "")
+              .trim();
+            contentMap.set(currentFeature, {
+              type: match[3] ? `(${match[3]})` : undefined,
+              desc,
+            });
+            handled = true;
+          } else if (match[3]) {
+            // Unknown bold heading WITH type marker (Ex/Su/Sp) — likely a sub-option
+            // of the current feature (e.g. "Earthgrip (Sp)" under "Stone Power")
+          } else {
+            // Unknown bold heading WITHOUT type marker — break continuation chain
+            currentFeature = null;
+            handled = true;
+          }
+        }
+      }
+
+      // Check for plain text "Name (Ex):" or "Name:" pattern
+      if (!handled) {
+        const plainText = el.text().trim();
+        const plainMatch = plainText.match(/^([A-Z][^:]{2,60}?)\s*(?:\((Ex|Su|Sp)\)\s*)?:\s+([\s\S]*)/);
+        if (plainMatch) {
+          const name = plainMatch[1].trim();
+          if (isKnownFeature(name, featureNames)) {
+            currentFeature = normalizeFeatureName(name);
+            contentMap.set(currentFeature, {
+              type: plainMatch[2] ? `(${plainMatch[2]})` : undefined,
+              desc: plainMatch[3].trim(),
+            });
+            handled = true;
+          }
+        }
+      }
+
+      // Continuation paragraph — append to current feature
+      if (!handled && currentFeature && contentMap.has(currentFeature)) {
+        const text = el.text().trim();
+        if (text) {
+          const entry = contentMap.get(currentFeature)!;
+          entry.desc = entry.desc ? `${entry.desc} ${text}` : text;
+        }
+      }
+    }
+
+    // Table — check for sub-option tables (e.g. Loremaster Secrets)
+    if (tag === "table" && currentFeature) {
+      for (const { key, desc } of subOptionRows($, el, currentFeature)) contentMap.set(key, { desc });
+    }
+  }
+
+  // Scan ALL tables on the page for sub-option tables linked to known features
+  // (some tables like Loremaster Secrets appear outside the Class Features section)
+  $("table").each((_, table) => {
+    if (findSubOptionColumns($, $(table)).nameCol < 0) return;
+
+    // Find the parent feature from the table title (first th in first row, often spanning)
+    const titleRow = $(table).find("tr").first();
+    const titleTh = titleRow.find("th[colspan], th").first();
+    const titleText = titleTh.text().trim().toLowerCase();
+
+    // Match title to a known feature (e.g. "Loremaster Secrets" → "secret")
+    let parentKey: string | null = null;
+    for (const [key] of contentMap) {
+      if (titleText.includes(key) || key.includes(titleText.replace(/s$/, ""))) {
+        parentKey = key;
+        break;
+      }
+    }
+    if (!parentKey) return;
+
+    for (const { key, desc } of subOptionRows($, $(table), parentKey)) {
+      if (!contentMap.has(key)) contentMap.set(key, { desc });
+    }
+  });
+
+  // Step 3: Build the features array in progression order
+  const features: RawFeature[] = [];
+  const seen = new Set<string>();
+
+  // Add implicit features first (WAP, Spells)
+  for (const name of IMPLICIT_FEATURES) {
+    const key = normalizeFeatureName(name);
+    if (contentMap.has(key) && !seen.has(key)) {
+      seen.add(key);
+      const entry = contentMap.get(key)!;
+      features.push({ name, type: entry.type, description: entry.desc });
+    }
+  }
+
+  // Add features in progression order (deduplicated by normalized name)
+  for (const row of progression) {
+    for (const s of row.special) {
+      const cleaned = cleanSpecialEntry(s);
+      const key = normalizeFeatureName(cleaned);
+      if (seen.has(key) || !key) continue;
+      seen.add(key);
+
+      // Look up description from contentMap (try normalized, then plural variants)
+      let entry = contentMap.get(key);
+      if (!entry) entry = contentMap.get(key + "s");
+      if (!entry) entry = contentMap.get(key.replace(/y$/, "ies"));
+
+      if (entry) {
+        features.push({ name: titleCase(cleaned), type: entry.type, description: entry.desc });
+      } else {
+        features.push({ name: titleCase(cleaned), description: "" });
+      }
+    }
+  }
+
+  // Add sub-features from tables and sub-section headings (e.g. "Secret: Instant Mastery")
+  for (const [key, entry] of contentMap) {
+    if (seen.has(key)) continue;
+    if (key.includes(":")) {
+      seen.add(key);
+      features.push({ name: titleCase(key), type: entry.type, description: entry.desc });
+    }
+  }
+
+  return features;
+}

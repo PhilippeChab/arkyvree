@@ -38,10 +38,10 @@ import type { ChangedField } from "@/shared/activity.ts";
 
 type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
 
-// Ruleset entities' tables, named like their types (abilities raise no activity)
+/** Ruleset entities' tables, named like their types (abilities raise no activity) */
 const RULESET_ENTITY_TABLES = new Set<string>(RULESET_ENTITY_TYPES.filter((type) => type !== "abilities"));
 
-// Customization tables whose source entities have a rulesetId
+/** Customization tables whose source entities have a rulesetId */
 const CUSTOMIZATION_TABLES = new Set(["modifiers", "requirements", "properties"]);
 
 const INVITES_TABLE = getTableName(invitesInCampaign);
@@ -155,7 +155,7 @@ async function resolveRecipients(
   const recipients = new Set<string>();
   const d = (data ?? {}) as Record<string, unknown>;
 
-  // ── Campaign invites ──────────────────────────────────────────────
+  // Campaign invites
   if (targetTable === INVITES_TABLE) {
     if (type === "createCampaignInvite") {
       // Notify the invitee (if they have an account)
@@ -167,7 +167,7 @@ async function resolveRecipients(
     }
   }
 
-  // ── Ruleset contributors ──────────────────────────────────────────
+  // Ruleset contributors
   if (targetTable === CONTRIBUTORS_TABLE) {
     if (type === "inviteContributor") {
       const contributor = await Contributors.findOne(db, { id: targetId });
@@ -196,7 +196,7 @@ async function resolveRecipients(
     }
   }
 
-  // ── Character contributors ────────────────────────────────────────
+  // Character contributors
   if (targetTable === CHARACTER_CONTRIBUTORS_TABLE) {
     if (type === "inviteCharacterContributor") {
       const contributor = await CharacterContributors.findOne(db, { id: targetId });
@@ -223,7 +223,7 @@ async function resolveRecipients(
     }
   }
 
-  // ── Ruleset content changes ───────────────────────────────────────
+  // Ruleset content changes
   const isContentChange = type.startsWith("create") || type.startsWith("update") || type.startsWith("delete");
   const isRulesetContent =
     RULESET_ENTITY_TABLES.has(targetTable) ||

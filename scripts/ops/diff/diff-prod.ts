@@ -11,15 +11,15 @@
  *   REFERENCE_DATABASE_URL=... \
  *     bun --env-file=.env.production run scripts/ops/diff/diff-prod.ts --emit-sql > sync.sql
  *
- * READ-ONLY (unless you run the emitted SQL). Compares a remote database
- * (typically production) against the current codebase and optionally a
- * freshly-seeded reference DB:
+ * READ-ONLY (unless you run the emitted SQL). Compares a remote database (typically production) against the current
+ * codebase and optionally a freshly-seeded reference DB:
  *   1. Schema drift: drizzle.__drizzle_migrations vs drizzle/meta/_journal.json
  *   2. Package drift: rules.content_packages vs database/packages/registry.ts
  *   3. Content drift (if REFERENCE_DATABASE_URL set): for every base ruleset
  *      and extension, every row the seeds write (content.ts), compared
  *      between reference and target.
  */
+
 import { readFileSync } from "node:fs";
 
 import { Pool, type PoolClient } from "pg";
@@ -96,7 +96,7 @@ async function main() {
 
   try {
     if (!emitSql) {
-      // ── 1. Schema drift ──
+      // 1. Schema drift
       console.log("## Schema drift\n");
 
       const journal = JSON.parse(readFileSync("./drizzle/meta/_journal.json", "utf8")) as {
@@ -132,7 +132,7 @@ async function main() {
       }
       console.log();
 
-      // ── 2. Package drift ──
+      // 2. Package drift
       console.log("## Package drift\n");
 
       const { rows: remotePackages } = await client.query<{
@@ -190,7 +190,7 @@ async function main() {
       console.log();
     }
 
-    // ── 3. Content drift ──
+    // 3. Content drift
     if (referenceConnectionString) {
       const refPool = new Pool({ connectionString: referenceConnectionString });
       const refClient = await refPool.connect();

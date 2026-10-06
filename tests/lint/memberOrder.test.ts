@@ -237,7 +237,8 @@ describe("member order", () => {
       "}",
       "",
     ]);
-    // A heading set apart by a blank line starts a run of its own; functions that call each other keep their order.
+    // A comment set apart by a blank line ends a run (`comment-style` reports it); functions that call each other are
+    // reported, and keep their order.
     const runs = write("runs.ts", [
       "function b() {}",
       "",
@@ -337,6 +338,9 @@ describe("member order", () => {
       ].join("\n"),
     );
     expect(fs.readFileSync(declarations, "utf8")).toBe("export function b(): void;\nexport function a(): void;\n");
+    expect((await runOxlint(["-f", "unix", "-c", config, dir])).stdout).toContain(
+      "Functions that call each other (y, x): untangle them, so the file reads bottom-up.",
+    );
     fs.rmSync(dir, { recursive: true });
   });
 });

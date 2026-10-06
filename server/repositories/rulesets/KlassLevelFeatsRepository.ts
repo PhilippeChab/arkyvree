@@ -26,10 +26,6 @@ class KlassLevelFeatsRepository extends BaseRepository<typeof klassLevelFeatsInR
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
   async delete(db: Db, where: { klassLevelId: string } | { featId: string } | { aptitudeId: string }) {
     return await db
       .delete(this.table)

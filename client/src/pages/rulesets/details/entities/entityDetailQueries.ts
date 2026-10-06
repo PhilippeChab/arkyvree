@@ -1,7 +1,8 @@
 /**
- * The detail queries of the simple ruleset entities, shared by their page and
- * the section rows' hover prefetch so both cache the same response.
+ * The detail queries of the simple ruleset entities, shared by their page and the section rows' hover prefetch so both
+ * cache the same response.
  */
+
 import { queryOptions } from "@tanstack/react-query";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";

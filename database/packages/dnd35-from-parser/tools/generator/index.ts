@@ -13,18 +13,18 @@ import {
 } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 
+import { collectAptitudes } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/aptitudes.ts";
 import {
-  bookDomainSeeds,
-  buildItemSeeds,
-  buildMagicItemSeeds,
-  buildRaceSeeds,
-  buildSpellSeeds,
-  buildWizardSchoolSeeds,
   classSpells,
-  collectAptitudes,
   inheritedLevel,
   inheritedLists,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
+import { bookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
+import { buildItemSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/items.ts";
+import { buildMagicItemSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
+import { buildRaceSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
+import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/spells.ts";
+import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/wizardSchools.ts";
 import {
   featLines,
   importLines,
@@ -671,7 +671,7 @@ function regenerateFeatIndex(out: Output, book: string) {
       if (exports.length > 0) featFiles.push({ file, exports });
     }
   } catch {
-    /* dir doesn't exist */
+    // dir doesn't exist
   }
 
   const allFeatExports = featFiles.flatMap((f) => f.exports);
@@ -871,7 +871,7 @@ function generateSpell(out: Output, ref: SpellReference, book: string) {
       try {
         unlinkSync(join(spellDir, f));
       } catch {
-        /* doesn't exist */
+        // doesn't exist
       }
     }
   }
@@ -1032,21 +1032,21 @@ function generateItem(out: Output, ref: ItemReference, book: string) {
   const seeds = buildItemSeeds(ref);
   const outDir = join(out.dir, book, "items");
 
-  // --- weapons.ts ---
+  // weapons.ts
   generateWeaponFile(out, join(outDir, "weapons.ts"), "SIMPLE_WEAPONS", seeds.simpleWeapons, "simple");
   generateWeaponFile(out, join(outDir, "martial.ts"), "MARTIAL_WEAPONS", seeds.martialWeapons, "martial");
   generateWeaponFile(out, join(outDir, "exotic.ts"), "EXOTIC_WEAPONS", seeds.exoticWeapons, "exotic");
 
-  // --- armor.ts ---
+  // armor.ts
   generateArmorFile(out, join(outDir, "armor.ts"), "ARMOR", seeds.armor);
 
-  // --- shields.ts ---
+  // shields.ts
   generateShieldFile(out, join(outDir, "shields.ts"), "SHIELDS", seeds.shields);
 
-  // --- goods.ts ---
+  // goods.ts
   generateGoodsFile(out, join(outDir, "goods.ts"), "GOODS", seeds.goods);
 
-  // --- index.ts ---
+  // index.ts
   generateItemIndex(out, outDir);
 
   if (!out.quiet)

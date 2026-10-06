@@ -1,7 +1,8 @@
 /**
- * A customization names what it belongs to by type and id, with no foreign key. The database deletes it with that
- * row, whatever deletes the row: a service, or a foreign key's cascade (drizzle/0070_customization_cleanup.sql).
+ * A customization names what it belongs to by type and id, with no foreign key. The database deletes it with that row,
+ * whatever deletes the row: a service, or a foreign key's cascade (drizzle/0070_customization_cleanup.sql).
  */
+
 import { describe, expect, test } from "bun:test";
 
 import { sql } from "drizzle-orm";

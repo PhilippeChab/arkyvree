@@ -1,12 +1,20 @@
+/**
+ * A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else:
+ * re-scraping replaces `raw` and keeps `overrides`. What the generator reads is derived from the two each time a
+ * reference is loaded: `detected`, parsed from `raw`, and `mapping`, the entities to generate (items and magic items
+ * have only `detected`; spells and wizard schools, neither). The overrides win over both, so a correction takes effect
+ * at the next generate and can't be lost to a re-scrape.
+ */
+
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { sanitizeJsonValues, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import { buildDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/detected.ts";
 import {
-  buildDetected,
   buildInitialMapping,
   buildOccurrenceMap,
-} from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass.ts";
+} from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/mapping.ts";
 import {
   buildDomainDetected,
   buildDomainMapping,
@@ -26,12 +34,6 @@ import type {
   SpellReference,
   WizardSchoolReference,
 } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-
-// A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing
-// else: re-scraping replaces `raw` and keeps `overrides`. What the generator reads is derived from the two each time
-// a reference is loaded: `detected`, parsed from `raw`, and `mapping`, the entities to generate (items and magic
-// items have only `detected`; spells and wizard schools, neither). The overrides win over both, so a correction
-// takes effect at the next generate and can't be lost to a re-scrape.
 
 export type ReferenceByType = {
   class: ClassReference;

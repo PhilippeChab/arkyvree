@@ -1,8 +1,3 @@
-import { basename } from "node:path";
-
-import { readStoredReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-
 /**
  * Lists all overrides across reference files, with the same filters as parser:sync.
  *
@@ -13,6 +8,11 @@ import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parse
  *   bun run parser:overrides complete-warrior              # only a specific book
  *   bun run parser:overrides complete-warrior --type feat  # combine filters
  */
+
+import { basename } from "node:path";
+
+import { readStoredReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 type OverrideEntry = {
   book: string;

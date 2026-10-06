@@ -12,9 +12,6 @@ export const FONT_SIZE = {
   title: 16,
 } as const;
 
-// Canonical display order for spell properties, matching D&D 3.5 stat-block convention.
-// Keys not in this list are appended alphabetically.
-
 export const styles = StyleSheet.create({
   page: {
     padding: 20,
@@ -490,5 +487,3 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
-
-/** The header of the sheet's pages after the first: the character's name, and what the page holds. */

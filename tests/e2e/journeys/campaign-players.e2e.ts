@@ -9,11 +9,9 @@ import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
 import { selectOption, uniqueName } from "@/tests/e2e/support/page.ts";
 import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
-/*
- * A Game Master managing a campaign's players from its Players tab: a player's role, a pending invite, a player's
- * seat. The players join through the API; what the test does is the Game Master's. A Game Master can't remove another
- * Game Master, so the player it promotes and the one it removes are two.
- */
+// A Game Master managing a campaign's players from its Players tab: a player's role, a pending invite, a player's
+// seat. The players join through the API; what the test does is the Game Master's. A Game Master can't remove another
+// Game Master, so the player it promotes and the one it removes are two.
 test.describe("A campaign's Game Master", () => {
   test("changes a player's role, revokes a pending invite and removes a player, each kept after a reload", async ({
     page,

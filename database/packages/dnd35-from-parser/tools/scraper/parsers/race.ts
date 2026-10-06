@@ -1,3 +1,17 @@
+/**
+ * Race HTML Parser — dndtools.net structure
+ *
+ * Listing page: /races/?rulebook=N
+ *   <table> with rows: <td><a href="/races/{book}/{slug}/">Race Name</a></td>
+ *
+ * Detail page: /races/{book}/{slug}/
+ *   <h2>Race Name</h2>
+ *   <h3>Attributes</h3>
+ *     <table> Size, Base speed, ability scores, Favored Classes
+ *   <h3>Description</h3> <p>...</p>
+ *   <h3>Racial Traits</h3> <ul><li>...</li></ul>
+ */
+
 import * as cheerio from "cheerio";
 
 import { frameHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/frame.ts";
@@ -8,20 +22,6 @@ import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
 
 /** A race page's frame also heads its listing "Races". */
 const RACE_FRAME_HEADING = frameHeading("Races");
-
-// ---------------------------------------------------------------------------
-// Race HTML Parser — dndtools.net structure
-//
-// Listing page: /races/?rulebook=N
-//   <table> with rows: <td><a href="/races/{book}/{slug}/">Race Name</a></td>
-//
-// Detail page: /races/{book}/{slug}/
-//   <h2>Race Name</h2>
-//   <h3>Attributes</h3>
-//     <table> Size, Base speed, ability scores, Favored Classes
-//   <h3>Description</h3> <p>...</p>
-//   <h3>Racial Traits</h3> <ul><li>...</li></ul>
-// ---------------------------------------------------------------------------
 
 const ABILITY_NAMES = new Set(["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]);
 
@@ -37,10 +37,6 @@ const DNDTOOLS_SIZE_IDS: Record<string, SizeType> = {
   "8": "Gargantuan",
   "9": "Colossal",
 };
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 function parseAbilityValue(text: string): number {
   // Handle "+2", "−2" (Unicode minus), "-2" (ASCII hyphen), "+0"
@@ -88,10 +84,6 @@ function parseSpeed(text: string): number {
   // The actual speed is the last number (after the Django object ID)
   return numbers.length > 0 ? numbers[numbers.length - 1] : 0;
 }
-
-// ---------------------------------------------------------------------------
-// Detail page parser
-// ---------------------------------------------------------------------------
 
 /**
  * Parse a single race detail page.

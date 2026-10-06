@@ -23,8 +23,10 @@ interface InviteAnswer {
   type: InviteType;
 }
 
-// Notification types that are invitations, answered in place with Accept /
-// Reject. `targetId` is the invite; `path` is where accepting takes the user.
+/**
+ * Notification types that are invitations, answered in place with Accept /
+ * Reject. `targetId` is the invite; `path` is where accepting takes the user.
+ */
 const INVITES = {
   createCampaignInvite: {
     label: "Campaign invite",
@@ -49,8 +51,10 @@ const INVITES = {
   },
 } as const;
 
-// Shared by accept and reject, so every notification surface can tell which
-// invites are being answered, whichever surface the click came from.
+/**
+ * Shared by accept and reject, so every notification surface can tell which invites are being answered, whichever
+ * surface the click came from.
+ */
 const ANSWER_INVITE_KEY = ["notifications", "answerInvite"] as const;
 
 function isInviteType(type: string): type is InviteType {

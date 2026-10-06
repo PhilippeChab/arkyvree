@@ -1,10 +1,7 @@
-import type { SpellSeedWithLevel } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
-import { quote, stringifyProperty } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
+/** Generates a spell reference's PowerSeed[] files: one per spell level (cantrips.ts, level1.ts, …, level9.ts). */
 
-// ---------------------------------------------------------------------------
-// Generate PowerSeed[] TypeScript files from a SpellReference
-// Produces one file per spell level (cantrips.ts, level1.ts, ..., level9.ts)
-// ---------------------------------------------------------------------------
+import { type SpellSeedWithLevel } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/spells.ts";
+import { quote, stringifyProperty } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
 
 function generateLevelFile(constName: string, spells: SpellSeedWithLevel[]): string {
   const lines: string[] = [];

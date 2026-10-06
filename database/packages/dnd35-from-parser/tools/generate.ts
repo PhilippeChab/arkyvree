@@ -4,6 +4,7 @@
  *
  * Usage: bun run parser:generate [<reference>.json [--book <book>]] [--book <book>] [--type <type>]
  */
+
 import {
   generateAll,
   generateAtomically,

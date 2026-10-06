@@ -1,5 +1,3 @@
-// ── Types ────────────────────────────────────────────────────
-
 type DamageType = "Bludgeoning" | "Piercing" | "Slashing";
 
 interface WeaponDefinition {
@@ -28,13 +26,13 @@ interface WeaponDefinition {
   finessable?: boolean;
 }
 
-// ── Weapon Type Definitions ─────────────────────────────────
-// Each entry is the canonical definition for a base weapon type.
-// All properties are derived from selecting a weapon type name.
-
+/**
+ * Each entry is the canonical definition for a base weapon type. All properties are derived from selecting a weapon
+ * type name.
+ */
 // oxfmt-ignore
 const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
-  // ── Simple ──
+  // Simple
   "Gauntlet": { proficiency: "Simple", family: "Close", baseDamage: "1d3", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Tiny", finessable: true },
   "Spiked Gauntlet": { proficiency: "Simple", family: "Close", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Tiny", finessable: true },
   "Dagger": { proficiency: "Simple", family: "Dagger", baseDamage: "1d4", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Piercing", "Slashing"], size: "Tiny", range: 10, finessable: true },
@@ -54,7 +52,7 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Javelin": { proficiency: "Simple", family: "Spear", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Piercing"], size: "Medium", range: 30 },
   "Sling": { proficiency: "Simple", family: "Sling", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Bludgeoning"], size: "Medium", range: 50 },
 
-  // ── Martial ──
+  // Martial
   "Handaxe": { proficiency: "Martial", family: "Axe", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Small", finessable: true },
   "Light Hammer": { proficiency: "Martial", family: "Hammer", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", range: 20, finessable: true },
   "Kukri": { proficiency: "Martial", family: "Dagger", baseDamage: "1d4", criticalRange: 3, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Small", finessable: true },
@@ -86,7 +84,7 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Large", range: 60 },
   "Composite Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", mighty: 0, damageTypes: ["Piercing"], size: "Large", range: 70 },
 
-  // ── Exotic ──
+  // Exotic
   "Kama": { proficiency: "Exotic", family: "Monk", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Small", finessable: true },
   "Nunchaku": { proficiency: "Exotic", family: "Monk", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", finessable: true },
   "Sai": { proficiency: "Exotic", family: "Monk", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", range: 10, finessable: true },

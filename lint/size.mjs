@@ -1,10 +1,11 @@
 /**
  * `function-length`: a function in the server or `shared/` holds at most 80 of its own lines (blank and comment lines
- * aside, its nested functions' lines counted where they're written), so a long one splits into named steps. A
- * concern's wrapper (`function X<B extends Constructor>(Base)`) counts nothing: its class's methods count each.
+ * aside, its nested functions' lines counted where they're written), so a long one splits into named steps. A concern's
+ * wrapper (`function X<B extends Constructor>(Base)`) counts nothing: its class's methods count each.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
+
 import { repoPath } from "./paths.mjs";
 
 const FUNCTIONS = ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"];

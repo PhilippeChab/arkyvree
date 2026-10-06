@@ -1,6 +1,6 @@
 import type { CharacterSeed } from "@/database/seeds/helpers.ts";
 
-// Human Fighter 5 — Skills, INT 12 (+1 mod, +1 human): (2+1+1)*4 + (2+1+1)*4 = 32
+/** Human Fighter 5 — Skills, INT 12 (+1 mod, +1 human): (2+1+1)*4 + (2+1+1)*4 = 32 */
 export default {
   raceName: "Human",
   name: "Bjorn Ironhand",

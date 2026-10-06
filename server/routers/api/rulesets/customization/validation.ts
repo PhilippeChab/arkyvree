@@ -8,7 +8,7 @@ const requirementOperators = new Set<string>(REQUIREMENT_OPERATORS);
 const modifierOperators = new Set<string>(MODIFIER_OPERATORS);
 const chainingOperators = new Set<string>(CHAINING_OPERATORS);
 
-// Keep RPC input types as strings, matching the existing form schemas.
+/** Keep RPC input types as strings, matching the existing form schemas. */
 export const requirementOperator = z
   .string()
   .refine((value) => requirementOperators.has(value), "Invalid requirement operator");

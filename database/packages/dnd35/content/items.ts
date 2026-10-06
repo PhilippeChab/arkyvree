@@ -1,3 +1,8 @@
+/**
+ * Builders the generated items are written with: their proficiency requirements and their weapon, armor or shield
+ * properties.
+ */
+
 import { eq, feat } from "@/database/packages/dnd35/content/requirements.ts";
 import type { Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
@@ -30,8 +35,6 @@ import {
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
 } from "@/shared/dnd3.5/properties/index.ts";
-
-// Builders the generated items are written with: their proficiency requirements and their weapon, armor or shield properties.
 
 export const LIGHT_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Light)"))];
 export const MEDIUM_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Medium)"))];

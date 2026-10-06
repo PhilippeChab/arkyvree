@@ -1,10 +1,12 @@
+/**
+ * The domains of dndtools' database as its copy at dnd.arkalseif.info keeps them: each book's version of a domain its
+ * own page ("Celerity (CD)": its book and page, its granted power, its spells), and each spell's page the level it has
+ * in each version. dndtools.net itself has since merged a domain's versions, without their books or spell levels.
+ */
+
 import * as cheerio from "cheerio";
 
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-
-// The domains of dndtools' database as its copy at dnd.arkalseif.info keeps them: each book's version of a domain its
-// own page ("Celerity (CD)": its book and page, its granted power, its spells), and each spell's page the level it has
-// in each version. dndtools.net itself has since merged a domain's versions, without their books or spell levels.
 
 /** A domain version of the domain index: its page's slug ("celerity-cd") and its label ("Celerity (CD)"). */
 export type DomainIndexEntry = { slug: string; label: string };

@@ -53,11 +53,12 @@ const ResetPassword = lazy(() => import("@/client/src/pages/auth/ResetPassword.t
 
 const queryClient = createQueryClient();
 
-// One-shot per browser-tab: probe /auth/me at most once even if the visitor
-// bounces between auth-only routes while unauth. Memoizing a Promise (rather
-// than a boolean "started" flag) keeps strict-mode's double-effect honest —
-// each mount awaits the same probe and attaches its own .finally, so the
-// surviving mount's callback fires after the first cleanup cancels its peer.
+/**
+ * One-shot per browser-tab: probe /auth/me at most once even if the visitor bounces between auth-only routes while
+ * unauth. Memoizing a Promise (rather than a boolean "started" flag) keeps strict-mode's double-effect honest — each
+ * mount awaits the same probe and attaches its own .finally, so the surviving mount's callback fires after the first
+ * cleanup cancels its peer.
+ */
 let authProbe: Promise<void> | null = null;
 
 function PrivateRoute() {
@@ -87,7 +88,7 @@ function PrivateRoute() {
   try {
     demoExpired = !!localStorage.getItem(DEMO_EXPIRED_FLAG);
   } catch {
-    /* storage disabled */
+    // storage disabled
   }
   if (demoExpired) return <Navigate to="/demo-expired" replace />;
 

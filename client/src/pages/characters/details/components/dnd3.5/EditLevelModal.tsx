@@ -41,8 +41,7 @@ export function EditLevelModal({ open, onClose, characterId, baseRules, editingL
     onReset: resetEditRefs,
   });
 
-  // ── Edit-only: fetch existing level data ────────────────────────────
-
+  // Edit-only: fetch existing level data
   const {
     data: editLevelData,
     isLoading: isLoadingLevel,

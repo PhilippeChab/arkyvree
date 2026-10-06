@@ -1,3 +1,24 @@
+/**
+ * Spell HTML Parser — supports both dndtools.net and legacy srd.dndtools.org
+ *
+ * dndtools.net listing page:
+ *   <table> with columns: Spell name, School, Rulebook, Effect, Duration, Range, Components, Casting Time
+ *   → Missing: subschool, descriptors, level entries, target/area, saving throw, spell resistance, description
+ *   → Use detail pages for full data
+ *
+ * dndtools.net detail page:
+ *   <h2>Spell Name</h2>
+ *   School (Subschool) [Descriptor] — linked text
+ *   <strong>Level:</strong> Sorcerer 6, Wizard 6 — linked class entries
+ *   <strong>Components:</strong> V, S, M
+ *   ... (other stat fields)
+ *   <p>Description...</p>
+ *
+ * Legacy single-page (srd.dndtools.org):
+ *   <h6><a id="spell-slug">Spell Name</a></h6>
+ *   <span class="stat-block"><b>Label</b>: Value</span>
+ */
+
 import * as cheerio from "cheerio";
 import { type Element, isText } from "domhandler";
 
@@ -5,27 +26,6 @@ import { pageTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/p
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { capitalize } from "@/shared/text.ts";
-
-// ---------------------------------------------------------------------------
-// Spell HTML Parser — supports both dndtools.net and legacy srd.dndtools.org
-//
-// dndtools.net listing page:
-//   <table> with columns: Spell name, School, Rulebook, Effect, Duration, Range, Components, Casting Time
-//   → Missing: subschool, descriptors, level entries, target/area, saving throw, spell resistance, description
-//   → Use detail pages for full data
-//
-// dndtools.net detail page:
-//   <h2>Spell Name</h2>
-//   School (Subschool) [Descriptor] — linked text
-//   <strong>Level:</strong> Sorcerer 6, Wizard 6 — linked class entries
-//   <strong>Components:</strong> V, S, M
-//   ... (other stat fields)
-//   <p>Description...</p>
-//
-// Legacy single-page (srd.dndtools.org):
-//   <h6><a id="spell-slug">Spell Name</a></h6>
-//   <span class="stat-block"><b>Label</b>: Value</span>
-// ---------------------------------------------------------------------------
 
 const VALID_SCHOOLS = new Set([
   "Abjuration",
@@ -51,14 +51,6 @@ const STAT_LABEL_PREFIXES = [
   "Saving Throw:",
   "Spell Resistance:",
 ];
-
-// ---------------------------------------------------------------------------
-// Legacy: single-page all-spells parser (srd.dndtools.org)
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Shared helpers
-// ---------------------------------------------------------------------------
 
 function isStatLabel(text: string): boolean {
   return STAT_LABEL_PREFIXES.some((p) => text.startsWith(p));
@@ -155,10 +147,6 @@ function parseStatFields($: cheerio.CheerioAPI): Map<string, string> {
 
   return stats;
 }
-
-// ---------------------------------------------------------------------------
-// Detail page parser (dndtools.net)
-// ---------------------------------------------------------------------------
 
 /**
  * Parse a single spell detail page from dndtools.net.

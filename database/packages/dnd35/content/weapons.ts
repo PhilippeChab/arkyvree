@@ -1,3 +1,5 @@
+/** The weapons by proficiency, which the weapon feats and the proficiency requirements name. */
+
 import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
@@ -11,8 +13,6 @@ const WEAPON_FAMILIARITY: Record<string, string> = {
   "Dwarven Urgrosh": "Dwarf",
   "Gnome Hooked Hammer": "Gnome",
 };
-
-// The weapons by proficiency, which the weapon feats and the proficiency requirements name.
 
 export const SIMPLE_WEAPONS = [
   "Gauntlet",

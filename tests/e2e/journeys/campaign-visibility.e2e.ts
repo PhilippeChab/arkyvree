@@ -9,7 +9,7 @@ import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
 type Campaign = { id: string; characters: Record<(typeof VISIBILITIES)[number], { id: string; name: string }> };
 
-/*
+/**
  * A player's characters in a campaign, by the visibility the player links each with: the Game Master sees them all,
  * whole; another player sees a public one whole, a partial one's identity only, and not a private one.
  */

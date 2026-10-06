@@ -1,3 +1,18 @@
+/**
+ * Feat HTML Parser — dndtools.net structure
+ *
+ * Listing page:
+ *   <table> with rows: <td><a href="/feats/{book}/{slug}/">Feat Name</a></td>
+ *
+ * Detail page:
+ *   <h2>Feat Name</h2>
+ *   [<a href="/feats/categories/general/">General</a>]
+ *   <h4>Prerequisite</h4> <p>...</p>
+ *   <h4>Benefit</h4> <div class="nice-textile"><p>...</p></div>
+ *   <h4>Normal</h4> <p>...</p>
+ *   <h4>Special</h4> <p>...</p>
+ */
+
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
@@ -9,10 +24,6 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 const KNOWN_LABELS = new Set(["prerequisite", "prerequisites", "benefit", "benefits", "normal", "special"]);
 
@@ -44,21 +55,6 @@ function normalizeFeatType(raw: string): string {
   if (lower.includes("item creation")) return "item creation";
   return lower;
 }
-
-// ---------------------------------------------------------------------------
-// Feat HTML Parser — dndtools.net structure
-//
-// Listing page:
-//   <table> with rows: <td><a href="/feats/{book}/{slug}/">Feat Name</a></td>
-//
-// Detail page:
-//   <h2>Feat Name</h2>
-//   [<a href="/feats/categories/general/">General</a>]
-//   <h4>Prerequisite</h4> <p>...</p>
-//   <h4>Benefit</h4> <div class="nice-textile"><p>...</p></div>
-//   <h4>Normal</h4> <p>...</p>
-//   <h4>Special</h4> <p>...</p>
-// ---------------------------------------------------------------------------
 
 /**
  * Parse a single feat detail page.

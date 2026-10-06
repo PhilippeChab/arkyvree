@@ -16,10 +16,10 @@ interface ShieldDefinition {
   spellFailure: number;
 }
 
-// ── Armor Type Definitions ──────────────────────────────────
-// Each entry is the canonical definition for a base armor type.
-// All properties are derived from selecting an armor type name.
-
+/**
+ * Each entry is the canonical definition for a base armor type. All properties are derived from selecting an armor type
+ * name.
+ */
 const ARMOR_TYPE_DEFINITIONS: Record<string, ArmorDefinition> = {
   "Padded Armor": { armorType: "Light", acBonus: 1, maxDex: 8, checkPenalty: 0, spellFailure: 5 },
   "Leather Armor": { armorType: "Light", acBonus: 2, maxDex: 6, checkPenalty: 0, spellFailure: 10 },
@@ -34,8 +34,6 @@ const ARMOR_TYPE_DEFINITIONS: Record<string, ArmorDefinition> = {
   "Half-Plate": { armorType: "Heavy", acBonus: 7, maxDex: 0, checkPenalty: -7, spellFailure: 40 },
   "Full Plate": { armorType: "Heavy", acBonus: 8, maxDex: 1, checkPenalty: -6, spellFailure: 35 },
 };
-
-// ── Shield Type Definitions ─────────────────────────────────
 
 const SHIELD_TYPE_DEFINITIONS: Record<string, ShieldDefinition> = {
   Buckler: { shieldType: "Light", acBonus: 1, checkPenalty: -1, spellFailure: 5 },

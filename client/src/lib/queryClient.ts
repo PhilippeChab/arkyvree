@@ -15,7 +15,7 @@ function handleGlobalError(error: unknown) {
       try {
         localStorage.setItem(DEMO_EXPIRED_FLAG, "1");
       } catch {
-        /* storage disabled */
+        // storage disabled
       }
     }
     useAuthStore.getState().clearSession();

@@ -14,6 +14,7 @@
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
+
 import fs from "node:fs";
 import path from "node:path";
 
@@ -57,9 +58,10 @@ const QUERY_INFRASTRUCTURE = new Set(["server/queue.ts", "server/websockets/even
 const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "delete", "execute"]);
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
 
-/** The trees whose folders are entered through their `index.ts`. */
-// The trees whose folders are entered through their index.ts: the server's, but its routers (a route folder's index.ts
-// is its routes, not its folder's entry), and the client's components.
+/**
+ * The trees whose folders are entered through their `index.ts`: the server's, but its routers (a route folder's
+ * `index.ts` is its routes, not its folder's entry), and the client's components.
+ */
 const INDEXED_TREES = ["server/", "client/src/components/"];
 const UNINDEXED_TREES = ["server/routers/"];
 

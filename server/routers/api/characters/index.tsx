@@ -1,3 +1,8 @@
+/**
+ * Level-up flows are currently 3.5-shaped (aptitude pools in query params, spell levels, wizard schools). When a second
+ * ruleset ships, dispatch by ruleset at this layer and pick the matching implementation.
+ */
+
 import { Hono } from "hono";
 import { z } from "zod";
 
@@ -8,9 +13,6 @@ import { CharactersService } from "@/server/services/characters/index.ts";
 
 import contributors from "./contributors/index.ts";
 import inventory from "./inventory/index.ts";
-// Level-up flows are currently 3.5-shaped (aptitude pools in query params,
-// spell levels, wizard schools). When a second ruleset ships, dispatch by
-// ruleset at this layer and pick the matching implementation.
 import levels from "./levels/dnd3.5/index.ts";
 import modifiers from "./modifiers/index.ts";
 import sharing from "./sharing/index.ts";

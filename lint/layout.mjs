@@ -30,12 +30,12 @@ const SUITE_CALLS = new Set([
   "setDefaultTimeout",
 ]);
 
-// The groups, in a file's order
+/** The groups, in a file's order */
 const RANK = { type: 1, constant: 2, helper: 3, main: 4 };
-// An exported type or constant goes after the file's own, in the same section
+/** An exported type or constant goes after the file's own, in the same section */
 const EXPORTED = 0.5;
 
-// What a type position holds: never an order a value needs
+/** What a type position holds: never an order a value needs */
 const TYPE_KEYS = new Set(["typeAnnotation", "returnType", "typeParameters", "typeArguments", "superTypeArguments"]);
 
 const MESSAGE =

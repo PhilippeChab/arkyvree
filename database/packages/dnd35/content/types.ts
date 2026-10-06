@@ -1,6 +1,6 @@
-import type { ItemLocation, SizeType } from "@/shared/enums.ts";
+/** The shapes of the content packages' data: the generated books and the hand-written content alike. */
 
-// The shapes of the content packages' data: the generated books and the hand-written content alike.
+import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 
 /** A check: `target` compared to `value` with `operator`. */
 export type RequirementCondition = { target: string; operator: string; value: string; valueType: string };

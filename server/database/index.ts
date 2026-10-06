@@ -1,11 +1,13 @@
-/**
- * Database connection - conditionally loads test or production implementation
- */
+/** Database connection - conditionally loads test or production implementation */
+
 import { sql } from "drizzle-orm";
 
 import { isTest } from "@/server/environment.ts";
 
-// Use dynamic imports to avoid loading test module in production. The test module refuses a database not named a test one.
+/**
+ * Use dynamic imports to avoid loading test module in production. The test module refuses a database not named a test
+ * one.
+ */
 const dbModule = isTest() ? await import("./test.ts") : await import("./production.ts");
 
 export const db = dbModule.db;

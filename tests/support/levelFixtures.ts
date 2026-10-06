@@ -1,8 +1,8 @@
 /**
- * Seeded D&D 3.5 characters and the level picks the level-up tests share:
- * who the character is, what each class level spends its points on, and
- * the masters whose picks bond them a familiar, a companion or a mount.
+ * Seeded D&D 3.5 characters and the level picks the level-up tests share: who the character is, what each class level
+ * spends its points on, and the masters whose picks bond them a familiar, a companion or a mount.
  */
+
 import { createCharacter, type SeedContext } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";

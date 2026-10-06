@@ -2,11 +2,7 @@ import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/
 import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
 import { getWeaponDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/weaponGenerator.ts";
 
-// ---------------------------------------------------------------------------
-// SRD → generator name mapping
-// ---------------------------------------------------------------------------
-
-// SRD weapon table uses "Adjective, Noun" format; generators use "Noun Adjective"
+/** SRD weapon table uses "Adjective, Noun" format; generators use "Noun Adjective" */
 const DEFAULT_WEAPON_NAME_MAP: Record<string, string> = {
   "Dagger, punching": "Punching Dagger",
   "Gauntlet, spiked": "Spiked Gauntlet",
@@ -36,7 +32,7 @@ const DEFAULT_WEAPON_NAME_MAP: Record<string, string> = {
   "Shuriken (5)": "Shuriken",
 };
 
-// SRD armor table uses short names; generators use full names
+/** SRD armor table uses short names; generators use full names */
 const DEFAULT_ARMOR_NAME_MAP: Record<string, string> = {
   Padded: "Padded Armor",
   Leather: "Leather Armor",
@@ -56,7 +52,7 @@ const DEFAULT_ARMOR_NAME_MAP: Record<string, string> = {
   "Shield, tower": "Tower Shield",
 };
 
-// SRD weapons that shouldn't become item entries
+/** SRD weapons that shouldn't become item entries */
 const DEFAULT_WEAPON_SKIPS = new Set([
   "Unarmed strike",
   "Shield, light",
@@ -66,7 +62,7 @@ const DEFAULT_WEAPON_SKIPS = new Set([
   "Spiked shield, heavy",
 ]);
 
-// SRD armor extras that aren't standalone equipment
+/** SRD armor extras that aren't standalone equipment */
 const DEFAULT_ARMOR_SKIPS = new Set(["Armor spikes", "Gauntlet, locked", "Shield spikes"]);
 
 const TABLE_CATEGORIES: Record<string, string> = {
@@ -79,14 +75,10 @@ const TABLE_CATEGORIES: Record<string, string> = {
   tableTransport: "Transport",
 };
 
-// Ammunition — not equippable weapons
+/** Ammunition — not equippable weapons */
 function isAmmunition(name: string): boolean {
   return /^(Arrows|Bolts|Bullets)\b/.test(name);
 }
-
-// ---------------------------------------------------------------------------
-// Detection
-// ---------------------------------------------------------------------------
 
 function resolveArmorName(srdName: string, overrideNameMap?: Record<string, string>): string {
   if (overrideNameMap?.[srdName]) return overrideNameMap[srdName];
@@ -99,10 +91,6 @@ function resolveWeaponName(srdName: string, overrideNameMap?: Record<string, str
   if (DEFAULT_WEAPON_NAME_MAP[srdName]) return DEFAULT_WEAPON_NAME_MAP[srdName];
   return srdName;
 }
-
-// ---------------------------------------------------------------------------
-// Cost / weight parsing
-// ---------------------------------------------------------------------------
 
 export function parseCost(cost: string): string {
   if (!cost || cost === "—" || cost === "-") return "0";

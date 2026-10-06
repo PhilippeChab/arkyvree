@@ -1,4 +1,5 @@
 /** What a file imports: each import's target in the repo, and whether it brings types only. */
+
 import path from "node:path";
 
 /** Whether an import brings in types only: `import type`, or every specifier `type`. */

@@ -10,6 +10,7 @@
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
+
 import { repoPath } from "./paths.mjs";
 
 const SKIPPING = new Set(["skip", "only", "todo", "skipIf", "if", "failing", "fixme"]);

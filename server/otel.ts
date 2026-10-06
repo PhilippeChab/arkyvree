@@ -15,13 +15,14 @@ let meterProvider: MeterProvider | null = null;
 let loggerProvider: LoggerProvider | null = null;
 let hostMetrics: HostMetrics | null = null;
 
-// Initializes OTLP metrics + logs push to Better Stack via
-// OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_AUTH_TOKEN. No-op if either unset.
-//
-// Traces deliberately omitted: Bun's runtime currently doesn't reliably
-// export spans (oven-sh/bun#3775, oven-sh/bun#26536). @hono/otel still runs
-// with disableTracing=true so its HTTP request-duration histogram + active
-// requests counter are recorded — we just skip span creation.
+/**
+ * Initializes OTLP metrics + logs push to Better Stack via OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_AUTH_TOKEN. No-op if
+ * either unset.
+ *
+ * Traces deliberately omitted: Bun's runtime currently doesn't reliably export spans (oven-sh/bun#3775,
+ * oven-sh/bun#26536). @hono/otel still runs with disableTracing=true so its HTTP request-duration histogram + active
+ * requests counter are recorded — we just skip span creation.
+ */
 export function initOtel(component: "web" | "worker") {
   if (initialized) return;
   const token = readEnv("OTEL_AUTH_TOKEN");
@@ -60,7 +61,7 @@ export function initOtel(component: "web" | "worker") {
   initialized = true;
 }
 
-// Drains in-flight metric/log batches before process exit.
+/** Drains in-flight metric/log batches before process exit. */
 export async function stopOtel(): Promise<void> {
   await Promise.allSettled([meterProvider?.shutdown(), loggerProvider?.shutdown()]);
 }

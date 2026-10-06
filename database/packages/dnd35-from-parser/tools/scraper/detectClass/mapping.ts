@@ -1,0 +1,434 @@
+/** A class reference's mapping: its initial section, and where its features' occurrences go. */
+
+import { CHOICE_PATTERN } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/aptitudePicks.ts";
+import {
+  buildFeatureMap,
+  featureBaseName,
+  normalizeFeatureName,
+  ORDINAL_PREFIX,
+  parsePoolSubOptions,
+  stripOrdinalPrefix,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/features.ts";
+import { detectWAPModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/proficiencies.ts";
+import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
+import {
+  lookupWithPluralVariants,
+  matchesWithPluralVariants,
+  normalizeWs,
+} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { type ClassReference, type NamedText } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { stripSeparators } from "@/shared/text.ts";
+
+/** A class reference's initial mapping section. */
+export function buildInitialMapping(
+  raw: ClassReference["raw"],
+  detected: ClassReference["detected"],
+): ClassReference["mapping"] {
+  const features: ClassReference["mapping"]["features"] = {};
+
+  // Build a set of pool feature names (from detected aptitudePicks)
+  // These are features whose description contains selectable sub-options
+  const poolFeatureNames = new Set<string>();
+  const poolAptitudes = new Map<string, { aptitude: string; level: number; stackable?: true }>();
+
+  if (detected.aptitudePicks) {
+    const classSlug = stripSeparators(raw.name);
+    // Build a map of class feature descriptions by lowercase name
+    const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf);
+
+    for (const pick of detected.aptitudePicks) {
+      // Extract feature slug from target: "aptitudes.roguespecialability.allowed" → "roguespecialability"
+      const slugMatch = pick.target.match(/^aptitudes\.(.+)\.allowed$/);
+      if (!slugMatch) continue;
+      const pickSlug = slugMatch[1].replace(new RegExp(`^${classSlug}`), "");
+
+      // Find the matching feature occurrence
+      const occ = detected.featureOccurrences.find((fo) => {
+        const featureSlug = stripSeparators(fo.name);
+        return featureSlug === pickSlug;
+      });
+      if (!occ) continue;
+
+      // Find the raw class feature description
+      const cf = lookupWithPluralVariants(descMap, occ.name);
+      if (!cf) continue;
+
+      const normalizedDesc = normalizeWs(cf.description);
+
+      // Check for choice language — this is a pool feature if description mentions selection
+      if (!CHOICE_PATTERN.test(normalizedDesc)) continue;
+
+      const aptName = `${raw.name} ${occ.name}`;
+      const minLevel = Math.min(...occ.levels);
+
+      const parsed = parsePoolSubOptions(normalizedDesc);
+      const hasInlineSubs = parsed && parsed.options.length >= 2;
+
+      if (hasInlineSubs) {
+        for (const opt of parsed.options) {
+          poolAptitudes.set(opt.name, {
+            aptitude: aptName,
+            level: minLevel,
+            ...(opt.stackable ? { stackable: true } : {}),
+          });
+        }
+      }
+
+      // Only treat as a pool feature if it has inline sub-options;
+      // orphan sub-options are detected below and will add to poolFeatureNames then
+      if (hasInlineSubs) {
+        poolFeatureNames.add(cf.name.toLowerCase());
+        poolFeatureNames.add(occ.name.toLowerCase());
+      }
+
+      // Store aptitude info for orphan sub-option detection
+      // Always set this — even without inline subs, orphan detection needs it
+      // (e.g. Stonelord Stone Power has sub-options as separate classFeatures)
+      poolAptitudes.set(`__pool__${cf.name.toLowerCase()}`, { aptitude: aptName, level: minLevel });
+    }
+  }
+
+  // Build a set of feature names that appear in the progression table
+  // (used to detect "orphan" classFeature entries that are pool sub-options)
+  const progressionFeatureNames = new Set<string>();
+  for (const row of raw.progression) {
+    for (const special of row.special) {
+      if (special) progressionFeatureNames.add(normalizeFeatureName(special).toLowerCase());
+    }
+  }
+
+  // Detect orphan sub-options: classFeature entries that follow a pool parent
+  // and don't appear in the progression table (e.g. Stonelord's Stone Power sub-options)
+  // Use poolAptitudes __pool__ entries (broader than poolFeatureNames which only has inline-sub features)
+  const orphanSubOptions = new Map<string, NamedText[]>();
+  for (let i = 0; i < raw.classFeatures.length; i++) {
+    const cf = raw.classFeatures[i];
+    const baseName = featureBaseName(cf.name);
+    if (
+      !poolAptitudes.has(`__pool__${cf.name.toLowerCase()}`) &&
+      !poolAptitudes.has(`__pool__${baseName.toLowerCase()}`)
+    )
+      continue;
+
+    // This is a pool parent — check if it has inline sub-options
+    const normalizedDesc = normalizeWs(cf.description);
+    const parsed = parsePoolSubOptions(normalizedDesc);
+    if (parsed && parsed.options.length >= 2) continue; // Handled by inline parsing
+
+    // No inline sub-options — collect orphan features that follow
+    const orphans: NamedText[] = [];
+    for (let j = i + 1; j < raw.classFeatures.length; j++) {
+      const next = raw.classFeatures[j];
+      const nextBase = featureBaseName(next.name);
+      const nextNorm = normalizeFeatureName(nextBase).toLowerCase();
+      // Stop when we hit a feature that appears in the progression table
+      if (progressionFeatureNames.has(nextNorm) || progressionFeatureNames.has(nextBase.toLowerCase())) break;
+      // Skip "Weapon and Armor Proficiency" — it's not a sub-option
+      if (nextBase.toLowerCase() === "weapon and armor proficiency") continue;
+      orphans.push({ name: nextBase, description: normalizeWs(next.description) });
+    }
+    if (orphans.length >= 2) {
+      orphanSubOptions.set(baseName.toLowerCase(), orphans);
+      poolFeatureNames.add(cf.name.toLowerCase());
+      poolFeatureNames.add(baseName.toLowerCase());
+    }
+  }
+
+  // Detect table-based sub-options: "table: X" → "X: Y" features
+  // e.g. "table: Loremaster Secrets" followed by "Loremaster Secrets: Instant Mastery" etc.
+  const tableSkipNames = new Set<string>();
+  for (let i = 0; i < raw.classFeatures.length; i++) {
+    const cf = raw.classFeatures[i];
+    if (!cf.name.startsWith("table: ")) continue;
+    const tableName = cf.name.replace(/^table:\s*/, "");
+    tableSkipNames.add(cf.name.toLowerCase()); // skip the "table: X" feature itself
+
+    // Find matching pool parent by checking if table slug ends with pool parent slug
+    let matchedParent: string | undefined;
+    for (const [key] of poolAptitudes) {
+      if (!key.startsWith("__pool__")) continue;
+      const parentSlug = key.replace("__pool__", "");
+      const tableSlug = stripSeparators(tableName);
+      if (tableSlug.endsWith(parentSlug) || tableSlug.endsWith(parentSlug + "s")) {
+        matchedParent = parentSlug;
+        break;
+      }
+    }
+    if (!matchedParent) continue;
+
+    // Collect prefixed sub-option features
+    const prefix = tableName + ": ";
+    const orphans: NamedText[] = [];
+    for (let j = i + 1; j < raw.classFeatures.length; j++) {
+      const next = raw.classFeatures[j];
+      if (!next.name.startsWith(prefix)) break;
+      const subName = next.name.substring(prefix.length);
+      orphans.push({ name: subName, description: normalizeWs(next.description) });
+      tableSkipNames.add(next.name.toLowerCase());
+    }
+
+    if (orphans.length >= 2) {
+      orphanSubOptions.set(matchedParent, orphans);
+      poolFeatureNames.add(matchedParent);
+    }
+  }
+
+  for (const cf of raw.classFeatures) {
+    const baseName = featureBaseName(cf.name);
+
+    // Skip "Table:" entries — not class features
+    if (baseName.startsWith("Table:")) continue;
+    // Skip table features and their sub-options — handled via orphan sub-option detection
+    if (tableSkipNames.has(cf.name.toLowerCase())) continue;
+
+    // If this is a pool feature, skip it and add its sub-options instead
+    if (poolFeatureNames.has(cf.name.toLowerCase()) || poolFeatureNames.has(baseName.toLowerCase())) {
+      const normalizedDesc = normalizeWs(cf.description);
+      const baseSlug = stripSeparators(baseName);
+      const poolOcc = detected.featureOccurrences.find((fo) =>
+        matchesWithPluralVariants(stripSeparators(fo.name), baseSlug),
+      );
+      const poolLevel = poolOcc ? Math.min(...poolOcc.levels) : 1;
+      const poolStackable = poolOcc && poolOcc.levels.length > 1 ? true : undefined;
+
+      features[baseName] = {
+        seedName: `${baseName} (${raw.name})`,
+        description: normalizedDesc,
+        level: poolLevel,
+        ...(poolStackable ? { stackable: true } : {}),
+        // No aptitude pick modifier here — aptitudePicks already handles it at runtime
+      };
+      const parsed = parsePoolSubOptions(normalizedDesc);
+      if (parsed) {
+        for (const opt of parsed.options) {
+          const pool = poolAptitudes.get(opt.name);
+          if (!pool) continue;
+          features[opt.name] = {
+            description: opt.description,
+            aptitude: pool.aptitude,
+            selectable: true,
+            ...(pool.stackable ? { stackable: true } : {}),
+            level: pool.level,
+          };
+        }
+      }
+
+      // Fallback: orphan sub-options (separate classFeature entries)
+      const orphans = orphanSubOptions.get(baseName.toLowerCase());
+      if (orphans) {
+        const poolInfo =
+          poolAptitudes.get(`__pool__${baseName.toLowerCase()}`) ??
+          poolAptitudes.get(`__pool__${cf.name.toLowerCase()}`);
+        if (poolInfo) {
+          for (const orphan of orphans) {
+            features[orphan.name] = {
+              description: orphan.description,
+              aptitude: poolInfo.aptitude,
+              selectable: true,
+              level: poolInfo.level,
+            };
+          }
+        }
+      }
+      continue;
+    }
+
+    // Skip orphan features — they were already added as sub-options above
+    const isOrphan = [...orphanSubOptions.values()].some((orphans) =>
+      orphans.some((o) => o.name.toLowerCase() === baseName.toLowerCase()),
+    );
+    if (isOrphan) continue;
+
+    // Find occurrences for this feature
+    const baseNameLower = baseName.toLowerCase();
+    const baseWords = new Set(baseNameLower.split(/\s+/));
+    const occ =
+      detected.featureOccurrences.find((fo) => fo.name.toLowerCase() === baseNameLower) ??
+      // Substring containment: occurrence contains feature name or vice versa
+      // Handles ordinal prefix ("1st Favored Enemy"), frequency suffix ("Remove Disease 1/Week"),
+      // variant suffix ("Bear Form (Black)"), level suffix ("Song Of Celerity (2nd)"),
+      // class suffix ("Fiendslaying (Knight Of The Chalice)")
+      detected.featureOccurrences.find(
+        (fo) => fo.name.toLowerCase().includes(baseNameLower) || baseNameLower.includes(fo.name.toLowerCase()),
+      ) ??
+      // Word-subset: all words of one name appear in the other
+      // Handles extra-word mismatches like "Save Against Poison" vs "Save Bonus against Poison"
+      detected.featureOccurrences.find((fo) => {
+        const foWords = new Set(fo.name.toLowerCase().split(/\s+/));
+        return [...foWords].every((w) => baseWords.has(w)) || [...baseWords].every((w) => foWords.has(w));
+      });
+    // Collect variant occurrences: same feature appearing at multiple levels under different names
+    // Match only true variants (suffix/prefix patterns), not unrelated features containing the name
+    // e.g. "Bear Form (Black)" is a variant of "Bear Form", but "Improved Evasion" is NOT a variant of "Evasion"
+    const variantOccs = detected.featureOccurrences.filter((fo) => {
+      if (fo === occ) return false;
+      const foLower = fo.name.toLowerCase();
+      // Occurrence starts with base name (handles suffixes like "(Black)", "1/Week", "(2nd)")
+      if (foLower.startsWith(baseNameLower + " ") || foLower.startsWith(baseNameLower + "(")) return true;
+      // Occurrence has ordinal prefix before base name (handles "1st Favored Enemy", "2nd Favored Enemy")
+      if (ORDINAL_PREFIX.test(foLower) && stripOrdinalPrefix(foLower) === baseNameLower) return true;
+      return false;
+    });
+    // Stackable if single occurrence spans multiple levels OR total occurrences > 1
+    const totalOccurrences = (occ ? 1 : 0) + variantOccs.length;
+    const stackable = (occ && occ.levels.length > 1) || totalOccurrences > 1 ? true : undefined;
+
+    // Detect spell feature level from spell table (first non-empty row)
+    const spellFeatureLevel =
+      /^spells$/i.test(baseName) && detected.spellsPerDay
+        ? detected.spellsPerDay.findIndex((row) => row.length > 0) + 1
+        : 0;
+
+    // Use occ's levels if found, otherwise union of all variant occurrence levels
+    const allLevels = occ
+      ? [...occ.levels, ...variantOccs.flatMap((vo) => vo.levels)]
+      : variantOccs.flatMap((vo) => vo.levels);
+    const level = allLevels.length > 0 ? Math.min(...allLevels) : spellFeatureLevel || 1; // Features not in progression table are available from level 1
+
+    const normalizedDesc = normalizeWs(cf.description);
+    const { modifiers } = detectModifiers(normalizedDesc);
+    const wapMods = baseName === "Weapon and Armor Proficiency" ? detectWAPModifiers(normalizedDesc) : [];
+    const allModifiers = [...wapMods, ...modifiers];
+
+    features[baseName] = {
+      seedName: `${baseName} (${raw.name})`,
+      description: normalizedDesc,
+      level,
+      stackable,
+      ...(allModifiers.length > 0 ? { modifiers: allModifiers } : {}),
+    };
+  }
+
+  // Add aptitude pick modifiers to features that have matching picks
+  // (e.g. Fighter's "Bonus Feats", Rogue's "Special Abilities")
+  // The feat owns the modifier; aptitudePicks that duplicate these are stripped by buildSeeds.
+  if (detected.aptitudePicks) {
+    const classSlug = stripSeparators(raw.name);
+    for (const pick of detected.aptitudePicks) {
+      const slugMatch = pick.target.match(/^aptitudes\.(.+)\.allowed$/);
+      if (!slugMatch) continue;
+      const pickSlug = slugMatch[1];
+
+      // Find the feature whose name matches this pick slug
+      for (const [key, feat] of Object.entries(features)) {
+        // Skip features that already have an aptitude pick modifier
+        if (feat.modifiers?.some((m) => m.target === pick.target)) continue;
+
+        const keySlug = stripSeparators(key);
+        const featureSlug = `${classSlug}${keySlug}`;
+        // Match with class prefix (per-class aptitude) OR direct (shared
+        // aptitude — slug doesn't start with classSlug, e.g.
+        // aptitudes.favoredenemy.allowed). The shared branch is gated on
+        // the prefix check to avoid matching "combatstyle" across classes.
+        const matches =
+          matchesWithPluralVariants(featureSlug, pickSlug) ||
+          (!pickSlug.startsWith(classSlug) && matchesWithPluralVariants(keySlug, pickSlug));
+        if (matches) {
+          // If per-level bonusFeatLists exist for this pick, the feat will be split
+          // into per-level variants — don't mark stackable (e.g. Monk Bonus Feat).
+          // Otherwise keep the auto-detected stackable (e.g. Fighter Bonus Feats).
+          const hasPerLevelLists = detected.bonusFeatLists?.some(
+            (l) => l.levels && l.levels.some((lv) => pick.levels.includes(lv)),
+          );
+          if (hasPerLevelLists) feat.stackable = undefined;
+          // Add the aptitude pick modifier
+          if (!feat.modifiers) feat.modifiers = [];
+          feat.modifiers.push({
+            target: pick.target,
+            operator: "add" as const,
+            value: "1",
+            valueType: "number" as const,
+          });
+          break;
+        }
+      }
+    }
+  }
+
+  const mapping: ClassReference["mapping"] = {
+    classFeatureAptitude: `${raw.name} Class Feature`,
+    features,
+  };
+
+  // Auto-populate spells from detected data
+  if (detected.spellsPerDay) {
+    // The aptitude "<Class> Spells" as a path names it
+    const slug = stripSeparators(raw.name) + "spells";
+    mapping.spells = {
+      slug,
+      ...(!raw.hasCantrips ? { noCantrips: true } : {}),
+      perDay: detected.spellsPerDay,
+      ...(detected.spellsKnown ? { known: detected.spellsKnown } : { knowAll: true }),
+    };
+  }
+
+  // Auto-populate bonusSpellAbility from raw or class feature descriptions
+  if (raw.bonusSpellAbility) {
+    mapping.bonusSpellAbility = raw.bonusSpellAbility;
+  } else {
+    for (const cf of raw.classFeatures) {
+      const m =
+        cf.description.match(
+          /must have (?:a |an )?(Intelligence|Wisdom|Charisma) score (?:equal to )?(?:at )?least 10/i,
+        ) ?? cf.description.match(/bonus spells for a high (Intelligence|Wisdom|Charisma)/i);
+      if (m) {
+        mapping.bonusSpellAbility = m[1];
+        break;
+      }
+    }
+  }
+
+  return mapping;
+}
+
+/** Build a map from every feature occurrence name to its mapping key.
+ *  Handles direct matches, variant suffixes/prefixes, and aliases. */
+export function buildOccurrenceMap(
+  features: ClassReference["mapping"]["features"],
+  featureOccurrences: ClassReference["detected"]["featureOccurrences"],
+): Record<string, string> {
+  const occurrenceMap: Record<string, string> = {};
+
+  for (const [key, feat] of Object.entries(features)) {
+    const keyLower = key.toLowerCase();
+    const aliasLower = new Set(feat.aliases?.map((a) => a.toLowerCase()) ?? []);
+
+    for (const fo of featureOccurrences) {
+      if (fo.name in occurrenceMap) continue;
+      const foLower = fo.name.toLowerCase();
+      // Direct match
+      if (foLower === keyLower) {
+        occurrenceMap[fo.name] = key;
+        continue;
+      }
+      // Alias match
+      if (aliasLower.has(foLower)) {
+        occurrenceMap[fo.name] = key;
+        continue;
+      }
+      // Variant: occurrence starts with key name (suffix like "(Magic)", "Any Distance")
+      if (foLower.startsWith(keyLower + " ") || foLower.startsWith(keyLower + "(")) {
+        occurrenceMap[fo.name] = key;
+        continue;
+      }
+      // Variant: ordinal prefix ("1st Favored Enemy" → "Favored Enemy")
+      if (ORDINAL_PREFIX.test(foLower) && stripOrdinalPrefix(foLower) === keyLower) {
+        occurrenceMap[fo.name] = key;
+        continue;
+      }
+      // Plural match ("Bonus Feat" ↔ "Bonus Feats")
+      if (matchesWithPluralVariants(foLower, keyLower)) {
+        occurrenceMap[fo.name] = key;
+        continue;
+      }
+      // Key starts with occurrence name (occurrence is a truncated version of key)
+      // Handles "Rage +" matching "Rage +1/Day"
+      if (keyLower.startsWith(foLower)) {
+        occurrenceMap[fo.name] = key;
+        continue;
+      }
+    }
+  }
+
+  return occurrenceMap;
+}

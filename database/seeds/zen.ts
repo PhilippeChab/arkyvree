@@ -1,6 +1,6 @@
 import type { CharacterSeed } from "@/database/seeds/helpers.ts";
 
-// Human Monk 3 — Skills: (4+0+1)*4 + (4+0+1)*2 = 30
+/** Human Monk 3 — Skills: (4+0+1)*4 + (4+0+1)*2 = 30 */
 export default {
   raceName: "Human",
   name: "Zen Whitepetal",
