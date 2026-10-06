@@ -37,7 +37,11 @@ async function main() {
   if (noCache) args.splice(noCacheIdx, 1);
 
   const delayIdx = args.indexOf("--delay");
-  const delay = delayIdx >= 0 ? parseInt(args[delayIdx + 1], 10) : undefined;
+  const delay = delayIdx >= 0 ? Number(args[delayIdx + 1]) : undefined;
+  if (delay !== undefined && !(Number.isInteger(delay) && delay >= 0)) {
+    console.error(`--delay takes a whole number of milliseconds, not "${args[delayIdx + 1]}"`);
+    process.exit(1);
+  }
   if (delayIdx >= 0) args.splice(delayIdx, 2);
 
   if (args.length < 1) {
@@ -50,7 +54,7 @@ async function main() {
   const url = urlIdx >= 0 ? args[urlIdx + 1] : undefined;
   const bookIdx = args.indexOf("--book");
   const book = bookIdx >= 0 ? args[bookIdx + 1] : "srd";
-  const scraper = new Scraper(book, new HttpClient({ noCache, ...(delay ? { delay } : {}) }));
+  const scraper = new Scraper(book, new HttpClient({ noCache, ...(delay !== undefined ? { delay } : {}) }));
 
   if (type === "class") {
     if (url) {

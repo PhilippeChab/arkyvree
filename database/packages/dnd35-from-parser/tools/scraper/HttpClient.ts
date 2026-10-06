@@ -26,12 +26,32 @@ export class HttpClient {
   /** When the last request was sent, which the next one waits `delay` after. */
   private lastRequestTime = 0;
 
+  /** The last request's turn to be sent, which the next one's waits for. */
+  private lastTurn: Promise<void> = Promise.resolve();
+
   private cacheKey(url: string): string {
     return createHash("sha256").update(url).digest("hex");
   }
 
   private cachePath(url: string): string {
     return join(CACHE_DIR, `${this.cacheKey(url)}.html`);
+  }
+
+  /**
+   * Waits for this request's turn: `delay` after the request before it. Requests made together (`Promise.all`) wait in
+   * turn, each `delay` after the one before, rather than all at once after the first.
+   */
+  private rateLimit(): Promise<void> {
+    const turn = this.lastTurn.then(async () => {
+      const delay = this.options.delay ?? 200;
+      const elapsed = Date.now() - this.lastRequestTime;
+      if (elapsed < delay) {
+        await new Promise((resolve) => setTimeout(resolve, delay - elapsed));
+      }
+      this.lastRequestTime = Date.now();
+    });
+    this.lastTurn = turn;
+    return turn;
   }
 
   private readCache(url: string): string | null {
@@ -51,15 +71,6 @@ export class HttpClient {
 
     mkdirSync(CACHE_DIR, { recursive: true });
     writeFileSync(this.cachePath(url), html);
-  }
-
-  private async rateLimit(): Promise<void> {
-    const delay = this.options.delay ?? 200;
-    const elapsed = Date.now() - this.lastRequestTime;
-    if (elapsed < delay) {
-      await new Promise((resolve) => setTimeout(resolve, delay - elapsed));
-    }
-    this.lastRequestTime = Date.now();
   }
 
   /**
