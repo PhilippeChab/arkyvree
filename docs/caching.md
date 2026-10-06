@@ -154,7 +154,7 @@ Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`,
 
 - **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateItem` / `createVariants` and `ModifiersService.duplicateModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow/index.ts` doesn't export.
 - **Extensions** (`RulesetExtensionsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
-- **Override map**: `buildOverrideMap`, called only inside `cow/` (`getOrBuildCowData`, `cowEntity`).
+- **Override map**: `buildOverrideMap`, called only by copy-on-write: its read side (`getOrBuildCowData`, `cache/rulesetCache/cowData.ts`) and its write side (`cowEntity`, `server/cow/`).
 - **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`getOrBuildCowData`, `cowEntity`) and target-path cache keys.
 - **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `RulesetCache.getData`, `invalidateCowData`, `invalidateAllCowData`.
 - **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `resolveOverrides`.
