@@ -15,7 +15,7 @@ interface PageErrorProps {
 export function PageError({ message, backLabel, backTo }: PageErrorProps) {
   return (
     <Section>
-      <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
+      <Stack spacing={3} sx={{ alignItems: "center", textAlign: "center" }}>
         <Typography component="h1" role="alert" variant="h3" sx={{ color: "error.main" }}>
           {message}
         </Typography>

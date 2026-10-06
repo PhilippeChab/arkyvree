@@ -58,10 +58,11 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={1}>
       <Stack
         {...toggleProps(open, () => setOpen((prev) => !prev))}
         direction="row"
+        spacing={1}
         sx={{ alignItems: "center", justifyContent: "space-between", ...CLICKABLE_SX }}
       >
         <Typography component="h3" variant="h6">

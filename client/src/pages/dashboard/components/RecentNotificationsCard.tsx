@@ -49,7 +49,7 @@ export function RecentNotificationsCard() {
           description="Notifications from your campaigns and collaborators will appear here."
         />
       ) : (
-        <Stack spacing={1.5}>
+        <Stack spacing={1}>
           {items.map((notification, index) => {
             const actionable = actions.isActionable(notification);
             const openable = actions.isOpenable(notification);
@@ -59,7 +59,7 @@ export function RecentNotificationsCard() {
                 key={notification.id}
                 {...(openable && clickableProps(() => actions.open(notification)))}
                 direction="row"
-                spacing={2}
+                spacing={1}
                 sx={{
                   justifyContent: "space-between",
                   alignItems: "center",

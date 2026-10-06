@@ -81,7 +81,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <br />
               Something broke unexpectedly.
             </Typography>
-            <Stack direction="row" spacing={2}>
+            <Stack direction="row" spacing={1}>
               <Button
                 variant="outlined"
                 onClick={() => {

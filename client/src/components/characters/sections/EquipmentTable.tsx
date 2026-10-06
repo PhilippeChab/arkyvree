@@ -110,12 +110,11 @@ export function EquipmentTable<T extends EquipmentTableRow>({
         // Each figure wraps as a whole on narrow screens.
         <Stack
           direction="row"
+          spacing={1}
           sx={{
             flexWrap: "wrap",
             justifyContent: "flex-end",
             alignItems: "center",
-            columnGap: 2,
-            rowGap: 0.5,
             whiteSpace: "nowrap",
           }}
         >

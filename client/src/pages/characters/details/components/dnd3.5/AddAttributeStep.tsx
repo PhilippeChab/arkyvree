@@ -23,7 +23,7 @@ export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
   }
 
   return (
-    <Stack spacing={1.5}>
+    <Stack spacing={3}>
       {abilityIncreaseLevels.map((index) => {
         const detail = levelDetails[index];
         const selected = abilityIncreases[index] ?? null;

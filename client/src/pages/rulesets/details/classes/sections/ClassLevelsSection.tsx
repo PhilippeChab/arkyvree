@@ -76,7 +76,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
         return <Typography variant="body2">{level.skills}</Typography>;
       case "feats":
         return (
-          <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
             {level.feats && level.feats.length > 0 ? (
               level.feats.map((feat) => {
                 const suffix = className ? ` (${className})` : "";
@@ -99,7 +99,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
 
   return (
     <Stack spacing={3}>
-      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+      <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
         <Typography component="h2" variant="h5">
           Class Levels
         </Typography>

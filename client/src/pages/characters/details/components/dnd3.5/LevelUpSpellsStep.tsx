@@ -182,14 +182,14 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
             selectedPowerLevel != null ? (selectedPowerLevel === 0 ? "Cantrip" : `Level ${selectedPowerLevel}`) : "";
 
           return (
-            <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
+            <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
               {/* Selected Spells (always reserve space) */}
               <Box sx={{ flexShrink: 0 }}>
                 <Typography component="p" variant="subtitle2" gutterBottom>
                   Selected {currentPool?.name}
                   {levelLabel ? ` ${levelLabel}` : ""} Spells ({levelPowers.length}/{poolAvailable}):
                 </Typography>
-                <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
+                <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
                   {levelPowers.length > 0
                     ? levelPowers.map((power) => (
                         <TagChip

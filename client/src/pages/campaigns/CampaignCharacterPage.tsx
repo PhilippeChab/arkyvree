@@ -67,7 +67,7 @@ export default function CampaignCharacterPage() {
           spacing={1}
           sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
         >
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
             <IconButton aria-label="Back" component={Link} to={`/campaigns/${campaignId}`}>
               <BackIcon />
             </IconButton>

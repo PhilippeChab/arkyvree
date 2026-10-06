@@ -14,7 +14,7 @@ interface InviteActionButtonsProps {
 export function InviteActionButtons({ onAccept, onReject, disabled, prominent = false }: InviteActionButtonsProps) {
   const size = prominent ? "medium" : "small";
   return (
-    <Stack direction="row" spacing={prominent ? 2 : 1}>
+    <Stack direction="row" spacing={1}>
       <Button
         size={size}
         fullWidth={prominent}

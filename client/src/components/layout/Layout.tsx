@@ -268,7 +268,7 @@ export function Layout() {
             <AppBrand />
           </Typography>
 
-          <Stack direction="row" spacing={{ xs: 0.5, sm: 2 }} sx={{ alignItems: "center", flexShrink: 0 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexShrink: 0 }}>
             {!isDemo && <FeedbackButton />}
             {!isDemo && <NotificationBell />}
             {!isDemo && (

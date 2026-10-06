@@ -11,7 +11,7 @@ interface SkeletonPanelProps {
 function SkeletonPanel({ index, children }: SkeletonPanelProps) {
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 }, ...fadeInUpSx(index) }}>
-      <Stack spacing={2}>{children}</Stack>
+      <Stack spacing={3}>{children}</Stack>
     </Paper>
   );
 }
@@ -36,7 +36,7 @@ export function CharacterDetailSkeleton() {
       <Stack spacing={3}>
         {/* Header bar */}
         <SkeletonPanel index={0}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <Skeleton variant="circular" width={40} height={40} />
             <Skeleton variant="text" width="40%" height={36} />
           </Stack>
@@ -65,7 +65,7 @@ export function CharacterDetailSkeleton() {
         {/* Combat & saves */}
         <SkeletonPanel index={3}>
           <Skeleton variant="text" width="25%" height={28} />
-          <Stack spacing={1.5}>
+          <Stack spacing={1}>
             <Skeleton variant="rounded" height={24} width="80%" />
             <Skeleton variant="rounded" height={24} width="65%" />
             <Skeleton variant="rounded" height={24} width="70%" />

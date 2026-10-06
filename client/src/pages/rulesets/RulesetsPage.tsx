@@ -119,7 +119,7 @@ function RulesetList({ filters }: RulesetListProps) {
               description={ruleset.description}
               corner={
                 ruleset.isStarrable && (
-                  <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
+                  <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                     {ruleset.starCount > 0 && (
                       <Typography
                         variant="caption"

@@ -271,7 +271,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
     <Section>
       <Accordion defaultExpanded={false} disableGutters elevation={0} sx={accordionSx}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={summarySx}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <Typography component="h2" variant="h5">
               Diagnostics
             </Typography>
@@ -298,7 +298,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
 
             {/* Requirements System Status */}
             <Stack spacing={1}>
-              <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography component="h3" variant="h6">
                   Requirements
                 </Typography>
@@ -319,7 +319,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
 
             {/* Modifier System Status */}
             <Stack spacing={1}>
-              <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography component="h3" variant="h6">
                   Modifiers
                 </Typography>

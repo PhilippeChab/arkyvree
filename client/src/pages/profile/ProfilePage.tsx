@@ -213,7 +213,7 @@ export default function ProfilePage() {
       <Section title="Basic Information">
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          spacing={{ xs: 2, sm: 4 }}
+          spacing={3}
           sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
         >
           <AttachmentField recordType="User" recordId={userData?.id} name="avatar" variant="avatar" size={140} />
@@ -251,10 +251,10 @@ export default function ProfilePage() {
         <Stack spacing={1}>
           <Stack
             direction="row"
-            spacing={2}
+            spacing={1}
             sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}
           >
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <Typography>Google</Typography>
               {isGoogleLinked && <TagChip tag={{ label: "Linked", color: "success" }} />}
             </Stack>

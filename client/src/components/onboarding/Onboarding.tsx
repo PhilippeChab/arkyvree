@@ -326,7 +326,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   );
 
   const navButtons = (
-    <Stack direction="row" sx={{ alignItems: "center", px: 3, pb: 3, pt: 2 }}>
+    <Stack direction="row" spacing={1} sx={{ alignItems: "center", px: 3, pb: 3, pt: 2 }}>
       <Button onClick={onClose} color="inherit" sx={{ opacity: 0.7 }}>
         Skip
       </Button>

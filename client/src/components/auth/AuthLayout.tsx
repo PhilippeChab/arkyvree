@@ -28,10 +28,9 @@ function AuthFooterLinks() {
   return (
     <Stack
       direction="row"
+      spacing={1}
       sx={{
         flexWrap: "wrap",
-        columnGap: { xs: 1, sm: 2 },
-        rowGap: 0.5,
         alignItems: "center",
         justifyContent: "center",
         width: "100%",
@@ -211,7 +210,7 @@ function MobileBranding() {
   return (
     <Stack
       direction="row"
-      spacing={2}
+      spacing={1}
       sx={{
         alignItems: "center",
         px: 2,

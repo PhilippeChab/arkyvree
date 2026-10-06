@@ -945,6 +945,40 @@ describe("frontend rules", () => {
     ]);
   });
 
+  test("a gap is a step of the ladder, by what it spaces: a row of buttons or chips 1, a group of panels 2", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/between.tsx": 'export const b = <Stack direction="row" spacing={1.5} />;\n',
+          "client/src/screens.tsx": "export const s = <Stack spacing={{ xs: 2, sm: 4 }} />;\n",
+          "client/src/none.tsx": "export const n = <Stack spacing={0} />;\n",
+          "client/src/grid.tsx": 'export const g = <Box sx={{ display: "grid", columnGap: 2, rowGap: 1.5 }} />;\n',
+          "client/src/computed.tsx": "export const c = <Stack spacing={gap} />;\n",
+          "client/src/chips.tsx":
+            'export const h = (\n  <Stack direction="row" spacing={0.5}>\n    {tags.map((t) => (\n      <TagChip key={t.label} tag={t} />\n    ))}\n  </Stack>\n);\n',
+          "client/src/buttons.tsx":
+            'export const u = (\n  <Stack direction="row" spacing={2}>\n    <Button>Retry</Button>\n    <Button>Back</Button>\n  </Stack>\n);\n',
+          "client/src/panels.tsx":
+            'export const p = (\n  <Stack spacing={3}>\n    <Section title="A">a</Section>\n    <Section title="B">b</Section>\n  </Stack>\n);\n',
+          "client/src/roles.tsx":
+            'export const r = (\n  <Stack spacing={2}>\n    {cards.map((c) => (\n      <Paper key={c} />\n    ))}\n    <Stack direction="row" spacing={1}>\n      <TagChip tag={a} />\n      <TagChip tag={b} />\n    </Stack>\n  </Stack>\n);\n',
+          "client/src/steps.tsx":
+            'export const t = (\n  <Stack spacing={3}>\n    <Stack direction="row" spacing={compact ? 0.5 : 1} />\n    <Stack spacing={open ? 2 : 0} />\n    <Box sx={{ display: "grid", gap: 1, columnGap: 4 }} />\n  </Stack>\n);\n',
+        },
+        ["spacing"],
+      ),
+    ).toEqual([
+      "spacing client/src/between.tsx",
+      "spacing client/src/buttons.tsx",
+      "spacing client/src/chips.tsx",
+      "spacing client/src/computed.tsx",
+      "spacing client/src/grid.tsx",
+      "spacing client/src/none.tsx",
+      "spacing client/src/panels.tsx",
+      "spacing client/src/screens.tsx",
+    ]);
+  });
+
   test("a Card is a card one opens; a panel is a Section", async () => {
     expect(
       await lintRepo(

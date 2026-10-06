@@ -317,7 +317,7 @@ export function EquipmentSection({
             isArchived
               ? undefined
               : (entry) => (
-                  <Stack direction="row" spacing={0} sx={{ justifyContent: "center" }}>
+                  <Stack direction="row" spacing={0.5} sx={{ justifyContent: "center" }}>
                     <IconButton size="small" aria-label={`Edit ${entry.name}`} onClick={() => handleEditItem(entry)}>
                       <EditIcon fontSize="small" />
                     </IconButton>

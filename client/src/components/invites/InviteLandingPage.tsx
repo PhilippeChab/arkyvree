@@ -213,7 +213,7 @@ export function InviteLandingPage({
     <PageBody width="sm">
       <Section>
         <Stack spacing={3}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <Avatar sx={{ width: 56, height: 56 }}>
               <Icon />
             </Avatar>

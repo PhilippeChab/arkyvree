@@ -29,7 +29,7 @@ export function AptitudeChipsCell({ links }: AptitudeChipsCellProps) {
     );
   }
   return (
-    <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
+    <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
       {links.toSorted(byListName).map((link) => (
         <TagChip key={link.aptitudeId} tag={aptitudeTag(link.aptitudesInRule?.name || "Unknown")} />
       ))}

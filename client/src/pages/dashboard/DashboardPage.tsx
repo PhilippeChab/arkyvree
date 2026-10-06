@@ -161,7 +161,7 @@ export default function DashboardPage() {
         />
 
         <Stack spacing={2} sx={{ alignItems: "flex-start", position: "relative" }}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             {/* Icon with radial glow */}
             <Stack
               direction="row"
@@ -229,7 +229,7 @@ export default function DashboardPage() {
 
       <GoldDivider />
 
-      <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap" }}>
+      <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
         <StatCard
           icon={CharactersIcon}
           count={dashboardStats?.totalCharacters ?? 0}

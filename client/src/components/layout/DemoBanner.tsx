@@ -24,7 +24,7 @@ export function DemoBanner() {
     <Stack direction="row" sx={{ position: "sticky", top: 0, zIndex: 1, justifyContent: "center", pt: 1.5, px: 2 }}>
       <Stack
         direction="row"
-        spacing={1.5}
+        spacing={1}
         sx={{
           alignItems: "center",
           py: 0.75,

@@ -187,7 +187,7 @@ export function AttachmentField({
                 e.stopPropagation();
                 pick();
               }}
-              spacing={0.75}
+              spacing={0.5}
               sx={{
                 position: "absolute",
                 inset: 0,

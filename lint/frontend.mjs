@@ -85,7 +85,8 @@
  *   marked `selected` (a filter, a sort, a visibility); a panel that opens from a button is a `Popover`.
  * - `spacing`: the gap between blocks is their `Stack`'s `spacing` (a page's blocks are a `PageBody`'s, a row's its
  *   `spacing` or a flex component's `gap`), never a block's own margin, on any side; an indent is padding, a heading's
- *   gutter `gutterBottom`. A margin only aligns (`auto`) or resets (`0`).
+ *   gutter `gutterBottom`. A margin only aligns (`auto`) or resets (`0`). A gap is a step of the ladder, by what it
+ *   spaces (`GAPS`): a row of buttons or chips is 1 apart, a group of panels or cards 2.
  * - `surfaces`: a panel of a page is a `Section` (a `Paper`, its padding, its title); a `Card` is a card one opens:
  *   `StyledCard`, or one holding a `CardActionArea`.
  * - `shadows`: a shadow is the theme's: an elevation (`boxShadow: 2`, `0` for none; a `Paper`, a `Card` or an
@@ -213,6 +214,16 @@ const FIELD_WRITES = new Set(["setValue", "resetField", "reset"]);
 /** The theme's font weights, as `sx` finds them (a CSS word, `"bold"`, would bypass the theme) */
 const FONT_WEIGHTS = new Set(["fontWeightBold", "fontWeightMedium", "fontWeightRegular"]);
 
+/** The style keys that set a gap between a flex or a grid container's children */
+const GAP_KEYS = new Set(["columnGap", "gap", "rowGap"]);
+
+/**
+ * The gaps between blocks, a step per what they space: the lines of one item (0.5), the items of a list or a row
+ * (1), the panels or cards of a group (2), a panel's blocks (3: a section's, a dialog's, a form's, a card's) and a
+ * page's (4)
+ */
+const GAPS = new Set([0.5, 1, 2, 3, 4]);
+
 /** The colors a heading may take: a state's, or what its banner gives it */
 const HEADING_COLORS = new Set(["common.white", "error.main", "inherit"]);
 
@@ -303,11 +314,17 @@ const MUI_TRANSITIONS = new Set(["Fade", "Grow", "Slide", "Zoom"]);
 /** The checks the browser makes of an input, which a `noValidate` form skips: a bound field's are its `rules` */
 const NATIVE_CHECKS = new Set(["max", "min", "pattern", "required"]);
 
+/** The surfaces a group lays side by side or stacks, 2 apart */
+const PANELS = new Set(["Accordion", "ListCard", "Paper", "Section", "StyledCard"]);
+
 /** The calls that hand an Autocomplete's picked value its chip's props */
 const PICKED_VALUE_PROPS = new Set(["getItemProps", "getTagProps"]);
 
 /** The requests an `rpc` endpoint makes. */
 const REQUEST_METHODS = new Set(["$get", "$post", "$put", "$patch", "$delete"]);
+
+/** What a row of items holds, 1 apart: buttons and chips */
+const ROW_ITEMS = new Set(["Button", "ChoiceChip", "TagChip"]);
 
 /** The shadow keys, and the helpers of `theme/shadows.ts` that give each one (a `filter`'s is `iconGlow`) */
 const SHADOW_HELPERS = {
@@ -935,7 +952,7 @@ function createFlexLayout(context) {
   return {
     Property(node) {
       const key = node.key.type === "Identifier" ? node.key.name : null;
-      if (key !== "display" && key !== "gap" && key !== "flexDirection") return;
+      if (key !== "display" && !GAP_KEYS.has(key) && key !== "flexDirection") return;
       const owner = node.parent.type === "ObjectExpression" ? sxOwner(node.parent) : null;
       if (owner && owner !== "Stack" && key === "display" && showsFlex(node.value)) {
         context.report({
@@ -1312,9 +1329,38 @@ function createShape(context) {
 
 function createSpacing(context) {
   if (!inClient(context)) return {};
+  const ladder =
+    "A gap is a step of the ladder, by what it spaces: the lines of one item 0.5, the items of a list or a row 1, " +
+    "the panels or cards of a group 2, a panel's blocks 3 (a section's, a dialog's, a form's, a card's), a page's 4 " +
+    "(`PageBody`). Never a step between them, one per screen size, or `spacing={0}`, a `Stack`'s own.";
   return {
+    JSXAttribute(node) {
+      if (node.name.name !== "spacing" || node.value?.type !== "JSXExpressionContainer") return;
+      if (offLadder(node.value.expression)) context.report({ node, message: ladder });
+    },
+    JSXElement(node) {
+      if (elementName(node) !== "Stack") return;
+      const kids = childElements(node).map((child) => elementName(child));
+      const mapped = node.children.some(
+        (c) => c.type === "JSXExpressionContainer" && c.expression.callee?.property?.name === "map",
+      );
+      if (kids.length === 0 || (kids.length === 1 && !mapped)) return;
+      const row = attributeText(node, "direction") === "row";
+      const step = row && kids.every((k) => ROW_ITEMS.has(k)) ? 1 : kids.every((k) => PANELS.has(k)) ? 2 : null;
+      if (step === null || numberAttribute(node, "spacing") === step) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          step === 1
+            ? "A row of buttons or chips holds items: `spacing={1}`."
+            : "Panels or cards of a group are `spacing={2}` apart.",
+      });
+    },
     Property(node) {
       const key = node.key.type === "Identifier" ? node.key.name : null;
+      if (GAP_KEYS.has(key) && node.parent.type === "ObjectExpression" && offLadder(node.value)) {
+        context.report({ node, message: ladder });
+      }
       if (!MARGINS.has(key) || node.parent.type !== "ObjectExpression" || !sxOwner(node.parent)) return;
       if (alignsOrResets(node.value)) return;
       context.report({
@@ -1689,6 +1735,12 @@ function numberAttribute(element, name) {
   const attribute = element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
   const value = attribute?.value?.type === "JSXExpressionContainer" ? attribute.value.expression : null;
   return value?.type === "Literal" && typeof value.value === "number" ? value.value : null;
+}
+
+/** Whether a gap is off the ladder: a step between its steps, one per screen size, or none at all (`0`) but as a branch */
+function offLadder(value) {
+  const values = styleValues(value);
+  return values.some((v) => v.type !== "Literal" || !(GAPS.has(v.value) || (v.value === 0 && values.length > 1)));
 }
 
 /** Whether a handler navigates to a path, besides closing what it's in: `() => { close(); navigate(path); }` (not `navigate(-1)`, which goes back in history). */

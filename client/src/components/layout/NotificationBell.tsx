@@ -112,7 +112,11 @@ export function NotificationBell() {
           </Box>
         ) : (
           <>
-            <Stack direction="row" sx={{ px: 2, py: 1, justifyContent: "space-between", alignItems: "center" }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ px: 2, py: 1, justifyContent: "space-between", alignItems: "center" }}
+            >
               <Typography component="h2" variant="h5">
                 Notifications
               </Typography>

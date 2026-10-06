@@ -7,7 +7,7 @@ export function Footer() {
     <Stack
       component="footer"
       direction="row"
-      spacing={2}
+      spacing={1}
       sx={{
         width: "100%",
         py: 2,

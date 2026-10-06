@@ -92,7 +92,7 @@ export function ClassLevelEditor({
       )}
       readOnlyBody={
         level.feats.length > 0 ? (
-          <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
             {sortedFeats(level).map((feat) => (
               <TagChip key={featKey(asLevelFeat(feat))} tag={{ label: featLabel(feat), color: "default" }} />
             ))}

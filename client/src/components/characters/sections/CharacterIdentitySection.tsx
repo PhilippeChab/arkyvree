@@ -265,7 +265,7 @@ export function CharacterIdentitySection({
 
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          spacing={{ xs: 2, sm: 4 }}
+          spacing={3}
           sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
         >
           <AttachmentField

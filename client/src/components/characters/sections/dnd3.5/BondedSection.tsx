@@ -49,11 +49,11 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
   );
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={3}>
       <Stack sx={{ minWidth: 0 }}>{nameNode}</Stack>
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-        <Stack spacing={1.5} sx={{ flex: "0 0 auto" }}>
+        <Stack spacing={1} sx={{ flex: "0 0 auto" }}>
           <Typography sx={{ fontWeight: "fontWeightBold", color: "text.secondary" }}>Abilities</Typography>
           <Box
             sx={{
@@ -71,16 +71,16 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
         </Stack>
 
         <Stack spacing={3} sx={{ flex: 1, minWidth: { md: 260 } }}>
-          <Stack spacing={1.5}>
+          <Stack spacing={1}>
             <Typography sx={{ fontWeight: "fontWeightBold", color: "text.secondary" }}>Combat &amp; Saves</Typography>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1.5 }}>
-              <Stack spacing={1.5}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1 }}>
+              <Stack spacing={1}>
                 <StatField label="HP" value={combat?.hp?.total ?? 0} />
                 <StatField label="AC" value={combat?.ac?.total ?? 10} />
                 <StatField label="BAB" value={formatSigned(combat?.bab)} />
                 <StatField label="Speed" value={`${combat?.speed?.total ?? 0} ft.`} />
               </Stack>
-              <Stack spacing={1.5}>
+              <Stack spacing={1}>
                 {Object.entries(saves).map(([key, save]) => (
                   <StatField key={key} label={save.name ?? key} value={formatSigned(save.total)} />
                 ))}
@@ -91,7 +91,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
           {featNames.length > 0 && (
             <Stack spacing={1}>
               <Typography sx={{ fontWeight: "fontWeightBold", color: "text.secondary" }}>Features</Typography>
-              <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
                 {featNames.map((n) => (
                   <TagChip key={n} tag={{ label: n, color: "default" }} />
                 ))}

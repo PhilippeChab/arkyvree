@@ -26,7 +26,7 @@ const OPERATORS: { display: string; insert: string }[] = [
  */
 export function TemplateExpressionToolbar({ inputRef, disabled }: TemplateExpressionToolbarProps) {
   return (
-    <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", rowGap: 0.5 }}>
+    <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
       {OPERATORS.map((op) => (
         <Tooltip key={op.insert} title={`Insert ${op.display}`}>
           <span>

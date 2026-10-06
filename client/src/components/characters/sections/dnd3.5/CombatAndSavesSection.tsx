@@ -34,13 +34,13 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
     <Section title="Combat & Saves">
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         {/* Left column: Combat Stats */}
-        <Stack spacing={2} sx={{ flex: 1, minWidth: { md: 350 } }}>
+        <Stack spacing={1} sx={{ flex: 1, minWidth: { md: 350 } }}>
           <Typography component="h3" variant="h6">
             Combat Stats
           </Typography>
-          <Stack spacing={2}>
+          <Stack spacing={1}>
             {/* Combat stat grid — single grid so columns align across rows */}
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: { xs: 1, sm: 2 } }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
               <StatField label="HP" value={combat?.hp?.total ?? 0} />
               <StatField label="Initiative" value={formatSigned(combat?.initiative?.total)} />
               <StatField label="Speed" value={`${combat?.speed?.total ?? 30} ft.`} />
@@ -66,7 +66,7 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
         </Stack>
 
         {/* Right column: Saving Throws */}
-        <Stack spacing={2} sx={{ flex: 1, minWidth: { md: 300 } }}>
+        <Stack spacing={1} sx={{ flex: 1, minWidth: { md: 300 } }}>
           <Typography component="h3" variant="h6">
             Saving Throws
           </Typography>
@@ -80,7 +80,7 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
                     <Typography variant="body2" sx={{ fontWeight: "fontWeightMedium", color: "text.secondary" }}>
                       {displayName}: {formatSigned(total)}
                     </Typography>
-                    <Stack direction="row" spacing={3} sx={{ pl: 2 }}>
+                    <Stack direction="row" spacing={1} sx={{ pl: 2 }}>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         Base: {formatSigned(saveData?.base)}
                       </Typography>

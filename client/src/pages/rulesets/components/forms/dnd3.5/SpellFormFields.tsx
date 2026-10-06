@@ -148,13 +148,13 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
         }}
       />
       {selectedAptitudes.length > 0 && (
-        <Stack spacing={1.5}>
+        <Stack spacing={1}>
           <Typography component="h3" variant="h6">
             Aptitude Settings
           </Typography>
           {selectedAptitudes.map((apt) => {
             return (
-              <Stack key={apt.id} direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <Stack key={apt.id} direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0 }}>
                   {apt.name}
                 </Typography>

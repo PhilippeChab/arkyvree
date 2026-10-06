@@ -42,7 +42,7 @@ export function ListCard({
     <StyledCard {...cardProps}>
       <Stack spacing={2} sx={{ p: { xs: 2, sm: 3 }, flex: 1, position: "relative" }}>
         {corner && <Box sx={{ position: "absolute", top: 8, right: 8 }}>{corner}</Box>}
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0, pr: corner ? 4 : 0 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0, pr: corner ? 4 : 0 }}>
           <Avatar
             src={avatarSrc}
             sx={{

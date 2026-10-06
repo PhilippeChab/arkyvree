@@ -32,7 +32,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
     <Stack spacing={3}>
       <Stack
         direction="row"
-        spacing={2}
+        spacing={1}
         sx={{ flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start" }}
       >
         <Typography component="h2" variant="h5">

@@ -56,7 +56,8 @@ function AutoGrantedFeats({ feats, defaultCollapsed }: AutoGrantedFeatsProps) {
       <Stack
         {...toggleProps(open, () => setOpen(!open))}
         direction="row"
-        sx={{ alignItems: "center", ...CLICKABLE_SX }}
+        spacing={1}
+        sx={{ alignItems: "center", justifyContent: "space-between", ...CLICKABLE_SX }}
       >
         <Typography component="h4" variant="subtitle1" sx={{ flex: 1 }}>
           Auto-Granted Feats ({feats.length})
@@ -280,13 +281,13 @@ export function LevelUpFeatsStep({
           const currentPoolFeats = selectedFeats[selectedAptitude] || [];
 
           return (
-            <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
+            <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
               {/* Selected Feats (always reserve space) */}
               <Box sx={{ flexShrink: 0 }}>
                 <Typography component="p" variant="subtitle2" gutterBottom>
                   Selected {currentPool?.name} Feats ({currentPoolFeats.length}/{currentPool?.available || 0}):
                 </Typography>
-                <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
+                <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
                   {currentPoolFeats.length > 0
                     ? currentPoolFeats.map((feat) => (
                         <TagChip

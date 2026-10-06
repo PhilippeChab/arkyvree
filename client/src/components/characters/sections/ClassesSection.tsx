@@ -57,7 +57,7 @@ export function ClassesSection({
       }
     >
       {classes && Object.keys(classes).length > 0 ? (
-        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
+        <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
           {Object.values(classes).map((cls) => {
             const { klass } = cls;
             const levels = cls.levels ?? [];
@@ -116,6 +116,7 @@ export function ClassesSection({
                     <Stack
                       key={lvl.characterLevel.id}
                       direction="row"
+                      spacing={1}
                       sx={{
                         alignItems: "center",
                         justifyContent: "space-between",

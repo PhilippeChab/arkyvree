@@ -31,7 +31,7 @@ export function HpGainField({
   onBlur,
 }: HpGainFieldProps) {
   return (
-    <Stack spacing={2}>
+    <Stack spacing={1}>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <Typography component="h3" variant="h6">
           {title}
