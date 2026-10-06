@@ -1,8 +1,8 @@
 /**
  * `file-layout`: a file reads in one order, so its parts are always where you look for them: its imports, its types,
  * its constants, its helpers, then what the file is for (its exports, its class, a test file's `describe` and `test`
- * blocks, an index's re-exports). Its types and its constants each go the ones it keeps first, then the ones it
- * exports (a constant still below one it reads). A helper is a function the file keeps to itself, or a constant one builds, or an
+ * blocks, an index's re-exports). Within its types, and within its constants, the file's own come first, then the ones
+ * it exports; a constant still sits below any it reads. A helper is a function the file keeps to itself, or a constant one builds, or an
  * export another helper calls; a test file's helper never sits in a `describe`. A top-level side effect (a script's
  * call, an `await`) is the file's purpose too, and a declaration after one is a step of its run, keeping its place.
  * `oxlint --fix` puts a file in order, each statement above what uses it, and lifts a helper out of a `describe` when it
