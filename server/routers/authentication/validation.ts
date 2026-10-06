@@ -1,172 +1,19 @@
 import { z } from "zod";
 
-import { sanitizeEmail, sanitizeText } from "@/server/routers/api/sanitize.ts";
+import { sanitizedText } from "@/server/routers/api/validation.ts";
 import { PASSWORD_MIN_LENGTH } from "@/shared/auth.ts";
 
-export const SignUpJson = z
-  .object({
-    emailAddress: z.string().email(),
-    password: z.string().min(PASSWORD_MIN_LENGTH),
-    passwordConfirmation: z.string().min(PASSWORD_MIN_LENGTH),
-  })
-  .transform((input) => {
-    return {
-      emailAddress: sanitizeEmail(input.emailAddress),
-      password: sanitizeText(input.password),
-      passwordConfirmation: sanitizeText(input.passwordConfirmation),
-    };
-  })
-  .refine((data) => data.password === data.passwordConfirmation, {
+/** A password a user sets: sanitized as it's stored, then at least `PASSWORD_MIN_LENGTH` long. */
+export const sanitizedPassword = sanitizedText.min(PASSWORD_MIN_LENGTH);
+
+/**
+ * A body's check that a new password's confirmation (`<field>Confirmation`) repeats it, reported on the confirmation:
+ * `.check(checkPasswordConfirmation("newPassword"))`.
+ */
+export function checkPasswordConfirmation<Field extends string>(field: Field) {
+  const confirmation = `${field}Confirmation` as const;
+  return z.refine<Record<Field | typeof confirmation, string>>((body) => body[field] === body[confirmation], {
     message: "Passwords do not match",
-    path: ["passwordConfirmation"],
+    path: [confirmation],
   });
-
-export const SignInJson = z
-  .object({
-    emailAddress: z.string().email(),
-    password: z.string(),
-  })
-  .transform((input) => {
-    return {
-      emailAddress: sanitizeEmail(input.emailAddress),
-      password: sanitizeText(input.password),
-    };
-  });
-
-export const UpdateProfileJson = z
-  .object({
-    username: z.string().min(3).max(50).optional(),
-    emailAddress: z.string().email().optional(),
-  })
-  .transform((input) => {
-    return {
-      username: input.username ? sanitizeText(input.username) : undefined,
-      emailAddress: input.emailAddress ? sanitizeEmail(input.emailAddress) : undefined,
-    };
-  });
-
-export const UpdatePasswordJson = z
-  .object({
-    currentPassword: z.string().min(1),
-    newPassword: z.string().min(PASSWORD_MIN_LENGTH),
-    newPasswordConfirmation: z.string().min(PASSWORD_MIN_LENGTH),
-  })
-  .transform((input) => {
-    return {
-      currentPassword: sanitizeText(input.currentPassword),
-      newPassword: sanitizeText(input.newPassword),
-      newPasswordConfirmation: sanitizeText(input.newPasswordConfirmation),
-    };
-  })
-  .refine((data) => data.newPassword === data.newPasswordConfirmation, {
-    message: "Passwords do not match",
-    path: ["newPasswordConfirmation"],
-  });
-
-export const VerifyEmailJson = z
-  .object({
-    emailAddress: z.string().email(),
-    code: z.string(),
-  })
-  .transform((input) => {
-    return {
-      emailAddress: sanitizeEmail(input.emailAddress),
-      code: sanitizeText(input.code),
-    };
-  });
-
-export const ResendVerificationJson = z
-  .object({
-    emailAddress: z.string().email(),
-  })
-  .transform((input) => {
-    return {
-      emailAddress: sanitizeEmail(input.emailAddress),
-    };
-  });
-
-export const ForgotPasswordJson = z
-  .object({
-    emailAddress: z.string().email(),
-  })
-  .transform((input) => {
-    return {
-      emailAddress: sanitizeEmail(input.emailAddress),
-    };
-  });
-
-export const ResetPasswordJson = z
-  .object({
-    emailAddress: z.string().email(),
-    code: z.string(),
-    newPassword: z.string().min(PASSWORD_MIN_LENGTH),
-    newPasswordConfirmation: z.string().min(PASSWORD_MIN_LENGTH),
-  })
-  .transform((input) => {
-    return {
-      emailAddress: sanitizeEmail(input.emailAddress),
-      code: sanitizeText(input.code),
-      newPassword: sanitizeText(input.newPassword),
-      newPasswordConfirmation: sanitizeText(input.newPasswordConfirmation),
-    };
-  })
-  .refine((data) => data.newPassword === data.newPasswordConfirmation, {
-    message: "Passwords do not match",
-    path: ["newPasswordConfirmation"],
-  });
-
-export const VerifyEmailChangeJson = z
-  .object({
-    code: z.string(),
-  })
-  .transform((input) => {
-    return {
-      code: sanitizeText(input.code),
-    };
-  });
-
-export const DeleteAccountJson = z
-  .object({
-    password: z.string().min(1).optional(),
-  })
-  .transform((input) => {
-    return {
-      password: input.password ? sanitizeText(input.password) : undefined,
-    };
-  });
-
-export const GoogleSignInJson = z
-  .object({
-    idToken: z.string().min(1),
-  })
-  .transform((input) => {
-    return {
-      idToken: input.idToken,
-    };
-  });
-
-export const SetPasswordJson = z
-  .object({
-    newPassword: z.string().min(PASSWORD_MIN_LENGTH),
-    newPasswordConfirmation: z.string().min(PASSWORD_MIN_LENGTH),
-  })
-  .transform((input) => {
-    return {
-      newPassword: sanitizeText(input.newPassword),
-      newPasswordConfirmation: sanitizeText(input.newPasswordConfirmation),
-    };
-  })
-  .refine((data) => data.newPassword === data.newPasswordConfirmation, {
-    message: "Passwords do not match",
-    path: ["newPasswordConfirmation"],
-  });
-
-export const UnlinkOauthJson = z
-  .object({
-    provider: z.string().min(1),
-  })
-  .transform((input) => {
-    return {
-      provider: sanitizeText(input.provider),
-    };
-  });
+}

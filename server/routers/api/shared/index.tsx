@@ -9,7 +9,7 @@ import { CharacterSharingService } from "@/server/services/characters/sharing/in
 
 const shareTokenParam = z.object({ shareToken: z.string().uuid() });
 
-const shared = new Hono()
+export default new Hono()
   // Get shared character data (public, no auth)
   .get("/characters/:shareToken", validate("param", shareTokenParam), async (c) => {
     const { shareToken } = c.req.valid("param");
@@ -42,5 +42,3 @@ const shared = new Hono()
       },
     });
   });
-
-export default shared;

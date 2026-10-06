@@ -28,13 +28,12 @@ export default new Hono()
       }),
     ),
     async (c) => {
-      const query = c.req.valid("query");
-
+      const { visibility, search, orderBy, orderDir, limit, page } = c.req.valid("query");
       return c.json(
         await CampaignsService.getCampaigns(
           c.var.requestSession,
-          { visibility: query.visibility, search: query.search, orderBy: query.orderBy, orderDir: query.orderDir },
-          { limit: query.limit, page: query.page },
+          { visibility, search, orderBy, orderDir },
+          { limit, page },
         ),
         200,
       );
@@ -57,9 +56,9 @@ export default new Hono()
       }),
     ),
     async (c) => {
-      const data = c.req.valid("json");
+      const body = c.req.valid("json");
 
-      return c.json(await CampaignsService.createCampaign(c.var.requestSession, data), 201);
+      return c.json(await CampaignsService.createCampaign(c.var.requestSession, body), 201);
     },
   )
   .post("/:id/unarchive", validate("param", idParam), async (c) => {
@@ -80,9 +79,9 @@ export default new Hono()
     ),
     async (c) => {
       const { id } = c.req.valid("param");
-      const data = c.req.valid("json");
+      const body = c.req.valid("json");
 
-      return c.json(await CampaignsService.updateCampaign(c.var.requestSession, id, data), 200);
+      return c.json(await CampaignsService.updateCampaign(c.var.requestSession, id, body), 200);
     },
   )
   .delete("/:id", validate("param", idParam), async (c) => {

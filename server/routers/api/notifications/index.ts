@@ -5,7 +5,7 @@ import { sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { NotificationsService } from "@/server/services/notifications/index.ts";
 
-const notifications = new Hono()
+export default new Hono()
   .use(sessionMiddleware)
   .get(
     "/",
@@ -23,13 +23,12 @@ const notifications = new Hono()
       }),
     ),
     async (c) => {
-      const query = c.req.valid("query");
-
+      const { unreadOnly, search, orderDir, limit, page } = c.req.valid("query");
       return c.json(
         await NotificationsService.getNotifications(
           c.var.requestSession,
-          { unreadOnly: query.unreadOnly, search: query.search, orderDir: query.orderDir },
-          { limit: query.limit, page: query.page },
+          { unreadOnly, search, orderDir },
+          { limit, page },
         ),
         200,
       );
@@ -46,5 +45,3 @@ const notifications = new Hono()
     const { id } = c.req.valid("param");
     return c.json(await NotificationsService.markRead(c.var.requestSession, id), 200);
   });
-
-export default notifications;

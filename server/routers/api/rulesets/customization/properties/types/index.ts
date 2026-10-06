@@ -7,7 +7,7 @@ import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { PropertyTypesService } from "@/server/services/rulesets/customization/properties/types/index.ts";
 import { PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 
-const propertyTypes = new Hono()
+export default new Hono()
   /**
    * GET /api/rulesets/:id/customization/properties/types?entityType=items
    * Get all available property types (static + custom)
@@ -100,5 +100,3 @@ const propertyTypes = new Hono()
       );
     },
   );
-
-export default propertyTypes;

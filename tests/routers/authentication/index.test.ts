@@ -59,6 +59,17 @@ describe("authentication", () => {
       });
     });
 
+    test("checks a password's length once it's trimmed, as it's stored", async () => {
+      const padded = `${" ".repeat(password.length)}x`;
+      const response = await auth["sign-up"].$post({
+        json: { emailAddress: newEmail("padded"), password: padded, passwordConfirmation: padded },
+      });
+      await expectStatus(response, 400);
+      expect(await response.json()).toMatchObject({
+        issues: [{ category: "password" }, { category: "passwordConfirmation" }],
+      });
+    });
+
     test("verifies the email with the code sent, signing the user in", async () => {
       const email = newEmail("verify");
       const user = await signUp(email);
