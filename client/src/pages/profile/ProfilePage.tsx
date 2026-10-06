@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Card, CardContent, Chip, Container, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Chip, Container, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -8,6 +8,7 @@ import {
   AttachmentField,
   DiceSpinner,
   EmailField,
+  FormTextField,
   PageError,
   PageHeader,
   PageTransition,
@@ -185,7 +186,6 @@ export default function ProfilePage() {
   }
 
   const profileErrors = profileForm.formState.errors;
-  const passwordErrors = passwordForm.formState.errors;
 
   return (
     <PageTransition>
@@ -229,22 +229,24 @@ export default function ProfilePage() {
 
             <Box sx={{ flex: 1, width: "100%" }}>
               <form onSubmit={profileSync.handleSubmit((data) => profileMutation.mutate(data))} noValidate>
-                <TextField
-                  {...profileForm.register("username", {
+                <FormTextField
+                  control={profileForm.control}
+                  name="username"
+                  rules={{
                     minLength: { value: 3, message: "Username must be at least 3 characters" },
                     maxLength: { value: 50, message: "Username must be at most 50 characters" },
-                  })}
+                  }}
                   label="Username"
                   variant="outlined"
                   fullWidth
                   margin="normal"
-                  error={!!profileErrors.username}
                   helperText={profileErrors.username?.message || "Optional: Choose a display name"}
                 />
 
                 <EmailField
-                  {...profileForm.register("emailAddress", emailRules)}
-                  error={profileErrors.emailAddress}
+                  control={profileForm.control}
+                  name="emailAddress"
+                  rules={emailRules}
                   label="Email Address"
                 />
 
@@ -301,26 +303,26 @@ export default function ProfilePage() {
           <form onSubmit={passwordForm.handleSubmit((data) => passwordMutation.mutate(data))} noValidate>
             {hasPassword && (
               <PasswordField
-                {...passwordForm.register("currentPassword", { required: "Current password is required" })}
-                error={passwordErrors.currentPassword}
+                control={passwordForm.control}
+                name="currentPassword"
+                rules={{ required: "Current password is required" }}
                 label="Current Password"
                 autoComplete="current-password"
               />
             )}
 
             <PasswordField
-              {...passwordForm.register("newPassword", newPasswordRules)}
-              error={passwordErrors.newPassword}
+              control={passwordForm.control}
+              name="newPassword"
+              rules={newPasswordRules}
               label="New Password"
               autoComplete="new-password"
             />
 
             <PasswordField
-              {...passwordForm.register(
-                "newPasswordConfirmation",
-                confirmPasswordRules<PasswordFormData>("newPassword"),
-              )}
-              error={passwordErrors.newPasswordConfirmation}
+              control={passwordForm.control}
+              name="newPasswordConfirmation"
+              rules={confirmPasswordRules<PasswordFormData>("newPassword")}
               label="Confirm New Password"
               autoComplete="new-password"
             />

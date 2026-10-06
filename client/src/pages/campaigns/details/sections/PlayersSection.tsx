@@ -42,7 +42,7 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useSearchParam } from "@/client/src/hooks/index.ts";
+import { useSearchText } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
@@ -85,7 +85,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   const selectedSlot = selectedPlayer && getPlayerSlot(selectedPlayer);
 
   // Search state with debounce
-  const [searchQuery, setSearchQuery] = useSearchParam("playerSearch");
+  const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("playerSearch");
 
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [selectedInviteId, setSelectedInviteId] = useState<string | null>(null);
@@ -256,8 +256,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       {/* Header */}
       <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>Players</Typography>
       <SearchBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
+        {...searchTextProps}
         searchPlaceholder="Search players..."
         actions={
           canManagePlayers &&

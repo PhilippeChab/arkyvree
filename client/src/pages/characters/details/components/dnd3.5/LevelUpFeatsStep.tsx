@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useController } from "react-hook-form";
 
 import { CLICKABLE_SX, clickableProps, DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
@@ -69,7 +70,7 @@ function FeatFamilyExpansion({
   pendingLevelFeatPicks,
   selectedAptitude,
   selectedFeats,
-  setValue,
+  onSelectedFeatsChange,
 }: {
   characterId: string;
   aptitudeId: string;
@@ -82,7 +83,7 @@ function FeatFamilyExpansion({
   pendingLevelFeatPicks?: string;
   selectedAptitude: string;
   selectedFeats: Record<string, SelectedFeat[]>;
-  setValue: (key: "selectedFeats", value: Record<string, SelectedFeat[]>) => void;
+  onSelectedFeatsChange: (value: Record<string, SelectedFeat[]>) => void;
 }) {
   const query = useInfiniteQuery({
     queryKey: queryKeys.characters.levelUp.availableFeatFamily(
@@ -157,7 +158,7 @@ function FeatFamilyExpansion({
                 sx={{ pl: 6 }}
                 disabled={!feat.eligible}
                 onClick={() => {
-                  setValue("selectedFeats", {
+                  onSelectedFeatsChange({
                     ...selectedFeats,
                     [selectedAptitude]: [
                       ...(selectedFeats[selectedAptitude] || []),
@@ -204,7 +205,7 @@ export function LevelUpFeatsStep({
     isLoadingFeats,
     featsError,
     adjustedFeatPools,
-    selectedFeats,
+    control,
     selectedAptitude,
     setSelectedAptitude,
     groupedFeats,
@@ -216,9 +217,10 @@ export function LevelUpFeatsStep({
     featSearch,
     setFeatSearch,
     handleFeatsScroll,
-    setValue,
     handleDeleteFeat,
   } = wizard;
+  const { field: feats } = useController({ control, name: "selectedFeats" });
+  const selectedFeats = feats.value;
   if (isLoadingFeats) return <DiceSpinner />;
   if (featsError) return <Alert severity="error">Error loading feats.</Alert>;
   if (!featData) return null;
@@ -361,7 +363,7 @@ export function LevelUpFeatsStep({
                                   pendingLevelFeatPicks={pendingLevelFeatPicks}
                                   selectedAptitude={selectedAptitude}
                                   selectedFeats={selectedFeats}
-                                  setValue={setValue}
+                                  onSelectedFeatsChange={feats.onChange}
                                 />
                               )}
                             </Box>
@@ -397,7 +399,7 @@ export function LevelUpFeatsStep({
                               <ListItemButton
                                 disabled={!row.eligible}
                                 onClick={() => {
-                                  setValue("selectedFeats", {
+                                  feats.onChange({
                                     ...selectedFeats,
                                     [selectedAptitude]: [
                                       ...(selectedFeats[selectedAptitude] || []),

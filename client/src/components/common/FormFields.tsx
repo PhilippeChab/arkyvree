@@ -1,38 +1,47 @@
 /**
- * The form fields many forms share. The text fields take a registration spread in — `<NameField
- * {...form.register("name", nameRules)} error={errors.name} />` — so they work with any form type; `SelectField` takes
- * the form's `control`.
+ * The form fields many forms share, each bound to its form's field through `useController` (controlled: the form holds
+ * the value, the field shows it and reports its changes): `<NameField control={form.control} name="name"
+ * rules={nameRules} />`. `FormTextField` binds any text field; the others are its presets, and `SelectField` a select.
  */
 
-import { MenuItem, type SxProps, TextField, type Theme } from "@mui/material";
+import {
+  FormControlLabel,
+  MenuItem,
+  Switch,
+  type SxProps,
+  TextField,
+  type TextFieldProps,
+  type Theme,
+} from "@mui/material";
 import type { ReactNode, UIEventHandler } from "react";
 import {
   type Control,
   Controller,
   type ControllerProps,
-  type FieldError,
   type FieldPath,
   type FieldValues,
-  type UseFormRegisterReturn,
+  useController,
 } from "react-hook-form";
 
-type RegisteredFieldProps = UseFormRegisterReturn & {
-  error?: FieldError;
+/** A field of a form: its control, its name, and the rules its value is validated by. */
+interface BoundFieldProps<T extends FieldValues> {
+  control: Control<T>;
+  name: FieldPath<T>;
+  rules?: ControllerProps<T>["rules"];
+}
+
+/** What a preset takes besides the form's field. */
+interface PresetFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
   autoFocus?: boolean;
   disabled?: boolean;
-};
-
-interface DescriptionFieldProps extends RegisteredFieldProps {
-  /** Rows shown before it grows. */
-  rows?: number;
-  placeholder?: string;
 }
 
-interface PasswordFieldProps extends RegisteredFieldProps {
-  label: string;
-  /** Tells password managers whether to fill the saved password or suggest a new one. */
-  autoComplete: "current-password" | "new-password";
-}
+/** A text field's own props: the form gives its value, change, error and ref. */
+type FormTextFieldProps<T extends FieldValues> = BoundFieldProps<T> &
+  Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "inputRef" | "error"> & {
+    /** Whether its value is a number: NaN when it's empty, as the form's rules read it. */
+    number?: boolean;
+  };
 
 type SelectOption = string | { value: string; label: ReactNode; disabled?: boolean };
 
@@ -53,60 +62,109 @@ interface SelectFieldProps<T extends FieldValues> {
   onMenuScroll?: UIEventHandler<HTMLElement>;
 }
 
-/** An entity's description: several lines, resizable. */
-export function DescriptionField({ error, rows = 3, ...field }: DescriptionFieldProps) {
+/**
+ * A number field's rules: its empty value is NaN, which `required` doesn't count as empty (only `""`), so a required one
+ * checks it too.
+ */
+function numberRules<T extends FieldValues>(rules: BoundFieldProps<T>["rules"]): BoundFieldProps<T>["rules"] {
+  const required = rules?.required;
+  if (!required) return rules;
+  const message = typeof required === "object" && "message" in required ? required.message : required;
+  const isNumber = (value: unknown) => !Number.isNaN(value) || (typeof message === "boolean" ? false : message);
+  const { validate } = rules;
+  return { ...rules, validate: typeof validate === "function" ? { validate, isNumber } : { ...validate, isNumber } };
+}
+
+/** A text field bound to a form's field: the form holds its value, and its error shows under it. */
+export function FormTextField<T extends FieldValues>({
+  control,
+  name,
+  rules,
+  number = false,
+  helperText,
+  ...props
+}: FormTextFieldProps<T>) {
+  const {
+    field: { ref, value, onChange, ...field },
+    fieldState,
+  } = useController({ control, name, rules: number ? numberRules(rules) : rules });
   return (
     <TextField
+      {...props}
+      {...field}
+      // On the input, so a failed submit focuses it
+      inputRef={ref}
+      value={value === undefined || value === null || (number && Number.isNaN(value)) ? "" : value}
+      onChange={(event) => {
+        const text = event.target.value;
+        onChange(number ? (text === "" ? Number.NaN : Number(text)) : text);
+      }}
+      error={!!fieldState.error}
+      helperText={fieldState.error?.message ?? helperText}
+    />
+  );
+}
+
+/** An entity's description: several lines, resizable. */
+export function DescriptionField<T extends FieldValues>({
+  rows = 3,
+  placeholder,
+  ...field
+}: PresetFieldProps<T> & { rows?: number; placeholder?: string }) {
+  return (
+    <FormTextField
       {...field}
       label="Description"
       fullWidth
       multiline
       minRows={rows}
-      error={!!error}
-      helperText={error?.message}
+      placeholder={placeholder}
       sx={{ "& textarea": { resize: "vertical" } }}
     />
   );
 }
 
-/** An email address. Register it with `emailRules`. */
-export function EmailField({ error, label = "Email", ...field }: RegisteredFieldProps & { label?: string }) {
+/** An email address, validated by `emailRules`. */
+export function EmailField<T extends FieldValues>({
+  label = "Email",
+  ...field
+}: PresetFieldProps<T> & { label?: string }) {
   return (
-    <TextField
+    <FormTextField
       {...field}
       label={label}
       type="email"
       variant="outlined"
       fullWidth
       margin="normal"
-      error={!!error}
-      helperText={error?.message}
       slotProps={{ htmlInput: { autoComplete: "email" } }}
     />
   );
 }
 
-/** An entity's name. Register it with `nameRules`. */
-export function NameField({
-  error,
+/** An entity's name, validated by `nameRules`. */
+export function NameField<T extends FieldValues>({
   label = "Name",
   helperText,
   ...field
-}: RegisteredFieldProps & { label?: string; helperText?: string }) {
-  return <TextField {...field} label={label} fullWidth error={!!error} helperText={error?.message ?? helperText} />;
+}: PresetFieldProps<T> & { label?: string; helperText?: string }) {
+  return <FormTextField {...field} label={label} helperText={helperText} fullWidth />;
 }
 
-export function PasswordField({ error, label, autoComplete, ...field }: PasswordFieldProps) {
+/** A password: `autoComplete` tells password managers whether to fill the saved one or suggest a new one. */
+export function PasswordField<T extends FieldValues>({
+  label,
+  autoComplete,
+  ...field
+}: PresetFieldProps<T> & { label: string; autoComplete: "current-password" | "new-password" }) {
   return (
-    <TextField
+    <FormTextField
       {...field}
       label={label}
       type="password"
       variant="outlined"
       fullWidth
       margin="normal"
-      error={!!error}
-      helperText={error?.message}
       slotProps={{ htmlInput: { autoComplete } }}
     />
   );
@@ -162,6 +220,35 @@ export function SelectField<T extends FieldValues>({
           ))}
         </TextField>
       )}
+    />
+  );
+}
+
+/** A labeled switch bound to a form's boolean field. `onChange` follows the field's own change, for what it changes too. */
+export function SwitchField<T extends FieldValues>({
+  control,
+  name,
+  rules,
+  label,
+  onChange,
+}: BoundFieldProps<T> & { label: string; onChange?: (checked: boolean) => void }) {
+  const {
+    field: { ref, value, onChange: change, ...field },
+  } = useController({ control, name, rules });
+  return (
+    <FormControlLabel
+      label={label}
+      control={
+        <Switch
+          {...field}
+          slotProps={{ input: { ref } }}
+          checked={!!value}
+          onChange={(event) => {
+            change(event.target.checked);
+            onChange?.(event.target.checked);
+          }}
+        />
+      }
     />
   );
 }

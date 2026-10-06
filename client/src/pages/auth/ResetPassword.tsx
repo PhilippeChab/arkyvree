@@ -1,5 +1,5 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
 import {
@@ -33,7 +33,6 @@ export default function ResetPassword() {
   const form = useForm<ResetPasswordFormData>({
     defaultValues: { digits: EMPTY_VERIFICATION_CODE, newPassword: "", newPasswordConfirmation: "" },
   });
-  const { errors } = form.formState;
   const digits = form.watch("digits");
 
   const { error, setError, handleResend, notice } = useResendCode(() =>
@@ -73,21 +72,24 @@ export default function ResetPassword() {
       }
     >
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-        <VerificationCodeInput
-          digits={digits}
-          onChange={(next) => form.setValue("digits", next, { shouldDirty: true })}
+        <Controller
+          control={form.control}
+          name="digits"
+          render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
         />
 
         <PasswordField
-          {...form.register("newPassword", newPasswordRules)}
-          error={errors.newPassword}
+          control={form.control}
+          name="newPassword"
+          rules={newPasswordRules}
           label="New Password"
           autoComplete="new-password"
         />
 
         <PasswordField
-          {...form.register("newPasswordConfirmation", confirmPasswordRules<ResetPasswordFormData>("newPassword"))}
-          error={errors.newPasswordConfirmation}
+          control={form.control}
+          name="newPasswordConfirmation"
+          rules={confirmPasswordRules<ResetPasswordFormData>("newPassword")}
           label="Confirm New Password"
           autoComplete="new-password"
         />

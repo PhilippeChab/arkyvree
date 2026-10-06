@@ -4,7 +4,7 @@ import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import type { RulesetLanguage } from "@/client/src/hooks/index.ts";
-import { useSearchParam } from "@/client/src/hooks/index.ts";
+import { useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { type LanguageFormData, LanguageFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
@@ -26,7 +26,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useSearchParam("search");
+  const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Language, LanguageFormData>({
     rulesetId: ruleset.id,
@@ -77,8 +77,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   return (
     <SectionContent>
       <SearchBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
+        {...searchTextProps}
         searchPlaceholder="Search languages..."
         actions={
           <SectionActions

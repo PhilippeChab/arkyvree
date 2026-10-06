@@ -1,5 +1,5 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -65,9 +65,10 @@ export default function VerifyEmail() {
       }
     >
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-        <VerificationCodeInput
-          digits={digits}
-          onChange={(next) => form.setValue("digits", next, { shouldDirty: true })}
+        <Controller
+          control={form.control}
+          name="digits"
+          render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
         />
 
         <AuthSubmitButton loading={isLoading} disabled={!isComplete}>

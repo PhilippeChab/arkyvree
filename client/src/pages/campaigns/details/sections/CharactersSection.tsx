@@ -39,7 +39,7 @@ import {
   useDebouncedValue,
   useListboxQuery,
   usePrefetch,
-  useSearchParam,
+  useSearchText,
   useStaggerAnimation,
 } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
@@ -421,7 +421,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   const [isLinkDialogOpen, setLinkDialogOpen] = useState(false);
 
   // Search state with debounce
-  const [searchQuery, setSearchQuery] = useSearchParam("characterSearch");
+  const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("characterSearch");
 
   const listQuery = campaignCharactersQuery(campaign.id, searchQuery);
   const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
@@ -450,8 +450,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
       <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>Characters</Typography>
 
       <SearchBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
+        {...searchTextProps}
         searchPlaceholder="Search characters..."
         actions={
           !campaign.deletedAt && (

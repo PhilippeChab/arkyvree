@@ -10,11 +10,17 @@
  *   (`[...queryKeys.rulesets.section(id, "feats"), search]`).
  * - `client-apis`: a mutation runs with `.mutate()` and its callbacks, never `.mutateAsync()`, and a loader is a
  *   `DiceSpinner`, never MUI's `CircularProgress`.
+ * - `controlled-inputs`: every input is controlled, and a form's field is bound one way: through `useController` (the
+ *   shared fields, `FormTextField`, `Controller`), never `register` (uncontrolled), and never a value `watch` reads
+ *   with a `setValue` for its change.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
 import { repoPath } from "./paths.mjs";
+
+/** The props an input takes its value through. */
+const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
 
 /** Whether a JSX element has the attribute `name`. */
 function hasAttribute(node, name) {
@@ -91,6 +97,16 @@ function createQueryKeyRule(context) {
   };
 }
 
+/** Whether `node` names one of `names`. */
+function namesOne(node, names) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some((child) => namesOne(child, names));
+  if (node.type === "Identifier" && names.has(node.name)) return true;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && namesOne(child, names),
+  );
+}
+
 /** The nearest JSX element around `node`. */
 function parentElement(node) {
   for (let p = node.parent; p; p = p.parent) if (p.type === "JSXElement") return p;
@@ -148,9 +164,60 @@ function createDialogConventions(context) {
   };
 }
 
+/** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */
+function readsWatch(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(readsWatch);
+  if (node.type === "CallExpression") {
+    const callee = node.callee;
+    const name =
+      callee.type === "Identifier" ? callee.name : callee.type === "MemberExpression" ? callee.property.name : null;
+    if (name === "watch" || name === "useWatch") return true;
+  }
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsWatch(child),
+  );
+}
+
+function createControlledInputs(context) {
+  if (!inClient(context)) return {};
+  // What a file reads with `watch`, held in a variable
+  const watched = new Set();
+  return {
+    CallExpression(node) {
+      const callee = node.callee;
+      const isRegister =
+        (callee.type === "Identifier" && callee.name === "register") ||
+        (callee.type === "MemberExpression" && callee.property.name === "register");
+      if (!isRegister) return;
+      context.report({
+        node,
+        message:
+          "A form's field is bound through `useController` (the shared fields, `FormTextField`, `Controller`), never " +
+          "`register`: every input is controlled.",
+      });
+    },
+    VariableDeclarator(node) {
+      if (node.id.type === "Identifier" && readsWatch(node.init)) watched.add(node.id.name);
+    },
+    JSXAttribute(node) {
+      if (node.name.type !== "JSXIdentifier" || !VALUE_PROPS.has(node.name.name)) return;
+      const expression = node.value?.type === "JSXExpressionContainer" ? node.value.expression : null;
+      if (!expression || !(readsWatch(expression) || namesOne(expression, watched))) return;
+      context.report({
+        node,
+        message:
+          "An input's value is its field's (`useController`), never one `watch` reads: the field binds its value and " +
+          "its change.",
+      });
+    },
+  };
+}
+
 export default {
   "accessible-icon-buttons": { meta: { type: "problem" }, create: createAccessibleIconButtons },
   "dialog-conventions": { meta: { type: "problem" }, create: createDialogConventions },
   "query-keys": { meta: { type: "suggestion" }, create: createQueryKeyRule },
   "client-apis": { meta: { type: "suggestion" }, create: createClientApis },
+  "controlled-inputs": { meta: { type: "problem" }, create: createControlledInputs },
 };

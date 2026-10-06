@@ -3,13 +3,14 @@ import { Chip, IconButton, MenuItem, Paper, Skeleton, Stack, TextField, Typograp
 import { keepPreviousData, skipToken, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
 import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { type Control, Controller, useForm, useWatch } from "react-hook-form";
+import { type Control, Controller, useController, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import {
   BaseRulesetAlert,
   CreateDialog,
   DescriptionField,
+  FormTextField,
   NameField,
   RulesetPicker,
   SelectField,
@@ -111,11 +112,11 @@ function AbilityCard({
 function PointBuyScores({
   abilities,
   abilityValues,
-  setValue,
+  onChange,
 }: {
   abilities: AbilityOption[];
   abilityValues: Record<string, number> | undefined;
-  setValue: (key: `abilities.${string}`, value: number) => void;
+  onChange: (scores: Record<string, number>) => void;
 }) {
   const pointsSpent = useMemo(() => {
     if (!abilityValues) return 0;
@@ -138,8 +139,8 @@ function PointBuyScores({
             key={ability.id}
             name={ability.name}
             score={score}
-            onIncrease={() => setValue(`abilities.${ability.id}`, score + 1)}
-            onDecrease={() => setValue(`abilities.${ability.id}`, score - 1)}
+            onIncrease={() => onChange({ ...abilityValues, [ability.id]: score + 1 })}
+            onDecrease={() => onChange({ ...abilityValues, [ability.id]: score - 1 })}
             canIncrease={canIncrease}
             canDecrease={canDecrease}
             bottomInfo={`Cost: ${costNow}`}
@@ -153,19 +154,20 @@ function PointBuyScores({
 function StandardArrayScores({
   abilities,
   abilityValues,
-  setValue,
+  onChange,
 }: {
   abilities: AbilityOption[];
   abilityValues: Record<string, number> | undefined;
-  setValue: (key: `abilities.${string}`, value: number) => void;
+  onChange: (scores: Record<string, number>) => void;
 }) {
+  // A score already given to another ability swaps with this one's
   const handleChange = (abilityId: string, newValue: number) => {
     if (!abilityValues) return;
+    const next = { ...abilityValues };
     const swapId = abilities.find((a) => a.id !== abilityId && abilityValues[a.id] === newValue)?.id;
-    if (swapId) {
-      setValue(`abilities.${swapId}`, abilityValues[abilityId] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1]);
-    }
-    setValue(`abilities.${abilityId}`, newValue);
+    if (swapId) next[swapId] = abilityValues[abilityId] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1];
+    next[abilityId] = newValue;
+    onChange(next);
   };
 
   const sortedAsc = useMemo(() => [...STANDARD_ARRAY].sort((a, b) => a - b), []);
@@ -199,18 +201,18 @@ function AbilityScoresSection({
   ref,
   abilities,
   control,
-  setValue,
   onRollingChange,
   method,
 }: {
   ref: Ref<AbilityScoresHandle>;
   abilities: AbilityOption[];
   control: Control<CreateCharacterFormData>;
-  setValue: (key: `abilities.${string}`, value: number) => void;
   onRollingChange: (rolling: boolean) => void;
   method: RollMethodId;
 }) {
-  const abilityValues = useWatch({ control, name: "abilities" });
+  const {
+    field: { value: abilityValues, onChange },
+  } = useController({ control, name: "abilities" });
   const [rolling, setRolling] = useState(false);
   const [rollingValues, setRollingValues] = useState<Record<string, number>>({});
   const [settledIds, setSettledIds] = useState<Set<string>>(new Set());
@@ -244,6 +246,8 @@ function AbilityScoresSection({
     setRolling(true);
     onRollingChange(true);
     setSettledIds(new Set());
+    // Each score settles on its own timer: the roll keeps the scores so far, written at each
+    const rolled = { ...abilityValues };
 
     for (const ability of abilities) {
       const interval = setInterval(() => {
@@ -262,7 +266,8 @@ function AbilityScoresSection({
 
         const result = rollFn();
         setRollingValues((prev) => ({ ...prev, [ability.id]: result }));
-        setValue(`abilities.${ability.id}`, result);
+        rolled[ability.id] = result;
+        onChange({ ...rolled });
         setSettledIds((prev) => new Set(prev).add(ability.id));
 
         if (index === abilities.length - 1) {
@@ -281,11 +286,11 @@ function AbilityScoresSection({
   useImperativeHandle(ref, () => ({ rollAll: handleRollAll }));
 
   if (method === "standard-array") {
-    return <StandardArrayScores abilities={abilities} abilityValues={abilityValues} setValue={setValue} />;
+    return <StandardArrayScores abilities={abilities} abilityValues={abilityValues} onChange={onChange} />;
   }
 
   if (method === "point-buy") {
-    return <PointBuyScores abilities={abilities} abilityValues={abilityValues} setValue={setValue} />;
+    return <PointBuyScores abilities={abilities} abilityValues={abilityValues} onChange={onChange} />;
   }
 
   return (
@@ -301,8 +306,8 @@ function AbilityScoresSection({
             key={ability.id}
             name={ability.name}
             score={displayValue}
-            onIncrease={() => setValue(`abilities.${ability.id}`, Math.min(100, displayValue + 1))}
-            onDecrease={() => setValue(`abilities.${ability.id}`, Math.max(1, displayValue - 1))}
+            onIncrease={() => onChange({ ...abilityValues, [ability.id]: Math.min(100, displayValue + 1) })}
+            onDecrease={() => onChange({ ...abilityValues, [ability.id]: Math.max(1, displayValue - 1) })}
             canIncrease={!rolling && displayValue < 100}
             canDecrease={!rolling && displayValue > 1}
             bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(displayValue))}`}
@@ -336,14 +341,7 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
       notes: "",
     },
   });
-  const {
-    control,
-    register,
-    reset,
-    watch,
-    setValue,
-    formState: { errors },
-  } = form;
+  const { control, reset, watch, setValue } = form;
 
   const selectedRulesetId = watch("rulesetId");
   const selectedAlignment = watch("alignment");
@@ -546,14 +544,15 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
       {/* Basic Info */}
       <Typography variant="h6">Basic Information</Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <NameField {...register("name", nameRules)} error={errors.name} label="Character Name" />
-        <TextField
-          {...register("xp", wholeNumberRules(0, "Experience points are required"))}
+        <NameField control={control} name="name" rules={nameRules} label="Character Name" />
+        <FormTextField
+          control={control}
+          name="xp"
+          rules={wholeNumberRules(0, "Experience points are required")}
+          number
           label="Experience Points"
           type="number"
           fullWidth
-          error={!!errors.xp}
-          helperText={errors.xp?.message}
         />
       </Stack>
 
@@ -658,7 +657,6 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
           ref={abilityScoresRef}
           abilities={rulesetAbilities}
           control={control}
-          setValue={setValue}
           onRollingChange={setAbilityRolling}
           method={rollMethod}
         />
@@ -673,26 +671,31 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
       {/* Physical Details */}
       <Typography variant="h6">Physical Details</Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <TextField
-          {...register("age", { valueAsNumber: true, min: 1 })}
+        <FormTextField
+          control={control}
+          name="age"
+          rules={{ min: 1 }}
+          number
           label="Age"
           type="number"
           slotProps={{ htmlInput: { min: 1 } }}
           fullWidth
         />
-        <TextField {...register("height")} label="Height" placeholder="e.g., 5 feet 8 inches" fullWidth />
-        <TextField {...register("weight")} label="Weight" placeholder="e.g., 150 lbs, 68kg" fullWidth />
+        <FormTextField control={control} name="height" label="Height" placeholder="e.g., 5 feet 8 inches" fullWidth />
+        <FormTextField control={control} name="weight" label="Weight" placeholder="e.g., 150 lbs, 68kg" fullWidth />
       </Stack>
 
       {/* Optional Details */}
       <Typography variant="h6">Optional Details</Typography>
-      <TextField {...register("deity")} label="Deity" fullWidth />
+      <FormTextField control={control} name="deity" label="Deity" fullWidth />
       <DescriptionField
-        {...register("description")}
+        control={control}
+        name="description"
         placeholder="Character appearance, personality, or background..."
       />
-      <TextField
-        {...register("notes")}
+      <FormTextField
+        control={control}
+        name="notes"
         label="Notes"
         multiline
         minRows={3}

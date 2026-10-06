@@ -1,5 +1,5 @@
 import { Box, Chip, Typography } from "@mui/material";
-import { useForm } from "react-hook-form";
+import { useController, useForm } from "react-hook-form";
 
 import { useFormSync, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -55,6 +55,8 @@ export function ClassLevelEditor({
   onSaved,
 }: EditorProps<ClassLevel>) {
   const form = useForm<ClassLevelForm>();
+  const { field: saves } = useController({ control: form.control, name: "saves" });
+  const { field: feats } = useController({ control: form.control, name: "feats" });
   const sync = useFormSync(form, toClassLevelForm(level), { key: recordKey, adoptKey });
   const { data: rulesetSaves } = useRulesetSaves(rulesetId);
   const saveMutation = useEditorSave({
@@ -106,10 +108,10 @@ export function ClassLevelEditor({
               fields: (
                 <ClassLevelFields
                   rulesetId={rulesetId}
-                  saves={form.watch("saves") ?? []}
-                  onSavesChange={(saves) => form.setValue("saves", saves, { shouldDirty: true })}
-                  feats={form.watch("feats") ?? []}
-                  onFeatsChange={(feats) => form.setValue("feats", feats, { shouldDirty: true })}
+                  saves={saves.value ?? []}
+                  onSavesChange={saves.onChange}
+                  feats={feats.value ?? []}
+                  onFeatsChange={feats.onChange}
                   featLabels={new Map(level.feats.map((feat) => [featKey(asLevelFeat(feat)), featLabel(feat)]))}
                 />
               ),

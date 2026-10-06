@@ -1,5 +1,6 @@
 import { Casino as CasinoIcon } from "@mui/icons-material";
 import { Box, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { useController } from "react-hook-form";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { settledPulse } from "@/client/src/lib/animations.ts";
@@ -7,7 +8,8 @@ import { settledPulse } from "@/client/src/lib/animations.ts";
 import type { LevelUpHpStepProps } from "./levelUpFactory.ts";
 
 export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
-  const { selectedClass, selectedHP, hpRolling, hpSettled, hpDisplayValue, triggerHpRoll, setValue } = wizard;
+  const { selectedClass, control, hpRolling, hpSettled, hpDisplayValue, triggerHpRoll } = wizard;
+  const { field } = useController({ control, name: "selectedHP" });
   // The level's class loads with the level being edited.
   if (!selectedClass) return <DiceSpinner />;
 
@@ -28,7 +30,7 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
           label="MAX"
           size="small"
           variant="outlined"
-          onClick={() => setValue("selectedHP", selectedClass.hd)}
+          onClick={() => field.onChange(selectedClass.hd)}
           disabled={hpRolling}
         />
       </Stack>
@@ -38,15 +40,13 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
       <TextField
         label="HP Gain"
         type="number"
-        value={hpRolling ? hpDisplayValue || "" : selectedHP || ""}
+        value={hpRolling ? hpDisplayValue || "" : field.value || ""}
         onChange={(e) => {
           const value = parseInt(e.target.value);
-          if (isNaN(value)) {
-            setValue("selectedHP", null);
-          } else {
-            setValue("selectedHP", Math.max(1, Math.min(value, selectedClass.hd)));
-          }
+          field.onChange(isNaN(value) ? null : Math.max(1, Math.min(value, selectedClass.hd)));
         }}
+        onBlur={field.onBlur}
+        inputRef={field.ref}
         disabled={hpRolling}
         fullWidth
         margin="normal"

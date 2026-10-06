@@ -9,7 +9,7 @@ import {
 import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
-import { type UseFormReturn } from "react-hook-form";
+import { Controller, type UseFormReturn } from "react-hook-form";
 
 import {
   ConfirmDialog,
@@ -185,25 +185,24 @@ export function EditRulesetDialog({
       isLoading={isLoading}
       submitLabel="Save Changes"
     >
-      <NameField
-        {...form.register("name", nameRules)}
-        error={form.formState.errors.name}
-        autoFocus
-        disabled={isLoading}
-      />
-      <DescriptionField {...form.register("description")} disabled={isLoading} rows={4} />
+      <NameField control={form.control} name="name" rules={nameRules} autoFocus disabled={isLoading} />
+      <DescriptionField control={form.control} name="description" disabled={isLoading} rows={4} />
       {!isPublic && (
-        <PrivacyToggle
-          value={form.watch("private") ?? false}
-          onChange={(isPrivate) => form.setValue("private", isPrivate, { shouldDirty: true })}
-          disabled={isLoading}
+        <Controller
+          control={form.control}
+          name="private"
+          render={({ field }) => (
+            <PrivacyToggle value={field.value ?? false} onChange={field.onChange} disabled={isLoading} />
+          )}
         />
       )}
       {canBeExtension && (
-        <RulesetKindToggle
-          value={form.watch("kind") ?? "ruleset"}
-          onChange={(kind) => form.setValue("kind", kind, { shouldDirty: true })}
-          disabled={isLoading}
+        <Controller
+          control={form.control}
+          name="kind"
+          render={({ field }) => (
+            <RulesetKindToggle value={field.value ?? "ruleset"} onChange={field.onChange} disabled={isLoading} />
+          )}
         />
       )}
     </EditDialog>
@@ -221,18 +220,14 @@ export function ForkRulesetDialog({ open, onClose, form, onSubmit, isLoading }: 
       isLoading={isLoading}
       submitLabel="Fork Ruleset"
     >
-      <NameField
-        {...form.register("name", nameRules)}
-        error={form.formState.errors.name}
-        label="New Name"
-        autoFocus
-        disabled={isLoading}
-      />
-      <DescriptionField {...form.register("description")} disabled={isLoading} rows={4} />
-      <PrivacyToggle
-        value={form.watch("private") ?? false}
-        onChange={(isPrivate) => form.setValue("private", isPrivate, { shouldDirty: true })}
-        disabled={isLoading}
+      <NameField control={form.control} name="name" rules={nameRules} label="New Name" autoFocus disabled={isLoading} />
+      <DescriptionField control={form.control} name="description" disabled={isLoading} rows={4} />
+      <Controller
+        control={form.control}
+        name="private"
+        render={({ field }) => (
+          <PrivacyToggle value={field.value ?? false} onChange={field.onChange} disabled={isLoading} />
+        )}
       />
     </CreateDialog>
   );

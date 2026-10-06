@@ -5,6 +5,7 @@ import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 
 import { LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
+import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   DescriptionCell,
@@ -31,7 +32,8 @@ const COLUMNS = [
 export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
   const [selectedLevel, setSelectedLevel] = useState<number>(0);
-  const [search, setSearch] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const search = useDebouncedValue(searchText);
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...classSpellListQuery(rulesetId, classId, selectedLevel, search),
@@ -58,8 +60,8 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
   return (
     <Box>
       <SearchBar
-        searchValue={search}
-        onSearchChange={setSearch}
+        searchValue={searchText}
+        onSearchChange={setSearchText}
         searchPlaceholder="Search spells..."
         filters={<SpellLevelFilter value={selectedLevel} onChange={(level) => setSelectedLevel(Number(level))} />}
       />

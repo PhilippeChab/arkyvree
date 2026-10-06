@@ -10,8 +10,8 @@ export type AptitudeFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]
 export function AptitudeFormFields({ form }: { form: UseFormReturn<AptitudeFormData> }) {
   return (
     <>
-      <NameField {...form.register("name", nameRules)} error={form.formState.errors.name} />
-      <DescriptionField {...form.register("description")} />
+      <NameField control={form.control} name="name" rules={nameRules} />
+      <DescriptionField control={form.control} name="description" />
     </>
   );
 }

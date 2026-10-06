@@ -10,6 +10,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import { useController } from "react-hook-form";
 
 import { DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
 
@@ -21,7 +22,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
     powerData,
     isLoadingPowers,
     powersError,
-    selectedPowers,
+    control,
     selectedFeats,
     selectedPowerAptitude,
     selectedPowerLevel,
@@ -31,11 +32,12 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
     isLoadingAvailablePowers,
     isFetchingNextPowersPage,
     powerSearch,
-    setValue,
     handleDeletePower,
     setPowerSearch,
     handlePowersScroll,
   } = wizard;
+  const { field: powers } = useController({ control, name: "selectedPowers" });
+  const selectedPowers = powers.value;
   if (isLoadingPowers) return <DiceSpinner />;
   if (powersError) return <Alert severity="error">Error loading spells.</Alert>;
   if (!powerData) return null;
@@ -248,7 +250,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                             <ListItemButton
                               disabled={!power.eligible}
                               onClick={() => {
-                                setValue("selectedPowers", {
+                                powers.onChange({
                                   ...selectedPowers,
                                   [selectedPowerAptitude]: [
                                     ...(selectedPowers[selectedPowerAptitude] || []),

@@ -1,9 +1,9 @@
 import { Autocomplete, Chip, ListItem, ListItemText, TextField } from "@mui/material";
 import { keepPreviousData, type QueryKey } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { DiceSpinner, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, useListboxQuery, useOnChange } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 
 /** A suggestion of the customization completion endpoints. */
 interface Completion {
@@ -53,11 +53,8 @@ export function CompletionAutocomplete<T extends Completion>({
   multiline = false,
   rows,
 }: CompletionAutocompleteProps<T>) {
-  const [inputValue, setInputValue] = useState(value);
-  const debouncedInputValue = useDebouncedValue(inputValue);
-
-  // The input follows its controlled value
-  useOnChange(value, (next) => setInputValue(next));
+  // Controlled: what's typed is the value, which every keystroke and pick reports
+  const debouncedInputValue = useDebouncedValue(value);
 
   const { items, isLoading, onScroll } = useListboxQuery({
     queryKey: queryKey(debouncedInputValue),
@@ -82,16 +79,11 @@ export function CompletionAutocomplete<T extends Completion>({
   return (
     <Autocomplete
       value={value}
-      inputValue={inputValue}
-      onInputChange={(_, newValue) => {
-        setInputValue(newValue);
-        onChange(newValue);
-      }}
+      inputValue={value}
+      onInputChange={(_, newValue) => onChange(newValue)}
       onChange={(_, newValue) => {
         if (newValue === null) return;
-        const picked = typeof newValue === "string" ? newValue : newValue.value;
-        onChange(picked);
-        setInputValue(picked);
+        onChange(typeof newValue === "string" ? newValue : newValue.value);
       }}
       options={completions}
       getOptionLabel={(option) => (typeof option === "string" ? option : option.label)}

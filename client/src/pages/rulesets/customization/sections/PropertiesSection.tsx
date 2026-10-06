@@ -1,6 +1,7 @@
 import { ListAlt as PropertiesIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
 import type { InferRequestType, InferResponseType } from "hono/client";
+import { Controller } from "react-hook-form";
 
 import {
   CreateDialog,
@@ -168,29 +169,45 @@ export function PropertiesSection({
       />
 
       <CreateDialog {...createDialogProps} title="Create New Property" fixedHeight="40vh">
-        <PropertyTypeInput
-          value={createForm.watch("type") || ""}
-          onChange={(value: string) => createForm.setValue("type", value)}
-          rulesetId={ruleset.id}
-          entityType={entityType}
-          label="Type"
-          placeholder="e.g., tag, category, note"
-          fullWidth
+        <Controller
+          control={createForm.control}
+          name="type"
+          render={({ field }) => (
+            <PropertyTypeInput
+              value={field.value || ""}
+              onChange={field.onChange}
+              rulesetId={ruleset.id}
+              entityType={entityType}
+              label="Type"
+              placeholder="e.g., tag, category, note"
+              fullWidth
+            />
+          )}
         />
-        <input type="hidden" {...createForm.register("value", { required: "Value is required" })} />
-        <PropertyValueInput
-          value={createForm.watch("value") || ""}
-          onChange={(value: string) => createForm.setValue("value", value, { shouldValidate: true })}
-          rulesetId={ruleset.id}
-          propertyType={createForm.watch("type") || ""}
-          label="Value"
-          required
-          fullWidth
-          placeholder="Enter the property value..."
-          error={!!createForm.formState.errors.value}
-          helperText={createForm.formState.errors.value?.message}
+        <Controller
+          control={createForm.control}
+          name="value"
+          rules={{ required: "Value is required" }}
+          render={({ field, fieldState }) => (
+            <PropertyValueInput
+              value={field.value || ""}
+              onChange={field.onChange}
+              rulesetId={ruleset.id}
+              propertyType={createForm.watch("type") || ""}
+              label="Value"
+              required
+              fullWidth
+              placeholder="Enter the property value..."
+              error={!!fieldState.error}
+              helperText={fieldState.error?.message}
+            />
+          )}
         />
-        <DescriptionField {...createForm.register("description")} placeholder="Enter the property description..." />
+        <DescriptionField
+          control={createForm.control}
+          name="description"
+          placeholder="Enter the property description..."
+        />
       </CreateDialog>
 
       <EditDialog
@@ -202,29 +219,45 @@ export function PropertiesSection({
         isLoading={updateMutation.isPending}
         fixedHeight="60vh"
       >
-        <PropertyTypeInput
-          value={editForm.watch("type") || ""}
-          onChange={(value: string) => editForm.setValue("type", value)}
-          rulesetId={ruleset.id}
-          entityType={entityType}
-          label="Type"
-          placeholder="e.g., tag, category, note"
-          fullWidth
+        <Controller
+          control={editForm.control}
+          name="type"
+          render={({ field }) => (
+            <PropertyTypeInput
+              value={field.value || ""}
+              onChange={field.onChange}
+              rulesetId={ruleset.id}
+              entityType={entityType}
+              label="Type"
+              placeholder="e.g., tag, category, note"
+              fullWidth
+            />
+          )}
         />
-        <input type="hidden" {...editForm.register("value", { required: "Value is required" })} />
-        <PropertyValueInput
-          value={editForm.watch("value") || ""}
-          onChange={(value: string) => editForm.setValue("value", value, { shouldValidate: true })}
-          rulesetId={ruleset.id}
-          propertyType={editForm.watch("type") || ""}
-          label="Value"
-          required
-          fullWidth
-          placeholder="Enter the property value..."
-          error={!!editForm.formState.errors.value}
-          helperText={editForm.formState.errors.value?.message}
+        <Controller
+          control={editForm.control}
+          name="value"
+          rules={{ required: "Value is required" }}
+          render={({ field, fieldState }) => (
+            <PropertyValueInput
+              value={field.value || ""}
+              onChange={field.onChange}
+              rulesetId={ruleset.id}
+              propertyType={editForm.watch("type") || ""}
+              label="Value"
+              required
+              fullWidth
+              placeholder="Enter the property value..."
+              error={!!fieldState.error}
+              helperText={fieldState.error?.message}
+            />
+          )}
         />
-        <DescriptionField {...editForm.register("description")} placeholder="Enter the property description..." />
+        <DescriptionField
+          control={editForm.control}
+          name="description"
+          placeholder="Enter the property description..."
+        />
       </EditDialog>
 
       <DeleteDialog

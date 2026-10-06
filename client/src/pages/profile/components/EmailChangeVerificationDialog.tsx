@@ -1,7 +1,7 @@
 import { Box, Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 import { VerificationCodeInput } from "@/client/src/components/auth/index.ts";
 import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
@@ -85,9 +85,10 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
             A new code has been sent to your email.
           </AnimatedAlert>
 
-          <VerificationCodeInput
-            digits={digits}
-            onChange={(next) => form.setValue("digits", next, { shouldDirty: true })}
+          <Controller
+            control={form.control}
+            name="digits"
+            render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
           />
 
           <Box sx={{ textAlign: "center", mb: 1 }}>

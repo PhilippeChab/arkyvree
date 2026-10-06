@@ -6,7 +6,7 @@ import { useCallback, useState } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
-import { useRulesetSaves, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useRulesetSaves, useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { type SpellFormData, SpellFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import {
@@ -35,7 +35,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useSearchParam("search");
+  const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
   const [selectedAptitude, setSelectedAptitude] = useState<Aptitude | null>(null);
   const [levelParam, setLevelParam] = useSearchParam("level");
   const parsed = Number(levelParam);
@@ -103,8 +103,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   return (
     <SectionContent>
       <SearchBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
+        {...searchTextProps}
         searchPlaceholder="Search spells..."
         filters={
           <>

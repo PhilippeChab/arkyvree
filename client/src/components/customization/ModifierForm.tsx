@@ -1,4 +1,4 @@
-import type { UseFormReturn } from "react-hook-form";
+import { useController, type UseFormReturn } from "react-hook-form";
 
 import { ConditionFields } from "./ConditionFields.tsx";
 
@@ -17,22 +17,16 @@ export interface ModifierFormData {
 }
 
 export function ModifierForm({ form, rulesetId, entityType, mode }: ModifierFormProps) {
+  const target = useController({ control: form.control, name: "target" });
+  const operator = useController({ control: form.control, name: "operator" });
+  const value = useController({ control: form.control, name: "value" });
   return (
     <ConditionFields
       kind="modifier"
       rulesetId={rulesetId}
       entityType={entityType}
       mode={mode}
-      values={{
-        target: form.watch("target") || "",
-        operator: form.watch("operator") || "",
-        value: form.watch("value") || "",
-      }}
-      errors={form.formState.errors}
-      onChange={(field, value) => {
-        form.setValue(field, value);
-        form.clearErrors(field);
-      }}
+      fields={{ target, operator, value }}
     />
   );
 }

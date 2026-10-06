@@ -1,8 +1,8 @@
-import { TextField } from "@mui/material";
+import {} from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import type { UseFormReturn } from "react-hook-form";
 
-import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
+import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import { nameRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
@@ -16,15 +16,10 @@ export type RaceFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["ra
 export function RaceFormFields({ form }: RaceFormFieldsProps) {
   return (
     <>
-      <NameField {...form.register("name", nameRules)} error={form.formState.errors.name} />
-      <DescriptionField {...form.register("description")} />
+      <NameField control={form.control} name="name" rules={nameRules} />
+      <DescriptionField control={form.control} name="description" />
       <SelectField control={form.control} name="size" label="Size" options={SIZE_OPTIONS} />
-      <TextField
-        {...form.register("baseSpeed", { valueAsNumber: true })}
-        label="Base Speed (feet)"
-        type="number"
-        fullWidth
-      />
+      <FormTextField control={form.control} name="baseSpeed" number label="Base Speed (feet)" type="number" fullWidth />
     </>
   );
 }

@@ -30,7 +30,7 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
-import { useSearchParam, useToggleSet } from "@/client/src/hooks/index.ts";
+import { useSearchParam, useSearchText, useToggleSet } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -217,7 +217,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useSearchParam("search");
+  const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
   const [selectedAptitude, setSelectedAptitude] = useState<Aptitude | null>(null);
   const [groupedParam, setGroupedParam] = useSearchParam("grouped", "true");
   const grouped = groupedParam === "true";
@@ -376,8 +376,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   return (
     <SectionContent>
       <SearchBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
+        {...searchTextProps}
         searchPlaceholder="Search feats..."
         filters={
           <Box sx={{ width: { xs: "100%", sm: 200 } }}>
