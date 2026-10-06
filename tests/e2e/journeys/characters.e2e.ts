@@ -191,7 +191,7 @@ test.describe("Characters", () => {
       timeout: 60_000,
     });
     const download = anyone.waitForEvent("download", { timeout: 60_000 });
-    await anyone.getByRole("button", { name: "Download PDF" }).first().click();
+    await openActionsMenu(anyone, /^Download PDF$/);
     expect((await pdf).headers()["content-type"]).toContain("application/pdf");
     const file = await download;
     expect(file.suggestedFilename()).toMatch(/\.pdf$/i);

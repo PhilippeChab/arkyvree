@@ -344,8 +344,8 @@ const PADDINGS = new Set([
   "py",
 ]);
 
-/** The surfaces a group lays side by side or stacks, 2 apart */
-const PANELS = new Set(["Accordion", "ListCard", "Paper", "Section", "StyledCard"]);
+/** The surfaces a group lays side by side or stacks, 2 apart (a page's `Section`s are its blocks, 4 apart) */
+const PANELS = new Set(["Accordion", "ListCard", "Paper", "StyledCard"]);
 
 /** The calls that hand an Autocomplete's picked value its chip's props */
 const PICKED_VALUE_PROPS = new Set(["getItemProps", "getTagProps"]);
@@ -1422,12 +1422,15 @@ function createSpacing(context) {
             ? 1
             : kids.every((k) => PANELS.has(k))
               ? 2
-              : null;
+              : kids.every((k) => k === "Section")
+                ? 4
+                : null;
       if (step === null || numberAttribute(node, "spacing") === step) return;
       const messages = {
         0.5: "Icon buttons side by side are one control's parts: `spacing={0.5}`.",
         1: "A row of buttons or chips holds items: `spacing={1}`.",
         2: "Panels or cards of a group are `spacing={2}` apart.",
+        4: "A page's sections are its blocks: `spacing={4}`, as `PageBody` spaces them.",
       };
       context.report({ node: node.openingElement, message: messages[step] });
     },

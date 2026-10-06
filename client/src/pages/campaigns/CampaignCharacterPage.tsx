@@ -1,12 +1,16 @@
-import { IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
+import { Menu } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
+import {
+  CharacterDetailSkeleton,
+  CharacterHeader,
+  CharacterSheetBody,
+} from "@/client/src/components/characters/index.ts";
 import { ActionMenuItem, PageBody, PageError } from "@/client/src/components/common/index.ts";
-import { BackIcon, DownloadIcon, EditIcon, MoreIcon } from "@/client/src/components/icons/index.ts";
+import { DownloadIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -61,49 +65,22 @@ export default function CampaignCharacterPage() {
 
   return (
     <PageBody>
-      <Paper sx={{ p: 2 }}>
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
-        >
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
-            <IconButton size="large" aria-label="Back" component={Link} to={`/campaigns/${campaignId}`}>
-              <BackIcon />
-            </IconButton>
-            <Typography component="p" sx={{ fontWeight: "fontWeightBold", typography: { xs: "h5", md: "h4" } }} noWrap>
-              {data.rulesetName || "Character Sheet"}
-            </Typography>
-          </Stack>
-
-          {data.canDownloadPdf && !data.deletedAt && (
-            <Stack direction="row" spacing={1}>
-              <IconButton
-                size="large"
-                aria-label="More actions"
-                onClick={(e) => setAnchorEl(e.currentTarget)}
-                sx={{ color: "text.secondary" }}
-              >
-                <MoreIcon />
-              </IconButton>
-              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-                {data.canEdit && (
-                  <ActionMenuItem
-                    icon={EditIcon}
-                    label="Edit Character"
-                    onClick={closeMenuAnd(() => navigate(`/characters/${characterId}`))}
-                  />
-                )}
-                <ActionMenuItem
-                  icon={DownloadIcon}
-                  label="Download PDF"
-                  onClick={closeMenuAnd(() => pdfExport.mutate())}
-                />
-              </Menu>
-            </Stack>
-          )}
-        </Stack>
-      </Paper>
+      <CharacterHeader
+        name={data.identity?.physiology?.name || ""}
+        rulesetName={data.rulesetName}
+        backTo={`/campaigns/${campaignId}`}
+        onMenuOpen={data.canDownloadPdf && !data.deletedAt ? (e) => setAnchorEl(e.currentTarget) : undefined}
+      />
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+        {data.canEdit && (
+          <ActionMenuItem
+            icon={EditIcon}
+            label="Edit Character"
+            onClick={closeMenuAnd(() => navigate(`/characters/${characterId}`))}
+          />
+        )}
+        <ActionMenuItem icon={DownloadIcon} label="Download PDF" onClick={closeMenuAnd(() => pdfExport.mutate())} />
+      </Menu>
       <CharacterSheetBody
         character={data}
         characterId={characterId}

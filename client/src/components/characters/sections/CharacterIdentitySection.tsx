@@ -1,12 +1,13 @@
 import { Autocomplete, Box, Button, Chip, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useController } from "react-hook-form";
 
 import {
   AttachmentField,
   DiceSpinner,
+  FormActions,
   FormTextField,
   Section,
   SelectField,
@@ -39,7 +40,6 @@ interface CharacterIdentityFormData {
 }
 
 interface CharacterIdentitySectionProps {
-  characterName: string;
   characterId: string;
   rulesetId?: string;
   readOnly?: boolean;
@@ -74,7 +74,6 @@ function toIdentityForm({ identity }: CharacterIdentitySectionProps["character"]
 }
 
 export function CharacterIdentitySection({
-  characterName,
   characterId,
   rulesetId,
   character,
@@ -83,7 +82,6 @@ export function CharacterIdentitySection({
   partial = false,
   portraitUrl,
 }: CharacterIdentitySectionProps) {
-  const canEditName = !readOnly;
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const form = useFormWith<CharacterIdentityFormData>({
@@ -133,34 +131,6 @@ export function CharacterIdentitySection({
   const { isDirty } = form.formState;
   useDirtyForm(isDirty);
 
-  // The name is renamed on its own, outside the Save flow: clicking it opens its field on the name, Enter or leaving
-  // the field saves, Escape cancels. The character's detail refetches, so the new name shows everywhere.
-  const nameForm = useFormWith<{ name: string }>({ name: "" });
-  const { field: nameField } = useController({ control: nameForm.control, name: "name" });
-  const [nameEditing, setNameEditing] = useState(false);
-  const rename = useMutation({
-    mutationFn: (name: string) =>
-      parseResponse(
-        rpc.api.characters[":id"]["$put"]({
-          param: { id: characterId },
-          json: { name, updatedAt: character.updatedAt },
-        }),
-      ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
-      if (character.parentCharacterId) {
-        await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(character.parentCharacterId) });
-      }
-    },
-    onError: (err) => snackbar.error(err, "Failed to rename character"),
-    onSettled: () => setNameEditing(false),
-  });
-  const saveName = nameForm.handleSubmit(({ name }) => {
-    const trimmed = name.trim();
-    if (!trimmed || trimmed === characterName) setNameEditing(false);
-    else rename.mutate(trimmed);
-  });
-
   // Staged via the form like every other field — selections only persist
   // when the user clicks Save, matching the rest of the identity section.
   const { data: availableLanguages } = useRulesetLanguages(rulesetId, !readOnly);
@@ -192,77 +162,13 @@ export function CharacterIdentitySection({
     : undefined;
 
   return (
-    <Section>
+    <Section title="Identity">
       <Stack
         component="form"
         spacing={3}
         onSubmit={sync.handleSubmit((formData) => saveIdentity.mutate(formData))}
         noValidate
       >
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
-        >
-          {nameEditing ? (
-            <TextField
-              value={nameField.value}
-              onChange={nameField.onChange}
-              inputRef={nameField.ref}
-              onBlur={() => saveName()}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  if (e.target instanceof HTMLElement) e.target.blur();
-                } else if (e.key === "Escape") {
-                  setNameEditing(false);
-                }
-              }}
-              autoFocus
-              disabled={rename.isPending}
-              slotProps={{ htmlInput: { "aria-label": "Character name", maxLength: 255 } }}
-              sx={{
-                "& .MuiInputBase-input": {
-                  fontWeight: "fontWeightBold",
-                  color: "primary.main",
-                  typography: { xs: "h6", sm: "h5" },
-                },
-              }}
-            />
-          ) : (
-            <Typography
-              component="h1"
-              variant="h3"
-              onClick={
-                canEditName
-                  ? () => {
-                      nameForm.reset({ name: characterName });
-                      setNameEditing(true);
-                    }
-                  : undefined
-              }
-              sx={{
-                cursor: canEditName ? "pointer" : "default",
-                "&:hover": canEditName
-                  ? { textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: "4px" }
-                  : undefined,
-              }}
-            >
-              {characterName || "Unnamed Character"}
-            </Typography>
-          )}
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={!isDirty || saveIdentity.isPending}
-            sx={{ visibility: readOnly ? "hidden" : "visible" }}
-          >
-            <DiceSpinner size="small" loading={saveIdentity.isPending}>
-              Save
-            </DiceSpinner>
-          </Button>
-        </Stack>
-
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={3}
@@ -434,6 +340,15 @@ export function CharacterIdentitySection({
             )}
           </Stack>
         </Stack>
+        {!readOnly && (
+          <FormActions>
+            <Button type="submit" variant="contained" disabled={!isDirty || saveIdentity.isPending}>
+              <DiceSpinner size="small" loading={saveIdentity.isPending}>
+                Save
+              </DiceSpinner>
+            </Button>
+          </FormActions>
+        )}
       </Stack>
     </Section>
   );

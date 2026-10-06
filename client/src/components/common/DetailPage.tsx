@@ -9,10 +9,12 @@ import { type Tag, TagChip } from "./TagChip.tsx";
 interface DetailPageHeaderProps {
   /** Its text, or a skeleton while it loads */
   title: ReactNode;
+  /** Shown in the title's place while the page's record is renamed */
+  titleEditor?: ReactNode;
   /** Inline control after the title, e.g. a star toggle. */
   titleAdornment?: ReactNode;
-  /** Where Back goes */
-  backTo: string;
+  /** Where Back goes; without one (a shared sheet's viewer), its corner stays empty */
+  backTo?: string;
   /** Momentarily nowhere sensible to go back to. */
   backDisabled?: boolean;
   /** Opens the page's action menu; the button is hidden when omitted. */
@@ -48,6 +50,7 @@ export interface SectionTab<K extends string> {
  */
 export function DetailPageHeader({
   title,
+  titleEditor,
   titleAdornment,
   backTo,
   backDisabled = false,
@@ -68,14 +71,20 @@ export function DetailPageHeader({
         borderColor: "divider",
       }}
     >
-      <IconButton component={Link} to={backTo} disabled={backDisabled} size="large" aria-label="Back">
-        <BackIcon />
-      </IconButton>
+      {backTo ? (
+        <IconButton component={Link} to={backTo} disabled={backDisabled} size="large" aria-label="Back">
+          <BackIcon />
+        </IconButton>
+      ) : (
+        <Box />
+      )}
       <Stack spacing={2} sx={{ textAlign: "center" }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center" }}>
-          <Typography component="h1" variant="h3">
-            {title}
-          </Typography>
+          {titleEditor ?? (
+            <Typography component="h1" variant="h3">
+              {title}
+            </Typography>
+          )}
           {titleAdornment}
         </Stack>
         {tags && tags.length > 0 && (

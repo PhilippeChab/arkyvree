@@ -62,9 +62,8 @@ export function CharacterSheetBody({
   const sections = getSections(character.baseRules ?? DEFAULT_BASE_RULES);
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={4}>
       <CharacterIdentitySection
-        characterName={character.identity?.physiology?.name || ""}
         characterId={characterId}
         rulesetId={rulesetId}
         character={character}

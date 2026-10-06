@@ -1,10 +1,16 @@
-import { IconButton, Paper, Stack, Typography } from "@mui/material";
+import { Menu } from "@mui/material";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { CharacterDetailSkeleton, CharacterSheetBody, downloadPdf } from "@/client/src/components/characters/index.ts";
-import { PageBody, PageError } from "@/client/src/components/common/index.ts";
+import {
+  CharacterDetailSkeleton,
+  CharacterHeader,
+  CharacterSheetBody,
+  downloadPdf,
+} from "@/client/src/components/characters/index.ts";
+import { ActionMenuItem, PageBody, PageError } from "@/client/src/components/common/index.ts";
 import { DownloadIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
@@ -15,6 +21,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 export default function SharedCharacterPage() {
   const { shareToken = "" } = useParams<{ shareToken: string }>();
   const snackbar = useSnackbar();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const {
     data: character,
@@ -53,26 +60,21 @@ export default function SharedCharacterPage() {
 
   return (
     <PageBody>
-      <Paper sx={{ p: 2 }}>
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
-        >
-          <Typography component="p" sx={{ fontWeight: "fontWeightBold", typography: { xs: "h5", md: "h4" } }} noWrap>
-            {character.rulesetName || "Character Sheet"}
-          </Typography>
-
-          <IconButton
-            size="large"
-            aria-label="Download PDF"
-            onClick={handleDownloadPdf}
-            sx={{ color: "text.secondary" }}
-          >
-            <DownloadIcon />
-          </IconButton>
-        </Stack>
-      </Paper>
+      <CharacterHeader
+        name={character.identity?.physiology?.name || ""}
+        rulesetName={character.rulesetName}
+        onMenuOpen={(e) => setAnchorEl(e.currentTarget)}
+      />
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+        <ActionMenuItem
+          icon={DownloadIcon}
+          label="Download PDF"
+          onClick={() => {
+            setAnchorEl(null);
+            handleDownloadPdf();
+          }}
+        />
+      </Menu>
 
       <CharacterSheetBody
         character={character}

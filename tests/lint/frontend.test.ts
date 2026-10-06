@@ -958,6 +958,8 @@ describe("frontend rules", () => {
             'export const h = (\n  <Stack direction="row" spacing={0.5}>\n    {tags.map((t) => (\n      <TagChip key={t.label} tag={t} />\n    ))}\n  </Stack>\n);\n',
           "client/src/buttons.tsx":
             'export const u = (\n  <Stack direction="row" spacing={2}>\n    <Button>Retry</Button>\n    <Button>Back</Button>\n  </Stack>\n);\n',
+          "client/src/cards.tsx":
+            "export const q = (\n  <Stack spacing={3}>\n    <Paper>a</Paper>\n    <Paper>b</Paper>\n  </Stack>\n);\n",
           "client/src/panels.tsx":
             'export const p = (\n  <Stack spacing={3}>\n    <Section title="A">a</Section>\n    <Section title="B">b</Section>\n  </Stack>\n);\n',
           "client/src/padded.tsx": "export const d = <Box sx={{ py: 1.5, px: 2 }} />;\n",
@@ -980,6 +982,7 @@ describe("frontend rules", () => {
     ).toEqual([
       "spacing client/src/between.tsx",
       "spacing client/src/buttons.tsx",
+      "spacing client/src/cards.tsx",
       "spacing client/src/chips.tsx",
       "spacing client/src/computed.tsx",
       "spacing client/src/constant.tsx",
