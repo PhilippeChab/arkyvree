@@ -10,4 +10,9 @@ export { refreshEntityData } from "./refreshEntityData.ts";
 export { default as RulesetCache } from "./RulesetCache.ts";
 export { default as RulesetData } from "./RulesetData.ts";
 export { withRulesetScope, withRulesetScopes } from "./scope.ts";
-export { mergeSiblingRequirements } from "./siblingRequirements.ts";
+export {
+  mergeSiblingAptitudeLinks,
+  mergeSiblingModifiers,
+  mergeSiblingProperties,
+  mergeSiblingRequirements,
+} from "./siblingMerge.ts";

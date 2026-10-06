@@ -494,7 +494,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
 - `server/cache/rulesetCache/` — `RulesetCache` (`RulesetCache.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up), the raw rows' fetch (`rawData.ts`), the compose step with its sibling merging and FK remap (`RulesetComposition.ts`), and the view it builds, whose lookup indices and resolving maps are built on first read (`RulesetData.ts`)
-- `server/cache/rulesetCache/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), the COW data's build (`CowDataBuilder.ts`; `RulesetCache` caches and invalidates it), the sibling requirements' merge (`siblingRequirements.ts`)
+- `server/cache/rulesetCache/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), the COW data's build (`CowDataBuilder.ts`; `RulesetCache` caches and invalidates it), the sibling merge's rules, which the compose step and a copy share (`siblingMerge.ts`), and the list the compose step gathers a merge's rows in (`SiblingRows.ts`)
 - `server/cow/` (copy-on-write's write side) — `RulesetEdit` (the rows a change writes, names a create takes), `EntityCopy` (a copy of an inherited entity), the copy primitives (`copyCustomizations.ts`)
 - `server/database/CowData.ts` — a ruleset's copy-on-write state: what an id resolves to, and whether it's overridden or a sibling loser
 - `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `getCowContext` (infrastructure)
