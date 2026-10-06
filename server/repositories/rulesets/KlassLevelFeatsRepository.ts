@@ -1,7 +1,7 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { eq, inArray, isNull } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
-import { klassLevelFeatsInRules } from "@/drizzle/schema.ts";
+import { klassesInRules, klassLevelFeatsInRules, klassLevelsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
@@ -33,12 +33,44 @@ class KlassLevelFeatsRepository extends BaseRepository<typeof klassLevelFeatsInR
       .returning();
   }
 
-  async findMany(db: Db, where: { klassLevelIds: string[] }) {
-    if (where.klassLevelIds.length === 0) return [];
+  /** Levels' grants, or a ruleset's classes' grants from lists (`aptitudeIds`) or of feats (`featIds`). */
+  async findMany(
+    db: Db,
+    where:
+      | { klassLevelIds: string[] }
+      | { rulesetId: string; aptitudeIds: string[] }
+      | { rulesetId: string; featIds: string[] },
+  ) {
+    if ("klassLevelIds" in where && where.klassLevelIds.length === 0) return [];
+    if ("aptitudeIds" in where && where.aptitudeIds.length === 0) return [];
+    if ("featIds" in where && where.featIds.length === 0) return [];
     return await db.query.klassLevelFeatsInRules.findMany({
-      where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
+      where: this.branchWhere(
+        [
+          "klassLevelIds" in where && inArray(this.table.klassLevelId, where.klassLevelIds),
+          "aptitudeIds" in where && inArray(this.table.aptitudeId, where.aptitudeIds),
+          "featIds" in where && inArray(this.table.featId, where.featIds),
+        ],
+        [
+          "rulesetId" in where &&
+            inArray(
+              this.table.klassLevelId,
+              db
+                .select({ id: klassLevelsInRules.id })
+                .from(klassLevelsInRules)
+                .innerJoin(klassesInRules, eq(klassesInRules.id, klassLevelsInRules.klassId))
+                .where(eq(klassesInRules.rulesetId, where.rulesetId)),
+            ),
+          isNull(this.table.deletedAt),
+        ],
+      ),
       orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.id)],
     });
+  }
+
+  /** Repoints a level's grant to another list. */
+  async update(db: Db, values: { aptitudeId: string }, where: { id: string }) {
+    return await db.update(this.table).set(values).where(eq(this.table.id, where.id)).returning();
   }
 }
 

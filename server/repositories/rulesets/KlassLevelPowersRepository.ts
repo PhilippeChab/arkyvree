@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
-import { klassLevelPowersInRules } from "@/drizzle/schema.ts";
+import { klassesInRules, klassLevelPowersInRules, klassLevelsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
@@ -29,16 +29,52 @@ class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersI
       .returning();
   }
 
-  async findMany(db: Db, where: { klassLevelIds: string[] }) {
-    if (where.klassLevelIds.length === 0) return [];
+  /** Levels' grants, or a ruleset's classes' grants from lists (`aptitudeIds`) or of powers (`powerIds`). */
+  async findMany(
+    db: Db,
+    where:
+      | { klassLevelIds: string[] }
+      | { rulesetId: string; aptitudeIds: string[] }
+      | { rulesetId: string; powerIds: string[] },
+  ) {
+    if ("klassLevelIds" in where && where.klassLevelIds.length === 0) return [];
+    if ("aptitudeIds" in where && where.aptitudeIds.length === 0) return [];
+    if ("powerIds" in where && where.powerIds.length === 0) return [];
     return await db.query.klassLevelPowersInRules.findMany({
-      where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
+      where: this.branchWhere(
+        [
+          "klassLevelIds" in where && inArray(this.table.klassLevelId, where.klassLevelIds),
+          "aptitudeIds" in where && inArray(this.table.aptitudeId, where.aptitudeIds),
+          "powerIds" in where && inArray(this.table.powerId, where.powerIds),
+        ],
+        [
+          "rulesetId" in where &&
+            inArray(
+              this.table.klassLevelId,
+              db
+                .select({ id: klassLevelsInRules.id })
+                .from(klassLevelsInRules)
+                .innerJoin(klassesInRules, eq(klassesInRules.id, klassLevelsInRules.klassId))
+                .where(eq(klassesInRules.rulesetId, where.rulesetId)),
+            ),
+          isNull(this.table.deletedAt),
+        ],
+      ),
       orderBy: [
         this.orderBy(this.table.createdAt),
         this.orderBy(this.table.klassLevelId),
         this.orderBy(this.table.powerId),
       ],
     });
+  }
+
+  /** Repoints a level's grant to another list. */
+  async update(db: Db, values: { aptitudeId: string }, where: { klassLevelId: string; powerId: string }) {
+    return await db
+      .update(this.table)
+      .set(values)
+      .where(and(eq(this.table.klassLevelId, where.klassLevelId), eq(this.table.powerId, where.powerId)))
+      .returning();
   }
 }
 
