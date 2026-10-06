@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const FRENZIED_BERSERKER: ClassSeed = {
   name: "Frenzied Berserker",
-  description: "Driven by an unquenchable thirst for violence, the frenzied berserker seeks ever-greater conflicts to satiate her relentless appetite for warfare.",
-  hd: 12, levels: 10, skillPoints: 2,
+  description:
+    "Driven by an unquenchable thirst for violence, the frenzied berserker seeks ever-greater conflicts to satiate her relentless appetite for warfare.",
+  hd: 12,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: ["Climb", "Intimidate", "Jump", "Ride", "Swim"],
@@ -41,9 +49,5 @@ export const FRENZIED_BERSERKER: ClassSeed = {
     [10, "Supreme Power Attack (Frenzied Berserker)"],
     [10, "Tireless Frenzy (Frenzied Berserker)"],
   ],
-  freeFeats: [
-    [1, "Diehard", "Frenzied Berserker Class Feature"],
-  ],
+  freeFeats: [[1, "Diehard", "Frenzied Berserker Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

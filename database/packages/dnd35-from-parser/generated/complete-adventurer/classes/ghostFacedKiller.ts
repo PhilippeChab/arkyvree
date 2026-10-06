@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const GHOST_FACED_KILLER: ClassSeed = {
   name: "Ghost-faced Killer",
-  description: "Long ago, a persecuted clan of dangerous warriors sought a way to take revenge against their oppressors. Through sorcery, the spellcasters of the clan beseeched dark spirits to reveal a way that their clan might survive the coming strife and take revenge on the emperor who sought to crush them. The clan members struck a dark bargain, and the demon-spirits they had contacted provided the clan with a means to the bloody ends they desired. Donning terrifying masks to hide their identities, warriors of the clan crept into the imperial palace, and through the evil power of the pact they had made, passed invisibly and intangibly into the imperial household and murdered the entire imperial family, plunging the country into bloody civil war once again. No one ever discovered the clan's honorless actions, and to this day, no one knows what clan the ghost-faced killers came from. Today ghost-faced killers act as assassins and spies for hire, a mercenary clan that hides behind a guise of open and honorable conduct. When on a mission, they wear porcelain demon-masks of ghostly white to hide their identities and as a symbol of the pact their clan made with the demon-spirits. Through training and discipline, ghost-faced killers learn the deadliest and most terrifying ways to attack foes, and through their mystic connection with spirits, ghost-faced killers learn to turn invisible, walk through walls, and even see with the eyes of the spirits themselves. Most ghost-faced killers begin their careers as rangers or rogues, though ninjas are also common. Fighters are only slightly less common. Few monks, barbarians, or members of spellcasting classes choose to become ghost-faced killers, but such characters are not unknown.",
-  hd: 8, levels: 10, skillPoints: 4,
+  description:
+    "Long ago, a persecuted clan of dangerous warriors sought a way to take revenge against their oppressors. Through sorcery, the spellcasters of the clan beseeched dark spirits to reveal a way that their clan might survive the coming strife and take revenge on the emperor who sought to crush them. The clan members struck a dark bargain, and the demon-spirits they had contacted provided the clan with a means to the bloody ends they desired. Donning terrifying masks to hide their identities, warriors of the clan crept into the imperial palace, and through the evil power of the pact they had made, passed invisibly and intangibly into the imperial household and murdered the entire imperial family, plunging the country into bloody civil war once again. No one ever discovered the clan's honorless actions, and to this day, no one knows what clan the ghost-faced killers came from. Today ghost-faced killers act as assassins and spies for hire, a mercenary clan that hides behind a guise of open and honorable conduct. When on a mission, they wear porcelain demon-masks of ghostly white to hide their identities and as a symbol of the pact their clan made with the demon-spirits. Through training and discipline, ghost-faced killers learn the deadliest and most terrifying ways to attack foes, and through their mystic connection with spirits, ghost-faced killers learn to turn invisible, walk through walls, and even see with the eyes of the spirits themselves. Most ghost-faced killers begin their careers as rangers or rogues, though ninjas are also common. Fighters are only slightly less common. Few monks, barbarians, or members of spellcasting classes choose to become ghost-faced killers, but such characters are not unknown.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -30,7 +38,11 @@ export const GHOST_FACED_KILLER: ClassSeed = {
     gte("skills.movesilently.rank", 6),
     eq("feats.improvedinitiative.possessed"),
     eq("feats.powerattack.possessed"),
-    or(eqStr("identity.beliefs.alignment", "Lawful Evil"), eqStr("identity.beliefs.alignment", "Neutral Evil"), eqStr("identity.beliefs.alignment", "Chaotic Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+      eqStr("identity.beliefs.alignment", "Neutral Evil"),
+      eqStr("identity.beliefs.alignment", "Chaotic Evil"),
+    ),
   ],
   classFeatureAptitude: "Ghost-faced Killer Class Feature",
   classFeatures: [
@@ -51,5 +63,3 @@ export const GHOST_FACED_KILLER: ClassSeed = {
     [10, "Ghost Step (Ghost-faced Killer)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

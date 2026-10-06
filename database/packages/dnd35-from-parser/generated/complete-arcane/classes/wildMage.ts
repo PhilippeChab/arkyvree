@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const WILD_MAGE: ClassSeed = {
   name: "Wild Mage",
   description: "Wild mages aspire to cast spells without structure.",
-  hd: 4, levels: 10, skillPoints: 2,
+  hd: 4,
+  levels: 10,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -33,7 +40,11 @@ export const WILD_MAGE: ClassSeed = {
     gte("skills.usemagicdevice.rank", 4),
     eq("feats.magicalaptitude.possessed"),
     eq("feats.metamagic.*.possessed"),
-    or(eqStr("identity.beliefs.alignment", "Chaotic Good"), eqStr("identity.beliefs.alignment", "Chaotic Neutral"), eqStr("identity.beliefs.alignment", "Chaotic Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Chaotic Good"),
+      eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
+      eqStr("identity.beliefs.alignment", "Chaotic Evil"),
+    ),
   ],
   casterLevelAdvancement: { type: "arcane", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Wild Mage Class Feature",
@@ -50,5 +61,3 @@ export const WILD_MAGE: ClassSeed = {
     [10, "Wildstrike (Wild Mage)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

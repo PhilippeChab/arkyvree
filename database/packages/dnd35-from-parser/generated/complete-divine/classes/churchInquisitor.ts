@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const CHURCH_INQUISITOR: ClassSeed = {
   name: "Church Inquisitor",
   description: "The church inquisitor roots out corruption lurking within religious institutions and excises it.",
-  hd: 8, levels: 10, skillPoints: 4,
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -45,9 +52,5 @@ export const CHURCH_INQUISITOR: ClassSeed = {
     [9, "Discern Lies (Church Inquisitor)"],
     [10, "Learn the Truth (Church Inquisitor)"],
   ],
-  freeFeats: [
-    [1, "Inquisition Domain", "Cleric Domain"],
-  ],
+  freeFeats: [[1, "Inquisition Domain", "Cleric Domain"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

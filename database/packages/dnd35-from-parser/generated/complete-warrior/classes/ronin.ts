@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const RONIN: ClassSeed = {
   name: "Ronin",
-  description: "A ronin is a wandering warrior who has lost or abandoned his lord, yet still holds on to fragments of his previous way of life.",
-  hd: 10, levels: 10, skillPoints: 2,
+  description:
+    "A ronin is a wandering warrior who has lost or abandoned his lord, yet still holds on to fragments of his previous way of life.",
+  hd: 10,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -42,5 +50,3 @@ export const RONIN: ClassSeed = {
     [10, "Sneak Attack (Ronin)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

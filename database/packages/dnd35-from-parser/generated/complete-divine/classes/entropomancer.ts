@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const ENTROPOMANCER: ClassSeed = {
   name: "Entropomancer",
-  description: "Those who walk this path become attuned to the primordial void that they believe resides at the heart of all existence.",
-  hd: 8, levels: 10, skillPoints: 2,
+  description:
+    "Those who walk this path become attuned to the primordial void that they believe resides at the heart of all existence.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: [
@@ -49,5 +57,3 @@ export const ENTROPOMANCER: ClassSeed = {
     [10, "Control Sphere (Entropomancer)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

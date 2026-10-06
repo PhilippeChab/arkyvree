@@ -1,10 +1,13 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const DRAGON_DISCIPLE: ClassSeed = {
   name: "Dragon Disciple",
-  description: "Dragon disciples channel their arcane power to awaken the latent draconic blood flowing through their veins.",
-  hd: 12, levels: 10, skillPoints: 2,
+  description:
+    "Dragon disciples channel their arcane power to awaken the latent draconic blood flowing through their veins.",
+  hd: 12,
+  levels: 10,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: [
@@ -31,10 +34,7 @@ export const DRAGON_DISCIPLE: ClassSeed = {
     "Spellcraft",
     "Spot",
   ],
-  requirements: [
-    gte("skills.knowledgearcana.rank", 8),
-    gte("spellcasting.arcane", 1),
-  ],
+  requirements: [gte("skills.knowledgearcana.rank", 8), gte("spellcasting.arcane", 1)],
   classFeatureAptitude: "Dragon Disciple Class Feature",
   classFeatures: [
     [1, "Natural Armor Increase (Dragon Disciple)"],

@@ -1,22 +1,21 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const NATURES_WARRIOR: ClassSeed = {
   name: "Nature's Warrior",
-  description: "Nature's warriors champion the untamed wilderness, serving as guardians of the natural order. Many are druids who have embraced their wild shape so deeply that the boundary between their civilized and bestial selves has blurred.",
-  hd: 10, levels: 5, skillPoints: 2,
+  description:
+    "Nature's warriors champion the untamed wilderness, serving as guardians of the natural order. Many are druids who have embraced their wild shape so deeply that the boundary between their civilized and bestial selves has blurred.",
+  hd: 10,
+  levels: 5,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
-  classSkills: [
-    "Diplomacy",
-    "Handle Animal",
-    "Intimidate",
-    "Jump",
-    "Knowledge (Nature)",
-    "Listen",
-    "Survival",
-    "Swim",
-  ],
+  classSkills: ["Diplomacy", "Handle Animal", "Intimidate", "Jump", "Knowledge (Nature)", "Listen", "Survival", "Swim"],
   requirements: [
     gte("combat.bab", 4),
     gte("skills.knowledgenature.rank", 8),
@@ -36,5 +35,3 @@ export const NATURES_WARRIOR: ClassSeed = {
     [5, "Nature's Armament (Nature's Warrior)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

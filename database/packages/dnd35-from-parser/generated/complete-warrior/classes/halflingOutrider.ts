@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const HALFLING_OUTRIDER: ClassSeed = {
   name: "Halfling Outrider",
-  description: "Halfling outriders serve as skilled mounted sentinels, dedicated to alerting and safeguarding their communities against approaching threats.",
-  hd: 8, levels: 10, skillPoints: 4,
+  description:
+    "Halfling outriders serve as skilled mounted sentinels, dedicated to alerting and safeguarding their communities against approaching threats.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: ["Handle Animal", "Listen", "Ride", "Spot", "Survival"],
@@ -31,9 +39,5 @@ export const HALFLING_OUTRIDER: ClassSeed = {
     [8, "Full Mounted Attack (Halfling Outrider)"],
     [10, "Quick Turn (Halfling Outrider)"],
   ],
-  freeFeats: [
-    [1, "Alertness", "Halfling Outrider Class Feature"],
-  ],
+  freeFeats: [[1, "Alertness", "Halfling Outrider Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

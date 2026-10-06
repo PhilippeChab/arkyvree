@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_8_SPELLS: PowerSeed[] = [
   {
     name: "Lion's Roar",
-    description: "You unleash a thunderous roar that inflicts 1d8 points of sonic damage per two caster levels upon all enemies in the area and stuns them for 1 round. A successful Fortitude save reduces the damage by half and prevents the stunning. Additionally, all allies within the area receive a +1 morale bonus on attack rolls and saving throws against fear effects, along with temporary hit points equal to 1d8 + your caster level (capped at 1d8+20 at 20th caster level).",
+    description:
+      "You unleash a thunderous roar that inflicts 1d8 points of sonic damage per two caster levels upon all enemies in the area and stuns them for 1 round. A successful Fortitude save reduces the damage by half and prevents the stunning. Additionally, all allies within the area receive a +1 morale bonus on attack rolls and saving throws against fear effects, along with temporary hit points equal to 1d8 + your caster level (capped at 1d8+20 at 20th caster level).",
     aptitudes: ["Cleric Spells", "Favored Soul Spells", "Shugenja Spells", "Ur-priest Spells"],
     savingThrow: "Fortitude partial or Will negates (harmless); see text",
     properties: [

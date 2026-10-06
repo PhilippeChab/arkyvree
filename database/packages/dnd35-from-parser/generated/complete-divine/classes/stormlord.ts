@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const STORMLORD: ClassSeed = {
   name: "Stormlord",
-  description: "Stormlords tend to live as bandits, pursuing their desires for riches, fine food, luxuries, and reckless indulgence, driven by an appetite for sudden, dramatic destruction.",
-  hd: 8, levels: 10, skillPoints: 2,
+  description:
+    "Stormlords tend to live as bandits, pursuing their desires for riches, fine food, luxuries, and reckless indulgence, driven by an appetite for sudden, dramatic destruction.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: [
@@ -44,5 +52,3 @@ export const STORMLORD: ClassSeed = {
     [10, "Elemental Conflagration (Stormlord)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

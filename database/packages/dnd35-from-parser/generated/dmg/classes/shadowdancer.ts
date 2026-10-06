@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SHADOWDANCER: ClassSeed = {
   name: "Shadowdancer",
-  description: "Shadowdancers thrive at the threshold where light meets shadow, employing agility and trickery as their primary tools.",
-  hd: 8, levels: 10, skillPoints: 6,
+  description:
+    "Shadowdancers thrive at the threshold where light meets shadow, employing agility and trickery as their primary tools.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -55,5 +63,3 @@ export const SHADOWDANCER: ClassSeed = {
     [10, "Shadow Jump (Shadowdancer)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

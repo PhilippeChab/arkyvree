@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const DREAD_PIRATE: ClassSeed = {
   name: "Dread Pirate",
-  description: "Thugs and cutthroats in every port lay claim to the title ?pirate,? but actually making a fortune through piracy is no easy task. A dread pirate, however, has mastered every aspect of larceny on the high seas. Some dread pirates accomplish their goals through fear, killing indiscriminately and ruling their ships at rapier-point. Others minimize bloodshed and exhibit a curious sort of chivalry, perhaps realizing that the captain and crew of a prize ship are more likely to surrender if they believe they will live to see port again. Now and then a dread pirate takes his chivalric streak a step farther and preys only on the ships of enemy nations?or even solely on other pirates. A dread pirate's lifestyle is ideal for most rogues, because the job requires a number of skills that other classes don't have the time or inclination to learn. However, the class also attracts some spellcasters, who can use magic to conceal their ships or incapacitate a prize vessel's cre",
-  hd: 8, levels: 10, skillPoints: 6,
+  description:
+    "Thugs and cutthroats in every port lay claim to the title ?pirate,? but actually making a fortune through piracy is no easy task. A dread pirate, however, has mastered every aspect of larceny on the high seas. Some dread pirates accomplish their goals through fear, killing indiscriminately and ruling their ships at rapier-point. Others minimize bloodshed and exhibit a curious sort of chivalry, perhaps realizing that the captain and crew of a prize ship are more likely to surrender if they believe they will live to see port again. Now and then a dread pirate takes his chivalric streak a step farther and preys only on the ships of enemy nations?or even solely on other pirates. A dread pirate's lifestyle is ideal for most rogues, because the job requires a number of skills that other classes don't have the time or inclination to learn. However, the class also attracts some spellcasters, who can use magic to conceal their ships or incapacitate a prize vessel's cre",
+  hd: 8,
+  levels: 10,
+  skillPoints: 6,
   bab: "good",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -60,9 +68,5 @@ export const DREAD_PIRATE: ClassSeed = {
     [10, "Fearsome Reputation (Dread Pirate)"],
     [10, "Pirate King (Dread Pirate)"],
   ],
-  freeFeats: [
-    [1, "Two-Weapon Fighting", "Dread Pirate Class Feature"],
-  ],
+  freeFeats: [[1, "Two-Weapon Fighting", "Dread Pirate Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

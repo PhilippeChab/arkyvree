@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const MASTER_TRANSMOGRIFIST: ClassSeed = {
   name: "Master Transmogrifist",
-  description: "The master transmogrifist is a sorcerer or wizard who has chosen to specialize in spells that change his form.",
-  hd: 4, levels: 10, skillPoints: 2,
+  description:
+    "The master transmogrifist is a sorcerer or wizard who has chosen to specialize in spells that change his form.",
+  hd: 4,
+  levels: 10,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: ["Bluff", "Concentration", "Craft", "Disguise", "Knowledge (Arcana)", "Profession", "Spellcraft"],
@@ -39,5 +47,3 @@ export const MASTER_TRANSMOGRIFIST: ClassSeed = {
     [10, "Infinite Variety (Master Transmogrifist)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

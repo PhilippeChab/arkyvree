@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
     name: "Antilife Shell",
-    description: "You create a mobile, hemispherical barrier of energy that excludes most living creatures. Animals, aberrations, dragons, fey, giants, humanoids, magical beasts, monstrous humanoids, oozes, plants, and vermin cannot enter, though constructs, elementals, outsiders, and undead are unaffected. This spell can only be used defensively; forcing the barrier against excluded creatures collapses it.",
+    description:
+      "You create a mobile, hemispherical barrier of energy that excludes most living creatures. Animals, aberrations, dragons, fey, giants, humanoids, magical beasts, monstrous humanoids, oozes, plants, and vermin cannot enter, though constructs, elementals, outsiders, and undead are unaffected. This spell can only be used defensively; forcing the barrier against excluded creatures collapses it.",
     aptitudes: ["Blighter Spells", "Cleric Spells", "Druid Spells"],
     aptitudeLevels: { "Blighter Spells": 5, "Cleric Spells": 6, "Druid Spells": 6 },
     savingThrow: "None",
@@ -21,7 +22,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Atonement",
-    description: "This spell lifts the burden of misdeeds from a truly repentant creature. If the wrongdoing was unwitting or coerced, the spell works at no cost. For deliberate, knowing transgressions, you must intercede with your deity (expending 500 XP). Many casters first assign a quest or similar penance to verify sincerity. The spell has several applications: Reverse Magical Alignment Change restores an alignment altered by magic at no XP cost. Restore Class can return a fallen paladin's class features. Restore Cleric or Druid Spell Powers can be granted by another cleric of the same deity or another druid (costing 500 XP if the transgression was intentional). Redemption or Temptation allows you to offer a creature of opposing alignment the chance to voluntarily change its alignment to match yours; no compulsion can force acceptance, and this does not work on outsiders or creatures incapable of natural alignment change. The spell applies equally to acts against any alignment, not just evil. Material Component: Burning incense. Focus: A set of prayer beads or similar prayer device worth at least 500 gp. XP Cost: 500 XP per casting when the guilt was from deliberate acts.",
+    description:
+      "This spell lifts the burden of misdeeds from a truly repentant creature. If the wrongdoing was unwitting or coerced, the spell works at no cost. For deliberate, knowing transgressions, you must intercede with your deity (expending 500 XP). Many casters first assign a quest or similar penance to verify sincerity. The spell has several applications: Reverse Magical Alignment Change restores an alignment altered by magic at no XP cost. Restore Class can return a fallen paladin's class features. Restore Cleric or Druid Spell Powers can be granted by another cleric of the same deity or another druid (costing 500 XP if the transgression was intentional). Redemption or Temptation allows you to offer a creature of opposing alignment the chance to voluntarily change its alignment to match yours; no compulsion can force acceptance, and this does not work on outsiders or creatures incapable of natural alignment change. The spell applies equally to acts against any alignment, not just evil. Material Component: Burning incense. Focus: A set of prayer beads or similar prayer device worth at least 500 gp. XP Cost: 500 XP per casting when the guilt was from deliberate acts.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -40,7 +42,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Awaken",
-    description: "You grant humanlike sentience to a tree or animal. You must succeed on a Will save (DC 10 + the creature's current HD, or the HD the tree will gain). The awakened creature is friendly toward you but has no special empathic connection; it will serve you in specific tasks if you communicate your wishes. An awakened tree gains animated object characteristics with the plant type, and each of its Intelligence, Wisdom, and Charisma scores become 3d6. An awakened animal gains 3d6 Intelligence, +1d3 Charisma, and +2 HD, with its type becoming magical beast (augmented animal). An awakened animal cannot serve as a companion, familiar, or special mount. The awakened creature speaks one language you know, plus additional languages equal to its Intelligence bonus. XP Cost: 250 XP.",
+    description:
+      "You grant humanlike sentience to a tree or animal. You must succeed on a Will save (DC 10 + the creature's current HD, or the HD the tree will gain). The awakened creature is friendly toward you but has no special empathic connection; it will serve you in specific tasks if you communicate your wishes. An awakened tree gains animated object characteristics with the plant type, and each of its Intelligence, Wisdom, and Charisma scores become 3d6. An awakened animal gains 3d6 Intelligence, +1d3 Charisma, and +2 HD, with its type becoming magical beast (augmented animal). An awakened animal cannot serve as a companion, familiar, or special mount. The awakened creature speaks one language you know, plus additional languages equal to its Intelligence bonus. XP Cost: 250 XP.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -58,7 +61,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Baleful Polymorph",
-    description: "You transform the target into a Small or smaller animal of no more than 1 HD. The subject adopts all statistics and special abilities of the new form's average member, except it retains its own class features and loses all special abilities from its original form. All items fall to the ground. If the new form would be fatal (such as a fish on land), the target gains a +4 bonus on the save. If the subject remains transformed for 24 consecutive hours, it must attempt a Will save; failure causes it to lose all memories and language comprehension, with its HD and hp adjusting to match the new form (reversible if the effect later ends). Incorporeal or gaseous creatures are immune, and shapechanger creatures can revert to their natural form as a standard action, ending the spell.",
+    description:
+      "You transform the target into a Small or smaller animal of no more than 1 HD. The subject adopts all statistics and special abilities of the new form's average member, except it retains its own class features and loses all special abilities from its original form. All items fall to the ground. If the new form would be fatal (such as a fish on land), the target gains a +4 bonus on the save. If the subject remains transformed for 24 consecutive hours, it must attempt a Will save; failure causes it to lose all memories and language comprehension, with its HD and hp adjusting to match the new form (reversible if the effect later ends). Incorporeal or gaseous creatures are immune, and shapechanger creatures can revert to their natural form as a standard action, ending the spell.",
     aptitudes: ["Druid Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Fortitude negates, Will partial; see text",
     properties: [
@@ -74,7 +78,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bigby's Interposing Hand",
-    description: "A Large hand of force appears between you and one opponent you designate. The hand moves to remain between you and the target, providing cover that grants a +4 bonus to AC against that foe. A creature trying to push past it must overcome the hand in an opposed check using its Strength modifier against the hand's bonus (your caster level + your relevant ability modifier). The hand does not prevent spells or ranged attacks. You can redirect it to a new target as a move action. The hand has hp equal to half your full hp, your save bonuses, and an AC of 20.",
+    description:
+      "A Large hand of force appears between you and one opponent you designate. The hand moves to remain between you and the target, providing cover that grants a +4 bonus to AC against that foe. A creature trying to push past it must overcome the hand in an opposed check using its Strength modifier against the hand's bonus (your caster level + your relevant ability modifier). The hand does not prevent spells or ranged attacks. You can redirect it to a new target as a move action. The hand has hp equal to half your full hp, your save bonuses, and an AC of 20.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -91,7 +96,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Call Lightning Storm",
-    description: "This functions like call lightning, except each bolt deals 5d6 points of electricity damage (or 5d10 in outdoor stormy conditions), and you may call up to 15 bolts.",
+    description:
+      "This functions like call lightning, except each bolt deals 5d6 points of electricity damage (or 5d10 in outdoor stormy conditions), and you may call up to 15 bolts.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Reflex half",
     properties: [
@@ -108,7 +114,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Cloudkill",
-    description: "You generate a bank of poisonous yellowish-green fog similar to fog cloud. Creatures with 3 or fewer HD are automatically killed (no save). Those with 4 to 6 HD die unless they succeed on a Fortitude save (taking 1d4 Constitution damage per round on failure). Creatures with 6+ HD take 1d4 Constitution damage per round (Fortitude halves). Holding one's breath does not help; poison-immune creatures are unaffected. The cloud moves away from you at 10 feet per round along the ground, sinking to the lowest available terrain. It cannot penetrate liquids or be cast underwater.",
+    description:
+      "You generate a bank of poisonous yellowish-green fog similar to fog cloud. Creatures with 3 or fewer HD are automatically killed (no save). Those with 4 to 6 HD die unless they succeed on a Fortitude save (taking 1d4 Constitution damage per round on failure). Creatures with 6+ HD take 1d4 Constitution damage per round (Fortitude halves). Holding one's breath does not help; poison-immune creatures are unaffected. The cloud moves away from you at 10 feet per round along the ground, sinking to the lowest available terrain. It cannot penetrate liquids or be cast underwater.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "Fortitude partial; see text",
     properties: [
@@ -125,7 +132,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Command, Greater",
-    description: "This functions like command, except you can affect up to one creature per level, the activity continues beyond 1 round, and each creature gets a new Will save at the start of its turn after the first. All creatures must receive the same command.",
+    description:
+      "This functions like command, except you can affect up to one creature per level, the activity continues beyond 1 round, and each creature gets a new Will save at the start of its turn after the first. All creatures must receive the same command.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -143,7 +151,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Commune",
-    description: "You contact your deity or its agents and ask yes-or-no questions, one per caster level. Answers are correct within the entity's knowledge. \"Unclear\" is valid since powerful beings are not omniscient. Short phrases may replace one-word answers when necessary to avoid misleading. The entities structure answers to further their own purposes. The spell ends if you stop to discuss answers or take other actions. Material Component: Holy (or unholy) water and incense. XP Cost: 100 XP.",
+    description:
+      'You contact your deity or its agents and ask yes-or-no questions, one per caster level. Answers are correct within the entity\'s knowledge. "Unclear" is valid since powerful beings are not omniscient. Short phrases may replace one-word answers when necessary to avoid misleading. The entities structure answers to further their own purposes. The spell ends if you stop to discuss answers or take other actions. Material Component: Holy (or unholy) water and incense. XP Cost: 100 XP.',
     aptitudes: ["Cleric Spells"],
     savingThrow: "None",
     properties: [
@@ -162,7 +171,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Cone of Cold",
-    description: "You create an area of extreme cold extending outward from your hand in a cone, draining heat and dealing 1d6 points of cold damage per caster level (maximum 15d6). Arcane Material Component: A very small crystal or glass cone.",
+    description:
+      "You create an area of extreme cold extending outward from your hand in a cone, draining heat and dealing 1d6 points of cold damage per caster level (maximum 15d6). Arcane Material Component: A very small crystal or glass cone.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "Reflex half",
     properties: [
@@ -181,7 +191,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Contact Other Plane",
-    description: "You project your mind to another plane to seek advice from extraplanar powers. They respond with brief one-word answers. You ask one question per two caster levels, requiring concentration (standard action) each round. Contacting more distant planes increases both the risk of Intelligence and Charisma loss and the likelihood of receiving accurate answers. Results may be modified by the GM based on the personalities of specific deities. Rarely, this divination may be blocked by certain powers.",
+    description:
+      "You project your mind to another plane to seek advice from extraplanar powers. They respond with brief one-word answers. You ask one question per two caster levels, requiring concentration (standard action) each round. Contacting more distant planes increases both the risk of Intelligence and Charisma loss and the likelihood of receiving accurate answers. Results may be modified by the GM based on the personalities of specific deities. Rarely, this divination may be blocked by certain powers.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -196,7 +207,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Control Winds",
-    description: "You alter wind force in the surrounding area, adjusting direction, strength, or both. Changes persist until the spell ends or you alter them (requiring concentration). You may create an \"eye\" of calm up to 80 feet in diameter at the center. Wind Direction: You may choose from four basic wind patterns over the spell's area.",
+    description:
+      'You alter wind force in the surrounding area, adjusting direction, strength, or both. Changes persist until the spell ends or you alter them (requiring concentration). You may create an "eye" of calm up to 80 feet in diameter at the center. Wind Direction: You may choose from four basic wind patterns over the spell\'s area.',
     aptitudes: ["Druid Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -213,7 +225,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Create Undead",
-    description: "More powerful than animate dead, this spell creates intelligent undead: ghouls, ghasts, mummies, and mohrgs. The type depends on your caster level, and you may create weaker types than allowed. Created undead are not automatically under your control; you may attempt to command them as they form if you have that ability. The spell must be cast at night. Material Component: A clay pot of grave dirt, one of brackish water, and a black onyx gem worth at least 50 gp per HD, placed in each corpse. The gems are consumed.",
+    description:
+      "More powerful than animate dead, this spell creates intelligent undead: ghouls, ghasts, mummies, and mohrgs. The type depends on your caster level, and you may create weaker types than allowed. Created undead are not automatically under your control; you may attempt to command them as they form if you have that ability. The spell must be cast at night. Material Component: A clay pot of grave dirt, one of brackish water, and a black onyx gem worth at least 50 gp per HD, placed in each corpse. The gems are consumed.",
     aptitudes: ["Blighter Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     aptitudeLevels: { "Blighter Spells": 5, "Cleric Spells": 6, "Sorcerer Spells": 6, "Wizard Spells": 6 },
     savingThrow: "None",
@@ -232,7 +245,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Cure Light Wounds, Mass",
-    description: "You channel positive energy to heal 1d8 points of damage + 1 per caster level (maximum +25) to each selected creature. Undead in the area take damage instead and may attempt Will saves for half.",
+    description:
+      "You channel positive energy to heal 1d8 points of damage + 1 per caster level (maximum +25) to each selected creature. Undead in the area take damage instead and may attempt Will saves for half.",
     aptitudes: ["Bard Spells", "Cleric Spells", "Druid Spells"],
     aptitudeLevels: { "Bard Spells": 5, "Cleric Spells": 5, "Druid Spells": 6 },
     savingThrow: "Will half (harmless) or Will half; see text",
@@ -250,7 +264,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Dispel Good",
-    description: "This functions like dispel evil, except you are surrounded by dark, wavering unholy energy, and it affects good creatures and spells.",
+    description:
+      "This functions like dispel evil, except you are surrounded by dark, wavering unholy energy, and it affects good creatures and spells.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "See text",
     properties: [
@@ -258,7 +273,11 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
       { type: "SPELL_DESCRIPTOR", value: "Evil" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Touch" },
-      { type: "SPELL_TARGET", value: "You and a touched evil creature from another plane; or you and an enchantment or evil spell on a touched creature or object" },
+      {
+        type: "SPELL_TARGET",
+        value:
+          "You and a touched evil creature from another plane; or you and an enchantment or evil spell on a touched creature or object",
+      },
       { type: "SPELL_DURATION", value: "1 round/level or until discharged, whichever comes first" },
       { type: "SPELL_RESISTANCE", value: "See text" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -268,7 +287,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Dispel Law",
-    description: "This functions like dispel evil, except you are surrounded by flickering yellow chaotic energy, and it affects lawful creatures and spells.",
+    description:
+      "This functions like dispel evil, except you are surrounded by flickering yellow chaotic energy, and it affects lawful creatures and spells.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "See text",
     properties: [
@@ -276,7 +296,11 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
       { type: "SPELL_DESCRIPTOR", value: "Chaotic" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Touch" },
-      { type: "SPELL_TARGET", value: "You and a touched evil creature from another plane; or you and an enchantment or evil spell on a touched creature or object" },
+      {
+        type: "SPELL_TARGET",
+        value:
+          "You and a touched evil creature from another plane; or you and an enchantment or evil spell on a touched creature or object",
+      },
       { type: "SPELL_DURATION", value: "1 round/level or until discharged, whichever comes first" },
       { type: "SPELL_RESISTANCE", value: "See text" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -286,9 +310,26 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Dispel Magic, Greater",
-    description: "This functions like dispel magic, except the maximum caster level bonus on your dispel check is +20 instead of +10, and it has a chance to dispel effects that remove curse can remove even if normal dispel magic cannot.",
-    aptitudes: ["Bard Spells", "Blighter Spells", "Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Bard Spells": 5, "Blighter Spells": 6, "Cleric Spells": 6, "Druid Spells": 6, "Sorcerer Spells": 6, "Wizard Spells": 6, "Wu Jen Spells": 6 },
+    description:
+      "This functions like dispel magic, except the maximum caster level bonus on your dispel check is +20 instead of +10, and it has a chance to dispel effects that remove curse can remove even if normal dispel magic cannot.",
+    aptitudes: [
+      "Bard Spells",
+      "Blighter Spells",
+      "Cleric Spells",
+      "Druid Spells",
+      "Sorcerer Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
+    aptitudeLevels: {
+      "Bard Spells": 5,
+      "Blighter Spells": 6,
+      "Cleric Spells": 6,
+      "Druid Spells": 6,
+      "Sorcerer Spells": 6,
+      "Wizard Spells": 6,
+      "Wu Jen Spells": 6,
+    },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -303,7 +344,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Dream",
-    description: "You or a touched messenger sends a phantasmal message to a named recipient through their dreams. The message can be any length and is perfectly remembered. Communication is one-way. The messenger enters a trance and appears in the recipient's dream. If the recipient is awake, the messenger can wait in the trance until the recipient sleeps. A disturbed messenger wakes, ending the spell. Creatures that do not sleep or dream cannot be contacted. The messenger is defenseless during the trance.",
+    description:
+      "You or a touched messenger sends a phantasmal message to a named recipient through their dreams. The message can be any length and is perfectly remembered. Communication is one-way. The messenger enters a trance and appears in the recipient's dream. If the recipient is awake, the messenger can wait in the trance until the recipient sleeps. A disturbed messenger wakes, ending the spell. Creatures that do not sleep or dream cannot be contacted. The messenger is defenseless during the trance.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -321,7 +363,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Fabricate",
-    description: "You convert raw material into a finished product of the same substance. Complex items require appropriate Craft checks. Mineral targets are reduced to 1 cubic foot per level instead of 10. Creatures and magic items cannot be created. Casting takes 1 round per 10 cubic feet affected. Material Component: The original material at the cost of raw materials.",
+    description:
+      "You convert raw material into a finished product of the same substance. Complex items require appropriate Craft checks. Mineral targets are reduced to 1 cubic foot per level instead of 10. Creatures and magic items cannot be created. Casting takes 1 round per 10 cubic feet affected. Material Component: The original material at the cost of raw materials.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -338,7 +381,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "False Vision",
-    description: "Any scrying directed at the area instead receives a false image you define at casting. You can concentrate to change the image; otherwise it remains static. Arcane Material Component: Jade dust worth at least 250 gp.",
+    description:
+      "Any scrying directed at the area instead receives a false image you define at casting. You can concentrate to change the image; otherwise it remains static. Arcane Material Component: Jade dust worth at least 250 gp.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -356,7 +400,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Feeblemind",
-    description: "On a failed Will save, the target's Intelligence and Charisma drop to 1. It cannot use Intelligence- or Charisma-based skills, cast spells, understand language, or communicate coherently, but still recognizes friends. Only heal, limited wish, miracle, or wish can restore it. Arcane spellcasters take -4 on the save. Material Component: A handful of clay, crystal, glass, or mineral spheres.",
+    description:
+      "On a failed Will save, the target's Intelligence and Charisma drop to 1. It cannot use Intelligence- or Charisma-based skills, cast spells, understand language, or communicate coherently, but still recognizes friends. Only heal, limited wish, miracle, or wish can restore it. Arcane spellcasters take -4 on the save. Material Component: A handful of clay, crystal, glass, or mineral spheres.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates; see text",
     properties: [
@@ -375,7 +420,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Forbiddance",
-    description: "You seal an area against all planar travel (teleportation, plane shifting, astral travel, ethereal travel, and summoning). Additionally, creatures with differing alignments take damage when entering: same alignment is unaffected; one axis different deals 6d6 (Will half, SR applies); both axes different deals 12d6 (Will half, SR applies). A password can exempt creatures. Cannot be overlapped. Can only be dispelled by a caster of equal or higher level. Material Component: Holy water and incenses worth 1,500 gp + 1,500 gp per 60-foot cube (password adds 1,000 gp + 1,000 gp per cube).",
+    description:
+      "You seal an area against all planar travel (teleportation, plane shifting, astral travel, ethereal travel, and summoning). Additionally, creatures with differing alignments take damage when entering: same alignment is unaffected; one axis different deals 6d6 (Will half, SR applies); both axes different deals 12d6 (Will half, SR applies). A password can exempt creatures. Cannot be overlapped. Can only be dispelled by a caster of equal or higher level. Material Component: Holy water and incenses worth 1,500 gp + 1,500 gp per 60-foot cube (password adds 1,000 gp + 1,000 gp per cube).",
     aptitudes: ["Blighter Spells", "Cleric Spells"],
     aptitudeLevels: { "Blighter Spells": 5, "Cleric Spells": 6 },
     savingThrow: "See text",
@@ -395,7 +441,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Hallow",
-    description: "You consecrate a site with four effects: magic circle against evil, +4 sacred bonus on turn checks (-4 to command), dead interred cannot become undead, and one fixed spell effect lasting one year throughout the site (designating who is affected). Spells that can be fixed include aid, bane, bless, cause fear, darkness, daylight, death ward, and many others. Only one hallow per area. Counters but does not dispel unhallow. Material Component: Herbs, oils, and incense worth 1,000 gp + 1,000 gp per spell level.",
+    description:
+      "You consecrate a site with four effects: magic circle against evil, +4 sacred bonus on turn checks (-4 to command), dead interred cannot become undead, and one fixed spell effect lasting one year throughout the site (designating who is affected). Spells that can be fixed include aid, bane, bless, cause fear, darkness, daylight, death ward, and many others. Only one hallow per area. Counters but does not dispel unhallow. Material Component: Herbs, oils, and incense worth 1,000 gp + 1,000 gp per spell level.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     savingThrow: "See text",
     properties: [
@@ -414,7 +461,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Heroism, Greater",
-    description: "This functions like heroism, except it grants a +4 morale bonus on attack rolls, saves, and skill checks, immunity to fear, and temporary hit points equal to your caster level (maximum 20).",
+    description:
+      "This functions like heroism, except it grants a +4 morale bonus on attack rolls, saves, and skill checks, immunity to fear, and temporary hit points equal to your caster level (maximum 20).",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     aptitudeLevels: { "Bard Spells": 5, "Sorcerer Spells": 6, "Wizard Spells": 6 },
     savingThrow: "Will negates (harmless)",
@@ -433,7 +481,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Inflict Light Wounds, Mass",
-    description: "Negative energy spreads from the origin point, dealing 1d8 + 1 per caster level (maximum +25) to nearby living enemies. Undead in the area are healed instead.",
+    description:
+      "Negative energy spreads from the origin point, dealing 1d8 + 1 per caster level (maximum +25) to nearby living enemies. Undead in the area are healed instead.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Will half",
     properties: [
@@ -449,7 +498,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Insect Plague",
-    description: "You summon locust swarms (one per three levels, maximum six at 18th), which must be placed adjacent to form a contiguous area. They attack creatures in their space. The swarms are stationary and do not pursue fleeing creatures.",
+    description:
+      "You summon locust swarms (one per three levels, maximum six at 18th), which must be placed adjacent to form a contiguous area. They attack creatures in their space. The swarms are stationary and do not pursue fleeing creatures.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -457,7 +507,10 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
       { type: "SPELL_SUBSCHOOL", value: "Summoning" },
       { type: "SPELL_CASTING_TIME", value: "1 round" },
       { type: "SPELL_RANGE_TYPE", value: "Long" },
-      { type: "SPELL_TARGET", value: "One swarm of locusts per three levels, each of which must be adjacent to at least one other swarm" },
+      {
+        type: "SPELL_TARGET",
+        value: "One swarm of locusts per three levels, each of which must be adjacent to at least one other swarm",
+      },
       { type: "SPELL_DURATION", value: "1 min./level" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -467,7 +520,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Leomund's Secret Chest",
-    description: "You hide a chest (up to 1 cubic foot per caster level) on the Ethereal Plane for up to 60 days, retrievable by concentration (standard action). Living creatures inside have a 75% chance of causing failure. The chest must be exceptionally crafted (minimum 5,000 gp) with a perfect miniature replica (50 gp). After 60 days, there is a cumulative 5% daily chance of permanent loss. If the replica is lost, the chest cannot be recalled. Focus: The chest and its replica.",
+    description:
+      "You hide a chest (up to 1 cubic foot per caster level) on the Ethereal Plane for up to 60 days, retrievable by concentration (standard action). Living creatures inside have a 75% chance of causing failure. The chest must be exceptionally crafted (minimum 5,000 gp) with a perfect miniature replica (50 gp). After 60 days, there is a cumulative 5% daily chance of permanent loss. If the replica is lost, the chest cannot be recalled. Focus: The chest and its replica.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -484,7 +538,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Magic Jar",
-    description: "You place your soul in a gem, leaving your body lifeless. From the gem, you can sense and attempt to possess life forces within 10 feet per caster level. Possession requires a full-round action and is blocked by protection from evil. The target gets a Will save; success means you cannot try that target again. On success, you keep your mental attributes and the host's physical ones. You cannot use the host's extraordinary or supernatural abilities. You can shift between the gem and a host as a standard action. The spell ends when you return to your own body. If the host dies in range, you return to the gem. If out of range, both die. Destroying the gem ends the spell. Focus: A gem worth at least 100 gp.",
+    description:
+      "You place your soul in a gem, leaving your body lifeless. From the gem, you can sense and attempt to possess life forces within 10 feet per caster level. Possession requires a full-round action and is blocked by protection from evil. The target gets a Will save; success means you cannot try that target again. On success, you keep your mental attributes and the host's physical ones. You cannot use the host's extraordinary or supernatural abilities. You can shift between the gem and a host as a standard action. The spell ends when you return to your own body. If the host dies in range, you return to the gem. If out of range, both die. Destroying the gem ends the spell. Focus: A gem worth at least 100 gp.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates; see text",
     properties: [
@@ -500,7 +555,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Major Creation",
-    description: "This functions like minor creation, except you can also create mineral objects (stone, crystal, metal). Duration varies by hardness and rarity.",
+    description:
+      "This functions like minor creation, except you can also create mineral objects (stone, crystal, metal). Duration varies by hardness and rarity.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -518,7 +574,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mind Fog",
-    description: "A bank of thin mist imposes -10 on Wisdom checks and Will saves (save negates; those who save are immune even if remaining). The penalty persists while in the fog and for 2d6 rounds after leaving. The fog is stationary, lasts 30 minutes, and is dispersible by moderate or strong wind. It does not significantly impair vision.",
+    description:
+      "A bank of thin mist imposes -10 on Wisdom checks and Will saves (save negates; those who save are immune even if remaining). The penalty persists while in the fog and for 2d6 rounds after leaving. The fog is stationary, lasts 30 minutes, and is dispersible by moderate or strong wind. It does not significantly impair vision.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -536,7 +593,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mirage Arcana",
-    description: "This functions like hallucinatory terrain, except it can alter the appearance of structures or add them. The illusion includes audible, visual, tactile, and olfactory elements. It cannot disguise or add creatures.",
+    description:
+      "This functions like hallucinatory terrain, except it can alter the appearance of structures or add them. The illusion includes audible, visual, tactile, and olfactory elements. It cannot disguise or add creatures.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will disbelief (if interacted with)",
     properties: [
@@ -553,7 +611,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mislead",
-    description: "You become invisible (as greater invisibility) while an illusory double (as major image) appears. You can make the double appear over your body to mask the transition. The double moves at your speed with speech and gestures but cannot attack or cast. It lasts as long as you concentrate plus 3 rounds. The invisibility lasts 1 round per level regardless of concentration.",
+    description:
+      "You become invisible (as greater invisibility) while an illusory double (as major image) appears. You can make the double appear over your body to mask the transition. The double moves at your speed with speech and gestures but cannot attack or cast. It lasts as long as you concentrate plus 3 rounds. The invisibility lasts 1 round per level regardless of concentration.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     aptitudeLevels: { "Bard Spells": 5, "Sorcerer Spells": 6, "Wizard Spells": 6 },
     savingThrow: "None or Will disbelief (if interacted with); see text",
@@ -570,7 +629,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mordenkainen's Faithful Hound",
-    description: "An invisible phantom watchdog guards where it was conjured. It barks loudly if any Small+ creature approaches within 30 feet (those present at conjuration are exempt until they leave and return). It sees invisible and ethereal creatures and reacts to shadow illusions. Within 5 feet, it bites (+10 attack, 2d6+3 piercing, counts as magic weapon), ready to strike on the intruder's turn. Cannot be attacked but can be dispelled. Lasts 1 hour per level, but only 1 round per level once barking begins. Ends if you move more than 100 feet away. Material Component: A silver whistle, bone, and thread.",
+    description:
+      "An invisible phantom watchdog guards where it was conjured. It barks loudly if any Small+ creature approaches within 30 feet (those present at conjuration are exempt until they leave and return). It sees invisible and ethereal creatures and reacts to shadow illusions. Within 5 feet, it bites (+10 attack, 2d6+3 piercing, counts as magic weapon), ready to strike on the intruder's turn. Cannot be attacked but can be dispelled. Lasts 1 hour per level, but only 1 round per level once barking begins. Ends if you move more than 100 feet away. Material Component: A silver whistle, bone, and thread.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -588,7 +648,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mordenkainen's Private Sanctum",
-    description: "The area appears as dark fog from outside (darkvision cannot penetrate). No sound escapes; scrying cannot perceive inside; detect thoughts is blocked. Those inside see out normally. Does not block sending, message, or telepathy. Does not prevent physical entry/exit. Can be made permanent with permanency. Material Component: Thin lead sheet, opaque glass, cotton, and powdered chrysolite.",
+    description:
+      "The area appears as dark fog from outside (darkvision cannot penetrate). No sound escapes; scrying cannot perceive inside; detect thoughts is blocked. Those inside see out normally. Does not block sending, message, or telepathy. Does not prevent physical entry/exit. Can be made permanent with permanency. Material Component: Thin lead sheet, opaque glass, cotton, and powdered chrysolite.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -605,7 +666,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Nightmare",
-    description: "You send a phantasmal vision to a named creature, preventing restful sleep and dealing 1d10 damage. The subject is fatigued and cannot regain arcane spells for 24 hours. Save difficulty depends on your familiarity with the subject. If the recipient is awake, you can wait in a vulnerable trance. Creatures that do not sleep or dream are immune.",
+    description:
+      "You send a phantasmal vision to a named creature, preventing restful sleep and dealing 1d10 damage. The subject is fatigued and cannot regain arcane spells for 24 hours. Save difficulty depends on your familiarity with the subject. If the recipient is awake, you can wait in a vulnerable trance. Creatures that do not sleep or dream are immune.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates; see text",
     properties: [
@@ -624,7 +686,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Overland Flight",
-    description: "This functions like fly, except speed is 40 feet (30 if encumbered) with average maneuverability. You can hustle without nonlethal damage, covering 64 miles in 8 hours (48 at 30 feet).",
+    description:
+      "This functions like fly, except speed is 40 feet (30 if encumbered) with average maneuverability. You can hustle without nonlethal damage, covering 64 miles in 8 hours (48 at 30 feet).",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -640,14 +703,18 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Passwall",
-    description: "You create a passage through wood, plaster, or stone (not metal) that is 10 feet deep + 5 feet per three caster levels above 9th (maximum 25 feet). Multiple castings can breach thick walls. Creatures inside when it ends are ejected from the nearest exit. Material Component: Sesame seeds.",
+    description:
+      "You create a passage through wood, plaster, or stone (not metal) that is 10 feet deep + 5 feet per three caster levels above 9th (maximum 25 feet). Multiple castings can breach thick walls. Creatures inside when it ends are ejected from the nearest exit. Material Component: Sesame seeds.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Touch" },
-      { type: "SPELL_TARGET", value: "5 ft. by 8 ft. opening, 10 ft. deep plus 5 ft. deep per three additional levels" },
+      {
+        type: "SPELL_TARGET",
+        value: "5 ft. by 8 ft. opening, 10 ft. deep plus 5 ft. deep per three additional levels",
+      },
       { type: "SPELL_DURATION", value: "1 hour/level (D)" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -657,7 +724,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Permanency",
-    description: "You make certain spells permanent. Some work only on yourself (dispellable only by higher-level casters); others work on creatures, objects, or areas (dispellable normally). Each application requires a minimum caster level and XP expenditure. The GM may allow additional spells to be made permanent through research. XP Cost: Varies.",
+    description:
+      "You make certain spells permanent. Some work only on yourself (dispellable only by higher-level casters); others work on creatures, objects, or areas (dispellable normally). Each application requires a minimum caster level and XP expenditure. The GM may allow additional spells to be made permanent through research. XP Cost: Varies.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -675,7 +743,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Persistent Image",
-    description: "This functions like silent image, except it includes visual, auditory, olfactory, and thermal elements and follows a script you define without requiring concentration. Can include intelligible speech. Material Component: Fleece and sand grains.",
+    description:
+      "This functions like silent image, except it includes visual, auditory, olfactory, and thermal elements and follows a script you define without requiring concentration. Can include intelligible speech. Material Component: Fleece and sand grains.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will disbelief (if interacted with)",
     properties: [
@@ -683,7 +752,10 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
       { type: "SPELL_SUBSCHOOL", value: "Figment" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Long" },
-      { type: "SPELL_TARGET", value: "Visual figment that cannot extend beyond four 10-ft. cubes + one 10-ft. cube/level (S)" },
+      {
+        type: "SPELL_TARGET",
+        value: "Visual figment that cannot extend beyond four 10-ft. cubes + one 10-ft. cube/level (S)",
+      },
       { type: "SPELL_DURATION", value: "1 min./level (D)" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -692,7 +764,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Planar Binding, Lesser",
-    description: "You lure an extraplanar creature into a magic circle trap. The target gets a Will save; failure draws it in. It can attempt daily escape via spell resistance, dimensional travel, or Charisma check (DC 15 + half your CL + your Cha mod). You must persuade it to perform a service via opposed Charisma checks (GM assigns +0 to +6 bonus). Impossible demands are refused. Rolling a 1 frees the creature.",
+    description:
+      "You lure an extraplanar creature into a magic circle trap. The target gets a Will save; failure draws it in. It can attempt daily escape via spell resistance, dimensional travel, or Charisma check (DC 15 + half your CL + your Cha mod). You must persuade it to perform a service via opposed Charisma checks (GM assigns +0 to +6 bonus). Impossible demands are refused. Rolling a 1 frees the creature.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -709,7 +782,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Plane Shift",
-    description: "You transport yourself and up to eight linked willing creatures to another plane, arriving 5 to 500 miles from your intended destination. Focus: A small forked metal rod keyed to the destination plane.",
+    description:
+      "You transport yourself and up to eight linked willing creatures to another plane, arriving 5 to 500 miles from your intended destination. Focus: A small forked metal rod keyed to the destination plane.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     aptitudeLevels: { "Cleric Spells": 5, "Sorcerer Spells": 7, "Wizard Spells": 7 },
     savingThrow: "Will negates",
@@ -727,7 +801,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Prying Eyes",
-    description: "You create 1d4 + caster level semi-tangible magical eyes (Fine constructs, 1 hp, AC 18, fly 30 ft perfect, +16 Hide, Spot = caster level max +15). You give them instructions (25 words max). Eyes scout within 1 mile and return to replay their recordings (1 round per hour). Each eye sees 120 feet (normal vision). Dispel magic can destroy them. Material Component: Crystal marbles.",
+    description:
+      "You create 1d4 + caster level semi-tangible magical eyes (Fine constructs, 1 hp, AC 18, fly 30 ft perfect, +16 Hide, Spot = caster level max +15). You give them instructions (25 words max). Eyes scout within 1 mile and return to replay their recordings (1 round per hour). Each eye sees 120 feet (normal vision). Dispel magic can destroy them. Material Component: Crystal marbles.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -744,7 +819,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Raise Dead",
-    description: "You restore a creature dead no longer than one day per caster level. The soul must be free and willing. The subject loses one level (or 2 Constitution if 1st level; if this would reduce Con to 0, it cannot be raised). Lost spells have a 50% chance of being lost. The raised creature has hp equal to its current HD. Ability scores at 0 are raised to 1. Mundane poison and disease are cured; magical ones are not. The body must be whole. Cannot raise undead, death-effect victims, constructs, elementals, outsiders, or those dead of old age. Material Component: Diamonds worth at least 5,000 gp.",
+    description:
+      "You restore a creature dead no longer than one day per caster level. The soul must be free and willing. The subject loses one level (or 2 Constitution if 1st level; if this would reduce Con to 0, it cannot be raised). Lost spells have a 50% chance of being lost. The raised creature has hp equal to its current HD. Ability scores at 0 are raised to 1. Mundane poison and disease are cured; magical ones are not. The body must be whole. Cannot raise undead, death-effect victims, constructs, elementals, outsiders, or those dead of old age. Material Component: Diamonds worth at least 5,000 gp.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None; see text",
     properties: [
@@ -763,14 +839,18 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Rary's Telepathic Bond",
-    description: "You forge a telepathic link among yourself and willing creatures (Intelligence 3+). All linked creatures communicate telepathically regardless of language. Works over any distance on the same plane. You may exclude yourself. Can be made permanent with permanency (bonding two creatures per casting). Material Component: Eggshell from two different creatures.",
+    description:
+      "You forge a telepathic link among yourself and willing creatures (Intelligence 3+). All linked creatures communicate telepathically regardless of language. Works over any distance on the same plane. You may exclude yourself. Can be made permanent with permanency (bonding two creatures per casting). Material Component: Eggshell from two different creatures.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Close" },
-      { type: "SPELL_TARGET", value: "You plus one willing creature per three levels, no two of which can be more than 30 ft. apart" },
+      {
+        type: "SPELL_TARGET",
+        value: "You plus one willing creature per three levels, no two of which can be more than 30 ft. apart",
+      },
       { type: "SPELL_DURATION", value: "10 min./level (D)" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -780,7 +860,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Repel Wood",
-    description: "Energy waves push wooden objects away at 40 feet per round. Fixed objects larger than 3 inches are unaffected; smaller ones break. Creatures can release dragged items. Set spears splinter. Even magic items with wooden parts are repelled (antimagic fields block). The path is set at casting.",
+    description:
+      "Energy waves push wooden objects away at 40 feet per round. Fixed objects larger than 3 inches are unaffected; smaller ones break. Creatures can release dragged items. Set spears splinter. Even magic items with wooden parts are repelled (antimagic fields block). The path is set at casting.",
     aptitudes: ["Blighter Spells", "Druid Spells"],
     aptitudeLevels: { "Blighter Spells": 5, "Druid Spells": 6 },
     savingThrow: "None",
@@ -797,7 +878,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Righteous Might",
-    description: "You double in height and multiply weight by 8, advancing one size category. You gain a +4 size bonus to Strength, +2 size bonus to Constitution, +2 enhancement bonus to natural armor, and DR 3/evil or good (6 at 12th level, 9 at 15th). Size modifier for AC and attacks changes accordingly. Equipment enlarges similarly; enlarged items that leave your possession return to normal size. Multiple size increases do not stack.",
+    description:
+      "You double in height and multiply weight by 8, advancing one size category. You gain a +4 size bonus to Strength, +2 size bonus to Constitution, +2 enhancement bonus to natural armor, and DR 3/evil or good (6 at 12th level, 9 at 15th). Size modifier for AC and attacks changes accordingly. Equipment enlarges similarly; enlarged items that leave your possession return to normal size. Multiple size increases do not stack.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None",
     properties: [
@@ -814,7 +896,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Seeming",
-    description: "This functions like disguise self, except you can also change others' appearances. Slain creatures revert. Unwilling targets get Will saves and can use spell resistance.",
+    description:
+      "This functions like disguise self, except you can also change others' appearances. Slain creatures revert. Unwilling targets get Will saves and can use spell resistance.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates or Will disbelief (if interacted with)",
     properties: [
@@ -831,7 +914,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shadow Evocation",
-    description: "You create quasi-real illusions of evocation spells of 4th level or lower. Disbelieved damage is 20%; special effects are 20% strong or likely. Non-damage effects have no effect against disbelievers. Objects automatically succeed on saves.",
+    description:
+      "You create quasi-real illusions of evocation spells of 4th level or lower. Disbelieved damage is 20%; special effects are 20% strong or likely. Non-damage effects have no effect against disbelievers. Objects automatically succeed on saves.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will disbelief (if interacted with)",
     properties: [
@@ -848,7 +932,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shadow Walk",
-    description: "From an area of shadow, you and touched creatures travel through the Plane of Shadow at 50 miles per hour relative to the Material Plane. You cannot make out details during transit. Upon exiting, you are displaced 1d10x100 feet in a random direction (1d10x1,000 if in a solid, or nearest open space with fatigue). Can also travel to other planes bordering the Plane of Shadow (1d4 hours transit). Unwilling creatures get a Will save.",
+    description:
+      "From an area of shadow, you and touched creatures travel through the Plane of Shadow at 50 miles per hour relative to the Material Plane. You cannot make out details during transit. Upon exiting, you are displaced 1d10x100 feet in a random direction (1d10x1,000 if in a solid, or nearest open space with fatigue). Can also travel to other planes bordering the Plane of Shadow (1d4 hours transit). Unwilling creatures get a Will save.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     aptitudeLevels: { "Bard Spells": 5, "Sorcerer Spells": 6, "Wizard Spells": 6 },
     savingThrow: "Will negates",
@@ -866,7 +951,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Slay Living",
-    description: "A melee touch attack can kill a living creature. A successful Fortitude save instead deals 3d6 + 1 per caster level damage.",
+    description:
+      "A melee touch attack can kill a living creature. A successful Fortitude save instead deals 3d6 + 1 per caster level damage.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Fortitude partial",
     properties: [
@@ -883,7 +969,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Song of Discord",
-    description: "Creatures in the area have a 50% chance each round to attack the nearest target instead of enemies. Those who do not attack act normally. Affected creatures use their deadliest abilities but do not harm unconscious targets.",
+    description:
+      "Creatures in the area have a 50% chance each round to attack the nearest target instead of enemies. Those who do not attack act normally. Affected creatures use their deadliest abilities but do not harm unconscious targets.",
     aptitudes: ["Bard Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -939,7 +1026,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Summon Monster V",
-    description: "This functions like summon monster I, except you summon one 5th-level, 1d3 4th-level, or 1d4+1 lower-level creatures.",
+    description:
+      "This functions like summon monster I, except you summon one 5th-level, 1d3 4th-level, or 1d4+1 lower-level creatures.",
     aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -957,7 +1045,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Summon Nature's Ally V",
-    description: "This functions like summon nature's ally I, except you summon one 5th-level, 1d3 4th-level, or 1d4+1 lower-level creatures.",
+    description:
+      "This functions like summon nature's ally I, except you summon one 5th-level, 1d3 4th-level, or 1d4+1 lower-level creatures.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -975,7 +1064,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Symbol of Pain",
-    description: "This functions like symbol of death, except creatures suffer -4 on attacks, skill checks, and ability checks for 1 hour after moving beyond 60 feet. No hp limit; active 10 minutes per caster level. Magical trap (DC 30). Material Component: Mercury, phosphorus, and diamond/opal (1,000 gp total).",
+    description:
+      "This functions like symbol of death, except creatures suffer -4 on attacks, skill checks, and ability checks for 1 hour after moving beyond 60 feet. No hp limit; active 10 minutes per caster level. Magical trap (DC 30). Material Component: Mercury, phosphorus, and diamond/opal (1,000 gp total).",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -993,7 +1083,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Symbol of Sleep",
-    description: "This functions like symbol of death, except creatures of 10 HD or less fall into catatonic slumber for 3d6x10 minutes (cannot be awakened nonmagically). No hp limit; active 10 minutes per caster level. Magical trap (DC 30). Material Component: Mercury, phosphorus, and diamond/opal (1,000 gp total).",
+    description:
+      "This functions like symbol of death, except creatures of 10 HD or less fall into catatonic slumber for 3d6x10 minutes (cannot be awakened nonmagically). No hp limit; active 10 minutes per caster level. Magical trap (DC 30). Material Component: Mercury, phosphorus, and diamond/opal (1,000 gp total).",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -1012,7 +1103,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Telekinesis",
-    description: "Three versions. Sustained Force: Move up to 25 lbs/level (max 375) at 20 feet/round for 1 round/level with concentration. Combat Maneuver: Bull rush, disarm, grapple, or trip using CL as BAB and Int/Cha mod, once per round with concentration (no saves, SR applies). Violent Thrust: Hurl up to 15 objects/creatures (25 lbs/level max) in one round. Attack rolls use BAB + Int/Cha mod. Weapons deal standard damage; other objects deal 1 to 1d6 per 25 lbs. Hurled creatures get Will saves.",
+    description:
+      "Three versions. Sustained Force: Move up to 25 lbs/level (max 375) at 20 feet/round for 1 round/level with concentration. Combat Maneuver: Bull rush, disarm, grapple, or trip using CL as BAB and Int/Cha mod, once per round with concentration (no saves, SR applies). Violent Thrust: Hurl up to 15 objects/creatures (25 lbs/level max) in one round. Attack rolls use BAB + Int/Cha mod. Weapons deal standard damage; other objects deal 1 to 1d6 per 25 lbs. Hurled creatures get Will saves.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates (object) or None; see text",
     properties: [
@@ -1028,7 +1120,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Teleport",
-    description: "Instantly transport yourself up to 100 miles per caster level (no interplanar travel). Bring objects up to maximum load and one willing Medium creature per three caster levels. Accuracy depends on familiarity: very familiar, studied carefully, seen casually, viewed once, or false destination, with results ranging from on-target to mishap. Material on arrival varies from on-target to off-target, similar area, or mishap (1d10 damage and reroll).",
+    description:
+      "Instantly transport yourself up to 100 miles per caster level (no interplanar travel). Bring objects up to maximum load and one willing Medium creature per three caster levels. Accuracy depends on familiarity: very familiar, studied carefully, seen casually, viewed once, or false destination, with results ranging from on-target to mishap. Material on arrival varies from on-target to off-target, similar area, or mishap (1d10 damage and reroll).",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None and Will negates (object)",
     properties: [
@@ -1044,9 +1137,16 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "True Seeing",
-    description: "The subject sees through normal and magical darkness, notices magically hidden secret doors, sees exact locations under blur or displacement, sees invisible creatures normally, sees through illusions, and sees the true form of polymorphed or transmuted things. Can also see into the Ethereal Plane (120-foot range). Does not penetrate solid objects, negate concealment from fog, see through mundane disguises, spot hiding creatures, or find mundane secret doors. Cannot be enhanced by other magic. Material Component: Eye ointment (250 gp) made from mushroom powder, saffron, and fat.",
+    description:
+      "The subject sees through normal and magical darkness, notices magically hidden secret doors, sees exact locations under blur or displacement, sees invisible creatures normally, sees through illusions, and sees the true form of polymorphed or transmuted things. Can also see into the Ethereal Plane (120-foot range). Does not penetrate solid objects, negate concealment from fog, see through mundane disguises, spot hiding creatures, or find mundane secret doors. Cannot be enhanced by other magic. Material Component: Eye ointment (250 gp) made from mushroom powder, saffron, and fat.",
     aptitudes: ["Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Cleric Spells": 5, "Druid Spells": 7, "Sorcerer Spells": 6, "Wizard Spells": 6, "Wu Jen Spells": 6 },
+    aptitudeLevels: {
+      "Cleric Spells": 5,
+      "Druid Spells": 7,
+      "Sorcerer Spells": 6,
+      "Wizard Spells": 6,
+      "Wu Jen Spells": 6,
+    },
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -1062,7 +1162,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Wall of Force",
-    description: "An invisible, immobile wall immune to all damage and most spells. Disintegrate, rod of cancellation, sphere of annihilation, or disjunction destroys it. Blocks breath weapons and spells in both directions; dimension door and teleport bypass it. Blocks ethereal creatures. Up to one 10-foot square per level. Must be continuous. Can be made permanent. Material Component: Powder from a clear gem.",
+    description:
+      "An invisible, immobile wall immune to all damage and most spells. Disintegrate, rod of cancellation, sphere of annihilation, or disjunction destroys it. Blocks breath weapons and spells in both directions; dimension door and teleport bypass it. Blocks ethereal creatures. Up to one 10-foot square per level. Must be continuous. Can be made permanent. Material Component: Powder from a clear gem.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -1080,7 +1181,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Wall of Stone",
-    description: "A stone wall merging with existing stone (1 inch per four CL, one 5-foot square per level; double area by halving thickness). Can be shaped into any form including bridges (spans over 20 feet require arching, halving area). 15 hp/inch, hardness 8. DC 20 + 2/inch to break. Can trap creatures (Reflex to avoid). Arcane Material Component: A small granite block.",
+    description:
+      "A stone wall merging with existing stone (1 inch per four CL, one 5-foot square per level; double area by halving thickness). Can be shaped into any form including bridges (spans over 20 feet require arching, halving area). 15 hp/inch, hardness 8. DC 20 + 2/inch to break. Can trap creatures (Reflex to avoid). Arcane Material Component: A small granite block.",
     aptitudes: ["Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
     aptitudeLevels: { "Cleric Spells": 5, "Druid Spells": 6, "Sorcerer Spells": 5, "Wizard Spells": 5 },
     savingThrow: "See text",
@@ -1101,7 +1203,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   },
   {
     name: "Wall of Thorns",
-    description: "A barrier of tough, thorny brush deals slashing damage per round of movement equal to 25 minus the creature's AC (Dexterity and dodge bonuses excluded; AC 25+ takes no damage). Minimum 5 feet thick. Strength check as full-round action to force through (5 feet per 5 points above DC 20). Trapped creatures can remain still to avoid further damage. Creatures that ignore overgrown terrain pass freely. Edged weapons create 1-foot safe passage per 10 minutes. Magical fire burns it in 10 minutes. Not a living plant.",
+    description:
+      "A barrier of tough, thorny brush deals slashing damage per round of movement equal to 25 minus the creature's AC (Dexterity and dodge bonuses excluded; AC 25+ takes no damage). Minimum 5 feet thick. Strength check as full-round action to force through (5 feet per 5 points above DC 20). Trapped creatures can remain still to avoid further damage. Creatures that ignore overgrown terrain pass freely. Edged weapons create 1-foot safe passage per 10 minutes. Magical fire burns it in 10 minutes. Not a living plant.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [

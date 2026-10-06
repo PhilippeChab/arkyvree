@@ -1,9 +1,16 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const WU_JEN: ClassSeed = {
   name: "Wu Jen",
   description: "A mysterious wizard of the eastern world, whose arcane lore revolves around mastery of the elements.",
-  hd: 4, levels: 20, skillPoints: 2,
+  hd: 4,
+  levels: 20,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -65,9 +72,5 @@ export const WU_JEN: ClassSeed = {
     ],
     knowAll: true,
   },
-  aptitudePicks: [
-    { levels: [3], target: "aptitudes.wujenspellsecret3rd.allowed" },
-  ],
+  aptitudePicks: [{ levels: [3], target: "aptitudes.wujenspellsecret3rd.allowed" }],
 };
-
-// TODO: No modifiers defined — review if this class needs any

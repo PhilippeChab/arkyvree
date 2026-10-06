@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const ACOLYTE_OF_THE_SKIN: ClassSeed = {
   name: "Acolyte of the Skin",
   description: "Acolytes of the skin seek to gain power by replacing their skin with that of a demon's.",
-  hd: 8, levels: 10, skillPoints: 2,
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: [
@@ -44,5 +51,3 @@ export const ACOLYTE_OF_THE_SKIN: ClassSeed = {
     [10, "Fiendish Symbiosis (Acolyte of the Skin)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

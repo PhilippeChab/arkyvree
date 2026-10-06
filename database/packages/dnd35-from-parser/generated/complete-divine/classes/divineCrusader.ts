@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const DIVINE_CRUSADER: ClassSeed = {
   name: "Divine Crusader",
-  description: "A divine crusader is a holy warrior wholly devoted to a single deity, channeling that god's power through unwavering faith and martial prowess.",
-  hd: 8, levels: 10, skillPoints: 2,
+  description:
+    "A divine crusader is a holy warrior wholly devoted to a single deity, channeling that god's power through unwavering faith and martial prowess.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: [
@@ -18,11 +26,7 @@ export const DIVINE_CRUSADER: ClassSeed = {
     "Ride",
     "Swim",
   ],
-  requirements: [
-    gte("combat.bab", 7),
-    gte("skills.knowledgereligion.rank", 2),
-    eq("feats.weaponfocus.*.possessed"),
-  ],
+  requirements: [gte("combat.bab", 7), gte("skills.knowledgereligion.rank", 2), eq("feats.weaponfocus.*.possessed")],
   classFeatureAptitude: "Divine Crusader Class Feature",
   classFeatures: [
     [1, "Aura (Divine Crusader)"],
@@ -54,9 +58,5 @@ export const DIVINE_CRUSADER: ClassSeed = {
     knowAll: true,
     noCantrips: true,
   },
-  aptitudePicks: [
-    { levels: [1], target: "aptitudes.divinecrusaderdomain.allowed" },
-  ],
+  aptitudePicks: [{ levels: [1], target: "aptitudes.divinecrusaderdomain.allowed" }],
 };
-
-// TODO: No modifiers defined — review if this class needs any

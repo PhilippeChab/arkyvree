@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_8_SPELLS: PowerSeed[] = [
   {
     name: "Animal Shapes",
-    description: "This functions like polymorph, except you transform up to one willing creature per caster level into an animal form of your choosing. Unwilling creatures are unaffected. All recipients must assume the same type of animal. Recipients remain transformed until the spell expires or you dismiss it for all subjects. An individual subject may use a full-round action to resume its normal form, ending the spell for that subject only. The maximum HD of the assumed form is the lesser of the subject's HD or your caster level, up to 20 HD at 20th level.",
+    description:
+      "This functions like polymorph, except you transform up to one willing creature per caster level into an animal form of your choosing. Unwilling creatures are unaffected. All recipients must assume the same type of animal. Recipients remain transformed until the spell expires or you dismiss it for all subjects. An individual subject may use a full-round action to resume its normal form, ending the spell for that subject only. The maximum HD of the assumed form is the lesser of the subject's HD or your caster level, up to 20 HD at 20th level.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None; see text",
     properties: [
@@ -20,9 +21,16 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Antipathy",
-    description: "You cause an object or location to radiate magical vibrations that repel a specific named kind of intelligent creature or a specific named alignment. The creature kind must be precise (not a subtype), and the alignment must be exact. Designated creatures feel an overwhelming compulsion to leave the area or avoid the item, never willingly returning while the spell lasts. A successful saving throw allows a creature to remain, but it suffers a -4 Dexterity penalty from the distracting discomfort. This spell counters and dispels sympathy. Arcane Material Component: A lump of alum soaked in vinegar.",
+    description:
+      "You cause an object or location to radiate magical vibrations that repel a specific named kind of intelligent creature or a specific named alignment. The creature kind must be precise (not a subtype), and the alignment must be exact. Designated creatures feel an overwhelming compulsion to leave the area or avoid the item, never willingly returning while the spell lasts. A successful saving throw allows a creature to remain, but it suffers a -4 Dexterity penalty from the distracting discomfort. This spell counters and dispels sympathy. Arcane Material Component: A lump of alum soaked in vinegar.",
     aptitudes: ["Blighter Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Blighter Spells": 9, "Druid Spells": 9, "Sorcerer Spells": 8, "Wizard Spells": 8, "Wu Jen Spells": 8 },
+    aptitudeLevels: {
+      "Blighter Spells": 9,
+      "Druid Spells": 9,
+      "Sorcerer Spells": 8,
+      "Wizard Spells": 8,
+      "Wu Jen Spells": 8,
+    },
     savingThrow: "Will partial",
     properties: [
       { type: "SPELL_SCHOOL", value: "Enchantment" },
@@ -41,7 +49,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bigby's Clenched Fist",
-    description: "A Large floating hand appears and attacks a target you designate. The hand strikes once per round on your turn with an attack bonus equal to your caster level + your relevant ability modifier + 11 (for its Strength and size). It deals 1d8+11 points of damage on each hit and can also attempt a bull rush with a bonus of +15, pushing the target back without provoking opportunity attacks. Directing the hand to a new target is a move action. The hand has as many hit points as you have at full health, has your save bonuses, and has an AC of 20 (-1 size, +11 natural). It takes half damage from energy attacks but full damage from physical attacks.",
+    description:
+      "A Large floating hand appears and attacks a target you designate. The hand strikes once per round on your turn with an attack bonus equal to your caster level + your relevant ability modifier + 11 (for its Strength and size). It deals 1d8+11 points of damage on each hit and can also attempt a bull rush with a bonus of +15, pushing the target back without provoking opportunity attacks. Directing the hand to a new target is a move action. The hand has as many hit points as you have at full health, has your save bonuses, and has an AC of 20 (-1 size, +11 natural). It takes half damage from energy attacks but full damage from physical attacks.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -59,7 +68,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Binding",
-    description: "This spell creates a magical restraint to hold a creature. You must have precise knowledge of the creature's identity. The target receives a Will save, modified by -1 for each binding of the same type currently maintained on other creatures. Several versions exist, from simple chains that immobilize the target to more elaborate prisons including minimus containment (shrinking the target into a gem), slumber (enchanted sleep), and bound slumber (chained and asleep). Higher versions require higher-level spells and may need additional material components. A bound creature may attempt escape at intervals depending on the version used. Material components and focuses vary by version, with the base requiring a continuous chanting and special materials worth at least 500 gp.",
+    description:
+      "This spell creates a magical restraint to hold a creature. You must have precise knowledge of the creature's identity. The target receives a Will save, modified by -1 for each binding of the same type currently maintained on other creatures. Several versions exist, from simple chains that immobilize the target to more elaborate prisons including minimus containment (shrinking the target into a gem), slumber (enchanted sleep), and bound slumber (chained and asleep). Higher versions require higher-level spells and may need additional material components. A bound creature may attempt escape at intervals depending on the version used. Material components and focuses vary by version, with the base requiring a continuous chanting and special materials worth at least 500 gp.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates; see text",
     properties: [
@@ -78,7 +88,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Cloak of Chaos",
-    description: "A chaotic pattern of color surrounds the subjects, providing four effects: +4 deflection bonus to AC and +4 resistance bonus on saves against all attacks (not just from lawful creatures); spell resistance 25 against lawful spells and spells cast by lawful creatures; protection from possession and mental influence as protection from law; and any lawful creature that succeeds on a melee attack against a warded subject is confused for 1 round (Will negates). Focus: A tiny reliquary with a sacred relic from a chaotic text, costing at least 500 gp.",
+    description:
+      "A chaotic pattern of color surrounds the subjects, providing four effects: +4 deflection bonus to AC and +4 resistance bonus on saves against all attacks (not just from lawful creatures); spell resistance 25 against lawful spells and spells cast by lawful creatures; protection from possession and mental influence as protection from law; and any lawful creature that succeeds on a melee attack against a warded subject is confused for 1 round (Will negates). Focus: A tiny reliquary with a sacred relic from a chaotic text, costing at least 500 gp.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "See text",
     properties: [
@@ -95,7 +106,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Clone",
-    description: "You create an inert duplicate of a creature. If the original dies, its soul instantly transfers to the clone, and the original's remains become permanently inert. Cloning fails if the original died of natural causes. You need a piece of living flesh (at least 1 cubic inch, not hair or nails) preserved from rotting. The clone must grow in a laboratory for 2d4 months. The clone is physically identical and shares the original's personality and memories, but treat it as if raised from the dead (losing one level or 2 Constitution points). If this would reduce Constitution to 0, the spell fails. If the original lost levels since the flesh was taken and died at a lower level, the clone is one level below the death level. Only body and mind are duplicated, not equipment. A clone grown while the original lives is merely inert flesh that rots without preservation. Material Component: The flesh and laboratory supplies (1,000 gp). Focus: Laboratory equipment (500 gp).",
+    description:
+      "You create an inert duplicate of a creature. If the original dies, its soul instantly transfers to the clone, and the original's remains become permanently inert. Cloning fails if the original died of natural causes. You need a piece of living flesh (at least 1 cubic inch, not hair or nails) preserved from rotting. The clone must grow in a laboratory for 2d4 months. The clone is physically identical and shares the original's personality and memories, but treat it as if raised from the dead (losing one level or 2 Constitution points). If this would reduce Constitution to 0, the spell fails. If the original lost levels since the flesh was taken and died at a lower level, the clone is one level below the death level. Only body and mind are duplicated, not equipment. A clone grown while the original lives is merely inert flesh that rots without preservation. Material Component: The flesh and laboratory supplies (1,000 gp). Focus: Laboratory equipment (500 gp).",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -112,14 +124,18 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Control Plants",
-    description: "You command plant creatures by voice for a short period. They understand you regardless of language. Even if silenced, controlled plants will not attack you. At the spell's end, they revert to normal behavior. Suicidal or self-destructive commands are ignored.",
+    description:
+      "You command plant creatures by voice for a short period. They understand you regardless of language. Even if silenced, controlled plants will not attack you. At the spell's end, they revert to normal behavior. Suicidal or self-destructive commands are ignored.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Close" },
-      { type: "SPELL_TARGET", value: "Up to 2 HD/level of plant creatures, no two of which can be more than 30 ft. apart" },
+      {
+        type: "SPELL_TARGET",
+        value: "Up to 2 HD/level of plant creatures, no two of which can be more than 30 ft. apart",
+      },
       { type: "SPELL_DURATION", value: "1 min./level" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -129,7 +145,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Create Greater Undead",
-    description: "This functions like create undead, except you can create more powerful undead types: shadows, wraiths, spectres, and devourers. The available type depends on your caster level.",
+    description:
+      "This functions like create undead, except you can create more powerful undead types: shadows, wraiths, spectres, and devourers. The available type depends on your caster level.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -147,7 +164,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Cure Critical Wounds, Mass",
-    description: "This functions like mass cure light wounds, except it restores 4d8 points of damage + 1 per caster level (maximum +40).",
+    description:
+      "This functions like mass cure light wounds, except it restores 4d8 points of damage + 1 per caster level (maximum +40).",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     aptitudeLevels: { "Cleric Spells": 8, "Druid Spells": 9 },
     savingThrow: "Will half (harmless) or Will half; see text",
@@ -165,7 +183,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Demand",
-    description: "This functions like sending, but the message can include a suggestion effect. A successful Will save negates the suggestion but not the contact itself. The demand is understood even by creatures with Intelligence as low as 1. Impossible or meaningless messages are understood but the suggestion has no effect. The message including the suggestion must be 25 words or less. Material Component: Copper wire and a small part of the subject.",
+    description:
+      "This functions like sending, but the message can include a suggestion effect. A successful Will save negates the suggestion but not the contact itself. The demand is understood even by creatures with Intelligence as low as 1. Impossible or meaningless messages are understood but the suggestion has no effect. The message including the suggestion must be 25 words or less. Material Component: Copper wire and a small part of the subject.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will partial",
     properties: [
@@ -185,7 +204,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Dimensional Lock",
-    description: "You create a shimmering emerald barrier that completely blocks extradimensional travel into or out of the area, including astral projection, blink, dimension door, ethereal jaunt, gate, maze, plane shift, shadow walk, teleport, and similar abilities. It does not affect already-ethereal/astral creatures, extradimensional perception or attacks, or summoned creatures disappearing at spell end.",
+    description:
+      "You create a shimmering emerald barrier that completely blocks extradimensional travel into or out of the area, including astral projection, blink, dimension door, ethereal jaunt, gate, maze, plane shift, shadow walk, teleport, and similar abilities. It does not affect already-ethereal/astral creatures, extradimensional perception or attacks, or summoned creatures disappearing at spell end.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -201,7 +221,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Discern Location",
-    description: "One of the most powerful locating spells available. Nothing short of mind blank or direct divine intervention prevents you from learning the exact location of a single creature or object. The spell reveals the name, community, political division, country, continent, and plane of existence. You must have seen the creature or touched the object at least once.",
+    description:
+      "One of the most powerful locating spells available. Nothing short of mind blank or direct divine intervention prevents you from learning the exact location of a single creature or object. The spell reveals the name, community, political division, country, continent, and plane of existence. You must have seen the creature or touched the object at least once.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -218,7 +239,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Holy Aura",
-    description: "Brilliant divine radiance provides four effects: +4 deflection to AC and +4 resistance on saves against all attacks; SR 25 against evil spells and spells cast by evil creatures; blocks possession and mental influence; evil creatures making successful melee attacks are blinded (Fortitude negates). Focus: A tiny reliquary with a sacred relic, costing at least 500 gp.",
+    description:
+      "Brilliant divine radiance provides four effects: +4 deflection to AC and +4 resistance on saves against all attacks; SR 25 against evil spells and spells cast by evil creatures; blocks possession and mental influence; evil creatures making successful melee attacks are blinded (Fortitude negates). Focus: A tiny reliquary with a sacred relic, costing at least 500 gp.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "See text",
     properties: [
@@ -235,7 +257,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Horrid Wilting",
-    description: "Moisture evaporates from each living creature's body, dealing 1d6 damage per caster level (maximum 20d6). Water elementals and plant creatures take 1d8 per caster level (maximum 20d8) instead. Arcane Material Component: A bit of sponge.",
+    description:
+      "Moisture evaporates from each living creature's body, dealing 1d6 damage per caster level (maximum 20d6). Water elementals and plant creatures take 1d8 per caster level (maximum 20d8) instead. Arcane Material Component: A bit of sponge.",
     aptitudes: ["Blighter Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "Fortitude half",
     properties: [
@@ -253,7 +276,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Incendiary Cloud",
-    description: "Roiling smoke with white-hot embers obscures sight as fog cloud and deals 4d6 fire damage per round (Reflex half). The cloud moves away at 10 feet per round, or you can direct it up to 60 feet per round with concentration. Wind disperses it; cannot be cast underwater.",
+    description:
+      "Roiling smoke with white-hot embers obscures sight as fog cloud and deals 4d6 fire damage per round (Reflex half). The cloud moves away at 10 feet per round, or you can direct it up to 60 feet per round with concentration. Wind disperses it; cannot be cast underwater.",
     aptitudes: ["Blighter Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     aptitudeLevels: { "Blighter Spells": 9, "Sorcerer Spells": 8, "Warmage Spells": 8, "Wizard Spells": 8 },
     savingThrow: "Reflex half; see text",
@@ -272,7 +296,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Inflict Critical Wounds, Mass",
-    description: "This functions like mass inflict light wounds, except it deals 4d8 + 1 per caster level (maximum +40).",
+    description:
+      "This functions like mass inflict light wounds, except it deals 4d8 + 1 per caster level (maximum +40).",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Will half",
     properties: [
@@ -288,7 +313,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Iron Body",
-    description: "Your body becomes living iron, granting DR 15/adamantine, immunity to blindness, critical hits, ability damage, deafness, disease, drowning, electricity, poison, stunning, and physiology-affecting effects. You take half damage from acid and fire but are vulnerable to iron golem weaknesses. You gain +6 Strength but take -6 Dexterity (minimum 1), half speed, 50% arcane spell failure, and -8 armor check penalty. Cannot drink or play wind instruments. Unarmed attacks deal club damage and count as armed. Weight increases tenfold. Arcane Material Component: A piece of iron from an iron golem, hero's armor, or war machine.",
+    description:
+      "Your body becomes living iron, granting DR 15/adamantine, immunity to blindness, critical hits, ability damage, deafness, disease, drowning, electricity, poison, stunning, and physiology-affecting effects. You take half damage from acid and fire but are vulnerable to iron golem weaknesses. You gain +6 Strength but take -6 Dexterity (minimum 1), half speed, 50% arcane spell failure, and -8 armor check penalty. Cannot drink or play wind instruments. Unarmed attacks deal club damage and count as armed. Weight increases tenfold. Arcane Material Component: A piece of iron from an iron golem, hero's armor, or war machine.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -306,7 +332,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Maze",
-    description: "You banish the subject into an extradimensional labyrinth of force planes. Each round, it may attempt a DC 20 Intelligence check (full-round action) to escape. After 10 minutes, the maze vanishes, forcing exit. The subject reappears at its original location. Intraplanar movement spells do not help escape, but plane shift does. Minotaurs are immune.",
+    description:
+      "You banish the subject into an extradimensional labyrinth of force planes. Each round, it may attempt a DC 20 Intelligence check (full-round action) to escape. After 10 minutes, the maze vanishes, forcing exit. The subject reappears at its original location. Intraplanar movement spells do not help escape, but plane shift does. Minotaurs are immune.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -323,7 +350,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mind Blank",
-    description: "The subject is protected from all thought-detecting, emotion-reading, and mind-affecting spells and effects, including divination. Even limited wish, miracle, and wish cannot affect the protected mind or gain information about it. Area scrying simply does not detect the subject; targeted scrying fails entirely.",
+    description:
+      "The subject is protected from all thought-detecting, emotion-reading, and mind-affecting spells and effects, including divination. Even limited wish, miracle, and wish cannot affect the protected mind or gain information about it. Area scrying simply does not detect the subject; targeted scrying fails entirely.",
     aptitudes: ["Blighter Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -339,7 +367,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Moment of Prescience",
-    description: "Once during the duration, you gain an insight bonus equal to your caster level (maximum +25) on any single attack roll, opposed check, saving throw, or AC against one attack. You must choose before rolling. Activation takes no action and can occur on another's turn. Only one can be active at a time.",
+    description:
+      "Once during the duration, you gain an insight bonus equal to your caster level (maximum +25) on any single attack roll, opposed check, saving throw, or AC against one attack. You must choose before rolling. Activation takes no action and can occur on another's turn. Only one can be active at a time.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -355,7 +384,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Otiluke's Telekinetic Sphere",
-    description: "This functions like resilient sphere, except contents weigh one-sixteenth normal. You can telekinetically move the sphere (up to 5,000 lbs of contents) at 30 feet per round with concentration (standard action). Falls at 60 feet per round (no damage to contents). Material Component: Clear crystal, gum arabic, and bar magnets.",
+    description:
+      "This functions like resilient sphere, except contents weigh one-sixteenth normal. You can telekinetically move the sphere (up to 5,000 lbs of contents) at 30 feet per round with concentration (standard action). Falls at 60 feet per round (no damage to contents). Material Component: Clear crystal, gum arabic, and bar magnets.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Reflex negates (object)",
     properties: [
@@ -373,7 +403,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Planar Ally, Greater",
-    description: "This functions like lesser planar ally, except you may call one creature of 18 HD or less, or up to three totaling 18 HD. XP Cost: 500 XP.",
+    description:
+      "This functions like lesser planar ally, except you may call one creature of 18 HD or less, or up to three totaling 18 HD. XP Cost: 500 XP.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None",
     properties: [
@@ -381,7 +412,11 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
       { type: "SPELL_SUBSCHOOL", value: "Calling" },
       { type: "SPELL_CASTING_TIME", value: "10 minutes" },
       { type: "SPELL_RANGE_TYPE", value: "Close" },
-      { type: "SPELL_TARGET", value: "Up to three called elementals or outsiders, totaling no more than 18 HD, no two of which can be more than 30 ft. apart when they appear" },
+      {
+        type: "SPELL_TARGET",
+        value:
+          "Up to three called elementals or outsiders, totaling no more than 18 HD, no two of which can be more than 30 ft. apart when they appear",
+      },
       { type: "SPELL_DURATION", value: "Instantaneous" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -392,7 +427,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Planar Binding, Greater",
-    description: "This functions like lesser planar binding, except you may call one creature of 18 HD or less, or up to three totaling 18 HD.",
+    description:
+      "This functions like lesser planar binding, except you may call one creature of 18 HD or less, or up to three totaling 18 HD.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -400,7 +436,11 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
       { type: "SPELL_SUBSCHOOL", value: "Calling" },
       { type: "SPELL_CASTING_TIME", value: "10 minutes" },
       { type: "SPELL_RANGE_TYPE", value: "Close" },
-      { type: "SPELL_TARGET", value: "Up to three elementals or outsiders, totaling no more than 18 HD, no two of which can be more than 30 ft. apart when they appear" },
+      {
+        type: "SPELL_TARGET",
+        value:
+          "Up to three elementals or outsiders, totaling no more than 18 HD, no two of which can be more than 30 ft. apart when they appear",
+      },
       { type: "SPELL_DURATION", value: "Instantaneous" },
       { type: "SPELL_RESISTANCE", value: "No and Yes; see text" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -409,7 +449,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Polar Ray",
-    description: "A blue-white ray of freezing air (ranged touch attack) deals 1d6 cold per caster level (maximum 25d6). Focus: A small white ceramic cone or prism.",
+    description:
+      "A blue-white ray of freezing air (ranged touch attack) deals 1d6 cold per caster level (maximum 25d6). Focus: A small white ceramic cone or prism.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -426,7 +467,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Polymorph Any Object",
-    description: "This functions like polymorph, except it can change objects or creatures. Duration depends on the degree of change. Unlike polymorph, it grants the new form's Intelligence, Wisdom, and Charisma if the original lacked them. Cannot create valuable materials, magic items, or cold iron. Can duplicate the effects of several specific transmutation spells. Arcane Material Component: Mercury, gum arabic, and smoke.",
+    description:
+      "This functions like polymorph, except it can change objects or creatures. Duration depends on the degree of change. Unlike polymorph, it grants the new form's Intelligence, Wisdom, and Charisma if the original lacked them. Cannot create valuable materials, magic items, or cold iron. Can duplicate the effects of several specific transmutation spells. Arcane Material Component: Mercury, gum arabic, and smoke.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Fortitude negates (object); see text",
     properties: [
@@ -444,7 +486,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Power Word Stun",
-    description: "A single word of power stuns one creature regardless of whether it can hear. Duration depends on current hit points. Creatures with 151+ hp are unaffected.",
+    description:
+      "A single word of power stuns one creature regardless of whether it can hear. Duration depends on current hit points. Creatures with 151+ hp are unaffected.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -461,7 +504,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Prismatic Wall",
-    description: "An immobile, vertical, multicolored wall protects you. Creatures with less than 8 HD within 20 feet are blinded for 2d4 rounds. Each of seven colors has a distinct effect on creatures attempting to pass. Colors must be destroyed in order by specific magic. A rod of cancellation or disjunction destroys it entirely. Antimagic fields cannot penetrate it. Spell resistance must be checked per color. Can be made permanent with permanency.",
+    description:
+      "An immobile, vertical, multicolored wall protects you. Creatures with less than 8 HD within 20 feet are blinded for 2d4 rounds. Each of seven colors has a distinct effect on creatures attempting to pass. Colors must be destroyed in order by specific magic. A rod of cancellation or disjunction destroys it entirely. Antimagic fields cannot penetrate it. Spell resistance must be checked per color. Can be made permanent with permanency.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "See text",
     properties: [
@@ -477,7 +521,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Protection from Spells",
-    description: "Subjects gain a +8 resistance bonus on saves against spells and spell-like abilities (not supernatural or extraordinary). Material Component: A diamond worth at least 500 gp, crushed over the targets. Focus: One 1,000 gp diamond per creature, which must be carried.",
+    description:
+      "Subjects gain a +8 resistance bonus on saves against spells and spell-like abilities (not supernatural or extraordinary). Material Component: A diamond worth at least 500 gp, crushed over the targets. Focus: One 1,000 gp diamond per creature, which must be carried.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -494,7 +539,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Prying Eyes, Greater",
-    description: "This functions like prying eyes, except the eyes have true seeing (120-foot range) and maximum Spot modifier of +25.",
+    description:
+      "This functions like prying eyes, except the eyes have true seeing (120-foot range) and maximum Spot modifier of +25.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -511,7 +557,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Scintillating Pattern",
-    description: "A coruscating pattern affects HD equal to your caster level (maximum 20), fewest first. 6 or less HD: unconscious 1d4 rounds, stunned 1d4 rounds, confused 1d4 rounds. 7-12 HD: stunned 1d4 rounds, confused 1d4 rounds. 13+ HD: confused 1d4 rounds. Sightless creatures unaffected. Material Component: A small crystal prism.",
+    description:
+      "A coruscating pattern affects HD equal to your caster level (maximum 20), fewest first. 6 or less HD: unconscious 1d4 rounds, stunned 1d4 rounds, confused 1d4 rounds. 7-12 HD: stunned 1d4 rounds, confused 1d4 rounds. 13+ HD: confused 1d4 rounds. Sightless creatures unaffected. Material Component: A small crystal prism.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -530,7 +577,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Screen",
-    description: "You dictate what scrying and direct observation perceive within the area. Scrying automatically detects the false image (no save). Direct observers may get a save if there is cause for disbelief. The illusion includes appropriate sight and sound. Once set, conditions cannot be changed.",
+    description:
+      "You dictate what scrying and direct observation perceive within the area. Scrying automatically detects the false image (no save). Direct observers may get a save if there is cause for disbelief. The illusion includes appropriate sight and sound. Once set, conditions cannot be changed.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None or Will disbelief (if interacted with); see text",
     properties: [
@@ -547,7 +595,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shadow Evocation, Greater",
-    description: "This functions like shadow evocation, except it mimics evocation spells of 7th level or lower at 60% effectiveness against nonbelievers.",
+    description:
+      "This functions like shadow evocation, except it mimics evocation spells of 7th level or lower at 60% effectiveness against nonbelievers.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will disbelief (if interacted with)",
     properties: [
@@ -564,7 +613,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shambler",
-    description: "You create 1d4+2 shambling mounds with 11 HD each that serve you for seven days (or seven months for guard duty only). Guard-duty shamblers cannot leave the spell's range. They gain fire resistance only in damp terrain.",
+    description:
+      "You create 1d4+2 shambling mounds with 11 HD each that serve you for seven days (or seven months for guard duty only). Guard-duty shamblers cannot leave the spell's range. They gain fire resistance only in damp terrain.",
     aptitudes: ["Blighter Spells", "Druid Spells"],
     aptitudeLevels: { "Blighter Spells": 8, "Druid Spells": 9 },
     savingThrow: "None",
@@ -573,7 +623,10 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
       { type: "SPELL_SUBSCHOOL", value: "Creation" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Medium" },
-      { type: "SPELL_TARGET", value: "Three or more shambling mounds, no two of which can be more than 30 ft. apart; see text" },
+      {
+        type: "SPELL_TARGET",
+        value: "Three or more shambling mounds, no two of which can be more than 30 ft. apart; see text",
+      },
       { type: "SPELL_DURATION", value: "Seven days or seven months (D); see text" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -582,7 +635,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shield of Law",
-    description: "A dim blue glow provides four effects: +4 deflection to AC and +4 resistance on saves against all attacks; SR 25 against chaotic spells; blocks possession and mental influence; chaotic creatures making successful melee attacks are slowed (Will negates). Focus: A tiny reliquary with a lawful relic (500 gp).",
+    description:
+      "A dim blue glow provides four effects: +4 deflection to AC and +4 resistance on saves against all attacks; SR 25 against chaotic spells; blocks possession and mental influence; chaotic creatures making successful melee attacks are slowed (Will negates). Focus: A tiny reliquary with a lawful relic (500 gp).",
     aptitudes: ["Cleric Spells"],
     savingThrow: "See text",
     properties: [
@@ -616,7 +670,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Summon Monster VIII",
-    description: "This functions like summon monster I, except you summon one 8th-level, 1d3 7th-level, or 1d4+1 lower-level creatures.",
+    description:
+      "This functions like summon monster I, except you summon one 8th-level, 1d3 7th-level, or 1d4+1 lower-level creatures.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -634,7 +689,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Summon Nature's Ally VIII",
-    description: "This functions like summon nature's ally I, except you summon one 8th-level, 1d3 7th-level, or 1d4+1 lower-level creatures.",
+    description:
+      "This functions like summon nature's ally I, except you summon one 8th-level, 1d3 7th-level, or 1d4+1 lower-level creatures.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -652,7 +708,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Sunburst",
-    description: "A globe of searing radiance blinds all creatures and deals 6d6 damage (double for sun-sensitive, Reflex negates blindness and halves damage). Undead take 1d6 per level (max 25d6, Reflex half); sun-vulnerable undead that fail are destroyed. Damages fungi, molds, oozes, and slimes as undead. Dispels darkness spells below 9th level. Arcane Material Component: Sunstone and a naked flame.",
+    description:
+      "A globe of searing radiance blinds all creatures and deals 6d6 damage (double for sun-sensitive, Reflex negates blindness and halves damage). Undead take 1d6 per level (max 25d6, Reflex half); sun-vulnerable undead that fail are destroyed. Damages fungi, molds, oozes, and slimes as undead. Dispels darkness spells below 9th level. Arcane Material Component: Sunstone and a naked flame.",
     aptitudes: ["Druid Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "Reflex partial; see text",
     properties: [
@@ -671,7 +728,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Symbol of Death",
-    description: "A potent rune slays creatures within 60 feet whose combined current hp do not exceed 150 (closest first). Active for 10 minutes per caster level or until 150 hp affected. Triggering conditions (look, read, touch, pass over/through portal) are set at casting. Must be in plain sight. Password and attunement options available. Read magic identifies it (DC 19 Spellcraft). Removable by dispel magic, not erase. Can be made permanent. Magical trap (DC 33, rogue only). Material Component: Mercury, phosphorus, and powdered diamond and opal (5,000 gp each).",
+    description:
+      "A potent rune slays creatures within 60 feet whose combined current hp do not exceed 150 (closest first). Active for 10 minutes per caster level or until 150 hp affected. Triggering conditions (look, read, touch, pass over/through portal) are set at casting. Must be in plain sight. Password and attunement options available. Read magic identifies it (DC 19 Spellcraft). Removable by dispel magic, not erase. Can be made permanent. Magical trap (DC 33, rogue only). Material Component: Mercury, phosphorus, and powdered diamond and opal (5,000 gp each).",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -689,7 +747,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Symbol of Insanity",
-    description: "This functions like symbol of death, except creatures become permanently insane (as the insanity spell). No hp limit; remains active 10 minutes per caster level. Magical trap (DC 33). Material Component: Mercury, phosphorus, and diamond/opal (5,000 gp total).",
+    description:
+      "This functions like symbol of death, except creatures become permanently insane (as the insanity spell). No hp limit; remains active 10 minutes per caster level. Magical trap (DC 33). Material Component: Mercury, phosphorus, and diamond/opal (5,000 gp total).",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -708,7 +767,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Sympathy",
-    description: "An object or location attracts a specific named kind of creature or alignment. Designated creatures feel compelled to stay or possess the object (save to resist, re-save required 1d6x10 minutes later). Counters and dispels antipathy. Material Component: Crushed pearls (1,500 gp) and honey.",
+    description:
+      "An object or location attracts a specific named kind of creature or alignment. Designated creatures feel compelled to stay or possess the object (save to resist, re-save required 1d6x10 minutes later). Counters and dispels antipathy. Material Component: Crushed pearls (1,500 gp) and honey.",
     aptitudes: ["Druid Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     aptitudeLevels: { "Druid Spells": 9, "Sorcerer Spells": 8, "Wizard Spells": 8, "Wu Jen Spells": 8 },
     savingThrow: "Will negates; see text",
@@ -728,7 +788,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Temporal Stasis",
-    description: "A melee touch attack places the subject in suspended animation. Time ceases for it, and no force can harm it. Removable by dispel magic or freedom. Material Component: Diamond, emerald, ruby, and sapphire dust (5,000 gp total).",
+    description:
+      "A melee touch attack places the subject in suspended animation. Time ceases for it, and no force can harm it. Removable by dispel magic or freedom. Material Component: Diamond, emerald, ruby, and sapphire dust (5,000 gp total).",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -745,7 +806,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Trap the Soul",
-    description: "You imprison a creature's life force and body in a gem indefinitely. Two methods: Spell Completion (standard action, allows SR and Will save; speaking the name ignores SR and adds +2 DC; failed save shatters gem) or Trigger Object (inscribed with name and command word; sympathy can be added; acceptance automatically traps with no save or SR). Material Component: A gem worth at least 1,000 gp per HD.",
+    description:
+      "You imprison a creature's life force and body in a gem indefinitely. Two methods: Spell Completion (standard action, allows SR and Will save; speaking the name ignores SR and adds +2 DC; failed save shatters gem) or Trigger Object (inscribed with name and command word; sympathy can be added; acceptance automatically traps with no save or SR). Material Component: A gem worth at least 1,000 gp per HD.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "See text",
     properties: [
@@ -763,7 +825,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Unholy Aura",
-    description: "Malevolent darkness provides four effects: +4 deflection to AC and +4 resistance on saves against all attacks; SR 25 against good spells; blocks possession and mental influence; good creatures making successful melee attacks take 1d6 temporary Strength damage (Fortitude negates). Focus: A tiny reliquary with an unholy relic (500 gp).",
+    description:
+      "Malevolent darkness provides four effects: +4 deflection to AC and +4 resistance on saves against all attacks; SR 25 against good spells; blocks possession and mental influence; good creatures making successful melee attacks take 1d6 temporary Strength damage (Fortitude negates). Focus: A tiny reliquary with an unholy relic (500 gp).",
     aptitudes: ["Cleric Spells"],
     savingThrow: "See text",
     properties: [
@@ -780,7 +843,8 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   },
   {
     name: "Whirlwind",
-    description: "A powerful cyclone moves at 60 feet per round under your direction (standard action) or a simple program. Large or smaller creatures contacting it take 3d6 (Reflex negates). Medium or smaller creatures failing a second save are suspended in the winds for 1d8 damage per round (no save). You can eject carried creatures at any time.",
+    description:
+      "A powerful cyclone moves at 60 feet per round under your direction (standard action) or a simple program. Large or smaller creatures contacting it take 3d6 (Reflex negates). Medium or smaller creatures failing a second save are suspended in the winds for 1d8 damage per round (no save). You can eject carried creatures at any time.",
     aptitudes: ["Druid Spells", "Wu Jen Spells"],
     savingThrow: "Reflex negates; see text",
     properties: [

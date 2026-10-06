@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const WAR_CHANTER: ClassSeed = {
   name: "War Chanter",
-  description: "The war chanter wields musical power as a weapon on the battlefield, sweeping up allies and enemies alike in the surge of her performance.",
-  hd: 8, levels: 10, skillPoints: 4,
+  description:
+    "The war chanter wields musical power as a weapon on the battlefield, sweeping up allies and enemies alike in the surge of her performance.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -49,5 +57,3 @@ export const WAR_CHANTER: ClassSeed = {
     [10, "Inspire Legion (War Chanter)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

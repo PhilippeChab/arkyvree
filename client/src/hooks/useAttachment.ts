@@ -17,7 +17,7 @@ interface UseAttachmentsParams {
   recordIds: string[];
 }
 
-export type AttachmentResponse = InferResponseType<typeof rpc.api.attachments.$get, 200>;
+type AttachmentResponse = InferResponseType<typeof rpc.api.attachments.$get, 200>;
 
 /** A record's attachment slot, as one query: its key and its request. */
 function slotQuery(recordType: string, recordId: string, name: string) {

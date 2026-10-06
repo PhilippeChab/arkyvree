@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_6_SPELLS: PowerSeed[] = [
   {
     name: "Anger of the Noonday Sun",
-    description: "You release a brilliant burst of solar radiance centered on yourself. Every sighted creature in the area must succeed on a saving throw or become blinded for 1 minute per caster level. Undead caught in the area suffer 1d6 points of damage per two caster levels (maximum 10d6), with a successful Reflex save reducing the damage by half. Undead that are particularly vulnerable to bright light (such as vampires) are destroyed outright if they fail their save. Fungi, mold, oozes, and slimes take damage from the ultraviolet radiation as though they were undead.",
+    description:
+      "You release a brilliant burst of solar radiance centered on yourself. Every sighted creature in the area must succeed on a saving throw or become blinded for 1 minute per caster level. Undead caught in the area suffer 1d6 points of damage per two caster levels (maximum 10d6), with a successful Reflex save reducing the damage by half. Undead that are particularly vulnerable to bright light (such as vampires) are destroyed outright if they fail their save. Fungi, mold, oozes, and slimes take damage from the ultraviolet radiation as though they were undead.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Reflex negates",
     properties: [
@@ -20,9 +21,26 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bestow Curse, Greater",
-    description: "You lay a potent curse on the creature you touch, selecting from three possible effects. You may also devise a custom curse of comparable power, subject to GM approval. Unlike a standard curse, this greater version cannot be removed by dispel magic, break enchantment, limited wish, or remove curse. Only miracle or wish can lift it. However, every greater curse must include a single specific deed the caster designates that will also remove it. The deed must be achievable within one year if pursued immediately, such as slaying a particular dragon or climbing the world's tallest peak. The cursed creature may receive assistance in completing the task.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
-    aptitudeLevels: { "Bard Spells": 6, "Cleric Spells": 7, "Sorcerer Spells": 8, "Spellthief Spells": 8, "Sublime Chord Spells": 6, "Suel Arcanamach Spells": 8, "Wizard Spells": 8 },
+    description:
+      "You lay a potent curse on the creature you touch, selecting from three possible effects. You may also devise a custom curse of comparable power, subject to GM approval. Unlike a standard curse, this greater version cannot be removed by dispel magic, break enchantment, limited wish, or remove curse. Only miracle or wish can lift it. However, every greater curse must include a single specific deed the caster designates that will also remove it. The deed must be achievable within one year if pursued immediately, such as slaying a particular dragon or climbing the world's tallest peak. The cursed creature may receive assistance in completing the task.",
+    aptitudes: [
+      "Bard Spells",
+      "Cleric Spells",
+      "Sorcerer Spells",
+      "Spellthief Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Wizard Spells",
+    ],
+    aptitudeLevels: {
+      "Bard Spells": 6,
+      "Cleric Spells": 7,
+      "Sorcerer Spells": 8,
+      "Spellthief Spells": 8,
+      "Sublime Chord Spells": 6,
+      "Suel Arcanamach Spells": 8,
+      "Wizard Spells": 8,
+    },
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -37,7 +55,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bolt of Glory",
-    description: "You project a ray of positive energy at a single creature, requiring a successful ranged touch attack. The damage dealt varies based on the target's nature or native plane of existence and your caster level.",
+    description:
+      "You project a ray of positive energy at a single creature, requiring a successful ranged touch attack. The damage dealt varies based on the target's nature or native plane of existence and your caster level.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -55,7 +74,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Cometfall",
-    description: "You conjure a brilliant, glowing comet in midair above your enemies, which then plummets to the ground with tremendous impact. The comet materializes 5 feet per caster level above the ground or at the ceiling, whichever is lower. It falls immediately, dealing 2d6 points of damage per 10 feet fallen to everything in the 10-foot-square area below it (maximum 20d6). Creatures who failed their Reflex save are also subject to a trip attempt. The comet has a +11 bonus on the trip check (+7 from an effective Strength of 25, +4 for being Large). On impact, the comet shatters, filling the 10-foot-square area with dense rubble.",
+    description:
+      "You conjure a brilliant, glowing comet in midair above your enemies, which then plummets to the ground with tremendous impact. The comet materializes 5 feet per caster level above the ground or at the ceiling, whichever is lower. It falls immediately, dealing 2d6 points of damage per 10 feet fallen to everything in the 10-foot-square area below it (maximum 20d6). Creatures who failed their Reflex save are also subject to a trip attempt. The comet has a +11 bonus on the trip check (+7 from an effective Strength of 25, +4 for being Large). On impact, the comet shatters, filling the 10-foot-square area with dense rubble.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     savingThrow: "Reflex half",
     properties: [
@@ -73,7 +93,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Contagious Touch",
-    description: "Upon casting, you select one disease from the following list: blinding sickness, cackle fever, filth fever, mindfire, red ache, the shakes, or slimy doom. For the spell's duration, any living creature you strike with a melee touch attack immediately contracts the chosen disease unless it succeeds on a Fortitude save, as though affected by the contagion spell. You can infect no more than one creature per round.",
+    description:
+      "Upon casting, you select one disease from the following list: blinding sickness, cackle fever, filth fever, mindfire, red ache, the shakes, or slimy doom. For the spell's duration, any living creature you strike with a melee touch attack immediately contracts the chosen disease unless it succeeds on a Fortitude save, as though affected by the contagion spell. You can infect no more than one creature per round.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -89,7 +110,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Crumble",
-    description: "You subject a manufactured structure to rapid erosion, such as a stone bridge, wooden building, iron wall, construct, or any non-natural object. The erosion deals 1d6 points of damage per caster level (maximum 15d6), ignoring hardness. This spell does not affect living creatures but does affect constructs. The maximum size of the affected object depends on your caster level; casting this on an object exceeding your size limit causes the spell to fail.",
+    description:
+      "You subject a manufactured structure to rapid erosion, such as a stone bridge, wooden building, iron wall, construct, or any non-natural object. The erosion deals 1d6 points of damage per caster level (maximum 15d6), ignoring hardness. This spell does not affect living creatures but does affect constructs. The maximum size of the affected object depends on your caster level; casting this on an object exceeding your size limit causes the spell to fail.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Fortitude partial (object)",
     properties: [
@@ -105,7 +127,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Curse of Lycanthropy",
-    description: "You can inflict temporary lycanthropy upon a humanoid you touch. A target that fails its saving throw contracts lycanthropy, with the condition manifesting at the next full moon. Unlike natural lycanthropy, this magically induced form can be broken by remove curse or break enchantment. You may induce any common variety of lycanthropy (and malicious casters often experiment with unusual forms). The lycanthrope's animal shape can be any predator ranging from the size of a small dog to a large bear. The type of animal blood used as the material component determines the victim's animal form. Material Component: A pint of animal blood.",
+    description:
+      "You can inflict temporary lycanthropy upon a humanoid you touch. A target that fails its saving throw contracts lycanthropy, with the condition manifesting at the next full moon. Unlike natural lycanthropy, this magically induced form can be broken by remove curse or break enchantment. You may induce any common variety of lycanthropy (and malicious casters often experiment with unusual forms). The lycanthrope's animal shape can be any predator ranging from the size of a small dog to a large bear. The type of animal blood used as the material component determines the victim's animal form. Material Component: A pint of animal blood.",
     aptitudes: [],
     savingThrow: "Fortitude negates",
     properties: [
@@ -123,7 +146,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Dream Sight",
-    description: "You fall into a deep slumber while your spirit departs your body in incorporeal form, traveling to distant locations. Your spirit moves at 100 feet per round and can see and hear as though you were physically present. It can be blocked by wards against incorporeal creatures and can be detected and attacked as an incorporeal entity. Your spirit can only move and observe; it cannot speak, attack, cast spells, or take any other action. When the spell ends, your spirit instantly returns and you awaken. If your physical body is disturbed during the spell, it ends immediately.",
+    description:
+      "You fall into a deep slumber while your spirit departs your body in incorporeal form, traveling to distant locations. Your spirit moves at 100 feet per round and can see and hear as though you were physically present. It can be blocked by wards against incorporeal creatures and can be detected and attacked as an incorporeal entity. Your spirit can only move and observe; it cannot speak, attack, cast spells, or take any other action. When the spell ends, your spirit instantly returns and you awaken. If your physical body is disturbed during the spell, it ends immediately.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -139,7 +163,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Enveloping Cocoon",
-    description: "A cocoon of shimmering blue-green energy encloses a Large or smaller creature for the spell's duration or until destroyed. The cocoon has hardness 10 and 10 hit points per caster level. The confining shell prevents the trapped creature from moving or casting spells requiring somatic components. The space is too restrictive for attacks with anything larger than a natural or light weapon, and the creature inside can only target the cocoon itself. You can attach a second spell to the cocoon by casting it at the enclosure. When the cocoon ends or is dismissed, the attached spell automatically affects the creature inside with no saving throw allowed (though spell resistance still applies). If the cocoon is destroyed before dismissal or expiration, the attached spell is wasted. The following spells may be attached: baleful polymorph, blight, contagion, dominate animal, flame strike, infestation of maggots, languor, miasma, phantasmal disorientation, or poison (the target automatically fails the initial save but attempts the secondary save normally). Material Component: A live caterpillar.",
+    description:
+      "A cocoon of shimmering blue-green energy encloses a Large or smaller creature for the spell's duration or until destroyed. The cocoon has hardness 10 and 10 hit points per caster level. The confining shell prevents the trapped creature from moving or casting spells requiring somatic components. The space is too restrictive for attacks with anything larger than a natural or light weapon, and the creature inside can only target the cocoon itself. You can attach a second spell to the cocoon by casting it at the enclosure. When the cocoon ends or is dismissed, the attached spell automatically affects the creature inside with no saving throw allowed (though spell resistance still applies). If the cocoon is destroyed before dismissal or expiration, the attached spell is wasted. The following spells may be attached: baleful polymorph, blight, contagion, dominate animal, flame strike, infestation of maggots, languor, miasma, phantasmal disorientation, or poison (the target automatically fails the initial save but attempts the secondary save normally). Material Component: A live caterpillar.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Reflex negates",
     properties: [
@@ -156,7 +181,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Fires of Purity",
-    description: "The creature you touch erupts in magical flames that are harmless to the target but dangerous to others. On a successful melee attack, the subject deals an extra 1d6 fire damage +1 per caster level (maximum +15). Spell resistance applies to this effect. Creatures that hit the subject also take this fire damage unless they use weapons with exceptional reach (such as longspears). Any creature taking fire damage from this spell must succeed on a Reflex save or catch fire, burning for 1d4 rounds and taking 1d6 fire damage each round unless it succeeds on subsequent Reflex saves (at the spell's DC) or douses itself in water. The target takes only half damage from fire-based attacks; if such an attack allows a Reflex save for half damage, the target takes no damage on a successful save.",
+    description:
+      "The creature you touch erupts in magical flames that are harmless to the target but dangerous to others. On a successful melee attack, the subject deals an extra 1d6 fire damage +1 per caster level (maximum +15). Spell resistance applies to this effect. Creatures that hit the subject also take this fire damage unless they use weapons with exceptional reach (such as longspears). Any creature taking fire damage from this spell must succeed on a Reflex save or catch fire, burning for 1d4 rounds and taking 1d6 fire damage each round unless it succeeds on subsequent Reflex saves (at the spell's DC) or douses itself in water. The target takes only half damage from fire-based attacks; if such an attack allows a Reflex save for half damage, the target takes no damage on a successful save.",
     aptitudes: ["Druid Spells", "Sorcerer Spells", "Sublime Chord Spells", "Wizard Spells"],
     savingThrow: "Reflex negates (harmless); see text",
     properties: [
@@ -173,7 +199,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Miasma",
-    description: "You fill the subject's mouth and throat with unbreathable gas, leaving them able to do little more than cough and sputter. The subject cannot speak, making conversation impossible, verbal spell components unusable, and bardic music unperformable. Only coughing and spitting sounds are possible. The subject can hold its breath for 2 rounds per point of Constitution, but must make a Constitution check each subsequent round (DC 10, +1 per previous success) to continue. Failure on any check (or voluntarily resuming breathing) causes the subject to fall unconscious at 0 hp. The following round, the subject drops to -1 hp and begins dying; on the third round, the subject suffocates.",
+    description:
+      "You fill the subject's mouth and throat with unbreathable gas, leaving them able to do little more than cough and sputter. The subject cannot speak, making conversation impossible, verbal spell components unusable, and bardic music unperformable. Only coughing and spitting sounds are possible. The subject can hold its breath for 2 rounds per point of Constitution, but must make a Constitution check each subsequent round (DC 10, +1 per previous success) to continue. Failure on any check (or voluntarily resuming breathing) causes the subject to fall unconscious at 0 hp. The following round, the subject drops to -1 hp and begins dying; on the third round, the subject suffocates.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -190,7 +217,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Phantasmal Disorientation",
-    description: "You fill the target's perception with ever-shifting illusory terrain that confounds movement. The ground appears to twist underfoot and landmarks seem to shift on their own, making walking in a straight line nearly impossible. Each round the subject wishes to move, it must attempt a DC 20 Survival check to distinguish real landmarks from phantasmal ones. On success, movement is normal. On failure, the subject moves 90 degrees to either side (equal chance of left or right). The subject does not realize it is heading the wrong direction until it meaningfully interacts with the environment (attacking, manipulating an object like a door, etc.) or the round ends. If the error is discovered before the round ends, a new Survival check can be attempted, but the outcome remains unknown until further interaction or the round's conclusion. This spell affects only movement; affected creatures can still fight, cast spells, and act normally in all other respects.",
+    description:
+      "You fill the target's perception with ever-shifting illusory terrain that confounds movement. The ground appears to twist underfoot and landmarks seem to shift on their own, making walking in a straight line nearly impossible. Each round the subject wishes to move, it must attempt a DC 20 Survival check to distinguish real landmarks from phantasmal ones. On success, movement is normal. On failure, the subject moves 90 degrees to either side (equal chance of left or right). The subject does not realize it is heading the wrong direction until it meaningfully interacts with the environment (attacking, manipulating an object like a door, etc.) or the round ends. If the error is discovered before the round ends, a new Survival check can be attempted, but the outcome remains unknown until further interaction or the round's conclusion. This spell affects only movement; affected creatures can still fight, cast spells, and act normally in all other respects.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -208,8 +236,15 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Probe Thoughts",
-    description: "You gain access to all of the subject's memories and knowledge, from deeply buried recollections to easily recalled information. You can learn the answer to one question per round, to the limit of the subject's knowledge. Sleeping subjects can also be probed, though they may attempt a Will save to awaken after each question. Unwilling subjects can try to move beyond range if not physically restrained. Questions are posed telepathically, and answers are received directly in your mind. You and the subject need not share a language, though less intelligent creatures may respond only with relevant visual images.",
-    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
+    description:
+      "You gain access to all of the subject's memories and knowledge, from deeply buried recollections to easily recalled information. You can learn the answer to one question per round, to the limit of the subject's knowledge. Sleeping subjects can also be probed, though they may attempt a Will save to awaken after each question. Unwilling subjects can try to move beyond range if not physically restrained. Questions are posed telepathically, and answers are received directly in your mind. You and the subject need not share a language, though less intelligent creatures may respond only with relevant visual images.",
+    aptitudes: [
+      "Sorcerer Spells",
+      "Spellthief Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "Will negates; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -225,7 +260,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Tidal Surge",
-    description: "You conjure a massive wave of water that crashes into one or more targets. Without a large natural body of water (river, lake, or ocean) within range, only a single target can be affected. If such a source exists within range, the spell creates a burst centered where you designate. The water deals 1d8 damage per two caster levels (maximum 7d8). All affected creatures also face a bull rush: opposed Strength checks against the wave, which has an effective Strength of 16 and is Medium (or Strength 20 and Large if near a water source). You designate the push direction when casting; creatures that lose the check are pushed back 5 feet plus an additional 5 feet for every 5 points the wave exceeds their check. The wave may push creatures into a body of water. It extinguishes torches, campfires, exposed lanterns, and other open flames of Large size or smaller that are carried by the target or in the area. Magical flames struck by the wave are subjected to a dispel magic effect as though you had cast the spell.",
+    description:
+      "You conjure a massive wave of water that crashes into one or more targets. Without a large natural body of water (river, lake, or ocean) within range, only a single target can be affected. If such a source exists within range, the spell creates a burst centered where you designate. The water deals 1d8 damage per two caster levels (maximum 7d8). All affected creatures also face a bull rush: opposed Strength checks against the wave, which has an effective Strength of 16 and is Medium (or Strength 20 and Large if near a water source). You designate the push direction when casting; creatures that lose the check are pushed back 5 feet plus an additional 5 feet for every 5 points the wave exceeds their check. The wave may push creatures into a body of water. It extinguishes torches, campfires, exposed lanterns, and other open flames of Large size or smaller that are carried by the target or in the area. Magical flames struck by the wave are subjected to a dispel magic effect as though you had cast the spell.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Reflex half",
     properties: [
@@ -242,7 +278,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Tortoise Shell",
-    description: "The target grows thick tortoise-like armor plating across its torso and tough, leathery skin elsewhere, granting a +6 enhancement bonus to natural armor class. This bonus increases by +1 for every three caster levels above 11th, to a maximum of +9 at 20th level. This enhancement stacks with the target's existing natural armor bonus but not with other enhancement bonuses to natural armor. A creature without natural armor is treated as having an effective natural armor bonus of +0. The spell reduces the creature's speed as though it were wearing heavy armor (for example, an elf would move at 20 feet and run at 60 feet per round). Only speed is affected; there is no armor check penalty or arcane spell failure chance.",
+    description:
+      "The target grows thick tortoise-like armor plating across its torso and tough, leathery skin elsewhere, granting a +6 enhancement bonus to natural armor class. This bonus increases by +1 for every three caster levels above 11th, to a maximum of +9 at 20th level. This enhancement stacks with the target's existing natural armor bonus but not with other enhancement bonuses to natural armor. A creature without natural armor is treated as having an effective natural armor bonus of +0. The spell reduces the creature's speed as though it were wearing heavy armor (for example, an elf would move at 20 feet and run at 60 feet per round). Only speed is affected; there is no armor check penalty or arcane spell failure chance.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -271,7 +308,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Visage of the Deity",
-    description: "Functions as lesser visage of the deity, but you take on all the qualities of a celestial or fiendish creature.",
+    description:
+      "Functions as lesser visage of the deity, but you take on all the qualities of a celestial or fiendish creature.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None",
     properties: [
@@ -285,7 +323,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   },
   {
     name: "Zealot Pact",
-    description: "You forge a divine agreement between a deity and the target that grants power against the deity's enemies. The pact lies dormant until the target strikes a foe whose alignment is diametrically opposed to the deity's. Upon activation, the target's melee attacks gain a +4 bonus, deal double damage, and automatically confirm critical hits for the duration. The attacks also carry alignment descriptors matching the deity of the pact. The target is compelled to attack foes of opposite alignment each round if able. The target knows which creatures within 60 feet have the opposite alignment (as if the relevant detect spells were active). If the deity is completely neutral, you choose one triggering alignment from: lawful good, lawful evil, chaotic evil, or chaotic good. A creature may have only one zealot pact at a time; casting a new one on a target with an existing untriggered pact replaces the old one. XP Cost: 500 XP.",
+    description:
+      "You forge a divine agreement between a deity and the target that grants power against the deity's enemies. The pact lies dormant until the target strikes a foe whose alignment is diametrically opposed to the deity's. Upon activation, the target's melee attacks gain a +4 bonus, deal double damage, and automatically confirm critical hits for the duration. The attacks also carry alignment descriptors matching the deity of the pact. The target is compelled to attack foes of opposite alignment each round if able. The target knows which creatures within 60 feet have the opposite alignment (as if the relevant detect spells were active). If the deity is completely neutral, you choose one triggering alignment from: lawful good, lawful evil, chaotic evil, or chaotic good. A creature may have only one zealot pact at a time; casting a new one on a target with an existing untriggered pact replaces the old one. XP Cost: 500 XP.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [

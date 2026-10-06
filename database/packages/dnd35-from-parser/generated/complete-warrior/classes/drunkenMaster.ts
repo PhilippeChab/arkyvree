@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const DRUNKEN_MASTER: ClassSeed = {
   name: "Drunken Master",
-  description: "Through erratic, swaying movements that mimic intoxication, practitioners of this fighting style evade incoming attacks with deceptive agility.",
-  hd: 8, levels: 10, skillPoints: 4,
+  description:
+    "Through erratic, swaying movements that mimic intoxication, practitioners of this fighting style evade incoming attacks with deceptive agility.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "medium",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: [
@@ -50,5 +58,3 @@ export const DRUNKEN_MASTER: ClassSeed = {
     [7, "Improved Grapple", "Drunken Master Class Feature"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

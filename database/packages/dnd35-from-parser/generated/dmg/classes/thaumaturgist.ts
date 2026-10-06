@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const THAUMATURGIST: ClassSeed = {
   name: "Thaumaturgist",
-  description: "This prestige class specializes in using divine magic to reach across planar boundaries, summoning and bargaining with extraplanar beings to serve the caster's purposes.",
-  hd: 4, levels: 5, skillPoints: 2,
+  description:
+    "This prestige class specializes in using divine magic to reach across planar boundaries, summoning and bargaining with extraplanar beings to serve the caster's purposes.",
+  hd: 4,
+  levels: 5,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -18,10 +26,7 @@ export const THAUMATURGIST: ClassSeed = {
     "Speak Language",
     "Spellcraft",
   ],
-  requirements: [
-    eq("feats.spellfocusconjuration.possessed"),
-    gte("spellcasting.divine", 3),
-  ],
+  requirements: [eq("feats.spellfocusconjuration.possessed"), gte("spellcasting.divine", 3)],
   casterLevelAdvancement: { type: "any", levels: [1, 2, 3, 4, 5] },
   classFeatureAptitude: "Thaumaturgist Class Feature",
   classFeatures: [
@@ -32,9 +37,5 @@ export const THAUMATURGIST: ClassSeed = {
     [4, "Contingent Conjuration (Thaumaturgist)"],
     [5, "Planar Cohort (Thaumaturgist)"],
   ],
-  freeFeats: [
-    [2, "Augment Summoning", "Thaumaturgist Class Feature"],
-  ],
+  freeFeats: [[2, "Augment Summoning", "Thaumaturgist Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const CONSECRATED_HARRIER: ClassSeed = {
   name: "Consecrated Harrier",
-  description: "A consecrated harrier serves as a sanctioned hunter on behalf of her faith or religious institution, tracking down designated enemies.",
-  hd: 10, levels: 10, skillPoints: 4,
+  description:
+    "A consecrated harrier serves as a sanctioned hunter on behalf of her faith or religious institution, tracking down designated enemies.",
+  hd: 10,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -25,7 +33,11 @@ export const CONSECRATED_HARRIER: ClassSeed = {
     gte("skills.disguise.rank", 5),
     gte("skills.gatherinformation.rank", 5),
     eq("feats.track.possessed"),
-    or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Lawful Neutral"), eqStr("identity.beliefs.alignment", "Lawful Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Good"),
+      eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+    ),
   ],
   classFeatureAptitude: "Consecrated Harrier Class Feature",
   classFeatures: [
@@ -46,21 +58,8 @@ export const CONSECRATED_HARRIER: ClassSeed = {
   casterType: "Divine",
   spells: {
     slug: "consecratedharrierspells",
-    perDay: [
-      [0],
-      [1],
-      [1, 0],
-      [1, 1],
-      [1, 1, 0],
-      [1, 1, 1],
-      [2, 1, 1, 0],
-      [2, 1, 1, 1],
-      [2, 2, 1, 1],
-      [2, 2, 2, 1],
-    ],
+    perDay: [[0], [1], [1, 0], [1, 1], [1, 1, 0], [1, 1, 1], [2, 1, 1, 0], [2, 1, 1, 1], [2, 2, 1, 1], [2, 2, 2, 1]],
     knowAll: true,
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

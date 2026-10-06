@@ -305,8 +305,7 @@ export function generateClassSeed(ref: ClassReference): string {
 
   lines.push(`};`);
 
-  // Flag unresolved items as TODO comments
-  // Convention: if the key exists in the overrides (even empty []), it's been reviewed — no TODO
+  // What the generator couldn't resolve is left for review, unless the overrides name the key (even empty: reviewed)
   const todos: string[] = [];
   if (!("requirements" in overrides) && detected.unresolvedPrereqs?.length) {
     for (const p of detected.unresolvedPrereqs) todos.push(p);
@@ -317,15 +316,12 @@ export function generateClassSeed(ref: ClassReference): string {
   if (!("modifiers" in overrides) && !("columns" in overrides)) {
     todos.push("No modifiers defined — review if this class needs any");
   }
-  if (todos.length > 0) {
-    lines.push("");
-    for (const todo of todos) {
-      lines.push(`// TODO: ${todo}`);
-    }
-  }
+  // What's left to review opens the file
+  const review = todos.length > 0 ? ["/**", " * To review:", ...todos.map((todo) => ` * - ${todo}`), " */", ""] : [];
 
   lines.push("");
   return [
+    ...review,
     `import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";`,
     ...requirementImports(uses),
     "",

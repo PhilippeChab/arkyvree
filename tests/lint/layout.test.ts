@@ -67,7 +67,7 @@ describe("file layout", () => {
           // A module runs nothing as it loads; a script marked a module by `export {}` runs
           "server/a/runs.ts": lines("export function f() {", "  return 1;", "}", "f();"),
           "scripts/marked.ts": lines("async function main() {}", "export {};", "await main();"),
-          // What a tool writes keeps its layout
+          // What a tool writes is held like the rest
           "database/packages/p/generated/feats.ts": lines("export const a = () => 1;", "type B = number;"),
           // Out of order: a type below a constant, a constant below a helper, a helper below an export
           "server/a/type.ts": lines("const N = 1;", "type A = number;"),
@@ -87,6 +87,7 @@ describe("file layout", () => {
       ),
     ).toEqual([
       "file-layout client/src/helper.tsx",
+      "file-layout database/packages/p/generated/feats.ts",
       "file-layout scripts/run.ts",
       "file-layout scripts/run.ts",
       "file-layout server/a/built.ts",

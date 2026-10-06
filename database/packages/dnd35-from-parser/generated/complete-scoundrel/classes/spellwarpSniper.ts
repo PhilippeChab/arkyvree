@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SPELLWARP_SNIPER: ClassSeed = {
   name: "Spellwarp Sniper",
-  description: "The spellwarp sniper contorts spells, changing area effects into rays that deliver precise, devastating attacks.",
-  hd: 6, levels: 5, skillPoints: 4,
+  description:
+    "The spellwarp sniper contorts spells, changing area effects into rays that deliver precise, devastating attacks.",
+  hd: 6,
+  levels: 5,
+  skillPoints: 4,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -32,9 +40,5 @@ export const SPELLWARP_SNIPER: ClassSeed = {
     [4, "Sudden Raystrike (Spellwarp Sniper)"],
     [5, "Ray Mastery (Spellwarp Sniper)"],
   ],
-  freeFeats: [
-    [3, "Precise Shot", "Spellwarp Sniper Class Feature"],
-  ],
+  freeFeats: [[3, "Precise Shot", "Spellwarp Sniper Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

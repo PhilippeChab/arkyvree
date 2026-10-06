@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_9_SPELLS: PowerSeed[] = [
   {
     name: "Cloak of Bravery, Greater",
-    description: "This enhanced version of cloak of bravery renders you and all allies within the emanation completely immune to fear effects and also grants them a +2 morale bonus on attack rolls. Allies who lack line of sight to you do not benefit from this spell.",
+    description:
+      "This enhanced version of cloak of bravery renders you and all allies within the emanation completely immune to fear effects and also grants them a +2 morale bonus on attack rolls. Allies who lack line of sight to you do not benefit from this spell.",
     aptitudes: [],
     savingThrow: "None",
     properties: [

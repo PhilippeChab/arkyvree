@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const HIGHLAND_STALKER: ClassSeed = {
   name: "Highland Stalker",
-  description: "The mountains are unforgiving, and the ability to ?nd food at high altitude often means the difference between survival and starvation. For those who live in such climes, hunters provide not only food but also clothing, shelter, and tools when they bring back animal skins and bones. The best high-altitude hunters?highland stalkers?are consummate trackers with an instinctive knowledge of their mountainous territories. Scouts are the most likely candidates to become highland stalkers, but rogues are well represented, and the prestige class attracts a fair number of multiclass barbarians and rangers who qualify.",
-  hd: 8, levels: 10, skillPoints: 4,
+  description:
+    "The mountains are unforgiving, and the ability to ?nd food at high altitude often means the difference between survival and starvation. For those who live in such climes, hunters provide not only food but also clothing, shelter, and tools when they bring back animal skins and bones. The best high-altitude hunters?highland stalkers?are consummate trackers with an instinctive knowledge of their mountainous territories. Scouts are the most likely candidates to become highland stalkers, but rogues are well represented, and the prestige class attracts a fair number of multiclass barbarians and rangers who qualify.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -43,5 +51,3 @@ export const HIGHLAND_STALKER: ClassSeed = {
     [10, "Skirmish (Highland Stalker)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

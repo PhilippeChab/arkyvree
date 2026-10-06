@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const BLADESINGER: ClassSeed = {
   name: "Bladesinger",
-  description: "Bladesingers are elven warriors who seamlessly weave together artistry, sword technique, and arcane spellcasting into a unified fighting discipline.",
-  hd: 8, levels: 10, skillPoints: 2,
+  description:
+    "Bladesingers are elven warriors who seamlessly weave together artistry, sword technique, and arcane spellcasting into a unified fighting discipline.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "poor", reflex: "good", will: "good" },
   classSkills: ["Balance", "Concentration", "Jump", "Perform", "Spellcraft", "Tumble"],
@@ -34,5 +42,3 @@ export const BLADESINGER: ClassSeed = {
     [10, "Song of Fury (Bladesinger)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

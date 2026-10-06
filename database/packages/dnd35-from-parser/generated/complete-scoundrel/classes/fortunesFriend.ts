@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const FORTUNES_FRIEND: ClassSeed = {
   name: "Fortune's Friend",
   description: "The fortune's friend lives by his luck.",
-  hd: 6, levels: 5, skillPoints: 6,
+  hd: 6,
+  levels: 5,
+  skillPoints: 6,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -33,10 +40,7 @@ export const FORTUNES_FRIEND: ClassSeed = {
     "Use Magic Device",
     "Use Rope",
   ],
-  requirements: [
-    gte("combat.bab", 3),
-    eq("feats.luck.*.possessed"),
-  ],
+  requirements: [gte("combat.bab", 3), eq("feats.luck.*.possessed")],
   casterLevelAdvancement: { type: "any", levels: [2, 4] },
   classFeatureAptitude: "Fortune's Friend Class Feature",
   classFeatures: [
@@ -51,5 +55,3 @@ export const FORTUNES_FRIEND: ClassSeed = {
     [5, "Lucky Strike (Fortune's Friend)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

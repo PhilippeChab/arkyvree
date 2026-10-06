@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Blessed Aim",
-    description: "This divination grants a +2 morale bonus on all ranged attack rolls for your allies within the spell's 60-foot spread.",
+    description:
+      "This divination grants a +2 morale bonus on all ranged attack rolls for your allies within the spell's 60-foot spread.",
     aptitudes: ["Blackguard Spells", "Cleric Spells", "Paladin Spells"],
     aptitudeLevels: { "Blackguard Spells": 2, "Cleric Spells": 3, "Paladin Spells": 2 },
     savingThrow: "Will negates (harmless)",
@@ -20,8 +21,16 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Body of the Sun",
-    description: "Drawing on solar energy, you cause your body to radiate fire in a 5-foot emanation. This light illuminates the surrounding area and deals 1d4+1 points of fire damage (Reflex save for half) to any creature it contacts, except you.",
-    aptitudes: ["Druid Spells", "Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
+    description:
+      "Drawing on solar energy, you cause your body to radiate fire in a 5-foot emanation. This light illuminates the surrounding area and deals 1d4+1 points of fire damage (Reflex save for half) to any creature it contacts, except you.",
+    aptitudes: [
+      "Druid Spells",
+      "Sorcerer Spells",
+      "Spellthief Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -38,7 +47,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Brambles",
-    description: "Magical thorns or spikes sprout from the surface of a wooden weapon such as a club, greatclub, nunchaku, or quarterstaff. For the duration, the weapon inflicts both piercing and bludgeoning damage, receives a +1 enhancement bonus on attack rolls, and deals an extra +1 point of damage per caster level (maximum +10). This spell functions only on melee weapons with wooden striking surfaces; it does not work on bows, arrows, or metal weapons. Material Component: A small thorn.",
+    description:
+      "Magical thorns or spikes sprout from the surface of a wooden weapon such as a club, greatclub, nunchaku, or quarterstaff. For the duration, the weapon inflicts both piercing and bludgeoning damage, receives a +1 enhancement bonus on attack rolls, and deals an extra +1 point of damage per caster level (maximum +10). This spell functions only on melee weapons with wooden striking surfaces; it does not work on bows, arrows, or metal weapons. Material Component: A small thorn.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -55,7 +65,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Briar Web",
-    description: "This spell causes grasses, weeds, shrubs, and even trees in the area to sprout thorns and then twist around creatures present in or entering the area. Creatures that succeed on their saving throw are unaffected except that they must move at half speed within the area. A creature that fails its initial save has three options: remain perfectly still, attempt to break free, or continue acting normally. A creature that stays still is entangled (-2 on attacks, -4 to Dexterity) but suffers no other effects or damage; the entangled condition ends upon leaving the area. Each round within the area, a creature may spend a full-round action to extricate itself, granting a new saving throw. Success means the creature is no longer caught by the thorns but can only move at half speed within the area. Breaking free is the only action that avoids thorn damage; a failed escape attempt inflicts the normal 2d6 piercing damage. Any other action (attacking, casting a spell with a somatic component, moving) also deals 2d6 points of piercing damage. A creature trying to cast a spell must also succeed on a Concentration check (DC 15 + spell level + damage taken) or lose the spell. The vegetation provides cover: a creature 5 feet away has cover, while 20 or more feet of briar webs grant total cover.",
+    description:
+      "This spell causes grasses, weeds, shrubs, and even trees in the area to sprout thorns and then twist around creatures present in or entering the area. Creatures that succeed on their saving throw are unaffected except that they must move at half speed within the area. A creature that fails its initial save has three options: remain perfectly still, attempt to break free, or continue acting normally. A creature that stays still is entangled (-2 on attacks, -4 to Dexterity) but suffers no other effects or damage; the entangled condition ends upon leaving the area. Each round within the area, a creature may spend a full-round action to extricate itself, granting a new saving throw. Success means the creature is no longer caught by the thorns but can only move at half speed within the area. Breaking free is the only action that avoids thorn damage; a failed escape attempt inflicts the normal 2d6 piercing damage. Any other action (attacking, casting a spell with a somatic component, moving) also deals 2d6 points of piercing damage. A creature trying to cast a spell must also succeed on a Concentration check (DC 15 + spell level + damage taken) or lose the spell. The vegetation provides cover: a creature 5 feet away has cover, while 20 or more feet of briar webs grant total cover.",
     aptitudes: ["Cleric Spells", "Druid Spells", "Ranger Spells"],
     aptitudeLevels: { "Cleric Spells": 3, "Druid Spells": 2, "Ranger Spells": 2 },
     savingThrow: "Reflex negates; see text",
@@ -73,7 +84,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Cloudburst",
-    description: "You summon dense clouds that release a torrential downpour. The heavy rain halves visibility ranges, imposing a -4 penalty on Spot and Search checks. It automatically extinguishes unprotected flames and has a 50% chance of putting out protected ones. Ranged weapon attacks and Listen checks also suffer a -4 penalty. The spell does not function indoors, underground, underwater, or in desert climates. After the spell ends, the conjured water evaporates over the next 10 minutes. This water does not quench thirst or nourish plants.",
+    description:
+      "You summon dense clouds that release a torrential downpour. The heavy rain halves visibility ranges, imposing a -4 penalty on Spot and Search checks. It automatically extinguishes unprotected flames and has a 50% chance of putting out protected ones. Ranged weapon attacks and Listen checks also suffer a -4 penalty. The spell does not function indoors, underground, underwater, or in desert climates. After the spell ends, the conjured water evaporates over the next 10 minutes. This water does not quench thirst or nourish plants.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -90,7 +102,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Creeping Cold",
-    description: "You convert the subject's perspiration into ice, forming blisters as frost develops on and beneath the skin. The spell inflicts escalating cold damage each round: 1d6 on the first round, 2d6 on the second, and 3d6 on the third. Only a single saving throw is permitted; success halves the damage each round. Focus: A small glass or ceramic container worth at least 25 gp, filled with ice, snow, or water.",
+    description:
+      "You convert the subject's perspiration into ice, forming blisters as frost develops on and beneath the skin. The spell inflicts escalating cold damage each round: 1d6 on the first round, 2d6 on the second, and 3d6 on the third. Only a single saving throw is permitted; success halves the damage each round. Focus: A small glass or ceramic container worth at least 25 gp, filled with ice, snow, or water.",
     aptitudes: ["Druid Spells"],
     savingThrow: "Fortitude half",
     properties: [
@@ -107,7 +120,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Curse of Ill Fortune",
-    description: "You place a short-term curse on the target, inflicting a -3 penalty on attack rolls, saving throws, ability checks, and skill checks. Any spell capable of removing bestow curse also negates this effect.",
+    description:
+      "You place a short-term curse on the target, inflicting a -3 penalty on attack rolls, saving throws, ability checks, and skill checks. Any spell capable of removing bestow curse also negates this effect.",
     aptitudes: ["Blackguard Spells", "Cleric Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -124,7 +138,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Decomposition",
-    description: "Whenever an enemy within the emanation takes normal (not subdual) damage, that wound festers, inflicting an additional 1 point of damage per round for the spell's duration. A successful Heal check (DC 15) or any healing magic (such as cure spells, heal, or healing circle) stops the festering. Only one wound festers at a time; additional wounds received while the first is still active are not subject to this effect. However, once festering is stopped, any new wound taken while still within the area before the spell expires starts the process over. For example, a creature that takes 6 damage from an attack within the area suffers 1 point of festering damage the next round and another the round after. If that creature then receives 4 points of healing from a cure spell, the festering stops. If the creature remains in the area and takes 3 more damage in battle the following round, the festering begins again at 1 point per round.",
+    description:
+      "Whenever an enemy within the emanation takes normal (not subdual) damage, that wound festers, inflicting an additional 1 point of damage per round for the spell's duration. A successful Heal check (DC 15) or any healing magic (such as cure spells, heal, or healing circle) stops the festering. Only one wound festers at a time; additional wounds received while the first is still active are not subject to this effect. However, once festering is stopped, any new wound taken while still within the area before the spell expires starts the process over. For example, a creature that takes 6 damage from an attack within the area suffers 1 point of festering damage the next round and another the round after. If that creature then receives 4 points of healing from a cure spell, the festering stops. If the creature remains in the area and takes 3 more damage in battle the following round, the festering begins again at 1 point per round.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -141,7 +156,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Deific Vengeance",
-    description: "You call upon your deity, reciting the target's offenses and urging divine retribution. The target's alignment is irrelevant to the spell's success. The angry deity delivers punishment as a spiritual blow that strikes automatically, dealing 1d6 damage per two caster levels (maximum 5d6), or 1d6 per caster level (maximum 10d6) against undead. A successful Will save reduces the damage by half.",
+    description:
+      "You call upon your deity, reciting the target's offenses and urging divine retribution. The target's alignment is irrelevant to the spell's success. The angry deity delivers punishment as a spiritual blow that strikes automatically, dealing 1d6 damage per two caster levels (maximum 5d6), or 1d6 per caster level (maximum 10d6) against undead. A successful Will save reduces the damage by half.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Will half",
     properties: [
@@ -159,7 +175,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Nature's Favor",
-    description: "Channeling nature's power, you grant the target animal a +1 luck bonus on attack and damage rolls for every three caster levels you possess (maximum +3).",
+    description:
+      "Channeling nature's power, you grant the target animal a +1 luck bonus on attack and damage rolls for every three caster levels you possess (maximum +3).",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     aptitudeLevels: { "Druid Spells": 3, "Ranger Spells": 2 },
     savingThrow: "Will negates (harmless)",
@@ -177,8 +194,17 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Scent",
-    description: "You grant the target creature a powerful sense of smell equivalent to the scent special ability. This enables detection of approaching enemies, tracking by scent, and identification of familiar odors (much as humans recognize familiar sights). The creature can detect opponents within 30 feet by smell; the range increases to 60 feet if the opponent is upwind and drops to 15 feet if downwind. Strong odors (smoke, rotting garbage) double the detection range, and overpowering scents (skunk musk, troglodyte stench) triple it. Detection reveals the presence of a scent somewhere within range but not the exact location. A partial action can determine the scent's direction, and moving within 5 feet pinpoints the source. A creature with scent can follow tracks by smell using a Wisdom check. A fresh trail has a base DC of 10 regardless of surface. The DC increases by 2 for each hour the trail has gone cold, and otherwise follows the rules for the Track feat. Scent-based tracking ignores surface conditions and poor visibility. Material Component: A pinch of mustard and pepper, plus a drop of sweat.",
-    aptitudes: ["Druid Spells", "Ranger Spells", "Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
+    description:
+      "You grant the target creature a powerful sense of smell equivalent to the scent special ability. This enables detection of approaching enemies, tracking by scent, and identification of familiar odors (much as humans recognize familiar sights). The creature can detect opponents within 30 feet by smell; the range increases to 60 feet if the opponent is upwind and drops to 15 feet if downwind. Strong odors (smoke, rotting garbage) double the detection range, and overpowering scents (skunk musk, troglodyte stench) triple it. Detection reveals the presence of a scent somewhere within range but not the exact location. A partial action can determine the scent's direction, and moving within 5 feet pinpoints the source. A creature with scent can follow tracks by smell using a Wisdom check. A fresh trail has a base DC of 10 regardless of surface. The DC increases by 2 for each hour the trail has gone cold, and otherwise follows the rules for the Track feat. Scent-based tracking ignores surface conditions and poor visibility. Material Component: A pinch of mustard and pepper, plus a drop of sweat.",
+    aptitudes: [
+      "Druid Spells",
+      "Ranger Spells",
+      "Sorcerer Spells",
+      "Spellthief Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -194,7 +220,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Touch of Madness",
-    description: "With a successful touch attack, you cloud a living creature's mind. If the target fails a Will save, it is dazed and takes no actions for 1 round per caster level. The creature is not considered stunned (attackers gain no special advantage), but it cannot move, cast spells, use mental abilities, or take similar actions.",
+    description:
+      "With a successful touch attack, you cloud a living creature's mind. If the target fails a Will save, it is dazed and takes no actions for 1 round per caster level. The creature is not considered stunned (attackers gain no special advantage), but it cannot move, cast spells, use mental abilities, or take similar actions.",
     aptitudes: [],
     savingThrow: "Will negates",
     properties: [
@@ -211,7 +238,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Wave of Grief",
-    description: "All creatures within the cone when cast are overwhelmed by sorrow and grief, suffering a -3 morale penalty on all attack rolls, saving throws, ability checks, and skill checks. Material Component: Three tears.",
+    description:
+      "All creatures within the cone when cast are overwhelmed by sorrow and grief, suffering a -3 morale penalty on all attack rolls, saving throws, ability checks, and skill checks. Material Component: Three tears.",
     aptitudes: ["Bard Spells", "Blackguard Spells", "Cleric Spells", "Sublime Chord Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -229,7 +257,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Zeal",
-    description: "You invoke a divine shield that protects you as you close with a chosen opponent. Select a foe when casting. You gain a +4 deflection bonus to AC against attacks of opportunity from all opponents other than the chosen foe. Additionally, you can move through enemy-occupied spaces as though they were allies for the spell's duration, provided you end your movement closer to the chosen foe than where you started.",
+    description:
+      "You invoke a divine shield that protects you as you close with a chosen opponent. Select a foe when casting. You gain a +4 deflection bonus to AC against attacks of opportunity from all opponents other than the chosen foe. Additionally, you can move through enemy-occupied spaces as though they were allies for the spell's duration, provided you end your movement closer to the chosen foe than where you started.",
     aptitudes: ["Blackguard Spells", "Paladin Spells"],
     savingThrow: "None",
     properties: [

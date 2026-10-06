@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const ASSASSIN: ClassSeed = {
   name: "Assassin",
   description: "The assassin specializes in swift, deadly strikes that dispatch targets with ruthless efficiency.",
-  hd: 6, levels: 10, skillPoints: 4,
+  hd: 6,
+  levels: 10,
+  skillPoints: 4,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -37,7 +44,11 @@ export const ASSASSIN: ClassSeed = {
     gte("skills.disguise.rank", 4),
     gte("skills.hide.rank", 8),
     gte("skills.movesilently.rank", 8),
-    or(eqStr("identity.beliefs.alignment", "Lawful Evil"), eqStr("identity.beliefs.alignment", "Neutral Evil"), eqStr("identity.beliefs.alignment", "Chaotic Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+      eqStr("identity.beliefs.alignment", "Neutral Evil"),
+      eqStr("identity.beliefs.alignment", "Chaotic Evil"),
+    ),
   ],
   classFeatureAptitude: "Assassin Class Feature",
   classFeatures: [
@@ -63,32 +74,8 @@ export const ASSASSIN: ClassSeed = {
   casterType: "Arcane",
   spells: {
     slug: "assassinspells",
-    perDay: [
-      [0],
-      [1],
-      [2, 0],
-      [3, 1],
-      [3, 2, 0],
-      [3, 3, 1],
-      [3, 3, 2, 0],
-      [3, 3, 3, 1],
-      [3, 3, 3, 2],
-      [3, 3, 3, 3],
-    ],
-    known: [
-      [2],
-      [3],
-      [3, 2],
-      [4, 3],
-      [4, 3, 2],
-      [4, 4, 3],
-      [4, 4, 3, 2],
-      [4, 4, 4, 3],
-      [4, 4, 4, 3],
-      [4, 4, 4, 4],
-    ],
+    perDay: [[0], [1], [2, 0], [3, 1], [3, 2, 0], [3, 3, 1], [3, 3, 2, 0], [3, 3, 3, 1], [3, 3, 3, 2], [3, 3, 3, 3]],
+    known: [[2], [3], [3, 2], [4, 3], [4, 3, 2], [4, 4, 3], [4, 4, 3, 2], [4, 4, 4, 3], [4, 4, 4, 3], [4, 4, 4, 4]],
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

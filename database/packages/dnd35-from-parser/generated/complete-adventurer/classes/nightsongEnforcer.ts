@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const NIGHTSONG_ENFORCER: ClassSeed = {
   name: "Nightsong Enforcer",
-  description: "The enforcers of the Nightsong Guild focus on the stealth-centered combat training that rogues usually learn; they forgo some of the sleight of hand or fast-talking aspects of being a thief. However, nightsong enforcers are not mere thugs. They are deadly opponents who strike from hidden positions and move silently behind their foes. When in battle, their goal is to eliminate their enemies, not to ?ght. Thus, they strike quickly from the shadows. They do not worry about honor or ?ghting fair, scof?ng at such ideals as childish. Rogues most often become nightsong enforcers, although bards, ?ghters, and urban rangers are also known to undertake the class. On occasion a wizard or sorcerer will endure the intensive training required to join the enforcers' ranks. When working with others, a nightsong enforcer is the linchpin. She is the very picture of ?delity when it comes to supporting teammates on a mission. It is common for an enforcer to lead a team composed of not only other enforcers, but ?ghters, spellcasters, or rogues.",
-  hd: 8, levels: 10, skillPoints: 4,
+  description:
+    "The enforcers of the Nightsong Guild focus on the stealth-centered combat training that rogues usually learn; they forgo some of the sleight of hand or fast-talking aspects of being a thief. However, nightsong enforcers are not mere thugs. They are deadly opponents who strike from hidden positions and move silently behind their foes. When in battle, their goal is to eliminate their enemies, not to ?ght. Thus, they strike quickly from the shadows. They do not worry about honor or ?ghting fair, scof?ng at such ideals as childish. Rogues most often become nightsong enforcers, although bards, ?ghters, and urban rangers are also known to undertake the class. On occasion a wizard or sorcerer will endure the intensive training required to join the enforcers' ranks. When working with others, a nightsong enforcer is the linchpin. She is the very picture of ?delity when it comes to supporting teammates on a mission. It is common for an enforcer to lead a team composed of not only other enforcers, but ?ghters, spellcasters, or rogues.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -49,5 +57,3 @@ export const NIGHTSONG_ENFORCER: ClassSeed = {
     [10, "Sneak Attack (Nightsong Enforcer)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

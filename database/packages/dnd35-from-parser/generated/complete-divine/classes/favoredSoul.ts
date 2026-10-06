@@ -1,9 +1,17 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const FAVORED_SOUL: ClassSeed = {
   name: "Favored Soul",
-  description: "Favored souls channel divine magic through an innate gift rather than through study and devotion. Their connection to the divine is instinctive, making their spellcasting spontaneous instead of prepared.",
-  hd: 8, levels: 20, skillPoints: 2,
+  description:
+    "Favored souls channel divine magic through an innate gift rather than through study and devotion. Their connection to the divine is instinctive, making their spellcasting spontaneous instead of prepared.",
+  hd: 8,
+  levels: 20,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "good", reflex: "good", will: "good" },
   classSkills: [
@@ -79,5 +87,3 @@ export const FAVORED_SOUL: ClassSeed = {
     ],
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

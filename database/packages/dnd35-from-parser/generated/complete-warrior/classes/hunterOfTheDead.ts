@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const HUNTER_OF_THE_DEAD: ClassSeed = {
   name: "Hunter of the Dead",
-  description: "A hunter of the dead devotes every waking moment to pursuing undead creatures, seeking out their hiding places and purging the world of their unholy taint.",
-  hd: 8, levels: 10, skillPoints: 2,
+  description:
+    "A hunter of the dead devotes every waking moment to pursuing undead creatures, seeking out their hiding places and purging the world of their unholy taint.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: ["Concentration", "Heal", "Knowledge (Religion)", "Profession", "Ride", "Search"],
@@ -34,28 +42,13 @@ export const HUNTER_OF_THE_DEAD: ClassSeed = {
     [10, "Sealed Life (Hunter of the Dead)"],
     [10, "Smite Undead (Hunter of the Dead)"],
   ],
-  freeFeats: [
-    [6, "Extra Turning", "Hunter of the Dead Class Feature"],
-  ],
+  freeFeats: [[6, "Extra Turning", "Hunter of the Dead Class Feature"]],
   bonusSpellAbility: "Wisdom",
   casterType: "Divine",
   spells: {
     slug: "hunterofthedeadspells",
-    perDay: [
-      [0],
-      [1],
-      [1, 0],
-      [1, 1],
-      [1, 1, 0],
-      [1, 1, 1],
-      [2, 1, 1, 0],
-      [2, 1, 1, 1],
-      [2, 2, 1, 1],
-      [2, 2, 2, 1],
-    ],
+    perDay: [[0], [1], [1, 0], [1, 1], [1, 1, 0], [1, 1, 1], [2, 1, 1, 0], [2, 1, 1, 1], [2, 2, 1, 1], [2, 2, 2, 1]],
     knowAll: true,
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

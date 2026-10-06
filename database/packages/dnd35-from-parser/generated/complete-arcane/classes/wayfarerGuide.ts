@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const WAYFARER_GUIDE: ClassSeed = {
   name: "Wayfarer Guide",
   description: "The wayfarer guide focues on honing her skill at instantaneous magical transportation.",
-  hd: 6, levels: 3, skillPoints: 2,
+  hd: 6,
+  levels: 3,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -25,10 +32,7 @@ export const WAYFARER_GUIDE: ClassSeed = {
     "Speak Language",
     "Spellcraft",
   ],
-  requirements: [
-    gte("skills.knowledgearcana.rank", 10),
-    gte("skills.knowledgegeography.rank", 10),
-  ],
+  requirements: [gte("skills.knowledgearcana.rank", 10), gte("skills.knowledgegeography.rank", 10)],
   casterLevelAdvancement: { type: "any", levels: [1, 3] },
   classFeatureAptitude: "Wayfarer Guide Class Feature",
   classFeatures: [
@@ -40,5 +44,3 @@ export const WAYFARER_GUIDE: ClassSeed = {
     [3, "Enhanced Accuracy (Wayfarer Guide)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

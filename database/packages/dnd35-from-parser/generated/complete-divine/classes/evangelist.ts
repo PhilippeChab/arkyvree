@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const EVANGELIST: ClassSeed = {
   name: "Evangelist",
-  description: "Wandering preachers devoted to a specific god, pantheon, or religious philosophy, evangelists journey across the land spreading the word of their faith.",
-  hd: 6, levels: 5, skillPoints: 6,
+  description:
+    "Wandering preachers devoted to a specific god, pantheon, or religious philosophy, evangelists journey across the land spreading the word of their faith.",
+  hd: 6,
+  levels: 5,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -49,5 +57,3 @@ export const EVANGELIST: ClassSeed = {
     [5, "Great Orator (Convert the Unfaithful) (Evangelist)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Absorb Weapon",
-    description: "You can harmlessly absorb a weapon you are touching (even a poisoned one) into your arm, so long as it is not in another creature's possession. The weapon must be a light weapon for you at the time you cast the spell. The absorbed weapon cannot be felt under the skin and doesn't restrict your range of motion in any way. An absorbed weapon cannot be detected with even a careful search, although a detect magic spell reveals the presence of a magical aura. The only evidence of its presence is a faint blotch on your skin shaped vaguely like the weapon. When you touch the spot (an action equivalent to drawing a weapon), or when the spell duration expires, the weapon appears in your hand and the spell ends. If you attack with the weapon in the same round that you retrieve it from its hiding place, you can attempt a Bluff check to feint in combat as a free action, and you gain a +4 bonus on the Bluff check. An intelligent magic weapon gets a saving throw against this spell, but other weapons do not.",
+    description:
+      "You can harmlessly absorb a weapon you are touching (even a poisoned one) into your arm, so long as it is not in another creature's possession. The weapon must be a light weapon for you at the time you cast the spell. The absorbed weapon cannot be felt under the skin and doesn't restrict your range of motion in any way. An absorbed weapon cannot be detected with even a careful search, although a detect magic spell reveals the presence of a magical aura. The only evidence of its presence is a faint blotch on your skin shaped vaguely like the weapon. When you touch the spot (an action equivalent to drawing a weapon), or when the spell duration expires, the weapon appears in your hand and the spell ends. If you attack with the weapon in the same round that you retrieve it from its hiding place, you can attempt a Bluff check to feint in combat as a free action, and you gain a +4 bonus on the Bluff check. An intelligent magic weapon gets a saving throw against this spell, but other weapons do not.",
     aptitudes: ["Assassin Spells"],
     savingThrow: "Will negates (object); see text",
     properties: [
@@ -19,7 +20,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Allegro",
-    description: "This spell makes you and your companions extraordinarily fleet of foot.Each creature within the spell's area gains a 30-foot enhancement bonus to its land speed, up to a maximum of double the creature's land speed.Affected creatures retain these effects for the duration of the spell, even if they leave the original area.Material Component: A tailfeather from a bird of prey.",
+    description:
+      "This spell makes you and your companions extraordinarily fleet of foot.Each creature within the spell's area gains a 30-foot enhancement bonus to its land speed, up to a maximum of double the creature's land speed.Affected creatures retain these effects for the duration of the spell, even if they leave the original area.Material Component: A tailfeather from a bird of prey.",
     aptitudes: ["Bard Spells", "Sublime Chord Spells", "Vigilante Spells"],
     savingThrow: "Fortitude negates (harmless)",
     properties: [
@@ -36,7 +38,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Blade Storm",
-    description: "You can cast this spell only at the beginning of your turn, before you take any other actions.After casting blade storm, you can take a full-round action to make one attack with each melee weapon you are currently wielding against every foe within reach.If you wield two weapons, or a double weapon, you can attack each foe once with each weapon or end, using the normal rules for two-weapon fighting.So, a ranger wielding a longsword and a short sword could attack each opponent he can reach with both weapons.You can attack a maximum number of individual targets equal to your character level.If you choose not to spend a full-round action in this fashion after casting the spell, the spell has no effect.",
+    description:
+      "You can cast this spell only at the beginning of your turn, before you take any other actions.After casting blade storm, you can take a full-round action to make one attack with each melee weapon you are currently wielding against every foe within reach.If you wield two weapons, or a double weapon, you can attack each foe once with each weapon or end, using the normal rules for two-weapon fighting.So, a ranger wielding a longsword and a short sword could attack each opponent he can reach with both weapons.You can attack a maximum number of individual targets equal to your character level.If you choose not to spend a full-round action in this fashion after casting the spell, the spell has no effect.",
     aptitudes: ["Consecrated Harrier Spells", "Ranger Spells"],
     savingThrow: "None",
     properties: [
@@ -51,7 +54,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Dirge of Discord",
-    description: "You create an unholy, cacophonous dirge that fills the subjects'minds with the screams of the dying, the wailing of the damned, and the howling of the mad.Affected creatures take a -4 penalty on attack rolls and Concentration checks, a -4 penalty to Dexterity, and a 50% reduction in their speed (to a minimum of 5 feet).Material Component: A pinch of ashes from a destrachan.",
+    description:
+      "You create an unholy, cacophonous dirge that fills the subjects'minds with the screams of the dying, the wailing of the damned, and the howling of the mad.Affected creatures take a -4 penalty on attack rolls and Concentration checks, a -4 penalty to Dexterity, and a 50% reduction in their speed (to a minimum of 5 feet).Material Component: A pinch of ashes from a destrachan.",
     aptitudes: ["Bard Spells", "Sublime Chord Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -71,7 +75,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Dissonant Chord",
-    description: "You emit a terrible, piercing note.Creatures (other than you) in the affected area take 1d8 points of sonic damage per two caster levels (maximum 5d8).",
+    description:
+      "You emit a terrible, piercing note.Creatures (other than you) in the affected area take 1d8 points of sonic damage per two caster levels (maximum 5d8).",
     aptitudes: ["Bard Spells", "Sublime Chord Spells"],
     savingThrow: "Fortitude half",
     properties: [
@@ -88,9 +93,24 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Entangling Staff",
-    description: "You cause your quarterstaff to extrude writhing vines that allow you to easily grab and entrap foes.Each time you successfully strike a foe with the staff (a normal melee attack), you deal normal damage and can attempt to start a grapple as a free action without provoking attacks of opportunity.This grapple attempt does not require a separate touch attack.You gain a +8 bonus on grapple checks you cause by striking a foe with the entangling staff.You can attempt to grapple creatures up to one size category larger than you.If your grapple check succeeds, your quarterstaff's vines constrict your foe, dealing 2d6 points of damage (you can choose to deal nonlethal damage instead of normal damage if you wish).You then have two choices: Release: You release your opponent from the grapple.Some vines remain clinging to your foe, leaving it entangled for the duration of the spell.You can attack different enemies in later rounds with the entangling staff, potentially grappling and constricting or entangling them.Maintain: You maintain your hold.In subsequent rounds, you deal constriction damage with a successful grapple check.You can then choose to release or maintain the hold again.Focus: A quarterstaff.",
-    aptitudes: ["Druid Spells", "Sorcerer Spells", "Spirit Shaman Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
-    aptitudeLevels: { "Druid Spells": 3, "Sorcerer Spells": 4, "Spirit Shaman Spells": 3, "Sublime Chord Spells": 4, "Suel Arcanamach Spells": 4, "Wizard Spells": 4 },
+    description:
+      "You cause your quarterstaff to extrude writhing vines that allow you to easily grab and entrap foes.Each time you successfully strike a foe with the staff (a normal melee attack), you deal normal damage and can attempt to start a grapple as a free action without provoking attacks of opportunity.This grapple attempt does not require a separate touch attack.You gain a +8 bonus on grapple checks you cause by striking a foe with the entangling staff.You can attempt to grapple creatures up to one size category larger than you.If your grapple check succeeds, your quarterstaff's vines constrict your foe, dealing 2d6 points of damage (you can choose to deal nonlethal damage instead of normal damage if you wish).You then have two choices: Release: You release your opponent from the grapple.Some vines remain clinging to your foe, leaving it entangled for the duration of the spell.You can attack different enemies in later rounds with the entangling staff, potentially grappling and constricting or entangling them.Maintain: You maintain your hold.In subsequent rounds, you deal constriction damage with a successful grapple check.You can then choose to release or maintain the hold again.Focus: A quarterstaff.",
+    aptitudes: [
+      "Druid Spells",
+      "Sorcerer Spells",
+      "Spirit Shaman Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Wizard Spells",
+    ],
+    aptitudeLevels: {
+      "Druid Spells": 3,
+      "Sorcerer Spells": 4,
+      "Spirit Shaman Spells": 3,
+      "Sublime Chord Spells": 4,
+      "Suel Arcanamach Spells": 4,
+      "Wizard Spells": 4,
+    },
     savingThrow: "Yes (harmless, object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -104,9 +124,15 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Forestfold",
-    description: "You change your coloring and attune your footfalls to one specific kind of terrain (aquatic, desert, plains, forest, hills, mountains, marsh, or underground).While you are in terrain of that kind, you gain a +20 competence bonus on Hide and Move Silently checks.You retain these bonuses even if you leave the designated terrain and return within the duration of the spell.",
+    description:
+      "You change your coloring and attune your footfalls to one specific kind of terrain (aquatic, desert, plains, forest, hills, mountains, marsh, or underground).While you are in terrain of that kind, you gain a +20 competence bonus on Hide and Move Silently checks.You retain these bonuses even if you leave the designated terrain and return within the duration of the spell.",
     aptitudes: ["Consecrated Harrier Spells", "Druid Spells", "Ranger Spells", "Spirit Shaman Spells"],
-    aptitudeLevels: { "Consecrated Harrier Spells": 3, "Druid Spells": 4, "Ranger Spells": 3, "Spirit Shaman Spells": 4 },
+    aptitudeLevels: {
+      "Consecrated Harrier Spells": 3,
+      "Druid Spells": 4,
+      "Ranger Spells": 3,
+      "Spirit Shaman Spells": 4,
+    },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -121,7 +147,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Harmonic Chorus",
-    description: "Harmonic chorus lets you improve the spellcasting ability of another spellcaster.For the duration of the spell, the subject gains a +2 morale bonus to caster level and a +2 morale bonus on save DCs for all spells she casts.Focus: A tuning fork.",
+    description:
+      "Harmonic chorus lets you improve the spellcasting ability of another spellcaster.For the duration of the spell, the subject gains a +2 morale bonus to caster level and a +2 morale bonus on save DCs for all spells she casts.Focus: A tuning fork.",
     aptitudes: ["Bard Spells", "Sublime Chord Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -139,7 +166,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Hymn of Praise",
-    description: "You can strike up a rousing, inspirational song that temporarily boosts by 2 the effective caster level of each good-aligned divine spellcaster within range.This increase does not grant access to additional spells, but it does improve all spell effects that are dependent on caster level.In addition, hymn of praise mimics the effect of a hallow spell with respect to turning or rebuking undead.Within the spell's area, each good-aligned divine spellcaster gains a +4 sacred bonus on Charisma checks to turn undead, and each evil-aligned divine spellcaster takes a -4 sacred penalty on Charisma checks to rebuke undead.",
+    description:
+      "You can strike up a rousing, inspirational song that temporarily boosts by 2 the effective caster level of each good-aligned divine spellcaster within range.This increase does not grant access to additional spells, but it does improve all spell effects that are dependent on caster level.In addition, hymn of praise mimics the effect of a hallow spell with respect to turning or rebuking undead.Within the spell's area, each good-aligned divine spellcaster gains a +4 sacred bonus on Charisma checks to turn undead, and each evil-aligned divine spellcaster takes a -4 sacred penalty on Charisma checks to rebuke undead.",
     aptitudes: ["Bard Spells", "Sublime Chord Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -148,7 +176,10 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
       { type: "SPELL_DESCRIPTOR", value: "Sonic" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Medium" },
-      { type: "SPELL_AREA_OF_EFFECT", value: "A sphere-shaped emanation with a radius equal to the range, centered on you" },
+      {
+        type: "SPELL_AREA_OF_EFFECT",
+        value: "A sphere-shaped emanation with a radius equal to the range, centered on you",
+      },
       { type: "SPELL_DURATION", value: "1 round/level (D)" },
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -157,7 +188,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Infernal Threnody",
-    description: "You can strike up a pulsing, powerful rhythm that temporarily boosts by 2 the effective caster level of each evil-aligned divine spellcaster within range.This increase does not grant access to addition al spells, but it does improve all spell effects that are dependent on caster level.In addition, infernal threnody mimics the effect of an unhallow spell with respect to turning or rebuking undead.Within the spell's area, each evil-aligned divine spellcaster gains a +4 profane bonus on Charisma checks to rebuke undead, and each good-aligned divine spellcaster takes a -4 profane penalty on Charisma checks to turn undead.",
+    description:
+      "You can strike up a pulsing, powerful rhythm that temporarily boosts by 2 the effective caster level of each evil-aligned divine spellcaster within range.This increase does not grant access to addition al spells, but it does improve all spell effects that are dependent on caster level.In addition, infernal threnody mimics the effect of an unhallow spell with respect to turning or rebuking undead.Within the spell's area, each evil-aligned divine spellcaster gains a +4 profane bonus on Charisma checks to rebuke undead, and each good-aligned divine spellcaster takes a -4 profane penalty on Charisma checks to turn undead.",
     aptitudes: ["Bard Spells", "Sublime Chord Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -166,7 +198,10 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
       { type: "SPELL_DESCRIPTOR", value: "Sonic" },
       { type: "SPELL_CASTING_TIME", value: "1 round" },
       { type: "SPELL_RANGE_TYPE", value: "Medium" },
-      { type: "SPELL_AREA_OF_EFFECT", value: "A sphere-shaped emanation with a radius equal to the range, centered on you" },
+      {
+        type: "SPELL_AREA_OF_EFFECT",
+        value: "A sphere-shaped emanation with a radius equal to the range, centered on you",
+      },
       { type: "SPELL_DURATION", value: "1 round/level (D)" },
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -175,9 +210,26 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Spectral Weapon",
-    description: "Using material from the Plane of Shadow, you can fashion a quasi-real weapon of any type with which you are proficient.This spectral weapon appears in your hand and behaves as a normal weapon of its type, with two exceptions.First, you resolve attacks with your spectral weapon as melee touch attacks instead of melee attacks.Second, any foe you hit is entitled to a Will save to recognize the weapon's shadowy nature.If the save is successful, that opponent takes only one-fifth normal damage from the weapon on that attack and all subsequent attacks, and is only 20% likely to suffer any special effects of your attacks (such as a death attack delivered with the weapon).You can maintain only one spectral weapon at a time, and only you can wield it.The weapon dissipates when you let go of it or when the spell's duration expires, whichever comes first.",
-    aptitudes: ["Assassin Spells", "Bard Spells", "Sorcerer Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Vigilante Spells", "Wizard Spells"],
-    aptitudeLevels: { "Assassin Spells": 3, "Bard Spells": 4, "Sorcerer Spells": 3, "Sublime Chord Spells": 4, "Suel Arcanamach Spells": 3, "Vigilante Spells": 4, "Wizard Spells": 3 },
+    description:
+      "Using material from the Plane of Shadow, you can fashion a quasi-real weapon of any type with which you are proficient.This spectral weapon appears in your hand and behaves as a normal weapon of its type, with two exceptions.First, you resolve attacks with your spectral weapon as melee touch attacks instead of melee attacks.Second, any foe you hit is entitled to a Will save to recognize the weapon's shadowy nature.If the save is successful, that opponent takes only one-fifth normal damage from the weapon on that attack and all subsequent attacks, and is only 20% likely to suffer any special effects of your attacks (such as a death attack delivered with the weapon).You can maintain only one spectral weapon at a time, and only you can wield it.The weapon dissipates when you let go of it or when the spell's duration expires, whichever comes first.",
+    aptitudes: [
+      "Assassin Spells",
+      "Bard Spells",
+      "Sorcerer Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+    ],
+    aptitudeLevels: {
+      "Assassin Spells": 3,
+      "Bard Spells": 4,
+      "Sorcerer Spells": 3,
+      "Sublime Chord Spells": 4,
+      "Suel Arcanamach Spells": 3,
+      "Vigilante Spells": 4,
+      "Wizard Spells": 3,
+    },
     savingThrow: "Will partial; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -193,7 +245,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   },
   {
     name: "Speechlink",
-    description: "You and a willing target can communicate verbally no matter how much distance you put between yourselves on the same plane.Either participant can end the spell at any time.Speechlink allows each to hear the other's vocalizations, whatever their volume.It does not transfer other sounds from either participant's location.This spell works on any creatures, including animals, but does not convey any special language comprehension abilities.",
+    description:
+      "You and a willing target can communicate verbally no matter how much distance you put between yourselves on the same plane.Either participant can end the spell at any time.Speechlink allows each to hear the other's vocalizations, whatever their volume.It does not transfer other sounds from either participant's location.This spell works on any creatures, including animals, but does not convey any special language comprehension abilities.",
     aptitudes: ["Bard Spells", "Sublime Chord Spells", "Vigilante Spells"],
     savingThrow: "None",
     properties: [

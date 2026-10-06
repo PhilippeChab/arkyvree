@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const DIVINE_ORACLE: ClassSeed = {
   name: "Divine Oracle",
-  description: "Certain mortals possess the ability to receive and interpret divine messages, serving as oracles of the gods.",
-  hd: 6, levels: 10, skillPoints: 2,
+  description:
+    "Certain mortals possess the ability to receive and interpret divine messages, serving as oracles of the gods.",
+  hd: 6,
+  levels: 10,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -17,10 +25,7 @@ export const DIVINE_ORACLE: ClassSeed = {
     "Profession",
     "Spellcraft",
   ],
-  requirements: [
-    gte("skills.knowledgereligion.rank", 8),
-    eq("feats.skillfocusknowledgereligion.possessed"),
-  ],
+  requirements: [gte("skills.knowledgereligion.rank", 8), eq("feats.skillfocusknowledgereligion.possessed")],
   casterLevelAdvancement: { type: "any", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Divine Oracle Class Feature",
   classFeatures: [
@@ -37,9 +42,5 @@ export const DIVINE_ORACLE: ClassSeed = {
     [8, "Trap Sense (Divine Oracle)"],
     [10, "Immune to Surprise (Divine Oracle)"],
   ],
-  freeFeats: [
-    [1, "Oracle Domain", "Cleric Domain"],
-  ],
+  freeFeats: [[1, "Oracle Domain", "Cleric Domain"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const EFFIGY_MASTER: ClassSeed = {
   name: "Effigy Master",
   description: "The effigy master is an expert in the imitation of true life.",
-  hd: 4, levels: 5, skillPoints: 2,
+  hd: 4,
+  levels: 5,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -42,5 +49,3 @@ export const EFFIGY_MASTER: ClassSeed = {
     [5, "Effigy Link (Effigy Master)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

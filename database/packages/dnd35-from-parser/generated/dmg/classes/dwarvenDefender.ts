@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const DWARVEN_DEFENDER: ClassSeed = {
   name: "Dwarven Defender",
   description: "A dwarven defender serves as a chosen protector of dwarven interests and strongholds.",
-  hd: 12, levels: 10, skillPoints: 2,
+  hd: 12,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: ["Craft", "Listen", "Sense Motive", "Spot"],
@@ -13,7 +20,11 @@ export const DWARVEN_DEFENDER: ClassSeed = {
     eq("feats.dodge.possessed"),
     eq("feats.endurance.possessed"),
     eq("feats.toughness.possessed"),
-    or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Lawful Neutral"), eqStr("identity.beliefs.alignment", "Lawful Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Good"),
+      eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+    ),
     eqStr("identity.physiology.race.name", "Dwarf"),
   ],
   classFeatureAptitude: "Dwarven Defender Class Feature",
@@ -34,5 +45,3 @@ export const DWARVEN_DEFENDER: ClassSeed = {
     [10, "Damage Reduction (Dwarven Defender)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

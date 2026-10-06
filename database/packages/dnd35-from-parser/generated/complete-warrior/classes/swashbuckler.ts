@@ -1,9 +1,16 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SWASHBUCKLER: ClassSeed = {
   name: "Swashbuckler",
   description: "The swashbuckler represents the ideal of boldness and flair in combat.",
-  hd: 10, levels: 20, skillPoints: 4,
+  hd: 10,
+  levels: 20,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -39,9 +46,5 @@ export const SWASHBUCKLER: ClassSeed = {
     [20, "Dodge Bonus (Swashbuckler)"],
     [20, "Grace (Swashbuckler)"],
   ],
-  freeFeats: [
-    [1, "Weapon Finesse", "Swashbuckler Class Feature"],
-  ],
+  freeFeats: [[1, "Weapon Finesse", "Swashbuckler Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

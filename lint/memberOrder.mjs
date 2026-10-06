@@ -20,7 +20,6 @@
  */
 
 import { rankStatements } from "./layout.mjs";
-import { isToolWritten } from "./paths.mjs";
 
 /**
  * A method's group, by its leading verb: a word followed by a capital or nothing (`get`, `getRuleset`). The lifecycle
@@ -387,7 +386,6 @@ export default {
           },
           Program(program) {
             // A declaration file follows the module it types.
-            if (isToolWritten(context.filename) || /\.d\.[cm]?ts$/.test(context.filename)) return;
             checkFunctions(context, program);
           },
           CallExpression(call) {

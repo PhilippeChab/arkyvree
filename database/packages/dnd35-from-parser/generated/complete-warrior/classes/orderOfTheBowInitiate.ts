@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const ORDER_OF_THE_BOW_INITIATE: ClassSeed = {
   name: "Order of the Bow Initiate",
-  description: "Through the contemplative discipline known as the Way of the Bow, an archer hones his accuracy, mental focus, and inner awareness.",
-  hd: 8, levels: 10, skillPoints: 2,
+  description:
+    "Through the contemplative discipline known as the Way of the Bow, an archer hones his accuracy, mental focus, and inner awareness.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "poor", reflex: "good", will: "good" },
   classSkills: ["Climb", "Craft", "Knowledge (Religion)", "Ride", "Spot", "Swim"],
@@ -34,9 +42,5 @@ export const ORDER_OF_THE_BOW_INITIATE: ClassSeed = {
     [9, "Ranged Precision (Order of the Bow Initiate)"],
     [10, "Extended Precision (Order of the Bow Initiate)"],
   ],
-  freeFeats: [
-    [6, "Sharp-Shooting", "Order of the Bow Initiate Class Feature"],
-  ],
+  freeFeats: [[6, "Sharp-Shooting", "Order of the Bow Initiate Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

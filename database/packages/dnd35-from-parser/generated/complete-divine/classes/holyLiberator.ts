@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const HOLY_LIBERATOR: ClassSeed = {
   name: "Holy Liberator",
-  description: "The holy liberator is a sacred champion dedicated to the cause of freedom, sharing a spiritual kinship with the paladin.",
-  hd: 10, levels: 10, skillPoints: 2,
+  description:
+    "The holy liberator is a sacred champion dedicated to the cause of freedom, sharing a spiritual kinship with the paladin.",
+  hd: 10,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -46,21 +54,8 @@ export const HOLY_LIBERATOR: ClassSeed = {
   casterType: "Divine",
   spells: {
     slug: "holyliberatorspells",
-    perDay: [
-      [0],
-      [1],
-      [1, 0],
-      [1, 1],
-      [1, 1, 0],
-      [1, 1, 1],
-      [2, 1, 1],
-      [2, 1, 1, 1],
-      [2, 2, 1, 1],
-      [2, 2, 2, 1],
-    ],
+    perDay: [[0], [1], [1, 0], [1, 1], [1, 1, 0], [1, 1, 1], [2, 1, 1], [2, 1, 1, 1], [2, 2, 1, 1], [2, 2, 2, 1]],
     knowAll: true,
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

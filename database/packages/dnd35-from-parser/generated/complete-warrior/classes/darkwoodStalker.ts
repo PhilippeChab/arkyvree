@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const DARKWOOD_STALKER: ClassSeed = {
   name: "Darkwood Stalker",
   description: "Certain elves dedicate themselves to becoming specialist orc hunters, known as darkwood stalkers.",
-  hd: 8, levels: 10, skillPoints: 4,
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: [
@@ -53,5 +60,3 @@ export const DARKWOOD_STALKER: ClassSeed = {
     [10, "Death Attack (Darkwood Stalker)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

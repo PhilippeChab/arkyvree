@@ -7,6 +7,11 @@ import { generateAll, generateAtomically } from "@/database/packages/dnd35-from-
 
 const GENERATED = join(import.meta.dirname, "../../database/packages/dnd35-from-parser/generated");
 
+/** A file's code as the generator leaves it, formatted: the swap formats what a generation writes. */
+function code(value: string) {
+  return `export const value = "${value}";\n`;
+}
+
 /** The files under `folder`, by their path in it. */
 function filesOf(folder: string) {
   return readdirSync(folder, { recursive: true, withFileTypes: true })
@@ -19,7 +24,8 @@ describe("The generator", () => {
   test("writes, from the committed references, exactly the committed generated files", () => {
     const folder = mkdtempSync(join(tmpdir(), "generated-"));
     try {
-      expect(generateAll({}, folder)).toEqual([]);
+      // As `parser:generate` writes them: generated in a copy, formatted, then swapped in
+      expect(generateAtomically(folder, (copy) => generateAll({}, copy))).toEqual([]);
       expect(filesOf(folder)).toEqual(filesOf(GENERATED));
       for (const file of filesOf(GENERATED)) {
         expect({ file, code: readFileSync(join(folder, file), "utf8") }).toEqual({
@@ -38,10 +44,10 @@ describe("The generator", () => {
     const contentOf = (file: string) => readFileSync(join(folder, file), "utf8");
     try {
       mkdirSync(folder);
-      writeFileSync(join(folder, "index.ts"), "before");
+      writeFileSync(join(folder, "index.ts"), code("before"));
       const halfWrite = (copy: string) => {
-        writeFileSync(join(copy, "index.ts"), "half");
-        writeFileSync(join(copy, "items.ts"), "half");
+        writeFileSync(join(copy, "index.ts"), code("half"));
+        writeFileSync(join(copy, "items.ts"), code("half"));
       };
 
       expect(
@@ -57,16 +63,16 @@ describe("The generator", () => {
         }),
       ).toThrow("the generator broke");
       expect(filesOf(folder)).toEqual(["index.ts"]);
-      expect(contentOf("index.ts")).toBe("before");
+      expect(contentOf("index.ts")).toBe(code("before"));
       expect(readdirSync(parent)).toEqual(["generated"]);
 
       expect(
         generateAtomically(folder, (copy) => {
-          writeFileSync(join(copy, "index.ts"), "after");
+          writeFileSync(join(copy, "index.ts"), code("after"));
           return [];
         }),
       ).toEqual([]);
-      expect(contentOf("index.ts")).toBe("after");
+      expect(contentOf("index.ts")).toBe(code("after"));
       expect(readdirSync(parent)).toEqual(["generated"]);
     } finally {
       rmSync(parent, { recursive: true, force: true });
@@ -79,10 +85,10 @@ describe("The generator", () => {
     try {
       // Killed mid-swap: the tree only as the previous one, and a stale copy
       mkdirSync(`${folder}.previous`);
-      writeFileSync(join(`${folder}.previous`, "index.ts"), "before");
-      writeFileSync(join(`${folder}.previous`, "domainFeats.ts"), "stale");
+      writeFileSync(join(`${folder}.previous`, "index.ts"), code("before"));
+      writeFileSync(join(`${folder}.previous`, "domainFeats.ts"), code("stale"));
       mkdirSync(`${folder}.next`);
-      writeFileSync(join(`${folder}.next`, "junk.ts"), "junk");
+      writeFileSync(join(`${folder}.next`, "junk.ts"), code("junk"));
 
       expect(
         generateAtomically(folder, (copy) => {
@@ -91,7 +97,7 @@ describe("The generator", () => {
         }),
       ).toEqual([]);
       expect(filesOf(folder)).toEqual(["index.ts"]);
-      expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe("before");
+      expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe(code("before"));
       expect(readdirSync(parent)).toEqual(["generated"]);
     } finally {
       rmSync(parent, { recursive: true, force: true });
@@ -103,7 +109,7 @@ describe("The generator", () => {
     const folder = join(parent, "generated");
     try {
       mkdirSync(folder);
-      writeFileSync(join(folder, "index.ts"), "before");
+      writeFileSync(join(folder, "index.ts"), code("before"));
       // The copy gone, the second rename of the swap fails
       expect(() =>
         generateAtomically(folder, (copy) => {
@@ -111,7 +117,7 @@ describe("The generator", () => {
           return [];
         }),
       ).toThrow("ENOENT");
-      expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe("before");
+      expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe(code("before"));
       expect(readdirSync(parent)).toEqual(["generated"]);
     } finally {
       rmSync(parent, { recursive: true, force: true });
@@ -123,17 +129,17 @@ describe("The generator", () => {
     const folder = join(parent, "generated");
     try {
       mkdirSync(folder);
-      writeFileSync(join(folder, "index.ts"), "before");
+      writeFileSync(join(folder, "index.ts"), code("before"));
       expect(
         generateAtomically(folder, (copy) => {
-          writeFileSync(join(copy, "index.ts"), "first");
+          writeFileSync(join(copy, "index.ts"), code("first"));
           expect(() => generateAtomically(folder, () => [])).toThrow("Another generation is running on this folder");
-          writeFileSync(join(copy, "items.ts"), "first");
+          writeFileSync(join(copy, "items.ts"), code("first"));
           return [];
         }),
       ).toEqual([]);
       expect(filesOf(folder)).toEqual(["index.ts", "items.ts"]);
-      expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe("first");
+      expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe(code("first"));
       expect(readdirSync(parent)).toEqual(["generated"]);
     } finally {
       rmSync(parent, { recursive: true, force: true });

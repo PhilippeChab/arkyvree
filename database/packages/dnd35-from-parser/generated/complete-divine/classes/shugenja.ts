@@ -1,9 +1,17 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SHUGENJA: ClassSeed = {
   name: "Shugenja",
-  description: "The shugenja is a divine spellcaster who channels the raw elemental forces of nature through personal attunement, shaping that power within the body to produce magical effects.",
-  hd: 6, levels: 20, skillPoints: 4,
+  description:
+    "The shugenja is a divine spellcaster who channels the raw elemental forces of nature through personal attunement, shaping that power within the body to produce magical effects.",
+  hd: 6,
+  levels: 20,
+  skillPoints: 4,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -82,5 +90,3 @@ export const SHUGENJA: ClassSeed = {
     ],
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

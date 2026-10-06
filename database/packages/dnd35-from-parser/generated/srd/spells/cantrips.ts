@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const CANTRIPS: PowerSeed[] = [
   {
     name: "Acid Splash",
-    description: "You launch a small globule of acid toward a target. A successful ranged touch attack is required to strike. The globule inflicts 1d3 points of acid damage on impact.",
+    description:
+      "You launch a small globule of acid toward a target. A successful ranged touch attack is required to strike. The globule inflicts 1d3 points of acid damage on impact.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -21,7 +22,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Arcane Mark",
-    description: "You inscribe a personal rune or mark of up to six characters on any substance, even stone or metal, without damaging the material. The mark can be visible or invisible. An invisible mark glows when detect magic is cast but is not necessarily legible. See invisibility, true seeing, a gem of seeing, or a robe of eyes also reveals an invisible mark. Read magic reveals any words in the mark. The mark cannot be dispelled but can be removed by the caster or an erase spell. On a living being, the mark fades naturally in about a month. Arcane mark must be placed on an object before casting instant summons on that same object.",
+    description:
+      "You inscribe a personal rune or mark of up to six characters on any substance, even stone or metal, without damaging the material. The mark can be visible or invisible. An invisible mark glows when detect magic is cast but is not necessarily legible. See invisibility, true seeing, a gem of seeing, or a robe of eyes also reveals an invisible mark. Read magic reveals any words in the mark. The mark cannot be dispelled but can be removed by the caster or an erase spell. On a living being, the mark fades naturally in about a month. Arcane mark must be placed on an object before casting instant summons on that same object.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -37,7 +39,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Create Water",
-    description: "You generate clean, drinkable water in a container as small as needed or up to three times as large, potentially filling many receptacles. Water weighs about 8 pounds per gallon; one cubic foot contains roughly 8 gallons and weighs about 60 pounds.",
+    description:
+      "You generate clean, drinkable water in a container as small as needed or up to three times as large, potentially filling many receptacles. Water weighs about 8 pounds per gallon; one cubic foot contains roughly 8 gallons and weighs about 60 pounds.",
     aptitudes: ["Cleric Spells", "Druid Spells", "Paladin Spells"],
     aptitudeLevels: { "Cleric Spells": 0, "Druid Spells": 0, "Paladin Spells": 1 },
     savingThrow: "None",
@@ -73,7 +76,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Dancing Lights",
-    description: "You create up to four lights resembling lanterns or torches (casting equivalent illumination), up to four glowing spheres, or one faintly glowing humanoid shape. The lights must remain within a 10-foot radius of each other but move as you desire without concentration, up to 100 feet per round. A light winks out if it exceeds the spell's range. This spell can be made permanent with permanency.",
+    description:
+      "You create up to four lights resembling lanterns or torches (casting equivalent illumination), up to four glowing spheres, or one faintly glowing humanoid shape. The lights must remain within a 10-foot radius of each other but move as you desire without concentration, up to 100 feet per round. A light winks out if it exceeds the spell's range. This spell can be made permanent with permanency.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -90,7 +94,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Daze",
-    description: "You cloud the mind of a humanoid creature with 4 or fewer HD, causing it to take no actions. Humanoids of 5+ HD are unaffected. A dazed creature is not stunned, so attackers gain no special advantage. Material Component: A pinch of wool or similar substance.",
+    description:
+      "You cloud the mind of a humanoid creature with 4 or fewer HD, causing it to take no actions. Humanoids of 5+ HD are unaffected. A dazed creature is not stunned, so attackers gain no special advantage. Material Component: A pinch of wool or similar substance.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -109,9 +114,28 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Detect Magic",
-    description: "You sense magical auras in a cone. 1st Round: Presence or absence. 2nd Round: Number and strength of the strongest aura. 3rd Round: Strength and location of each aura. With line of sight, Spellcraft checks (DC 15 + spell level, or 15 + half caster level for non-spell effects) identify the school. Strong local emanations may distort weaker auras. Lingering auras persist as dim after the source is gone. Summoned outsiders and elementals register their conjuration spell. The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt. It can be made permanent with permanency.",
-    aptitudes: ["Bard Spells", "Blighter Spells", "Cleric Spells", "Druid Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Bard Spells": 0, "Blighter Spells": 0, "Cleric Spells": 0, "Druid Spells": 0, "Sorcerer Spells": 0, "Vigilante Spells": 1, "Wizard Spells": 0, "Wu Jen Spells": 0 },
+    description:
+      "You sense magical auras in a cone. 1st Round: Presence or absence. 2nd Round: Number and strength of the strongest aura. 3rd Round: Strength and location of each aura. With line of sight, Spellcraft checks (DC 15 + spell level, or 15 + half caster level for non-spell effects) identify the school. Strong local emanations may distort weaker auras. Lingering auras persist as dim after the source is gone. Summoned outsiders and elementals register their conjuration spell. The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt. It can be made permanent with permanency.",
+    aptitudes: [
+      "Bard Spells",
+      "Blighter Spells",
+      "Cleric Spells",
+      "Druid Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
+    aptitudeLevels: {
+      "Bard Spells": 0,
+      "Blighter Spells": 0,
+      "Cleric Spells": 0,
+      "Druid Spells": 0,
+      "Sorcerer Spells": 0,
+      "Vigilante Spells": 1,
+      "Wizard Spells": 0,
+      "Wu Jen Spells": 0,
+    },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -126,9 +150,30 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Detect Poison",
-    description: "You determine whether a creature, object, or area is poisoned or poisonous. The exact type can be identified with a DC 20 Wisdom check or DC 20 Craft (alchemy) check. The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt.",
-    aptitudes: ["Assassin Spells", "Blighter Spells", "Cleric Spells", "Druid Spells", "Paladin Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Assassin Spells": 1, "Blighter Spells": 0, "Cleric Spells": 0, "Druid Spells": 0, "Paladin Spells": 1, "Ranger Spells": 1, "Sorcerer Spells": 0, "Wizard Spells": 0, "Wu Jen Spells": 0 },
+    description:
+      "You determine whether a creature, object, or area is poisoned or poisonous. The exact type can be identified with a DC 20 Wisdom check or DC 20 Craft (alchemy) check. The spell penetrates barriers except 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt.",
+    aptitudes: [
+      "Assassin Spells",
+      "Blighter Spells",
+      "Cleric Spells",
+      "Druid Spells",
+      "Paladin Spells",
+      "Ranger Spells",
+      "Sorcerer Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
+    aptitudeLevels: {
+      "Assassin Spells": 1,
+      "Blighter Spells": 0,
+      "Cleric Spells": 0,
+      "Druid Spells": 0,
+      "Paladin Spells": 1,
+      "Ranger Spells": 1,
+      "Sorcerer Spells": 0,
+      "Wizard Spells": 0,
+      "Wu Jen Spells": 0,
+    },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -143,7 +188,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Disrupt Undead",
-    description: "You fire a ray of positive energy. A successful ranged touch attack against an undead creature deals 1d6 damage.",
+    description:
+      "You fire a ray of positive energy. A successful ranged touch attack against an undead creature deals 1d6 damage.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -159,7 +205,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Flare",
-    description: "A burst of light that dazzles one creature for 1 minute unless it succeeds on a Fortitude save. Sightless or already dazzled creatures are unaffected.",
+    description:
+      "A burst of light that dazzles one creature for 1 minute unless it succeeds on a Fortitude save. Sightless or already dazzled creatures are unaffected.",
     aptitudes: ["Bard Spells", "Blighter Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -175,9 +222,26 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Ghost Sound",
-    description: "You create a volume of sound that can move or remain fixed. You choose the type at casting and cannot change its basic character. Volume scales with level: up to four humans per caster level (maximum twenty). Can produce any sound type within the volume limit. Enhances silent image. Can be made permanent with permanency. Material Component: Wool or wax.",
-    aptitudes: ["Assassin Spells", "Bard Spells", "Blighter Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Assassin Spells": 1, "Bard Spells": 0, "Blighter Spells": 0, "Sorcerer Spells": 0, "Vigilante Spells": 1, "Wizard Spells": 0, "Wu Jen Spells": 0 },
+    description:
+      "You create a volume of sound that can move or remain fixed. You choose the type at casting and cannot change its basic character. Volume scales with level: up to four humans per caster level (maximum twenty). Can produce any sound type within the volume limit. Enhances silent image. Can be made permanent with permanency. Material Component: Wool or wax.",
+    aptitudes: [
+      "Assassin Spells",
+      "Bard Spells",
+      "Blighter Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
+    aptitudeLevels: {
+      "Assassin Spells": 1,
+      "Bard Spells": 0,
+      "Blighter Spells": 0,
+      "Sorcerer Spells": 0,
+      "Vigilante Spells": 1,
+      "Wizard Spells": 0,
+      "Wu Jen Spells": 0,
+    },
     savingThrow: "Will disbelief (if interacted with)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -194,7 +258,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Guidance",
-    description: "The subject gains a +1 competence bonus on a single attack roll, saving throw, or skill check, chosen before rolling.",
+    description:
+      "The subject gains a +1 competence bonus on a single attack roll, saving throw, or skill check, chosen before rolling.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -210,7 +275,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Inflict Minor Wounds",
-    description: "This functions like inflict light wounds, except it deals 1 point of damage and a Will save negates completely.",
+    description:
+      "This functions like inflict light wounds, except it deals 1 point of damage and a Will save negates completely.",
     aptitudes: ["Blighter Spells", "Cleric Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -226,7 +292,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Know Direction",
-    description: "You instantly know the direction of north. Works in any environment where north exists but may fail on other planes. The knowledge is accurate only at the moment of casting.",
+    description:
+      "You instantly know the direction of north. Works in any environment where north exists but may fail on other planes. The knowledge is accurate only at the moment of casting.",
     aptitudes: ["Bard Spells", "Druid Spells", "Vigilante Spells"],
     aptitudeLevels: { "Bard Spells": 0, "Druid Spells": 0, "Vigilante Spells": 1 },
     savingThrow: "None",
@@ -243,8 +310,17 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Light",
-    description: "An object glows like a torch with 20-foot bright light and 20 more feet of dim light. A light spell counters and dispels an equal or lower-level darkness spell. Arcane Material Component: A firefly or phosphorescent moss.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Druid Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells", "Wu Jen Spells"],
+    description:
+      "An object glows like a torch with 20-foot bright light and 20 more feet of dim light. A light spell counters and dispels an equal or lower-level darkness spell. Arcane Material Component: A firefly or phosphorescent moss.",
+    aptitudes: [
+      "Bard Spells",
+      "Cleric Spells",
+      "Druid Spells",
+      "Sorcerer Spells",
+      "Warmage Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Evocation" },
@@ -261,7 +337,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Lullaby",
-    description: "Creatures that fail a Will save become drowsy, taking -5 on Listen and Spot checks and -2 on Will saves against sleep effects. Lasts while you concentrate plus up to 1 round per caster level.",
+    description:
+      "Creatures that fail a Will save become drowsy, taking -5 on Listen and Spot checks and -2 on Will saves against sleep effects. Lasts while you concentrate plus up to 1 round per caster level.",
     aptitudes: ["Bard Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -279,9 +356,16 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Mage Hand",
-    description: "You telekinetically lift and move an object weighing up to 5 pounds, propelling it up to 15 feet per round as a move action. Ends if the object exceeds the spell's range.",
+    description:
+      "You telekinetically lift and move an object weighing up to 5 pounds, propelling it up to 15 feet per round as a move action. Ends if the object exceeds the spell's range.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Bard Spells": 0, "Sorcerer Spells": 0, "Vigilante Spells": 1, "Wizard Spells": 0, "Wu Jen Spells": 0 },
+    aptitudeLevels: {
+      "Bard Spells": 0,
+      "Sorcerer Spells": 0,
+      "Vigilante Spells": 1,
+      "Wizard Spells": 0,
+      "Wu Jen Spells": 0,
+    },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -296,9 +380,26 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Mending",
-    description: "You repair small breaks or tears in objects (not warps). Welds single metallic breaks; ceramic or wooden objects with multiple breaks are invisibly rejoined. Completely heals holes in leather containers. Restores physical integrity of magic items but not their magical abilities. Cannot mend rods, staffs, wands, or affect creatures.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Druid Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Bard Spells": 0, "Cleric Spells": 0, "Druid Spells": 0, "Sorcerer Spells": 0, "Vigilante Spells": 1, "Wizard Spells": 0, "Wu Jen Spells": 0 },
+    description:
+      "You repair small breaks or tears in objects (not warps). Welds single metallic breaks; ceramic or wooden objects with multiple breaks are invisibly rejoined. Completely heals holes in leather containers. Restores physical integrity of magic items but not their magical abilities. Cannot mend rods, staffs, wands, or affect creatures.",
+    aptitudes: [
+      "Bard Spells",
+      "Cleric Spells",
+      "Druid Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
+    aptitudeLevels: {
+      "Bard Spells": 0,
+      "Cleric Spells": 0,
+      "Druid Spells": 0,
+      "Sorcerer Spells": 0,
+      "Vigilante Spells": 1,
+      "Wizard Spells": 0,
+      "Wu Jen Spells": 0,
+    },
     savingThrow: "Will negates (harmless, object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -313,9 +414,16 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Message",
-    description: "You whisper messages to designated creatures within range, who can whisper replies. Blocked by 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt. The message can travel around barriers via open paths within range. Transmits sound, not meaning; does not cross language barriers. Focus: Copper wire.",
+    description:
+      "You whisper messages to designated creatures within range, who can whisper replies. Blocked by 1 foot of stone, 1 inch of metal, thin lead, or 3 feet of wood/dirt. The message can travel around barriers via open paths within range. Transmits sound, not meaning; does not cross language barriers. Focus: Copper wire.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Bard Spells": 0, "Sorcerer Spells": 0, "Vigilante Spells": 1, "Wizard Spells": 0, "Wu Jen Spells": 0 },
+    aptitudeLevels: {
+      "Bard Spells": 0,
+      "Sorcerer Spells": 0,
+      "Vigilante Spells": 1,
+      "Wizard Spells": 0,
+      "Wu Jen Spells": 0,
+    },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -331,9 +439,16 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Open/close",
-    description: "You open or close a container or portal (door, chest, box, etc.) weighing 30 pounds or less. Fails if anything resists (bar, lock). Focus: A brass key.",
+    description:
+      "You open or close a container or portal (door, chest, box, etc.) weighing 30 pounds or less. Fails if anything resists (bar, lock). Focus: A brass key.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Bard Spells": 0, "Sorcerer Spells": 0, "Vigilante Spells": 1, "Wizard Spells": 0, "Wu Jen Spells": 0 },
+    aptitudeLevels: {
+      "Bard Spells": 0,
+      "Sorcerer Spells": 0,
+      "Vigilante Spells": 1,
+      "Wizard Spells": 0,
+      "Wu Jen Spells": 0,
+    },
     savingThrow: "Will negates (object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -348,9 +463,16 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Prestidigitation",
-    description: "Minor magical tricks lasting 1 hour: slowly lift 1 pound, color/clean/soil 1-foot cube per round, chill/warm/flavor 1 pound of nonliving material. Cannot deal damage or affect concentration. Created objects are crude, fragile, and cannot serve as tools, weapons, or components. Actual changes (beyond moving/cleaning/soiling) persist only 1 hour.",
+    description:
+      "Minor magical tricks lasting 1 hour: slowly lift 1 pound, color/clean/soil 1-foot cube per round, chill/warm/flavor 1 pound of nonliving material. Cannot deal damage or affect concentration. Created objects are crude, fragile, and cannot serve as tools, weapons, or components. Actual changes (beyond moving/cleaning/soiling) persist only 1 hour.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Bard Spells": 0, "Sorcerer Spells": 0, "Vigilante Spells": 1, "Wizard Spells": 0, "Wu Jen Spells": 0 },
+    aptitudeLevels: {
+      "Bard Spells": 0,
+      "Sorcerer Spells": 0,
+      "Vigilante Spells": 1,
+      "Wizard Spells": 0,
+      "Wu Jen Spells": 0,
+    },
     savingThrow: "See text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Universal" },
@@ -365,7 +487,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Purify Food and Drink",
-    description: "You make spoiled, poisonous, or contaminated food and water safe to consume. Does not prevent subsequent spoilage. Spoils unholy water but does not affect creatures or potions.",
+    description:
+      "You make spoiled, poisonous, or contaminated food and water safe to consume. Does not prevent subsequent spoilage. Spoils unholy water but does not affect creatures or potions.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     savingThrow: "Will negates (object)",
     properties: [
@@ -398,9 +521,32 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Read Magic",
-    description: "You decipher magical inscriptions that would otherwise be unintelligible. This does not normally activate the magic (except cursed scrolls). After reading, you can thereafter read that writing without the spell. Identifies glyphs of warding (DC 13 Spellcraft), greater glyphs (DC 16), and symbol spells (DC 10 + spell level). Can be made permanent with permanency. Focus: A clear crystal or mineral prism.",
-    aptitudes: ["Bard Spells", "Blighter Spells", "Cleric Spells", "Druid Spells", "Paladin Spells", "Ranger Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Bard Spells": 0, "Blighter Spells": 0, "Cleric Spells": 0, "Druid Spells": 0, "Paladin Spells": 1, "Ranger Spells": 1, "Sorcerer Spells": 0, "Vigilante Spells": 1, "Wizard Spells": 0, "Wu Jen Spells": 0 },
+    description:
+      "You decipher magical inscriptions that would otherwise be unintelligible. This does not normally activate the magic (except cursed scrolls). After reading, you can thereafter read that writing without the spell. Identifies glyphs of warding (DC 13 Spellcraft), greater glyphs (DC 16), and symbol spells (DC 10 + spell level). Can be made permanent with permanency. Focus: A clear crystal or mineral prism.",
+    aptitudes: [
+      "Bard Spells",
+      "Blighter Spells",
+      "Cleric Spells",
+      "Druid Spells",
+      "Paladin Spells",
+      "Ranger Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
+    aptitudeLevels: {
+      "Bard Spells": 0,
+      "Blighter Spells": 0,
+      "Cleric Spells": 0,
+      "Druid Spells": 0,
+      "Paladin Spells": 1,
+      "Ranger Spells": 1,
+      "Sorcerer Spells": 0,
+      "Vigilante Spells": 1,
+      "Wizard Spells": 0,
+      "Wu Jen Spells": 0,
+    },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -415,9 +561,28 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Resistance",
-    description: "The subject gains a +1 resistance bonus on saves. Can be made permanent with permanency. Arcane Material Component: A miniature cloak.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Druid Spells", "Paladin Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Bard Spells": 0, "Cleric Spells": 0, "Druid Spells": 0, "Paladin Spells": 1, "Sorcerer Spells": 0, "Vigilante Spells": 1, "Wizard Spells": 0, "Wu Jen Spells": 0 },
+    description:
+      "The subject gains a +1 resistance bonus on saves. Can be made permanent with permanency. Arcane Material Component: A miniature cloak.",
+    aptitudes: [
+      "Bard Spells",
+      "Cleric Spells",
+      "Druid Spells",
+      "Paladin Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
+    aptitudeLevels: {
+      "Bard Spells": 0,
+      "Cleric Spells": 0,
+      "Druid Spells": 0,
+      "Paladin Spells": 1,
+      "Sorcerer Spells": 0,
+      "Vigilante Spells": 1,
+      "Wizard Spells": 0,
+      "Wu Jen Spells": 0,
+    },
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -434,7 +599,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Summon Instrument",
-    description: "You summon one handheld musical instrument of your choice that only plays for you. Cannot be larger than two-handed.",
+    description:
+      "You summon one handheld musical instrument of your choice that only plays for you. Cannot be larger than two-handed.",
     aptitudes: ["Bard Spells"],
     savingThrow: "None",
     properties: [
@@ -451,7 +617,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Touch of Fatigue",
-    description: "A successful touch attack fatigues the target for the duration. No effect if already fatigued. Unlike normal fatigue, ends when the spell expires. Material Component: A drop of sweat.",
+    description:
+      "A successful touch attack fatigues the target for the duration. No effect if already fatigued. Unlike normal fatigue, ends when the spell expires. Material Component: A drop of sweat.",
     aptitudes: ["Blighter Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Fortitude negates",
     properties: [

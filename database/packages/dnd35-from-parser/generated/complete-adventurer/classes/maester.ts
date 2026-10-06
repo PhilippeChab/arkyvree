@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const MAESTER: ClassSeed = {
   name: "Maester",
-  description: "Maesters are the master crafters of the gnome world, combining technical and magical expertise to create incredible marvels. They specialize in the creation of magic items, bending all their skill and ability toward the construction of items that are their art and livelihood. Maesters are usually wizards, although sorcerers occasionally take up the class. Some bards also have been known to become maesters, but typically not until they have spent a number of years adventuring.",
-  hd: 4, levels: 5, skillPoints: 4,
+  description:
+    "Maesters are the master crafters of the gnome world, combining technical and magical expertise to create incredible marvels. They specialize in the creation of magic items, bending all their skill and ability toward the construction of items that are their art and livelihood. Maesters are usually wizards, although sorcerers occasionally take up the class. Some bards also have been known to become maesters, but typically not until they have spent a number of years adventuring.",
+  hd: 4,
+  levels: 5,
+  skillPoints: 4,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -45,5 +53,3 @@ export const MAESTER: ClassSeed = {
     [5, "Bonus Feat (Maester)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

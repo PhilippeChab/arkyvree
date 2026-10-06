@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const PSIBOND_AGENT: ClassSeed = {
   name: "Psibond Agent",
-  description: "A psibond agent sees through the eyes of others, gently guiding (or in some cases forcefully commanding) her puppet to go places she could never enter herself.",
-  hd: 6, levels: 10, skillPoints: 6,
+  description:
+    "A psibond agent sees through the eyes of others, gently guiding (or in some cases forcefully commanding) her puppet to go places she could never enter herself.",
+  hd: 6,
+  levels: 10,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -60,5 +68,3 @@ export const PSIBOND_AGENT: ClassSeed = {
     [10, "Psibond (Dominate) (Psibond Agent)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

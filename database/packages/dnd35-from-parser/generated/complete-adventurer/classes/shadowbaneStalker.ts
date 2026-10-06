@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SHADOWBANE_STALKER: ClassSeed = {
   name: "Shadowbane Stalker",
-  description: "Shadowbane stalkers find evil hidden in civilized areas so that the martial arm of the order (the inquisitors) can spearhead the attack. Those they name as heretics or servants of evil call them zealots. Those they protect from darkness call them saviors and defenders of the truth. Whatever their label, shadowbane stalkers rank as some of the most feared individuals wherever they go.",
-  hd: 8, levels: 10, skillPoints: 6,
+  description:
+    "Shadowbane stalkers find evil hidden in civilized areas so that the martial arm of the order (the inquisitors) can spearhead the attack. Those they name as heretics or servants of evil call them zealots. Those they protect from darkness call them saviors and defenders of the truth. Whatever their label, shadowbane stalkers rank as some of the most feared individuals wherever they go.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "good" },
   classSkills: [
@@ -62,5 +70,3 @@ export const SHADOWBANE_STALKER: ClassSeed = {
     [10, "Sacred Strike (Shadowbane Stalker)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

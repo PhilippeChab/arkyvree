@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const CANTRIPS: PowerSeed[] = [
   {
     name: "Maelstrom",
-    description: "You create a deadly whirlpool in a body of water. The water must be at least 120 feet wide and 60 feet deep, or the spell is wasted. Waterborne creatures or objects within 50 feet of the vortex (below and on all sides) must succeed on Reflex saves or be drawn in. Trained swimmers may attempt Swim checks instead if their modifier exceeds their Reflex bonus. Vessel operators may make Profession (sailor) checks against the same DC. Creatures and objects sucked in take 3d8 points of damage upon entry. Once inside, they take 3d8 bludgeoning damage each round and remain trapped for 2d4 rounds. Subjects of Large or smaller size are ejected from the bottom; larger subjects are expelled from the top.",
+    description:
+      "You create a deadly whirlpool in a body of water. The water must be at least 120 feet wide and 60 feet deep, or the spell is wasted. Waterborne creatures or objects within 50 feet of the vortex (below and on all sides) must succeed on Reflex saves or be drawn in. Trained swimmers may attempt Swim checks instead if their modifier exceeds their Reflex bonus. Vessel operators may make Profession (sailor) checks against the same DC. Creatures and objects sucked in take 3d8 points of damage upon entry. Once inside, they take 3d8 bludgeoning damage each round and remain trapped for 2d4 rounds. Subjects of Large or smaller size are ejected from the bottom; larger subjects are expelled from the top.",
     aptitudes: [],
     savingThrow: "Reflex negates (and see text)",
     properties: [
@@ -21,7 +22,8 @@ export const CANTRIPS: PowerSeed[] = [
   },
   {
     name: "Naturewatch",
-    description: "Functions identically to deathwatch, but applies only to animals and plants. Additionally, it reveals miscellaneous mundane information about the observed creatures and plants (such as whether plants are dehydrated or animals are malnourished).",
+    description:
+      "Functions identically to deathwatch, but applies only to animals and plants. Additionally, it reveals miscellaneous mundane information about the observed creatures and plants (such as whether plants are dehydrated or animals are malnourished).",
     aptitudes: ["Druid Spells", "Ranger Spells"],
     aptitudeLevels: { "Druid Spells": 0, "Ranger Spells": 1 },
     savingThrow: "None",

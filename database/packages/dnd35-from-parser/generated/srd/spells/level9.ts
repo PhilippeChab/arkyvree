@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_9_SPELLS: PowerSeed[] = [
   {
     name: "Astral Projection",
-    description: "You free your spirit from your body and project an astral form onto another plane. Willing creatures linked in a circle with you at the time of casting can accompany you as dependent travelers. Your physical body remains on the Material Plane in suspended animation. An astral copy of you and your equipment appears on the Astral Plane. From there, you can travel to other planes by leaving the Astral Plane and forming a new physical body and equipment on the destination plane. A silvery cord connects your astral and physical forms; severing it kills you. When a second body is formed, the cord attaches invisibly to it. If the second body or astral form is slain, the cord returns you to your Material Plane body, reviving it. Astral projections function on the Astral Plane but must materialize physical bodies to affect other planes. Travel is indefinite until you choose to end it or it is terminated by outside means such as dispel magic on either form, cord destruction, or destruction of your physical body. Material Component: A jacinth worth at least 1,000 gp, plus a silver bar worth 5 gp per person affected.",
+    description:
+      "You free your spirit from your body and project an astral form onto another plane. Willing creatures linked in a circle with you at the time of casting can accompany you as dependent travelers. Your physical body remains on the Material Plane in suspended animation. An astral copy of you and your equipment appears on the Astral Plane. From there, you can travel to other planes by leaving the Astral Plane and forming a new physical body and equipment on the destination plane. A silvery cord connects your astral and physical forms; severing it kills you. When a second body is formed, the cord attaches invisibly to it. If the second body or astral form is slain, the cord returns you to your Material Plane body, reviving it. Astral projections function on the Astral Plane but must materialize physical bodies to affect other planes. Travel is indefinite until you choose to end it or it is terminated by outside means such as dispel magic on either form, cord destruction, or destruction of your physical body. Material Component: A jacinth worth at least 1,000 gp, plus a silver bar worth 5 gp per person affected.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -20,7 +21,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bigby's Crushing Hand",
-    description: "This creates a Large hand that can both interpose itself defensively and crush opponents. The hand provides cover (+4 AC bonus) when interposing and can grapple. Its grapple bonus equals your caster level + your relevant ability modifier + 12 (Strength plus size). A successfully grappled foe takes 2d6+12 points of damage each round. The hand can also bull rush at +18. You direct its actions as a move action.",
+    description:
+      "This creates a Large hand that can both interpose itself defensively and crush opponents. The hand provides cover (+4 AC bonus) when interposing and can grapple. Its grapple bonus equals your caster level + your relevant ability modifier + 12 (Strength plus size). A successfully grappled foe takes 2d6+12 points of damage each round. The hand can also bull rush at +18. You direct its actions as a move action.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -57,7 +59,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Elemental Swarm",
-    description: "You open a portal to an Elemental Plane and summon elementals. First, 2d4 Large elementals appear. Ten minutes later, 1d4 Huge elementals arrive. Ten minutes after that, one greater elemental appears. All have maximum hit points and serve you for the duration, obeying explicitly. No concentration is needed. You can dismiss them individually or as groups. The spell takes on the type descriptor matching the summoned element.",
+    description:
+      "You open a portal to an Elemental Plane and summon elementals. First, 2d4 Large elementals appear. Ten minutes later, 1d4 Huge elementals arrive. Ten minutes after that, one greater elemental appears. All have maximum hit points and serve you for the duration, obeying explicitly. No concentration is needed. You can dismiss them individually or as groups. The spell takes on the type descriptor matching the summoned element.",
     aptitudes: ["Druid Spells", "Warmage Spells"],
     savingThrow: "None",
     properties: [
@@ -74,7 +77,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Energy Drain",
-    description: "This functions like enervation, except the target gains 2d4 negative levels that last longer. No saving throw prevents gaining the levels, but 24 hours later, the subject makes a Fortitude save for each level; success removes the negative level, while failure also removes it but permanently drains one character level. An undead creature struck gains 2d4 x 5 temporary hit points for 1 hour.",
+    description:
+      "This functions like enervation, except the target gains 2d4 negative levels that last longer. No saving throw prevents gaining the levels, but 24 hours later, the subject makes a Fortitude save for each level; success removes the negative level, while failure also removes it but permanently drains one character level. An undead creature struck gains 2d4 x 5 temporary hit points for 1 hour.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Fortitude partial; see text for enervation",
     properties: [
@@ -90,7 +94,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Etherealness",
-    description: "This functions like ethereal jaunt, except you and other willing creatures joined by linked hands (plus equipment) become ethereal. You can bring one creature per three caster levels. Subjects need not stay together and return to material existence when the spell expires.",
+    description:
+      "This functions like ethereal jaunt, except you and other willing creatures joined by linked hands (plus equipment) become ethereal. You can bring one creature per three caster levels. Subjects need not stay together and return to material existence when the spell expires.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -106,7 +111,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Foresight",
-    description: "You or another creature gains instantaneous warnings of impending danger, including sneak attacks, ambushes, and targeted spells. The subject is never surprised or flat-footed and gains a +2 insight bonus to AC and Reflex saves (lost when Dexterity bonus would be lost). When cast on another, you receive the warnings but must communicate them for the subject to benefit (the subject does not gain the AC/Reflex bonus). Arcane Material Component: A hummingbird feather.",
+    description:
+      "You or another creature gains instantaneous warnings of impending danger, including sneak attacks, ambushes, and targeted spells. The subject is never surprised or flat-footed and gains a +2 insight bonus to AC and Reflex saves (lost when Dexterity bonus would be lost). When cast on another, you receive the warnings but must communicate them for the subject to benefit (the subject does not gain the AC/Reflex bonus). Arcane Material Component: A hummingbird feather.",
     aptitudes: ["Blighter Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None or Will negates (harmless)",
     properties: [
@@ -124,7 +130,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Freedom",
-    description: "The subject is freed from binding, entangle, grappling, imprisonment, maze, paralysis, petrification, pinning, sleep, slow, stunning, temporal stasis, and web. Freeing from imprisonment or maze requires knowing the creature's name and background and casting at the original site.",
+    description:
+      "The subject is freed from binding, entangle, grappling, imprisonment, maze, paralysis, petrification, pinning, sleep, slow, stunning, temporal stasis, and web. Freeing from imprisonment or maze requires knowing the creature's name and background and casting at the original site.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -140,7 +147,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Gate",
-    description: "Two effects: creating an interplanar portal and calling creatures. Planar Travel: Opens a circular portal (5-20 feet) between planes. Deities can prevent gates in their domains. Anyone stepping through is transported. Cannot open to the same plane. You can hold it open 1 round per level with concentration. Calling Creatures: Names a specific being or kind to pull through willingly or unwillingly (deities/unique beings are not compelled). Controlling creatures requires their HD not to exceed twice your caster level. Uncontrolled beings act freely. Controlled creatures can perform immediate tasks (1 round/level) for free, or longer contractual service for fair payment. XP Cost: 1,000 XP (calling only).",
+    description:
+      "Two effects: creating an interplanar portal and calling creatures. Planar Travel: Opens a circular portal (5-20 feet) between planes. Deities can prevent gates in their domains. Anyone stepping through is transported. Cannot open to the same plane. You can hold it open 1 round per level with concentration. Calling Creatures: Names a specific being or kind to pull through willingly or unwillingly (deities/unique beings are not compelled). Controlling creatures requires their HD not to exceed twice your caster level. Uncontrolled beings act freely. Controlled creatures can perform immediate tasks (1 round/level) for free, or longer contractual service for fair payment. XP Cost: 1,000 XP (calling only).",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -158,7 +166,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Heal, Mass",
-    description: "This functions like heal, except it affects multiple creatures with a maximum of 250 hp restored to each.",
+    description:
+      "This functions like heal, except it affects multiple creatures with a maximum of 250 hp restored to each.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -175,7 +184,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Hold Monster, Mass",
-    description: "This functions like hold person, except it affects multiple creatures and can hold any living creature.",
+    description:
+      "This functions like hold person, except it affects multiple creatures and can hold any living creature.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates; see text",
     properties: [
@@ -194,7 +204,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Implosion",
-    description: "Each round you concentrate, one corporeal creature collapses in on itself and dies (instantaneous, cannot be dispelled). Each creature can only be targeted once per casting. No effect on gaseous or incorporeal creatures.",
+    description:
+      "Each round you concentrate, one corporeal creature collapses in on itself and dies (instantaneous, cannot be dispelled). Each creature can only be targeted once per casting. No effect on gaseous or incorporeal creatures.",
     aptitudes: ["Blighter Spells", "Cleric Spells", "Warmage Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -210,7 +221,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Imprisonment",
-    description: "You touch a creature, entombing it in suspended animation in a small sphere deep beneath the earth. Only freedom cast at the imprisonment site can release it. Divination cannot detect it except discern location. Wish or miracle reveals the location but cannot free the subject. Knowing the target's name and background imposes -4 on its save.",
+    description:
+      "You touch a creature, entombing it in suspended animation in a small sphere deep beneath the earth. Only freedom cast at the imprisonment site can release it. Divination cannot detect it except discern location. Wish or miracle reveals the location but cannot free the subject. Knowing the target's name and background imposes -4 on its save.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates; see text",
     properties: [
@@ -226,7 +238,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Meteor Swarm",
-    description: "Four 2-foot fiery spheres streak to your chosen locations. You may make ranged touch attacks against specific creatures; a direct hit deals 2d6 bludgeoning (no save) plus the sphere's fire damage (no save on the fire for direct hits). Each sphere explodes in a 40-foot radius for 6d6 fire damage (Reflex half). Creatures in multiple explosions save against each separately.",
+    description:
+      "Four 2-foot fiery spheres streak to your chosen locations. You may make ranged touch attacks against specific creatures; a direct hit deals 2d6 bludgeoning (no save) plus the sphere's fire damage (no save on the fire for direct hits). Each sphere explodes in a 40-foot radius for 6d6 fire damage (Reflex half). Creatures in multiple explosions save against each separately.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "None or Reflex half; see text",
     properties: [
@@ -243,7 +256,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Miracle",
-    description: "You request divine intervention. The GM determines the effect. It can duplicate most spells and perform powerful feats. Especially powerful requests cost 5,000 XP. Duplicated spells use 9th-level save DCs. Material and XP costs of duplicated spells must be paid. XP Cost: 5,000 XP for certain uses.",
+    description:
+      "You request divine intervention. The GM determines the effect. It can duplicate most spells and perform powerful feats. Especially powerful requests cost 5,000 XP. Duplicated spells use 9th-level save DCs. Material and XP costs of duplicated spells must be paid. XP Cost: 5,000 XP for certain uses.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "See text",
     properties: [
@@ -260,7 +274,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mordenkainen's Disjunction",
-    description: "All magical effects and items within the radius (except those you carry or touch) are disjoined. Spells are ended; permanent magic items must Will save or become mundane. You have a 1% chance per caster level of destroying an antimagic field. Even artifacts are subject to disjunction (1% per caster level chance), but destroying one requires a DC 25 Will save or permanent loss of all spellcasting.",
+    description:
+      "All magical effects and items within the radius (except those you carry or touch) are disjoined. Spells are ended; permanent magic items must Will save or become mundane. You have a 1% chance per caster level of destroying an antimagic field. Even artifacts are subject to disjunction (1% per caster level chance), but destroying one requires a DC 25 Will save or permanent loss of all spellcasting.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates (object)",
     properties: [
@@ -275,7 +290,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Power Word Kill",
-    description: "A single word of power instantly kills one creature regardless of whether it can hear. Creatures with 101+ hp are unaffected.",
+    description:
+      "A single word of power instantly kills one creature regardless of whether it can hear. Creatures with 101+ hp are unaffected.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -293,7 +309,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Prismatic Sphere",
-    description: "This functions like prismatic wall, except it forms an immobile opaque globe surrounding you. Blinds creatures with less than 8 HD for 2d4x10 minutes. You can pass freely. It blocks outgoing projections. Creatures passing through suffer each color's effect. Can be made permanent with permanency.",
+    description:
+      "This functions like prismatic wall, except it forms an immobile opaque globe surrounding you. Blinds creatures with less than 8 HD for 2d4x10 minutes. You can pass freely. It blocks outgoing projections. Creatures passing through suffer each color's effect. Can be made permanent with permanency.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "See text",
     properties: [
@@ -308,7 +325,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shades",
-    description: "This functions like shadow conjuration, except it mimics conjuration spells of 8th level or lower at 80% effectiveness against nonbelievers.",
+    description:
+      "This functions like shadow conjuration, except it mimics conjuration spells of 8th level or lower at 80% effectiveness against nonbelievers.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will disbelief (if interacted with); varies; see text",
     properties: [
@@ -325,7 +343,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shapechange",
-    description: "This functions like polymorph, except you can assume any single nonunique creature form from Fine to Colossal (up to your CL in HD, maximum 25). You gain all extraordinary and supernatural abilities of the new form but lose your supernatural abilities. You can change form once per round as a free action. If used as a disguise, +10 on Disguise checks. Focus: A jade circlet worth at least 1,500 gp.",
+    description:
+      "This functions like polymorph, except you can assume any single nonunique creature form from Fine to Colossal (up to your CL in HD, maximum 25). You gain all extraordinary and supernatural abilities of the new form but lose your supernatural abilities. You can change form once per round as a free action. If used as a disguise, +10 on Disguise checks. Focus: A jade circlet worth at least 1,500 gp.",
     aptitudes: ["Druid Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -341,7 +360,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Soul Bind",
-    description: "You imprison the soul of a creature dead no more than 1 round per caster level in a black sapphire gem. The trapped soul cannot be restored by any means except destroying the gem or dispelling the spell. Focus: A black sapphire worth at least 1,000 gp per HD.",
+    description:
+      "You imprison the soul of a creature dead no more than 1 round per caster level in a black sapphire gem. The trapped soul cannot be restored by any means except destroying the gem or dispelling the spell. Focus: A black sapphire worth at least 1,000 gp per HD.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -357,7 +377,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Storm of Vengeance",
-    description: "A massive black storm cloud produces escalating effects while you concentrate: Round 1: Fortitude or deafened 1d4x10 minutes. Round 2: 1d6 acid (no save). Round 3: Six lightning bolts you direct (10d6 electricity each, Reflex half). Round 4: 5d6 bludgeoning hail (no save). Rounds 5-10: Rain obscures all sight beyond 5 feet, reduces speed by 75%, prevents ranged attacks, and disrupts spellcasting (Concentration DC = spell's save DC + spell level).",
+    description:
+      "A massive black storm cloud produces escalating effects while you concentrate: Round 1: Fortitude or deafened 1d4x10 minutes. Round 2: 1d6 acid (no save). Round 3: Six lightning bolts you direct (10d6 electricity each, Reflex half). Round 4: 5d6 bludgeoning hail (no save). Rounds 5-10: Rain obscures all sight beyond 5 feet, reduces speed by 75%, prevents ranged attacks, and disrupts spellcasting (Concentration DC = spell's save DC + spell level).",
     aptitudes: ["Blighter Spells", "Cleric Spells", "Druid Spells"],
     savingThrow: "See text",
     properties: [
@@ -374,7 +395,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Summon Monster IX",
-    description: "This functions like summon monster I, except you summon one 9th-level, 1d3 8th-level, or 1d4+1 lower-level creatures.",
+    description:
+      "This functions like summon monster I, except you summon one 9th-level, 1d3 8th-level, or 1d4+1 lower-level creatures.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -392,7 +414,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Summon Nature's Ally IX",
-    description: "This functions like summon nature's ally I, except you summon one 9th-level, 1d3 8th-level, or 1d4+1 lower-level creatures.",
+    description:
+      "This functions like summon nature's ally I, except you summon one 9th-level, 1d3 8th-level, or 1d4+1 lower-level creatures.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -410,7 +433,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Teleportation Circle",
-    description: "A floor circle teleports (as greater teleport) any creature standing on it to a fixed destination. Nearly invisible. Can be made permanent. Magical trap (DC 34, rogue only). Material Component: Amber dust (1,000 gp).",
+    description:
+      "A floor circle teleports (as greater teleport) any creature standing on it to a fixed destination. Nearly invisible. Can be made permanent. Magical trap (DC 34, rogue only). Material Component: Amber dust (1,000 gp).",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -427,7 +451,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Time Stop",
-    description: "You speed up so greatly that other creatures appear frozen for 1d4+1 rounds. You cannot target, attack, or harm other creatures or their possessions. Area spells with remaining duration affect others when time resumes. You are undetectable and cannot enter antimagic fields.",
+    description:
+      "You speed up so greatly that other creatures appear frozen for 1d4+1 rounds. You cannot target, attack, or harm other creatures or their possessions. Area spells with remaining duration affect others when time resumes. You are undetectable and cannot enter antimagic fields.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -442,7 +467,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "True Resurrection",
-    description: "This functions like raise dead, except the creature can have been dead up to 10 years per caster level, bodies need not exist (identify the deceased clearly), and the creature is restored to full hp with no level loss or lost spells. Can resurrect death-effect victims, destroyed undead, elementals, and outsiders (but not constructs or undead). Cannot restore death from old age. Material Component: Holy water and diamonds (25,000 gp).",
+    description:
+      "This functions like raise dead, except the creature can have been dead up to 10 years per caster level, bodies need not exist (identify the deceased clearly), and the creature is restored to full hp with no level loss or lost spells. Can resurrect death-effect victims, destroyed undead, elementals, and outsiders (but not constructs or undead). Cannot restore death from old age. Material Component: Holy water and diamonds (25,000 gp).",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None; see text",
     properties: [
@@ -460,7 +486,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Wail of the Banshee",
-    description: "You emit a terrible scream that kills creatures that hear it (not yourself). Those closest to you are affected first.",
+    description:
+      "You emit a terrible scream that kills creatures that hear it (not yourself). Those closest to you are affected first.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -477,7 +504,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Weird",
-    description: "This functions like phantasmal killer, except it affects multiple creatures. Subjects who succeed on Fortitude saves still take 3d6 damage, are stunned 1 round, and take 1d4 temporary Strength damage.",
+    description:
+      "This functions like phantasmal killer, except it affects multiple creatures. Subjects who succeed on Fortitude saves still take 3d6 damage, are stunned 1 round, and take 1d4 temporary Strength damage.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "Will disbelief (if interacted with), then Fortitude partial; see text",
     properties: [
@@ -496,7 +524,8 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
   },
   {
     name: "Wish",
-    description: "The most powerful wizard/sorcerer spell. You can produce a wide range of effects by speaking aloud. Attempting effects beyond the listed capabilities risks incomplete, perverted, or partial fulfillment at the GM's discretion. Duplicated spells use 9th-level save DCs. Material components over 10,000 gp must be provided. XP Cost: Minimum 5,000 XP, plus duplicated spell XP costs, plus double normal crafting XP for item creation.",
+    description:
+      "The most powerful wizard/sorcerer spell. You can produce a wide range of effects by speaking aloud. Attempting effects beyond the listed capabilities risks incomplete, perverted, or partial fulfillment at the GM's discretion. Duplicated spells use 9th-level save DCs. Material components over 10,000 gp must be provided. XP Cost: Minimum 5,000 XP, plus duplicated spell XP costs, plus double normal crafting XP for item creation.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "See text",
     properties: [

@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const VIGILANTE: ClassSeed = {
   name: "Vigilante",
   description: "The vigilante combines magical and mundane investigative techniques to assess a crime scene.",
-  hd: 8, levels: 10, skillPoints: 6,
+  hd: 8,
+  levels: 10,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "good" },
   classSkills: [
@@ -64,32 +71,8 @@ export const VIGILANTE: ClassSeed = {
   casterType: "Arcane",
   spells: {
     slug: "vigilantespells",
-    perDay: [
-      [0],
-      [1],
-      [2, 0],
-      [3, 1],
-      [3, 2, 0],
-      [3, 3, 1],
-      [3, 3, 2, 0],
-      [3, 3, 3, 1],
-      [3, 3, 3, 2],
-      [3, 3, 3, 3],
-    ],
-    known: [
-      [2],
-      [3],
-      [3, 2],
-      [4, 3],
-      [4, 3, 2],
-      [4, 4, 3],
-      [4, 4, 3, 2],
-      [4, 4, 4, 3],
-      [4, 4, 4, 3],
-      [4, 4, 4, 4],
-    ],
+    perDay: [[0], [1], [2, 0], [3, 1], [3, 2, 0], [3, 3, 1], [3, 3, 2, 0], [3, 3, 3, 1], [3, 3, 3, 2], [3, 3, 3, 3]],
+    known: [[2], [3], [3, 2], [4, 3], [4, 3, 2], [4, 4, 3], [4, 4, 3, 2], [4, 4, 4, 3], [4, 4, 4, 3], [4, 4, 4, 4]],
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

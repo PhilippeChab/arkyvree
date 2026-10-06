@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const STREETFIGHTER: ClassSeed = {
   name: "Streetfighter",
-  description: "Streetfighters seek the challenges of the back alleys as a way of testing themselves and their experience in the wilder world.",
-  hd: 8, levels: 5, skillPoints: 4,
+  description:
+    "Streetfighters seek the challenges of the back alleys as a way of testing themselves and their experience in the wilder world.",
+  hd: 8,
+  levels: 5,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -44,5 +52,3 @@ export const STREETFIGHTER: ClassSeed = {
     [5, "Uncanny Dodge (Streetfighter)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

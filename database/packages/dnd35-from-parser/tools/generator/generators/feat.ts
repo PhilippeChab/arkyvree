@@ -153,6 +153,7 @@ function closeTemplate({ lines }: FeatFile, familyName: string): void {
 /** The system feats of the core rules' feat file `fileName`. */
 function emitSystemFeats(file: FeatFile, fileName: string): void {
   for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
+    file.lines.push(`/** A system feat list (\`coreSystemFeats\`): no reference lists it. */`);
     file.lines.push(`export const ${name}: FeatSeed[] = ${code};`);
     for (const used of uses) file.uses.add(used);
   }
@@ -482,7 +483,6 @@ export function generateFeatSeeds(ref: FeatReference): string {
 
   // System feats are only generated for the SRD — other books reuse them
   if (ref._meta.book === "srd") {
-    file.lines.push(`// The system feats (\`coreSystemFeats\`): no reference lists them.`);
     emitSystemFeats(file, "feats.ts");
   }
   return featFileCode(file);

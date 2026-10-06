@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const THAYAN_KNIGHT: ClassSeed = {
   name: "Thayan Knight",
-  description: "Thayan knights are skilled swordfighters with knowledge of the arcane arts who serve as devoted protectors of the Red Wizards.",
-  hd: 10, levels: 5, skillPoints: 2,
+  description:
+    "Thayan knights are skilled swordfighters with knowledge of the arcane arts who serve as devoted protectors of the Red Wizards.",
+  hd: 10,
+  levels: 5,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -49,9 +57,5 @@ export const THAYAN_KNIGHT: ClassSeed = {
     [4, "Horrors of Thay (Thayan Knight)"],
     [5, "Zulkir's Champion (Thayan Knight)"],
   ],
-  aptitudePicks: [
-    { levels: [3], target: "aptitudes.fighterbonusfeat.allowed" },
-  ],
+  aptitudePicks: [{ levels: [3], target: "aptitudes.fighterbonusfeat.allowed" }],
 };
-
-// TODO: No modifiers defined — review if this class needs any
