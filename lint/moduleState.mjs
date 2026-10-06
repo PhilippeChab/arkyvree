@@ -96,7 +96,9 @@ function createModuleState(context) {
           if (kind === "const") constants.add(name);
           else context.report({ node: declarator, message: `\`${name}\` is state the module keeps. ${advice}` });
         }
-        const { id, init } = declarator;
+        const { id } = declarator;
+        let init = declarator.init;
+        while (init && WRAPPERS.has(init.type)) init = init.expression;
         if (kind !== "const" || id.type !== "Identifier" || init?.type !== "NewExpression") continue;
         if (declaredExported || exported.has(id.name) || isValueClass(init.callee)) continue;
         context.report({

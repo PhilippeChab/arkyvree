@@ -26,6 +26,8 @@ describe("module-state", () => {
             "import DependentCache from './DependentCache.ts';\nconst cache = new DependentCache<number>();\nexport function drop(id: string) {\n  cache.invalidate(id);\n}\n",
           "server/cast.ts":
             "const seen: unknown = new Map();\nexport function see(k: string) {\n  (seen as Map<string, number>).set(k, 1);\n}\n",
+          "server/castInstance.ts":
+            "import DependentCache from './DependentCache.ts';\nconst cache = new DependentCache<number>() as DependentCache<number>;\nexport function drop(id: string) {\n  cache.invalidate(id);\n}\n",
           "server/nonNull.ts":
             "const state: { a?: { n: number } } = {};\nexport function set() {\n  state.a!.n = 1;\n}\n",
         },
@@ -34,6 +36,7 @@ describe("module-state", () => {
     ).toEqual([
       "module-state server/assigned.ts",
       "module-state server/cast.ts",
+      "module-state server/castInstance.ts",
       "module-state server/deleted.ts",
       "module-state server/exportedLet.ts",
       "module-state server/flag.ts",
