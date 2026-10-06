@@ -53,6 +53,14 @@ interface PlayersSectionProps {
   campaign: CampaignDetail;
 }
 
+/** The players' columns; each row's actions sit over its last. */
+const PLAYER_COLUMNS: DataTableColumn[] = [
+  { key: "player", label: "Player", width: "25%" },
+  { key: "role", label: "Role", width: "25%" },
+  { key: "status", label: "Status", width: "25%" },
+  { key: "joined", label: "Joined", width: "25%" },
+];
+
 /** A player's role in the campaign */
 const PLAYER_ROLES = {
   "Game Master": { icon: GameMasterIcon, label: "Game Master", color: "warning" },
@@ -65,14 +73,6 @@ const PLAYER_STATES = {
   pending: { icon: PendingIcon, label: "Invite Pending", color: "warning" },
   unassigned: { icon: UnassignedIcon, label: "Unassigned", color: "default" },
 } as const satisfies Record<PlayerState, Tag>;
-
-/** The players' columns; each row's actions sit over its last. */
-const PLAYER_COLUMNS: DataTableColumn[] = [
-  { key: "player", label: "Player", width: "25%" },
-  { key: "role", label: "Role", width: "25%" },
-  { key: "status", label: "Status", width: "25%" },
-  { key: "joined", label: "Joined", width: "25%" },
-];
 
 export function PlayersSection({ campaign }: PlayersSectionProps) {
   const queryClient = useQueryClient();

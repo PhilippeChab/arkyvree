@@ -36,11 +36,6 @@ interface StatCardProps {
   animationIndex: number;
 }
 
-/** A stat card's text, raised off its gradient. */
-function textShadow(theme: Theme) {
-  return `0px 2px 4px ${alpha(theme.palette.common.black, 0.3)}`;
-}
-
 function StatCard({ icon: Icon, count, label, tagline, to, colors, animationIndex }: StatCardProps) {
   return (
     <Box sx={{ flex: "1 1 300px", minWidth: { xs: 0, sm: 300 } }}>
@@ -78,6 +73,11 @@ function StatCard({ icon: Icon, count, label, tagline, to, colors, animationInde
       </Card>
     </Box>
   );
+}
+
+/** A stat card's text, raised off its gradient. */
+function textShadow(theme: Theme) {
+  return `0px 2px 4px ${alpha(theme.palette.common.black, 0.3)}`;
 }
 
 export default function DashboardPage() {

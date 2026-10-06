@@ -7,8 +7,6 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 
-const itemParams = idParam.extend({ itemId: z.string().uuid() });
-
 const itemBody = z.object({
   name: z.string().min(1),
   description: z
@@ -36,6 +34,8 @@ const itemBody = z.object({
   isTemplate: z.boolean().optional(),
   updatedAt: z.string().optional(),
 });
+
+const itemParams = idParam.extend({ itemId: z.string().uuid() });
 
 export default new Hono<SessionContext>()
   .get(

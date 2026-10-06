@@ -1,6 +1,6 @@
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
-import { Users } from "@/server/repositories/index.ts";
+import { EmailVerifications, Users } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 
@@ -29,4 +29,9 @@ export async function createTestUser(prefix = "testuser") {
     password: "password1234",
   });
   return { user, session: makeSession(user.id) };
+}
+
+/** The code of `userId`'s latest email verification. */
+export async function findVerificationCode(userId: string) {
+  return (await EmailVerifications.findOne(db, { userId }))!.code;
 }

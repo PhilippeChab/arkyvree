@@ -8,35 +8,38 @@ import { CampaignsPolicy, RulesetsPolicy } from "@/server/services/policies/inde
 import type { Session } from "@/shared/relations.ts";
 
 class CampaignsService {
-  async getCampaign(session: Session, id: string) {
-    const rows = await Campaigns.findOneWithPlayerCount(db, { id });
-    const campaign = rows[0];
+  async archiveCampaign(session: Session, id: string) {
+    return await withTransaction(async (tx) => {
+      const existingCampaign = await Campaigns.findOne(tx, { id });
 
-    if (!campaign) {
-      throw new NotFoundError("Campaign not found");
-    }
+      if (!existingCampaign) {
+        throw new NotFoundError("Campaign not found");
+      }
 
-    const player = (await CampaignsPolicy.for(db, session, campaign)).canRead();
+      (await CampaignsPolicy.for(tx, session, existingCampaign)).canDelete();
 
-    return { ...campaign, currentUserRole: player.role };
-  }
+      // Archive flips deletedAt on the campaign row only — players, invites,
+      // and player-character links stay live. Campaigns.findMany filters
+      // archived campaigns out of list views for everyone, so those rows
+      // are only reachable by direct navigation (bookmarks), which already
+      // loads via Visibility.All. Unarchive below still un-cascades for
+      // legacy campaigns whose players were cascade-archived pre-change.
+      const rows = await Campaigns.archive(tx, { id });
+      const archivedCampaign = rows[0];
 
-  async getCampaigns(
-    session: Session,
-    where: {
-      visibility?: keyof typeof visibilityMap;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    const { visibility, ...filters } = where;
-    return await Campaigns.findPage(
-      db,
-      { userId: session.userId, ...filters, ...(visibility && { visibility: visibilityMap[visibility] }) },
-      pagination,
-    );
+      if (!archivedCampaign) {
+        throw new InternalError("Failed to archive campaign");
+      }
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: archivedCampaign.id,
+        targetTable: getTableName(campaignsInCampaign),
+        type: "archiveCampaign",
+      });
+
+      return archivedCampaign;
+    });
   }
 
   async createCampaign(
@@ -84,73 +87,35 @@ class CampaignsService {
     });
   }
 
-  async updateCampaign(
-    session: Session,
-    id: string,
-    body: {
-      name?: string;
-      description?: string;
-    },
-  ) {
-    return await withTransaction(async (tx) => {
-      const existingCampaign = await Campaigns.findOne(tx, { id });
+  async getCampaign(session: Session, id: string) {
+    const rows = await Campaigns.findOneWithPlayerCount(db, { id });
+    const campaign = rows[0];
 
-      if (!existingCampaign) {
-        throw new NotFoundError("Campaign not found");
-      }
+    if (!campaign) {
+      throw new NotFoundError("Campaign not found");
+    }
 
-      (await CampaignsPolicy.for(tx, session, existingCampaign)).canUpdate();
+    const player = (await CampaignsPolicy.for(db, session, campaign)).canRead();
 
-      const rows = await Campaigns.update(tx, body, { id });
-      const updatedCampaign = rows[0];
-
-      if (!updatedCampaign) {
-        throw new InternalError("Failed to update campaign");
-      }
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: updatedCampaign.id,
-        targetTable: getTableName(campaignsInCampaign),
-        type: "updateCampaign",
-      });
-
-      return updatedCampaign;
-    });
+    return { ...campaign, currentUserRole: player.role };
   }
 
-  async archiveCampaign(session: Session, id: string) {
-    return await withTransaction(async (tx) => {
-      const existingCampaign = await Campaigns.findOne(tx, { id });
-
-      if (!existingCampaign) {
-        throw new NotFoundError("Campaign not found");
-      }
-
-      (await CampaignsPolicy.for(tx, session, existingCampaign)).canDelete();
-
-      // Archive flips deletedAt on the campaign row only — players, invites,
-      // and player-character links stay live. Campaigns.findMany filters
-      // archived campaigns out of list views for everyone, so those rows
-      // are only reachable by direct navigation (bookmarks), which already
-      // loads via Visibility.All. Unarchive below still un-cascades for
-      // legacy campaigns whose players were cascade-archived pre-change.
-      const rows = await Campaigns.archive(tx, { id });
-      const archivedCampaign = rows[0];
-
-      if (!archivedCampaign) {
-        throw new InternalError("Failed to archive campaign");
-      }
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: archivedCampaign.id,
-        targetTable: getTableName(campaignsInCampaign),
-        type: "archiveCampaign",
-      });
-
-      return archivedCampaign;
-    });
+  async getCampaigns(
+    session: Session,
+    where: {
+      visibility?: keyof typeof visibilityMap;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    const { visibility, ...filters } = where;
+    return await Campaigns.findPage(
+      db,
+      { userId: session.userId, ...filters, ...(visibility && { visibility: visibilityMap[visibility] }) },
+      pagination,
+    );
   }
 
   async hardDeleteCampaign(session: Session, id: string) {
@@ -203,6 +168,41 @@ class CampaignsService {
       });
 
       return unarchivedCampaign;
+    });
+  }
+
+  async updateCampaign(
+    session: Session,
+    id: string,
+    body: {
+      name?: string;
+      description?: string;
+    },
+  ) {
+    return await withTransaction(async (tx) => {
+      const existingCampaign = await Campaigns.findOne(tx, { id });
+
+      if (!existingCampaign) {
+        throw new NotFoundError("Campaign not found");
+      }
+
+      (await CampaignsPolicy.for(tx, session, existingCampaign)).canUpdate();
+
+      const rows = await Campaigns.update(tx, body, { id });
+      const updatedCampaign = rows[0];
+
+      if (!updatedCampaign) {
+        throw new InternalError("Failed to update campaign");
+      }
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: updatedCampaign.id,
+        targetTable: getTableName(campaignsInCampaign),
+        type: "updateCampaign",
+      });
+
+      return updatedCampaign;
     });
   }
 }

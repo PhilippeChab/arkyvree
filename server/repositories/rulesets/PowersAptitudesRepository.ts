@@ -10,6 +10,28 @@ class PowersAptitudesRepository extends BaseRepository<typeof powersAptitudesInR
     super(powersAptitudesInRules);
   }
 
+  async create(db: Db, values: InferInsertModel<typeof powersAptitudesInRules>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async createMany(db: Db, values: InferInsertModel<typeof powersAptitudesInRules>[]) {
+    if (values.length === 0) return [];
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  // Exception to soft-delete: disposable configuration data — intentional removal
+  async delete(db: Db, where: { powerId: string; aptitudeId?: string } | { aptitudeId: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        this.branchWhere([
+          "powerId" in where && eq(this.table.powerId, where.powerId),
+          where.aptitudeId !== undefined && eq(this.table.aptitudeId, where.aptitudeId),
+        ]),
+      )
+      .returning();
+  }
+
   async findAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
     if (where.aptitudeIds.length === 0) return [];
     const rows = await db
@@ -42,28 +64,6 @@ class PowersAptitudesRepository extends BaseRepository<typeof powersAptitudesInR
         isNull(this.table.deletedAt),
       ),
     });
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof powersAptitudesInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof powersAptitudesInRules>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { powerId: string; aptitudeId?: string } | { aptitudeId: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        this.branchWhere([
-          "powerId" in where && eq(this.table.powerId, where.powerId),
-          where.aptitudeId !== undefined && eq(this.table.aptitudeId, where.aptitudeId),
-        ]),
-      )
-      .returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal

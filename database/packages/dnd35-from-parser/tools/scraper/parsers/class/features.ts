@@ -38,35 +38,6 @@ const IMPLICIT_FEATURES = [
   "Flurry of Blows",
 ];
 
-/** Find name and effect column indices from a sub-option table */
-function findSubOptionColumns(
-  $: cheerio.CheerioAPI,
-  table: cheerio.Cheerio<AnyNode>,
-): { nameCol: number; effectCol: number } {
-  // Find the header row with the most <th> cells (skip title rows with 1 spanning th, and footnote rows)
-  const headerRows = table.find("tr").filter((_, row) => $(row).children("th").length > 1);
-  if (headerRows.length === 0) return { nameCol: -1, effectCol: -1 };
-
-  // Use the row with the most th cells
-  let bestRow = headerRows.first();
-  let bestCount = bestRow.children("th").length;
-  headerRows.each((_, row) => {
-    const count = $(row).children("th").length;
-    if (count > bestCount) {
-      bestRow = $(row);
-      bestCount = count;
-    }
-  });
-
-  const headers = bestRow
-    .children("th")
-    .toArray()
-    .map((th) => $(th).text().trim().toLowerCase());
-  const nameCol = headers.findIndex((h) => /^(secret|name|ability|trick|mastery|option|maneuver)$/i.test(h));
-  const effectCol = headers.findIndex((h) => /^(effect|benefit|description)$/i.test(h));
-  return { nameCol, effectCol };
-}
-
 /**
  * Clean a Special column entry to its base feature name.
  * "Sneak Attack +1d6" → "Sneak Attack"
@@ -102,12 +73,6 @@ function cleanSpecialEntry(s: string): string {
     .replace(/^(?:huge |large |small )?elemental$/i, ""); // orphaned fragments from broken wild shape cells
 }
 
-/** Normalize a feature name for matching — strips plurals, collapses whitespace */
-function normalizeFeatureName(name: string): string {
-  // "Special Abilities" → "special ability"
-  return normalizeWs(name.toLowerCase()).replace(/ies$/, "y");
-}
-
 /** Find the exact key in the known features set that matches this name */
 function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): string | undefined {
   const norm = normalizeFeatureName(name);
@@ -134,9 +99,44 @@ function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): strin
   return undefined;
 }
 
+/** Find name and effect column indices from a sub-option table */
+function findSubOptionColumns(
+  $: cheerio.CheerioAPI,
+  table: cheerio.Cheerio<AnyNode>,
+): { nameCol: number; effectCol: number } {
+  // Find the header row with the most <th> cells (skip title rows with 1 spanning th, and footnote rows)
+  const headerRows = table.find("tr").filter((_, row) => $(row).children("th").length > 1);
+  if (headerRows.length === 0) return { nameCol: -1, effectCol: -1 };
+
+  // Use the row with the most th cells
+  let bestRow = headerRows.first();
+  let bestCount = bestRow.children("th").length;
+  headerRows.each((_, row) => {
+    const count = $(row).children("th").length;
+    if (count > bestCount) {
+      bestRow = $(row);
+      bestCount = count;
+    }
+  });
+
+  const headers = bestRow
+    .children("th")
+    .toArray()
+    .map((th) => $(th).text().trim().toLowerCase());
+  const nameCol = headers.findIndex((h) => /^(secret|name|ability|trick|mastery|option|maneuver)$/i.test(h));
+  const effectCol = headers.findIndex((h) => /^(effect|benefit|description)$/i.test(h));
+  return { nameCol, effectCol };
+}
+
 /** Check if a feature name matches any known feature (case-insensitive, with plural matching) */
 function isKnownFeature(name: string, knownFeatures: Set<string>): boolean {
   return findMatchingFeatureKey(name, knownFeatures) !== undefined;
+}
+
+/** Normalize a feature name for matching — strips plurals, collapses whitespace */
+function normalizeFeatureName(name: string): string {
+  // "Special Abilities" → "special ability"
+  return normalizeWs(name.toLowerCase()).replace(/ies$/, "y");
 }
 
 /** A sub-option table's options of the feature `parentKey`: each its key ("Feature: Option") and effect. */

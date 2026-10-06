@@ -8,7 +8,7 @@ import { parseResponse } from "hono/client";
 
 import { expect, test } from "@/tests/e2e/fixtures.ts";
 import { apiOf } from "@/tests/e2e/support/api.ts";
-import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
+import { createCampaign, postPlayerInvite } from "@/tests/e2e/support/campaigns.ts";
 import { createCharacter } from "@/tests/e2e/support/characters.ts";
 import { uniqueName } from "@/tests/e2e/support/page.ts";
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
@@ -23,10 +23,8 @@ function entityPage(kind: string, id: string) {
 async function campaignInvite(gm: Page, email: string) {
   const name = uniqueName("Invite Campaign");
   const id = await createCampaign(gm, name);
-  const { invite } = await parseResponse(
-    apiOf(gm).api.campaigns[":id"].players.$post({ param: { id }, json: { role: "Player Character", email } }),
-  );
-  return { name, id, link: `/campaign-invite/${invite!.id}`, page: entityPage("campaigns", id) };
+  const invite = await postPlayerInvite(gm, id, email);
+  return { name, id, link: `/campaign-invite/${invite.id}`, page: entityPage("campaigns", id) };
 }
 
 test.describe("A campaign invite link", () => {

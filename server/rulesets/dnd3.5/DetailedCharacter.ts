@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import AbstractDetailedCharacter, {
   type DataLoader,
@@ -35,6 +35,7 @@ import {
   SPELL_DESCRIPTOR,
   SPELL_SCHOOL,
 } from "@/shared/dnd3.5/properties/index.ts";
+import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
   Character,
@@ -56,7 +57,6 @@ import DetailedCharacterShields from "./DetailedCharacterShields.ts";
 import DetailedCharacterSpellcasting from "./DetailedCharacterSpellcasting.ts";
 import DetailedCharacterWeapons from "./DetailedCharacterWeapons.ts";
 import { Dnd35LevelsHooks } from "./hooks/index.ts";
-import { getStaticPropertyValues } from "./PropertyTypes.ts";
 import TargetPaths from "./TargetPaths.ts";
 import type { Dnd35ProjectedCharacterData } from "./types.ts";
 
@@ -184,6 +184,15 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     modifierOwner: Map<string, { name: string; type: string }>;
   };
 
+  protected applyLoadedData(data: Dnd35LoadedCharacterData) {
+    super.applyLoadedData(data);
+    this.skillPointAbilityId = data.skillPointAbilityId;
+    this.skillProperties = data.skillProperties;
+    this.klassLevelProperties = data.klassLevelProperties;
+    this.klassBonusSpellAbilityMap = data.klassBonusSpellAbilityMap;
+    this.klassCasterTypeMap = data.klassCasterTypeMap;
+  }
+
   protected buildHolders(): Holders {
     return {
       abilities: this.detailedCharacterAbilities,
@@ -204,18 +213,13 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     };
   }
 
-  protected applyLoadedData(data: Dnd35LoadedCharacterData) {
-    super.applyLoadedData(data);
-    this.skillPointAbilityId = data.skillPointAbilityId;
-    this.skillProperties = data.skillProperties;
-    this.klassLevelProperties = data.klassLevelProperties;
-    this.klassBonusSpellAbilityMap = data.klassBonusSpellAbilityMap;
-    this.klassCasterTypeMap = data.klassCasterTypeMap;
-  }
-
   /** The general feats the character has at its total level (`Dnd35LevelsHooks.countGeneralFeats`). */
   protected countGeneralFeats(totalLevel: number): number {
     return Dnd35LevelsHooks.countGeneralFeats(totalLevel);
+  }
+
+  protected createDataLoader(): DataLoader {
+    return new DetailedCharacterDataLoader(this.character);
   }
 
   private getDiagnosticsIndex() {
@@ -286,7 +290,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
    * Whether the character has a feat with this property true (FEAT_WEAPON_FINESSE: Weapon Finesse): picked, granted or
    * given by a modifier.
    */
-  protected hasFeatWith(rulesetData: CachedRulesetData, propertyType: string): boolean {
+  protected hasFeatWith(rulesetData: RulesetData, propertyType: string): boolean {
     return rulesetData.feats.some(
       (feat) =>
         (rulesetData.propertiesByEntity.get(feat.id) ?? []).some(
@@ -294,10 +298,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
         ) &&
         (this.detailedCharacterFeats.getFeat(feat.name)?.possessed ?? false),
     );
-  }
-
-  protected createDataLoader(): DataLoader {
-    return new DetailedCharacterDataLoader(this.character);
   }
 
   protected normalizeData(): void {
@@ -397,7 +397,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterCombat.applyProficiencyPenalties(unproficient);
   }
 
-  protected async postModifierProcessing(rulesetData: CachedRulesetData): Promise<void> {
+  protected async postModifierProcessing(rulesetData: RulesetData): Promise<void> {
     this.detailedCharacterSpellcasting.fetchBonusCasterLevelData(
       rulesetData,
       this.klassLevels,
@@ -431,7 +431,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterSpellcasting.buildSpellTags(this.feats, this.featListIds);
   }
 
-  protected async preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void> {
+  protected async preRequirementProcessing(rulesetData: RulesetData): Promise<void> {
     this.detailedCharacterSpellcasting.loadClassLists(rulesetData);
     this.detailedCharacterSpellcasting.initCasterLevels(this.modifiers, this.klassCasterTypeMap);
     // Possession modifiers have given their feats: a finessed weapon's attack is what requirements read
@@ -439,6 +439,18 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterCombat.applyOversizedTwoWeaponFighting(
       this.hasFeatWith(rulesetData, FEAT_OVERSIZED_TWO_WEAPON_FIGHTING),
     );
+  }
+
+  evaluateWithProjectedLevel(
+    klassName: string,
+    klassLevel: KlassLevel,
+    characterLevel: CharacterLevel,
+    requirementGroups: Requirement[][],
+  ): boolean {
+    this.detailedCharacterClasses.addProjectedLevel(klassName, klassLevel, characterLevel);
+    const result = this.areRequirementsMet(requirementGroups);
+    this.detailedCharacterClasses.removeProjectedLevel(klassName);
+    return result;
   }
 
   getDetailedCharacterArmors() {
@@ -477,16 +489,16 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     return this.detailedCharacterWeapons;
   }
 
+  getSpellcasting(): { arcane: number; divine: number } {
+    return this.detailedCharacterSpellcasting.getSpellcasting();
+  }
+
   getSpellTagLists() {
     return this.detailedCharacterSpellcasting.getSpellTagLists();
   }
 
   getSpellTags() {
     return this.detailedCharacterSpellcasting.getSpellTags();
-  }
-
-  getSpellcasting(): { arcane: number; divine: number } {
-    return this.detailedCharacterSpellcasting.getSpellcasting();
   }
 
   getVirtuallyPossessedPowerIds() {
@@ -600,18 +612,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       ...baseResult.issues.slice(aptitudeEndIndex),
     ];
     return { valid: issues.length === 0, issues };
-  }
-
-  evaluateWithProjectedLevel(
-    klassName: string,
-    klassLevel: KlassLevel,
-    characterLevel: CharacterLevel,
-    requirementGroups: Requirement[][],
-  ): boolean {
-    this.detailedCharacterClasses.addProjectedLevel(klassName, klassLevel, characterLevel);
-    const result = this.areRequirementsMet(requirementGroups);
-    this.detailedCharacterClasses.removeProjectedLevel(klassName);
-    return result;
   }
 
   async build(

@@ -7,38 +7,6 @@ import { KnownPowers } from "./spellcasting/KnownPowers.ts";
 import SpellcastingState from "./spellcasting/SpellcastingState.ts";
 
 class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCasterLevels, KnownPowers) {
-  /**
-   * Lightweight init: sets spellcasting.arcane/divine based on caster type presence. Called before modifiers so
-   * requirements like Scribe Scroll can check spellcasting.arcane >= 1.
-   */
-  initCasterLevels(modifiers: Modifier[], klassCasterTypeMap: Map<string, "Arcane" | "Divine">) {
-    // Build a map of spell aptitude key → caster type by scanning character classes.
-    const spellAptitudeToCasterType = new Map<string, "Arcane" | "Divine">();
-    const characterClasses = this.classes.getCharacterClasses();
-    for (const [className, klassData] of Object.entries(characterClasses)) {
-      const casterType = klassCasterTypeMap.get(klassData.klass.id);
-      if (!casterType) continue;
-      for (const list of this.spellListsOf(className)) spellAptitudeToCasterType.set(list, casterType);
-    }
-
-    // Scan modifiers for spell slot targets (aptitudes.<spellAptKey>.<level>.allowed)
-    // to determine max spell level per caster type before modifiers are applied.
-    let maxArcane = 0;
-    let maxDivine = 0;
-    for (const mod of modifiers) {
-      const parts = mod.target.split(".");
-      if (parts.length !== 4 || parts[0] !== "aptitudes" || parts[3] !== "allowed") continue;
-      const casterType = spellAptitudeToCasterType.get(parts[1]);
-      if (!casterType) continue;
-      const spellLevel = Number(parts[2]);
-      if (Number.isNaN(spellLevel)) continue;
-      if (casterType === "Arcane") maxArcane = Math.max(maxArcane, spellLevel);
-      else maxDivine = Math.max(maxDivine, spellLevel);
-    }
-
-    this.casterLevels = { arcane: maxArcane, divine: maxDivine };
-  }
-
   applyBonusSpellsFromAbilities(klassBonusSpellAbilityMap: Map<string, string>) {
     const characterClasses = this.classes.getCharacterClasses();
     const aptitudes = this.aptitudes.getAptitudes();
@@ -66,11 +34,6 @@ class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCast
         }
       }
     }
-  }
-
-  /** The highest arcane and divine spell levels the character casts: the `spellcasting` holder's, its target paths'. */
-  getSpellcasting(): { arcane: number; divine: number } {
-    return this.casterLevels;
   }
 
   /** Full computation: scans spell aptitude data for actual max spell levels. */
@@ -103,6 +66,43 @@ class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCast
         if (casterType === "Arcane") maxArcane = Math.max(maxArcane, maxLevel);
         else maxDivine = Math.max(maxDivine, maxLevel);
       }
+    }
+
+    this.casterLevels = { arcane: maxArcane, divine: maxDivine };
+  }
+
+  /** The highest arcane and divine spell levels the character casts: the `spellcasting` holder's, its target paths'. */
+  getSpellcasting(): { arcane: number; divine: number } {
+    return this.casterLevels;
+  }
+
+  /**
+   * Lightweight init: sets spellcasting.arcane/divine based on caster type presence. Called before modifiers so
+   * requirements like Scribe Scroll can check spellcasting.arcane >= 1.
+   */
+  initCasterLevels(modifiers: Modifier[], klassCasterTypeMap: Map<string, "Arcane" | "Divine">) {
+    // Build a map of spell aptitude key → caster type by scanning character classes.
+    const spellAptitudeToCasterType = new Map<string, "Arcane" | "Divine">();
+    const characterClasses = this.classes.getCharacterClasses();
+    for (const [className, klassData] of Object.entries(characterClasses)) {
+      const casterType = klassCasterTypeMap.get(klassData.klass.id);
+      if (!casterType) continue;
+      for (const list of this.spellListsOf(className)) spellAptitudeToCasterType.set(list, casterType);
+    }
+
+    // Scan modifiers for spell slot targets (aptitudes.<spellAptKey>.<level>.allowed)
+    // to determine max spell level per caster type before modifiers are applied.
+    let maxArcane = 0;
+    let maxDivine = 0;
+    for (const mod of modifiers) {
+      const parts = mod.target.split(".");
+      if (parts.length !== 4 || parts[0] !== "aptitudes" || parts[3] !== "allowed") continue;
+      const casterType = spellAptitudeToCasterType.get(parts[1]);
+      if (!casterType) continue;
+      const spellLevel = Number(parts[2]);
+      if (Number.isNaN(spellLevel)) continue;
+      if (casterType === "Arcane") maxArcane = Math.max(maxArcane, spellLevel);
+      else maxDivine = Math.max(maxDivine, spellLevel);
     }
 
     this.casterLevels = { arcane: maxArcane, divine: maxDivine };

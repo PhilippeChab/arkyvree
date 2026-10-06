@@ -5,6 +5,10 @@ import type { FieldError } from "react-hook-form";
 import { AnimatedAlert } from "./AnimatedAlert.tsx";
 import { ScrollSafeListbox } from "./ScrollSafeListbox.tsx";
 
+interface BaseRulesetAlertProps {
+  ruleset: PickableRuleset | null;
+}
+
 interface PickableRuleset {
   id: string;
   name: string;
@@ -27,10 +31,6 @@ interface RulesetPickerProps<R extends PickableRuleset> {
   error?: FieldError;
   /** The Controller's `field.ref`, so a failed submit focuses the input. */
   inputRef?: Ref<HTMLInputElement>;
-}
-
-interface BaseRulesetAlertProps {
-  ruleset: PickableRuleset | null;
 }
 
 /** The warning shown once a base ruleset is picked: it can't be edited until forked. */

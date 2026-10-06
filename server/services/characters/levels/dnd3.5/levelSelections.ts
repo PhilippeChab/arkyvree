@@ -2,7 +2,7 @@
  * An existing character level's saved selections.
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -22,7 +22,7 @@ import { resolveAptitudeModifiers } from "./featPicks.ts";
 type AptitudeModifier = { aptitudeId: string; value: number; operator: string };
 
 /** A level's picked feats by pool, each with the pools its modifiers add slots to. */
-function featSelections(levelFeats: { featId: string; aptitudeId: string }[], rulesetData: CachedRulesetData) {
+function featSelections(levelFeats: { featId: string; aptitudeId: string }[], rulesetData: RulesetData) {
   const aptitudeModByFeat =
     levelFeats.length > 0
       ? resolveAptitudeModifiers(
@@ -49,7 +49,7 @@ function featSelections(levelFeats: { featId: string; aptitudeId: string }[], ru
 }
 
 /** A level's picked powers by pool, each with its spell level in the pool when it has one. */
-function powerSelections(levelPowers: { powerId: string; aptitudeId: string }[], rulesetData: CachedRulesetData) {
+function powerSelections(levelPowers: { powerId: string; aptitudeId: string }[], rulesetData: RulesetData) {
   // All IDs are post-COW on both sides.
   const powerLevelMap = buildPowerLevelLookup(
     rulesetData,

@@ -5,10 +5,6 @@
 
 import { type BabType, type ClassReference, type SaveType } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
-function goodSave(level: number): number {
-  return Math.floor(level / 2) + 2;
-}
-
 function detectSave(
   progression: ClassReference["raw"]["progression"],
   key: "fortSave" | "refSave" | "willSave",
@@ -17,6 +13,10 @@ function detectSave(
   const level = last.level;
   if (last[key] === goodSave(level)) return "good";
   return "poor";
+}
+
+function goodSave(level: number): number {
+  return Math.floor(level / 2) + 2;
 }
 
 function parseSpellSlotString(s: string): number[] {

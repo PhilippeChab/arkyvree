@@ -58,6 +58,14 @@ export interface DataTableColumn {
   hideOnMobile?: boolean;
 }
 
+/** What an empty table shows */
+export interface DataTableEmpty {
+  icon?: ElementType;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}
+
 /** One of a row's actions: an icon button its label names. */
 export interface RowAction {
   label: string;
@@ -65,14 +73,6 @@ export interface RowAction {
   onClick: () => void;
   color?: "primary" | "warning" | "error";
   disabled?: boolean;
-}
-
-/** What an empty table shows */
-export interface DataTableEmpty {
-  icon?: ElementType;
-  title: string;
-  description?: string;
-  action?: ReactNode;
 }
 
 /** A row's actions, laid over its last cell. */

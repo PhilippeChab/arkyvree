@@ -74,45 +74,32 @@
 
 import { repoPath } from "./paths.mjs";
 
-/** The props an input takes its value through. */
-const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
+/** The border shorthands, which the theme writes from a width (`border: 1` is `1px solid`) */
+const BORDER_SIDES = new Set(["border", "borderBottom", "borderLeft", "borderRight", "borderTop"]);
 
-/** The hooks whose callback is an effect. */
-const EFFECTS = new Set(["useEffect", "useLayoutEffect"]);
+/** A button's look by its intent, as `docs/ui-buttons.md` sets it: the verb its label starts with picks the row */
+// oxfmt-ignore
+const BUTTON_INTENTS = [
+  { verbs: ["Delete", "Remove", "Reject", "Revoke", "Unsubscribe", "Unlink"], variant: "contained", color: "error" },
+  { verbs: ["Archive", "Leave"], variant: "contained", color: "warning" },
+  { verbs: ["Publish", "Accept", "Unarchive", "Restore"], variant: "contained", color: "success" },
+  { verbs: ["Cancel", "Close", "Dismiss"], variant: "outlined", color: "inherit" },
+];
 
-/** The form writes an effect never makes, but `useFormSync`'s. */
-const FIELD_WRITES = new Set(["setValue", "resetField", "reset"]);
+/** What a card renders: a container that opens on click and holds content of its own, so it can't be a link */
+const CARDS = new Set(["ListCard", "StyledCard"]);
 
-/** The requests an `rpc` endpoint makes. */
-const REQUEST_METHODS = new Set(["$get", "$post", "$put", "$patch", "$delete"]);
-
-/** The ways to write a date that `lib/formatDate.ts` keeps to itself. */
-const DATE_FORMATTERS = new Set(["toLocaleDateString", "toLocaleTimeString"]);
-
-/** The packages that export MUI's `styled` */
-const STYLED_SOURCES = new Set(["@mui/material", "@mui/material/styles", "@mui/system"]);
-
-/** The components that show an error in an `Alert`: a load failure, the auth pages' form error, and the toast. */
-const ERROR_ALERT_FILES = new Set([
-  "client/src/components/common/LoadError.tsx",
-  "client/src/components/auth/AuthLayout.tsx",
-  "client/src/contexts/ToastContext.tsx",
-]);
-
-/** A color written out: a hex color, or an `rgb()` / `hsl()` of numbers (`rgba(var(--…))` reads the theme's) */
-const HEX_COLOR = /(?<![\w&])#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})\b/i;
-
-/** A color function of written values (`rgba(0, 0, 0, 0.3)`, `oklch(…)`, `color(srgb …)`); `rgba(var(--…))` reads the theme's */
-const COLOR_FUNCTION = /\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(\s*[\d.]|\bcolor\(\s*[a-z-]+\s+[\d.]/i;
-
-/** A style value that holds a color: a gradient, a shadow, a border */
-const COLOR_CONTEXT = /gradient\(|shadow\(|\bsolid\b|\bdashed\b|\dpx\b/;
+/** The style keys that color a chip, which its `color` prop sets */
+const CHIP_COLOR_KEYS = new Set(["background", "backgroundColor", "bgcolor", "borderColor", "color"]);
 
 /** The JSX attributes that take a color (`<path fill="…">`): any other attribute's hex text isn't one (`href="#add"`) */
 const COLOR_ATTRIBUTES = new Set(["bgcolor", "color", "fill", "stopColor", "stroke"]);
 
-/** A hex alpha appended to a color: the text that follows `${color}` in `${color}40` */
-const HEX_ALPHA_SUFFIX = /^[0-9a-f]{2}(?![\w])/i;
+/** A style value that holds a color: a gradient, a shadow, a border */
+const COLOR_CONTEXT = /gradient\(|shadow\(|\bsolid\b|\bdashed\b|\dpx\b/;
+
+/** A color function of written values (`rgba(0, 0, 0, 0.3)`, `oklch(…)`, `color(srgb …)`); `rgba(var(--…))` reads the theme's */
+const COLOR_FUNCTION = /\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(\s*[\d.]|\bcolor\(\s*[a-z-]+\s+[\d.]/i;
 
 /** The style properties that take a color */
 const COLOR_PROPERTIES = new Set([
@@ -137,6 +124,9 @@ const COLOR_PROPERTIES = new Set([
   "textDecorationColor",
 ]);
 
+/** The wrappers a component is declared in (`memo(function Row(…) {…})`) */
+const COMPONENT_WRAPPERS = new Set(["forwardRef", "memo"]);
+
 /** CSS's color names, which a style never writes: the theme names its colors (`common.white`) */
 // oxfmt-ignore
 const CSS_COLOR_NAMES = new Set([
@@ -160,11 +150,27 @@ const CSS_COLOR_NAMES = new Set([
   "yellowgreen",
 ]);
 
-/** The wrappers a component is declared in (`memo(function Row(…) {…})`) */
-const COMPONENT_WRAPPERS = new Set(["forwardRef", "memo"]);
+/** The ways to write a date that `lib/formatDate.ts` keeps to itself. */
+const DATE_FORMATTERS = new Set(["toLocaleDateString", "toLocaleTimeString"]);
 
-/** What a card renders: a container that opens on click and holds content of its own, so it can't be a link */
-const CARDS = new Set(["ListCard", "StyledCard"]);
+/** The hooks whose callback is an effect. */
+const EFFECTS = new Set(["useEffect", "useLayoutEffect"]);
+
+/** The components that show an error in an `Alert`: a load failure, the auth pages' form error, and the toast. */
+const ERROR_ALERT_FILES = new Set([
+  "client/src/components/common/LoadError.tsx",
+  "client/src/components/auth/AuthLayout.tsx",
+  "client/src/contexts/ToastContext.tsx",
+]);
+
+/** The form writes an effect never makes, but `useFormSync`'s. */
+const FIELD_WRITES = new Set(["setValue", "resetField", "reset"]);
+
+/** A hex alpha appended to a color: the text that follows `${color}` in `${color}40` */
+const HEX_ALPHA_SUFFIX = /^[0-9a-f]{2}(?![\w])/i;
+
+/** A color written out: a hex color, or an `rgb()` / `hsl()` of numbers (`rgba(var(--…))` reads the theme's) */
+const HEX_COLOR = /(?<![\w&])#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})\b/i;
 
 /** TypeScript's and React's type builders: a props type built with one in a component's signature is written in place */
 const IN_PLACE_TYPES = new Set([
@@ -178,6 +184,18 @@ const IN_PLACE_TYPES = new Set([
   "Required",
 ]);
 
+/** `Intl`'s date formatters */
+const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
+
+/** The props that hold an action's label or a dialog's title */
+const LABEL_PROPS = new Set(["backLabel", "confirmLabel", "label", "submitLabel"]);
+
+/** The elements whose text is an action's label: a button, a menu item */
+const LABELLED = new Set(["ActionMenuItem", "Button", "MenuItem"]);
+
+/** A time or an easing written out: `200ms`, `0.3s`, `ease-in-out`, `cubic-bezier(…)` */
+const MOTION_LITERAL = /\d(?:\.\d+)?m?s\b|\b(?:ease(?:-in|-out|-in-out)?|linear|steps)\b|cubic-bezier\(/;
+
 /** The style properties that time a change */
 const MOTION_PROPERTIES = new Set([
   "animation",
@@ -190,17 +208,31 @@ const MOTION_PROPERTIES = new Set([
   "transitionTimingFunction",
 ]);
 
-/** A time or an easing written out: `200ms`, `0.3s`, `ease-in-out`, `cubic-bezier(…)` */
-const MOTION_LITERAL = /\d(?:\.\d+)?m?s\b|\b(?:ease(?:-in|-out|-in-out)?|linear|steps)\b|cubic-bezier\(/;
-
-/** The border shorthands, which the theme writes from a width (`border: 1` is `1px solid`) */
-const BORDER_SIDES = new Set(["border", "borderBottom", "borderLeft", "borderRight", "borderTop"]);
-
-/** The props the theme sets for every instance of a component (`MuiTooltip`'s and `MuiCollapse`'s `defaultProps`) */
-const THEME_DEFAULTS = { Collapse: new Set(["timeout"]), Tooltip: new Set(["arrow", "enterDelay", "enterNextDelay"]) };
-
 /** MUI's transitions a component never runs itself: a page fades in with `PageTransition`, a block opens with `Collapse` */
 const MUI_TRANSITIONS = new Set(["Fade", "Grow", "Slide", "Zoom"]);
+
+/** The requests an `rpc` endpoint makes. */
+const REQUEST_METHODS = new Set(["$get", "$post", "$put", "$patch", "$delete"]);
+
+/** The words a Title Case label leaves lowercase */
+const SMALL_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "as",
+  "at",
+  "by",
+  "for",
+  "from",
+  "in",
+  "of",
+  "on",
+  "or",
+  "the",
+  "to",
+  "vs",
+  "with",
+]);
 
 /** The theme-spaced style keys, which take its units (`mt: 2`), never pixels */
 const SPACING_KEYS = new Set([
@@ -231,51 +263,14 @@ const SPACING_KEYS = new Set([
   "paddingTop",
 ]);
 
-/** The elements whose text is an action's label: a button, a menu item */
-const LABELLED = new Set(["ActionMenuItem", "Button", "MenuItem"]);
+/** The packages that export MUI's `styled` */
+const STYLED_SOURCES = new Set(["@mui/material", "@mui/material/styles", "@mui/system"]);
 
-/** The props that hold an action's label or a dialog's title */
-const LABEL_PROPS = new Set(["backLabel", "confirmLabel", "label", "submitLabel"]);
+/** The props the theme sets for every instance of a component (`MuiTooltip`'s and `MuiCollapse`'s `defaultProps`) */
+const THEME_DEFAULTS = { Collapse: new Set(["timeout"]), Tooltip: new Set(["arrow", "enterDelay", "enterNextDelay"]) };
 
-/** The words a Title Case label leaves lowercase */
-const SMALL_WORDS = new Set([
-  "a",
-  "an",
-  "and",
-  "as",
-  "at",
-  "by",
-  "for",
-  "from",
-  "in",
-  "of",
-  "on",
-  "or",
-  "the",
-  "to",
-  "vs",
-  "with",
-]);
-
-/** A button's look by its intent, as `docs/ui-buttons.md` sets it: the verb its label starts with picks the row */
-// oxfmt-ignore
-const BUTTON_INTENTS = [
-  { verbs: ["Delete", "Remove", "Reject", "Revoke", "Unsubscribe", "Unlink"], variant: "contained", color: "error" },
-  { verbs: ["Archive", "Leave"], variant: "contained", color: "warning" },
-  { verbs: ["Publish", "Accept", "Unarchive", "Restore"], variant: "contained", color: "success" },
-  { verbs: ["Cancel", "Close", "Dismiss"], variant: "outlined", color: "inherit" },
-];
-
-/** `Intl`'s date formatters */
-const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
-
-/** The style keys that color a chip, which its `color` prop sets */
-const CHIP_COLOR_KEYS = new Set(["background", "backgroundColor", "bgcolor", "borderColor", "color"]);
-
-/** Whether a JSX element has the attribute `name`. */
-function hasAttribute(node, name) {
-  return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
-}
+/** The props an input takes its value through. */
+const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
 
 /** The string a JSX attribute holds, when it's written out (`variant="outlined"`). */
 function attributeText(element, name) {
@@ -292,63 +287,78 @@ function calleeName(node) {
   return null;
 }
 
-/** A JSX element's name: `IconButton`, `Dialog`. */
-function elementName(node) {
-  return node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;
+function createAccessibleIconButtons(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "IconButton") return;
+      if (hasAttribute(node, "aria-label") || hasAttribute(node, "aria-labelledby")) return;
+      // A tooltip names its child, but not with `describeChild`, which makes its title a description.
+      const parent = parentElement(node);
+      if (parent && elementName(parent) === "Tooltip" && !hasAttribute(parent, "describeChild")) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "An icon-only `IconButton` takes an `aria-label`, or a `Tooltip` right around it (not around a `<span>`).",
+      });
+    },
+  };
 }
 
-/**
- * How `pattern` binds `name`: "whole" for a form's field taken whole, its `ref` with it (`{ field }`), "bound" for any
- * other binding (`{ field: { ref, ...field } }`, a parameter), null when it doesn't bind it.
- */
-function fieldBinding(pattern, name) {
-  if (!pattern) return null;
-  switch (pattern.type) {
-    case "Identifier":
-      return pattern.name === name ? "bound" : null;
-    case "AssignmentPattern":
-      return fieldBinding(pattern.left, name);
-    case "RestElement":
-      return fieldBinding(pattern.argument, name);
-    case "ArrayPattern":
-      return pattern.elements.map((element) => fieldBinding(element, name)).find(Boolean) ?? null;
-    case "ObjectPattern":
-      for (const property of pattern.properties) {
-        const value = property.type === "RestElement" ? property : property.value;
-        const isField = property.type === "Property" && !property.computed && property.key.name === "field";
-        if (isField && value.type === "Identifier" && value.name === name) return "whole";
-        const binding = fieldBinding(value, name);
-        if (binding) return binding;
+function createApiCallsInQueries(context) {
+  if (!inClient(context)) return {};
+  return {
+    CallExpression(node) {
+      const callee = node.callee;
+      if (callee.type !== "MemberExpression" || callee.computed || !REQUEST_METHODS.has(callee.property.name)) return;
+      if (!fromRpc(callee) || inQueryFunction(node)) return;
+      context.report({
+        node,
+        message:
+          "The API is called through TanStack Query: make this request in a function a query or a mutation runs, named " +
+          "`…Fn` (a `queryFn`, a `mutationFn`, or a hook's `createFn` that becomes one), never on its own.",
+      });
+    },
+  };
+}
+
+function createBorders(context) {
+  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
+  return {
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      if (BORDER_SIDES.has(key)) {
+        const written = styleValues(node.value).some(
+          (value) =>
+            (value.type === "Literal" && typeof value.value === "string" && value.value !== "none") ||
+            value.type === "TemplateLiteral",
+        );
+        if (written) {
+          context.report({
+            node: node.value,
+            message:
+              "A border is the theme's shorthand: a width (`border: 1`, `borderLeft: 3`), its color in `borderColor`, " +
+              'its style in `borderStyle`: never `"1px solid …"`.',
+          });
+        }
       }
-      return null;
-    default:
-      return null;
-  }
-}
-
-/** Whether a member chain starts at `rpc`: `rpc.api.rulesets[":id"].$get`. */
-function fromRpc(node) {
-  let object = node;
-  while (object.type === "MemberExpression") object = object.object;
-  return object.type === "Identifier" && object.name === "rpc";
-}
-
-/** The heading variants a style object's `typography` takes, responsive ones included (`{ xs: "h6", sm: "h5" }`). */
-function headingVariants(object) {
-  const typography =
-    object?.type === "ObjectExpression"
-      ? object.properties.find(
-          (p) => p.type === "Property" && p.key.type === "Identifier" && p.key.name === "typography",
-        )
-      : null;
-  if (!typography) return [];
-  const values =
-    typography.value.type === "ObjectExpression" ? typography.value.properties.map((p) => p.value) : [typography.value];
-  return values.filter((v) => v?.type === "Literal" && /^h[1-6]$/.test(v.value));
-}
-
-function inClient(context) {
-  return repoPath(context.filename).startsWith("client/src/");
+      const surface = node.parent.type === "ObjectExpression" ? sxElement(node.parent) : null;
+      if (surface !== "Paper" && surface !== "Card") return;
+      if (key === "boxShadow" && node.value.type === "Literal" && typeof node.value.value === "number") {
+        context.report({
+          node,
+          message: "A `Paper` or a `Card` takes its elevation as `elevation`, never `sx` `boxShadow`.",
+        });
+      }
+      if (key === "border" || key === "borderWidth" || key === "borderStyle") {
+        context.report({
+          node,
+          message:
+            'A `Paper` or a `Card` is outlined by `variant="outlined"` (or the theme\'s card), never an `sx` border.',
+        });
+      }
+    },
+  };
 }
 
 function createBrowserStorage(context) {
@@ -460,6 +470,31 @@ function createComponentDefaults(context) {
   };
 }
 
+function createComponentProps(context) {
+  if (!inClient(context)) return {};
+  const check = (fn) => {
+    const type = fn.params[0]?.typeAnnotation?.typeAnnotation;
+    if (!type || (type.type === "TSTypeReference" && !IN_PLACE_TYPES.has(referenceName(type.typeName)))) return;
+    context.report({
+      node: type,
+      message:
+        "A component's props are one named type: its own (`interface XProps`, `type XProps = Omit<…>`) or one its " +
+        "family shares (`RulesetSectionProps`), never written in place.",
+    });
+  };
+  return {
+    FunctionDeclaration(node) {
+      if (/^[A-Z]/.test(node.id?.name ?? "")) check(node);
+    },
+    CallExpression(node) {
+      const callee = node.callee.type === "MemberExpression" ? node.callee.property : node.callee;
+      const component = node.arguments[0];
+      const isFunction = component?.type === "FunctionExpression" || component?.type === "ArrowFunctionExpression";
+      if (callee.type === "Identifier" && COMPONENT_WRAPPERS.has(callee.name) && isFunction) check(component);
+    },
+  };
+}
+
 function createConfirmWording(context) {
   if (!inClient(context)) return {};
   return {
@@ -483,6 +518,61 @@ function createConfirmWording(context) {
         message:
           'A confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends "This action ' +
           'cannot be undone."',
+      });
+    },
+  };
+}
+
+function createControlledInputs(context) {
+  if (!inClient(context)) return {};
+  // What a file reads with `watch`, held in a variable
+  const watched = new Set();
+  return {
+    ImportSpecifier(node) {
+      if (node.parent.source.value !== "react-hook-form" || node.imported.name !== "useForm") return;
+      if (repoPath(context.filename) === "client/src/hooks/useFormWith.ts") return;
+      context.report({
+        node,
+        message:
+          "A form starts every field with a value: make it with `useFormWith(defaultValues)` (`client/src/hooks`), " +
+          "whose values TypeScript checks are whole, not `useForm`.",
+      });
+    },
+    CallExpression(node) {
+      const callee = node.callee;
+      const isRegister =
+        (callee.type === "Identifier" && callee.name === "register") ||
+        (callee.type === "MemberExpression" && callee.property.name === "register");
+      if (!isRegister) return;
+      context.report({
+        node,
+        message:
+          "A form's field is bound through `useController` (the shared fields, `FormTextField`, `Controller`), never " +
+          "`register`: every input is controlled.",
+      });
+    },
+    VariableDeclarator(node) {
+      if (node.id.type === "Identifier" && readsWatch(node.init)) watched.add(node.id.name);
+    },
+    JSXSpreadAttribute(node) {
+      if (node.argument.type !== "Identifier" || !spreadsWholeField(node, node.argument.name)) return;
+      context.report({
+        node,
+        message:
+          "A form's field reaches its input through `inputRef` (`field: { ref, ...field }`, as `FormTextField` and " +
+          "`SelectField` take it): spread whole, its `ref` lands on the component's root, so a failed submit can't " +
+          "focus the input.",
+      });
+    },
+    JSXAttribute(node) {
+      if (node.name.type !== "JSXIdentifier" || !VALUE_PROPS.has(node.name.name)) return;
+      const expression = node.value?.type === "JSXExpressionContainer" ? node.value.expression : null;
+      if (!expression || !(readsWatch(expression) || namesOne(expression, watched))) return;
+      context.report({
+        node,
+        message:
+          "An input's value is its field's (`useController`), never one `watch` reads: the field binds its value and " +
+          "its change.",
       });
     },
   };
@@ -514,6 +604,120 @@ function createDateFormats(context) {
     VariableDeclarator(node) {
       if (node.init?.type !== "Identifier" || node.init.name !== "Intl" || node.id.type !== "ObjectPattern") return;
       if (node.id.properties.some((p) => p.type === "Property" && INTL_DATE_FORMATS.has(p.key.name))) report(node);
+    },
+  };
+}
+
+function createDialogConventions(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXElement(node) {
+      const name = elementName(node);
+      if (name === "Dialog" && !hasAttribute(node, "fullScreen")) {
+        context.report({
+          node: node.openingElement,
+          message: "A `Dialog` goes full screen on a phone: `fullScreen={isMobile}`.",
+        });
+      }
+      // component="form", or component={"form"}
+      const valueOf = (a) => (a.value?.type === "JSXExpressionContainer" ? a.value.expression.value : a.value?.value);
+      const isForm =
+        name === "form" ||
+        node.openingElement.attributes.some(
+          (a) => a.type === "JSXAttribute" && a.name.name === "component" && valueOf(a) === "form",
+        );
+      if (!isForm) return;
+      for (let p = parentElement(node); p; p = parentElement(p)) {
+        if (elementName(p) === "Modal") {
+          context.report({
+            node: node.openingElement,
+            message:
+              "A form goes in a `FormDialog` (or `CreateDialog` / `EditDialog`), never a `Modal`: it would close and lose a dirty form.",
+          });
+          return;
+        }
+      }
+    },
+  };
+}
+
+function createEffectWrites(context) {
+  if (!inClient(context)) return {};
+  const syncsForms = repoPath(context.filename) === "client/src/hooks/useFormSync.ts";
+  // A write taken under another name: `const { setValue: setPick } = form`
+  const writes = new Set(FIELD_WRITES);
+  return {
+    Property(node) {
+      if (node.parent.type !== "ObjectPattern" || node.key.type !== "Identifier") return;
+      if (FIELD_WRITES.has(node.key.name) && node.value.type === "Identifier") writes.add(node.value.name);
+    },
+    CallExpression(node) {
+      const name = calleeName(node);
+      if (!name || !inEffect(node)) return;
+      if (writes.has(name) && !syncsForms) {
+        context.report({
+          node,
+          message:
+            "An effect never writes a form's field: write it in the event that causes the change, derive what follows " +
+            "from data as the component renders, and sync a form with the server through `useFormSync`.",
+        });
+      } else if (name === "navigate") {
+        context.report({
+          node,
+          message:
+            "An effect never navigates: a redirect is rendered (`<Navigate to={…} replace />`), and a move the user " +
+            "makes happens in its event.",
+        });
+      } else if (/^on[A-Z]/.test(name) || name === "current") {
+        context.report({
+          node,
+          message:
+            "An effect never calls back its owner (an `on…` prop, a callback a ref holds): call it in the event that " +
+            "causes it, or let the owner derive what it needs.",
+        });
+      }
+    },
+  };
+}
+
+function createErrorAlerts(context) {
+  if (!inClient(context) || ERROR_ALERT_FILES.has(repoPath(context.filename))) return {};
+  return {
+    JSXElement(node) {
+      if (!["Alert", "AnimatedAlert"].includes(elementName(node))) return;
+      const colors = node.openingElement.attributes.filter(
+        (a) => a.type === "JSXAttribute" && ["severity", "color"].includes(a.name.name),
+      );
+      if (!colors.some((a) => (writtenString(a) ?? "error") === "error")) return;
+      context.report({
+        node,
+        message:
+          "An error reaches the user one way per kind: a load failure is a `LoadError`, a page that can't show a " +
+          "`PageError`, a failed action a toast (`snackbar.error`), a wrong value its field's error: never an error " +
+          "`Alert` of its own. An `Alert` writes out its `severity` and `color`, so this can read them.",
+      });
+    },
+  };
+}
+
+function createFlexLayout(context) {
+  if (!inClient(context)) return {};
+  return {
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      if (key !== "display" && key !== "gap" && key !== "flexDirection") return;
+      const owner = node.parent.type === "ObjectExpression" ? sxOwner(node.parent) : null;
+      if (owner === "Box" && key === "display" && showsFlex(node.value)) {
+        context.report({
+          node,
+          message:
+            "A flex container is a `Stack` (`direction`, `spacing`; the rest in `sx`), never a `Box` with a flex " +
+            "`display`.",
+        });
+      }
+      if (owner === "Stack" && key !== "display") {
+        context.report({ node, message: "A `Stack` takes its `direction` and `spacing` as props, never `sx`." });
+      }
     },
   };
 }
@@ -551,6 +755,105 @@ function createIcons(context) {
         message:
           "An icon comes from `components/icons`, named for what it means (`ContributorsIcon`), so a meaning has one " +
           "icon: never from `@mui/icons-material`.",
+      });
+    },
+  };
+}
+
+function createLabelCase(context) {
+  if (!inClient(context)) return {};
+  const report = (node, text) =>
+    context.report({
+      node,
+      message: `A button's, a menu item's and a dialog's words are in Title Case ("Mark All as Read"): "${text.trim()}".`,
+    });
+  return {
+    JSXText(node) {
+      const parent = node.parent;
+      const owner = parent.type === "JSXElement" ? elementName(parent) : null;
+      const labels = LABELLED.has(owner) || owner === "DialogTitle";
+      if (labels && /[a-z]/i.test(node.value) && !inTitleCase(node.value)) report(node, node.value);
+    },
+    JSXAttribute(node) {
+      if (node.value?.type !== "Literal" || typeof node.value.value !== "string") return;
+      const element = elementName(node.parent.parent) ?? "";
+      const dialogTitle = node.name.name === "title" && /(Dialog|^Modal)$/.test(element);
+      const label = LABEL_PROPS.has(node.name.name) && (LABELLED.has(element) || /(Dialog|^Modal)$/.test(element));
+      if ((dialogTitle || label) && !inTitleCase(node.value.value)) report(node, node.value.value);
+    },
+  };
+}
+
+function createMotion(context) {
+  if (!inClient(context) || repoPath(context.filename) === "client/src/lib/animations.ts") return {};
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        "Motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS.diceRoll`), a transition of its " +
+        'tokens (`transitionOf(["opacity"], DURATION.fast)`), or a template of `DURATION` / `EASING`. No time, ' +
+        "easing or keyframes written elsewhere.",
+    });
+  return {
+    ImportSpecifier(node) {
+      if (node.imported.name === "keyframes") report(node);
+      const inTheme = repoPath(context.filename).startsWith("client/src/theme/");
+      if (MUI_TRANSITIONS.has(node.imported.name) && node.parent.source.value === "@mui/material" && !inTheme)
+        report(node);
+    },
+    Literal(node) {
+      if (typeof node.value === "string" && node.value.includes("cubic-bezier(")) report(node);
+    },
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : node.key.type === "Literal" ? node.key.value : null;
+      if (typeof key === "string" && key.startsWith("@keyframes")) return report(node);
+      if (!MOTION_PROPERTIES.has(key)) return;
+      const value = node.value;
+      if (value.type === "Literal" && typeof value.value === "string" && value.value !== "none") report(value);
+      if (value.type === "TemplateLiteral" && timesItself(value, context.sourceCode)) report(value);
+    },
+  };
+}
+
+function createNavLinks(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXAttribute(node) {
+      if (node.name.name !== "onClick" || CARDS.has(elementName(node.parent.parent))) return;
+      if (node.value?.type !== "JSXExpressionContainer" || !onlyNavigates(node.value.expression)) return;
+      context.report({
+        node,
+        message:
+          'A control that only navigates is a link: `component={Link} to="…"` (a page\'s way back too: `backTo`), ' +
+          "so it opens in a new tab and reads as a link. A card, which holds content of its own, opens on click.",
+      });
+    },
+    ImportSpecifier(node) {
+      if (node.imported.name !== "Link") return;
+      const source = node.parent.source.value;
+      const expected = source === "@mui/material" ? "MuiLink" : source === "react-router-dom" ? "Link" : null;
+      if (!expected || node.local.name === expected) return;
+      context.report({
+        node,
+        message: "React Router's `Link` is imported as `Link`, MUI's as `MuiLink`: one name for each, in every file.",
+      });
+    },
+  };
+}
+
+function createPageErrors(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXAttribute(node) {
+      const element = elementName(node.parent.parent);
+      if (node.name.name !== "message" || (element !== "PageError" && element !== "EntityPageError")) return;
+      const value = node.value?.type === "JSXExpressionContainer" ? node.value.expression : node.value;
+      if (worded(value)) return;
+      context.report({
+        node,
+        message:
+          "A page that couldn't load says why in `loadFailureMessage`'s words (`loadFailureMessage(\"Campaign\", " +
+          "error)`): not found, no access, or failed.",
       });
     },
   };
@@ -624,6 +927,68 @@ function createShape(context) {
   };
 }
 
+function createSxStyles(context) {
+  if (!inClient(context)) return {};
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        "A style is written with `sx`: never `styled()`, no stylesheet but the global one `main.tsx` loads, and " +
+        "`style` only passes on one a component is given (`{ ...props.style }`).",
+    });
+  // What a file imports MUI's packages whole as (`import * as M from "@mui/material"`), whose `M.styled` it reports
+  const namespaces = new Set();
+  return {
+    ImportDeclaration(node) {
+      const source = node.source.value;
+      const stylesheet = source.endsWith(".css") && repoPath(context.filename) !== "client/src/main.tsx";
+      const styled = node.specifiers.some((s) => s.type === "ImportSpecifier" && s.imported.name === "styled");
+      if (stylesheet || source === "@emotion/styled" || (STYLED_SOURCES.has(source) && styled)) report(node);
+      if (!STYLED_SOURCES.has(source)) return;
+      for (const specifier of node.specifiers) {
+        if (specifier.type !== "ImportSpecifier") namespaces.add(specifier.local.name);
+      }
+    },
+    MemberExpression(node) {
+      const ofNamespace = node.object.type === "Identifier" && namespaces.has(node.object.name);
+      if (ofNamespace && !node.computed && node.property.name === "styled") report(node);
+    },
+    JSXAttribute(node) {
+      if (node.name.type !== "JSXIdentifier" || node.name.name !== "style") return;
+      const value = node.value?.type === "JSXExpressionContainer" ? node.value.expression : null;
+      if (!passesStyleOn(value)) report(node);
+    },
+    Property(node) {
+      if (node.key.type !== "Identifier" || node.key.name !== "style" || passesStyleOn(node.value)) return;
+      for (let p = node.parent; p; p = p.parent) {
+        if (p.type === "JSXAttribute") return report(node);
+      }
+    },
+  };
+}
+
+function createTagChips(context) {
+  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/TagChip.tsx") return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "Chip") return;
+      const attributes = node.openingElement.attributes.filter((a) => a.type === "JSXAttribute");
+      if (attributes.some((a) => a.name.name === "icon")) {
+        context.report({
+          node: node.openingElement,
+          message: "A role, a status or a fact is a `TagChip` (`components/common`): its icon, its words, its color.",
+        });
+      }
+    },
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      if (!CHIP_COLOR_KEYS.has(key) || node.parent.type !== "ObjectExpression" || sxOwner(node.parent) !== "Chip")
+        return;
+      context.report({ node, message: "A chip's color is its `color` prop, never `sx`." });
+    },
+  };
+}
+
 function createThemeColors(context) {
   if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
   const report = (node) =>
@@ -682,588 +1047,6 @@ function createThemeColors(context) {
   };
 }
 
-/**
- * Whether `node` runs as an effect runs: in its callback (`useEffect(() => …)`, `useLayoutEffect`), not in a function
- * it hands on (a subscription's handler, a timer's callback, which an event calls).
- */
-function inEffect(node) {
-  for (let p = node.parent; p; p = p.parent) {
-    if (p.type === "ArrowFunctionExpression" || p.type === "FunctionExpression" || p.type === "FunctionDeclaration") {
-      const call = p.parent;
-      return call?.type === "CallExpression" && call.arguments[0] === p && EFFECTS.has(calleeName(call));
-    }
-  }
-  return false;
-}
-
-function createEffectWrites(context) {
-  if (!inClient(context)) return {};
-  const syncsForms = repoPath(context.filename) === "client/src/hooks/useFormSync.ts";
-  // A write taken under another name: `const { setValue: setPick } = form`
-  const writes = new Set(FIELD_WRITES);
-  return {
-    Property(node) {
-      if (node.parent.type !== "ObjectPattern" || node.key.type !== "Identifier") return;
-      if (FIELD_WRITES.has(node.key.name) && node.value.type === "Identifier") writes.add(node.value.name);
-    },
-    CallExpression(node) {
-      const name = calleeName(node);
-      if (!name || !inEffect(node)) return;
-      if (writes.has(name) && !syncsForms) {
-        context.report({
-          node,
-          message:
-            "An effect never writes a form's field: write it in the event that causes the change, derive what follows " +
-            "from data as the component renders, and sync a form with the server through `useFormSync`.",
-        });
-      } else if (name === "navigate") {
-        context.report({
-          node,
-          message:
-            "An effect never navigates: a redirect is rendered (`<Navigate to={…} replace />`), and a move the user " +
-            "makes happens in its event.",
-        });
-      } else if (/^on[A-Z]/.test(name) || name === "current") {
-        context.report({
-          node,
-          message:
-            "An effect never calls back its owner (an `on…` prop, a callback a ref holds): call it in the event that " +
-            "causes it, or let the owner derive what it needs.",
-        });
-      }
-    },
-  };
-}
-
-/**
- * Whether `node` is in a function a query or a mutation runs: one a property or a prop named `…Fn` holds (`queryFn`,
- * `mutationFn`, or a hook's or a component's that becomes one, as `useRulesetSection`'s `createFn`).
- */
-function inQueryFunction(node) {
-  for (let p = node.parent; p; p = p.parent) {
-    const name =
-      p.type === "Property" && p.key.type === "Identifier"
-        ? p.key.name
-        : p.type === "JSXAttribute" && p.name.type === "JSXIdentifier"
-          ? p.name.name
-          : null;
-    if (name?.endsWith("Fn")) return true;
-  }
-  return false;
-}
-
-function createApiCallsInQueries(context) {
-  if (!inClient(context)) return {};
-  return {
-    CallExpression(node) {
-      const callee = node.callee;
-      if (callee.type !== "MemberExpression" || callee.computed || !REQUEST_METHODS.has(callee.property.name)) return;
-      if (!fromRpc(callee) || inQueryFunction(node)) return;
-      context.report({
-        node,
-        message:
-          "The API is called through TanStack Query: make this request in a function a query or a mutation runs, named " +
-          "`…Fn` (a `queryFn`, a `mutationFn`, or a hook's `createFn` that becomes one), never on its own.",
-      });
-    },
-  };
-}
-
-/** Whether a label is in Title Case: every word but the small ones starts with a capital (`Mark All as Read`). */
-function inTitleCase(text) {
-  const words = text
-    .trim()
-    .split(/\s+/)
-    .filter((word) => /^[a-z]/i.test(word));
-  return words.every((word, index) => /^[A-Z0-9]/.test(word) || (index > 0 && SMALL_WORDS.has(word.toLowerCase())));
-}
-
-function createLabelCase(context) {
-  if (!inClient(context)) return {};
-  const report = (node, text) =>
-    context.report({
-      node,
-      message: `A button's, a menu item's and a dialog's words are in Title Case ("Mark All as Read"): "${text.trim()}".`,
-    });
-  return {
-    JSXText(node) {
-      const parent = node.parent;
-      const owner = parent.type === "JSXElement" ? elementName(parent) : null;
-      const labels = LABELLED.has(owner) || owner === "DialogTitle";
-      if (labels && /[a-z]/i.test(node.value) && !inTitleCase(node.value)) report(node, node.value);
-    },
-    JSXAttribute(node) {
-      if (node.value?.type !== "Literal" || typeof node.value.value !== "string") return;
-      const element = elementName(node.parent.parent) ?? "";
-      const dialogTitle = node.name.name === "title" && /(Dialog|^Modal)$/.test(element);
-      const label = LABEL_PROPS.has(node.name.name) && (LABELLED.has(element) || /(Dialog|^Modal)$/.test(element));
-      if ((dialogTitle || label) && !inTitleCase(node.value.value)) report(node, node.value.value);
-    },
-  };
-}
-
-/** Whether `node` names one of `names`. */
-function namesOne(node, names) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some((child) => namesOne(child, names));
-  if (node.type === "Identifier" && names.has(node.name)) return true;
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && namesOne(child, names),
-  );
-}
-
-/** Whether a handler only navigates to a path: `() => navigate(path)` (not `navigate(-1)`, which goes back in history). */
-function onlyNavigates(handler) {
-  if (handler?.type !== "ArrowFunctionExpression" || handler.params.length > 0) return false;
-  let call = handler.body;
-  if (call.type === "BlockStatement") {
-    if (call.body.length !== 1 || call.body[0].type !== "ExpressionStatement") return false;
-    call = call.body[0].expression;
-  }
-  const isNavigate = call.type === "CallExpression" && calleeName(call) === "navigate" && call.arguments.length === 1;
-  const [to] = call.arguments ?? [];
-  return isNavigate && !(to.type === "Literal" && typeof to.value === "number") && to.type !== "UnaryExpression";
-}
-
-function createNavLinks(context) {
-  if (!inClient(context)) return {};
-  return {
-    JSXAttribute(node) {
-      if (node.name.name !== "onClick" || CARDS.has(elementName(node.parent.parent))) return;
-      if (node.value?.type !== "JSXExpressionContainer" || !onlyNavigates(node.value.expression)) return;
-      context.report({
-        node,
-        message:
-          'A control that only navigates is a link: `component={Link} to="…"` (a page\'s way back too: `backTo`), ' +
-          "so it opens in a new tab and reads as a link. A card, which holds content of its own, opens on click.",
-      });
-    },
-    ImportSpecifier(node) {
-      if (node.imported.name !== "Link") return;
-      const source = node.parent.source.value;
-      const expected = source === "@mui/material" ? "MuiLink" : source === "react-router-dom" ? "Link" : null;
-      if (!expected || node.local.name === expected) return;
-      context.report({
-        node,
-        message: "React Router's `Link` is imported as `Link`, MUI's as `MuiLink`: one name for each, in every file.",
-      });
-    },
-  };
-}
-
-/** The nearest JSX element around `node`. */
-function parentElement(node) {
-  for (let p = node.parent; p; p = p.parent) if (p.type === "JSXElement") return p;
-  return null;
-}
-
-function createAccessibleIconButtons(context) {
-  if (!inClient(context)) return {};
-  return {
-    JSXElement(node) {
-      if (elementName(node) !== "IconButton") return;
-      if (hasAttribute(node, "aria-label") || hasAttribute(node, "aria-labelledby")) return;
-      // A tooltip names its child, but not with `describeChild`, which makes its title a description.
-      const parent = parentElement(node);
-      if (parent && elementName(parent) === "Tooltip" && !hasAttribute(parent, "describeChild")) return;
-      context.report({
-        node: node.openingElement,
-        message:
-          "An icon-only `IconButton` takes an `aria-label`, or a `Tooltip` right around it (not around a `<span>`).",
-      });
-    },
-  };
-}
-
-function createDialogConventions(context) {
-  if (!inClient(context)) return {};
-  return {
-    JSXElement(node) {
-      const name = elementName(node);
-      if (name === "Dialog" && !hasAttribute(node, "fullScreen")) {
-        context.report({
-          node: node.openingElement,
-          message: "A `Dialog` goes full screen on a phone: `fullScreen={isMobile}`.",
-        });
-      }
-      // component="form", or component={"form"}
-      const valueOf = (a) => (a.value?.type === "JSXExpressionContainer" ? a.value.expression.value : a.value?.value);
-      const isForm =
-        name === "form" ||
-        node.openingElement.attributes.some(
-          (a) => a.type === "JSXAttribute" && a.name.name === "component" && valueOf(a) === "form",
-        );
-      if (!isForm) return;
-      for (let p = parentElement(node); p; p = parentElement(p)) {
-        if (elementName(p) === "Modal") {
-          context.report({
-            node: node.openingElement,
-            message:
-              "A form goes in a `FormDialog` (or `CreateDialog` / `EditDialog`), never a `Modal`: it would close and lose a dirty form.",
-          });
-          return;
-        }
-      }
-    },
-  };
-}
-
-/** Whether a style object passes on one its component was given: `{ ...props.style, … }`. */
-function passesStyleOn(value) {
-  return (
-    value?.type === "ObjectExpression" &&
-    value.properties.some(
-      (p) =>
-        p.type === "SpreadElement" &&
-        p.argument.type === "MemberExpression" &&
-        !p.argument.computed &&
-        p.argument.property.name === "style",
-    )
-  );
-}
-
-function createSxStyles(context) {
-  if (!inClient(context)) return {};
-  const report = (node) =>
-    context.report({
-      node,
-      message:
-        "A style is written with `sx`: never `styled()`, no stylesheet but the global one `main.tsx` loads, and " +
-        "`style` only passes on one a component is given (`{ ...props.style }`).",
-    });
-  // What a file imports MUI's packages whole as (`import * as M from "@mui/material"`), whose `M.styled` it reports
-  const namespaces = new Set();
-  return {
-    ImportDeclaration(node) {
-      const source = node.source.value;
-      const stylesheet = source.endsWith(".css") && repoPath(context.filename) !== "client/src/main.tsx";
-      const styled = node.specifiers.some((s) => s.type === "ImportSpecifier" && s.imported.name === "styled");
-      if (stylesheet || source === "@emotion/styled" || (STYLED_SOURCES.has(source) && styled)) report(node);
-      if (!STYLED_SOURCES.has(source)) return;
-      for (const specifier of node.specifiers) {
-        if (specifier.type !== "ImportSpecifier") namespaces.add(specifier.local.name);
-      }
-    },
-    MemberExpression(node) {
-      const ofNamespace = node.object.type === "Identifier" && namespaces.has(node.object.name);
-      if (ofNamespace && !node.computed && node.property.name === "styled") report(node);
-    },
-    JSXAttribute(node) {
-      if (node.name.type !== "JSXIdentifier" || node.name.name !== "style") return;
-      const value = node.value?.type === "JSXExpressionContainer" ? node.value.expression : null;
-      if (!passesStyleOn(value)) report(node);
-    },
-    Property(node) {
-      if (node.key.type !== "Identifier" || node.key.name !== "style" || passesStyleOn(node.value)) return;
-      for (let p = node.parent; p; p = p.parent) {
-        if (p.type === "JSXAttribute") return report(node);
-      }
-    },
-  };
-}
-
-/** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */
-function readsWatch(node) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some(readsWatch);
-  if (node.type === "CallExpression") {
-    const callee = node.callee;
-    const name =
-      callee.type === "Identifier" ? callee.name : callee.type === "MemberExpression" ? callee.property.name : null;
-    if (name === "watch" || name === "useWatch") return true;
-  }
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsWatch(child),
-  );
-}
-
-/** The name a type reference names: `Omit` in `Omit<…>`, `ComponentProps` in `React.ComponentProps<…>`. */
-function referenceName(typeName) {
-  return typeName.type === "TSQualifiedName" ? typeName.right.name : typeName.name;
-}
-
-function createComponentProps(context) {
-  if (!inClient(context)) return {};
-  const check = (fn) => {
-    const type = fn.params[0]?.typeAnnotation?.typeAnnotation;
-    if (!type || (type.type === "TSTypeReference" && !IN_PLACE_TYPES.has(referenceName(type.typeName)))) return;
-    context.report({
-      node: type,
-      message:
-        "A component's props are one named type: its own (`interface XProps`, `type XProps = Omit<…>`) or one its " +
-        "family shares (`RulesetSectionProps`), never written in place.",
-    });
-  };
-  return {
-    FunctionDeclaration(node) {
-      if (/^[A-Z]/.test(node.id?.name ?? "")) check(node);
-    },
-    CallExpression(node) {
-      const callee = node.callee.type === "MemberExpression" ? node.callee.property : node.callee;
-      const component = node.arguments[0];
-      const isFunction = component?.type === "FunctionExpression" || component?.type === "ArrowFunctionExpression";
-      if (callee.type === "Identifier" && COMPONENT_WRAPPERS.has(callee.name) && isFunction) check(component);
-    },
-  };
-}
-
-/** Whether a `display` value lays out as flex: `"flex"`, `"inline-flex"`, or one of a responsive object's. */
-function showsFlex(value) {
-  if (value.type === "Literal") return value.value === "flex" || value.value === "inline-flex";
-  if (value.type === "ObjectExpression")
-    return value.properties.some((p) => p.type === "Property" && showsFlex(p.value));
-  return false;
-}
-
-/** Whether `name`, spread at `node`, is a form's field taken whole: bound by the nearest function or declaration that binds it. */
-function spreadsWholeField(node, name) {
-  for (let scope = node.parent; scope; scope = scope.parent) {
-    const declarations =
-      scope.type === "BlockStatement" || scope.type === "Program"
-        ? scope.body.flatMap((statement) => (statement.type === "VariableDeclaration" ? statement.declarations : []))
-        : [];
-    for (const declaration of declarations) {
-      const binding = fieldBinding(declaration.id, name);
-      if (binding) return binding === "whole";
-    }
-    const params = /Function/.test(scope.type) ? scope.params : [];
-    for (const param of params) {
-      const binding = fieldBinding(param, name);
-      if (binding) return binding === "whole";
-    }
-  }
-  return false;
-}
-
-function createControlledInputs(context) {
-  if (!inClient(context)) return {};
-  // What a file reads with `watch`, held in a variable
-  const watched = new Set();
-  return {
-    ImportSpecifier(node) {
-      if (node.parent.source.value !== "react-hook-form" || node.imported.name !== "useForm") return;
-      if (repoPath(context.filename) === "client/src/hooks/useFormWith.ts") return;
-      context.report({
-        node,
-        message:
-          "A form starts every field with a value: make it with `useFormWith(defaultValues)` (`client/src/hooks`), " +
-          "whose values TypeScript checks are whole, not `useForm`.",
-      });
-    },
-    CallExpression(node) {
-      const callee = node.callee;
-      const isRegister =
-        (callee.type === "Identifier" && callee.name === "register") ||
-        (callee.type === "MemberExpression" && callee.property.name === "register");
-      if (!isRegister) return;
-      context.report({
-        node,
-        message:
-          "A form's field is bound through `useController` (the shared fields, `FormTextField`, `Controller`), never " +
-          "`register`: every input is controlled.",
-      });
-    },
-    VariableDeclarator(node) {
-      if (node.id.type === "Identifier" && readsWatch(node.init)) watched.add(node.id.name);
-    },
-    JSXSpreadAttribute(node) {
-      if (node.argument.type !== "Identifier" || !spreadsWholeField(node, node.argument.name)) return;
-      context.report({
-        node,
-        message:
-          "A form's field reaches its input through `inputRef` (`field: { ref, ...field }`, as `FormTextField` and " +
-          "`SelectField` take it): spread whole, its `ref` lands on the component's root, so a failed submit can't " +
-          "focus the input.",
-      });
-    },
-    JSXAttribute(node) {
-      if (node.name.type !== "JSXIdentifier" || !VALUE_PROPS.has(node.name.name)) return;
-      const expression = node.value?.type === "JSXExpressionContainer" ? node.value.expression : null;
-      if (!expression || !(readsWatch(expression) || namesOne(expression, watched))) return;
-      context.report({
-        node,
-        message:
-          "An input's value is its field's (`useController`), never one `watch` reads: the field binds its value and " +
-          "its change.",
-      });
-    },
-  };
-}
-
-/** The values a style property takes: the branches of a condition (`showRing ? 4 : 2`) and what a theme callback returns. */
-function styleValues(value) {
-  if (value.type === "ConditionalExpression")
-    return [...styleValues(value.consequent), ...styleValues(value.alternate)];
-  if (value.type === "ArrowFunctionExpression" && value.body.type !== "BlockStatement") return styleValues(value.body);
-  return [value];
-}
-
-/** The JSX element a style object is the `sx` of, written right in the attribute (`sx={{…}}`, `sx={[{…}, sx]}`). */
-function sxElement(object) {
-  const container = object.parent?.type === "ArrayExpression" ? object.parent.parent : object.parent;
-  const attribute = container?.parent;
-  if (container?.type !== "JSXExpressionContainer" || attribute?.type !== "JSXAttribute") return null;
-  return attribute.name.name === "sx" ? elementName(attribute.parent.parent) : null;
-}
-
-function createBorders(context) {
-  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
-  return {
-    Property(node) {
-      const key = node.key.type === "Identifier" ? node.key.name : null;
-      if (BORDER_SIDES.has(key)) {
-        const written = styleValues(node.value).some(
-          (value) =>
-            (value.type === "Literal" && typeof value.value === "string" && value.value !== "none") ||
-            value.type === "TemplateLiteral",
-        );
-        if (written) {
-          context.report({
-            node: node.value,
-            message:
-              "A border is the theme's shorthand: a width (`border: 1`, `borderLeft: 3`), its color in `borderColor`, " +
-              'its style in `borderStyle`: never `"1px solid …"`.',
-          });
-        }
-      }
-      const surface = node.parent.type === "ObjectExpression" ? sxElement(node.parent) : null;
-      if (surface !== "Paper" && surface !== "Card") return;
-      if (key === "boxShadow" && node.value.type === "Literal" && typeof node.value.value === "number") {
-        context.report({
-          node,
-          message: "A `Paper` or a `Card` takes its elevation as `elevation`, never `sx` `boxShadow`.",
-        });
-      }
-      if (key === "border" || key === "borderWidth" || key === "borderStyle") {
-        context.report({
-          node,
-          message:
-            'A `Paper` or a `Card` is outlined by `variant="outlined"` (or the theme\'s card), never an `sx` border.',
-        });
-      }
-    },
-  };
-}
-
-/**
- * The JSX element whose own `sx` a style object is: right in the attribute, in its array, a branch of a condition, or
- * what its theme callback returns. A nested selector's object (`"&:hover": {…}`) styles something else.
- */
-function sxOwner(object) {
-  let node = object;
-  for (let parent = node.parent; parent; node = parent, parent = parent.parent) {
-    if (parent.type === "JSXExpressionContainer") {
-      const attribute = parent.parent;
-      return attribute?.type === "JSXAttribute" && attribute.name.name === "sx"
-        ? elementName(attribute.parent.parent)
-        : null;
-    }
-    const passes =
-      parent.type === "ArrayExpression" ||
-      parent.type === "ConditionalExpression" ||
-      parent.type === "LogicalExpression" ||
-      parent.type === "ReturnStatement" ||
-      parent.type === "BlockStatement" ||
-      (parent.type === "ArrowFunctionExpression" && parent.body === node);
-    if (!passes) return null;
-  }
-  return null;
-}
-
-function createFlexLayout(context) {
-  if (!inClient(context)) return {};
-  return {
-    Property(node) {
-      const key = node.key.type === "Identifier" ? node.key.name : null;
-      if (key !== "display" && key !== "gap" && key !== "flexDirection") return;
-      const owner = node.parent.type === "ObjectExpression" ? sxOwner(node.parent) : null;
-      if (owner === "Box" && key === "display" && showsFlex(node.value)) {
-        context.report({
-          node,
-          message:
-            "A flex container is a `Stack` (`direction`, `spacing`; the rest in `sx`), never a `Box` with a flex " +
-            "`display`.",
-        });
-      }
-      if (owner === "Stack" && key !== "display") {
-        context.report({ node, message: "A `Stack` takes its `direction` and `spacing` as props, never `sx`." });
-      }
-    },
-  };
-}
-
-function createTagChips(context) {
-  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/TagChip.tsx") return {};
-  return {
-    JSXElement(node) {
-      if (elementName(node) !== "Chip") return;
-      const attributes = node.openingElement.attributes.filter((a) => a.type === "JSXAttribute");
-      if (attributes.some((a) => a.name.name === "icon")) {
-        context.report({
-          node: node.openingElement,
-          message: "A role, a status or a fact is a `TagChip` (`components/common`): its icon, its words, its color.",
-        });
-      }
-    },
-    Property(node) {
-      const key = node.key.type === "Identifier" ? node.key.name : null;
-      if (!CHIP_COLOR_KEYS.has(key) || node.parent.type !== "ObjectExpression" || sxOwner(node.parent) !== "Chip")
-        return;
-      context.report({ node, message: "A chip's color is its `color` prop, never `sx`." });
-    },
-  };
-}
-
-/** Whether a template literal times something by its own numbers: a literal time, or a time no `DURATION` gives (`${i * 80}ms`). */
-function timesItself(template, sourceCode) {
-  const texts = template.quasis.map((quasi) => quasi.value.cooked ?? "");
-  if (texts.some((text) => MOTION_LITERAL.test(text))) return true;
-  return template.expressions.some(
-    (expression, index) => /^m?s\b/.test(texts[index + 1]) && !sourceCode.getText(expression).includes("DURATION."),
-  );
-}
-
-function createMotion(context) {
-  if (!inClient(context) || repoPath(context.filename) === "client/src/lib/animations.ts") return {};
-  const report = (node) =>
-    context.report({
-      node,
-      message:
-        "Motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS.diceRoll`), a transition of its " +
-        'tokens (`transitionOf(["opacity"], DURATION.fast)`), or a template of `DURATION` / `EASING`. No time, ' +
-        "easing or keyframes written elsewhere.",
-    });
-  return {
-    ImportSpecifier(node) {
-      if (node.imported.name === "keyframes") report(node);
-      const inTheme = repoPath(context.filename).startsWith("client/src/theme/");
-      if (MUI_TRANSITIONS.has(node.imported.name) && node.parent.source.value === "@mui/material" && !inTheme)
-        report(node);
-    },
-    Literal(node) {
-      if (typeof node.value === "string" && node.value.includes("cubic-bezier(")) report(node);
-    },
-    Property(node) {
-      const key = node.key.type === "Identifier" ? node.key.name : node.key.type === "Literal" ? node.key.value : null;
-      if (typeof key === "string" && key.startsWith("@keyframes")) return report(node);
-      if (!MOTION_PROPERTIES.has(key)) return;
-      const value = node.value;
-      if (value.type === "Literal" && typeof value.value === "string" && value.value !== "none") report(value);
-      if (value.type === "TemplateLiteral" && timesItself(value, context.sourceCode)) report(value);
-    },
-  };
-}
-
-/** The texts a toast's argument can show: a string, a template's text, a condition's branches. */
-function toastTexts(argument) {
-  if (!argument) return [];
-  if (argument.type === "Literal" && typeof argument.value === "string") return [argument.value];
-  if (argument.type === "TemplateLiteral") return [argument.quasis.map((quasi) => quasi.value.cooked).join("…")];
-  if (argument.type === "ConditionalExpression")
-    return [...toastTexts(argument.consequent), ...toastTexts(argument.alternate)];
-  return [];
-}
-
 function createToastWording(context) {
   if (!inClient(context)) return {};
   return {
@@ -1290,41 +1073,6 @@ function createToastWording(context) {
       });
     },
   };
-}
-
-/** Whether a message is `loadFailureMessage`'s: its call, or a condition whose branches are. */
-function worded(value) {
-  if (value?.type === "ConditionalExpression") return worded(value.consequent) && worded(value.alternate);
-  return value?.type === "CallExpression" && calleeName(value) === "loadFailureMessage";
-}
-
-function createPageErrors(context) {
-  if (!inClient(context)) return {};
-  return {
-    JSXAttribute(node) {
-      const element = elementName(node.parent.parent);
-      if (node.name.name !== "message" || (element !== "PageError" && element !== "EntityPageError")) return;
-      const value = node.value?.type === "JSXExpressionContainer" ? node.value.expression : node.value;
-      if (worded(value)) return;
-      context.report({
-        node,
-        message:
-          "A page that couldn't load says why in `loadFailureMessage`'s words (`loadFailureMessage(\"Campaign\", " +
-          "error)`): not found, no access, or failed.",
-      });
-    },
-  };
-}
-
-/** Whether a style value is a size written out: `14`, `"0.75rem"`, `{ xs: 48, sm: 64 }` (not `"inherit"`, not computed). */
-function writtenSize(value) {
-  if (value.type === "Literal")
-    return typeof value.value === "number" || (typeof value.value === "string" && value.value !== "inherit");
-  if (value.type === "TemplateLiteral") return value.expressions.length === 0;
-  if (value.type === "ObjectExpression") {
-    return value.properties.length > 0 && value.properties.every((p) => p.type === "Property" && writtenSize(p.value));
-  }
-  return false;
 }
 
 function createTypeScale(context) {
@@ -1358,32 +1106,284 @@ function createTypeScale(context) {
   };
 }
 
+/** A JSX element's name: `IconButton`, `Dialog`. */
+function elementName(node) {
+  return node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;
+}
+
+/**
+ * How `pattern` binds `name`: "whole" for a form's field taken whole, its `ref` with it (`{ field }`), "bound" for any
+ * other binding (`{ field: { ref, ...field } }`, a parameter), null when it doesn't bind it.
+ */
+function fieldBinding(pattern, name) {
+  if (!pattern) return null;
+  switch (pattern.type) {
+    case "Identifier":
+      return pattern.name === name ? "bound" : null;
+    case "AssignmentPattern":
+      return fieldBinding(pattern.left, name);
+    case "RestElement":
+      return fieldBinding(pattern.argument, name);
+    case "ArrayPattern":
+      return pattern.elements.map((element) => fieldBinding(element, name)).find(Boolean) ?? null;
+    case "ObjectPattern":
+      for (const property of pattern.properties) {
+        const value = property.type === "RestElement" ? property : property.value;
+        const isField = property.type === "Property" && !property.computed && property.key.name === "field";
+        if (isField && value.type === "Identifier" && value.name === name) return "whole";
+        const binding = fieldBinding(value, name);
+        if (binding) return binding;
+      }
+      return null;
+    default:
+      return null;
+  }
+}
+
+/** Whether a member chain starts at `rpc`: `rpc.api.rulesets[":id"].$get`. */
+function fromRpc(node) {
+  let object = node;
+  while (object.type === "MemberExpression") object = object.object;
+  return object.type === "Identifier" && object.name === "rpc";
+}
+
+/** Whether a JSX element has the attribute `name`. */
+function hasAttribute(node, name) {
+  return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
+}
+
+/** The heading variants a style object's `typography` takes, responsive ones included (`{ xs: "h6", sm: "h5" }`). */
+function headingVariants(object) {
+  const typography =
+    object?.type === "ObjectExpression"
+      ? object.properties.find(
+          (p) => p.type === "Property" && p.key.type === "Identifier" && p.key.name === "typography",
+        )
+      : null;
+  if (!typography) return [];
+  const values =
+    typography.value.type === "ObjectExpression" ? typography.value.properties.map((p) => p.value) : [typography.value];
+  return values.filter((v) => v?.type === "Literal" && /^h[1-6]$/.test(v.value));
+}
+
+function inClient(context) {
+  return repoPath(context.filename).startsWith("client/src/");
+}
+
+/**
+ * Whether `node` runs as an effect runs: in its callback (`useEffect(() => …)`, `useLayoutEffect`), not in a function
+ * it hands on (a subscription's handler, a timer's callback, which an event calls).
+ */
+function inEffect(node) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (p.type === "ArrowFunctionExpression" || p.type === "FunctionExpression" || p.type === "FunctionDeclaration") {
+      const call = p.parent;
+      return call?.type === "CallExpression" && call.arguments[0] === p && EFFECTS.has(calleeName(call));
+    }
+  }
+  return false;
+}
+
+/**
+ * Whether `node` is in a function a query or a mutation runs: one a property or a prop named `…Fn` holds (`queryFn`,
+ * `mutationFn`, or a hook's or a component's that becomes one, as `useRulesetSection`'s `createFn`).
+ */
+function inQueryFunction(node) {
+  for (let p = node.parent; p; p = p.parent) {
+    const name =
+      p.type === "Property" && p.key.type === "Identifier"
+        ? p.key.name
+        : p.type === "JSXAttribute" && p.name.type === "JSXIdentifier"
+          ? p.name.name
+          : null;
+    if (name?.endsWith("Fn")) return true;
+  }
+  return false;
+}
+
+/** Whether a label is in Title Case: every word but the small ones starts with a capital (`Mark All as Read`). */
+function inTitleCase(text) {
+  const words = text
+    .trim()
+    .split(/\s+/)
+    .filter((word) => /^[a-z]/i.test(word));
+  return words.every((word, index) => /^[A-Z0-9]/.test(word) || (index > 0 && SMALL_WORDS.has(word.toLowerCase())));
+}
+
+/** Whether `node` names one of `names`. */
+function namesOne(node, names) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some((child) => namesOne(child, names));
+  if (node.type === "Identifier" && names.has(node.name)) return true;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && namesOne(child, names),
+  );
+}
+
+/** Whether a handler only navigates to a path: `() => navigate(path)` (not `navigate(-1)`, which goes back in history). */
+function onlyNavigates(handler) {
+  if (handler?.type !== "ArrowFunctionExpression" || handler.params.length > 0) return false;
+  let call = handler.body;
+  if (call.type === "BlockStatement") {
+    if (call.body.length !== 1 || call.body[0].type !== "ExpressionStatement") return false;
+    call = call.body[0].expression;
+  }
+  const isNavigate = call.type === "CallExpression" && calleeName(call) === "navigate" && call.arguments.length === 1;
+  const [to] = call.arguments ?? [];
+  return isNavigate && !(to.type === "Literal" && typeof to.value === "number") && to.type !== "UnaryExpression";
+}
+
+/** The nearest JSX element around `node`. */
+function parentElement(node) {
+  for (let p = node.parent; p; p = p.parent) if (p.type === "JSXElement") return p;
+  return null;
+}
+
+/** Whether a style object passes on one its component was given: `{ ...props.style, … }`. */
+function passesStyleOn(value) {
+  return (
+    value?.type === "ObjectExpression" &&
+    value.properties.some(
+      (p) =>
+        p.type === "SpreadElement" &&
+        p.argument.type === "MemberExpression" &&
+        !p.argument.computed &&
+        p.argument.property.name === "style",
+    )
+  );
+}
+
+/** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */
+function readsWatch(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(readsWatch);
+  if (node.type === "CallExpression") {
+    const callee = node.callee;
+    const name =
+      callee.type === "Identifier" ? callee.name : callee.type === "MemberExpression" ? callee.property.name : null;
+    if (name === "watch" || name === "useWatch") return true;
+  }
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsWatch(child),
+  );
+}
+
+/** The name a type reference names: `Omit` in `Omit<…>`, `ComponentProps` in `React.ComponentProps<…>`. */
+function referenceName(typeName) {
+  return typeName.type === "TSQualifiedName" ? typeName.right.name : typeName.name;
+}
+
+/** Whether a `display` value lays out as flex: `"flex"`, `"inline-flex"`, or one of a responsive object's. */
+function showsFlex(value) {
+  if (value.type === "Literal") return value.value === "flex" || value.value === "inline-flex";
+  if (value.type === "ObjectExpression")
+    return value.properties.some((p) => p.type === "Property" && showsFlex(p.value));
+  return false;
+}
+
+/** Whether `name`, spread at `node`, is a form's field taken whole: bound by the nearest function or declaration that binds it. */
+function spreadsWholeField(node, name) {
+  for (let scope = node.parent; scope; scope = scope.parent) {
+    const declarations =
+      scope.type === "BlockStatement" || scope.type === "Program"
+        ? scope.body.flatMap((statement) => (statement.type === "VariableDeclaration" ? statement.declarations : []))
+        : [];
+    for (const declaration of declarations) {
+      const binding = fieldBinding(declaration.id, name);
+      if (binding) return binding === "whole";
+    }
+    const params = /Function/.test(scope.type) ? scope.params : [];
+    for (const param of params) {
+      const binding = fieldBinding(param, name);
+      if (binding) return binding === "whole";
+    }
+  }
+  return false;
+}
+
+/** The values a style property takes: the branches of a condition (`showRing ? 4 : 2`) and what a theme callback returns. */
+function styleValues(value) {
+  if (value.type === "ConditionalExpression")
+    return [...styleValues(value.consequent), ...styleValues(value.alternate)];
+  if (value.type === "ArrowFunctionExpression" && value.body.type !== "BlockStatement") return styleValues(value.body);
+  return [value];
+}
+
+/** The JSX element a style object is the `sx` of, written right in the attribute (`sx={{…}}`, `sx={[{…}, sx]}`). */
+function sxElement(object) {
+  const container = object.parent?.type === "ArrayExpression" ? object.parent.parent : object.parent;
+  const attribute = container?.parent;
+  if (container?.type !== "JSXExpressionContainer" || attribute?.type !== "JSXAttribute") return null;
+  return attribute.name.name === "sx" ? elementName(attribute.parent.parent) : null;
+}
+
+/**
+ * The JSX element whose own `sx` a style object is: right in the attribute, in its array, a branch of a condition, or
+ * what its theme callback returns. A nested selector's object (`"&:hover": {…}`) styles something else.
+ */
+function sxOwner(object) {
+  let node = object;
+  for (let parent = node.parent; parent; node = parent, parent = parent.parent) {
+    if (parent.type === "JSXExpressionContainer") {
+      const attribute = parent.parent;
+      return attribute?.type === "JSXAttribute" && attribute.name.name === "sx"
+        ? elementName(attribute.parent.parent)
+        : null;
+    }
+    const passes =
+      parent.type === "ArrayExpression" ||
+      parent.type === "ConditionalExpression" ||
+      parent.type === "LogicalExpression" ||
+      parent.type === "ReturnStatement" ||
+      parent.type === "BlockStatement" ||
+      (parent.type === "ArrowFunctionExpression" && parent.body === node);
+    if (!passes) return null;
+  }
+  return null;
+}
+
+/** Whether a template literal times something by its own numbers: a literal time, or a time no `DURATION` gives (`${i * 80}ms`). */
+function timesItself(template, sourceCode) {
+  const texts = template.quasis.map((quasi) => quasi.value.cooked ?? "");
+  if (texts.some((text) => MOTION_LITERAL.test(text))) return true;
+  return template.expressions.some(
+    (expression, index) => /^m?s\b/.test(texts[index + 1]) && !sourceCode.getText(expression).includes("DURATION."),
+  );
+}
+
+/** The texts a toast's argument can show: a string, a template's text, a condition's branches. */
+function toastTexts(argument) {
+  if (!argument) return [];
+  if (argument.type === "Literal" && typeof argument.value === "string") return [argument.value];
+  if (argument.type === "TemplateLiteral") return [argument.quasis.map((quasi) => quasi.value.cooked).join("…")];
+  if (argument.type === "ConditionalExpression")
+    return [...toastTexts(argument.consequent), ...toastTexts(argument.alternate)];
+  return [];
+}
+
+/** Whether a message is `loadFailureMessage`'s: its call, or a condition whose branches are. */
+function worded(value) {
+  if (value?.type === "ConditionalExpression") return worded(value.consequent) && worded(value.alternate);
+  return value?.type === "CallExpression" && calleeName(value) === "loadFailureMessage";
+}
+
+/** Whether a style value is a size written out: `14`, `"0.75rem"`, `{ xs: 48, sm: 64 }` (not `"inherit"`, not computed). */
+function writtenSize(value) {
+  if (value.type === "Literal")
+    return typeof value.value === "number" || (typeof value.value === "string" && value.value !== "inherit");
+  if (value.type === "TemplateLiteral") return value.expressions.length === 0;
+  if (value.type === "ObjectExpression") {
+    return value.properties.length > 0 && value.properties.every((p) => p.type === "Property" && writtenSize(p.value));
+  }
+  return false;
+}
+
 /** What a JSX attribute's value says when it's written out (`"error"`, `{"error"}`, `` {`error`} ``), else null. */
 function writtenString(attribute) {
   const value = attribute.value?.type === "JSXExpressionContainer" ? attribute.value.expression : attribute.value;
   if (value?.type === "Literal" && typeof value.value === "string") return value.value;
   if (value?.type === "TemplateLiteral" && value.expressions.length === 0) return value.quasis[0].value.cooked;
   return null;
-}
-
-function createErrorAlerts(context) {
-  if (!inClient(context) || ERROR_ALERT_FILES.has(repoPath(context.filename))) return {};
-  return {
-    JSXElement(node) {
-      if (!["Alert", "AnimatedAlert"].includes(elementName(node))) return;
-      const colors = node.openingElement.attributes.filter(
-        (a) => a.type === "JSXAttribute" && ["severity", "color"].includes(a.name.name),
-      );
-      if (!colors.some((a) => (writtenString(a) ?? "error") === "error")) return;
-      context.report({
-        node,
-        message:
-          "An error reaches the user one way per kind: a load failure is a `LoadError`, a page that can't show a " +
-          "`PageError`, a failed action a toast (`snackbar.error`), a wrong value its field's error: never an error " +
-          "`Alert` of its own. An `Alert` writes out its `severity` and `color`, so this can read them.",
-      });
-    },
-  };
 }
 
 export default {

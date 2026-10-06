@@ -10,13 +10,6 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
     super(exportsInAccount);
   }
 
-  /** An export, its owner's: none reads another's. */
-  async findOne(db: Db, where: { id: string; userId: string }) {
-    return await db.query.exportsInAccount.findFirst({
-      where: and(eq(this.table.id, where.id), eq(this.table.userId, where.userId)),
-    });
-  }
-
   async create(db: Db, values: InferInsertModel<typeof exportsInAccount>) {
     return await db.insert(this.table).values(values).returning();
   }
@@ -30,6 +23,13 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
           "expiresBefore" in where && lt(this.table.expiresAt, where.expiresBefore),
         ]),
       );
+  }
+
+  /** An export, its owner's: none reads another's. */
+  async findOne(db: Db, where: { id: string; userId: string }) {
+    return await db.query.exportsInAccount.findFirst({
+      where: and(eq(this.table.id, where.id), eq(this.table.userId, where.userId)),
+    });
   }
 }
 

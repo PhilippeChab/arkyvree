@@ -21,17 +21,6 @@ type LevelPicks = {
   skills?: { skillId: string; rank: number }[];
 };
 
-/** A class's level `level`. */
-export async function findKlassLevel(klassId: string, level: number) {
-  return await db.query.klassLevelsInRules.findFirst({
-    where: and(
-      eq(klassLevelsInRules.klassId, klassId),
-      eq(klassLevelsInRules.level, level),
-      isNull(klassLevelsInRules.deletedAt),
-    ),
-  });
-}
-
 /** Gives a character a level in a class level, with these picks, straight in the database: no level-up rule applies. */
 export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: LevelPicks = {}) {
   const [level] = await CharacterLevels.create(db, { characterId, klassLevelId, hp: 1 });
@@ -85,6 +74,17 @@ export async function createTestKlassLevel(rulesetId: string) {
   const [klass] = await Klasses.create(db, { name: `Test Class ${uniqueId()}`, rulesetId, hd: 8 });
   const [klassLevel] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
   return { klass, klassLevel };
+}
+
+/** A class's level `level`. */
+export async function findKlassLevel(klassId: string, level: number) {
+  return await db.query.klassLevelsInRules.findFirst({
+    where: and(
+      eq(klassLevelsInRules.klassId, klassId),
+      eq(klassLevelsInRules.level, level),
+      isNull(klassLevelsInRules.deletedAt),
+    ),
+  });
 }
 
 /** A character of `userId`'s on `rulesetId`, who picked the feat at their first level. */

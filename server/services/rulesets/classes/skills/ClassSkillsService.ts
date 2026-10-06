@@ -1,9 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassSkillsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntityToEdit, findScopedEntity, hasCharacterPicks } from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { KlassSkills } from "@/server/repositories/index.ts";
@@ -12,14 +12,6 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ClassSkillsService {
-  async getClassSkills(rulesetId: string, classId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-      return rulesetData.klassSkillsWithSkillsByKlass.get(klass.id) ?? [];
-    });
-  }
-
   async addClassSkill(session: Session, rulesetId: string, classId: string, skillId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
@@ -37,7 +29,8 @@ class ClassSkillsService {
         }
 
         // Copy an inherited class: the new klass_skills row would otherwise point at the parent ruleset's class.
-        const { id: targetKlassId } = await cowEntityToEdit(tx, ruleset, sourceChain, "klasses", klass);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
         const rows = await KlassSkills.create(tx, {
           klassId: targetKlassId,
@@ -60,6 +53,14 @@ class ClassSkillsService {
     return result;
   }
 
+  async getClassSkills(rulesetId: string, classId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+      return rulesetData.klassSkillsWithSkillsByKlass.get(klass.id) ?? [];
+    });
+  }
+
   async removeClassSkill(session: Session, rulesetId: string, classId: string, skillId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
@@ -78,7 +79,8 @@ class ClassSkillsService {
         const skill = rulesetData.skillsById.get(skillId);
 
         // Copy an inherited class: the delete would otherwise remove the parent ruleset's klass_skills row.
-        const { id: targetKlassId } = await cowEntityToEdit(tx, ruleset, sourceChain, "klasses", klass);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
         const rows = await KlassSkills.delete(tx, { klassId: targetKlassId, skillId: klassSkill.skillId });
         const removedKlassSkill = rows[0];

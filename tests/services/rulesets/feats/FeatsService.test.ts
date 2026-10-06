@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { eq } from "drizzle-orm";
 
-import { aptitudesInRules, featsAptitudesInRules, klassLevelFeatsInRules } from "@/drizzle/schema.ts";
+import { featsAptitudesInRules, klassLevelFeatsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError } from "@/server/errors/index.ts";
 import { Characters, EntitySnapshots, Klasses, Properties } from "@/server/repositories/index.ts";
@@ -11,23 +11,15 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows } from "@/tests/support/database.ts";
 import { pickFeat } from "@/tests/support/levels.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+
+/** The aptitudes of the test's ruleset. */
+const APTITUDES = ["Combat", "Metamagic", "General"];
 
 async function linkedAptitudeIds(featId: string) {
   const rows = await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.featId, featId));
   return rows.map((row) => row.aptitudeId).sort();
-}
-
-/** A new user's empty ruleset with three aptitudes. */
-async function setup() {
-  const { user, session, ruleset } = await createTestUserAndRuleset();
-  const aptitudes = await insertRows(
-    aptitudesInRules,
-    ["Combat", "Metamagic", "General"].map((name) => ({ name, rulesetId: ruleset.id })),
-  );
-  return { user, session, ruleset, aptitudeIds: aptitudes.map((a) => a.id) };
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
@@ -38,7 +30,7 @@ describe("FeatsService", () => {
         session,
         ruleset,
         aptitudeIds: [combat, metamagic, general],
-      } = await setup();
+      } = await createTestUserAndRuleset(APTITUDES);
       const feat = await FeatsService.createFeat(session, ruleset.id, {
         name: "Power Attack",
         aptitudeIds: [combat, metamagic],
@@ -62,7 +54,7 @@ describe("FeatsService", () => {
     });
 
     test("refuses a new feat without an aptitude", async () => {
-      const { session, ruleset } = await setup();
+      const { session, ruleset } = await createTestUserAndRuleset(APTITUDES);
       await expect(
         FeatsService.createFeat(session, ruleset.id, { name: "Orphan Feat", aptitudeIds: [] }),
       ).rejects.toThrow(BadRequestError);
@@ -73,7 +65,7 @@ describe("FeatsService", () => {
         session,
         ruleset,
         aptitudeIds: [combat, spells],
-      } = await setup();
+      } = await createTestUserAndRuleset(APTITUDES);
       await PowersService.createPower(session, ruleset.id, {
         name: "Magic Missile",
         aptitudes: [{ id: spells }],
@@ -97,7 +89,7 @@ describe("FeatsService", () => {
       session,
       ruleset,
       aptitudeIds: [combat, general],
-    } = await setup();
+    } = await createTestUserAndRuleset(APTITUDES);
     for (const name of ["Focus: Axe", "Focus: Sword"]) {
       const feat = await FeatsService.createFeat(session, ruleset.id, { name, aptitudeIds: [combat] });
       await Properties.create(db, { entityId: feat.id, entityType: "feats", type: FEAT_FAMILY, value: "Focus" });
@@ -117,7 +109,7 @@ describe("FeatsService", () => {
       session,
       ruleset,
       aptitudeIds: [combat],
-    } = await setup();
+    } = await createTestUserAndRuleset(APTITUDES);
     const feat = await FeatsService.createFeat(session, ruleset.id, {
       name: "Doomed Feat",
       aptitudeIds: [combat],
@@ -145,7 +137,7 @@ describe("FeatsService", () => {
         session,
         ruleset,
         aptitudeIds: [combat],
-      } = await setup();
+      } = await createTestUserAndRuleset(APTITUDES);
       const feat = await FeatsService.createFeat(session, ruleset.id, {
         name: "Picked Feat",
         aptitudeIds: [combat],
@@ -164,7 +156,7 @@ describe("FeatsService", () => {
         session,
         ruleset: parent,
         aptitudeIds: [combat],
-      } = await setup();
+      } = await createTestUserAndRuleset(APTITUDES);
       const feat = await FeatsService.createFeat(session, parent.id, {
         name: "Inherited Feat",
         aptitudeIds: [combat],
@@ -180,7 +172,7 @@ describe("FeatsService", () => {
         session,
         ruleset: extension,
         aptitudeIds: [combat],
-      } = await setup();
+      } = await createTestUserAndRuleset(APTITUDES);
       const feat = await FeatsService.createFeat(session, extension.id, {
         name: "Extension Feat",
         aptitudeIds: [combat],
@@ -196,7 +188,7 @@ describe("FeatsService", () => {
         session,
         ruleset,
         aptitudeIds: [combat],
-      } = await setup();
+      } = await createTestUserAndRuleset(APTITUDES);
       await createTestCharacter(user.id, { rulesetId: ruleset.id });
       const feat = await FeatsService.createFeat(session, ruleset.id, {
         name: "Unpicked Feat",
@@ -214,7 +206,7 @@ describe("FeatsService", () => {
       session,
       ruleset: parent,
       aptitudeIds: [combat],
-    } = await setup();
+    } = await createTestUserAndRuleset(APTITUDES);
     const source = await FeatsService.createFeat(session, parent.id, {
       name: "Endurance",
       aptitudeIds: [combat],

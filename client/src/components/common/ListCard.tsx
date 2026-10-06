@@ -6,6 +6,10 @@ import { getInitial } from "@/shared/text.ts";
 import { StyledCard } from "./StyledCard.tsx";
 import { type Tag, TagChip } from "./TagChip.tsx";
 
+interface ListCardGridProps {
+  children: ReactNode;
+}
+
 interface ListCardProps extends Omit<ComponentProps<typeof StyledCard>, "children" | "title"> {
   /** Defaults to the title's initial. */
   avatar?: ReactNode;
@@ -18,10 +22,6 @@ interface ListCardProps extends Omit<ComponentProps<typeof StyledCard>, "childre
   /** Its facts: a status, a race, a ruleset… */
   tags?: Tag[];
   description: string | null | undefined;
-}
-
-interface ListCardGridProps {
-  children: ReactNode;
 }
 
 /** What a card or a details view shows for an entity without a description. */

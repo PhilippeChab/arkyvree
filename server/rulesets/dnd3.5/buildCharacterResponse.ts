@@ -3,9 +3,9 @@ import type { InferSelectModel } from "drizzle-orm";
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import type Dnd35DetailedCharacterBonded from "@/server/rulesets/dnd3.5/DetailedCharacterBonded.ts";
-import { getStaticPropertyValues } from "@/server/rulesets/dnd3.5/PropertyTypes.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
+import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /** The modifiers, applied, unapplied and inactive, each with the name of its source. */
@@ -67,29 +67,26 @@ function equipmentOf(dc: Dnd35DetailedCharacter) {
     }));
 }
 
-/** The feats and powers the character's modifiers make it possess without a pick. */
-export function buildVirtualEntities(dc: Dnd35DetailedCharacter) {
+export function buildBondedMap(
+  bondedByKind: Partial<Record<string, { record: InferSelectModel<typeof charactersInCharacter>; detailed: unknown }>>,
+  transform?: (entry: ReturnType<typeof buildBondedResponse>) => ReturnType<typeof buildBondedResponse>,
+): Record<string, ReturnType<typeof buildBondedResponse>> {
+  const out: Record<string, ReturnType<typeof buildBondedResponse>> = {};
+  for (const [kind, entry] of Object.entries(bondedByKind)) {
+    if (!entry) continue;
+    const built = buildBondedResponse(entry.record, entry.detailed as Parameters<typeof buildBondedResponse>[1]);
+    out[kind] = transform ? transform(built) : built;
+  }
+  return out;
+}
+
+export function buildBondedResponse(
+  record: InferSelectModel<typeof charactersInCharacter>,
+  bonded: Dnd35DetailedCharacterBonded,
+) {
   return {
-    virtualFeats: dc.getVirtuallyPossessedFeats().map((f) => ({
-      id: f.id,
-      name: f.name,
-      description: f.description,
-      stackable: f.stackable,
-    })),
-    virtualPowers: dc.getVirtuallyPossessedPowersWithAptitudes().map((entry) => ({
-      id: entry.power.id,
-      name: entry.power.name,
-      description: entry.power.description,
-      saveName: entry.saveName,
-      saveEffect: entry.power.saveEffect,
-      aptitudeId: entry.aptitudeId,
-      level: entry.level,
-      dc: entry.dc,
-      properties: formatPropertyValues(
-        groupPropertyValues(entry.properties, getStaticPropertyValues),
-        getStaticPropertyValues,
-      ),
-    })),
+    ...buildFullCharacterResponse(record, bonded),
+    feats: bonded.getDetailedCharacterFeats().getFeats(),
   };
 }
 
@@ -138,25 +135,28 @@ export function buildFullCharacterResponse(
   };
 }
 
-export function buildBondedResponse(
-  record: InferSelectModel<typeof charactersInCharacter>,
-  bonded: Dnd35DetailedCharacterBonded,
-) {
+/** The feats and powers the character's modifiers make it possess without a pick. */
+export function buildVirtualEntities(dc: Dnd35DetailedCharacter) {
   return {
-    ...buildFullCharacterResponse(record, bonded),
-    feats: bonded.getDetailedCharacterFeats().getFeats(),
+    virtualFeats: dc.getVirtuallyPossessedFeats().map((f) => ({
+      id: f.id,
+      name: f.name,
+      description: f.description,
+      stackable: f.stackable,
+    })),
+    virtualPowers: dc.getVirtuallyPossessedPowersWithAptitudes().map((entry) => ({
+      id: entry.power.id,
+      name: entry.power.name,
+      description: entry.power.description,
+      saveName: entry.saveName,
+      saveEffect: entry.power.saveEffect,
+      aptitudeId: entry.aptitudeId,
+      level: entry.level,
+      dc: entry.dc,
+      properties: formatPropertyValues(
+        groupPropertyValues(entry.properties, getStaticPropertyValues),
+        getStaticPropertyValues,
+      ),
+    })),
   };
-}
-
-export function buildBondedMap(
-  bondedByKind: Partial<Record<string, { record: InferSelectModel<typeof charactersInCharacter>; detailed: unknown }>>,
-  transform?: (entry: ReturnType<typeof buildBondedResponse>) => ReturnType<typeof buildBondedResponse>,
-): Record<string, ReturnType<typeof buildBondedResponse>> {
-  const out: Record<string, ReturnType<typeof buildBondedResponse>> = {};
-  for (const [kind, entry] of Object.entries(bondedByKind)) {
-    if (!entry) continue;
-    const built = buildBondedResponse(entry.record, entry.detailed as Parameters<typeof buildBondedResponse>[1]);
-    out[kind] = transform ? transform(built) : built;
-  }
-  return out;
 }

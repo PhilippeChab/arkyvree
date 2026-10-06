@@ -20,20 +20,20 @@ declare global {
   var __testDb: Db | null | undefined;
 }
 
+type Db = typeof db | Transaction;
+
 type Transaction = PgTransaction<
   PgQueryResultHKT,
   typeof schemaWithRelations,
   ExtractTablesWithRelations<typeof schemaWithRelations>
 >;
 
-type Db = typeof db | Transaction;
-
 /** Read first: anything but a test database stops the run before the pool below is built. */
 const connectionString = readTestDatabaseUrl();
 
-const schemaWithRelations = { ...schema, ...relations };
-
 const pool = createPool({ connectionString });
+
+const schemaWithRelations = { ...schema, ...relations };
 
 const poolDb = drizzlePg(pool as NodePgClient, { schema: schemaWithRelations });
 

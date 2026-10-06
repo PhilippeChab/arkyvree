@@ -1,17 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  assertEntityNameAvailable,
-  cowEntityToDelete,
-  cowEntityToEdit,
-  findScopedEntity,
-  hasCharacterPicks,
-  repointTombstoneSnapshot,
-  wasGeneratedFeat,
-} from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit, wasGeneratedFeat } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
@@ -21,6 +13,100 @@ import { getListFeatIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {
+  async createFeat(
+    session: Session,
+    rulesetId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      aptitudeIds: string[];
+    },
+  ) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "feats", body.name);
+
+        if (!body.aptitudeIds || body.aptitudeIds.length === 0) {
+          throw new BadRequestError("At least one aptitude must be selected for the feat");
+        }
+
+        const spellAptitudes = await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds });
+        if (spellAptitudes.length > 0) {
+          throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
+        }
+
+        // Named as an ancestor the fork deleted, the feat stands in for it (`RulesetEdit.repointTombstone`), checks
+        // finding it by that name: generated if the ancestor was
+        const rows = await Feats.create(tx, {
+          name: body.name,
+          description: body.description,
+          generated: tombstoneAncestorId ? await wasGeneratedFeat(tx, tombstoneAncestorId) : false,
+          rulesetId,
+        });
+        const feat = rows[0];
+
+        if (tombstoneAncestorId) {
+          await edit.repointTombstone(tx, "feats", tombstoneAncestorId, feat.id);
+        }
+
+        for (const aptitudeId of body.aptitudeIds) {
+          await FeatsAptitudes.create(tx, {
+            featId: feat.id,
+            aptitudeId,
+          });
+        }
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: feat.id,
+          targetTable: getTableName(featsInRules),
+          type: "createFeat",
+          data: { entityName: feat.name },
+        });
+
+        return feat;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async deleteFeat(session: Session, rulesetId: string, featId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "feats", featId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
+
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "feats", feat);
+
+        // FK CASCADE on feats_aptitudes.feat_id and klass_level_feats.feat_id
+        // wipes those join rows when the feat row is deleted.
+        // The database deletes its customizations with it.
+        const rows = await Feats.delete(tx, { id: targetId });
+        const deletedFeat = rows[0];
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(featsInRules),
+          type: "deleteFeat",
+          data: { rulesetId, entityName: feat.name },
+        });
+
+        return deletedFeat;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
   async getFeat(rulesetId: string, featId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
@@ -79,72 +165,6 @@ class FeatsService {
     });
   }
 
-  async createFeat(
-    session: Session,
-    rulesetId: string,
-    body: {
-      name: string;
-      description?: string | null;
-      aptitudeIds: string[];
-    },
-  ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "feats",
-          body.name,
-        );
-
-        if (!body.aptitudeIds || body.aptitudeIds.length === 0) {
-          throw new BadRequestError("At least one aptitude must be selected for the feat");
-        }
-
-        const spellAptitudes = await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds });
-        if (spellAptitudes.length > 0) {
-          throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
-        }
-
-        // Named as an ancestor the fork deleted, the feat stands in for it (`repointTombstoneSnapshot`), checks
-        // finding it by that name: generated if the ancestor was
-        const rows = await Feats.create(tx, {
-          name: body.name,
-          description: body.description,
-          generated: tombstoneAncestorId ? await wasGeneratedFeat(tx, tombstoneAncestorId) : false,
-          rulesetId,
-        });
-        const feat = rows[0];
-
-        if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "feats", tombstoneAncestorId, feat.id);
-        }
-
-        for (const aptitudeId of body.aptitudeIds) {
-          await FeatsAptitudes.create(tx, {
-            featId: feat.id,
-            aptitudeId,
-          });
-        }
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: feat.id,
-          targetTable: getTableName(featsInRules),
-          type: "createFeat",
-          data: { entityName: feat.name },
-        });
-
-        return feat;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
   async updateFeat(
     session: Session,
     rulesetId: string,
@@ -169,7 +189,8 @@ class FeatsService {
           throw new BadRequestError("Generated feats cannot be renamed");
         }
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "feats", feat);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "feats", feat);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const rows = await Feats.update(
@@ -216,38 +237,6 @@ class FeatsService {
         });
 
         return updatedFeat;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteFeat(session: Session, rulesetId: string, featId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "feats", featId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "feats", feat);
-
-        // FK CASCADE on feats_aptitudes.feat_id and klass_level_feats.feat_id
-        // wipes those join rows when the feat row is deleted.
-        // The database deletes its customizations with it.
-        const rows = await Feats.delete(tx, { id: targetId });
-        const deletedFeat = rows[0];
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(featsInRules),
-          type: "deleteFeat",
-          data: { rulesetId, entityName: feat.name },
-        });
-
-        return deletedFeat;
       });
     });
     RulesetCache.invalidate(rulesetId);

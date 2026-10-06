@@ -32,43 +32,6 @@ class CharacterInventoryService {
     };
   }
 
-  async getInventory(session: Session, characterId: string) {
-    // Visibility.All: an archived character's sheet still lists its items, read-only.
-    const characterRecord = await getEditableCharacter(db, session, characterId, Visibility.All);
-
-    return await withRulesetScope(db, characterRecord.rulesetId, async ({ rulesetData }) => {
-      // Inside withRulesetScope: CharacterInventory.findMany auto-resolves
-      // row.itemId to post-COW, and rulesetData id Maps are cow-resolving
-      // wrappers. No manual canonicalize anywhere below.
-      const inventory = await CharacterInventory.findMany(db, { characterId });
-      if (inventory.length === 0) return [];
-
-      return inventory.map((entry) => {
-        // The join still contains the stored parent row after itemId resolves.
-        const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
-        const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
-        const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
-        const templateProperties = item.sourceItemId
-          ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []).filter((p) => !ownPropertyTypes.has(p.type))
-          : [];
-        const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
-        const templateRequirements = item.sourceItemId
-          ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
-          : [];
-
-        return {
-          ...entry,
-          item: {
-            ...item,
-            properties: [...templateProperties, ...ownProperties],
-            modifiers: rulesetData.modifiersBySource.get(item.id) ?? [],
-            requirements: [...templateRequirements, ...ownRequirements],
-          },
-        };
-      });
-    });
-  }
-
   async addItem(
     session: Session,
     characterId: string,
@@ -129,6 +92,67 @@ class CharacterInventoryService {
     });
   }
 
+  async getInventory(session: Session, characterId: string) {
+    // Visibility.All: an archived character's sheet still lists its items, read-only.
+    const characterRecord = await getEditableCharacter(db, session, characterId, Visibility.All);
+
+    return await withRulesetScope(db, characterRecord.rulesetId, async ({ rulesetData }) => {
+      // Inside withRulesetScope: CharacterInventory.findMany auto-resolves
+      // row.itemId to post-COW, and rulesetData id Maps are cow-resolving
+      // wrappers. No manual canonicalize anywhere below.
+      const inventory = await CharacterInventory.findMany(db, { characterId });
+      if (inventory.length === 0) return [];
+
+      return inventory.map((entry) => {
+        // The join still contains the stored parent row after itemId resolves.
+        const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
+        const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
+        const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
+        const templateProperties = item.sourceItemId
+          ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []).filter((p) => !ownPropertyTypes.has(p.type))
+          : [];
+        const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
+        const templateRequirements = item.sourceItemId
+          ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
+          : [];
+
+        return {
+          ...entry,
+          item: {
+            ...item,
+            properties: [...templateProperties, ...ownProperties],
+            modifiers: rulesetData.modifiersBySource.get(item.id) ?? [],
+            requirements: [...templateRequirements, ...ownRequirements],
+          },
+        };
+      });
+    });
+  }
+
+  async removeItem(session: Session, characterId: string, entryId: string) {
+    return await withTransaction(async (tx) => {
+      const characterRecord = await getEditableCharacter(tx, session, characterId);
+
+      return await withRulesetScope(tx, characterRecord.rulesetId, async () => {
+        const existing = await CharacterInventory.findOne(tx, { characterId, id: entryId });
+        if (!existing) {
+          throw new NotFoundError("Item not in inventory");
+        }
+
+        await CharacterInventory.delete(tx, { characterId, id: entryId });
+
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: characterId,
+          targetTable: getTableName(inventoryInCharacter),
+          type: "removeItem",
+        });
+
+        return { success: true };
+      });
+    });
+  }
+
   async updateItem(
     session: Session,
     characterId: string,
@@ -179,30 +203,6 @@ class CharacterInventoryService {
         });
 
         return rows[0];
-      });
-    });
-  }
-
-  async removeItem(session: Session, characterId: string, entryId: string) {
-    return await withTransaction(async (tx) => {
-      const characterRecord = await getEditableCharacter(tx, session, characterId);
-
-      return await withRulesetScope(tx, characterRecord.rulesetId, async () => {
-        const existing = await CharacterInventory.findOne(tx, { characterId, id: entryId });
-        if (!existing) {
-          throw new NotFoundError("Item not in inventory");
-        }
-
-        await CharacterInventory.delete(tx, { characterId, id: entryId });
-
-        await Activities.create(tx, {
-          userId: session.userId,
-          targetId: characterId,
-          targetTable: getTableName(inventoryInCharacter),
-          type: "removeItem",
-        });
-
-        return { success: true };
       });
     });
   }

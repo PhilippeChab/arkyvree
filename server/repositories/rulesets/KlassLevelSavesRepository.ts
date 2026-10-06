@@ -10,19 +10,6 @@ class KlassLevelSavesRepository extends BaseRepository<typeof klassLevelSavesInR
     super(klassLevelSavesInRules);
   }
 
-  async exists(db: Db, where: { saveId: string }) {
-    const result = await db.query.klassLevelSavesInRules.findFirst({
-      where: and(eq(this.table.saveId, where.saveId), isNull(this.table.deletedAt)),
-    });
-    return !!result;
-  }
-
-  async findMany(db: Db, where: { klassLevelIds: string[] }) {
-    return await db.query.klassLevelSavesInRules.findMany({
-      where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
-    });
-  }
-
   async createMany(db: Db, values: InferInsertModel<typeof klassLevelSavesInRules>[]) {
     if (values.length === 0) return [];
     return await db.insert(this.table).values(values).returning();
@@ -39,6 +26,24 @@ class KlassLevelSavesRepository extends BaseRepository<typeof klassLevelSavesInR
         ]),
       )
       .returning();
+  }
+
+  async exists(db: Db, where: { saveId: string }) {
+    const result = await db.query.klassLevelSavesInRules.findFirst({
+      where: and(eq(this.table.saveId, where.saveId), isNull(this.table.deletedAt)),
+    });
+    return !!result;
+  }
+
+  async findMany(db: Db, where: { klassLevelIds: string[] }) {
+    return await db.query.klassLevelSavesInRules.findMany({
+      where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
+      orderBy: [
+        this.orderBy(this.table.createdAt),
+        this.orderBy(this.table.klassLevelId),
+        this.orderBy(this.table.saveId),
+      ],
+    });
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal

@@ -22,8 +22,8 @@ import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-type ClassesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>;
 type Class = ClassesPaginated["items"][number];
+type ClassesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>;
 
 const CLASSES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },

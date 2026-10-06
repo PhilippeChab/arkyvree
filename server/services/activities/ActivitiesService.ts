@@ -52,6 +52,20 @@ class ActivitiesService {
     return entityUrl;
   }
 
+  /** A class's section page (its levels, its skills), or null when the class is gone. */
+  private async klassSectionUrl(klassId: string, section: "levels" | "skills") {
+    const klass = await Klasses.findOne(db, { id: klassId });
+    if (!klass) return null;
+    return `/rulesets/${klass.rulesetId}/classes/${klass.id}/${section}`;
+  }
+
+  /** The page of a player's campaign (`path` under it), or null when the player is gone. */
+  private async playerCampaignUrl(playerId: string, path = "") {
+    const player = await Players.findOne(db, { id: playerId });
+    if (!player) return null;
+    return `/campaigns/${player.campaignId}${path}`;
+  }
+
   private async resolveCustomizationUrl(entityId: string, entityType: string): Promise<string | null> {
     if (entityType === "klass_levels") {
       const klassLevel = await KlassLevels.findOne(db, { id: entityId });
@@ -96,20 +110,6 @@ class ActivitiesService {
     return isOneOf(targetTable, CUSTOMIZATION_PAGE_TYPES)
       ? `/rulesets/${entity.rulesetId}/${buildCustomizationPath(targetTable, targetId)}`
       : `/rulesets/${entity.rulesetId}/${getUrlSegment(targetTable)}/${targetId}`;
-  }
-
-  /** A class's section page (its levels, its skills), or null when the class is gone. */
-  private async klassSectionUrl(klassId: string, section: "levels" | "skills") {
-    const klass = await Klasses.findOne(db, { id: klassId });
-    if (!klass) return null;
-    return `/rulesets/${klass.rulesetId}/classes/${klass.id}/${section}`;
-  }
-
-  /** The page of a player's campaign (`path` under it), or null when the player is gone. */
-  private async playerCampaignUrl(playerId: string, path = "") {
-    const player = await Players.findOne(db, { id: playerId });
-    if (!player) return null;
-    return `/campaigns/${player.campaignId}${path}`;
   }
 
   async getActivities(

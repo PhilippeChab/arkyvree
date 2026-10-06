@@ -66,6 +66,14 @@ export default class DetailedCharacterSavingThrows {
   private readonly detailedCharacterSavingThrows: DetailedCharacterComprehensiveSavingThrows =
     {} as DetailedCharacterComprehensiveSavingThrows;
 
+  getSavingThrow(savingThrowName: string): DetailedCharacterComprehensiveSavingThrows[string] {
+    return this.detailedCharacterSavingThrows[stripSeparators(savingThrowName)];
+  }
+
+  getSavingThrows(): DetailedCharacterComprehensiveSavingThrows {
+    return this.detailedCharacterSavingThrows;
+  }
+
   initialize(saves: RulesetSave[], rulesetAbilities: RulesetAbility[], klassLevelSaves: KlassLevelSave[]) {
     const abilityNames = new Map(rulesetAbilities.map((a) => [a.id, a.name]));
     const saveBaseValues = new Map<string, number>();
@@ -99,13 +107,5 @@ export default class DetailedCharacterSavingThrows {
         },
       };
     }
-  }
-
-  getSavingThrow(savingThrowName: string): DetailedCharacterComprehensiveSavingThrows[string] {
-    return this.detailedCharacterSavingThrows[stripSeparators(savingThrowName)];
-  }
-
-  getSavingThrows(): DetailedCharacterComprehensiveSavingThrows {
-    return this.detailedCharacterSavingThrows;
   }
 }

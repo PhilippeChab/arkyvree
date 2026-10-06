@@ -28,12 +28,6 @@ interface ContributorRow {
   user?: { username?: string | null } | null;
 }
 
-/** The owner's row, or a contributor's */
-type TableRow<T> = { id: string; username?: string | null; email: string } & (
-  | { owner: true }
-  | { owner: false; contributor: T }
-);
-
 interface ContributorsTableProps<T extends ContributorRow> {
   owner: { username?: string | null; emailAddress: string } | null;
   contributors: T[];
@@ -46,7 +40,11 @@ interface ContributorsTableProps<T extends ContributorRow> {
   empty: DataTableEmpty;
 }
 
-const OWNER_ROW_ID = "owner";
+/** The owner's row, or a contributor's */
+type TableRow<T> = { id: string; username?: string | null; email: string } & (
+  | { owner: true }
+  | { owner: false; contributor: T }
+);
 
 /** A contributor's role */
 const CONTRIBUTOR_ROLES: Record<string, Tag> = {
@@ -64,6 +62,8 @@ const CONTRIBUTOR_STATUSES: Record<string, Tag> = {
 };
 
 const OWNER: Tag = { icon: OwnerIcon, label: "Owner", color: "primary" };
+
+const OWNER_ROW_ID = "owner";
 
 /** Owner row followed by the invited contributors, with their status. */
 export function ContributorsTable<T extends ContributorRow>({

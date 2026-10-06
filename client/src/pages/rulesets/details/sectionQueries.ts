@@ -10,9 +10,8 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 import { DEFAULT_ENTITY_FILTERS, type EntityKind, type EntitySortField } from "./entityFilters.ts";
 
-interface ListFilters {
-  search: string;
-  childOnly: boolean;
+interface AptitudeFilters extends ListFilters {
+  aptitudeId?: string;
 }
 
 interface EntityFilters extends ListFilters {
@@ -21,8 +20,9 @@ interface EntityFilters extends ListFilters {
   orderDir: "asc" | "desc";
 }
 
-interface AptitudeFilters extends ListFilters {
-  aptitudeId?: string;
+interface ListFilters {
+  search: string;
+  childOnly: boolean;
 }
 
 interface PowerFilters extends AptitudeFilters {
@@ -207,6 +207,44 @@ export function powersQuery(rulesetId: string, filters: PowerFilters) {
   });
 }
 
+/**
+ * Warm the first page of a tab the way it opens: switching tabs clears the
+ * URL's filters, so that's no search, the default kind and sort, and the
+ * ruleset's default "Local Changes" setting.
+ */
+export function prefetchSection(
+  queryClient: QueryClient,
+  rulesetId: string,
+  section: RulesetSection,
+  childOnly: boolean,
+) {
+  const filters = { search: "", childOnly };
+  switch (section) {
+    case "races":
+      return queryClient.prefetchInfiniteQuery(racesQuery(rulesetId, { ...filters, ...DEFAULT_ENTITY_FILTERS }));
+    case "classes":
+      return queryClient.prefetchInfiniteQuery(classesQuery(rulesetId, { ...filters, ...DEFAULT_ENTITY_FILTERS }));
+    case "feats":
+      return queryClient.prefetchInfiniteQuery(featsGroupedQuery(rulesetId, filters));
+    case "powers":
+      return queryClient.prefetchInfiniteQuery(powersQuery(rulesetId, filters));
+    case "languages":
+      return queryClient.prefetchInfiniteQuery(languagesQuery(rulesetId, filters));
+    case "skills":
+      return queryClient.prefetchInfiniteQuery(skillsQuery(rulesetId, filters));
+    case "items":
+      return queryClient.prefetchInfiniteQuery(itemsQuery(rulesetId, filters));
+    case "aptitudes":
+      return queryClient.prefetchInfiniteQuery(aptitudesQuery(rulesetId, filters));
+    case "saves":
+      return queryClient.prefetchInfiniteQuery(savesQuery(rulesetId, filters));
+    case "mechanics":
+      return queryClient.prefetchInfiniteQuery(mechanicsQuery(rulesetId, filters));
+    case "abilities":
+      return queryClient.prefetchQuery(abilitiesQuery(rulesetId, childOnly));
+  }
+}
+
 export function racesQuery(rulesetId: string, filters: EntityFilters) {
   return infiniteQueryOptions({
     queryKey: [...sectionKey(rulesetId, "races", filters), filters.kind, filters.orderBy, filters.orderDir],
@@ -255,42 +293,4 @@ export function skillsQuery(rulesetId: string, filters: ListFilters) {
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
-}
-
-/**
- * Warm the first page of a tab the way it opens: switching tabs clears the
- * URL's filters, so that's no search, the default kind and sort, and the
- * ruleset's default "Local Changes" setting.
- */
-export function prefetchSection(
-  queryClient: QueryClient,
-  rulesetId: string,
-  section: RulesetSection,
-  childOnly: boolean,
-) {
-  const filters = { search: "", childOnly };
-  switch (section) {
-    case "races":
-      return queryClient.prefetchInfiniteQuery(racesQuery(rulesetId, { ...filters, ...DEFAULT_ENTITY_FILTERS }));
-    case "classes":
-      return queryClient.prefetchInfiniteQuery(classesQuery(rulesetId, { ...filters, ...DEFAULT_ENTITY_FILTERS }));
-    case "feats":
-      return queryClient.prefetchInfiniteQuery(featsGroupedQuery(rulesetId, filters));
-    case "powers":
-      return queryClient.prefetchInfiniteQuery(powersQuery(rulesetId, filters));
-    case "languages":
-      return queryClient.prefetchInfiniteQuery(languagesQuery(rulesetId, filters));
-    case "skills":
-      return queryClient.prefetchInfiniteQuery(skillsQuery(rulesetId, filters));
-    case "items":
-      return queryClient.prefetchInfiniteQuery(itemsQuery(rulesetId, filters));
-    case "aptitudes":
-      return queryClient.prefetchInfiniteQuery(aptitudesQuery(rulesetId, filters));
-    case "saves":
-      return queryClient.prefetchInfiniteQuery(savesQuery(rulesetId, filters));
-    case "mechanics":
-      return queryClient.prefetchInfiniteQuery(mechanicsQuery(rulesetId, filters));
-    case "abilities":
-      return queryClient.prefetchQuery(abilitiesQuery(rulesetId, childOnly));
-  }
 }

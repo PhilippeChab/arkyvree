@@ -24,6 +24,15 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
       .returning();
   }
 
+  async create(db: Db, values: InferInsertModel<typeof attachmentsInStorage>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async delete(db: Db, where: { id: string } | { recordType: string; recordIds: string[] }) {
+    if ("id" in where) return await this.deleteOne(db, where.id);
+    return await this.deleteRecords(db, where.recordType, where.recordIds);
+  }
+
   async findMany(db: Db, where: { blobIds: string[] }) {
     if (where.blobIds.length === 0) return [];
     return await db.query.attachmentsInStorage.findMany({
@@ -57,15 +66,6 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
       )
       .limit(1);
     return rows[0] ?? null;
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof attachmentsInStorage>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async delete(db: Db, where: { id: string } | { recordType: string; recordIds: string[] }) {
-    if ("id" in where) return await this.deleteOne(db, where.id);
-    return await this.deleteRecords(db, where.recordType, where.recordIds);
   }
 }
 

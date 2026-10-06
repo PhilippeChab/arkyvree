@@ -32,6 +32,15 @@ export const REQUIREMENT_IMPORTS: ImportTable = [
   ["@/database/packages/dnd35/content/requirements.ts", ["and", "eq", "eqNum", "eqStr", "feat", "gte", "or"]],
 ];
 
+/** A check written with its builder: `builder(target, value)`. */
+function builderCall(
+  { target, value }: RequirementCondition,
+  { name, takes }: (typeof CHECK_BUILDERS)[number],
+): string {
+  if (takes === "nothing") return `${name}(${quote(target)})`;
+  return `${name}(${quote(target)}, ${takes === "number" ? Number(value) : quote(value)})`;
+}
+
 /**
  * The builder the generated code writes `check` with: one that builds that very check from its target and value. A
  * check none builds (another operator, a value that isn't a number's own writing) is written as an object.
@@ -61,20 +70,6 @@ function indent(text: string, level: number): string {
     .join("\n");
 }
 
-/** `s` as a string literal. */
-export function quote(s: string): string {
-  return `"${escapeString(s)}"`;
-}
-
-/** A check written with its builder: `builder(target, value)`. */
-function builderCall(
-  { target, value }: RequirementCondition,
-  { name, takes }: (typeof CHECK_BUILDERS)[number],
-): string {
-  if (takes === "nothing") return `${name}(${quote(target)})`;
-  return `${name}(${quote(target)}, ${takes === "number" ? Number(value) : quote(value)})`;
-}
-
 /** A modifier's fields written as code, its target as `target`. */
 function modifierFields(mod: ModifierEffect, target: string): string[] {
   return [
@@ -85,14 +80,34 @@ function modifierFields(mod: ModifierEffect, target: string): string[] {
   ];
 }
 
-/** A `key: [...]` field of `items`, one per line, after `prefix` (its indentation); none when there are no items. */
-export function listField(key: string, items: string[], prefix: string): string[] {
-  return items.length === 0 ? [] : [`${prefix}${key}: [`, ...items.map((item) => `${prefix}  ${item},`), `${prefix}],`];
-}
-
 /** `s` escaped for a template literal: as for a string literal, and its backticks and `${` too. */
 export function escapeTemplate(s: string): string {
   return escapeString(s).replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+}
+
+/** A feat written as code, a list's item: its builders added to `uses` (`stringifyRequirement`). */
+export function featLines(feat: FeatSeed, uses: Set<string>): string[] {
+  return [
+    `  {`,
+    `    name: ${quote(feat.name)},`,
+    `    description: ${quote(feat.description)},`,
+    ...(feat.stackable ? [`    stackable: true,`] : []),
+    ...(feat.selectable === false ? [`    selectable: false,`] : []),
+    ...(feat.generated ? [`    generated: true,`] : []),
+    `    aptitudes: [${feat.aptitudes.map(quote).join(", ")}],`,
+    ...listField(
+      "requirements",
+      (feat.requirements ?? []).map((req) => stringifyRequirement(req, uses, 3)),
+      "    ",
+    ),
+    ...listField(
+      "modifiers",
+      (feat.modifiers ?? []).map((m) => stringifyFeatModifier(m, uses)),
+      "    ",
+    ),
+    ...listField("properties", (feat.properties ?? []).map(stringifyProperty), "    "),
+    `  },`,
+  ];
 }
 
 export function formatStringArray(items: string[], indentLevel = 1): string {
@@ -121,9 +136,33 @@ export function importLines(uses: Set<string>, table: ImportTable): string[] {
   });
 }
 
+/** A `key: [...]` field of `items`, one per line, after `prefix` (its indentation); none when there are no items. */
+export function listField(key: string, items: string[], prefix: string): string[] {
+  return items.length === 0 ? [] : [`${prefix}${key}: [`, ...items.map((item) => `${prefix}  ${item},`), `${prefix}],`];
+}
+
+/** `s` as a string literal. */
+export function quote(s: string): string {
+  return `"${escapeString(s)}"`;
+}
+
 /** The import of the requirement builders a file's code uses (`uses`), when it uses some. */
 export function requirementImports(uses: Set<string>): string[] {
   return importLines(uses, REQUIREMENT_IMPORTS);
+}
+
+/**
+ * A feat's modifier written as code, at `indentLevel`: with its requirements, their builders added to `uses`
+ * (`stringifyRequirement`). `target` is its target as code (a template's names each item).
+ */
+export function stringifyFeatModifier(
+  mod: ModifierSeed,
+  uses: Set<string>,
+  indentLevel = 3,
+  target = quote(mod.target),
+): string {
+  const requirements = (mod.requirements ?? []).map((r) => stringifyRequirement(r, uses, indentLevel));
+  return `{ ${[...modifierFields(mod, target), ...(requirements.length > 0 ? [`requirements: [${requirements.join(", ")}]`] : [])].join(", ")} }`;
 }
 
 /** A modifier written as code: a domain's, a race's or an item's, which has no requirements (only a feat's has). */
@@ -159,45 +198,6 @@ export function stringifyRequirement(req: RequirementEntry, uses: Set<string>, i
   }
   const { target, operator, value, valueType } = req;
   return `{ target: ${quote(target)}, operator: ${quote(operator)}, value: ${quote(value)}, valueType: ${quote(valueType)} }`;
-}
-
-/**
- * A feat's modifier written as code, at `indentLevel`: with its requirements, their builders added to `uses`
- * (`stringifyRequirement`). `target` is its target as code (a template's names each item).
- */
-export function stringifyFeatModifier(
-  mod: ModifierSeed,
-  uses: Set<string>,
-  indentLevel = 3,
-  target = quote(mod.target),
-): string {
-  const requirements = (mod.requirements ?? []).map((r) => stringifyRequirement(r, uses, indentLevel));
-  return `{ ${[...modifierFields(mod, target), ...(requirements.length > 0 ? [`requirements: [${requirements.join(", ")}]`] : [])].join(", ")} }`;
-}
-
-/** A feat written as code, a list's item: its builders added to `uses` (`stringifyRequirement`). */
-export function featLines(feat: FeatSeed, uses: Set<string>): string[] {
-  return [
-    `  {`,
-    `    name: ${quote(feat.name)},`,
-    `    description: ${quote(feat.description)},`,
-    ...(feat.stackable ? [`    stackable: true,`] : []),
-    ...(feat.selectable === false ? [`    selectable: false,`] : []),
-    ...(feat.generated ? [`    generated: true,`] : []),
-    `    aptitudes: [${feat.aptitudes.map(quote).join(", ")}],`,
-    ...listField(
-      "requirements",
-      (feat.requirements ?? []).map((req) => stringifyRequirement(req, uses, 3)),
-      "    ",
-    ),
-    ...listField(
-      "modifiers",
-      (feat.modifiers ?? []).map((m) => stringifyFeatModifier(m, uses)),
-      "    ",
-    ),
-    ...listField("properties", (feat.properties ?? []).map(stringifyProperty), "    "),
-    `  },`,
-  ];
 }
 
 export function toConstName(name: string): string {

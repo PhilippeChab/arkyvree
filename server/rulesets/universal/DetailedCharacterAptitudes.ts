@@ -6,6 +6,8 @@ import { stripSeparators } from "@/shared/text.ts";
 import type DetailedCharacterClasses from "./DetailedCharacterClasses.ts";
 import type DetailedCharacterIdentity from "./DetailedCharacterIdentity.ts";
 
+type AptitudesById = Map<string, DetailedCharacterComprehensiveAptitudes[string]>;
+
 type DetailedCharacterComprehensiveAptitudes = {
   [key: string]: {
     id: string;
@@ -20,8 +22,6 @@ type DetailedCharacterComprehensiveAptitudes = {
   };
 };
 
-type AptitudesById = Map<string, DetailedCharacterComprehensiveAptitudes[string]>;
-
 export type AptitudeLevelData = {
   uses: number;
   allowed: number;
@@ -30,6 +30,18 @@ export type AptitudeLevelData = {
 };
 
 const ALLOWED_ENTITY_TYPES = ["feats", "klass_levels", "races"];
+
+/**
+ * A spell list's spells joining the list of the class that gives it (`aptitudes.<list>.joinsclasslist`): a cleric's
+ * domain joins the cleric's list. A feat or a class level sets it, and the class is its own, or the one whose level gave
+ * the feat.
+ */
+const JOINS_CLASS_LIST = {
+  path: "joinsclasslist",
+  label: "Joins Class List",
+  description: "Whether its spells join the list of the class whose level gave it",
+  allowedEntityTypes: ["feats", "klass_levels"],
+};
 
 const NAVIGATABLE_PATHS = [
   {
@@ -46,18 +58,11 @@ const NAVIGATABLE_PATHS = [
   },
 ];
 
-/**
- * A spell list's spells joining the list of the class that gives it (`aptitudes.<list>.joinsclasslist`): a cleric's
- * domain joins the cleric's list. A feat or a class level sets it, and the class is its own, or the one whose level gave
- * the feat.
- */
-const JOINS_CLASS_LIST = {
-  path: "joinsclasslist",
-  label: "Joins Class List",
-  description: "Whether its spells join the list of the class whose level gave it",
-  allowedEntityTypes: ["feats", "klass_levels"],
+const POOL_SLOT_MODIFIERS: Pick<TargetPath, "operators" | "literalOnly" | "minValue"> = {
+  operators: ["add"],
+  literalOnly: true,
+  minValue: 0,
 };
-
 /**
  * What a modifier on a pool's slots may do: grant more (`add` 0 or more: -1 is all known), or make a spell level's all
  * known (`set` -1). The level-up wizard and the class tables count these without a character, the sheet's way: other
@@ -76,43 +81,8 @@ const SPELL_LEVEL_SLOT_MODIFIERS: Record<
   },
   uses: { operators: ["add"], literalOnly: true, minValue: 0 },
 };
-const POOL_SLOT_MODIFIERS: Pick<TargetPath, "operators" | "literalOnly" | "minValue"> = {
-  operators: ["add"],
-  literalOnly: true,
-  minValue: 0,
-};
-
-/** The spell levels whose spells are all known: a state of the level, not a count it holds (`newSpellLevel`). */
-const ALL_KNOWN = new WeakSet<AptitudeLevelData>();
 
 export const ALLOWED_ALL = -1;
-
-/**
- * A spell level's entry. Its known slots are a count, or all known (ALLOWED_ALL), which a `set -1` makes them and an
- * add, before or after, leaves: the class tables' and the level-up wizard's count. Code that takes all known back clears
- * it (`clearAllKnown`).
- */
-function newSpellLevel(): AptitudeLevelData {
-  let count = 0;
-  return {
-    uses: 0,
-    get allowed() {
-      return ALL_KNOWN.has(this) ? ALLOWED_ALL : count;
-    },
-    set allowed(value: number) {
-      if (value === ALLOWED_ALL) ALL_KNOWN.add(this);
-      else if (!ALL_KNOWN.has(this)) count = value;
-    },
-    spent: 0,
-    available: 0,
-  };
-}
-
-/** Takes a spell level's all known back: its known slots a count again, none. */
-export function clearAllKnown(level: AptitudeLevelData): void {
-  ALL_KNOWN.delete(level);
-  level.allowed = 0;
-}
 
 export default class DetailedCharacterAptitudes {
   constructor(
@@ -190,30 +160,8 @@ export default class DetailedCharacterAptitudes {
   // Track which aptitude keys are leveled (spell aptitudes)
   private readonly leveledAptitudeKeys = new Set<string>();
 
-  /** An entry per aptitude, with one per spell level for a leveled one. */
-  private buildEntries(aptitudes: Aptitude[], leveledAptitudeIds: Set<string>) {
-    for (const aptitude of aptitudes) {
-      const key = stripSeparators(aptitude.name);
-      this.detailedCharacterComprehensiveAptitudes[key] = {
-        id: aptitude.id,
-        name: aptitude.name,
-        description: aptitude.description || "",
-        uses: 0,
-        allowed: 0,
-        available: 0,
-        spent: 0,
-      };
-
-      if (leveledAptitudeIds.has(aptitude.id)) {
-        this.leveledAptitudeKeys.add(key);
-        const aptitudeObj = this.detailedCharacterComprehensiveAptitudes[key] as Record<string, unknown>;
-        for (let level = 0; level <= this.maxSpellLevel; level++) {
-          aptitudeObj[String(level)] = newSpellLevel();
-        }
-        aptitudeObj[JOINS_CLASS_LIST.path] = false;
-      }
-    }
-  }
+  /** The spell levels whose spells are all known: a state of the level, not a count it holds (`newSpellLevel`). */
+  private readonly allKnownLevels = new WeakSet<AptitudeLevelData>();
 
   /**
    * What each aptitude allows: the feats and the (non-free) powers the class levels grant through it, and the general
@@ -264,6 +212,31 @@ export default class DetailedCharacterAptitudes {
     }
   }
 
+  /** An entry per aptitude, with one per spell level for a leveled one. */
+  private buildEntries(aptitudes: Aptitude[], leveledAptitudeIds: Set<string>) {
+    for (const aptitude of aptitudes) {
+      const key = stripSeparators(aptitude.name);
+      this.detailedCharacterComprehensiveAptitudes[key] = {
+        id: aptitude.id,
+        name: aptitude.name,
+        description: aptitude.description || "",
+        uses: 0,
+        allowed: 0,
+        available: 0,
+        spent: 0,
+      };
+
+      if (leveledAptitudeIds.has(aptitude.id)) {
+        this.leveledAptitudeKeys.add(key);
+        const aptitudeObj = this.detailedCharacterComprehensiveAptitudes[key] as Record<string, unknown>;
+        for (let level = 0; level <= this.maxSpellLevel; level++) {
+          aptitudeObj[String(level)] = this.newSpellLevel();
+        }
+        aptitudeObj[JOINS_CLASS_LIST.path] = false;
+      }
+    }
+  }
+
   /** The feats and the (non-free) powers the character took per aptitude, per spell level for a leveled power. */
   private countSpent() {
     const spentByAptitudeId: Record<string, number> = {};
@@ -289,60 +262,32 @@ export default class DetailedCharacterAptitudes {
     return { spentByAptitudeId, spentByAptitudeIdAndLevel };
   }
 
-  initialize(
-    aptitudes: Aptitude[],
-    klassLevelFeatCountsByAptitudeId: Record<string, number>,
-    klassLevelPowerCountsByAptitudeId: Record<string, number> = {},
-    leveledAptitudeIds: Set<string> = new Set(),
-  ) {
-    this.buildEntries(aptitudes, leveledAptitudeIds);
-    const aptitudeById: AptitudesById = new Map(
-      Object.values(this.detailedCharacterComprehensiveAptitudes).map((aptitude) => [aptitude.id, aptitude]),
-    );
-    this.applyAllowances(aptitudeById, klassLevelFeatCountsByAptitudeId, klassLevelPowerCountsByAptitudeId);
-    this.applySpent(aptitudeById, this.countSpent());
-    this.updateAvailables();
+  /**
+   * A spell level's entry. Its known slots are a count, or all known (ALLOWED_ALL), which a `set -1` makes them and an
+   * add, before or after, leaves: the class tables' and the level-up wizard's count. Code that takes all known back
+   * clears it (`clearAllKnown`).
+   */
+  private newSpellLevel(): AptitudeLevelData {
+    const allKnownLevels = this.allKnownLevels;
+    let count = 0;
+    return {
+      uses: 0,
+      get allowed() {
+        return allKnownLevels.has(this) ? ALLOWED_ALL : count;
+      },
+      set allowed(value: number) {
+        if (value === ALLOWED_ALL) allKnownLevels.add(this);
+        else if (!allKnownLevels.has(this)) count = value;
+      },
+      spent: 0,
+      available: 0,
+    };
   }
 
-  getAptitudes() {
-    return this.detailedCharacterComprehensiveAptitudes;
-  }
-
-  /** Returns IDs of all non-leveled aptitudes. */
-  getNonLeveledAptitudeIds(): string[] {
-    return Object.entries(this.detailedCharacterComprehensiveAptitudes)
-      .filter(([key]) => !this.leveledAptitudeKeys.has(key))
-      .map(([, apt]) => apt.id);
-  }
-
-  isLeveledAptitude(key: string): boolean {
-    return this.leveledAptitudeKeys.has(key);
-  }
-
-  updateAvailables() {
-    for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
-      if (this.leveledAptitudeKeys.has(key)) {
-        // Update per-level availables for spell aptitudes
-        const aptitudeObj = aptitude as Record<string, unknown>;
-        for (let level = 0; level <= this.maxSpellLevel; level++) {
-          const levelData = aptitudeObj[String(level)] as AptitudeLevelData | undefined;
-          if (levelData) {
-            if (levelData.allowed === ALLOWED_ALL) {
-              levelData.available = 0;
-            } else {
-              levelData.available = levelData.allowed - levelData.spent;
-            }
-          }
-        }
-      } else {
-        // Update flat available
-        if (aptitude.allowed === ALLOWED_ALL) {
-          aptitude.available = 0;
-        } else {
-          aptitude.available = aptitude.allowed - aptitude.spent;
-        }
-      }
-    }
+  /** Takes a spell level's all known back: its known slots a count again, none. */
+  clearAllKnown(level: AptitudeLevelData): void {
+    this.allKnownLevels.delete(level);
+    level.allowed = 0;
   }
 
   /**
@@ -438,5 +383,61 @@ export default class DetailedCharacterAptitudes {
       }
     }
     return pools;
+  }
+
+  getAptitudes() {
+    return this.detailedCharacterComprehensiveAptitudes;
+  }
+
+  /** Returns IDs of all non-leveled aptitudes. */
+  getNonLeveledAptitudeIds(): string[] {
+    return Object.entries(this.detailedCharacterComprehensiveAptitudes)
+      .filter(([key]) => !this.leveledAptitudeKeys.has(key))
+      .map(([, apt]) => apt.id);
+  }
+
+  initialize(
+    aptitudes: Aptitude[],
+    klassLevelFeatCountsByAptitudeId: Record<string, number>,
+    klassLevelPowerCountsByAptitudeId: Record<string, number> = {},
+    leveledAptitudeIds: Set<string> = new Set(),
+  ) {
+    this.buildEntries(aptitudes, leveledAptitudeIds);
+    const aptitudeById: AptitudesById = new Map(
+      Object.values(this.detailedCharacterComprehensiveAptitudes).map((aptitude) => [aptitude.id, aptitude]),
+    );
+    this.applyAllowances(aptitudeById, klassLevelFeatCountsByAptitudeId, klassLevelPowerCountsByAptitudeId);
+    this.applySpent(aptitudeById, this.countSpent());
+    this.updateAvailables();
+  }
+
+  isLeveledAptitude(key: string): boolean {
+    return this.leveledAptitudeKeys.has(key);
+  }
+
+  updateAvailables() {
+    for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
+      if (this.leveledAptitudeKeys.has(key)) {
+        // Update per-level availables for spell aptitudes
+        const aptitudeObj = aptitude as Record<string, unknown>;
+        for (let level = 0; level <= this.maxSpellLevel; level++) {
+          const levelData = aptitudeObj[String(level)] as AptitudeLevelData | undefined;
+          if (levelData) {
+            if (levelData.allowed === ALLOWED_ALL) {
+              levelData.available = 0;
+            } else {
+              levelData.available = levelData.allowed - levelData.spent;
+            }
+          }
+        }
+      } else {
+        // Update flat available
+        if (aptitude.allowed === ALLOWED_ALL) {
+          aptitude.available = 0;
+        } else {
+          aptitude.available = aptitude.allowed - aptitude.spent;
+        }
+      }
+    }
   }
 }

@@ -12,7 +12,7 @@
  * - buildBaselineAptitudes — the aptitudes of the character as saved, before planned levels
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
 import type { DetailedCharacterInterface, ProjectedCharacterData, RulesetModule } from "@/server/rulesets/types.ts";
@@ -20,26 +20,16 @@ import type { Character, Modifier, Property, Requirement } from "@/shared/relati
 
 export type FeatPick = { featId: string; aptitudeId: string };
 
-/** Loads modifiers, properties, and requirements for feats so projected data carries full effects. */
-export function loadFeatCustomizations(rulesetData: CachedRulesetData, featIds: string[]) {
-  const modifiersMap = new Map<string, Modifier[]>();
-  const propertiesMap = new Map<string, Property[]>();
-  const requirementsMap = new Map<string, Requirement[]>();
-
-  for (const featId of featIds) {
-    const mods = rulesetData.modifiersBySource.get(featId);
-    if (mods) modifiersMap.set(featId, mods);
-    const props = rulesetData.propertiesByEntity.get(featId);
-    if (props) propertiesMap.set(featId, props);
-    const reqs = rulesetData.requirementsByEntity.get(featId);
-    if (reqs) requirementsMap.set(featId, reqs);
-  }
-
-  return {
-    modifiers: modifiersMap,
-    properties: propertiesMap,
-    requirements: requirementsMap,
-  };
+/** Builds projected character levels from pending batch level data (klass level IDs + optional ability IDs). */
+export function buildPendingCharacterLevels(
+  characterId: string,
+  pendingLevelKlassLevelIds: string[],
+  pendingLevelAbilityIds?: (string | undefined)[],
+) {
+  return pendingLevelKlassLevelIds.map((klassLevelId, i) => {
+    const abilityId = pendingLevelAbilityIds?.[i] || null;
+    return buildProjectedCharacterLevel(characterId, klassLevelId, abilityId);
+  });
 }
 
 /** Builds projected auto-granted feats for character projection, filtering out user-picked feats. */
@@ -82,23 +72,11 @@ export function buildProjectedCharacterLevel(characterId: string, klassLevelId: 
   };
 }
 
-/** Builds projected character levels from pending batch level data (klass level IDs + optional ability IDs). */
-export function buildPendingCharacterLevels(
-  characterId: string,
-  pendingLevelKlassLevelIds: string[],
-  pendingLevelAbilityIds?: (string | undefined)[],
-) {
-  return pendingLevelKlassLevelIds.map((klassLevelId, i) => {
-    const abilityId = pendingLevelAbilityIds?.[i] || null;
-    return buildProjectedCharacterLevel(characterId, klassLevelId, abilityId);
-  });
-}
-
 export function buildProjectedFeatsFromPicks(
   selectedFeatPicks: FeatPick[],
   klassLevelId: string,
   projectedCharacterLevelId: string,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ): {
   projectedFeats: NonNullable<ProjectedCharacterData["feats"]>;
   nonStackableFeatIds: string[];
@@ -210,7 +188,7 @@ export function buildProjectedSkillsFromAllocations(
   allocations: { skillId: string; rank: number }[],
   klassLevelId: string,
   characterLevelId: string,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ) {
   if (allocations.length === 0) return [];
 
@@ -241,6 +219,28 @@ export function getLevelIdsFromOnward(
   return sorted.slice(index).map((l) => l.id);
 }
 
+/** Loads modifiers, properties, and requirements for feats so projected data carries full effects. */
+export function loadFeatCustomizations(rulesetData: RulesetData, featIds: string[]) {
+  const modifiersMap = new Map<string, Modifier[]>();
+  const propertiesMap = new Map<string, Property[]>();
+  const requirementsMap = new Map<string, Requirement[]>();
+
+  for (const featId of featIds) {
+    const mods = rulesetData.modifiersBySource.get(featId);
+    if (mods) modifiersMap.set(featId, mods);
+    const props = rulesetData.propertiesByEntity.get(featId);
+    if (props) propertiesMap.set(featId, props);
+    const reqs = rulesetData.requirementsByEntity.get(featId);
+    if (reqs) requirementsMap.set(featId, reqs);
+  }
+
+  return {
+    modifiers: modifiersMap,
+    properties: propertiesMap,
+    requirements: requirementsMap,
+  };
+}
+
 /**
  * The projected data of planned levels: a character level each, and the feats their class levels grant. Also returns
  * those grants' records, per level.
@@ -248,7 +248,7 @@ export function getLevelIdsFromOnward(
 export function projectPlannedLevels(
   characterId: string,
   plannedLevels: { klassLevel: { id: string }; abilityId: string | null }[],
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ) {
   const projectedCharacterLevels = plannedLevels.map(({ klassLevel, abilityId }) =>
     buildProjectedCharacterLevel(characterId, klassLevel.id, abilityId),

@@ -25,6 +25,8 @@ import { WAYFARER_GUIDE } from "./wayfarerGuide.ts";
 import { WILD_MAGE } from "./wildMage.ts";
 import { WU_JEN } from "./wuJen.ts";
 
+export const ALL_BASE_CLASSES: ClassSeed[] = [WARLOCK, WARMAGE, WU_JEN];
+
 export const ALL_CLASSES: ClassSeed[] = [
   ACOLYTE_OF_THE_SKIN,
   ALIENIST,
@@ -49,8 +51,6 @@ export const ALL_CLASSES: ClassSeed[] = [
   WILD_MAGE,
   WU_JEN,
 ];
-
-export const ALL_BASE_CLASSES: ClassSeed[] = [WARLOCK, WARMAGE, WU_JEN];
 
 export const ALL_PRESTIGE_CLASSES: ClassSeed[] = [
   ACOLYTE_OF_THE_SKIN,

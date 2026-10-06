@@ -23,13 +23,10 @@ import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/l
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { brandGold, brandGoldTint } from "@/client/src/theme/brandGold.ts";
 
-interface OnboardingStep {
-  icon: SvgIconComponent | null;
-  logo?: boolean;
-  title: string;
-  description: string;
-  tooltip?: string;
-  mode: "dialog" | "popper";
+interface OnboardingPopperProps {
+  anchorEl: HTMLElement;
+  onClose: () => void;
+  children: ReactNode;
 }
 
 interface OnboardingProps {
@@ -41,10 +38,13 @@ interface OnboardingProps {
   isMobile: boolean;
 }
 
-interface OnboardingPopperProps {
-  anchorEl: HTMLElement;
-  onClose: () => void;
-  children: ReactNode;
+interface OnboardingStep {
+  icon: SvgIconComponent | null;
+  logo?: boolean;
+  title: string;
+  description: string;
+  tooltip?: string;
+  mode: "dialog" | "popper";
 }
 
 const SIDEBAR_TRANSITION_MS = 380;

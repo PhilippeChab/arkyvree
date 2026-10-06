@@ -21,29 +21,22 @@ import { ChevronRightIcon, ExpandMoreIcon } from "@/client/src/components/icons/
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
+interface DiagnosticsGroupProps {
+  label: string;
+  count: number;
+  children: ReactNode;
+}
+
 interface DiagnosticsSectionProps {
   validation: CharacterDetail["validation"];
   requirements: CharacterDetail["requirements"];
   modifiers: CharacterDetail["modifiers"];
 }
-
-type RequirementGroup = DiagnosticsSectionProps["requirements"]["unmetRequirementGroups"][number];
-/** A modifier in the applied, unapplied or inactive list, with its source's name. */
-type Modifier = DiagnosticsSectionProps["modifiers"]["appliedModifiers"][number];
-
-/** A requirement's or modifier's target, operator, value and last column (chaining or value type). */
-type RuleCells = [target: ReactNode, operator: ReactNode, value: ReactNode, last: ReactNode];
-
-interface RuleGroup {
-  key: string;
-  source: string;
-  rules: RuleCells[];
-}
-
-interface DiagnosticsGroupProps {
+interface GroupedRuleTableProps {
   label: string;
   count: number;
-  children: ReactNode;
+  lastColumn: string;
+  groups: RuleGroup[];
 }
 
 interface HeaderRowProps {
@@ -54,34 +47,41 @@ interface InvalidRequirementTableProps {
   items: DiagnosticsSectionProps["requirements"]["invalidRequirements"];
 }
 
-interface RuleCellsRowProps {
-  cells: RuleCells;
-}
-
-interface GroupedRuleTableProps {
-  label: string;
-  count: number;
-  lastColumn: string;
-  groups: RuleGroup[];
-}
+/** A modifier in the applied, unapplied or inactive list, with its source's name. */
+type Modifier = DiagnosticsSectionProps["modifiers"]["appliedModifiers"][number];
 
 interface ModifierTableProps {
   modifiers: Modifier[];
   label: string;
 }
 
+type RequirementGroup = DiagnosticsSectionProps["requirements"]["unmetRequirementGroups"][number];
+
 interface RequirementTableProps {
   groups: RequirementGroup[];
   label: string;
+}
+
+/** A requirement's or modifier's target, operator, value and last column (chaining or value type). */
+type RuleCells = [target: ReactNode, operator: ReactNode, value: ReactNode, last: ReactNode];
+
+interface RuleCellsRowProps {
+  cells: RuleCells;
+}
+
+interface RuleGroup {
+  key: string;
+  source: string;
+  rules: RuleCells[];
 }
 
 interface SkippedModifierTableProps {
   items: DiagnosticsSectionProps["modifiers"]["skippedModifiers"];
 }
 
+const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
 const tableCellSx = { py: 0.5, px: 1 } as const;
 const headerCellSx = { ...tableCellSx, fontWeight: 600 } as const;
-const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
 const summarySx = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
 
 /** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
@@ -100,52 +100,6 @@ function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
         </TableContainer>
       </AccordionDetails>
     </Accordion>
-  );
-}
-
-function HeaderRow({ labels }: HeaderRowProps) {
-  return (
-    <TableHead>
-      <TableRow>
-        {labels.map((label) => (
-          <TableCell key={label} sx={headerCellSx}>
-            {label}
-          </TableCell>
-        ))}
-      </TableRow>
-    </TableHead>
-  );
-}
-
-function InvalidRequirementTable({ items }: InvalidRequirementTableProps) {
-  return (
-    <DiagnosticsGroup label="Invalid" count={items.length}>
-      <HeaderRow labels={["Source", "Level", "Target", "Warning"]} />
-      <TableBody>
-        {items.map((item, i) => (
-          <TableRow key={i}>
-            <TableCell sx={tableCellSx}>{item.sourceName ?? item.requirement.entityType}</TableCell>
-            <TableCell sx={tableCellSx}>{item.requirement.level}</TableCell>
-            <TableCell sx={tableCellSx}>{item.requirement.target || "—"}</TableCell>
-            <TableCell sx={tableCellSx}>{item.warning}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </DiagnosticsGroup>
-  );
-}
-
-function RuleCellsRow({ cells }: RuleCellsRowProps) {
-  const [target, ...rest] = cells;
-  return (
-    <>
-      <TableCell sx={tableCellSx}>{target}</TableCell>
-      {rest.map((cell, i) => (
-        <TableCell key={i} sx={tableCellSx} align="center">
-          {cell}
-        </TableCell>
-      ))}
-    </>
   );
 }
 
@@ -216,6 +170,38 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
   );
 }
 
+function HeaderRow({ labels }: HeaderRowProps) {
+  return (
+    <TableHead>
+      <TableRow>
+        {labels.map((label) => (
+          <TableCell key={label} sx={headerCellSx}>
+            {label}
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableHead>
+  );
+}
+
+function InvalidRequirementTable({ items }: InvalidRequirementTableProps) {
+  return (
+    <DiagnosticsGroup label="Invalid" count={items.length}>
+      <HeaderRow labels={["Source", "Level", "Target", "Warning"]} />
+      <TableBody>
+        {items.map((item, i) => (
+          <TableRow key={i}>
+            <TableCell sx={tableCellSx}>{item.sourceName ?? item.requirement.entityType}</TableCell>
+            <TableCell sx={tableCellSx}>{item.requirement.level}</TableCell>
+            <TableCell sx={tableCellSx}>{item.requirement.target || "—"}</TableCell>
+            <TableCell sx={tableCellSx}>{item.warning}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </DiagnosticsGroup>
+  );
+}
+
 function ModifierTable({ modifiers, label }: ModifierTableProps) {
   const groups = useMemo(() => {
     const bySource = new Map<string, RuleCells[]>();
@@ -249,6 +235,20 @@ function RequirementTable({ groups, label }: RequirementTableProps) {
         ]),
       }))}
     />
+  );
+}
+
+function RuleCellsRow({ cells }: RuleCellsRowProps) {
+  const [target, ...rest] = cells;
+  return (
+    <>
+      <TableCell sx={tableCellSx}>{target}</TableCell>
+      {rest.map((cell, i) => (
+        <TableCell key={i} sx={tableCellSx} align="center">
+          {cell}
+        </TableCell>
+      ))}
+    </>
   );
 }
 

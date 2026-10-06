@@ -1,5 +1,5 @@
-export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 export const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"] as const;
+export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 /**
  * How long an unattached blob (uploaded but never confirmed) lives before

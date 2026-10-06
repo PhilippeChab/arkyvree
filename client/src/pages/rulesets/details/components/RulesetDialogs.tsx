@@ -21,6 +21,13 @@ import { nameRules } from "@/client/src/lib/validation.ts";
 import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
+interface ArchiveRulesetDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+}
+
 interface EditRulesetDialogProps {
   open: boolean;
   onClose: () => void;
@@ -39,11 +46,10 @@ interface ForkRulesetDialogProps {
   isLoading: boolean;
 }
 
-interface ArchiveRulesetDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading: boolean;
+interface PrivacyToggleProps {
+  value: boolean;
+  onChange: (isPrivate: boolean) => void;
+  disabled: boolean;
 }
 
 interface PublishRulesetDialogProps {
@@ -57,24 +63,18 @@ interface PublishRulesetDialogProps {
   onKindChange: (kind: PublishKind) => void;
 }
 
+interface RulesetKindToggleProps {
+  value: PublishKind;
+  onChange: (kind: PublishKind) => void;
+  disabled: boolean;
+}
+
 interface UnsubscribeExtensionDialogProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
   isLoading: boolean;
   extensionName: string;
-}
-
-interface PrivacyToggleProps {
-  value: boolean;
-  onChange: (isPrivate: boolean) => void;
-  disabled: boolean;
-}
-
-interface RulesetKindToggleProps {
-  value: PublishKind;
-  onChange: (kind: PublishKind) => void;
-  disabled: boolean;
 }
 
 export type EditRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["$put"]>["json"];

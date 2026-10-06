@@ -5,6 +5,13 @@ import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { allLevelSaves, ClassLevelFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 
+interface ConfirmActionProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+}
+
 interface CreateLevelDialogProps {
   open: boolean;
   onClose: () => void;
@@ -12,13 +19,6 @@ interface CreateLevelDialogProps {
   onSubmit: (data: CreateLevelFormData) => void;
   isLoading: boolean;
   rulesetId: string;
-}
-
-interface ConfirmActionProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading: boolean;
 }
 
 export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, rulesetId }: CreateLevelDialogProps) {

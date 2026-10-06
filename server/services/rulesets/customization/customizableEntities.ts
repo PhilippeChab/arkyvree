@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -13,6 +13,15 @@ import {
 } from "@/server/repositories/index.ts";
 import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
+/** A 404 unless the entity `customization` is made on still exists. */
+export async function checkCustomizedEntity(customization: Modifier | Requirement | Property) {
+  if ("sourceId" in customization) {
+    await getCustomizableEntityName(customization.sourceId, customization.sourceType);
+  } else {
+    await getCustomizableEntityName(customization.entityId, customization.entityType);
+  }
+}
+
 /**
  * The name of an entity customizations can be made on, or a 404: it exists, within the composed ruleset when one is
  * given, never falling back to a global lookup for an entity outside it.
@@ -20,7 +29,7 @@ import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 export async function getCustomizableEntityName(
   entityId: string,
   entityType: string,
-  rulesetData?: CachedRulesetData,
+  rulesetData?: RulesetData,
 ): Promise<string> {
   let name: string | undefined;
 
@@ -72,13 +81,4 @@ export async function getCustomizableEntityName(
   }
 
   return name;
-}
-
-/** A 404 unless the entity `customization` is made on still exists. */
-export async function checkCustomizedEntity(customization: Modifier | Requirement | Property) {
-  if ("sourceId" in customization) {
-    await getCustomizableEntityName(customization.sourceId, customization.sourceType);
-  } else {
-    await getCustomizableEntityName(customization.entityId, customization.entityType);
-  }
 }

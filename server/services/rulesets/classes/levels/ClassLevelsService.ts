@@ -1,9 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntityForCustomization, cowEntityToEdit, findScopedEntity, hasCharacterPicks } from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { include } from "@/server/mixins.ts";
@@ -26,7 +26,7 @@ import { ListsSpells } from "./concerns/ListsSpells.ts";
 class ClassLevelsService extends include(Object, ListsSpells) {
   private buildClassLevelDetail<L extends KlassLevel>(
     ruleset: { baseRules: BaseRules },
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     level: L,
   ) {
     const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
@@ -100,74 +100,6 @@ class ClassLevelsService extends include(Object, ListsSpells) {
     });
   }
 
-  async getClassLevel(rulesetId: string, classId: string, levelId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-
-      const level = rulesetData.klassLevelsById.get(levelId);
-      if (!level || level.klassId !== klass.id) throw new NotFoundError("Class level not found");
-
-      return this.buildClassLevelDetail(ruleset, rulesetData, level);
-    });
-  }
-
-  async getClassLevelFeatPools(rulesetId: string, classId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-      const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
-
-      const levelModifiers: Modifier[] = [];
-      const levelFeats: KlassLevelFeat[] = [];
-      for (const level of levels) {
-        const ms = rulesetData.modifiersBySource.get(level.id);
-        if (ms) levelModifiers.push(...ms);
-        const lfs = rulesetData.klassLevelFeatsByKlassLevel.get(level.id);
-        if (lfs) levelFeats.push(...lfs);
-      }
-
-      // Stackable feats (e.g. "Bonus Feat (Fighter)") share one feat record linked
-      // to multiple klass levels, so we duplicate the modifier per level occurrence.
-      const remappedFeatModifiers: Modifier[] = [];
-      for (const lf of levelFeats) {
-        const mods = rulesetData.modifiersBySource.get(lf.featId);
-        if (!mods) continue;
-        for (const mod of mods) {
-          if (mod.sourceType !== "feats") continue;
-          remappedFeatModifiers.push({ ...mod, sourceId: lf.klassLevelId });
-        }
-      }
-
-      return hooks.classLevels.enrichWithFeatPools(
-        levels,
-        [...levelModifiers, ...remappedFeatModifiers],
-        rulesetData.aptitudes,
-      );
-    });
-  }
-
-  async getClassLevelWithClassName(rulesetId: string, classLevelId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-
-      const level = rulesetData.klassLevelsById.get(classLevelId);
-      if (!level) throw new NotFoundError("Class level not found");
-
-      const klass = findScopedEntity(rulesetData.klassesById, level.klassId, rulesetId, sourceChain, "Class");
-
-      // `name` is attached so clients of getClassLevelWithClassName can show the class
-      // name without a second fetch.
-      return this.buildClassLevelDetail(ruleset, rulesetData, { ...level, name: klass.name });
-    });
-  }
-
-  async getClassLevels(rulesetId: string, classId: string) {
-    return await this.listClassLevels(rulesetId, classId);
-  }
-
   async createClassLevel(
     session: Session,
     rulesetId: string,
@@ -188,7 +120,8 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
         // Copy an inherited class: the new level row would otherwise belong to the parent ruleset's class.
-        const { id: targetKlassId } = await cowEntityToEdit(tx, ruleset, sourceChain, "klasses", klass);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const { feats, saves, bab, skills, ...levelData } = body;
@@ -250,6 +183,114 @@ class ClassLevelsService extends include(Object, ListsSpells) {
     return result;
   }
 
+  async deleteClassLevel(session: Session, rulesetId: string, classId: string, levelId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "klass_levels", levelId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+
+        const level = rulesetData.klassLevelsById.get(levelId);
+        if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
+
+        // COW the parent klass if the level is inherited — without this, hard-delete
+        // would wipe the parent ruleset's row. RulesetEdit.cowOwner on
+        // "klass_levels" duplicates the entire klass into the user's ruleset and
+        // returns the level id in the new copy.
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
+
+        // FK CASCADE on klass_level_feats / klass_level_powers / klass_level_saves
+        // wipes those join rows when the level row is deleted.
+        // The database deletes its customizations with it.
+        const rows = await KlassLevels.delete(tx, { id: resolvedLevelId });
+        const deletedLevel = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: deletedLevel.id,
+          targetTable: getTableName(klassLevelsInRules),
+          type: "deleteKlassLevel",
+          data: { rulesetId, entityName: klass.name, level: deletedLevel.level },
+        });
+
+        return deletedLevel;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async getClassLevel(rulesetId: string, classId: string, levelId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+
+      const level = rulesetData.klassLevelsById.get(levelId);
+      if (!level || level.klassId !== klass.id) throw new NotFoundError("Class level not found");
+
+      return this.buildClassLevelDetail(ruleset, rulesetData, level);
+    });
+  }
+
+  async getClassLevelFeatPools(rulesetId: string, classId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+
+      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+      const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
+
+      const levelModifiers: Modifier[] = [];
+      const levelFeats: KlassLevelFeat[] = [];
+      for (const level of levels) {
+        const ms = rulesetData.modifiersBySource.get(level.id);
+        if (ms) levelModifiers.push(...ms);
+        const lfs = rulesetData.klassLevelFeatsByKlassLevel.get(level.id);
+        if (lfs) levelFeats.push(...lfs);
+      }
+
+      // Stackable feats (e.g. "Bonus Feat (Fighter)") share one feat record linked
+      // to multiple klass levels, so we duplicate the modifier per level occurrence.
+      const remappedFeatModifiers: Modifier[] = [];
+      for (const lf of levelFeats) {
+        const mods = rulesetData.modifiersBySource.get(lf.featId);
+        if (!mods) continue;
+        for (const mod of mods) {
+          if (mod.sourceType !== "feats") continue;
+          remappedFeatModifiers.push({ ...mod, sourceId: lf.klassLevelId });
+        }
+      }
+
+      return hooks.classLevels.enrichWithFeatPools(
+        levels,
+        [...levelModifiers, ...remappedFeatModifiers],
+        rulesetData.aptitudes,
+      );
+    });
+  }
+
+  async getClassLevels(rulesetId: string, classId: string) {
+    return await this.listClassLevels(rulesetId, classId);
+  }
+
+  async getClassLevelWithClassName(rulesetId: string, classLevelId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+
+      const level = rulesetData.klassLevelsById.get(classLevelId);
+      if (!level) throw new NotFoundError("Class level not found");
+
+      const klass = findScopedEntity(rulesetData.klassesById, level.klassId, rulesetId, sourceChain, "Class");
+
+      // `name` is attached so clients of getClassLevelWithClassName can show the class
+      // name without a second fetch.
+      return this.buildClassLevelDetail(ruleset, rulesetData, { ...level, name: klass.name });
+    });
+  }
+
   async updateClassLevel(
     session: Session,
     rulesetId: string,
@@ -273,7 +314,8 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
 
         // COW the parent klass if inherited so writes don't corrupt the parent.
-        const resolvedLevelId = await cowEntityForCustomization(tx, rulesetId, "klass_levels", level.id);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const { feats, saves, bab, skills } = body;
@@ -340,45 +382,6 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         });
 
         return hooks.classLevels.enrichWithProperties([{ ...level, id: resolvedLevelId }], finalProps)[0];
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteClassLevel(session: Session, rulesetId: string, classId: string, levelId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "klass_levels", levelId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-
-        const level = rulesetData.klassLevelsById.get(levelId);
-        if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
-
-        // COW the parent klass if the level is inherited — without this, hard-delete
-        // would wipe the parent ruleset's row. cowEntityForCustomization on
-        // "klass_levels" duplicates the entire klass into the user's ruleset and
-        // returns the level id in the new copy.
-        const resolvedLevelId = await cowEntityForCustomization(tx, rulesetId, "klass_levels", level.id);
-
-        // FK CASCADE on klass_level_feats / klass_level_powers / klass_level_saves
-        // wipes those join rows when the level row is deleted.
-        // The database deletes its customizations with it.
-        const rows = await KlassLevels.delete(tx, { id: resolvedLevelId });
-        const deletedLevel = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: deletedLevel.id,
-          targetTable: getTableName(klassLevelsInRules),
-          type: "deleteKlassLevel",
-          data: { rulesetId, entityName: klass.name, level: deletedLevel.level },
-        });
-
-        return deletedLevel;
       });
     });
     RulesetCache.invalidate(rulesetId);

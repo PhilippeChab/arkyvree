@@ -1,16 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { languagesInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  assertEntityNameAvailable,
-  cowEntityToDelete,
-  cowEntityToEdit,
-  findScopedEntity,
-  hasCharacterPicks,
-  repointTombstoneSnapshot,
-} from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Languages } from "@/server/repositories/index.ts";
@@ -19,6 +12,79 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class LanguagesService {
+  async createLanguage(
+    session: Session,
+    rulesetId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      type: string;
+    },
+  ) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "languages", body.name);
+
+        const rows = await Languages.create(tx, {
+          ...body,
+          rulesetId,
+        });
+        const language = rows[0];
+
+        if (tombstoneAncestorId) {
+          await edit.repointTombstone(tx, "languages", tombstoneAncestorId, language.id);
+        }
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: language.id,
+          targetTable: getTableName(languagesInRules),
+          type: "createLanguage",
+          data: { entityName: language.name },
+        });
+
+        return language;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async deleteLanguage(session: Session, rulesetId: string, languageId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "languages", languageId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
+
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "languages", language);
+
+        // The database deletes its customizations with it.
+        const rows = await Languages.delete(tx, { id: targetId });
+        const deletedLanguage = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(languagesInRules),
+          type: "deleteLanguage",
+          data: { rulesetId, entityName: language.name },
+        });
+
+        return deletedLanguage;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
   async getLanguage(rulesetId: string, languageId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
@@ -43,52 +109,6 @@ class LanguagesService {
     });
   }
 
-  async createLanguage(
-    session: Session,
-    rulesetId: string,
-    body: {
-      name: string;
-      description?: string | null;
-      type: string;
-    },
-  ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "languages",
-          body.name,
-        );
-
-        const rows = await Languages.create(tx, {
-          ...body,
-          rulesetId,
-        });
-        const language = rows[0];
-
-        if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "languages", tombstoneAncestorId, language.id);
-        }
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: language.id,
-          targetTable: getTableName(languagesInRules),
-          type: "createLanguage",
-          data: { entityName: language.name },
-        });
-
-        return language;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
   async updateLanguage(
     session: Session,
     rulesetId: string,
@@ -108,7 +128,8 @@ class LanguagesService {
 
         const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "languages", language);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "languages", language);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...languageData } = body;
@@ -130,37 +151,6 @@ class LanguagesService {
         });
 
         return updatedLanguage;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteLanguage(session: Session, rulesetId: string, languageId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "languages", languageId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "languages", language);
-
-        // The database deletes its customizations with it.
-        const rows = await Languages.delete(tx, { id: targetId });
-        const deletedLanguage = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(languagesInRules),
-          type: "deleteLanguage",
-          data: { rulesetId, entityName: language.name },
-        });
-
-        return deletedLanguage;
       });
     });
     RulesetCache.invalidate(rulesetId);

@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterAbilities, CharacterLevels, Characters } from "@/server/repositories/index.ts";
@@ -20,7 +20,7 @@ async function createBonded(
   kind: BondedKind,
   raceId: string,
   raceName: string,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ): Promise<string> {
   const inserted = await Characters.create(tx, {
     userId: master.userId,
@@ -50,50 +50,12 @@ async function createBonded(
   return bonded.id;
 }
 
-async function syncBondedLevels(
-  tx: Db,
-  bondedId: string,
-  bondedKlassId: string,
-  targetHD: number,
-  rulesetData: CachedRulesetData,
-): Promise<void> {
-  const existingLevels = await CharacterLevels.findMany(tx, {
-    characterId: bondedId,
-  });
-  const currentHD = existingLevels.length;
-
-  if (currentHD === targetHD) return;
-
-  if (currentHD < targetHD) {
-    const klassLevels = rulesetData.klassLevelsByKlassId.get(bondedKlassId) ?? [];
-    const klassLevelByLevel = new Map(klassLevels.map((kl) => [kl.level, kl]));
-    for (let lv = currentHD + 1; lv <= targetHD; lv++) {
-      const kl = klassLevelByLevel.get(lv);
-      if (!kl) {
-        throw new BadRequestError(`Bonded class is missing level ${lv} — content seed incomplete`);
-      }
-      await CharacterLevels.create(tx, {
-        characterId: bondedId,
-        klassLevelId: kl.id,
-        hp: 1,
-        abilityId: null,
-      });
-    }
-    return;
-  }
-
-  const sorted = [...existingLevels].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  for (let i = 0; i < currentHD - targetHD; i++) {
-    await CharacterLevels.delete(tx, { id: sorted[i].id });
-  }
-}
-
 async function reconcileBonded(
   tx: Db,
   masterRecord: Character,
   kind: BondedKind,
   detailedMaster: Dnd35DetailedCharacter,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ): Promise<void> {
   const { className } = BONDED_KIND_BY_SLUG[kind];
   const targetRaceName = detailedMaster.getDetailedCharacterBonds().getBondedRace(kind);
@@ -145,11 +107,49 @@ async function reconcileBonded(
   await syncBondedLevels(tx, bondedId, bondedKlass.id, targetHD, rulesetData);
 }
 
+async function syncBondedLevels(
+  tx: Db,
+  bondedId: string,
+  bondedKlassId: string,
+  targetHD: number,
+  rulesetData: RulesetData,
+): Promise<void> {
+  const existingLevels = await CharacterLevels.findMany(tx, {
+    characterId: bondedId,
+  });
+  const currentHD = existingLevels.length;
+
+  if (currentHD === targetHD) return;
+
+  if (currentHD < targetHD) {
+    const klassLevels = rulesetData.klassLevelsByKlassId.get(bondedKlassId) ?? [];
+    const klassLevelByLevel = new Map(klassLevels.map((kl) => [kl.level, kl]));
+    for (let lv = currentHD + 1; lv <= targetHD; lv++) {
+      const kl = klassLevelByLevel.get(lv);
+      if (!kl) {
+        throw new BadRequestError(`Bonded class is missing level ${lv} — content seed incomplete`);
+      }
+      await CharacterLevels.create(tx, {
+        characterId: bondedId,
+        klassLevelId: kl.id,
+        hp: 1,
+        abilityId: null,
+      });
+    }
+    return;
+  }
+
+  const sorted = [...existingLevels].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  for (let i = 0; i < currentHD - targetHD; i++) {
+    await CharacterLevels.delete(tx, { id: sorted[i].id });
+  }
+}
+
 export async function reconcileAllBondedKinds(
   tx: Db,
   masterRecord: Character,
   detailedMaster: Dnd35DetailedCharacter,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ): Promise<void> {
   for (const kind of BONDED_KIND_SLUGS) {
     await reconcileBonded(tx, masterRecord, kind, detailedMaster, rulesetData);

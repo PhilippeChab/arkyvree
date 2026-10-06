@@ -70,15 +70,6 @@ export function renderHuman(d: TableDiff): string[] {
   ];
 }
 
-/** A value as a Postgres literal: text dollar-quoted, anything that isn't a scalar as jsonb. */
-export function sqlLiteral(v: unknown): string {
-  if (v === null || v === undefined) return "NULL";
-  if (typeof v === "boolean") return v ? "true" : "false";
-  if (typeof v === "number") return String(v);
-  if (typeof v === "string") return dollarQuote(v);
-  return `${dollarQuote(JSON.stringify(v))}::jsonb`;
-}
-
 /**
  * The SQL that brings `table`'s (schema-qualified) drifted fields to the reference's values. What it can't write is a
  * comment, for manual handling: a row on one side only (an INSERT would need its references remapped, and a DELETE
@@ -96,6 +87,15 @@ export function renderSql(table: string, d: TableDiff, labelled: readonly string
         : `UPDATE ${table} SET ${c.field} = ${sqlLiteral(c.ref)} WHERE id = ${sqlLiteral(c.targetId)};  -- ${c.bk}`,
     ),
   ];
+}
+
+/** A value as a Postgres literal: text dollar-quoted, anything that isn't a scalar as jsonb. */
+export function sqlLiteral(v: unknown): string {
+  if (v === null || v === undefined) return "NULL";
+  if (typeof v === "boolean") return v ? "true" : "false";
+  if (typeof v === "number") return String(v);
+  if (typeof v === "string") return dollarQuote(v);
+  return `${dollarQuote(JSON.stringify(v))}::jsonb`;
 }
 
 /**

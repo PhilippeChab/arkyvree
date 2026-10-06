@@ -2,7 +2,7 @@ import type { JobHelpers } from "graphile-worker";
 
 import { db, withTransaction } from "@/server/database/index.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
-import { getStorage, isStorageConfigured } from "@/server/storage/s3.ts";
+import ObjectStorage, { isStorageConfigured } from "@/server/storage/s3.ts";
 import { UNATTACHED_BLOB_TTL_MS } from "@/shared/attachments.ts";
 
 interface Logger {
@@ -30,7 +30,7 @@ async function sweepOne(blobId: string, key: string, logger: Logger): Promise<Sw
     // (graphile-worker single concurrency) so connection-pool impact
     // is bounded.
     try {
-      await getStorage().deleteObject(key);
+      await ObjectStorage.get().deleteObject(key);
       await Blobs.delete(tx, { id: blobId });
       return "swept";
     } catch (err) {

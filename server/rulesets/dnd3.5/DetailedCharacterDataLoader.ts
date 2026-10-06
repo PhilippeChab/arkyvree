@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/index.ts";
+import type { RulesetData } from "@/server/cache/index.ts";
 import { refreshEntityData } from "@/server/cache/rulesetCache/index.ts";
 import { type CowData, db, type Db } from "@/server/database/index.ts";
 import {
@@ -50,22 +50,22 @@ import type {
 import { readSkillFlags } from "./skillFlags.ts";
 import { collectClassListIds, collectFeatListIds } from "./spellcasting/spellLists.ts";
 
+/** Resolves stored ids through the override map, when there is one. */
+type Resolve = <T extends Record<string, unknown>>(rows: T[]) => T[];
+
 /** Internal bag of rounds 1-3 DB results shared across projected/baseline builds. */
 interface SharedCharacterData {
   ruleset: Ruleset;
   player: Player | undefined;
   campaign: Campaign | undefined;
   cowData: CowData;
-  rulesetData: CachedRulesetData;
+  rulesetData: RulesetData;
   characterAbilityRecords: Awaited<ReturnType<typeof CharacterAbilities.findMany>>;
   race: Race;
   characterLanguages: Awaited<ReturnType<typeof CharacterLanguages.findMany>>;
   inventory: Awaited<ReturnType<typeof CharacterInventoryRepository.findMany>>;
   rawCharacterLevels: CharacterLevel[];
 }
-
-/** Resolves stored ids through the override map, when there is one. */
-type Resolve = <T extends Record<string, unknown>>(rows: T[]) => T[];
 
 /** D&D 3.5-specific extension of LoadedCharacterData with spellcasting and skill properties. */
 export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
@@ -84,58 +84,6 @@ export type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR };
 
 export default class DetailedCharacterDataLoader {
   constructor(private readonly character: Character) {}
-
-  /**
-   * Scans modifiers for "set feats.<slug>.possessed = true" targets and returns
-   * the IDs of the possessed feats that aren't already in the character's feat list.
-   */
-  private resolvePossessedFeatIds(
-    modifiers: Modifier[],
-    existingFeatIds: Set<string>,
-    featIdBySlug: Map<string, string>,
-  ): string[] {
-    const ids: string[] = [];
-    const seen = new Set<string>();
-    for (const mod of modifiers) {
-      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
-      const parts = mod.target.split(".");
-      if (parts.length !== 3 || parts[0] !== "feats" || parts[2] !== "possessed") continue;
-      const featId = featIdBySlug.get(parts[1]);
-      if (!featId || existingFeatIds.has(featId) || seen.has(featId)) continue;
-      seen.add(featId);
-      ids.push(featId);
-    }
-    return ids;
-  }
-
-  private resolvePossessedPowers(
-    modifiers: Modifier[],
-    existingPowerIds: Set<string>,
-    powerIdsBySlug: Map<string, string[]>,
-    powersById: Map<string, PowerWithAptitudes>,
-    aptitudeIdBySpellSlug: Map<string, string>,
-  ): { powerId: string; aptitudeId: string }[] {
-    const results: { powerId: string; aptitudeId: string }[] = [];
-    for (const mod of modifiers) {
-      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
-      const parts = mod.target.split(".");
-      // powers.<spellSlug>.<aptSlug>.known
-      if (parts.length !== 4 || parts[0] !== "powers" || parts[3] !== "known") continue;
-      const aptitudeId = aptitudeIdBySpellSlug.get(parts[2]);
-      if (!aptitudeId) continue;
-      const candidateIds = powerIdsBySlug.get(parts[1]);
-      if (!candidateIds) continue;
-      for (const id of candidateIds) {
-        const power = powersById.get(id);
-        if (!power) continue;
-        if (!power.powersAptitudesInRules.some((pa) => pa.aptitudeId === aptitudeId)) continue;
-        if (existingPowerIds.has(power.id)) break;
-        results.push({ powerId: power.id, aptitudeId });
-        break;
-      }
-    }
-    return results;
-  }
 
   /** A character ability's score, with its ability's name. */
   private abilityScore(
@@ -181,7 +129,7 @@ export default class DetailedCharacterDataLoader {
       feats: FeatWithPMR[];
       powers: PowerWithPMR[];
     },
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     extraRequirements: Requirement[],
   ) {
     const modifiers: Modifier[] = [...parts.characterSourcedModifiers, ...parts.race.modifiers];
@@ -231,7 +179,7 @@ export default class DetailedCharacterDataLoader {
   /** The feats: picked and given (deduped), then projected, in character-level order; and the given per aptitude. */
   private composeFeats(
     picks: Awaited<ReturnType<DetailedCharacterDataLoader["fetchPicks"]>>,
-    rulesetFeats: CachedRulesetData["feats"],
+    rulesetFeats: RulesetData["feats"],
     projectedData: Dnd35ProjectedCharacterData | undefined,
     allCharacterLevels: CharacterLevel[],
     resolve: Resolve,
@@ -288,7 +236,7 @@ export default class DetailedCharacterDataLoader {
   /** The character's skills, feats and powers: saved picks and grants, COW-resolved, then the projected ones. */
   private composePicks(
     picks: Awaited<ReturnType<DetailedCharacterDataLoader["fetchPicks"]>>,
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     projectedData: Dnd35ProjectedCharacterData | undefined,
     allCharacterLevels: CharacterLevel[],
     resolve: Resolve,
@@ -308,7 +256,7 @@ export default class DetailedCharacterDataLoader {
    */
   private composePowers(
     picks: Awaited<ReturnType<DetailedCharacterDataLoader["fetchPicks"]>>,
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     projectedData: Dnd35ProjectedCharacterData | undefined,
     allCharacterLevels: CharacterLevel[],
     resolve: Resolve,
@@ -350,7 +298,7 @@ export default class DetailedCharacterDataLoader {
   private featsWithPMR(
     allFeats: ReturnType<DetailedCharacterDataLoader["composeFeats"]>["allFeats"],
     virtuallyPossessedFeatIds: string[],
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
   ): FeatWithPMR[] {
     const realFeatsWithPMR: FeatWithPMR[] = allFeats.map((feat) => ({
       ...feat,
@@ -377,7 +325,7 @@ export default class DetailedCharacterDataLoader {
   }
 
   /** The D&D 3.5 reading of the cache's raw property rows: each skill's flags, and the skill-point ability. */
-  private interpretProperties(rulesetData: CachedRulesetData, resolveId: (id: string) => string) {
+  private interpretProperties(rulesetData: RulesetData, resolveId: (id: string) => string) {
     const skillProperties = readSkillFlags(rulesetData.propertiesByEntityType.get("skills") ?? []);
 
     // The skill-point-ability property is attached to whichever ruleset in the
@@ -395,10 +343,7 @@ export default class DetailedCharacterDataLoader {
    * are the proficiency with it: its template's, or its own when it is one. Its own on top of a template, or a plain
    * item's, are its other requirements, which its modifiers need
    */
-  private inventoryWithPMR(
-    inventory: SharedCharacterData["inventory"],
-    rulesetData: CachedRulesetData,
-  ): InventoryEntry[] {
+  private inventoryWithPMR(inventory: SharedCharacterData["inventory"], rulesetData: RulesetData): InventoryEntry[] {
     return inventory.map((inv) => {
       const item = inv.itemsInRule;
       const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
@@ -424,7 +369,7 @@ export default class DetailedCharacterDataLoader {
   }
 
   /** Klass level properties/modifiers/requirements, and each level's bab and skill points. */
-  private klassLevelsWithPMR(klassLevelsRaw: KlassLevel[], rulesetData: CachedRulesetData) {
+  private klassLevelsWithPMR(klassLevelsRaw: KlassLevel[], rulesetData: RulesetData) {
     const klassLevels: KlassLevelWithPMR[] = klassLevelsRaw
       .map((level) => ({
         ...level,
@@ -454,11 +399,7 @@ export default class DetailedCharacterDataLoader {
   }
 
   /** Klass properties (bonus spell ability + caster type). */
-  private klassProperties(
-    klassEntityIds: string[],
-    rulesetData: CachedRulesetData,
-    abilityLookup: Map<string, string>,
-  ) {
+  private klassProperties(klassEntityIds: string[], rulesetData: RulesetData, abilityLookup: Map<string, string>) {
     const klassBonusSpellAbilityMap = new Map<string, string>();
     const klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
     for (const klassId of klassEntityIds) {
@@ -504,7 +445,7 @@ export default class DetailedCharacterDataLoader {
   private powersWithPMR(
     allPowers: ReturnType<DetailedCharacterDataLoader["composePowers"]>["allPowers"],
     virtuallyPossessedPowers: { powerId: string; aptitudeId: string }[],
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
   ): PowerWithPMR[] {
     const realPowersWithPMR: PowerWithPMR[] = allPowers.map((power) => ({
       ...power,
@@ -536,7 +477,7 @@ export default class DetailedCharacterDataLoader {
   }
 
   /** The race with its properties, modifiers and requirements. */
-  private raceWithPMR(race: Race, rulesetData: CachedRulesetData): RaceWithPMR {
+  private raceWithPMR(race: Race, rulesetData: RulesetData): RaceWithPMR {
     return {
       ...race,
       properties: rulesetData.propertiesByEntity.get(race.id) ?? [],
@@ -545,8 +486,60 @@ export default class DetailedCharacterDataLoader {
     };
   }
 
+  /**
+   * Scans modifiers for "set feats.<slug>.possessed = true" targets and returns
+   * the IDs of the possessed feats that aren't already in the character's feat list.
+   */
+  private resolvePossessedFeatIds(
+    modifiers: Modifier[],
+    existingFeatIds: Set<string>,
+    featIdBySlug: Map<string, string>,
+  ): string[] {
+    const ids: string[] = [];
+    const seen = new Set<string>();
+    for (const mod of modifiers) {
+      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
+      const parts = mod.target.split(".");
+      if (parts.length !== 3 || parts[0] !== "feats" || parts[2] !== "possessed") continue;
+      const featId = featIdBySlug.get(parts[1]);
+      if (!featId || existingFeatIds.has(featId) || seen.has(featId)) continue;
+      seen.add(featId);
+      ids.push(featId);
+    }
+    return ids;
+  }
+
+  private resolvePossessedPowers(
+    modifiers: Modifier[],
+    existingPowerIds: Set<string>,
+    powerIdsBySlug: Map<string, string[]>,
+    powersById: Map<string, PowerWithAptitudes>,
+    aptitudeIdBySpellSlug: Map<string, string>,
+  ): { powerId: string; aptitudeId: string }[] {
+    const results: { powerId: string; aptitudeId: string }[] = [];
+    for (const mod of modifiers) {
+      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
+      const parts = mod.target.split(".");
+      // powers.<spellSlug>.<aptSlug>.known
+      if (parts.length !== 4 || parts[0] !== "powers" || parts[3] !== "known") continue;
+      const aptitudeId = aptitudeIdBySpellSlug.get(parts[2]);
+      if (!aptitudeId) continue;
+      const candidateIds = powerIdsBySlug.get(parts[1]);
+      if (!candidateIds) continue;
+      for (const id of candidateIds) {
+        const power = powersById.get(id);
+        if (!power) continue;
+        if (!power.powersAptitudesInRules.some((pa) => pa.aptitudeId === aptitudeId)) continue;
+        if (existingPowerIds.has(power.id)) break;
+        results.push({ powerId: power.id, aptitudeId });
+        break;
+      }
+    }
+    return results;
+  }
+
   /** The ruleset's own lists, as the loaded data carries them. */
-  private rulesetFields(rulesetData: CachedRulesetData) {
+  private rulesetFields(rulesetData: RulesetData) {
     return {
       rulesetAbilities: rulesetData.abilities,
       rulesetSaves: rulesetData.saves,
@@ -568,7 +561,7 @@ export default class DetailedCharacterDataLoader {
     baseModifiers: Modifier[],
     featIds: string[],
     powerIds: string[],
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
   ) {
     return {
       virtuallyPossessedFeatIds: this.resolvePossessedFeatIds(
@@ -594,7 +587,7 @@ export default class DetailedCharacterDataLoader {
    * scan for "set feats/powers.<slug>.possessed/known" targets). Built by O(entities) map lookups, not an O(all ruleset
    * mods) filter. Then the requirements of the character's own modifiers.
    */
-  private async fetchModifiers(database: Db, rulesetData: CachedRulesetData, sourceIds: string[]) {
+  private async fetchModifiers(database: Db, rulesetData: RulesetData, sourceIds: string[]) {
     const characterSourcedModifiers = await Modifiers.findMany(database, {
       sourceIds: [this.character.id],
     });

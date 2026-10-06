@@ -14,11 +14,11 @@ import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-type UnreadNotification = InferResponseType<typeof rpc.api.notifications.unread.$get, 200>["items"][number];
-
 interface NotificationSummaryProps {
   notification: UnreadNotification;
 }
+
+type UnreadNotification = InferResponseType<typeof rpc.api.notifications.unread.$get, 200>["items"][number];
 
 function NotificationSummary({ notification }: NotificationSummaryProps) {
   return (

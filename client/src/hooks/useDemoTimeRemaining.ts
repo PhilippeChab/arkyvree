@@ -14,9 +14,7 @@ export interface DemoTimeRemaining {
   urgency: DemoUrgency;
 }
 
-const WARNING_THRESHOLD_MS = 30 * 60 * 1000;
 const CRITICAL_THRESHOLD_MS = 5 * 60 * 1000;
-
 /** What the hook returns for a user who isn't a demo's. */
 const NOT_A_DEMO: DemoTimeRemaining = {
   isDemo: false,
@@ -27,6 +25,8 @@ const NOT_A_DEMO: DemoTimeRemaining = {
   seconds: 0,
   urgency: "normal",
 };
+
+const WARNING_THRESHOLD_MS = 30 * 60 * 1000;
 
 function compute(expiresAt: string | null | undefined): DemoTimeRemaining {
   if (!expiresAt) return NOT_A_DEMO;

@@ -9,16 +9,13 @@ import { EmailVerifications, OauthAccounts, PasswordResets, Users } from "@/serv
 import { expectOk, expectStatus, guestApi, sessionIdFrom, signedInApi } from "@/tests/support/api.ts";
 import { apiAs } from "@/tests/support/clients.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
+import { findVerificationCode } from "@/tests/support/users.ts";
 
 const auth = guestApi.auth;
 const password = "password1234";
 
 function newEmail(label: string) {
   return `test+${label}+${uniqueId()}@example.com`;
-}
-
-async function latestVerificationCode(userId: string) {
-  return (await EmailVerifications.findOne(db, { userId }))!.code;
 }
 
 async function signUp(email: string) {
@@ -31,7 +28,7 @@ async function signUpAndVerify(label: string) {
   const email = newEmail(label);
   const user = await signUp(email);
   const verified = await auth["verify-email"].$post({
-    json: { emailAddress: email, code: await latestVerificationCode(user.id) },
+    json: { emailAddress: email, code: await findVerificationCode(user.id) },
   });
   await expectOk(verified);
   const sessionId = sessionIdFrom(verified);
@@ -74,7 +71,7 @@ describe("authentication", () => {
       const email = newEmail("verify");
       const user = await signUp(email);
       const response = await auth["verify-email"].$post({
-        json: { emailAddress: email, code: await latestVerificationCode(user.id) },
+        json: { emailAddress: email, code: await findVerificationCode(user.id) },
       });
       expect(response.status).toBe(200);
       const body = await expectOk(response);
@@ -152,7 +149,7 @@ describe("authentication", () => {
 
       await expectStatus(api.auth["verify-email-change"].$post({ json: { code: "000000" } }), 401);
       const verified = await expectOk(
-        api.auth["verify-email-change"].$post({ json: { code: await latestVerificationCode(user.id) } }),
+        api.auth["verify-email-change"].$post({ json: { code: await findVerificationCode(user.id) } }),
       );
       expect(verified).toMatchObject({ emailAddress: changed, pendingEmailAddress: null });
       expect(verified).not.toHaveProperty("passwordDigest");

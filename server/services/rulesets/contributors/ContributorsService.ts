@@ -11,6 +11,23 @@ import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ContributorsService {
+  /**
+   * The invitee's answer: the invite's status, its notification read,
+   * and the activity its ruleset's managers are told of.
+   */
+  private async answerInvite(tx: Db, session: Session, contributorId: string, status: "Active" | "Rejected") {
+    const [updated] = await Contributors.update(tx, { status }, { id: contributorId });
+    await Notifications.markRead(tx, { recipientId: session.userId, targetId: contributorId });
+    await createActivityWithNotifications(tx, {
+      userId: session.userId,
+      targetId: updated.id,
+      targetTable: getTableName(contributorsInRules),
+      type: status === "Active" ? "acceptContributorInvite" : "rejectContributorInvite",
+      data: { contributorId },
+    });
+    return updated;
+  }
+
   /** A contributor the session's user may manage, with its ruleset and the policy that allowed it. */
   private async getManagedContributor(tx: Db, session: Session, contributorId: string) {
     const contributor = await Contributors.findOne(tx, { id: contributorId });
@@ -40,21 +57,20 @@ class ContributorsService {
     return contributor;
   }
 
-  /**
-   * The invitee's answer: the invite's status, its notification read,
-   * and the activity its ruleset's managers are told of.
-   */
-  private async answerInvite(tx: Db, session: Session, contributorId: string, status: "Active" | "Rejected") {
-    const [updated] = await Contributors.update(tx, { status }, { id: contributorId });
-    await Notifications.markRead(tx, { recipientId: session.userId, targetId: contributorId });
-    await createActivityWithNotifications(tx, {
-      userId: session.userId,
-      targetId: updated.id,
-      targetTable: getTableName(contributorsInRules),
-      type: status === "Active" ? "acceptContributorInvite" : "rejectContributorInvite",
-      data: { contributorId },
+  async acceptInvite(session: Session, contributorId: string) {
+    return await withTransaction(async (tx) => {
+      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
+
+      const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
+      if (!ruleset) {
+        throw new NotFoundError("Ruleset not found");
+      }
+      if (ruleset.status === "Archived") {
+        throw new ConflictError("This ruleset has been archived");
+      }
+
+      return await this.answerInvite(tx, session, contributor.id, "Active");
     });
-    return updated;
   }
 
   async getContributors(
@@ -98,53 +114,6 @@ class ContributorsService {
 
   async getUserInvites(userId: string) {
     return await Contributors.findManyWithRuleset(db, { userId, status: "Pending" }, { limit: 10 });
-  }
-
-  async updateContributorRole(session: Session, contributorId: string, role: ContributorRole) {
-    return await withTransaction(async (tx) => {
-      const { contributor, ruleset, policy } = await this.getManagedContributor(tx, session, contributorId);
-
-      if (ruleset.status === "Archived") {
-        throw new ConflictError("Cannot modify roles on an archived ruleset");
-      }
-
-      if (role === "Admin" || contributor.role === "Admin") {
-        policy.canManageAdminContributors();
-      }
-
-      if (contributor.status !== "Active") {
-        throw new ConflictError("Can only update role of active contributors");
-      }
-
-      const rows = await Contributors.update(tx, { role }, { id: contributorId });
-      const updated = rows[0];
-
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: updated.id,
-        targetTable: getTableName(contributorsInRules),
-        type: "updateContributorRole",
-        data: { contributorId, role },
-      });
-
-      return updated;
-    });
-  }
-
-  async acceptInvite(session: Session, contributorId: string) {
-    return await withTransaction(async (tx) => {
-      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
-
-      const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
-      if (ruleset.status === "Archived") {
-        throw new ConflictError("This ruleset has been archived");
-      }
-
-      return await this.answerInvite(tx, session, contributor.id, "Active");
-    });
   }
 
   async inviteContributor(session: Session, rulesetId: string, email: string, role: ContributorRole) {
@@ -318,6 +287,37 @@ class ContributorsService {
         targetTable: getTableName(contributorsInRules),
         type: "revokeContributor",
         data: { contributorId, prevStatus },
+      });
+
+      return updated;
+    });
+  }
+
+  async updateContributorRole(session: Session, contributorId: string, role: ContributorRole) {
+    return await withTransaction(async (tx) => {
+      const { contributor, ruleset, policy } = await this.getManagedContributor(tx, session, contributorId);
+
+      if (ruleset.status === "Archived") {
+        throw new ConflictError("Cannot modify roles on an archived ruleset");
+      }
+
+      if (role === "Admin" || contributor.role === "Admin") {
+        policy.canManageAdminContributors();
+      }
+
+      if (contributor.status !== "Active") {
+        throw new ConflictError("Can only update role of active contributors");
+      }
+
+      const rows = await Contributors.update(tx, { role }, { id: contributorId });
+      const updated = rows[0];
+
+      await createActivityWithNotifications(tx, {
+        userId: session.userId,
+        targetId: updated.id,
+        targetTable: getTableName(contributorsInRules),
+        type: "updateContributorRole",
+        data: { contributorId, role },
       });
 
       return updated;

@@ -7,16 +7,6 @@ import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts"
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-type AptitudesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"], 200>;
-
-interface AptitudesAutocompleteProps {
-  rulesetId: string;
-  value: Aptitude[];
-  onChange: (aptitudes: Aptitude[]) => void;
-  disabled?: boolean;
-  scope?: "feats" | "spells";
-}
-
 interface AptitudeAutocompleteProps {
   rulesetId: string;
   value: Aptitude | null;
@@ -26,6 +16,16 @@ interface AptitudeAutocompleteProps {
   size?: "small" | "medium";
   scope?: "feats" | "spells";
 }
+
+interface AptitudesAutocompleteProps {
+  rulesetId: string;
+  value: Aptitude[];
+  onChange: (aptitudes: Aptitude[]) => void;
+  disabled?: boolean;
+  scope?: "feats" | "spells";
+}
+
+type AptitudesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"], 200>;
 
 export type Aptitude = AptitudesPaginated["items"][number];
 

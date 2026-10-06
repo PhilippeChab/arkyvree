@@ -10,18 +10,18 @@ import { SheetSection } from "./SheetSection.tsx";
 
 type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number];
 
-interface FeatsSectionProps {
-  classes: CharacterDetail["classes"];
-  virtualFeats?: CharacterDetail["virtualFeats"];
-  rulesetId?: string;
-  renderFeatExtra?: (feat: Feat) => React.ReactNode;
-}
-
 interface FeatRowProps {
   name: React.ReactNode;
   label: string;
   description?: string | null;
   extra?: React.ReactNode;
+}
+
+interface FeatsSectionProps {
+  classes: CharacterDetail["classes"];
+  virtualFeats?: CharacterDetail["virtualFeats"];
+  rulesetId?: string;
+  renderFeatExtra?: (feat: Feat) => React.ReactNode;
 }
 
 interface GrantedFeatsSectionProps {

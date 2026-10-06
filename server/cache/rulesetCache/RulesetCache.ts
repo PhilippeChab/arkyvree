@@ -5,7 +5,8 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 
 import CowDataBuilder, { buildSourceChain, type RulesetSources } from "./CowDataBuilder.ts";
 import { fetchRulesetRawData, type RulesetRawData } from "./rawData.ts";
-import RulesetComposition, { type CachedRulesetData } from "./RulesetComposition.ts";
+import RulesetComposition from "./RulesetComposition.ts";
+import type RulesetData from "./RulesetData.ts";
 
 type TargetPathsAndLabels = { paths: TargetPath[]; segmentLabels: Record<string, string> };
 
@@ -28,11 +29,6 @@ class RulesetCache {
 
   private readonly targetPaths = new DependentCache<TargetPathsAndLabels>();
 
-  /** Whether a ruleset's own rows are pinned, kept whatever else the cache evicts. */
-  isRawDataPinned(rulesetId: string, campaignId?: string): boolean {
-    return this.rawData.isPinned(getRawDataKey(rulesetId, campaignId));
-  }
-
   /** Drops what a change to a ruleset can touch: its copy-on-write data, its rows and its target paths. */
   invalidate(rulesetId: string): void {
     this.invalidateEntities(rulesetId);
@@ -52,6 +48,11 @@ class RulesetCache {
     this.rawData.invalidate(rulesetId);
   }
 
+  /** Whether a ruleset's own rows are pinned, kept whatever else the cache evicts. */
+  isRawDataPinned(rulesetId: string, campaignId?: string): boolean {
+    return this.rawData.isPinned(getRawDataKey(rulesetId, campaignId));
+  }
+
   /**
    * A ruleset's copy-on-write data: its source chain, its overrides and sibling pairs. Keyed by the ruleset and its
    * ordered source chain: a request holding old ruleset metadata must not cache its old subscription chain under the
@@ -66,7 +67,7 @@ class RulesetCache {
   }
 
   /** A ruleset's view: its own rows and its source chain's, composed by its copy-on-write data. */
-  async getData(ruleset: RulesetSources, campaignId?: string): Promise<CachedRulesetData> {
+  async getData(ruleset: RulesetSources, campaignId?: string): Promise<RulesetData> {
     const cowData = await this.getCowData(ruleset);
     const chain = await Promise.all([
       this.getRawData(ruleset.id, campaignId),

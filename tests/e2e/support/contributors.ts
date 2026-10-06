@@ -15,14 +15,6 @@ export async function answerInvite(page: Page, name: string, answer: "Accept" | 
   await answered;
 }
 
-/** Opens the contributors of the ruleset or character on the page, from its actions menu. */
-export async function openContributors(page: Page) {
-  await openActionsMenu(page, "Contributors");
-  const manager = page.locator('[role="dialog"][aria-modal="true"]').filter({ hasText: "Contributors" }).first();
-  await expect(manager).toBeVisible();
-  return manager;
-}
-
 /** Invites `email` to contribute to the ruleset or character on the page. */
 export async function inviteContributor(page: Page, email: string) {
   await (await openContributors(page)).getByRole("button", { name: /^Invite$/ }).click();
@@ -32,4 +24,12 @@ export async function inviteContributor(page: Page, email: string) {
   await dialog.getByRole("button", { name: /^Invite$/ }).click();
   await invited;
   await expect(dialog).toBeHidden({ timeout: 15_000 });
+}
+
+/** Opens the contributors of the ruleset or character on the page, from its actions menu. */
+export async function openContributors(page: Page) {
+  await openActionsMenu(page, "Contributors");
+  const manager = page.locator('[role="dialog"][aria-modal="true"]').filter({ hasText: "Contributors" }).first();
+  await expect(manager).toBeVisible();
+  return manager;
 }

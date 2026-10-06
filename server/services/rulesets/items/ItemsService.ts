@@ -1,17 +1,13 @@
 import { getTableName } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import {
-  assertEntityNameAvailable,
   copyEntityCustomizations,
-  cowEntityToDelete,
-  cowEntityToEdit,
   fetchEntityCustomizations,
-  findScopedEntity,
   hasCharacterPicks,
-  repointTombstoneSnapshot,
+  RulesetEdit,
 } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -58,13 +54,8 @@ class ItemsService extends include(Object, Variants) {
           : undefined;
         if (!source) this.validateTemplateSource(body.isTemplate ?? false, body.sourceItemId);
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "items",
-          body.name,
-        );
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "items", body.name);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const rows = await Items.create(tx, {
@@ -81,12 +72,12 @@ class ItemsService extends include(Object, Variants) {
         const item = rows[0];
 
         if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "items", tombstoneAncestorId, item.id);
+          await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
         }
 
         if (source && !source.isTemplate) {
           const cust = (await fetchEntityCustomizations(tx, [source.id], "items", "items")).get(source.id);
-          if (cust) await copyEntityCustomizations(tx, source.id, item.id, "items", cust);
+          if (cust) await copyEntityCustomizations(tx, item.id, "items", cust);
         }
 
         await createActivityWithNotifications(tx, {
@@ -102,6 +93,54 @@ class ItemsService extends include(Object, Variants) {
     });
     RulesetCache.invalidate(rulesetId);
     return result;
+  }
+
+  async createItem(session: Session, rulesetId: string, body: ItemBody) {
+    return await this.addRulesetItem(session, rulesetId, body);
+  }
+
+  async deleteItem(session: Session, rulesetId: string, itemId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "items", itemId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
+
+        // If template, check for copies using the resolved ID
+        if (item.isTemplate) {
+          const copies = await Items.findMany(tx, { sourceItemId: item.id });
+          if (copies.length > 0) {
+            throw new ConflictError("Cannot delete a template item that has copies referencing it");
+          }
+        }
+
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "items", item);
+
+        // The database deletes its customizations with it.
+        const rows = await Items.delete(tx, { id: targetId });
+        const deletedItem = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(itemsInRules),
+          type: "deleteItem",
+          data: { rulesetId, entityName: item.name },
+        });
+
+        return deletedItem;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async duplicateItem(session: Session, rulesetId: string, sourceItemId: string, body: ItemBody) {
+    return await this.addRulesetItem(session, rulesetId, body, sourceItemId);
   }
 
   async getItem(rulesetId: string, itemId: string) {
@@ -153,14 +192,6 @@ class ItemsService extends include(Object, Variants) {
     });
   }
 
-  async createItem(session: Session, rulesetId: string, body: ItemBody) {
-    return await this.addRulesetItem(session, rulesetId, body);
-  }
-
-  async duplicateItem(session: Session, rulesetId: string, sourceItemId: string, body: ItemBody) {
-    return await this.addRulesetItem(session, rulesetId, body, sourceItemId);
-  }
-
   async updateItem(session: Session, rulesetId: string, itemId: string, body: ItemBody) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
@@ -172,7 +203,8 @@ class ItemsService extends include(Object, Variants) {
 
         this.validateTemplateSource(item.isTemplate, body.sourceItemId);
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "items", item);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "items", item);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
@@ -207,45 +239,6 @@ class ItemsService extends include(Object, Variants) {
         });
 
         return updatedItem;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteItem(session: Session, rulesetId: string, itemId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "items", itemId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
-
-        // If template, check for copies using the resolved ID
-        if (item.isTemplate) {
-          const copies = await Items.findMany(tx, { sourceItemId: item.id });
-          if (copies.length > 0) {
-            throw new ConflictError("Cannot delete a template item that has copies referencing it");
-          }
-        }
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "items", item);
-
-        // The database deletes its customizations with it.
-        const rows = await Items.delete(tx, { id: targetId });
-        const deletedItem = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(itemsInRules),
-          type: "deleteItem",
-          data: { rulesetId, entityName: item.name },
-        });
-
-        return deletedItem;
       });
     });
     RulesetCache.invalidate(rulesetId);

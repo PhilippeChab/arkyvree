@@ -160,7 +160,7 @@ export async function fetchKlassRelationships(tx: Db, klassIds: string[]): Promi
 
 /**
  * The customizations of sibling losers, by their own ids: read with copy-on-write resolution off, which would otherwise
- * resolve each loser to its winner and return the winner's rows. What `mergeSiblingData` copies onto the winner.
+ * resolve each loser to its winner and return the winner's rows. What `EntityCopy` merges into the winner's copy.
  */
 export async function fetchSiblingCustomizations(
   tx: Db,

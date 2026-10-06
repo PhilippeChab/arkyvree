@@ -7,6 +7,8 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 
 import { ConditionFields } from "./ConditionFields.tsx";
 
+type RequirementConditionFieldsProps = Pick<RequirementFormProps, "form" | "rulesetId" | "mode">;
+
 interface RequirementFormProps {
   form: UseFormReturn<RequirementFormData>;
   type: RequirementType;
@@ -14,8 +16,6 @@ interface RequirementFormProps {
   rulesetId: string;
   mode: "create" | "edit";
 }
-
-type RequirementConditionFieldsProps = Pick<RequirementFormProps, "form" | "rulesetId" | "mode">;
 
 export type RequirementFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"]["$post"]

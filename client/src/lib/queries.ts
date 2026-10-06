@@ -12,29 +12,27 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 type CampaignListParams = InferRequestType<typeof rpc.api.campaigns.$get>["query"];
 type CharacterListParams = InferRequestType<typeof rpc.api.characters.$get>["query"];
-type RulesetListParams = InferRequestType<typeof rpc.api.rulesets.$get>["query"];
-
 type Direction = "asc" | "desc";
 
-export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];
-export type RulesetItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
-export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
-export type CampaignDetail = InferResponseType<(typeof rpc.api.campaigns)[":id"]["$get"], 200>;
-export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id"]["$get"], 200>;
+type RulesetListParams = InferRequestType<typeof rpc.api.rulesets.$get>["query"];
 
+export type CampaignDetail = InferResponseType<(typeof rpc.api.campaigns)[":id"]["$get"], 200>;
 export interface CampaignListFilters {
   view: "active" | "archived";
   search: string;
   orderBy: NonNullable<CampaignListParams["orderBy"]>;
   orderDir: Direction;
 }
-
+export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id"]["$get"], 200>;
 export interface CharacterListFilters {
   view: "active" | "shared" | "archived";
   search: string;
   orderBy: NonNullable<CharacterListParams["orderBy"]>;
   orderDir: Direction;
 }
+export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
+
+export type RulesetItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
 
 export interface RulesetListFilters {
   scope: RulesetListParams["scope"];
@@ -42,6 +40,8 @@ export interface RulesetListFilters {
   orderBy: NonNullable<RulesetListParams["orderBy"]>;
   orderDir: Direction;
 }
+
+export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];
 
 const LIST_PAGE_SIZE = 10;
 

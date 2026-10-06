@@ -3,14 +3,14 @@ import { sanitizeText } from "@/shared/text.ts";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** React Hook Form rules for an entity's required name. */
-export const nameRules = { required: "Name is required" } as const;
-
 /** React Hook Form rules for a required email address field. */
 export const emailRules = {
   required: "Email is required",
   pattern: { value: EMAIL_PATTERN, message: "Please enter a valid email address" },
 } as const;
+
+/** React Hook Form rules for an entity's required name. */
+export const nameRules = { required: "Name is required" } as const;
 
 /** React Hook Form rules for a password the user is choosing, measured as it's stored (`sanitizeText`). */
 export const newPasswordRules = {

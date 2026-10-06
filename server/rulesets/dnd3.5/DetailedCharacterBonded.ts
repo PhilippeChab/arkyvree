@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db, memoizeRequest } from "@/server/database/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
 import type { ValidationIssue, ValidationResult } from "@/server/rulesets/AbstractDetailedCharacter.ts";
@@ -10,7 +10,7 @@ import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.t
 export default abstract class DetailedCharacterBonded extends Dnd35DetailedCharacter {
   protected cachedTotalHD: number | null = null;
 
-  protected applyGrantedFeats(featNames: string[], rulesetData: CachedRulesetData): void {
+  protected applyGrantedFeats(featNames: string[], rulesetData: RulesetData): void {
     if (featNames.length === 0) return;
     const featModifiers: Modifier[] = [];
     for (const featName of featNames) {
@@ -30,9 +30,9 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     }
   }
 
-  protected abstract applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void>;
+  protected abstract applyMasterDerivation(parentCharacterId: string, rulesetData: RulesetData): Promise<void>;
 
-  protected applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
+  protected applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: RulesetData): void {
     this.applyGrantedFeats([...(raceStats.bonusFeats ?? []), ...(raceStats.baseFeats ?? [])], rulesetData);
     this.applySkillTotals(raceStats.baseSkillTotals ?? {}, raceStats.baseSkillRanks ?? {});
   }
@@ -59,10 +59,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     return { budget: [], ranks: [] };
   }
 
-  protected async loadMaster(
-    parentCharacterId: string,
-    rulesetData: CachedRulesetData,
-  ): Promise<Dnd35DetailedCharacter> {
+  protected async loadMaster(parentCharacterId: string, rulesetData: RulesetData): Promise<Dnd35DetailedCharacter> {
     return await memoizeRequest(`bonded-master:${parentCharacterId}`, async () => {
       const masterRecord = await Characters.findOne(db, { id: parentCharacterId }, Visibility.All);
       if (!masterRecord) {
@@ -83,7 +80,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
    * block's feats and skill totals) before requirements read the sheet and modifiers change it: an item's or a feat's
    * modifier adds on top. Then the character's own setup, Weapon Finesse on the natural attacks included.
    */
-  protected override async preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void> {
+  protected override async preRequirementProcessing(rulesetData: RulesetData): Promise<void> {
     if (this.character.parentCharacterId) {
       await this.applyMasterDerivation(this.character.parentCharacterId, rulesetData);
     }

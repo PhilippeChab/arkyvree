@@ -204,6 +204,14 @@ class RulesetsRepository extends include(
     );
   }
 
+  async archive(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ status: "Archived", updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
   async count(db: Db, where: { userId: string }) {
     const [result] = await db
       .select({ count: count() })
@@ -225,6 +233,10 @@ class RulesetsRepository extends include(
       );
 
     return result.count;
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof rulesetsInRules>) {
+    return await db.insert(this.table).values(values).returning();
   }
 
   /** Whether a ruleset subscribes to the extension. */
@@ -254,6 +266,7 @@ class RulesetsRepository extends include(
         ],
         [isNull(this.table.deletedAt)],
       ),
+      orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.id)],
     });
   }
 
@@ -305,8 +318,29 @@ class RulesetsRepository extends include(
     );
   }
 
-  async create(db: Db, values: InferInsertModel<typeof rulesetsInRules>) {
-    return await db.insert(this.table).values(values).returning();
+  /** Leaves a user's rulesets without an owner, when the user deletes their account. */
+  async orphan(db: Db, where: { userId: string }) {
+    return await db
+      .update(this.table)
+      .set({ userId: null, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  async publish(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ status: "Published", updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  async unarchive(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ status: "Draft", updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt), eq(this.table.status, "Archived")))
+      .returning();
   }
 
   async update(
@@ -324,39 +358,6 @@ class RulesetsRepository extends include(
           this.casUpdatedAt(where.expectedUpdatedAt),
         ]),
       )
-      .returning();
-  }
-
-  async archive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ status: "Archived", updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async unarchive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ status: "Draft", updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt), eq(this.table.status, "Archived")))
-      .returning();
-  }
-
-  /** Leaves a user's rulesets without an owner, when the user deletes their account. */
-  async orphan(db: Db, where: { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ userId: null, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async publish(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ status: "Published", updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
       .returning();
   }
 }

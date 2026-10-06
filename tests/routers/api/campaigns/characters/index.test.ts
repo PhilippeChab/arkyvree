@@ -6,6 +6,7 @@ import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { postCampaign } from "@/tests/support/campaigns.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
 import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -28,9 +29,7 @@ async function queuedPdfPayload(characterId: string) {
 
 /** A campaign of the seeded user's and a character of theirs, not linked yet. */
 async function setup() {
-  const { rulesetId } = await getSeedCtx();
-  const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Characters Campaign", rulesetId } }));
-  return { campaignId: campaign.id, characterId: (await postCharacter()).id };
+  return { campaignId: (await postCampaign()).id, characterId: (await postCharacter()).id };
 }
 
 /** The seeded user's character linked as a Private player character, and a new member with `role`. */

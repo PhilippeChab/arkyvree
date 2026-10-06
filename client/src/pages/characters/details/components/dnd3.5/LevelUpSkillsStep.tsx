@@ -35,6 +35,9 @@ interface SkillAllocationRowProps {
   perLevelSkillPoints?: number[];
 }
 
+/** The narrow number columns' headers. */
+const columnHeaderSx = { typography: { xs: "caption", sm: "body2" }, whiteSpace: "nowrap" };
+
 const SkillAllocationRow = memo(function SkillAllocationRow({
   skill,
   totalCharacterLevel,
@@ -149,9 +152,6 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
     </SkillRow>
   );
 });
-
-/** The narrow number columns' headers. */
-const columnHeaderSx = { typography: { xs: "caption", sm: "body2" }, whiteSpace: "nowrap" };
 
 export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
   const {

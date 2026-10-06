@@ -24,6 +24,13 @@ const RULESET_WORDS: Record<string, Record<string, Words>> = {
   },
 };
 
+/** The ruleset's word for an entity type ("Spell" for a 3.5 power, "Spells" with `many`), else the type itself. */
+export function entityTypeLabel(entityType: string, baseRules: string | undefined, many = false): string {
+  const words = RULESET_WORDS[baseRules ?? ""]?.[entityType] ?? ENTITY_WORDS[entityType];
+  if (!words) return entityType;
+  return many ? words.many : words.one;
+}
+
 /** The ruleset's words that replace the engine's in an activity's type ("Create Power" → "Create Spell"). */
 export function getActivityLabelOverrides(baseRules: string): Record<string, string> {
   return Object.fromEntries(
@@ -32,11 +39,4 @@ export function getActivityLabelOverrides(baseRules: string): Record<string, str
       words.one,
     ]),
   );
-}
-
-/** The ruleset's word for an entity type ("Spell" for a 3.5 power, "Spells" with `many`), else the type itself. */
-export function entityTypeLabel(entityType: string, baseRules: string | undefined, many = false): string {
-  const words = RULESET_WORDS[baseRules ?? ""]?.[entityType] ?? ENTITY_WORDS[entityType];
-  if (!words) return entityType;
-  return many ? words.many : words.one;
 }

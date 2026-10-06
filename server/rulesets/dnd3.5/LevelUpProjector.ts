@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
 import { KLASS_LEVEL_SKILL_POINTS, SPELL_SCHOOL, WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
@@ -10,6 +10,29 @@ import type { Dnd35LevelUpProjector as Dnd35LevelUpProjectorInterface } from "./
 
 export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInterface {
   constructor(private readonly character: DetailedCharacter) {}
+
+  /**
+   * Each planned level's points per level before the minimum, in the batch's order: its class's and the skill point
+   * ability's modifier.
+   */
+  computeSkillPointBasesPerLevel(klassLevelIds: string[], rulesetData: RulesetData): number[] {
+    const skillPointsByKlassLevelId = new Map<string, number>();
+    for (const klassLevelId of klassLevelIds) {
+      const props = rulesetData.propertiesByEntity.get(klassLevelId);
+      if (!props) continue;
+      for (const p of props) {
+        if (p.entityType === "klass_levels" && p.type === KLASS_LEVEL_SKILL_POINTS) {
+          skillPointsByKlassLevelId.set(p.entityId, Number(p.value));
+          break;
+        }
+      }
+    }
+
+    const skills = this.character.getDetailedCharacterSkills();
+    return klassLevelIds.map((klassLevelId) =>
+      skills.getLevelPointsPerLevel(skillPointsByKlassLevelId.get(klassLevelId) ?? 0),
+    );
+  }
 
   getCharacterEnrichedSkills<T extends { id: string; name: string }>(
     allSkills: T[],
@@ -30,27 +53,42 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     return this.character.getDetailedCharacterSkills().getSkillPointBases();
   }
 
-  /**
-   * Each planned level's points per level before the minimum, in the batch's order: its class's and the skill point
-   * ability's modifier.
-   */
-  computeSkillPointBasesPerLevel(klassLevelIds: string[], rulesetData: CachedRulesetData): number[] {
-    const skillPointsByKlassLevelId = new Map<string, number>();
-    for (const klassLevelId of klassLevelIds) {
-      const props = rulesetData.propertiesByEntity.get(klassLevelId);
-      if (!props) continue;
-      for (const p of props) {
-        if (p.entityType === "klass_levels" && p.type === KLASS_LEVEL_SKILL_POINTS) {
-          skillPointsByKlassLevelId.set(p.entityId, Number(p.value));
-          break;
-        }
-      }
+  /** Each planned level's skill points, in the batch's order: the first counts four times over on a new character. */
+  async computeSkillPointsPerLevel(
+    klassLevelIds: string[],
+    existingLevelCount: number,
+    rulesetData: RulesetData,
+  ): Promise<number[]> {
+    const { bonusPerLevel } = this.getSkillPointBases();
+    return this.computeSkillPointBasesPerLevel(klassLevelIds, rulesetData).map((points, i) =>
+      computeLevelSkillPoints(points, bonusPerLevel, existingLevelCount === 0 && i === 0),
+    );
+  }
+
+  async evaluateClassAvailability(
+    candidates: { klassName: string; klassLevel: KlassLevel; requirementGroups: Requirement[][] }[],
+    projectedCharacterLevel: CharacterLevel,
+  ): Promise<Map<string, boolean>> {
+    const results = new Map<string, boolean>();
+    if (candidates.length === 0) return results;
+
+    const identity = this.character.getDetailedCharacterIdentity().getIdentity();
+    identity.meta.level++;
+
+    for (const candidate of candidates) {
+      results.set(
+        candidate.klassLevel.id,
+        this.character.evaluateWithProjectedLevel(
+          candidate.klassName,
+          candidate.klassLevel,
+          projectedCharacterLevel,
+          candidate.requirementGroups,
+        ),
+      );
     }
 
-    const skills = this.character.getDetailedCharacterSkills();
-    return klassLevelIds.map((klassLevelId) =>
-      skills.getLevelPointsPerLevel(skillPointsByKlassLevelId.get(klassLevelId) ?? 0),
-    );
+    identity.meta.level--;
+    return results;
   }
 
   async getExcludedPowerIds(
@@ -59,7 +97,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     characterLevels: { id: string; klassLevelId: string }[],
     selectedFeatProperties: { type: string; value: string }[],
     clientExcludeSchools: string[],
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
   ): Promise<string[]> {
     const aptitude = rulesetData.aptitudesById.get(aptitudeId);
     if (aptitude?.name !== "Wizard Spells") return [];
@@ -104,43 +142,5 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
       for (const id of ids) excludedPowerIds.add(id);
     }
     return [...excludedPowerIds];
-  }
-
-  /** Each planned level's skill points, in the batch's order: the first counts four times over on a new character. */
-  async computeSkillPointsPerLevel(
-    klassLevelIds: string[],
-    existingLevelCount: number,
-    rulesetData: CachedRulesetData,
-  ): Promise<number[]> {
-    const { bonusPerLevel } = this.getSkillPointBases();
-    return this.computeSkillPointBasesPerLevel(klassLevelIds, rulesetData).map((points, i) =>
-      computeLevelSkillPoints(points, bonusPerLevel, existingLevelCount === 0 && i === 0),
-    );
-  }
-
-  async evaluateClassAvailability(
-    candidates: { klassName: string; klassLevel: KlassLevel; requirementGroups: Requirement[][] }[],
-    projectedCharacterLevel: CharacterLevel,
-  ): Promise<Map<string, boolean>> {
-    const results = new Map<string, boolean>();
-    if (candidates.length === 0) return results;
-
-    const identity = this.character.getDetailedCharacterIdentity().getIdentity();
-    identity.meta.level++;
-
-    for (const candidate of candidates) {
-      results.set(
-        candidate.klassLevel.id,
-        this.character.evaluateWithProjectedLevel(
-          candidate.klassName,
-          candidate.klassLevel,
-          projectedCharacterLevel,
-          candidate.requirementGroups,
-        ),
-      );
-    }
-
-    identity.meta.level--;
-    return results;
   }
 }

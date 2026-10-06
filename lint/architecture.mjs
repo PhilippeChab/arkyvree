@@ -32,6 +32,13 @@ const ABOVE_REPOSITORIES = [
   "server/middlewares/",
   "server/routers/",
 ];
+const indexCache = new Map();
+
+/**
+ * The trees whose folders are entered through their `index.ts`: the server's, but its routers (a route folder's
+ * `index.ts` is its routes, not its folder's entry), and the client's components.
+ */
+const INDEXED_TREES = ["server/", "client/src/components/"];
 const LAYERS = [
   { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
   { layer: "server/repositories/", deny: ABOVE_REPOSITORIES },
@@ -59,27 +66,13 @@ const LAYERS = [
   { layer: "shared/", deny: ["server/", "client/", "database/", "drizzle/"], types: ["drizzle/"] },
   { layer: "client/", deny: ["server/", "database/", "drizzle/"], types: ["server/", "drizzle/"] },
 ];
-
 /** Where a query may be built: the repositories, and the database layer (what talks to Postgres itself). */
 const QUERY_HOMES = ["server/repositories/", "server/database/"];
+
 const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "delete", "execute"]);
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
 
-/**
- * The trees whose folders are entered through their `index.ts`: the server's, but its routers (a route folder's
- * `index.ts` is its routes, not its folder's entry), and the client's components.
- */
-const INDEXED_TREES = ["server/", "client/src/components/"];
 const UNINDEXED_TREES = ["server/routers/"];
-
-const indexCache = new Map();
-
-function hasIndex(dir) {
-  if (!indexCache.has(dir)) {
-    indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));
-  }
-  return indexCache.get(dir);
-}
 
 function createFolderIndex(context) {
   const root = rootOf(context.filename);
@@ -195,6 +188,13 @@ function createQueriesInRepositories(context) {
       }
     },
   };
+}
+
+function hasIndex(dir) {
+  if (!indexCache.has(dir)) {
+    indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));
+  }
+  return indexCache.get(dir);
 }
 
 export default {

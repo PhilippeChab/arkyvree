@@ -2,9 +2,6 @@ import { defineConfig, devices } from "@playwright/test";
 
 import { prepareE2eEnvironment } from "./tests/fixtures/e2eEnvironment.ts";
 
-/** Before anything reads the environment: `.env.test`, and the run's port, URLs and database */
-const port = prepareE2eEnvironment();
-
 const coverage = process.env.E2E_COVERAGE === "1";
 
 /**
@@ -12,6 +9,9 @@ const coverage = process.env.E2E_COVERAGE === "1";
  * that can take minutes); locally, Playwright's own Chromium (`bunx playwright install chromium`).
  */
 const desktop = { ...devices["Desktop Chrome"], ...(process.env.CI ? { channel: "chrome" } : {}) };
+
+/** Before anything reads the environment: `.env.test`, and the run's port, URLs and database */
+const port = prepareE2eEnvironment();
 
 /**
  * See https://playwright.dev/docs/test-configuration.

@@ -3,6 +3,8 @@ import { describe, expect, test } from "bun:test";
 import type { Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
 import { evaluateTemplateExpression } from "@/server/rulesets/universal/templateExpression.ts";
 
+const holders = {} as Holders;
+
 /** Minimal stub holders + traverser that knows a small fixed path tree. */
 const tree: Record<string, number | string> = {
   "classes.druid.level": 5,
@@ -14,7 +16,6 @@ const tree: Record<string, number | string> = {
   "abilities.charisma.modifier": -1,
   "identity.physiology.name": "Aldric",
 };
-
 const traverser: TargetPathsTraverser = {
   readsSource: () => false,
   traversePathInit(path: string): TraversePathResult[] {
@@ -35,7 +36,6 @@ const traverser: TargetPathsTraverser = {
     ];
   },
 } as unknown as TargetPathsTraverser;
-const holders = {} as Holders;
 
 describe("templateExpression", () => {
   test("plain bare path", () => {

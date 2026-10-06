@@ -1,8 +1,12 @@
 import { keyframes } from "@mui/material";
 
-const pulse = keyframes`
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
+const bellShake = keyframes`
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-12deg); }
+  45% { transform: rotate(10deg); }
+  60% { transform: rotate(-8deg); }
+  75% { transform: rotate(4deg); }
 `;
 
 const diceRoll = keyframes`
@@ -13,19 +17,15 @@ const diceRoll = keyframes`
   100% { transform: translateY(0)    rotate(360deg); }
 `;
 
+const pulse = keyframes`
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+`;
+
 const settledPulse = keyframes`
   0%   { box-shadow: none; }
   50%  { box-shadow: 0 0 0 3px rgba(var(--mui-palette-primary-mainChannel) / 0.4); }
   100% { box-shadow: none; }
-`;
-
-const bellShake = keyframes`
-  0%, 100% { transform: rotate(0deg); }
-  15% { transform: rotate(14deg); }
-  30% { transform: rotate(-12deg); }
-  45% { transform: rotate(10deg); }
-  60% { transform: rotate(-8deg); }
-  75% { transform: rotate(4deg); }
 `;
 
 export const DURATION = {
@@ -42,16 +42,9 @@ export const EASING = {
   emphasized: "cubic-bezier(0.2, 0, 0, 1)",
 } as const;
 
-export const prefersReducedMotion = "@media (prefers-reduced-motion: reduce)" as const;
-
 export const fadeIn = keyframes`
   from { opacity: 0; }
   to   { opacity: 1; }
-`;
-
-export const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
 `;
 
 /** The app's animations, timed here: a component names one (`animation: ANIMATIONS.diceRoll`). */
@@ -67,6 +60,13 @@ export const ANIMATIONS = {
   /** A row that appears as its group opens */
   fadeIn: `${fadeIn} ${DURATION.fast}ms ${EASING.decelerate}`,
 } as const;
+
+export const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+`;
+
+export const prefersReducedMotion = "@media (prefers-reduced-motion: reduce)" as const;
 
 export function fadeInUpSx(index: number, offset = 0) {
   const delay = (index - offset) * DURATION.stagger;

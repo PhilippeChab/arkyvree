@@ -19,18 +19,11 @@ import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } 
 import { compareInConstantTime, generateVerificationCode } from "./codes.ts";
 import { verifyGoogleIdToken } from "./google.ts";
 
-const DUMMY_HASH = await hashPassword("dummy-password-for-timing-normalization");
-
 const DEMO_TTL_MS = 60 * 60 * 1000;
 
+const DUMMY_HASH = await hashPassword("dummy-password-for-timing-normalization");
+
 class AuthenticationService {
-  async getCurrentUser(session: Session) {
-    const user = await Users.findOne(db, { id: session.userId });
-    if (!user) throw new InternalError("User not found");
-
-    return toSafeUser(user);
-  }
-
   async forgotPassword(emailAddress: string) {
     const { code } = await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { emailAddress });
@@ -61,6 +54,13 @@ class AuthenticationService {
     }
 
     return { success: true };
+  }
+
+  async getCurrentUser(session: Session) {
+    const user = await Users.findOne(db, { id: session.userId });
+    if (!user) throw new InternalError("User not found");
+
+    return toSafeUser(user);
   }
 
   async resendVerification(emailAddress: string) {

@@ -28,6 +28,10 @@ interface SpellFormFieldsProps {
   knownAptitudes?: Aptitude[];
 }
 
+interface SpellPropertyFieldsProps {
+  form: UseFormReturn<SpellFormData>;
+}
+
 interface TagsFieldProps {
   form: UseFormReturn<SpellFormData>;
   name: "descriptors" | "components";
@@ -35,38 +39,8 @@ interface TagsFieldProps {
   options: readonly string[];
 }
 
-interface SpellPropertyFieldsProps {
-  form: UseFormReturn<SpellFormData>;
-}
-
 /** A select's first choice, for a spell without one: the API stores it as "". */
 const NONE = { value: "", label: "None" };
-
-/** A free-text list with suggestions, shown as chips. */
-function TagsField({ form, name, label, options }: TagsFieldProps) {
-  return (
-    <Controller
-      name={name}
-      control={form.control}
-      render={({ field }) => (
-        <Autocomplete
-          multiple
-          freeSolo
-          options={options}
-          value={field.value ?? []}
-          onChange={(_, newValue) => field.onChange(newValue)}
-          renderValue={(value, getItemProps) =>
-            value.map((option, index) => {
-              const { key, ...tagProps } = getItemProps({ index });
-              return <Chip key={key} label={option} size="small" {...tagProps} />;
-            })
-          }
-          renderInput={(params) => <TextField {...params} label={label} />}
-        />
-      )}
-    />
-  );
-}
 
 function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
   return (
@@ -119,6 +93,32 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
       </Stack>
       <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />
     </>
+  );
+}
+
+/** A free-text list with suggestions, shown as chips. */
+function TagsField({ form, name, label, options }: TagsFieldProps) {
+  return (
+    <Controller
+      name={name}
+      control={form.control}
+      render={({ field }) => (
+        <Autocomplete
+          multiple
+          freeSolo
+          options={options}
+          value={field.value ?? []}
+          onChange={(_, newValue) => field.onChange(newValue)}
+          renderValue={(value, getItemProps) =>
+            value.map((option, index) => {
+              const { key, ...tagProps } = getItemProps({ index });
+              return <Chip key={key} label={option} size="small" {...tagProps} />;
+            })
+          }
+          renderInput={(params) => <TextField {...params} label={label} />}
+        />
+      )}
+    />
   );
 }
 

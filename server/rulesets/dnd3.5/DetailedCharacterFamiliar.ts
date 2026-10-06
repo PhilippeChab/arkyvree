@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 
 import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
@@ -21,12 +21,12 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
   private masterSkillRanks: Record<string, number> = {};
 
   /** The stat block's skills, then its master's ranks where they're better. */
-  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
+  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: RulesetData): void {
     super.applyRaceDefaults(raceStats, rulesetData);
     this.detailedCharacterSkills.applyBetterRanks(this.masterSkillRanks);
   }
 
-  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void> {
+  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: RulesetData): Promise<void> {
     const master = await this.loadMaster(parentCharacterId, rulesetData);
     const masterLevel = master.getDetailedCharacterIdentity().getIdentity().meta.level;
     const naBonus = Math.min(10, Math.max(1, Math.ceil(masterLevel / 2)));

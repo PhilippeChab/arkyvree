@@ -9,17 +9,10 @@
  * inherit a dialect that doesn't apply to them.
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { LevelUpProjector, ProjectedCharacterData } from "@/server/rulesets/types.ts";
 import type { Power, Property, Skill } from "@/shared/relations.ts";
-
-/** A projected skill row with a 3.5 rank allocation. */
-type Dnd35ProjectedSkill = Skill & {
-  klassLevelId: string;
-  characterLevelId: string;
-  rank: number;
-};
 
 /** A projected power row with 3.5 spell-level and save-name fields. */
 type Dnd35ProjectedPower = Power & {
@@ -30,21 +23,22 @@ type Dnd35ProjectedPower = Power & {
   saveName: string | null;
 };
 
-/** 3.5 projected character data — extends the generic shape with 3.5 skill/power rows. */
-export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
-  skills?: Dnd35ProjectedSkill[];
-  powers?: Dnd35ProjectedPower[];
-}
+/** A projected skill row with a 3.5 rank allocation. */
+type Dnd35ProjectedSkill = Skill & {
+  klassLevelId: string;
+  characterLevelId: string;
+  rank: number;
+};
 
 /** 3.5 level-up projector — generic surface + 3.5 skill-points / schools / ranks. */
 export interface Dnd35LevelUpProjector extends LevelUpProjector {
   /** Each planned level's points per level before the minimum, in the batch's order (class + ability modifier). */
-  computeSkillPointBasesPerLevel(klassLevelIds: string[], rulesetData: CachedRulesetData): number[];
+  computeSkillPointBasesPerLevel(klassLevelIds: string[], rulesetData: RulesetData): number[];
   /** Each klass level's skill points, the skill point ability's modifier included, four times over at the first level. */
   computeSkillPointsPerLevel(
     klassLevelIds: string[],
     existingLevelCount: number,
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
   ): Promise<number[]>;
   /** Wizard specialist-school exclusions + client-supplied prohibited schools.
    *  Must be called inside a cowContext so stored pre-COW feat ids on the
@@ -55,7 +49,7 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
     characterLevels: { id: string; klassLevelId: string }[],
     selectedFeatProperties: { type: string; value: string }[],
     clientExcludeSchools: string[],
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
   ): Promise<string[]>;
   /** 3.5 skill-points budget — a 3.5-native concept (skill points per level
    *  × INT mod, doubled at first level), not universal. */
@@ -69,6 +63,12 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
     allSkills: T[],
     classSkillIds: Set<string>,
   ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[];
+}
+
+/** 3.5 projected character data — extends the generic shape with 3.5 skill/power rows. */
+export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
+  skills?: Dnd35ProjectedSkill[];
+  powers?: Dnd35ProjectedPower[];
 }
 
 /** What a weapon's stats read of a property: its type and its value (an item's, or a natural attack's). */

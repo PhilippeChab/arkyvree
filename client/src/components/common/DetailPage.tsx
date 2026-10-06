@@ -20,6 +20,10 @@ interface DetailPageHeaderProps {
   children?: ReactNode;
 }
 
+interface SectionContentProps {
+  children: ReactNode;
+}
+
 interface SectionTabsProps<K extends string> {
   tabs: SectionTab<K>[];
   value: K;
@@ -27,10 +31,6 @@ interface SectionTabsProps<K extends string> {
   /** Warm a tab's data before it is clicked. */
   onTabHover?: (key: K) => void;
   "aria-label": string;
-}
-
-interface SectionContentProps {
-  children: ReactNode;
 }
 
 export interface SectionTab<K extends string> {

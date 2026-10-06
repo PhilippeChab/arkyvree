@@ -28,20 +28,6 @@ import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-function findMappedName(rawName: string, features: ClassReference["mapping"]["features"]): string | undefined {
-  if (!features) return undefined;
-  // Exact match
-  if (features[rawName]) return features[rawName].seedName;
-
-  // Case-insensitive match
-  const lower = rawName.toLowerCase();
-  for (const [key, val] of Object.entries(features)) {
-    if (key.toLowerCase() === lower) return val.seedName;
-  }
-
-  return undefined;
-}
-
 /** A class's features and the existing feats it grants, a feature split per level named as `perLevelPicks` splits its pick. */
 function buildClassFeatures(
   ref: ClassReference,
@@ -116,6 +102,20 @@ function buildClassFeatures(
   features.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
   autoFreeFeats.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
   return { classFeatures: features, autoFreeFeats };
+}
+
+function findMappedName(rawName: string, features: ClassReference["mapping"]["features"]): string | undefined {
+  if (!features) return undefined;
+  // Exact match
+  if (features[rawName]) return features[rawName].seedName;
+
+  // Case-insensitive match
+  const lower = rawName.toLowerCase();
+  for (const [key, val] of Object.entries(features)) {
+    if (key.toLowerCase() === lower) return val.seedName;
+  }
+
+  return undefined;
 }
 
 /** A feat as a line of a class's feats file: the class feature aptitude as `APT`. */

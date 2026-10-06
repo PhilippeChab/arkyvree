@@ -24,6 +24,15 @@ import {
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
+type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
+  RulesetEntityDetailProps<TEntity, TForm, TKey>,
+  "rulesetId" | "entityId" | "section" | "label" | "query"
+> & {
+  editing: EntityEditing<TEntity, TForm>;
+  entity: TEntity;
+  chips: ReactNode;
+};
+
 interface EntityBase {
   id: string;
   name: string;
@@ -54,20 +63,6 @@ interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends Fie
   editing?: EntityEditing<TEntity, TForm>;
   /** Facts shown next to the title in the read-only view. */
   renderChips?: (entity: TEntity) => ReactNode;
-}
-
-type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
-  RulesetEntityDetailProps<TEntity, TForm, TKey>,
-  "rulesetId" | "entityId" | "section" | "label" | "query"
-> & {
-  editing: EntityEditing<TEntity, TForm>;
-  entity: TEntity;
-  chips: ReactNode;
-};
-
-/** Refetches the section that lists the entity. */
-function invalidateSection(queryClient: QueryClient, rulesetId: string, section: string) {
-  return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
 }
 
 /** An editor's details: the entity's form, following the entity, which saves it. */
@@ -128,6 +123,11 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
       }}
     />
   );
+}
+
+/** Refetches the section that lists the entity. */
+function invalidateSection(queryClient: QueryClient, rulesetId: string, section: string) {
+  return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
 }
 
 /**

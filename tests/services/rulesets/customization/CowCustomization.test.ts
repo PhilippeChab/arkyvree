@@ -23,13 +23,10 @@ import { RequirementsService } from "@/server/services/rulesets/customization/re
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
+import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-
-type Row = { id: string };
-
-type Written = Row & { resolvedEntityId: string };
 
 type Kind = {
   rowsOf: (ownerType: string, ownerId: string) => Promise<Row[]>;
@@ -39,15 +36,29 @@ type Kind = {
   remove: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
 };
 
-const requirement = { valueType: "number", operator: "greater_than_or_equal" } as const;
+type Row = { id: string };
 
-const dexterityBonus = { target: "abilities.dexterity.misc", value: "5", operator: "add" };
+type Written = Row & { resolvedEntityId: string };
+
+/** A class level is copied with its whole class, and a modifier with the entity it modifies. */
+const CASES = [
+  ["feats", "modifiers"],
+  ["feats", "properties"],
+  ["feats", "requirements"],
+  ["klasses", "modifiers"],
+  ["klasses", "properties"],
+  ["klasses", "requirements"],
+  ["klass_levels", "modifiers"],
+  ["modifiers", "requirements"],
+] as const;
+
 const dexterityAtLeast = {
   level: "2",
   target: "abilities.dexterity.misc",
   value: "10",
   operator: "greater_than_or_equal",
 };
+const dexterityBonus = { target: "abilities.dexterity.misc", value: "5", operator: "add" };
 
 const KINDS: Record<string, Kind> = {
   modifiers: {
@@ -79,17 +90,7 @@ const KINDS: Record<string, Kind> = {
   },
 };
 
-/** A class level is copied with its whole class, and a modifier with the entity it modifies. */
-const CASES = [
-  ["feats", "modifiers"],
-  ["feats", "properties"],
-  ["feats", "requirements"],
-  ["klasses", "modifiers"],
-  ["klasses", "properties"],
-  ["klasses", "requirements"],
-  ["klass_levels", "modifiers"],
-  ["modifiers", "requirements"],
-] as const;
+const requirement = { valueType: "number", operator: "greater_than_or_equal" } as const;
 
 /**
  * A published ruleset whose feat has a modifier (with a requirement of its
@@ -111,10 +112,7 @@ async function setup() {
   const [modifier] = await Modifiers.create(db, {
     sourceId: feat.id,
     sourceType: "feats",
-    target: "abilities.strength.misc",
-    value: "2",
-    valueType: "number",
-    operator: "add",
+    ...STRENGTH_BONUS,
   });
   await Requirements.create(db, {
     ...requirement,

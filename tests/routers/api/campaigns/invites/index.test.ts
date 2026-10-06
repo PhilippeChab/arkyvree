@@ -1,27 +1,20 @@
 import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
-import { EmailVerifications, Users } from "@/server/repositories/index.ts";
+import { Users } from "@/server/repositories/index.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi, sessionIdFrom } from "@/tests/support/api.ts";
+import { postCampaignInvite } from "@/tests/support/campaigns.ts";
 import { apiAs } from "@/tests/support/clients.ts";
-import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { findVerificationCode } from "@/tests/support/users.ts";
 
 const invites = api.api.campaigns.invites;
-
-/** A campaign of the seeded user with an invite sent to `email`. */
-async function createInvite(email: string) {
-  const { rulesetId } = await getSeedCtx();
-  const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Invites Campaign", rulesetId } }));
-  const { invite } = await expectOk(
-    api.api.campaigns[":id"].players.$post({ param: { id: campaign.id }, json: { email, role: "Player Character" } }),
-  );
-  return { campaignId: campaign.id, inviteId: invite!.id };
-}
 
 /** An invite sent to a new user, and a client signed in as them. */
 async function createInviteForNewUser() {
   const invitee = await createSignedInUser("invitee");
-  return { ...(await createInvite(invitee.user.emailAddress)), invitee };
+  const { campaign, invite } = await postCampaignInvite(invitee.user.emailAddress);
+  return { campaignId: campaign.id, inviteId: invite.id, invitee };
 }
 
 describe("campaigns invites", () => {
@@ -63,7 +56,7 @@ describe("campaigns invites", () => {
 
   test("hands an email-only invite to whoever signs up with that email", async () => {
     const email = `email-only-${uniqueId()}@example.com`;
-    const { inviteId } = await createInvite(email);
+    const { id: inviteId } = (await postCampaignInvite(email)).invite;
 
     await expectOk(
       guestApi.auth["sign-up"].$post({
@@ -71,9 +64,8 @@ describe("campaigns invites", () => {
       }),
     );
     const user = await Users.findOne(db, { emailAddress: email });
-    const verification = await EmailVerifications.findOne(db, { userId: user!.id });
     const verified = await guestApi.auth["verify-email"].$post({
-      json: { emailAddress: email, code: verification!.code },
+      json: { emailAddress: email, code: await findVerificationCode(user!.id) },
     });
     await expectOk(verified);
     const theirs = apiAs(sessionIdFrom(verified)).api.campaigns.invites;

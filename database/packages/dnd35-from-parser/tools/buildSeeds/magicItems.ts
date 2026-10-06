@@ -20,11 +20,11 @@ export type MagicItemSeedSets = {
   staffs: ItemDef[];
 };
 
-/** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
-const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
-
 /** The specific armor and shields, whose text gives what they change of their base's. */
 const ARMOR_CATEGORIES = new Set<MagicItemCategory>(["specificArmor", "specificShield"]);
+
+/** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
+const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
 
 /** A weapon's enhancement bonus, as modifiers of the weapon holding it: its attack's and its damage's. */
 function weaponEnhancementModifiers(description: string): Modifier[] {
@@ -39,20 +39,6 @@ function weaponEnhancementModifiers(description: string): Modifier[] {
 function withOwnProperties(base: Property[], own: Property[]): Property[] {
   const ownTypes = new Set(own.map((property) => property.type));
   return [...base.filter((property) => !ownTypes.has(property.type)), ...own];
-}
-
-/**
- * The magic items a magic item reference seeds (those its overrides don't skip), each with its override and its slot,
- * checked when it has one: the override's, else as detected. Generation throws a slot's problem, and
- * `parser:validate` reports it.
- */
-export function seededMagicItems(ref: MagicItemReference) {
-  return Object.entries(ref.detected).flatMap(([name, det]) => {
-    const override = ref.overrides?.[name];
-    if (override?.skip) return [];
-    const slot = override?.slot ?? det.slot;
-    return [{ name, det, override, slot: slot ? checkOneOf(slot, LOCATION_OPTIONS, `${name}'s slot`) : undefined }];
-  });
 }
 
 /**
@@ -157,4 +143,18 @@ export function buildMagicItemSeeds(
   }
 
   return { magicArmor, magicShields, magicWeapons, wondrousItems, rings, rods, staffs };
+}
+
+/**
+ * The magic items a magic item reference seeds (those its overrides don't skip), each with its override and its slot,
+ * checked when it has one: the override's, else as detected. Generation throws a slot's problem, and
+ * `parser:validate` reports it.
+ */
+export function seededMagicItems(ref: MagicItemReference) {
+  return Object.entries(ref.detected).flatMap(([name, det]) => {
+    const override = ref.overrides?.[name];
+    if (override?.skip) return [];
+    const slot = override?.slot ?? det.slot;
+    return [{ name, det, override, slot: slot ? checkOneOf(slot, LOCATION_OPTIONS, `${name}'s slot`) : undefined }];
+  });
 }

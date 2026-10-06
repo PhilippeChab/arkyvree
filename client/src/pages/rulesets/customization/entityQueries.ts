@@ -16,12 +16,7 @@ type CustomizedModifier = InferResponseType<
   200
 >;
 
-export type Feat = InferResponseType<(typeof rulesetApi)["feats"][":featId"]["$get"], 200>;
-export type Race = InferResponseType<(typeof rulesetApi)["races"][":raceId"]["$get"], 200>;
-export type Item = InferResponseType<(typeof rulesetApi)["items"][":itemId"]["$get"], 200>;
-export type Power = InferResponseType<(typeof rulesetApi)["powers"][":powerId"]["$get"], 200>;
 export type ClassLevel = InferResponseType<(typeof rulesetApi)["class-levels"][":classLevelId"]["$get"], 200>;
-
 export type CustomizationEntity =
   | { type: "feats"; entity: Feat }
   | { type: "races"; entity: Race }
@@ -29,6 +24,11 @@ export type CustomizationEntity =
   | { type: "powers"; entity: Power }
   | { type: "klass_levels"; entity: ClassLevel }
   | { type: "modifiers"; entity: CustomizedModifier };
+export type Feat = InferResponseType<(typeof rulesetApi)["feats"][":featId"]["$get"], 200>;
+export type Item = InferResponseType<(typeof rulesetApi)["items"][":itemId"]["$get"], 200>;
+export type Power = InferResponseType<(typeof rulesetApi)["powers"][":powerId"]["$get"], 200>;
+
+export type Race = InferResponseType<(typeof rulesetApi)["races"][":raceId"]["$get"], 200>;
 
 const rulesetApi = rpc.api.rulesets[":id"];
 

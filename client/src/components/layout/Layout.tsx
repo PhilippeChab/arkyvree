@@ -58,8 +58,25 @@ import { DemoBanner } from "./DemoBanner.tsx";
 import { FeedbackButton } from "./FeedbackButton.tsx";
 import { NotificationBell } from "./NotificationBell.tsx";
 
+/** How a list page opens by default, which a prefetch asks for. */
+const DEFAULT_LIST = { search: "", orderBy: "createdAt", orderDir: "desc" } as const;
 const drawerWidth = 72;
+
 const expandedDrawerWidth = 240;
+
+/**
+ * Warm the first page of a section when its sidebar item is hovered. The options are the ones the pages use, filtered
+ * the way a page opens by default.
+ */
+const prefetchers: Partial<Record<string, (queryClient: QueryClient) => void>> = {
+  dashboard: (queryClient) => void queryClient.prefetchQuery(dashboardStatsQuery()),
+  rulesets: (queryClient) =>
+    void queryClient.prefetchInfiniteQuery(rulesetListQuery({ scope: undefined, ...DEFAULT_LIST })),
+  characters: (queryClient) =>
+    void queryClient.prefetchInfiniteQuery(characterListQuery({ view: "active", ...DEFAULT_LIST })),
+  campaigns: (queryClient) =>
+    void queryClient.prefetchInfiniteQuery(campaignListQuery({ view: "active", ...DEFAULT_LIST })),
+};
 
 const sidebarItems = [
   {
@@ -122,24 +139,7 @@ const sidebarItems = [
     external: true,
   },
 ];
-
 const stepToSidebarId: Record<number, string> = { 1: "rulesets", 2: "characters", 3: "campaigns" };
-
-/** How a list page opens by default, which a prefetch asks for. */
-const DEFAULT_LIST = { search: "", orderBy: "createdAt", orderDir: "desc" } as const;
-/**
- * Warm the first page of a section when its sidebar item is hovered. The options are the ones the pages use, filtered
- * the way a page opens by default.
- */
-const prefetchers: Partial<Record<string, (queryClient: QueryClient) => void>> = {
-  dashboard: (queryClient) => void queryClient.prefetchQuery(dashboardStatsQuery()),
-  rulesets: (queryClient) =>
-    void queryClient.prefetchInfiniteQuery(rulesetListQuery({ scope: undefined, ...DEFAULT_LIST })),
-  characters: (queryClient) =>
-    void queryClient.prefetchInfiniteQuery(characterListQuery({ view: "active", ...DEFAULT_LIST })),
-  campaigns: (queryClient) =>
-    void queryClient.prefetchInfiniteQuery(campaignListQuery({ view: "active", ...DEFAULT_LIST })),
-};
 
 export function Layout() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);

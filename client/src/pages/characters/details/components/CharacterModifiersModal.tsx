@@ -33,17 +33,17 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-type Modifier = InferResponseType<
-  (typeof rpc.api.characters.modifiers)[":characterId"]["modifiers"]["$get"],
-  200
->[number];
-
 interface CharacterModifiersModalProps {
   open: boolean;
   onClose: () => void;
   characterId: string;
   rulesetId: string;
 }
+
+type Modifier = InferResponseType<
+  (typeof rpc.api.characters.modifiers)[":characterId"]["modifiers"]["$get"],
+  200
+>[number];
 
 /** A character's modifiers' columns; each row's actions sit over its last. */
 const MODIFIER_COLUMNS: DataTableColumn[] = [

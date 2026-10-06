@@ -4,6 +4,8 @@ import type { InferResponseType } from "hono/client";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
+type AttachmentResponse = InferResponseType<typeof rpc.api.attachments.$get, 200>;
+
 interface UseAttachmentParams {
   recordType: string;
   recordId: string | undefined;
@@ -16,8 +18,6 @@ interface UseAttachmentsParams {
   name: string;
   recordIds: string[];
 }
-
-type AttachmentResponse = InferResponseType<typeof rpc.api.attachments.$get, 200>;
 
 /** A record's attachment slot, as one query: its key and its request. */
 function slotQuery(recordType: string, recordId: string, name: string) {

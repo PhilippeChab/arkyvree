@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
-import { findScopedEntity } from "@/server/cow/index.ts";
+import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { include } from "@/server/mixins.ts";
@@ -66,6 +65,89 @@ class CharactersService extends include(Object, Archives) {
     for (const languageId of languageIds) {
       await CharacterLanguages.create(tx, { characterId: characterRecord.id, languageId });
     }
+  }
+
+  async createCharacter(
+    session: Session,
+    characterData: {
+      rulesetId: string;
+      raceId: string;
+      name: string;
+      xp: number;
+      alignment: Alignment;
+      abilities: Record<string, number>;
+      age?: number;
+      gender: Gender;
+      height?: string;
+      weight?: string;
+      deity?: string;
+      description?: string;
+      notes?: string;
+    },
+  ) {
+    return await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, characterData.rulesetId, async ({ ruleset, rulesetData }) => {
+        (await RulesetsPolicy.for(tx, session, ruleset)).canCreateCharacter();
+
+        const race = findScopedEntity(
+          rulesetData.racesById,
+          characterData.raceId,
+          characterData.rulesetId,
+          rulesetData.cow.sourceChain,
+          "Race",
+        );
+        if (race.kind !== "pc") {
+          throw new BadRequestError("Race is not valid for a player character");
+        }
+
+        const [newCharacter] = await Characters.create(tx, {
+          userId: session.userId,
+          rulesetId: characterData.rulesetId,
+          raceId: characterData.raceId,
+          name: characterData.name,
+          xp: characterData.xp,
+          alignment: characterData.alignment,
+          age: characterData.age,
+          gender: characterData.gender,
+          height: characterData.height,
+          weight: characterData.weight,
+          deity: characterData.deity,
+          description: characterData.description,
+          notes: characterData.notes,
+        });
+
+        // Create character ability scores from ruleset abilities
+        if (rulesetData.abilities.length > 0) {
+          await CharacterAbilities.createMany(
+            tx,
+            rulesetData.abilities.map((ability) => ({
+              characterId: newCharacter.id,
+              abilityId: ability.id,
+              score: characterData.abilities[ability.id] ?? 10,
+            })),
+          );
+        }
+
+        // Log the activity
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: newCharacter.id,
+          targetTable: getTableName(charactersInCharacter),
+          type: "createCharacter",
+        });
+
+        return newCharacter;
+      });
+    });
+  }
+
+  async enqueuePdf(session: Session, characterId: string) {
+    const characterRecord = await findExportableCharacter(session.userId, characterId);
+    if (!characterRecord) {
+      throw new NotFoundError("Character not found");
+    }
+
+    await enqueueCharacterPdf(session, characterRecord);
   }
 
   async getAvailableRaces(
@@ -262,80 +344,6 @@ class CharactersService extends include(Object, Archives) {
     );
   }
 
-  async createCharacter(
-    session: Session,
-    characterData: {
-      rulesetId: string;
-      raceId: string;
-      name: string;
-      xp: number;
-      alignment: Alignment;
-      abilities: Record<string, number>;
-      age?: number;
-      gender: Gender;
-      height?: string;
-      weight?: string;
-      deity?: string;
-      description?: string;
-      notes?: string;
-    },
-  ) {
-    return await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, characterData.rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canCreateCharacter();
-
-        const race = findScopedEntity(
-          rulesetData.racesById,
-          characterData.raceId,
-          characterData.rulesetId,
-          rulesetData.cow.sourceChain,
-          "Race",
-        );
-        if (race.kind !== "pc") {
-          throw new BadRequestError("Race is not valid for a player character");
-        }
-
-        const [newCharacter] = await Characters.create(tx, {
-          userId: session.userId,
-          rulesetId: characterData.rulesetId,
-          raceId: characterData.raceId,
-          name: characterData.name,
-          xp: characterData.xp,
-          alignment: characterData.alignment,
-          age: characterData.age,
-          gender: characterData.gender,
-          height: characterData.height,
-          weight: characterData.weight,
-          deity: characterData.deity,
-          description: characterData.description,
-          notes: characterData.notes,
-        });
-
-        // Create character ability scores from ruleset abilities
-        if (rulesetData.abilities.length > 0) {
-          await CharacterAbilities.createMany(
-            tx,
-            rulesetData.abilities.map((ability) => ({
-              characterId: newCharacter.id,
-              abilityId: ability.id,
-              score: characterData.abilities[ability.id] ?? 10,
-            })),
-          );
-        }
-
-        // Log the activity
-        await Activities.create(tx, {
-          userId: session.userId,
-          targetId: newCharacter.id,
-          targetTable: getTableName(charactersInCharacter),
-          type: "createCharacter",
-        });
-
-        return newCharacter;
-      });
-    });
-  }
-
   async updateAbilities(session: Session, characterId: string, abilities: Record<string, number>) {
     return await withTransaction(async (tx) => {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
@@ -427,15 +435,6 @@ class CharactersService extends include(Object, Archives) {
         });
       });
     });
-  }
-
-  async enqueuePdf(session: Session, characterId: string) {
-    const characterRecord = await findExportableCharacter(session.userId, characterId);
-    if (!characterRecord) {
-      throw new NotFoundError("Character not found");
-    }
-
-    await enqueueCharacterPdf(session, characterRecord);
   }
 }
 

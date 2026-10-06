@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 
 import type { PropertyRecord } from "./SkillsHooks.ts";
@@ -15,11 +15,14 @@ export interface ClassLevelsHooks {
 
   readCurrentValues(properties: { type: string; value: string }[]): { bab: number; skills: number };
 
-  /** The first spell list a class's levels give slots in, by level, by its aptitude's id: none when they give none. */
-  getSpellListId(
-    rulesetData: Pick<CachedRulesetData, "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
+  /**
+   * The spell lists a class's levels give slots in, by their aptitudes' ids: the one named for the class first, then
+   * the others by level; none when they give none.
+   */
+  getSpellListIds(
+    rulesetData: Pick<RulesetData, "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
     klassId: string,
-  ): string | undefined;
+  ): string[];
 
   enrichWithSpellsPerDay<T extends { id: string; level: number }>(
     levels: T[],

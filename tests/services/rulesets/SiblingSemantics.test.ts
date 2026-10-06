@@ -2,7 +2,6 @@ import { afterEach, expect, test } from "bun:test";
 
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Abilities, Aptitudes, Feats, FeatsAptitudes, Requirements, Rulesets } from "@/server/repositories/index.ts";
@@ -17,7 +16,11 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
-import { createSeededTestRuleset, createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
+import {
+  copyEntity,
+  createSeededTestRuleset,
+  createSeededTestRulesetWithExtensions,
+} from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 /** Every page of a list, by its size and its ids. */
@@ -120,7 +123,7 @@ for (const [chainingOperator, reverseOrder] of [
     const copies: string[] = [];
     const { session, host } = await setup(async (rulesetId, baseId, index) => {
       const source = (await Feats.findOne(db, { rulesetId: baseId, name: "Toughness" }))!;
-      const copy = await cowEntity(db, "feats", source.id, rulesetId, [baseId], []);
+      const copy = await copyEntity(db, "feats", source.id, rulesetId, [baseId], []);
       copies.push(copy.id);
       const owner = { entityId: copy.id, entityType: "feats" };
       const conditionA = {

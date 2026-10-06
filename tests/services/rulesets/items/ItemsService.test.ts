@@ -3,19 +3,15 @@ import { describe, expect, test } from "bun:test";
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { EntitySnapshots, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { EntitySnapshots } from "@/server/repositories/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
+import { customize, findCustomizations } from "@/tests/support/customizations.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
-const requirement = {
-  level: "1",
-  target: "combat.bab",
-  value: "5",
-  valueType: "number",
-  operator: "greater_than_or_equal",
-} as const;
+/** The property `customize` gives an item. */
+const COLD_RESISTANCE = { type: "resistance", value: "Cold" };
 
 const copiedCustomizations = {
   modifiers: [{ target: "abilities.strength.misc", requirements: ["combat.bab"] }],
@@ -24,48 +20,28 @@ const copiedCustomizations = {
 };
 const noCustomizations = { modifiers: [], properties: [], requirements: [] };
 
-/** The customizations an item owns, with each modifier's own requirements. */
-async function customizationsOf(itemId: string) {
-  const modifiers = await Modifiers.findMany(db, { sourceIds: [itemId], sourceType: "items" });
-  return {
-    modifiers: await Promise.all(
-      modifiers.map(async ({ id, target }) => ({
-        id,
-        target,
-        requirements: (await Requirements.findMany(db, { entityIds: [id], entityType: "modifiers" })).map(
-          (r) => r.target,
-        ),
-      })),
-    ),
-    properties: (await Properties.findMany(db, { entityIds: [itemId], entityType: "items" })).map((p) => p.value),
-    requirements: (await Requirements.findMany(db, { entityIds: [itemId], entityType: "items" })).map((r) => r.target),
-  };
-}
-
-/** Gives an item a modifier (with a requirement of its own), a property and a requirement. */
-async function customize(itemId: string) {
-  const [modifier] = await Modifiers.create(db, {
-    sourceId: itemId,
-    sourceType: "items",
-    target: "abilities.strength.misc",
-    value: "2",
-    valueType: "number",
-    operator: "add",
-  });
-  await Requirements.create(db, { ...requirement, entityId: modifier.id, entityType: "modifiers" });
-  await Properties.create(db, { entityId: itemId, entityType: "items", type: "resistance", value: "Cold" });
-  await Requirements.create(db, { ...requirement, entityId: itemId, entityType: "items" });
-  return modifier;
-}
-
 /** A template with a property and a requirement, which its instances read, and a modifier, which they don't. */
 async function createTemplate(session: Parameters<typeof ItemsService.createItem>[0], rulesetId: string) {
   const template = await ItemsService.createItem(session, rulesetId, {
     name: "Sword Template",
     isTemplate: true,
   });
-  await customize(template.id);
+  await customize("items", template.id, { property: COLD_RESISTANCE });
   return template;
+}
+
+/** The customizations an item owns, by their targets and values, with each modifier's own requirements. */
+async function customizationsOf(itemId: string) {
+  const { modifiers, modifierRequirements, properties, requirements } = await findCustomizations("items", itemId);
+  return {
+    modifiers: modifiers.map(({ id, target }) => ({
+      id,
+      target,
+      requirements: modifierRequirements.filter((r) => r.entityId === id).map((r) => r.target),
+    })),
+    properties: properties.map((p) => p.value),
+    requirements: requirements.map((r) => r.target),
+  };
 }
 
 async function expectTemplateInstance(rulesetId: string, itemId: string, templateId: string) {
@@ -127,7 +103,7 @@ describe("ItemsService", () => {
     test("copies the item's customizations, each modifier with its own requirements", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
       const source = await ItemsService.createItem(session, ruleset.id, { name: "Cloak" });
-      const modifier = await customize(source.id);
+      const modifier = await customize("items", source.id, { property: COLD_RESISTANCE });
 
       const copy = await ItemsService.duplicateItem(session, ruleset.id, source.id, { name: "Cloak Copy" });
       const copied = await customizationsOf(copy.id);
@@ -162,7 +138,7 @@ describe("ItemsService", () => {
         weight: 0.1,
         costGp: 25,
       });
-      await customize(source.id);
+      await customize("items", source.id, { property: COLD_RESISTANCE });
 
       const variants = await ItemsService.createVariants(session, ruleset.id, source.id, [
         { name: "Scroll of Healing", description: "Heals 1d8" },

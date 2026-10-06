@@ -27,13 +27,13 @@ const FILTER_OPTIONS: FilterOption<"unread">[] = [
   { value: "unread", label: "Unread" },
 ];
 
-const PAGE_SIZE = 10;
-
 const NOTIFICATION_COLUMNS: DataTableColumn[] = [
   { key: "notification", label: "Notification" },
   { key: "when", label: "When" },
   { key: "invite", label: "Actions" },
 ];
+
+const PAGE_SIZE = 10;
 
 export default function NotificationsPage() {
   usePageTitle("Notifications");

@@ -11,6 +11,9 @@ import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+/** Every Knowledge skill, which "Add all Knowledge skills" names. */
+const ALL_KNOWLEDGE_SKILLS = SKILL_NAMES.filter((n) => n.startsWith("Knowledge"));
+
 /** Skill names → slugs, the base's and each without its parentheses: "Knowledge (nature)" and "knowledge nature" → "knowledgenature". */
 const SKILL_MAP: Record<string, string> = {
   ...BASE_SKILL_MAP,
@@ -20,9 +23,6 @@ const SKILL_MAP: Record<string, string> = {
       .map(([name, noParen]) => [noParen.toLowerCase(), stripSeparators(name)]),
   ),
 };
-
-/** Every Knowledge skill, which "Add all Knowledge skills" names. */
-const ALL_KNOWLEDGE_SKILLS = SKILL_NAMES.filter((n) => n.startsWith("Knowledge"));
 
 function detectDomainModifiers(description: string): ModifierDetection<Modifier> {
   const modifiers: Modifier[] = [];

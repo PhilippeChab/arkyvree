@@ -28,22 +28,11 @@ import { prefetchSection } from "@/client/src/pages/rulesets/details/sectionQuer
 import { useToggleRulesetStar } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 type FilterScope = (typeof SCOPES)[number];
-type SortField = RulesetListFilters["orderBy"];
-
 interface RulesetListProps {
   filters: RulesetListFilters;
 }
 
-const SCOPES = [
-  "base",
-  "extensions",
-  "systems",
-  "community",
-  "forked",
-  "campaignAccessible",
-  "starred",
-  "archived",
-] as const;
+type SortField = RulesetListFilters["orderBy"];
 
 const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
   { value: undefined, label: "All" },
@@ -58,6 +47,17 @@ const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
 ];
 
 const RULESET_SORT_OPTIONS: SortOption<SortField>[] = [...CREATED_SORTS, ...UPDATED_SORTS];
+
+const SCOPES = [
+  "base",
+  "extensions",
+  "systems",
+  "community",
+  "forked",
+  "campaignAccessible",
+  "starred",
+  "archived",
+] as const;
 
 function RulesetList({ filters }: RulesetListProps) {
   const navigate = useNavigate();

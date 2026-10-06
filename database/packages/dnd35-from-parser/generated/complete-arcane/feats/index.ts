@@ -12,15 +12,6 @@ import {
   METAMAGIC_FEATS,
 } from "./feats.ts";
 
-export const ALL_STANDALONE_FEATS: FeatSeed[] = [
-  ...GENERAL_FEATS,
-  ...METAMAGIC_FEATS,
-  ...ITEM_CREATION_FEATS,
-  ...DRACONIC_FEATS,
-  ...HERITAGE_FEATS,
-  ...arcaneDefense,
-];
-
 export const ALL_FEATS: FeatSeed[] = [
   ...GENERAL_FEATS,
   ...METAMAGIC_FEATS,
@@ -29,6 +20,15 @@ export const ALL_FEATS: FeatSeed[] = [
   ...HERITAGE_FEATS,
   ...arcaneDefense,
   ...ALL_CLASS_FEATS,
+];
+
+export const ALL_STANDALONE_FEATS: FeatSeed[] = [
+  ...GENERAL_FEATS,
+  ...METAMAGIC_FEATS,
+  ...ITEM_CREATION_FEATS,
+  ...DRACONIC_FEATS,
+  ...HERITAGE_FEATS,
+  ...arcaneDefense,
 ];
 
 export {

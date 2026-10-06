@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 
 import { getBondedRaceStats } from "./bondedRaceData.ts";
 import type Dnd35DetailedCharacter from "./DetailedCharacter.ts";
@@ -41,6 +41,12 @@ const BASICS_TABLE: BasicsRow[] = [
   { bonusHD: 12, natural: 12, strDex: 6 },
 ];
 
+function basicsAt(effectiveLevel: number): BasicsRow {
+  if (effectiveLevel <= 0) return BASICS_TABLE[0];
+  const idx = Math.min(effectiveLevel, BASICS_TABLE.length) - 1;
+  return BASICS_TABLE[idx];
+}
+
 /**
  * Effective AC level = the master's resolved `bonded.animalcompanion.level`,
  * which is the sum of every grant feat's template-modifier contribution
@@ -52,12 +58,6 @@ function getAnimalCompanionEffectiveLevel(master: Dnd35DetailedCharacter): numbe
   return master.getDetailedCharacterBonds().getBondedLevel("animalcompanion");
 }
 
-function basicsAt(effectiveLevel: number): BasicsRow {
-  if (effectiveLevel <= 0) return BASICS_TABLE[0];
-  const idx = Math.min(effectiveLevel, BASICS_TABLE.length) - 1;
-  return BASICS_TABLE[idx];
-}
-
 /**
  * Animal Companion mechanic (SRD Druid Animal Companion Basics):
  *   total HD = race.baseHD + bonusHD (from basics table at effective level).
@@ -66,7 +66,7 @@ function basicsAt(effectiveLevel: number): BasicsRow {
  *   bonuses apply on top of the race's ability modifiers.
  */
 export default class DetailedCharacterAnimalCompanion extends DetailedCharacterAdvancingBonded {
-  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void> {
+  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: RulesetData): Promise<void> {
     const master = await this.loadMaster(parentCharacterId, rulesetData);
     const effective = getAnimalCompanionEffectiveLevel(master);
     const row = basicsAt(effective);

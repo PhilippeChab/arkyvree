@@ -44,6 +44,10 @@ export default createMiddleware<SessionContext>(async (c, next) => {
   await next();
 });
 
+export function deleteSessionCookie(c: Context) {
+  deleteCookie(c, SESSION_COOKIE_NAME);
+}
+
 export function setSessionCookie(c: Context, sessionId: string) {
   setCookie(c, SESSION_COOKIE_NAME, sessionId, {
     httpOnly: true,
@@ -52,8 +56,4 @@ export function setSessionCookie(c: Context, sessionId: string) {
     path: "/",
     maxAge: SESSION_TTL_SECONDS,
   });
-}
-
-export function deleteSessionCookie(c: Context) {
-  deleteCookie(c, SESSION_COOKIE_NAME);
 }

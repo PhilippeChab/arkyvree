@@ -4,18 +4,17 @@ import { z } from "zod";
 import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { classParams } from "@/server/routers/api/rulesets/classes/validation.ts";
-import { idParam, limit, page } from "@/server/routers/api/validation.ts";
+import { idParam } from "@/server/routers/api/validation.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
-import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 
-const levelParams = classParams.extend({ levelId: z.string().uuid() });
 const classLevelParams = idParam.extend({ classLevelId: z.string().uuid() });
-
-/** A class level's saves (each its base bonus) and granted feats, its create's and its update's. */
-const levelSaves = z.array(z.object({ saveId: z.string().uuid(), base: z.number().int().min(0).max(12) })).optional();
 const levelFeats = z
   .array(z.object({ featId: z.string().uuid(), aptitudeId: z.string().uuid(), free: z.boolean().optional() }))
   .optional();
+
+const levelParams = classParams.extend({ levelId: z.string().uuid() });
+/** A class level's saves (each its base bonus) and granted feats, its create's and its update's. */
+const levelSaves = z.array(z.object({ saveId: z.string().uuid(), base: z.number().int().min(0).max(12) })).optional();
 
 export default new Hono<SessionContext>()
   .get("/:id/class-levels/:classLevelId", validate("param", classLevelParams), async (c) => {
@@ -34,24 +33,10 @@ export default new Hono<SessionContext>()
     const { id, classId, levelId } = c.req.valid("param");
     return c.json(await ClassLevelsService.getClassLevel(id, classId, levelId), 200);
   })
-  .get(
-    "/:id/classes/:classId/spell-list",
-    validate("param", classParams),
-    validate(
-      "query",
-      z.object({
-        limit,
-        page,
-        level: z.coerce.number().min(0).max(9).optional(),
-        search: z.string().optional(),
-      }),
-    ),
-    async (c) => {
-      const { id, classId } = c.req.valid("param");
-      const { limit, page, level, search } = c.req.valid("query");
-      return c.json(await PowersService.getPowers(id, { classId, level, search }, { limit, page }), 200);
-    },
-  )
+  .get("/:id/classes/:classId/spell-lists", validate("param", classParams), async (c) => {
+    const { id, classId } = c.req.valid("param");
+    return c.json(await ClassLevelsService.getClassSpellLists(id, classId), 200);
+  })
   .get("/:id/classes/:classId/spells", validate("param", classParams), async (c) => {
     const { id, classId } = c.req.valid("param");
     return c.json(await ClassLevelsService.getClassLevelSpells(id, classId), 200);

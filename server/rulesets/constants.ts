@@ -1,26 +1,5 @@
 export type LoadCategory = (typeof LOAD_CATEGORIES)[number];
 
-export const CONSTANTS = {
-  DEFAULT_ABILITY_SCORE: 10,
-  DEFAULT_AC_BASE: 10,
-  DEFAULT_SPEED: 30,
-  ABILITY_MODIFIER_DIVISOR: 2,
-  ABILITY_MODIFIER_OFFSET: 10,
-  NONPROFICIENCY_PENALTY: -4,
-  // A composite bow's penalty to attack when the wielder's Strength bonus is below its rating
-  COMPOSITE_BOW_PENALTY: -2,
-  // A tower shield's penalty on attack rolls, for its encumbrance
-  TOWER_SHIELD_PENALTY: -2,
-  // A secondary natural attack's penalty to attack, which Multiattack lessens
-  SECONDARY_NATURAL_ATTACK_PENALTY: -5,
-  // Two-weapon fighting's penalties on each hand's attacks, 2 less with a light off-hand weapon (PHB Table 8-10)
-  TWO_WEAPON_MAIN_HAND_PENALTY: -6,
-  TWO_WEAPON_OFF_HAND_PENALTY: -10,
-  LIGHT_OFF_HAND_BONUS: 2,
-  // How much lower each attack after the first is, iterative or off hand
-  ATTACK_STEP: 5,
-} as const;
-
 /**
  * D&D 3.5 PHB Table 9-1: Carrying Capacity by Strength score (index = Str score, value = heavy load in lbs)
  * Index 0 is unused (no Str 0), indices 1–29 map to Str 1–29
@@ -58,90 +37,25 @@ export const CARRYING_CAPACITY: number[] = [
   1400, // 29
 ];
 
-/** Multiplier applied to a biped's carrying capacity based on its size */
-export const SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
-  Fine: 1 / 8,
-  Diminutive: 1 / 4,
-  Tiny: 1 / 2,
-  Small: 3 / 4,
-  Medium: 1,
-  Large: 2,
-  Huge: 4,
-  Gargantuan: 8,
-  Colossal: 16,
-};
-
-/** A quadruped's carrying capacity by size: it carries more than a biped (SRD, "Bigger and Smaller Creatures"). */
-export const QUADRUPED_SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
-  Fine: 1 / 4,
-  Diminutive: 1 / 2,
-  Tiny: 3 / 4,
-  Small: 1,
-  Medium: 3 / 2,
-  Large: 3,
-  Huge: 6,
-  Gargantuan: 12,
-  Colossal: 24,
-};
-
-/** Weapon damage size step (Medium = 0; +1 step = bigger damage die). */
-export const SIZE_STEPS: Record<string, number> = {
-  Fine: -4,
-  Diminutive: -3,
-  Tiny: -2,
-  Small: -1,
-  Medium: 0,
-  Large: 1,
-  Huge: 2,
-  Gargantuan: 3,
-  Colossal: 4,
-};
-
-/** Size modifier applied to grapple checks (opposite direction to AC/attack). */
-export const SIZE_GRAPPLE_MOD: Record<string, number> = {
-  Fine: -16,
-  Diminutive: -12,
-  Tiny: -8,
-  Small: -4,
-  Medium: 0,
-  Large: 4,
-  Huge: 8,
-  Gargantuan: 12,
-  Colossal: 16,
-};
-
-/** Size modifier applied to AC and to-hit (same magnitude, same direction). */
-export const SIZE_AC_ATTACK_MOD: Record<string, number> = {
-  Fine: 8,
-  Diminutive: 4,
-  Tiny: 2,
-  Small: 1,
-  Medium: 0,
-  Large: -1,
-  Huge: -2,
-  Gargantuan: -4,
-  Colossal: -8,
-};
-
-/** Size modifier applied to the Hide skill (opposite direction to AC/attack). */
-export const SIZE_HIDE_MOD: Record<string, number> = {
-  Fine: 16,
-  Diminutive: 12,
-  Tiny: 8,
-  Small: 4,
-  Medium: 0,
-  Large: -4,
-  Huge: -8,
-  Gargantuan: -12,
-  Colossal: -16,
-};
-
-/** Max Dex bonus and check penalty by load category */
-export const ENCUMBRANCE_PENALTIES = {
-  light: { maxdex: Infinity, checkpenalty: 0 },
-  medium: { maxdex: 3, checkpenalty: -3 },
-  heavy: { maxdex: 1, checkpenalty: -6 },
-  overloaded: { maxdex: 0, checkpenalty: -6 },
+export const CONSTANTS = {
+  DEFAULT_ABILITY_SCORE: 10,
+  DEFAULT_AC_BASE: 10,
+  DEFAULT_SPEED: 30,
+  ABILITY_MODIFIER_DIVISOR: 2,
+  ABILITY_MODIFIER_OFFSET: 10,
+  NONPROFICIENCY_PENALTY: -4,
+  // A composite bow's penalty to attack when the wielder's Strength bonus is below its rating
+  COMPOSITE_BOW_PENALTY: -2,
+  // A tower shield's penalty on attack rolls, for its encumbrance
+  TOWER_SHIELD_PENALTY: -2,
+  // A secondary natural attack's penalty to attack, which Multiattack lessens
+  SECONDARY_NATURAL_ATTACK_PENALTY: -5,
+  // Two-weapon fighting's penalties on each hand's attacks, 2 less with a light off-hand weapon (PHB Table 8-10)
+  TWO_WEAPON_MAIN_HAND_PENALTY: -6,
+  TWO_WEAPON_OFF_HAND_PENALTY: -10,
+  LIGHT_OFF_HAND_BONUS: 2,
+  // How much lower each attack after the first is, iterative or off hand
+  ATTACK_STEP: 5,
 } as const;
 
 /** D&D 3.5 reduced speed for medium/heavy encumbrance (base → reduced) */
@@ -157,7 +71,93 @@ export const ENCUMBERED_SPEED: Record<number, number> = {
   100: 70,
 };
 
+/** Max Dex bonus and check penalty by load category */
+export const ENCUMBRANCE_PENALTIES = {
+  light: { maxdex: Infinity, checkpenalty: 0 },
+  medium: { maxdex: 3, checkpenalty: -3 },
+  heavy: { maxdex: 1, checkpenalty: -6 },
+  overloaded: { maxdex: 0, checkpenalty: -6 },
+} as const;
+
 export const LOAD_CATEGORIES = ["light", "medium", "heavy", "overloaded"] as const;
+
+/** A quadruped's carrying capacity by size: it carries more than a biped (SRD, "Bigger and Smaller Creatures"). */
+export const QUADRUPED_SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
+  Fine: 1 / 4,
+  Diminutive: 1 / 2,
+  Tiny: 3 / 4,
+  Small: 1,
+  Medium: 3 / 2,
+  Large: 3,
+  Huge: 6,
+  Gargantuan: 12,
+  Colossal: 24,
+};
+
+/** Size modifier applied to AC and to-hit (same magnitude, same direction). */
+export const SIZE_AC_ATTACK_MOD: Record<string, number> = {
+  Fine: 8,
+  Diminutive: 4,
+  Tiny: 2,
+  Small: 1,
+  Medium: 0,
+  Large: -1,
+  Huge: -2,
+  Gargantuan: -4,
+  Colossal: -8,
+};
+
+/** Multiplier applied to a biped's carrying capacity based on its size */
+export const SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
+  Fine: 1 / 8,
+  Diminutive: 1 / 4,
+  Tiny: 1 / 2,
+  Small: 3 / 4,
+  Medium: 1,
+  Large: 2,
+  Huge: 4,
+  Gargantuan: 8,
+  Colossal: 16,
+};
+
+/** Size modifier applied to grapple checks (opposite direction to AC/attack). */
+export const SIZE_GRAPPLE_MOD: Record<string, number> = {
+  Fine: -16,
+  Diminutive: -12,
+  Tiny: -8,
+  Small: -4,
+  Medium: 0,
+  Large: 4,
+  Huge: 8,
+  Gargantuan: 12,
+  Colossal: 16,
+};
+
+/** Size modifier applied to the Hide skill (opposite direction to AC/attack). */
+export const SIZE_HIDE_MOD: Record<string, number> = {
+  Fine: 16,
+  Diminutive: 12,
+  Tiny: 8,
+  Small: 4,
+  Medium: 0,
+  Large: -4,
+  Huge: -8,
+  Gargantuan: -12,
+  Colossal: -16,
+};
+
+/** Weapon damage size step (Medium = 0; +1 step = bigger damage die). */
+export const SIZE_STEPS: Record<string, number> = {
+  Fine: -4,
+  Diminutive: -3,
+  Tiny: -2,
+  Small: -1,
+  Medium: 0,
+  Large: 1,
+  Huge: 2,
+  Gargantuan: 3,
+  Colossal: 4,
+};
 
 /** The weapon every character strikes with when its hand holds none: no item, always on the sheet. */
 export const UNARMED_STRIKE = "Unarmed Strike";

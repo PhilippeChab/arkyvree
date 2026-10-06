@@ -55,18 +55,6 @@ import {
   ClassSpellsSection,
 } from "./sections/index.ts";
 
-const TABS: SectionTab<ClassSection>[] = [
-  { key: "levels", label: "Levels", icon: LevelsIcon },
-  { key: "skills", label: "Skills", icon: SkillsIcon },
-  { key: "feat-pools", label: "Feat Pools", icon: FeatPoolsIcon },
-  { key: "spells-known", label: "Spells Known", icon: SpellProgressionIcon },
-  { key: "spells", label: "Spell Uses", icon: SpellProgressionIcon },
-  { key: "spell-list", label: "Spells", icon: SpellsIcon },
-  { key: "properties", label: "Properties", icon: PropertiesIcon },
-  { key: "modifiers", label: "Modifiers", icon: ModifiersIcon },
-  { key: "requirements", label: "Requirements", icon: RequirementsIcon },
-];
-
 const SECTION_COMPONENTS = {
   levels: ClassLevelsSection,
   skills: ClassSkillsSection,
@@ -78,6 +66,18 @@ const SECTION_COMPONENTS = {
   modifiers: ClassModifiersSection,
   requirements: ClassRequirementsSection,
 } as const;
+
+const TABS: SectionTab<ClassSection>[] = [
+  { key: "levels", label: "Levels", icon: LevelsIcon },
+  { key: "skills", label: "Skills", icon: SkillsIcon },
+  { key: "feat-pools", label: "Feat Pools", icon: FeatPoolsIcon },
+  { key: "spells-known", label: "Spells Known", icon: SpellProgressionIcon },
+  { key: "spells", label: "Spell Uses", icon: SpellProgressionIcon },
+  { key: "spell-list", label: "Spells", icon: SpellsIcon },
+  { key: "properties", label: "Properties", icon: PropertiesIcon },
+  { key: "modifiers", label: "Modifiers", icon: ModifiersIcon },
+  { key: "requirements", label: "Requirements", icon: RequirementsIcon },
+];
 
 function isClassSection(section: string | undefined): section is ClassSection {
   return TABS.some((tab) => tab.key === section);

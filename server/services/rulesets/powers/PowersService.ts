@@ -1,16 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  assertEntityNameAvailable,
-  cowEntityToDelete,
-  cowEntityToEdit,
-  findScopedEntity,
-  hasCharacterPicks,
-  repointTombstoneSnapshot,
-} from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { FeatsAptitudes, Powers, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
@@ -19,7 +12,6 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 interface PowerBody {
@@ -56,47 +48,6 @@ const SPELL_FIELDS = [
 ] as const satisfies (keyof PowerBody)[];
 
 class PowersService {
-  /**
-   * The ids a page of powers is drawn from: those on a class's spell list (none when its levels give slots in none) or
-   * on a list, at a level when one is given, or at a level on any list; every power when none of these is given.
-   */
-  private getListedPowerIds(
-    baseRules: BaseRules,
-    rulesetData: CachedRulesetData,
-    rulesetId: string,
-    where: { aptitudeId?: string; classId?: string; level?: number },
-  ) {
-    if (where.classId !== undefined) {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, where.classId, rulesetId, sourceChain, "Class");
-      const listId = RulesetFactory.fromBaseRules(baseRules).hooks.classLevels.getSpellListId(rulesetData, klass.id);
-      return listId === undefined ? [] : getListPowerIds(rulesetData, { aptitudeId: listId, level: where.level });
-    }
-    if (where.aptitudeId === undefined && where.level == null) return undefined;
-    return getListPowerIds(rulesetData, where);
-  }
-
-  /** Replaces a power's aptitude links with these. */
-  private async replaceAptitudes(tx: Db, powerId: string, aptitudes: NonNullable<PowerBody["aptitudes"]>) {
-    await PowersAptitudes.delete(tx, { powerId });
-
-    if (aptitudes.length > 0) {
-      await this.checkSpellAptitudes(
-        tx,
-        aptitudes.map((a) => a.id),
-      );
-
-      await PowersAptitudes.createMany(
-        tx,
-        aptitudes.map((aptitude) => ({
-          powerId,
-          aptitudeId: aptitude.id,
-          level: aptitude.level ?? null,
-        })),
-      );
-    }
-  }
-
   /** Throws when one of the aptitudes is already used for feats: a spell can't be linked to it. */
   private async checkSpellAptitudes(tx: Db, aptitudeIds: string[]) {
     const featAptitudes = await FeatsAptitudes.findAptitudeIds(tx, { aptitudeIds });
@@ -140,51 +91,25 @@ class PowersService {
     }
   }
 
-  async getPower(rulesetId: string, powerId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
-      return {
-        ...power,
-        modifiers: rulesetData.modifiersBySource.get(power.id) ?? [],
-        properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(power.id) ?? [],
-      };
-    });
-  }
+  /** Replaces a power's aptitude links with these. */
+  private async replaceAptitudes(tx: Db, powerId: string, aptitudes: NonNullable<PowerBody["aptitudes"]>) {
+    await PowersAptitudes.delete(tx, { powerId });
 
-  /** A page of the ruleset's powers, as its composed view has them: all of them, a list's or a class's (at a level). */
-  async getPowers(
-    rulesetId: string,
-    where: {
-      childOnly?: boolean;
-      aptitudeId?: string;
-      classId?: string;
-      level?: number;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const { aptitudeId, classId, level, ...filters } = where;
-      const ids = this.getListedPowerIds(ruleset.baseRules, rulesetData, rulesetId, { aptitudeId, classId, level });
-      const result = await Powers.findPage(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ...filters, ids },
-        pagination,
+    if (aptitudes.length > 0) {
+      await this.checkSpellAptitudes(
+        tx,
+        aptitudes.map((a) => a.id),
       );
-      // Each inherited power's lists as the ruleset composes them: its siblings' links merged in, their ids remapped
-      if (sourceChain.length > 0 && !where.childOnly) {
-        result.items = result.items.map((power) => {
-          const merged = rulesetData.powersById.get(power.id);
-          return merged ? { ...power, powersAptitudesInRules: merged.powersAptitudesInRules } : power;
-        });
-      }
-      return result;
-    });
+
+      await PowersAptitudes.createMany(
+        tx,
+        aptitudes.map((aptitude) => ({
+          powerId,
+          aptitudeId: aptitude.id,
+          level: aptitude.level ?? null,
+        })),
+      );
+    }
   }
 
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
@@ -194,13 +119,8 @@ class PowersService {
 
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "powers",
-          body.name,
-        );
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "powers", body.name);
 
         if (!body.aptitudes || body.aptitudes.length === 0) {
           throw new BadRequestError("At least one aptitude must be selected for the power");
@@ -223,7 +143,7 @@ class PowersService {
         const power = rows[0];
 
         if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "powers", tombstoneAncestorId, power.id);
+          await edit.repointTombstone(tx, "powers", tombstoneAncestorId, power.id);
         }
 
         for (const aptitude of body.aptitudes) {
@@ -255,6 +175,87 @@ class PowersService {
     return result;
   }
 
+  async deletePower(session: Session, rulesetId: string, powerId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "powers", powerId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
+
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "powers", power);
+
+        // FK CASCADE on powers_aptitudes.power_id and klass_level_powers.power_id
+        // wipes those join rows when the power row is deleted.
+        // The database deletes its customizations with it.
+        const rows = await Powers.delete(tx, { id: targetId });
+        const deletedPower = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(powersInRules),
+          type: "deletePower",
+          data: { baseRules: ruleset.baseRules, rulesetId, entityName: power.name },
+        });
+
+        return deletedPower;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async getPower(rulesetId: string, powerId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
+      return {
+        ...power,
+        modifiers: rulesetData.modifiersBySource.get(power.id) ?? [],
+        properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(power.id) ?? [],
+      };
+    });
+  }
+
+  /** A page of the ruleset's powers, as its composed view has them: all of them, or a list's (at a level). */
+  async getPowers(
+    rulesetId: string,
+    where: {
+      childOnly?: boolean;
+      aptitudeId?: string;
+      level?: number;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const { aptitudeId, level, ...filters } = where;
+      const ids =
+        aptitudeId !== undefined || level != null ? getListPowerIds(rulesetData, { aptitudeId, level }) : undefined;
+      const result = await Powers.findPage(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, ...filters, ids },
+        pagination,
+      );
+      // Each inherited power's lists as the ruleset composes them: its siblings' links merged in, their ids remapped
+      if (sourceChain.length > 0 && !where.childOnly) {
+        result.items = result.items.map((power) => {
+          const merged = rulesetData.powersById.get(power.id);
+          return merged ? { ...power, powersAptitudesInRules: merged.powersAptitudesInRules } : power;
+        });
+      }
+      return result;
+    });
+  }
+
   async updatePower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
@@ -264,7 +265,8 @@ class PowersService {
 
         const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "powers", power);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "powers", power);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
@@ -304,39 +306,6 @@ class PowersService {
         });
 
         return updatedPower;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deletePower(session: Session, rulesetId: string, powerId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "powers", powerId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "powers", power);
-
-        // FK CASCADE on powers_aptitudes.power_id and klass_level_powers.power_id
-        // wipes those join rows when the power row is deleted.
-        // The database deletes its customizations with it.
-        const rows = await Powers.delete(tx, { id: targetId });
-        const deletedPower = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(powersInRules),
-          type: "deletePower",
-          data: { baseRules: ruleset.baseRules, rulesetId, entityName: power.name },
-        });
-
-        return deletedPower;
       });
     });
     RulesetCache.invalidate(rulesetId);

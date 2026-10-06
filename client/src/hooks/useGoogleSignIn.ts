@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 
 import { useLatest } from "./useLatest.ts";
 
-const GSI_SCRIPT_URL = "https://accounts.google.com/gsi/client";
 const CLIENT_ID = window.__APP_CONFIG__?.googleClientId || null;
-
-let scriptLoadPromise: Promise<void> | null = null;
-let initialized = false;
 let globalCallback: ((response: GoogleCredentialResponse) => void) | null = null;
+
+const GSI_SCRIPT_URL = "https://accounts.google.com/gsi/client";
+let initialized = false;
+let scriptLoadPromise: Promise<void> | null = null;
 
 function loadGsiScript(): Promise<void> {
   if (scriptLoadPromise) return scriptLoadPromise;

@@ -49,21 +49,8 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { campaignCharactersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];
-type UnlinkedCharacter = InferResponseType<
-  (typeof rpc.api.characters.unlinked)[":campaignId"]["$get"],
-  200
->["items"][number];
-
-interface CharactersSectionProps {
-  campaign: CampaignDetail;
-}
-
-type Visibility = NonNullable<
-  InferRequestType<(typeof rpc.api.campaigns)[":id"]["characters"]["$post"]>["json"]["visibility"]
->;
-
+type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
 interface CharacterCardProps {
   character: CampaignCharacter;
   campaignId: string;
@@ -73,19 +60,32 @@ interface CharacterCardProps {
   portraitUrl: string | null;
 }
 
+interface CharactersSectionProps {
+  campaign: CampaignDetail;
+}
+
 interface LinkCharacterDialogProps {
   open: boolean;
   onClose: () => void;
   campaignId: string;
 }
 
-const VISIBILITY_OPTIONS = ["Private", "Public", "Partial"] as const satisfies readonly Visibility[];
+type UnlinkedCharacter = InferResponseType<
+  (typeof rpc.api.characters.unlinked)[":campaignId"]["$get"],
+  200
+>["items"][number];
+
+type Visibility = NonNullable<
+  InferRequestType<(typeof rpc.api.campaigns)[":id"]["characters"]["$post"]>["json"]["visibility"]
+>;
 
 const VISIBILITY_DESCRIPTIONS: Record<Visibility, string> = {
   Private: "Only visible to you",
   Public: "Visible to all campaign members",
   Partial: "Limited information visible to others",
 };
+
+const VISIBILITY_OPTIONS = ["Private", "Public", "Partial"] as const satisfies readonly Visibility[];
 
 function CharacterCard({
   character,

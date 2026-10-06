@@ -23,6 +23,18 @@ import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 import type { LevelWizard } from "./levelUp/index.ts";
 
+interface LevelWizardDialogProps {
+  open: boolean;
+  title: string;
+  wizard: WizardControls;
+  stepLabels: readonly string[];
+  /** The last step's button ("Finish"). */
+  finishLabel: string;
+  isSaving: boolean;
+  /** The current step. */
+  children: ReactNode;
+}
+
 /** The part of a level wizard the dialog drives: steps, cancel, validation and navigation. */
 type WizardControls = Pick<
   LevelWizard,
@@ -39,18 +51,6 @@ type WizardControls = Pick<
   | "isNextDisabled"
   | "isLastStep"
 >;
-
-interface LevelWizardDialogProps {
-  open: boolean;
-  title: string;
-  wizard: WizardControls;
-  stepLabels: readonly string[];
-  /** The last step's button ("Finish"). */
-  finishLabel: string;
-  isSaving: boolean;
-  /** The current step. */
-  children: ReactNode;
-}
 
 /** The Add Level / Edit Level dialog: stepper, cancel confirmation, validation warnings and navigation. */
 export function LevelWizardDialog({

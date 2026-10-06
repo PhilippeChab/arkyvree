@@ -3,10 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { DND35_COMPLETE_DIVINE_NAME } from "@/database/packages/dnd35/names.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
-import { Klasses, Rulesets } from "@/server/repositories/index.ts";
+import { Klasses } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 const klass = api.api.rulesets[":id"].classes[":classId"];
 const levels = klass.levels;
@@ -60,7 +60,7 @@ describe("rulesets class levels", () => {
     ]);
   });
 
-  test("reads a class's spells per day, spells known, feat pools and spell list", async () => {
+  test("reads a class's spells per day, spells known, feat pools and spell lists", async () => {
     const { klassMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
@@ -73,33 +73,18 @@ describe("rulesets class levels", () => {
     const pools = await expectOk(klass["feat-pools"].$get({ param: { id, classId: klassMap.pc["Fighter"] } }));
     expect(pools.find((l) => l.level === 1)).toMatchObject({ featPools: { "Fighter Bonus Feat": 1 } });
 
-    const spells = await expectOk(
-      klass["spell-list"].$get({
-        param: { id, classId: klassMap.pc["Wizard"] },
-        query: { level: "1", search: "Magic Missile" },
-      }),
-    );
-    expect(spells.items.map((s) => s.name)).toContain("Magic Missile");
+    const lists = await expectOk(klass["spell-lists"].$get({ param: { id, classId: klassMap.pc["Wizard"] } }));
+    expect(lists.map((list) => list.name)).toEqual(["Wizard Spells"]);
 
-    // A class whose levels give slots in no list has no spell list
-    const none = await expectOk(
-      klass["spell-list"].$get({ param: { id, classId: klassMap.pc["Fighter"] }, query: {} }),
-    );
-    expect(none).toMatchObject({ items: [], page: 1 });
+    // A class whose levels give slots in no list has none
+    expect(await expectOk(klass["spell-lists"].$get({ param: { id, classId: klassMap.pc["Fighter"] } }))).toEqual([]);
   });
 
-  test("reads the first spell list a class's levels give slots in, by level: the Pious Templar's own", async () => {
-    const divine = (await Rulesets.findOne(db, { name: DND35_COMPLETE_DIVINE_NAME }))!;
+  test("lists every spell list a class casts from, its own first: the Pious Templar's and its blackguard one", async () => {
+    const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
     const templar = (await Klasses.findOne(db, { name: "Pious Templar", rulesetId: divine.id }))!;
-    const spells = await expectOk(
-      klass["spell-list"].$get({ param: { id: divine.id, classId: templar.id }, query: { limit: "100" } }),
-    );
-    expect(spells.items.length).toBeGreaterThan(0);
-    expect(
-      spells.items.every((spell) =>
-        spell.powersAptitudesInRules.some((link) => link.aptitudesInRule?.name === "Pious Templar Spells"),
-      ),
-    ).toBe(true);
+    const lists = await expectOk(klass["spell-lists"].$get({ param: { id: divine.id, classId: templar.id } }));
+    expect(lists.map((list) => list.name)).toEqual(["Pious Templar Spells", "Pious Templar Blackguard Spells"]);
   });
 
   test("requires a session", async () => {

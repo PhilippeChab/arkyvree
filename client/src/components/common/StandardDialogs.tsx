@@ -14,6 +14,8 @@ import { DiceSpinner } from "@/client/src/components/common/DiceSpinner.tsx";
 import { FormDialog } from "@/client/src/components/common/FormDialog.tsx";
 import { Modal } from "@/client/src/components/common/Modal.tsx";
 
+type DeleteDialogProps = Omit<ConfirmDialogProps, "confirmColor">;
+
 interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   open: boolean;
   onClose: () => void;
@@ -31,8 +33,6 @@ interface FormActionDialogProps<T extends FieldValues = FieldValues> {
 type StandardFormDialogProps<T extends FieldValues> = Omit<FormActionDialogProps<T>, "submitLabel"> & {
   submitLabel?: string;
 };
-
-type DeleteDialogProps = Omit<ConfirmDialogProps, "confirmColor">;
 
 export interface ConfirmDialogProps {
   open: boolean;

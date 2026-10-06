@@ -44,7 +44,8 @@
     // General
     "no-console": "error",
     "import/no-empty-named-blocks": "error",
-    // Routers, services and repositories in CRUD order (lint/memberOrder.mjs): `bun run lint --fix` sorts them.
+    // Every declaration and method by name, every route by method and path (lint/memberOrder.mjs): `bun run lint --fix`
+    // sorts them.
     "arkyvree/member-order": "error",
     // A public method starts with a verb its layer knows (lint/methodNames.mjs): repositories, services, policies.
     "arkyvree/method-names": "error",
@@ -107,12 +108,13 @@
     "arkyvree/test-conventions": "error",
     // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
     "arkyvree/function-length": "error",
-    // A file reads bottom-up: a helper sits above the code that uses it. Classes are left out (a repository's instance
-    // class follows it), and so is a variable read inside a function, which runs once the file has loaded: drizzle's
-    // tables point their foreign keys both ways.
+    "arkyvree/module-state": "error",
+    // A value sits above what reads it as the file loads. Functions are left out (hoisted, they go by name:
+    // member-order), and so are classes (a repository's instance class follows it) and a variable read inside a
+    // function, which runs once the file has loaded: drizzle's tables point their foreign keys both ways.
     "no-use-before-define": [
       "error",
-      { "functions": true, "classes": false, "variables": false, "enums": false, "typedefs": false, "ignoreTypeReferences": true }
+      { "functions": false, "classes": false, "variables": false, "enums": false, "typedefs": false, "ignoreTypeReferences": true }
     ],
     // The names inside an import, alphabetically. The formatter orders the imports themselves.
     "sort-imports": ["error", { "ignoreCase": true, "ignoreDeclarationSort": true }],

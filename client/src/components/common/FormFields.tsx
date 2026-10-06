@@ -30,10 +30,13 @@ interface BoundFieldProps<T extends FieldValues> {
   rules?: ControllerProps<T>["rules"];
 }
 
-/** What a preset takes besides the form's field. */
-interface PresetFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
-  autoFocus?: boolean;
-  disabled?: boolean;
+interface DescriptionFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
+  rows?: number;
+  placeholder?: string;
+}
+
+interface EmailFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
+  label?: string;
 }
 
 /** A text field's own props: the form gives its value, change, error and ref. */
@@ -43,7 +46,21 @@ type FormTextFieldProps<T extends FieldValues> = BoundFieldProps<T> &
     number?: boolean;
   };
 
-type SelectOption = string | { value: string; label: ReactNode; disabled?: boolean };
+interface NameFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
+  label?: string;
+  helperText?: string;
+}
+
+interface PasswordFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
+  label: string;
+  autoComplete: "current-password" | "new-password";
+}
+
+/** What a preset takes besides the form's field. */
+interface PresetFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
+  autoFocus?: boolean;
+  disabled?: boolean;
+}
 
 interface SelectFieldProps<T extends FieldValues> {
   control: Control<T>;
@@ -64,24 +81,7 @@ interface SelectFieldProps<T extends FieldValues> {
   onMenuScroll?: UIEventHandler<HTMLElement>;
 }
 
-interface DescriptionFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
-  rows?: number;
-  placeholder?: string;
-}
-
-interface EmailFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
-  label?: string;
-}
-
-interface NameFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
-  label?: string;
-  helperText?: string;
-}
-
-interface PasswordFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
-  label: string;
-  autoComplete: "current-password" | "new-password";
-}
+type SelectOption = string | { value: string; label: ReactNode; disabled?: boolean };
 
 interface SwitchFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
   label: string;
@@ -99,36 +99,6 @@ function numberRules<T extends FieldValues>(rules: BoundFieldProps<T>["rules"]):
   const isNumber = (value: unknown) => !Number.isNaN(value) || (typeof message === "boolean" ? false : message);
   const { validate } = rules;
   return { ...rules, validate: typeof validate === "function" ? { validate, isNumber } : { ...validate, isNumber } };
-}
-
-/** A text field bound to a form's field: the form holds its value, and its error shows under it. */
-export function FormTextField<T extends FieldValues>({
-  control,
-  name,
-  rules,
-  number = false,
-  helperText,
-  ...props
-}: FormTextFieldProps<T>) {
-  const {
-    field: { ref, value, onChange, ...field },
-    fieldState,
-  } = useController({ control, name, rules: number ? numberRules(rules) : rules });
-  return (
-    <TextField
-      {...props}
-      {...field}
-      // On the input, so a failed submit focuses it
-      inputRef={ref}
-      value={value === undefined || value === null || (number && Number.isNaN(value)) ? "" : value}
-      onChange={(event) => {
-        const text = event.target.value;
-        onChange(number ? (text === "" ? Number.NaN : Number(text)) : text);
-      }}
-      error={!!fieldState.error}
-      helperText={fieldState.error?.message ?? helperText}
-    />
-  );
 }
 
 /** An entity's description: several lines, resizable. */
@@ -157,6 +127,36 @@ export function EmailField<T extends FieldValues>({ label = "Email", ...field }:
       fullWidth
       margin="normal"
       slotProps={{ htmlInput: { autoComplete: "email" } }}
+    />
+  );
+}
+
+/** A text field bound to a form's field: the form holds its value, and its error shows under it. */
+export function FormTextField<T extends FieldValues>({
+  control,
+  name,
+  rules,
+  number = false,
+  helperText,
+  ...props
+}: FormTextFieldProps<T>) {
+  const {
+    field: { ref, value, onChange, ...field },
+    fieldState,
+  } = useController({ control, name, rules: number ? numberRules(rules) : rules });
+  return (
+    <TextField
+      {...props}
+      {...field}
+      // On the input, so a failed submit focuses it
+      inputRef={ref}
+      value={value === undefined || value === null || (number && Number.isNaN(value)) ? "" : value}
+      onChange={(event) => {
+        const text = event.target.value;
+        onChange(number ? (text === "" ? Number.NaN : Number(text)) : text);
+      }}
+      error={!!fieldState.error}
+      helperText={fieldState.error?.message ?? helperText}
     />
   );
 }

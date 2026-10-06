@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { collectClassLists } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
@@ -26,16 +26,6 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
         value: String(skills),
       },
     ];
-  }
-
-  getSpellListId(
-    rulesetData: Pick<CachedRulesetData, "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
-    klassId: string,
-  ): string | undefined {
-    const klassLevels = rulesetData.klassLevelsByKlassId.get(klassId) ?? [];
-    const [list] =
-      collectClassLists({ klassLevels, modifiersBySource: rulesetData.modifiersBySource }).get(klassId) ?? [];
-    return list === undefined ? undefined : rulesetData.aptitudeIdBySlug.get(list);
   }
 
   enrichWithFeatPools<T extends { id: string; level: number }>(
@@ -208,6 +198,21 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
       ...level,
       spellsPerDay: resultMap.get(level.id) ?? {},
     }));
+  }
+
+  getSpellListIds(
+    rulesetData: Pick<RulesetData, "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
+    klassId: string,
+  ): string[] {
+    const klassLevels = rulesetData.klassLevelsByKlassId.get(klassId) ?? [];
+    const lists = [
+      ...(collectClassLists({ klassLevels, modifiersBySource: rulesetData.modifiersBySource }).get(klassId) ?? []),
+    ];
+    // A class casting from one of several lists (a pious templar's own, or its blackguard one) opens on its own
+    const own = `${stripSeparators(rulesetData.klassesById.get(klassId)?.name ?? "")}spells`;
+    return [...lists.filter((list) => list === own), ...lists.filter((list) => list !== own)].flatMap(
+      (list) => rulesetData.aptitudeIdBySlug.get(list) ?? [],
+    );
   }
 
   readCurrentValues(properties: { type: string; value: string }[]): { bab: number; skills: number } {

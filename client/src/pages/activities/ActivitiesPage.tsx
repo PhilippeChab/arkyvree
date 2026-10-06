@@ -22,6 +22,11 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 type SortField = "createdAt" | "type";
 
+const ACTIVITY_COLUMNS: DataTableColumn[] = [
+  { key: "action", label: "Action" },
+  { key: "date", label: "Date" },
+];
+
 const ACTIVITY_SORT_OPTIONS: SortOption<SortField>[] = [
   ...CREATED_SORTS,
   { field: "type", direction: "asc", label: "Type (A-Z)" },
@@ -29,11 +34,6 @@ const ACTIVITY_SORT_OPTIONS: SortOption<SortField>[] = [
 ];
 
 const PAGE_SIZE = 10;
-
-const ACTIVITY_COLUMNS: DataTableColumn[] = [
-  { key: "action", label: "Action" },
-  { key: "date", label: "Date" },
-];
 
 export default function ActivitiesPage() {
   usePageTitle("Activities");

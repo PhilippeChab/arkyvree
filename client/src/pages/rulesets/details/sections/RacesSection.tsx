@@ -15,8 +15,8 @@ import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.t
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-type RacesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>;
 type Race = RacesPaginated["items"][number];
+type RacesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>;
 
 const RACES_COLUMNS = [
   { key: "name", label: "Name", width: "15%" },
