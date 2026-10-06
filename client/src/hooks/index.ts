@@ -11,7 +11,6 @@ export { useIsMobile } from "./useIsMobile.ts";
 export { useLatest } from "./useLatest.ts";
 export { useNotificationActions } from "./useNotificationActions.ts";
 export { useOglLicense } from "./useOglLicense.ts";
-export { useOnChange } from "./useOnChange.ts";
 export { isNavigableTarget, useOpenActivityTarget } from "./useOpenActivityTarget.ts";
 export { usePageTitle } from "./usePageTitle.ts";
 export { usePdfExport } from "./usePdfExport.ts";
