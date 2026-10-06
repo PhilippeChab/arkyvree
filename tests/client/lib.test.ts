@@ -15,9 +15,16 @@ import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { extractTemplateExpression, extractTemplatePath, isTemplateValue } from "@/client/src/lib/templateValues.ts";
-import { confirmPasswordRules, emailRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import {
+  confirmPasswordRules,
+  emailRules,
+  newPasswordRules,
+  usernameRules,
+  wholeNumberRules,
+} from "@/client/src/lib/validation.ts";
 import { valuesEqual } from "@/client/src/lib/valuesEqual.ts";
 import { ApiError } from "@/client/src/services/apiError.ts";
+import { PASSWORD_MIN_LENGTH } from "@/shared/auth.ts";
 
 describe("Numbers shown to the user", () => {
   test("have two decimals, or none when there's no number", () => {
@@ -105,6 +112,21 @@ describe("Form rules", () => {
     const { validate } = confirmPasswordRules<{ password: string }>("password");
     expect(validate("secret123", { password: "secret123" })).toBe(true);
     expect(validate("secret124", { password: "secret123" })).toBe("Passwords do not match");
+  });
+
+  test("measure a password and a username as the server stores them, trimmed", () => {
+    const password = "x".repeat(PASSWORD_MIN_LENGTH);
+    expect([newPasswordRules.validate(password), newPasswordRules.validate(` ${password.slice(1)} `)]).toEqual([
+      true,
+      `Password must be at least ${PASSWORD_MIN_LENGTH} characters`,
+    ]);
+    expect(["", "elara", "  ab  ", "   ", "x".repeat(51)].map((name) => usernameRules.validate(name))).toEqual([
+      true,
+      true,
+      "Username must be at least 3 characters",
+      "Username must be at least 3 characters",
+      "Username must be at most 50 characters",
+    ]);
   });
 
   test("take whole numbers only, an empty field left to `required`", () => {

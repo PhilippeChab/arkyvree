@@ -157,6 +157,16 @@ describe("conventions", () => {
           "server/routers/api/fields.ts": routeReading(
             '  const query = c.req.valid("query");\n  return S.f(query.search, query.page);',
           ),
+          "server/routers/api/derived.ts":
+            'const itemBody = z.object({});\nexport const r = app.post("/", validate("json", itemBody), (c) => c).put("/", validate("json", itemBody.partial()), (c) => c);\n',
+          "server/routers/api/derivedOnce.ts":
+            'const itemBody = z.object({});\nexport const r = app.put("/", validate("json", itemBody.partial()), (c) => c);\n',
+          "server/routers/api/declared.ts":
+            'async function create(c) {\n  const body = c.req.valid("json");\n  return c.json(await S.create(body), 200);\n}\nexport const r = app.post("/", validate("json", z.object({})), create);\n',
+          "server/routers/api/destructuredLater.ts": routeReading(
+            '  const body = c.req.valid("json");\n  const { name } = body;\n  return S.f(name);',
+          ),
+          "server/routers/api/inlineRead.ts": routeReading('  return S.f(c.req.valid("param"));'),
           "server/routers/api/exported.ts": 'export default new Hono().get("/", (c) => c);\n',
           "server/routers/api/named.ts": 'const r = new Hono().get("/", (c) => c);\nexport default r;\n',
         },
@@ -164,9 +174,12 @@ describe("conventions", () => {
       ),
     ).toEqual([
       "route-conventions server/routers/api/data.ts",
+      "route-conventions server/routers/api/derivedOnce.ts",
+      "route-conventions server/routers/api/destructuredLater.ts",
       "route-conventions server/routers/api/fields.ts",
       "route-conventions server/routers/api/imported.ts",
       "route-conventions server/routers/api/imported.ts",
+      "route-conventions server/routers/api/inlineRead.ts",
       "route-conventions server/routers/api/misnamed.ts",
       "route-conventions server/routers/api/named.ts",
       "route-conventions server/routers/api/named.ts",

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { sanitizeEmail, sanitizeText } from "./sanitize.ts";
+import { sanitizeEmail, sanitizeText } from "@/shared/text.ts";
+
 import { limitDefaultingTo } from "./schemaBuilders.ts";
 
 /** Standard page parameter: positive integer, defaults to 1 */

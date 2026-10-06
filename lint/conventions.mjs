@@ -13,8 +13,8 @@
  *   is the app's `validate` (`@/server/middlewares/index.ts`, which answers in the API's error envelope), its params
  *   are a named schema (`validate("param", featParams)`: from a `validation.ts` when several routers use it,
  *   declared at the top of its router otherwise), its body and query are written in it (or at its router's top, as
- *   `itemBody`, when several of its routes take one), its handler destructures what it reads of them (`body` or
- *   `query` when it reads one whole), a router is its module's export (`export default new Hono()…`) and names a
+ *   `itemBody`, when several of its routes take one, as it is or derived), its handler reads its input into a const
+ *   and destructures what it reads of it (`body` or `query` when it reads one whole), a router is its module's export (`export default new Hono()…`) and names a
  *   schema for what it validates (never `…Schema`), and it lets an error reach `onError` instead of catching it
  *   (`server/routers/api/`; a `finally` alone is fine).
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
@@ -62,7 +62,7 @@ const ROUTE_METHODS = new Set(["get", "post", "put", "patch", "delete", "route"]
 const CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
 /** kebab-case, a file's name (`sitemap.xml`) or a wildcard */
 const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*)$/;
-/** A route's whole input, named for its target when it's named: `featParams`, `itemBody`, `pagingQuery`. */
+/** A route's whole input, named for its target when it's named: `featParams`, `itemBody`, a query's `…Query`. */
 const INPUT_NAMES = { param: /Params?$/, json: /Body$/, query: /Query$/ };
 /** The variable a handler reads a whole input into: it destructures params, and an input it reads field by field. */
 const INPUT_VARIABLES = { json: "body", query: "query" };
@@ -298,11 +298,23 @@ function* callsIn(node) {
   }
 }
 
-/** A body or query schema given by name: the router's own, which several of its routes take. */
+/** What a call or member chain starts from: `itemBody` in `itemBody.partial()`, `z` in `z.object({…})`. */
+function chainRootOf(node) {
+  let current = node;
+  while (current?.type === "CallExpression" || current?.type === "MemberExpression") {
+    current = current.type === "CallExpression" ? current.callee : current.object;
+  }
+  return current;
+}
+
+/**
+ * A body or query schema given by name: the router's own, which several of its routes take, as it is or derived
+ * (`itemBody.partial()`).
+ */
 function checkNamedInputs(context, named, constants) {
-  for (const [name, nodes] of named) {
-    if (constants.has(name) && nodes.length > 1) continue;
-    for (const node of nodes) {
+  for (const [name, { bare, derived }] of named) {
+    const reported = !constants.has(name) ? bare : bare.length + derived.length > 1 ? [] : [...bare, ...derived];
+    for (const node of reported) {
       context.report({
         node,
         message: `A route's body or query is written in the route; \`${name}\` is declared at the router's top only when several of its routes take it.`,
@@ -354,10 +366,13 @@ function checkValidation(context, node, named) {
   } else if (schema?.type === "Identifier" && !pattern.test(schema.name)) {
     context.report({
       node: schema,
-      message: `A route's ${target.value} schema is named for what it validates (\`featParams\`, \`idParam\`, \`itemBody\`, \`pagingQuery\`): \`${schema.name}\` isn't.`,
+      message: `A route's ${target.value} schema is named for what it validates (\`featParams\`, \`idParam\`, \`itemBody\`, a query's \`…Query\`): \`${schema.name}\` isn't.`,
     });
-  } else if (schema?.type === "Identifier" && target.value !== "param") {
-    (named.get(schema.name) ?? named.set(schema.name, []).get(schema.name)).push(schema);
+  } else if (target.value !== "param") {
+    const root = schema?.type === "Identifier" ? schema : chainRootOf(schema);
+    if (root?.type !== "Identifier") return;
+    if (!named.has(root.name)) named.set(root.name, { bare: [], derived: [] });
+    named.get(root.name)[root === schema ? "bare" : "derived"].push(root);
   }
 }
 
@@ -401,7 +416,7 @@ function declarationText(text, statement, declarator) {
 /** The function `node` sits in. */
 function enclosingFunction(node) {
   let current = node.parent;
-  while (current && !current.type.endsWith("FunctionExpression")) current = current.parent;
+  while (current && !/Function(Expression|Declaration)$/.test(current.type)) current = current.parent;
   return current;
 }
 
@@ -642,7 +657,8 @@ function createFunctionDeclarations(context) {
 function readsWhole(node, name) {
   if (node.type === "Identifier" && node.name === name) {
     const parent = node.parent;
-    if (parent?.type === "VariableDeclarator" && parent.id === node) return false;
+    if (parent?.type === "VariableDeclarator" && (parent.id === node || parent.id.type === "ObjectPattern"))
+      return false;
     if (parent?.type === "MemberExpression" && !parent.computed) return false;
     return !(parent?.type === "Property" && parent.key === node && !parent.shorthand);
   }
@@ -715,6 +731,14 @@ function createRouteConventions(context) {
         return;
       }
       if (callee.type !== "MemberExpression") return;
+      // S.get(c.req.valid("param")): a handler reads its input into a const, where the rule sees how it's read
+      if (validTargetOf(node) && node.parent?.type !== "VariableDeclarator") {
+        context.report({
+          node,
+          message: 'A route reads its input into a const: `const { id } = c.req.valid("param")`.',
+        });
+        return;
+      }
       // c.json(body) → c.json(body, 200): a route says its status, which its types list.
       if (
         callee.object.type === "Identifier" &&
