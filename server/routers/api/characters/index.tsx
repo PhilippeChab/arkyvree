@@ -182,12 +182,12 @@ export default new Hono()
       "json",
       z.object({
         name: z.string().min(1).max(255).optional(),
-        age: z.number().optional(),
+        age: z.number().min(1).optional(),
         gender: z.enum(["Male", "Female", "Other"]).optional(),
         height: z.string().optional(),
         weight: z.string().optional(),
         deity: z.string().optional(),
-        xp: z.number().optional(),
+        xp: z.number().min(0).optional(),
         alignment: z
           .enum([
             "Lawful Good",

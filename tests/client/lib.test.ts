@@ -147,6 +147,8 @@ describe("Form rules", () => {
     const { validate, min } = wholeNumberRules(1, "Required");
     expect([validate(3), validate(2.5), validate(Number.NaN)]).toEqual([true, "Whole numbers only", true]);
     expect(min).toEqual({ value: 1, message: "Minimum 1" });
+    expect(wholeNumberRules(1, "Required", 20).max).toEqual({ value: 20, message: "Maximum 20" });
+    expect("max" in wholeNumberRules(0)).toBe(false);
   });
 });
 

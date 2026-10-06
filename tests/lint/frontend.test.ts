@@ -103,11 +103,18 @@ describe("frontend rules", () => {
             'export const w = (\n  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>\n    <FormTextField control={c} name="a" />\n  </Stack>\n);\n',
           "client/src/gapped.tsx":
             'export const g = (\n  <Stack spacing={1}>\n    {open && <SelectField control={c} name="a" label="A" options={[]} />}\n  </Stack>\n);\n',
+          "client/src/bounded.tsx":
+            'export const n = <FormTextField control={c} name="xp" number slotProps={{ htmlInput: { min: 0 } }} />;\n',
+          "client/src/ruled.tsx":
+            'export const u = <FormTextField control={c} name="xp" rules={wholeNumberRules(0)} slotProps={{ htmlInput: { maxLength: 9 } }} />;\n',
+          "client/src/stepper.tsx":
+            'export const p = <TextField type="number" slotProps={{ htmlInput: { min: 0, max: 9 } }} />;\n',
         },
         ["forms"],
       ),
     ).toEqual([
       "forms client/src/bound.tsx",
+      "forms client/src/bounded.tsx",
       "forms client/src/gapped.tsx",
       "forms client/src/margined.tsx",
       "forms client/src/outlined.tsx",
@@ -816,6 +823,9 @@ describe("frontend rules", () => {
             'export const k = <Chip {...getItemProps({ index })} key={id} label={name} size="small" />;\n',
           "client/src/outlined.tsx":
             'export const o = <Chip {...getItemProps({ index })} key={id} label={name} variant="outlined" />;\n',
+          "client/src/destructured.tsx":
+            'export const d = values.map((v, index) => {\n  const { key, ...tagProps } = getItemProps({ index });\n  return <Chip key={key} label={v} size="small" {...tagProps} />;\n});\n',
+          "client/src/spread.tsx": 'export const r = <Chip {...rest} label="x" size="small" />;\n',
         },
         ["tag-chips"],
       ),
@@ -825,6 +835,7 @@ describe("frontend rules", () => {
       "tag-chips client/src/painted.tsx",
       "tag-chips client/src/painted.tsx",
       "tag-chips client/src/plain.tsx",
+      "tag-chips client/src/spread.tsx",
     ]);
   });
 
@@ -881,10 +892,12 @@ describe("frontend rules", () => {
             "export const p = (\n  <Menu open>\n    <Box>\n      <Typography>Notifications</Typography>\n    </Box>\n  </Menu>\n);\n",
           "client/src/select.tsx":
             'export const s = (\n  <TextField select value={v}>\n    <MenuItem value="a">A</MenuItem>\n  </TextField>\n);\n',
+          "client/src/mapped.tsx":
+            "export const q = (\n  <Menu open>\n    {items.map((i) => (\n      <Box key={i}>{i}</Box>\n    ))}\n  </Menu>\n);\n",
         },
         ["menus"],
       ),
-    ).toEqual(["menus client/src/action.tsx", "menus client/src/panel.tsx"]);
+    ).toEqual(["menus client/src/action.tsx", "menus client/src/mapped.tsx", "menus client/src/panel.tsx"]);
   });
 
   test("a button that starts a request shows it running", async () => {

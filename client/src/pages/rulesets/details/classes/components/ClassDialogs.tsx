@@ -2,6 +2,7 @@ import { useController, type UseFormReturn } from "react-hook-form";
 
 import { ConfirmDialog, CreateDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
+import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { allLevelSaves, ClassLevelFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 
@@ -42,35 +43,26 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
       <FormTextField
         control={form.control}
         name="level"
-        rules={{ required: "Level is required" }}
+        rules={wholeNumberRules(1, "Level is required", 20)}
         number
         label="Level"
         type="number"
-        slotProps={{
-          htmlInput: { min: 1, max: 20 },
-        }}
       />
       <FormTextField
         control={form.control}
         name="bab"
-        rules={{ required: "Base Attack Bonus is required" }}
+        rules={wholeNumberRules(0, "Base Attack Bonus is required")}
         number
         label="Base Attack Bonus"
         type="number"
-        slotProps={{
-          htmlInput: { min: 0 },
-        }}
       />
       <FormTextField
         control={form.control}
         name="skills"
-        rules={{ required: "Skill points are required" }}
+        rules={wholeNumberRules(1, "Skill points are required")}
         number
         label="Skill Points"
         type="number"
-        slotProps={{
-          htmlInput: { min: 1 },
-        }}
       />
       <ClassLevelFields
         rulesetId={rulesetId}

@@ -57,8 +57,8 @@
  *   default, makes `spacing` a gap), never another element with a flex `display`: a surface (`Paper`, `Card`,
  *   `DialogContent`) holds a `Stack`.
  * - `forms`: a form is a `Stack component="form" noValidate` (its rules check its fields, never the browser). Its fields
- *   stack `spacing={3}` apart and never set a `margin`; fields side by side are a `FieldRow`, and a form's select is a
- *   `SelectField`.
+ *   stack `spacing={3}` apart and never set a `margin`; fields side by side are a `FieldRow`, a form's select is a
+ *   `SelectField`, and a bound field's bounds are its `rules`, never the browser's `min`, `max`, `pattern` or `required`.
  * - `component-defaults`: what the theme sets for every instance (a tooltip's arrow and delay, `Collapse`'s timeout)
  *   isn't set again on one, nor is a value MUI gives by default (`<Chip variant="filled">`); `--fix` removes both.
  * - `label-case`: a button's, a menu item's, a field's and a dialog's words are in Title Case ("Mark All as Read").
@@ -261,6 +261,12 @@ const MUI_DEFAULTS = {
 /** MUI's transitions a component never runs itself: a page fades in with `PageTransition`, a block opens with `Collapse` */
 const MUI_TRANSITIONS = new Set(["Fade", "Grow", "Slide", "Zoom"]);
 
+/** The checks the browser makes of an input, which a `noValidate` form skips: a bound field's are its `rules` */
+const NATIVE_CHECKS = new Set(["max", "min", "pattern", "required"]);
+
+/** The calls that hand an Autocomplete's picked value its chip's props */
+const PICKED_VALUE_PROPS = new Set(["getItemProps", "getTagProps"]);
+
 /** The requests an `rpc` endpoint makes. */
 const REQUEST_METHODS = new Set(["$get", "$post", "$put", "$patch", "$delete"]);
 
@@ -346,6 +352,22 @@ function calleeName(node) {
   return null;
 }
 
+/** Whether a field takes a check from the browser (`slotProps={{ htmlInput: { min: 0 } }}`), which a `noValidate` form skips */
+function checksNatively(element) {
+  const attribute = element.openingElement.attributes.find(
+    (a) => a.type === "JSXAttribute" && a.name.name === "slotProps",
+  );
+  const slots = attribute?.value?.type === "JSXExpressionContainer" ? attribute.value.expression : null;
+  const input =
+    slots?.type === "ObjectExpression"
+      ? slots.properties.find((p) => p.type === "Property" && p.key.name === "htmlInput")?.value
+      : null;
+  return (
+    input?.type === "ObjectExpression" &&
+    input.properties.some((p) => p.type === "Property" && NATIVE_CHECKS.has(p.key.name ?? p.key.value))
+  );
+}
+
 /** The elements a JSX element renders as its children: written out, in a fragment, or behind a condition. */
 function childElements(node) {
   return node.children.flatMap((child) => {
@@ -358,7 +380,9 @@ function childElements(node) {
         ? [expression.right]
         : expression.type === "ConditionalExpression"
           ? [expression.consequent, expression.alternate]
-          : [expression];
+          : expression.type === "CallExpression" && expression.callee.property?.name === "map"
+            ? mappedElements(expression.arguments[0])
+            : [expression];
     return branches.filter((branch) => branch.type === "JSXElement");
   });
 }
@@ -895,6 +919,12 @@ function createForms(context) {
         report("A select bound to a form's field is a `SelectField`.");
       }
       if (BOUND_FIELDS.has(name) && hasAttribute(node, "size")) report("A form's field is one size, MUI's default.");
+      if (BOUND_FIELDS.has(name) && checksNatively(node)) {
+        report(
+          "A bound field's bounds are its `rules` (`wholeNumberRules(min, required, max)`): a `noValidate` form's " +
+            "browser checks no `min`, `max`, `pattern` or `required`.",
+        );
+      }
       const fullWidth = BOUND_FIELDS.has(name)
         ? node.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === "fullWidth")
         : null;
@@ -1233,7 +1263,9 @@ function createTagChips(context) {
   return {
     JSXElement(node) {
       if (elementName(node) !== "Chip" || choices) return;
-      const picked = node.openingElement.attributes.some((a) => a.type === "JSXSpreadAttribute");
+      const picked = node.openingElement.attributes.some(
+        (a) => a.type === "JSXSpreadAttribute" && spreadsPickedValue(a),
+      );
       if (!picked) {
         context.report({
           node: node.openingElement,
@@ -1489,6 +1521,15 @@ function inTitleCase(text) {
   return words.every((word, index) => /^[A-Z0-9]/.test(word) || (index > 0 && SMALL_WORDS.has(word.toLowerCase())));
 }
 
+/** The elements a `.map()` callback returns: its body, or what its block returns (`items.map((i) => <Box />)`). */
+function mappedElements(callback) {
+  if (callback?.type !== "ArrowFunctionExpression" && callback?.type !== "FunctionExpression") return [];
+  if (callback.body.type !== "BlockStatement") return [callback.body];
+  return callback.body.body.flatMap((statement) =>
+    statement.type === "ReturnStatement" && statement.argument ? [statement.argument] : [],
+  );
+}
+
 /** Whether `node` names one of `names`. */
 function namesOne(node, names) {
   if (!node || typeof node !== "object") return false;
@@ -1593,6 +1634,32 @@ function showsFlex(value) {
   if (value.type === "Literal") return value.value === "flex" || value.value === "inline-flex";
   if (value.type === "ObjectExpression")
     return value.properties.some((p) => p.type === "Property" && showsFlex(p.value));
+  return false;
+}
+
+/**
+ * Whether a spread hands a chip an Autocomplete's picked value: `{...getItemProps({ index })}`, or what the block it
+ * sits in destructured from that call (`const { key, ...tagProps } = getItemProps({ index })`).
+ */
+function spreadsPickedValue(spread) {
+  const { argument } = spread;
+  if (argument.type === "CallExpression") return PICKED_VALUE_PROPS.has(calleeName(argument));
+  if (argument.type !== "Identifier") return false;
+  for (let node = spread.parent; node; node = node.parent) {
+    if (node.type !== "BlockStatement") continue;
+    const declared = node.body.some(
+      (statement) =>
+        statement.type === "VariableDeclaration" &&
+        statement.declarations.some(
+          (d) =>
+            d.init?.type === "CallExpression" &&
+            PICKED_VALUE_PROPS.has(calleeName(d.init)) &&
+            d.id.type === "ObjectPattern" &&
+            d.id.properties.some((p) => p.type === "RestElement" && p.argument.name === argument.name),
+        ),
+    );
+    if (declared) return true;
+  }
   return false;
 }
 

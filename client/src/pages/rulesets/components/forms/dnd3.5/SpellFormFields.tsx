@@ -165,7 +165,8 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
                   slotProps={{ htmlInput: { min: 0, max: 9 } }}
                   value={levelOf(apt.id) ?? ""}
                   onChange={(e) => {
-                    const level = e.target.value === "" ? undefined : parseInt(e.target.value);
+                    const level =
+                      e.target.value === "" ? undefined : Math.max(0, Math.min(parseInt(e.target.value), 9));
                     setSelected(selected.map((a) => (a.id === apt.id ? spellAptitude(a.id, level) : a)));
                   }}
                   sx={{ width: 80 }}

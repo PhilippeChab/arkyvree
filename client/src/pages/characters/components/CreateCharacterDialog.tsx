@@ -694,15 +694,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
         Physical Details
       </Typography>
       <FieldRow>
-        <FormTextField
-          control={control}
-          name="age"
-          rules={{ min: 1 }}
-          number
-          label="Age"
-          type="number"
-          slotProps={{ htmlInput: { min: 1 } }}
-        />
+        <FormTextField control={control} name="age" rules={wholeNumberRules(1)} number label="Age" type="number" />
         <FormTextField control={control} name="height" label="Height" placeholder="e.g., 5 feet 8 inches" />
         <FormTextField control={control} name="weight" label="Weight" placeholder="e.g., 150 lbs, 68kg" />
       </FieldRow>

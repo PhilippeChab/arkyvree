@@ -38,6 +38,12 @@ describe("characters", () => {
     expect(await expectOk(character.$put({ param: { id: created.id }, json: update }))).toMatchObject(update);
   });
 
+  test("refuses a negative experience or an age under 1, as a new character does", async () => {
+    const { id } = await postCharacter({ name: "Bounded Character" });
+    await expectStatus(character.$put({ param: { id }, json: { xp: -1 } }), 400);
+    await expectStatus(character.$put({ param: { id }, json: { age: 0 } }), 400);
+  });
+
   test("lists the races a new character can pick", async () => {
     const ctx = await getSeedCtx();
     const races = await expectOk(

@@ -39,13 +39,15 @@ export function confirmPasswordRules<T extends object>(passwordField: keyof T) {
 }
 
 /**
- * React Hook Form rules for a whole number of at least `min`, for a number field (`<FormTextField number />`). Use these
- * rather than native `min`: the browser's own check would block the submit before the field shows why.
+ * React Hook Form rules for a whole number of at least `min` (and at most `max`), for a number field
+ * (`<FormTextField number />`). A form is `noValidate`, so the browser checks no native `min` or `max`: a field's
+ * bounds are these.
  */
-export function wholeNumberRules(min: number, required?: string) {
+export function wholeNumberRules(min: number, required?: string, max?: number) {
   return {
     required,
     min: { value: min, message: `Minimum ${min}` },
+    ...(max !== undefined && { max: { value: max, message: `Maximum ${max}` } }),
     validate: (value: unknown) =>
       typeof value !== "number" || Number.isNaN(value) || Number.isInteger(value) || "Whole numbers only",
   };

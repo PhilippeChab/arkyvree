@@ -16,6 +16,7 @@ import { type RulesetLanguage, useFormWith, useRulesetLanguages } from "@/client
 import { useDirtyForm, useFormSync } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";
 
@@ -306,10 +307,10 @@ export function CharacterIdentitySection({
                   <FormTextField
                     control={form.control}
                     name="experience"
+                    rules={wholeNumberRules(0)}
                     number
                     label="Experience"
                     type="number"
-                    slotProps={{ htmlInput: { min: 0 } }}
                     disabled={readOnly}
                     sx={disabledFieldStyle}
                   />

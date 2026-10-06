@@ -96,7 +96,7 @@ export function ClassLevelFields({
               label={`${save.name} Save`}
               type="number"
               value={baseFor(save.id)}
-              onChange={(e) => setBase(save.id, Number(e.target.value))}
+              onChange={(e) => setBase(save.id, Math.max(0, Math.min(Number(e.target.value), 12)))}
               slotProps={{ htmlInput: { min: 0, max: 12 } }}
             />
           ))}
