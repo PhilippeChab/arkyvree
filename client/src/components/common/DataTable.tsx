@@ -100,10 +100,7 @@ function RowActions({ actions }: RowActionsProps) {
               size="small"
               aria-label={label}
               disabled={disabled}
-              onClick={(e) => {
-                e.stopPropagation();
-                onClick();
-              }}
+              onClick={onClick}
               sx={color ? { color: `${color}.main` } : undefined}
             >
               {icon}

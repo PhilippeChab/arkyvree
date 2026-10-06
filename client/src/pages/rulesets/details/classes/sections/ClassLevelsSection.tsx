@@ -2,7 +2,7 @@ import { Button, Stack, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
-import { TagChip } from "@/client/src/components/common/index.ts";
+import { ListToolbar, TagChip } from "@/client/src/components/common/index.ts";
 import { AddIcon, LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
@@ -99,16 +99,15 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
 
   return (
     <Stack spacing={3}>
-      <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
-        <Typography component="h2" variant="h5">
-          Class Levels
-        </Typography>
-        {canEdit && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
-            Add Level
-          </Button>
-        )}
-      </Stack>
+      {canEdit && (
+        <ListToolbar
+          actions={
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
+              Add Level
+            </Button>
+          }
+        />
+      )}
 
       <RulesetSectionTable
         data={levels && [...levels].sort((a, b) => a.level - b.level)}

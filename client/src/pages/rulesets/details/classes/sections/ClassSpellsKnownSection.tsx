@@ -11,7 +11,6 @@ export function ClassSpellsKnownSection({ rulesetId, classId }: ClassSectionProp
   const { data, isLoading } = useQuery(classSpellsKnownQuery(rulesetId, classId));
   return (
     <ClassLevelCountsTable
-      title="Spells Known"
       levels={data}
       isLoading={isLoading}
       keysOf={(level) => Object.keys(level.spellsKnown)}

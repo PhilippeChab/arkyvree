@@ -10,7 +10,6 @@ export function ClassFeatPoolsSection({ rulesetId, classId }: ClassSectionProps)
   const { data, isLoading } = useQuery(classFeatPoolsQuery(rulesetId, classId));
   return (
     <ClassLevelCountsTable
-      title="Feat Pools"
       levels={data}
       isLoading={isLoading}
       keysOf={(level) => Object.keys(level.featPools)}

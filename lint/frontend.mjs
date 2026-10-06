@@ -94,7 +94,8 @@
  *   the ladder, by what it spaces (`GAPS`): a row of icon buttons is 0.5 apart, of buttons or chips 1, a group of
  *   panels or cards 2. A padding is a step too, an indent (`pl: 6`), its role's per-screen shape (`PADDING_SHAPES`),
  *   or derived from data, never a constant that hides a step. A card's blocks are 2 apart, a panel's 3, read from the
- *   surface; a heading and what it titles are a `Subsection`.
+ *   surface; a heading and what it titles are a `Subsection`, a panel's title a `Section`'s, and a tab's content has
+ *   none: its tab names it, its actions sit in its `ListToolbar`.
  * - `surfaces`: a panel of a page is a `Section` (a `Paper`, its padding, its title); a `Card` is a card one opens:
  *   `StyledCard`, or one holding a `CardActionArea`.
  * - `shadows`: a shadow is the theme's: an elevation (`boxShadow: 2`, `0` for none; a `Paper`, a `Card` or an
@@ -1438,6 +1439,7 @@ function createShape(context) {
 function createSpacing(context) {
   if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
   const inSubsection = repoPath(context.filename) === "client/src/components/common/Subsection.tsx";
+  const inSection = repoPath(context.filename) === "client/src/components/common/Section.tsx";
   const ladder =
     "A gap is a step of the ladder, by what it spaces: the parts of one item 0.5, the items of a list or a row 1, " +
     "a card's blocks and the panels or cards of a group 2, a panel's blocks 3 (a section's, a dialog's, a form's), a " +
@@ -1450,12 +1452,27 @@ function createSpacing(context) {
     JSXElement(node) {
       const name = elementName(node);
       const column = !hasAttribute(node, "direction");
-      if ((name === "Stack" || name === "Box") && column && !inSubsection && titlesBlock(node)) {
+      const title =
+        (name === "Stack" || name === "Box") && column && numberAttribute(node, "spacing") !== 0.5
+          ? titlesBlock(node)
+          : null;
+      if (title === "h2" && !inSection) {
+        context.report({
+          node: node.openingElement,
+          message: "A panel and its title are a `Section` (`title`, `action`), never an `h2` over its block by hand.",
+        });
+      } else if (title && title !== "h2" && !inSubsection) {
         context.report({
           node: node.openingElement,
           message:
             "A heading and what it titles are a `Subsection` (its title, an action beside it, its content 1 apart; " +
             "`open` and `onToggle` when it opens and closes), never a heading over its block by hand.",
+        });
+      }
+      if (name === "SectionContent" && headingLevel(childElements(node)[0])) {
+        context.report({
+          node: node.openingElement,
+          message: "A tab's content has no title, its tab names it: its actions sit in its toolbar (`ListToolbar`).",
         });
       }
       if (name !== "Stack") return;
@@ -1804,6 +1821,22 @@ function fromRpc(node) {
 /** Whether a JSX element has the attribute `name`. */
 function hasAttribute(node, name) {
   return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
+}
+
+/**
+ * A heading's level, when an element is one that titles a block: an `h2` to `h4`, or plain text set bold (a label
+ * with a variant or a size of its own, a score's or a field's, is one item's part).
+ */
+function headingLevel(element) {
+  if (!element || elementName(element) !== "Typography") return null;
+  const component = attributeText(element, "component");
+  if (["h2", "h3", "h4"].includes(component)) return component;
+  const bold =
+    !component &&
+    !hasAttribute(element, "variant") &&
+    !sxSetsAny(element, TEXT_SIZE_KEYS) &&
+    sxString(element, "fontWeight") === "fontWeightBold";
+  return bold ? "bold" : null;
 }
 
 /** The heading variants a style object's `typography` takes, responsive ones included (`{ xs: "h6", sm: "h5" }`). */
@@ -2188,29 +2221,18 @@ function timesItself(template, sourceCode) {
 }
 
 /**
- * Whether a column opens with a heading over the rest of its block: an `h3` or an `h4` first, or a row that starts
- * with one (a title and its action), which a `Subsection` lays out.
+ * The heading a column opens with over the rest of its block (`h2`, `h3`, `h4`, or `"bold"` for plain text set bold,
+ * a heading by its look): first, or starting a row first (a title and its action). Null when it opens with none.
  */
 function titlesBlock(column) {
   const kids = childElements(column);
-  if (kids.length < 2) return false;
-  // Plain text set bold is a heading by its look; a label with a variant or a size of its own (a score's, a field's) is
-  // one item's part
-  const minorHeading = (element) =>
-    element &&
-    elementName(element) === "Typography" &&
-    (["h3", "h4"].includes(attributeText(element, "component")) ||
-      (!hasAttribute(element, "component") &&
-        !hasAttribute(element, "variant") &&
-        !sxSetsAny(element, TEXT_SIZE_KEYS) &&
-        sxString(element, "fontWeight") === "fontWeightBold"));
+  if (kids.length < 2) return null;
   const [first] = kids;
-  if (minorHeading(first)) return true;
-  return (
-    elementName(first) === "Stack" &&
-    attributeText(first, "direction") === "row" &&
-    minorHeading(childElements(first)[0])
-  );
+  if (headingLevel(first)) return headingLevel(first);
+  if (elementName(first) === "Stack" && attributeText(first, "direction") === "row") {
+    return headingLevel(childElements(first)[0]);
+  }
+  return null;
 }
 
 /** The texts a toast's argument can show: a string, a template's text, a condition's branches. */

@@ -131,10 +131,7 @@ function RulesetList({ filters }: RulesetListProps) {
                     <IconButton
                       size="small"
                       aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleStar(ruleset.id, ruleset.isStarred);
-                      }}
+                      onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
                       sx={{
                         color: ruleset.isStarred ? "warning.main" : "action.disabled",
                         "&:hover": { color: "warning.main" },

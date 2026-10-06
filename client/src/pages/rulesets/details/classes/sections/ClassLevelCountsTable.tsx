@@ -1,11 +1,10 @@
-import { Stack, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { type ElementType, useMemo } from "react";
 
 import { TagChip } from "@/client/src/components/common/index.ts";
 import { levelTag, RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 
 interface ClassLevelCountsTableProps<L extends { id: string; level: number }> {
-  title: string;
   levels: L[] | undefined;
   isLoading: boolean;
   /** The column keys a class level has counts for: its feat pools, or its spell levels. */
@@ -20,7 +19,6 @@ interface ClassLevelCountsTableProps<L extends { id: string; level: number }> {
 
 /** A class's counts per level, one column per key any of its levels has. */
 export function ClassLevelCountsTable<L extends { id: string; level: number }>({
-  title,
   levels,
   isLoading,
   keysOf,
@@ -61,22 +59,14 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
   };
 
   return (
-    <Stack spacing={3}>
-      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
-        <Typography component="h2" variant="h5">
-          {title}
-        </Typography>
-      </Stack>
-
-      <RulesetSectionTable
-        data={keys.length > 0 ? sortedLevels : undefined}
-        isLoading={isLoading}
-        columns={columns}
-        renderCell={renderCell}
-        emptyIcon={emptyIcon}
-        emptyTitle={emptyTitle}
-        emptyDescription={emptyDescription}
-      />
-    </Stack>
+    <RulesetSectionTable
+      data={keys.length > 0 ? sortedLevels : undefined}
+      isLoading={isLoading}
+      columns={columns}
+      renderCell={renderCell}
+      emptyIcon={emptyIcon}
+      emptyTitle={emptyTitle}
+      emptyDescription={emptyDescription}
+    />
   );
 }

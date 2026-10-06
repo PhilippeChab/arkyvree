@@ -1,6 +1,6 @@
 import { Autocomplete, Box, Skeleton, Stack, TextField, Typography } from "@mui/material";
 
-import { BlankState, ScrollSafeListbox, Section, TagChip } from "@/client/src/components/common/index.ts";
+import { BlankState, ListToolbar, ScrollSafeListbox, Section, TagChip } from "@/client/src/components/common/index.ts";
 import { RemoveSkillDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { useClassSkills, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
@@ -30,15 +30,8 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
 
   return (
     <Stack spacing={3}>
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{ flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start" }}
-      >
-        <Typography component="h2" variant="h5">
-          Class Skills
-        </Typography>
-        {canEdit && (
+      {canEdit && (
+        <ListToolbar>
           <Box sx={{ minWidth: { xs: "100%", sm: 300 } }}>
             <Autocomplete
               options={unassignedSkills}
@@ -91,8 +84,8 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
               }}
             />
           </Box>
-        )}
-      </Stack>
+        </ListToolbar>
+      )}
       {isLoading ? (
         <Stack spacing={1}>
           {[...Array(3)].map((_, index) => (

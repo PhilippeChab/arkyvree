@@ -965,6 +965,12 @@ describe("frontend rules", () => {
             'export const h = (\n  <Stack direction="row" spacing={0.5}>\n    {tags.map((t) => (\n      <TagChip key={t.label} tag={t} />\n    ))}\n  </Stack>\n);\n',
           "client/src/buttons.tsx":
             'export const u = (\n  <Stack direction="row" spacing={2}>\n    <Button>Retry</Button>\n    <Button>Back</Button>\n  </Stack>\n);\n',
+          "client/src/panelled.tsx":
+            'export const p = (\n  <Stack spacing={3}>\n    <Stack direction="row">\n      <Typography component="h2" variant="h5">Class Levels</Typography>\n      <Button>Add Level</Button>\n    </Stack>\n    <Box />\n  </Stack>\n);\n',
+          "client/src/tabbed.tsx":
+            'export const t = (\n  <SectionContent>\n    <Typography component="h2" variant="h5">Players</Typography>\n    <SearchBar />\n  </SectionContent>\n);\n',
+          "client/src/subtitled.tsx":
+            'export const u = (\n  <Stack spacing={0.5}>\n    <Typography component="h2" variant="h5">Ravenloft</Typography>\n    <Typography>Invited as Editor</Typography>\n  </Stack>\n);\n',
           "client/src/bold.tsx":
             'export const o = (\n  <Stack spacing={1}>\n    <Typography sx={{ fontWeight: "fontWeightBold" }}>Abilities</Typography>\n    <Box />\n  </Stack>\n);\n',
           "client/src/scored.tsx":
@@ -1016,11 +1022,13 @@ describe("frontend rules", () => {
       "spacing client/src/nested.tsx",
       "spacing client/src/none.tsx",
       "spacing client/src/padded.tsx",
+      "spacing client/src/panelled.tsx",
       "spacing client/src/panels.tsx",
       "spacing client/src/region.tsx",
       "spacing client/src/screens.tsx",
       "spacing client/src/surfaces.tsx",
       "spacing client/src/surfaces.tsx",
+      "spacing client/src/tabbed.tsx",
       "spacing client/src/titled.tsx",
     ]);
   });

@@ -180,10 +180,7 @@ function GroupedRow({
             <TableCell colSpan={2} sx={{ pl: 6 }}>
               <Button
                 size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  variantQuery.fetchNextPage();
-                }}
+                onClick={() => variantQuery.fetchNextPage()}
                 disabled={variantQuery.isFetchingNextPage}
               >
                 <DiceSpinner size="small" loading={variantQuery.isFetchingNextPage}>

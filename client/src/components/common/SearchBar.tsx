@@ -1,8 +1,9 @@
-import { Box, IconButton, Menu, MenuItem, Paper, Stack, Toolbar, Tooltip } from "@mui/material";
+import { IconButton, Menu, MenuItem, Tooltip } from "@mui/material";
 import { useState } from "react";
 
 import { FilterIcon, SortIcon } from "@/client/src/components/icons/index.ts";
 
+import { ListToolbar } from "./ListToolbar.tsx";
 import { SearchField } from "./SearchField.tsx";
 
 interface SearchBarProps<TFilter extends string = string, TSort extends string = string> {
@@ -78,20 +79,9 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
   };
 
   return (
-    <Paper variant="outlined" sx={{ borderRadius: 2 }}>
-      <Toolbar sx={{ px: 2, py: 1 }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexGrow: 1, flexWrap: "wrap" }}>
-          <SearchField
-            placeholder={searchPlaceholder}
-            value={searchValue}
-            onChange={onSearchChange}
-            sx={{ width: { xs: "100%", sm: 300 } }}
-          />
-
-          {filters}
-
-          <Box sx={{ flexGrow: 1 }} />
-
+    <ListToolbar
+      actions={
+        <>
           {actions}
 
           {filterOptions && filterOptions.length > 0 && (
@@ -135,8 +125,16 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
               </Menu>
             </>
           )}
-        </Stack>
-      </Toolbar>
-    </Paper>
+        </>
+      }
+    >
+      <SearchField
+        placeholder={searchPlaceholder}
+        value={searchValue}
+        onChange={onSearchChange}
+        sx={{ width: { xs: "100%", sm: 300 } }}
+      />
+      {filters}
+    </ListToolbar>
   );
 }

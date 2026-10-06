@@ -119,13 +119,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
             <ExpandArrow open={open} />
             {spellLink ? (
-              <MuiLink
-                component={Link}
-                to={spellLink}
-                target="_blank"
-                underline="hover"
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-              >
+              <MuiLink component={Link} to={spellLink} target="_blank" underline="hover">
                 {spell.name}
               </MuiLink>
             ) : (

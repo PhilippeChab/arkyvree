@@ -155,29 +155,16 @@ function CharacterCard({
               icon: VisibilityIcon,
               label: character.visibility,
               color: "default",
-              onClick: canEditVisibility
-                ? (event) => {
-                    event.stopPropagation();
-                    setMenuAnchorEl(event.currentTarget);
-                  }
-                : undefined,
+              onClick: canEditVisibility ? (event) => setMenuAnchorEl(event.currentTarget) : undefined,
             }}
           />
           {canEditVisibility && (
-            <Menu
-              anchorEl={menuAnchorEl}
-              open={Boolean(menuAnchorEl)}
-              onClose={(e: React.SyntheticEvent) => {
-                e.stopPropagation?.();
-                setMenuAnchorEl(null);
-              }}
-            >
+            <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={() => setMenuAnchorEl(null)}>
               {VISIBILITY_OPTIONS.map((option) => (
                 <MenuItem
                   key={option}
                   selected={option === character.visibility}
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => {
                     setMenuAnchorEl(null);
                     if (option !== character.visibility) {
                       updateVisibility(option);
@@ -366,11 +353,6 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
 
   return (
     <SectionContent>
-      {/* Header */}
-      <Typography component="h2" variant="h5">
-        Characters
-      </Typography>
-
       <SearchBar
         {...searchTextProps}
         searchPlaceholder="Search characters..."
