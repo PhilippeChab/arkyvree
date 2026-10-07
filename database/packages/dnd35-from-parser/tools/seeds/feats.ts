@@ -1,17 +1,33 @@
-/** What a feat reference makes: its feats by feat type, and its template families. */
+/** What a feat reference makes: its feats by feat type and its template families, and a feat's checks of a family. */
 
 import { buildCompanionGrantModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/grants.ts";
-import type { TemplateFamily } from "@/database/packages/dnd35-from-parser/tools/generator/code/FeatsFile.ts";
 import { normalizeName, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
+import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 type FeatEntry = {
   entry: FeatReference["raw"][number];
   detected: FeatReference["detected"][string];
   mapped: FeatReference["mapping"][string];
 };
+
+/** A template feat's family, which the generated code makes a feat of per item (weapon, skill, school…). */
+export type TemplateFamily = {
+  type: TemplateType;
+  constName: string;
+  familyName: string;
+  aptitudes: string[];
+  requirements: RequirementEntry[];
+  featNameMap: Record<string, string>;
+  modifiers: ModifierSeed[];
+  description: string;
+};
+
+/** The kind of item a template family makes a feat for. */
+export type TemplateType = NonNullable<FeatReference["mapping"][string]["template"]>["type"];
 
 /**
  * What a feat reference makes: its feats by feat type, and its template families. An epic feat is left out unless an
@@ -65,4 +81,31 @@ export function buildReferenceFeats(ref: FeatReference) {
     templates,
     templateNames: new Set(kept.filter(({ mapped }) => mapped.template).map(({ entry }) => entry.name)),
   };
+}
+
+/**
+ * A feat reference's feats as the aptitude list reads them (names, aptitudes, modifiers): a template family once, as
+ * its feats share their aptitudes and their modifiers only differ in the item they target.
+ */
+export function getFeatAptitudeSources(ref: FeatReference): Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] {
+  const { byType, templates } = buildReferenceFeats(ref);
+  return [
+    ...[...byType.values()].flat(),
+    ...templates.map(({ familyName, aptitudes, modifiers }) => ({ name: familyName, aptitudes, modifiers })),
+  ];
+}
+
+/**
+ * `requirements`, each check of a family by its own name (Daring Warrior's "Weapon Specialization"), which no feat
+ * has, made a check of any of its feats. A count of a family by its name (a prestige class's "Sneak attack +2d6") is
+ * the family's own: how many times the character has its feats, every class's sneak attack dice together.
+ */
+export function resolveFamilyChecks(requirements: RequirementEntry[], families: Set<string>): RequirementEntry[] {
+  const slugs = new Set([...families].map(stripSeparators));
+  const anyOf = (entry: RequirementEntry): RequirementEntry => {
+    if ("chainingOperator" in entry) return { ...entry, children: entry.children.map(anyOf) };
+    const [, slug] = /^feats\.([^.]+)\.possessed$/.exec(entry.target) ?? [];
+    return slug && slugs.has(slug) ? { ...entry, target: `feats.${slug}.*.possessed` } : entry;
+  };
+  return requirements.map(anyOf);
 }

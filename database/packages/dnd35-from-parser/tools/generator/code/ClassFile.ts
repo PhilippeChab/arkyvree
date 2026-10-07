@@ -1,12 +1,10 @@
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { resolveFamilyChecks } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
 import {
   formatStringArray,
   listField,
   quote,
   toConstName,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import TemplateFamilies from "@/database/packages/dnd35-from-parser/tools/generator/code/TemplateFamilies.ts";
 import { getClassAptitudePicks } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/aptitudePicks.ts";
 import {
   buildPoolParentNameMap,
@@ -15,6 +13,8 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/features.ts";
 import { buildClassModifiers } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/modifiers.ts";
 import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/spellSlots.ts";
+import { resolveFamilyChecks } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
+import TemplateFamilies from "@/database/packages/dnd35-from-parser/tools/seeds/TemplateFamilies.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";

@@ -10,11 +10,11 @@ import {
   listField,
   quote,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
+import type { TemplateFamily, TemplateType } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
 import {
   expandTemplateDescription,
   normalizeDescription,
 } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
-import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import { feat, neq } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   ModifierSeed,
@@ -22,20 +22,6 @@ import type {
   RequirementEntry,
 } from "@/database/packages/dnd35/content/customization/types.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
-
-type TemplateType = NonNullable<FeatReference["mapping"][string]["template"]>["type"];
-
-/** A template feat's family, which the generated code makes a feat of per item (weapon, skill, school…). */
-export type TemplateFamily = {
-  type: TemplateType;
-  constName: string;
-  familyName: string;
-  aptitudes: string[];
-  requirements: RequirementEntry[];
-  featNameMap: Record<string, string>;
-  modifiers: ModifierSeed[];
-  description: string;
-};
 
 /** Where each name the generated feats use comes from, in the order the imports are written. */
 const IMPORTS: ImportTable = [
