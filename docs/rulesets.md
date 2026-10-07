@@ -428,6 +428,8 @@ server/
 │       │                                  Dnd35ClassLevelsEffects)
 │       ├── powers/                        (PowersComponent, PowerGroupingsComponent, PowersPaths, Dnd35PowersRules,
 │       │                                  Dnd35PowersEffects and its spellGenerator)
+│       ├── races/                         (raceFields: a race's fields off its properties; Dnd35RacesRules,
+│       │                                  Dnd35RacesEffects)
 │       ├── skills/                        (SkillsComponent: the 3.5 rank system, SkillsPaths, Dnd35SkillsRules,
 │       │                                  Dnd35SkillsEffects)
 │       ├── combat/                        (CombatComponent on CombatState, which includes ArmorClass, HitPoints, Attacks,
@@ -544,7 +546,7 @@ Each method starts with the verb of what it does, the same in every area:
 | Rules | `extract…` | reads a value out of a request's fields | `powers.extractGroupingValue` |
 | Rules | `normalize…` | gives fields the shape they're stored in | `skills.normalizeFlags` |
 | Rules | `validate…` | throws | `inventory.validateWeaponHands` |
-| Effects | `syncProperties` | stores an entity's fields as its properties, in place of those it stored before | `classLevels`, `skills`, `powers` |
+| Effects | `syncProperties` | stores an entity's fields as its properties, in place of those it stored before | `classLevels`, `skills`, `powers`, `races` |
 | Effects | `generateFeats` | makes the feats an entity brings, or its grouping shares (see [customization](customization.md#auto-generated-customization)) | `skills`, `powers` |
 | Effects | `deleteFeats` | removes the feats that are an entity's own | `skills` |
 | Effects | `require…` | writes what an entity requires | `classLevels.requirePreviousLevel` |

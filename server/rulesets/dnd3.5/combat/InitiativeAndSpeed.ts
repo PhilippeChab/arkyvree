@@ -1,6 +1,6 @@
 import type { Constructor } from "@/server/mixins.ts";
+import { readRaceFields } from "@/server/rulesets/dnd3.5/races/raceFields.ts";
 import type { CustomizedRace } from "@/server/rulesets/engine/types.ts";
-import { RACE_SPEED_IGNORES_ENCUMBRANCE } from "@/shared/dnd3.5/properties/index.ts";
 
 import type CombatState from "./CombatState.ts";
 
@@ -25,9 +25,7 @@ export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) 
     protected initializeSpeed(race: CustomizedRace): void {
       const overloaded = () => this.combat.encumbrance.load === "overloaded";
       const loadedSpeed = (base: number) => this.loadedSpeed(base);
-      this.speedIgnoresEncumbrance = race.properties.some(
-        (p) => p.type === RACE_SPEED_IGNORES_ENCUMBRANCE && p.value === "true",
-      );
+      this.speedIgnoresEncumbrance = readRaceFields(race.properties).speedIgnoresEncumbrance;
       this.combat.speed = {
         base: race.baseSpeed,
         misc: 0,

@@ -96,6 +96,14 @@ export interface PowersRules {
   readonly primaryGroupingType: string;
 }
 
+/** A race's fields its properties hold: whether it walks on four legs, and whether armor and load leave its speed. */
+export type RaceFields = { quadruped: boolean; speedIgnoresEncumbrance: boolean };
+
+/** The rules a race follows. */
+export interface RacesRules {
+  readProperties(properties: { type: string; value: string }[]): RaceFields;
+}
+
 /** What a ruleset answers the services without the database, one set of rules per area. */
 export interface RulesetRules {
   aptitudes: AptitudesRules;
@@ -105,6 +113,7 @@ export interface RulesetRules {
   items: ItemsRules;
   levels: LevelsRules;
   powers: PowersRules;
+  races: RacesRules;
   skills: SkillsRules;
 }
 

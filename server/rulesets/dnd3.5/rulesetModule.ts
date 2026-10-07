@@ -19,6 +19,8 @@ import { seedTemplateItems } from "./items/seedTemplateItems.ts";
 import { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
 import { Dnd35PowersEffects } from "./powers/Dnd35PowersEffects.ts";
 import { Dnd35PowersRules } from "./powers/Dnd35PowersRules.ts";
+import { Dnd35RacesEffects } from "./races/Dnd35RacesEffects.ts";
+import { Dnd35RacesRules } from "./races/Dnd35RacesRules.ts";
 import Dnd35DetailedCharacterSheet from "./sheet/DetailedCharacterSheet.tsx";
 import { Dnd35SkillsEffects } from "./skills/Dnd35SkillsEffects.ts";
 import { Dnd35SkillsRules } from "./skills/Dnd35SkillsRules.ts";
@@ -51,11 +53,13 @@ export function createRulesetModule(): Dnd35RulesetModule {
       items: new Dnd35ItemsRules(),
       levels: new Dnd35LevelsRules(),
       powers: new Dnd35PowersRules(),
+      races: new Dnd35RacesRules(),
       skills: new Dnd35SkillsRules(),
     },
     effects: {
       classLevels: new Dnd35ClassLevelsEffects(),
       powers: new Dnd35PowersEffects(),
+      races: new Dnd35RacesEffects(),
       skills: new Dnd35SkillsEffects(),
     },
 
