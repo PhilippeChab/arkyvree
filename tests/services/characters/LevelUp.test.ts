@@ -400,7 +400,7 @@ describe("finalizing several levels at once", () => {
       ],
       // A feat that doesn't stack, in two pools.
       [
-        BadRequestError,
+        'Non-stackable feat "Power Attack" cannot be picked more than once',
         async () =>
           finalizeBatch(ctx, await createSeedCharacter(ctx, "fighter", { xp: 1000 }), fighterLevels(2), {
             skills: { Climb: 20 },

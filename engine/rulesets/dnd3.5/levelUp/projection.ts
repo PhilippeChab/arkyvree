@@ -9,16 +9,12 @@
  * - buildPendingCharacterLevels — creates projected levels from pending batch data
  * - buildProjectedSkillsFromAllocations — builds projected skills from skill allocation data
  * - projectPlannedLevels — projects planned levels with the feats their class levels grant
- * - buildBaselineAptitudes — the aptitudes of the character as saved, before planned levels
  */
 
-import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { ProjectedCharacterData, ProjectedCharacterLevel } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Dnd35ProjectedCharacterData, Dnd35RulesetModule } from "@/engine/rulesets/dnd3.5/index.ts";
-import { buildCharacter } from "@/server/builds/index.ts";
-import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import type { Character, Modifier, Property, Requirement } from "@/shared/relations.ts";
+import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
+import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 export type FeatPick = { aptitudeId: string; featId: string };
 
@@ -262,15 +258,4 @@ export function projectPlannedLevels(
     ),
   };
   return { projectedData, allAutoGrantedFeatRecords };
-}
-
-/** The aptitudes of the character as saved, before its planned levels: built from the rows its projection was. */
-export async function buildBaselineAptitudes(
-  rulesetModule: Dnd35RulesetModule,
-  characterRecord: Character,
-  rows: CharacterRows,
-  scope: RulesetScope,
-) {
-  const baselineCharacter = await buildCharacter(rulesetModule, characterRecord, { rows, scope });
-  return baselineCharacter.components.aptitudes.getAptitudes();
 }

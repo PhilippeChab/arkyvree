@@ -246,7 +246,7 @@ describe("CharactersService with bonded creatures", () => {
     ).rejects.toThrow(BadRequestError);
     const wizardId = await createSeedCharacter(ctx, "wizard");
     await expect(addOneLevel(owner, wizardId, ctx.klassMap.familiar["Familiar"], 1, 4, null)).rejects.toThrow(
-      BadRequestError,
+      "Level 1: Class is not valid for a player character",
     );
   });
 

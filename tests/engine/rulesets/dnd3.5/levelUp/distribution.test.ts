@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import { computePerLevelAptitudeSlots } from "@/engine/rulesets/dnd3.5/levelUp/distribution.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Modifiers, Rulesets } from "@/server/repositories/index.ts";
-import { computePerLevelAptitudeSlots } from "@/server/services/characters/levels/dnd3.5/distribution.ts";
 import { findKlassLevel } from "@/tests/support/levels.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";

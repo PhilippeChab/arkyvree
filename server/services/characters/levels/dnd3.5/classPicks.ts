@@ -3,7 +3,17 @@
  */
 
 import { type RulesetData } from "@/engine/core/view/index.ts";
-import type { Dnd35DetailedCharacter, Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/index.ts";
+import {
+  buildPendingCharacterLevels,
+  buildProjectedCharacterLevel,
+  buildProjectedFeatsFromPicks,
+  buildProjectedGivenFeats,
+  buildProjectedSkillsFromAllocations,
+  type Dnd35DetailedCharacter,
+  type Dnd35ProjectedCharacterData,
+  type FeatPick,
+  loadFeatCustomizations,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -12,16 +22,6 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Klass, KlassLevel, Requirement, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
-
-import {
-  buildPendingCharacterLevels,
-  buildProjectedCharacterLevel,
-  buildProjectedFeatsFromPicks,
-  buildProjectedGivenFeats,
-  buildProjectedSkillsFromAllocations,
-  type FeatPick,
-  loadFeatCustomizations,
-} from "./projection.ts";
 
 type KlassWithNextLevel = { klass: Klass; nextKlassLevel: KlassLevel };
 

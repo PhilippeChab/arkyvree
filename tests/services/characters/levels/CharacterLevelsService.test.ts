@@ -10,11 +10,12 @@ import {
   powersInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
+import { getListPowerIds } from "@/engine/core/view/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
-import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
+import { BadRequestError, toJson } from "@/server/errors/index.ts";
 import {
   Aptitudes,
   CharacterLevelFeats,
@@ -37,7 +38,6 @@ import {
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
-import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -92,6 +92,15 @@ function pool(pools: Record<string, { allowed: number; available: number; name: 
 
 function skillRanks(ctx: Awaited<ReturnType<typeof getSeedCtx>>, ranks: Record<string, number>) {
   return picks(ctx, { skills: ranks }).skills;
+}
+
+/** The status the API answers a call's refusal with: the server's error, or a ruleset's refusal (`RulesError`). */
+async function answeredStatus(call: () => Promise<unknown>) {
+  const error = await call().then(
+    () => undefined,
+    (thrown: Error) => thrown,
+  );
+  return error && toJson(error)[1];
 }
 
 /**
@@ -291,7 +300,7 @@ describe("LevelsService", () => {
       () => CharacterLevelsService.removeLevel(session, character.id),
     ];
     // One at a time: the test's transaction has a single connection.
-    for (const call of notFound) await expect(call()).rejects.toThrow(NotFoundError);
+    for (const call of notFound) expect(await answeredStatus(call)).toBe(404);
   });
 
   describe("classes a character can take", () => {
@@ -1368,22 +1377,24 @@ describe("LevelsService", () => {
     test("refuses a class or a feat of an unrelated ruleset", async () => {
       const { user, session, character, klass, featAptitude } = await setupRuleset({ fork: true });
       const unrelated = await setupRuleset();
-      await expect(addOneLevel(session, character.id, unrelated.klass.id, 1, 8, null, {}, {}, {})).rejects.toThrow(
-        BadRequestError,
-      );
-      await expect(
-        addOneLevel(
-          session,
-          character.id,
-          klass.id,
-          1,
-          8,
-          null,
-          {},
-          { [featAptitude.id]: [unrelated.feats["Power Attack"].id] },
-          {},
+      expect(
+        await answeredStatus(() => addOneLevel(session, character.id, unrelated.klass.id, 1, 8, null, {}, {}, {})),
+      ).toBe(400);
+      expect(
+        await answeredStatus(() =>
+          addOneLevel(
+            session,
+            character.id,
+            klass.id,
+            1,
+            8,
+            null,
+            {},
+            { [featAptitude.id]: [unrelated.feats["Power Attack"].id] },
+            {},
+          ),
         ),
-      ).rejects.toThrow(BadRequestError);
+      ).toBe(400);
       void user;
     });
 

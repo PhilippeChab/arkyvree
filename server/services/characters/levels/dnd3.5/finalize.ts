@@ -10,10 +10,27 @@ import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
-import type {
-  AptitudesComponent,
-  Dnd35ProjectedCharacterData,
-  Dnd35RulesetModule,
+import {
+  type AptitudesComponent,
+  buildPowerLevelLookup,
+  buildProjectedAutoGrantedFeats,
+  buildProjectedCharacterLevel,
+  buildProjectedGivenFeats,
+  buildProjectedSelections,
+  buildSkillContexts,
+  checkAbilityIncrease,
+  checkSelections,
+  computePerLevelAptitudeSlots,
+  distributePoolSelections,
+  type Dnd35ProjectedCharacterData,
+  type Dnd35RulesetModule,
+  getDeferredAptitudeSources,
+  getLevelIdsFromOnward,
+  getPlannedClassSkills,
+  getPlannedKlassLevels,
+  getSavedKlassLevel,
+  type PerLevelDistributionData,
+  projectPlannedLevels,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter, readCharacterRows } from "@/server/builds/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
@@ -31,26 +48,9 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Character, CharacterLevel, Session } from "@/shared/relations.ts";
 
+import { buildBaselineAptitudes } from "./baseline.ts";
 import { reconcileAllBondedKinds } from "./bondedReconcile.ts";
-import { getPlannedClassSkills, getPlannedKlassLevels, getSavedKlassLevel } from "./classes.ts";
-import {
-  buildPowerLevelLookup,
-  buildSkillContexts,
-  computePerLevelAptitudeSlots,
-  distributePoolSelections,
-  getDeferredAptitudeSources,
-  type PerLevelDistributionData,
-} from "./distribution.ts";
-import {
-  buildBaselineAptitudes,
-  buildProjectedAutoGrantedFeats,
-  buildProjectedCharacterLevel,
-  buildProjectedGivenFeats,
-  buildProjectedSelections,
-  getLevelIdsFromOnward,
-  projectPlannedLevels,
-} from "./projection.ts";
-import { checkAbilityIncrease, checkSelections, validateAndFetchLevelSelections } from "./validation.ts";
+import { validateAndFetchLevelSelections } from "./validation.ts";
 
 type LevelSelections = Awaited<ReturnType<typeof validateAndFetchLevelSelections>>;
 

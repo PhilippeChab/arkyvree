@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/bun";
 
-import RulesError, { type Refusal } from "@/engine/core/RulesError.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import { isDevelopment } from "@/server/environment.ts";
 
 type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
@@ -16,12 +16,14 @@ export interface ErrorJson {
 export const STALE_ENTITY_MESSAGE = "This was modified by someone else. Please refresh and try again.";
 
 class BaseError extends Error {
-  private static fromRefusal(refusal: Refusal, message: string) {
+  private static fromRefusal({ refusal, message, issues }: RulesError) {
     switch (refusal) {
       case "conflict":
         return new ConflictError(message);
       case "invalid":
-        return new BadRequestError(message);
+        return new BadRequestError(message, { issues });
+      case "not-found":
+        return new NotFoundError(message);
       case "unprocessable":
         return new UnprocessableEntityError(message);
     }
@@ -29,7 +31,7 @@ class BaseError extends Error {
 
   /** An error of the server's own: a ruleset's refusal as the error of its kind, anything else an internal one. */
   static fromError(error: Error) {
-    if (error instanceof RulesError) return BaseError.fromRefusal(error.refusal, error.message);
+    if (error instanceof RulesError) return BaseError.fromRefusal(error);
     return new InternalError(error.message, { cause: error.cause });
   }
 

@@ -6,6 +6,41 @@ export type { default as Dnd35DetailedCharacterBonded } from "./bonded/DetailedC
 export type { default as Dnd35DetailedCharacter } from "./character/DetailedCharacter.ts";
 export { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
 export {
+  getClassSkillIds,
+  getKlassLevel,
+  getPlannedClassSkills,
+  getPlannedKlassLevels,
+  getSavedKlassLevel,
+} from "./levelUp/classes.ts";
+export {
+  buildPowerLevelLookup,
+  buildSkillContexts,
+  computePerLevelAptitudeSlots,
+  distributePoolSelections,
+  getDeferredAptitudeSources,
+} from "./levelUp/distribution.ts";
+export type { PerLevelDistributionData } from "./levelUp/distribution.ts";
+export {
+  buildPendingCharacterLevels,
+  buildProjectedAutoGrantedFeats,
+  buildProjectedCharacterLevel,
+  buildProjectedFeatsFromPicks,
+  buildProjectedGivenFeats,
+  buildProjectedSelections,
+  buildProjectedSkillsFromAllocations,
+  getLevelIdsFromOnward,
+  loadFeatCustomizations,
+  projectPlannedLevels,
+} from "./levelUp/projection.ts";
+export type { FeatPick } from "./levelUp/projection.ts";
+export {
+  annotateRequirements,
+  checkAbilityIncrease,
+  checkLevelSelections,
+  checkNotTaken,
+  checkSelections,
+} from "./levelUp/validation.ts";
+export {
   buildBondedMap,
   buildBondedResponse,
   buildFullCharacterResponse,
