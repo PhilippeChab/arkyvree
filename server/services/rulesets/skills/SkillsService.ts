@@ -37,13 +37,13 @@ class SkillsService {
         const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
 
         const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, ...skillData } = body;
-        const flags = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
+        const fields = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
         const rows = await Skills.create(tx, { ...skillData, rulesetId });
         const skill = rows[0];
 
         if (tombstoneAncestorId) await edit.repointTombstone(tx, "skills", tombstoneAncestorId, skill.id);
 
-        await effects.skills.syncProperties(tx, skill.id, flags);
+        await effects.skills.syncProperties(tx, skill.id, fields);
         await effects.skills.generateFeats(tx, { ruleset, rulesetData }, body.name);
 
         await createActivityWithNotifications(tx, {
@@ -54,7 +54,7 @@ class SkillsService {
           data: { entityName: skill.name },
         });
 
-        return { ...skill, ...rules.skills.normalizeFlags(flags) };
+        return { ...skill, ...rules.skills.normalizeFields(fields) };
       });
     });
     RulesetCache.invalidate(rulesetId);
@@ -169,13 +169,13 @@ class SkillsService {
 
         const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
         const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, updatedAt: _u, ...skillData } = body;
-        const flags = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
+        const fields = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
         const rows = await Skills.update(tx, skillData, { id: targetId, expectedUpdatedAt });
         if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
         const updatedSkill = rows[0];
 
-        await effects.skills.syncProperties(tx, targetId, flags);
+        await effects.skills.syncProperties(tx, targetId, fields);
 
         if (skill.name !== body.name) {
           await effects.skills.deleteFeats(tx, { ruleset, rulesetData }, skill.name);
@@ -193,7 +193,7 @@ class SkillsService {
           },
         });
 
-        return { ...updatedSkill, ...rules.skills.normalizeFlags(flags) };
+        return { ...updatedSkill, ...rules.skills.normalizeFields(fields) };
       });
     });
     RulesetCache.invalidate(rulesetId);

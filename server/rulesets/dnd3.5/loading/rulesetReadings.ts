@@ -2,7 +2,7 @@
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { readClassFields } from "@/server/rulesets/dnd3.5/classes/classFields.ts";
-import { readSkillFlags } from "@/server/rulesets/dnd3.5/skills/skillFlags.ts";
+import { readSkillFields } from "@/server/rulesets/dnd3.5/skills/skillFields.ts";
 import { collectClassListIds, collectFeatListIds } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 
@@ -70,9 +70,13 @@ export function readRulesetFields(rulesetData: RulesetData) {
   };
 }
 
-/** The D&D 3.5 reading of the cache's raw property rows: each skill's flags, and the skill-point ability. */
+/** The D&D 3.5 reading of the cache's raw property rows: the fields of each skill that has any, and the skill-point ability. */
 export function readRulesetProperties(rulesetData: RulesetData, resolveId: (id: string) => string) {
-  const skillProperties = readSkillFlags(rulesetData.propertiesByEntityType.get("skills") ?? []);
+  const propertiesBySkillId = Map.groupBy(
+    rulesetData.propertiesByEntityType.get("skills") ?? [],
+    (row) => row.entityId,
+  );
+  const skillFields = new Map([...propertiesBySkillId].map(([skillId, rows]) => [skillId, readSkillFields(rows)]));
 
   // The skill-point-ability property is attached to whichever ruleset in the
   // source chain declares it (usually the base), so look across every
@@ -81,5 +85,5 @@ export function readRulesetProperties(rulesetData: RulesetData, resolveId: (id: 
     (p) => p.type === RULESET_SKILL_POINT_ABILITY_ID,
   );
   const skillPointAbilityId = skillPointAbilityProp?.value ? resolveId(skillPointAbilityProp.value) : null;
-  return { skillProperties, skillPointAbilityId };
+  return { skillFields, skillPointAbilityId };
 }

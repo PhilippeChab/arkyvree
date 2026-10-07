@@ -1,7 +1,7 @@
 import type { Db } from "@/server/database/index.ts";
 import type { Dnd35LoadedCharacterData } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
 import type ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
-import type { SkillFlags } from "@/server/rulesets/engine/module/index.ts";
+import type { SkillFields } from "@/server/rulesets/engine/module/index.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import type {
   CustomizedFeat,
@@ -192,9 +192,9 @@ export default abstract class CharacterState {
   protected rulesetSkills: Skill[] = [];
 
   // Dnd3.5-specific data
-  protected skillPointAbilityId: string | null = null;
+  protected skillFields: Map<string, SkillFields> = new Map();
 
-  protected skillProperties: Map<string, SkillFlags> = new Map();
+  protected skillPointAbilityId: string | null = null;
 
   protected skills: SkillWithRank[] = [];
 

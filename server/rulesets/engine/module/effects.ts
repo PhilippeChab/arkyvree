@@ -8,7 +8,7 @@ import type {
   ItemFields,
   PowerFields,
   RaceFields,
-  SkillFlags,
+  SkillFields,
 } from "./rules.ts";
 
 /** What a ruleset writes when a class is saved: its fields. */
@@ -69,12 +69,12 @@ export interface RulesetEffects {
   skills: SkillsEffects;
 }
 
-/** What a ruleset writes when a skill is saved or deleted: its flags, and the feat that's the skill's own. */
+/** What a ruleset writes when a skill is saved or deleted: its fields, and the feat that's the skill's own. */
 export interface SkillsEffects {
   /** The skill's own feat, deleted with the skill, unless a character picked it. */
   deleteFeats(tx: Db, scope: RulesetScope, skillName: string): Promise<void>;
   /** The feat that's the skill's own (its Skill Focus), made with the skill. */
   generateFeats(tx: Db, scope: RulesetScope, skillName: string): Promise<void>;
-  /** Stores the skill's flags as its properties, in place of those it stored before. */
-  syncProperties(tx: Db, skillId: string, flags: SkillFlags): Promise<void>;
+  /** Stores the skill's fields as its properties, in place of those it stored before. */
+  syncProperties(tx: Db, skillId: string, fields: SkillFields): Promise<void>;
 }

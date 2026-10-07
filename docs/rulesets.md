@@ -431,8 +431,8 @@ server/
 │       │                                  Dnd35PowersEffects and its spellGenerator)
 │       ├── races/                         (raceFields: a race's fields off its properties; Dnd35RacesRules,
 │       │                                  Dnd35RacesEffects)
-│       ├── skills/                        (SkillsComponent: the 3.5 rank system, SkillsPaths, Dnd35SkillsRules,
-│       │                                  Dnd35SkillsEffects)
+│       ├── skills/                        (SkillsComponent: the 3.5 rank system, SkillsPaths, skillFields: a skill's
+│       │                                  fields off its properties; Dnd35SkillsRules, Dnd35SkillsEffects)
 │       ├── combat/                        (CombatComponent on CombatState, which includes ArmorClass, HitPoints, Attacks,
 │       │                                  InitiativeAndSpeed; ArmorsComponent, ShieldsComponent, WeaponsComponent,
 │       │                                  EncumbranceComponent; the combat, items.* and weapon.* path categories:
@@ -547,7 +547,7 @@ Each method starts with the verb of what it does, the same in every area:
 | Rules | `is…` | answers yes or no | `levels.isAbilityIncreaseLevel` |
 | Rules | `resolve…` | picks among candidates | `items.resolveSlot` |
 | Rules | `extract…` | reads a value out of a request's fields | `powers.extractGroupingValue` |
-| Rules | `normalize…` | gives fields the shape they're stored in | `skills.normalizeFlags` |
+| Rules | `normalize…` | gives fields the shape they're stored in | `skills.normalizeFields` |
 | Rules | `validate…` | throws | `inventory.validateWeaponHands` |
 | Effects | `syncProperties` | stores an entity's fields as its properties, in place of those it stored before | `classes`, `classLevels`, `feats`, `items`, `powers`, `races`, `skills` |
 | Effects | `generateFeats` | makes the feats an entity brings, or its grouping shares (see [customization](customization.md#auto-generated-customization)) | `skills`, `powers` |

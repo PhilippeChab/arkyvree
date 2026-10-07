@@ -3,7 +3,7 @@ import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesCompo
 import type { ArmorsData } from "@/server/rulesets/dnd3.5/combat/ArmorsComponent.ts";
 import type { ShieldsData } from "@/server/rulesets/dnd3.5/combat/ShieldsComponent.ts";
 import { SIZE_HIDE_MOD } from "@/server/rulesets/dnd3.5/constants.ts";
-import type { SkillFlags } from "@/server/rulesets/engine/module/index.ts";
+import type { SkillFields } from "@/server/rulesets/engine/module/index.ts";
 import type { ValidationIssue } from "@/server/rulesets/engine/types.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
@@ -191,7 +191,7 @@ export default class SkillsComponent {
     rulesetSkills: Skill[],
     rulesetAbilities: RulesetAbility[],
     raceSize: string,
-    skillProperties?: Map<string, SkillFlags>,
+    skillFields?: Map<string, SkillFields>,
   ) {
     this.raceSize = raceSize;
     const classes = this.classes.getClasses();
@@ -243,10 +243,10 @@ export default class SkillsComponent {
     }
 
     for (const skill of rulesetSkills) {
-      const props = skillProperties?.get(skill.id);
-      const usableWithoutTraining = props?.usableWithoutTraining ?? true;
+      const fields = skillFields?.get(skill.id);
+      const usableWithoutTraining = fields?.usableWithoutTraining ?? true;
       // How many times over the skill takes the armor check penalty: none when armor doesn't weigh on it
-      const checkPenaltyMultiplier = props?.impactedByWeight ? (props.checkPenaltyMultiplier ?? 1) : 0;
+      const checkPenaltyMultiplier = fields?.impactedByWeight ? (fields.checkPenaltyMultiplier ?? 1) : 0;
       const invested = this.rankBySkillId.get(skill.id) ?? 0;
       const abilityName = abilityNameById.get(skill.primaryAbilityId) ?? "";
       this.abilityNameBySkill.set(stripSeparators(skill.name), abilityName);

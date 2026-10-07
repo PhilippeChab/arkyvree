@@ -54,7 +54,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       this.requirementGroups = data.requirementGroups;
       this.validRulesetIds = data.validRulesetIds;
       this.skillPointAbilityId = data.skillPointAbilityId;
-      this.skillProperties = data.skillProperties;
+      this.skillFields = data.skillFields;
       this.klassLevelProperties = data.klassLevelProperties;
       this.klassBonusSpellAbilityMap = data.klassBonusSpellAbilityMap;
       this.klassCasterTypeMap = data.klassCasterTypeMap;
@@ -159,12 +159,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       }
       this.components.featGroupings.seedEmptyFamilies(FEAT_FAMILIES);
       this.components.feats.injectGroupings(this.components.featGroupings.getFeatGroupings());
-      this.components.skills.initialize(
-        this.rulesetSkills,
-        this.rulesetAbilities,
-        this.race.size,
-        this.skillProperties,
-      );
+      this.components.skills.initialize(this.rulesetSkills, this.rulesetAbilities, this.race.size, this.skillFields);
       this.components.savingThrows.initialize(this.rulesetSaves, this.rulesetAbilities, this.klassLevelSaves);
       this.components.combat.initialize(this.race, this.klassLevelProperties);
       this.components.inventory.initialize(this.inventory);

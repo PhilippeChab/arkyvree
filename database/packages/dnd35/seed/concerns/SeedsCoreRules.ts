@@ -11,12 +11,8 @@ import {
   skillsInRules,
 } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/server/mixins.ts";
-import {
-  RULESET_SKILL_POINT_ABILITY_ID,
-  SKILL_CHECK_PENALTY_MULTIPLIER,
-  SKILL_IMPACTED_BY_WEIGHT,
-  SKILL_USABLE_WITHOUT_TRAINING,
-} from "@/shared/dnd3.5/properties/index.ts";
+import { toSkillProperties } from "@/server/rulesets/dnd3.5/skills/skillFields.ts";
+import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 
 /** Seeding a base ruleset's own rules: its abilities, saves, skills and languages. */
 export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
@@ -88,13 +84,11 @@ export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
       await this.insertAll(
         propertiesInCustomization,
         skills.flatMap(({ name, impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining }) =>
-          [
-            ...(impactedByWeight ? [{ type: SKILL_IMPACTED_BY_WEIGHT, value: "true" }] : []),
-            ...(checkPenaltyMultiplier
-              ? [{ type: SKILL_CHECK_PENALTY_MULTIPLIER, value: String(checkPenaltyMultiplier) }]
-              : []),
-            ...(usableWithoutTraining ? [{ type: SKILL_USABLE_WITHOUT_TRAINING, value: "true" }] : []),
-          ].map((property) => ({ entityId: this.ctx.skillMap[name], entityType: "skills", ...property })),
+          toSkillProperties(this.ctx.skillMap[name], {
+            impactedByWeight: impactedByWeight ?? false,
+            checkPenaltyMultiplier: checkPenaltyMultiplier ?? 1,
+            usableWithoutTraining: usableWithoutTraining ?? false,
+          }),
         ),
       );
     }

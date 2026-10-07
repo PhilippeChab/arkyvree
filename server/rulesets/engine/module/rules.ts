@@ -160,17 +160,18 @@ export interface RulesetRules {
   skills: SkillsRules;
 }
 
-/** A skill's flags, kept as its properties: whether armor weighs on it, how many times over, and untrained use. */
-export type SkillFlags = { checkPenaltyMultiplier: number; impactedByWeight: boolean; usableWithoutTraining: boolean };
+/** A skill's fields its properties hold: whether armor weighs on it, how many times over, and untrained use. */
+export type SkillFields = { checkPenaltyMultiplier: number; impactedByWeight: boolean; usableWithoutTraining: boolean };
 
 /** The rules a skill follows. */
 export interface SkillsRules {
   enrichWithProperties<T extends { id: string }>(
     skills: T[],
     properties: { entityId: string; type: string; value: string }[],
-  ): (T & SkillFlags)[];
-  /** The flags as a skill keeps them, which `SkillsEffects.syncProperties` stores. */
-  normalizeFlags(flags: SkillFlags): SkillFlags;
+  ): (T & SkillFields)[];
+  /** The fields as a skill keeps them, which `SkillsEffects.syncProperties` stores. */
+  normalizeFields(fields: SkillFields): SkillFields;
+  readProperties(properties: { type: string; value: string }[]): SkillFields;
 }
 
 /** A weapon's fields: what its attacks, its groupings and the hands it's held in read. */
