@@ -43,7 +43,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { NAME_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { availableRacesQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { ANIMATIONS, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
+import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
@@ -119,7 +119,7 @@ function AbilityCard({
         alignItems: "center",
         justifyContent: "space-between",
         minHeight: 100,
-        animation: isSettled ? ANIMATIONS.settle : undefined,
+        animation: isSettled ? settleAnimation : undefined,
         [PREFERS_REDUCED_MOTION]: { animation: "none" },
       }}
     >

@@ -1,6 +1,6 @@
 /** The theme's motion: its durations and easings, its keyframes and the animations they make, and how a transition is written. */
 
-import { keyframes } from "@mui/material";
+import { alpha, keyframes, type Theme } from "@mui/material";
 
 /** The bell's ring when a notification comes in */
 const bellShake = keyframes`
@@ -25,12 +25,6 @@ const pulse = keyframes`
   50% { opacity: 1; }
 `;
 
-const settledPulse = keyframes`
-  0%   { box-shadow: none; }
-  50%  { box-shadow: 0 0 0 3px rgba(var(--mui-palette-primary-mainChannel) / 0.4); }
-  100% { box-shadow: none; }
-`;
-
 /** How motion eases: CSS's own curves, and Material's */
 export const EASING = {
   ease: "ease",
@@ -42,12 +36,11 @@ export const EASING = {
   emphasized: "cubic-bezier(0.2, 0, 0, 1)",
 } as const;
 
-/** The animations the app runs, by what they show: the bell's ring, the dice of a spinner, a loading pulse, a value settling */
+/** The animations the app runs, by what they show: the bell's ring, the dice of a spinner, a loading pulse */
 export const ANIMATIONS = {
   bellShake: `${bellShake} 0.6s ease-in-out`,
   diceRoll: `${diceRoll} 1.6s ${EASING.decelerate} infinite`,
   pulse: `${pulse} 2s ${EASING.standard} infinite`,
-  settle: `${settledPulse} 0.4s ${EASING.standard}`,
 } as const;
 
 /** How long motion takes, in milliseconds: a delay behind another step, a stagger between items, then a transition's */
@@ -87,7 +80,22 @@ export function fadeInUpSx(index: number, offset = 0) {
   } as const;
 }
 
-/** A transition of `properties`, each over `duration` (`DURATION`) along `easing`: `transitionOf(["opacity"], DURATION.fast)`. */
+/**
+ * A transition of `properties`, each over `duration` (`DURATION`) along `easing`: `transitionOf(["opacity"],
+ * DURATION.fast)`.
+ *
+ * A value settling (a rolled score, the rolled HP): a ring of the theme's primary color, pulsed once.
+ */
+export function settleAnimation(theme: Theme) {
+  const ring = alpha(theme.palette.primary.main, 0.4);
+  const settledPulse = keyframes`
+    0%   { box-shadow: none; }
+    50%  { box-shadow: 0 0 0 3px ${ring}; }
+    100% { box-shadow: none; }
+  `;
+  return `${settledPulse} 0.4s ${EASING.standard}`;
+}
+
 export function transitionOf(properties: string[], duration: number, easing: string = EASING.ease) {
   return properties.map((property) => `${property} ${duration}ms ${easing}`).join(", ");
 }

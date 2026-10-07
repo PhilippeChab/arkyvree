@@ -5,6 +5,7 @@ import { type DefaultValues, type FieldValues } from "react-hook-form";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { heldSectionQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 interface RulesetSectionConfig<
   TData,
@@ -76,7 +77,7 @@ export function useRulesetSection<
     isLoading,
     error,
   } = useQuery<TData[], DefaultError, TData[], SectionKey>(
-    query && !externalData ? query : { queryKey: QUERY_KEYS.rulesets.section(rulesetId, sectionName), enabled: false },
+    query && !externalData ? query : heldSectionQuery<TData>(rulesetId, sectionName),
   );
 
   const data = externalData ?? queryData;
