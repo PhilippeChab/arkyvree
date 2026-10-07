@@ -8,7 +8,7 @@ import type { Constructor } from "@/server/mixins.ts";
 /** Generating a book's index. */
 export function GeneratesBooks<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingBooks extends Base {
-    /** Regenerate index.ts for an extension's book: its content, as the extension seeds it. */
+    /** Regenerate index.ts for a book: its content, as its package seeds it (the core rules' with what they add). */
     writeBookIndex(book: string) {
       const dir = join(this.dir, book);
       const parts: { key: string; file: string; name: string }[] = [

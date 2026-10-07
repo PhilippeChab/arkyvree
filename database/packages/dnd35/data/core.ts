@@ -3,10 +3,7 @@
  * with (`CORE`).
  */
 
-import { ALL_APTITUDES } from "@/database/packages/dnd35-from-parser/generated/srd/aptitudes.ts";
-import { ALL_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
-import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains.ts";
-import { ALL_FEATS } from "@/database/packages/dnd35-from-parser/generated/srd/feats/index.ts";
+import { BOOK } from "@/database/packages/dnd35-from-parser/generated/srd/index.ts";
 import {
   GOODS,
   MAGIC_ARMOR,
@@ -18,7 +15,6 @@ import {
   WONDROUS_ITEMS,
 } from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
 import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races.ts";
-import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/spells/index.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizardSchools.ts";
 import type { AbilitySeed } from "@/database/packages/dnd35/content/abilities/types.ts";
 import { spellLevelsOf } from "@/database/packages/dnd35/content/classes/spellLevels.ts";
@@ -129,16 +125,19 @@ export const SKILLS: SkillSeed[] = [
   { name: "Use Rope", description: "Tie knots, bind prisoners, and handle rope in many different situations.", ability: "Dexterity", impactedByWeight: false, usableWithoutTraining: true },
 ];
 
-/** All the core rules are seeded with: the SRD's, and its hand-written feats; its items the SRD's goods and magic items. */
+/**
+ * All the core rules are seeded with: the SRD's book (`BOOK`) and its races, items and wizard schools, its hand-written
+ * feats, rules and bonded creatures; its items the SRD's goods and magic items.
+ */
 export const CORE: CoreContent = {
-  aptitudes: ALL_APTITUDES,
+  aptitudes: BOOK.aptitudes,
   languages: LANGUAGES,
   races: ALL_RACES,
   abilities: ABILITIES,
   skills: SKILLS,
   saves: SAVES,
-  feats: [...ALL_FEATS, ...buildCoreFeats(WIZARD_SCHOOLS)],
-  classes: ALL_CLASSES,
+  feats: [...BOOK.standaloneFeats, ...BOOK.classFeats, ...buildCoreFeats(WIZARD_SCHOOLS)],
+  classes: BOOK.classes,
   templateItems: TEMPLATE_ITEMS,
   items: [
     ...GOODS,
@@ -150,12 +149,12 @@ export const CORE: CoreContent = {
     ...RODS,
     ...STAFFS,
   ],
-  spells: ALL_SPELLS,
+  spells: BOOK.spells,
   wizardSchools: WIZARD_SCHOOLS,
-  domains: ALL_DOMAINS,
+  domains: BOOK.domains,
   bonds: [FAMILIARS, ANIMAL_COMPANIONS, SPECIAL_MOUNTS],
-  clericSpellLevels: spellLevelsOf(ALL_CLASSES, "Cleric"),
-  wizardSpellLevels: spellLevelsOf(ALL_CLASSES, "Wizard"),
+  clericSpellLevels: spellLevelsOf(BOOK.classes, "Cleric"),
+  wizardSpellLevels: spellLevelsOf(BOOK.classes, "Wizard"),
 };
 
 export const CORE_RULESET = {

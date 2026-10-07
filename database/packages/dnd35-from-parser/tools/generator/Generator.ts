@@ -14,7 +14,6 @@ import { GeneratesRaces } from "@/database/packages/dnd35-from-parser/tools/gene
 import { GeneratesSpells } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesSpells.ts";
 import { GeneratesWizardSchools } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesWizardSchools.ts";
 import {
-  CORE_BOOK,
   filterReferenceFiles,
   getReferencePath,
   listReferenceBooks,
@@ -124,7 +123,7 @@ export class Generator extends include(
         if (!existsSync(getReferencePath(book, "spell")) || (bookFilter && book !== bookFilter)) continue;
         try {
           this.generateDomains(book);
-          if (book !== CORE_BOOK) this.writeBookIndex(book);
+          this.writeBookIndex(book);
         } catch (error) {
           failures.push(`${book}/domains.json: ${error instanceof Error ? error.message : error}`);
         }
@@ -169,6 +168,6 @@ export class Generator extends include(
           `Unknown type: ${meta.type}. Supported: class, feat, spell, wizardSchool, domain, race, item, magicItem`,
         );
     }
-    if (book !== CORE_BOOK) this.writeBookIndex(book);
+    this.writeBookIndex(book);
   }
 }
