@@ -73,8 +73,8 @@ const LAYERS = [
   { layer: "server/services/", deny: ["server/jobs/", "server/middlewares/", "server/routers/"] },
   { layer: "server/jobs/", deny: ["server/middlewares/", "server/routers/"] },
   { layer: "server/middlewares/", deny: ["server/services/", "server/jobs/", "server/routers/"] },
-  // The server reads the content packages' data (a new ruleset's template items), never the seeders or scripts.
-  { layer: "server/", deny: ["database/"], allow: ["database/packages/"] },
+  // The server reads nothing of database/: what its packages hold reaches it through the database, which they seed
+  { layer: "server/", deny: ["database/"] },
   // What a content package's data is written with: below its data, its seeder and what generates it
   {
     layer: "database/packages/dnd35/content/",

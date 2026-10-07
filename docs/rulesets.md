@@ -455,8 +455,7 @@ server/
 │       ├── spellcasting/                  (SpellcastingComponent on SpellcastingState, which includes BonusCasterLevels,
 │       │                                  KnownPowers; SpellcastingPaths)
 │       ├── items/                         (InventoryComponent, the slots, itemFields: an item's fields off its
-│       │                                  properties; Dnd35InventoryRules, Dnd35ItemsRules, Dnd35ItemsEffects,
-│       │                                  seedTemplateItems)
+│       │                                  properties; Dnd35InventoryRules, Dnd35ItemsRules, Dnd35ItemsEffects)
 │       ├── levels/                        (Dnd35LevelsRules)
 │       ├── bonded/                        (the bonded creatures' characters, BondsComponent, BondedPaths)
 │       └── sheet/                         (the PDF sheet)
@@ -635,7 +634,7 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 
 ### How to add a new ruleset
 
-1. **Define the module**: `server/rulesets/<ruleset>/rulesetModule.ts`, whose factory returns a `RulesetModule` of its own character, projector and kinds (`Dnd35RulesetModule`). Provide `rules` and `effects` (levels, classes, skills, …), `createDetailedCharacter`, `createDetailedCharacterWithSheet`, `createLevelUpProjector`, `createTargetPaths`, `createPropertyTypes` and `seedTemplateItems`.
+1. **Define the module**: `server/rulesets/<ruleset>/rulesetModule.ts`, whose factory returns a `RulesetModule` of its own character, projector and kinds (`Dnd35RulesetModule`). Provide `rules` and `effects` (levels, classes, skills, …), `createDetailedCharacter`, `createDetailedCharacterWithSheet`, `createLevelUpProjector`, `createTargetPaths` and `createPropertyTypes`. A new ruleset's template items come with its base, which its content package seeds: a fork reads them through its chain.
 2. **Write its character** in `server/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`buildComponents`), and `DetailedCharacter`, which includes the concerns. 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).
 3. **Write its target paths**: a `CategoryPaths` subclass (`Dnd35TargetPaths`) over its categories, one `PathCategory` per domain (`AbilitiesPaths`, `CombatPaths`, …), which `createTargetPaths` returns and the evaluators walk; and its property types (`Dnd35PropertyTypes`), which `createPropertyTypes` returns. See [target-paths.md](./target-paths.md).
 4. **Extend the types** in `server/rulesets/<ruleset>/types.ts`:

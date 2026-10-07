@@ -1,4 +1,3 @@
-import type { Db } from "@/server/database/index.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import { Dnd35AptitudesRules } from "./aptitudes/Dnd35AptitudesRules.ts";
@@ -19,7 +18,6 @@ import { Dnd35FeatsRules } from "./feats/Dnd35FeatsRules.ts";
 import { Dnd35InventoryRules } from "./items/Dnd35InventoryRules.ts";
 import { Dnd35ItemsEffects } from "./items/Dnd35ItemsEffects.ts";
 import { Dnd35ItemsRules } from "./items/Dnd35ItemsRules.ts";
-import { seedTemplateItems } from "./items/seedTemplateItems.ts";
 import { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
 import { Dnd35PowersEffects } from "./powers/Dnd35PowersEffects.ts";
 import { Dnd35PowersRules } from "./powers/Dnd35PowersRules.ts";
@@ -73,10 +71,6 @@ export function createRulesetModule(): Dnd35RulesetModule {
       races: new Dnd35RacesEffects(),
       rulesets: new Dnd35RulesetsEffects(),
       skills: new Dnd35SkillsEffects(),
-    },
-
-    async seedTemplateItems(tx: Db, rulesetId: string) {
-      await seedTemplateItems(tx, rulesetId);
     },
 
     createDetailedCharacter(record: CharacterRecord, kind: CharacterKind = "pc") {

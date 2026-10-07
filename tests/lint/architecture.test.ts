@@ -146,16 +146,23 @@ describe("architecture rules", () => {
     ).toEqual(["folder-index server/services/direct.ts"]);
   });
 
-  test("the middlewares sit above the repositories, and the server reads content packages, not the seeders", async () => {
+  test("the middlewares sit above the repositories, and the server reads nothing of database/", async () => {
     expect(
       await lint({
         "server/repositories/R.ts": 'import { m } from "@/server/middlewares/m.ts";\nexport const r = m;\n',
         "server/middlewares/m.ts": 'import { R } from "@/server/repositories/R.ts";\nexport const m = R;\n',
         "server/rulesets/seed.ts":
           'import { items } from "@/database/packages/dnd35/seed/items.ts";\nexport const s = items;\n',
+        "server/rulesets/data.ts":
+          'import { CORE } from "@/database/packages/dnd35/data/core.ts";\nexport const d = CORE;\n',
         "server/services/s.ts": 'import { SEED } from "@/database/seeds/users.ts";\nexport const s = SEED;\n',
       }),
-    ).toEqual(["layers server/repositories/R.ts", "layers server/services/s.ts"]);
+    ).toEqual([
+      "layers server/repositories/R.ts",
+      "layers server/rulesets/data.ts",
+      "layers server/rulesets/seed.ts",
+      "layers server/services/s.ts",
+    ]);
   });
 
   test("a transaction's handle is named `tx`, which the query rule knows", async () => {

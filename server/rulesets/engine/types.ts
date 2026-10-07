@@ -69,5 +69,4 @@ export interface RulesetModule<
   effects: ModuleEffects;
   /** What the ruleset answers the services, without the database */
   rules: ModuleRules;
-  seedTemplateItems(tx: Db, rulesetId: string): Promise<void>;
 }
