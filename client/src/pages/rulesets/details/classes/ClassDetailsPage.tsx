@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
-  DeleteDialog,
   HelpLabel,
   type SectionTab,
   SectionTabPanel,
@@ -37,6 +36,7 @@ import {
   EMPTY_CLASS,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import {
+  EntityDeleteDialog,
   EntityDetailLayout,
   EntityDetailsCard,
   EntityPageError,
@@ -45,7 +45,7 @@ import { propertiesQuery } from "@/client/src/pages/rulesets/customization/custo
 import { useCopyFollow } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useCopyOnWrite, useRestorableDelete, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
@@ -62,7 +62,6 @@ import {
   ClassSpellListSection,
   ClassSpellsKnownSection,
   ClassSpellsSection,
-  useFollowClassCopy,
 } from "./sections/index.ts";
 
 const SECTION_COMPONENTS = {
@@ -117,10 +116,10 @@ export default function ClassDetailsPage() {
   }>();
   const back = entityPageBack(location.state, `/rulesets/${rulesetId}/classes`);
   const currentTab: ClassSection = isClassSection(section) ? section : "levels";
-  // The bonus spell and caster type selects write the class's properties: a copy they make is followed, as its
-  // Properties tab's saves are
-  const followClassCopy = useFollowClassCopy(rulesetId, currentTab);
-  const { tag, follow } = useCopyFollow(classId, followClassCopy);
+  // A save of an inherited class copies it: the page follows the copy, as its customization tabs' saves do, and so do
+  // the bonus spell and caster type selects, which write the class's properties
+  const copy = useCopyOnWrite(rulesetId, classId, (id) => `classes/${id}`);
+  const { tag, follow } = useCopyFollow(classId, copy.followCopy);
 
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
 
@@ -137,12 +136,15 @@ export default function ClassDetailsPage() {
   const editForm = useFormWith<ClassFormData>(EMPTY_CLASS);
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
+  // Deleting an inherited class, or what it holds, can be undone
+  const { restorable, error: changesError } = useRestorableDelete(ruleset, classData);
 
   const sync = useFormSync(editForm, classData && toClassForm(classData), {
-    // An inherited class keeps its id in every fork.
-    key: `${rulesetId}/${classId}`,
+    key: copy.key,
+    adoptKey: copy.adoptKey,
     updatedAt: classData?.updatedAt,
   });
+  const forgetSource = copy.forgetSource(!!classData);
 
   const { data: abilities, error: abilitiesError } = useRulesetAbilities(rulesetId);
 
@@ -166,9 +168,7 @@ export default function ClassDetailsPage() {
       // class's own; their selects stay disabled until then.
       if (classData && stillOpen) queryClient.setQueryData(savedKey, { ...classData, ...data });
       queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
-      // Editing an inherited class copies it into this ruleset under a new id.
-      if (stillOpen && data.id !== sourceId)
-        navigate(`/rulesets/${rulesetId}/classes/${data.id}/${currentTab}`, { replace: true, state: location.state });
+      copy.followCopy(data.id, sourceId);
 
       invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, "classes")]);
       snackbar.success("Class updated");
@@ -205,6 +205,8 @@ export default function ClassDetailsPage() {
       invalidateRulesetEdit(queryClient, rulesetId, [
         propertiesQuery(rulesetId, "klasses", classId).queryKey,
         classDetailQuery(rulesetId, classId).queryKey,
+        // A copy takes the class's place in the list
+        QUERY_KEYS.rulesets.section(rulesetId, "classes"),
       ]);
       follow(saved);
       snackbar.success(message);
@@ -244,12 +246,14 @@ export default function ClassDetailsPage() {
 
   return (
     <>
+      {forgetSource && <Navigate to={forgetSource.to} replace state={forgetSource.state} />}
       <EntityDetailLayout
         entityName={classData?.name}
         rulesetName={ruleset?.name}
         backTo={back.to}
         canDelete={canEdit}
         onDelete={() => setDeleteDialogOpen(true)}
+        restorable={restorable}
         isLoading={isLoading}
       >
         {classData && ruleset && (
@@ -308,7 +312,7 @@ export default function ClassDetailsPage() {
                         </>
                       ),
                       onSubmit: sync.handleSubmit((data) => updateMutation.mutate(data)),
-                      canSave: editForm.formState.isDirty,
+                      canSave: sync.isDirty,
                       isSaving: updateMutation.isPending,
                     }
                   : undefined
@@ -327,17 +331,24 @@ export default function ClassDetailsPage() {
               />
 
               <SectionTabPanel>
-                <Section rulesetId={rulesetId} classId={classId} className={classData.name} ruleset={ruleset} />
+                <Section
+                  rulesetId={rulesetId}
+                  classId={classId}
+                  className={classData.name}
+                  ruleset={ruleset}
+                  restorable={restorable}
+                />
               </SectionTabPanel>
             </Stack>
           </>
         )}
       </EntityDetailLayout>
-      <DeleteDialog
+      <EntityDeleteDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        title="Delete Class"
-        message="Are you sure you want to delete this class? This action cannot be undone."
+        what="Class"
+        restorable={restorable}
+        changesError={changesError}
         onConfirm={() => deleteMutation.mutate()}
         isLoading={deleteMutation.isPending}
       />

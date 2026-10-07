@@ -5,7 +5,6 @@ import { Controller, type UseFormReturn } from "react-hook-form";
 import {
   AddButton,
   CreateDialog,
-  DeleteDialog,
   DescriptionField,
   EditDialog,
   EmptyValue,
@@ -17,7 +16,7 @@ import { PropertyTypeInput, PropertyValueInput } from "@/client/src/components/c
 import { ListAltIcon } from "@/client/src/components/icons/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { EntityDeleteDialog, RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   customizationSection,
   propertiesQuery,
@@ -39,6 +38,8 @@ interface PropertiesSectionProps {
   entityType: CustomizableEntityType;
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
+  /** A delete can be undone from Local Changes, its entity's being inherited (`useRestorableDelete`) */
+  restorable: boolean;
   ruleset: RulesetDetail;
 }
 
@@ -118,6 +119,7 @@ export function PropertiesSection({
   data: externalData,
   queryKeysToInvalidate,
   onEntityIdChange,
+  restorable,
 }: PropertiesSectionProps) {
   const { tag, followCopies } = useCopyFollow(entityId, onEntityIdChange);
   const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
@@ -218,6 +220,7 @@ export function PropertiesSection({
           canDelete={canDelete}
           onEdit={handleEditProperty}
           onDelete={handleDelete}
+          restorable={restorable}
           renderCell={renderCell}
           emptyIcon={ListAltIcon}
           emptyTitle="No properties"
@@ -233,11 +236,7 @@ export function PropertiesSection({
         <PropertyFields form={editForm} rulesetId={ruleset.id} entityType={entityType} />
       </EditDialog>
 
-      <DeleteDialog
-        {...deleteDialogProps}
-        title="Delete Property"
-        message="Are you sure you want to delete this property? This action cannot be undone."
-      />
+      <EntityDeleteDialog {...deleteDialogProps} what="Property" restorable={restorable} />
     </SectionContent>
   );
 }

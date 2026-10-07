@@ -144,12 +144,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
                 spell.name
               )}
               {spell.tags?.map((tag) => (
-                <ValueChip
-                  key={tag.name}
-                  label={tag.name}
-
-                  color={tag.joinsClassList ? "secondary" : "primary"}
-                />
+                <ValueChip key={tag.name} label={tag.name} color={tag.joinsClassList ? "secondary" : "primary"} />
               ))}
             </Stack>
           </Stack>

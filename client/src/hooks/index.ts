@@ -12,6 +12,7 @@ export { useDirtyForm } from "./useDirtyForm.ts";
 export { type FormSync, useFormSync } from "./useFormSync.ts";
 export { useFormWith } from "./useFormWith.ts";
 export { useGoogleSignIn } from "./useGoogleSignIn.ts";
+export { useIsDemo } from "./useIsDemo.ts";
 export { useIsMobile } from "./useIsMobile.ts";
 export { useLatest } from "./useLatest.ts";
 export { useListboxQuery } from "./useListboxQuery.ts";

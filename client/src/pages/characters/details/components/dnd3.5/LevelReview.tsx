@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 
+import { skillRanks } from "./levelUp/index.ts";
 import type { LevelReviewState } from "./levelUpFactory.ts";
 
 interface LevelReviewProps {
@@ -34,7 +35,7 @@ function ReviewItem({ name, note }: ReviewItemProps) {
 
 /** The last step of the Add Level and Edit Level wizards: the wizard's groups, then the skills, feats and spells picked. */
 export function LevelReview({ wizard, children }: LevelReviewProps) {
-  const { skillPointAllocations, skillData, selectedFeats, featData, selectedPowers, powerData } = wizard;
+  const { skillPointAllocations, skillData, skillLevels, selectedFeats, featData, selectedPowers, powerData } = wizard;
   const selectedSkills = Object.entries(skillPointAllocations).filter(([, points]) => points > 0);
   const pointsUsed = Object.values(skillPointAllocations).reduce((sum, points) => sum + points, 0);
   const selectedFeatsData = Object.values(selectedFeats).flat();
@@ -54,13 +55,14 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
               <Box>
                 {selectedSkills.map(([skillId, points]) => {
                   const skill = skillData?.skills.find((s) => s.id === skillId);
-                  if (!skill) return null;
-                  const ranksGained = skill.isClassSkill ? points : points * 0.5;
+                  if (!skill || !skillLevels) return null;
+                  // As the skills step and the server count them: by the levels the points go to
+                  const ranksGained = skillRanks(skillId, points, skillLevels);
                   return (
                     <ReviewItem
                       key={skillId}
                       name={skill.name}
-                      note={`: +${formatCount(ranksGained, "rank")}${skill.isClassSkill ? "" : ` (${formatCount(points, "point")})`}`}
+                      note={`: +${formatCount(ranksGained, "rank")}${ranksGained === points ? "" : ` (${formatCount(points, "point")})`}`}
                     />
                   );
                 })}

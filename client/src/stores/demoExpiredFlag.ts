@@ -1,30 +1,19 @@
+import { readStored, removeStored, writeStored } from "./browserStorage.ts";
+
 /** The breadcrumb a demo that ran out leaves, so the next route sends its user to /demo-expired. */
 const DEMO_EXPIRED_FLAG = "demo-expired";
 
 /** Forgets that a demo ran out, once its page has shown it. */
 export function clearDemoExpired() {
-  try {
-    localStorage.removeItem(DEMO_EXPIRED_FLAG);
-  } catch {
-    // storage disabled
-  }
+  removeStored("local", DEMO_EXPIRED_FLAG);
 }
 
 /** Whether a demo ran out in this browser and its page hasn't shown it yet. */
 export function isDemoExpired() {
-  try {
-    return !!localStorage.getItem(DEMO_EXPIRED_FLAG);
-  } catch {
-    // storage disabled
-    return false;
-  }
+  return !!readStored("local", DEMO_EXPIRED_FLAG);
 }
 
 /** Remembers that a demo ran out. */
 export function markDemoExpired() {
-  try {
-    localStorage.setItem(DEMO_EXPIRED_FLAG, "1");
-  } catch {
-    // storage disabled
-  }
+  writeStored("local", DEMO_EXPIRED_FLAG, "1");
 }

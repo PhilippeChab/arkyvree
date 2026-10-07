@@ -112,7 +112,6 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
               <ValueChip
                 key={classSkill.skillId}
                 label={classSkill.skillsInRule.name}
-
                 color="primary"
                 onDelete={canEdit ? () => handleRemoveSkill(classSkill.skillId) : undefined}
               />

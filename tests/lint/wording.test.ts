@@ -68,10 +68,18 @@ describe("wording rules", () => {
             'export const d = <DeleteDialog message="Are you sure you want to delete this modifier? This action cannot be undone." />;\n',
           "client/src/undone.tsx":
             'export const u = <DeleteDialog message="Are you sure you want to delete this modifier?" />;\n',
+          "client/src/restorable.tsx":
+            'export const r = <DeleteDialog message={restorable ? "Are you sure you want to delete this feat? You can restore it from Local Changes." : "Are you sure you want to delete this feat? This action cannot be undone."} />;\n',
+          "client/src/unsaid.tsx":
+            'export const n = <DeleteDialog message={restorable ? "Are you sure you want to delete this feat?" : "Are you sure you want to delete this feat? This action cannot be undone."} />;\n',
         },
         ["confirm-wording"],
       ),
-    ).toEqual(["confirm-wording client/src/says.tsx", "confirm-wording client/src/undone.tsx"]);
+    ).toEqual([
+      "confirm-wording client/src/says.tsx",
+      "confirm-wording client/src/undone.tsx",
+      "confirm-wording client/src/unsaid.tsx",
+    ]);
   });
 
   test("an ellipsis is one mark, a dash between words an em dash, and a cut text truncate()", async () => {

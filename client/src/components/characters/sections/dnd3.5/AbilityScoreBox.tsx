@@ -23,7 +23,7 @@ export function AbilityScoreBox({
   readOnly,
   compact,
 }: AbilityScoreBoxProps) {
-  const baseValue = abilityData?.base || 10;
+  const baseValue = abilityData?.base ?? 10;
   const edit =
     !readOnly && !compact && abilityData?.abilityId && onBaseChange
       ? { abilityId: abilityData.abilityId, onBaseChange }

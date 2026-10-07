@@ -270,9 +270,13 @@ class ClassLevelsService extends include(Object, ListsSpells) {
 
       const klass = findScopedEntity(rulesetData.klassesById, level.klassId, rulesetId, sourceChain, "Class");
 
-      // `name` is attached so clients of getClassLevelWithClassName can show the class
-      // name without a second fetch.
-      return this.buildClassLevelDetail(ruleset, rulesetData, { ...level, name: klass.name });
+      // Its class's name, which its page shows, and the ruleset that holds its class: an inherited one's level is
+      // inherited too
+      return this.buildClassLevelDetail(ruleset, rulesetData, {
+        ...level,
+        name: klass.name,
+        rulesetId: klass.rulesetId,
+      });
     });
   }
 

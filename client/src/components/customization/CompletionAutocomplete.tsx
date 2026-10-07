@@ -117,11 +117,7 @@ export function CompletionAutocomplete<
               primary={
                 <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
                   {option.label}
-                  <ValueChip
-                    label={option.kind}
-
-                    color={option.kind === "engine" ? "primary" : "default"}
-                  />
+                  <ValueChip label={option.kind} color={option.kind === "engine" ? "primary" : "default"} />
                 </Stack>
               }
               secondary={option.detail}

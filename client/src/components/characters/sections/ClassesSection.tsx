@@ -33,8 +33,8 @@ interface ClassGroupProps {
   klass: NonNullable<SheetClass["klass"]>;
   /** Its levels, which the sheet carries in full */
   levels: NonNullable<SheetClass["levels"]>;
-  onEditLevel: (editingLevel: EditingLevel) => void;
-  readOnly?: boolean;
+  /** Edits a level; a read-only viewer sees the levels without it. */
+  onEditLevel?: (editingLevel: EditingLevel) => void;
 }
 
 type SheetClass = CharacterDetail["classes"][string];
@@ -42,7 +42,7 @@ type SheetClass = CharacterDetail["classes"][string];
 type SheetClasses = NonNullable<CharacterData["classes"]>;
 
 /** A class's levels under its heading, led by its arrow as every group the sheet opens and closes. */
-function ClassGroup({ klass, levels, classLink, onEditLevel, readOnly }: ClassGroupProps) {
+function ClassGroup({ klass, levels, classLink, onEditLevel }: ClassGroupProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -81,7 +81,7 @@ function ClassGroup({ klass, levels, classLink, onEditLevel, readOnly }: ClassGr
               <Typography variant="body2">
                 Level {lvl.klassLevel.level} — HP: +{lvl.characterLevel.hp}
               </Typography>
-              {!readOnly && (
+              {onEditLevel && (
                 <RowActions>
                   <RowAction
                     icon={EditIcon}
@@ -144,8 +144,8 @@ export function ClassesSection({
 
             const classLink = rulesetId && klass?.id ? `/rulesets/${rulesetId}/classes/${klass.id}` : undefined;
 
-            // Levels can only be edited on a class the sheet carries in full.
-            if (!klass || levels.length === 0 || !onEditLevel) {
+            // A class the sheet carries in full lists its levels, which an editor can edit; another is its chip.
+            if (!klass || levels.length === 0) {
               return (
                 <ValueChip
                   color="default"
@@ -169,8 +169,7 @@ export function ClassesSection({
                 klass={klass}
                 levels={levels}
                 classLink={classLink}
-                onEditLevel={onEditLevel}
-                readOnly={readOnly}
+                onEditLevel={readOnly ? undefined : onEditLevel}
               />
             );
           })}

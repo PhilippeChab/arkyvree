@@ -19,6 +19,7 @@ import {
   type PickerLevel,
 } from "./levelUpQueries.ts";
 import type { BaseRules, SelectedKlass } from "./levelUpTypes.ts";
+import type { SkillLevels } from "./skillLevels.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
 interface UseAddLevelWizardParams {
@@ -295,9 +296,16 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     [picked.feats, featData],
   );
   const selectedPowers = useMemo(() => fitPowers(picked.powers, powerData?.aptitudePools), [picked.powers, powerData]);
+  // The planned levels' class skills and points, which the skills step and the review spend the points over
+  const skillLevels = useMemo<SkillLevels | undefined>(
+    () =>
+      perLevelClassSkillIds &&
+      perLevelSkillPoints && { classSkillIds: perLevelClassSkillIds, points: perLevelSkillPoints },
+    [perLevelClassSkillIds, perLevelSkillPoints],
+  );
   const skillPointAllocations = useMemo(
-    () => fitSkillPoints(picked.skillPoints, skillData, perLevelClassSkillIds, perLevelSkillPoints),
-    [picked.skillPoints, skillData, perLevelClassSkillIds, perLevelSkillPoints],
+    () => fitSkillPoints(picked.skillPoints, skillData, skillLevels),
+    [picked.skillPoints, skillData, skillLevels],
   );
   const selectedAptitude = openPoolOf(base.selectedAptitude, adjustedFeatPools);
   const allSelectedFeatPickString = useMemo(() => featPickString(selectedFeats), [selectedFeats]);
@@ -512,8 +520,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     skillData,
     isLoadingSkills,
     skillsError,
-    perLevelClassSkillIds,
-    perLevelSkillPoints,
+    skillLevels,
 
     // Feats (step 5)
     featData,

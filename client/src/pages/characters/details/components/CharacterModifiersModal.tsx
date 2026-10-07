@@ -41,10 +41,10 @@ import {
 import { CopyIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
-import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { characterModifiersQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { formatOperator } from "@/shared/customization/operators.ts";
 import { extractTemplatePath } from "@/shared/customization/templateExpression.ts";
 
 interface CharacterModifiersModalProps {
@@ -203,11 +203,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                           <TargetPathBreadcrumbs target={mod.target} targetLabels={mod.targetLabels} />
                         </TableCell>
                         <TableCell>
-                          <ValueChip
-                            label={MODIFIER_OPERATOR_LABELS[mod.operator] || mod.operator}
-
-                            color="secondary"
-                          />
+                          <ValueChip label={formatOperator("modifier", mod.operator)} color="secondary" />
                         </TableCell>
                         <TableCell>
                           {(() => {

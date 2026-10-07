@@ -19,6 +19,7 @@ import {
   type StepLevel,
 } from "./levelUpQueries.ts";
 import type { BaseRules, LevelUpFormData } from "./levelUpTypes.ts";
+import { editedLevelSkills } from "./skillLevels.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
 interface UseLevelWizardParams {
@@ -113,6 +114,9 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
     ...skillSlotsQuery(characterId, step, selectedAttribute),
     enabled: open && activeStep === skillsStep,
   });
+
+  // The edited level's class skills and points, which the skills step and the review spend the points over
+  const skillLevels = useMemo(() => skillData && editedLevelSkills(skillData), [skillData]);
 
   const {
     data: featData,
@@ -259,6 +263,7 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
     skillData,
     isLoadingSkills,
     skillsError,
+    skillLevels,
     featData,
     isLoadingFeats,
     featsError,

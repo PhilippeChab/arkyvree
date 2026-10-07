@@ -7,7 +7,9 @@
  *   lets it go once faded.
  * - `menus`: a menu lists its items alone (a panel that opens from a button is a `Popover`), and an action in it is an
  *   `ActionMenuItem`, one line each; a `MenuItem` is one of several to choose, marked `selected`. A menu is sized by
- *   its items and opens where MUI puts it (no width, no anchor of its own), and its delete is "Delete Permanently".
+ *   its items and opens where MUI puts it (no width, no anchor of its own), and its delete is "Delete Permanently",
+ *   or "Delete" for what a fork inherits, which its Local Changes restore (`restorable ? "Delete" : "Delete
+ *   Permanently"`).
  * - `pending-buttons`: a button that starts a request shows it running: its label in a `DiceSpinner`, disabled the
  *   while.
  * - `page-errors`: a page that couldn't load shows a `PageError`, never an alert of its own: it says why in
@@ -158,11 +160,12 @@ function createMenus(context) {
           message: "A menu is sized by its items and opens where MUI puts it: no width, no anchor of its own.",
         });
       }
-      const label = attributeValue(attribute(node, "label"));
-      if (name === "ActionMenuItem" && label?.type === "Literal" && label.value === "Delete") {
+      if (name === "ActionMenuItem" && deletesForGood(attributeValue(attribute(node, "label")))) {
         context.report({
           node: node.openingElement,
-          message: "A menu's delete says it can't be undone, as Archive can: \"Delete Permanently\".",
+          message:
+            'A menu\'s delete says it can\'t be undone, as Archive can: "Delete Permanently"; "Delete" only for what can ' +
+            'be restored, on its condition (`restorable ? "Delete" : "Delete Permanently"`).',
         });
       }
       if (name !== "MenuItem" || hasAttribute(node, "selected")) return;
@@ -296,6 +299,18 @@ function createQueryErrors(context) {
       });
     },
   };
+}
+
+/**
+ * Whether a menu item's label says "Delete" of what can't be restored: written so, or a condition's branch whose other
+ * one isn't "Delete Permanently".
+ */
+function deletesForGood(label) {
+  const isDelete = (node) => node?.type === "Literal" && node.value === "Delete";
+  if (label?.type !== "ConditionalExpression") return isDelete(label);
+  const { consequent, alternate } = label;
+  const isForGood = (node) => node?.type === "Literal" && node.value === "Delete Permanently";
+  return (isDelete(consequent) && !isForGood(alternate)) || (isDelete(alternate) && !isForGood(consequent));
 }
 
 /** Whether a JSX element holds a spinner, at any depth. */

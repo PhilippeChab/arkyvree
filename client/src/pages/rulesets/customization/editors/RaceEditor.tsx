@@ -62,7 +62,7 @@ export function RaceEditor({
           ? {
               fields: <RaceFormFields form={form} />,
               onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-              canSave: form.formState.isDirty && !locked,
+              canSave: sync.isDirty && !locked,
               isSaving: saveMutation.isPending,
             }
           : undefined

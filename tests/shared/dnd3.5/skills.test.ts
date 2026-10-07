@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { computeLevelSkillPoints, computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
+import {
+  computeLevelSkillPoints,
+  computeMaxPointsForSkill,
+  computeMaxSkillRank,
+  distributeSkillPoints,
+} from "@/shared/dnd3.5/skills.ts";
 
 const CLIMB = "climb";
 /** Levels by whether Climb is a class skill at them, with the skill points each gives. */
@@ -26,6 +31,14 @@ describe("skill points", () => {
     const { classSkills, points } = levels([true, 3], [false, 8]);
     const most = computeMaxPointsForSkill(CLIMB, 5, classSkills, points);
     expect(distributeSkillPoints(CLIMB, most, classSkills, points)).toEqual({ ranks: 5, perLevel: [3, 4] });
+  });
+});
+
+describe("a skill's rank cap", () => {
+  test("is the character's level + 3 for a class skill, half that for a cross-class one", () => {
+    expect([computeMaxSkillRank(1, true), computeMaxSkillRank(1, false), computeMaxSkillRank(4, false)]).toEqual([
+      4, 2, 3.5,
+    ]);
   });
 });
 

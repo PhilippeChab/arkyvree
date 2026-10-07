@@ -1,6 +1,23 @@
 import { describe, expect, test } from "bun:test";
 
-import { buildAttackRows } from "@/shared/dnd3.5/weaponAttacks.ts";
+import { buildAttackRows, formatAttackBonus, formatCritical } from "@/shared/dnd3.5/weaponAttacks.ts";
+
+// The sheet and its PDF write a weapon's attack and critical one way, as the SRD's weapon tables do
+describe("a weapon's attack and critical text", () => {
+  test("say a threat on a 20 by its multiplier alone, a wider one by its range too", () => {
+    expect([
+      formatCritical({ range: 1, multiplier: 3 }),
+      formatCritical({ range: 2, multiplier: 2 }),
+      formatCritical({ range: 3, multiplier: 2 }),
+    ]).toEqual(["×3", "19–20/×2", "18–20/×2"]);
+  });
+
+  test("sign each iterative attack, and show none as missing", () => {
+    expect([formatAttackBonus([9, 4]), formatAttackBonus([-1]), formatAttackBonus([0]), formatAttackBonus([])]).toEqual(
+      ["+9/+4", "-1", "+0", "—"],
+    );
+  });
+});
 
 describe("a weapon's attack rows", () => {
   test("list a melee weapon's attack, and its thrown attack when it has a range", () => {

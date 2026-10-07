@@ -103,6 +103,7 @@
     "arkyvree/react-imports": "error",
     "arkyvree/icons": "error",
     "arkyvree/jsx-conditionals": "error",
+    "arkyvree/jsx-attribute-lines": "error",
     "arkyvree/component-files": "error",
     "arkyvree/hook-files": "error",
     "arkyvree/handler-names": "error",
@@ -112,7 +113,9 @@
     "arkyvree/dot-notation": "error",
     "arkyvree/error-reads": "error",
     "arkyvree/browser-storage": "error",
+    "arkyvree/dirty-forms": "error",
     "arkyvree/date-formats": "error",
+    "arkyvree/demo-reads": "error",
     "arkyvree/navigation": "error",
     "arkyvree/clickable-elements": "error",
     "arkyvree/tooltips": "error",
@@ -232,6 +235,14 @@
         "client/src/components/common/FormDialog.tsx",
         "client/src/components/common/StandardDialogs.tsx"
       ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    // A test reaches the folder's own module it tests (AGENTS.md): a client test runs without a browser, which a
+    // folder's index would load through its components
+    {
+      "files": ["tests/client/**/*.ts"],
       "rules": {
         "no-restricted-imports": "off"
       }

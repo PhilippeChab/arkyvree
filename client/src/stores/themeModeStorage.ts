@@ -1,24 +1,20 @@
 import type { ThemeMode } from "@/client/src/contexts/themeContext.ts";
 
+import { readStored, removeStored, writeStored } from "./browserStorage.ts";
+
 /** The theme mode the browser kept, or "system"; a legacy `darkMode` flag is read once and dropped. */
 export function readThemeMode(): ThemeMode {
-  try {
-    const saved = localStorage.getItem("themeMode");
-    if (saved === "light" || saved === "dark" || saved === "system") return saved;
+  const saved = readStored("local", "themeMode");
+  if (saved === "light" || saved === "dark" || saved === "system") return saved;
 
-    // Migrate legacy darkMode preference
-    const legacyDarkMode = localStorage.getItem("darkMode");
-    if (legacyDarkMode !== null) {
-      localStorage.removeItem("darkMode");
-      return JSON.parse(legacyDarkMode) === true ? "dark" : "light";
-    }
-  } catch {
-    // Ignore corrupted localStorage
-  }
-  return "system";
+  // Migrate legacy darkMode preference
+  const legacyDarkMode = readStored("local", "darkMode");
+  if (legacyDarkMode === null) return "system";
+  removeStored("local", "darkMode");
+  return legacyDarkMode === "true" ? "dark" : "light";
 }
 
-/** Keeps the theme mode the user chose. */
+/** Keeps the theme mode the user chose, where the browser keeps anything. */
 export function saveThemeMode(mode: ThemeMode) {
-  localStorage.setItem("themeMode", mode);
+  writeStored("local", "themeMode", mode);
 }

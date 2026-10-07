@@ -74,10 +74,19 @@ describe("feedback rules", () => {
             'export const a = <Menu open anchorOrigin={{ vertical: "bottom", horizontal: "right" }}><Divider /></Menu>;\n',
           "client/src/delete.tsx":
             'export const d = <ActionMenuItem icon={DeleteIcon} label="Delete" onClick={go} />;\n',
+          "client/src/restorable.tsx":
+            'export const r = <ActionMenuItem icon={DeleteIcon} label={restorable ? "Delete" : "Delete Permanently"} onClick={go} />;\n',
+          "client/src/either.tsx":
+            'export const e = <ActionMenuItem icon={DeleteIcon} label={restorable ? "Delete" : "Remove"} onClick={go} />;\n',
         },
         ["menus"],
       ),
-    ).toEqual(["menus client/src/anchored.tsx", "menus client/src/delete.tsx", "menus client/src/wide.tsx"]);
+    ).toEqual([
+      "menus client/src/anchored.tsx",
+      "menus client/src/delete.tsx",
+      "menus client/src/either.tsx",
+      "menus client/src/wide.tsx",
+    ]);
   });
 
   test("a button that starts a request shows it running", async () => {

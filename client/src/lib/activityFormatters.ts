@@ -1,21 +1,34 @@
 import type { ChangedField } from "@/shared/activity.ts";
+import { formatOperator } from "@/shared/customization/operators.ts";
+import { formatPropertyType } from "@/shared/customization/properties.ts";
+import { formatSegment } from "@/shared/customization/target.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
-import { getActivityLabelOverrides } from "./rulesetLabels.ts";
+import { entityTypeLabel, getActivityLabelOverrides } from "./rulesetLabels.ts";
 
+/** A ruleset entity's change, as its notification says it: its verb, by the type's (`createFeat`) */
+const CONTENT_CHANGES: Record<string, string> = { create: "created", delete: "deleted", update: "updated" };
+
+/** The ruleset entities a change's notification names by their word, by their name in its type (`createKlass`) */
+const CONTENT_ENTITY_TYPES: Record<string, string> = {
+  Aptitude: "aptitudes",
+  Feat: "feats",
+  Item: "items",
+  Klass: "klasses",
+  Language: "languages",
+  Mechanic: "mechanics",
+  Power: "powers",
+  Race: "races",
+  Save: "saves",
+  Skill: "skills",
+};
+
+/** The changed fields whose name doesn't read as their label (`formatSegment`'s "Hd") */
 const FIELD_LABELS: Record<string, string> = {
-  name: "Name",
-  description: "Description",
-  type: "Type",
-  slot: "Slot",
-  weight: "Weight",
-  costGp: "Cost (gp)",
-  hd: "Hit die",
-  size: "Size",
-  baseSpeed: "Base speed",
-  primaryAbilityId: "Primary ability",
   abilityId: "Ability",
-  saveEffect: "Save effect",
+  costGp: "Cost (gp)",
+  hd: "Hit Die",
+  primaryAbilityId: "Primary Ability",
   saveId: "Save",
 };
 
@@ -44,17 +57,7 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   revokeCharacterContributor: (actor, d) => `${actor} revoked your access to ${d.characterName || "a character"}`,
   leaveCharacter: (actor, d) => `${actor} stopped contributing to ${d.characterName || "your character"}`,
 
-  // Ruleset content — create
-  createFeat: (actor, d) => `${actor} created feat ${d.entityName || ""}`.trim(),
-  createPower: (actor, d) => `${actor} created spell ${d.entityName || ""}`.trim(),
-  createKlass: (actor, d) => `${actor} created class ${d.entityName || ""}`.trim(),
-  createItem: (actor, d) => `${actor} created item ${d.entityName || ""}`.trim(),
-  createRace: (actor, d) => `${actor} created race ${d.entityName || ""}`.trim(),
-  createSkill: (actor, d) => `${actor} created skill ${d.entityName || ""}`.trim(),
-  createSave: (actor, d) => `${actor} created save ${d.entityName || ""}`.trim(),
-  createMechanic: (actor, d) => `${actor} created mechanic ${d.entityName || ""}`.trim(),
-  createLanguage: (actor, d) => `${actor} created language ${d.entityName || ""}`.trim(),
-  createAptitude: (actor, d) => `${actor} created aptitude ${d.entityName || ""}`.trim(),
+  // Ruleset content beside an entity's own change (`contentChange`): class levels and skills, customizations — create
   createKlassLevel: (actor, d) => `${actor} added a level to ${d.entityName || "a class"}`,
   addKlassSkill: (actor, d) => `${actor} added ${d.skillName || "a skill"} to ${d.entityName || "a class"}`,
   createModifier: (actor, d) => `${actor} added a modifier to ${d.entityName || "an entity"}`,
@@ -62,32 +65,12 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   createProperty: (actor, d) => `${actor} added a property to ${d.entityName || "an entity"}`,
 
   // Ruleset content — update
-  updateFeat: (actor, d) => `${actor} updated feat ${d.entityName || ""}`.trim(),
-  updatePower: (actor, d) => `${actor} updated spell ${d.entityName || ""}`.trim(),
-  updateKlass: (actor, d) => `${actor} updated class ${d.entityName || ""}`.trim(),
-  updateItem: (actor, d) => `${actor} updated item ${d.entityName || ""}`.trim(),
-  updateRace: (actor, d) => `${actor} updated race ${d.entityName || ""}`.trim(),
-  updateSkill: (actor, d) => `${actor} updated skill ${d.entityName || ""}`.trim(),
-  updateSave: (actor, d) => `${actor} updated save ${d.entityName || ""}`.trim(),
-  updateMechanic: (actor, d) => `${actor} updated mechanic ${d.entityName || ""}`.trim(),
-  updateLanguage: (actor, d) => `${actor} updated language ${d.entityName || ""}`.trim(),
-  updateAptitude: (actor, d) => `${actor} updated aptitude ${d.entityName || ""}`.trim(),
   updateKlassLevel: (actor, d) => `${actor} updated a level of ${d.entityName || "a class"}`,
   updateModifier: (actor, d) => `${actor} updated a modifier on ${d.entityName || "an entity"}`,
   updateRequirement: (actor, d) => `${actor} updated a requirement on ${d.entityName || "an entity"}`,
   updateProperty: (actor, d) => `${actor} updated a property on ${d.entityName || "an entity"}`,
 
   // Ruleset content — delete
-  deleteFeat: (actor, d) => `${actor} deleted feat ${d.entityName || ""}`.trim(),
-  deletePower: (actor, d) => `${actor} deleted spell ${d.entityName || ""}`.trim(),
-  deleteKlass: (actor, d) => `${actor} deleted class ${d.entityName || ""}`.trim(),
-  deleteItem: (actor, d) => `${actor} deleted item ${d.entityName || ""}`.trim(),
-  deleteRace: (actor, d) => `${actor} deleted race ${d.entityName || ""}`.trim(),
-  deleteSkill: (actor, d) => `${actor} deleted skill ${d.entityName || ""}`.trim(),
-  deleteSave: (actor, d) => `${actor} deleted save ${d.entityName || ""}`.trim(),
-  deleteMechanic: (actor, d) => `${actor} deleted mechanic ${d.entityName || ""}`.trim(),
-  deleteLanguage: (actor, d) => `${actor} deleted language ${d.entityName || ""}`.trim(),
-  deleteAptitude: (actor, d) => `${actor} deleted aptitude ${d.entityName || ""}`.trim(),
   deleteKlassLevel: (actor, d) => `${actor} removed a level from ${d.entityName || "a class"}`,
   removeKlassSkill: (actor, d) => `${actor} removed ${d.skillName || "a skill"} from ${d.entityName || "a class"}`,
   deleteModifier: (actor, d) => `${actor} removed a modifier from ${d.entityName || "an entity"}`,
@@ -99,8 +82,21 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   pdfFailed: (_actor, d) => `PDF generation failed for ${d.characterName || "your character"}`,
 };
 
+/** The base rules an activity's ruleset follows, when it says */
+function baseRulesOf(d: Record<string, unknown>) {
+  return typeof d.baseRules === "string" ? d.baseRules : undefined;
+}
+
+/** A ruleset entity's create, update or delete, named in its ruleset's word ("Ann created spell Fireball"). */
+function contentChange(type: string, actor: string, d: Record<string, unknown>) {
+  const [, verb = "", name = ""] = /^([a-z]+)([A-Z]\w*)$/.exec(type) ?? [];
+  if (!Object.hasOwn(CONTENT_CHANGES, verb) || !Object.hasOwn(CONTENT_ENTITY_TYPES, name)) return undefined;
+  const word = entityTypeLabel(CONTENT_ENTITY_TYPES[name], baseRulesOf(d)).toLowerCase();
+  return `${actor} ${CONTENT_CHANGES[verb]} ${word} ${d.entityName || ""}`.trim();
+}
+
 function formatChange(change: ChangedField): string {
-  const label = FIELD_LABELS[change.field] ?? change.field;
+  const label = FIELD_LABELS[change.field] ?? formatSegment(change.field);
   if (change.from == null && change.to == null) return `${label} updated`;
 
   if (change.from && change.to) return `${label}: ${change.from} → ${change.to}`;
@@ -119,7 +115,8 @@ function payload(data: unknown): Record<string, unknown> {
   return isRecord(data) ? data : {};
 }
 
-export function formatActivityDetails(data: unknown): string | null {
+/** What an activity of `type` changed: its fields, its level, its modifier's or requirement's change, its property. */
+export function formatActivityDetails(type: string, data: unknown): string | null {
   const d = payload(data);
   const parts: string[] = [];
 
@@ -128,24 +125,25 @@ export function formatActivityDetails(data: unknown): string | null {
 
   if (d.level != null) parts.push(`Level ${d.level}`);
 
-  // Modifier details
-  if (d.target && d.operator) parts.push(`${d.operator} ${d.value ?? ""} on ${d.target}`.trim());
+  // A modifier's or a requirement's change
+  if (d.target && typeof d.operator === "string" && d.operator) {
+    const operator = formatOperator(type.endsWith("Requirement") ? "requirement" : "modifier", d.operator);
+    parts.push(`${operator}${d.value ? ` ${d.value}` : ""} on ${d.target}`);
+  }
 
   // Property details
   if (typeof d.propertyType === "string" && d.propertyType)
-    parts.push(`${FIELD_LABELS[d.propertyType] ?? d.propertyType}: ${d.value ?? ""}`);
+    parts.push(`${formatPropertyType(d.propertyType)}: ${d.value ?? ""}`);
 
   return parts.length > 0 ? parts.join("\n") : null;
 }
 
+/** An activity's type as a label, in its ruleset's words ("createKlass" → "Create Class"), with the entity it names. */
 export function formatActivityType(type: string, data?: unknown): string {
-  let formatted = type.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
-
   const d = payload(data);
-  if (typeof d.baseRules === "string") {
-    const overrides = getActivityLabelOverrides(d.baseRules);
-    for (const [generic, specific] of Object.entries(overrides)) formatted = formatted.replaceAll(generic, specific);
-  }
+  let formatted = formatSegment(type);
+  for (const [code, word] of Object.entries(getActivityLabelOverrides(baseRulesOf(d))))
+    formatted = formatted.replace(new RegExp(`\\b${code}\\b`, "g"), word);
 
   if (d.entityName) formatted += `: ${d.entityName}`;
 
@@ -158,6 +156,8 @@ export function formatNotificationMessage(type: string, data: unknown): string {
 
   const formatter = NOTIFICATION_MESSAGES[type];
   if (formatter) return formatter(actorName, d);
+  const change = contentChange(type, actorName, d);
+  if (change) return change;
 
   const typeFormatted = formatActivityType(type, data).toLowerCase();
   return `${actorName}: ${typeFormatted}`;

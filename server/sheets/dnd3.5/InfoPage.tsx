@@ -1,7 +1,12 @@
 import { Image, Page, Text, View } from "@react-pdf/renderer";
 
 import { type Dnd35DetailedCharacter } from "@/engine/rulesets/dnd3.5/index.ts";
-import { buildAttackRows, describeWeaponSlot } from "@/shared/dnd3.5/weaponAttacks.ts";
+import {
+  buildAttackRows,
+  describeWeaponSlot,
+  formatAttackBonus,
+  formatCritical,
+} from "@/shared/dnd3.5/weaponAttacks.ts";
 
 import { formatModifier } from "./format.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
@@ -284,12 +289,10 @@ function InfoPage({
                             </Text>
                           )}
                         </View>
-                        <Text style={[styles.tableCell, { width: "18%" }]}>
-                          {row.attack.map(formatModifier).join("/")}
-                        </Text>
+                        <Text style={[styles.tableCell, { width: "18%" }]}>{formatAttackBonus(row.attack)}</Text>
                         <Text style={[styles.tableCell, { width: "18%" }]}>{row.damage ?? weapon!.damage.total}</Text>
                         <Text style={[styles.tableCell, { width: "13%" }]}>
-                          {21 - weapon!.damage.critical.range}/x{weapon!.damage.critical.multiplier}
+                          {formatCritical(weapon!.damage.critical)}
                         </Text>
                         <Text style={[styles.tableCell, { width: "11%" }]}>{row.range}</Text>
                         <Text style={[styles.tableCell, { width: "13%" }]}>{weapon!.damage.types.join(", ")}</Text>

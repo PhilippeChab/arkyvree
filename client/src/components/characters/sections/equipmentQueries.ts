@@ -18,7 +18,7 @@ export function characterInventoryQuery(characterId: string) {
 /** A ruleset item's details, which its placement profile reads; skipped until an item is picked. */
 export function rulesetItemQuery(rulesetId: string, itemId: string | undefined) {
   return queryOptions({
-    queryKey: QUERY_KEYS.characters.rulesetItem(rulesetId, itemId ?? ""),
+    queryKey: QUERY_KEYS.rulesets.item(rulesetId, itemId ?? ""),
     queryFn: itemId
       ? () => parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId } }))
       : skipToken,
@@ -28,7 +28,7 @@ export function rulesetItemQuery(rulesetId: string, itemId: string | undefined) 
 /** The ruleset's items the add dialog offers, filtered by what's typed. */
 export function rulesetItemSearchQuery(rulesetId: string, search: string) {
   return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.characters.itemSearch(rulesetId, search),
+    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "items", search),
     queryFn: ({ pageParam }) =>
       parseResponse(
         rpc.api.rulesets[":id"].items.$get({
