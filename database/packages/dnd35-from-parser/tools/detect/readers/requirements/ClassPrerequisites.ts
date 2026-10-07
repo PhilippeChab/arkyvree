@@ -1,11 +1,11 @@
-import {
-  RACE_NAME_PATH,
-  RACE_SIZE_PATH,
-  SKILL_SLUGS,
-  toSkillSlug,
-} from "@/database/packages/dnd35-from-parser/tools/detect/vocabulary.ts";
 import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import {
+  RACE_NAME_PATH,
+  RACE_NAMES,
+  RACE_SIZE_PATH,
+} from "@/database/packages/dnd35-from-parser/tools/vocabulary/races.ts";
+import { SKILL_SLUGS, toSkillSlug } from "@/database/packages/dnd35-from-parser/tools/vocabulary/skills.ts";
 import { domainFeat } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
@@ -20,18 +20,6 @@ import { readAnySkillRequirement } from "./skills.ts";
 
 /** Skills that exist in D&D 3.5 but aren't tracked in this system. */
 const NON_TRACKABLE_SKILLS = new Set(["speak language"]);
-
-const RACE_NAMES: Record<string, string> = {
-  elf: "Elf",
-  "half-elf": "Half-Elf",
-  halfelf: "Half-Elf",
-  dwarf: "Dwarf",
-  gnome: "Gnome",
-  halfling: "Halfling",
-  human: "Human",
-  "half-orc": "Half-Orc",
-  halforc: "Half-Orc",
-};
 
 /** A compound feat requirement: "Weapon Focus (longbow or shortbow)". */
 function compoundFeatRequirement(text: string): RequirementEntry | undefined {

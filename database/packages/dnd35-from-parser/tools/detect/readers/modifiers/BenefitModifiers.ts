@@ -1,4 +1,4 @@
-import { SAVE_SLUGS } from "@/database/packages/dnd35-from-parser/tools/detect/vocabulary.ts";
+import { SAVE_SLUGS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/saves.ts";
 import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 
 import { BonusText } from "./BonusText.ts";

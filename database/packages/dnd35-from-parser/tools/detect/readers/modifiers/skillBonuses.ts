@@ -1,4 +1,4 @@
-import { SKILL_SLUGS } from "@/database/packages/dnd35-from-parser/tools/detect/vocabulary.ts";
+import { SKILL_SLUGS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/skills.ts";
 
 /** A skill bonus a text gives: its skill's slug, or none when the name isn't a skill (`name`), and where it was read. */
 export type SkillBonus = { index: number; name: string; slug: string | undefined; value: string };

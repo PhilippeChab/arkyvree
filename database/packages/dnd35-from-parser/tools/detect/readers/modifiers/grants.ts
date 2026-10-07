@@ -3,7 +3,7 @@
  * names.
  */
 
-import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
+import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/numbers.ts";
 import { bonus, setFlag } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
 

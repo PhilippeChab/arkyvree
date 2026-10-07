@@ -2,22 +2,10 @@
 
 import { sanitizeText } from "./sanitize.ts";
 
+/** The longest a description is kept, in characters. */
+const MAX_DESC = 2000;
+
 const WEAPON_DESC_PATTERNS = [/the selected weapon/gi, /selected weapon/gi, /the weapon you selected/gi];
-
-export const MAX_DESC = 2000;
-
-export const NUMBER_WORDS: Record<string, number> = {
-  one: 1,
-  two: 2,
-  three: 3,
-  four: 4,
-  five: 5,
-  six: 6,
-  seven: 7,
-  eight: 8,
-  nine: 9,
-  ten: 10,
-};
 
 /**
  * The separator a scraped text keeps between its parts (a race's traits): U+2063 INVISIBLE SEPARATOR, which

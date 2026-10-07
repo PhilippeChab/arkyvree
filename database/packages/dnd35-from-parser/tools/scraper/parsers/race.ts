@@ -17,12 +17,11 @@ import * as cheerio from "cheerio";
 import { normalizeWs, PART_SEPARATOR } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
+import { ABILITY_NAMES } from "@/database/packages/dnd35-from-parser/tools/vocabulary/abilities.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
 
 import { buildFrameHeading } from "./frame.ts";
 import { findSectionElements, getPageTitle, getTagName } from "./page.ts";
-
-const ABILITY_NAMES = new Set(["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]);
 
 /** dndtools' Django ids of the sizes, for its "RaceSize object (N)" rendering: the site's keys, not ours. */
 const DNDTOOLS_SIZE_IDS: Record<string, SizeType> = {
@@ -116,7 +115,7 @@ export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] 
       size = parseSize(valueText);
     } else if (/base speed/i.test(label)) {
       baseSpeed = parseSpeed(valueText);
-    } else if (ABILITY_NAMES.has(label)) {
+    } else if (ABILITY_NAMES.includes(label)) {
       const value = parseAbilityValue(valueText);
       if (value !== 0) abilityAdjustments.push({ ability: label, value });
     } else if (/^favored class/i.test(label)) {

@@ -24,6 +24,8 @@ import { type Element, isText } from "domhandler";
 
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
+import { SPELL_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import { capitalize } from "@/shared/text.ts";
 
 import { getPageTitle } from "./page.ts";
@@ -40,18 +42,6 @@ const STAT_LABEL_PREFIXES = [
   "Saving Throw:",
   "Spell Resistance:",
 ];
-
-const VALID_SCHOOLS = new Set([
-  "Abjuration",
-  "Conjuration",
-  "Divination",
-  "Enchantment",
-  "Evocation",
-  "Illusion",
-  "Necromancy",
-  "Transmutation",
-  "Universal",
-]);
 
 function isStatLabel(text: string): boolean {
   return STAT_LABEL_PREFIXES.some((p) => text.startsWith(p));
@@ -194,7 +184,7 @@ export function parseSpellDetailHtml(html: string, sourceUrl: string): SpellRefe
     if (desc && !/^see text/i.test(desc)) descriptors.push(desc);
   }
 
-  if (!VALID_SCHOOLS.has(school)) return null;
+  if (!isOneOf(school, SPELL_SCHOOLS)) return null;
 
   // Parse stat fields — <strong>Label:</strong> Value or <b>Label:</b> Value
   const stats = parseStatFields($);

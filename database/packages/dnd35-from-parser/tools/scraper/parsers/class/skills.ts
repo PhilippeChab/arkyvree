@@ -3,26 +3,15 @@
 import type * as cheerio from "cheerio";
 
 import { findSectionElements, getTagName } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { KNOWLEDGE_SKILLS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/skills.ts";
 
 import { capitalizeTitle } from "./capitalizeTitle.ts";
 import { findSectionHeader } from "./sections.ts";
 
-/** Known Knowledge subspecialties for expansion */
-const KNOWLEDGE_SUBSPECIALTIES: Record<string, string> = {
-  arcana: "Knowledge (Arcana)",
-  "architecture and engineering": "Knowledge (Architecture and Engineering)",
-  dungeoneering: "Knowledge (Dungeoneering)",
-  geography: "Knowledge (Geography)",
-  history: "Knowledge (History)",
-  local: "Knowledge (Local)",
-  nature: "Knowledge (Nature)",
-  "nobility and royalty": "Knowledge (Nobility and Royalty)",
-  psionics: "Knowledge (Psionics)",
-  religion: "Knowledge (Religion)",
-  "the planes": "Knowledge (The Planes)",
-};
-
-const ALL_KNOWLEDGE = Object.values(KNOWLEDGE_SUBSPECIALTIES);
+/** A Knowledge skill by its subspecialty, lowercased ("the planes" → "Knowledge (The Planes)"). */
+const KNOWLEDGE_SUBSPECIALTIES: Record<string, string> = Object.fromEntries(
+  KNOWLEDGE_SKILLS.map((name) => [name.slice("Knowledge (".length, -1).toLowerCase(), name]),
+);
 
 export function parseClassSkills($: cheerio.CheerioAPI): string[] {
   const skills: string[] = [];
@@ -49,7 +38,7 @@ export function parseClassSkills($: cheerio.CheerioAPI): string[] {
           if (subMatch) {
             const sub = subMatch[1].toLowerCase().trim();
             if (/^all\b/i.test(sub)) {
-              skills.push(...ALL_KNOWLEDGE);
+              skills.push(...KNOWLEDGE_SKILLS);
             } else {
               const mapped = KNOWLEDGE_SUBSPECIALTIES[sub];
               skills.push(mapped ?? `Knowledge (${capitalizeTitle(sub)})`);
@@ -63,7 +52,7 @@ export function parseClassSkills($: cheerio.CheerioAPI): string[] {
               const mapped = KNOWLEDGE_SUBSPECIALTIES[sub];
               skills.push(mapped ?? `Knowledge (${capitalizeTitle(sub)})`);
             } else {
-              skills.push(...ALL_KNOWLEDGE);
+              skills.push(...KNOWLEDGE_SKILLS);
             }
           }
         } else {
