@@ -1,4 +1,4 @@
-import type { SkillFlags } from "@/server/rulesets/engine/hooks/index.ts";
+import type { SkillFlags } from "@/server/rulesets/engine/module/index.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,

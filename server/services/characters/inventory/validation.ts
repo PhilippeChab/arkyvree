@@ -53,8 +53,8 @@ async function validateEquipmentSlot(
 
   // A two-handed weapon needs both hands
   if (isHandLocation(location)) {
-    const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-    await hooks.inventory.validateWeaponHands(tx, rulesetData, item.id, location);
+    const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    rules.inventory.validateWeaponHands(rulesetData, item.id, location);
   }
 }
 
@@ -100,7 +100,7 @@ async function validateWeaponInOneHand(
 ) {
   if (item.type !== "Weapon" || !isHandLocation(location) || location === "Two Handed") return;
   const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-  if (!rulesetModule.hooks.inventory.isUnwieldyInOneHand(rulesetData, item.id)) return;
+  if (!rulesetModule.rules.inventory.isUnwieldyInOneHand(rulesetData, item.id)) return;
 
   // Its proficiency: its template's requirements, or its own when it's a template (`DetailedCharacterDataLoader`)
   const isTemplate = rulesetData.itemsById.get(item.id)?.isTemplate ?? false;

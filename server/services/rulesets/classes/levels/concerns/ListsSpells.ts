@@ -12,7 +12,7 @@ export function ListsSpells<B extends Constructor>(Base: B) {
         const { sourceChain } = rulesetData.cow;
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
         const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
         const modifiers: Modifier[] = [];
         for (const level of levels) {
@@ -20,7 +20,7 @@ export function ListsSpells<B extends Constructor>(Base: B) {
           if (ms) modifiers.push(...ms);
         }
 
-        return hooks.classLevels.enrichWithSpellsPerDay(levels, modifiers);
+        return rules.classLevels.enrichWithSpellsPerDay(levels, modifiers);
       });
     }
 
@@ -29,7 +29,7 @@ export function ListsSpells<B extends Constructor>(Base: B) {
         const { sourceChain } = rulesetData.cow;
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
         const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
         const modifiers: Modifier[] = [];
         for (const level of levels) {
@@ -37,7 +37,7 @@ export function ListsSpells<B extends Constructor>(Base: B) {
           if (ms) modifiers.push(...ms);
         }
 
-        return hooks.classLevels.enrichWithSpellsKnown(levels, modifiers);
+        return rules.classLevels.enrichWithSpellsKnown(levels, modifiers);
       });
     }
 
@@ -46,8 +46,8 @@ export function ListsSpells<B extends Constructor>(Base: B) {
       return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-        return hooks.classLevels.getSpellListIds(rulesetData, klass.id).flatMap((listId) => {
+        const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+        return rules.classLevels.getSpellListIds(rulesetData, klass.id).flatMap((listId) => {
           const list = rulesetData.aptitudesById.get(listId);
           return list ? [{ id: list.id, name: list.name }] : [];
         });

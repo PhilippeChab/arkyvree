@@ -158,7 +158,7 @@ export async function getAttributeSlots(
   // totalLevel = number of levels before this one (so totalLevel+1 = the level being added/edited)
   const totalLevel = characterLevels.length - excludeIds.length + (pendingLevelCount ?? 0);
 
-  if (!rulesetModule.hooks.levels.isAbilityIncreaseLevel(totalLevel)) {
+  if (!rulesetModule.rules.levels.isAbilityIncreaseLevel(totalLevel)) {
     return {
       isAvailable: false,
       attributes: {},

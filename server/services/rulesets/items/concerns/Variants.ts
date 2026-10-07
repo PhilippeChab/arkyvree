@@ -52,8 +52,8 @@ export function Variants<B extends Constructor>(Base: B) {
 
           const source = findScopedEntity(rulesetData.itemsById, sourceItemId, rulesetId, sourceChain, "Source item");
 
-          const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-          const slot = hooks.items.resolveSlot(source.type, source.slot);
+          const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+          const slot = rules.items.resolveSlot(source.type, source.slot);
 
           // Batched pre-validation: one query for local conflicts, one for
           // ancestor conflicts, then the shared visibility / tombstone check

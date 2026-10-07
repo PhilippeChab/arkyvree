@@ -57,12 +57,12 @@ class ItemsService extends include(Object, Variants) {
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
         const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "items", body.name);
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
         const rows = await Items.create(tx, {
           name: body.name,
           description: body.description,
           type: body.type,
-          slot: hooks.items.resolveSlot(body.type, body.slot),
+          slot: rules.items.resolveSlot(body.type, body.slot),
           rulesetId,
           weight: body.weight?.toString(),
           costGp: body.costGp?.toString(),
@@ -207,8 +207,8 @@ class ItemsService extends include(Object, Variants) {
         const { id: targetId, copied } = await edit.cowToEdit(tx, "items", item);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-        const slot = hooks.items.resolveSlot(body.type, body.slot);
+        const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+        const slot = rules.items.resolveSlot(body.type, body.slot);
         const rows = await Items.update(
           tx,
           {

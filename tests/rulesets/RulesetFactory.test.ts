@@ -15,10 +15,17 @@ describe("RulesetFactory", () => {
 
   test("builds the D&D 3.5 module", () => {
     const module = RulesetFactory.fromBaseRules("Dungeons & Dragons: 3.5");
-    expect(module.hooks).toBeDefined();
+    expect(module.rules).toBeDefined();
+    expect(module.effects).toBeDefined();
     expect(module.createDetailedCharacter).toBeFunction();
     expect(module.createDetailedCharacterWithSheet).toBeFunction();
     expect(module.createTargetPaths).toBeFunction();
     expect(module.createPropertyTypes).toBeFunction();
+  });
+
+  test("builds each base rules' module once, with fresh characters and paths on each call", () => {
+    const module = RulesetFactory.fromBaseRules("Dungeons & Dragons: 3.5");
+    expect(RulesetFactory.fromBaseRules("Dungeons & Dragons: 3.5")).toBe(module);
+    expect(module.createTargetPaths()).not.toBe(module.createTargetPaths());
   });
 });

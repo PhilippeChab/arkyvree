@@ -98,7 +98,7 @@ class ClassesService {
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const properties = rulesetData.propertiesByEntity.get(klass.id) ?? [];
       const { bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId } =
-        rulesetModule.hooks.classes.readClassProperties(properties);
+        rulesetModule.rules.classes.readClassProperties(properties);
 
       return { ...klass, bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId };
     });

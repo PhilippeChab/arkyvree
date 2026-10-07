@@ -1,19 +1,10 @@
+import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { PowerBody, PowersHooks } from "@/server/rulesets/engine/hooks/index.ts";
-import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import type { PowerBody, PowersEffects } from "@/server/rulesets/engine/module/index.ts";
 
-import {
-  generateSpellFocusFeats,
-  generateSpellProperties,
-  SPELL_FIELD_PROPERTY_TYPES,
-  type SpellFields,
-} from "./spellGenerator.ts";
+import { generateSpellFocusFeats, generateSpellProperties, type SpellFields } from "./spellGenerator.ts";
 
-export class Dnd35PowersHooks implements PowersHooks {
-  readonly primaryGroupingType = SPELL_SCHOOL;
-
-  readonly generatedPropertyTypes = SPELL_FIELD_PROPERTY_TYPES;
-
+export class Dnd35PowersEffects implements PowersEffects {
   private extractSpellFields(body: PowerBody): SpellFields | null {
     if (typeof body.school !== "string" || body.school.length === 0) return null;
     return {
@@ -30,12 +21,8 @@ export class Dnd35PowersHooks implements PowersHooks {
     };
   }
 
-  extractGroupingValue(body: PowerBody): string | null {
-    return typeof body.school === "string" && body.school.length > 0 ? body.school : null;
-  }
-
-  async generateGroupingFeats(tx: Db, rulesetId: string, sourceChain: string[], value: string): Promise<void> {
-    await generateSpellFocusFeats(tx, rulesetId, sourceChain, value);
+  async generateGroupingFeats(tx: Db, scope: RulesetScope, value: string): Promise<void> {
+    await generateSpellFocusFeats(tx, scope.ruleset.id, scope.rulesetData.cow.sourceChain, value);
   }
 
   async generateProperties(tx: Db, powerId: string, body: PowerBody): Promise<void> {

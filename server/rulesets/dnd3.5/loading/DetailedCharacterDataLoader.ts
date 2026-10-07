@@ -19,7 +19,7 @@ import PowersPaths from "@/server/rulesets/dnd3.5/powers/PowersPaths.ts";
 import { readSkillFlags } from "@/server/rulesets/dnd3.5/skills/skillFlags.ts";
 import { collectClassListIds, collectFeatListIds } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
-import type { SkillFlags } from "@/server/rulesets/engine/hooks/index.ts";
+import type { SkillFlags } from "@/server/rulesets/engine/module/index.ts";
 import type {
   FeatWithPMR,
   InventoryEntry,

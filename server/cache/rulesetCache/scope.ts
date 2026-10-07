@@ -5,6 +5,12 @@ import { Rulesets } from "@/server/repositories/index.ts";
 import RulesetCache from "./RulesetCache.ts";
 import type RulesetData from "./RulesetData.ts";
 
+/** A ruleset and its view: what `withRulesetScope` hands its callback, and what an effect of the ruleset runs in. */
+export type RulesetScope = {
+  ruleset: NonNullable<Awaited<ReturnType<typeof Rulesets.findOne>>>;
+  rulesetData: RulesetData;
+};
+
 /**
  * Scope helper: loads the ruleset and its view (`RulesetCache.getData`), and runs `fn` inside a
  * cowContext so every repository read inside auto-resolves pre-COW ids to
@@ -19,10 +25,7 @@ import type RulesetData from "./RulesetData.ts";
 export async function withRulesetScope<T>(
   tx: Db,
   rulesetId: string,
-  fn: (ctx: {
-    ruleset: NonNullable<Awaited<ReturnType<typeof Rulesets.findOne>>>;
-    rulesetData: RulesetData;
-  }) => Promise<T>,
+  fn: (ctx: RulesetScope) => Promise<T>,
 ): Promise<T> {
   const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
   if (!ruleset) throw new NotFoundError("Ruleset not found");

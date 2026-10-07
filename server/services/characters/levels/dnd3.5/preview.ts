@@ -24,7 +24,7 @@ type PowerPools = ReturnType<AptitudesComponent["extractPowerPools"]>;
 function abilityIncreaseLevels(rulesetModule: RulesetModule, existingCount: number, plannedCount: number) {
   const levels: number[] = [];
   for (let i = 0; i < plannedCount; i++) {
-    if (rulesetModule.hooks.levels.isAbilityIncreaseLevel(existingCount + i)) {
+    if (rulesetModule.rules.levels.isAbilityIncreaseLevel(existingCount + i)) {
       levels.push(i);
     }
   }

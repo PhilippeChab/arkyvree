@@ -1,8 +1,6 @@
 import type { Db } from "@/server/database/index.ts";
-import { Properties } from "@/server/repositories/index.ts";
 import type { CharacterKind, DetailedCharacterWithSheet, RulesetModule } from "@/server/rulesets/engine/types.ts";
-import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
-import type { Character as CharacterRecord, Property } from "@/shared/relations.ts";
+import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import Dnd35DetailedCharacterAnimalCompanion from "./bonded/DetailedCharacterAnimalCompanion.ts";
 import type Dnd35DetailedCharacterBonded from "./bonded/DetailedCharacterBonded.ts";
@@ -10,11 +8,20 @@ import Dnd35DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.t
 import Dnd35DetailedCharacterMount from "./bonded/DetailedCharacterMount.ts";
 import Dnd35DetailedCharacter from "./character/DetailedCharacter.ts";
 import Dnd35LevelUpProjector from "./character/Dnd35LevelUpProjector.ts";
+import { Dnd35ClassesRules } from "./classes/Dnd35ClassesRules.ts";
+import { Dnd35ClassLevelsEffects } from "./classes/Dnd35ClassLevelsEffects.ts";
+import { Dnd35ClassLevelsRules } from "./classes/Dnd35ClassLevelsRules.ts";
 import Dnd35PropertyTypes from "./Dnd35PropertyTypes.ts";
 import Dnd35TargetPaths from "./Dnd35TargetPaths.ts";
+import { Dnd35InventoryRules } from "./items/Dnd35InventoryRules.ts";
+import { Dnd35ItemsRules } from "./items/Dnd35ItemsRules.ts";
 import { seedTemplateItems } from "./items/seedTemplateItems.ts";
-import { createServiceHooks } from "./serviceHooks.ts";
+import { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
+import { Dnd35PowersEffects } from "./powers/Dnd35PowersEffects.ts";
+import { Dnd35PowersRules } from "./powers/Dnd35PowersRules.ts";
 import Dnd35DetailedCharacterSheet from "./sheet/DetailedCharacterSheet.tsx";
+import { Dnd35SkillsEffects } from "./skills/Dnd35SkillsEffects.ts";
+import { Dnd35SkillsRules } from "./skills/Dnd35SkillsRules.ts";
 
 function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35DetailedCharacterBonded | null {
   switch (kind) {
@@ -29,35 +36,29 @@ function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35Detail
   }
 }
 
-/** The 3.5 rules as a ruleset module: its hooks, characters, sheets and level-ups, paths and properties. */
+/**
+ * The 3.5 rules as a ruleset module: what they answer the services and do in their transactions, characters, sheets
+ * and level-ups, paths and properties.
+ */
 export function createRulesetModule(): RulesetModule {
   return {
-    hooks: createServiceHooks(),
+    rules: {
+      classes: new Dnd35ClassesRules(),
+      classLevels: new Dnd35ClassLevelsRules(),
+      inventory: new Dnd35InventoryRules(),
+      items: new Dnd35ItemsRules(),
+      levels: new Dnd35LevelsRules(),
+      powers: new Dnd35PowersRules(),
+      skills: new Dnd35SkillsRules(),
+    },
+    effects: {
+      classLevels: new Dnd35ClassLevelsEffects(),
+      powers: new Dnd35PowersEffects(),
+      skills: new Dnd35SkillsEffects(),
+    },
 
     async seedTemplateItems(tx: Db, rulesetId: string) {
       await seedTemplateItems(tx, rulesetId);
-    },
-
-    async remapRulesetProperties(
-      tx: Db,
-      sourceProperties: Property[],
-      newRulesetId: string,
-      idMaps: Record<string, Record<string, string>>,
-    ) {
-      const skillPointAbilityProp = sourceProperties.find((p) => p.type === RULESET_SKILL_POINT_ABILITY_ID);
-      if (skillPointAbilityProp) {
-        const newAbilityId = idMaps.abilitiesIdMap?.[skillPointAbilityProp.value];
-        if (newAbilityId) {
-          await Properties.createMany(tx, [
-            {
-              entityId: newRulesetId,
-              entityType: "rulesets",
-              type: RULESET_SKILL_POINT_ABILITY_ID,
-              value: newAbilityId,
-            },
-          ]);
-        }
-      }
     },
 
     createDetailedCharacter(record: CharacterRecord, kind: CharacterKind = "pc") {

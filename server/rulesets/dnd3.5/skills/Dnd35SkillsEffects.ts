@@ -1,19 +1,20 @@
-import type { RulesetData, RulesetSources } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Aptitudes, Feats, FeatsAptitudes, Modifiers, Properties } from "@/server/repositories/index.ts";
-import { NO_SKILL_FLAGS, normalizeSkillFlags, readSkillFlags } from "@/server/rulesets/dnd3.5/skills/skillFlags.ts";
+import { normalizeSkillFlags } from "@/server/rulesets/dnd3.5/skills/skillFlags.ts";
 import SkillsPaths from "@/server/rulesets/dnd3.5/skills/SkillsPaths.ts";
-import type { PropertyRecord, SkillFlags, SkillsHooks } from "@/server/rulesets/engine/hooks/index.ts";
+import type { PropertyRecord } from "@/server/rulesets/dnd3.5/types.ts";
+import type { SkillFlags, SkillsEffects } from "@/server/rulesets/engine/module/index.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
 } from "@/shared/dnd3.5/properties/index.ts";
 
-export class Dnd35SkillsHooks implements SkillsHooks {
-  buildProperties(skillId: string, flags: SkillFlags): PropertyRecord[] {
+export class Dnd35SkillsEffects implements SkillsEffects {
+  private buildProperties(skillId: string, flags: SkillFlags): PropertyRecord[] {
     const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining } = normalizeSkillFlags(flags);
     const property = (type: string, value: string): PropertyRecord => ({
       entityId: skillId,
@@ -31,15 +32,8 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     ];
   }
 
-  enrichWithProperties<T extends { id: string }>(
-    skills: T[],
-    properties: { entityId: string; type: string; value: string }[],
-  ): (T & SkillFlags)[] {
-    const flagsBySkillId = readSkillFlags(properties);
-    return skills.map((skill) => ({ ...skill, ...(flagsBySkillId.get(skill.id) ?? NO_SKILL_FLAGS) }));
-  }
-
-  async deleteSkillFeat(tx: Db, ruleset: RulesetSources, rulesetData: RulesetData, skillName: string): Promise<void> {
+  async deleteSkillFeat(tx: Db, scope: RulesetScope, skillName: string): Promise<void> {
+    const { ruleset, rulesetData } = scope;
     const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
     if (!feat) return;
     if (await hasCharacterPicks(tx, "feats", feat.id, ruleset.id)) {
@@ -56,7 +50,9 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     await Feats.delete(tx, { id: targetId });
   }
 
-  async generateSkillFeat(tx: Db, rulesetId: string, sourceChain: string[], skillName: string): Promise<void> {
+  async generateSkillFeat(tx: Db, scope: RulesetScope, skillName: string): Promise<void> {
+    const rulesetId = scope.ruleset.id;
+    const { sourceChain } = scope.rulesetData.cow;
     let generalAptitude = await Aptitudes.findOne(tx, { name: "General", rulesetId });
     if (!generalAptitude) {
       for (const ancestorId of sourceChain) {

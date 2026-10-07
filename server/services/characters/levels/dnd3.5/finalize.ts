@@ -197,7 +197,7 @@ async function insertPlannedLevels(
     // Validate ability increase timing using base count + plan offset
     const totalLevelCount = baseExistingLevels.length + i;
     checkAbilityIncrease(
-      rulesetModule.hooks.levels.isAbilityIncreaseLevel(totalLevelCount),
+      rulesetModule.rules.levels.isAbilityIncreaseLevel(totalLevelCount),
       abilityId,
       `Level ${i + 1}: `,
     );
@@ -513,7 +513,7 @@ export async function updateLevel(
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
       const levelIndex = sortedLevels.findIndex((l) => l.id === characterLevelId);
-      checkAbilityIncrease(rulesetModule.hooks.levels.isAbilityIncreaseLevel(levelIndex), abilityId);
+      checkAbilityIncrease(rulesetModule.rules.levels.isAbilityIncreaseLevel(levelIndex), abilityId);
       const validationResult = await validateAndFetchLevelSelections(tx, {
         klass,
         klassLevel,

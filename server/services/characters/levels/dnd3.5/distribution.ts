@@ -7,7 +7,7 @@
  */
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { ALLOWED_ALL, Dnd35LevelsHooks, type Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
+import { ALLOWED_ALL, Dnd35LevelsRules, type Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { isRecord } from "@/shared/isRecord.ts";
@@ -285,7 +285,7 @@ function levelDeltas(
   const generalAptId = aptitudeSlugToId.get("general");
   if (generalAptId && perLevelFeatSlots[generalAptId]) {
     const generalDelta =
-      Dnd35LevelsHooks.countGeneralFeats(charLevel) - Dnd35LevelsHooks.countGeneralFeats(charLevel - 1);
+      Dnd35LevelsRules.countGeneralFeats(charLevel) - Dnd35LevelsRules.countGeneralFeats(charLevel - 1);
     if (generalDelta > 0) {
       deltas.feats[generalAptId] = (deltas.feats[generalAptId] ?? 0) + generalDelta;
     }

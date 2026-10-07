@@ -1,14 +1,14 @@
-import { Dnd35LevelsHooks } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsHooks.ts";
+import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 
 import type { BondedRaceStatBlock } from "./bondedRaceData.ts";
 
 /**
  * A creature's feats at its total hit dice: as many as the Monster Manual gives, one at the first hit die and one more
- * every third (`Dnd35LevelsHooks.countGeneralFeats`, a character's general feats' rule). Its stat block's base feats,
+ * every third (`Dnd35LevelsRules.countGeneralFeats`, a character's general feats' rule). Its stat block's base feats,
  * then enough of its `featPriority`, in order, to reach that count.
  */
 export function scaleFeats(stats: BondedRaceStatBlock, totalHD: number): string[] {
-  const count = Dnd35LevelsHooks.countGeneralFeats(Math.max(1, totalHD));
+  const count = Dnd35LevelsRules.countGeneralFeats(Math.max(1, totalHD));
   const base = stats.baseFeats ?? [];
   const priority = stats.featPriority ?? [];
   const extras = priority.slice(0, Math.max(0, count - base.length));
