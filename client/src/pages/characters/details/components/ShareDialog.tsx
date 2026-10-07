@@ -12,7 +12,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
 
-import { DialogFooter, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { DialogFooter, DiceSpinner, InlineConfirm, Modal } from "@/client/src/components/common/index.ts";
 import { CopyIcon, LinkOffIcon, RefreshIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -83,6 +83,16 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
     <Modal open={open} onClose={() => !isLoading && onClose()}>
       <DialogTitle>Share Character Sheet</DialogTitle>
       <DialogContent>
+        <InlineConfirm
+          open={confirmRevoke}
+          cancelLabel="Keep Link"
+          confirmLabel="Revoke"
+          onCancel={() => setConfirmRevoke(false)}
+          onConfirm={() => revokeMutation.mutate()}
+          pending={revokeMutation.isPending}
+        >
+          Revoke this link? Anyone who has it loses access.
+        </InlineConfirm>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {shareUrl ? (
             <>
@@ -119,44 +129,16 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
                     Regenerate
                   </DiceSpinner>
                 </Button>
-                {confirmRevoke ? (
-                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      Are you sure?
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      color="error"
-                      onClick={() => revokeMutation.mutate()}
-                      disabled={isLoading}
-                    >
-                      <DiceSpinner size="small" loading={revokeMutation.isPending}>
-                        Revoke
-                      </DiceSpinner>
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="inherit"
-                      onClick={() => setConfirmRevoke(false)}
-                      disabled={isLoading}
-                    >
-                      Cancel
-                    </Button>
-                  </Stack>
-                ) : (
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="error"
-                    startIcon={<LinkOffIcon />}
-                    onClick={() => setConfirmRevoke(true)}
-                    disabled={isLoading}
-                  >
-                    Revoke Link
-                  </Button>
-                )}
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="error"
+                  startIcon={<LinkOffIcon />}
+                  onClick={() => setConfirmRevoke(true)}
+                  disabled={isLoading}
+                >
+                  Revoke Link
+                </Button>
               </Stack>
             </>
           ) : (

@@ -4,6 +4,9 @@
  * - `dialog-footers`: a dialog's footer is a `DialogFooter` (its way out, then its action or its own steps), never
  *   `DialogActions` written by hand.
  * - `add-buttons`: a button that adds something is an `AddButton`, never a `Button` given the add icon.
+ * - `inline-confirms`: a dialog asking before it loses something asks at its top, an `InlineConfirm` (its way out, then
+ *   its action); a save's rules warnings are a `ValidationIssuesAlert`. No other alert carries actions, and no
+ *   "Are you sure" is written by hand.
  * - `link-buttons`: an action written as a link is a `LinkButton`, never a `MuiLink component="button"`.
  * - `choice-chips`: a chip that is one of several to choose (its look switched by a selection) is a `ChoiceChip`.
  * - `next-page-spinners`: the spinner at the foot of a list that loads its next page as it scrolls is a
@@ -182,6 +185,34 @@ function createFormValidation(context) {
   };
 }
 
+function createInlineConfirms(context) {
+  const file = repoPath(context.filename);
+  const owners = [
+    "client/src/components/common/InlineConfirm.tsx",
+    "client/src/components/common/ValidationIssuesAlert.tsx",
+  ];
+  if (!inClient(context) || owners.includes(file)) return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "AnimatedAlert" || !hasAttribute(node, "action")) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "A dialog asks before a loss with an `InlineConfirm`, and shows a save's rules warnings with a " +
+          "`ValidationIssuesAlert`: no other alert carries actions.",
+      });
+    },
+    JSXText(node) {
+      if (!/\bAre you sure\b/i.test(node.value) || inConfirmation(node)) return;
+      context.report({
+        node,
+        message:
+          "A confirmation is an `InlineConfirm` inside a dialog, a `ConfirmDialog` over a page: never written by hand.",
+      });
+    },
+  };
+}
+
 function createLinkButtons(context) {
   if (!inClient(context) || inFile(context, "client/src/components/common/LinkButton.tsx")) return {};
   return {
@@ -286,6 +317,16 @@ function flips(label) {
   );
 }
 
+/** Whether a text is a confirmation's own: a `ConfirmDialog`'s (`DeleteDialog`'s) `message`, an `InlineConfirm`'s question. */
+function inConfirmation(node) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (p.type === "JSXAttribute" && p.name.name === "message") return true;
+    if (p.type === "JSXElement" && ["ConfirmDialog", "DeleteDialog", "InlineConfirm"].includes(elementName(p)))
+      return true;
+  }
+  return false;
+}
+
 /** Whether the linted file is `file`, the one module the rule leaves the raw pattern to. */
 function inFile(context, file) {
   return repoPath(context.filename) === file;
@@ -305,6 +346,7 @@ export default {
   "dialog-footers": { meta: { type: "suggestion" }, create: createDialogFooters },
   "expand-arrows": { meta: { type: "suggestion" }, create: createExpandArrows },
   "form-validation": { meta: { type: "suggestion" }, create: createFormValidation },
+  "inline-confirms": { meta: { type: "suggestion" }, create: createInlineConfirms },
   "link-buttons": { meta: { type: "suggestion" }, create: createLinkButtons },
   "next-page-spinners": { meta: { type: "suggestion" }, create: createNextPageSpinners },
   "option-tooltips": { meta: { type: "suggestion" }, create: createOptionTooltips },

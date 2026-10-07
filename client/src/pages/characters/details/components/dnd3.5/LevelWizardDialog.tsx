@@ -1,12 +1,12 @@
-import { Button, DialogContent, DialogTitle, Stack, Step, StepLabel, Stepper, Typography } from "@mui/material";
+import { Button, DialogContent, DialogTitle, Stack, Step, StepLabel, Stepper } from "@mui/material";
 import type { ReactNode } from "react";
 
 import {
-  AnimatedAlert,
   DialogFooter,
   DiceSpinner,
+  InlineConfirm,
   Modal,
-  ValidationIssueList,
+  ValidationIssuesAlert,
 } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
@@ -69,58 +69,24 @@ export function LevelWizardDialog({
     >
       <DialogTitle>{title}</DialogTitle>
       <Stack component={DialogContent} sx={{ height: "100%", overflow: "hidden" }}>
-        {/* Cancel confirm */}
-        <AnimatedAlert
-          in={wizard.showCancelConfirm}
-          severity="warning"
-          action={
-            <Stack direction="row" spacing={1}>
-              <Button size="small" onClick={() => wizard.setShowCancelConfirm(false)}>
-                Keep Editing
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                onClick={wizard.handleConfirmCancel}
-                disabled={isSaving}
-              >
-                Discard
-              </Button>
-            </Stack>
-          }
-          gutter={2}
+        <InlineConfirm
+          open={wizard.showCancelConfirm}
+          cancelLabel="Keep Editing"
+          confirmLabel="Discard"
+          onCancel={() => wizard.setShowCancelConfirm(false)}
+          onConfirm={wizard.handleConfirmCancel}
+          pending={isSaving}
         >
           Discard all level-up progress?
-        </AnimatedAlert>
-
-        {/* Validation errors */}
-        <AnimatedAlert
-          in={wizard.validationErrors.length > 0}
-          severity="warning"
+        </InlineConfirm>
+        <ValidationIssuesAlert
+          issues={wizard.validationErrors}
+          title="Validation warnings"
           onClose={() => wizard.setValidationErrors([])}
-          action={
-            <Button
-              size="small"
-              variant="outlined"
-              color="warning"
-              onClick={wizard.handleForceSubmit}
-              disabled={isSaving}
-              sx={{ whiteSpace: "nowrap" }}
-            >
-              Proceed Anyway
-            </Button>
-          }
+          onProceed={wizard.handleForceSubmit}
+          pending={isSaving}
           gutter={2}
-          sx={{ "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 } }}
-        >
-          <Stack spacing={0.5}>
-            <Typography variant="subtitle2" component="h3">
-              Validation warnings
-            </Typography>
-            <ValidationIssueList issues={wizard.validationErrors} />
-          </Stack>
-        </AnimatedAlert>
+        />
 
         <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
           {/* Stepper */}

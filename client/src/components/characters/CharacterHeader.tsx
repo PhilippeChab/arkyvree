@@ -76,7 +76,14 @@ function CharacterNameEditor({ characterId, updatedAt, parentCharacterId, name, 
       variant="standard"
       slotProps={{ htmlInput: { "aria-label": "Character Name", maxLength: 255 } }}
       sx={{
-        "& .MuiInputBase-input": { fontWeight: 700, typography: { xs: "h4", md: "h3" }, textAlign: "center" },
+        // The title's line, its height and no padding: the header keeps its size as the name turns into its field
+        "& .MuiInputBase-input": {
+          fontWeight: 700,
+          typography: { xs: "h4", md: "h3" },
+          textAlign: "center",
+          height: "auto",
+          p: 0,
+        },
       }}
     />
   );
