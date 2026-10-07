@@ -14,7 +14,7 @@ const dnd35CompleteScoundrel: ContentPackage = {
         name: DND35_COMPLETE_SCOUNDREL_NAME,
         description: "Feats, prestige classes, and tricks for scoundrels in D&D 3.5.",
       });
-      await seeder.seedBook(BOOK, CORE.clericSpellLevels);
+      await seeder.seedBook(BOOK, CORE.classes);
     },
   ],
 };

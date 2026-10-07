@@ -21,7 +21,6 @@ import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/r
 import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/spells/index.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
 import type { AbilityDefinition } from "@/database/packages/dnd35/content/abilities/types.ts";
-import { spellLevelsOf } from "@/database/packages/dnd35/content/classes/spellLevels.ts";
 import type { LanguageDefinition } from "@/database/packages/dnd35/content/languages/types.ts";
 import type { CoreContent } from "@/database/packages/dnd35/content/rulesets/types.ts";
 import type { SaveDefinition } from "@/database/packages/dnd35/content/saves/types.ts";
@@ -153,8 +152,6 @@ export const CORE: CoreContent = {
   wizardSchools: WIZARD_SCHOOLS,
   domains: ALL_DOMAINS,
   bonds: [FAMILIARS, ANIMAL_COMPANIONS, SPECIAL_MOUNTS],
-  clericSpellLevels: spellLevelsOf(ALL_CLASSES, "Cleric"),
-  wizardSpellLevels: spellLevelsOf(ALL_CLASSES, "Wizard"),
 };
 
 export const CORE_RULESET = {

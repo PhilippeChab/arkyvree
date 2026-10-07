@@ -6,12 +6,14 @@ import type {
   Property,
   RequirementEntry,
 } from "@/database/packages/dnd35/content/customization/types.ts";
+import { getClassSpellLevels, type SpellcastingClass } from "@/database/packages/dnd35/seed/spellTable.ts";
 import {
   modifiersInCustomization,
   type propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 type Ids = Record<string, string>;
 
@@ -148,11 +150,13 @@ export class BaseSeeder {
   }
 
   /**
-   * Inserts modifiers and gates the ones that give spell slots by the class level that opens their spell level:
-   * `spellLevels` maps a spell level to it. The first class level needs no gate.
+   * Inserts modifiers and gates the ones that give spell slots by the level of `klass` that opens their spell level (a
+   * cleric's for a domain's slots, a wizard's for a school's). The first class level needs no gate.
    */
-  protected async insertGatedSpellSlots(rows: ModifierRow[], classTarget: string, spellLevels: Record<number, number>) {
+  protected async insertGatedSpellSlots(rows: ModifierRow[], klass: SpellcastingClass) {
     if (rows.length === 0) return;
+    const classTarget = `classes.${stripSeparators(klass.name)}.level`;
+    const spellLevels = getClassSpellLevels(klass.spells);
     const inserted = await this.db
       .insert(modifiersInCustomization)
       .values(rows)

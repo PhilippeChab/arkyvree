@@ -14,7 +14,7 @@ const dnd35Dmg: ContentPackage = {
         name: DND35_DMG_NAME,
         description: "Dungeon Master's Guide — prestige classes for D&D 3.5.",
       });
-      await seeder.seedBook(BOOK, CORE.clericSpellLevels);
+      await seeder.seedBook(BOOK, CORE.classes);
     },
   ],
 };
