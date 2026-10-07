@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
-import { useDebouncedValue, useFormWith, useToggleSet, useValidationIssues } from "@/client/src/hooks/index.ts";
+import { useValidationIssues } from "@/client/src/components/characters/index.ts";
+import { useDebouncedValue, useFormWith, useToggleSet } from "@/client/src/hooks/index.ts";
 import { invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 

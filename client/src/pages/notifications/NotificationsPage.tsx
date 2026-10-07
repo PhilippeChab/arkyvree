@@ -19,7 +19,8 @@ import { NotificationMessage, UNREAD_NOTIFICATION_SX } from "@/client/src/compon
 import { useListPageQuery, useListParams, useNotificationActions, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { notificationListQuery } from "@/client/src/lib/queries.ts";
+
+import { notificationListQuery } from "./notificationQueries.ts";
 
 const FILTER_OPTIONS: FilterOption<"unread">[] = [
   { value: undefined, label: "All" },

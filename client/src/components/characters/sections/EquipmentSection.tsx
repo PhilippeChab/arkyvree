@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { Link } from "react-router-dom";
 
+import { useValidationIssues, ValidationIssuesAlert } from "@/client/src/components/characters/validation/index.ts";
 import {
   AddButton,
   AnimatedAlert,
@@ -15,24 +16,16 @@ import {
   LoadError,
   RowAction,
   ScrollSafeListbox,
-  ValidationIssuesAlert,
 } from "@/client/src/components/common/index.ts";
 import { DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import {
-  useDebouncedValue,
-  useDialogState,
-  useFormWith,
-  useListboxQuery,
-  useValidationIssues,
-} from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useDialogState, useFormWith, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import type { RulesetItem } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
-import { type RPC, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import {
   detectSlotFromItem,
@@ -45,7 +38,12 @@ import {
   placementPayload,
   placementProfile,
 } from "./equipment.ts";
-import { characterInventoryQuery, rulesetItemQuery, rulesetItemSearchQuery } from "./equipmentQueries.ts";
+import {
+  characterInventoryQuery,
+  type RulesetItem,
+  rulesetItemQuery,
+  rulesetItemSearchQuery,
+} from "./equipmentQueries.ts";
 import { EquipmentTable } from "./EquipmentTable.tsx";
 import { InventoryPlacementFields } from "./InventoryPlacementFields.tsx";
 import { SheetSection } from "./SheetSection.tsx";
@@ -60,7 +58,7 @@ interface EquipmentSectionProps {
 }
 type InventoryEntry = InventoryItems[number];
 
-type InventoryItems = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>;
+type InventoryItems = InferResponseType<(typeof rpc.api.characters.inventory)[":characterId"]["$get"], 200>;
 
 /** An item's placement, from its details: its columns and properties' profile (slot, weapon, charges). */
 function placementOf(detail: {

@@ -5,4 +5,3 @@ export { type LanguageFormData, LanguageFormFields } from "./LanguageFormFields.
 export { type MechanicFormData, MechanicFormFields } from "./MechanicFormFields.tsx";
 export { type RaceFormData, RaceFormFields } from "./RaceFormFields.tsx";
 export { type SaveFormData, SaveFormFields } from "./SaveFormFields.tsx";
-export { byName } from "./useAptitudeLookup.ts";

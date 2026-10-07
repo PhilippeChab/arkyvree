@@ -4,9 +4,8 @@ import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
-import { AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
-import { useRulesetSaves, useSearchText } from "@/client/src/hooks/index.ts";
+import { useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   EMPTY_SPELL,
@@ -14,6 +13,7 @@ import {
   SpellFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import {
+  AptitudeAutocomplete,
   AptitudeChipsCell,
   DescriptionCell,
   RulesetSectionTable,
@@ -26,13 +26,14 @@ import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.
 import {
   useAptitudeFilter,
   useOpenEntity,
+  useRulesetSaves,
   useRulesetSection,
   useSpellLevelFilter,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-type Spell = SpellsPaginated["items"][number];
-type SpellsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>;
+/** A ruleset's spell (its power), as its list gives it. */
+export type Spell = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>["items"][number];
 
 const SPELLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },

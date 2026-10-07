@@ -2,7 +2,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { classDetailQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { useCopyOnWrite } from "@/client/src/pages/rulesets/hooks/index.ts";
 
-import type { ClassSectionProps } from "./types.ts";
+import type { ClassSectionProps } from "./classSections.ts";
 
 /** What a customization section of the class takes: the class, and where a copy of it goes. */
 export function useClassCustomization({ rulesetId, classId, ruleset, restorable }: ClassSectionProps) {

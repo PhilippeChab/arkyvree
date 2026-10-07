@@ -16,7 +16,6 @@ import {
   SelectField,
 } from "@/client/src/components/common/index.ts";
 import {
-  type ContributorRole,
   ContributorsTable,
   EMPTY_INVITE,
   InviteContributorDialog,
@@ -32,18 +31,20 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rulesetContributorsQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import type { ContributorRole } from "@/shared/enums.ts";
 
-type Contributor = InferResponseType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$get"], 200>["items"][number];
-type ContributorInvite = InferRequestType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$post"]>["json"];
+type Contributor = InferResponseType<ContributorsApi["$get"], 200>["items"][number];
+type ContributorInvite = InferRequestType<ContributorsApi["$post"]>["json"];
+
+type ContributorsApi = (typeof rpc.api.rulesets)[":id"]["contributors"];
 
 interface ContributorsSectionProps {
   onLeave?: () => void;
   ruleset: RulesetDetail;
 }
 
-interface RoleFormData {
-  role: ContributorRole;
-}
+/** A contributor's role, as its update sends it. */
+type RoleFormData = InferRequestType<ContributorsApi[":contributorId"]["$put"]>["json"];
 
 export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionProps) {
   const queryClient = useQueryClient();
@@ -95,7 +96,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: ({ contributorId, role }: { contributorId: string; role: ContributorRole }) =>
+    mutationFn: ({ contributorId, role }: RoleFormData & { contributorId: string }) =>
       parseResponse(
         rpc.api.rulesets[":id"].contributors[":contributorId"].$put({
           param: { id: ruleset.id, contributorId },

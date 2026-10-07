@@ -13,22 +13,6 @@ interface AppMainProps {
   railWidth?: number;
 }
 
-/** Logo and wordmark shown in the app bar. */
-export function AppBrand() {
-  return (
-    <>
-      <Box
-        component="img"
-        src="/pwa-192x192.png"
-        alt=""
-        // 28px, then the gap to the wordmark
-        sx={{ boxSizing: "content-box", width: 28, height: 28, pr: 1, verticalAlign: "middle" }}
-      />
-      Arkyvree
-    </>
-  );
-}
-
 /**
  * Scrolling page area of the app shells: sits under the app bar, centers the
  * routed page with the footer below, and eases back to the top on navigation.

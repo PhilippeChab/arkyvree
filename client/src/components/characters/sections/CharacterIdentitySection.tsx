@@ -14,7 +14,7 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { type RulesetLanguage, useFormSync, useFormWith, useRulesetLanguages } from "@/client/src/hooks/index.ts";
+import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
@@ -23,6 +23,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";
 
 import type { CharacterData } from "./characterData.ts";
+import { type RulesetLanguage, useRulesetLanguages } from "./useRulesetLanguages.ts";
 
 interface CharacterIdentityFormData {
   /** NaN while it is empty: a number field's value. */

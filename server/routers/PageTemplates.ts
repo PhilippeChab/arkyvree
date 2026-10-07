@@ -1,4 +1,5 @@
 import { readEnv } from "@/server/environment.ts";
+import type { AppConfig } from "@/shared/appConfig.ts";
 
 /** What the client reads at runtime, filled into its shell. */
 const APP_CONFIG = JSON.stringify({
@@ -6,7 +7,7 @@ const APP_CONFIG = JSON.stringify({
   sentryDsn: readEnv("SENTRY_CLIENT_DSN") || null,
   sentryEnvironment: readEnv("NODE_ENV") || null,
   sentryRelease: readEnv("FLY_MACHINE_VERSION") || null,
-});
+} satisfies AppConfig);
 
 /** The app's public URL, which the pages' links and meta name. */
 export const APP_URL = readEnv("APP_URL") || "http://localhost:8000";

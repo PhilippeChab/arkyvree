@@ -1,7 +1,7 @@
 import type { InferRequestType } from "hono/client";
 
-import type { RulesetSave } from "@/client/src/hooks/index.ts";
 import { wholeNumberError } from "@/client/src/lib/validation.ts";
+import type { RulesetSave } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
 

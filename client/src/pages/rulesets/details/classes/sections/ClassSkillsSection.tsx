@@ -13,9 +13,10 @@ import { SkillsIcon } from "@/client/src/components/icons/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { truncate } from "@/client/src/lib/truncate.ts";
 import { RemoveSkillDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
-import { useClassSkills, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
-import type { ClassSectionProps } from "./types.ts";
+import type { ClassSectionProps } from "./classSections.ts";
+import { useClassSkills } from "./useClassSkills.ts";
 
 export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSectionProps) {
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);

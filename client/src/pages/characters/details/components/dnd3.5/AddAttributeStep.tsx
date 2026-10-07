@@ -1,9 +1,25 @@
 import { Box, Stack } from "@mui/material";
 
 import { BlankNote, DiceSpinner, LoadError, SubsectionTitle } from "@/client/src/components/common/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import { AttributeIncreaseField } from "./AttributeIncreaseField.tsx";
-import type { AddAttributeStepProps } from "./levelUpFactory.ts";
+import type { AttributesData, PreviewLevelDetail } from "./levelUp/index.ts";
+
+interface AddAttributeState {
+  abilityIncreaseLevels: number[];
+  abilityIncreases: Record<number, string | null>;
+  attributeData: AttributesData | undefined;
+  attributesError: Error | null;
+  handleAbilityIncreaseChange: (index: number, abilityId: string) => void;
+  isLoadingAttributes: boolean;
+  levelDetails: Pick<PreviewLevelDetail, "klassName" | "level">[];
+}
+
+export interface AddAttributeStepProps {
+  baseRules: BaseRules;
+  wizard: AddAttributeState;
+}
 
 export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
   const {

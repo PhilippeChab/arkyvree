@@ -2,13 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import { partialMatchKey } from "@tanstack/react-query";
 
-import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import {
   formatActivityDetails,
   formatActivityType,
   formatNotificationMessage,
 } from "@/client/src/lib/activityFormatters.ts";
-import { getRollFunction, isDiceMethod, POINT_BUY_COSTS, rollDie } from "@/client/src/lib/dice.ts";
 import { accessLost, errorMessage, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { formatCost, formatCount, formatDecimal, formatSigned, formatWeight } from "@/client/src/lib/formatNumeric.ts";
@@ -24,7 +22,6 @@ import {
   USERNAME_RULES,
   wholeNumberRules,
 } from "@/client/src/lib/validation.ts";
-import { valuesEqual } from "@/client/src/lib/valuesEqual.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 import { PASSWORD_MIN_LENGTH } from "@/shared/auth.ts";
 
@@ -138,27 +135,6 @@ describe("Form rules", () => {
   });
 });
 
-describe("Form values compared for changes", () => {
-  test("treat an empty field, null and undefined as the same", () => {
-    expect([
-      valuesEqual("", undefined),
-      valuesEqual(null, ""),
-      valuesEqual({ a: "" }, {}),
-      valuesEqual(undefined, { a: null }),
-    ]).toEqual([true, true, true, true]);
-  });
-
-  test("compare arrays and objects in depth", () => {
-    expect(valuesEqual({ a: [1, { b: "x" }] }, { a: [1, { b: "x" }] })).toBe(true);
-    expect([
-      valuesEqual([1, 2], [1, 2, 3]),
-      valuesEqual({ a: { b: 1 } }, { a: { b: 2 } }),
-      valuesEqual([1], { 0: 1 }),
-      valuesEqual(0, ""),
-    ]).toEqual([false, false, false, false]);
-  });
-});
-
 describe("An entity type", () => {
   test("is named in its ruleset's words, singular or plural, else the engine's", () => {
     expect(entityTypeLabel("powers", "Dungeons & Dragons: 3.5")).toBe("Spell");
@@ -235,30 +211,6 @@ describe("An activity", () => {
   });
 });
 
-describe("Dice", () => {
-  test("roll between one and their sides, and ability methods between 3 and 18", () => {
-    for (let i = 0; i < 200; i++) {
-      expect(rollDie(6)).toBeWithin(1, 7);
-      expect(getRollFunction("4d6-drop-lowest")!()).toBeWithin(3, 19);
-      expect(getRollFunction("3d6-straight")!()).toBeWithin(3, 19);
-    }
-    expect([getRollFunction("standard-array"), getRollFunction("point-buy")]).toEqual([null, null]);
-    expect(
-      ["4d6-drop-lowest", "3d6-straight", "standard-array", "point-buy"].map((method) =>
-        isDiceMethod(method as Parameters<typeof isDiceMethod>[0]),
-      ),
-    ).toEqual([true, true, false, false]);
-  });
-
-  test("cost more points for each higher score", () => {
-    const scores = Object.keys(POINT_BUY_COSTS)
-      .map(Number)
-      .sort((a, b) => a - b);
-    for (const [i, score] of scores.slice(1).entries())
-      expect(POINT_BUY_COSTS[score]).toBeGreaterThan(POINT_BUY_COSTS[scores[i]]);
-  });
-});
-
 describe("Query keys", () => {
   // An item's write refreshes its ruleset's Items section, and with it what a character's add dialog read of the items
   test("of a ruleset's items, as a character's add dialog reads them, nest under its Items section", () => {
@@ -274,17 +226,6 @@ describe("Lists", () => {
   test("of an infinite query are its pages' items, in order", () => {
     expect(pageItems({ pages: [{ items: [1, 2] }, { items: [3] }] })).toEqual([1, 2, 3]);
     expect(pageItems(undefined)).toEqual([]);
-  });
-
-  test("of abilities follow their ruleset's order, unknown ones last", () => {
-    const names = ["Wisdom", "Luck", "strength", "Charisma"];
-    expect(sortAbilities(names, "Dungeons & Dragons: 3.5", (name) => name)).toEqual([
-      "strength",
-      "Wisdom",
-      "Charisma",
-      "Luck",
-    ]);
-    expect(sortAbilities(names, "Another game", (name) => name)).toBe(names);
   });
 
   test("in a listbox fetch the next page of each list that has one, near the bottom", () => {

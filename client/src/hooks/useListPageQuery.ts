@@ -8,15 +8,9 @@ import {
 } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { type ListPage, pageItems } from "@/client/src/lib/pageItems.ts";
 
 import { useStaggerAnimation } from "./useStaggerAnimation.ts";
-
-/** A page of a paginated list endpoint. */
-interface ListPage {
-  items: unknown[];
-  nextPage?: number | null;
-}
 
 /**
  * A list page's infinite query (the rulesets, characters, campaigns, notifications, activities, and a campaign's

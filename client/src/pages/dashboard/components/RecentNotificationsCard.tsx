@@ -16,7 +16,7 @@ import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { NotificationMessage, UNREAD_NOTIFICATION_SX } from "@/client/src/components/notifications/index.ts";
 import { useNotificationActions } from "@/client/src/hooks/index.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
-import { recentNotificationsQuery } from "@/client/src/lib/queries.ts";
+import { recentNotificationsQuery } from "@/client/src/pages/dashboard/dashboardQueries.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
 export function RecentNotificationsCard() {

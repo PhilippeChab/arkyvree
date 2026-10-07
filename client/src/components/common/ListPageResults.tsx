@@ -1,19 +1,15 @@
 import { Box, Stack, type SxProps, type Theme } from "@mui/material";
 import { type ReactNode } from "react";
 
+import type { useListPageQuery } from "@/client/src/hooks/index.ts";
+
 import { NoMatchesState } from "./BlankState.tsx";
 import { LoadError } from "./LoadError.tsx";
 import { LoadMoreButton } from "./LoadMoreButton.tsx";
 import { PageLoader } from "./PageLoader.tsx";
 
-interface ListPageQueryState {
-  error: unknown;
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-  isLoading: boolean;
-  items: readonly unknown[];
-  loadMore: () => void;
-}
+/** A list page's query, as `useListPageQuery` gives it. */
+type ListPageQuery = ReturnType<typeof useListPageQuery>;
 
 interface ListPageResultsProps {
   /** The loaded list: a `ListCardGrid` of cards, or a table in its `TableFrame`. */
@@ -23,7 +19,7 @@ interface ListPageResultsProps {
   /** The empty states' spacing, where a page sets them apart from its table's place (`pt`). */
   emptySx?: SxProps<Theme>;
   /** The page's query (`useListPageQuery`). */
-  list: ListPageQueryState;
+  list: ListPageQuery;
   /** The search that runs, if any: when it found nothing, a `NoMatchesState`. */
   search: string;
   /** What it lists, as its load failure names it: "Characters". */

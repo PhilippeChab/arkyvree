@@ -11,15 +11,11 @@ import { type Ref, useMemo } from "react";
 import { ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
+import type { ListPage } from "@/client/src/lib/pageItems.ts";
+import type { PropertyTypeCompletion, PropertyValueCompletion } from "@/shared/customization/properties.ts";
 
-/** A suggestion of the customization completion endpoints. */
-interface Completion {
-  detail?: string | null;
-  /** Where it comes from: the engine's own or the ruleset's. */
-  kind: string;
-  label: string;
-  value: string;
-}
+/** A suggestion of the property completion endpoints: a type's, which has its detail, or a value's. */
+type Completion = PropertyTypeCompletion | PropertyValueCompletion;
 
 interface CompletionAutocompleteProps<
   TPage extends CompletionPage,
@@ -45,10 +41,9 @@ interface CompletionAutocompleteProps<
   value: string;
 }
 
-/** A page of the customization completion endpoints. */
-interface CompletionPage {
+/** A page of the property completion endpoints. */
+interface CompletionPage extends ListPage {
   items: Completion[];
-  nextPage?: number | null;
 }
 
 /** A free-text field that suggests the values the ruleset already uses. */
@@ -120,7 +115,7 @@ export function CompletionAutocomplete<
                   <ValueChip label={option.kind} color={option.kind === "engine" ? "primary" : "default"} />
                 </Stack>
               }
-              secondary={option.detail}
+              secondary={"detail" in option && option.detail}
             />
           )}
         </ListItem>

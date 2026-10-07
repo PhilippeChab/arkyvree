@@ -3,11 +3,15 @@ import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { AuthPage, AuthSubmitButton, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
+import {
+  AuthPage,
+  AuthSubmitButton,
+  GoogleSignInSection,
+  safeRedirectPath,
+} from "@/client/src/components/auth/index.ts";
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { confirmPasswordRules, EMAIL_RULES, NEW_PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 

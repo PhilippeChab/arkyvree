@@ -2,20 +2,25 @@ import { Box, Stack } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
+import { sortAbilities } from "@/client/src/components/characters/sections/abilityOrder.ts";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote, ConfirmDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState } from "@/client/src/hooks/index.ts";
-import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
-import { characterDetailQuery, invalidateCharacter } from "@/client/src/lib/queries.ts";
+import { type CharacterDetail, characterDetailQuery, invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useUserPreferencesStore } from "@/client/src/stores/userPreferencesStore.ts";
-import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 
+import { computeAbilityModifier } from "./abilities.ts";
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
-import type { Dnd35AbilityScoresSectionProps } from "./types.ts";
 
-export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35AbilityScoresSectionProps) {
+export interface AbilityScoresSectionProps {
+  abilities: CharacterDetail["abilities"];
+  characterId: string;
+  readOnly?: boolean;
+}
+
+export function AbilityScoresSection({ abilities, characterId, readOnly }: AbilityScoresSectionProps) {
   const entries = Object.entries(abilities);
   const sortedEntries = sortAbilities(entries, "Dungeons & Dragons: 3.5", ([name]) => name);
   const queryClient = useQueryClient();

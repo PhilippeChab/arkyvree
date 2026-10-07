@@ -1,14 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, BONDED_KINDS } from "@/shared/dnd3.5/bondedKinds.ts";
 import { MAGIC_SCHOOLS, toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 
 describe("D&D 3.5", () => {
-  test("gives an ability score's modifier: +1 for every two points above 10, rounded down", () => {
-    expect([1, 8, 9, 10, 11, 12, 18, 19].map(computeAbilityModifier)).toEqual([-5, -1, -1, 0, 0, 1, 4, 4]);
-  });
-
   test("names a spell list's possession paths after its aptitude, without the Spells suffix", () => {
     expect(toSpellPossessionSlug("Wizard Spells")).toBe("wizard");
     expect(toSpellPossessionSlug("Knowledge Domain Spells")).toBe("knowledgedomain");

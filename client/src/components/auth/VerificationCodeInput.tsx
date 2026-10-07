@@ -1,7 +1,7 @@
 import { Stack, TextField } from "@mui/material";
 import { type KeyboardEvent, useRef } from "react";
 
-import { VERIFICATION_CODE_LENGTH } from "@/client/src/lib/verificationCode.ts";
+import { VERIFICATION_CODE_LENGTH } from "@/shared/auth.ts";
 
 interface VerificationCodeInputProps {
   digits: string[];

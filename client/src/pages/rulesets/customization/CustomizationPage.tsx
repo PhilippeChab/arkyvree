@@ -19,7 +19,7 @@ import {
 } from "@/client/src/components/customization/index.ts";
 import { ModifiersIcon, PropertiesIcon, RequirementsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -31,7 +31,13 @@ import {
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useCopyOnWrite, useRestorableDelete, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useCopyOnWrite,
+  useRestorableDelete,
+  useRulesetFeats,
+  useRulesetPermissions,
+  useRulesetSaves,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import {
   buildCustomizationPath,

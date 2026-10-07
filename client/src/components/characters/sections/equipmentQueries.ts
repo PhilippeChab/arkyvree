@@ -1,11 +1,14 @@
 /** The equipment section's queries: a character's inventory, and the ruleset's items its add dialog searches and picks. */
 
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+
+/** A ruleset's item, as the add dialog lists it. */
+export type RulesetItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
 
 /** The items a character carries, with where each is placed. */
 export function characterInventoryQuery(characterId: string) {

@@ -24,12 +24,12 @@ import {
   toggleProps,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
 
 import { spellLevelName } from "./spellLevels.ts";
-import type { Dnd35PowersSectionProps } from "./types.ts";
 
 interface CollapsibleClassProps {
   apt: AptitudeSpells;
@@ -44,6 +44,16 @@ interface CollapsibleLevelProps {
 interface SpellRowItemProps {
   rulesetId?: string;
   spell: SpellRow;
+}
+
+export interface SpellsSectionProps {
+  aptitudes?: CharacterDetail["aptitudes"];
+  classes: CharacterDetail["classes"];
+  powers?: CharacterDetail["powers"];
+  rulesetId?: string;
+  spellTagLists?: CharacterDetail["spellTagLists"];
+  spellTags?: CharacterDetail["spellTags"];
+  virtualPowers?: CharacterDetail["virtualPowers"];
 }
 
 function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
@@ -193,7 +203,7 @@ export function SpellsSection({
   spellTags,
   spellTagLists,
   rulesetId,
-}: Dnd35PowersSectionProps) {
+}: SpellsSectionProps) {
   const groups = useMemo(
     () => buildSpellGroups({ classes, powers, virtualPowers, aptitudes, spellTags, spellTagLists }),
     [classes, powers, virtualPowers, aptitudes, spellTags, spellTagLists],

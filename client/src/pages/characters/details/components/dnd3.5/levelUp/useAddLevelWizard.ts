@@ -2,13 +2,12 @@ import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { computeAbilityModifier } from "@/client/src/components/characters/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
-import { rollDie } from "@/client/src/lib/dice.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
+import { rollDie } from "@/client/src/pages/characters/dice.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
 import { featPickString, fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
@@ -18,16 +17,18 @@ import {
   levelPreviewQuery,
   type PickerLevel,
 } from "./levelUpQueries.ts";
-import type { BaseRules, SelectedKlass } from "./levelUpTypes.ts";
+import type { SelectedKlass } from "./levelUpTypes.ts";
 import type { SkillLevels } from "./skillLevels.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
 interface UseAddLevelWizardParams {
-  baseRules: BaseRules;
   characterId: string;
   onClose: () => void;
   open: boolean;
 }
+
+/** The Add Level wizard's state: what its dialog and its steps read. */
+export type AddLevelWizard = ReturnType<typeof useAddLevelWizard>;
 
 export const ADD_STEP_CONTENT = ["class-plan", "hp", "attributes", "skills", "feats", "powers", "review"] as const;
 
@@ -41,7 +42,7 @@ export const ADD_STEP_LABELS = [
   "Review Changes",
 ];
 
-export function useAddLevelWizard({ open, onClose, characterId, baseRules }: UseAddLevelWizardParams) {
+export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWizardParams) {
   const snackbar = useSnackbar();
   const base = useLevelWizardBase(characterId);
   const {
@@ -58,7 +59,6 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     refreshAfterSave,
     handleSaveError,
   } = base;
-  const levelUpSections = getLevelUpSections(baseRules);
 
   const featsStep = ADD_STEP_CONTENT.indexOf("feats");
   const powersStep = ADD_STEP_CONTENT.indexOf("powers");
@@ -552,8 +552,6 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     isNextDisabled,
 
     finalizeMutation,
-
-    levelUpSections,
 
     preview: previewQuery.data,
     isLoadingPreview: previewQuery.isLoading,

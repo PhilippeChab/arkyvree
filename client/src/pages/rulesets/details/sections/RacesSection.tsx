@@ -17,8 +17,7 @@ import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/s
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useEntityFilters } from "@/client/src/pages/rulesets/details/useEntityFilters.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFilters, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type Race = RacesPaginated["items"][number];

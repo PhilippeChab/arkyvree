@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import type { FieldError, RefCallBack } from "react-hook-form";
 
 import { Crossfade, HelpLabel } from "@/client/src/components/common/index.ts";
-import { isValuelessOperator } from "@/shared/customization/operators.ts";
+import { isValuelessOperator, type OperatorKind } from "@/shared/customization/operators.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 
 import { OperatorSelect } from "./OperatorSelect.tsx";
@@ -27,11 +27,13 @@ interface ConditionFieldsProps {
   entityType?: string;
   /** Its form's target, operator and value, each bound to the form (`useController`). */
   fields: Record<ConditionField, BoundField>;
-  kind: "modifier" | "requirement";
-  /** "create" autofills value/operator from the path's defaults; "edit" preserves the loaded values. */
-  mode: "create" | "edit";
+  kind: OperatorKind;
+  mode: ConditionMode;
   rulesetId: string;
 }
+
+/** What a condition's form is for: a new one ("create") takes the path's defaults, a loaded one ("edit") keeps its own. */
+export type ConditionMode = "create" | "edit";
 
 /**
  * A modifier's or requirement's target path, operator and value. The value is a literal or a `{{ template }}`; either

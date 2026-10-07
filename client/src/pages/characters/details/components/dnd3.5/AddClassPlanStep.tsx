@@ -1,13 +1,35 @@
 import { Autocomplete, Box, IconButton, Stack, TextField, Typography } from "@mui/material";
-import { useMemo } from "react";
+import { type UIEvent, useMemo } from "react";
 
 import { AddButton, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 
-import type { AvailableKlass } from "./levelUp/index.ts";
-import type { AddClassPlanStepProps } from "./levelUpFactory.ts";
+import type { AvailableKlass, SelectedKlass } from "./levelUp/index.ts";
 import { OptionTooltip } from "./OptionTooltip.tsx";
+
+interface AddClassPlanState {
+  classPlan: (SelectedKlass | null)[];
+  handleAddLevel: () => void;
+  handleClassChange: (index: number, klass: SelectedKlass | null) => void;
+  handleQuickAddLevel: (klass: SelectedKlass) => void;
+  handleRemoveLevel: (index: number) => void;
+  slotKeys: number[];
+}
+
+export interface AddClassPlanStepProps {
+  /** Search-filtered list for the Autocomplete dropdown. */
+  availableKlasses: AvailableKlass[];
+  handleKlassListScroll: (event: UIEvent<HTMLElement>) => void;
+  isLoadingKlasses: boolean;
+  /** Why the classes didn't load, said where they'd show. */
+  klassesError: unknown;
+  /** Unfiltered snapshot for the quick-add button row so searching doesn't
+   *  drop the character's existing classes from the "+ X" row. */
+  quickAddKlasses: AvailableKlass[];
+  setKlassSearch: (search: string) => void;
+  wizard: AddClassPlanState;
+}
 
 export function AddClassPlanStep({
   wizard,

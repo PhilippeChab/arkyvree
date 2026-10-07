@@ -1,11 +1,13 @@
 /** Shared application definitions, checked against the migrated database by tests. */
 
+import type { TargetPathKind } from "./target.ts";
+
 type ModifierOperator = (typeof MODIFIER_OPERATORS)[number];
 
 type RequirementOperator = (typeof REQUIREMENT_OPERATORS)[number];
 
 /** What an operator belongs to: a modifier's changes its target, a requirement's compares it. */
-export type OperatorKind = "modifier" | "requirement";
+export type OperatorKind = Exclude<TargetPathKind, "template">;
 
 /**
  * An operator's words, by its kind: a modifier's sign, a requirement's comparison. Every operator of the lists has
@@ -34,6 +36,9 @@ const OPERATOR_LABELS: {
   },
 };
 
+/** The requirement operators that check their target alone: they compare it to no value. */
+const VALUELESS_REQUIREMENT_OPERATORS = ["is_empty", "not_empty"] as const;
+
 export const CHAINING_OPERATORS = ["and", "or"] as const;
 
 export const MODIFIER_OPERATORS = ["add", "subtract", "multiply", "divide", "set"] as const;
@@ -58,8 +63,6 @@ export const REQUIREMENT_OPERATORS = [
   "is_empty",
   "not_empty",
 ] as const;
-/** The requirement operators that check their target alone: they compare it to no value. */
-export const VALUELESS_REQUIREMENT_OPERATORS = ["is_empty", "not_empty"] as const;
 
 /** An operator's words, as the app shows it ("+", "starts with"); one it doesn't know, as it is. */
 export function formatOperator(kind: OperatorKind, operator: string): string {

@@ -1,9 +1,9 @@
 import { ConfirmDialog } from "@/client/src/components/common/index.ts";
 
-interface RemovableContributor {
-  email: string;
-  user?: { username?: string | null } | null;
-}
+import type { ContributorRow } from "./ContributorsTable.tsx";
+
+/** What the confirmation names a contributor by, as the table does. */
+type RemovableContributor = Pick<ContributorRow, "email" | "user">;
 
 interface RemoveContributorDialogProps {
   /** The contributor it asks about, kept while it fades out (`useDialogState`'s `target`). */

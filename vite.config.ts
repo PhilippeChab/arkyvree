@@ -6,6 +6,7 @@ import { defineConfig, loadEnv, type UserConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 import { createQuietLogger } from "./scripts/vite/quietLogger.ts";
+import type { AppConfig } from "./shared/appConfig.ts";
 
 const apiPort = process.env.API_PORT || "8000";
 
@@ -53,7 +54,7 @@ const baseConfig: UserConfig = {
           sentryDsn: env.SENTRY_CLIENT_DSN || null,
           sentryEnvironment: env.NODE_ENV || null,
           sentryRelease: null,
-        });
+        } satisfies AppConfig);
         return html.replace("__APP_CONFIG_JSON__", config);
       },
     },

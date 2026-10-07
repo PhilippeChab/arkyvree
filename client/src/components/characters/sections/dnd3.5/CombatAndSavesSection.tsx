@@ -3,11 +3,19 @@ import { Box, Stack, Typography } from "@mui/material";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { capitalize } from "@/shared/text.ts";
 
 import { formatSpeed, iterativeAttacks } from "./combatValues.ts";
 import { StatField } from "./StatField.tsx";
-import type { Dnd35CombatAndSavesSectionProps } from "./types.ts";
+
+export interface CombatAndSavesSectionProps {
+  combat: SheetCombat;
+  saves: CharacterDetail["savingThrows"];
+}
+
+/** The sheet's combat stats; empty on a sheet that carries none. */
+export type SheetCombat = Partial<CharacterDetail["combat"]>;
 
 /** The parts of the AC the breakdown lists, by their label */
 const AC_PARTS = [
@@ -21,7 +29,7 @@ const AC_PARTS = [
   ["Misc", "misc"],
 ] as const;
 
-export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSectionProps) {
+export function CombatAndSavesSection({ combat, saves }: CombatAndSavesSectionProps) {
   const bab = combat?.bab ?? 0;
 
   return (

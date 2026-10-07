@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
   AuthPage,
   AuthSubmitButton,
+  EMPTY_VERIFICATION_CODE,
   ResendCodeLink,
   useResendCode,
   VerificationCodeInput,
@@ -13,7 +14,6 @@ import { PasswordField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { confirmPasswordRules, NEW_PASSWORD_RULES } from "@/client/src/lib/validation.ts";
-import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface ResetPasswordFormData {

@@ -3,6 +3,7 @@ import { type ReactNode } from "react";
 
 import { FilterIcon, SearchIcon, SortIcon } from "@/client/src/components/icons/index.ts";
 import { useAnchorMenu } from "@/client/src/hooks/index.ts";
+import type { Direction } from "@/client/src/lib/queries.ts";
 
 import { ListToolbar } from "./ListToolbar.tsx";
 
@@ -15,10 +16,10 @@ interface SearchBarProps<TFilter extends string = string, TSort extends string =
   onFilterChange?: (value: TFilter | undefined) => void;
   onSearchChange: (value: string) => void;
 
-  onSortChange?: (field: TSort, direction: "asc" | "desc") => void;
+  onSortChange?: (field: TSort, direction: Direction) => void;
   searchPlaceholder?: string;
   searchValue: string;
-  sortDirection?: "asc" | "desc";
+  sortDirection?: Direction;
 
   sortField?: TSort;
   sortOptions?: SortOption<TSort>[];
@@ -30,7 +31,7 @@ export interface FilterOption<T extends string = string> {
 }
 
 export interface SortOption<T extends string = string> {
-  direction: "asc" | "desc";
+  direction: Direction;
   field: T;
   label: string;
 }
@@ -57,7 +58,7 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
     filterMenu.closeMenu();
   };
 
-  const handleSortSelect = (field: TSort, direction: "asc" | "desc") => {
+  const handleSortSelect = (field: TSort, direction: Direction) => {
     onSortChange?.(field, direction);
     sortMenu.closeMenu();
   };

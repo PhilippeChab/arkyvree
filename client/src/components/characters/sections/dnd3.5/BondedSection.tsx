@@ -1,24 +1,30 @@
 import { Box, Link as MuiLink, Stack } from "@mui/material";
 import { Link } from "react-router-dom";
 
+import { sortAbilities } from "@/client/src/components/characters/sections/abilityOrder.ts";
 import { EntryTitle, SubsectionTitle } from "@/client/src/components/common/index.ts";
-import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 import { formatSpeed, iterativeAttacks } from "./combatValues.ts";
 import { StatField } from "./StatField.tsx";
-import type { Dnd35BondedSectionProps } from "./types.ts";
 
-type FeatEntry = NonNullable<Dnd35BondedSectionProps["bonded"]["feats"]>[string];
+type FeatEntry = NonNullable<BondedSectionProps["bonded"]["feats"]>[string];
+
+export interface BondedSectionProps {
+  bonded: NonNullable<CharacterDetail["bonded"][string]>;
+  /** The creature's name links to its sheet. */
+  linkable?: boolean;
+}
 
 /** A feat entry, as opposed to a family of variants keyed by name. */
 function isFeat(entry: FeatEntry): entry is Extract<FeatEntry, { possessed: boolean }> {
   return "possessed" in entry && typeof entry.possessed === "boolean";
 }
 
-export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionProps) {
+export function BondedSection({ bonded, linkable = false }: BondedSectionProps) {
   const abilityEntries = sortAbilities(
     Object.entries(bonded.abilities ?? {}),
     bonded.baseRules ?? DEFAULT_BASE_RULES,

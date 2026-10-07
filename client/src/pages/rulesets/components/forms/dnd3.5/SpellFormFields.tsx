@@ -9,10 +9,11 @@ import {
   SubsectionTitle,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
-import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
-import type { RulesetSave } from "@/client/src/hooks/index.ts";
 import { APTITUDES_RULES, NAME_RULES, readNumberInput } from "@/client/src/lib/validation.ts";
-import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/forms/useAptitudeLookup.ts";
+import { AptitudesAutocomplete } from "@/client/src/pages/rulesets/components/AptitudesAutocomplete.tsx";
+import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/useAptitudeLookup.ts";
+import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import type { RulesetSave } from "@/client/src/pages/rulesets/hooks/index.ts";
 import {
   MAX_SPELL_LEVEL,
   SPELL_COMPONENTS,
@@ -31,8 +32,6 @@ import {
   spellLevelError,
 } from "./spellForm.ts";
 
-type Save = RulesetSave;
-
 interface SpellFormFieldsProps {
   /** A new spell needs an aptitude; an existing one may lose its own. */
   aptitudesRequired?: boolean;
@@ -41,7 +40,7 @@ interface SpellFormFieldsProps {
   /** Aptitudes the form may already hold (the spell's own), so they show by name. */
   knownAptitudes?: Aptitude[];
   rulesetId: string;
-  saves: Save[];
+  saves: RulesetSave[];
   /** Why the saves didn't load. */
   savesError: unknown;
 }

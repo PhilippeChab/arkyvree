@@ -1,17 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { attachmentSlotQuery } from "@/client/src/lib/queries.ts";
+import { type AttachmentSlot, attachmentSlotQuery } from "@/client/src/lib/queries.ts";
 
-interface UseAttachmentParams {
+interface UseAttachmentParams extends AttachmentSlot {
   enabled?: boolean;
-  name: string;
-  recordId: string | undefined;
-  recordType: string;
 }
 
-export function useAttachment(params: UseAttachmentParams) {
-  return useQuery({
-    ...attachmentSlotQuery(params.recordType, params.recordId, params.name),
-    enabled: params.enabled ?? true,
-  });
+export function useAttachment({ enabled = true, ...slot }: UseAttachmentParams) {
+  return useQuery({ ...attachmentSlotQuery(slot), enabled });
 }

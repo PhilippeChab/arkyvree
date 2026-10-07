@@ -1,7 +1,6 @@
 import { useController, type UseFormReturn } from "react-hook-form";
 
 import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/components/common/index.ts";
-import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import {
   allLevelSaves,
@@ -9,6 +8,7 @@ import {
   ClassLevelFields,
   type CreateLevelFormData,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
 
 interface ConfirmActionProps {

@@ -63,3 +63,16 @@ export function prefetchCampaignSections(queryClient: QueryClient, campaignId: s
     queryClient.prefetchInfiniteQuery(campaignPlayersQuery(campaignId, "")),
   ]);
 }
+
+/** The user's characters the Characters tab's link dialog offers, filtered by what's typed. */
+export function unlinkedCharactersQuery(campaignId: string, search: string) {
+  return infiniteQueryOptions({
+    queryKey: QUERY_KEYS.characters.unlinked(campaignId, { search }),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.characters.unlinked[":campaignId"].$get({ param: { campaignId }, query: listQuery(pageParam, search) }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}

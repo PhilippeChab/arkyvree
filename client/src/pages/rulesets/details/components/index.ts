@@ -1,4 +1,4 @@
-export { OverridesDialog } from "./OverridesDialog.tsx";
+export { LocalChangesDialog } from "./LocalChangesDialog.tsx";
 export {
   ArchiveRulesetDialog,
   EditRulesetDialog,

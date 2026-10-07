@@ -1,6 +1,6 @@
 import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback } from "react";
 
 import {
@@ -11,7 +11,7 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { LanguagesIcon } from "@/client/src/components/icons/index.ts";
-import { type RulesetLanguage, useSearchText } from "@/client/src/hooks/index.ts";
+import { useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   EMPTY_LANGUAGE,
@@ -25,7 +25,8 @@ import { languagesQuery } from "@/client/src/pages/rulesets/details/sectionQueri
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-type Language = RulesetLanguage;
+type Language = LanguagesPaginated["items"][number];
+type LanguagesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["languages"]["$get"], 200>;
 
 const LANGUAGES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },

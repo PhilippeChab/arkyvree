@@ -8,20 +8,20 @@ import {
   PhotoCameraOutlinedIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useAttachment, useDetachAttachment, useDirectUpload, useIsDemo } from "@/client/src/hooks/index.ts";
+import { useAttachment, useIsDemo } from "@/client/src/hooks/index.ts";
+import type { AttachmentSlot } from "@/client/src/lib/queries.ts";
 import { DURATION, transitionOf } from "@/client/src/theme/animations.ts";
 import { ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
 
 import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 import { DiceSpinner } from "./DiceSpinner.tsx";
+import { useDetachAttachment } from "./useDetachAttachment.ts";
+import { useDirectUpload } from "./useDirectUpload.ts";
 
-interface AttachmentFieldProps {
+interface AttachmentFieldProps extends AttachmentSlot {
   label?: string;
-  name: string;
   /** Hide upload/delete controls — useful when viewing other users' content. */
   readOnly?: boolean;
-  recordId: string | undefined;
-  recordType: string;
   /** Show a white ring + drop shadow around the image — for hero/profile placements. */
   ring?: boolean;
   /** Pixel size of the displayed image. Defaults: 128 (avatar), 220 (portrait). */

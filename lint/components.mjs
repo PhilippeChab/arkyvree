@@ -119,7 +119,7 @@ const PAGE_HEADERS = new Set(["CharacterHeader", "DetailPageHeader", "PageHeader
  * pages' `AuthPage`, an invite's card, the error page.
  */
 const PAGE_TITLE_MODULES = new Set([
-  "client/src/components/auth/AuthLayoutRoute.tsx",
+  "client/src/components/auth/AuthPage.tsx",
   "client/src/components/common/DetailPageHeader.tsx",
   "client/src/components/common/ErrorBoundary.tsx",
   "client/src/components/common/PageHeader.tsx",
@@ -247,7 +247,8 @@ function createChoiceChips(context) {
 }
 
 function createConfirmDialogs(context) {
-  if (!inClient(context) || inFile(context, "client/src/components/common/ValidationIssuesAlert.tsx")) return {};
+  if (!inClient(context) || inFile(context, "client/src/components/characters/validation/ValidationIssuesAlert.tsx"))
+    return {};
   return {
     JSXElement(node) {
       if (elementName(node) !== "AnimatedAlert" || !hasAttribute(node, "action")) return;
@@ -512,7 +513,7 @@ function createOptionTooltips(context) {
 
 function createPageGaps(context) {
   if (!inClient(context)) return {};
-  const tabPanelModule = inFile(context, "client/src/components/common/DetailPageHeader.tsx");
+  const tabPanelModule = inFile(context, "client/src/components/common/SectionTabs.tsx");
   return {
     JSXElement(node) {
       const name = elementName(node);

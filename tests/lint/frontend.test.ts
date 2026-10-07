@@ -501,6 +501,22 @@ describe("frontend rules", () => {
     ]);
   });
 
+  test("a type lives with the code it describes, never in a types/ folder nor a types.ts grab bag", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/types/character.ts": "export interface A {\n  a: string;\n}\n",
+          "client/src/pages/x/types.ts": "export interface A {\n  a: string;\n}\n",
+          "client/src/pages/x/levelUpTypes.ts": "export interface A {\n  a: string;\n}\n",
+          "client/src/hooks/google.d.ts": "interface Window {\n  a: string;\n}\n",
+          "client/src/types/globals.d.ts": "interface Window {\n  b: string;\n}\n",
+          "server/types.ts": "export interface A {\n  a: string;\n}\n",
+        },
+        ["no-types-modules"],
+      ),
+    ).toEqual(["no-types-modules client/src/pages/x/types.ts", "no-types-modules client/src/types/character.ts"]);
+  });
+
   test("a component's own handler is handleX; onX names a prop", async () => {
     expect(
       await lintRepo(

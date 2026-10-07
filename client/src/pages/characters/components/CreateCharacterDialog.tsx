@@ -5,9 +5,8 @@ import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } f
 import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
-import { RollAllButton } from "@/client/src/components/characters/index.ts";
+import { computeAbilityModifier, RollAllButton, sortAbilities } from "@/client/src/components/characters/index.ts";
 import {
-  BaseRulesetAlert,
   BlankNote,
   CountChip,
   CreateDialog,
@@ -16,11 +15,11 @@ import {
   FormTextField,
   LoadError,
   NameField,
-  RulesetPicker,
   SelectField,
   SubsectionTitle,
 } from "@/client/src/components/common/index.ts";
 import { AddIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
+import { BaseRulesetAlert, RulesetPicker } from "@/client/src/components/rulesets/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
   type RulesetAbility,
@@ -29,16 +28,6 @@ import {
   useListboxQuery,
   useRulesetAbilities,
 } from "@/client/src/hooks/index.ts";
-import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
-import {
-  getRollFunction,
-  isDiceMethod,
-  POINT_BUY_COSTS,
-  POINT_BUY_TOTAL,
-  ROLL_METHODS,
-  type RollMethodId,
-  STANDARD_ARRAY,
-} from "@/client/src/lib/dice.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
@@ -47,9 +36,17 @@ import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { NAME_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { availableRacesQuery } from "@/client/src/pages/characters/characterQueries.ts";
+import {
+  getRollFunction,
+  isDiceMethod,
+  POINT_BUY_COSTS,
+  POINT_BUY_TOTAL,
+  ROLL_METHODS,
+  type RollMethodId,
+  STANDARD_ARRAY,
+} from "@/client/src/pages/characters/dice.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
-import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
 interface AbilityCardProps {

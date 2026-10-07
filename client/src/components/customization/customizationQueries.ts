@@ -1,4 +1,4 @@
-/** The queries of the customization fields: the aptitudes a picker offers, the completions and the target paths. */
+/** The queries of the customization fields: a property's completions, and a target path's. */
 
 import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
@@ -12,27 +12,6 @@ import type { TargetPathKind } from "@/shared/customization/target.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { type PathInfo, toPathInfo } from "./pathValues.ts";
-
-/** A picker's aptitudes, searched on the server: a ruleset's, or those of its feats or its spells. */
-export function aptitudeOptionsQuery(rulesetId: string, search: string, scope?: "feats" | "spells") {
-  return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "aptitudes", search, scope),
-    queryFn: async ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].aptitudes.$get({
-          param: { id: rulesetId },
-          query: {
-            limit: "10",
-            page: pageParam.toString(),
-            search: search || undefined,
-            scope: scope || undefined,
-          },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
 
 /** The property types a ruleset already uses that match what's typed, for an entity type's properties. */
 export function propertyTypeCompletionsQuery(rulesetId: string, search: string, entityType?: PropertyEntityType) {

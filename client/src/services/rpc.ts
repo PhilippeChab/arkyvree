@@ -4,7 +4,7 @@ import type { Application } from "@/server/routers/application.ts";
 
 import { apiFetch } from "./apiFetch.ts";
 
-export type RPC = typeof _rpc;
+type RPC = typeof _rpc;
 
 /** We need to do this in order for tsserver to be usable */
 const _rpc = hc<Application>("");

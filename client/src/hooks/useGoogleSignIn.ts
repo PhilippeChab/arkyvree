@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useLatest } from "./useLatest.ts";
 
-const CLIENT_ID = window.__APP_CONFIG__?.googleClientId || null;
+const CLIENT_ID = window.__APP_CONFIG__.googleClientId;
 let globalCallback: ((response: GoogleCredentialResponse) => void) | null = null;
 
 const GSI_SCRIPT_URL = "https://accounts.google.com/gsi/client";

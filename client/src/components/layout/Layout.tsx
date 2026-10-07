@@ -53,7 +53,8 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { DURATION, EASING, PREFERS_REDUCED_MOTION, transitionOf } from "@/client/src/theme/animations.ts";
 
-import { AppBrand, AppMain } from "./AppMain.tsx";
+import { AppBrand } from "./AppBrand.tsx";
+import { AppMain } from "./AppMain.tsx";
 import { DemoBanner } from "./DemoBanner.tsx";
 import { FeedbackButton } from "./FeedbackButton.tsx";
 import { NotificationBell } from "./NotificationBell.tsx";

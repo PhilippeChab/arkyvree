@@ -9,7 +9,8 @@ interface UseWebSocketOptions {
   onMessage: (data: WsMessage) => void;
 }
 
-interface WsMessage {
+/** A message the server pushes: its type, and what it carries. */
+export interface WsMessage {
   [key: string]: unknown;
   type: string;
 }

@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { type Aptitude } from "@/client/src/components/customization/index.ts";
 import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { aptitudeQuery, seedAptitude } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
+import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 /**
  * A ruleset list's aptitude filter, kept in the URL (`aptitude`, its id): the aptitude it filters by, read back for its

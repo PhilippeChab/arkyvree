@@ -1,6 +1,6 @@
 import { Alert, Box, Button, Container, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { type InferRequestType, parseResponse } from "hono/client";
 import { type ReactNode } from "react";
 
 import { GoogleSignInButton } from "@/client/src/components/auth/index.ts";
@@ -39,11 +39,8 @@ import type { AuthUser } from "@/client/src/stores/authUser.ts";
 import { DeleteAccountDialog, EmailChangeVerificationDialog } from "./components/index.ts";
 import { linkedAccountsQuery } from "./profileQueries.ts";
 
-interface PasswordFormData {
-  currentPassword: string;
-  newPassword: string;
-  newPasswordConfirmation: string;
-}
+/** A password's change, as its request sends it (a password set for the first time sends the new one alone). */
+type PasswordFormData = InferRequestType<typeof rpc.auth.password.$put>["json"];
 
 interface ProfileCardProps {
   children: ReactNode;
@@ -51,10 +48,8 @@ interface ProfileCardProps {
   title: string;
 }
 
-interface ProfileFormData {
-  emailAddress: string;
-  username: string;
-}
+/** The profile's fields, as its update sends them: each one held by its form, which sends what's filled in. */
+type ProfileFormData = Required<InferRequestType<typeof rpc.auth.profile.$put>["json"]>;
 
 const EMPTY_PASSWORD_FORM: PasswordFormData = { currentPassword: "", newPassword: "", newPasswordConfirmation: "" };
 

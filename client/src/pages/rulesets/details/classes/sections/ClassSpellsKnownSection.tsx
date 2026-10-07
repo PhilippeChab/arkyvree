@@ -4,8 +4,8 @@ import { SpellsIcon } from "@/client/src/components/icons/index.ts";
 import { classSpellsKnownQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 import { ClassLevelCountsTable } from "./ClassLevelCountsTable.tsx";
+import type { ClassSectionProps } from "./classSections.ts";
 import { bySpellLevel, spellLevelLabel } from "./spellLevels.ts";
-import type { ClassSectionProps } from "./types.ts";
 
 export function ClassSpellsKnownSection({ rulesetId, classId }: ClassSectionProps) {
   const { data, isLoading, error } = useQuery(classSpellsKnownQuery(rulesetId, classId));

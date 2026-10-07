@@ -15,8 +15,7 @@ import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.
 import type { Item } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import type { EditorProps } from "./types.ts";
-import { useEditorSave } from "./useEditorSave.ts";
+import { type EditorProps, useEditorSave } from "./useEditorSave.ts";
 
 export function ItemEditor({
   rulesetId,

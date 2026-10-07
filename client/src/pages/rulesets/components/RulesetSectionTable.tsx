@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, type TableCellProps, TableHead, TableRow } from "@mui/material";
+import { Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import { type ElementType, type ReactNode, useMemo, useRef } from "react";
 
 import {
@@ -10,6 +10,7 @@ import {
   ROW_ACTIONS_HOVER_SX,
   RowAction,
   RowActions,
+  type TableColumn,
   TableFrame,
   TableSkeleton,
 } from "@/client/src/components/common/index.ts";
@@ -19,12 +20,8 @@ import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
 import { TABLE_CONTAINER_LOADING_SX, TABLE_CONTAINER_SX, TABLE_SX } from "./tableStyles.ts";
 
-interface Column {
-  align?: TableCellProps["align"];
+interface Column extends TableColumn {
   hideOnMobile?: boolean;
-  key: string;
-  label: string;
-  width?: string;
 }
 
 interface RulesetSectionTableProps<T extends { id: string }> {

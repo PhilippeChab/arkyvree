@@ -1,11 +1,12 @@
+export { useEntityFilters } from "./dnd3.5/useEntityFilters.ts";
 export { useAptitudeFilter } from "./useAptitudeFilter.ts";
-export { type Level, useClassLevels } from "./useClassLevels.ts";
-export { useClassSkills } from "./useClassSkills.ts";
 export { useCopyOnWrite } from "./useCopyOnWrite.ts";
 export { useOpenEntity } from "./useOpenEntity.ts";
 export { useRestorableDelete } from "./useRestorableDelete.ts";
+export { useRulesetFeats } from "./useRulesetFeats.ts";
 export { type PublishKind, useRulesetOperations } from "./useRulesetOperations.ts";
 export { useRulesetPermissions } from "./useRulesetPermissions.ts";
+export { type RulesetSave, useRulesetSaves } from "./useRulesetSaves.ts";
 export { useRulesetSection } from "./useRulesetSection.ts";
 export { useSpellLevelFilter } from "./useSpellLevelFilter.ts";
 export { useToggleRulesetStar } from "./useToggleRulesetStar.ts";

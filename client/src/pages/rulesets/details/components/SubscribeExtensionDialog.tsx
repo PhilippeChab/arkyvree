@@ -7,8 +7,6 @@ import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts"
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetListItem, rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 
-type ExtensionRuleset = RulesetListItem;
-
 interface SubscribeExtensionDialogProps {
   isLoading: boolean;
   onClose: () => void;
@@ -26,7 +24,7 @@ function SubscribeExtensionForm({
   isLoading,
   subscribedExtensionIds,
 }: SubscribeExtensionFormProps) {
-  const [selected, setSelected] = useState<ExtensionRuleset[]>([]);
+  const [selected, setSelected] = useState<RulesetListItem[]>([]);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
 

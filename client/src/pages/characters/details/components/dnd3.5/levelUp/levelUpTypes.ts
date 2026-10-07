@@ -2,13 +2,12 @@
 
 import type { InferResponseType } from "hono/client";
 
-import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import type { RPC } from "@/client/src/services/rpc.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
 
 /** A saved level, as Edit Level loads it. */
 type LevelData = InferResponseType<LevelsApi[":characterLevelId"]["$get"], 200>;
 
-type LevelsApi = RPC["api"]["characters"]["levels"][":characterId"];
+type LevelsApi = (typeof rpc.api.characters.levels)[":characterId"];
 
 /** A spell picked for the level, as a saved level lists it. */
 type SelectedPower = LevelData["powers"][string][number];
@@ -18,7 +17,6 @@ export type AptitudePool = FeatsData["aptitudePools"][string];
 export type AttributesData = InferResponseType<LevelsApi["attribute-slots"]["$get"], 200>;
 export type AvailableKlass = InferResponseType<LevelsApi["available-classes"]["$get"], 200>["items"][number];
 export type AvailablePower = InferResponseType<LevelsApi["available-powers"]["$get"], 200>["items"][number];
-export type BaseRules = NonNullable<CharacterDetail["baseRules"]>;
 
 export type FeatsData = InferResponseType<LevelsApi["feat-slots"]["$get"], 200>;
 /** A row of the feat picker: a feat, or a family of feat variants. */

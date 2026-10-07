@@ -12,19 +12,20 @@ import {
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
-interface ContributorRow {
-  email: string;
-  id: string;
-  role: ContributorRole;
-  status: string;
-  user?: { username?: string | null } | null;
-}
-
 interface ContributorsTableProps<T extends ContributorRow> {
   contributors: T[];
   owner: { emailAddress: string; username?: string | null } | null;
   /** A row's `RowAction`s; when omitted there is no Actions column. */
   renderActions?: (contributor: T) => ReactNode;
+}
+
+/** A contributor's row, a ruleset's or a character's: who, their role and their invite's status. */
+export interface ContributorRow {
+  email: string;
+  id: string;
+  role: ContributorRole;
+  status: string;
+  user?: { username?: string | null } | null;
 }
 
 function contributorStatusColor(status: string): "warning" | "success" | "error" | "default" {

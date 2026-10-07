@@ -3,7 +3,7 @@ import { type Ref } from "react";
 
 import type { PathValueType } from "@/shared/customization/target.ts";
 
-import { pathChoices } from "./pathValues.ts";
+import { type PathChoice, pathChoices } from "./pathValues.ts";
 
 interface PathValueInputProps {
   disabled?: boolean;
@@ -15,7 +15,7 @@ interface PathValueInputProps {
   label?: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  possibleValues?: { label: string; value: string }[];
+  possibleValues?: PathChoice[];
   required?: boolean;
   value: string;
   valueType?: PathValueType;

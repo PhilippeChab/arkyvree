@@ -14,9 +14,17 @@ import { TableFrame } from "./TableFrame.tsx";
 
 interface TableSkeletonProps {
   /** The table's columns: their header and width */
-  columns: { align?: TableCellProps["align"]; key: string; label: string; width?: string }[];
+  columns: TableColumn[];
   sx?: SxProps<Theme>;
   tableSx?: SxProps<Theme>;
+}
+
+/** A table's column: its key, its header and its width. */
+export interface TableColumn {
+  align?: TableCellProps["align"];
+  key: string;
+  label: string;
+  width?: string;
 }
 
 /** A table's first load: its frame and header, over rows of placeholder lines. */

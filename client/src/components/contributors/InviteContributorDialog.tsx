@@ -1,10 +1,9 @@
 import { DialogContent, DialogTitle, Stack } from "@mui/material";
-import type { InferRequestType } from "hono/client";
 import type { UseFormReturn } from "react-hook-form";
 
 import { DialogFooter, EmailField, FormDialog, SelectField } from "@/client/src/components/common/index.ts";
 import { EMAIL_RULES } from "@/client/src/lib/validation.ts";
-import type { rpc } from "@/client/src/services/rpc.ts";
+import type { ContributorRole } from "@/shared/enums.ts";
 
 interface InviteContributorDialogProps {
   /** Its opener's, reset as it opens (`EMPTY_INVITE`): a failed invite keeps what was typed. */
@@ -16,10 +15,6 @@ interface InviteContributorDialogProps {
   /** Roles offered; no role picker when omitted. */
   roles?: ContributorRole[];
 }
-
-export type ContributorRole = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["contributors"][":contributorId"]["$put"]
->["json"]["role"];
 
 export interface InviteContributorFormData {
   email: string;
