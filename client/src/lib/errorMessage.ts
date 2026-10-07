@@ -5,6 +5,11 @@ export function accessLost(error: unknown): boolean {
   return error instanceof ApiError && (error.status === 404 || error.status === 403);
 }
 
+/** What a picker's list says when it shows no option: why its options didn't load, else `otherwise` (MUI's default). */
+export function emptyOptionsText(what: string, error: unknown, otherwise?: string) {
+  return error ? loadFailureMessage(what, error) : otherwise;
+}
+
 /** A caught error's message for the user, or the fallback when it carries none. */
 export function errorMessage(error: unknown, fallback: string): string {
   if (typeof error === "string") return error || fallback;

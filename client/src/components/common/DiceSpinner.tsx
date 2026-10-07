@@ -1,4 +1,4 @@
-import { Box, Stack, type SxProps, type Theme, Typography } from "@mui/material";
+import { Stack, type SxProps, type Theme, Typography } from "@mui/material";
 import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 
 import { ANIMATIONS, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
@@ -69,10 +69,15 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
             {dice}
           </Stack>
         )}
-        {/* "inherit", not "visible": a button hidden with visibility must hide its label too. */}
-        <Box component="span" sx={{ visibility: loading ? "hidden" : "inherit" }}>
+        {/* "inherit", not "visible": a button hidden with visibility must hide its label too. A flex box, as its
+            wrapper: an icon inside it takes no line box's height. */}
+        <Stack
+          component="span"
+          direction="row"
+          sx={{ display: "inline-flex", visibility: loading ? "hidden" : "inherit" }}
+        >
           {children}
-        </Box>
+        </Stack>
       </Stack>
     );
   }

@@ -30,7 +30,7 @@ test.describe("Campaigns", () => {
     const dialog = page.locator('[role="dialog"][aria-modal="true"]').last();
     await dialog.locator('input[name="name"]').fill(`${name} renamed`);
     const renamed = apiResponse(page, "PUT", /\/api\/campaigns\/[a-f0-9-]+(?:\?|$)/);
-    await dialog.getByRole("button", { name: /Save Changes/ }).click();
+    await dialog.getByRole("button", { name: "Update" }).click();
     await renamed;
     await expect(page.getByRole("heading", { name: `${name} renamed` })).toBeVisible({ timeout: 15_000 });
 

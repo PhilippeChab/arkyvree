@@ -25,7 +25,7 @@ export function useClassLevels(rulesetId: string, classId: string) {
     feats: [],
   });
 
-  const { data: levels, isLoading } = useQuery(classLevelsQuery(rulesetId, classId));
+  const { data: levels, isLoading, error } = useQuery(classLevelsQuery(rulesetId, classId));
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateLevelFormData) => {
@@ -37,12 +37,11 @@ export function useClassLevels(rulesetId: string, classId: string) {
       );
     },
     onSuccess: () => {
-      snackbar.success("Level created successfully");
+      snackbar.success("Level created");
       queryClient.invalidateQueries({
         queryKey: classLevelsQuery(rulesetId, classId).queryKey,
       });
       setCreateDialogOpen(false);
-      createForm.reset();
     },
     onError: (error) => {
       snackbar.error(error, "Failed to create level");
@@ -70,6 +69,7 @@ export function useClassLevels(rulesetId: string, classId: string) {
   return {
     levels,
     isLoading,
+    error,
 
     createDialogOpen,
     setCreateDialogOpen,

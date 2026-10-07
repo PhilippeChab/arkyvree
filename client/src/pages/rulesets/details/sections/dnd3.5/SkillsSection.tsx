@@ -3,7 +3,13 @@ import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/re
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback } from "react";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  CreateDialog,
+  LoadError,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+} from "@/client/src/components/common/index.ts";
 import { SkillsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -51,9 +57,9 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     onCreateSuccess: (created) => openEntity(`skills/${created.id}`),
   });
 
-  const { data: rulesetAbilities = [] } = useRulesetAbilities(ruleset.id);
+  const { data: rulesetAbilities = [], error: abilitiesError } = useRulesetAbilities(ruleset.id);
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...skillsQuery(ruleset.id, { search: searchQuery, childOnly }),
     placeholderData: keepPreviousData,
   });
@@ -99,7 +105,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       <Stack spacing={3}>
         <SearchBar
           {...searchTextProps}
-          searchPlaceholder="Search skills..."
+          searchPlaceholder="Search skills…"
           actions={
             <SectionActions
               ruleset={ruleset}
@@ -111,7 +117,10 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
           }
         />
         <Stack spacing={2}>
+          {!!abilitiesError && rulesetAbilities.length === 0 && <LoadError what="Abilities" error={abilitiesError} />}
           <RulesetSectionTable
+            what="Skills"
+            error={error}
             data={skills}
             search={searchQuery}
             isLoading={isLoading}
@@ -132,7 +141,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Skill">
-        <SkillFormFields form={createForm} abilities={rulesetAbilities} />
+        <SkillFormFields form={createForm} abilities={rulesetAbilities} abilitiesError={abilitiesError} />
       </CreateDialog>
     </SectionContent>
   );

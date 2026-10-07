@@ -46,7 +46,7 @@ export function SpellEditor({
 }: EditorProps<Power>) {
   const form = useFormWith<SpellFormData>(EMPTY_SPELL);
   const sync = useFormSync(form, toSpellForm(power), { key: recordKey, adoptKey, updatedAt: power.updatedAt });
-  const { data: saves = [] } = useRulesetSaves(rulesetId);
+  const { data: saves = [], error: savesError } = useRulesetSaves(rulesetId);
   const saveMutation = useEditorSave({
     sync,
     entityId,
@@ -91,6 +91,7 @@ export function SpellEditor({
                   form={form}
                   rulesetId={rulesetId}
                   saves={saves}
+                  savesError={savesError}
                   knownAptitudes={linkedAptitudes(power)}
                   hideProperties
                 />

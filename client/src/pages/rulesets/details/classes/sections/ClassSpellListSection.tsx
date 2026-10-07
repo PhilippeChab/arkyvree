@@ -35,7 +35,11 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
   const [searchText, setSearchText] = useState("");
   const search = useDebouncedValue(searchText);
 
-  const { data: lists = [], isLoading: isLoadingLists } = useQuery(classSpellListsQuery(rulesetId, classId));
+  const {
+    data: lists = [],
+    isLoading: isLoadingLists,
+    error: listsError,
+  } = useQuery(classSpellListsQuery(rulesetId, classId));
   // The class's own list opens first; one it casts from too (a pious templar's blackguard list) is picked
   const listId = lists.some((list) => list.id === chosenListId) ? chosenListId : lists[0]?.id;
 
@@ -44,7 +48,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
     return listId === undefined ? undefined : keepPreviousData(previous);
   }
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...spellListSpellsQuery(rulesetId, listId, selectedLevel, search),
     placeholderData: keepListSpells,
   });
@@ -72,7 +76,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
       <SearchBar
         searchValue={searchText}
         onSearchChange={setSearchText}
-        searchPlaceholder="Search spells..."
+        searchPlaceholder="Search spells…"
         filters={
           <>
             {lists.length > 1 && (
@@ -81,7 +85,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
                   select
                   fullWidth
                   size="small"
-                  label="Spell list"
+                  label="Spell List"
                   value={listId ?? ""}
                   onChange={(e) => setChosenListId(e.target.value)}
                 >
@@ -100,6 +104,8 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
 
       <Stack spacing={2}>
         <RulesetSectionTable
+          what="Spells"
+          error={listsError ?? error}
           data={spells}
           search={search}
           isLoading={isLoadingLists || isLoading}

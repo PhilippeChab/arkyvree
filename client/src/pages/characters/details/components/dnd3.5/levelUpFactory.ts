@@ -78,6 +78,8 @@ interface FeatPickerState {
   setSelectedAptitude: (aptitude: string | null) => void;
   groupedFeats: GroupedFeatRow[];
   isLoadingAvailableFeats: boolean;
+  /** Why the feats to pick didn't load. */
+  availableFeatsError: unknown;
   isFetchingNextFeatsPage: boolean;
   expandedFeatFamilies: ReadonlySet<string>;
   toggleFeatFamily: (family: string) => void;
@@ -127,6 +129,8 @@ interface PowerPickerState {
   setSelectedPowerLevel: (level: number | null) => void;
   availablePowers: AvailablePower[];
   isLoadingAvailablePowers: boolean;
+  /** Why the spells to pick didn't load. */
+  availablePowersError: unknown;
   isFetchingNextPowersPage: boolean;
   powerSearch: string;
   /** The picks' form: the spells field, which the step changes from `selectedPowers`. */
@@ -174,6 +178,8 @@ export interface AddClassPlanStepProps {
    *  drop the character's existing classes from the "+ X" row. */
   quickAddKlasses: AvailableKlass[];
   isLoadingKlasses: boolean;
+  /** Why the classes didn't load, said where they'd show. */
+  klassesError: unknown;
   handleKlassListScroll: (event: UIEvent<HTMLElement>) => void;
   setKlassSearch: (search: string) => void;
 }

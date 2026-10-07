@@ -10,17 +10,17 @@ interface RulesetLicenseNoticeProps {
 
 export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
   const [open, setOpen] = useState(false);
-  const { data: text, isPending, isError, error, refetch } = useOglLicense(open);
+  const { data: text, isPending, error, refetch } = useOglLicense(open);
 
   return (
     <>
       <Stack sx={{ alignItems: "center" }}>
         <LinkButton variant="body2" onClick={() => setOpen(true)}>
-          License & attribution
+          License & Attribution
         </LinkButton>
       </Stack>
       <Modal open={open} onClose={() => setOpen(false)} maxWidth="md" aria-labelledby="ruleset-license-title">
-        <DialogTitle id="ruleset-license-title">License & attribution</DialogTitle>
+        <DialogTitle id="ruleset-license-title">License & Attribution</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={3}>
             <Stack spacing={1}>
@@ -35,14 +35,16 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
             {isPending && (
               <Stack
                 role="status"
-                aria-label="Loading license"
+                aria-label="Loading License"
                 direction="row"
                 sx={{ justifyContent: "center", py: 4 }}
               >
                 <DiceSpinner />
               </Stack>
             )}
-            {isError && <LoadError what="License text" error={error} onRetry={() => void refetch()} />}
+            {!!error && text === undefined && (
+              <LoadError what="License text" error={error} onRetry={() => void refetch()} />
+            )}
             {text !== undefined && (
               <Typography
                 component="pre"

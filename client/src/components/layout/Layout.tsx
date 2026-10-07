@@ -241,7 +241,7 @@ export function Layout() {
               color="inherit"
               onClick={() => setMobileDrawerOpen(true)}
               edge="start"
-              aria-label="Open navigation"
+              aria-label="Open Navigation"
             >
               <MenuIcon />
             </IconButton>
@@ -275,7 +275,7 @@ export function Layout() {
             {!isDemo && <FeedbackButton />}
             {!isDemo && <NotificationBell />}
             {!isDemo && (
-              <IconButton size="large" onClick={menu.openMenu} color="inherit" aria-label="Account menu">
+              <IconButton size="large" onClick={menu.openMenu} color="inherit" aria-label="Account Menu">
                 <Avatar src={avatarAttachment?.url ?? undefined} sx={{ width: 32, height: 32 }}>
                   <AccountCircleIcon />
                 </Avatar>

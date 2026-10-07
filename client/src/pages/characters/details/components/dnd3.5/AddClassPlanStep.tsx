@@ -3,6 +3,7 @@ import { useMemo } from "react";
 
 import { AddButton, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { CloseIcon } from "@/client/src/components/icons/index.ts";
+import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 
 import type { AvailableKlass } from "./levelUp/index.ts";
 import type { AddClassPlanStepProps } from "./levelUpFactory.ts";
@@ -13,6 +14,7 @@ export function AddClassPlanStep({
   availableKlasses,
   quickAddKlasses,
   isLoadingKlasses,
+  klassesError,
   handleKlassListScroll,
   setKlassSearch,
 }: AddClassPlanStepProps) {
@@ -110,6 +112,7 @@ export function AddClassPlanStep({
               sx={{ flex: 1 }}
               options={availableKlasses}
               loading={isLoadingKlasses}
+              noOptionsText={emptyOptionsText("Classes", klassesError)}
               value={null}
               onChange={(_, value) => {
                 if (value) onClassChange(index, value);
@@ -145,7 +148,7 @@ export function AddClassPlanStep({
                 );
               }}
               renderInput={(params) => (
-                <TextField {...params} label={`Level ${index + 1}`} placeholder="Search classes..." />
+                <TextField {...params} label={`Level ${index + 1}`} placeholder="Search classes…" />
               )}
               slotProps={{
                 listbox: {
@@ -154,7 +157,7 @@ export function AddClassPlanStep({
                 },
               }}
             />
-            <IconButton size="small" aria-label={`Remove level ${index + 1}`} onClick={() => onRemoveLevel(index)}>
+            <IconButton size="small" aria-label={`Remove Level ${index + 1}`} onClick={() => onRemoveLevel(index)}>
               <CloseIcon fontSize="small" />
             </IconButton>
           </Stack>

@@ -11,11 +11,13 @@ type Ability = RulesetAbility;
 interface SaveFormFieldsProps {
   form: UseFormReturn<SaveFormData>;
   abilities: Ability[];
+  /** Why the abilities didn't load. */
+  abilitiesError: unknown;
 }
 
 export type SaveFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["saves"]["$post"]>["json"];
 
-export function SaveFormFields({ form, abilities }: SaveFormFieldsProps) {
+export function SaveFormFields({ form, abilities, abilitiesError }: SaveFormFieldsProps) {
   return (
     <>
       <NameField control={form.control} name="name" rules={NAME_RULES} />
@@ -26,6 +28,7 @@ export function SaveFormFields({ form, abilities }: SaveFormFieldsProps) {
         label="Linked Ability"
         rules={requiredRules("Ability is required")}
         options={abilities.map((ability) => ({ value: ability.id, label: ability.name }))}
+        loadError={abilitiesError}
       />
     </>
   );

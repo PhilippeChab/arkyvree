@@ -156,7 +156,7 @@ export function ClassesSection({
                               hd: klass.hd,
                             })
                           }
-                          aria-label={`Edit ${className} level ${lvl.klassLevel.level}`}
+                          aria-label={`Edit ${className} Level ${lvl.klassLevel.level}`}
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>

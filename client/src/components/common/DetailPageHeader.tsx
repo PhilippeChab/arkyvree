@@ -62,7 +62,7 @@ export function DetailPageHeader({
         <ArrowBackIcon />
       </IconButton>
       {onMenuOpen && (
-        <IconButton onClick={onMenuOpen} size="large" aria-label="More actions" sx={{ ...cornerButtonSx, right: 0 }}>
+        <IconButton onClick={onMenuOpen} size="large" aria-label="More Actions" sx={{ ...cornerButtonSx, right: 0 }}>
           <MoreVertIcon />
         </IconButton>
       )}

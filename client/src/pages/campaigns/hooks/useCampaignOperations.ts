@@ -25,12 +25,11 @@ export function useCampaignOperations() {
   const createMutation = useMutation({
     mutationFn: (data: CreateCampaignFormData) => parseResponse(rpc.api.campaigns.$post({ json: data })),
     onSuccess: (data) => {
-      snackbar.success("Campaign created successfully");
+      snackbar.success("Campaign created");
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.campaigns.lists,
       });
       setCreateDialogOpen(false);
-      createForm.reset();
       navigate(`/campaigns/${data.campaign.id}`);
     },
     onError: (error) => {
@@ -38,7 +37,9 @@ export function useCampaignOperations() {
     },
   });
 
+  // Opened empty, whatever a cancelled one held
   const handleCreate = () => {
+    createForm.reset();
     setCreateDialogOpen(true);
   };
 

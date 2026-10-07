@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { DialogFooter, Modal, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { ExtensionIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetListItem, rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 
 type ExtensionRuleset = RulesetListItem;
@@ -32,6 +33,7 @@ function SubscribeExtensionForm({
   const {
     items: extensions,
     isLoading: isLoadingExtensions,
+    error: extensionsError,
     onScroll,
   } = useListboxQuery(rulesetPickerQuery("extensions", debouncedSearch));
 
@@ -63,6 +65,7 @@ function SubscribeExtensionForm({
             }}
             filterOptions={(x) => x}
             loading={isLoadingExtensions}
+            noOptionsText={emptyOptionsText("Extensions", extensionsError)}
             disabled={isLoading}
             renderValue={(value, getItemProps) =>
               value.map((option, index) => {
@@ -70,7 +73,7 @@ function SubscribeExtensionForm({
                 return <Chip key={key} label={option.name} size="small" {...tagProps} />;
               })
             }
-            renderInput={(params) => <TextField {...params} label="Select extensions" />}
+            renderInput={(params) => <TextField {...params} label="Select Extensions" />}
             fullWidth
             slotProps={{
               listbox: {

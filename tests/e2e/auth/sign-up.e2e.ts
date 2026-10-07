@@ -27,7 +27,7 @@ test.describe("Sign Up", () => {
     await page.goto("/sign-up");
     await page.click("text=Sign in");
     await expect(page).toHaveURL("/sign-in");
-    await page.click("text=Sign up");
+    await page.click("text=Sign Up");
     await expect(page).toHaveURL("/sign-up");
   });
 });

@@ -18,7 +18,7 @@ The engine refuses illegal choices at every step: prestige classes you don't qua
 
 A character can't be switched to a different ruleset later — build a new character on the new ruleset.
 
-**Archive** makes a character read-only and hides it from your lists; **Unarchive** it from the Archived view. An archived character can also be removed for good with **Delete permanently**.
+**Archive** makes a character read-only and hides it from your lists; **Unarchive** it from the Archived view. An archived character can also be removed for good with **Delete Permanently**.
 
 ## What are Campaigns?
 

@@ -134,6 +134,7 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
   const {
     items: groupedFeats,
     isLoading: isLoadingAvailableFeats,
+    error: availableFeatsError,
     onScroll: handleFeatsScroll,
     isFetchingNextPage: isFetchingNextFeatsPage,
   } = useListboxQuery({
@@ -151,6 +152,7 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
   const {
     items: availablePowers,
     isLoading: isLoadingAvailablePowers,
+    error: availablePowersError,
     onScroll: handlePowersScroll,
     isFetchingNextPage: isFetchingNextPowersPage,
   } = useListboxQuery({
@@ -262,12 +264,14 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
     featsError,
     groupedFeats,
     isLoadingAvailableFeats,
+    availableFeatsError,
     isFetchingNextFeatsPage,
     powerData,
     isLoadingPowers,
     powersError,
     availablePowers,
     isLoadingAvailablePowers,
+    availablePowersError,
     isFetchingNextPowersPage,
 
     finalizeMutation,

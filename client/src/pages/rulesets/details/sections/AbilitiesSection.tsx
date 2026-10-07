@@ -22,7 +22,7 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery(abilitiesQuery(ruleset.id, childOnly));
+  const { data, isLoading, error } = useQuery(abilitiesQuery(ruleset.id, childOnly));
 
   const abilities = data?.items ?? [];
 
@@ -56,6 +56,8 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
           <SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange} />
         </Stack>
         <RulesetSectionTable
+          what="Abilities"
+          error={error}
           data={abilities}
           isLoading={isLoading}
           columns={ABILITIES_COLUMNS}

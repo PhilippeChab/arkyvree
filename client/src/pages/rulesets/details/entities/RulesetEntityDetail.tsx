@@ -209,16 +209,14 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
             />
           ))}
       </EntityDetailLayout>
-      {editing && (
-        <DeleteDialog
-          open={deleteDialogOpen}
-          onClose={() => setDeleteDialogOpen(false)}
-          title={`Delete ${label}`}
-          message={`Are you sure you want to delete this ${label.toLowerCase()}? This action cannot be undone.`}
-          onConfirm={() => deleteMutation.mutate()}
-          isLoading={deleteMutation.isPending}
-        />
-      )}
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        title={`Delete ${label}`}
+        message={`Are you sure you want to delete this ${label.toLowerCase()}? This action cannot be undone.`}
+        onConfirm={() => deleteMutation.mutate()}
+        isLoading={deleteMutation.isPending}
+      />
     </>
   );
 }

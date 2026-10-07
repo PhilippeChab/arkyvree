@@ -28,7 +28,7 @@ interface CreateLevelDialogProps {
 }
 
 export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, rulesetId }: CreateLevelDialogProps) {
-  const { data: rulesetSaves } = useRulesetSaves(rulesetId, open);
+  const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId, open);
   const { field: saves, fieldState: savesState } = useController({
     control: form.control,
     name: "saves",
@@ -84,6 +84,8 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
       />
       <ClassLevelFields
         rulesetId={rulesetId}
+        rulesetSaves={rulesetSaves}
+        savesError={savesError}
         saves={saves.value ?? []}
         onSavesChange={saves.onChange}
         savesInvalid={!!savesState.error}
@@ -99,7 +101,7 @@ export function RemoveSkillDialog({ ...props }: ConfirmActionProps) {
     <DeleteDialog
       {...props}
       title="Remove Skill"
-      message="Are you sure you want to remove this skill from the class?"
+      message="Are you sure you want to remove this skill from the class? This action cannot be undone."
       confirmLabel="Remove"
     />
   );

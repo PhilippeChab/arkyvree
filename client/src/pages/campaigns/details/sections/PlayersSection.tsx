@@ -124,12 +124,11 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       );
     },
     onSuccess: () => {
-      snackbar.success("Player added successfully");
+      snackbar.success("Player added");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaign.id) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
       setAddDialogOpen(false);
-      addForm.reset();
     },
     onError: (error) => {
       snackbar.error(error, "Failed to add player");
@@ -146,7 +145,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       );
     },
     onSuccess: () => {
-      snackbar.success("Player updated successfully");
+      snackbar.success("Player updated");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaign.id) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
@@ -167,7 +166,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     },
     onSuccess: () => {
       const removedSelf = selectedPlayer?.userId === currentUserId;
-      snackbar.success(removedSelf ? "You left the campaign" : "Player removed successfully");
+      snackbar.success(removedSelf ? "You left the campaign" : "Player removed");
       if (removedSelf) {
         navigate("/campaigns", { replace: true });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
@@ -193,7 +192,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       );
     },
     onSuccess: () => {
-      snackbar.success("Invitation revoked successfully");
+      snackbar.success("Invitation revoked");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
       setRevokeDialogOpen(false);
       setSelectedInviteId(null);
@@ -253,7 +252,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         </Typography>
         <SearchBar
           {...searchTextProps}
-          searchPlaceholder="Search players..."
+          searchPlaceholder="Search players…"
           actions={
             canManagePlayers && !campaign.deletedAt && <AddButton label="Add Player" onClick={handleAddPlayer} />
           }

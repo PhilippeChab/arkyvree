@@ -12,7 +12,7 @@ test.describe("Profile editing", () => {
   });
 
   test("opens from the account menu, with the user's email", async ({ page, user }) => {
-    await page.getByRole("button", { name: "Account menu" }).click();
+    await page.getByRole("button", { name: "Account Menu" }).click();
     await page.getByRole("menuitem", { name: "Profile" }).click();
     await page.waitForURL("/profile");
     await expect(page.locator('input[name="emailAddress"]')).toHaveValue(user.email);
@@ -23,7 +23,7 @@ test.describe("Profile editing", () => {
     const username = `testuser_${Date.now()}`;
     await page.fill('input[name="username"]', username);
     await page.locator("form").filter({ hasText: "Username" }).locator('button[type="submit"]').click();
-    await expect(page.locator("text=/Profile updated successfully/i")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/Profile updated/i")).toBeVisible({ timeout: 5000 });
     await page.reload();
     await expect(page.locator('input[name="username"]')).toHaveValue(username);
   });
@@ -75,7 +75,7 @@ test.describe("Profile editing", () => {
     await fillOtp(dialog, await getEmailVerificationCode(user.email));
     await dialog.getByRole("button", { name: /^Verify$/ }).click();
 
-    await expect(page.locator("text=/Email address updated successfully/i")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/Email address updated/i")).toBeVisible({ timeout: 5000 });
     await expect(dialog).toHaveCount(0);
     await expect(page.locator('input[name="emailAddress"]')).toHaveValue(newEmail);
     await expect(page.locator("text=/Pending email change/i")).toHaveCount(0);
@@ -88,9 +88,9 @@ test.describe("Profile editing", () => {
     await page.fill('input[name="newPassword"]', newPassword);
     await page.fill('input[name="newPasswordConfirmation"]', newPassword);
     await page.locator("form").filter({ hasText: "Current Password" }).locator('button[type="submit"]').click();
-    await expect(page.locator("text=/Password updated successfully/i")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/Password updated/i")).toBeVisible({ timeout: 5000 });
 
-    await page.getByRole("button", { name: "Account menu" }).click();
+    await page.getByRole("button", { name: "Account Menu" }).click();
     await page.getByRole("menuitem", { name: "Sign Out" }).click();
     await page.waitForURL("/sign-in");
     // A fresh sign-in page, with nothing left of the session: a late auth check can't re-render the form mid-fill

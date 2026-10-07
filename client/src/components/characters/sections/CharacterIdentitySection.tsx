@@ -20,6 +20,7 @@ import {
   useFormWith,
   useRulesetLanguages,
 } from "@/client/src/hooks/index.ts";
+import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
@@ -166,7 +167,7 @@ export function CharacterIdentitySection({
 
   // Staged via the form like every other field — selections only persist
   // when the user clicks Save, matching the rest of the identity section.
-  const { data: availableLanguages } = useRulesetLanguages(rulesetId, !readOnly);
+  const { data: availableLanguages, error: languagesError } = useRulesetLanguages(rulesetId, !readOnly);
 
   const { field: languageIds } = useController({ control: form.control, name: "languageIds" });
   const selectedLanguageIds = languageIds.value;
@@ -404,6 +405,7 @@ export function CharacterIdentitySection({
                     multiple
                     size="small"
                     options={availableLanguages ?? []}
+                    noOptionsText={emptyOptionsText("Languages", languagesError)}
                     getOptionLabel={(option) => option.name}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     value={selectedLanguages}
@@ -437,7 +439,7 @@ export function CharacterIdentitySection({
                     variant="outlined"
                     multiline
                     minRows={3}
-                    placeholder="Character appearance, personality, or background..."
+                    placeholder="Character appearance, personality, or background…"
                     disabled={readOnly}
                     sx={{ ...disabledFieldStyle, "& textarea": { resize: "vertical" } }}
                   />
@@ -452,7 +454,7 @@ export function CharacterIdentitySection({
                     variant="outlined"
                     multiline
                     minRows={4}
-                    placeholder="Campaign notes, character development, reminders..."
+                    placeholder="Campaign notes, character development, reminders…"
                     disabled={readOnly}
                     sx={{ ...disabledFieldStyle, "& textarea": { resize: "vertical" } }}
                   />

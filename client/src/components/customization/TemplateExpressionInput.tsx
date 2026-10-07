@@ -133,11 +133,11 @@ export function TemplateExpressionInput({
             sx: { fontFamily: "monospace" },
             endAdornment: (
               <InputAdornment position="end">
-                <Tooltip title="Insert path…">
+                <Tooltip title="Insert Path…">
                   <span>
                     <IconButton
                       size="small"
-                      aria-label="Insert path"
+                      aria-label="Insert Path"
                       onClick={openPicker}
                       disabled={disabled}
                       edge="end"

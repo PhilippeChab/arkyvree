@@ -49,7 +49,7 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     onCreateSuccess: (created) => openEntity(`mechanics/${created.id}`),
   });
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...mechanicsQuery(ruleset.id, { search: searchQuery, childOnly }),
     placeholderData: keepPreviousData,
   });
@@ -83,7 +83,7 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       <Stack spacing={3}>
         <SearchBar
           {...searchTextProps}
-          searchPlaceholder="Search mechanics..."
+          searchPlaceholder="Search mechanics…"
           actions={
             <SectionActions
               ruleset={ruleset}
@@ -96,6 +96,8 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
         />
         <Stack spacing={2}>
           <RulesetSectionTable
+            what="Mechanics"
+            error={error}
             data={mechanics}
             search={searchQuery}
             isLoading={isLoading}

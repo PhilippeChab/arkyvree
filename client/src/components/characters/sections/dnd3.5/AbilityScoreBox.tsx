@@ -88,7 +88,7 @@ export function AbilityScoreBox({
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "center" }}>
                 <IconButton
                   size="small"
-                  aria-label={`Lower base ${ability}`}
+                  aria-label={`Lower Base ${ability}`}
                   onClick={() => edit.onBaseChange(edit.abilityId, baseValue - 1)}
                   disabled={baseValue <= 1}
                   sx={{ p: 0 }}
@@ -100,7 +100,7 @@ export function AbilityScoreBox({
                 </Typography>
                 <IconButton
                   size="small"
-                  aria-label={`Raise base ${ability}`}
+                  aria-label={`Raise Base ${ability}`}
                   onClick={() => edit.onBaseChange(edit.abilityId, baseValue + 1)}
                   disabled={baseValue >= 100}
                   sx={{ p: 0 }}

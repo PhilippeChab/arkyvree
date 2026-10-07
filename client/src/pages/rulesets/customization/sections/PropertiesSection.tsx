@@ -161,6 +161,7 @@ export function PropertiesSection({
         {canEdit && <SectionAddButton label="Add Property" onClick={handleCreate} />}
 
         <RulesetSectionTable
+          what="Properties"
           data={properties}
           isLoading={isLoading}
           columns={PROPERTIES_COLUMNS}
@@ -204,7 +205,7 @@ export function PropertiesSection({
               label="Value"
               required
               fullWidth
-              placeholder="Enter the property value..."
+              placeholder="Enter the property value…"
               error={!!fieldState.error}
               helperText={fieldState.error?.message}
             />
@@ -213,7 +214,7 @@ export function PropertiesSection({
         <DescriptionField
           control={createForm.control}
           name="description"
-          placeholder="Enter the property description..."
+          placeholder="Enter the property description…"
         />
       </CreateDialog>
 
@@ -254,17 +255,13 @@ export function PropertiesSection({
               label="Value"
               required
               fullWidth
-              placeholder="Enter the property value..."
+              placeholder="Enter the property value…"
               error={!!fieldState.error}
               helperText={fieldState.error?.message}
             />
           )}
         />
-        <DescriptionField
-          control={editForm.control}
-          name="description"
-          placeholder="Enter the property description..."
-        />
+        <DescriptionField control={editForm.control} name="description" placeholder="Enter the property description…" />
       </EditDialog>
 
       <DeleteDialog

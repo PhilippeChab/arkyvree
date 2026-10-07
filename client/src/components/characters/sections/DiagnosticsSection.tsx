@@ -139,7 +139,7 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
             <Fragment key={key}>
               <TableRow hover {...clickableProps(() => toggle(key))} sx={CLICKABLE_SX}>
                 <TableCell sx={{ ...TABLE_CELL_SX, pr: 0 }}>
-                  <IconButton size="small" aria-label={`${source}'s rules`} aria-expanded={isOpen} sx={{ p: 0 }}>
+                  <IconButton size="small" aria-label={`${source}'s Rules`} aria-expanded={isOpen} sx={{ p: 0 }}>
                     {isOpen ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
                   </IconButton>
                 </TableCell>

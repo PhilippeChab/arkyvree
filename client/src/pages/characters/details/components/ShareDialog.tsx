@@ -99,7 +99,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
                     readOnly: true,
                     endAdornment: (
                       <InputAdornment position="end">
-                        <IconButton onClick={handleCopy} edge="end" size="small" aria-label="Copy link">
+                        <IconButton onClick={handleCopy} edge="end" size="small" aria-label="Copy Link">
                           <CopyIcon fontSize="small" />
                         </IconButton>
                       </InputAdornment>
@@ -115,7 +115,9 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
                   onClick={() => generateMutation.mutate()}
                   disabled={isLoading}
                 >
-                  Regenerate
+                  <DiceSpinner size="small" loading={generateMutation.isPending}>
+                    Regenerate
+                  </DiceSpinner>
                 </Button>
                 {confirmRevoke ? (
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
@@ -129,7 +131,9 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
                       onClick={() => revokeMutation.mutate()}
                       disabled={isLoading}
                     >
-                      Revoke
+                      <DiceSpinner size="small" loading={revokeMutation.isPending}>
+                        Revoke
+                      </DiceSpinner>
                     </Button>
                     <Button
                       size="small"

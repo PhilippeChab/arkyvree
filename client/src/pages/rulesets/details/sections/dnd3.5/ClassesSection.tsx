@@ -53,7 +53,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
     onCreateSuccess: (created) => openEntity(`classes/${created.id}/levels`),
   });
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...classesQuery(ruleset.id, { search, childOnly, kind, orderBy, orderDir }),
     placeholderData: keepPreviousData,
   });
@@ -96,7 +96,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
       <Stack spacing={3}>
         <SearchBar
           {...searchBarProps}
-          searchPlaceholder="Search classes..."
+          searchPlaceholder="Search classes…"
           actions={
             <SectionActions
               ruleset={ruleset}
@@ -109,6 +109,8 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
         />
         <Stack spacing={2}>
           <RulesetSectionTable
+            what="Classes"
+            error={error}
             data={classes}
             search={search}
             isLoading={isLoading}
@@ -128,7 +130,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
         </Stack>
       </Stack>
 
-      <CreateDialog {...createDialogProps} title="Add New Class" maxWidth="xs">
+      <CreateDialog {...createDialogProps} title="Create New Class" maxWidth="xs">
         <ClassFormFields form={createForm} />
       </CreateDialog>
     </SectionContent>

@@ -47,7 +47,7 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
     // The private route sends the user to sign in
     onSuccess: () => {
       useAuthStore.getState().clearSession({ byUser: true });
-      snackbar.success("Account deleted successfully");
+      snackbar.success("Account deleted");
     },
     onError: (error) => setError(errorMessage(error, "Failed to delete account")),
   });
@@ -83,7 +83,7 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
                 control={control}
                 name="password"
                 type="password"
-                label="Confirm your password"
+                label="Confirm Your Password"
                 variant="outlined"
                 fullWidth
                 autoComplete="current-password"
@@ -92,7 +92,7 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
               <FormTextField
                 control={control}
                 name="confirmText"
-                label='Type "DELETE" to confirm'
+                label='Type "DELETE" to Confirm'
                 variant="outlined"
                 fullWidth
                 autoComplete="off"

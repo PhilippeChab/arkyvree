@@ -92,7 +92,7 @@ export default function CharactersPage() {
 
           <SearchBar
             {...searchBarProps}
-            searchPlaceholder="Search characters..."
+            searchPlaceholder="Search characters…"
             filterOptions={CHARACTER_FILTER_OPTIONS}
             filterValue={view}
             onFilterChange={(value) => updateSearchParams({ view: value })}

@@ -1,7 +1,9 @@
 import { Autocomplete, Box, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 
-import { BlankState, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { BlankState, LoadError, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { CloseIcon } from "@/client/src/components/icons/index.ts";
+import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
+import { truncate } from "@/client/src/lib/truncate.ts";
 import { RemoveSkillDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { useClassSkills, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
@@ -12,9 +14,11 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
 
   const {
     classSkills,
+    error,
     availableSkills,
     isLoading,
     isAvailableSkillsLoading,
+    availableSkillsError,
     setSkillSearch,
     handleSkillsScroll,
     deleteDialogOpen,
@@ -55,9 +59,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
                         {option.name}
                       </Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        {(option.description?.length ?? 0) > 60
-                          ? `${option.description?.substring(0, 60)}...`
-                          : (option.description ?? "")}
+                        {truncate(option.description ?? "", 60)}
                       </Typography>
                     </Box>
                   </Box>
@@ -76,14 +78,9 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
               }}
               value={null}
               renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Add Skill"
-                  placeholder="Search and select a skill to add..."
-                  size="small"
-                />
+                <TextField {...params} label="Add Skill" placeholder="Search and select a skill to add…" size="small" />
               )}
-              noOptionsText="No skills found"
+              noOptionsText={emptyOptionsText("Skills", availableSkillsError, "No skills found")}
               slotProps={{
                 listbox: {
                   component: ScrollSafeListbox,
@@ -100,6 +97,8 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
             <Skeleton key={index} variant="rectangular" height={40} />
           ))}
         </Stack>
+      ) : error && !classSkills?.length ? (
+        <LoadError what="Class skills" error={error} />
       ) : !classSkills || classSkills.length === 0 ? (
         <BlankState
           title="No class skills assigned"

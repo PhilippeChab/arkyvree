@@ -22,7 +22,7 @@ test.describe("Notifications", () => {
     const invitee = await signedInPage(browser, inviteeUser);
     await expect.poll(() => unreadCount(invitee), { timeout: 15_000 }).toBeGreaterThanOrEqual(1);
     await notificationBell(invitee).click();
-    const menu = invitee.locator('[role="menu"]').first();
+    const menu = invitee.getByRole("dialog", { name: "Notifications" });
     await expect(menu.locator("text=/invited you to/").filter({ hasText: name }).first()).toBeVisible();
     const accepted = apiResponse(invitee, "POST", /\/api\/campaigns\/invites\/[^/]+\/accept/);
     await menu.locator(":scope > div", { hasText: name }).first().getByRole("button", { name: "Accept" }).click();
@@ -32,7 +32,7 @@ test.describe("Notifications", () => {
     // The answered invite is off the bell.
     await invitee.goto("/dashboard");
     await notificationBell(invitee).click();
-    await expect(invitee.locator('[role="menu"]').first().getByText(name)).toHaveCount(0);
+    await expect(invitee.getByRole("dialog", { name: "Notifications" }).getByText(name)).toHaveCount(0);
 
     await gm.context().close();
     await invitee.context().close();
@@ -60,7 +60,7 @@ test.describe("Notifications", () => {
     const unread = await unreadCount(gm);
 
     const markedRead = apiResponse(gm, "POST", /\/api\/notifications\/read-all$/);
-    await gm.getByRole("button", { name: "Mark all as read" }).click();
+    await gm.getByRole("button", { name: "Mark All as Read" }).click();
     await markedRead;
     await expect.poll(() => unreadRejections.count(), { timeout: 10_000 }).toBe(0);
     await expect.poll(() => unreadCount(gm), { timeout: 15_000 }).toBeLessThanOrEqual(unread - 2);

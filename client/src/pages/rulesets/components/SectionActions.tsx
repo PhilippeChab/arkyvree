@@ -33,7 +33,7 @@ export function SectionActions({
           onChange={() => onChildOnlyChange(!childOnly)}
           sx={{ textTransform: "none" }}
         >
-          Local changes
+          Local Changes
         </ToggleButton>
       )}
       {canEditEntities && onAdd && <AddButton label={addLabel} onClick={onAdd} />}

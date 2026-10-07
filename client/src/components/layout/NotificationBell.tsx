@@ -1,9 +1,21 @@
-import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
+import {
+  Badge,
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  ListItemButton,
+  Popover,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
+import { DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
 import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useAnchorMenu, useNotificationActions } from "@/client/src/hooks/index.ts";
@@ -21,6 +33,12 @@ interface NotificationSummaryProps {
 
 type UnreadNotification = InferResponseType<typeof rpc.api.notifications.unread.$get, 200>["items"][number];
 
+/** A notification's row: a touch target's height on a phone, as a menu's item */
+const ROW_SX = { py: 1.5, minHeight: { xs: 48, sm: "auto" } } as const;
+
+/** The link to every notification, under the list */
+const LINK_ROW_SX = { ...ROW_SX, py: 0.75, justifyContent: "center" } as const;
+
 function NotificationSummary({ notification }: NotificationSummaryProps) {
   return (
     <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "baseline", width: "100%" }}>
@@ -37,7 +55,7 @@ export function NotificationBell() {
   const navigate = useNavigate();
   const actions = useNotificationActions();
 
-  const { data: unreadData } = useQuery({ ...unreadNotificationsQuery(), refetchInterval: ONE_MINUTE });
+  const { data: unreadData, error } = useQuery({ ...unreadNotificationsQuery(), refetchInterval: ONE_MINUTE });
 
   const unreadCount = unreadData?.count ?? 0;
   const notifications = unreadData?.items ?? [];
@@ -69,83 +87,85 @@ export function NotificationBell() {
           <NotificationsIcon />
         </Badge>
       </IconButton>
-      <Menu
+      {/* A panel, not a menu: its heading, its list, and a link to the whole page */}
+      <Popover
         anchorEl={menu.anchorEl}
         open={menu.open}
         onClose={menu.closeMenu}
+        // Under the bell, as a menu opens
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         slotProps={{
           paper: {
+            role: "dialog",
+            "aria-label": "Notifications",
             sx: { width: { xs: "90vw", sm: 450 }, maxHeight: 480 },
           },
         }}
       >
-        {notifications.length === 0 ? (
-          <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              No unread notifications
-            </Typography>
-          </Box>
-        ) : (
-          [
-            <Stack
-              key="header"
-              direction="row"
-              sx={{ px: 2, py: 1, justifyContent: "space-between", alignItems: "center" }}
-            >
-              <Typography variant="subtitle2" component="p" sx={{ color: "text.secondary" }}>
-                Notifications
+        <Stack sx={{ py: 1 }}>
+          {error && !unreadData ? (
+            <Box sx={{ px: 2, py: 1.5 }}>
+              <LoadError what="Notifications" error={error} />
+            </Box>
+          ) : notifications.length === 0 ? (
+            <Box sx={{ px: 2, py: 1.5 }}>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                No unread notifications
               </Typography>
-              <Button
-                size="small"
-                onClick={() => actions.markAllRead.mutate(undefined, { onSuccess: menu.closeMenu })}
-                disabled={actions.markAllRead.isPending}
-              >
-                Mark all read
-              </Button>
-            </Stack>,
-            <Divider key="divider" />,
-            ...notifications.map((notification) =>
-              actions.isActionable(notification) ? (
-                <Stack key={notification.id} spacing={1} sx={{ px: 2, py: 1.5 }}>
-                  <NotificationSummary notification={notification} />
-                  <InviteActionButtons
-                    onAccept={() => actions.accept(notification, (path) => menu.closeMenuAnd(() => navigate(path))())}
-                    onReject={() => actions.reject(notification)}
-                    disabled={actions.isAnswering(notification)}
-                  />
-                </Stack>
-              ) : (
-                <Tooltip
-                  describeChild
-                  key={notification.id}
-                  title={formatActivityDetails(notification.data) ?? ""}
-                  arrow
-                  enterDelay={300}
-                  placement="left"
-                  slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
+            </Box>
+          ) : (
+            <>
+              <Stack direction="row" sx={{ px: 2, py: 1, justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="subtitle2" component="p" sx={{ color: "text.secondary" }}>
+                  Notifications
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => actions.markAllRead.mutate(undefined, { onSuccess: menu.closeMenu })}
+                  disabled={actions.markAllRead.isPending}
                 >
-                  <MenuItem
-                    onClick={menu.closeMenuAnd(() => actions.open(notification))}
-                    sx={{ py: 1.5, whiteSpace: "normal" }}
-                  >
+                  <DiceSpinner size="small" loading={actions.markAllRead.isPending}>
+                    Mark All as Read
+                  </DiceSpinner>
+                </Button>
+              </Stack>
+              <Divider />
+              {notifications.map((notification) =>
+                actions.isActionable(notification) ? (
+                  <Stack key={notification.id} spacing={1} sx={{ px: 2, py: 1.5 }}>
                     <NotificationSummary notification={notification} />
-                  </MenuItem>
-                </Tooltip>
-              ),
-            ),
-            <Divider key="divider-bottom" />,
-            <MenuItem
-              key="view-all"
-              onClick={menu.closeMenuAnd(() => navigate("/notifications"))}
-              sx={{ justifyContent: "center" }}
-            >
-              <Typography variant="body2" sx={{ color: "primary.main" }}>
-                View all notifications
-              </Typography>
-            </MenuItem>,
-          ]
-        )}
-      </Menu>
+                    <InviteActionButtons
+                      onAccept={() => actions.accept(notification, (path) => menu.closeMenuAnd(() => navigate(path))())}
+                      onReject={() => actions.reject(notification)}
+                      disabled={actions.isAnswering(notification)}
+                    />
+                  </Stack>
+                ) : (
+                  <Tooltip
+                    describeChild
+                    key={notification.id}
+                    title={formatActivityDetails(notification.data) ?? ""}
+                    arrow
+                    enterDelay={300}
+                    placement="left"
+                    slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
+                  >
+                    <ListItemButton onClick={menu.closeMenuAnd(() => actions.open(notification))} sx={ROW_SX}>
+                      <NotificationSummary notification={notification} />
+                    </ListItemButton>
+                  </Tooltip>
+                ),
+              )}
+              <Divider />
+              <ListItemButton component={Link} to="/notifications" onClick={menu.closeMenu} sx={LINK_ROW_SX}>
+                <Typography variant="body2" sx={{ color: "primary.main" }}>
+                  View All Notifications
+                </Typography>
+              </ListItemButton>
+            </>
+          )}
+        </Stack>
+      </Popover>
     </>
   );
 }

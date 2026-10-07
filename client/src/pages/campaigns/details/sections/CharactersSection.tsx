@@ -42,6 +42,7 @@ import {
   useSearchText,
   useStaggerAnimation,
 } from "@/client/src/hooks/index.ts";
+import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
@@ -275,6 +276,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
   const {
     items: unlinkedCharacters,
     isLoading,
+    error: charactersError,
     onScroll: handleCharactersScroll,
   } = useListboxQuery({ ...unlinkedCharactersQuery(campaignId, debouncedCharacterSearch), enabled: open });
 
@@ -289,7 +291,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
       );
     },
     onSuccess: () => {
-      snackbar.success("Character linked successfully");
+      snackbar.success("Character linked");
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.campaigns.section(campaignId, "characters"),
       });
@@ -326,6 +328,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
             }}
             filterOptions={(x) => x}
             loading={isLoading}
+            noOptionsText={emptyOptionsText("Characters", charactersError)}
             disabled={isLinking}
             renderOption={(props, option) => (
               <li {...props} key={option.id}>
@@ -421,7 +424,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
 
         <SearchBar
           {...searchTextProps}
-          searchPlaceholder="Search characters..."
+          searchPlaceholder="Search characters…"
           actions={!campaign.deletedAt && <AddButton label="Link Character" onClick={() => setLinkDialogOpen(true)} />}
         />
 

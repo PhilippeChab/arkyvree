@@ -67,7 +67,7 @@ export default function ActivitiesPage() {
           <Stack spacing={3}>
             <SearchBar
               {...searchBarProps}
-              searchPlaceholder="Search activity logs..."
+              searchPlaceholder="Search activity logs…"
               sortOptions={ACTIVITY_SORT_OPTIONS}
             />
 

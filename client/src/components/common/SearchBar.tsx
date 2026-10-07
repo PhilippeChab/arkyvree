@@ -47,7 +47,7 @@ export interface SortOption<T extends string = string> {
 export function SearchBar<TFilter extends string = string, TSort extends string = string>({
   searchValue,
   onSearchChange,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Search…",
   filterOptions,
   filterValue,
   onFilterChange,

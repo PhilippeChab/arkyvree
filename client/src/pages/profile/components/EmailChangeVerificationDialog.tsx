@@ -46,7 +46,7 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.me });
       updateUser({ emailAddress: data.emailAddress, pendingEmailAddress: data.pendingEmailAddress });
-      snackbar.success("Email address updated successfully");
+      snackbar.success("Email address updated");
       handleClose();
     },
     onError: (error) => setError(errorMessage(error, "Failed to verify the code")),

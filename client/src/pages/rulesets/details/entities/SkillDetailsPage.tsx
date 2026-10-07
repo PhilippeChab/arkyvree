@@ -2,6 +2,7 @@ import { Chip } from "@mui/material";
 import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
+import { LoadError } from "@/client/src/components/common/index.ts";
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import {
   EMPTY_SKILL,
@@ -17,7 +18,7 @@ export default function SkillDetailsPage() {
   const { id: rulesetId = "", skillId = "" } = useParams<{ id: string; skillId: string }>();
   const param = { id: rulesetId, skillId };
   const endpoint = rpc.api.rulesets[":id"].skills[":skillId"];
-  const { data: abilities = [] } = useRulesetAbilities(rulesetId);
+  const { data: abilities = [], error: abilitiesError } = useRulesetAbilities(rulesetId);
 
   return (
     <RulesetEntityDetail
@@ -38,12 +39,13 @@ export default function SkillDetailsPage() {
         }),
         update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
         remove: () => endpoint.$delete({ param }),
-        renderFields: (form) => <SkillFormFields form={form} abilities={abilities} />,
+        renderFields: (form) => <SkillFormFields form={form} abilities={abilities} abilitiesError={abilitiesError} />,
       }}
       renderChips={(skill) => {
         const primaryAbilityName = abilities.find((a) => a.id === skill.primaryAbilityId)?.name;
         return (
           <>
+            {!!abilitiesError && abilities.length === 0 && <LoadError what="Abilities" error={abilitiesError} />}
             {primaryAbilityName && <Chip label={primaryAbilityName} color="secondary" sx={{ fontWeight: 600 }} />}
             {!skill.usableWithoutTraining && <Chip label="Trained Only" color="warning" />}
             {skill.impactedByWeight && (

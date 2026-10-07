@@ -2,7 +2,7 @@ import { Chip, Stack, Tooltip, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
-import { AddButton } from "@/client/src/components/common/index.ts";
+import { AddButton, LoadError } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
@@ -25,7 +25,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   // One column per ruleset save.
-  const { data: rulesetSaves } = useRulesetSaves(rulesetId);
+  const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
   // Build dynamic columns based on ruleset saves
   const levelsColumns = useMemo(() => {
     const saveColumns = (rulesetSaves ?? []).map((save) => ({
@@ -45,6 +45,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   const {
     levels,
     isLoading,
+    error,
     createDialogOpen,
     setCreateDialogOpen,
     createForm,
@@ -120,7 +121,10 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
         {canEdit && <AddButton label="Add Level" onClick={handleCreate} />}
       </Stack>
 
+      {!!savesError && !rulesetSaves && <LoadError what="Saves" error={savesError} />}
       <RulesetSectionTable
+        what="Levels"
+        error={error}
         data={levels && [...levels].sort((a, b) => a.level - b.level)}
         isLoading={isLoading}
         columns={levelsColumns}

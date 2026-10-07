@@ -208,7 +208,7 @@ function CustomizationView({
               replace: locked,
             })
           }
-          aria-label="customization tabs"
+          aria-label="Customization Tabs"
         />
 
         <Box role="tabpanel" sx={{ py: 3 }}>

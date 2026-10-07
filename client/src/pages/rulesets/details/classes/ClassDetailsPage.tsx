@@ -126,7 +126,7 @@ export default function ClassDetailsPage() {
     updatedAt: classData?.updatedAt,
   });
 
-  const { data: abilities } = useRulesetAbilities(rulesetId);
+  const { data: abilities, error: abilitiesError } = useRulesetAbilities(rulesetId);
 
   const updateMutation = useMutation({
     mutationFn: async (data: ClassFormData) => ({
@@ -256,6 +256,10 @@ export default function ClassDetailsPage() {
                             value={bonusSpellAbility?.id ?? ""}
                             onChange={(e) => bonusSpellMutation.mutate(e.target.value)}
                             disabled={!abilities || bonusSpellMutation.isPending || isClassFetching}
+                            error={!!abilitiesError && !abilities}
+                            helperText={
+                              !abilities && abilitiesError ? loadFailureMessage("Abilities", abilitiesError) : undefined
+                            }
                           >
                             <MenuItem value="">None</MenuItem>
                             {abilities?.map((a) => (
@@ -295,7 +299,7 @@ export default function ClassDetailsPage() {
                   navigate(`/rulesets/${rulesetId}/classes/${classId}/${key}`, { state: location.state })
                 }
                 onTabHover={(key) => void prefetchClassSection(queryClient, rulesetId, classId, key)}
-                aria-label="class details tabs"
+                aria-label="Class Details Tabs"
               />
 
               <Box role="tabpanel">

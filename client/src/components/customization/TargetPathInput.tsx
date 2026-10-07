@@ -1,5 +1,6 @@
 import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
 
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
 
 import type { PathInfo } from "./pathValues.ts";
@@ -34,12 +35,14 @@ export function TargetPathInput({
   disabled = false,
   fullWidth = true,
 }: TargetPathInputProps) {
-  const { target, pick } = useTargetPath(rulesetId, kind, entityType, value);
+  const { target, error: targetError, pick } = useTargetPath(rulesetId, kind, entityType, value);
+  // What the path takes didn't load: the field says so, under what its form says
+  const shownHelperText = helperText ?? (targetError ? loadFailureMessage("Path", targetError) : undefined);
   const segments = value ? value.split(".").filter(Boolean) : [];
 
   return (
     // The field's border sits below its label, which the control holds over its top padding
-    <FormControl fullWidth={fullWidth} error={error} sx={{ pt: 2 }}>
+    <FormControl fullWidth={fullWidth} error={error || !!targetError} sx={{ pt: 2 }}>
       <InputLabel shrink required={required} sx={{ bgcolor: "background.paper", px: 0.5 }}>
         {label}
       </InputLabel>
@@ -68,7 +71,7 @@ export function TargetPathInput({
           }}
         />
       </Box>
-      {helperText && <FormHelperText>{helperText}</FormHelperText>}
+      {shownHelperText && <FormHelperText>{shownHelperText}</FormHelperText>}
     </FormControl>
   );
 }

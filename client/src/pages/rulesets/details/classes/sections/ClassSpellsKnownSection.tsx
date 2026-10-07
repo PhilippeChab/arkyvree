@@ -8,12 +8,13 @@ import { bySpellLevel, spellLevelLabel } from "./spellLevels.ts";
 import type { ClassSectionProps } from "./types.ts";
 
 export function ClassSpellsKnownSection({ rulesetId, classId }: ClassSectionProps) {
-  const { data, isLoading } = useQuery(classSpellsKnownQuery(rulesetId, classId));
+  const { data, isLoading, error } = useQuery(classSpellsKnownQuery(rulesetId, classId));
   return (
     <ClassLevelCountsTable
       title="Spells Known"
       levels={data}
       isLoading={isLoading}
+      error={error}
       keysOf={(level) => Object.keys(level.spellsKnown)}
       countOf={(level, key) => level.spellsKnown[Number(key)]}
       compareKeys={bySpellLevel}

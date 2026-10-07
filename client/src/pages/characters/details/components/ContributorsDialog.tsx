@@ -17,6 +17,7 @@ import {
 import { ContributorsTable, InviteContributorDialog } from "@/client/src/components/contributors/index.ts";
 import { ContributorsIcon, DeleteIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { useDialogState } from "@/client/src/hooks/index.ts";
 import { firstPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { characterContributorsQuery } from "@/client/src/pages/characters/characterQueries.ts";
@@ -39,7 +40,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
   const navigate = useNavigate();
 
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [removeTarget, setRemoveTarget] = useState<Contributor | null>(null);
+  const removeDialog = useDialogState<Contributor>();
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
 
   const contributorsKey = QUERY_KEYS.characters.contributors(characterId);
@@ -74,7 +75,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
     onSuccess: () => {
       snackbar.success("Contributor removed");
       queryClient.invalidateQueries({ queryKey: contributorsKey });
-      setRemoveTarget(null);
+      removeDialog.close();
     },
     onError: (err) => snackbar.error(err, "Failed to remove contributor"),
   });
@@ -149,7 +150,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                                 aria-label="Remove"
                                 size="small"
                                 color="error"
-                                onClick={() => setRemoveTarget(contributor)}
+                                onClick={() => removeDialog.openWith(contributor)}
                               >
                                 <DeleteIcon fontSize="small" />
                               </IconButton>
@@ -178,25 +179,27 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
         isLoading={inviteMutation.isPending}
       />
 
-      {removeTarget && (
-        <ConfirmDialog
-          open
-          onClose={() => setRemoveTarget(null)}
-          onConfirm={() => revokeMutation.mutate(removeTarget.id)}
-          isLoading={revokeMutation.isPending}
-          title="Remove Contributor"
-          message={
-            <>
-              Are you sure you want to remove{" "}
-              <strong>{removeTarget.user?.username || removeTarget.user?.emailAddress || removeTarget.email}</strong> as
-              a contributor?
-            </>
-          }
-          confirmLabel="Remove"
-          confirmColor="error"
-          maxWidth="xs"
-        />
-      )}
+      <ConfirmDialog
+        open={removeDialog.open}
+        onClose={removeDialog.close}
+        onConfirm={() => removeDialog.target && revokeMutation.mutate(removeDialog.target.id)}
+        isLoading={revokeMutation.isPending}
+        title="Remove Contributor"
+        message={
+          <>
+            Are you sure you want to remove{" "}
+            <strong>
+              {removeDialog.target?.user?.username ||
+                removeDialog.target?.user?.emailAddress ||
+                removeDialog.target?.email}
+            </strong>{" "}
+            as a contributor?
+          </>
+        }
+        confirmLabel="Remove"
+        confirmColor="error"
+        maxWidth="xs"
+      />
 
       <ConfirmDialog
         open={leaveConfirmOpen}

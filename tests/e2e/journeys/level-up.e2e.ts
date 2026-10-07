@@ -108,7 +108,7 @@ test.describe("Level up", () => {
       await page.getByRole("button", { name: new RegExp(`${klass}.*Level 1`, "i") }).click();
       await expect(page.getByText(`Level 1 — HP: +${maxHp}`)).toBeVisible({ timeout: 10_000 });
 
-      await page.getByRole("button", { name: `Edit ${klass} level 1` }).click();
+      await page.getByRole("button", { name: `Edit ${klass} Level 1` }).click();
       const editWizard = page.getByRole("dialog", { name: "Edit Level" });
       await editWizard.getByLabel("HP Gain").fill(String(hp));
       for (let step = 0; step < 5; step++) await editWizard.getByRole("button", { name: /^Next$/ }).click();

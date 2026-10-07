@@ -12,7 +12,7 @@ import type { PathInfo } from "./pathValues.ts";
  */
 export function useTargetPath(rulesetId: string, kind: TargetPathKind, entityType: string | undefined, path: string) {
   const queryClient = useQueryClient();
-  const { data } = useQuery(targetPathQuery(rulesetId, kind, path, entityType));
+  const { data, error } = useQuery(targetPathQuery(rulesetId, kind, path, entityType));
   const pick = (picked: PathInfo) => seedTargetPath(queryClient, rulesetId, kind, picked, entityType);
-  return { target: data ?? null, pick };
+  return { target: data ?? null, error, pick };
 }

@@ -19,12 +19,14 @@ import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 interface EditLevelModalProps {
   open: boolean;
   onClose: () => void;
+  /** It has faded out: its owner unmounts it. */
+  onExited: () => void;
   characterId: string;
   baseRules: BaseRules;
   editingLevel: EditingLevel;
 }
 
-export function EditLevelModal({ open, onClose, characterId, baseRules, editingLevel }: EditLevelModalProps) {
+export function EditLevelModal({ open, onClose, onExited, characterId, baseRules, editingLevel }: EditLevelModalProps) {
   const editingLevelId = editingLevel.characterLevelId;
 
   const wizard = useLevelWizard({ open, onClose, characterId, baseRules, editingLevelId });
@@ -99,6 +101,7 @@ export function EditLevelModal({ open, onClose, characterId, baseRules, editingL
   return (
     <LevelWizardDialog
       open={open}
+      onExited={onExited}
       title="Edit Level"
       wizard={{ ...wizard, isNextDisabled: wizard.isNextDisabled || loading || failed }}
       stepLabels={EDIT_STEP_LABELS}

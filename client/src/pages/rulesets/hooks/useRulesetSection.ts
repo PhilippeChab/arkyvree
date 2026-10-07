@@ -98,14 +98,13 @@ export function useRulesetSection<
   const createMutation = useMutation({
     mutationFn: createFn,
     onSuccess: (data) => {
-      snackbar.success(`${label} created successfully`);
+      snackbar.success(`${label} created`);
       invalidateOnMutation();
       setCreateDialogOpen(false);
-      createForm.reset(createDefaults);
       onCreateSuccess?.(data);
     },
     onError: (error) => {
-      snackbar.error(error, `Failed to create ${label}`);
+      snackbar.error(error, `Failed to create ${label.toLowerCase()}`);
     },
   });
 
@@ -113,13 +112,13 @@ export function useRulesetSection<
     mutationFn: ({ id, data }: { id: string; data: TFormData }) =>
       updateFn ? updateFn(id, data) : Promise.reject(new Error(`${label} can't be updated here`)),
     onSuccess: (data) => {
-      snackbar.success(`${label} updated successfully`);
+      snackbar.success(`${label} updated`);
       invalidateOnMutation();
       closeEditDialog();
       onUpdateSuccess?.(data);
     },
     onError: (error) => {
-      snackbar.error(error, `Failed to update ${label}`);
+      snackbar.error(error, `Failed to update ${label.toLowerCase()}`);
     },
   });
 
@@ -128,16 +127,18 @@ export function useRulesetSection<
     onSuccess: (data) => {
       invalidateOnMutation();
       setDeleteDialogOpen(false);
-      snackbar.success(`${label} deleted successfully`);
+      snackbar.success(`${label} deleted`);
       setItemToDelete(null);
       onDeleteSuccess?.(data);
     },
     onError: (error) => {
-      snackbar.error(error, `Failed to delete ${label}`);
+      snackbar.error(error, `Failed to delete ${label.toLowerCase()}`);
     },
   });
 
+  // Opened empty, whatever a cancelled one held
   const handleCreate = () => {
+    createForm.reset(createDefaults);
     setCreateDialogOpen(true);
   };
 

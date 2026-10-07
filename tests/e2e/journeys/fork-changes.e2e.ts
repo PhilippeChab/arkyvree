@@ -14,8 +14,8 @@ import { signIn } from "@/tests/e2e/support/signIn.ts";
 /** Opens the fork's Local changes, from its page. */
 async function openLocalChanges(page: Page, forkId: string) {
   await page.goto(`/rulesets/${forkId}`);
-  await openActionsMenu(page, /^Local changes/);
-  const dialog = page.getByRole("dialog").filter({ hasText: "Local changes" });
+  await openActionsMenu(page, /^Local Changes/);
+  const dialog = page.getByRole("dialog").filter({ hasText: "Local Changes" });
   await expect(dialog).toBeVisible();
   return dialog;
 }
@@ -26,7 +26,7 @@ async function restore(page: Page, dialog: ReturnType<Page["getByRole"]>, group:
   const row = dialog.getByRole("listitem").filter({ hasText: renamed });
   await expect(row.locator(".MuiChip-root", { hasText: "modified" })).toBeVisible();
   const restored = apiResponse(page, "POST", /\/api\/rulesets\/[a-f0-9-]+\/entities\/[^/]+\/[^/]+\/restore/);
-  await row.getByRole("button", { name: "Revert to parent version" }).click();
+  await row.getByRole("button", { name: "Revert to Parent Version" }).click();
   await restored;
   await expect(dialog.getByText("No local changes")).toBeVisible({ timeout: 15_000 });
 }
@@ -47,7 +47,7 @@ test.describe("Changes to a fork", () => {
     const rows = page.locator("table tbody tr");
     await expect(page.locator(`text="${renamed}"`).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.locator("table tbody").getByText("Dwarf", { exact: true })).toBeVisible();
-    const toggle = page.getByRole("button", { name: "Local changes" });
+    const toggle = page.getByRole("button", { name: "Local Changes" });
     await toggle.click();
     await expect(page).toHaveURL(/childOnly=true/);
     await expect(rows).toHaveCount(1, { timeout: 10_000 });
@@ -100,10 +100,10 @@ test.describe("Changes to a fork", () => {
     await expect(dialog).toBeHidden({ timeout: 15_000 });
 
     await page.goto(`/rulesets/${forkId}/feats`);
-    await page.getByPlaceholder("Search feats...").fill(featName);
+    await page.getByPlaceholder("Search feats…").fill(featName);
     const row = page.locator("table tbody").getByText(featName, { exact: true }).first();
     await expect(row).toBeVisible({ timeout: 10_000 });
-    await page.getByRole("button", { name: "Local changes" }).click();
+    await page.getByRole("button", { name: "Local Changes" }).click();
     await expect(page).toHaveURL(/childOnly=true/);
     await expect(row).toBeVisible({ timeout: 10_000 });
   });

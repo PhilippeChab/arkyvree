@@ -1,14 +1,19 @@
 import { Autocomplete, Box, Chip, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
 
-import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
+import { LoadError, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { type RulesetSave, useDebouncedValue, useRulesetFeats } from "@/client/src/hooks/index.ts";
+import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
 
 import { featKey, type LevelFeat, levelFeatLabel, type LevelSave, saveBaseError } from "./classLevelForm.ts";
 
 interface ClassLevelFieldsProps {
   rulesetId: string;
+  /** The ruleset's saves, each a base field; its owner reads them, for what it sends. */
+  rulesetSaves: RulesetSave[] | undefined;
+  /** Why they didn't load. */
+  savesError: unknown;
   saves: LevelSave[];
   onSavesChange: (saves: LevelSave[]) => void;
   feats: LevelFeat[];
@@ -26,6 +31,8 @@ interface FeatOption extends LevelFeat {
 /** Base saves and granted feats of a class level, shared by its create dialog and its customization page. */
 export function ClassLevelFields({
   rulesetId,
+  rulesetSaves,
+  savesError,
   saves,
   onSavesChange,
   feats,
@@ -33,11 +40,16 @@ export function ClassLevelFields({
   savesInvalid,
   featLabels,
 }: ClassLevelFieldsProps) {
-  const { data: rulesetSaves = [] } = useRulesetSaves(rulesetId);
+  const saveList = rulesetSaves ?? [];
   // The server searches the ruleset's feats and pages them in as the list scrolls.
   const [featSearch, setFeatSearch] = useState("");
   const debouncedFeatSearch = useDebouncedValue(featSearch);
-  const { items: rulesetFeats, isLoading, onScroll } = useRulesetFeats(rulesetId, debouncedFeatSearch);
+  const {
+    items: rulesetFeats,
+    isLoading,
+    error: featsError,
+    onScroll,
+  } = useRulesetFeats(rulesetId, debouncedFeatSearch);
   // Labels of the feats picked here, for when neither a later search nor the saved level lists them.
   const [pickedLabels, setPickedLabels] = useState<ReadonlyMap<string, string>>(new Map());
 
@@ -86,15 +98,16 @@ export function ClassLevelFields({
 
   return (
     <>
-      {rulesetSaves.length > 0 && (
+      {!!savesError && saveList.length === 0 && <LoadError what="Saves" error={savesError} />}
+      {saveList.length > 0 && (
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: `repeat(${Math.min(rulesetSaves.length, 3)}, 1fr)` },
+            gridTemplateColumns: { xs: "1fr", sm: `repeat(${Math.min(saveList.length, 3)}, 1fr)` },
             gap: 2,
           }}
         >
-          {rulesetSaves.map((save) => (
+          {saveList.map((save) => (
             <TextField
               key={save.id}
               label={`${save.name} Save`}
@@ -124,6 +137,7 @@ export function ClassLevelFields({
         }}
         filterOptions={(opts) => opts}
         loading={isLoading}
+        noOptionsText={emptyOptionsText("Feats", featsError)}
         slotProps={{ listbox: { component: ScrollSafeListbox, onScroll } }}
         renderInput={(params) => (
           <TextField {...params} label="Feats" placeholder="Select feats with aptitudes granted at this level" />

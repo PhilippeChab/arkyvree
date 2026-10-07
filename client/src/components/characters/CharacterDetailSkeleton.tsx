@@ -46,7 +46,7 @@ export function CharacterDetailSkeleton() {
               [PREFERS_REDUCED_MOTION]: { animation: "none", opacity: 0.6 },
             }}
           >
-            Loading character sheet...
+            Loading character sheet…
           </Typography>
         </Stack>
         <Stack spacing={3}>

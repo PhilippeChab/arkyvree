@@ -23,6 +23,8 @@ import {
   useController,
 } from "react-hook-form";
 
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+
 /** A field of a form: its control, its name, and the rules its value is validated by. */
 interface BoundFieldProps<T extends FieldValues> {
   control: Control<T>;
@@ -77,6 +79,8 @@ interface SelectFieldProps<T extends FieldValues> {
   onChange?: (value: SelectValue | null) => void;
   /** Shown under it while its value has no error. */
   helperText?: ReactNode;
+  /** Why its options didn't load: said under it. */
+  loadError?: unknown;
   disabled?: boolean;
   size?: "small" | "medium";
   sx?: SxProps<Theme>;
@@ -198,6 +202,7 @@ export function SelectField<T extends FieldValues>({
   emptyValue = null,
   onChange,
   helperText,
+  loadError,
   disabled,
   size,
   sx,
@@ -223,8 +228,8 @@ export function SelectField<T extends FieldValues>({
             field.onChange(value);
             onChange?.(value);
           }}
-          error={!!fieldState.error}
-          helperText={fieldState.error?.message ?? helperText}
+          error={!!fieldState.error || !!loadError}
+          helperText={fieldState.error?.message ?? (loadError ? loadFailureMessage(label, loadError) : helperText)}
           disabled={disabled}
           size={size}
           sx={sx}

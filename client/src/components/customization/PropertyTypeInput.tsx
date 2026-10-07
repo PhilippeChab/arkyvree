@@ -21,7 +21,7 @@ export function PropertyTypeInput({
   rulesetId,
   entityType,
   label = "Property Type",
-  placeholder = "Enter or select a property type...",
+  placeholder = "Enter or select a property type…",
   ...props
 }: PropertyTypeInputProps) {
   return (
@@ -31,7 +31,7 @@ export function PropertyTypeInput({
       placeholder={placeholder}
       query={(search) => propertyTypeCompletionsQuery(rulesetId, search, entityType)}
       enabled={!!rulesetId}
-      loadingText="Loading property types..."
+      loadingText="Loading property types…"
       noOptionsText="No property types found"
     />
   );

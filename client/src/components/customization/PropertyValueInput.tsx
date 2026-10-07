@@ -23,7 +23,7 @@ export function PropertyValueInput({
   rulesetId,
   propertyType,
   label = "Value",
-  placeholder = "Enter the property value...",
+  placeholder = "Enter the property value…",
   fullWidth = true,
   ...props
 }: PropertyValueInputProps) {
@@ -50,7 +50,7 @@ export function PropertyValueInput({
       fullWidth={fullWidth}
       query={(search) => propertyValueCompletionsQuery(rulesetId, propertyType, search)}
       enabled={!!rulesetId}
-      loadingText="Loading values..."
+      loadingText="Loading values…"
       noOptionsText="No values found"
     />
   );

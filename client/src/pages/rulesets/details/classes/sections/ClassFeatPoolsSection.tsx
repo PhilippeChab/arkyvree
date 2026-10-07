@@ -7,12 +7,13 @@ import { ClassLevelCountsTable } from "./ClassLevelCountsTable.tsx";
 import type { ClassSectionProps } from "./types.ts";
 
 export function ClassFeatPoolsSection({ rulesetId, classId }: ClassSectionProps) {
-  const { data, isLoading } = useQuery(classFeatPoolsQuery(rulesetId, classId));
+  const { data, isLoading, error } = useQuery(classFeatPoolsQuery(rulesetId, classId));
   return (
     <ClassLevelCountsTable
       title="Feat Pools"
       levels={data}
       isLoading={isLoading}
+      error={error}
       keysOf={(level) => Object.keys(level.featPools)}
       countOf={(level, key) => level.featPools[key]}
       emptyIcon={FeatPoolsIcon}

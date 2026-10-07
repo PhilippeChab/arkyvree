@@ -32,8 +32,8 @@ export function useOpenActivityTarget() {
       (error) =>
         snackbar.warning(
           error instanceof ApiError && error.status === 403
-            ? errorMessage(error, "You no longer have access to this item.")
-            : "This item has been deleted and is no longer available.",
+            ? errorMessage(error, "You no longer have access to this item")
+            : "This item was deleted",
         ),
     );
   };

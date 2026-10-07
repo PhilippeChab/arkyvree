@@ -69,7 +69,7 @@ export default function CampaignCharacterPage() {
 
             {data.canDownloadPdf && !data.deletedAt && (
               <Stack direction="row" spacing={1}>
-                <IconButton aria-label="More actions" onClick={menu.openMenu} sx={{ color: "text.secondary" }}>
+                <IconButton aria-label="More Actions" onClick={menu.openMenu} sx={{ color: "text.secondary" }}>
                   <MoreVertIcon />
                 </IconButton>
                 <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>

@@ -26,7 +26,13 @@ import {
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useAnchorMenu, useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
+import {
+  useAnchorMenu,
+  useDemoTimeRemaining,
+  useDialogState,
+  usePageTitle,
+  usePdfExport,
+} from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -51,8 +57,8 @@ export default function CharacterDetailsPage() {
   const [isArchiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [isHardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
   // A new character arrives with the Add Level wizard open (`openLevelUp`)
-  const [isAddLevelOpen, setAddLevelOpen] = useState(() => location.state?.openLevelUp === true);
-  const [editingLevel, setEditingLevel] = useState<EditingLevel | null>(null);
+  const addLevel = useDialogState(location.state?.openLevelUp === true ? true : null);
+  const editLevel = useDialogState<EditingLevel>();
   const [isShareOpen, setShareOpen] = useState(false);
   const [isContributorsOpen, setContributorsOpen] = useState(false);
   const [isModifiersOpen, setModifiersOpen] = useState(false);
@@ -72,7 +78,7 @@ export default function CharacterDetailsPage() {
   // Closing the wizard a new character arrived with clears that from its history entry: a reload or a Back doesn't
   // open it again
   const closeAddLevel = () => {
-    setAddLevelOpen(false);
+    addLevel.close();
     if (location.state?.openLevelUp) navigate(location.pathname, { replace: true, state: {} });
   };
 
@@ -106,7 +112,7 @@ export default function CharacterDetailsPage() {
   const unarchiveMutation = useMutation({
     mutationFn: () => parseResponse(rpc.api.characters[":id"].unarchive.$post({ param: { id } })),
     onSuccess: () => {
-      snackbar.success("Character unarchived successfully");
+      snackbar.success("Character unarchived");
       return invalidateCharacter();
     },
     onError: (err) => snackbar.error(err, "Failed to unarchive character"),
@@ -171,7 +177,7 @@ export default function CharacterDetailsPage() {
 
               {!(isBonded && isArchived) && (
                 <Stack direction="row" spacing={1}>
-                  <IconButton aria-label="More actions" onClick={menu.openMenu} sx={{ color: "text.secondary" }}>
+                  <IconButton aria-label="More Actions" onClick={menu.openMenu} sx={{ color: "text.secondary" }}>
                     <MoreVertIcon />
                   </IconButton>
                   <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
@@ -205,7 +211,7 @@ export default function CharacterDetailsPage() {
                           <ActionMenuItem
                             key="hard-delete"
                             icon={DeleteForeverIcon}
-                            label="Delete permanently"
+                            label="Delete Permanently"
                             intent="destructive"
                             onClick={menu.closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
                           />
@@ -217,7 +223,7 @@ export default function CharacterDetailsPage() {
                           key="add-level"
                           icon={AddIcon}
                           label="Add Level"
-                          onClick={menu.closeMenuAnd(() => setAddLevelOpen(true))}
+                          onClick={menu.closeMenuAnd(() => addLevel.openWith(true))}
                         />,
                         <ActionMenuItem
                           key="remove-level"
@@ -296,10 +302,10 @@ export default function CharacterDetailsPage() {
             open={isHardDeleteConfirmOpen}
             onClose={() => setHardDeleteConfirmOpen(false)}
             onConfirm={() => hardDeleteMutation.mutate()}
-            title="Delete permanently"
-            message="This will permanently delete this character and all of its levels, abilities, inventory, attachments, and customizations. This cannot be undone."
+            title="Delete Permanently"
+            message="Are you sure you want to permanently delete this character? Its levels, abilities, inventory, attachments and customizations go with it. This action cannot be undone."
             isLoading={hardDeleteMutation.isPending}
-            confirmLabel="Delete permanently"
+            confirmLabel="Delete Permanently"
           />
 
           <ShareDialog
@@ -334,21 +340,23 @@ export default function CharacterDetailsPage() {
             </Alert>
           )}
 
-          {isAddLevelOpen && (
+          {addLevel.target && (
             <AddLevelModal
-              open
+              open={addLevel.open}
               onClose={closeAddLevel}
+              onExited={addLevel.onExited}
               characterId={id}
               baseRules={character.baseRules ?? DEFAULT_BASE_RULES}
             />
           )}
-          {editingLevel && (
+          {editLevel.target && (
             <EditLevelModal
-              open
-              onClose={() => setEditingLevel(null)}
+              open={editLevel.open}
+              onClose={editLevel.close}
+              onExited={editLevel.onExited}
               characterId={id}
               baseRules={character.baseRules ?? DEFAULT_BASE_RULES}
-              editingLevel={editingLevel}
+              editingLevel={editLevel.target}
             />
           )}
 
@@ -368,8 +376,8 @@ export default function CharacterDetailsPage() {
               readOnly={isArchived}
               // Contributors edit the sheet, but only the owner changes a player character's portrait.
               portraitReadOnly={isArchived || !isOwner}
-              onEditLevel={!isArchived ? setEditingLevel : undefined}
-              onAddLevel={() => setAddLevelOpen(true)}
+              onEditLevel={!isArchived ? editLevel.openWith : undefined}
+              onAddLevel={() => addLevel.openWith(true)}
               onRemoveLevel={() => setConfirmOpen(true)}
               onViewBondedSheet={(bondedId) => navigate(`/characters/${bondedId}`)}
               equipmentMode="editable"

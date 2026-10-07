@@ -22,7 +22,7 @@ test.describe("New accounts", () => {
     const newPassword = "brandNewPass5678";
     await signUpAndVerify(page, email, "password1234");
     await page.getByRole("button", { name: /^Skip$/ }).click();
-    await page.getByRole("button", { name: "Account menu" }).click();
+    await page.getByRole("button", { name: "Account Menu" }).click();
     await page.getByRole("menuitem", { name: "Sign Out" }).click();
     await page.waitForURL("/sign-in", { timeout: 10_000 });
 

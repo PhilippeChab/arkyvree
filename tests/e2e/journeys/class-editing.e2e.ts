@@ -17,7 +17,7 @@ test.describe("A class created in a fork", () => {
     // Created, it opens on its levels, none yet
     await page.goto(`/rulesets/${forkId}/classes`);
     await page.getByRole("button", { name: "Add Class" }).click();
-    const create = page.getByRole("dialog", { name: "Add New Class" });
+    const create = page.getByRole("dialog", { name: "Create New Class" });
     await create.getByLabel("Name", { exact: true }).fill(name);
     await selectOption(page, "Hit Die", "d10");
     await expect(create.getByRole("combobox", { name: "Hit Die" })).toHaveText("d10");

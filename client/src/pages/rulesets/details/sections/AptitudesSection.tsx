@@ -47,7 +47,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     onCreateSuccess: (created) => openEntity(`aptitudes/${created.id}`),
   });
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...aptitudesQuery(ruleset.id, { search: searchQuery, childOnly }),
     placeholderData: keepPreviousData,
   });
@@ -81,7 +81,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       <Stack spacing={3}>
         <SearchBar
           {...searchTextProps}
-          searchPlaceholder="Search aptitudes..."
+          searchPlaceholder="Search aptitudes…"
           actions={
             <SectionActions
               ruleset={ruleset}
@@ -94,6 +94,8 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
         />
         <Stack spacing={2}>
           <RulesetSectionTable
+            what="Aptitudes"
+            error={error}
             data={aptitudes}
             search={searchQuery}
             isLoading={isLoading}
