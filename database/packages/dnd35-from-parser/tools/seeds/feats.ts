@@ -100,8 +100,9 @@ export function buildReferenceFeats(ref: FeatReference) {
 }
 
 /**
- * A feat reference's feats (what `buildReferenceFeats` makes of it) as the aptitude list reads them (names, aptitudes, modifiers): a template family once, as
- * its feats share their aptitudes and their modifiers only differ in the item they target.
+ * A feat reference's feats (what `buildReferenceFeats` makes of it) as the aptitude list reads them (names, aptitudes,
+ * modifiers): a template family once, as its feats share their aptitudes and their modifiers only differ in the item
+ * they target.
  */
 export function getFeatAptitudeSources({
   byType,

@@ -138,7 +138,9 @@ export class BaseBookSeeds {
     return this.existingFeats().get(stripSeparators(name)) ?? findFamilyFeat(name);
   }
 
-  /** The lists the book's classes draw on others' lists for (`inheritsFrom`): each class's own, or each of its `lists`. */
+  /**
+   * The lists the book's classes draw on others' lists for (`inheritsFrom`): each class's own, or each of its `lists`.
+   */
   inheritedLists(): { aptitude: string; list: InheritedSpellList }[] {
     return this.memo("inheritedLists", () => {
       const lists: { aptitude: string; list: InheritedSpellList }[] = [];

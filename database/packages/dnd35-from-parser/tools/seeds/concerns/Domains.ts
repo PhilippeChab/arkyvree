@@ -14,9 +14,10 @@ export function Domains<B extends Constructor<BaseBookSeeds>>(Base: B) {
     }
 
     /**
-     * What a domains reference of the book's lists lack (its own, by default), as generated: a spell neither the core rules nor the book has (the seed
-     * leaves it out), a spell level from 1st to 9th without a spell, and a spell of the book whose level line puts it
-     * on one of them at a level the list doesn't. An override of the domain's spells corrects them.
+     * What a domains reference of the book's lists lack (its own, by default), as generated: a spell neither the core
+     * rules nor the book has (the seed leaves it out), a spell level from 1st to 9th without a spell, and a spell of
+     * the book whose level line puts it on one of them at a level the list doesn't. An override of the domain's spells
+     * corrects them.
      */
     domainSpellIssues(ref: DomainReference | undefined = this.reference("domain")): { domain: string; text: string }[] {
       if (!ref) return [];

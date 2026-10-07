@@ -19,6 +19,11 @@ const GENERATED_DIR = join(import.meta.dirname!, "../../generated");
 
 function main() {
   const args = process.argv.slice(2);
+  // A reference's book is its own: an option after it (the old `--book`) would be ignored, so it's refused
+  if (args[0]?.endsWith(".json") && args.length > 1) {
+    console.error(`parser:generate <reference>.json takes nothing after the reference: ${args.slice(1).join(" ")}`);
+    process.exit(1);
+  }
   const generate = (dir: string) => {
     if (!args[0]?.endsWith(".json")) return new Generator(dir, true).generateAll(parseCliArgs());
     try {

@@ -11,9 +11,10 @@ import { getInheritedLevel } from "./inheritedLists.ts";
 type RawSpell = SpellReference["raw"][number];
 
 /**
- * A spell's aptitudes (its classes' spell lists, by the name its level line gives each, `classSpellLists`, and the lists
- * other books' classes inherit, `othersInherited`), its level on each, and its lowest level: on a list it's on, else in any level entry, else 0. Its level entries are the
- * scraped ones: an override's extra entries reach only the copies an extension makes of a core spell (#359).
+ * A spell's aptitudes (its classes' spell lists, by the name its level line gives each, `classSpellLists`, and the
+ * lists other books' classes inherit, `othersInherited`), its level on each, and its lowest level: on a list it's on,
+ * else in any level entry, else 0. Its level entries are the scraped ones: an override's extra entries reach only the
+ * copies an extension makes of a core spell (#359).
  */
 function spellLevels(
   entry: RawSpell,

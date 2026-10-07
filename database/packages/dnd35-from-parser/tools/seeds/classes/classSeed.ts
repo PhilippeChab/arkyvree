@@ -1,4 +1,7 @@
-/** A class reference's seed: what its file holds, as its mapping (its overrides applied) and its detected section give it. */
+/**
+ * A class reference's seed: what its file holds, as its mapping (its overrides applied) and its detected section give
+ * it.
+ */
 
 import type { BaseBookSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/BaseBookSeeds.ts";
 import { resolveFamilyChecks } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
@@ -42,9 +45,10 @@ function buildClassSpells(ref: ClassReference): ClassSeed["spells"] {
 }
 
 /**
- * A class reference's seed, `book` the book's whose families and feats it reads: its summary (name, description, hit die, levels, skills, BAB, saves, requirements), its
- * features and the feats it grants, its spellcasting, its level modifiers and its aptitude picks. Each is built in the
- * order its file is written, so a class the generator refuses fails on the same field.
+ * A class reference's seed, `book` the book's whose families and feats it reads: its summary (name, description, hit
+ * die, levels, skills, BAB, saves, requirements), its features and the feats it grants, its spellcasting, its level
+ * modifiers and its aptitude picks. Each is built in the order its file is written, so a class the generator refuses
+ * fails on the same field.
  */
 export function buildClassSeed(ref: ClassReference, book: BaseBookSeeds): ClassSeed {
   const { detected, mapping, raw } = ref;

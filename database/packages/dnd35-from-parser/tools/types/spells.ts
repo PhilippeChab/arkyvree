@@ -5,7 +5,9 @@ import type { Overrides, ScrapedMeta } from "./reference.ts";
 export type SpellReference = {
   _meta: ScrapedMeta<"spell">;
 
-  /** What each spell's text gives: its properties and its saving throw, normalized, its base spell's where it lacks some */
+  /**
+   * What each spell's text gives: its properties and its saving throw, normalized, its base spell's where it lacks some
+   */
   detected: Record<string, { properties: Property[]; savingThrow: string }>;
 
   /**
@@ -29,7 +31,7 @@ export type SpellReference = {
     descriptors: string[];
     duration: string;
     effect?: string;
-    /** Level entries as scraped, e.g. "Sor/Wiz 3", "Clr 2" */
+    /** Level entries as scraped, a class's or a domain's name and the level it gives: "Wizard 6", "Fire 4" */
     levelEntries: { className: string; level: number }[];
     name: string;
     range: string;

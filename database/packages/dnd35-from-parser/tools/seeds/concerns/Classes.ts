@@ -10,7 +10,10 @@ import type { Constructor } from "@/server/mixins.ts";
 /** A book's classes: each class's seed, and the feats its features are and its domain pool offers. */
 export function Classes<B extends Constructor<BaseBookSeeds>>(Base: B) {
   abstract class WithClasses extends Base {
-    /** A class's feats: its features' (`buildClassFeatSeeds`), and the domains it picks from (`buildClassDomainPickFeats`). */
+    /**
+     * A class's feats: its features' (`buildClassFeatSeeds`), and the domains it picks from
+     * (`buildClassDomainPickFeats`).
+     */
     classFeatSeeds(ref: ClassReference): FeatSeed[] {
       return this.memoOf(ref, "classFeats", () => [
         ...buildClassFeatSeeds(ref, this),

@@ -44,7 +44,10 @@ function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | s
   }
 }
 
-/** The feats of a domains reference's feat pools: a feat per item of each pool (a War Domain Weapon feat per martial weapon). */
+/**
+ * The feats of a domains reference's feat pools: a feat per item of each pool (a War Domain Weapon feat per martial
+ * weapon).
+ */
 export function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
   const results: FeatSeed[] = [];
 
