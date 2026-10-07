@@ -1,3 +1,4 @@
+import { REFERENCE_FILE_NAMES } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import { buildRaceListingUrl } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
@@ -53,7 +54,7 @@ export function ScrapesRaces<B extends Constructor<BaseScraper>>(Base: B) {
 
       console.log(`Parsed ${raw.length} races`);
 
-      const outPath = this.referencePath("races.json");
+      const outPath = this.referencePath(REFERENCE_FILE_NAMES.race);
 
       this.saveReference(
         outPath,

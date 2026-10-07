@@ -11,10 +11,10 @@
 import type * as cheerio from "cheerio";
 import { type AnyNode } from "domhandler";
 
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { capitalizeTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/capitalizeTitle.ts";
 import { findSectionHeader } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
 import { findSectionElements, getTagName } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 /** A feature's type (Ex, Su, Sp), when its heading gives one, and its description. */

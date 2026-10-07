@@ -178,6 +178,9 @@ export type ClassReference = {
   };
 };
 
+/** A book's class reference, with its file's name (`wizard.json`). */
+export type ClassReferenceFile = { file: string; ref: ClassReference };
+
 /** A list a class's slots can go to, while its requirements are met: a pious templar's paladin or blackguard list. */
 export type ClassSpellList = { name: string; inheritsFrom: InheritedSpellList; requirements: RequirementEntry[] };
 

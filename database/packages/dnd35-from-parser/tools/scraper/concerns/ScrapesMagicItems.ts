@@ -1,3 +1,4 @@
+import { REFERENCE_FILE_NAMES } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import {
   parseMagicArmorHtml,
@@ -77,7 +78,7 @@ export function ScrapesMagicItems<B extends Constructor<BaseScraper>>(Base: B) {
 
       console.log(`\nTotal raw entries: ${raw.length}`);
 
-      const outPath = this.referencePath("magicItems.json");
+      const outPath = this.referencePath(REFERENCE_FILE_NAMES.magicItem);
 
       const categoryCounts: Record<string, number> = {};
       for (const entry of raw) {

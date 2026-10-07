@@ -2,22 +2,21 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
-import {
-  buildMagicItemSeeds,
-  getSeededMagicItems,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
-import { buildRaceSeeds, getSeededRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
-import { checkOneOf } from "@/database/packages/dnd35-from-parser/tools/checks.ts";
-import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
+import { buildFeatDetected } from "@/database/packages/dnd35-from-parser/tools/detect/feats.ts";
+import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/detect/races.ts";
+import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import {
   readStoredReference,
   type ReferenceType,
-  resolveReference,
   type StoredReference,
-} from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import { buildFeatDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
-import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
+} from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
+import { checkOneOf } from "@/database/packages/dnd35-from-parser/tools/seeds/checks.ts";
+import {
+  buildMagicItemSeeds,
+  getSeededMagicItems,
+} from "@/database/packages/dnd35-from-parser/tools/seeds/magicItems.ts";
+import { buildRaceSeeds, getSeededRaces } from "@/database/packages/dnd35-from-parser/tools/seeds/races.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 
@@ -95,7 +94,7 @@ describe("A loaded reference", () => {
   test("keeps its overrides at the top, as stored, next to what it derives", () => {
     for (const [file, type, derives] of FILES) {
       const reference = stored(file, type);
-      const loaded = resolveReference(type, reference);
+      const loaded = ReferenceLoader.resolve(type, reference);
       expect({
         file,
         overrides: loaded.overrides,
@@ -113,7 +112,7 @@ describe("A loaded reference", () => {
         ...reference.overrides,
         [name]: { ...reference.overrides?.[name], description: "It?s \u2019quoted\u2019" },
       };
-      return resolveReference(type, reference).overrides?.[name]?.description;
+      return ReferenceLoader.resolve(type, reference).overrides?.[name]?.description;
     };
     expect(edited("srd/feats.json", "feat")).toBe("It's 'quoted'");
     expect(edited("srd/spells.json", "spell")).toBe("It?s \u2019quoted\u2019");
@@ -126,7 +125,7 @@ describe("A race reference's races", () => {
     const reference = stored("srd/races.json", "race");
     const [skipped] = reference.raw;
     reference.overrides = { ...reference.overrides, [skipped.name]: { skip: true } };
-    const names = buildRaceSeeds(resolveReference("race", reference)).map(({ name }) => name);
+    const names = buildRaceSeeds(ReferenceLoader.resolve("race", reference)).map(({ name }) => name);
     expect(names).not.toContain(skipped.name);
     expect(names).toHaveLength(reference.raw.length - 1);
   });
@@ -138,7 +137,7 @@ describe("A race reference's races", () => {
     const size = first.size === "Small" ? "Large" : "Small";
     reference.overrides = { ...reference.overrides, [first.name]: { ...reference.overrides?.[first.name], size } };
     const sizeOf = (name: string) =>
-      getSeededRaces(resolveReference("race", reference)).find((race) => race.name === name)?.size;
+      getSeededRaces(ReferenceLoader.resolve("race", reference)).find((race) => race.name === name)?.size;
     expect(sizeOf(first.name)).toEqual({ ok: true, value: size });
     expect(sizeOf(second.name)).toEqual(checkOneOf(second.size, SIZE_OPTIONS, `${second.name}'s size`));
 
@@ -147,7 +146,7 @@ describe("A race reference's races", () => {
       ok: false,
       problem: `${first.name}'s size: "Titanic" isn't one of ${SIZE_OPTIONS.join(", ")}`,
     });
-    expect(() => buildRaceSeeds(resolveReference("race", reference))).toThrow(`${first.name}'s size`);
+    expect(() => buildRaceSeeds(ReferenceLoader.resolve("race", reference))).toThrow(`${first.name}'s size`);
   });
 });
 
@@ -331,30 +330,30 @@ describe("A race's detected modifiers", () => {
 describe("A magic item reference's items", () => {
   test("leave out the ones its overrides skip, and have their override's slot, else the detected one", () => {
     const reference = stored("srd/magicItems.json", "magicItem");
-    const loaded = resolveReference("magicItem", reference);
+    const loaded = ReferenceLoader.resolve("magicItem", reference);
     const [skipped, slotted] = Object.keys(loaded.detected).filter((name) => !reference.overrides?.[name]);
     // A slot the item isn't detected with
     const slot = LOCATION_OPTIONS.find((option) => option !== loaded.detected[slotted].slot) ?? "Waist";
     reference.overrides = { ...reference.overrides, [skipped]: { skip: true }, [slotted]: { slot } };
-    const items = getSeededMagicItems(resolveReference("magicItem", reference));
+    const items = getSeededMagicItems(ReferenceLoader.resolve("magicItem", reference));
     expect(items.map(({ name }) => name)).not.toContain(skipped);
     expect(items.find(({ name }) => name === slotted)?.slot).toEqual({ ok: true, value: slot });
 
     // An empty slot is no slot, not a refused one
     reference.overrides = { ...reference.overrides, [slotted]: { slot: "" } };
     expect(
-      getSeededMagicItems(resolveReference("magicItem", reference)).find(({ name }) => name === slotted)?.slot,
+      getSeededMagicItems(ReferenceLoader.resolve("magicItem", reference)).find(({ name }) => name === slotted)?.slot,
     ).toBeUndefined();
-    expect(() => buildMagicItemSeeds(resolveReference("magicItem", reference))).not.toThrow();
+    expect(() => buildMagicItemSeeds(ReferenceLoader.resolve("magicItem", reference))).not.toThrow();
 
     reference.overrides = { ...reference.overrides, [slotted]: { slot: "Tail" } };
-    const refused = getSeededMagicItems(resolveReference("magicItem", reference)).find(
+    const refused = getSeededMagicItems(ReferenceLoader.resolve("magicItem", reference)).find(
       ({ name }) => name === slotted,
     )?.slot;
     expect(refused).toEqual({
       ok: false,
       problem: `${slotted}'s slot: "Tail" isn't one of ${LOCATION_OPTIONS.join(", ")}`,
     });
-    expect(() => buildMagicItemSeeds(resolveReference("magicItem", reference))).toThrow(`${slotted}'s slot`);
+    expect(() => buildMagicItemSeeds(ReferenceLoader.resolve("magicItem", reference))).toThrow(`${slotted}'s slot`);
   });
 });

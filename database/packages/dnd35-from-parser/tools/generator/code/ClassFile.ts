@@ -1,11 +1,3 @@
-import {
-  buildClassModifiers,
-  buildPoolParentNameMap,
-  findExistingFeatGranted,
-  getClassAptitudePicks,
-  getClassSpells,
-  insertOrdinalInName,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { resolveFamilyChecks } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
 import {
@@ -15,7 +7,15 @@ import {
   toConstName,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import TemplateFamilies from "@/database/packages/dnd35-from-parser/tools/generator/code/TemplateFamilies.ts";
-import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
+import {
+  buildClassModifiers,
+  buildPoolParentNameMap,
+  findExistingFeatGranted,
+  getClassAptitudePicks,
+  getClassSpells,
+  insertOrdinalInName,
+} from "@/database/packages/dnd35-from-parser/tools/seeds/classes.ts";
+import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import { stripSeparators } from "@/shared/text.ts";

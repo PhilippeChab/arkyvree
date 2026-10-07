@@ -1,9 +1,9 @@
 /** What a feat reference makes: its feats by feat type, and its template families. */
 
+import { buildCompanionGrantModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/grants.ts";
 import type { TemplateFamily } from "@/database/packages/dnd35-from-parser/tools/generator/code/FeatsFile.ts";
-import { buildCompanionGrantModifiers } from "@/database/packages/dnd35-from-parser/tools/grants.ts";
-import { normalizeName, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/names.ts";
-import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
+import { normalizeName, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
+import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 

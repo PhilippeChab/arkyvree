@@ -1,3 +1,4 @@
+import { REFERENCE_FILE_NAMES } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import { buildListingUrl } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
@@ -45,7 +46,7 @@ export function ScrapesFeats<B extends Constructor<BaseScraper>>(Base: B) {
 
       console.log(`Parsed ${raw.length} feats`);
 
-      const outPath = this.referencePath("feats.json");
+      const outPath = this.referencePath(REFERENCE_FILE_NAMES.feat);
 
       this.saveReference(
         outPath,

@@ -103,6 +103,7 @@ const TEST_MIRRORS = [
   ["tests/client/", "client/src/"],
   ["tests/lint/", "lint/"],
   ["tests/scripts/", "scripts/"],
+  ["tests/parser/", "database/packages/dnd35-from-parser/tools/"],
 ];
 
 const WRITE_VERBS = [...METHOD_VERBS.write, ...METHOD_VERBS.lock];

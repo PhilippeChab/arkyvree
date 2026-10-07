@@ -3,7 +3,7 @@
 import type * as cheerio from "cheerio";
 import { type AnyNode } from "domhandler";
 
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 /**

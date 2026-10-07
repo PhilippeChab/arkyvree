@@ -55,12 +55,17 @@ database/packages/dnd35-from-parser/
 │   ├── srd/              #   The core rules
 │   └── dmg/, complete-warrior/, …   # Each extension book, with an index.ts exporting BOOK
 └── tools/                # Scraper, generator, validate, overrides
+    ├── cli/              # The commands (parser:scrape, generate, sync, overrides, validate) and their arguments
     ├── types/            # A reference's types, a module per kind of reference
+    ├── references/       # The reference files: finding, reading and loading them (ReferenceLoader), resolving what's derived
     ├── scraper/          # Pages → reference/
     │   ├── BaseScraper.ts    # A scraper's core: its book, its HttpClient, the listings, saving a reference
     │   ├── Scraper.ts        # A concern per kind of reference (concerns/): ScrapesClasses, ScrapesFeats…
     │   └── parsers/          # A page's HTML → what its reference stores
-    ├── buildSeeds/       # A reference → the seeds it makes
+    ├── detect/           # A reference's raw → its detected and mapping, a module per kind (classes/, feats.ts…)
+    ├── text/             # The scraped text: sanitized, normalized, entry names
+    ├── seeds/            # A reference → the seeds it makes
+    ├── validate/         # What parser:validate reports, and the overrides that change nothing
     └── generator/        # The seeds → generated/
         ├── BaseGenerator.ts  # A generator's core: the folder it writes to, the writes kinds of files share
         ├── Generator.ts      # generateAll, generateReference: the steps a reference takes
@@ -144,7 +149,7 @@ A reference file (`reference/<book>/…json`) has three parts:
 - **`raw`** — what the scraper read. Re-scraping replaces it.
 - **`overrides`** — corrections made by hand. Re-scraping keeps them. Nothing else in the file is hand-edited.
 
-What the generator reads is derived from the two each time a reference is loaded (`ReferenceLoader`, which derives them with `tools/references.ts`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`) and `mapping` (the entities to generate). Items and magic items have only `detected`; spells and wizard schools, neither. The overrides win over both. So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
+What the generator reads is derived from the two each time a reference is loaded (`ReferenceLoader`, which derives them with `tools/references/resolve.ts` and the detectors in `tools/detect/`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`) and `mapping` (the entities to generate). Items and magic items have only `detected`; spells and wizard schools, neither. The overrides win over both. So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
 
 `bun run parser:validate` lists:
 - unresolved detections, and items without a definition (the generator leaves them out), not yet listed in `overrides.reviewed`; and entries of `overrides.reviewed` that cover none of them, or repeat one;

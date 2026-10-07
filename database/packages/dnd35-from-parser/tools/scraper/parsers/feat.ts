@@ -16,13 +16,13 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import {
   findContentHeading,
   findSectionElements,
   getPageTitle,
   getTagName,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 
 const KNOWN_LABELS = new Set(["prerequisite", "prerequisites", "benefit", "benefits", "normal", "special"]);

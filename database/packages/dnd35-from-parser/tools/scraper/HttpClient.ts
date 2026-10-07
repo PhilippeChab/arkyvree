@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { sanitizeHtml } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import { sanitizeHtml } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 
 interface HttpOptions {
   /** Disable disk cache (default: false) */

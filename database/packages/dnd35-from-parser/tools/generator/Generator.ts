@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
-import { basename, dirname, join, relative } from "node:path";
+import { dirname, relative } from "node:path";
 
-import type { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli.ts";
+import type { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
 import { BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { GeneratesBooks } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesBooks.ts";
 import { GeneratesClasses } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesClasses.ts";
@@ -13,11 +13,14 @@ import { GeneratesRaces } from "@/database/packages/dnd35-from-parser/tools/gene
 import { GeneratesSpells } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesSpells.ts";
 import { GeneratesWizardSchools } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesWizardSchools.ts";
 import {
+  CORE_BOOK,
+  filterReferenceFiles,
+  getReferencePath,
   listReferenceBooks,
   listReferenceFiles,
   REFERENCE_DIR,
-} from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
+} from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
@@ -102,12 +105,7 @@ export class Generator extends include(
    * reference. A reference that fails doesn't stop the others: the failures are returned.
    */
   generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>): string[] {
-    const refs = listReferenceFiles().filter(
-      (r) =>
-        (!bookFilter || r.book === bookFilter) &&
-        (!typeFilter || r.type === typeFilter) &&
-        (!nameFilter || basename(r.path, ".json").toLowerCase() === nameFilter),
-    );
+    const refs = filterReferenceFiles(listReferenceFiles(), { bookFilter, typeFilter, nameFilter });
 
     const failures: string[] = [];
     const generate = (path: string, book?: string) => {
@@ -123,10 +121,10 @@ export class Generator extends include(
     for (const ref of refs.filter((r) => r.type !== "domain")) generate(ref.path);
     if (typeFilter === "domain" || (!typeFilter && !nameFilter)) {
       for (const book of listReferenceBooks()) {
-        if (!existsSync(join(REFERENCE_DIR, book, "spells.json")) || (bookFilter && book !== bookFilter)) continue;
+        if (!existsSync(getReferencePath(book, "spell")) || (bookFilter && book !== bookFilter)) continue;
         try {
           this.generateDomains(book);
-          if (book !== "srd") this.writeBookIndex(book);
+          if (book !== CORE_BOOK) this.writeBookIndex(book);
         } catch (error) {
           failures.push(`${book}/domains.json: ${error instanceof Error ? error.message : error}`);
         }
@@ -171,6 +169,6 @@ export class Generator extends include(
           `Unknown type: ${meta.type}. Supported: class, feat, spell, wizardSchool, domain, race, item, magicItem`,
         );
     }
-    if (book !== "srd") this.writeBookIndex(book);
+    if (book !== CORE_BOOK) this.writeBookIndex(book);
   }
 }

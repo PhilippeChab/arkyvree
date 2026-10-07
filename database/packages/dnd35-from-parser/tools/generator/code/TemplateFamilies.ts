@@ -1,12 +1,9 @@
 /** The template families feats can require, each book's read from its feat reference once. */
 
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-
-import { CLASS_FEAT_FAMILY_NAMES } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
 import { buildReferenceFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/referenceFeats.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import { CLASS_FEAT_FAMILY_NAMES } from "@/database/packages/dnd35-from-parser/tools/seeds/classes.ts";
 
 /** Each book's template families, read once: every class of the book asks for them. */
 class TemplateFamilies {
@@ -17,10 +14,8 @@ class TemplateFamilies {
   ofBook(book: string): Set<string> {
     let names = this.byBook.get(book);
     if (!names) {
-      const path = join(REFERENCE_DIR, book, "feats.json");
-      names = existsSync(path)
-        ? buildReferenceFeats(ReferenceLoader.load(path, "feat")).templateNames
-        : new Set<string>();
+      const ref = ReferenceLoader.find(book, "feat");
+      names = ref ? buildReferenceFeats(ref).templateNames : new Set<string>();
       this.byBook.set(book, names);
     }
     return names;
@@ -31,7 +26,7 @@ class TemplateFamilies {
    * its feats build on (Power Critical requires the SRD's Weapon Focus), and the class features' (Sneak Attack, Rage…).
    */
   requirable(book: string, own = this.ofBook(book)): Set<string> {
-    return new Set([...own, ...(book === "srd" ? [] : this.ofBook("srd")), ...CLASS_FEAT_FAMILY_NAMES]);
+    return new Set([...own, ...(book === CORE_BOOK ? [] : this.ofBook(CORE_BOOK)), ...CLASS_FEAT_FAMILY_NAMES]);
   }
 }
 
