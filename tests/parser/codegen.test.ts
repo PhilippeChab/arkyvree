@@ -20,8 +20,11 @@ import {
 import { escapeTemplate, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import { buildClassFeatSeeds, buildClassModifiers } from "@/database/packages/dnd35-from-parser/tools/seeds/classes.ts";
+import { buildClassSeed } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/classSeed.ts";
+import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/featSeeds.ts";
+import { buildClassModifiers } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/modifiers.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { getClassReviewNotes } from "@/database/packages/dnd35-from-parser/tools/validate/classReview.ts";
 import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   Modifier,
@@ -40,7 +43,7 @@ function check(operator: string, valueType: string, value: string): RequirementC
 
 /** A class reference's generated ClassSeed file. */
 function classCode(ref: ClassReference) {
-  return new ClassFile(ref).classCode();
+  return new ClassFile(buildClassSeed(ref), getClassReviewNotes(ref)).classCode();
 }
 
 function classRef(book: string, slug: string) {

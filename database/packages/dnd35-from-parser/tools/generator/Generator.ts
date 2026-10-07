@@ -5,6 +5,7 @@ import type { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/c
 import { BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { GeneratesBooks } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesBooks.ts";
 import { GeneratesClasses } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesClasses.ts";
+import { GeneratesCopies } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesCopies.ts";
 import { GeneratesDomains } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesDomains.ts";
 import { GeneratesFeats } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesFeats.ts";
 import { GeneratesItems } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesItems.ts";
@@ -35,6 +36,7 @@ export class Generator extends include(
   BaseGenerator,
   GeneratesBooks,
   GeneratesClasses,
+  GeneratesCopies,
   GeneratesDomains,
   GeneratesFeats,
   GeneratesItems,

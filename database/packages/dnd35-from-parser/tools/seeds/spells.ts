@@ -1,8 +1,11 @@
 /** A spell reference's seeds: its PowerSeed[], each with its level. */
 
 import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import { getInheritedLevel, getInheritedLists } from "@/database/packages/dnd35-from-parser/tools/seeds/classes.ts";
 import ClassSpellMaps from "@/database/packages/dnd35-from-parser/tools/seeds/ClassSpellMaps.ts";
+import {
+  getInheritedLevel,
+  getInheritedLists,
+} from "@/database/packages/dnd35-from-parser/tools/seeds/inheritedLists.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import { normalizeDescription, normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";

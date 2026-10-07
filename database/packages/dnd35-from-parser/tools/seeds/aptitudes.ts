@@ -2,11 +2,9 @@
 
 import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import {
-  buildClassDomainPickFeats,
-  buildClassFeatSeeds,
-  getClassSpellLists,
-} from "@/database/packages/dnd35-from-parser/tools/seeds/classes.ts";
+import { buildClassDomainPickFeats } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/domainPicks.ts";
+import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/featSeeds.ts";
+import { getClassSpellLists } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/spellSlots.ts";
 import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/domains.ts";
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/spells.ts";
 import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/wizardSchools.ts";

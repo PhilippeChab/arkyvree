@@ -56,11 +56,6 @@ export function lt(target: string, value: string | number): RequirementCondition
   return condition(target, "less_than", value, "number");
 }
 
-/** `target` not true: a feat not possessed. */
-export function neq(target: string): RequirementCondition {
-  return condition(target, "not_equal", "true", "boolean");
-}
-
 /** Any one of `children`. */
 export function or(...children: RequirementEntry[]): RequirementGroup {
   return { chainingOperator: "or", children };

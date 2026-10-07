@@ -1,19 +1,18 @@
 import { readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
-import {
-  type BaseGenerator,
-  GENERATED_HEADER,
-} from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { generateClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/classFeatsFile.ts";
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
-import { quote, toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
+import { toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import { buildClassSeed } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/classSeed.ts";
 import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { getClassReviewNotes } from "@/database/packages/dnd35-from-parser/tools/validate/classReview.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
-/** Generating a book's classes: each class's file and its feats', their indexes, and the core feats they copy. */
+/** Generating a book's classes: each class's file and its feats', and their indexes. */
 export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingClasses extends Base {
     /** A class's file and its feats' file, or neither for a class left out of the seed. */
@@ -27,7 +26,7 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
         rmSync(classPath, { force: true });
         rmSync(featPath, { force: true });
       } else {
-        this.write(classPath, new ClassFile(ref).classCode());
+        this.write(classPath, new ClassFile(buildClassSeed(ref), getClassReviewNotes(ref)).classCode());
         this.write(featPath, generateClassFeatSeeds(ref));
       }
     }
@@ -116,73 +115,6 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
 
       const genClassDir = join(this.dir, book, "classes");
       const outPath = join(genClassDir, "index.ts");
-      this.write(outPath, lines.join("\n"));
-    }
-
-    /** Regenerate cowFeats.ts for a book from bonusFeatLists in class reference JSONs.
-     *  Only emits entries for feats that don't already exist in the book's own feat pool
-     *  (i.e. cross-book references that actually need COW). Same-book feats already get
-     *  their aptitudes added directly by the feat generator. */
-    writeCowFeats(book: string) {
-      if (!this.copiesFromCore(book)) return;
-      const classes = ReferenceLoader.loadClasses(book);
-
-      // Load the book's own raw feat names — these already get aptitudes via the feat generator
-      const bookFeats = new Set<string>();
-      for (const feat of ReferenceLoader.find(book, "feat")?.raw ?? []) bookFeats.add(feat.name);
-
-      // Also collect class feature seed names — these are generated as feats by the class feat generator
-      const classFeatureNames = new Set<string>();
-      for (const { ref } of classes) {
-        for (const feat of Object.values(ref.mapping.features)) {
-          if (feat.seedName) classFeatureNames.add(feat.seedName);
-        }
-      }
-
-      type CowEntry = { feat: string; requirements: { className: string; level: number }[]; aptitudes: string[] };
-      const entries: CowEntry[] = [];
-
-      for (const { ref } of classes) {
-        const bonusFeatLists = ref.overrides?.bonusFeatLists ?? ref.detected?.bonusFeatLists;
-        if (!bonusFeatLists?.length) continue;
-
-        for (const list of bonusFeatLists) {
-          for (const feat of list.feats) {
-            // Skip feats that exist in this book's own feat pool or as class features —
-            // the feat generator already adds the aptitude directly
-            if (bookFeats.has(feat) || classFeatureNames.has(feat)) continue;
-            entries.push({ feat, requirements: [], aptitudes: [list.aptitude] });
-          }
-        }
-      }
-
-      const outPath = join(this.dir, book, "cowFeats.ts");
-
-      // Deduplicate: a feat might appear in multiple lists
-      const deduped = new Map<string, CowEntry>();
-      for (const entry of entries) {
-        const existing = deduped.get(entry.feat);
-        if (existing) {
-          for (const apt of entry.aptitudes) {
-            if (!existing.aptitudes.includes(apt)) existing.aptitudes.push(apt);
-          }
-        } else {
-          deduped.set(entry.feat, { ...entry });
-        }
-      }
-
-      const lines: string[] = [];
-      lines.push(...GENERATED_HEADER);
-      lines.push(`import type { CowFeatEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";`);
-      lines.push(``);
-      lines.push(`export const COW_FEATS: CowFeatEntry[] = [`);
-      for (const entry of deduped.values()) {
-        const aptStr = entry.aptitudes.map(quote).join(", ");
-        lines.push(`  { feat: ${quote(entry.feat)}, requirements: [], aptitudes: [${aptStr}] },`);
-      }
-      lines.push(`];`);
-      lines.push(``);
-
       this.write(outPath, lines.join("\n"));
     }
   }

@@ -9,13 +9,13 @@ import { buildCoreSystemFeats } from "@/database/packages/dnd35-from-parser/tool
 import {
   generateFavoredEnemyFeats,
   generateFeatSeeds,
-  getFeatAptitudeSources,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
 import { compareNames, formatImport } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { CORE_BOOK, getReferencePath } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { collectAptitudes } from "@/database/packages/dnd35-from-parser/tools/seeds/aptitudes.ts";
+import { getFeatAptitudeSources } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
 import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/wizardSchools.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { Constructor } from "@/server/mixins.ts";
