@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import { findReferenceIssues } from "@/database/packages/dnd35-from-parser/tools/validate/referenceIssues.ts";
+import { ReferenceIssues } from "@/database/packages/dnd35-from-parser/tools/validate/ReferenceIssues.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 const folders: string[] = [];
@@ -23,7 +23,7 @@ function issuesOf(file: string, edit: (overrides: Record<string, unknown>) => vo
   folders.push(folder);
   mkdirSync(dirname(join(folder, file)), { recursive: true });
   writeFileSync(join(folder, file), JSON.stringify(reference));
-  return findReferenceIssues([References.file(join(folder, file))]).map(({ kind, entityName, text }) => ({
+  return ReferenceIssues.of([References.file(join(folder, file))]).map(({ kind, entityName, text }) => ({
     kind,
     entityName,
     text,
@@ -102,7 +102,7 @@ describe("parser:validate", () => {
   });
 
   test("finds no issue in the committed references", () => {
-    expect(findReferenceIssues(References.files())).toEqual([]);
+    expect(ReferenceIssues.of(References.files())).toEqual([]);
   });
 
   test("reports what a reference's review list covers, once cleared: a class's aptitude picks and prerequisites, feats' modifiers", () => {
@@ -181,7 +181,7 @@ describe("parser:validate", () => {
       JSON.stringify({ _meta: { type: "potion", sourceUrl: "", book: "srd", scrapedAt: "" }, raw: [] }),
     );
     expect(
-      findReferenceIssues([References.file(join(folder, "potions.json"))]).map(({ kind, text }) => ({ kind, text })),
+      ReferenceIssues.of([References.file(join(folder, "potions.json"))]).map(({ kind, text }) => ({ kind, text })),
     ).toEqual([{ kind: "unknown type", text: "potion" }]);
   });
 

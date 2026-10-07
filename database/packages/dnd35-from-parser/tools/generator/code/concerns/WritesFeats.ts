@@ -1,7 +1,7 @@
 import BookLayout from "@/database/packages/dnd35-from-parser/tools/generator/BookLayout.ts";
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
 import {
-  FeatSeeds,
+  type FeatSeeds,
   type TemplateFamily,
   type TemplateType,
 } from "@/database/packages/dnd35-from-parser/tools/seeds/FeatSeeds.ts";
@@ -218,18 +218,15 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
     }
 
     /**
-     * A feats file's lists (what a feat reference makes, `FeatSeeds`): a list per feat type, each feat's checks of a
-     * family its own (`FeatSeeds.familyChecks`), and a template family's feats made per item; `families` the families a
-     * feat can require.
+     * A feats file's lists (what a feat reference makes, `FeatSeeds`): a list per feat type, and a template family's
+     * feats made per item; `families` the families a feat can require, which name a template's item's feat.
      */
     featsFile(seeds: FeatSeeds, families: Set<string>): void {
       for (const [type, feats] of seeds.byType()) {
         this.list(
           BookLayout.featTypeList(type),
           "FeatSeed",
-          feats.flatMap((feat) =>
-            this.feat({ ...feat, requirements: FeatSeeds.familyChecks(feat.requirements ?? [], families) }),
-          ),
+          feats.flatMap((feat) => this.feat(feat)),
         );
       }
       for (const family of seeds.templates()) this.featTemplate(family, families);

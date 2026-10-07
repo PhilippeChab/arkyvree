@@ -1,6 +1,7 @@
 import { HttpClient } from "@/database/packages/dnd35-from-parser/tools/scraper/HttpClient.ts";
 import { Scraper } from "@/database/packages/dnd35-from-parser/tools/scraper/Scraper.ts";
-import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/vocabulary/books.ts";
+
+import { CommandLine } from "./CommandLine.ts";
 
 function printUsage() {
   console.error("Usage: bun scraper/index.ts <type> [options]");
@@ -30,31 +31,20 @@ function printUsage() {
 }
 
 async function main() {
-  const args = process.argv.slice(2);
-
-  // Parse global options
-  const noCacheIdx = args.indexOf("--no-cache");
-  const noCache = noCacheIdx >= 0;
-  if (noCache) args.splice(noCacheIdx, 1);
-
-  const delayIdx = args.indexOf("--delay");
-  const delay = delayIdx >= 0 ? Number(args[delayIdx + 1]) : undefined;
-  if (delay !== undefined && !(Number.isInteger(delay) && delay >= 0)) {
-    console.error(`--delay takes a whole number of milliseconds, not "${args[delayIdx + 1]}"`);
+  let request: ReturnType<typeof CommandLine.scrape>;
+  try {
+    request = CommandLine.scrape();
+  } catch (error) {
+    // A delay that isn't a whole number, or an option the scraper doesn't take
+    console.error(error instanceof Error ? error.message : error);
     process.exit(1);
   }
-  if (delayIdx >= 0) args.splice(delayIdx, 2);
-
-  if (args.length < 1) {
+  const { type, book, url, noCache, delay } = request;
+  if (!type) {
     printUsage();
     process.exit(1);
   }
 
-  const type = args[0];
-  const urlIdx = args.indexOf("--url");
-  const url = urlIdx >= 0 ? args[urlIdx + 1] : undefined;
-  const bookIdx = args.indexOf("--book");
-  const book = bookIdx >= 0 ? args[bookIdx + 1] : CORE_BOOK;
   const scraper = new Scraper(book, new HttpClient({ noCache, ...(delay !== undefined ? { delay } : {}) }));
 
   if (type === "class") {

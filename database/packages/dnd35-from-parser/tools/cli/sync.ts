@@ -14,7 +14,7 @@ import { $ } from "bun";
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import type { ReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 
-import { parseCliArgs } from "./args.ts";
+import { CommandLine } from "./CommandLine.ts";
 
 const GENERATOR = join(import.meta.dirname!, "generate.ts");
 const SCRAPER = join(import.meta.dirname!, "scrape.ts");
@@ -38,7 +38,7 @@ function buildScrapeArgs(ref: ReferenceFile): string[] | null {
 }
 
 async function main() {
-  const { bookFilter, typeFilter, nameFilter } = parseCliArgs();
+  const { bookFilter, typeFilter, nameFilter } = CommandLine.filters();
 
   const allRefs = References.files();
   if (allRefs.length === 0) {

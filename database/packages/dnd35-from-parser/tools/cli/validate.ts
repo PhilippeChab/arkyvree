@@ -17,19 +17,16 @@
  */
 
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import {
-  findReferenceIssues,
-  type Issue,
-} from "@/database/packages/dnd35-from-parser/tools/validate/referenceIssues.ts";
+import { type Issue, ReferenceIssues } from "@/database/packages/dnd35-from-parser/tools/validate/ReferenceIssues.ts";
 
-import { parseCliArgs } from "./args.ts";
+import { CommandLine } from "./CommandLine.ts";
 
 function main() {
-  const { bookFilter, typeFilter } = parseCliArgs();
+  const { bookFilter, typeFilter } = CommandLine.filters();
 
   const refs = References.files({ bookFilter, typeFilter });
 
-  const issues = findReferenceIssues(refs);
+  const issues = ReferenceIssues.of(refs);
   if (issues.length === 0) {
     console.log(`All clear — no issues across ${refs.length} references.`);
     return;
