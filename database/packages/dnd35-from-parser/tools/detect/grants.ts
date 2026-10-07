@@ -4,6 +4,7 @@
  */
 
 import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
+import { bonus, setFlag } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
 
 const COMPANION_GRANT_PATTERNS: {
@@ -81,18 +82,10 @@ export function buildCompanionGrantModifiers(featName: string, description: stri
     const classSlug = className.toLowerCase().replace(/\s+/g, "");
     const formula = detectBondedLevelFormula(description, classSlug);
 
-    modifiers.push({
-      target: `aptitudes.${aptitudeSlug}.allowed`,
-      operator: "add",
-      value: "1",
-      valueType: "number",
-    });
-    modifiers.push({
-      target: `bonded.${bondedKind}.level`,
-      operator: "add",
-      value: `{{ ${formula} }}`,
-      valueType: "number",
-    });
+    modifiers.push(
+      bonus(`aptitudes.${aptitudeSlug}.allowed`, 1),
+      bonus(`bonded.${bondedKind}.level`, `{{ ${formula} }}`),
+    );
   }
   return modifiers;
 }
@@ -102,9 +95,7 @@ export function buildCompanionGrantModifiers(featName: string, description: stri
  * bonus to AC, and its dodge bonuses, when flat-footed. Improved uncanny dodge is flanking, no part of AC.
  */
 export function buildUncannyDodgeModifiers(featName: string): ModifierSeed[] {
-  return /^Uncanny Dodge\b/.test(featName)
-    ? [{ target: "combat.ac.uncannydodge", operator: "set", value: "true", valueType: "boolean" }]
-    : [];
+  return /^Uncanny Dodge\b/.test(featName) ? [setFlag("combat.ac.uncannydodge")] : [];
 }
 
 /** Extract feat names from "gains/receives X as a [bonus] feat" patterns.

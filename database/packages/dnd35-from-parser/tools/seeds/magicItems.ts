@@ -1,4 +1,4 @@
-/** A magic item reference's seeds: its ItemDef[], by category. */
+/** A magic item reference's seeds: its ItemSeed[], by category. */
 
 import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/detect/armorStats.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/detect/magicItems.ts";
@@ -9,20 +9,21 @@ import {
   type MagicItemCategory,
   type MagicItemReference,
 } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
+import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { Modifier, Property } from "@/database/packages/dnd35/content/customization/types.ts";
 import { armorProperties } from "@/database/packages/dnd35/content/items/properties.ts";
-import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
+import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 import { MAGIC_AURA, MAGIC_CASTER_LEVEL } from "@/shared/dnd3.5/properties/index.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 export type MagicItemSeedSets = {
-  magicArmor: ItemDef[];
-  magicShields: ItemDef[];
-  magicWeapons: ItemDef[];
-  wondrousItems: ItemDef[];
-  rings: ItemDef[];
-  rods: ItemDef[];
-  staffs: ItemDef[];
+  magicArmor: ItemSeed[];
+  magicShields: ItemSeed[];
+  magicWeapons: ItemSeed[];
+  wondrousItems: ItemSeed[];
+  rings: ItemSeed[];
+  rods: ItemSeed[];
+  staffs: ItemSeed[];
 };
 
 /** The specific armor and shields, whose text gives what they change of their base's. */
@@ -35,9 +36,8 @@ const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Rin
 function weaponEnhancementModifiers(description: string): Modifier[] {
   const enhancement = readWeaponEnhancement(description);
   if (!enhancement) return [];
-  const bonus = (target: string, value: number): Modifier[] =>
-    value ? [{ target, operator: "add", value: String(value), valueType: "number" }] : [];
-  return [...bonus("weapon.tohit.magic", enhancement.attack), ...bonus("weapon.damage.magic", enhancement.damage)];
+  const bonusOf = (target: string, value: number): Modifier[] => (value ? [bonus(target, value)] : []);
+  return [...bonusOf("weapon.tohit.magic", enhancement.attack), ...bonusOf("weapon.damage.magic", enhancement.damage)];
 }
 
 /** The properties of `base`, those of `own` over them by type. */
@@ -56,15 +56,15 @@ export function buildMagicItemSeeds(
   ref: MagicItemReference,
   baseWeights: Record<string, string> = {},
 ): MagicItemSeedSets {
-  const magicArmor: ItemDef[] = [];
-  const magicShields: ItemDef[] = [];
-  const magicWeapons: ItemDef[] = [];
-  const wondrousItems: ItemDef[] = [];
-  const rings: ItemDef[] = [];
-  const rods: ItemDef[] = [];
-  const staffs: ItemDef[] = [];
+  const magicArmor: ItemSeed[] = [];
+  const magicShields: ItemSeed[] = [];
+  const magicWeapons: ItemSeed[] = [];
+  const wondrousItems: ItemSeed[] = [];
+  const rings: ItemSeed[] = [];
+  const rods: ItemSeed[] = [];
+  const staffs: ItemSeed[] = [];
 
-  const categoryBuckets: Record<MagicItemCategory, ItemDef[]> = {
+  const categoryBuckets: Record<MagicItemCategory, ItemSeed[]> = {
     specificArmor: magicArmor,
     specificShield: magicShields,
     specificWeapon: magicWeapons,
@@ -99,14 +99,7 @@ export function buildMagicItemSeeds(
     // Its enhancement bonus: an armor's or a shield's to its part of the AC, a weapon's to its own attack and damage
     // (not ammunition's, made from no weapon, which no hand holds)
     const enhancement: Modifier[] = stats?.enhancement
-      ? [
-          {
-            target: det.category === "specificArmor" ? "combat.ac.armor" : "combat.ac.shield",
-            operator: "add",
-            value: String(stats.enhancement),
-            valueType: "number",
-          },
-        ]
+      ? [bonus(det.category === "specificArmor" ? "combat.ac.armor" : "combat.ac.shield", stats.enhancement)]
       : det.category === "specificWeapon" && sourceItem
         ? weaponEnhancementModifiers(description)
         : [];

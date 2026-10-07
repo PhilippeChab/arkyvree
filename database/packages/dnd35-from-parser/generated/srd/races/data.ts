@@ -1,6 +1,6 @@
-import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
+import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
 
-export const ALL_RACES: RaceDefinition[] = [
+export const ALL_RACES: RaceSeed[] = [
   {
     name: "Dwarf",
     description:

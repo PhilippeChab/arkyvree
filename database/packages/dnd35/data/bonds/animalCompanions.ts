@@ -1,10 +1,10 @@
 import { formatWithArticle } from "@/database/packages/dnd35/content/bonds/articles.ts";
 import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
-import { grantFeat } from "@/database/packages/dnd35/content/customization/modifiers.ts";
+import { bonus, grantFeat, setNum, setStr } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { gte, lt } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
+import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/data/bonds/raceProperties.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
@@ -80,17 +80,11 @@ const ANIMAL_COMPANION_CLASS_FEATURE_FEATS: FeatSeed[] = [
     // Multiattack: its secondary attacks at -2; without three attacks, a second one with its primary natural weapon
     modifiers: [
       {
-        target: "combat.naturalattacks.secondarypenalty",
-        operator: "set",
-        value: "-2",
-        valueType: "number",
+        ...setNum("combat.naturalattacks.secondarypenalty", -2),
         requirements: [gte("combat.naturalattacks.count", 3)],
       },
       {
-        target: "combat.naturalattacks.extraattacks",
-        operator: "add",
-        value: "1",
-        valueType: "number",
+        ...bonus("combat.naturalattacks.extraattacks", 1),
         requirements: [gte("combat.naturalattacks.count", 1), lt("combat.naturalattacks.count", 3)],
       },
     ],
@@ -126,17 +120,10 @@ const ANIMAL_COMPANION_RACE_PICK_FEATS: FeatSeed[] = ANIMAL_COMPANION_RACE_NAMES
   description: `Bond with ${formatWithArticle(race)} as your animal companion. The companion appears on your sheet with stats derived from your level and the ${race} race profile.`,
   selectable: true,
   aptitudes: [ANIMAL_COMPANION_APTITUDE],
-  modifiers: [
-    {
-      target: "bonded.animalcompanion.race",
-      operator: "set",
-      value: race,
-      valueType: "string",
-    },
-  ],
+  modifiers: [setStr("bonded.animalcompanion.race", race)],
 }));
 
-const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
+const ANIMAL_COMPANION_RACES: RaceSeed[] = [
   {
     name: "Badger",
     description: "A burrowing carnivore known for its tenacity. Strong claws and a thick hide.",
@@ -157,7 +144,7 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     size: "Small",
     baseSpeed: 40,
     properties: QUADRUPED,
-    modifiers: [grantFeat("diseasefilthfever")],
+    modifiers: [grantFeat("Disease (Filth Fever)")],
   },
   {
     name: "Dog",
@@ -172,7 +159,7 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     size: "Medium",
     baseSpeed: 40,
     properties: QUADRUPED,
-    modifiers: [grantFeat("trip")],
+    modifiers: [grantFeat("Trip")],
   },
   {
     name: "Eagle",
@@ -220,14 +207,14 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     description: "A small venomous serpent. Quick to strike and difficult to spot.",
     size: "Small",
     baseSpeed: 20,
-    modifiers: [grantFeat("poison")],
+    modifiers: [grantFeat("Poison")],
   },
   {
     name: "Snake, Medium Viper",
     description: "A medium-sized venomous serpent. Lethal bite and unsettling speed.",
     size: "Medium",
     baseSpeed: 20,
-    modifiers: [grantFeat("poison")],
+    modifiers: [grantFeat("Poison")],
   },
   {
     name: "Wolf",
@@ -235,7 +222,7 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     size: "Medium",
     baseSpeed: 50,
     properties: QUADRUPED,
-    modifiers: [grantFeat("trip")],
+    modifiers: [grantFeat("Trip")],
   },
 ];
 

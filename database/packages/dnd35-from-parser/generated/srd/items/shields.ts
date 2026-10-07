@@ -2,9 +2,9 @@
 
 import { SHIELD_PROF, TOWER_SHIELD_PROF } from "@/database/packages/dnd35/content/items/proficiencies.ts";
 import { shieldProperties } from "@/database/packages/dnd35/content/items/properties.ts";
-import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
+import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 
-export const SHIELDS: ItemDef[] = [
+export const SHIELDS: ItemSeed[] = [
   {
     name: "Buckler",
     description: "A buckler is a small metal shield worn strapped to the forearm.",

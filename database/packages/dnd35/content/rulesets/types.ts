@@ -1,15 +1,15 @@
-import type { AbilityDefinition } from "@/database/packages/dnd35/content/abilities/types.ts";
+import type { AbilitySeed } from "@/database/packages/dnd35/content/abilities/types.ts";
 import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
-import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";
+import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
-import type { LanguageDefinition } from "@/database/packages/dnd35/content/languages/types.ts";
-import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
-import type { SaveDefinition } from "@/database/packages/dnd35/content/saves/types.ts";
-import type { SkillDefinition } from "@/database/packages/dnd35/content/skills/types.ts";
+import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
+import type { LanguageSeed } from "@/database/packages/dnd35/content/languages/types.ts";
+import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
+import type { SaveSeed } from "@/database/packages/dnd35/content/saves/types.ts";
+import type { SkillSeed } from "@/database/packages/dnd35/content/skills/types.ts";
 import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
-import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
+import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
 
 /** An extension's book, as the parser generates it (`generated/<book>/index.ts`). */
 export type BookContent = {
@@ -21,7 +21,7 @@ export type BookContent = {
   spells: SpellSeed[];
   /** Core spells the book adds to its spell lists. */
   cowSpells: CowSpellEntry[];
-  domains: DomainDefinition[];
+  domains: DomainSeed[];
   classes: ClassSeed[];
 };
 
@@ -31,19 +31,19 @@ export type BookContent = {
  */
 export type CoreContent = {
   aptitudes: string[];
-  languages: LanguageDefinition[];
-  races: RaceDefinition[];
-  abilities: AbilityDefinition[];
-  skills: SkillDefinition[];
-  saves: SaveDefinition[];
+  languages: LanguageSeed[];
+  races: RaceSeed[];
+  abilities: AbilitySeed[];
+  skills: SkillSeed[];
+  saves: SaveSeed[];
   feats: FeatSeed[];
   classes: ClassSeed[];
   /** The items others are made from, which a new ruleset starts with. */
-  templateItems: ItemDef[];
-  items: ItemDef[];
+  templateItems: ItemSeed[];
+  items: ItemSeed[];
   spells: SpellSeed[];
-  wizardSchools: WizardSchoolDefinition[];
-  domains: DomainDefinition[];
+  wizardSchools: WizardSchoolSeed[];
+  domains: DomainSeed[];
   bonds: BondContent[];
   /** The class level each of the cleric's spell levels opens at, which a domain's slots open at too. */
   clericSpellLevels: Record<number, number>;

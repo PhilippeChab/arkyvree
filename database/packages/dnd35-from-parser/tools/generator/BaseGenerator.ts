@@ -128,7 +128,7 @@ export class BaseGenerator {
     const file = new CodeFile(ITEM_IMPORTS);
     for (const name of uses) file.uses.add(name);
     file.lines.push(
-      `export const ${constName}: ItemDef[] = [`,
+      `export const ${constName}: ItemSeed[] = [`,
       ...items.flatMap((item) => [
         `  {`,
         `    name: ${quote(item.name)},`,
@@ -143,7 +143,7 @@ export class BaseGenerator {
       path,
       file.code([
         ...GENERATED_HEADER,
-        `import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";`,
+        `import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";`,
       ]),
     );
   }

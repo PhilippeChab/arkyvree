@@ -16,11 +16,9 @@ export function GeneratesWizardSchools<B extends Constructor<BaseGenerator>>(Bas
 
       // Generate data.ts
       const lines: string[] = [];
-      lines.push(
-        `import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/wizardSchools/types.ts";`,
-      );
+      lines.push(`import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";`);
       lines.push(``);
-      lines.push(`export const WIZARD_SCHOOLS: WizardSchoolDefinition[] = [`);
+      lines.push(`export const WIZARD_SCHOOLS: WizardSchoolSeed[] = [`);
       for (const s of seeds) {
         lines.push(`  {`);
         lines.push(`    name: ${quote(s.name)},`);

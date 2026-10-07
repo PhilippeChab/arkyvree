@@ -1,4 +1,4 @@
-import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
+import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   itemsInRules,
@@ -15,7 +15,7 @@ export function SeedsItems<B extends Constructor<BaseSeeder>>(Base: B) {
      * Seeds items with their properties, requirements and modifiers, as templates or made from the templates
      * `templateMap` has by name. Returns their ids by name.
      */
-    async seedItems(items: ItemDef[], options: { isTemplate?: boolean; templateMap?: Record<string, string> } = {}) {
+    async seedItems(items: ItemSeed[], options: { isTemplate?: boolean; templateMap?: Record<string, string> } = {}) {
       if (items.length === 0) return {};
       const ids = BaseSeeder.idsByName(
         await this.db

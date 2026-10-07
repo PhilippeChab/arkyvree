@@ -22,7 +22,7 @@ export function and(...children: RequirementEntry[]): RequirementGroup {
 }
 
 /** `target` true: a feat possessed, a property held. */
-export function eq(target: string) {
+export function eq(target: string): RequirementCondition {
   return condition(target, "equal", "true", "boolean");
 }
 
@@ -37,8 +37,13 @@ export function eqStr(target: string, value: string | number): RequirementCondit
 }
 
 /** The path of having a feat. */
-export function feat(name: string) {
+export function feat(name: string): string {
   return `feats.${stripSeparators(name)}.possessed`;
+}
+
+/** `target` above the number `value`. */
+export function gt(target: string, value: string | number): RequirementCondition {
+  return condition(target, "greater_than", value, "number");
 }
 
 /** `target` at least the number `value`. */
@@ -49,6 +54,11 @@ export function gte(target: string, value: string | number): RequirementConditio
 /** `target` below the number `value`. */
 export function lt(target: string, value: string | number): RequirementCondition {
   return condition(target, "less_than", value, "number");
+}
+
+/** `target` not true: a feat not possessed. */
+export function neq(target: string): RequirementCondition {
+  return condition(target, "not_equal", "true", "boolean");
 }
 
 /** Any one of `children`. */

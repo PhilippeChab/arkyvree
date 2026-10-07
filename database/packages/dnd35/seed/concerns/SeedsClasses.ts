@@ -1,4 +1,6 @@
 import type { BabType, ClassSeed, SaveType } from "@/database/packages/dnd35/content/classes/types.ts";
+import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
+import { gt } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
@@ -143,9 +145,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
         levels.flatMap(({ id, level }) =>
           [
             ...levelModifiers.filter((m) => m.level === level),
-            ...picks
-              .filter((pick) => pick.levels.includes(level))
-              .map((pick) => ({ target: pick.target, value: "1", valueType: "number", operator: "add" })),
+            ...picks.filter((pick) => pick.levels.includes(level)).map((pick) => bonus(pick.target, 1)),
           ].map((modifier) => ({ sourceId: id, modifier })),
         ),
       );
@@ -161,10 +161,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
             entityId: id,
             entityType: "klass_levels",
             level: "1",
-            target: `classes.${classSlug}.level`,
-            value: String(level - 1),
-            valueType: "number",
-            operator: "greater_than",
+            ...gt(`classes.${classSlug}.level`, level - 1),
           })),
         ...this.requirementRows(levelIds[1], "klass_levels", def.requirements),
       ]);

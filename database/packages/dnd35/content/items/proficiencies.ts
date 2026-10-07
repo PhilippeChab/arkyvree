@@ -4,17 +4,11 @@
 
 import { and, eq, eqStr, feat, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
-import { MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/data/weapons.ts";
-
-/** The exotic weapons "a character can use two-handed as a martial weapon". */
-const MARTIAL_IN_TWO_HANDS = new Set(["Bastard Sword", "Dwarven Waraxe"]);
-
-/** The exotic weapons a race treats as martial weapons (its weapon familiarity), by the race. */
-const WEAPON_FAMILIARITY: Record<string, string> = {
-  "Dwarven Waraxe": "Dwarf",
-  "Dwarven Urgrosh": "Dwarf",
-  "Gnome Hooked Hammer": "Gnome",
-};
+import {
+  getWeaponDefinition,
+  MARTIAL_WEAPONS,
+  SIMPLE_WEAPONS,
+} from "@/database/packages/dnd35/content/items/weapons.ts";
 
 export const HEAVY_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Heavy)"))];
 export const LIGHT_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Light)"))];
@@ -28,9 +22,10 @@ export const TOWER_SHIELD_PROF: RequirementEntry[] = [eq(feat("Tower Shield Prof
  * what only a weapon's own proficiency reads, a prerequisite holding no weapon.
  */
 function exoticProficiency(weapon: string, held: boolean): RequirementEntry[] {
+  const definition = getWeaponDefinition(weapon);
   const asMartial = [
-    ...(held && MARTIAL_IN_TWO_HANDS.has(weapon) ? [eqStr("weapon.wielded", "twohanded")] : []),
-    ...(weapon in WEAPON_FAMILIARITY ? [eqStr("identity.physiology.race.name", WEAPON_FAMILIARITY[weapon])] : []),
+    ...(held && definition?.oneHandTraining ? [eqStr("weapon.wielded", "twohanded")] : []),
+    ...(definition?.familiarity ? [eqStr("identity.physiology.race.name", definition.familiarity)] : []),
   ];
   const own = eq(feat(`Exotic Weapon Proficiency: ${weapon}`));
   if (asMartial.length === 0) return [own];

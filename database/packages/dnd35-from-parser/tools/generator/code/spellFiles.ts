@@ -2,9 +2,9 @@
 
 import { stringifyProperty } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import { type SpellSeedWithLevel } from "@/database/packages/dnd35-from-parser/tools/seeds/spells.ts";
+import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 
-function generateLevelFile(constName: string, spells: SpellSeedWithLevel[]): string {
+function generateLevelFile(constName: string, spells: SpellSeed[]): string {
   const lines: string[] = [];
   lines.push(`import type { PowerSeed } from "@/database/packages/dnd35/content/spells/types.ts";`);
   lines.push(``);
@@ -44,8 +44,8 @@ function generateLevelFile(constName: string, spells: SpellSeedWithLevel[]): str
   return lines.join("\n");
 }
 
-export function generateSpellFiles(spells: SpellSeedWithLevel[]): Map<string, string> {
-  const byLevel = new Map<number, SpellSeedWithLevel[]>();
+export function generateSpellFiles(spells: SpellSeed[]): Map<string, string> {
+  const byLevel = new Map<number, SpellSeed[]>();
   for (const spell of spells) {
     const existing = byLevel.get(spell.level) ?? [];
     existing.push(spell);

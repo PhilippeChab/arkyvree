@@ -15,7 +15,7 @@ import {
   normalizeDescription,
 } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
-import { feat } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import { feat, neq } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   ModifierSeed,
   RequirementCondition,
@@ -41,7 +41,7 @@ export type TemplateFamily = {
 const IMPORTS: ImportTable = [
   ...REQUIREMENT_IMPORTS,
   [
-    "@/database/packages/dnd35/data/weapons.ts",
+    "@/database/packages/dnd35/content/items/weapons.ts",
     ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS"],
   ],
   ["@/database/packages/dnd35/content/items/proficiencies.ts", ["proficiencyRequirements"]],
@@ -55,12 +55,7 @@ const IMPORTS: ImportTable = [
 ];
 
 /** A single martial weapon's proficiency feat is for a character without them all. */
-const NOT_MARTIAL_PROFICIENT: RequirementCondition = {
-  target: feat("Martial Weapon Proficiency"),
-  operator: "not_equal",
-  value: "true",
-  valueType: "boolean",
-};
+const NOT_MARTIAL_PROFICIENT = neq(feat("Martial Weapon Proficiency"));
 
 /** Weapon proficiency families expand over their own weapons, the others over every weapon. */
 const WEAPON_LISTS: Record<string, string> = {

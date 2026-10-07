@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
-import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
+import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { powersAptitudesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -14,7 +14,7 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
      * Gives each school's specialist feat a slot at each spell level of its spell list ("X Specialist Spells"), once
      * the wizard casts that level, and lists there the seeded wizard spells of the school, at their wizard level.
      */
-    async seedWizardSchools(schools: WizardSchoolDefinition[], wizardSpellLevels: Record<number, number>) {
+    async seedWizardSchools(schools: WizardSchoolSeed[], wizardSpellLevels: Record<number, number>) {
       await this.insertGatedSpellSlots(
         schools
           .filter((s) => this.ctx.featMap[`${s.name} Specialist`])

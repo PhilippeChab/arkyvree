@@ -1,8 +1,9 @@
 import { formatWithArticle } from "@/database/packages/dnd35/content/bonds/articles.ts";
 import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
+import { setStr } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
+import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/data/bonds/raceProperties.ts";
 
 const SPECIAL_MOUNT_APTITUDE = "Special Mount Bond";
@@ -84,17 +85,10 @@ const SPECIAL_MOUNT_RACE_PICK_FEATS: FeatSeed[] = SPECIAL_MOUNT_RACE_NAMES.map((
   description: `Bond with ${formatWithArticle(race)} as your paladin's special mount. The mount appears on your sheet with stats derived from your paladin level and the ${race} race profile.`,
   selectable: true,
   aptitudes: [SPECIAL_MOUNT_APTITUDE],
-  modifiers: [
-    {
-      target: "bonded.mount.race",
-      operator: "set",
-      value: race,
-      valueType: "string",
-    },
-  ],
+  modifiers: [setStr("bonded.mount.race", race)],
 }));
 
-const SPECIAL_MOUNT_RACES: RaceDefinition[] = [
+const SPECIAL_MOUNT_RACES: RaceSeed[] = [
   {
     name: "Heavy Warhorse",
     description:

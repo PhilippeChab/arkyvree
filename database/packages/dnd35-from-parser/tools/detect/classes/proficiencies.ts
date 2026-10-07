@@ -1,7 +1,8 @@
 /** Detects the weapon and armor proficiencies a class grants. */
 
+import { grantFeat } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
-import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/data/weapons.ts";
+import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/content/items/weapons.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** Aliases for description text → canonical weapon names */
@@ -68,15 +69,6 @@ function detectSpecificWeapons(desc: string): string[] {
   return slugs;
 }
 
-function PROF(slug: string) {
-  return {
-    operator: "set" as const,
-    target: `feats.${slug}.possessed`,
-    value: "true",
-    valueType: "boolean" as const,
-  };
-}
-
 export function detectWAPModifiers(desc: string): ModifierSeed[] {
   const mods: ModifierSeed[] = [];
   const d = desc.toLowerCase();
@@ -92,43 +84,47 @@ export function detectWAPModifiers(desc: string): ModifierSeed[] {
 
   // Weapons
   if (/all simple and martial weapons/.test(profSentences)) {
-    mods.push(PROF("simpleweaponproficiency"), PROF("martialweaponproficiency"));
+    mods.push(grantFeat("simpleweaponproficiency"), grantFeat("martialweaponproficiency"));
   } else if (/all simple weapons/.test(profSentences)) {
-    mods.push(PROF("simpleweaponproficiency"));
+    mods.push(grantFeat("simpleweaponproficiency"));
   }
 
   // Specific weapon proficiencies (e.g. "plus the rapier, sap, shortbow")
   const specificWeapons = detectSpecificWeapons(profSentences);
   for (const slug of specificWeapons) {
-    mods.push(PROF(slug));
+    mods.push(grantFeat(slug));
   }
 
   // Armor — "all types of armor" / "all armor" / listing all three
   if (/all types of armor|all armor|heavy, medium, and light|light, medium, and heavy/.test(profSentences)) {
-    mods.push(PROF("armorproficiencylight"), PROF("armorproficiencymedium"), PROF("armorproficiencyheavy"));
+    mods.push(
+      grantFeat("armorproficiencylight"),
+      grantFeat("armorproficiencymedium"),
+      grantFeat("armorproficiencyheavy"),
+    );
   } else {
-    if (/light (and medium )?armor|light, medium/i.test(profSentences)) mods.push(PROF("armorproficiencylight"));
+    if (/light (and medium )?armor|light, medium/i.test(profSentences)) mods.push(grantFeat("armorproficiencylight"));
     if (/medium (and heavy )?armor|medium armor|light and medium armor/i.test(profSentences))
-      mods.push(PROF("armorproficiencymedium"));
-    if (/heavy armor|medium and heavy armor/i.test(profSentences)) mods.push(PROF("armorproficiencyheavy"));
+      mods.push(grantFeat("armorproficiencymedium"));
+    if (/heavy armor|medium and heavy armor/i.test(profSentences)) mods.push(grantFeat("armorproficiencyheavy"));
   }
 
   // Shields
   if (/not with shields|not.*with.*shields|but not with shields/.test(profSentences)) {
     // explicitly no shield proficiency
   } else if (/shields \(including tower shields\)|all armor and shields/.test(profSentences)) {
-    mods.push(PROF("shieldproficiency"), PROF("towershieldproficiency"));
+    mods.push(grantFeat("shieldproficiency"), grantFeat("towershieldproficiency"));
   } else if (/shields \(except tower shields\)/.test(profSentences)) {
-    mods.push(PROF("shieldproficiency"));
+    mods.push(grantFeat("shieldproficiency"));
   } else if (/\bshields\b/.test(profSentences) && !/tower shields/.test(profSentences)) {
-    mods.push(PROF("shieldproficiency"));
+    mods.push(grantFeat("shieldproficiency"));
   }
   // "proficiency with tower shields" alone (prestige class additions like Purple Dragon Knight)
   if (
     /proficiency with tower shields/.test(profSentences) &&
     !mods.some((m) => m.target.includes("towershieldproficiency"))
   ) {
-    mods.push(PROF("towershieldproficiency"));
+    mods.push(grantFeat("towershieldproficiency"));
   }
 
   return mods;

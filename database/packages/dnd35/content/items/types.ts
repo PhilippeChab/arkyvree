@@ -2,7 +2,7 @@ import type { Modifier, Property, RequirementEntry } from "@/database/packages/d
 import type { ItemLocation } from "@/shared/enums.ts";
 
 /** An item: a template others are made from, or one made from a template (`sourceItem`). */
-export interface ItemDef {
+export type ItemSeed = {
   name: string;
   description: string;
   weight: string;
@@ -16,4 +16,4 @@ export interface ItemDef {
   isTemplate?: true;
   requirements?: RequirementEntry[];
   modifiers?: Modifier[];
-}
+};

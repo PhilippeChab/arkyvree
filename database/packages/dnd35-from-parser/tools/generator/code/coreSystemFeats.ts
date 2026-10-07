@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchools/schoolFeats.ts";
-import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
+import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
 import { favoredEnemyFeats } from "@/database/packages/dnd35/data/feats/favoredEnemy.ts";
 import { spellWeaponFocusFeats, weaponProficiencyFeats } from "@/database/packages/dnd35/data/feats/weapons.ts";
 
@@ -15,7 +15,7 @@ export const CORE_SYSTEM_FEATS: {
   name: string;
   code: string;
   uses: string[];
-  build: (wizardSchools: WizardSchoolDefinition[]) => FeatSeed[];
+  build: (wizardSchools: WizardSchoolSeed[]) => FeatSeed[];
 }[] = [
   {
     file: "feats.ts",
@@ -48,6 +48,6 @@ export const CORE_SYSTEM_FEATS: {
 ];
 
 /** The core rules' system feats (the wizard's school choice, the weapon proficiencies, Weapon Focus for spells, the favored enemies). */
-export function buildCoreSystemFeats(wizardSchools: WizardSchoolDefinition[]): FeatSeed[] {
+export function buildCoreSystemFeats(wizardSchools: WizardSchoolSeed[]): FeatSeed[] {
   return CORE_SYSTEM_FEATS.flatMap(({ build }) => build(wizardSchools));
 }

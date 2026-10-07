@@ -51,9 +51,17 @@ describe("architecture rules", () => {
         "shared/s.ts": 'import type { T } from "@/drizzle/schema.ts";\nexport type S = T;\n',
         "client/src/c.ts": 'import type { App } from "@/server/routers/application.ts";\nexport type C = App;\n',
         "client/src/v.ts": 'import { app } from "@/server/routers/application.ts";\nexport const v = app;\n',
+        // A content package's vocabulary reads neither its data nor the server
+        "database/packages/dnd35/content/a.ts":
+          'import { b } from "@/database/packages/dnd35/content/b.ts";\nexport const a = b;\n',
+        "database/packages/dnd35/content/d.ts":
+          'import { D } from "@/database/packages/dnd35/data/core.ts";\nexport const d = D;\n',
+        "database/packages/dnd35/content/s.ts": 'import { S } from "@/server/rulesets/s.ts";\nexport const s = S;\n',
       }),
     ).toEqual([
       "layers client/src/v.ts",
+      "layers database/packages/dnd35/content/d.ts",
+      "layers database/packages/dnd35/content/s.ts",
       "layers server/cache/c.ts",
       "layers server/cow/w.ts",
       "layers server/database/d.ts",

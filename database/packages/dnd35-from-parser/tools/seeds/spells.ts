@@ -6,7 +6,7 @@ import ClassSpellMaps from "@/database/packages/dnd35-from-parser/tools/seeds/Cl
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import { normalizeDescription, normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
-import type { PowerSeed } from "@/database/packages/dnd35/content/spells/types.ts";
+import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 import {
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
@@ -23,8 +23,6 @@ import { capitalize } from "@/shared/text.ts";
 
 /** A spell of a reference, as scraped. */
 type RawSpell = SpellReference["raw"][number];
-
-export type SpellSeedWithLevel = PowerSeed & { level: number };
 
 const COMPONENT_MAP: Record<string, string> = {
   V: "Verbal",
@@ -270,7 +268,7 @@ function withBaseSpellFields(rawEntry: RawSpell, rawByName: Map<string, RawSpell
   return entry;
 }
 
-export function buildSpellSeeds(ref: SpellReference, book?: string): { spells: SpellSeedWithLevel[] } {
+export function buildSpellSeeds(ref: SpellReference, book?: string): { spells: SpellSeed[] } {
   // The lists other books' classes draw on others' lists for (`inheritsFrom`), which an extension's spell can be on:
   // the book seeds its own copy of each that takes one, which a ruleset merges with that book's when it takes both, as
   // it does a class list the spell's level line names. The core rules' spells reach them through each book's copies.
@@ -285,7 +283,7 @@ export function buildSpellSeeds(ref: SpellReference, book?: string): { spells: S
     rawByName.set(entry.name.toLowerCase(), entry);
   }
 
-  const spells: SpellSeedWithLevel[] = [];
+  const spells: SpellSeed[] = [];
 
   for (const rawEntry of ref.raw) {
     const entry = withBaseSpellFields(rawEntry, rawByName);
@@ -295,7 +293,7 @@ export function buildSpellSeeds(ref: SpellReference, book?: string): { spells: S
     const savingThrow = normalizeSpellText(entry.savingThrow || "None");
     // Only include aptitudeLevels when not all aptitudes share the same level
     const hasVaryingLevels = Object.values(aptitudeLevels).some((l) => l !== minLevel);
-    const seed: SpellSeedWithLevel = {
+    const seed: SpellSeed = {
       name: entry.name,
       description: normalizeDescription(ref.overrides?.[entry.name]?.description ?? entry.description),
       aptitudes: [...aptitudes].sort(),

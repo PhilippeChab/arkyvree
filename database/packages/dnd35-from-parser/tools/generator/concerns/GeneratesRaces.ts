@@ -20,7 +20,7 @@ export function GeneratesRaces<B extends Constructor<BaseGenerator>>(Base: B) {
 
       // Generate data.ts
       const lines: string[] = [];
-      lines.push(`export const ALL_RACES: RaceDefinition[] = [`);
+      lines.push(`export const ALL_RACES: RaceSeed[] = [`);
       for (const r of seeds) {
         lines.push(`  {`);
         lines.push(`    name: ${quote(r.name)},`);
@@ -34,7 +34,7 @@ export function GeneratesRaces<B extends Constructor<BaseGenerator>>(Base: B) {
       lines.push(`];`);
       lines.push(``);
 
-      const head = [`import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";`, ``];
+      const head = [`import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";`, ``];
       this.write(join(this.dir, book, "races", "data.ts"), [...head, ...lines].join("\n"));
 
       this.log(`\nDone!`);

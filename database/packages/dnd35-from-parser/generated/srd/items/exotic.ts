@@ -2,9 +2,9 @@
 
 import { exotic } from "@/database/packages/dnd35/content/items/proficiencies.ts";
 import { weaponProperties } from "@/database/packages/dnd35/content/items/properties.ts";
-import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
+import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 
-export const EXOTIC_WEAPONS: ItemDef[] = [
+export const EXOTIC_WEAPONS: ItemSeed[] = [
   {
     name: "Orc Double Axe",
     description: "An orc double axe is a two-handed exotic double weapon with an axe head on each end.",
