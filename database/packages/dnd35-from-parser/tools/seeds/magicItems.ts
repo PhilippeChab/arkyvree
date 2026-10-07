@@ -4,6 +4,7 @@ import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/dete
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/detect/magicItems.ts";
 import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/detect/weaponStats.ts";
 import { checkOneOf, getCheckedValue } from "@/database/packages/dnd35-from-parser/tools/seeds/checks.ts";
+import { getArmorProficiency } from "@/database/packages/dnd35-from-parser/tools/seeds/items.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import {
   type MagicItemCategory,
@@ -13,7 +14,7 @@ import { bonus } from "@/database/packages/dnd35/content/customization/modifiers
 import type { Modifier, Property } from "@/database/packages/dnd35/content/customization/types.ts";
 import { armorProperties } from "@/database/packages/dnd35/content/items/properties.ts";
 import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
-import { MAGIC_AURA, MAGIC_CASTER_LEVEL } from "@/shared/dnd3.5/properties/index.ts";
+import { ARMOR_PROFICIENCY, MAGIC_AURA, MAGIC_CASTER_LEVEL } from "@/shared/dnd3.5/properties/index.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 export type MagicItemSeedSets = {
@@ -31,6 +32,12 @@ const ARMOR_CATEGORIES = new Set<MagicItemCategory>(["specificArmor", "specificS
 
 /** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
 const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
+
+/** A template made of `properties`: its requirements are the proficiency with it, by its category. */
+function templateOf(properties: Property[]): Pick<ItemSeed, "isTemplate" | "requirements" | "properties"> {
+  const category = properties.find((property) => property.type === ARMOR_PROFICIENCY)?.value;
+  return { isTemplate: true, requirements: getArmorProficiency(category), properties };
+}
 
 /** A weapon's enhancement bonus, as modifiers of the weapon holding it: its attack's and its damage's. */
 function weaponEnhancementModifiers(description: string): Modifier[] {
@@ -134,7 +141,7 @@ export function buildMagicItemSeeds(
       type: det.itemType,
       slot: slot && getCheckedValue(slot),
       ...(ovr?.template && sourceItem
-        ? { isTemplate: true as const, properties: withOwnProperties(armorProperties(sourceItem), properties) }
+        ? templateOf(withOwnProperties(armorProperties(sourceItem), properties))
         : { properties, ...(sourceItem ? { sourceItem } : {}) }),
       ...(modifiers.length ? { modifiers } : {}),
     });
