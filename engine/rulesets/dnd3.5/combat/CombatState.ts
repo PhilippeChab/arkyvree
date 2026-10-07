@@ -8,7 +8,7 @@ import type EncumbranceComponent from "./EncumbranceComponent.ts";
 import type { EncumbranceData } from "./EncumbranceComponent.ts";
 import type { ShieldsData } from "./ShieldsComponent.ts";
 
-export type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
+type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
 
 export type CombatData = {
   ac: {

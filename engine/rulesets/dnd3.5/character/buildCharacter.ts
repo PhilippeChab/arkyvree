@@ -8,6 +8,20 @@ import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import DetailedCharacter from "./DetailedCharacter.ts";
 
+/** The 3.5 character a row is, by its kind: a bonded creature's class, or a player character's for any other kind. */
+function createCharacter(record: CharacterRecord, kind: CharacterKind): DetailedCharacter {
+  switch (kind) {
+    case "familiar":
+      return new Dnd35DetailedCharacterFamiliar(record);
+    case "animalcompanion":
+      return new Dnd35DetailedCharacterAnimalCompanion(record);
+    case "mount":
+      return new Dnd35DetailedCharacterMount(record);
+    default:
+      return new DetailedCharacter(record);
+  }
+}
+
 /**
  * A character, built from the rows the server read (`input`) in its ruleset's `view`, of its row's kind: with a
  * level-up's `projected` levels and picks, and a bonded creature's sheet derived from its master's, built from its
@@ -21,18 +35,4 @@ export function buildCharacter(
   const character = createCharacter(input.record, input.record.kind as CharacterKind);
   character.build(input.rows, view, projected, master ?? (input.master && buildCharacter(view, input.master)));
   return character;
-}
-
-/** The 3.5 character a row is, by its kind: a bonded creature's class, or a player character's for any other kind. */
-export function createCharacter(record: CharacterRecord, kind: CharacterKind = "pc"): DetailedCharacter {
-  switch (kind) {
-    case "familiar":
-      return new Dnd35DetailedCharacterFamiliar(record);
-    case "animalcompanion":
-      return new Dnd35DetailedCharacterAnimalCompanion(record);
-    case "mount":
-      return new Dnd35DetailedCharacterMount(record);
-    default:
-      return new DetailedCharacter(record);
-  }
 }

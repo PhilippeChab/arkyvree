@@ -5,7 +5,7 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 import type PathTraverser from "./PathTraverser.ts";
 
 /** A component of `C`, by its key, and the getter that hands its data to a path: both checked against `C`. */
-export type ComponentSpec<C> = { [K in keyof C & string]: { getter: GetterOf<C[K]>; key: K } }[keyof C & string];
+type ComponentSpec<C> = { [K in keyof C & string]: { getter: GetterOf<C[K]>; key: K } }[keyof C & string];
 
 /** The names of `T`'s methods a path can call without arguments: the getters its data comes from. */
 export type GetterOf<T> = { [M in keyof T]-?: T[M] extends () => unknown ? M : never }[keyof T] & string;
