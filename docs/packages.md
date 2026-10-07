@@ -64,13 +64,13 @@ database/packages/dnd35-from-parser/
     │   └── parsers/          # A page's HTML → what its reference stores
     ├── detect/           # A reference's raw → its detected and mapping, a module per kind (classes/, feats.ts…)
     ├── text/             # The scraped text: sanitized, normalized, entry names
-    ├── seeds/            # A reference → the seeds it makes
+    ├── seeds/            # A reference → the seeds it makes, whole (a class's: classes/classSeed.ts), and what a book copies (copies.ts)
     ├── validate/         # What parser:validate reports, and the overrides that change nothing
     └── generator/        # The seeds → generated/
         ├── BaseGenerator.ts  # A generator's core: the folder it writes to, the writes kinds of files share
         ├── Generator.ts      # generateAll, generateReference: the steps a reference takes
         ├── concerns/         # A kind of file per concern: GeneratesClasses, GeneratesFeats…
-        └── code/             # A file's code: CodeFile (its lines, the names they use), FeatsFile
+        └── code/             # A file's code, written from its seeds: CodeFile (its lines, the names they use), FeatsFile, ClassFile
 ```
 
 `content/` and `data/` never touch the database: the generated data, the parser and the seeds import them. `generated/` holds only what the generator writes; hand-written content goes in `data/`, what content is written with in `content/`, which imports none of them (`arkyvree/layers`): a table a builder reads (the weapons, the armor) is content.
@@ -160,7 +160,7 @@ What the generator reads is derived from the two each time a reference is loaded
 
 ## COW-ing core entities into extensions
 
-When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `seed/concerns/CopiesOnWrite.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes.
+When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `seed/concerns/CopiesOnWrite.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes (`tools/seeds/copies.ts`).
 
 ### Aptitude ownership rules
 
