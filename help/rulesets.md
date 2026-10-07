@@ -75,7 +75,7 @@ Examples on the SRD ruleset:
 - **Divine Crusader Domain** — one pick at Divine Crusader level 1 (Complete Divine): her spell list is that domain's spells.
 - **Wizard Spells** — spells added to the spellbook at every level.
 - **Sorcerer Spells Known** — the spontaneous spell list.
-- **General** — the standard "any feat" pool, available at character levels 1, 3, 6, 9, …
+- **General** — the standard "any feat" pool, available at character levels 1, 3, 6, 9, … Every character's general feats count toward the aptitude named General, so it keeps that name and can't be deleted.
 
 An aptitude defines:
 

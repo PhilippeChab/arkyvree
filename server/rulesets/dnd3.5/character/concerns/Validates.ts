@@ -1,6 +1,7 @@
 import type { Constructor } from "@/server/mixins.ts";
 import { ALLOWED_ALL } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import type CharacterState from "@/server/rulesets/dnd3.5/character/CharacterState.ts";
+import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import type {
   CustomizedFeat,
@@ -120,6 +121,13 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
           });
         }
       };
+      const unplacedGeneralFeats = this.components.aptitudes.getUnplacedGeneralFeats();
+      if (unplacedGeneralFeats > 0) {
+        issues.push({
+          category: "integrity",
+          message: `The ruleset has no ${Dnd35LevelsRules.GENERAL_FEATS_APTITUDE} aptitude: this character's ${unplacedGeneralFeats} general feat(s) count toward none`,
+        });
+      }
       sourceChain(this.race.rulesetId, this.race.name, "races");
       for (const klass of this.klasses) sourceChain(klass.rulesetId, klass.name, "klasses");
       for (const skill of this.skills) sourceChain(skill.rulesetId, skill.name, "skills");

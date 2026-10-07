@@ -1,6 +1,15 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 
+/** The rules a ruleset's aptitudes follow. */
+export interface AptitudesRules {
+  /**
+   * Throws when the ruleset's characters need the aptitude by its name and the change drops it: a rename to `name`, or,
+   * without one, a delete.
+   */
+  validateNameKept(aptitude: { name: string }, name?: string): void;
+}
+
 /** The rules a class follows. */
 export interface ClassesRules {
   /** Extract spellcasting-related property values from raw class properties. */
@@ -87,6 +96,7 @@ export interface PowersRules {
 
 /** What a ruleset answers the services without the database, one set of rules per area. */
 export interface RulesetRules {
+  aptitudes: AptitudesRules;
   classes: ClassesRules;
   classLevels: ClassLevelsRules;
   inventory: InventoryRules;

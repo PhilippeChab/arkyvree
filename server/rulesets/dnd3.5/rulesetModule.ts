@@ -1,6 +1,7 @@
 import type { Db } from "@/server/database/index.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
+import { Dnd35AptitudesRules } from "./aptitudes/Dnd35AptitudesRules.ts";
 import Dnd35DetailedCharacterAnimalCompanion from "./bonded/DetailedCharacterAnimalCompanion.ts";
 import type Dnd35DetailedCharacterBonded from "./bonded/DetailedCharacterBonded.ts";
 import Dnd35DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.ts";
@@ -43,6 +44,7 @@ function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35Detail
 export function createRulesetModule(): Dnd35RulesetModule {
   return {
     rules: {
+      aptitudes: new Dnd35AptitudesRules(),
       classes: new Dnd35ClassesRules(),
       classLevels: new Dnd35ClassLevelsRules(),
       inventory: new Dnd35InventoryRules(),

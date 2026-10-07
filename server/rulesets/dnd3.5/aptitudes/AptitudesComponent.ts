@@ -1,5 +1,6 @@
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import type IdentityComponent from "@/server/rulesets/dnd3.5/identity/IdentityComponent.ts";
+import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import { type Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -45,6 +46,9 @@ export default class AptitudesComponent {
 
   private readonly aptitudes: AptitudesData = {};
 
+  /** The general feats the character's level gives, when its ruleset has no aptitude for them to count toward. */
+  private unplacedGeneralFeats = 0;
+
   // Track which aptitude keys are leveled (spell aptitudes)
   private readonly leveledAptitudeKeys = new Set<string>();
 
@@ -69,8 +73,10 @@ export default class AptitudesComponent {
       }
     }
 
-    const level = this.identity.getIdentity().meta.level;
-    this.aptitudes["general"].allowed += this.countGeneralFeats(level);
+    const generalFeats = this.countGeneralFeats(this.identity.getIdentity().meta.level);
+    const general = this.aptitudes[Dnd35LevelsRules.GENERAL_FEATS_APTITUDE_SLUG];
+    if (general) general.allowed += generalFeats;
+    this.unplacedGeneralFeats = general ? 0 : generalFeats;
   }
 
   /** Sets what the character spent on each aptitude: flat, or per spell level for a leveled one. */
@@ -282,6 +288,11 @@ export default class AptitudesComponent {
     return Object.entries(this.aptitudes)
       .filter(([key]) => !this.leveledAptitudeKeys.has(key))
       .map(([, apt]) => apt.id);
+  }
+
+  /** The general feats the character's level gives that count toward no aptitude: its ruleset has no General. */
+  getUnplacedGeneralFeats(): number {
+    return this.unplacedGeneralFeats;
   }
 
   initialize(

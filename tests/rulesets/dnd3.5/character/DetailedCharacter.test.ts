@@ -77,9 +77,10 @@ import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows, measure } from "@/tests/support/database.ts";
 import { createTestItem } from "@/tests/support/items.ts";
-import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
+import { addCharacterLevel, createTestKlassLevel, findKlassLevel } from "@/tests/support/levels.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -1951,6 +1952,34 @@ describe("DetailedCharacter", () => {
   });
 
   describe("feats", () => {
+    test("count a level's general feats toward General, and report them when the ruleset has none", async () => {
+      const ruleset = await createTestRuleset(SEED_USER_ID);
+      const [race] = await Races.create(db, {
+        name: "Test Race",
+        rulesetId: ruleset.id,
+        size: "Medium",
+        baseSpeed: 30,
+      });
+      const { klassLevel } = await createTestKlassLevel(ruleset.id);
+      const character = await createTestCharacter(SEED_USER_ID, { rulesetId: ruleset.id, raceId: race.id });
+      await addCharacterLevel(character.id, klassLevel.id);
+
+      const integrityIssues = (detailed: Detailed) =>
+        detailed.validate().issues.filter((i) => i.category === "integrity");
+      expect(integrityIssues(await build(character))).toEqual([
+        {
+          category: "integrity",
+          message: "The ruleset has no General aptitude: this character's 1 general feat(s) count toward none",
+        },
+      ]);
+
+      await Aptitudes.create(db, { name: "General", rulesetId: ruleset.id });
+      RulesetCache.invalidate(ruleset.id);
+      const withGeneral = await build(character);
+      expect(withGeneral.components.aptitudes.getAptitudes().general.allowed).toBe(1);
+      expect(integrityIssues(withGeneral)).toEqual([]);
+    });
+
     test("give none by a family's name, which names no feat: the modifier is reported, and the sheet still builds", async () => {
       const ctx = await getSeedCtx();
       const dodge = (await Feats.findOne(db, { name: "Dodge", rulesetId: ctx.rulesetId }))!;

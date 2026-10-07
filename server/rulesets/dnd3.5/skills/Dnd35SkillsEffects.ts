@@ -2,7 +2,8 @@ import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Aptitudes, Feats, FeatsAptitudes, Modifiers, Properties } from "@/server/repositories/index.ts";
+import { Feats, FeatsAptitudes, Modifiers, Properties } from "@/server/repositories/index.ts";
+import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import { normalizeSkillFlags } from "@/server/rulesets/dnd3.5/skills/skillFlags.ts";
 import SkillsPaths from "@/server/rulesets/dnd3.5/skills/SkillsPaths.ts";
 import type { PropertyRecord } from "@/server/rulesets/dnd3.5/types.ts";
@@ -52,15 +53,8 @@ export class Dnd35SkillsEffects implements SkillsEffects {
 
   async generateSkillFeat(tx: Db, scope: RulesetScope, skillName: string): Promise<void> {
     const rulesetId = scope.ruleset.id;
-    const { sourceChain } = scope.rulesetData.cow;
-    let generalAptitude = await Aptitudes.findOne(tx, { name: "General", rulesetId });
-    if (!generalAptitude) {
-      for (const ancestorId of sourceChain) {
-        generalAptitude = await Aptitudes.findOne(tx, { name: "General", rulesetId: ancestorId });
-        if (generalAptitude) break;
-      }
-    }
-    if (!generalAptitude) return;
+    const generalAptitudeId = scope.rulesetData.aptitudeIdBySlug.get(Dnd35LevelsRules.GENERAL_FEATS_APTITUDE_SLUG);
+    if (!generalAptitudeId) return;
 
     const rows = await Feats.create(tx, {
       name: `Skill Focus: ${skillName}`,
@@ -70,7 +64,7 @@ export class Dnd35SkillsEffects implements SkillsEffects {
     });
     const feat = rows[0];
 
-    await FeatsAptitudes.create(tx, { featId: feat.id, aptitudeId: generalAptitude.id });
+    await FeatsAptitudes.create(tx, { featId: feat.id, aptitudeId: generalAptitudeId });
 
     await Modifiers.createMany(tx, [
       {
