@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { addClassLevels, addFeats, addPowers, addSkills } from "@/database/seeds/seedCharacter.ts";
 import { db } from "@/server/database/index.ts";
-import { Characters, Skills } from "@/server/repositories/index.ts";
+import { Characters, Saves, Skills } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -59,4 +59,31 @@ describe("A fork's own description of an inherited", () => {
     );
     expect(descriptions.get(name)).toBe(description);
   });
+});
+
+// A spell's saving throw is the fork's too: its save and what a success does
+test("A fork's own saving throw of an inherited spell is on the sheet", async () => {
+  const session = makeSession();
+  const fork = await createSeededTestRuleset(session.userId);
+  const ctx = await getSeedCtx();
+  const forkCtx = { ...ctx, rulesetId: fork.id };
+  const will = (await Saves.findOne(db, { name: "Will", rulesetId: ctx.rulesetId }))!;
+  const name = "Magic Missile";
+  await PowersService.updatePower(session, fork.id, ctx.powerMap[name], {
+    name,
+    saveId: will.id,
+    saveEffect: "negates",
+  });
+
+  const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
+  const levelIds = await addClassLevels(db, forkCtx, characterId, "Wizard", [1], [4]);
+  await addPowers(db, forkCtx, levelIds, [{ levelIndex: 0, powerName: name, aptitude: "Wizard Spells" }]);
+
+  const character = new DetailedCharacter((await Characters.findOne(db, { id: characterId }))!);
+  await character.build();
+  const power = Object.values(character.components.classes.getCharacterClasses())
+    .flatMap((k) => k.levels)
+    .flatMap((level) => level.powers)
+    .find((p) => p.name === name);
+  expect(power).toMatchObject({ saveName: "Will", saveEffect: "negates" });
 });
