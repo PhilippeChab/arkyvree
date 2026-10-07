@@ -3,6 +3,12 @@ import { sanitizeText } from "@/shared/text.ts";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** React Hook Form rules for a new feat's or spell's aptitudes: at least one, as the API asks. */
+export const APTITUDES_RULES = { required: "At least one aptitude must be selected" } as const;
+
+/** React Hook Form rules for a decimal written as text (an item's cost, its weight): digits with one point, or nothing. */
+export const DECIMAL_RULES = { pattern: { value: /^(\d+\.?\d*|\.\d+)?$/, message: "Must be a number" } } as const;
+
 /** React Hook Form rules for a required email address field. */
 export const EMAIL_RULES = {
   required: "Email is required",
@@ -39,6 +45,14 @@ export function confirmPasswordRules<T extends object>(passwordField: keyof T) {
     required: "Please confirm your password",
     validate: (value: unknown, formValues: T) => value === formValues[passwordField] || "Passwords do not match",
   };
+}
+
+/**
+ * What a number input outside a form's own fields (a list's) holds: its number, which its rule checks, or undefined
+ * while it's empty.
+ */
+export function readNumberInput(text: string) {
+  return text === "" ? undefined : Number(text);
 }
 
 /** React Hook Form rules for a field that must be filled, saying so in `message` ("Level is required"). */

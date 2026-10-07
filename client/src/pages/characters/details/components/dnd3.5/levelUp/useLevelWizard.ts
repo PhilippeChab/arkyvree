@@ -224,7 +224,7 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
         cleanupHpRoll();
         const result = rollDie(hd);
         setHpDisplayValue(result);
-        setValue("selectedHP", result);
+        setValue("selectedHP", result, { shouldDirty: true });
         setHpRolling(false);
         setHpSettled(true);
         hpTimeoutRef.current = setTimeout(() => setHpSettled(false), 400);

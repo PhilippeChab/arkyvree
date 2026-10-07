@@ -212,11 +212,8 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     rulesetId: ruleset.id,
     sectionName: "feats",
     label: "Feat",
-    createFn: async (data) => {
-      if (!data.aptitudeIds?.length) throw new Error("At least one aptitude must be selected");
-
-      return parseResponse(rpc.api.rulesets[":id"].feats.$post({ param: { id: ruleset.id }, json: data }));
-    },
+    createFn: async (data) =>
+      parseResponse(rpc.api.rulesets[":id"].feats.$post({ param: { id: ruleset.id }, json: data })),
     onCreateSuccess: (created) => openEntity(`feats/${created.id}/customization`),
   });
 
@@ -423,7 +420,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Feat">
-        <FeatFormFields form={createForm} rulesetId={ruleset.id} />
+        <FeatFormFields form={createForm} rulesetId={ruleset.id} aptitudesRequired />
       </CreateDialog>
     </SectionContent>
   );

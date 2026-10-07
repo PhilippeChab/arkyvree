@@ -561,8 +561,8 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
                   onChange={(ruleset) => {
                     setSelectedRuleset(ruleset);
                     field.onChange(ruleset?.id ?? "");
-                    setValue("abilities", {});
-                    if (!ruleset) setValue("raceId", "");
+                    setValue("abilities", {}, { shouldDirty: true });
+                    if (!ruleset) setValue("raceId", "", { shouldDirty: true });
                   }}
                   onSearch={setRulesetSearch}
                   onScroll={handleRulesetsScroll}
@@ -619,7 +619,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
                 const method = ROLL_METHODS.find((m) => m.id === e.target.value);
                 if (!method) return;
                 setRollMethod(method.id);
-                setValue("abilities", {});
+                setValue("abilities", {}, { shouldDirty: true });
               }}
               size="small"
               sx={{ minWidth: 200 }}

@@ -85,7 +85,7 @@ describe("frontend rules", () => {
           "client/src/bound.tsx": 'export const b = <NameField control={form.control} name="name" />;\n',
           "client/src/registered.tsx": 'export const r = <TextField {...form.register("name")} />;\n',
           "client/src/watched.tsx":
-            'export const w = <Toggle value={form.watch("private")} onChange={(v) => form.setValue("private", v)} />;\n',
+            'export const w = <Toggle value={form.watch("private")} onChange={(v) => form.setValue("private", v, { shouldDirty: true })} />;\n',
           "client/src/held.tsx":
             'const digits = watch("digits");\nexport const h = <CodeInput digits={digits} onChange={setDigits} />;\n',
           "client/src/shown.tsx": 'const name = watch("name");\nexport const s = <Typography>{name}</Typography>;\n',
@@ -97,6 +97,39 @@ describe("frontend rules", () => {
       "controlled-inputs client/src/registered.tsx",
       "controlled-inputs client/src/watched.tsx",
     ]);
+  });
+
+  test("a field written in the user's event is marked dirty", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/dirty.tsx": 'export const d = () => form.setValue("slot", "", { shouldDirty: true });\n',
+          "client/src/clean.tsx": 'export const c = () => form.setValue("slot", "");\n',
+          "client/src/destructured.tsx":
+            "export const t = () => setValue(`items.${i}.name`, name, { shouldTouch: true });\n",
+          "client/src/state.tsx": "export const s = () => setValue(next);\n",
+        },
+        ["controlled-inputs"],
+      ),
+    ).toEqual(["controlled-inputs client/src/clean.tsx", "controlled-inputs client/src/destructured.tsx"]);
+  });
+
+  test("a field's error shows where its binding puts it, never read from formState.errors", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/bound.tsx":
+            'export const b = <FormTextField control={form.control} name="username" helperText="Optional" />;\n',
+          "client/src/read.tsx":
+            "export const r = <Typography>{form.formState.errors.username?.message}</Typography>;\n",
+          "client/src/destructured.tsx":
+            "export function D() {\n  const { formState: { errors } } = form;\n  return <Typography>{errors.name?.message}</Typography>;\n}\n",
+          "client/src/field.tsx":
+            "export const f = <TextField error={!!fieldState.error} helperText={fieldState.error?.message} />;\n",
+        },
+        ["controlled-inputs"],
+      ),
+    ).toEqual(["controlled-inputs client/src/destructured.tsx", "controlled-inputs client/src/read.tsx"]);
   });
 
   test("a form is made with useFormWith, whose values are whole, never react-hook-form's useForm", async () => {

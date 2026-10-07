@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { LoadError, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { type RulesetSave, useDebouncedValue, useRulesetFeats } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
+import { readNumberInput } from "@/client/src/lib/validation.ts";
 import { MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
 
 import { featKey, type LevelFeat, levelFeatLabel, type LevelSave, saveBaseError } from "./classLevelForm.ts";
@@ -113,7 +114,7 @@ export function ClassLevelFields({
               label={`${save.name} Save`}
               type="number"
               value={baseFor(save.id)}
-              onChange={(e) => setBase(save.id, Number(e.target.value))}
+              onChange={(e) => setBase(save.id, readNumberInput(e.target.value) ?? 0)}
               error={savesInvalid && saveBaseError(baseFor(save.id)) !== undefined}
               helperText={savesInvalid && saveBaseError(baseFor(save.id))}
               slotProps={{ htmlInput: { min: 0, max: MAX_SAVE_BASE } }}

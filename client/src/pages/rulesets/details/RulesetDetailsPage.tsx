@@ -137,22 +137,14 @@ export default function RulesetDetailsPage() {
   };
 
   const {
-    selectedRuleset,
-    editDialogOpen,
-    setEditDialogOpen,
-    forkDialogOpen,
-    setForkDialogOpen,
-    archiveDialogOpen,
-    setArchiveDialogOpen,
-    publishDialogOpen,
-    setPublishDialogOpen,
+    editDialog,
+    forkDialog,
+    archiveDialog,
+    publishDialog,
     publishKind,
     setPublishKind,
-    subscribeDialogOpen,
-    setSubscribeDialogOpen,
-    unsubscribeDialogOpen,
-    setUnsubscribeDialogOpen,
-    unsubscribeTarget,
+    subscribeDialog,
+    unsubscribeDialog,
     editForm,
     forkForm,
     updateMutation,
@@ -504,28 +496,28 @@ export default function RulesetDetailsPage() {
         </Menu>
 
         <EditRulesetDialog
-          open={editDialogOpen}
-          onClose={() => setEditDialogOpen(false)}
+          open={editDialog.open}
+          onClose={editDialog.close}
           form={editForm}
           onSubmit={(data) => {
-            if (selectedRuleset)
-              updateMutation.mutate({ id: selectedRuleset.id, data, updatedAt: selectedRuleset.updatedAt });
+            const edited = editDialog.target;
+            if (edited) updateMutation.mutate({ id: edited.id, data, updatedAt: edited.updatedAt });
           }}
           isLoading={updateMutation.isPending}
-          isPublic={selectedRuleset ? !selectedRuleset.private : false}
+          isPublic={editDialog.target ? !editDialog.target.private : false}
           canBeExtension={
-            !!selectedRuleset?.rulesetId &&
-            selectedRuleset.userId !== null &&
-            selectedRuleset.extensionRulesetIds.length === 0
+            !!editDialog.target?.rulesetId &&
+            editDialog.target.userId !== null &&
+            editDialog.target.extensionRulesetIds.length === 0
           }
         />
 
         <ArchiveRulesetDialog
-          open={archiveDialogOpen}
-          onClose={() => setArchiveDialogOpen(false)}
+          open={archiveDialog.open}
+          onClose={archiveDialog.close}
           onConfirm={() => {
-            if (selectedRuleset) {
-              archiveMutation.mutate(selectedRuleset.id, {
+            if (archiveDialog.target) {
+              archiveMutation.mutate(archiveDialog.target.id, {
                 onSuccess: () => navigate("/rulesets"),
               });
             }
@@ -534,24 +526,24 @@ export default function RulesetDetailsPage() {
         />
 
         <PublishRulesetDialog
-          open={publishDialogOpen}
-          onClose={() => setPublishDialogOpen(false)}
+          open={publishDialog.open}
+          onClose={publishDialog.close}
           onConfirm={(kind) => {
-            if (selectedRuleset) publishMutation.mutate({ id: selectedRuleset.id, kind });
+            if (publishDialog.target) publishMutation.mutate({ id: publishDialog.target.id, kind });
           }}
           isLoading={publishMutation.isPending}
           canBeExtension={
-            !!selectedRuleset?.rulesetId &&
-            selectedRuleset.userId !== null &&
-            selectedRuleset.extensionRulesetIds.length === 0
+            !!publishDialog.target?.rulesetId &&
+            publishDialog.target.userId !== null &&
+            publishDialog.target.extensionRulesetIds.length === 0
           }
           kind={publishKind}
           onKindChange={setPublishKind}
         />
 
         <ForkRulesetDialog
-          open={forkDialogOpen}
-          onClose={() => setForkDialogOpen(false)}
+          open={forkDialog.open}
+          onClose={forkDialog.close}
           form={forkForm}
           onSubmit={confirmFork}
           isLoading={forkMutation.isPending}
@@ -568,21 +560,19 @@ export default function RulesetDetailsPage() {
             />
 
             <SubscribeExtensionDialog
-              open={subscribeDialogOpen}
-              onClose={() => setSubscribeDialogOpen(false)}
+              open={subscribeDialog.open}
+              onClose={subscribeDialog.close}
               onConfirm={confirmSubscribe}
               isLoading={subscribeMutation.isPending}
               subscribedExtensionIds={subscribedExtensions?.map((ext) => ext.extensionId) ?? []}
             />
 
             <UnsubscribeExtensionDialog
-              open={unsubscribeDialogOpen}
-              onClose={() => {
-                setUnsubscribeDialogOpen(false);
-              }}
+              open={unsubscribeDialog.open}
+              onClose={unsubscribeDialog.close}
               onConfirm={confirmUnsubscribe}
               isLoading={unsubscribeMutation.isPending}
-              extensionName={unsubscribeTarget?.extensionName ?? ""}
+              extensionName={unsubscribeDialog.target?.extensionName ?? ""}
             />
           </>
         )}

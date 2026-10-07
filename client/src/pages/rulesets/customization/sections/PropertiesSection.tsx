@@ -124,20 +124,14 @@ export function PropertiesSection({
     data: properties,
     isLoading,
     error,
-    editDialogOpen,
-    deleteDialogOpen,
-    setEditDialogOpen,
-    setDeleteDialogOpen,
-    selectedItem: selectedProperty,
     createForm,
     editForm,
-    updateMutation,
-    deleteMutation,
     handleCreate,
     handleEdit,
     handleDelete,
-    confirmDelete,
     createDialogProps,
+    editDialogProps,
+    deleteDialogProps,
   } = useRulesetSection({
     createDefaults: EMPTY_PROPERTY,
     rulesetId: ruleset.id,
@@ -184,8 +178,8 @@ export function PropertiesSection({
   const handleEditProperty = (property: Property) => {
     handleEdit(property, {
       value: property.value,
-      type: property.type || "",
-      description: property.description || "",
+      type: property.type ?? "",
+      description: property.description ?? "",
     });
   };
 
@@ -240,28 +234,14 @@ export function PropertiesSection({
         <PropertyFields form={createForm} rulesetId={ruleset.id} entityType={entityType} />
       </CreateDialog>
 
-      <EditDialog
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
-        title="Edit Property"
-        form={editForm}
-        onSubmit={(data) =>
-          selectedProperty &&
-          updateMutation.mutate({ id: selectedProperty.id, data, updatedAt: selectedProperty.updatedAt })
-        }
-        isLoading={updateMutation.isPending}
-        fixedHeight={PROPERTY_DIALOG_HEIGHT}
-      >
+      <EditDialog {...editDialogProps} title="Edit Property" fixedHeight={PROPERTY_DIALOG_HEIGHT}>
         <PropertyFields form={editForm} rulesetId={ruleset.id} entityType={entityType} />
       </EditDialog>
 
       <DeleteDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+        {...deleteDialogProps}
         title="Delete Property"
         message="Are you sure you want to delete this property? This action cannot be undone."
-        onConfirm={confirmDelete}
-        isLoading={deleteMutation.isPending}
       />
     </SectionContent>
   );

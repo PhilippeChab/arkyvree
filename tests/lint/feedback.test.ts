@@ -16,6 +16,25 @@ describe("feedback rules", () => {
           "client/src/record.tsx": "export const r = <EditDialog open={target !== null} />;\n",
           "client/src/target.tsx":
             "export const t = dialog.target && <AddLevelModal open={dialog.open} onExited={dialog.onExited} />;\n",
+          "client/src/flag.tsx":
+            "export function F() {\n" +
+            "  const [editOpen, setEditOpen] = useState(false);\n" +
+            "  const [selected, setSelected] = useState<Row | null>(null);\n" +
+            "  const handleEdit = (row: Row) => {\n" +
+            "    setSelected(row);\n" +
+            "    setEditOpen(true);\n" +
+            "  };\n" +
+            "  return <EditDialog open={editOpen} onClose={() => setEditOpen(false)} onEdit={handleEdit} item={selected} />;\n" +
+            "}\n",
+          "client/src/plain.tsx":
+            "export function P() {\n" +
+            "  const [addOpen, setAddOpen] = useState(false);\n" +
+            "  const handleAdd = () => {\n" +
+            "    reset();\n" +
+            "    setAddOpen(true);\n" +
+            "  };\n" +
+            "  return <CreateDialog open={addOpen} onClose={() => setAddOpen(false)} onAdd={handleAdd} />;\n" +
+            "}\n",
         },
         ["dialog-mounts"],
       ),
@@ -23,6 +42,7 @@ describe("feedback rules", () => {
       "dialog-mounts client/src/always.tsx",
       "dialog-mounts client/src/conditional.tsx",
       "dialog-mounts client/src/conditional.tsx",
+      "dialog-mounts client/src/flag.tsx",
       "dialog-mounts client/src/record.tsx",
     ]);
   });

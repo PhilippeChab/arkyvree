@@ -19,6 +19,7 @@ import {
   EMPTY_INVITE,
   InviteContributorDialog,
   type InviteContributorFormData,
+  RemoveContributorDialog,
 } from "@/client/src/components/contributors/index.ts";
 import { DeleteIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -182,26 +183,12 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
         isLoading={inviteMutation.isPending}
       />
 
-      <ConfirmDialog
+      <RemoveContributorDialog
+        contributor={removeDialog.target}
         open={removeDialog.open}
         onClose={removeDialog.close}
         onConfirm={() => removeDialog.target && revokeMutation.mutate(removeDialog.target.id)}
         isLoading={revokeMutation.isPending}
-        title="Remove Contributor"
-        message={
-          <>
-            Are you sure you want to remove{" "}
-            <strong>
-              {removeDialog.target?.user?.username ||
-                removeDialog.target?.user?.emailAddress ||
-                removeDialog.target?.email}
-            </strong>{" "}
-            as a contributor?
-          </>
-        }
-        confirmLabel="Remove"
-        confirmColor="error"
-        maxWidth="xs"
       />
 
       <ConfirmDialog

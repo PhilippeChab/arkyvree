@@ -42,7 +42,7 @@ import {
   UnassignedIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
@@ -81,17 +81,13 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   const snackbar = useSnackbar();
   const navigate = useNavigate();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
-  // Kept after its dialog closes, so the dialog doesn't change while it fades out.
-  const [selectedPlayer, setSelectedPlayer] = useState<CampaignPlayer | null>(null);
-  const selectedSlot = selectedPlayer && getPlayerSlot(selectedPlayer);
+  // A player's or an invite's dialogs keep it while they fade out
+  const editDialog = useDialogState<CampaignPlayer>();
+  const removeDialog = useDialogState<CampaignPlayer>();
+  const revokeDialog = useDialogState<string>();
 
   // Search state with debounce
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("playerSearch");
-
-  const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
-  const [selectedInviteId, setSelectedInviteId] = useState<string | null>(null);
 
   const { canManagePlayers, canManageInvites } = useCampaignPermissions(campaign);
   const currentUserId = useAuthStore((s) => s.user?.id);
@@ -149,7 +145,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     onSuccess: () => {
       snackbar.success("Player updated");
       invalidateCampaignPlayers(queryClient, campaign.id);
-      setEditDialogOpen(false);
+      editDialog.close();
     },
     onError: (error) => {
       snackbar.error(error, "Failed to update player");
@@ -165,14 +161,14 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       );
     },
     onSuccess: () => {
-      const removedSelf = selectedPlayer?.userId === currentUserId;
+      const removedSelf = removeDialog.target?.userId === currentUserId;
       snackbar.success(removedSelf ? "You left the campaign" : "Player removed");
       if (removedSelf) {
         navigate("/campaigns", { replace: true });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
       } else {
         invalidateCampaignPlayers(queryClient, campaign.id, true);
-        setRemoveDialogOpen(false);
+        removeDialog.close();
       }
     },
     onError: (error) => {
@@ -191,21 +187,17 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     onSuccess: () => {
       snackbar.success("Invitation revoked");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
-      setRevokeDialogOpen(false);
-      setSelectedInviteId(null);
+      revokeDialog.close();
     },
     onError: (error) => {
       snackbar.error(error, "Failed to revoke invitation");
     },
   });
 
-  const handleRevokeInvite = (inviteId: string) => {
-    setSelectedInviteId(inviteId);
-    setRevokeDialogOpen(true);
-  };
+  const handleRevokeInvite = (inviteId: string) => revokeDialog.openWith(inviteId);
 
   const confirmRevokeInvite = () => {
-    if (selectedInviteId) revokeInviteMutation.mutate(selectedInviteId);
+    if (revokeDialog.target) revokeInviteMutation.mutate(revokeDialog.target);
   };
 
   const handleAddPlayer = () => {
@@ -218,27 +210,23 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   };
 
   const handleEditPlayer = (player: CampaignPlayer) => {
-    setSelectedPlayer(player);
     editForm.reset({
       role: player.role,
       email: "",
     });
-    setEditDialogOpen(true);
+    editDialog.openWith(player);
   };
 
   const confirmEditPlayer = (data: PlayerFormData) => {
-    if (!selectedPlayer) return;
-    editMutation.mutate({ playerId: selectedPlayer.id, data });
+    if (!editDialog.target) return;
+    editMutation.mutate({ playerId: editDialog.target.id, data });
   };
 
-  const handleRemovePlayer = (player: CampaignPlayer) => {
-    setSelectedPlayer(player);
-    setRemoveDialogOpen(true);
-  };
+  const handleRemovePlayer = (player: CampaignPlayer) => removeDialog.openWith(player);
 
   const confirmRemovePlayer = () => {
-    if (!selectedPlayer) return;
-    removeMutation.mutate(selectedPlayer.id);
+    if (!removeDialog.target) return;
+    removeMutation.mutate(removeDialog.target.id);
   };
 
   return (
@@ -430,26 +418,26 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       />
       {/* Edit Player Dialog */}
       <EditPlayerDialog
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
+        open={editDialog.open}
+        onClose={editDialog.close}
         form={editForm}
         onSubmit={confirmEditPlayer}
         isLoading={editMutation.isPending}
-        slot={selectedSlot}
+        slot={editDialog.target && getPlayerSlot(editDialog.target)}
       />
       {/* Remove Player Dialog */}
       <RemovePlayerDialog
-        open={removeDialogOpen}
-        onClose={() => setRemoveDialogOpen(false)}
+        open={removeDialog.open}
+        onClose={removeDialog.close}
         onConfirm={confirmRemovePlayer}
         isLoading={removeMutation.isPending}
-        isSelfRemoval={selectedPlayer?.userId === currentUserId}
-        slot={selectedSlot}
+        isSelfRemoval={removeDialog.target?.userId === currentUserId}
+        slot={removeDialog.target && getPlayerSlot(removeDialog.target)}
       />
       {/* Revoke Invite Dialog */}
       <ConfirmDialog
-        open={revokeDialogOpen}
-        onClose={() => setRevokeDialogOpen(false)}
+        open={revokeDialog.open}
+        onClose={revokeDialog.close}
         title="Confirm Revoke"
         message="Are you sure you want to revoke this invitation? This action cannot be undone."
         onConfirm={confirmRevokeInvite}

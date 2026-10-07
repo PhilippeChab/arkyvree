@@ -1,4 +1,7 @@
+import type { InferRequestType } from "hono/client";
 import { useController, type UseFormReturn } from "react-hook-form";
+
+import type { rpc } from "@/client/src/services/rpc.ts";
 
 import { ConditionFields } from "./ConditionFields.tsx";
 import { CONDITION_OPERATOR_RULES, CONDITION_TARGET_RULES, MODIFIER_VALUE_RULES } from "./conditionRules.ts";
@@ -11,11 +14,10 @@ interface ModifierFormProps {
   rulesetId: string;
 }
 
-export interface ModifierFormData {
-  operator: string;
-  target: string;
-  value: string;
-}
+/** A modifier's fields, a ruleset entity's and a character's alike. */
+export type ModifierFormData = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$post"]
+>["json"];
 
 export function ModifierForm({ form, rulesetId, entityType, mode }: ModifierFormProps) {
   const target = useController({ control: form.control, name: "target", rules: CONDITION_TARGET_RULES });

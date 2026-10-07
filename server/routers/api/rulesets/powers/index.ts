@@ -34,8 +34,16 @@ const powerFields = {
     .string()
     .optional()
     .transform((v) => v || null),
-  saveId: z.string().uuid().nullable().optional(),
-  saveEffect: z.string().nullable().optional(),
+  saveId: z
+    .union([z.string().uuid(), z.literal("")])
+    .nullable()
+    .optional()
+    .transform((v) => v || null),
+  saveEffect: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v) => v || null),
   ...spellFields,
 };
 

@@ -98,22 +98,17 @@ export function RequirementsSection({
     data: requirements,
     isLoading,
     error,
-    createDialogOpen,
-    editDialogOpen,
-    deleteDialogOpen,
-    setCreateDialogOpen,
-    setEditDialogOpen,
-    setDeleteDialogOpen,
-    selectedItem: selectedRequirement,
+    editDialog,
     createForm,
     editForm,
     createMutation,
     updateMutation,
-    deleteMutation,
     handleCreate,
     handleEdit,
     handleDelete,
-    confirmDelete,
+    createDialogProps,
+    editDialogProps,
+    deleteDialogProps,
   } = useRulesetSection({
     createDefaults: EMPTY_REQUIREMENT,
     rulesetId: ruleset.id,
@@ -408,14 +403,11 @@ export function RequirementsSection({
           ))}
       </Stack>
       <CreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        {...createDialogProps}
         title="Create Requirement"
-        form={createForm}
         onSubmit={(data) =>
           createMutation.mutate(requirementPayload(createRequirementType, computeNextLevel(createParentLevel), data))
         }
-        isLoading={createMutation.isPending}
         maxWidth="md"
       >
         {isPublished && <PublishedWarning />}
@@ -428,19 +420,16 @@ export function RequirementsSection({
         />
       </CreateDialog>
       <EditDialog
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
+        {...editDialogProps}
         title="Edit Requirement"
-        form={editForm}
         onSubmit={(data) => {
-          if (!selectedRequirement) return;
+          if (!editDialog.target) return;
           updateMutation.mutate({
-            id: selectedRequirement.id,
-            data: requirementPayload(editRequirementType, selectedRequirement.level, data),
-            updatedAt: selectedRequirement.updatedAt,
+            id: editDialog.target.id,
+            data: requirementPayload(editRequirementType, editDialog.target.level, data),
+            updatedAt: editDialog.target.updatedAt,
           });
         }}
-        isLoading={updateMutation.isPending}
         maxWidth="md"
       >
         {isPublished && <PublishedWarning />}
@@ -453,12 +442,9 @@ export function RequirementsSection({
         />
       </EditDialog>
       <DeleteDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+        {...deleteDialogProps}
         title="Delete Requirement"
         message="Are you sure you want to delete this requirement? This action cannot be undone."
-        onConfirm={confirmDelete}
-        isLoading={deleteMutation.isPending}
       />
     </SectionContent>
   );

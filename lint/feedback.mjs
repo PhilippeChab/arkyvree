@@ -2,8 +2,9 @@
  * How the client tells the user what happens, one way (docs/frontend.md):
  *
  * - `dialog-mounts`: a dialog stays mounted, its `open` showing it, so it fades out as it closes; a dialog about a
- *   record opens through `useDialogState`, which keeps the record while it fades, and one that keeps state of its own
- *   mounts with that record (`{dialog.target && …}`) and lets it go once faded.
+ *   record opens through `useDialogState`, which keeps the record while it fades, never an `…Open` flag set beside a
+ *   record state of its own, and one that keeps state of its own mounts with that record (`{dialog.target && …}`) and
+ *   lets it go once faded.
  * - `menus`: a menu lists its items alone (a panel that opens from a button is a `Popover`), and an action in it is an
  *   `ActionMenuItem`; a `MenuItem` is one of several to choose, marked `selected`.
  * - `pending-buttons`: a button that starts a request shows it running: its label in a `DiceSpinner`, disabled the
@@ -72,7 +73,51 @@ function conditionOf(node) {
 
 function createDialogMounts(context) {
   if (!inClient(context) || repoPath(context.filename).startsWith("client/src/components/common/")) return {};
+  // The component's states: a record a dialog acts on (`useState<X | null>(null)`) and an open flag (`useState(false)`)
+  const recordSetters = new Set();
+  const openSetters = new Set();
+  const blocks = [];
   return {
+    VariableDeclarator(node) {
+      if (node.id.type !== "ArrayPattern" || node.init?.type !== "CallExpression") return;
+      if (calleeName(node.init) !== "useState") return;
+      const setter = node.id.elements[1];
+      const [initial] = node.init.arguments;
+      if (setter?.type !== "Identifier" || !initial) return;
+      if (isNull(initial)) recordSetters.add(setter.name);
+      if (initial.type === "Literal" && initial.value === false && setter.name.endsWith("Open"))
+        openSetters.add(setter.name);
+    },
+    BlockStatement(node) {
+      blocks.push(node);
+    },
+    // An opener that keeps a record beside a flag (`setSelected(row); setDialogOpen(true)`) loses it as it closes
+    "Program:exit"() {
+      for (const block of blocks) {
+        const calls = block.body
+          .filter(
+            (statement) => statement.type === "ExpressionStatement" && statement.expression.type === "CallExpression",
+          )
+          .map((statement) => statement.expression)
+          .filter((call) => call.callee.type === "Identifier");
+        const keeps = calls.some(
+          (call) => recordSetters.has(call.callee.name) && call.arguments[0] && !isNull(call.arguments[0]),
+        );
+        const opens = calls.find(
+          (call) =>
+            openSetters.has(call.callee.name) &&
+            call.arguments[0]?.type === "Literal" &&
+            call.arguments[0].value === true,
+        );
+        if (!keeps || !opens) continue;
+        context.report({
+          node: opens,
+          message:
+            "A dialog about a record opens through `useDialogState` (`dialog.openWith(row)`), which keeps the record " +
+            "while it fades out, never a flag beside a record of its own.",
+        });
+      }
+    },
     JSXElement(node) {
       const name = elementName(node);
       if (!name || !/(Dialog|Modal)$/.test(name) || !hasAttribute(node, "open")) return;

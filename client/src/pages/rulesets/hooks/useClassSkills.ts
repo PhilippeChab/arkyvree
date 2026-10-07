@@ -3,7 +3,7 @@ import { parseResponse } from "hono/client";
 import { useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useDialogState, useListboxQuery } from "@/client/src/hooks/index.ts";
 import {
   classSkillsQuery,
   skillOptionsQuery,
@@ -15,9 +15,8 @@ export function useClassSkills(rulesetId: string, classId: string) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  const [skillToRemove, setSkillToRemove] = useState<string | null>(null);
+  // The skill a remove confirmation asks about, kept while it fades out
+  const removeDialog = useDialogState<string>();
 
   const skillsQuery = classSkillsQuery(rulesetId, classId);
   const classSkillsKey = skillsQuery.queryKey;
@@ -112,6 +111,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     },
     onSuccess: () => {
       snackbar.success("Skill removed from class");
+      removeDialog.close();
     },
     onError: (err, _skillId, context) => {
       snackbar.error(err, "Failed to remove skill from class");
@@ -121,8 +121,6 @@ export function useClassSkills(rulesetId: string, classId: string) {
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
       invalidateRulesetEdit(queryClient, rulesetId, [classSkillsKey]);
-      setDeleteDialogOpen(false);
-      setSkillToRemove(null);
     },
   });
 
@@ -130,13 +128,10 @@ export function useClassSkills(rulesetId: string, classId: string) {
     addSkillMutation.mutate(skillId);
   };
 
-  const handleRemoveSkill = (skillId: string) => {
-    setSkillToRemove(skillId);
-    setDeleteDialogOpen(true);
-  };
+  const handleRemoveSkill = (skillId: string) => removeDialog.openWith(skillId);
 
   const confirmRemoveSkill = () => {
-    if (skillToRemove) removeSkillMutation.mutate(skillToRemove);
+    if (removeDialog.target) removeSkillMutation.mutate(removeDialog.target);
   };
 
   return {
@@ -150,8 +145,8 @@ export function useClassSkills(rulesetId: string, classId: string) {
     setSkillSearch,
     handleSkillsScroll,
 
-    deleteDialogOpen,
-    setDeleteDialogOpen,
+    /** The remove confirmation: `open`, `close`, and the skill it removes (`target`). */
+    removeDialog,
 
     addSkillMutation,
     removeSkillMutation,

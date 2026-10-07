@@ -28,8 +28,8 @@ function toSpellForm(power: Power): SpellFormData {
   return {
     name: power.name,
     description: power.description ?? "",
-    saveId: power.saveId ?? null,
-    saveEffect: power.saveEffect ?? null,
+    saveId: power.saveId ?? "",
+    saveEffect: power.saveEffect ?? "",
     aptitudes: linkedAptitudes(power).map((a) => spellAptitude(a.id, a.level)),
   };
 }

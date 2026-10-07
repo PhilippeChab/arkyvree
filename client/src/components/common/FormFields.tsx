@@ -67,10 +67,8 @@ interface PresetFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
 interface SelectFieldProps<T extends FieldValues> {
   control: Control<T>;
   disabled?: boolean;
-  /** A first choice for no value ("None"); picking it stores `emptyValue`. */
+  /** A first choice for no value ("None"): picking it stores `""`, as an empty text field holds. */
   emptyLabel?: string;
-  /** What the first choice stores: null by default, or the empty value the field keeps (`""`). */
-  emptyValue?: string | null;
   /** Shown under it while its value has no error. */
   helperText?: ReactNode;
   label: string;
@@ -78,7 +76,7 @@ interface SelectFieldProps<T extends FieldValues> {
   loadError?: unknown;
   name: FieldPath<T>;
   /** What follows from a pick, in the same event: the fields that depended on the old value reset. */
-  onChange?: (value: SelectValue | null) => void;
+  onChange?: (value: SelectValue) => void;
   /** Loads more options as the open menu nears its end (see `createListboxScrollHandler`). */
   onMenuScroll?: UIEventHandler<HTMLElement>;
   /** The choices; a plain string is both value and label. */
@@ -199,7 +197,6 @@ export function SelectField<T extends FieldValues>({
   options,
   rules,
   emptyLabel,
-  emptyValue = null,
   onChange,
   helperText,
   loadError,
@@ -224,9 +221,8 @@ export function SelectField<T extends FieldValues>({
           label={label}
           value={choices.some((choice) => choice.value === field.value) ? field.value : ""}
           onChange={(event) => {
-            const value = emptyLabel && event.target.value === "" ? emptyValue : event.target.value;
-            field.onChange(value);
-            onChange?.(value);
+            field.onChange(event.target.value);
+            onChange?.(event.target.value);
           }}
           error={!!fieldState.error || !!loadError}
           helperText={fieldState.error?.message ?? (loadError ? loadFailureMessage(label, loadError) : helperText)}

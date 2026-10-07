@@ -3,12 +3,14 @@ import { Controller, type UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, NameField } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
-import { NAME_RULES } from "@/client/src/lib/validation.ts";
+import { APTITUDES_RULES, NAME_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 import { byName, useAptitudeLookup } from "./useAptitudeLookup.ts";
 
 interface FeatFormFieldsProps {
+  /** A new feat needs an aptitude; an existing one may lose its own. */
+  aptitudesRequired?: boolean;
   form: UseFormReturn<FeatFormData>;
   /** A generated feat's name names its option (`Weapon Focus: Longsword`): it can't be changed. */
   generated?: boolean;
@@ -20,7 +22,13 @@ interface FeatFormFieldsProps {
 export type FeatFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["feats"]["$post"]>["json"];
 
 /** Name, description and aptitudes of a feat; the aptitudes live in the form as `aptitudeIds`, sorted by name. */
-export function FeatFormFields({ form, rulesetId, knownAptitudes = [], generated = false }: FeatFormFieldsProps) {
+export function FeatFormFields({
+  form,
+  rulesetId,
+  knownAptitudes = [],
+  generated = false,
+  aptitudesRequired = false,
+}: FeatFormFieldsProps) {
   const aptitudes = useAptitudeLookup(knownAptitudes);
   return (
     <>
@@ -35,10 +43,12 @@ export function FeatFormFields({ form, rulesetId, knownAptitudes = [], generated
       <Controller
         control={form.control}
         name="aptitudeIds"
-        render={({ field }) => (
+        rules={aptitudesRequired ? APTITUDES_RULES : undefined}
+        render={({ field, fieldState }) => (
           <AptitudesAutocomplete
             rulesetId={rulesetId}
             inputRef={field.ref}
+            error={fieldState.error}
             value={aptitudes.resolve(field.value ?? [])}
             onChange={(selected) => {
               aptitudes.remember(selected);

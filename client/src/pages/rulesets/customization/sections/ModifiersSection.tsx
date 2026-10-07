@@ -1,11 +1,16 @@
 import { Chip, Stack, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { CreateDialog, DeleteDialog, EditDialog, SectionContent } from "@/client/src/components/common/index.ts";
-import { EMPTY_MODIFIER, ModifierForm, TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
+import {
+  EMPTY_MODIFIER,
+  ModifierForm,
+  type ModifierFormData,
+  TargetPathBreadcrumbs,
+} from "@/client/src/components/customization/index.ts";
 import { TuneIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
@@ -28,10 +33,6 @@ import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
 type Modifier = ModifiersArray[number];
-type ModifierFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$post"]
->["json"];
-
 type ModifiersArray = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"],
   200
@@ -70,22 +71,16 @@ export function ModifiersSection({
     data: modifiers,
     isLoading,
     error,
-    createDialogOpen,
-    editDialogOpen,
-    deleteDialogOpen,
     setCreateDialogOpen,
-    setEditDialogOpen,
-    setDeleteDialogOpen,
-    selectedItem: selectedModifier,
     createForm,
     editForm,
     createMutation,
-    updateMutation,
-    deleteMutation,
     handleCreate,
     handleEdit,
     handleDelete,
-    confirmDelete,
+    createDialogProps,
+    editDialogProps,
+    deleteDialogProps,
   } = useRulesetSection({
     createDefaults: EMPTY_MODIFIER,
     rulesetId: ruleset.id,
@@ -178,7 +173,6 @@ export function ModifiersSection({
         ...(queryKeysToInvalidate ?? []),
       ]);
       setCreateDialogOpen(false);
-      setDuplicateSourceId(null);
       handleResolvedEntityId(data);
     },
     onError: (err: Error) => {
@@ -253,13 +247,9 @@ export function ModifiersSection({
       </Stack>
 
       <CreateDialog
-        open={createDialogOpen}
-        onClose={() => {
-          setCreateDialogOpen(false);
-          setDuplicateSourceId(null);
-        }}
+        {...createDialogProps}
         title="Create New Modifier"
-        form={createForm}
+        // Add and Duplicate set the source when they open it: the dialog keeps it while it fades out
         onSubmit={(data) => {
           if (duplicateSourceId) duplicateMutation.mutate({ sourceId: duplicateSourceId, data });
           else createMutation.mutate(data);
@@ -270,28 +260,14 @@ export function ModifiersSection({
         <ModifierForm form={createForm} rulesetId={ruleset.id} entityType={entityType} mode="create" />
       </CreateDialog>
 
-      <EditDialog
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
-        title="Edit Modifier"
-        form={editForm}
-        onSubmit={(data) =>
-          selectedModifier &&
-          updateMutation.mutate({ id: selectedModifier.id, data, updatedAt: selectedModifier.updatedAt })
-        }
-        isLoading={updateMutation.isPending}
-        maxWidth="md"
-      >
+      <EditDialog {...editDialogProps} title="Edit Modifier" maxWidth="md">
         <ModifierForm form={editForm} rulesetId={ruleset.id} entityType={entityType} mode="edit" />
       </EditDialog>
 
       <DeleteDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+        {...deleteDialogProps}
         title="Delete Modifier"
         message="Are you sure you want to delete this modifier? This action cannot be undone."
-        onConfirm={confirmDelete}
-        isLoading={deleteMutation.isPending}
       />
     </SectionContent>
   );

@@ -194,8 +194,6 @@ export default function ProfilePage() {
     );
   }
 
-  const profileErrors = profileForm.formState.errors;
-
   return (
     <PageTransition>
       {/* Deeper at the bottom, under the last card */}
@@ -256,7 +254,7 @@ export default function ProfilePage() {
                       label="Username"
                       variant="outlined"
                       fullWidth
-                      helperText={profileErrors.username?.message || "Optional: Choose a display name"}
+                      helperText="Optional: Choose a display name"
                     />
 
                     <EmailField

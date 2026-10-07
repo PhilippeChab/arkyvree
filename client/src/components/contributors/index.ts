@@ -5,3 +5,4 @@ export {
   InviteContributorDialog,
   type InviteContributorFormData,
 } from "./InviteContributorDialog.tsx";
+export { RemoveContributorDialog } from "./RemoveContributorDialog.tsx";
