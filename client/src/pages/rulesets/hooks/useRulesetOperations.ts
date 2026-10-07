@@ -55,14 +55,13 @@ export function useRulesetOperations() {
   const forkForm = useFormWith<ForkRulesetFormData>({ name: "", description: "", private: false });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data, updatedAt }: { data: EditRulesetFormData; id: string; updatedAt?: string }) => {
-      return parseResponse(
+    mutationFn: async ({ id, data, updatedAt }: { data: EditRulesetFormData; id: string; updatedAt?: string }) =>
+      parseResponse(
         rpc.api.rulesets[":id"].$put({
           param: { id },
           json: { ...data, updatedAt },
         }),
-      );
-    },
+      ),
     onSuccess: (_, { id }) => {
       snackbar.success("Ruleset updated");
       void refreshRuleset(id);
@@ -74,14 +73,13 @@ export function useRulesetOperations() {
   });
 
   const forkMutation = useMutation({
-    mutationFn: async ({ id, data }: { data: ForkRulesetFormData; id: string }) => {
-      return parseResponse(
+    mutationFn: async ({ id, data }: { data: ForkRulesetFormData; id: string }) =>
+      parseResponse(
         rpc.api.rulesets[":id"].fork.$post({
           param: { id },
           json: data,
         }),
-      );
-    },
+      ),
     onSuccess: (data) => {
       snackbar.success("Ruleset forked");
       queryClient.invalidateQueries({
@@ -96,13 +94,12 @@ export function useRulesetOperations() {
   });
 
   const archiveMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return parseResponse(
+    mutationFn: async (id: string) =>
+      parseResponse(
         rpc.api.rulesets[":id"].archive.$post({
           param: { id },
         }),
-      );
-    },
+      ),
     onSuccess: (_, id) => {
       snackbar.success("Ruleset archived");
       void refreshRuleset(id);
@@ -114,13 +111,12 @@ export function useRulesetOperations() {
   });
 
   const unarchiveMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return parseResponse(
+    mutationFn: async (id: string) =>
+      parseResponse(
         rpc.api.rulesets[":id"].unarchive.$post({
           param: { id },
         }),
-      );
-    },
+      ),
     onSuccess: (_, id) => {
       snackbar.success("Ruleset unarchived");
       void refreshRuleset(id);
@@ -133,14 +129,13 @@ export function useRulesetOperations() {
   const toggleStar = useToggleRulesetStar();
 
   const publishMutation = useMutation({
-    mutationFn: async ({ id, kind }: { id: string; kind?: PublishKind }) => {
-      return parseResponse(
+    mutationFn: async ({ id, kind }: { id: string; kind?: PublishKind }) =>
+      parseResponse(
         rpc.api.rulesets[":id"].publish.$post({
           param: { id },
           json: { kind },
         }),
-      );
-    },
+      ),
     onSuccess: (_, { id }) => {
       snackbar.success("Ruleset published");
       void refreshRuleset(id);
@@ -152,14 +147,13 @@ export function useRulesetOperations() {
   });
 
   const subscribeMutation = useMutation({
-    mutationFn: async ({ id, extensionIds }: { extensionIds: string[]; id: string }) => {
-      return parseResponse(
+    mutationFn: async ({ id, extensionIds }: { extensionIds: string[]; id: string }) =>
+      parseResponse(
         rpc.api.rulesets[":id"].subscribe.$post({
           param: { id },
           json: { extensionIds },
         }),
-      );
-    },
+      ),
     onSuccess: (_, { id, extensionIds }) => {
       snackbar.success(
         `Subscribed to ${extensionIds.length === 1 ? "extension" : formatCount(extensionIds.length, "extension")}`,
@@ -173,14 +167,13 @@ export function useRulesetOperations() {
   });
 
   const unsubscribeMutation = useMutation({
-    mutationFn: async ({ id, extensionId }: { extensionId: string; id: string }) => {
-      return parseResponse(
+    mutationFn: async ({ id, extensionId }: { extensionId: string; id: string }) =>
+      parseResponse(
         rpc.api.rulesets[":id"].unsubscribe.$post({
           param: { id },
           json: { extensionId },
         }),
-      );
-    },
+      ),
     onSuccess: (_, { id }) => {
       snackbar.success("Unsubscribed from extension");
       unsubscribeDialog.close();

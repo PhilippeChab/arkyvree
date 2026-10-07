@@ -41,9 +41,9 @@ export async function checkBuilds(characters: Character[]) {
       } else {
         console.log(`✓ ${char.name} (${ruleset})`);
       }
-    } catch (err) {
+    } catch (error) {
       issues++;
-      console.error(`✗ ${char.name}: BUILD FAILED — ${err instanceof Error ? err.message : err}`);
+      console.error(`✗ ${char.name}: BUILD FAILED — ${error instanceof Error ? error.message : error}`);
     }
   }
   return issues;

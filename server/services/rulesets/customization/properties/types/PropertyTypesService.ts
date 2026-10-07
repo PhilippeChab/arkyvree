@@ -80,14 +80,14 @@ class PropertyTypesService {
    * that share that pair across the resolved properties.
    */
   async getCustomPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      return this.countPropertyTypes(rulesetData, entityType).map((c): PropertyType => ({
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
+      this.countPropertyTypes(rulesetData, entityType).map((c): PropertyType => ({
         value: c.type,
         isStatic: false,
         entityType: c.entityType,
         usageCount: c.count,
-      }));
-    });
+      })),
+    );
   }
 
   /**

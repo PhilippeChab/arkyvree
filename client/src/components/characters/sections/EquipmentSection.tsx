@@ -164,14 +164,13 @@ export function EquipmentSection({
       data: InventoryFormData;
       force?: boolean;
       item: RulesetItem;
-    }) => {
-      return parseResponse(
+    }) =>
+      parseResponse(
         rpc.api.characters.inventory[":characterId"].$post({
           param: { characterId },
           json: { itemId: item.id, ...placementPayload(data, !!addProfile?.charges.has), force },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Item added to inventory");
       queryClient.invalidateQueries({
@@ -192,14 +191,13 @@ export function EquipmentSection({
       data: InventoryFormData;
       entryId: string;
       force?: boolean;
-    }) => {
-      return parseResponse(
+    }) =>
+      parseResponse(
         rpc.api.characters.inventory[":characterId"][":entryId"].$put({
           param: { characterId, entryId },
           json: { ...placementPayload(data, editProfile.charges.has), force, updatedAt: editingEntry?.updatedAt },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Item updated");
       queryClient.invalidateQueries({
@@ -212,13 +210,12 @@ export function EquipmentSection({
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (entryId: string) => {
-      return parseResponse(
+    mutationFn: async (entryId: string) =>
+      parseResponse(
         rpc.api.characters.inventory[":characterId"][":entryId"].$delete({
           param: { characterId, entryId },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Item removed from inventory");
       queryClient.invalidateQueries({

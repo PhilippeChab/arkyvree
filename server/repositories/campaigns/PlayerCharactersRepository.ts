@@ -109,25 +109,27 @@ class PlayerCharactersRepository extends include(
       ? or(eq(this.table.playerId, where.visibilityPlayerId), not(eq(this.table.visibility, "Private")))!
       : false;
 
-    return this.withPagination(pagination, async ({ limit, offset }) => {
-      return await db.query.playerCharactersInCampaign.findMany({
-        where: this.branchWhere(
-          [
-            "playerIds" in where && inArray(playerCharactersInCampaign.playerId, where.playerIds),
-            "playerId" in where && eq(this.table.playerId, where.playerId),
-            "characterId" in where && eq(this.table.characterId, where.characterId),
-          ],
-          [isNull(this.table.deletedAt), searchCondition, visibilityCondition],
-        ),
-        with: {
-          charactersInCharacter: true,
-        },
-        // A link has no id: a character is linked to one campaign at a time
-        orderBy: this.pageOrder(this.orderBy(this.table[orderBy], orderDir), this.table.characterId),
-        limit,
-        offset,
-      });
-    });
+    return this.withPagination(
+      pagination,
+      async ({ limit, offset }) =>
+        await db.query.playerCharactersInCampaign.findMany({
+          where: this.branchWhere(
+            [
+              "playerIds" in where && inArray(playerCharactersInCampaign.playerId, where.playerIds),
+              "playerId" in where && eq(this.table.playerId, where.playerId),
+              "characterId" in where && eq(this.table.characterId, where.characterId),
+            ],
+            [isNull(this.table.deletedAt), searchCondition, visibilityCondition],
+          ),
+          with: {
+            charactersInCharacter: true,
+          },
+          // A link has no id: a character is linked to one campaign at a time
+          orderBy: this.pageOrder(this.orderBy(this.table[orderBy], orderDir), this.table.characterId),
+          limit,
+          offset,
+        }),
+    );
   }
 
   async update(

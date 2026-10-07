@@ -100,91 +100,93 @@ class PowersService {
   }
 
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "powers", body.name);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "powers", body.name);
 
-        if (!body.aptitudes || body.aptitudes.length === 0)
-          throw new BadRequestError("At least one aptitude must be selected for the power");
+          if (!body.aptitudes || body.aptitudes.length === 0)
+            throw new BadRequestError("At least one aptitude must be selected for the power");
 
-        await this.checkSpellAptitudes(
-          tx,
-          body.aptitudes.map((a) => a.id),
-        );
+          await this.checkSpellAptitudes(
+            tx,
+            body.aptitudes.map((a) => a.id),
+          );
 
-        const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+          const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
 
-        const rows = await Powers.create(tx, {
-          name: body.name,
-          description: body.description,
-          rulesetId,
-          saveId: body.saveId ?? null,
-          saveEffect: body.saveEffect ?? null,
-        });
-        const power = rows[0];
-
-        if (tombstoneAncestorId) await edit.repointTombstone(tx, "powers", tombstoneAncestorId, power.id);
-
-        for (const aptitude of body.aptitudes) {
-          await PowersAptitudes.create(tx, {
-            powerId: power.id,
-            aptitudeId: aptitude.id,
-            level: aptitude.level ?? null,
+          const rows = await Powers.create(tx, {
+            name: body.name,
+            description: body.description,
+            rulesetId,
+            saveId: body.saveId ?? null,
+            saveEffect: body.saveEffect ?? null,
           });
-        }
+          const power = rows[0];
 
-        await effects.powers.syncProperties(tx, power.id, body);
-        const groupingValue = rules.powers.extractGroupingValue(body);
-        if (groupingValue) await effects.powers.generateFeats(tx, { ruleset, rulesetData }, groupingValue);
+          if (tombstoneAncestorId) await edit.repointTombstone(tx, "powers", tombstoneAncestorId, power.id);
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: power.id,
-          targetTable: getTableName(powersInRules),
-          type: "createPower",
-          data: { baseRules: ruleset.baseRules, entityName: power.name },
-        });
+          for (const aptitude of body.aptitudes) {
+            await PowersAptitudes.create(tx, {
+              powerId: power.id,
+              aptitudeId: aptitude.id,
+              level: aptitude.level ?? null,
+            });
+          }
 
-        return power;
-      });
-    });
+          await effects.powers.syncProperties(tx, power.id, body);
+          const groupingValue = rules.powers.extractGroupingValue(body);
+          if (groupingValue) await effects.powers.generateFeats(tx, { ruleset, rulesetData }, groupingValue);
+
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: power.id,
+            targetTable: getTableName(powersInRules),
+            type: "createPower",
+            data: { baseRules: ruleset.baseRules, entityName: power.name },
+          });
+
+          return power;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
 
   async deletePower(session: Session, rulesetId: string, powerId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        const inUse = await hasCharacterPicks(tx, "powers", powerId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+          const inUse = await hasCharacterPicks(tx, "powers", powerId, rulesetId);
+          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
+          const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const targetId = await edit.cowToDelete(tx, "powers", power);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const targetId = await edit.cowToDelete(tx, "powers", power);
 
-        // FK CASCADE on powers_aptitudes.power_id and klass_level_powers.power_id
-        // wipes those join rows when the power row is deleted.
-        // The database deletes its customizations with it.
-        const rows = await Powers.delete(tx, { id: targetId });
-        const deletedPower = rows[0];
+          // FK CASCADE on powers_aptitudes.power_id and klass_level_powers.power_id
+          // wipes those join rows when the power row is deleted.
+          // The database deletes its customizations with it.
+          const rows = await Powers.delete(tx, { id: targetId });
+          const deletedPower = rows[0];
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(powersInRules),
-          type: "deletePower",
-          data: { baseRules: ruleset.baseRules, rulesetId, entityName: power.name },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId,
+            targetTable: getTableName(powersInRules),
+            type: "deletePower",
+            data: { baseRules: ruleset.baseRules, rulesetId, entityName: power.name },
+          });
 
-        return deletedPower;
-      });
-    });
+          return deletedPower;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
@@ -237,54 +239,55 @@ class PowersService {
   }
 
   async updatePower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
+          const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { id: targetId, copied } = await edit.cowToEdit(tx, "powers", power);
-        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { id: targetId, copied } = await edit.cowToEdit(tx, "powers", power);
+          const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-        const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+          const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
 
-        const rows = await Powers.update(
-          tx,
-          {
-            name: body.name,
-            description: body.description,
-            saveId: body.saveId ?? null,
-            saveEffect: body.saveEffect ?? null,
-          },
-          { id: targetId, expectedUpdatedAt },
-        );
-        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+          const rows = await Powers.update(
+            tx,
+            {
+              name: body.name,
+              description: body.description,
+              saveId: body.saveId ?? null,
+              saveEffect: body.saveEffect ?? null,
+            },
+            { id: targetId, expectedUpdatedAt },
+          );
+          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-        const updatedPower = rows[0];
+          const updatedPower = rows[0];
 
-        if (body.aptitudes !== undefined) await this.replaceAptitudes(tx, targetId, body.aptitudes);
+          if (body.aptitudes !== undefined) await this.replaceAptitudes(tx, targetId, body.aptitudes);
 
-        if (SPELL_FIELDS.some((field) => body[field] !== undefined))
-          await this.syncSpellProperties(tx, rulesetModule, { ruleset, rulesetData }, targetId, body);
+          if (SPELL_FIELDS.some((field) => body[field] !== undefined))
+            await this.syncSpellProperties(tx, rulesetModule, { ruleset, rulesetData }, targetId, body);
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(powersInRules),
-          type: "updatePower",
-          data: {
-            baseRules: ruleset.baseRules,
-            entityName: body.name,
-            changedFields: getChangedFields(power, body),
-          },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId,
+            targetTable: getTableName(powersInRules),
+            type: "updatePower",
+            data: {
+              baseRules: ruleset.baseRules,
+              entityName: body.name,
+              changedFields: getChangedFields(power, body),
+            },
+          });
 
-        return updatedPower;
-      });
-    });
+          return updatedPower;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }

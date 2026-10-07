@@ -573,6 +573,22 @@ describe("conventions", () => {
     ]);
   });
 
+  test("an error is named error: a catch's binding and an onError callback's first parameter", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/a.ts": "export function a() {\n  try {\n    run();\n  } catch (err) {\n    log(err);\n  }\n}\n",
+          "server/b.ts": "export function b() {\n  try {\n    run();\n  } catch (error) {\n    log(error);\n  }\n}\n",
+          "server/c.ts": "export function c() {\n  try {\n    run();\n  } catch {\n    log();\n  }\n}\n",
+          "client/src/d.ts": "export const d = { onError: (e: unknown) => log(e) };\n",
+          "client/src/e.ts":
+            "export const e = { onError: (error: unknown) => log(error), onSuccess: (data: unknown) => log(data) };\n",
+        },
+        ["error-names"],
+      ),
+    ).toEqual(["error-names client/src/d.ts", "error-names server/a.ts"]);
+  });
+
   test("a file's own function is a declaration, and --fix declares a const's arrow", async () => {
     expect(
       await lintRepo(

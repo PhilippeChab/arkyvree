@@ -13,9 +13,9 @@ import {
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 
 export default new Hono<SessionContext>()
-  .get("/contributors/invites/me", async (c) => {
-    return c.json(await CharacterContributorsService.getUserInvites(c.var.requestSession.userId), 200);
-  })
+  .get("/contributors/invites/me", async (c) =>
+    c.json(await CharacterContributorsService.getUserInvites(c.var.requestSession.userId), 200),
+  )
   .get("/contributors/invites/:id", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await CharacterContributorsService.getInvite(c.var.requestSession, id), 200);

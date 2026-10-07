@@ -29,14 +29,13 @@ export function useClassLevels(rulesetId: string, classId: string) {
   const { data: levels, isLoading, error } = useQuery(classLevelsQuery(rulesetId, classId));
 
   const createMutation = useMutation({
-    mutationFn: async (data: CreateLevelFormData) => {
-      return parseResponse(
+    mutationFn: async (data: CreateLevelFormData) =>
+      parseResponse(
         rpc.api.rulesets[":id"].classes[":classId"].levels.$post({
           param: { id: rulesetId, classId },
           json: data,
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Level created");
       invalidateRulesetEdit(queryClient, rulesetId, [classLevelsQuery(rulesetId, classId).queryKey]);

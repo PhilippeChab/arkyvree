@@ -19,60 +19,62 @@ class MechanicsService {
       name: string;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "mechanics", body.name);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "mechanics", body.name);
 
-        const rows = await Mechanics.create(tx, { ...body, rulesetId });
-        const mechanic = rows[0];
+          const rows = await Mechanics.create(tx, { ...body, rulesetId });
+          const mechanic = rows[0];
 
-        if (tombstoneAncestorId) await edit.repointTombstone(tx, "mechanics", tombstoneAncestorId, mechanic.id);
+          if (tombstoneAncestorId) await edit.repointTombstone(tx, "mechanics", tombstoneAncestorId, mechanic.id);
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: mechanic.id,
-          targetTable: getTableName(mechanicsInRules),
-          type: "createMechanic",
-          data: { entityName: mechanic.name },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: mechanic.id,
+            targetTable: getTableName(mechanicsInRules),
+            type: "createMechanic",
+            data: { entityName: mechanic.name },
+          });
 
-        return mechanic;
-      });
-    });
+          return mechanic;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
 
   async deleteMechanic(session: Session, rulesetId: string, mechanicId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        // Mechanics have no character-level pick table, so no in-use check.
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
+          // Mechanics have no character-level pick table, so no in-use check.
+          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
-        const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
+          const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const targetId = await edit.cowToDelete(tx, "mechanics", mechanic);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const targetId = await edit.cowToDelete(tx, "mechanics", mechanic);
 
-        const rows = await Mechanics.delete(tx, { id: targetId });
-        const deletedMechanic = rows[0];
+          const rows = await Mechanics.delete(tx, { id: targetId });
+          const deletedMechanic = rows[0];
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(mechanicsInRules),
-          type: "deleteMechanic",
-          data: { rulesetId, entityName: mechanic.name },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId,
+            targetTable: getTableName(mechanicsInRules),
+            type: "deleteMechanic",
+            data: { rulesetId, entityName: mechanic.name },
+          });
 
-        return deletedMechanic;
-      });
-    });
+          return deletedMechanic;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
@@ -111,38 +113,39 @@ class MechanicsService {
       updatedAt?: string;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
+          const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { id: targetId, copied } = await edit.cowToEdit(tx, "mechanics", mechanic);
-        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { id: targetId, copied } = await edit.cowToEdit(tx, "mechanics", mechanic);
+          const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-        const { updatedAt: _u, ...mechanicData } = body;
-        const rows = await Mechanics.update(tx, mechanicData, { id: targetId, expectedUpdatedAt });
-        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+          const { updatedAt: _u, ...mechanicData } = body;
+          const rows = await Mechanics.update(tx, mechanicData, { id: targetId, expectedUpdatedAt });
+          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-        const updatedMechanic = rows[0];
+          const updatedMechanic = rows[0];
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(mechanicsInRules),
-          type: "updateMechanic",
-          data: {
-            entityName: body.name,
-            changedFields: getChangedFields(mechanic, body),
-          },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId,
+            targetTable: getTableName(mechanicsInRules),
+            type: "updateMechanic",
+            data: {
+              entityName: body.name,
+              changedFields: getChangedFields(mechanic, body),
+            },
+          });
 
-        return updatedMechanic;
-      });
-    });
+          return updatedMechanic;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }

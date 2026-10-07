@@ -28,8 +28,8 @@ export async function waitForDatabase(attempts = 4, delayMs = 500) {
       await pingDatabase();
       console.log("[db] Connection pool warmed up");
       return;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
       console.error(`[db] Warm-up attempt ${i}/${attempts} failed: ${msg}`);
       if (i < attempts) await new Promise((r) => setTimeout(r, delayMs * i));
     }

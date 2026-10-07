@@ -52,9 +52,9 @@ class BroadcastListener {
           }),
         ]);
         if (timeoutHandle) clearTimeout(timeoutHandle);
-      } catch (err) {
+      } catch (error) {
         if (timeoutHandle) clearTimeout(timeoutHandle);
-        console.warn("[ws] Heartbeat failed — forcing reconnect:", err instanceof Error ? err.message : err);
+        console.warn("[ws] Heartbeat failed — forcing reconnect:", error instanceof Error ? error.message : error);
         this.clearHeartbeat();
         this.client = null;
         client.removeAllListeners();
@@ -86,8 +86,8 @@ class BroadcastListener {
       try {
         const { userId, event } = JSON.parse(msg.payload) as { event: WsEvent; userId: string };
         Connections.send(userId, event);
-      } catch (err) {
-        console.error("[ws] Failed to parse broadcast payload:", err);
+      } catch (error) {
+        console.error("[ws] Failed to parse broadcast payload:", error);
       }
     });
 
@@ -99,8 +99,8 @@ class BroadcastListener {
       const wasReconnect = this.attempt > 0;
       this.attempt = 0;
       console.log(wasReconnect ? "[ws] Broadcast listener reconnected" : "[ws] Broadcast listener started");
-    } catch (err) {
-      console.error("[ws] Failed to connect listener:", err);
+    } catch (error) {
+      console.error("[ws] Failed to connect listener:", error);
       this.attempt++;
       this.scheduleReconnect();
     }

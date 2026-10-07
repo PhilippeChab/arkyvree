@@ -36,14 +36,13 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     rulesetId: ruleset.id,
     sectionName: "aptitudes",
     label: "Aptitude",
-    createFn: async (data) => {
-      return parseResponse(
+    createFn: async (data) =>
+      parseResponse(
         rpc.api.rulesets[":id"].aptitudes.$post({
           param: { id: ruleset.id },
           json: data,
         }),
-      );
-    },
+      ),
     onCreateSuccess: (created) => openEntity(`aptitudes/${created.id}`),
   });
 

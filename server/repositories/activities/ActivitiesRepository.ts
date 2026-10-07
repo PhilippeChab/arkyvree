@@ -57,14 +57,16 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
 
     const orderByClause = this.orderBy(this.table[orderBy], orderDir);
 
-    return await this.withPagination(pagination, async ({ limit, offset }) => {
-      return await db.query.activitiesInAccount.findMany({
-        where: whereConditions,
-        orderBy: this.pageOrder(orderByClause),
-        limit,
-        offset,
-      });
-    });
+    return await this.withPagination(
+      pagination,
+      async ({ limit, offset }) =>
+        await db.query.activitiesInAccount.findMany({
+          where: whereConditions,
+          orderBy: this.pageOrder(orderByClause),
+          limit,
+          offset,
+        }),
+    );
   }
 }
 

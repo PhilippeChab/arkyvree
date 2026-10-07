@@ -140,35 +140,32 @@ export function PropertiesSection({
     data: externalData,
     query: propertiesQuery(ruleset.id, entityType, entityId),
     queryKeysToInvalidate,
-    createFn: async (data: PropertyFormData) => {
-      return tag(
+    createFn: async (data: PropertyFormData) =>
+      tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties.$post({
             param: entityParam,
             json: data,
           }),
         ),
-      );
-    },
-    updateFn: async (propertyId: string, data: PropertyFormData, updatedAt: string | undefined) => {
-      return tag(
+      ),
+    updateFn: async (propertyId: string, data: PropertyFormData, updatedAt: string | undefined) =>
+      tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":propertyId"].$put({
             param: { ...entityParam, propertyId },
             json: { ...data, updatedAt },
           }),
         ),
-      );
-    },
-    deleteFn: async (propertyId: string) => {
-      return tag(
+      ),
+    deleteFn: async (propertyId: string) =>
+      tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":propertyId"].$delete({
             param: { ...entityParam, propertyId },
           }),
         ),
-      );
-    },
+      ),
     ...followCopies,
   });
 

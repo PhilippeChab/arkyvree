@@ -76,14 +76,16 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
 
     const orderByClause = this.orderBy(this.table.createdAt, orderDir);
 
-    return await this.withPagination(pagination, async ({ limit, offset }) => {
-      return await db.query.notificationsInAccount.findMany({
-        where: whereConditions,
-        orderBy: this.pageOrder(orderByClause),
-        limit,
-        offset,
-      });
-    });
+    return await this.withPagination(
+      pagination,
+      async ({ limit, offset }) =>
+        await db.query.notificationsInAccount.findMany({
+          where: whereConditions,
+          orderBy: this.pageOrder(orderByClause),
+          limit,
+          offset,
+        }),
+    );
   }
 
   /** Marks the recipient's notifications read: one (`id`), those about a target (`targetId`), or all but some types. */

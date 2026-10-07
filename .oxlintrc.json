@@ -49,6 +49,7 @@
     // A body that fits on its statement's line takes no braces; a longer or nested one takes them, and so do all of
     // an if-else chain's when one does.
     "curly": ["error", "multi-or-nest", "consistent"],
+    "arrow-body-style": ["error", "as-needed"],
     "import/no-empty-named-blocks": "error",
     // A module is imported once: its types and values in one import (`import { type A, b } from "x"`).
     "import/no-duplicates": ["error", { "preferInline": true }],
@@ -86,6 +87,7 @@
     "arkyvree/policy-shape": "error",
     "arkyvree/include-order": "error",
     "arkyvree/file-layout": "error",
+    "arkyvree/error-names": "error",
     "arkyvree/function-declarations": "error",
     // The client's conventions (lint/frontend.mjs) and the tests' (lint/testing.mjs).
     "arkyvree/accessible-icon-buttons": "error",

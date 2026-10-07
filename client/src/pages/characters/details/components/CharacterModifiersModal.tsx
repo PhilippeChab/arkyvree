@@ -78,14 +78,13 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   const invalidate = () => invalidateCharacter(queryClient, characterId);
 
   const createMutation = useMutation({
-    mutationFn: async (data: ModifierFormData) => {
-      return parseResponse(
+    mutationFn: async (data: ModifierFormData) =>
+      parseResponse(
         rpc.api.characters.modifiers[":characterId"].modifiers.$post({
           param: { characterId },
           json: data,
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Modifier created");
       setCreateOpen(false);
@@ -95,14 +94,13 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data, updatedAt }: { data: ModifierFormData; id: string; updatedAt?: string }) => {
-      return parseResponse(
+    mutationFn: async ({ id, data, updatedAt }: { data: ModifierFormData; id: string; updatedAt?: string }) =>
+      parseResponse(
         rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$put({
           param: { characterId, modifierId: id },
           json: { ...data, updatedAt },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Modifier updated");
       editDialog.close();
@@ -112,13 +110,12 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return parseResponse(
+    mutationFn: async (id: string) =>
+      parseResponse(
         rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$delete({
           param: { characterId, modifierId: id },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Modifier deleted");
       deleteDialog.close();

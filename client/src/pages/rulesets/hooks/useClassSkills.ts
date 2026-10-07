@@ -34,14 +34,13 @@ export function useClassSkills(rulesetId: string, classId: string) {
   } = useListboxQuery(skillOptionsQuery(rulesetId, debouncedSkillSearch));
 
   const addSkillMutation = useMutation({
-    mutationFn: async (skillId: string) => {
-      return parseResponse(
+    mutationFn: async (skillId: string) =>
+      parseResponse(
         rpc.api.rulesets[":id"].classes[":classId"].skills.$post({
           param: { id: rulesetId, classId },
           json: { skillId },
         }),
-      );
-    },
+      ),
     onMutate: async (skillId: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({
@@ -72,8 +71,8 @@ export function useClassSkills(rulesetId: string, classId: string) {
     onSuccess: () => {
       snackbar.success("Skill added to class");
     },
-    onError: (err, _skillId, context) => {
-      snackbar.error(err, "Failed to add skill to class");
+    onError: (error, _skillId, context) => {
+      snackbar.error(error, "Failed to add skill to class");
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousClassSkills) queryClient.setQueryData(classSkillsKey, context.previousClassSkills);
     },
@@ -84,13 +83,12 @@ export function useClassSkills(rulesetId: string, classId: string) {
   });
 
   const removeSkillMutation = useMutation({
-    mutationFn: async (skillId: string) => {
-      return parseResponse(
+    mutationFn: async (skillId: string) =>
+      parseResponse(
         rpc.api.rulesets[":id"].classes[":classId"].skills[":skillId"].$delete({
           param: { id: rulesetId, classId, skillId },
         }),
-      );
-    },
+      ),
     onMutate: async (skillId: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({
@@ -113,8 +111,8 @@ export function useClassSkills(rulesetId: string, classId: string) {
       snackbar.success("Skill removed from class");
       removeDialog.close();
     },
-    onError: (err, _skillId, context) => {
-      snackbar.error(err, "Failed to remove skill from class");
+    onError: (error, _skillId, context) => {
+      snackbar.error(error, "Failed to remove skill from class");
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousClassSkills) queryClient.setQueryData(classSkillsKey, context.previousClassSkills);
     },

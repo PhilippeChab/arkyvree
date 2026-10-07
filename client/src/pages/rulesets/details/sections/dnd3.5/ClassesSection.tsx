@@ -42,14 +42,13 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
     sectionName: "classes",
     label: "Class",
     createDefaults: EMPTY_CLASS,
-    createFn: async (data) => {
-      return parseResponse(
+    createFn: async (data) =>
+      parseResponse(
         rpc.api.rulesets[":id"].classes.$post({
           param: { id: ruleset.id },
           json: data,
         }),
-      );
-    },
+      ),
     onCreateSuccess: (created) => openEntity(`classes/${created.id}/levels`),
   });
 

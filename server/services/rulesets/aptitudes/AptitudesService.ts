@@ -20,67 +20,69 @@ class AptitudesService {
       name: string;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "aptitudes", body.name);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "aptitudes", body.name);
 
-        const rows = await Aptitudes.create(tx, {
-          ...body,
-          rulesetId,
-        });
-        const aptitude = rows[0];
+          const rows = await Aptitudes.create(tx, {
+            ...body,
+            rulesetId,
+          });
+          const aptitude = rows[0];
 
-        if (tombstoneAncestorId) await edit.repointTombstone(tx, "aptitudes", tombstoneAncestorId, aptitude.id);
+          if (tombstoneAncestorId) await edit.repointTombstone(tx, "aptitudes", tombstoneAncestorId, aptitude.id);
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: aptitude.id,
-          targetTable: getTableName(aptitudesInRules),
-          type: "createAptitude",
-          data: { entityName: aptitude.name },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: aptitude.id,
+            targetTable: getTableName(aptitudesInRules),
+            type: "createAptitude",
+            data: { entityName: aptitude.name },
+          });
 
-        return aptitude;
-      });
-    });
+          return aptitude;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
 
   async deleteAptitude(session: Session, rulesetId: string, aptitudeId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        const inUse = await hasCharacterPicks(tx, "aptitudes", aptitudeId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+          const inUse = await hasCharacterPicks(tx, "aptitudes", aptitudeId, rulesetId);
+          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
-        RulesetFactory.fromBaseRules(ruleset.baseRules).rules.aptitudes.validateNameKept(aptitude);
+          const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
+          RulesetFactory.fromBaseRules(ruleset.baseRules).rules.aptitudes.validateNameKept(aptitude);
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const targetId = await edit.cowToDelete(tx, "aptitudes", aptitude);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const targetId = await edit.cowToDelete(tx, "aptitudes", aptitude);
 
-        // FK CASCADE on feats_aptitudes / powers_aptitudes / klass_level_feats /
-        // klass_level_powers wipes the join rows pointing at this aptitude.
-        // The database deletes its customizations with it.
-        const rows = await Aptitudes.delete(tx, { id: targetId });
-        const deletedAptitude = rows[0];
+          // FK CASCADE on feats_aptitudes / powers_aptitudes / klass_level_feats /
+          // klass_level_powers wipes the join rows pointing at this aptitude.
+          // The database deletes its customizations with it.
+          const rows = await Aptitudes.delete(tx, { id: targetId });
+          const deletedAptitude = rows[0];
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(aptitudesInRules),
-          type: "deleteAptitude",
-          data: { rulesetId, entityName: aptitude.name },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId,
+            targetTable: getTableName(aptitudesInRules),
+            type: "deleteAptitude",
+            data: { rulesetId, entityName: aptitude.name },
+          });
 
-        return deletedAptitude;
-      });
-    });
+          return deletedAptitude;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
@@ -120,39 +122,40 @@ class AptitudesService {
       updatedAt?: string;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
-        RulesetFactory.fromBaseRules(ruleset.baseRules).rules.aptitudes.validateNameKept(aptitude, body.name);
+          const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
+          RulesetFactory.fromBaseRules(ruleset.baseRules).rules.aptitudes.validateNameKept(aptitude, body.name);
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { id: targetId, copied } = await edit.cowToEdit(tx, "aptitudes", aptitude);
-        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { id: targetId, copied } = await edit.cowToEdit(tx, "aptitudes", aptitude);
+          const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-        const { updatedAt: _u, ...aptitudeData } = body;
-        const rows = await Aptitudes.update(tx, aptitudeData, { id: targetId, expectedUpdatedAt });
-        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+          const { updatedAt: _u, ...aptitudeData } = body;
+          const rows = await Aptitudes.update(tx, aptitudeData, { id: targetId, expectedUpdatedAt });
+          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-        const updatedAptitude = rows[0];
+          const updatedAptitude = rows[0];
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(aptitudesInRules),
-          type: "updateAptitude",
-          data: {
-            entityName: body.name,
-            changedFields: getChangedFields(aptitude, body),
-          },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId,
+            targetTable: getTableName(aptitudesInRules),
+            type: "updateAptitude",
+            data: {
+              entityName: body.name,
+              changedFields: getChangedFields(aptitude, body),
+            },
+          });
 
-        return updatedAptitude;
-      });
-    });
+          return updatedAptitude;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }

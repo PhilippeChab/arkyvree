@@ -13,10 +13,10 @@ export function ScrapesClasses<B extends Constructor<BaseScraper>>(Base: B) {
       let html: string;
       try {
         html = await this.http.fetchHtml(url);
-      } catch (err) {
+      } catch (error) {
         // If 404 and URL includes a book slug, try without it
         // e.g. /classes/complete-divine--52/spirit-shaman/ → /classes/spirit-shaman/
-        if (err instanceof Error && err.message.includes("404")) {
+        if (error instanceof Error && error.message.includes("404")) {
           const slugMatch = url.match(/\/classes\/[^/]+\/([^/]+)\/?$/);
           if (slugMatch) {
             const fallbackUrl = `${BaseScraper.site}/classes/${slugMatch[1]}/`;
@@ -24,10 +24,10 @@ export function ScrapesClasses<B extends Constructor<BaseScraper>>(Base: B) {
             html = await this.http.fetchHtml(fallbackUrl);
             url = fallbackUrl; // Update for _meta.sourceUrl
           } else {
-            throw err;
+            throw error;
           }
         } else {
-          throw err;
+          throw error;
         }
       }
       console.log(`Parsing class HTML (${html.length} bytes)...`);

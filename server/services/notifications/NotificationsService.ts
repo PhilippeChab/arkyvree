@@ -31,12 +31,13 @@ class NotificationsService {
   }
 
   async markAllRead(session: Session) {
-    return await withTransaction(async (tx) => {
-      return await Notifications.markRead(tx, {
-        recipientId: session.userId,
-        excludeTypes: ACTIONABLE_TYPES,
-      });
-    });
+    return await withTransaction(
+      async (tx) =>
+        await Notifications.markRead(tx, {
+          recipientId: session.userId,
+          excludeTypes: ACTIONABLE_TYPES,
+        }),
+    );
   }
 
   async markRead(session: Session, notificationId: string) {

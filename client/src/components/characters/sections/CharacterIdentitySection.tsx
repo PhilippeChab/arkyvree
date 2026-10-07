@@ -124,7 +124,7 @@ export function CharacterIdentitySection({
       void invalidateCharacterListings(queryClient);
       await invalidateCharacter(queryClient, characterId);
     },
-    onError: (err) => snackbar.error(err, "Failed to save character details"),
+    onError: (error) => snackbar.error(error, "Failed to save character details"),
   });
 
   const { isDirty } = form.formState;

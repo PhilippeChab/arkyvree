@@ -42,85 +42,87 @@ class PropertiesService {
       value: string;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const effectiveEntityId = rulesetData.canonicalize(entityId);
-        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+          const effectiveEntityId = rulesetData.canonicalize(entityId);
+          const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
 
-        const rows = await Properties.create(tx, {
-          entityId: resolvedEntityId,
-          entityType,
-          value: body.value,
-          type: body.type,
-          description: body.description,
-        });
-        const property = rows[0];
+          const rows = await Properties.create(tx, {
+            entityId: resolvedEntityId,
+            entityType,
+            value: body.value,
+            type: body.type,
+            description: body.description,
+          });
+          const property = rows[0];
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: property.id,
-          targetTable: getTableName(propertiesInCustomization),
-          type: "createProperty",
-          data: { entityName, entityType, propertyType: body.type, value: body.value },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: property.id,
+            targetTable: getTableName(propertiesInCustomization),
+            type: "createProperty",
+            data: { entityName, entityType, propertyType: body.type, value: body.value },
+          });
 
-        return { ...property, resolvedEntityId };
-      });
-    });
+          return { ...property, resolvedEntityId };
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
 
   async deleteProperty(session: Session, rulesetId: string, entityType: string, entityId: string, propertyId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
-        const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+          const effectiveEntityId = rulesetData.canonicalize(entityId);
+          await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
-        const { property, fromTemplate } = this.findEntityProperty(
-          rulesetData,
-          entityType,
-          effectiveEntityId,
-          propertyId,
-        );
-        if (fromTemplate) {
-          // Template property: nothing to delete on the derived item since it doesn't own it.
-          throw new BadRequestError("Cannot delete a property inherited from a template");
-        }
+          const { property, fromTemplate } = this.findEntityProperty(
+            rulesetData,
+            entityType,
+            effectiveEntityId,
+            propertyId,
+          );
+          if (fromTemplate) {
+            // Template property: nothing to delete on the derived item since it doesn't own it.
+            throw new BadRequestError("Cannot delete a property inherited from a template");
+          }
 
-        await checkCustomizedEntity(property);
+          await checkCustomizedEntity(property);
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await edit.cowCustomization(
-          tx,
-          entityType,
-          effectiveEntityId,
-          "property",
-          propertyId,
-        );
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await edit.cowCustomization(
+            tx,
+            entityType,
+            effectiveEntityId,
+            "property",
+            propertyId,
+          );
 
-        const rows = await Properties.delete(tx, { id: resolvedPropertyId });
-        const deletedProperty = rows[0];
+          const rows = await Properties.delete(tx, { id: resolvedPropertyId });
+          const deletedProperty = rows[0];
 
-        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: deletedProperty.id,
-          targetTable: getTableName(propertiesInCustomization),
-          type: "deleteProperty",
-          data: { rulesetId, entityName, entityType, propertyType: property.type, value: property.value },
-        });
+          const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: deletedProperty.id,
+            targetTable: getTableName(propertiesInCustomization),
+            type: "deleteProperty",
+            data: { rulesetId, entityName, entityType, propertyType: property.type, value: property.value },
+          });
 
-        return { ...deletedProperty, resolvedEntityId };
-      });
-    });
+          return { ...deletedProperty, resolvedEntityId };
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
@@ -147,75 +149,76 @@ class PropertiesService {
       value: string;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+          const effectiveEntityId = rulesetData.canonicalize(entityId);
+          await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
-        const { property, fromTemplate } = this.findEntityProperty(
-          rulesetData,
-          entityType,
-          effectiveEntityId,
-          propertyId,
-        );
-
-        await checkCustomizedEntity(property);
-
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        if (fromTemplate) {
-          // Template property: create an override on the derived item
-          const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
-          const rows = await Properties.create(tx, {
-            entityId: resolvedEntityId,
+          const { property, fromTemplate } = this.findEntityProperty(
+            rulesetData,
             entityType,
-            value: body.value,
-            type: body.type,
-            description: body.description,
-          });
-          const newProperty = rows[0];
+            effectiveEntityId,
+            propertyId,
+          );
+
+          await checkCustomizedEntity(property);
+
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          if (fromTemplate) {
+            // Template property: create an override on the derived item
+            const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
+            const rows = await Properties.create(tx, {
+              entityId: resolvedEntityId,
+              entityType,
+              value: body.value,
+              type: body.type,
+              description: body.description,
+            });
+            const newProperty = rows[0];
+
+            const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+            await createActivityWithNotifications(tx, {
+              userId: session.userId,
+              targetId: newProperty.id,
+              targetTable: getTableName(propertiesInCustomization),
+              type: "createProperty",
+              data: { entityName, entityType, propertyType: body.type, value: body.value },
+            });
+
+            return { ...newProperty, resolvedEntityId };
+          }
+
+          // COW the owning entity if this property is inherited
+          const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await edit.cowCustomization(
+            tx,
+            entityType,
+            effectiveEntityId,
+            "property",
+            propertyId,
+          );
+
+          const expectedUpdatedAt = resolvedPropertyId === propertyId ? body.updatedAt : undefined;
+          const { updatedAt: _u, ...propertyData } = body;
+          const rows = await Properties.update(tx, propertyData, { id: resolvedPropertyId, expectedUpdatedAt });
+          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
+          const updatedProperty = rows[0];
 
           const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
           await createActivityWithNotifications(tx, {
             userId: session.userId,
-            targetId: newProperty.id,
+            targetId: updatedProperty.id,
             targetTable: getTableName(propertiesInCustomization),
-            type: "createProperty",
+            type: "updateProperty",
             data: { entityName, entityType, propertyType: body.type, value: body.value },
           });
 
-          return { ...newProperty, resolvedEntityId };
-        }
-
-        // COW the owning entity if this property is inherited
-        const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await edit.cowCustomization(
-          tx,
-          entityType,
-          effectiveEntityId,
-          "property",
-          propertyId,
-        );
-
-        const expectedUpdatedAt = resolvedPropertyId === propertyId ? body.updatedAt : undefined;
-        const { updatedAt: _u, ...propertyData } = body;
-        const rows = await Properties.update(tx, propertyData, { id: resolvedPropertyId, expectedUpdatedAt });
-        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
-
-        const updatedProperty = rows[0];
-
-        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: updatedProperty.id,
-          targetTable: getTableName(propertiesInCustomization),
-          type: "updateProperty",
-          data: { entityName, entityType, propertyType: body.type, value: body.value },
-        });
-
-        return { ...updatedProperty, resolvedEntityId };
-      });
-    });
+          return { ...updatedProperty, resolvedEntityId };
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }

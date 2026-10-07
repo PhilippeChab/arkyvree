@@ -14,9 +14,9 @@ import {
 import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 
 export default new Hono<SessionContext>()
-  .get("/contributors/invites/me", async (c) => {
-    return c.json(await ContributorsService.getUserInvites(c.var.requestSession.userId), 200);
-  })
+  .get("/contributors/invites/me", async (c) =>
+    c.json(await ContributorsService.getUserInvites(c.var.requestSession.userId), 200),
+  )
   .get("/contributors/invites/:id", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await ContributorsService.getInvite(c.var.requestSession, id), 200);

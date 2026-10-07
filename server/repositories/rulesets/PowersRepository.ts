@@ -121,28 +121,32 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
 
     const rulesetCondition = this.buildRulesetCondition(db, where);
 
-    return await this.withPagination(pagination, async ({ limit, offset }) => {
-      return await db.query.powersInRules.findMany({
-        where: this.where([
-          rulesetCondition,
-          isNull(this.table.deletedAt),
-          searchConditions,
-          where.ids !== undefined && inArray(this.table.id, where.ids),
-        ]),
-        orderBy: this.pageOrder(this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir))),
-        with: {
-          powersAptitudesInRules: {
-            orderBy: (links) => [this.orderBy(links.createdAt), this.orderBy(links.aptitudeId)],
-            with: {
-              aptitudesInRule: true,
+    return await this.withPagination(
+      pagination,
+      async ({ limit, offset }) =>
+        await db.query.powersInRules.findMany({
+          where: this.where([
+            rulesetCondition,
+            isNull(this.table.deletedAt),
+            searchConditions,
+            where.ids !== undefined && inArray(this.table.id, where.ids),
+          ]),
+          orderBy: this.pageOrder(
+            this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
+          ),
+          with: {
+            powersAptitudesInRules: {
+              orderBy: (links) => [this.orderBy(links.createdAt), this.orderBy(links.aptitudeId)],
+              with: {
+                aptitudesInRule: true,
+              },
             },
+            savesInRule: true,
           },
-          savesInRule: true,
-        },
-        limit,
-        offset,
-      });
-    });
+          limit,
+          offset,
+        }),
+    );
   }
 
   /** The picks of these character levels, by the picked entity's name, ties broken to a fixed order. */

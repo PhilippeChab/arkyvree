@@ -158,13 +158,14 @@ function AbilityScoresSection({ ref, abilities, control, onRollingChange, method
   const intervalsRef = useRef<ReturnType<typeof setInterval>[]>([]);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       for (const id of intervalsRef.current) clearInterval(id);
 
       for (const id of timeoutsRef.current) clearTimeout(id);
-    };
-  }, []);
+    },
+    [],
+  );
 
   const handleRollAll = () => {
     const rollFn = getRollFunction(method);
@@ -476,8 +477,8 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   ]);
 
   const createCharacterMutation = useMutation({
-    mutationFn: async (data: CreateCharacterRequest) => {
-      return parseResponse(
+    mutationFn: async (data: CreateCharacterRequest) =>
+      parseResponse(
         rpc.api.characters.$post({
           json: {
             rulesetId: data.rulesetId,
@@ -495,15 +496,14 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
             notes: data.notes || undefined,
           },
         }),
-      );
-    },
+      ),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists });
       onClose();
       navigate(`/characters/${data.id}`, { state: { openLevelUp: true } });
     },
-    onError: (err) => {
-      snackbar.error(err, "Failed to create character");
+    onError: (error) => {
+      snackbar.error(error, "Failed to create character");
     },
   });
 

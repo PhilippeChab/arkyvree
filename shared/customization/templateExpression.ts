@@ -280,7 +280,7 @@ export function isTemplateValue(value: string): boolean {
 export function parseTemplateExpression(expression: string): { node: TemplateNode } | { error: string } {
   try {
     return { node: new Parser(new Tokenizer(expression).tokenize()).parse() };
-  } catch (e) {
-    return { error: (e as Error).message };
+  } catch (error) {
+    return { error: (error as Error).message };
   }
 }

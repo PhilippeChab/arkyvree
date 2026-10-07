@@ -259,6 +259,17 @@ function createClientApis(context) {
         });
       }
     },
+    // const { mutate } = useMutation(…): a mutation is held whole, `saveMutation.mutate(…)`, `saveMutation.isPending`
+    VariableDeclarator(node) {
+      const call = node.init?.type === "AwaitExpression" ? node.init.argument : node.init;
+      if (node.id.type !== "ObjectPattern" || call?.type !== "CallExpression" || calleeName(call) !== "useMutation")
+        return;
+      context.report({
+        node: node.id,
+        message:
+          "A mutation is held whole (`const saveMutation = useMutation(…)`): read `.mutate` and `.isPending` off it.",
+      });
+    },
     // const { mutateAsync } = useMutation(…)
     Property(node) {
       if (node.parent?.type === "ObjectPattern" && node.key.type === "Identifier" && node.key.name === "mutateAsync") {

@@ -8,9 +8,9 @@ import { CampaignInvitesService } from "@/server/services/campaigns/invites/inde
 const inviteIdParam = z.object({ inviteId: z.string().uuid() });
 
 export default new Hono<SessionContext>()
-  .get("/invites/me", async (c) => {
-    return c.json(await CampaignInvitesService.getUserInvites(c.var.requestSession.userId), 200);
-  })
+  .get("/invites/me", async (c) =>
+    c.json(await CampaignInvitesService.getUserInvites(c.var.requestSession.userId), 200),
+  )
   .get("/invites/:inviteId", validate("param", inviteIdParam), async (c) => {
     const { inviteId } = c.req.valid("param");
     return c.json(await CampaignInvitesService.getInvite(c.var.requestSession, inviteId), 200);

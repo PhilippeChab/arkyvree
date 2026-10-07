@@ -75,7 +75,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
       queryClient.invalidateQueries({ queryKey: contributorsKey });
       setInviteOpen(false);
     },
-    onError: (err) => snackbar.error(err, "Failed to invite contributor"),
+    onError: (error) => snackbar.error(error, "Failed to invite contributor"),
   });
 
   const revokeMutation = useMutation({
@@ -90,7 +90,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
       queryClient.invalidateQueries({ queryKey: contributorsKey });
       removeDialog.close();
     },
-    onError: (err) => snackbar.error(err, "Failed to remove contributor"),
+    onError: (error) => snackbar.error(error, "Failed to remove contributor"),
   });
 
   const leaveMutation = useMutation({
@@ -102,7 +102,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
       onClose();
       navigate("/characters");
     },
-    onError: (err) => snackbar.error(err, "Failed to leave character"),
+    onError: (error) => snackbar.error(error, "Failed to leave character"),
   });
 
   return (

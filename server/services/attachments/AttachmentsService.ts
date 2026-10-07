@@ -159,8 +159,10 @@ class AttachmentsService {
     try {
       await ObjectStorage.get().deleteObject(orphan.key);
       await withTransaction((tx) => Blobs.delete(tx, { id: orphan.id }));
-    } catch (err) {
-      console.warn(`[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`);
+    } catch (error) {
+      console.warn(
+        `[attachments] S3 cleanup failed for ${orphan.key}: ${error instanceof Error ? error.message : error}`,
+      );
     }
   }
 
@@ -210,10 +212,10 @@ class AttachmentsService {
           blobId: blob.id,
         });
         attachment = rows[0];
-      } catch (err) {
-        if (this.isUniqueViolation(err)) throw new ConflictError("Slot is already attached by a concurrent request");
+      } catch (error) {
+        if (this.isUniqueViolation(error)) throw new ConflictError("Slot is already attached by a concurrent request");
 
-        throw err;
+        throw error;
       }
       if (!attachment) throw new InternalError("Failed to create attachment");
 

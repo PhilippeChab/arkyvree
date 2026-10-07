@@ -69,14 +69,18 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
 
     const rulesetCondition = this.buildRulesetCondition(db, where);
 
-    return await this.withPagination(pagination, async ({ limit, offset }) => {
-      return await db.query.aptitudesInRules.findMany({
-        where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions, scopeCondition]),
-        orderBy: this.pageOrder(this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir))),
-        limit,
-        offset,
-      });
-    });
+    return await this.withPagination(
+      pagination,
+      async ({ limit, offset }) =>
+        await db.query.aptitudesInRules.findMany({
+          where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions, scopeCondition]),
+          orderBy: this.pageOrder(
+            this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
+          ),
+          limit,
+          offset,
+        }),
+    );
   }
 }
 

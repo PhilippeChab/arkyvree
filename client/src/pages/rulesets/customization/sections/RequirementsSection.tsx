@@ -90,9 +90,8 @@ export function RequirementsSection({
   const [editRequirementType, setEditRequirementType] = useState<RequirementType>("condition");
 
   // Helper function to determine if a requirement is a chaining node
-  const isChaining = (requirement: Requirement) => {
-    return requirement.chainingOperator && (!requirement.target || !requirement.operator || !requirement.value);
-  };
+  const isChaining = (requirement: Requirement) =>
+    requirement.chainingOperator && (!requirement.target || !requirement.operator || !requirement.value);
 
   const {
     data: requirements,
@@ -117,35 +116,32 @@ export function RequirementsSection({
     data: externalData,
     query: requirementsQuery(ruleset.id, entityType, entityId),
     queryKeysToInvalidate,
-    createFn: async (data: RequirementFormData) => {
-      return tag(
+    createFn: async (data: RequirementFormData) =>
+      tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements.$post({
             param: entityParam,
             json: data,
           }),
         ),
-      );
-    },
-    updateFn: async (requirementId: string, data: RequirementFormData, updatedAt: string | undefined) => {
-      return tag(
+      ),
+    updateFn: async (requirementId: string, data: RequirementFormData, updatedAt: string | undefined) =>
+      tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirementId"].$put({
             param: { ...entityParam, requirementId },
             json: { ...data, updatedAt },
           }),
         ),
-      );
-    },
-    deleteFn: async (requirementId: string) => {
-      return tag(
+      ),
+    deleteFn: async (requirementId: string) =>
+      tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirementId"].$delete({
             param: { ...entityParam, requirementId },
           }),
         ),
-      );
-    },
+      ),
     ...followCopies,
   });
 

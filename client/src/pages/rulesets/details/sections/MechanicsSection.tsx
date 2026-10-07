@@ -38,14 +38,13 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     rulesetId: ruleset.id,
     sectionName: "mechanics",
     label: "Mechanic",
-    createFn: async (data) => {
-      return parseResponse(
+    createFn: async (data) =>
+      parseResponse(
         rpc.api.rulesets[":id"].mechanics.$post({
           param: { id: ruleset.id },
           json: data,
         }),
-      );
-    },
+      ),
     onCreateSuccess: (created) => openEntity(`mechanics/${created.id}`),
   });
 

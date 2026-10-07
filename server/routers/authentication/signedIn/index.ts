@@ -12,9 +12,7 @@ export default new Hono()
   .use(sessionMiddleware)
   .route("/", account)
   .route("/", linkedAccounts)
-  .get("/me", async (c) => {
-    return c.json(await AuthenticationService.getCurrentUser(c.var.requestSession), 200);
-  })
+  .get("/me", async (c) => c.json(await AuthenticationService.getCurrentUser(c.var.requestSession), 200))
   .post("/sign-out", async (c) => {
     await AuthenticationService.signOut(c.var.requestSession);
     deleteSessionCookie(c);
