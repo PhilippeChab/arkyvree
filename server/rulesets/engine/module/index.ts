@@ -1,6 +1,7 @@
 export type {
   ClassesEffects,
   ClassLevelsEffects,
+  FeatsEffects,
   PowersEffects,
   RacesEffects,
   RulesetEffects,
@@ -12,6 +13,8 @@ export type {
   ClassFields,
   ClassLevelFields,
   ClassLevelsRules,
+  FeatFields,
+  FeatsRules,
   InventoryRules,
   ItemsRules,
   LevelsRules,

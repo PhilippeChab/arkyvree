@@ -2,6 +2,7 @@ import { type RulesetData, type RulesetScope, withRulesetScope } from "@/server/
 import { type Db, db, withCowContext } from "@/server/database/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import type CharacterState from "@/server/rulesets/dnd3.5/character/CharacterState.ts";
+import { readFeatFields } from "@/server/rulesets/dnd3.5/feats/featFields.ts";
 import FeatsPaths from "@/server/rulesets/dnd3.5/feats/FeatsPaths.ts";
 import { type Dnd35LoadedCharacterData } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
 import PowersPaths from "@/server/rulesets/dnd3.5/powers/PowersPaths.ts";
@@ -10,12 +11,7 @@ import RequirementEvaluator from "@/server/rulesets/engine/requirements/Requirem
 import type { PreloadedCharacterData, PreloadedRulesetData } from "@/server/rulesets/engine/types.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
-import {
-  FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
-  FEAT_WEAPON_FINESSE,
-  SPELL_DESCRIPTOR,
-  SPELL_SCHOOL,
-} from "@/shared/dnd3.5/properties/index.ts";
+import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
@@ -119,16 +115,14 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
     }
 
     /**
-     * Whether the character has a feat with this property true (FEAT_WEAPON_FINESSE: Weapon Finesse): picked, granted or
-     * given by a modifier.
+     * Whether the character has a feat that changes this weapon rule (Weapon Finesse's): picked, granted or given by a
+     * modifier. Only the feats it has are read.
      */
-    protected hasFeatWith(rulesetData: RulesetData, propertyType: string): boolean {
+    protected hasFeatWith(rulesetData: RulesetData, rule: "oversizedTwoWeaponFighting" | "weaponFinesse"): boolean {
       return rulesetData.feats.some(
         (feat) =>
-          (rulesetData.propertiesByEntity.get(feat.id) ?? []).some(
-            (property) => property.type === propertyType && property.value === "true",
-          ) &&
-          (this.components.feats.getFeat(feat.name)?.possessed ?? false),
+          (this.components.feats.getFeat(feat.name)?.possessed ?? false) &&
+          readFeatFields(rulesetData.propertiesByEntity.get(feat.id) ?? [])[rule],
       );
     }
 
@@ -298,9 +292,9 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       this.components.spellcasting.loadClassLists(rulesetData);
       this.components.spellcasting.initCasterLevels(this.modifiers, this.klassCasterTypeMap);
       // Possession modifiers have given their feats: a finessed weapon's attack is what requirements read
-      this.components.combat.applyWeaponFinesse(this.hasFeatWith(rulesetData, FEAT_WEAPON_FINESSE));
+      this.components.combat.applyWeaponFinesse(this.hasFeatWith(rulesetData, "weaponFinesse"));
       this.components.combat.applyOversizedTwoWeaponFighting(
-        this.hasFeatWith(rulesetData, FEAT_OVERSIZED_TWO_WEAPON_FIGHTING),
+        this.hasFeatWith(rulesetData, "oversizedTwoWeaponFighting"),
       );
     }
 

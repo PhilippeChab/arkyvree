@@ -2,9 +2,10 @@ import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
 import { readClassLevelFields } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";
+import { readFeatFields } from "@/server/rulesets/dnd3.5/feats/featFields.ts";
 import type { Dnd35LevelUpProjector as Dnd35LevelUpProjectorInterface } from "@/server/rulesets/dnd3.5/types.ts";
 import type { ProjectedCharacterLevel } from "@/server/rulesets/engine/types.ts";
-import { SPELL_SCHOOL, WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import type { KlassLevel, Requirement } from "@/shared/relations.ts";
 
@@ -106,15 +107,12 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     const allFeatIds = [...new Set([...pickedFeats, ...givenFeats].map((f) => f.id))];
 
     for (const featId of allFeatIds) {
-      const props = rulesetData.propertiesByEntity.get(featId);
-      if (!props) continue;
-      for (const p of props)
-        if (p.entityType === "feats" && p.type === WIZARD_PROHIBITED_SCHOOL) prohibitedSchools.add(p.value);
+      for (const school of readFeatFields(rulesetData.propertiesByEntity.get(featId) ?? []).prohibitedSchools)
+        prohibitedSchools.add(school);
     }
 
     // Also check selected feats from the current session
-    for (const prop of selectedFeatProperties)
-      if (prop.type === WIZARD_PROHIBITED_SCHOOL) prohibitedSchools.add(prop.value);
+    for (const school of readFeatFields(selectedFeatProperties).prohibitedSchools) prohibitedSchools.add(school);
 
     if (prohibitedSchools.size === 0) return [];
 

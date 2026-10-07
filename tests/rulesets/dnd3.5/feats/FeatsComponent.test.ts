@@ -15,7 +15,7 @@ describe("FeatsComponent.injectGroupings", () => {
     const family = await Properties.findMany(db, { entityIds: [rapier.id], entityType: "feats", type: FEAT_FAMILY });
     const feats = new FeatsComponent();
     feats.initialize([generic, rapier], [rapier]);
-    const groupings = new FeatGroupingsComponent(feats, [FEAT_FAMILY]);
+    const groupings = new FeatGroupingsComponent(feats);
     // The feat in its own family too, as a ruleset could tag it
     for (const feat of [generic, rapier]) groupings.registerFeat(feat, family);
     feats.injectGroupings(groupings.getFeatGroupings());
