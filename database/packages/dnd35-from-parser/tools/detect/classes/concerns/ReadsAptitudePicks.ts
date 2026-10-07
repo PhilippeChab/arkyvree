@@ -6,7 +6,7 @@ import type { Constructor } from "@/server/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** Description patterns that indicate gameplay/tactical choices, not character-build picks.
- *  These filter AFTER CHOICE_PATTERN matches — if any match, the feature is skipped.
+ *  These filter AFTER a feature offers a choice (`FeatureText.offersChoice`) — if any match, the feature is skipped.
  *  Keep these narrow: a description can contain both build choices and gameplay language.
  *  Only match when the ENTIRE feature is clearly not a build pick. */
 const NON_PICK_DESCRIPTION: RegExp[] = [
@@ -17,7 +17,7 @@ const NON_PICK_DESCRIPTION: RegExp[] = [
   /roll .{0,20}choose/i,
 ];
 
-/** Features that match CHOICE_PATTERN but aren't character-build picks.
+/** Features that offer a choice (`FeatureText.offersChoice`) but aren't character-build picks.
  *  Add new entries here instead of scattering regex blocks in aptitudePicks(). */
 const NON_PICK_FEATURES: RegExp[] = [
   // Scaling abilities that increase in power, not choices
@@ -89,7 +89,7 @@ export function ReadsAptitudePicks<B extends Constructor<BaseClassDetector>>(Bas
         if (!desc) continue;
 
         // Detect references to existing SRD aptitudes (e.g. "from the list of fighter bonus feats")
-        // Checked before CHOICE_PATTERN since the phrasing may not match generic choice words
+        // Checked before offersChoice() since the phrasing may not match generic choice words
         const existingAptitude = detectExistingAptitudeReference(desc);
         if (existingAptitude) {
           picks.push({ levels: occ.levels, target: existingAptitude });
@@ -104,7 +104,7 @@ export function ReadsAptitudePicks<B extends Constructor<BaseClassDetector>>(Bas
         const text = new FeatureText(desc);
         if (!text.offersChoice()) continue;
 
-        // Filter out features that match CHOICE_PATTERN but aren't character-build picks.
+        // Filter out features that offer a choice but aren't character-build picks.
         // This covers scaling abilities, named feat grants, passive combat features, and
         // class abilities whose descriptions incidentally contain choice words.
         if (NON_PICK_FEATURES.some((pattern) => pattern.test(occ.name))) continue;
