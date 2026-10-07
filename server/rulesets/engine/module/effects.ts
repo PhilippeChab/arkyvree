@@ -1,7 +1,7 @@
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 
-import type { ClassLevelFields, PowerFields, SkillFlags } from "./rules.ts";
+import type { ClassLevelFields, PowerFields, RaceFields, SkillFlags } from "./rules.ts";
 
 /** What a ruleset writes when a class level is saved: its fields, and what it requires of the class's earlier levels. */
 export interface ClassLevelsEffects {
@@ -22,10 +22,17 @@ export interface PowersEffects {
   syncProperties(tx: Db, powerId: string, fields: PowerFields): Promise<void>;
 }
 
+/** What a ruleset writes when a race is saved: its fields. */
+export interface RacesEffects {
+  /** Stores the race's fields as its properties, in place of those it stored before. */
+  syncProperties(tx: Db, raceId: string, fields: RaceFields): Promise<void>;
+}
+
 /** What a ruleset does in a service's transaction, one set of effects per area. */
 export interface RulesetEffects {
   classLevels: ClassLevelsEffects;
   powers: PowersEffects;
+  races: RacesEffects;
   skills: SkillsEffects;
 }
 

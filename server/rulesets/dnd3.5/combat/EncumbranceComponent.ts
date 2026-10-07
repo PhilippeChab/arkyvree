@@ -7,8 +7,8 @@ import {
   QUADRUPED_SIZE_CARRY_MULTIPLIERS,
   SIZE_CARRY_MULTIPLIERS,
 } from "@/server/rulesets/dnd3.5/constants.ts";
+import { readRaceFields } from "@/server/rulesets/dnd3.5/races/raceFields.ts";
 import type { CustomizedRace } from "@/server/rulesets/engine/types.ts";
-import { RACE_QUADRUPED } from "@/shared/dnd3.5/properties/index.ts";
 import type { CharacterInventory, Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 type RawInventoryEntry = CharacterInventory & {
@@ -108,7 +108,7 @@ export default class EncumbranceComponent {
 
   initialize(inventory: RawInventoryEntry[], race: CustomizedRace): void {
     this.raceSize = race.size;
-    this.quadruped = race.properties.some((p) => p.type === RACE_QUADRUPED && p.value === "true");
+    this.quadruped = readRaceFields(race.properties).quadruped;
 
     let totalWeight = 0;
     for (const entry of inventory) {

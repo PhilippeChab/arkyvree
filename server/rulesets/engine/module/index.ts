@@ -1,4 +1,4 @@
-export type { ClassLevelsEffects, PowersEffects, RulesetEffects, SkillsEffects } from "./effects.ts";
+export type { ClassLevelsEffects, PowersEffects, RacesEffects, RulesetEffects, SkillsEffects } from "./effects.ts";
 export type {
   AptitudesRules,
   ClassesRules,
@@ -9,6 +9,8 @@ export type {
   LevelsRules,
   PowerFields,
   PowersRules,
+  RaceFields,
+  RacesRules,
   RulesetRules,
   SkillFlags,
   SkillsRules,
