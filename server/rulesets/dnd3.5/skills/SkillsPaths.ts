@@ -33,6 +33,11 @@ const NAVIGATABLE_PATHS = [
 
 /** The skills' target paths: each skill's ranks and modifiers (a skill's name reaching its subtypes), and the budget. */
 export default class SkillsPaths implements PathCategory<Dnd35Components> {
+  /** A skill's misc bonus (`skills.<slug>.misc`), by the skill's name. */
+  static misc(skillName: string): string {
+    return `skills.${stripSeparators(skillName)}.misc`;
+  }
+
   /** The skill families no skill of their own names, by their slug: "knowledge" for the Knowledge skills. */
   static getFamilyLabels(skills: Pick<Skill, "name">[]): Record<string, string> {
     const names = new Set(skills.map((skill) => skill.name));

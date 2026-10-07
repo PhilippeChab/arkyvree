@@ -19,6 +19,19 @@ const NAVIGATABLE_POWER_DC_PATHS = [
 
 /** The spells' target paths: each spell's DC, possession and properties. */
 export default class PowersPaths implements PathCategory<Dnd35Components> {
+  /** Whether a target is a spell's (`powers.…`): a spell's modifiers apply after the others. */
+  static isPowerTarget(target: string): boolean {
+    return target.startsWith("powers.");
+  }
+
+  /** The spell and list a target makes known (`powers.<spell>.<list>.known`), or undefined for another target. */
+  static parseKnown(target: string): { spell: string; list: string } | undefined {
+    const parts = target.split(".");
+    return parts.length === 4 && parts[0] === "powers" && parts[3] === "known"
+      ? { spell: parts[1], list: parts[2] }
+      : undefined;
+  }
+
   static generatePowerPaths(
     powers: (PowerWithAptitudes & { properties: Property[] })[],
     aptitudes: Aptitude[],

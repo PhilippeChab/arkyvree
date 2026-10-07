@@ -8,6 +8,16 @@ import { stripSeparators } from "@/shared/text.ts";
 
 /** The classes' target paths: each class's level and caster level. */
 export default class ClassesPaths implements PathCategory<Dnd35Components> {
+  /** A class's bonus caster levels (`classes.<slug>.bonuscasterlevel`), by the class's name. */
+  static bonusCasterLevel(className: string): string {
+    return `classes.${stripSeparators(className)}.bonuscasterlevel`;
+  }
+
+  /** A class's level (`classes.<slug>.level`), by the class's name. */
+  static level(className: string): string {
+    return `classes.${stripSeparators(className)}.level`;
+  }
+
   static generateTargetPaths(klasses: Klass[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 

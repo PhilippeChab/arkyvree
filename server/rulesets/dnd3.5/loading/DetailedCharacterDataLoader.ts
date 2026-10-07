@@ -14,6 +14,8 @@ import {
   Requirements,
   Skills,
 } from "@/server/repositories/index.ts";
+import FeatsPaths from "@/server/rulesets/dnd3.5/feats/FeatsPaths.ts";
+import PowersPaths from "@/server/rulesets/dnd3.5/powers/PowersPaths.ts";
 import { readSkillFlags } from "@/server/rulesets/dnd3.5/skills/skillFlags.ts";
 import { collectClassListIds, collectFeatListIds } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
@@ -497,9 +499,9 @@ export default class DetailedCharacterDataLoader {
     const seen = new Set<string>();
     for (const mod of modifiers) {
       if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
-      const parts = mod.target.split(".");
-      if (parts.length !== 3 || parts[0] !== "feats" || parts[2] !== "possessed") continue;
-      const featId = featIdBySlug.get(parts[1]);
+      const slug = FeatsPaths.parsePossessed(mod.target);
+      if (slug === undefined) continue;
+      const featId = featIdBySlug.get(slug);
       if (!featId || existingFeatIds.has(featId) || seen.has(featId)) continue;
       seen.add(featId);
       ids.push(featId);
@@ -517,12 +519,11 @@ export default class DetailedCharacterDataLoader {
     const results: { powerId: string; aptitudeId: string }[] = [];
     for (const mod of modifiers) {
       if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
-      const parts = mod.target.split(".");
-      // powers.<spellSlug>.<aptSlug>.known
-      if (parts.length !== 4 || parts[0] !== "powers" || parts[3] !== "known") continue;
-      const aptitudeId = aptitudeIdBySpellSlug.get(parts[2]);
+      const known = PowersPaths.parseKnown(mod.target);
+      if (!known) continue;
+      const aptitudeId = aptitudeIdBySpellSlug.get(known.list);
       if (!aptitudeId) continue;
-      const candidateIds = powerIdsBySlug.get(parts[1]);
+      const candidateIds = powerIdsBySlug.get(known.spell);
       if (!candidateIds) continue;
       for (const id of candidateIds) {
         const power = powersById.get(id);
