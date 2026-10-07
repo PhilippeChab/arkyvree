@@ -45,9 +45,8 @@ class CampaignPlayersService {
   /** Core invite creation logic — must be called within a transaction. */
   private async createInviteInTransaction(tx: Db, session: Session, player: Player, email: string) {
     const campaign = await Campaigns.findOne(tx, { id: player.campaignId }, Visibility.All);
-    if (!campaign) {
-      throw new NotFoundError("Campaign not found");
-    }
+    if (!campaign) throw new NotFoundError("Campaign not found");
+
     const policy = await CampaignsPolicy.for(tx, session, campaign);
     policy.canModify();
     policy.canUpdate();
@@ -57,16 +56,12 @@ class CampaignPlayersService {
 
     // Check if there's already a pending invite for this player slot
     const existingInvite = await Invites.findOne(tx, { playerId: player.id, status: "Pending" });
-    if (existingInvite) {
-      throw new ConflictError("This player slot already has a pending invite");
-    }
+    if (existingInvite) throw new ConflictError("This player slot already has a pending invite");
 
     if (user) {
       // Check if the user already has a player slot for this campaign
       const existingPlayer = await Players.findOne(tx, { userId: user.id, campaignId: player.campaignId });
-      if (existingPlayer) {
-        throw new ConflictError("User already has a player slot for this campaign");
-      }
+      if (existingPlayer) throw new ConflictError("User already has a player slot for this campaign");
 
       // Check if the user already has a pending invite for this campaign
       const campaignPlayers = await Players.findMany(tx, {
@@ -78,9 +73,7 @@ class CampaignPlayersService {
         playerIds: campaignPlayerIds,
         status: "Pending",
       });
-      if (existingPendingInvite) {
-        throw new ConflictError("User already has a pending invite for this campaign");
-      }
+      if (existingPendingInvite) throw new ConflictError("User already has a pending invite for this campaign");
     } else {
       // For email-only invites, check by email across the campaign
       const campaignPlayers = await Players.findMany(tx, {
@@ -92,9 +85,7 @@ class CampaignPlayersService {
         playerIds: campaignPlayerIds,
         status: "Pending",
       });
-      if (existingPendingInvite) {
-        throw new ConflictError("This email already has a pending invite for this campaign");
-      }
+      if (existingPendingInvite) throw new ConflictError("This email already has a pending invite for this campaign");
     }
 
     const rows = await Invites.create(tx, {
@@ -134,9 +125,8 @@ class CampaignPlayersService {
 
     const { player, invite } = await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) {
-        throw new NotFoundError("Campaign not found");
-      }
+      if (!campaign) throw new NotFoundError("Campaign not found");
+
       const policy = await CampaignsPolicy.for(tx, session, campaign);
       policy.canModify();
       policy.canUpdate();
@@ -164,9 +154,7 @@ class CampaignPlayersService {
       return { player, invite };
     });
 
-    if (emailData) {
-      this.sendInviteEmail(emailData);
-    }
+    if (emailData) this.sendInviteEmail(emailData);
 
     return { player, invite };
   }
@@ -178,9 +166,7 @@ class CampaignPlayersService {
     pagination: { limit: number; page: number },
   ) {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (!campaign) {
-      throw new NotFoundError("Campaign not found");
-    }
+    if (!campaign) throw new NotFoundError("Campaign not found");
 
     (await CampaignsPolicy.for(db, session, campaign)).canRead();
 
@@ -190,28 +176,21 @@ class CampaignPlayersService {
   async removePlayer(session: Session, campaignId: string, playerId: string) {
     return await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) {
-        throw new NotFoundError("Campaign not found");
-      }
+      if (!campaign) throw new NotFoundError("Campaign not found");
+
       const policy = await CampaignsPolicy.for(tx, session, campaign);
       policy.canModify();
 
       const player = await Players.findOne(tx, { id: playerId });
-      if (!player || player.campaignId !== campaignId) {
-        throw new NotFoundError("Player not found in this campaign");
-      }
+      if (!player || player.campaignId !== campaignId) throw new NotFoundError("Player not found in this campaign");
 
       const isSelfRemoval = player.userId === session.userId;
-      if (!isSelfRemoval) {
-        policy.canUpdate();
-      }
+      if (!isSelfRemoval) policy.canUpdate();
 
       if (player.role === "Game Master") {
         const campaignPlayers = await Players.findMany(tx, { campaignId });
         const gmCount = campaignPlayers.filter((p) => p.role === "Game Master").length;
-        if (gmCount <= 1) {
-          throw new ConflictError("Cannot remove the last Game Master from a campaign");
-        }
+        if (gmCount <= 1) throw new ConflictError("Cannot remove the last Game Master from a campaign");
       }
 
       const removedPlayer = player;
@@ -237,24 +216,19 @@ class CampaignPlayersService {
 
     const { updatedPlayer, invite } = await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) {
-        throw new NotFoundError("Campaign not found");
-      }
+      if (!campaign) throw new NotFoundError("Campaign not found");
+
       const policy = await CampaignsPolicy.for(tx, session, campaign);
       policy.canModify();
       policy.canUpdate();
 
       const player = await Players.findOne(tx, { id: playerId, campaignId });
-      if (!player) {
-        throw new NotFoundError("Player not found in this campaign");
-      }
+      if (!player) throw new NotFoundError("Player not found in this campaign");
 
       if (player.role === "Game Master" && role !== "Game Master") {
         const campaignPlayers = await Players.findMany(tx, { campaignId });
         const gmCount = campaignPlayers.filter((p) => p.role === "Game Master").length;
-        if (gmCount <= 1) {
-          throw new ConflictError("Cannot demote the last Game Master");
-        }
+        if (gmCount <= 1) throw new ConflictError("Cannot demote the last Game Master");
       }
 
       const rows = await Players.update(tx, { role }, { id: playerId });
@@ -265,11 +239,8 @@ class CampaignPlayersService {
 
       let invite: Invite | undefined = existingInvite;
       if (email) {
-        if (player.userId) {
-          throw new ConflictError("Player already has a user assigned");
-        } else if (existingInvite?.status === "Pending") {
-          throw new ConflictError("Player already has a pending invite");
-        }
+        if (player.userId) throw new ConflictError("Player already has a user assigned");
+        else if (existingInvite?.status === "Pending") throw new ConflictError("Player already has a pending invite");
 
         emailData = await this.createInviteInTransaction(tx, session, updatedPlayer, email);
         invite = emailData.invite;
@@ -286,9 +257,7 @@ class CampaignPlayersService {
       return { updatedPlayer, invite };
     });
 
-    if (emailData) {
-      this.sendInviteEmail(emailData);
-    }
+    if (emailData) this.sendInviteEmail(emailData);
 
     return { player: updatedPlayer, invite };
   }

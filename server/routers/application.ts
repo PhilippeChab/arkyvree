@@ -10,12 +10,13 @@ import { runWithRequestCache } from "@/server/database/index.ts";
 import { isProduction, isTest, readEnv } from "@/server/environment.ts";
 import { toJson } from "@/server/errors/index.ts";
 import { requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
-import apiRouter from "@/server/routers/api/index.ts";
-import authenticationRouter from "@/server/routers/authentication/index.ts";
-import healthRouter from "@/server/routers/health.ts";
-import staticRouter from "@/server/routers/static.ts";
-import wsRouter from "@/server/routers/ws.ts";
 import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
+
+import apiRouter from "./api/index.ts";
+import authenticationRouter from "./authentication/index.ts";
+import healthRouter from "./health.ts";
+import staticRouter from "./static.ts";
+import wsRouter from "./ws.ts";
 
 export type Application = typeof application;
 
@@ -69,9 +70,7 @@ export const application = new Hono<{ Variables: Partial<SessionContext["Variabl
       "/pwa-192x192.png", // email logo
       "/pwa-512x512.png", // og:image
     ]);
-    if (CROSS_ORIGIN_ASSETS.has(c.req.path)) {
-      c.res.headers.set("Cross-Origin-Resource-Policy", "cross-origin");
-    }
+    if (CROSS_ORIGIN_ASSETS.has(c.req.path)) c.res.headers.set("Cross-Origin-Resource-Policy", "cross-origin");
   })
   .use(
     "*",
@@ -104,9 +103,9 @@ export const application = new Hono<{ Variables: Partial<SessionContext["Variabl
   .route("/api", apiRouter)
   .route("/", staticRouter)
   .onError((err, c) => {
-    if (err instanceof HTTPException) {
+    if (err instanceof HTTPException)
       return c.json({ error: "Forbidden", cause: "forbidden", message: "Forbidden" }, 403);
-    }
+
     // Everything a route or a service throws: the error in the API's envelope, with its status.
     const [error, code] = toJson(err);
     return c.json(error, code);

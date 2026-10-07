@@ -11,13 +11,11 @@ export function CreationRights<B extends Constructor<RulesetRoles>>(Base: B) {
     }
 
     canCreateCharacter() {
-      if (this.entity.kind === "extension" || this.entity.status === "Archived" || this.entity.deletedAt) {
+      if (this.entity.kind === "extension" || this.entity.status === "Archived" || this.entity.deletedAt)
         throw new UnprocessableEntityError("Choose an active playable ruleset");
-      }
 
-      if (!this.isPublic && !this.isOwner && !this.isContributor && !this.isCampaignPlayer) {
+      if (!this.isPublic && !this.isOwner && !this.isContributor && !this.isCampaignPlayer)
         throw new ForbiddenError("You do not have access to this ruleset");
-      }
 
       return true;
     }

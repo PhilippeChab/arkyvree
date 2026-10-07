@@ -1,8 +1,9 @@
-import type { PowerDc, PowerDcsByClass } from "@/server/rulesets/dnd3.5/powers/PowerGroupingsComponent.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { type Aptitude, type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import type { PowerDc, PowerDcsByClass } from "./PowerGroupingsComponent.ts";
 
 type PowerEntry = {
   power: Power;
@@ -96,9 +97,8 @@ export default class PowersComponent {
         const aptSlug = aptitudeIdToSlug.get(pa.aptitudeId);
         if (!aptSlug) continue;
 
-        if (!this.powers[spellSlug]) {
-          this.powers[spellSlug] = {} as Record<string, { known: boolean }>;
-        }
+        if (!this.powers[spellSlug]) this.powers[spellSlug] = {} as Record<string, { known: boolean }>;
+
         (this.powers[spellSlug] as Record<string, { known: boolean }>)[aptSlug] = { known: false };
       }
     }
@@ -109,9 +109,7 @@ export default class PowersComponent {
       if (!aptSlug) continue;
 
       const spellEntry = this.powers[stripSeparators(power.name)] as Record<string, { known: boolean }> | undefined;
-      if (spellEntry?.[aptSlug]) {
-        spellEntry[aptSlug].known = true;
-      }
+      if (spellEntry?.[aptSlug]) spellEntry[aptSlug].known = true;
     }
   }
 
@@ -124,9 +122,9 @@ export default class PowersComponent {
     const namespace: PowerGroupsNamespace = {};
     for (const [key, group] of Object.entries(groupings)) {
       const wrapped: PowerGroupEntry = {};
-      for (const [powerKey, dcs] of Object.entries(group)) {
+      for (const [powerKey, dcs] of Object.entries(group))
         wrapped[powerKey] = Object.fromEntries(Object.entries(dcs).map(([klass, dc]) => [klass, { dc }]));
-      }
+
       namespace[key] = wrapped;
     }
     this.powers.groups = namespace;

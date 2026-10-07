@@ -24,14 +24,11 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
       // Match cantrips.ts and level*.ts (the standard spell level files)
       const levelFiles: { file: string; level: number; constName: string }[] = [];
 
-      if (allFiles.includes("cantrips.ts")) {
-        levelFiles.push({ file: "cantrips.ts", level: 0, constName: "CANTRIPS" });
-      }
+      if (allFiles.includes("cantrips.ts")) levelFiles.push({ file: "cantrips.ts", level: 0, constName: "CANTRIPS" });
+
       for (let i = 1; i <= 9; i++) {
         const fname = `level${i}.ts`;
-        if (allFiles.includes(fname)) {
-          levelFiles.push({ file: fname, level: i, constName: `LEVEL_${i}_SPELLS` });
-        }
+        if (allFiles.includes(fname)) levelFiles.push({ file: fname, level: i, constName: `LEVEL_${i}_SPELLS` });
       }
 
       if (levelFiles.length === 0) return;

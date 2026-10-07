@@ -1,7 +1,8 @@
 import { createMiddleware } from "hono/factory";
 
 import { ForbiddenError, UnauthorizedError } from "@/server/errors/index.ts";
-import { type SessionContext } from "@/server/middlewares/session.ts";
+
+import { type SessionContext } from "./session.ts";
 
 export default createMiddleware<SessionContext>(async (c, next) => {
   const user = c.var.requestUser;

@@ -1,12 +1,13 @@
-import { isConditional } from "@/database/packages/dnd35-from-parser/tools/detect/conditional.ts";
-import { parseCost, parseWeight } from "@/database/packages/dnd35-from-parser/tools/detect/items.ts";
-import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/detect/skillBonuses.ts";
-import { SAVE_MAP } from "@/database/packages/dnd35-from-parser/tools/detect/targets.ts";
 import type {
   MagicItemCategory,
   MagicItemReference,
 } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
 import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
+
+import { isConditional } from "./conditional.ts";
+import { parseCost, parseWeight } from "./items.ts";
+import { readSkillBonuses } from "./skillBonuses.ts";
+import { SAVE_MAP } from "./targets.ts";
 
 type Modifier = { target: string; operator: string; value: string; valueType: string };
 
@@ -189,16 +190,12 @@ const NAME_MODIFIER_PATTERNS: { pattern: RegExp; toModifiers: (match: RegExpMatc
     pattern: /(.+?)\s*\+(\d+)$/,
     toModifiers: (m) => {
       const nameWords = m[1].trim().toLowerCase();
-      for (const ability of Object.keys(ABILITY_MAP)) {
-        if (nameWords.endsWith(ability)) {
-          return [bonus(ABILITY_MAP[ability], m[2])];
-        }
-      }
-      for (const [alias, ability] of Object.entries(NAME_ABILITY_ALIAS)) {
-        if (nameWords.endsWith(alias)) {
-          return [bonus(ABILITY_MAP[ability], m[2])];
-        }
-      }
+      for (const ability of Object.keys(ABILITY_MAP))
+        if (nameWords.endsWith(ability)) return [bonus(ABILITY_MAP[ability], m[2])];
+
+      for (const [alias, ability] of Object.entries(NAME_ABILITY_ALIAS))
+        if (nameWords.endsWith(alias)) return [bonus(ABILITY_MAP[ability], m[2])];
+
       return [];
     },
   },
@@ -272,9 +269,8 @@ function detectModifiers(name: string, description: string): { modifiers: Modifi
 
   // 3. Save bonuses: "+N <type> bonus on [all] saving throws"
   const allSavesMatch = description.match(/\+(\d+)\s+\w+\s+bonus on (?:all )?saving throws/i);
-  if (allSavesMatch && !conditional(description.indexOf(allSavesMatch[0]), allSavesMatch[0].length)) {
+  if (allSavesMatch && !conditional(description.indexOf(allSavesMatch[0]), allSavesMatch[0].length))
     add("saves.*.misc", allSavesMatch[1]);
-  }
 
   // Individual saves: "+N <type> bonus on Fortitude/Reflex/Will saves"
   const singleSaveRegex =
@@ -287,21 +283,17 @@ function detectModifiers(name: string, description: string): { modifiers: Modifi
 
   // 4. Initiative: "+N <type> bonus on/to initiative"
   const initMatch = description.match(/\+(\d+)\s+\w+\s+bonus (?:on|to)\s+initiative/i);
-  if (initMatch && !conditional(description.indexOf(initMatch[0]), initMatch[0].length)) {
+  if (initMatch && !conditional(description.indexOf(initMatch[0]), initMatch[0].length))
     add("combat.initiative.misc", initMatch[1]);
-  }
 
   return { modifiers, unresolvedModifiers };
 }
 
 function inferSlot(name: string, category: MagicItemCategory): string {
-  if (category !== "wondrousItem") {
-    return CATEGORY_SLOT_MAP[category] ?? "Other";
-  }
+  if (category !== "wondrousItem") return CATEGORY_SLOT_MAP[category] ?? "Other";
 
-  for (const [pattern, slot] of WONDROUS_SLOT_PATTERNS) {
-    if (pattern.test(name)) return slot;
-  }
+  for (const [pattern, slot] of WONDROUS_SLOT_PATTERNS) if (pattern.test(name)) return slot;
+
   return "Other";
 }
 
@@ -316,9 +308,8 @@ function parseAllVariantPrices(metadataText: string): Map<string, string> | null
   while ((match = variantPattern.exec(metadataText)) !== null) {
     // Strip category prefix and normalize to match cleaned variant names from the parser
     let tag = match[2].trim().replace(/^(?:ring|armor|shield|weapon)\s+/i, "");
-    if (tag && !tag.startsWith("+")) {
-      tag = tag.replace(/\b\w/g, (c) => c.toUpperCase());
-    }
+    if (tag && !tag.startsWith("+")) tag = tag.replace(/\b\w/g, (c) => c.toUpperCase());
+
     variants.set(tag, match[1].replace(/,/g, ""));
   }
   return variants.size > 1 ? variants : null;
@@ -411,20 +402,13 @@ export function detectBaseItem(name: string, description: string, category: Magi
 
   // Check category-scoped aliases first (e.g., "chainmail" → "Chain Mail" for armor only)
   const categoryAliases = ALIASES[category];
-  if (categoryAliases) {
-    for (const [alias, canonical] of Object.entries(categoryAliases)) {
-      if (lowerDesc.includes(alias)) return canonical;
-    }
-  }
+  if (categoryAliases)
+    for (const [alias, canonical] of Object.entries(categoryAliases)) if (lowerDesc.includes(alias)) return canonical;
 
-  for (const base of candidates) {
-    if (lowerDesc.includes(base.toLowerCase())) return base;
-  }
+  for (const base of candidates) if (lowerDesc.includes(base.toLowerCase())) return base;
 
   const lowerName = name.toLowerCase();
-  for (const base of candidates) {
-    if (lowerName.includes(base.toLowerCase())) return base;
-  }
+  for (const base of candidates) if (lowerName.includes(base.toLowerCase())) return base;
 
   return undefined;
 }

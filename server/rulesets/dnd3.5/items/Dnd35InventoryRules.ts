@@ -1,8 +1,9 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
-import { SIZE_ORDER } from "@/server/rulesets/dnd3.5/items/slots.ts";
 import type { InventoryRules } from "@/server/rulesets/engine/module/index.ts";
 import { WEAPON_ONE_HAND_TRAINING, WEAPON_SIZE } from "@/shared/dnd3.5/properties/index.ts";
+
+import { SIZE_ORDER } from "./slots.ts";
 
 export class Dnd35InventoryRules implements InventoryRules {
   /** A weapon whose WEAPON_ONE_HAND_TRAINING is true, its own or its template's: a bastard sword, a dwarven waraxe. */
@@ -30,8 +31,7 @@ export class Dnd35InventoryRules implements InventoryRules {
       ownProps.find((p) => p.type === WEAPON_SIZE) ?? templateProps.find((p) => p.type === WEAPON_SIZE)
     )?.value;
     const sizeIndex = weaponSize === undefined ? undefined : SIZE_ORDER[weaponSize];
-    if (sizeIndex !== undefined && sizeIndex > SIZE_ORDER.Medium && location !== "Two Handed") {
+    if (sizeIndex !== undefined && sizeIndex > SIZE_ORDER.Medium && location !== "Two Handed")
       throw new BadRequestError("This weapon requires two hands");
-    }
   }
 }

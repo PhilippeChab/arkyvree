@@ -1,7 +1,6 @@
 /** A class's features by level, and the existing feats a feature grants instead of being a feat of its own. */
 
 import { extractGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/detect/grants.ts";
-import type { getClassAptitudePicks } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/aptitudePicks.ts";
 import ExistingFeats from "@/database/packages/dnd35-from-parser/tools/seeds/ExistingFeats.ts";
 import {
   getPluralVariants,
@@ -10,6 +9,8 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
+import type { getClassAptitudePicks } from "./aptitudePicks.ts";
+
 function findMappedName(rawName: string, features: ClassReference["mapping"]["features"]): string | undefined {
   if (!features) return undefined;
   // Exact match
@@ -17,9 +18,7 @@ function findMappedName(rawName: string, features: ClassReference["mapping"]["fe
 
   // Case-insensitive match
   const lower = rawName.toLowerCase();
-  for (const [key, val] of Object.entries(features)) {
-    if (key.toLowerCase() === lower) return val.seedName;
-  }
+  for (const [key, val] of Object.entries(features)) if (key.toLowerCase() === lower) return val.seedName;
 
   return undefined;
 }
@@ -70,9 +69,7 @@ export function buildClassFeatures(
       // Check for per-level split names
       const resolvedKey = mappingKey?.toLowerCase() ?? occ.name.toLowerCase();
       const levelMap = perLevelFeatNames.get(resolvedKey);
-      for (const level of occ.levels) {
-        features.push([level, levelMap?.get(level) ?? name]);
-      }
+      for (const level of occ.levels) features.push([level, levelMap?.get(level) ?? name]);
     }
   }
 
@@ -88,11 +85,9 @@ export function buildClassFeatures(
     if (feat.aptitude && feat.aptitude !== mapping.classFeatureAptitude) continue;
     const name = feat.seedName ?? key;
     const freeFeatName = findExistingFeatGranted(ref, name, feat.description);
-    if (freeFeatName && mapping.classFeatureAptitude) {
+    if (freeFeatName && mapping.classFeatureAptitude)
       autoFreeFeats.push([feat.level, freeFeatName, mapping.classFeatureAptitude]);
-    } else {
-      features.push([feat.level, name]);
-    }
+    else features.push([feat.level, name]);
   }
 
   features.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
@@ -121,9 +116,7 @@ export function buildPoolParentNameMap(
     if (!parentEntry) continue;
     const seedName = parentEntry[1].seedName ?? `${parentEntry[0]} (${className})`;
     // Map all variants to this seedName
-    for (const variant of getPluralVariants(s)) {
-      nameMap.set(variant, seedName);
-    }
+    for (const variant of getPluralVariants(s)) nameMap.set(variant, seedName);
   }
   return nameMap;
 }

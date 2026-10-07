@@ -130,9 +130,8 @@ export default class CowDataBuilder {
   private overrideSnapshots(allRulesetIds: string[], byRuleset: SnapshotsByRuleset) {
     for (const rid of allRulesetIds) {
       for (const snap of byRuleset.get(rid) ?? []) {
-        if (!this.overrides.has(snap.sourceEntityId)) {
+        if (!this.overrides.has(snap.sourceEntityId))
           this.override(snap.sourceEntityId, this.overrides.get(snap.forkedEntityId) ?? snap.forkedEntityId);
-        }
       }
     }
   }

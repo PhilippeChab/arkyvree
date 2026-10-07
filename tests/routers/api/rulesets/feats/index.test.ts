@@ -56,9 +56,8 @@ describe("rulesets feats", () => {
       { name: "", aptitudeIds: [aptitudeId] },
       { name: "Feat", aptitudeIds: [] },
       { name: "Feat", aptitudeIds: aptitudeId },
-    ]) {
+    ])
       await expectStatus(feats.$post({ param: { id }, json: json as never }), 400);
-    }
   });
 
   test("returns 404 for a missing ruleset or feat", async () => {

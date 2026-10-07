@@ -128,9 +128,9 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
     const featGroupingLabels: Record<string, string> = Object.fromEntries(
       FEAT_FAMILIES.map((family) => [stripSeparators(family), family]),
     );
-    for (const prop of rulesetData.propertiesByEntityType.get("feats") ?? []) {
+    for (const prop of rulesetData.propertiesByEntityType.get("feats") ?? [])
       if (prop.type === FEAT_FAMILY) featGroupingLabels[stripSeparators(prop.value)] = prop.value;
-    }
+
     return featGroupingLabels;
   }
 

@@ -1,16 +1,12 @@
-import {
-  buildModifierMapping,
-  detectModifiersOf,
-  type ModifierDetection,
-  validateModifiers,
-} from "@/database/packages/dnd35-from-parser/tools/detect/modifiers.ts";
-import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/detect/paths.ts";
-import { SKILL_MAP as BASE_SKILL_MAP } from "@/database/packages/dnd35-from-parser/tools/detect/targets.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
 import { setFlag } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { buildModifierMapping, detectModifiersOf, type ModifierDetection, validateModifiers } from "./modifiers.ts";
+import { isValidModifierPath } from "./paths.ts";
+import { SKILL_MAP as BASE_SKILL_MAP } from "./targets.ts";
 
 /** Every Knowledge skill, which "Add all Knowledge skills" names. */
 const ALL_KNOWLEDGE_SKILLS = SKILL_NAMES.filter((n) => n.startsWith("Knowledge"));
@@ -54,11 +50,8 @@ function detectDomainModifiers(description: string): ModifierDetection<Modifier>
         const name = part.trim();
         if (!name) continue;
         const slug = SKILL_MAP[name.toLowerCase()];
-        if (slug) {
-          modifiers.push(setFlag(`skills.${slug}.innate`));
-        } else {
-          unresolvedModifiers.push(`Unresolved class skill: "${name}"`);
-        }
+        if (slug) modifiers.push(setFlag(`skills.${slug}.innate`));
+        else unresolvedModifiers.push(`Unresolved class skill: "${name}"`);
       }
     }
   }

@@ -7,10 +7,11 @@ import { Logger } from "graphile-worker";
 import { Pool } from "pg";
 
 import { readEnv } from "@/server/environment.ts";
-import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
-import { runCleanupTask } from "@/server/jobs/runCleanup.ts";
-import { sendEmailTask } from "@/server/jobs/sendEmail.ts";
-import { sweepPendingBlobsTask } from "@/server/jobs/sweepPendingBlobs.ts";
+
+import { generatePdfTask } from "./generatePdf.tsx";
+import { runCleanupTask } from "./runCleanup.ts";
+import { sendEmailTask } from "./sendEmail.ts";
+import { sweepPendingBlobsTask } from "./sweepPendingBlobs.ts";
 
 /** The cleanup at 4 every morning, the blob sweep every hour. */
 export const crontab = ["0 4 * * * runCleanup", "0 * * * * sweepPendingBlobs"].join("\n");

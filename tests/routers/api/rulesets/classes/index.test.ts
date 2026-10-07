@@ -45,9 +45,8 @@ describe("rulesets classes", () => {
   test("rejects a class without a name or with a non-standard hit die", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     // Only d4/d6/d8/d10/d12 pass the database's CHECK constraint: the validator stops a d5 first.
-    for (const json of [{ name: "" }, { name: "Bad Class", hd: 5 }]) {
+    for (const json of [{ name: "" }, { name: "Bad Class", hd: 5 }])
       await expectStatus(classes.$post({ param: { id }, json: json as never }), 400);
-    }
   });
 
   test("returns 404 for a missing ruleset or class", async () => {

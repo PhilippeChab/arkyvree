@@ -158,23 +158,22 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
       // Flat modifier.id → owning entity index. Built once by iterating every
       // entity that owns modifiers so resolveModifierSourceName becomes O(1).
       const modifierOwner = new Map<string, { name: string; type: string }>();
-      for (const feat of this.feats) {
+      for (const feat of this.feats)
         for (const m of feat.modifiers) modifierOwner.set(m.id, { name: feat.name, type: "feats" });
-      }
-      for (const inv of this.inventory) {
+
+      for (const inv of this.inventory)
         for (const m of inv.item.modifiers) modifierOwner.set(m.id, { name: inv.item.name, type: "items" });
-      }
-      if (this.race?.modifiers) {
+
+      if (this.race?.modifiers)
         for (const m of this.race.modifiers) modifierOwner.set(m.id, { name: this.race.name, type: "races" });
-      }
+
       for (const kl of this.klassLevels) {
         const klass = rulesetKlassesById.get(kl.klassId);
         const label = klass ? `${klass.name} Level ${kl.level}` : `Level ${kl.level}`;
         for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "klass_levels" });
       }
-      for (const power of this.powers) {
+      for (const power of this.powers)
         for (const m of power.modifiers) modifierOwner.set(m.id, { name: power.name, type: "powers" });
-      }
 
       this.diagnosticsIndex = {
         featsById,
@@ -295,9 +294,8 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
           const mod =
             this.modifiers.find((m) => m.id === entityId) ??
             this.components.spellcasting.getBonusKlassLevelModifiers().find((m) => m.id === entityId);
-          if (mod) {
-            return this.resolveEntityName(mod.sourceId, mod.sourceType);
-          }
+          if (mod) return this.resolveEntityName(mod.sourceId, mod.sourceType);
+
           break;
         }
         case "characters":

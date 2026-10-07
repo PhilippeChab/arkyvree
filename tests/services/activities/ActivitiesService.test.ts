@@ -199,8 +199,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       "requirements",
       "properties",
       "notifications",
-    ]) {
+    ])
       expect({ table, url: await resolve(table, NIL_UUID) }).toEqual({ table, url: null });
-    }
   });
 });

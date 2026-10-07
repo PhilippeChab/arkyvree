@@ -16,14 +16,10 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
-import {
-  findContentHeading,
-  findSectionElements,
-  getPageTitle,
-  getTagName,
-} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
+
+import { findContentHeading, findSectionElements, getPageTitle, getTagName } from "./page.ts";
 
 const KNOWN_LABELS = new Set(["prerequisite", "prerequisites", "benefit", "benefits", "normal", "special"]);
 
@@ -33,13 +29,9 @@ const KNOWN_LABELS = new Set(["prerequisite", "prerequisites", "benefit", "benef
  */
 function featCategories($: cheerio.CheerioAPI, heading: cheerio.Cheerio<AnyNode>): string[] {
   let after = "";
-  for (
-    let node = heading[0].nextSibling;
-    node && !(node.type === "tag" && node.name === "h4");
-    node = node.nextSibling
-  ) {
+  for (let node = heading[0].nextSibling; node && !(node.type === "tag" && node.name === "h4"); node = node.nextSibling)
     after += $.html(node);
-  }
+
   const bracket = after.match(/\[([^\]]*)\]/)?.[1] ?? "";
   return [...bracket.matchAll(/<a[^>]*href="\/feats\/categories\/[^"]+"[^>]*>([^<]+)<\/a>/gi)].map((m) => m[1].trim());
 }
@@ -94,9 +86,7 @@ export function parseFeatDetailHtml(html: string): FeatReference["raw"][number] 
             const text = normalizeWs($(p).text());
             if (text) parts.push(text);
           });
-          if (el.find("p").length === 0 && divText) {
-            parts.push(divText);
-          }
+          if (el.find("p").length === 0 && divText) parts.push(divText);
         }
       } else if (tag === "p" || tag === "ul" || tag === "ol") {
         const text = normalizeWs(el.text());

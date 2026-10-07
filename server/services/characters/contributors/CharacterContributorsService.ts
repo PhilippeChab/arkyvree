@@ -38,12 +38,10 @@ class CharacterContributorsService {
    */
   private async getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
     const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
-    if (!contributor || contributor.userId !== session.userId) {
-      throw new NotFoundError("Contributor invite not found");
-    }
-    if (contributor.status !== "Pending") {
-      throw new ConflictError("Invite is no longer pending");
-    }
+    if (!contributor || contributor.userId !== session.userId) throw new NotFoundError("Contributor invite not found");
+
+    if (contributor.status !== "Pending") throw new ConflictError("Invite is no longer pending");
+
     return contributor;
   }
 
@@ -52,12 +50,9 @@ class CharacterContributorsService {
       const contributor = await this.getPendingInviteFor(tx, session, contributorId);
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
-      if (!character) {
-        throw new NotFoundError("Character not found");
-      }
-      if (character.deletedAt) {
-        throw new ConflictError("This character has been archived and can no longer be edited");
-      }
+      if (!character) throw new NotFoundError("Character not found");
+
+      if (character.deletedAt) throw new ConflictError("This character has been archived and can no longer be edited");
 
       return await this.answerInvite(tx, session, contributor, character.name, "Active");
     });
@@ -74,9 +69,7 @@ class CharacterContributorsService {
     pagination: { limit: number; page: number },
   ) {
     const character = await Characters.findOne(db, { id: characterId }, Visibility.All);
-    if (!character || character.kind !== "pc") {
-      throw new NotFoundError("Character not found");
-    }
+    if (!character || character.kind !== "pc") throw new NotFoundError("Character not found");
 
     (await CharactersPolicy.for(db, session, character)).canReadContributors();
 
@@ -96,9 +89,8 @@ class CharacterContributorsService {
       id: contributorId,
       userId: session.userId,
     });
-    if (!invite) {
-      throw new NotFoundError("Contributor invite not found");
-    }
+    if (!invite) throw new NotFoundError("Contributor invite not found");
+
     return invite;
   }
 
@@ -109,21 +101,16 @@ class CharacterContributorsService {
   async inviteContributor(session: Session, characterId: string, email: string) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
       const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
-      if (!character || character.kind !== "pc") {
-        throw new NotFoundError("Character not found");
-      }
+      if (!character || character.kind !== "pc") throw new NotFoundError("Character not found");
 
       (await CharactersPolicy.for(tx, session, character)).canManageContributors();
 
-      if (character.deletedAt) {
-        throw new ConflictError("Cannot invite a contributor to an archived character");
-      }
+      if (character.deletedAt) throw new ConflictError("Cannot invite a contributor to an archived character");
 
       const user = await Users.findOne(tx, { emailAddress: email });
 
-      if (user && user.id === character.userId) {
+      if (user && user.id === character.userId)
         throw new ConflictError("Cannot invite the character owner as a contributor");
-      }
 
       if (user) {
         const existing = await CharacterContributors.findOne(tx, {
@@ -131,26 +118,21 @@ class CharacterContributorsService {
           userId: user.id,
           status: "Active",
         });
-        if (existing) {
-          throw new ConflictError("User is already a contributor");
-        }
+        if (existing) throw new ConflictError("User is already a contributor");
+
         const pending = await CharacterContributors.findOne(tx, {
           characterId,
           userId: user.id,
           status: "Pending",
         });
-        if (pending) {
-          throw new ConflictError("User already has a pending invite");
-        }
+        if (pending) throw new ConflictError("User already has a pending invite");
       } else {
         const pending = await CharacterContributors.findOne(tx, {
           characterId,
           email,
           status: "Pending",
         });
-        if (pending) {
-          throw new ConflictError("This email already has a pending invite");
-        }
+        if (pending) throw new ConflictError("This email already has a pending invite");
       }
 
       const rows = await CharacterContributors.create(tx, {
@@ -202,18 +184,14 @@ class CharacterContributorsService {
   async leaveCharacter(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
       const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
-      if (!character || character.kind !== "pc") {
-        throw new NotFoundError("Character not found");
-      }
+      if (!character || character.kind !== "pc") throw new NotFoundError("Character not found");
 
       const contributor = await CharacterContributors.findOne(tx, {
         characterId,
         userId: session.userId,
         status: "Active",
       });
-      if (!contributor) {
-        throw new NotFoundError("You are not a contributor of this character");
-      }
+      if (!contributor) throw new NotFoundError("You are not a contributor of this character");
 
       const rows = await CharacterContributors.update(tx, { status: "Revoked" }, { id: contributor.id });
       const updated = rows[0];
@@ -243,20 +221,15 @@ class CharacterContributorsService {
   async revokeContributor(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
       const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
-      if (!contributor) {
-        throw new NotFoundError("Contributor not found");
-      }
+      if (!contributor) throw new NotFoundError("Contributor not found");
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
-      if (!character) {
-        throw new NotFoundError("Character not found");
-      }
+      if (!character) throw new NotFoundError("Character not found");
 
       (await CharactersPolicy.for(tx, session, character)).canManageContributors();
 
-      if (contributor.status !== "Active" && contributor.status !== "Pending") {
+      if (contributor.status !== "Active" && contributor.status !== "Pending")
         throw new ConflictError("Contributor is not active or pending");
-      }
 
       const prevStatus = contributor.status;
       const rows = await CharacterContributors.update(tx, { status: "Revoked" }, { id: contributorId });

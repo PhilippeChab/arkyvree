@@ -6,8 +6,9 @@ import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import { api, expectOk } from "@/tests/support/api.ts";
-import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+
+import { api, expectOk } from "./api.ts";
+import { getSeedCtx, uniqueId } from "./seed.ts";
 
 /**
  * A new character of `session`'s, created through the service: a Human on the seeded ruleset, unless `values` says

@@ -3,10 +3,11 @@
  * day the aptitude allows there. The web sheet and the PDF sheet read the same data: the character response's.
  */
 
-import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
-import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { SPELL_SCHOOL } from "./properties/index.ts";
+import { toSpellPossessionSlug } from "./spells.ts";
 
 /** A spell a modifier gives without a pick. */
 interface GivenSpell {
@@ -169,9 +170,7 @@ function usesPerDay(aptitudes: SpellSheet["aptitudes"], aptitudeName: string, sp
 /** The character's spells by aptitude (by name), each aptitude's levels in order and their spells by name. */
 export function buildSpellGroups(sheet: SpellSheet): AptitudeSpells[] {
   const aptitudeNameById = new Map<string, string>();
-  for (const apt of Object.values(sheet.aptitudes ?? {})) {
-    if (apt.id) aptitudeNameById.set(apt.id, apt.name);
-  }
+  for (const apt of Object.values(sheet.aptitudes ?? {})) if (apt.id) aptitudeNameById.set(apt.id, apt.name);
 
   const byAptitude = new Map<string, AptitudeSpells>();
   for (const group of groupSpells(sheet, aptitudeNameById).values()) {

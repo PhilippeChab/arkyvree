@@ -1,9 +1,10 @@
 import { eq } from "drizzle-orm";
 
-import { registry } from "@/database/packages/registry.ts";
-import type { ContentPackage } from "@/database/packages/types.ts";
 import { contentPackagesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+
+import { registry } from "./registry.ts";
+import type { ContentPackage } from "./types.ts";
 
 /**
  * A database's version of a package below its seeds can't be brought up to date: the updates it lacks were folded
@@ -21,9 +22,8 @@ function updatesOf(pkg: ContentPackage) {
     .map(Number)
     .sort((a, b) => a - b);
   for (const [i, version] of versions.entries()) {
-    if (version !== pkg.seedsVersion + i + 1) {
+    if (version !== pkg.seedsVersion + i + 1)
       throw new Error(`${pkg.name}: update v${version} doesn't follow v${pkg.seedsVersion + i}`);
-    }
   }
   return versions.map((version) => ({ version, update: pkg.updates![version] }));
 }
@@ -84,9 +84,8 @@ export async function applyPackages(db: Db, packages: ContentPackage[] = registr
         : `  Updating ${pkg.name} v${from} → v${version}...`,
     );
     await db.transaction(async (tx) => {
-      if (from === undefined) {
-        for (const seed of pkg.seeds) await seed(tx);
-      }
+      if (from === undefined) for (const seed of pkg.seeds) await seed(tx);
+
       for (const { update } of updates.filter((u) => u.version > (from ?? pkg.seedsVersion))) await update(tx);
 
       if (from === undefined) {

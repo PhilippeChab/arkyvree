@@ -320,9 +320,8 @@ async function pullContent(query: Query, table: ContentTable, rulesetId: string)
         )
       ).map((r) => [r.id, r.label]),
     );
-    for (const row of rows) {
+    for (const row of rows)
       if (typeof row[column] === "string") row[column] = labels.get(row[column]) ?? "<unresolved>";
-    }
   }
   return rows.map((row) => ({ bk: String(row.name ?? row.id), id: String(row.id), row: stripVolatile(row) }));
 }
@@ -364,9 +363,11 @@ export async function diffContent(target: Query, reference: Query) {
     const [name] = key.split("|");
     const ref = refByName.get(key);
     const tgt = tgtByName.get(key);
-    if (!ref) result.onlyInTarget.push(name);
-    else if (!tgt) result.onlyInReference.push(name);
-    else {
+    if (!ref) {
+      result.onlyInTarget.push(name);
+    } else if (!tgt) {
+      result.onlyInReference.push(name);
+    } else {
       const tables: { table: string; diff: TableDiff }[] = [];
       for (const table of COMPARED_TABLES) {
         const diff = collectDiff(await pullTable(reference, table, ref.id), await pullTable(target, table, tgt.id));

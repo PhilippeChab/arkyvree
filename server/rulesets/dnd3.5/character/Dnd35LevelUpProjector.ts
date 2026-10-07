@@ -116,19 +116,13 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     for (const featId of allFeatIds) {
       const props = rulesetData.propertiesByEntity.get(featId);
       if (!props) continue;
-      for (const p of props) {
-        if (p.entityType === "feats" && p.type === WIZARD_PROHIBITED_SCHOOL) {
-          prohibitedSchools.add(p.value);
-        }
-      }
+      for (const p of props)
+        if (p.entityType === "feats" && p.type === WIZARD_PROHIBITED_SCHOOL) prohibitedSchools.add(p.value);
     }
 
     // Also check selected feats from the current session
-    for (const prop of selectedFeatProperties) {
-      if (prop.type === WIZARD_PROHIBITED_SCHOOL) {
-        prohibitedSchools.add(prop.value);
-      }
-    }
+    for (const prop of selectedFeatProperties)
+      if (prop.type === WIZARD_PROHIBITED_SCHOOL) prohibitedSchools.add(prop.value);
 
     if (prohibitedSchools.size === 0) return [];
 

@@ -43,9 +43,7 @@ export function GeneratesMagicItems<B extends Constructor<BaseGenerator>>(Base: 
         ["staffs.ts", "STAFFS", seeds.staffs],
       ];
 
-      for (const [filename, constName, items] of files) {
-        this.writeItemFile(join(outDir, filename), constName, items);
-      }
+      for (const [filename, constName, items] of files) this.writeItemFile(join(outDir, filename), constName, items);
 
       this.writeItemIndex(outDir);
 

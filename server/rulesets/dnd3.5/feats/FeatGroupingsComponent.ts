@@ -1,8 +1,8 @@
-import type FeatsComponent from "@/server/rulesets/dnd3.5/feats/FeatsComponent.ts";
-import type { FeatEntry } from "@/server/rulesets/dnd3.5/feats/FeatsComponent.ts";
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import type FeatsComponent from "./FeatsComponent.ts";
+import type { FeatEntry } from "./FeatsComponent.ts";
 import { FAMILY_COUNT } from "./FeatsPaths.ts";
 
 type FeatGroup = Record<string, FeatEntry>;
@@ -47,9 +47,8 @@ export default class FeatGroupingsComponent {
       const featState = this.feats.getFeat(feat.name);
       if (!featState) continue;
 
-      if (!this.featGroupings[normalizedFamily]) {
-        this.featGroupings[normalizedFamily] = familyGroup();
-      }
+      if (!this.featGroupings[normalizedFamily]) this.featGroupings[normalizedFamily] = familyGroup();
+
       this.featGroupings[normalizedFamily][variant] = featState;
     }
   }

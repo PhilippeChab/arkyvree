@@ -15,9 +15,9 @@ function cellNumber(cell: string) {
 export function buildClassModifiers(ref: ClassReference): (ModifierSeed & { level: number })[] {
   const fromColumns = Object.entries(ref.overrides?.columns ?? {}).flatMap(
     ([column, { target, operator, requirements }]) => {
-      if (!ref.raw.progression.some((row) => row.columns?.[column] !== undefined)) {
+      if (!ref.raw.progression.some((row) => row.columns?.[column] !== undefined))
         throw new Error(`${ref.raw.name}: its table has no "${column}" column`);
-      }
+
       let previous = operator === "add" ? "+0" : "";
       return ref.raw.progression.flatMap((row) => {
         // A blank cell keeps the value above it

@@ -40,9 +40,8 @@ function SkillsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
           const skillsData = skills.getSkills();
           const skillEntries = Object.values(skillsData);
 
-          if (!skillEntries || skillEntries.length === 0) {
+          if (!skillEntries || skillEntries.length === 0)
             return <Text style={styles.emptyMessage}>No skills available</Text>;
-          }
 
           const sorted = [...skillEntries].sort((a, b) => a.name.localeCompare(b.name));
           const half = Math.ceil(sorted.length / 2);

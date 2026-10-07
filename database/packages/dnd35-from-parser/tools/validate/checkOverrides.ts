@@ -6,7 +6,8 @@ import { buildClassSeed } from "@/database/packages/dnd35-from-parser/tools/seed
 import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/spellSlots.ts";
 import { sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import { getClassReviewNotes } from "@/database/packages/dnd35-from-parser/tools/validate/classReview.ts";
+
+import { getClassReviewNotes } from "./classReview.ts";
 
 type ClassOverrides = NonNullable<StoredReference<"class">["overrides"]>;
 

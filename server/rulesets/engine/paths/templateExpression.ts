@@ -68,9 +68,8 @@ class Tokenizer {
         const literal = this.src.slice(this.pos, end);
         // Reject malformed numerics like "5.5.5" — Number() returns NaN which
         // would slip past the numeric type guard downstream.
-        if (!/^[0-9]+(\.[0-9]+)?$/.test(literal)) {
-          throw new Error(`Invalid numeric literal: "${literal}"`);
-        }
+        if (!/^[0-9]+(\.[0-9]+)?$/.test(literal)) throw new Error(`Invalid numeric literal: "${literal}"`);
+
         tokens.push({ type: "NUMBER", value: Number(literal) });
         this.pos = end;
         continue;

@@ -12,28 +12,23 @@ export function ContributorRights<B extends Constructor<RulesetRoles>>(Base: B) 
      * Admin-tier rows.
      */
     canManageAdminContributors() {
-      if (!this.isOwner) {
-        throw new ForbiddenError("Only the owner can manage Admin contributors");
-      }
+      if (!this.isOwner) throw new ForbiddenError("Only the owner can manage Admin contributors");
+
       return true;
     }
 
     canManageContributors() {
-      if (!this.entity.userId) {
-        throw new ForbiddenError("Cannot manage contributors on a base ruleset");
-      }
+      if (!this.entity.userId) throw new ForbiddenError("Cannot manage contributors on a base ruleset");
 
-      if (!this.isOwner && !this.isAdminContributor) {
+      if (!this.isOwner && !this.isAdminContributor)
         throw new ForbiddenError("Only the owner or Admin contributors can manage contributors");
-      }
 
       return true;
     }
 
     canReadContributors() {
-      if (!this.isOwner && !this.isContributor) {
-        throw new ForbiddenError("You are not a contributor of this ruleset");
-      }
+      if (!this.isOwner && !this.isContributor) throw new ForbiddenError("You are not a contributor of this ruleset");
+
       return true;
     }
   }

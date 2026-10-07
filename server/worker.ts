@@ -1,12 +1,12 @@
 import { run } from "graphile-worker";
 
-import "@/server/instrument-worker.ts";
-import "@/server/log.ts";
-import { MemoryCache } from "@/server/cache/index.ts";
-import { waitForDatabase } from "@/server/database/index.ts";
-import { readEnv } from "@/server/environment.ts";
-import { createWorkerEvents, createWorkerPool, crontab, taskList, workerLogger } from "@/server/jobs/runner.ts";
-import Shutdown from "@/server/Shutdown.ts";
+import "./instrument-worker.ts";
+import "./log.ts";
+import { MemoryCache } from "./cache/index.ts";
+import { waitForDatabase } from "./database/index.ts";
+import { readEnv } from "./environment.ts";
+import { createWorkerEvents, createWorkerPool, crontab, taskList, workerLogger } from "./jobs/runner.ts";
+import Shutdown from "./Shutdown.ts";
 
 async function main() {
   // Web mutations cannot invalidate this process’s in-memory cache. Each job

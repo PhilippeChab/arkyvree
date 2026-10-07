@@ -23,15 +23,12 @@ function nextSegments(allPaths: TargetPath[], baseDot: string, segmentPrefix: st
     }
 
     const fullPrefix = baseDot + nextSegment;
-    if (!info.examplePath && (p.path.startsWith(fullPrefix + ".") || p.path === fullPrefix)) {
-      info.examplePath = p;
-    }
-    if (!info.isGroup && p.path.startsWith(fullPrefix + ".*")) {
-      info.isGroup = true;
-    }
-    if (!info.groupDesc && p.groupDescription && p.path.startsWith(fullPrefix + ".")) {
+    if (!info.examplePath && (p.path.startsWith(fullPrefix + ".") || p.path === fullPrefix)) info.examplePath = p;
+
+    if (!info.isGroup && p.path.startsWith(fullPrefix + ".*")) info.isGroup = true;
+
+    if (!info.groupDesc && p.groupDescription && p.path.startsWith(fullPrefix + "."))
       info.groupDesc = p.groupDescription;
-    }
   }
   return segmentInfo;
 }
@@ -192,9 +189,7 @@ export function resolveCompletedPrefix(allPaths: TargetPath[], partialPath: stri
     const candidatePath = pathPrefix.slice(0, -1);
     if (allPaths.some((p) => p.path === candidatePath)) {
       const candidateSegments = candidatePath.split(".");
-      if (candidateSegments.length > 1) {
-        return candidateSegments.slice(0, -1).join(".") + ".";
-      }
+      if (candidateSegments.length > 1) return candidateSegments.slice(0, -1).join(".") + ".";
     }
   }
   return pathPrefix;

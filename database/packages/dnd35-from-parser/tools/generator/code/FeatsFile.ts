@@ -1,14 +1,3 @@
-import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import {
-  type ImportTable,
-  REQUIREMENT_IMPORTS,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
-import {
-  escapeTemplate,
-  listField,
-  quote,
-  toConstName,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import {
   buildReferenceFeats,
   type TemplateFamily,
@@ -25,6 +14,10 @@ import type {
   RequirementEntry,
 } from "@/database/packages/dnd35/content/customization/types.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+
+import { CodeFile } from "./CodeFile.ts";
+import { type ImportTable, REQUIREMENT_IMPORTS } from "./imports.ts";
+import { escapeTemplate, listField, quote, toConstName } from "./literals.ts";
 
 /** Where each name the generated feats use comes from, in the order the imports are written. */
 const IMPORTS: ImportTable = [

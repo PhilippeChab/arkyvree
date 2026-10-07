@@ -100,9 +100,7 @@ export async function getAvailablePowers(
       .map((power) => power.id);
 
     // Also exclude auto-granted powers from the current klass level
-    for (const rec of autoGrantedPowerRecords) {
-      excludePowerIds.push(rec.powersInRule.id);
-    }
+    for (const rec of autoGrantedPowerRecords) excludePowerIds.push(rec.powersInRule.id);
 
     // Exclude powers virtually granted by modifiers (e.g. "set powers.<spell>.<apt>.known = true")
     const virtualPowerIds = detailedCharacter.getVirtuallyPossessedPowerIds();

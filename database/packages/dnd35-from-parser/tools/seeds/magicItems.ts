@@ -3,8 +3,6 @@
 import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/detect/armorStats.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/detect/magicItems.ts";
 import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/detect/weaponStats.ts";
-import { checkOneOf, getCheckedValue } from "@/database/packages/dnd35-from-parser/tools/seeds/checks.ts";
-import { getArmorProficiency } from "@/database/packages/dnd35-from-parser/tools/seeds/items.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import {
   type MagicItemCategory,
@@ -16,6 +14,9 @@ import { armorProperties } from "@/database/packages/dnd35/content/items/propert
 import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 import { ARMOR_PROFICIENCY, MAGIC_AURA, MAGIC_CASTER_LEVEL } from "@/shared/dnd3.5/properties/index.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
+
+import { checkOneOf, getCheckedValue } from "./checks.ts";
+import { getArmorProficiency } from "./items.ts";
 
 export type MagicItemSeedSets = {
   magicArmor: ItemSeed[];
@@ -124,15 +125,13 @@ export function buildMagicItemSeeds(
         .replace(/\bRods\b/g, "Rod")
         .replace(/\bRings\b/g, "Ring")
         .replace(/\bStaffs\b/g, "Staff");
-      if (!new RegExp(`\\b${categoryWord}\\b`, "i").test(itemName)) {
-        itemName = `${categoryWord} of ${itemName}`;
-      }
+      if (!new RegExp(`\\b${categoryWord}\\b`, "i").test(itemName)) itemName = `${categoryWord} of ${itemName}`;
     }
 
     // A template is made from nothing: its base armor's properties are its own, under those it changes
-    if (ovr?.template && (det.category !== "specificArmor" || !sourceItem)) {
+    if (ovr?.template && (det.category !== "specificArmor" || !sourceItem))
       throw new Error(`${name}: only a specific armor made from a base armor can be a template`);
-    }
+
     bucket.push({
       name: itemName,
       description,

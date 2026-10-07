@@ -20,13 +20,9 @@ export function Stars<B extends Constructor>(Base: B) {
     async starRuleset(session: Session, rulesetId: string) {
       return await withTransaction(async (tx) => {
         const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-        if (!ruleset) {
-          throw new NotFoundError("Ruleset not found");
-        }
+        if (!ruleset) throw new NotFoundError("Ruleset not found");
 
-        if (!this.isStarrable(ruleset)) {
-          throw new ForbiddenError("Only base rulesets and extensions can be starred");
-        }
+        if (!this.isStarrable(ruleset)) throw new ForbiddenError("Only base rulesets and extensions can be starred");
 
         await StarredRulesets.upsert(tx, { userId: session.userId, rulesetId });
       });

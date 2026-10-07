@@ -28,15 +28,13 @@ export function readSkillFlags(
       flags = { ...NO_SKILL_FLAGS };
       flagsBySkillId.set(property.entityId, flags);
     }
-    if (property.type === SKILL_IMPACTED_BY_WEIGHT && property.value === "true") {
-      flags.impactedByWeight = true;
-    }
-    if (property.type === SKILL_CHECK_PENALTY_MULTIPLIER && Number(property.value) > 0) {
+    if (property.type === SKILL_IMPACTED_BY_WEIGHT && property.value === "true") flags.impactedByWeight = true;
+
+    if (property.type === SKILL_CHECK_PENALTY_MULTIPLIER && Number(property.value) > 0)
       flags.checkPenaltyMultiplier = Number(property.value);
-    }
-    if (property.type === SKILL_USABLE_WITHOUT_TRAINING && property.value === "true") {
+
+    if (property.type === SKILL_USABLE_WITHOUT_TRAINING && property.value === "true")
       flags.usableWithoutTraining = true;
-    }
   }
   return flagsBySkillId;
 }

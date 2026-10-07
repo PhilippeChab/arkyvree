@@ -6,17 +6,6 @@ import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.
 import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
 import type { BookContent, CoreContent } from "@/database/packages/dnd35/content/rulesets/types.ts";
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
-import { BaseSeeder, type SeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
-import { CopiesOnWrite } from "@/database/packages/dnd35/seed/concerns/CopiesOnWrite.ts";
-import { SeedsAptitudes } from "@/database/packages/dnd35/seed/concerns/SeedsAptitudes.ts";
-import { SeedsClasses } from "@/database/packages/dnd35/seed/concerns/SeedsClasses.ts";
-import { SeedsCoreRules } from "@/database/packages/dnd35/seed/concerns/SeedsCoreRules.ts";
-import { SeedsFeats } from "@/database/packages/dnd35/seed/concerns/SeedsFeats.ts";
-import { SeedsItems } from "@/database/packages/dnd35/seed/concerns/SeedsItems.ts";
-import { SeedsPowers } from "@/database/packages/dnd35/seed/concerns/SeedsPowers.ts";
-import { SeedsRaces } from "@/database/packages/dnd35/seed/concerns/SeedsRaces.ts";
-import { SeedsWizardSchools } from "@/database/packages/dnd35/seed/concerns/SeedsWizardSchools.ts";
-import { findSpellcastingClass, type SpellcastingClass } from "@/database/packages/dnd35/seed/spellTable.ts";
 import {
   abilitiesInRules,
   aptitudesInRules,
@@ -32,6 +21,18 @@ import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { BaseSeeder, type SeedContext } from "./BaseSeeder.ts";
+import { CopiesOnWrite } from "./concerns/CopiesOnWrite.ts";
+import { SeedsAptitudes } from "./concerns/SeedsAptitudes.ts";
+import { SeedsClasses } from "./concerns/SeedsClasses.ts";
+import { SeedsCoreRules } from "./concerns/SeedsCoreRules.ts";
+import { SeedsFeats } from "./concerns/SeedsFeats.ts";
+import { SeedsItems } from "./concerns/SeedsItems.ts";
+import { SeedsPowers } from "./concerns/SeedsPowers.ts";
+import { SeedsRaces } from "./concerns/SeedsRaces.ts";
+import { SeedsWizardSchools } from "./concerns/SeedsWizardSchools.ts";
+import { findSpellcastingClass, type SpellcastingClass } from "./spellTable.ts";
 
 /**
  * Seeds a ruleset, step by step: a step that writes one kind of row is a concern (`concerns/`), and the steps made of

@@ -2,7 +2,8 @@ import { expect, test } from "bun:test";
 
 import * as RULESET_NAMES from "@/database/packages/dnd35/names.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
-import { seededRows } from "@/tests/seeds/seededRows.ts";
+
+import { seededRows } from "./seededRows.ts";
 
 // A target the editor doesn't offer is one an author can't write or save again, and one the engine may not read: a
 // Dragon Disciple's boosts on `abilities.strength`, an Ur-priest's slots on `aptitudes.ur-priestspells`

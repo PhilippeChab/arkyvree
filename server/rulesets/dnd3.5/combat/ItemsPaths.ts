@@ -1,6 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
-import { buildWeaponPaths } from "@/server/rulesets/dnd3.5/combat/WeaponPaths.ts";
 import { UNARMED_STRIKE } from "@/server/rulesets/dnd3.5/constants.ts";
 import type { GetterOf, PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import PathTraverser from "@/server/rulesets/engine/paths/PathTraverser.ts";
@@ -8,14 +7,14 @@ import { collectPropertySlugs } from "@/server/rulesets/engine/paths/propertySlu
 import { readComponent } from "@/server/rulesets/engine/paths/readComponent.ts";
 import type { Components, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
-import { deriveSegmentLabels } from "@/shared/customization/target.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { ARMOR_TYPE, SHIELD_TYPE, WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type ArmorsComponent from "./ArmorsComponent.ts";
 import type ShieldsComponent from "./ShieldsComponent.ts";
+import { buildWeaponPaths } from "./WeaponPaths.ts";
 import type WeaponsComponent from "./WeaponsComponent.ts";
 
 const ARMOR_LABELS: Record<string, string> = {

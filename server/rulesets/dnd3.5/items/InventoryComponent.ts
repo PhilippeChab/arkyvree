@@ -3,7 +3,6 @@ import type CombatComponent from "@/server/rulesets/dnd3.5/combat/CombatComponen
 import type ShieldsComponent from "@/server/rulesets/dnd3.5/combat/ShieldsComponent.ts";
 import type WeaponsComponent from "@/server/rulesets/dnd3.5/combat/WeaponsComponent.ts";
 import { UNARMED_STRIKE } from "@/server/rulesets/dnd3.5/constants.ts";
-import { getInventorySlot } from "@/server/rulesets/dnd3.5/items/slots.ts";
 import {
   type CharacterInventory,
   type Item,
@@ -11,6 +10,8 @@ import {
   type Property,
   type Requirement,
 } from "@/shared/relations.ts";
+
+import { getInventorySlot } from "./slots.ts";
 
 type InventoryData = Record<string, InventorySlotData> & {
   weaponsets: WeaponSetInventory;
@@ -62,22 +63,15 @@ export default class InventoryComponent {
   initialize(inventory: RawInventoryEntry[]) {
     this.rawItems = inventory;
     for (const entry of inventory) {
-      if (!entry.equipped) {
-        continue;
-      }
+      if (!entry.equipped) continue;
 
       const slot = getInventorySlot(entry.item.type, entry.location);
-      if (!slot) {
-        continue;
-      }
+      if (!slot) continue;
 
       const propertiesMap: Record<string, string> = {};
       for (const prop of entry.item.properties) {
-        if (prop.type in propertiesMap) {
-          propertiesMap[prop.type] += `, ${prop.value}`;
-        } else {
-          propertiesMap[prop.type] = prop.value;
-        }
+        if (prop.type in propertiesMap) propertiesMap[prop.type] += `, ${prop.value}`;
+        else propertiesMap[prop.type] = prop.value;
       }
 
       const isArmor = entry.item.type === "Armor";
@@ -124,8 +118,7 @@ export default class InventoryComponent {
     }
 
     const set0Mainhand = this.combat.getCombat().weaponsets["0"]?.mainhand;
-    if (set0Mainhand?.name === UNARMED_STRIKE && set0Mainhand.itemId === null) {
+    if (set0Mainhand?.name === UNARMED_STRIKE && set0Mainhand.itemId === null)
       this.weapons.registerWeapon(0, "Main Hand", { name: UNARMED_STRIKE });
-    }
   }
 }

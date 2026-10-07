@@ -4,15 +4,14 @@
  */
 
 import type { ExtractTablesWithRelations } from "drizzle-orm";
-import type { NodePgClient } from "drizzle-orm/node-postgres";
-import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
+import { drizzle as drizzlePg, type NodePgClient } from "drizzle-orm/node-postgres";
 import { type PgQueryResultHKT, type PgTransaction } from "drizzle-orm/pg-core";
 
 import * as relations from "@/drizzle/relations.ts";
 import * as schema from "@/drizzle/schema.ts";
-import { clearRequestCache } from "@/server/database/requestCache.ts";
 
 import { createPool } from "./pool.ts";
+import { clearRequestCache } from "./requestCache.ts";
 import { readTestDatabaseUrl } from "./testDatabaseUrl.ts";
 
 declare global {

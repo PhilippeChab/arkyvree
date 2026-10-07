@@ -63,9 +63,7 @@ export default class AptitudesComponent {
     for (const counts of [klassLevelFeatCountsByAptitudeId, klassLevelPowerCountsByAptitudeId]) {
       for (const [aptitudeId, count] of Object.entries(counts)) {
         const aptitude = aptitudeById.get(aptitudeId);
-        if (aptitude) {
-          aptitude.allowed += count;
-        }
+        if (aptitude) aptitude.allowed += count;
       }
     }
 
@@ -95,9 +93,7 @@ export default class AptitudesComponent {
       const aptitudeObj = aptitude as Record<string, unknown>;
       for (const [levelStr, count] of Object.entries(levelSpent)) {
         const levelData = aptitudeObj[levelStr] as AptitudeLevelData | undefined;
-        if (levelData) {
-          levelData.spent = count;
-        }
+        if (levelData) levelData.spent = count;
       }
     }
   }
@@ -119,9 +115,8 @@ export default class AptitudesComponent {
       if (leveledAptitudeIds.has(aptitude.id)) {
         this.leveledAptitudeKeys.add(key);
         const aptitudeObj = this.aptitudes[key] as Record<string, unknown>;
-        for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
-          aptitudeObj[String(level)] = this.newSpellLevel();
-        }
+        for (let level = 0; level <= MAX_SPELL_LEVEL; level++) aptitudeObj[String(level)] = this.newSpellLevel();
+
         aptitudeObj[JOINS_CLASS_LIST.path] = false;
       }
     }
@@ -134,9 +129,9 @@ export default class AptitudesComponent {
 
     for (const klass of Object.values(this.classes.getClasses())) {
       for (const level of klass.levels) {
-        for (const feat of level.feats) {
+        for (const feat of level.feats)
           spentByAptitudeId[feat.aptitudeId] = (spentByAptitudeId[feat.aptitudeId] || 0) + 1;
-        }
+
         for (const power of level.powers) {
           if (power.free) continue;
           if (power.powerLevel != null) {
@@ -318,20 +313,14 @@ export default class AptitudesComponent {
         for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
           const levelData = aptitudeObj[String(level)] as AptitudeLevelData | undefined;
           if (levelData) {
-            if (levelData.allowed === ALLOWED_ALL) {
-              levelData.available = 0;
-            } else {
-              levelData.available = levelData.allowed - levelData.spent;
-            }
+            if (levelData.allowed === ALLOWED_ALL) levelData.available = 0;
+            else levelData.available = levelData.allowed - levelData.spent;
           }
         }
       } else {
         // Update flat available
-        if (aptitude.allowed === ALLOWED_ALL) {
-          aptitude.available = 0;
-        } else {
-          aptitude.available = aptitude.allowed - aptitude.spent;
-        }
+        if (aptitude.allowed === ALLOWED_ALL) aptitude.available = 0;
+        else aptitude.available = aptitude.allowed - aptitude.spent;
       }
     }
   }

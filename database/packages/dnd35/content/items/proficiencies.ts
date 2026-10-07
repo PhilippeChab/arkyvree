@@ -4,11 +4,8 @@
 
 import { and, eq, eqStr, feat, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
-import {
-  getWeaponDefinition,
-  MARTIAL_WEAPONS,
-  SIMPLE_WEAPONS,
-} from "@/database/packages/dnd35/content/items/weapons.ts";
+
+import { getWeaponDefinition, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "./weapons.ts";
 
 export const HEAVY_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Heavy)"))];
 export const LIGHT_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Light)"))];

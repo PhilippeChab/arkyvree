@@ -1,5 +1,17 @@
-import { and, count, eq, exists, inArray, isNotNull, isNull, not, or, sql } from "drizzle-orm";
-import type { InferInsertModel, SQL } from "drizzle-orm";
+import {
+  and,
+  count,
+  eq,
+  exists,
+  inArray,
+  type InferInsertModel,
+  isNotNull,
+  isNull,
+  not,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 
 import {
   campaignsInCampaign,
@@ -295,17 +307,15 @@ class RulesetsRepository extends include(
 
     const conditions = this.scopeConditions(db, session, scope);
     const searchCondition = this.search(search, [this.table.name]);
-    if (searchCondition) {
-      conditions.push(searchCondition);
-    }
+    if (searchCondition) conditions.push(searchCondition);
+
     const condition = conditions.length > 1 ? and(...conditions) : conditions[0];
 
     const orderField = orderBy === "updatedAt" ? this.table.updatedAt : this.table.createdAt;
     const order = this.orderBy(orderField, orderDir);
 
-    if (scope === "starred") {
-      return await this.findStarredPage(db, session, condition, order, pagination);
-    }
+    if (scope === "starred") return await this.findStarredPage(db, session, condition, order, pagination);
+
     return await this.withPagination(
       pagination,
       async (paginate) =>

@@ -36,9 +36,7 @@ export function buildFeatureMap<T>(
   for (const cf of features) {
     map.set(cf.name.toLowerCase(), valueFn(cf));
     const stripped = cf.name.replace(TYPE_SUFFIX, "").toLowerCase();
-    if (stripped !== cf.name.toLowerCase()) {
-      map.set(stripped, valueFn(cf));
-    }
+    if (stripped !== cf.name.toLowerCase()) map.set(stripped, valueFn(cf));
   }
   return map;
 }
@@ -60,9 +58,8 @@ export function detectFeatureOccurrences(
       // Skip "Table:" entries — these are table references, not class features
       if (special.startsWith("Table:")) continue;
       const normalized = normalizeFeatureName(special);
-      if (!map.has(normalized)) {
-        map.set(normalized, []);
-      }
+      if (!map.has(normalized)) map.set(normalized, []);
+
       map.get(normalized)!.push(row.level);
     }
   }
@@ -85,9 +82,7 @@ export function isScalingFeature(normalizedName: string, progression: ClassRefer
   for (const row of progression) {
     for (const special of row.special) {
       if (!special) continue;
-      if (normalizeFeatureName(special) === normalizedName) {
-        rawEntries.push(special);
-      }
+      if (normalizeFeatureName(special) === normalizedName) rawEntries.push(special);
     }
   }
   if (rawEntries.length < 2) return false;
@@ -100,9 +95,8 @@ export function isScalingFeature(normalizedName: string, progression: ClassRefer
 
   if (numbers.every((n) => n !== null)) {
     // All entries have numeric suffixes — check if they increase
-    for (let i = 1; i < numbers.length; i++) {
-      if (numbers[i]! <= numbers[i - 1]!) return false;
-    }
+    for (let i = 1; i < numbers.length; i++) if (numbers[i]! <= numbers[i - 1]!) return false;
+
     return true;
   }
   return false;
@@ -166,9 +160,8 @@ export function parsePoolSubOptions(
   const matches: { name: string; index: number; matchLength: number }[] = [];
 
   let m;
-  while ((m = pattern.exec(description)) !== null) {
+  while ((m = pattern.exec(description)) !== null)
     matches.push({ name: m[1], index: m.index, matchLength: m[0].length });
-  }
 
   if (matches.length < 2) return undefined;
 

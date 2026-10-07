@@ -58,9 +58,7 @@ function FeatsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter
             });
           }
 
-          if (featEntries.length === 0) {
-            return <Text style={styles.emptyMessage}>No feats available</Text>;
-          }
+          if (featEntries.length === 0) return <Text style={styles.emptyMessage}>No feats available</Text>;
 
           const columns: (typeof featEntries)[] = [[], []];
           const weights = [0, 0];

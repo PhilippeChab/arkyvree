@@ -35,9 +35,8 @@ describe("A redundant class override", () => {
       "srd/classes/wizard.json",
       "complete-divine/classes/spiritShaman.json",
       "complete-warrior/classes/drunkenMaster.json",
-    ]) {
+    ])
       expect({ file, redundant: checkClassOverrides(classReference(file)).redundant }).toEqual({ file, redundant: [] });
-    }
   });
 
   test("is one equal to what's detected", () => {
@@ -118,9 +117,8 @@ describe("A class override the generator ignores", () => {
       "srd/classes/barbarian.json",
       "srd/classes/wizard.json",
       "complete-divine/classes/favoredSoul.json",
-    ]) {
+    ])
       expect({ file, ignored: checkClassOverrides(classReference(file)).ignored }).toEqual({ file, ignored: [] });
-    }
   });
 });
 

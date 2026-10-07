@@ -85,9 +85,7 @@ export function buildProjectedFeatsFromPicks(
   projectedFeats: NonNullable<ProjectedCharacterData["feats"]>;
   nonStackableFeatIds: string[];
 } {
-  if (selectedFeatPicks.length === 0) {
-    return { projectedFeats: [], nonStackableFeatIds: [] };
-  }
+  if (selectedFeatPicks.length === 0) return { projectedFeats: [], nonStackableFeatIds: [] };
 
   // Dedup by (featId, aptitudeId) — the wizard sometimes sends the same pick
   // under both `selectedFeatPicks` and `pendingLevelFeatPicks` (Add Level batch

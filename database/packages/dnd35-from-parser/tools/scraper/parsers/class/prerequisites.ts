@@ -2,10 +2,11 @@
 
 import type * as cheerio from "cheerio";
 
-import { findSectionHeader } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
 import { findSectionElements } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+
+import { findSectionHeader } from "./sections.ts";
 
 type Parsed = ClassReference["raw"]["prerequisites"]["parsed"];
 
@@ -86,15 +87,12 @@ function requiredCasterLevels(text: string): NonNullable<Parsed["casterLevel"]> 
 
   const spellLevelRegex = /(\d+)(?:st|nd|rd|th)[- ]level\s+(divine|arcane)\s*spells?/gi;
   let slMatch;
-  while ((slMatch = spellLevelRegex.exec(text)) !== null) {
+  while ((slMatch = spellLevelRegex.exec(text)) !== null)
     casterLevels.push({ type: slMatch[2].toLowerCase() as "divine" | "arcane", level: parseInt(slMatch[1], 10) });
-  }
 
   if (casterLevels.length === 0) {
     const genericMatch = text.match(/(?:Able to|ability to) cast (\d+)(?:st|nd|rd|th)[- ]level\s*spells?/i);
-    if (genericMatch) {
-      casterLevels.push({ type: "any", level: parseInt(genericMatch[1], 10) });
-    }
+    if (genericMatch) casterLevels.push({ type: "any", level: parseInt(genericMatch[1], 10) });
   }
 
   const spellOfMatch = text.match(/(arcane|divine)\s+spells?\s+of\s+(\d+)(?:st|nd|rd|th)\s+level/i);
@@ -106,9 +104,9 @@ function requiredCasterLevels(text: string): NonNullable<Parsed["casterLevel"]> 
   }
 
   const castTypeMatch = text.match(/(?:Able to|ability to) cast (arcane|divine) spells/i);
-  if (castTypeMatch && casterLevels.every((c) => c.type !== castTypeMatch[1].toLowerCase())) {
+  if (castTypeMatch && casterLevels.every((c) => c.type !== castTypeMatch[1].toLowerCase()))
     casterLevels.push({ type: castTypeMatch[1].toLowerCase() as "divine" | "arcane", level: 1 });
-  }
+
   return casterLevels;
 }
 
@@ -146,9 +144,8 @@ function requiredFeats(text: string): string[] {
       let trimmed = part.trim().replace(/\.$/, "");
       // "Spell Focus (or any other metamagic feat)" → "any metamagic feat"
       trimmed = trimmed.replace(/^.+?\(or any (?:other )?(.+? feat)\)$/i, "any $1");
-      if (trimmed && !trimmed.match(/^(or|any|must|have|the)$/i) && trimmed.length > 2 && trimmed.length < 60) {
+      if (trimmed && !trimmed.match(/^(or|any|must|have|the)$/i) && trimmed.length > 2 && trimmed.length < 60)
         feats.push(trimmed);
-      }
     }
   }
   return feats;
@@ -199,9 +196,8 @@ function requiredSpecials(text: string): string[] {
 
   const mustRegex = /Must (?:have |be )(.+?)(?:\.|$)/gi;
   let mustMatch: RegExpExecArray | null;
-  while ((mustMatch = mustRegex.exec(text)) !== null) {
-    specials.push(mustMatch[1].trim());
-  }
+  while ((mustMatch = mustRegex.exec(text)) !== null) specials.push(mustMatch[1].trim());
+
   return specials;
 }
 

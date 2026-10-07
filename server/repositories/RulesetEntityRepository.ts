@@ -15,12 +15,13 @@ import type {
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { ChecksExistence } from "@/server/repositories/concerns/ChecksExistence.ts";
-import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
-import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
-import { ScopesToRuleset } from "@/server/repositories/concerns/ScopesToRuleset.ts";
-import { Searches } from "@/server/repositories/concerns/Searches.ts";
+
+import BaseRepository from "./BaseRepository.ts";
+import { ChecksExistence } from "./concerns/ChecksExistence.ts";
+import { GuardsStaleEdits } from "./concerns/GuardsStaleEdits.ts";
+import { Paginates } from "./concerns/Paginates.ts";
+import { ScopesToRuleset } from "./concerns/ScopesToRuleset.ts";
+import { Searches } from "./concerns/Searches.ts";
 
 type RulesetEntityTable =
   | typeof abilitiesInRules

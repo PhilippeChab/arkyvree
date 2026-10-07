@@ -293,9 +293,8 @@ describe("RulesetsService", () => {
       const { rulesetId } = await getSeedCtx();
       const created = await fork(session, { id: rulesetId }, { private: true });
       const feats = await Feats.findPage(db, { rulesetId }, { limit: 26, page: 1 });
-      for (const feat of feats.items) {
-        expect((await copyEntity(db, "feats", feat.id, created)).id).not.toBe(feat.id);
-      }
+      for (const feat of feats.items) expect((await copyEntity(db, "feats", feat.id, created)).id).not.toBe(feat.id);
+
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toHaveLength(26);
     });
   });

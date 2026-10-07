@@ -1,18 +1,19 @@
-import aldric from "@/database/seeds/characters/aldric.ts";
-import bjorn from "@/database/seeds/characters/bjorn.ts";
-import elara from "@/database/seeds/characters/elara.ts";
-import fenn from "@/database/seeds/characters/fenn.ts";
-import grak from "@/database/seeds/characters/grak.ts";
-import kael from "@/database/seeds/characters/kael.ts";
-import lyra from "@/database/seeds/characters/lyra.ts";
-import melody from "@/database/seeds/characters/melody.ts";
-import rowan from "@/database/seeds/characters/rowan.ts";
-import theron from "@/database/seeds/characters/theron.ts";
-import vex from "@/database/seeds/characters/vex.ts";
-import zen from "@/database/seeds/characters/zen.ts";
-import { seedCharacter } from "@/database/seeds/seedCharacter.ts";
-import { getSeedContext } from "@/database/seeds/seedContext.ts";
 import type { Db } from "@/server/database/index.ts";
+
+import aldric from "./characters/aldric.ts";
+import bjorn from "./characters/bjorn.ts";
+import elara from "./characters/elara.ts";
+import fenn from "./characters/fenn.ts";
+import grak from "./characters/grak.ts";
+import kael from "./characters/kael.ts";
+import lyra from "./characters/lyra.ts";
+import melody from "./characters/melody.ts";
+import rowan from "./characters/rowan.ts";
+import theron from "./characters/theron.ts";
+import vex from "./characters/vex.ts";
+import zen from "./characters/zen.ts";
+import { seedCharacter } from "./seedCharacter.ts";
+import { getSeedContext } from "./seedContext.ts";
 
 /** The seed user's characters on the core rules. */
 export const CHARACTERS = [bjorn, grak, lyra, zen, kael, elara, vex, theron, melody, rowan, aldric, fenn];

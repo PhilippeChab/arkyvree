@@ -95,9 +95,8 @@ describe("rulesets items", () => {
 
   test("rejects an item without a name or with a non-numeric weight or cost", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    for (const json of [{ name: "" }, { name: "Item", weight: "heavy" }, { name: "Item", costGp: "cheap" }]) {
+    for (const json of [{ name: "" }, { name: "Item", weight: "heavy" }, { name: "Item", costGp: "cheap" }])
       await expectStatus(items.$post({ param: { id }, json: json as never }), 400);
-    }
   });
 
   test("returns 404 for a missing ruleset or item", async () => {

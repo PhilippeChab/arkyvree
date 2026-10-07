@@ -3,26 +3,27 @@ import { z } from "zod";
 
 import { rulesetKind } from "@/drizzle/schema.ts";
 import { denyDemoUser, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
-import abilities from "@/server/routers/api/rulesets/abilities/index.ts";
-import aptitudes from "@/server/routers/api/rulesets/aptitudes/index.ts";
-import changes from "@/server/routers/api/rulesets/changes/index.ts";
-import classes from "@/server/routers/api/rulesets/classes/index.ts";
-import contributorsRouter from "@/server/routers/api/rulesets/contributors/index.ts";
-import modifiers from "@/server/routers/api/rulesets/customization/modifiers/index.ts";
-import properties from "@/server/routers/api/rulesets/customization/properties/index.ts";
-import requirements from "@/server/routers/api/rulesets/customization/requirements/index.ts";
-import targetRouter from "@/server/routers/api/rulesets/customization/target/index.ts";
-import extensions from "@/server/routers/api/rulesets/extensions/index.ts";
-import feats from "@/server/routers/api/rulesets/feats/index.ts";
-import items from "@/server/routers/api/rulesets/items/index.ts";
-import languages from "@/server/routers/api/rulesets/languages/index.ts";
-import mechanics from "@/server/routers/api/rulesets/mechanics/index.ts";
-import powers from "@/server/routers/api/rulesets/powers/index.ts";
-import races from "@/server/routers/api/rulesets/races/index.ts";
-import saves from "@/server/routers/api/rulesets/saves/index.ts";
-import skills from "@/server/routers/api/rulesets/skills/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
+
+import abilities from "./abilities/index.ts";
+import aptitudes from "./aptitudes/index.ts";
+import changes from "./changes/index.ts";
+import classes from "./classes/index.ts";
+import contributorsRouter from "./contributors/index.ts";
+import modifiers from "./customization/modifiers/index.ts";
+import properties from "./customization/properties/index.ts";
+import requirements from "./customization/requirements/index.ts";
+import targetRouter from "./customization/target/index.ts";
+import extensions from "./extensions/index.ts";
+import feats from "./feats/index.ts";
+import items from "./items/index.ts";
+import languages from "./languages/index.ts";
+import mechanics from "./mechanics/index.ts";
+import powers from "./powers/index.ts";
+import races from "./races/index.ts";
+import saves from "./saves/index.ts";
+import skills from "./skills/index.ts";
 
 export default new Hono()
   .use(sessionMiddleware)

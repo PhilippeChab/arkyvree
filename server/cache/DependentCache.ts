@@ -17,9 +17,7 @@ export default class DependentCache<T> {
     // MemoryCache is capped at 200 entries. No unbounded dependency registry,
     // no database lookup, and unrelated cached/in-flight reads stay reusable.
     this.cache.invalidateWhere((entry) => entry.dependencies.has(dependencyId));
-    for (const [key, entry] of this.pending) {
-      if (entry.dependencies.has(dependencyId)) this.pending.delete(key);
-    }
+    for (const [key, entry] of this.pending) if (entry.dependencies.has(dependencyId)) this.pending.delete(key);
   }
 
   invalidateAll(): void {
@@ -32,9 +30,8 @@ export default class DependentCache<T> {
   }
 
   async getOrFetch(key: string, dependencyIds: readonly string[], fetcher: () => Promise<Loaded<T>>): Promise<T> {
-    if (!MemoryCache.isEnabled()) {
-      return (await fetcher()).data;
-    }
+    if (!MemoryCache.isEnabled()) return (await fetcher()).data;
+
     const cached = this.cache.get(key);
     if (cached) return cached.data;
     const active = this.pending.get(key);

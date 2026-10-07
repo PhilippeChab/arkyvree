@@ -10,13 +10,9 @@ class ExportsService {
       userId: session.userId,
     });
 
-    if (!exportRecord) {
-      throw new NotFoundError("Export not found");
-    }
+    if (!exportRecord) throw new NotFoundError("Export not found");
 
-    if (new Date(exportRecord.expiresAt) < new Date()) {
-      throw new NotFoundError("Export has expired");
-    }
+    if (new Date(exportRecord.expiresAt) < new Date()) throw new NotFoundError("Export has expired");
 
     return exportRecord;
   }

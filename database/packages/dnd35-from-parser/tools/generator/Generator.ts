@@ -2,17 +2,6 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, relative } from "node:path";
 
 import type { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
-import { BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import { GeneratesBooks } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesBooks.ts";
-import { GeneratesClasses } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesClasses.ts";
-import { GeneratesCopies } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesCopies.ts";
-import { GeneratesDomains } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesDomains.ts";
-import { GeneratesFeats } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesFeats.ts";
-import { GeneratesItems } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesItems.ts";
-import { GeneratesMagicItems } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesMagicItems.ts";
-import { GeneratesRaces } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesRaces.ts";
-import { GeneratesSpells } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesSpells.ts";
-import { GeneratesWizardSchools } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesWizardSchools.ts";
 import {
   filterReferenceFiles,
   getReferencePath,
@@ -25,6 +14,18 @@ import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import { include } from "@/server/mixins.ts";
+
+import { BaseGenerator } from "./BaseGenerator.ts";
+import { GeneratesBooks } from "./concerns/GeneratesBooks.ts";
+import { GeneratesClasses } from "./concerns/GeneratesClasses.ts";
+import { GeneratesCopies } from "./concerns/GeneratesCopies.ts";
+import { GeneratesDomains } from "./concerns/GeneratesDomains.ts";
+import { GeneratesFeats } from "./concerns/GeneratesFeats.ts";
+import { GeneratesItems } from "./concerns/GeneratesItems.ts";
+import { GeneratesMagicItems } from "./concerns/GeneratesMagicItems.ts";
+import { GeneratesRaces } from "./concerns/GeneratesRaces.ts";
+import { GeneratesSpells } from "./concerns/GeneratesSpells.ts";
+import { GeneratesWizardSchools } from "./concerns/GeneratesWizardSchools.ts";
 
 /**
  * Generates the content package's seed data from the references, into `dir`: a step that writes one kind of file is a

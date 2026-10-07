@@ -31,9 +31,10 @@ import {
   KLASS_CASTER_TYPE,
   KLASS_LEVEL_BAB,
   KLASS_LEVEL_SKILL_POINTS,
+  SPELL_SCHOOL,
 } from "@/shared/dnd3.5/properties/index.ts";
-import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
-import { describeCustomizations, freshExtensionSeeder, freshSeeder, namesOf } from "@/tests/seeds/freshSeed.ts";
+
+import { describeCustomizations, freshExtensionSeeder, freshSeeder, namesOf } from "./freshSeed.ts";
 
 /**
  * The class level each spell level opens at, the first at the first: 1, 3, 5…

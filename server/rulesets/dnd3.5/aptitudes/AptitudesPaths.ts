@@ -134,11 +134,9 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
   /** The leveled aptitudes: those with spells at a level, and those a class gives slots in before they have any. */
   private leveledAptitudeIds(rulesetData: RulesetData) {
     const leveledAptitudeIds = collectClassListIds(rulesetData);
-    for (const power of rulesetData.powers) {
-      for (const pa of power.powersAptitudesInRules) {
-        if (pa.level != null) leveledAptitudeIds.add(pa.aptitudeId);
-      }
-    }
+    for (const power of rulesetData.powers)
+      for (const pa of power.powersAptitudesInRules) if (pa.level != null) leveledAptitudeIds.add(pa.aptitudeId);
+
     return leveledAptitudeIds;
   }
 

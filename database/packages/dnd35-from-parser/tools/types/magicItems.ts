@@ -1,6 +1,7 @@
-import type { ItemFields } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
-import type { Overrides, ScrapedMeta } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import type { Modifier, Property } from "@/database/packages/dnd35/content/customization/types.ts";
+
+import type { ItemFields } from "./items.ts";
+import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 /** A magic item's fields an override sets. */
 type MagicItemFields = ItemFields & {

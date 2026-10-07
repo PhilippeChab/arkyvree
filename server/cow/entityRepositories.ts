@@ -52,7 +52,6 @@ export const ENTITY_REPOS: Record<RulesetEntityType, EntityRepository> = {
 
 /** Locks an entity a change writes under (its customizations, its delete), by its stored id: a not found when gone. */
 export async function lockEntityForMutation(tx: Db, entityType: RulesetEntityType, entityId: string): Promise<void> {
-  if (!(await ENTITY_REPOS[entityType].lock(tx, { id: entityId }))) {
+  if (!(await ENTITY_REPOS[entityType].lock(tx, { id: entityId })))
     throw new NotFoundError("Customization source no longer exists; refresh the entity");
-  }
 }

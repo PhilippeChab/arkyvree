@@ -12,9 +12,7 @@ type SendArgs = {
 
 class EmailService {
   async send(options: SendArgs): Promise<{ success: boolean; error?: string }> {
-    if (isTest()) {
-      return { success: false, error: "Email service not configured" };
-    }
+    if (isTest()) return { success: false, error: "Email service not configured" };
 
     try {
       const from = options.from || "Arkyvree <notifications@arkyvree.com>";

@@ -1,8 +1,7 @@
 import { afterAll, afterEach, expect, test } from "bun:test";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { lockEntityForMutation } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
@@ -97,7 +96,5 @@ test("every customization kind reports a row removed before the owner lock as mi
     () => RequirementsService.updateRequirement(session, rulesetId, "feats", featId, requirement.id, { level: "1" }),
     () => RequirementsService.deleteRequirement(session, rulesetId, "feats", featId, requirement.id),
   ];
-  for (const mutate of mutations) {
-    await expect(mutate()).rejects.toThrow("no longer exists");
-  }
+  for (const mutate of mutations) await expect(mutate()).rejects.toThrow("no longer exists");
 });

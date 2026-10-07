@@ -73,11 +73,9 @@ export function deriveSegmentLabels(
   overrides: Record<string, string> = {},
 ): Record<string, string> {
   const labels: Record<string, string> = { ...overrides };
-  for (const { path } of paths) {
-    for (const segment of path.split(".")) {
-      if (!(segment in labels)) labels[segment] = formatSegment(segment);
-    }
-  }
+  for (const { path } of paths)
+    for (const segment of path.split(".")) if (!(segment in labels)) labels[segment] = formatSegment(segment);
+
   return labels;
 }
 
@@ -96,11 +94,8 @@ export function pickTargetLabels(targets: string[], segmentLabels: Record<string
   for (const target of targets) {
     const inner = target.replace(/^\{\{?\s*|\s*\}?\}$/g, "").trim();
     const bracketed = [...inner.matchAll(/\[([^\]]+)\]/g)].map((match) => match[1].trim());
-    for (const path of bracketed.length > 0 ? bracketed : [inner]) {
-      for (const segment of path.split(".")) {
-        if (segment in segmentLabels) labels[segment] = segmentLabels[segment];
-      }
-    }
+    for (const path of bracketed.length > 0 ? bracketed : [inner])
+      for (const segment of path.split(".")) if (segment in segmentLabels) labels[segment] = segmentLabels[segment];
   }
   return labels;
 }

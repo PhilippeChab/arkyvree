@@ -62,7 +62,6 @@ test("a query whose where matches none of its branches throws, instead of writin
     () => Rulesets.findMany(db, unmatched),
     () => Characters.findOne(db, unmatched),
     () => Users.findOne(db, unmatched),
-  ]) {
+  ])
     await expect(write()).rejects.toThrow("a where that matches none of its branches");
-  }
 });

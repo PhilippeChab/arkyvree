@@ -1,5 +1,4 @@
-import type { InferInsertModel } from "drizzle-orm";
-import { and, eq, getTableColumns, ilike, inArray, isNull, or } from "drizzle-orm";
+import { and, eq, getTableColumns, ilike, inArray, type InferInsertModel, isNull, or } from "drizzle-orm";
 
 import { invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";

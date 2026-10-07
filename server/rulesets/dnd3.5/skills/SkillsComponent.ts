@@ -29,9 +29,9 @@ type SkillsData = {
  * user-authored ruleset can nest them ("Knowledge (Arcana) (Ancient)"), so every " (" is a possible base's end.
  */
 export function isSkillSubtypeOf(name: string, names: Set<string>): boolean {
-  for (let idx = name.indexOf(" ("); idx > 0; idx = name.indexOf(" (", idx + 1)) {
+  for (let idx = name.indexOf(" ("); idx > 0; idx = name.indexOf(" (", idx + 1))
     if (names.has(name.slice(0, idx))) return true;
-  }
+
   return false;
 }
 
@@ -74,16 +74,12 @@ export default class SkillsComponent {
 
     if (this.characterArmors) {
       const uniqueArmors = new Set(Object.values(this.characterArmors.getArmors()));
-      for (const armor of uniqueArmors) {
-        armorPenalty += armor.checkpenalty;
-      }
+      for (const armor of uniqueArmors) armorPenalty += armor.checkpenalty;
     }
 
     if (this.characterShields) {
       const uniqueShields = new Set(Object.values(this.characterShields.getShields()));
-      for (const shield of uniqueShields) {
-        armorPenalty += shield.checkpenalty;
-      }
+      for (const shield of uniqueShields) armorPenalty += shield.checkpenalty;
     }
 
     // D&D 3.5: use the worse (more negative) of armor+shield penalty vs encumbrance penalty
@@ -202,15 +198,11 @@ export default class SkillsComponent {
 
     // Build ability ID -> name lookup
     const abilityNameById = new Map<string, string>();
-    for (const a of rulesetAbilities) {
-      abilityNameById.set(a.id, a.name);
-    }
+    for (const a of rulesetAbilities) abilityNameById.set(a.id, a.name);
 
     // Build skill ID → name lookup from ruleset skills
     const skillNameById = new Map<string, string>();
-    for (const s of rulesetSkills) {
-      skillNameById.set(s.id, s.name);
-    }
+    for (const s of rulesetSkills) skillNameById.set(s.id, s.name);
 
     // Collect all class skill IDs + mark subtypes as innate
     // (e.g., "Craft (Armorsmithing)" is innate if "Craft" is a class skill)
@@ -226,9 +218,7 @@ export default class SkillsComponent {
     // Also mark subtypes of class skills as innate.
     for (const skill of rulesetSkills) {
       if (this.innateSkillIds.has(skill.id)) continue;
-      if (isSkillSubtypeOf(skill.name, allKlassSkillNames)) {
-        this.innateSkillIds.add(skill.id);
-      }
+      if (isSkillSubtypeOf(skill.name, allKlassSkillNames)) this.innateSkillIds.add(skill.id);
     }
 
     // Convert stored points to actual ranks per class-level.

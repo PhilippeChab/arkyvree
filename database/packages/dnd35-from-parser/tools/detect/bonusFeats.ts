@@ -21,13 +21,7 @@ export function getBonusFeatAptitudes(classes: ClassReferenceFile[]): Map<string
   for (const { ref } of classes) {
     // Bonus feat lists → aptitudes
     const lists = ref.detected?.bonusFeatLists;
-    if (lists) {
-      for (const list of lists) {
-        for (const featName of list.feats) {
-          add(featName, list.aptitude);
-        }
-      }
-    }
+    if (lists) for (const list of lists) for (const featName of list.feats) add(featName, list.aptitude);
 
     // "gains X as a bonus feat" in class feature descriptions → class feature aptitude
     const aptitude = ref.mapping?.classFeatureAptitude;

@@ -11,10 +11,11 @@
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import type DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import type { LevelUpProjector, ProjectedCharacterData, RulesetModule } from "@/server/rulesets/engine/types.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Power, Property, Skill } from "@/shared/relations.ts";
+
+import type DetailedCharacter from "./character/DetailedCharacter.ts";
 
 /** A projected power row with 3.5 spell-level and save-name fields. */
 type Dnd35ProjectedPower = Power & {

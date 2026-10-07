@@ -38,8 +38,7 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
       scaleFeats(raceStats, totalHD).filter((feat) => !baseFeats.has(feat)),
       rulesetData,
     );
-    for (const [skillName, ranks] of Object.entries(scaleSkillRanks(raceStats, totalHD))) {
+    for (const [skillName, ranks] of Object.entries(scaleSkillRanks(raceStats, totalHD)))
       this.components.skills.addRanks(skillName, ranks);
-    }
   }
 }

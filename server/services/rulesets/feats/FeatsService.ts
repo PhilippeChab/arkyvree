@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -38,14 +37,12 @@ class FeatsService {
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
         const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "feats", body.name);
 
-        if (!body.aptitudeIds || body.aptitudeIds.length === 0) {
+        if (!body.aptitudeIds || body.aptitudeIds.length === 0)
           throw new BadRequestError("At least one aptitude must be selected for the feat");
-        }
 
         const spellAptitudes = await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds });
-        if (spellAptitudes.length > 0) {
+        if (spellAptitudes.length > 0)
           throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
-        }
 
         // Named as an ancestor the fork deleted, the feat stands in for it (`RulesetEdit.repointTombstone`), checks
         // finding it by that name: generated if the ancestor was
@@ -57,9 +54,7 @@ class FeatsService {
         });
         const feat = rows[0];
 
-        if (tombstoneAncestorId) {
-          await edit.repointTombstone(tx, "feats", tombstoneAncestorId, feat.id);
-        }
+        if (tombstoneAncestorId) await edit.repointTombstone(tx, "feats", tombstoneAncestorId, feat.id);
 
         for (const aptitudeId of body.aptitudeIds) {
           await FeatsAptitudes.create(tx, {
@@ -194,9 +189,7 @@ class FeatsService {
         const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
 
         // A generated feat's name names its option (`Weapon Focus: Longsword`), which checks and generators find it by
-        if (body.name !== feat.name && feat.generated) {
-          throw new BadRequestError("Generated feats cannot be renamed");
-        }
+        if (body.name !== feat.name && feat.generated) throw new BadRequestError("Generated feats cannot be renamed");
 
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
         const { id: targetId, copied } = await edit.cowToEdit(tx, "feats", feat);
@@ -210,9 +203,8 @@ class FeatsService {
           },
           { id: targetId, expectedUpdatedAt },
         );
-        if (expectedUpdatedAt && rows.length === 0) {
-          throw new ConflictError(STALE_ENTITY_MESSAGE);
-        }
+        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
         const updatedFeat = rows[0];
 
         if (body.aptitudeIds !== undefined) {
@@ -220,9 +212,8 @@ class FeatsService {
 
           if (body.aptitudeIds.length > 0) {
             const spellAptitudes = await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds });
-            if (spellAptitudes.length > 0) {
+            if (spellAptitudes.length > 0)
               throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
-            }
 
             await FeatsAptitudes.createMany(
               tx,

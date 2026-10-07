@@ -4,15 +4,6 @@ import {
   buildCompanionGrantModifiers,
   buildUncannyDodgeModifiers,
 } from "@/database/packages/dnd35-from-parser/tools/detect/grants.ts";
-import {
-  getClassAptitudePicks,
-  type PerLevelExpansion,
-} from "@/database/packages/dnd35-from-parser/tools/seeds/classes/aptitudePicks.ts";
-import { detectClassFeatFamily } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/featFamilies.ts";
-import {
-  findExistingFeatGranted,
-  insertOrdinalInName,
-} from "@/database/packages/dnd35-from-parser/tools/seeds/classes/features.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { bonus, grantFeat } from "@/database/packages/dnd35/content/customization/modifiers.ts";
@@ -22,6 +13,10 @@ import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts"
 import { FAVORED_ENEMY_FAMILY } from "@/database/packages/dnd35/data/feats/favoredEnemy.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { getClassAptitudePicks, type PerLevelExpansion } from "./aptitudePicks.ts";
+import { detectClassFeatFamily } from "./featFamilies.ts";
+import { findExistingFeatGranted, insertOrdinalInName } from "./features.ts";
 
 /** Having `level` levels in the class `classSlug`. */
 function classLevelRequirement(classSlug: string, level: number): RequirementEntry[] {

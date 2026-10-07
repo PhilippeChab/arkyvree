@@ -1,9 +1,10 @@
 import { asc, eq, isNull } from "drizzle-orm";
 
 import { klassesInRules, klassLevelsInRules, levelsInCharacter } from "@/drizzle/schema.ts";
-import type { Character } from "@/scripts/ops/validateCharacters/queries.ts";
-import { moduleOf } from "@/scripts/ops/validateCharacters/rulesetModules.ts";
 import { db } from "@/server/database/index.ts";
+
+import type { Character } from "./queries.ts";
+import { moduleOf } from "./rulesetModules.ts";
 
 /**
  * Phase 3: Ability increases — on the levels the ruleset gives one

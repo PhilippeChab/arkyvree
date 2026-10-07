@@ -1,5 +1,4 @@
-import type { Browser, Page } from "@playwright/test";
-import { expect } from "@playwright/test";
+import { type Browser, expect, type Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
 import { test } from "@/tests/e2e/fixtures.ts";

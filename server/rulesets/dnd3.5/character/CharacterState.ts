@@ -1,5 +1,4 @@
 import type { Db } from "@/server/database/index.ts";
-import { type Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import type { Dnd35LoadedCharacterData } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
 import type ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
 import type { SkillFlags } from "@/server/rulesets/engine/module/index.ts";
@@ -35,6 +34,8 @@ import type {
   RulesetSave,
   Skill,
 } from "@/shared/relations.ts";
+
+import { type Dnd35Components } from "./components.ts";
 
 /**
  * Data loader interface that ruleset implementations must provide.

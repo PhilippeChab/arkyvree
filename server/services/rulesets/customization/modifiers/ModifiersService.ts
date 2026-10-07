@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
-import { RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, type RulesetData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { copyEntityCustomizations, fetchEntityCustomizations, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -24,9 +23,9 @@ class ModifiersService {
   /** A modifier the entity is the source of, or a 404. */
   private findEntityModifier(rulesetData: RulesetData, entityType: string, entityId: string, modifierId: string) {
     const modifier = rulesetData.modifiersById.get(modifierId);
-    if (!modifier || modifier.sourceId !== entityId || modifier.sourceType !== entityType) {
+    if (!modifier || modifier.sourceId !== entityId || modifier.sourceType !== entityType)
       throw new NotFoundError("Modifier not found for this entity");
-    }
+
     return modifier;
   }
 
@@ -55,9 +54,8 @@ class ModifiersService {
             !sourceModifier ||
             sourceModifier.sourceId !== effectiveEntityId ||
             sourceModifier.sourceType !== entityType
-          ) {
+          )
             throw new NotFoundError("Source modifier not found for this entity");
-          }
         }
 
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -272,9 +270,8 @@ class ModifiersService {
           },
           { id: resolvedModifierId, expectedUpdatedAt },
         );
-        if (expectedUpdatedAt && rows.length === 0) {
-          throw new ConflictError(STALE_ENTITY_MESSAGE);
-        }
+        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
         const updatedModifier = rows[0];
 
         const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);

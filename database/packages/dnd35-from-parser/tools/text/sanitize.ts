@@ -90,15 +90,14 @@ export function sanitizeHtml(html: string): string {
  * - Description-like keys also get book-reference stripping via sanitizeText
  */
 export function sanitizeJsonValues<T>(obj: T, parentKey?: string): T {
-  if (typeof obj === "string") {
+  if (typeof obj === "string")
     return (parentKey && DESCRIPTION_KEYS.has(parentKey) ? sanitizeText(obj) : fixEncoding(obj)) as T;
-  }
+
   if (Array.isArray(obj)) return obj.map((item) => sanitizeJsonValues(item, parentKey)) as T;
   if (isRecord(obj)) {
     const result: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(obj)) {
-      result[fixEncoding(k)] = sanitizeJsonValues(v, k);
-    }
+    for (const [k, v] of Object.entries(obj)) result[fixEncoding(k)] = sanitizeJsonValues(v, k);
+
     return result as T;
   }
   return obj;
@@ -184,12 +183,13 @@ export function sanitizeText(text: string): string {
 /** Recursively sort all object keys for deterministic JSON output */
 export function sortKeysDeep(val: unknown): unknown {
   if (Array.isArray(val)) return val.map(sortKeysDeep);
-  if (isRecord(val))
+  if (isRecord(val)) {
     return Object.fromEntries(
       Object.keys(val)
         .sort()
         .map((key) => [key, sortKeysDeep(val[key])]),
     );
+  }
   return val;
 }
 

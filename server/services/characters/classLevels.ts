@@ -26,9 +26,7 @@ export function getClassLevelsByCharacter(
       levelsByCharacter.set(level.characterId, bucket);
     }
     const currentLevel = bucket.get(klassName) || 0;
-    if (klassLevel.level > currentLevel) {
-      bucket.set(klassName, klassLevel.level);
-    }
+    if (klassLevel.level > currentLevel) bucket.set(klassName, klassLevel.level);
   }
   return new Map(
     [...levelsByCharacter].map(([characterId, bucket]) => [

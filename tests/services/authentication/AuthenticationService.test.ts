@@ -18,8 +18,7 @@ import {
   Users,
 } from "@/server/repositories/index.ts";
 import { AccountService } from "@/server/services/authentication/account/index.ts";
-import { signInAsGoogleAccount } from "@/server/services/authentication/index.ts";
-import { AuthenticationService } from "@/server/services/authentication/index.ts";
+import { AuthenticationService, signInAsGoogleAccount } from "@/server/services/authentication/index.ts";
 import { LinkedAccountsService, linkGoogleAccountTo } from "@/server/services/authentication/linkedAccounts/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";

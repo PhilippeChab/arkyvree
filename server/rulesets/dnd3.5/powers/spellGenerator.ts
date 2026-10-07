@@ -140,15 +140,11 @@ export async function generateSpellProperties(tx: Db, powerId: string, fields: S
   add(SPELL_DURATION, fields.duration);
   add(SPELL_RESISTANCE, fields.spellResistance);
 
-  for (const descriptor of fields.descriptors ?? []) {
+  for (const descriptor of fields.descriptors ?? [])
     props.push({ entityId: powerId, entityType: "powers", type: SPELL_DESCRIPTOR, value: descriptor });
-  }
 
-  for (const component of fields.components ?? []) {
+  for (const component of fields.components ?? [])
     props.push({ entityId: powerId, entityType: "powers", type: SPELL_COMPONENT, value: component });
-  }
 
-  if (props.length > 0) {
-    await Properties.createMany(tx, props);
-  }
+  if (props.length > 0) await Properties.createMany(tx, props);
 }

@@ -48,9 +48,7 @@ export default createMiddleware<SessionContext>(async (c, next) => {
 
   const user = await Users.findOne(db, { id: session.userId });
   if (!user) throw new UnauthorizedError("Invalid session");
-  if (user.expiresAt && new Date(user.expiresAt) < new Date()) {
-    throw new UnauthorizedError("Session expired");
-  }
+  if (user.expiresAt && new Date(user.expiresAt) < new Date()) throw new UnauthorizedError("Session expired");
 
   c.set(SESSION_CONTEXT_KEY, session);
   c.set(USER_CONTEXT_KEY, user);

@@ -2,8 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { location } from "@/drizzle/schema.ts";
-import { validate } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
+import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { characterIdParam } from "@/server/routers/api/validation.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 

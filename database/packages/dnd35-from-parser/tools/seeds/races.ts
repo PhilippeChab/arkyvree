@@ -1,9 +1,10 @@
 /** A race reference's seeds: its RaceSeed[]. */
 
-import { checkOneOf, getCheckedValue } from "@/database/packages/dnd35-from-parser/tools/seeds/checks.ts";
 import { type RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
+
+import { checkOneOf, getCheckedValue } from "./checks.ts";
 
 export function buildRaceSeeds(ref: RaceReference): RaceSeed[] {
   return getSeededRaces(ref).map(({ entry, override, size }) => {

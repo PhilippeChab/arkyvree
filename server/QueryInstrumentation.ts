@@ -1,6 +1,6 @@
 import { Client, Pool } from "pg";
 
-import { timingStorage } from "@/server/timing.ts";
+import { timingStorage } from "./timing.ts";
 
 const SLOW_QUERY_THRESHOLD_MS = 200;
 
@@ -12,9 +12,7 @@ function onQueryEnd(): void {
   const store = timingStorage.getStore();
   if (!store) return;
   store.activeQueries -= 1;
-  if (store.activeQueries === 0) {
-    store.dbTimeMs += performance.now() - store.dbWallStart;
-  }
+  if (store.activeQueries === 0) store.dbTimeMs += performance.now() - store.dbWallStart;
 }
 
 function onQueryStart(): void {
@@ -22,9 +20,7 @@ function onQueryStart(): void {
   if (!store) return;
   store.queryCount += 1;
   store.activeQueries += 1;
-  if (store.activeQueries === 1) {
-    store.dbWallStart = performance.now();
-  }
+  if (store.activeQueries === 1) store.dbWallStart = performance.now();
 }
 
 /** The SQL text of a `query` call's first argument: a string, or a config with `text`. */

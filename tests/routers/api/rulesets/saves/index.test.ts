@@ -41,9 +41,8 @@ describe("rulesets saves", () => {
       { abilityId: abilityMap["Wisdom"] },
       { name: "No ability" },
       { name: "Bad ability", abilityId: "not-a-uuid" },
-    ]) {
+    ])
       await expectStatus(saves.$post({ param: { id }, json: json as never }), 400);
-    }
   });
 
   test("returns 404 for a missing ruleset or save", async () => {

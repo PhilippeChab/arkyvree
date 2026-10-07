@@ -21,9 +21,8 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
       const mods = rulesetData.modifiersBySource.get(featRow.id);
       if (mods) featModifiers.push(...mods);
     }
-    if (featModifiers.length > 0 && this.components) {
+    if (featModifiers.length > 0 && this.components)
       this.modifierEvaluator.evaluateModifiers(this.components, featModifiers, this.requirementEvaluator);
-    }
   }
 
   protected abstract applyMasterDerivation(parentCharacterId: string, rulesetData: RulesetData): Promise<void>;
@@ -38,9 +37,8 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
    * so does a raised ability.
    */
   protected applySkillTotals(totals: Record<string, number>, ranks: Record<string, number> = {}): void {
-    for (const [skillName, total] of Object.entries(totals)) {
+    for (const [skillName, total] of Object.entries(totals))
       this.components.skills.setStatBlockTotal(skillName, total, ranks[skillName] ?? 0);
-    }
   }
 
   /**
@@ -58,9 +56,8 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
   protected async loadMaster(parentCharacterId: string, rulesetData: RulesetData): Promise<Dnd35DetailedCharacter> {
     return await memoizeRequest(`bonded-master:${parentCharacterId}`, async () => {
       const masterRecord = await Characters.findOne(db, { id: parentCharacterId }, Visibility.All);
-      if (!masterRecord) {
-        throw new Error(`Bonded's master not found: ${parentCharacterId}`);
-      }
+      if (!masterRecord) throw new Error(`Bonded's master not found: ${parentCharacterId}`);
+
       const composed = new Dnd35DetailedCharacter(masterRecord);
       await composed.build(db, undefined, { ruleset: this.ruleset!, rulesetData });
       return composed;
@@ -73,21 +70,18 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
    * modifier adds on top. Then the character's own setup, Weapon Finesse on the natural attacks included.
    */
   protected override async preRequirementProcessing(rulesetData: RulesetData): Promise<void> {
-    if (this.character.parentCharacterId) {
+    if (this.character.parentCharacterId)
       await this.applyMasterDerivation(this.character.parentCharacterId, rulesetData);
-    }
 
     const raceStats = getBondedRaceStats(this.race?.name);
     if (raceStats) {
-      if (raceStats.naturalAttacks.length > 0) {
-        this.components.combat.setNaturalAttacks(raceStats.naturalAttacks);
-      }
+      if (raceStats.naturalAttacks.length > 0) this.components.combat.setNaturalAttacks(raceStats.naturalAttacks);
+
       this.applyRaceDefaults(raceStats, rulesetData);
     }
 
-    if (this.cachedTotalHD !== null) {
-      this.components.combat.setHitDiceOverride(this.cachedTotalHD);
-    }
+    if (this.cachedTotalHD !== null) this.components.combat.setHitDiceOverride(this.cachedTotalHD);
+
     await super.preRequirementProcessing(rulesetData);
   }
 

@@ -7,9 +7,10 @@ import type {
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { ChecksExistence } from "@/server/repositories/concerns/ChecksExistence.ts";
-import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
+
+import BaseRepository from "./BaseRepository.ts";
+import { ChecksExistence } from "./concerns/ChecksExistence.ts";
+import { GuardsStaleEdits } from "./concerns/GuardsStaleEdits.ts";
 
 type CustomizationTable =
   | typeof modifiersInCustomization

@@ -58,9 +58,8 @@ export async function findExportableCharacter(userId: string, characterId: strin
   if (campaignId) {
     if (!(await PlayerCharacters.findOne(db, { characterId, campaignId }))) return null;
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (campaign && (await CampaignsPolicy.for(db, { userId }, campaign)).isGameMaster()) {
+    if (campaign && (await CampaignsPolicy.for(db, { userId }, campaign)).isGameMaster())
       return (await Characters.findOne(db, { id: characterId })) ?? null;
-    }
   }
   return findEditableCharacterOrBonded(db, characterId, userId);
 }

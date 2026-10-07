@@ -1,6 +1,6 @@
 /** Resets the local database DATABASE_URL names: emptied, migrated as production does, and seeded. */
 
-import resetDatabase from "@/scripts/db/resetDatabase.ts";
+import resetDatabase from "./resetDatabase.ts";
 
 async function main() {
   const args = process.argv.slice(2);

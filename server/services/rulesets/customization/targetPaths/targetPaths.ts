@@ -1,5 +1,4 @@
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { buildSourceChain, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { buildSourceChain, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
@@ -11,9 +10,9 @@ import type { PathCompletion, PathError, PathValidationResult, TargetPath } from
 /** Why a modifier's or requirement's operator and value don't suit the path, or null when they do. */
 function valueMismatch(pathDef: TargetPath, operator: string | undefined, value: string | undefined): string | null {
   const { path, valueType } = pathDef;
-  if (operator !== undefined && !pathDef.operators.includes(operator)) {
+  if (operator !== undefined && !pathDef.operators.includes(operator))
     return `The operator ${operator} isn't offered on ${path}: ${pathDef.operators.join(", ")}`;
-  }
+
   if (value === undefined) return null;
   if (isTemplateValue(value)) return pathDef.literalOnly ? `${path} takes a number, not a template` : null;
   const literal = parseLiteralValue(value, valueType);
@@ -22,9 +21,9 @@ function valueMismatch(pathDef: TargetPath, operator: string | undefined, value:
     if (pathDef.setValues.some((choice) => choice.value === value)) return null;
     return `A set on ${path} takes ${pathDef.setValues.map((choice) => `${choice.value} (${choice.label})`).join(", ")}`;
   }
-  if (pathDef.minValue !== undefined && typeof literal === "number" && literal < pathDef.minValue) {
+  if (pathDef.minValue !== undefined && typeof literal === "number" && literal < pathDef.minValue)
     return `${path} takes ${pathDef.minValue} or more`;
-  }
+
   return null;
 }
 
@@ -79,9 +78,9 @@ export async function resolvePathValueType(
     throw new BadRequestError(`Invalid ${kind} path: ${errors[0]?.message ?? target}`);
   }
   const allowed = kind === "modifier" ? pathDef.allowedEntityTypes : undefined;
-  if (allowed && sourceType && !allowed.includes(sourceType)) {
+  if (allowed && sourceType && !allowed.includes(sourceType))
     throw new BadRequestError(`${target} takes modifiers from ${allowed.join(", ")} only`);
-  }
+
   const mismatch = valueMismatch(pathDef, operator, value);
   if (mismatch) throw new BadRequestError(mismatch);
   return pathDef.valueType;
@@ -125,9 +124,7 @@ export async function validatePath(
   }
 
   const exactMatch = pathMap.get(path);
-  if (exactMatch) {
-    return { isValid: true, errors: [], suggestions: [], completions: [], target: exactMatch };
-  }
+  if (exactMatch) return { isValid: true, errors: [], suggestions: [], completions: [], target: exactMatch };
 
   const partialMatches = allPaths.filter((p) => p.path.startsWith(path));
   if (partialMatches.length > 0) {

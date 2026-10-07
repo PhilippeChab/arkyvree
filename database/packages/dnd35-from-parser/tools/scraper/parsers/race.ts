@@ -14,16 +14,13 @@
 
 import * as cheerio from "cheerio";
 
-import { buildFrameHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/frame.ts";
-import {
-  findSectionElements,
-  getPageTitle,
-  getTagName,
-} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs, PART_SEPARATOR } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
+
+import { buildFrameHeading } from "./frame.ts";
+import { findSectionElements, getPageTitle, getTagName } from "./page.ts";
 
 const ABILITY_NAMES = new Set(["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]);
 
@@ -76,9 +73,8 @@ function parseFeatureText(text: string): { name: string; description: string } {
 
 function parseSize(text: string): string {
   // Try the size names first (case-insensitive)
-  for (const s of SIZE_OPTIONS) {
-    if (text.toLowerCase().includes(s.toLowerCase())) return s;
-  }
+  for (const s of SIZE_OPTIONS) if (text.toLowerCase().includes(s.toLowerCase())) return s;
+
   // Fallback: "RaceSize object (N)" pattern from Django
   const idMatch = text.match(/\((\d+)\)/);
   if (idMatch && DNDTOOLS_SIZE_IDS[idMatch[1]]) return DNDTOOLS_SIZE_IDS[idMatch[1]];
@@ -122,9 +118,7 @@ export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] 
       baseSpeed = parseSpeed(valueText);
     } else if (ABILITY_NAMES.has(label)) {
       const value = parseAbilityValue(valueText);
-      if (value !== 0) {
-        abilityAdjustments.push({ ability: label, value });
-      }
+      if (value !== 0) abilityAdjustments.push({ ability: label, value });
     } else if (/^favored class/i.test(label)) {
       const link = valueCell.find("a").first();
       const fc = link.length > 0 ? link.text().trim() : valueText;

@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { copyEntityCustomizationsToMany, fetchEntityCustomizations, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, UnprocessableEntityError } from "@/server/errors/index.ts";
@@ -22,9 +21,7 @@ export function Variants<B extends Constructor>(Base: B) {
     }
 
     protected validateTemplateSource(isTemplate: boolean, sourceItemId?: string) {
-      if (isTemplate && sourceItemId) {
-        throw new UnprocessableEntityError("Template items cannot have a source item");
-      }
+      if (isTemplate && sourceItemId) throw new UnprocessableEntityError("Template items cannot have a source item");
     }
 
     async createVariants(
@@ -33,16 +30,12 @@ export function Variants<B extends Constructor>(Base: B) {
       sourceItemId: string,
       variants: Array<{ name: string; description?: string | null }>,
     ) {
-      if (variants.length === 0) {
-        throw new UnprocessableEntityError("At least one variant is required");
-      }
-      if (variants.length > 50) {
-        throw new UnprocessableEntityError("Cannot create more than 50 variants at once");
-      }
+      if (variants.length === 0) throw new UnprocessableEntityError("At least one variant is required");
+
+      if (variants.length > 50) throw new UnprocessableEntityError("Cannot create more than 50 variants at once");
+
       const names = variants.map((v) => v.name);
-      if (new Set(names).size !== names.length) {
-        throw new ConflictError("Duplicate names within the variants list");
-      }
+      if (new Set(names).size !== names.length) throw new ConflictError("Duplicate names within the variants list");
 
       const result = await withTransaction(async (tx) => {
         return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
@@ -60,9 +53,8 @@ export function Variants<B extends Constructor>(Base: B) {
           // used by `RulesetEdit.assertNameAvailable`. Avoids N × sourceChain serial
           // round-trips when N can be up to 50.
           const ownConflicts = await Items.findMany(tx, { rulesetIds: [rulesetId], names });
-          if (ownConflicts.length > 0) {
+          if (ownConflicts.length > 0)
             throw new ConflictError(`Name already exists in this ruleset: ${ownConflicts[0].name}`);
-          }
 
           const ancestorConflicts = await Items.findMany(tx, { rulesetIds: sourceChain, names });
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -84,9 +76,8 @@ export function Variants<B extends Constructor>(Base: B) {
             if (
               !existing ||
               (sourceChainOrder.get(c.rulesetId) ?? Infinity) < (sourceChainOrder.get(existing.rulesetId) ?? Infinity)
-            ) {
+            )
               tombstoneByName.set(c.name, c);
-            }
           }
           const tombstones = new Map<number, string>();
           for (let i = 0; i < variants.length; i++) {
@@ -115,9 +106,7 @@ export function Variants<B extends Constructor>(Base: B) {
             const item = rows[0];
 
             const tombstoneAncestorId = tombstones.get(i);
-            if (tombstoneAncestorId) {
-              await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
-            }
+            if (tombstoneAncestorId) await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
 
             await createActivityWithNotifications(tx, {
               userId: session.userId,

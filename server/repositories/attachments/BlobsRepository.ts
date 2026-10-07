@@ -1,5 +1,4 @@
-import { eq, isNotNull, lt, notExists, notInArray, or, sql } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
+import { eq, type InferInsertModel, isNotNull, lt, notExists, notInArray, or, sql } from "drizzle-orm";
 
 import { attachmentsInStorage, blobsInStorage } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";

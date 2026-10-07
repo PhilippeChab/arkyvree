@@ -3,7 +3,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 
-import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
+import type { ReferenceType } from "./resolve.ts";
 
 type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string } };
 

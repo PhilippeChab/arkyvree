@@ -1,5 +1,4 @@
-import { eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
+import { eq, inArray, type InferInsertModel, isNull } from "drizzle-orm";
 
 import { klassesInRules, klassLevelFeatsInRules, klassLevelsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";

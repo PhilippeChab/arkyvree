@@ -2,7 +2,8 @@ import type { Browser, BrowserContextOptions, Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
 import { recordContext } from "@/tests/e2e/coverage.ts";
-import { apiOf } from "@/tests/e2e/support/api.ts";
+
+import { apiOf } from "./api.ts";
 
 /** A new browser context, for another user or a guest: the run's coverage records its pages. Close it when done. */
 export async function openContext(browser: Browser, options?: BrowserContextOptions) {

@@ -21,9 +21,9 @@ function headersAbove($: cheerio.CheerioAPI, rows: AnyNode[]): string[] {
         const text = normalizeWs($(th).text().trim());
         const rowspan = parseInt($(th).attr("rowspan") ?? "1", 10);
         const colspan = parseInt($(th).attr("colspan") ?? "1", 10);
-        for (let dr = 0; dr < rowspan && r + dr < rows.length; dr++) {
+        for (let dr = 0; dr < rowspan && r + dr < rows.length; dr++)
           for (let dc = 0; dc < colspan; dc++) grid[r + dr][column + dc] = text;
-        }
+
         column += colspan;
       });
   }
@@ -155,9 +155,7 @@ export function parseProgression($: cheerio.CheerioAPI): {
         nextRow.children("th").each((_, th) => {
           subHeaders.push($(th).text().trim().toLowerCase());
         });
-        if (subHeaders.length > 0 && subHeaders[0] === "0") {
-          hasCantrips = true;
-        }
+        if (subHeaders.length > 0 && subHeaders[0] === "0") hasCantrips = true;
       }
     }
 
@@ -240,11 +238,8 @@ export function parseProgression($: cheerio.CheerioAPI): {
           spellValues.push(val);
         }
         const joined = spellValues.join("/");
-        if (joined.includes("+1 level")) {
-          spellsPerDay = joined;
-        } else {
-          spellsPerDay = spellValues.join(",");
-        }
+        if (joined.includes("+1 level")) spellsPerDay = joined;
+        else spellsPerDay = spellValues.join(",");
       }
 
       const columns = Object.fromEntries(otherIdx.map((i) => [headerNames[i], normalizeWs(cells[i] ?? "")]));

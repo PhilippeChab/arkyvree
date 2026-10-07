@@ -1,5 +1,4 @@
-import { and, count, eq, exists, inArray, isNull, not, or, sql } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
+import { and, count, eq, exists, inArray, type InferInsertModel, isNull, not, or, sql } from "drizzle-orm";
 
 import {
   charactersInCharacter,

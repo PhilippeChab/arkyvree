@@ -4,7 +4,8 @@ import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.
 import { setStr } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
-import { QUADRUPED } from "@/database/packages/dnd35/data/bonds/raceProperties.ts";
+
+import { QUADRUPED } from "./raceProperties.ts";
 
 const SPECIAL_MOUNT_APTITUDE = "Special Mount Bond";
 const SPECIAL_MOUNT_CLASS_FEATURE_APTITUDE = "Special Mount Class Feature";

@@ -22,10 +22,11 @@
 import * as cheerio from "cheerio";
 import { type Element, isText } from "domhandler";
 
-import { getPageTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import { capitalize } from "@/shared/text.ts";
+
+import { getPageTitle } from "./page.ts";
 
 const STAT_LABEL_PREFIXES = [
   "Level:",
@@ -183,18 +184,14 @@ export function parseSpellDetailHtml(html: string, sourceUrl: string): SpellRefe
 
   // Extract subschool from link
   const subschoolMatch = bodyHtml.match(/<a[^>]*href="\/spells\/sub-schools\/[^"]+\/"[^>]*>([^<]+)<\/a>/i);
-  if (subschoolMatch) {
-    subschool = subschoolMatch[1].trim();
-  }
+  if (subschoolMatch) subschool = subschoolMatch[1].trim();
 
   // Extract descriptors from links
   const descriptorRegex = /<a[^>]*href="\/spells\/descriptors\/[^"]+\/"[^>]*>([^<]+)<\/a>/gi;
   let descMatch;
   while ((descMatch = descriptorRegex.exec(bodyHtml)) !== null) {
     const desc = descMatch[1].trim();
-    if (desc && !/^see text/i.test(desc)) {
-      descriptors.push(desc);
-    }
+    if (desc && !/^see text/i.test(desc)) descriptors.push(desc);
   }
 
   if (!VALID_SCHOOLS.has(school)) return null;

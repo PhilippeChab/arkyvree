@@ -1,6 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
-import { WIELDED_VALUES } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import type { GetterOf, PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import type PathTraverser from "@/server/rulesets/engine/paths/PathTraverser.ts";
 import { readComponent } from "@/server/rulesets/engine/paths/readComponent.ts";
@@ -10,6 +9,7 @@ import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/tar
 import { isRecord } from "@/shared/isRecord.ts";
 
 import type CombatComponent from "./CombatComponent.ts";
+import { WIELDED_VALUES } from "./CombatState.ts";
 
 /**
  * A weapon's paths: a weapon group's (`items.weapons.<group>.tohit.misc`), and an item's own weapon's
@@ -132,9 +132,8 @@ export default class WeaponPaths implements PathCategory<Dnd35Components> {
       for (const [, weapon] of Object.entries(weaponSet as Record<string, unknown>)) {
         // Its item's (a modifier's source), or its entry's (a proficiency read of the entry holding it)
         const held = weapon as { itemId?: string | null; entryId?: string | null } | null;
-        if (held && typeof held === "object" && (held.itemId === sourceId || held.entryId === sourceId)) {
+        if (held && typeof held === "object" && (held.itemId === sourceId || held.entryId === sourceId))
           results.push(...traverser.traverse(weaponsComponent, rest, weapon, rest[0], 0, ["weapon"]));
-        }
       }
     }
     return results;

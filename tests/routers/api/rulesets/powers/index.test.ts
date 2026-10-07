@@ -41,9 +41,8 @@ describe("rulesets powers", () => {
       { name: "" },
       { name: "Power", aptitudes: aptitudeId },
       { name: "Power", aptitudes: [{ id: aptitudeId, level: 10 }] },
-    ]) {
+    ])
       await expectStatus(powers.$post({ param: { id }, json: json as never }), 400);
-    }
   });
 
   test("returns 404 for a missing ruleset or power", async () => {

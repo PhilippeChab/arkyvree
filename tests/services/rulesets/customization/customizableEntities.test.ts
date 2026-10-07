@@ -82,9 +82,9 @@ describe("customizableEntities", () => {
   });
 
   test("getCustomizableEntityName refuses a missing entity or an unsupported type", async () => {
-    for (const type of ["feats", "items", "powers", "races", "klasses", "klass_levels", "modifiers", "characters"]) {
+    for (const type of ["feats", "items", "powers", "races", "klasses", "klass_levels", "modifiers", "characters"])
       await expect(getCustomizableEntityName(NIL_UUID, type)).rejects.toThrow(NotFoundError);
-    }
+
     await expect(getCustomizableEntityName(NIL_UUID, "invalid_type")).rejects.toThrow("invalid_type not supported");
   });
 
@@ -105,11 +105,10 @@ describe("customizableEntities", () => {
     const { ruleset } = await createTestUserAndRuleset();
     const [feat] = await Feats.create(db, { rulesetId: ruleset.id, name: "Test Feat" });
 
-    for (const customization of [modifierOn(feat.id, "feats"), propertyOn(feat.id, "feats")]) {
+    for (const customization of [modifierOn(feat.id, "feats"), propertyOn(feat.id, "feats")])
       expect(await checkCustomizedEntity(customization)).toBeUndefined();
-    }
-    for (const customization of [modifierOn(NIL_UUID, "items"), propertyOn(NIL_UUID, "races")]) {
+
+    for (const customization of [modifierOn(NIL_UUID, "items"), propertyOn(NIL_UUID, "races")])
       await expect(checkCustomizedEntity(customization)).rejects.toThrow(NotFoundError);
-    }
   });
 });

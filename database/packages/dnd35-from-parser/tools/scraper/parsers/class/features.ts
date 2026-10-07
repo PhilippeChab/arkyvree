@@ -11,11 +11,12 @@
 import type * as cheerio from "cheerio";
 import { type AnyNode } from "domhandler";
 
-import { capitalizeTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/capitalizeTitle.ts";
-import { findSectionHeader } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
 import { findSectionElements, getTagName } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+
+import { capitalizeTitle } from "./capitalizeTitle.ts";
+import { findSectionHeader } from "./sections.ts";
 
 /** A feature's type (Ex, Su, Sp), when its heading gives one, and its description. */
 type FeatureDescription = { type?: string; desc: string };
@@ -90,9 +91,8 @@ function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): strin
   if (exact !== undefined) return exact;
   // A known feature starting with this name
   // e.g. "Mounted Weapon Bonus" matches "Mounted Weapon Bonus (Lance)"
-  for (const known of knownFeatures) {
-    if (known.startsWith(norm + " ") || known.startsWith(lower + " ")) return known;
-  }
+  for (const known of knownFeatures) if (known.startsWith(norm + " ") || known.startsWith(lower + " ")) return known;
+
   // A known feature this name starts with, then a non-alpha suffix
   // e.g. "Rage +1/Day" matches "Rage" (suffix starts with +)
   // But NOT "Terrain Mastery Benefits" matching "Terrain Mastery" (suffix is a word)
@@ -193,11 +193,8 @@ function orderedFeatures(
       if (!entry) entry = descriptions.get(key + "s");
       if (!entry) entry = descriptions.get(key.replace(/y$/, "ies"));
 
-      if (entry) {
-        features.push({ name: capitalizeTitle(cleaned), type: entry.type, description: entry.desc });
-      } else {
-        features.push({ name: capitalizeTitle(cleaned), description: "" });
-      }
+      if (entry) features.push({ name: capitalizeTitle(cleaned), type: entry.type, description: entry.desc });
+      else features.push({ name: capitalizeTitle(cleaned), description: "" });
     }
   }
 
@@ -365,9 +362,8 @@ class FeatureDescriptions {
     // Paragraph — could be inline feature or continuation
     if (tag === "p") this.readParagraph(el);
     // Table — check for sub-option tables (e.g. Loremaster Secrets)
-    if (tag === "table" && this.currentFeature) {
+    if (tag === "table" && this.currentFeature)
       for (const { key, desc } of subOptionRows(this.$, el, this.currentFeature)) this.byKey.set(key, { desc });
-    }
   }
 
   /**
@@ -394,9 +390,8 @@ class FeatureDescriptions {
       }
       if (!parentKey) return;
 
-      for (const { key, desc } of subOptionRows($, $(table), parentKey)) {
+      for (const { key, desc } of subOptionRows($, $(table), parentKey))
         if (!this.byKey.has(key)) this.byKey.set(key, { desc });
-      }
     });
   }
 }

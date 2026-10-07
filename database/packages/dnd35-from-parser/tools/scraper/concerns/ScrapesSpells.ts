@@ -35,22 +35,16 @@ export function ScrapesSpells<B extends Constructor<BaseScraper>>(Base: B) {
       for (const entry of spellUrls) {
         const html = await this.http.fetchHtml(entry.url);
         const spell = parseSpellDetailHtml(html, entry.url);
-        if (spell) {
-          raw.push(spell);
-        } else {
-          console.warn(`  SKIP: Could not parse ${entry.name} at ${entry.url}`);
-        }
+        if (spell) raw.push(spell);
+        else console.warn(`  SKIP: Could not parse ${entry.name} at ${entry.url}`);
       }
 
       console.log(`Parsed ${raw.length} spells`);
 
       const schools = new Map<string, number>();
-      for (const spell of raw) {
-        schools.set(spell.school, (schools.get(spell.school) ?? 0) + 1);
-      }
-      for (const [school, count] of [...schools.entries()].sort()) {
-        console.log(`  ${school}: ${count}`);
-      }
+      for (const spell of raw) schools.set(spell.school, (schools.get(spell.school) ?? 0) + 1);
+
+      for (const [school, count] of [...schools.entries()].sort()) console.log(`  ${school}: ${count}`);
 
       const outPath = this.referencePath(REFERENCE_FILE_NAMES.spell);
 

@@ -2,8 +2,7 @@
  * An existing character level's saved selections.
  */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -75,9 +74,8 @@ export async function getLevel(session: Session, characterId: string, characterL
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
   const characterLevel = await CharacterLevels.findOne(db, { id: characterLevelId });
-  if (!characterLevel || characterLevel.characterId !== characterId) {
+  if (!characterLevel || characterLevel.characterId !== characterId)
     throw new NotFoundError("Character level not found");
-  }
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ rulesetData }) => {
     // Inside withRulesetScope every Character* repo read below returns rows
@@ -91,16 +89,12 @@ export async function getLevel(session: Session, characterId: string, characterL
       CharacterLevelFeats.findMany(db, { characterLevelIds: [characterLevelId] }),
       CharacterLevelPowers.findMany(db, { characterLevelIds: [characterLevelId] }),
     ]);
-    if (!refreshedCharacterLevel) {
-      throw new NotFoundError("Character level not found");
-    }
+    if (!refreshedCharacterLevel) throw new NotFoundError("Character level not found");
 
     const { klassLevel, klass } = getSavedKlassLevel(rulesetData, refreshedCharacterLevel);
 
     const skills: Record<string, number> = {};
-    for (const s of levelSkills) {
-      skills[s.skillId] = s.rank;
-    }
+    for (const s of levelSkills) skills[s.skillId] = s.rank;
 
     return {
       characterLevelId: refreshedCharacterLevel.id,

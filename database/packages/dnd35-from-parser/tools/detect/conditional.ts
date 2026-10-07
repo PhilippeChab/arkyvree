@@ -36,8 +36,9 @@ function scopeOf(text: string, start: number, end: number): string {
   let from = 0;
   let to = text.length;
   for (const match of text.matchAll(boundary)) {
-    if (match.index < start) from = match.index + 1;
-    else if (match.index >= end) {
+    if (match.index < start) {
+      from = match.index + 1;
+    } else if (match.index >= end) {
       to = match.index;
       break;
     }

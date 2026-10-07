@@ -12,9 +12,7 @@ class CampaignsService {
     return await withTransaction(async (tx) => {
       const existingCampaign = await Campaigns.findOne(tx, { id });
 
-      if (!existingCampaign) {
-        throw new NotFoundError("Campaign not found");
-      }
+      if (!existingCampaign) throw new NotFoundError("Campaign not found");
 
       (await CampaignsPolicy.for(tx, session, existingCampaign)).canDelete();
 
@@ -27,9 +25,7 @@ class CampaignsService {
       const rows = await Campaigns.archive(tx, { id });
       const archivedCampaign = rows[0];
 
-      if (!archivedCampaign) {
-        throw new InternalError("Failed to archive campaign");
-      }
+      if (!archivedCampaign) throw new InternalError("Failed to archive campaign");
 
       await Activities.create(tx, {
         userId: session.userId,
@@ -58,9 +54,7 @@ class CampaignsService {
       const campaignRows = await Campaigns.create(tx, body);
 
       const campaign = campaignRows[0];
-      if (!campaign) {
-        throw new InternalError("Failed to create campaign");
-      }
+      if (!campaign) throw new InternalError("Failed to create campaign");
 
       const playerRows = await Players.create(tx, {
         userId: session.userId,
@@ -69,9 +63,7 @@ class CampaignsService {
       });
 
       const player = playerRows[0];
-      if (!player) {
-        throw new InternalError("Failed to create player");
-      }
+      if (!player) throw new InternalError("Failed to create player");
 
       await Activities.create(tx, {
         userId: session.userId,
@@ -91,9 +83,7 @@ class CampaignsService {
     const rows = await Campaigns.findOneWithPlayerCount(db, { id });
     const campaign = rows[0];
 
-    if (!campaign) {
-      throw new NotFoundError("Campaign not found");
-    }
+    if (!campaign) throw new NotFoundError("Campaign not found");
 
     const player = (await CampaignsPolicy.for(db, session, campaign)).canRead();
 
@@ -122,9 +112,7 @@ class CampaignsService {
     return await withTransaction(async (tx) => {
       const existingCampaign = await Campaigns.findOne(tx, { id }, Visibility.ArchivedOnly);
 
-      if (!existingCampaign) {
-        throw new NotFoundError("Campaign not found");
-      }
+      if (!existingCampaign) throw new NotFoundError("Campaign not found");
 
       (await CampaignsPolicy.for(tx, session, existingCampaign)).canHardDelete();
 
@@ -147,18 +135,14 @@ class CampaignsService {
     return await withTransaction(async (tx) => {
       const existingCampaign = await Campaigns.findOne(tx, { id }, Visibility.ArchivedOnly);
 
-      if (!existingCampaign) {
-        throw new NotFoundError("Campaign not found");
-      }
+      if (!existingCampaign) throw new NotFoundError("Campaign not found");
 
       (await CampaignsPolicy.for(tx, session, existingCampaign)).canDelete();
 
       const rows = await Campaigns.unarchive(tx, { id });
       const unarchivedCampaign = rows[0];
 
-      if (!unarchivedCampaign) {
-        throw new InternalError("Failed to unarchive campaign");
-      }
+      if (!unarchivedCampaign) throw new InternalError("Failed to unarchive campaign");
 
       await Activities.create(tx, {
         userId: session.userId,
@@ -182,18 +166,14 @@ class CampaignsService {
     return await withTransaction(async (tx) => {
       const existingCampaign = await Campaigns.findOne(tx, { id });
 
-      if (!existingCampaign) {
-        throw new NotFoundError("Campaign not found");
-      }
+      if (!existingCampaign) throw new NotFoundError("Campaign not found");
 
       (await CampaignsPolicy.for(tx, session, existingCampaign)).canUpdate();
 
       const rows = await Campaigns.update(tx, body, { id });
       const updatedCampaign = rows[0];
 
-      if (!updatedCampaign) {
-        throw new InternalError("Failed to update campaign");
-      }
+      if (!updatedCampaign) throw new InternalError("Failed to update campaign");
 
       await Activities.create(tx, {
         userId: session.userId,

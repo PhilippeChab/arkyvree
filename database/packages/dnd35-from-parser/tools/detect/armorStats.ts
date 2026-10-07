@@ -38,9 +38,9 @@ export function readArmorStats(text: string): ArmorStats {
   const enhancementMatch = ENHANCEMENT.map((pattern) => text.match(pattern)).find(Boolean);
   const enhancement = enhancementMatch ? Number(enhancementMatch[1]) : undefined;
   const masterwork = enhancement !== undefined || /\b(?:adamantine|masterwork)\b/i.test(text);
-  if (masterwork && !properties.some((property) => property.type === ARMOR_CHECK_PENALTY)) {
+  if (masterwork && !properties.some((property) => property.type === ARMOR_CHECK_PENALTY))
     properties.push({ type: ITEM_MASTERWORK, value: "true" });
-  }
+
   const weightMatch = text.match(/weighs (\d+)(½)? pounds/);
   const weight = weightMatch ? `${weightMatch[1]}${weightMatch[2] ? ".5" : ""}` : undefined;
   return { properties, ...(weight && { weight }), ...(enhancement && { enhancement }) };

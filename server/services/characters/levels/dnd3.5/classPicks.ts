@@ -2,8 +2,7 @@
  * Classes the character can take next, with their eligibility.
  */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Klasses } from "@/server/repositories/index.ts";
 import type { Dnd35DetailedCharacter, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
@@ -132,9 +131,7 @@ export async function getAvailableKlasses(
       pagination,
     );
 
-    if (klassPage.items.length === 0) {
-      return { items: [], page: klassPage.page, nextPage: klassPage.nextPage };
-    }
+    if (klassPage.items.length === 0) return { items: [], page: klassPage.page, nextPage: klassPage.nextPage };
 
     const characterKlassLevels = await CharacterLevels.findMaxKlassLevels(db, {
       characterId,
@@ -146,9 +143,7 @@ export async function getAvailableKlasses(
       : [];
 
     const candidates = klassesWithNextLevel(klassPage.items, characterKlassLevelMap, rulesetData);
-    if (candidates.length === 0) {
-      return { items: [], page: klassPage.page, nextPage: klassPage.nextPage };
-    }
+    if (candidates.length === 0) return { items: [], page: klassPage.page, nextPage: klassPage.nextPage };
 
     // Per-candidate requirements — served from the cache's requirementsByEntity map.
     const requirementsByKlassLevel = requirementsByNextLevel(candidates, rulesetData);
@@ -182,9 +177,7 @@ export async function getAvailableKlasses(
       }));
       const projectedCharLevel = buildProjectedCharacterLevel(characterId, "");
       const evaluationResults = await levelUpProjector.evaluateClassAvailability(evaluated, projectedCharLevel);
-      for (const [klassLevelId, result] of evaluationResults) {
-        evaluationResultMap.set(klassLevelId, result);
-      }
+      for (const [klassLevelId, result] of evaluationResults) evaluationResultMap.set(klassLevelId, result);
     }
 
     const items = [

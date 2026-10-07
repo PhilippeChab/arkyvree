@@ -1,5 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
-import { expect } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 import { test } from "@/tests/e2e/fixtures.ts";
 import { createCharacter } from "@/tests/e2e/support/characters.ts";

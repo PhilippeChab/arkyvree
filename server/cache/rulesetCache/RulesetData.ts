@@ -186,12 +186,10 @@ export default class RulesetData {
     if (this.cow.isEmpty()) return map;
     return new Proxy(map, {
       get(target, prop) {
-        if (prop === "get") {
-          return (key: string) => target.get(resolveKey(key));
-        }
-        if (prop === "has") {
-          return (key: string) => target.has(resolveKey(key));
-        }
+        if (prop === "get") return (key: string) => target.get(resolveKey(key));
+
+        if (prop === "has") return (key: string) => target.has(resolveKey(key));
+
         const value = Reflect.get(target, prop, target);
         return typeof value === "function" ? value.bind(target) : value;
       },

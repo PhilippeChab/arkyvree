@@ -1,5 +1,4 @@
 import { include } from "@/server/mixins.ts";
-import type EncumbranceComponent from "@/server/rulesets/dnd3.5/combat/EncumbranceComponent.ts";
 import { UNARMED_STRIKE } from "@/server/rulesets/dnd3.5/constants.ts";
 import type SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
 import type { CustomizedRace } from "@/server/rulesets/engine/types.ts";
@@ -16,6 +15,7 @@ import { type CharacterLevel } from "@/shared/relations.ts";
 import { ArmorClass } from "./ArmorClass.ts";
 import { Attacks } from "./Attacks.ts";
 import CombatState, { type CombatData } from "./CombatState.ts";
+import type EncumbranceComponent from "./EncumbranceComponent.ts";
 import { HitPoints } from "./HitPoints.ts";
 import { InitiativeAndSpeed } from "./InitiativeAndSpeed.ts";
 
@@ -29,9 +29,8 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
 
     const classes = this.classes.getClasses();
     const levels = Object.values(classes).reduce((acc, klass) => {
-      for (const level of klass.levels) {
-        acc.push(level.characterLevel);
-      }
+      for (const level of klass.levels) acc.push(level.characterLevel);
+
       return acc;
     }, [] as CharacterLevel[]);
 

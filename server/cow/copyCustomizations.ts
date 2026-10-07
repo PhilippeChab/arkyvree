@@ -25,9 +25,8 @@ async function copyRows<R extends { id: string }>(
       rows.map((row) => ({ ...row, ...owner(row, targetId, targetIndex), id: undefined })),
     ),
   );
-  for (let i = 0; i < rows.length; i++) {
-    copiedIds?.set(rows[i].id, copies[i].id);
-  }
+  for (let i = 0; i < rows.length; i++) copiedIds?.set(rows[i].id, copies[i].id);
+
   return copies;
 }
 
@@ -52,17 +51,15 @@ export async function copyEntityCustomizationsToMany(
   if (targetEntityIds.length === 0) return;
   // Copies are paired with their sources by position, so reject inputs that
   // position cannot represent instead of writing rows to the wrong owner.
-  if (copiedIds && targetEntityIds.length > 1) {
+  if (copiedIds && targetEntityIds.length > 1)
     throw new Error("copiedIds maps each source row to one copy; copy to a single target");
-  }
-  if (!isCustomizableEntityType(entityType) && sourceCust.modifiers.length > 0) {
+
+  if (!isCustomizableEntityType(entityType) && sourceCust.modifiers.length > 0)
     throw new Error(`Cannot copy modifiers onto ${entityType}`);
-  }
+
   const sourceModifierIds = new Set(sourceCust.modifiers.map((m) => m.id));
   const orphan = sourceCust.modifierRequirements.find((r) => !sourceModifierIds.has(r.entityId));
-  if (orphan) {
-    throw new Error(`Modifier requirement ${orphan.id} belongs to a modifier outside the copied set`);
-  }
+  if (orphan) throw new Error(`Modifier requirement ${orphan.id} belongs to a modifier outside the copied set`);
 
   const { modifiers, properties, requirements, modifierRequirements } = sourceCust;
   const newModifiers = await copyRows(

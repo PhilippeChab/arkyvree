@@ -1,13 +1,11 @@
 /** Detects a class's bonus feat lists: the existing feats its player picks from. */
 
-import { parseTreatedAsHavingFeats } from "@/database/packages/dnd35-from-parser/tools/detect/classes/aptitudePicks.ts";
-import {
-  buildFeatureMap,
-  parsePoolSubOptions,
-} from "@/database/packages/dnd35-from-parser/tools/detect/classes/features.ts";
 import { findWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type BonusFeatList, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+
+import { parseTreatedAsHavingFeats } from "./aptitudePicks.ts";
+import { buildFeatureMap, parsePoolSubOptions } from "./features.ts";
 
 /** A bonus feat list: "from the following list: Feat1, Feat2, ...". */
 function parseBonusFeatList(description: string): string[] | undefined {
@@ -21,9 +19,11 @@ function parseBonusFeatList(description: string): string[] | undefined {
   let current = "";
   let parenDepth = 0;
   for (const char of listText) {
-    if (char === "(") parenDepth++;
-    else if (char === ")") parenDepth--;
-    else if (char === "," && parenDepth === 0) {
+    if (char === "(") {
+      parenDepth++;
+    } else if (char === ")") {
+      parenDepth--;
+    } else if (char === "," && parenDepth === 0) {
       const cleaned = current.replace(/^\s*(?:and|or)\s+/i, "").trim();
       if (cleaned) feats.push(cleaned);
       current = "";
@@ -59,9 +59,7 @@ function parsePerLevelBonusFeatList(description: string): { level: number; feats
       .split(/,\s*(?:or\s+)?|\s+or\s+/i)
       .map((f) => f.replace(/^\s*(?:and|or)\s+/i, "").trim())
       .filter(Boolean);
-    if (feats.length >= 2) {
-      results.push({ level, feats });
-    }
+    if (feats.length >= 2) results.push({ level, feats });
   }
 
   return results.length > 0 ? results : undefined;

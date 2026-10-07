@@ -19,9 +19,8 @@ export function getClassSkillIds(
 ): Set<string> {
   const ids = new Set(records.map((record) => record.skillId));
   const names = new Set(records.map((record) => record.skillsInRule.name));
-  for (const skill of skills) {
-    if (isSkillSubtypeOf(skill.name, names)) ids.add(skill.id);
-  }
+  for (const skill of skills) if (isSkillSubtypeOf(skill.name, names)) ids.add(skill.id);
+
   return ids;
 }
 
@@ -58,16 +57,14 @@ export function getPlannedKlassLevels(
 ) {
   return levels.map(({ klassId, level, abilityId }, i) => {
     const klass = rulesetData.klassesById.get(klassId);
-    if (!klass || (rulesetIds && !rulesetIds.has(klass.rulesetId))) {
+    if (!klass || (rulesetIds && !rulesetIds.has(klass.rulesetId)))
       throw new BadRequestError(`Level ${i + 1}: Class does not belong to the character's ruleset`);
-    }
-    if (klass.kind !== "pc") {
-      throw new BadRequestError(`Level ${i + 1}: Class is not valid for a player character`);
-    }
+
+    if (klass.kind !== "pc") throw new BadRequestError(`Level ${i + 1}: Class is not valid for a player character`);
+
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
-    if (!klassLevel) {
-      throw new NotFoundError(`Level ${i + 1}: Class level not found`);
-    }
+    if (!klassLevel) throw new NotFoundError(`Level ${i + 1}: Class level not found`);
+
     return { klass, klassLevel, abilityId };
   });
 }
@@ -75,12 +72,10 @@ export function getPlannedKlassLevels(
 /** A saved character level's class level and class, in the composed ruleset, or a 404. */
 export function getSavedKlassLevel(rulesetData: RulesetData, characterLevel: { klassLevelId: string }) {
   const klassLevel = rulesetData.klassLevelsById.get(characterLevel.klassLevelId);
-  if (!klassLevel) {
-    throw new NotFoundError("Class level not found");
-  }
+  if (!klassLevel) throw new NotFoundError("Class level not found");
+
   const klass = rulesetData.klassesById.get(klassLevel.klassId);
-  if (!klass) {
-    throw new NotFoundError("Class not found");
-  }
+  if (!klass) throw new NotFoundError("Class not found");
+
   return { klassLevel, klass };
 }

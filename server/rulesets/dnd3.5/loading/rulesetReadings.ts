@@ -1,7 +1,6 @@
 /** What the loader reads of the ruleset's view: its rows, its fields and the 3.5 meaning of its properties. */
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import type { SharedCharacterData } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
 import { readSkillFlags } from "@/server/rulesets/dnd3.5/skills/skillFlags.ts";
 import { collectClassListIds, collectFeatListIds } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import {
@@ -9,6 +8,8 @@ import {
   KLASS_CASTER_TYPE,
   RULESET_SKILL_POINT_ABILITY_ID,
 } from "@/shared/dnd3.5/properties/index.ts";
+
+import type { SharedCharacterData } from "./DetailedCharacterDataLoader.ts";
 
 /** A character ability's score, with its ability's name. */
 export function buildAbilityScore(
@@ -51,9 +52,7 @@ export function readKlassProperties(
     for (const prop of props) {
       if (prop.type === KLASS_BONUS_SPELL_ABILITY_ID) {
         const abilityName = abilityLookup.get(prop.value);
-        if (abilityName) {
-          klassBonusSpellAbilityMap.set(klassId, abilityName);
-        }
+        if (abilityName) klassBonusSpellAbilityMap.set(klassId, abilityName);
       } else if (prop.type === KLASS_CASTER_TYPE) {
         klassCasterTypeMap.set(klassId, prop.value as "Arcane" | "Divine");
       }

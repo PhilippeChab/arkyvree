@@ -18,8 +18,9 @@ import {
 } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { namesOf } from "@/tests/seeds/freshSeed.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+
+import { namesOf } from "./freshSeed.ts";
 
 type Character = typeof charactersInCharacter.$inferSelect;
 

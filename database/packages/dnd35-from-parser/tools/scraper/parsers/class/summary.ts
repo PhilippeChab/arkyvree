@@ -2,16 +2,14 @@
 
 import type * as cheerio from "cheerio";
 
-import { capitalizeTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/capitalizeTitle.ts";
-import {
-  findSectionHeader,
-  getTextAfterHeader,
-} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
 import {
   findContentHeading,
   findSectionElements,
   getTagName,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+
+import { capitalizeTitle } from "./capitalizeTitle.ts";
+import { findSectionHeader, getTextAfterHeader } from "./sections.ts";
 
 /** The class's heading: its page's title, or its only h2. */
 function classHeading($: cheerio.CheerioAPI) {
@@ -53,9 +51,8 @@ export function parseDescription($: cheerio.CheerioAPI): string {
       if (tag === "p") {
         const text = el.text().trim();
         // Skip short text, page references, and "all of the following" boilerplate
-        if (text && text.length >= 20 && !text.match(/^\(.*p\.\s*\d+\)$/) && !text.match(/^All of the following/i)) {
+        if (text && text.length >= 20 && !text.match(/^\(.*p\.\s*\d+\)$/) && !text.match(/^All of the following/i))
           paragraphs.push(text);
-        }
       }
       // Check inside divs (nice-textile) — but skip if it contains feature headers
       if (tag === "div" && !el.find("h3, h4, strong, b").length) {

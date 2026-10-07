@@ -1,10 +1,6 @@
-import type {
-  DetectedModifiers,
-  NamedText,
-  Overrides,
-  ScrapedMeta,
-} from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import type { Modifier, Property } from "@/database/packages/dnd35/content/customization/types.ts";
+
+import type { DetectedModifiers, NamedText, Overrides, ScrapedMeta } from "./reference.ts";
 
 export type RaceReference = {
   _meta: ScrapedMeta<"race">;

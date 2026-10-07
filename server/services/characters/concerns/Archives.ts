@@ -18,9 +18,7 @@ export function Archives<B extends Constructor>(Base: B) {
           userId: session.userId,
         });
 
-        if (!existingCharacter || existingCharacter.kind !== "pc") {
-          throw new NotFoundError("Character not found");
-        }
+        if (!existingCharacter || existingCharacter.kind !== "pc") throw new NotFoundError("Character not found");
 
         // Archive flips deletedAt on the character row only — level/inventory/
         // language children stay live. They're unreachable once the parent is
@@ -30,9 +28,7 @@ export function Archives<B extends Constructor>(Base: B) {
         const rows = await Characters.archive(tx, { id: characterId });
         const archivedCharacter = rows[0];
 
-        if (!archivedCharacter) {
-          throw new InternalError("Failed to archive character");
-        }
+        if (!archivedCharacter) throw new InternalError("Failed to archive character");
 
         await Activities.create(tx, {
           userId: session.userId,
@@ -53,9 +49,7 @@ export function Archives<B extends Constructor>(Base: B) {
           Visibility.ArchivedOnly,
         );
 
-        if (!existingCharacter || existingCharacter.kind !== "pc") {
-          throw new NotFoundError("Character not found");
-        }
+        if (!existingCharacter || existingCharacter.kind !== "pc") throw new NotFoundError("Character not found");
 
         const inActiveCampaign = await PlayerCharacters.exists(tx, { characterId, campaignArchived: false });
         (await CharactersPolicy.for(tx, session, existingCharacter)).canHardDelete({ inActiveCampaign });
@@ -86,16 +80,12 @@ export function Archives<B extends Constructor>(Base: B) {
           Visibility.ArchivedOnly,
         );
 
-        if (!existingCharacter || existingCharacter.kind !== "pc") {
-          throw new NotFoundError("Character not found");
-        }
+        if (!existingCharacter || existingCharacter.kind !== "pc") throw new NotFoundError("Character not found");
 
         const rows = await Characters.unarchive(tx, { id: characterId });
         const unarchivedCharacter = rows[0];
 
-        if (!unarchivedCharacter) {
-          throw new InternalError("Failed to unarchive character");
-        }
+        if (!unarchivedCharacter) throw new InternalError("Failed to unarchive character");
 
         await Activities.create(tx, {
           userId: session.userId,

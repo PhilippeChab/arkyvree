@@ -9,9 +9,10 @@
 
 import { join } from "node:path";
 
-import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
 import { generateAtomically } from "@/database/packages/dnd35-from-parser/tools/generator/atomicGeneration.ts";
 import { Generator } from "@/database/packages/dnd35-from-parser/tools/generator/Generator.ts";
+
+import { parseCliArgs } from "./args.ts";
 
 /** What the generator writes: the content package's seed data. */
 const GENERATED_DIR = join(import.meta.dirname!, "../../generated");

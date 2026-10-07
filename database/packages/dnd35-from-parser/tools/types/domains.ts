@@ -1,9 +1,6 @@
-import type {
-  DetectedModifiers,
-  Overrides,
-  ScrapedMeta,
-} from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
+
+import type { DetectedModifiers, Overrides, ScrapedMeta } from "./reference.ts";
 
 /** A domain's pool of feats (e.g. War Domain Weapon: a feat per martial weapon). */
 type DomainFeatPool = {

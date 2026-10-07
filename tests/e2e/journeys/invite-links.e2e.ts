@@ -3,8 +3,7 @@
  * worker's owner, sets it up through the API; the invitee is the test's own user.
  */
 
-import type { Page } from "@playwright/test";
-import { expect } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
 import { test } from "@/tests/e2e/fixtures.ts";

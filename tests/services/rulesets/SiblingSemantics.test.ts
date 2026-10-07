@@ -1,7 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, type RulesetData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
@@ -237,13 +236,15 @@ for (const [chainingOperator, reverseOrder] of [
         value: "13",
         valueType: "number",
       };
-      if (index === 0) await Requirements.create(db, { ...owner, ...conditionA, level: "1" });
-      else
+      if (index === 0) {
+        await Requirements.create(db, { ...owner, ...conditionA, level: "1" });
+      } else {
         await Requirements.createMany(db, [
           { ...owner, level: "1", chainingOperator },
           { ...owner, ...conditionA, level: "1.1" },
           { ...owner, ...conditionA, target: "abilities.dexterity.total", value: "15", level: "1.2" },
         ]);
+      }
     }, reverseOrder);
     const abilities = new AbilitiesComponent();
     const rows = await fetchEveryPage((pagination) =>

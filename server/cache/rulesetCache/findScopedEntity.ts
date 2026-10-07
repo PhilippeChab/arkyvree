@@ -12,8 +12,8 @@ export function findScopedEntity<T extends { rulesetId: string }>(
   name: string,
 ): T {
   const entity = entities.get(entityId);
-  if (!entity || (entity.rulesetId !== rulesetId && !sourceChain.includes(entity.rulesetId))) {
+  if (!entity || (entity.rulesetId !== rulesetId && !sourceChain.includes(entity.rulesetId)))
     throw new NotFoundError(`${name} not found in this ruleset`);
-  }
+
   return entity;
 }

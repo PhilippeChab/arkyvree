@@ -1,6 +1,7 @@
-import type { ScrapedMeta } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import type { BabType, SaveType } from "@/database/packages/dnd35/content/classes/types.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
+
+import type { ScrapedMeta } from "./reference.ts";
 
 /** A class feature's fields a mapping derives and an override sets. */
 type ClassFeatureFields = {

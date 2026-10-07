@@ -40,9 +40,8 @@ export default class DetailedCharacterMount extends DetailedCharacterAdvancingBo
     const totalHD = baseHD + (row?.bonusHD ?? 0);
 
     const abilities = this.components.abilities.getAbilities();
-    if (row && row.str !== 0 && abilities["strength"]) {
-      abilities["strength"].misc += row.str;
-    }
+    if (row && row.str !== 0 && abilities["strength"]) abilities["strength"].misc += row.str;
+
     if (row && abilities["intelligence"]) {
       abilities["intelligence"].base = row.int;
       abilities["intelligence"].level = 0;
@@ -56,11 +55,8 @@ export default class DetailedCharacterMount extends DetailedCharacterAdvancingBo
     if (row) {
       const saves = this.components.savingThrows.getSavingThrows();
       const masterSaves = master.components.savingThrows.getSavingThrows();
-      for (const saveName of Object.keys(saves)) {
-        if (masterSaves[saveName]) {
-          saves[saveName].base = Math.max(saves[saveName].base, masterSaves[saveName].base);
-        }
-      }
+      for (const saveName of Object.keys(saves))
+        if (masterSaves[saveName]) saves[saveName].base = Math.max(saves[saveName].base, masterSaves[saveName].base);
     }
   }
 }

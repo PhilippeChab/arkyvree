@@ -1,7 +1,7 @@
 /** Builders the content's modifiers are written with, as its requirements are with `requirements.ts`'s. */
 
-import { feat } from "@/database/packages/dnd35/content/customization/requirements.ts";
-import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
+import { feat } from "./requirements.ts";
+import type { Modifier } from "./types.ts";
 
 /** `target` changed by `operator` to `value`, read as `valueType`. */
 function modifier(target: string, operator: string, value: string | number, valueType: string): Modifier {

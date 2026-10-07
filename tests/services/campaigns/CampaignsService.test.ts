@@ -179,13 +179,13 @@ describe("CampaignsService", () => {
 
     test("is for the Game Master only", async () => {
       const { gm, campaign, player, stranger } = await setup();
-      for (const session of [player, stranger]) {
+      for (const session of [player, stranger])
         await expect(CampaignsService.archiveCampaign(session, campaign.id)).rejects.toThrow(ForbiddenError);
-      }
+
       await CampaignsService.archiveCampaign(gm, campaign.id);
-      for (const session of [player, stranger]) {
+      for (const session of [player, stranger])
         await expect(CampaignsService.unarchiveCampaign(session, campaign.id)).rejects.toThrow(ForbiddenError);
-      }
+
       await expect(CampaignsService.archiveCampaign(gm, NIL_UUID)).rejects.toThrow(NotFoundError);
       await expect(CampaignsService.unarchiveCampaign(gm, NIL_UUID)).rejects.toThrow(NotFoundError);
     });

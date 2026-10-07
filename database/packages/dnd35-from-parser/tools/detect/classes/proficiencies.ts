@@ -83,17 +83,13 @@ export function detectWAPModifiers(desc: string): ModifierSeed[] {
     .join(". ");
 
   // Weapons
-  if (/all simple and martial weapons/.test(profSentences)) {
+  if (/all simple and martial weapons/.test(profSentences))
     mods.push(grantFeat("simpleweaponproficiency"), grantFeat("martialweaponproficiency"));
-  } else if (/all simple weapons/.test(profSentences)) {
-    mods.push(grantFeat("simpleweaponproficiency"));
-  }
+  else if (/all simple weapons/.test(profSentences)) mods.push(grantFeat("simpleweaponproficiency"));
 
   // Specific weapon proficiencies (e.g. "plus the rapier, sap, shortbow")
   const specificWeapons = detectSpecificWeapons(profSentences);
-  for (const slug of specificWeapons) {
-    mods.push(grantFeat(slug));
-  }
+  for (const slug of specificWeapons) mods.push(grantFeat(slug));
 
   // Armor — "all types of armor" / "all armor" / listing all three
   if (/all types of armor|all armor|heavy, medium, and light|light, medium, and heavy/.test(profSentences)) {
@@ -123,9 +119,8 @@ export function detectWAPModifiers(desc: string): ModifierSeed[] {
   if (
     /proficiency with tower shields/.test(profSentences) &&
     !mods.some((m) => m.target.includes("towershieldproficiency"))
-  ) {
+  )
     mods.push(grantFeat("towershieldproficiency"));
-  }
 
   return mods;
 }

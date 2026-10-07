@@ -45,9 +45,9 @@ export default class ModifierEvaluator {
       if (group.length === 0) continue;
       for (const r of group) blockedKeys.add(`${r.entityId}:${r.entityType}`);
     }
-    for (const inv of reqs.invalidRequirements) {
+    for (const inv of reqs.invalidRequirements)
       blockedKeys.add(`${inv.requirement.entityId}:${inv.requirement.entityType}`);
-    }
+
     return blockedKeys;
   }
 
@@ -110,9 +110,9 @@ export default class ModifierEvaluator {
     if (!isTraversable(object)) return this.skip(modifier, `Target ${modifier.target} isn't in an object`);
     // A part the sheet computes when read (a total, an ability's share) has a getter and no setter
     const descriptor = Object.getOwnPropertyDescriptor(object, key);
-    if (descriptor?.get && !descriptor.set) {
+    if (descriptor?.get && !descriptor.set)
       return this.skip(modifier, `Target ${modifier.target} is computed from the sheet: a modifier can't change it`);
-    }
+
     // The caller made sure the data has the value's type: a number meets a number, a string a string.
     switch (operator) {
       case "add":
@@ -270,11 +270,8 @@ export default class ModifierEvaluator {
     for (const modifier of modifiers) {
       if (!this.filterByRequirements(modifier, blockedKeys)) continue;
 
-      if (isTemplateValue(modifier.value)) {
-        templateModifiers.push(modifier);
-      } else {
-        this.evaluateModifier(modifier, components);
-      }
+      if (isTemplateValue(modifier.value)) templateModifiers.push(modifier);
+      else this.evaluateModifier(modifier, components);
     }
 
     // Template modifiers run last so they read final resolved values.

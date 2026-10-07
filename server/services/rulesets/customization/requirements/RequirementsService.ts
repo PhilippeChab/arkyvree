@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import { RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, type RulesetData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -84,9 +83,7 @@ class RequirementsService {
           requirement = rows[0];
         }
 
-        if (!requirement) {
-          throw new InternalError("Failed to create requirement");
-        }
+        if (!requirement) throw new InternalError("Failed to create requirement");
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,
@@ -243,9 +240,8 @@ class RequirementsService {
             },
             { id: resolvedRequirementId, expectedUpdatedAt },
           );
-          if (expectedUpdatedAt && rows.length === 0) {
-            throw new ConflictError(STALE_ENTITY_MESSAGE);
-          }
+          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
           updatedRequirement = rows[0];
         } else {
           const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
@@ -257,15 +253,12 @@ class RequirementsService {
             },
             { id: resolvedRequirementId, expectedUpdatedAt },
           );
-          if (expectedUpdatedAt && rows.length === 0) {
-            throw new ConflictError(STALE_ENTITY_MESSAGE);
-          }
+          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
           updatedRequirement = rows[0];
         }
 
-        if (!updatedRequirement) {
-          throw new InternalError("Failed to update requirement");
-        }
+        if (!updatedRequirement) throw new InternalError("Failed to update requirement");
 
         const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {

@@ -89,11 +89,9 @@ export default class RulesetComposition {
   /** Leveled aptitude IDs: union across visible aptitudes. */
   private composeLeveledAptitudeIds(): Set<string> {
     const leveledAptitudeIds = new Set<string>();
-    for (const raw of this.chain) {
-      for (const id of raw.leveledAptitudeIds) {
-        if (!this.cow.isHidden(id)) leveledAptitudeIds.add(id);
-      }
-    }
+    for (const raw of this.chain)
+      for (const id of raw.leveledAptitudeIds) if (!this.cow.isHidden(id)) leveledAptitudeIds.add(id);
+
     return leveledAptitudeIds;
   }
 
@@ -131,9 +129,8 @@ export default class RulesetComposition {
       requirements: this.composeRequirements(visibleKlassLevelIds, excludedModifierIds),
     };
     const links = this.collectSiblingAptitudeLinks();
-    if (!this.cow.isEmpty()) {
-      this.resolveAptitudeLinks(composed.feats, composed.powers, composed.aptitudes, links);
-    }
+    if (!this.cow.isEmpty()) this.resolveAptitudeLinks(composed.feats, composed.powers, composed.aptitudes, links);
+
     return composed;
   }
 
@@ -156,9 +153,8 @@ export default class RulesetComposition {
     }
     const groups = siblingRows.getGroups();
     const taken = new Set(groups.flatMap(({ own, siblings }) => mergeSiblingModifiers(own, siblings)));
-    for (const m of groups.flatMap(({ siblings }) => siblings.flat())) {
-      if (!taken.has(m)) excludedModifierIds.add(m.id);
-    }
+    for (const m of groups.flatMap(({ siblings }) => siblings.flat())) if (!taken.has(m)) excludedModifierIds.add(m.id);
+
     return { modifiers: siblingRows.moveTaken(taken, (m, sourceId) => ({ ...m, sourceId })), excludedModifierIds };
   }
 
@@ -258,9 +254,9 @@ export default class RulesetComposition {
     links: ReturnType<RulesetComposition["collectSiblingAptitudeLinks"]>,
   ) {
     const aptitudesById = new Map(aptitudes.map((apt) => [apt.id, apt]));
-    for (const feat of feats) {
+    for (const feat of feats)
       feat.featsAptitudesInRules = this.linkAptitudes(feat.id, feat.featsAptitudesInRules, links.feats, aptitudesById);
-    }
+
     for (const power of powers) {
       power.powersAptitudesInRules = this.linkAptitudes(
         power.id,

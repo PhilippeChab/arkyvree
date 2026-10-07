@@ -1,6 +1,7 @@
 import { db } from "@/server/database/index.ts";
 import { Attachments, Blobs, Exports } from "@/server/repositories/index.ts";
-import { uniqueId } from "@/tests/support/seed.ts";
+
+import { uniqueId } from "./seed.ts";
 
 /** A PDF export of `userId`'s, valid for an hour unless `expiresAt` says otherwise. */
 export async function createExport(userId: string, expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()) {

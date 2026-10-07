@@ -37,14 +37,10 @@ export default new Hono().get(
         ws.send(JSON.stringify({ type: "app:version", version: BUILD_ID }));
       },
       onMessage(event, ws) {
-        if (event.data === "ping") {
-          ws.send("pong");
-        }
+        if (event.data === "ping") ws.send("pong");
       },
       onClose(_event, ws) {
-        if (userId) {
-          Connections.remove(userId, ws);
-        }
+        if (userId) Connections.remove(userId, ws);
       },
     };
   }),

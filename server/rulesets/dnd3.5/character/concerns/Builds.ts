@@ -80,9 +80,9 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       const gateKeys = new Set(groups.flatMap((group) => group.map(gateKey)));
       const literal = modifiers.filter((m) => !isTemplateValue(m.value));
 
-      for (const modifier of literal.filter((m) => !keysOf(m).some((key) => gateKeys.has(key)))) {
+      for (const modifier of literal.filter((m) => !keysOf(m).some((key) => gateKeys.has(key))))
         this.modifierEvaluator.evaluateModifier(modifier, components);
-      }
+
       let waiting = literal.filter((m) => keysOf(m).some((key) => gateKeys.has(key)));
       const appliedGated: Modifier[] = [];
       while (waiting.length > 0) {
@@ -181,11 +181,9 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       // Spell Focus targeting a school the character has no spells in resolves
       // (zero matches → inactive) rather than failing path traversal (skipped).
       const groupingValues = new Set<string>();
-      for (const prop of this.rulesetPowerProperties) {
-        if (prop.type === SPELL_SCHOOL || prop.type === SPELL_DESCRIPTOR) {
-          groupingValues.add(prop.value);
-        }
-      }
+      for (const prop of this.rulesetPowerProperties)
+        if (prop.type === SPELL_SCHOOL || prop.type === SPELL_DESCRIPTOR) groupingValues.add(prop.value);
+
       this.components.powerGroupings.seedEmptyGroupings([...groupingValues]);
 
       // Build aptitudeId → DC ability lookup from real spells once so virtual
@@ -208,9 +206,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
           abilityDcName = aptitudeIdToAbilityName.get(power.aptitudeId) ?? null;
         } else {
           const klassLevel = this.klassLevels.find((kl) => kl.id === power.klassLevelId);
-          if (klassLevel) {
-            abilityDcName = this.klassBonusSpellAbilityMap.get(klassLevel.klassId) ?? null;
-          }
+          if (klassLevel) abilityDcName = this.klassBonusSpellAbilityMap.get(klassLevel.klassId) ?? null;
         }
         const aptitudeSlug = aptitudeSlugById.get(power.aptitudeId) ?? power.aptitudeId;
         this.components.powerGroupings.registerPower({ ...power, abilityDcName, aptitudeSlug }, power.properties);
@@ -246,9 +242,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
         const known = PowersPaths.parseKnown(mod.target);
         if (known) {
           const spell = this.components.powers.getSpellEntry(known.spell, known.list);
-          if (spell && !spell.known) {
-            spell.known = true;
-          }
+          if (spell && !spell.known) spell.known = true;
         }
       }
     }
@@ -258,9 +252,9 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
      * view, without reading the ruleset or composing its view again. Without one, `fn` runs in a scope of its own.
      */
     private async inScope<T>(database: Db, scope: RulesetScope | undefined, fn: (scope: RulesetScope) => Promise<T>) {
-      if (scope?.ruleset.id !== this.character.rulesetId) {
+      if (scope?.ruleset.id !== this.character.rulesetId)
         return await withRulesetScope(database, this.character.rulesetId, fn);
-      }
+
       const { ruleset, rulesetData } = scope;
       return await withCowContext(rulesetData.cow, () => fn({ ruleset, rulesetData }));
     }

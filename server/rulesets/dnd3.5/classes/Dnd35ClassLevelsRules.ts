@@ -14,9 +14,7 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
   ): (T & { featPools: Record<string, number> })[] {
     // Build slug → display name map from aptitudes
     const slugToName = new Map<string, string>();
-    for (const apt of aptitudes) {
-      slugToName.set(stripSeparators(apt.name), apt.name);
-    }
+    for (const apt of aptitudes) slugToName.set(stripSeparators(apt.name), apt.name);
 
     // Build levelId → { [aptitudeName]: delta } map
     const deltasByLevelId = new Map<string, Record<string, number>>();
@@ -42,11 +40,9 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
     const resultMap = new Map<string, Record<string, number>>();
     for (const level of sorted) {
       const deltas = deltasByLevelId.get(level.id);
-      if (deltas) {
-        for (const [name, delta] of Object.entries(deltas)) {
-          cumulative[name] = (cumulative[name] ?? 0) + delta;
-        }
-      }
+      if (deltas)
+        for (const [name, delta] of Object.entries(deltas)) cumulative[name] = (cumulative[name] ?? 0) + delta;
+
       resultMap.set(level.id, { ...cumulative });
     }
 
@@ -68,12 +64,9 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
         entry = { bab: 0, skills: 0 };
         propsByLevelId.set(prop.entityId, entry);
       }
-      if (prop.type === KLASS_LEVEL_BAB) {
-        entry.bab = Number(prop.value);
-      }
-      if (prop.type === KLASS_LEVEL_SKILL_POINTS) {
-        entry.skills = Number(prop.value);
-      }
+      if (prop.type === KLASS_LEVEL_BAB) entry.bab = Number(prop.value);
+
+      if (prop.type === KLASS_LEVEL_SKILL_POINTS) entry.skills = Number(prop.value);
     }
 
     return levels.map((level) => {
@@ -115,11 +108,9 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
       const deltas = deltasByLevelId.get(level.id);
       if (deltas) {
         for (const { spellLevel, delta, operator } of deltas) {
-          if (operator === "set" && delta === -1) {
-            cumulative[spellLevel] = "All";
-          } else if (cumulative[spellLevel] !== "All") {
+          if (operator === "set" && delta === -1) cumulative[spellLevel] = "All";
+          else if (cumulative[spellLevel] !== "All")
             cumulative[spellLevel] = ((cumulative[spellLevel] as number) ?? 0) + delta;
-          }
         }
       }
       resultMap.set(level.id, { ...cumulative });
@@ -159,9 +150,8 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
     for (const level of sorted) {
       const deltas = deltasByLevelId.get(level.id);
       if (deltas) {
-        for (const [sl, delta] of Object.entries(deltas)) {
+        for (const [sl, delta] of Object.entries(deltas))
           cumulative[Number(sl)] = (cumulative[Number(sl)] ?? 0) + delta;
-        }
       }
       resultMap.set(level.id, { ...cumulative });
     }

@@ -2,7 +2,8 @@ import { and, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
 
 import { aptitudesInRules, featsInRules, levelFeatsInCharacter } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import LevelPicksRepository from "@/server/repositories/characters/LevelPicksRepository.ts";
+
+import LevelPicksRepository from "./LevelPicksRepository.ts";
 
 class CharacterLevelFeatsRepository extends LevelPicksRepository<typeof levelFeatsInCharacter> {
   constructor() {
@@ -24,9 +25,9 @@ class CharacterLevelFeatsRepository extends LevelPicksRepository<typeof levelFea
     const { table } = this;
     if ("featId" in where)
       return await this.existsPick(db, table.featId, { id: where.featId, rulesetId: where.rulesetId });
-    if ("aptitudeId" in where) {
+    if ("aptitudeId" in where)
       return await this.existsPick(db, table.aptitudeId, { id: where.aptitudeId, rulesetId: where.rulesetId });
-    }
+
     if ("shadowFeatIds" in where) {
       return await this.existsPickFromExtension(db, table.featId, featsInRules, {
         ...where,

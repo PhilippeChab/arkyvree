@@ -1,12 +1,5 @@
 import type { Constructor } from "@/server/mixins.ts";
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
-import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
-import {
-  type NaturalAttackKind,
-  SLOT_MAP,
-  type WeaponAbilities,
-  type WeaponSlot,
-} from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/server/rulesets/dnd3.5/constants.ts";
 import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/server/rulesets/dnd3.5/items/slots.ts";
 import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
@@ -27,6 +20,9 @@ import {
   WEAPON_STRENGTH_DAMAGE,
 } from "@/shared/dnd3.5/properties/index.ts";
 import { type Item } from "@/shared/relations.ts";
+
+import type CombatState from "./CombatState.ts";
+import { type NaturalAttackKind, SLOT_MAP, type WeaponAbilities, type WeaponSlot } from "./CombatState.ts";
 
 /**
  * D&D 3.5 damage die progression for size adjustments. All weapon/unarmed damages are defined for Medium size; shift up
@@ -97,9 +93,8 @@ function handTraits(
 
 function iterativeAttacks(bab: number): number[] {
   const attacks: number[] = [];
-  for (let bonus = bab; bonus > 0; bonus -= CONSTANTS.ATTACK_STEP) {
-    attacks.push(bonus);
-  }
+  for (let bonus = bab; bonus > 0; bonus -= CONSTANTS.ATTACK_STEP) attacks.push(bonus);
+
   return attacks.length > 0 ? attacks : [bab];
 }
 
@@ -127,20 +122,19 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     private attackModifier({ attack, finesse, strengthRating, ratingRequired }: WeaponAbilities): number {
       const abilities = this.abilities;
       let modifier = abilities.getAbilityModifier(attack);
-      if (finesse) {
-        modifier = Math.max(modifier, abilities.getAbilityModifier("Dexterity") + this.shieldCheckPenalty());
-      }
-      if (ratingRequired && abilities.getAbilityModifier("Strength") < (strengthRating ?? 0)) {
+      if (finesse) modifier = Math.max(modifier, abilities.getAbilityModifier("Dexterity") + this.shieldCheckPenalty());
+
+      if (ratingRequired && abilities.getAbilityModifier("Strength") < (strengthRating ?? 0))
         modifier += CONSTANTS.COMPOSITE_BOW_PENALTY;
-      }
+
       return modifier;
     }
 
     /** The weapon set, created if missing, with the slots the weapon displaces emptied. */
     private clearSlots(setKey: string, slot: "Main Hand" | "Off Hand" | "Two Handed") {
-      if (!this.combat.weaponsets[setKey]) {
+      if (!this.combat.weaponsets[setKey])
         this.combat.weaponsets[setKey] = { mainhand: null, offhand: null, twohanded: null };
-      }
+
       // Two-handed weapons displace main-hand and off-hand (e.g. unarmed strike default)
       if (slot === "Two Handed") {
         this.combat.weaponsets[setKey].mainhand = null;
@@ -446,9 +440,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
         }
       }
-      for (const gear of [...Object.values(armors), ...Object.values(shields)]) {
+      for (const gear of [...Object.values(armors), ...Object.values(shields)])
         if (itemIds.has(gear.itemId)) gear.proficient = false;
-      }
     }
 
     /** Lets each finessable weapon that attacks with Strength attack with Dexterity, for a feat with FEAT_WEAPON_FINESSE. */

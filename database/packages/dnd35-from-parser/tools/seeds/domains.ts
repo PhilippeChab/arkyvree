@@ -80,9 +80,9 @@ function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number])
 function domainSeeds(ref: DomainReference): DomainSeed[] {
   const spellNames = getDomainSpellNames(ref._meta.book);
   const seeds = ref.raw.map((entry) => domainSeed(ref, entry));
-  for (const seed of seeds) {
+  for (const seed of seeds)
     for (const spell of seed.spells) spell.name = spellNames.get(spell.name.toLowerCase()) ?? spell.name;
-  }
+
   return seeds;
 }
 
@@ -121,18 +121,16 @@ export function findDomainSpellIssues(ref: DomainReference): { domain: string; t
     const has = (name: string, level: number) =>
       spells.some((spell) => spell.level === level && spell.name.toLowerCase() === name.toLowerCase());
     for (const spell of spells) {
-      if (!spellNames.has(spell.name.toLowerCase())) {
+      if (!spellNames.has(spell.name.toLowerCase()))
         issues.push({ domain, text: `${spell.name} (level ${spell.level}) is no spell of the core rules or the book` });
-      }
     }
-    for (let level = 1; level <= 9; level++) {
+    for (let level = 1; level <= 9; level++)
       if (!spells.some((spell) => spell.level === level)) issues.push({ domain, text: `no spell at level ${level}` });
-    }
+
     for (const spell of bookSpells) {
       for (const { className, level } of spell.levelEntries) {
-        if (className === domain && !has(spell.name, level)) {
+        if (className === domain && !has(spell.name, level))
           issues.push({ domain, text: `the book's ${spell.name} is ${domain} ${level}, not on its list` });
-        }
       }
     }
   }

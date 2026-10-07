@@ -5,8 +5,7 @@ import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.t
 import { collectPropertySlugs } from "@/server/rulesets/engine/paths/propertySlugs.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
-import { deriveSegmentLabels } from "@/shared/customization/target.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, PowerWithAptitudes, Property } from "@/shared/relations.ts";

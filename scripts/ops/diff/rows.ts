@@ -35,13 +35,14 @@ export function collectDiff(ref: IdentifiedRow[], tgt: IdentifiedRow[]): TableDi
   for (const bk of [...new Set([...refMap.keys(), ...tgtMap.keys()])].sort()) {
     const r = refMap.get(bk);
     const t = tgtMap.get(bk);
-    if (!r) diff.onlyInTgt.push(bk);
-    else if (!t) diff.onlyInRef.push(bk);
-    else {
+    if (!r) {
+      diff.onlyInTgt.push(bk);
+    } else if (!t) {
+      diff.onlyInRef.push(bk);
+    } else {
       for (const field of new Set([...Object.keys(r.row), ...Object.keys(t.row)])) {
-        if (!Bun.deepEquals(r.row[field], t.row[field])) {
+        if (!Bun.deepEquals(r.row[field], t.row[field]))
           diff.fieldChanges.push({ bk, targetId: t.id, field, ref: r.row[field], tgt: t.row[field] });
-        }
       }
     }
   }

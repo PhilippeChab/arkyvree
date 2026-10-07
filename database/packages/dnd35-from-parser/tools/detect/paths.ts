@@ -33,18 +33,15 @@ function isValidRequirementPath(path: string): boolean {
     const slug = skillMatch[1];
     if (SKILL_GROUP_SLUGS.has(slug)) return true;
     // Check if slug starts with a known group prefix (e.g. "craftleatherworking" starts with "craft")
-    for (const group of SKILL_GROUP_SLUGS) {
-      if (slug.startsWith(group) && slug.length > group.length) return true;
-    }
+    for (const group of SKILL_GROUP_SLUGS) if (slug.startsWith(group) && slug.length > group.length) return true;
   }
   return false;
 }
 
 /** Recursively find invalid paths in a requirement tree */
 export function findInvalidRequirementPaths(req: RequirementEntry): string[] {
-  if ("chainingOperator" in req) {
-    return req.children.flatMap(findInvalidRequirementPaths);
-  }
+  if ("chainingOperator" in req) return req.children.flatMap(findInvalidRequirementPaths);
+
   return isValidRequirementPath(req.target) ? [] : [req.target];
 }
 

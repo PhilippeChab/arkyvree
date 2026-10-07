@@ -71,9 +71,7 @@ function expandPerLevelAptitudePicks(
     }
     // Keep any remaining levels that aren't covered by per-level lists
     const remaining = pick.levels.filter((l) => !perLevelCoveredLevels.has(l));
-    if (remaining.length > 0) {
-      result.push({ levels: remaining, target: pick.target });
-    }
+    if (remaining.length > 0) result.push({ levels: remaining, target: pick.target });
   }
 
   return result;

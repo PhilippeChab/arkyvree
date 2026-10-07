@@ -137,9 +137,7 @@ describe("cache join-maps — parity with repository queries", () => {
     // And: looking up a known D&D 3.5 triple returns the expected powers.
     const evocation = rulesetData.entityIdsByPropertyLookup.get(`powers:${SPELL_SCHOOL}:Evocation`) ?? [];
     expect(evocation.length).toBeGreaterThan(0);
-    for (const id of evocation) {
-      expect(rulesetData.powersById.has(id)).toBe(true);
-    }
+    for (const id of evocation) expect(rulesetData.powersById.has(id)).toBe(true);
   });
 
   test("propertiesByEntity + propertiesByEntityType cover the same row set", () => {
@@ -162,14 +160,10 @@ describe("cache join-maps — parity with repository queries", () => {
   });
 
   test("featsById / powersById / skillsById resolve every composed row", () => {
-    for (const feat of rulesetData.feats) {
-      expect(rulesetData.featsById.get(feat.id)).toBe(feat);
-    }
-    for (const power of rulesetData.powers) {
-      expect(rulesetData.powersById.get(power.id)).toBe(power);
-    }
-    for (const skill of rulesetData.skills) {
-      expect(rulesetData.skillsById.get(skill.id)).toBe(skill);
-    }
+    for (const feat of rulesetData.feats) expect(rulesetData.featsById.get(feat.id)).toBe(feat);
+
+    for (const power of rulesetData.powers) expect(rulesetData.powersById.get(power.id)).toBe(power);
+
+    for (const skill of rulesetData.skills) expect(rulesetData.skillsById.get(skill.id)).toBe(skill);
   });
 });

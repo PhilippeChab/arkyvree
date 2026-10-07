@@ -146,9 +146,9 @@ async function candidates(
   }
   if (column.type === "boolean") return [`coalesce(not ${current}, true)`];
   if (column.type === "numeric") return [`coalesce(${current}, 0) + 1`];
-  if (column.type === "integer") {
+  if (column.type === "integer")
     return [`${current} + 1`, `${current} - 1`, ...Array.from({ length: 20 }, (_, i) => String(i + 1))];
-  }
+
   const allowed = CHECKED[column.name] ?? (column.name === "operator" ? await operators(table) : undefined);
   return allowed
     ? allowed.filter((value) => value !== row[column.name]).map((value) => `'${value}'`)

@@ -1,12 +1,11 @@
 /** A class reference's detected section. */
 
-import {
-  detectAptitudePicks,
-  detectLockedFavoredEnemies,
-} from "@/database/packages/dnd35-from-parser/tools/detect/classes/aptitudePicks.ts";
-import { detectBonusFeatLists } from "@/database/packages/dnd35-from-parser/tools/detect/classes/bonusFeatLists.ts";
-import { detectFeatureOccurrences } from "@/database/packages/dnd35-from-parser/tools/detect/classes/features.ts";
-import { parseRequirements } from "@/database/packages/dnd35-from-parser/tools/detect/classes/prerequisites.ts";
+import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+
+import { detectAptitudePicks, detectLockedFavoredEnemies } from "./aptitudePicks.ts";
+import { detectBonusFeatLists } from "./bonusFeatLists.ts";
+import { detectFeatureOccurrences } from "./features.ts";
+import { parseRequirements } from "./prerequisites.ts";
 import {
   detectBab,
   detectCasterAdvancement,
@@ -16,8 +15,7 @@ import {
   detectSpellsPerDay,
   parseHd,
   parseSkillPoints,
-} from "@/database/packages/dnd35-from-parser/tools/detect/classes/progression.ts";
-import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+} from "./progression.ts";
 
 /** A class reference's detected section, from what was scraped. */
 export function buildDetected(raw: ClassReference["raw"]): ClassReference["detected"] {

@@ -15,11 +15,8 @@ import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 /** A 404 unless the entity `customization` is made on still exists. */
 export async function checkCustomizedEntity(customization: Modifier | Requirement | Property) {
-  if ("sourceId" in customization) {
-    await getCustomizableEntityName(customization.sourceId, customization.sourceType);
-  } else {
-    await getCustomizableEntityName(customization.entityId, customization.entityType);
-  }
+  if ("sourceId" in customization) await getCustomizableEntityName(customization.sourceId, customization.sourceType);
+  else await getCustomizableEntityName(customization.entityId, customization.entityType);
 }
 
 /**
@@ -76,9 +73,7 @@ export async function getCustomizableEntityName(
       break;
   }
 
-  if (!name) {
-    throw new NotFoundError(`${entityType} not supported`);
-  }
+  if (!name) throw new NotFoundError(`${entityType} not supported`);
 
   return name;
 }

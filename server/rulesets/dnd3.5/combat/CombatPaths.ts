@@ -1,12 +1,12 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
-import { ARMOR_CATEGORIES } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import { LOAD_CATEGORIES } from "@/server/rulesets/dnd3.5/constants.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
-import { deriveSegmentLabels } from "@/shared/customization/target.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { capitalize } from "@/shared/text.ts";
+
+import { ARMOR_CATEGORIES } from "./CombatState.ts";
 
 const COMBAT_LABELS: Record<string, string> = {
   tohit: "To Hit",

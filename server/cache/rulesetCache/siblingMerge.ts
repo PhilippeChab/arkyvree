@@ -29,9 +29,9 @@ function conditionKey(requirement: Requirement): string {
  */
 function serializeNode(node: RequirementNode<Requirement>, level: string, entityId: string): Requirement[] {
   const rows: Requirement[] = [{ ...node.requirement, entityId, level }];
-  for (const [index, child] of node.children.entries()) {
+  for (const [index, child] of node.children.entries())
     rows.push(...serializeNode(child, `${level}.${index + 1}`, entityId));
-  }
+
   return rows;
 }
 
@@ -93,9 +93,8 @@ export function mergeSiblingRequirements(
   );
   const usedLevels = new Set(own.map((r) => r.level));
   let maxTopInt = 0;
-  for (const r of own) {
-    if (/^\d+$/.test(r.level)) maxTopInt = Math.max(maxTopInt, Number(r.level));
-  }
+  for (const r of own) if (/^\d+$/.test(r.level)) maxTopInt = Math.max(maxTopInt, Number(r.level));
+
   const merged: Requirement[] = [];
   for (const requirements of siblings) {
     for (const node of RequirementTree.fromRows(requirements).roots) {
@@ -103,9 +102,8 @@ export function mergeSiblingRequirements(
       if (!isGroup && standaloneKeys.has(conditionKey(node.requirement))) continue;
       let level: string;
       if (isGroup) {
-        do {
-          level = String(++maxTopInt);
-        } while (usedLevels.has(level));
+        do level = String(++maxTopInt);
+        while (usedLevels.has(level));
       } else {
         const originalLevel = node.requirement.level;
         level = originalLevel;

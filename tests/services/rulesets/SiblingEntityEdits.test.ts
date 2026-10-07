@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Items, Klasses, KlassLevels, Modifiers, Properties, Races, Rulesets } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -33,7 +32,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     const copy = await copyEntity(db, entityType, source.id, extension);
     await Properties.create(db, { entityId: copy.id, entityType, type: "SIBLING_MARKER", value: String(i) });
     // Classes have modifiers on their levels, not directly on the class.
-    if (entityType !== "klasses")
+    if (entityType !== "klasses") {
       await Modifiers.create(db, {
         sourceId: copy.id,
         sourceType: entityType,
@@ -42,6 +41,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
         valueType: "number",
         operator: "add",
       });
+    }
     if (omitLastLevel) {
       const last = (await KlassLevels.findMany(db, { klassId: copy.id })).find((level) => level.level === 20)!;
       await ClassLevelsService.deleteClassLevel(session, extension.id, copy.id, last.id);
@@ -95,23 +95,24 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
 for (const entityType of ["races", "klasses", "items"] as const) {
   test(`${entityType}: ordinary edit copies all visible sibling customizations`, async () => {
     const { session, host, source, assertCopied } = await setup(entityType);
-    if (entityType === "races")
+    if (entityType === "races") {
       await RacesService.updateRace(session, host.id, source.id, {
         name: source.name,
         description: "edited description",
         size: "Medium",
         baseSpeed: 30,
       });
-    else if (entityType === "klasses")
+    } else if (entityType === "klasses") {
       await ClassesService.updateClass(session, host.id, source.id, {
         name: source.name,
         description: "edited description",
       });
-    else
+    } else {
       await ItemsService.updateItem(session, host.id, source.id, {
         name: source.name,
         description: "edited description",
       });
+    }
     await assertCopied();
   });
 }

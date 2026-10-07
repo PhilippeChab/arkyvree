@@ -4,12 +4,13 @@ import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/ap
 import AptitudesPaths from "@/server/rulesets/dnd3.5/aptitudes/AptitudesPaths.ts";
 import { parseAptitudeSpellLevel } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 import ClassesPaths from "@/server/rulesets/dnd3.5/classes/ClassesPaths.ts";
-import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import type { Components, CustomizedFeat, CustomizedKlassLevel } from "@/server/rulesets/engine/types.ts";
 import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
+
+import type SpellcastingState from "./SpellcastingState.ts";
 
 /** A character level's key in the index of the class levels the character took. */
 function levelKey(characterLevelId: string, klassLevelId: string) {
@@ -62,9 +63,8 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
 
         const actualLevel = klassData.level;
         const effectiveLevel = Math.min(actualLevel + bonus, MAX_CLASS_LEVEL);
-        for (let level = actualLevel + 1; level <= effectiveLevel; level++) {
+        for (let level = actualLevel + 1; level <= effectiveLevel; level++)
           classNameByLevel.set(`${klassData.klass.id}:${level}`, className);
-        }
       }
       return classNameByLevel;
     }
@@ -204,9 +204,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         (m) => AptitudesPaths.isAptitudeTarget(m.target) && isGateMet(m),
       );
 
-      for (const modifier of aptitudeModifiers) {
-        this.modifierEvaluator.evaluateModifier(modifier, components);
-      }
+      for (const modifier of aptitudeModifiers) this.modifierEvaluator.evaluateModifier(modifier, components);
 
       this.syncFeatListSlots(feats, featListIds, isGateMet);
     }
@@ -231,9 +229,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       this.bonusKlassLevels = bonusKlassLevels;
       for (const kl of bonusKlassLevels) {
         const className = classNameByLevel.get(`${kl.klassId}:${kl.level}`);
-        if (className) {
-          this.bonusKlassLevelClassMap.set(kl.id, className);
-        }
+        if (className) this.bonusKlassLevelClassMap.set(kl.id, className);
       }
       this.attributeBonusLevels(bonusKlassLevels, klassLevels, feats, characterLevels, rulesetKlasses);
     }

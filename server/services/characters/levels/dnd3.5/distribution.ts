@@ -7,8 +7,14 @@
  */
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { ALLOWED_ALL, Dnd35LevelsRules, type Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
-import { parseAptitudeAllowed, parseAptitudePool, parseAptitudeSpellLevel } from "@/server/rulesets/dnd3.5/index.ts";
+import {
+  ALLOWED_ALL,
+  Dnd35LevelsRules,
+  type Dnd35LevelUpProjector,
+  parseAptitudeAllowed,
+  parseAptitudePool,
+  parseAptitudeSpellLevel,
+} from "@/server/rulesets/dnd3.5/index.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { isRecord } from "@/shared/isRecord.ts";
@@ -61,9 +67,8 @@ function addModifierDeltas(
     const pool = parseAptitudePool(mod.target);
     if (pool !== undefined) {
       const aptId = aptitudeSlugToId.get(pool);
-      if (aptId && perLevelFeatSlots[aptId]) {
-        deltas.feats[aptId] = (deltas.feats[aptId] ?? 0) + value;
-      }
+      if (aptId && perLevelFeatSlots[aptId]) deltas.feats[aptId] = (deltas.feats[aptId] ?? 0) + value;
+
       continue;
     }
     const slot = parseAptitudeSpellLevel(mod.target);
@@ -72,11 +77,8 @@ function addModifierDeltas(
       if (aptId && perLevelPowerSlots[aptId]) {
         if (!deltas.powers[aptId]) deltas.powers[aptId] = {};
         const spellLevel = String(slot.level);
-        if (mod.operator === "set" && value === -1) {
-          deltas.powers[aptId][spellLevel] = ALL_KNOWN_SLOTS;
-        } else {
-          deltas.powers[aptId][spellLevel] = (deltas.powers[aptId][spellLevel] ?? 0) + value;
-        }
+        if (mod.operator === "set" && value === -1) deltas.powers[aptId][spellLevel] = ALL_KNOWN_SLOTS;
+        else deltas.powers[aptId][spellLevel] = (deltas.powers[aptId][spellLevel] ?? 0) + value;
       }
     }
   }
@@ -86,9 +88,8 @@ function addModifierDeltas(
 function allKnownLevels(aptitudes: Record<string, { id: string } & Record<string, unknown>>): Set<string> {
   const known = new Set<string>();
   for (const aptitude of Object.values(aptitudes)) {
-    for (const [level, entry] of Object.entries(aptitude)) {
+    for (const [level, entry] of Object.entries(aptitude))
       if (/^\d+$/.test(level) && isRecord(entry) && entry.allowed === ALLOWED_ALL) known.add(`${aptitude.id}:${level}`);
-    }
   }
   return known;
 }
@@ -113,9 +114,8 @@ function capAtMaxRanks(
     perLevel[i] += overflow;
     overflow = 0;
 
-    if (data.perLevelClassSkillIds[i].includes(skillId)) {
-      isClassSoFar = true;
-    }
+    if (data.perLevelClassSkillIds[i].includes(skillId)) isClassSoFar = true;
+
     if (perLevel[i] === 0) continue;
 
     const charLevelAtI = data.baseCharacterLevel + i + 1;
@@ -175,9 +175,7 @@ function distributeFeats(
     }
 
     if (!result[targetLevel].feats[aptitudeId]) result[targetLevel].feats[aptitudeId] = [];
-    for (const featId of featIds) {
-      result[targetLevel].feats[aptitudeId].push(featId);
-    }
+    for (const featId of featIds) result[targetLevel].feats[aptitudeId].push(featId);
   }
 }
 
@@ -209,9 +207,8 @@ function distributePowers(
       const totalSlotsAt = (i: number) => Object.values(slotsPerLevel[i] ?? {}).reduce((sum, n) => sum + n, 0);
       fillSlots(result.length, powerIds, totalSlotsAt, place);
     } else {
-      for (const [plKey, levelPowerIds] of powersByLevel) {
+      for (const [plKey, levelPowerIds] of powersByLevel)
         fillSlots(result.length, levelPowerIds, (i) => (slotsPerLevel[i] ?? {})[plKey] ?? 0, place);
-      }
     }
   }
 }
@@ -276,17 +273,13 @@ function levelDeltas(
     addModifierDeltas(deltas, modifiers, aptitudeSlugToId, perLevelFeatSlots, perLevelPowerSlots);
 
   add(modifiersBySourceId.get(klassLevelId) ?? []);
-  for (const rec of autoFeatRecords) {
-    add(modifiersBySourceId.get(rec.featsInRule.id) ?? []);
-  }
+  for (const rec of autoFeatRecords) add(modifiersBySourceId.get(rec.featsInRule.id) ?? []);
 
   const generalAptId = aptitudeSlugToId.get(Dnd35LevelsRules.GENERAL_FEATS_APTITUDE_SLUG);
   if (generalAptId && perLevelFeatSlots[generalAptId]) {
     const generalDelta =
       Dnd35LevelsRules.countGeneralFeats(charLevel) - Dnd35LevelsRules.countGeneralFeats(charLevel - 1);
-    if (generalDelta > 0) {
-      deltas.feats[generalAptId] = (deltas.feats[generalAptId] ?? 0) + generalDelta;
-    }
+    if (generalDelta > 0) deltas.feats[generalAptId] = (deltas.feats[generalAptId] ?? 0) + generalDelta;
   }
   return deltas;
 }
@@ -300,9 +293,7 @@ export function buildPowerLevelLookup(rulesetData: RulesetData, powerIds: string
   for (const powerId of powerIds) {
     const power = rulesetData.powersById.get(powerId);
     if (!power) continue;
-    for (const pa of power.powersAptitudesInRules) {
-      lookup.set(`${pa.powerId}:${pa.aptitudeId}`, pa.level);
-    }
+    for (const pa of power.powersAptitudesInRules) lookup.set(`${pa.powerId}:${pa.aptitudeId}`, pa.level);
   }
   return lookup;
 }
@@ -369,9 +360,8 @@ export function computePerLevelAptitudeSlots(
       perLevelFeatSlots,
       perLevelPowerSlots,
     );
-    for (const aptId of featPoolIds) {
-      perLevelFeatSlots[aptId].push(Math.max(0, deltas.feats[aptId] ?? 0));
-    }
+    for (const aptId of featPoolIds) perLevelFeatSlots[aptId].push(Math.max(0, deltas.feats[aptId] ?? 0));
+
     for (const aptId of powerPoolIds) {
       const slots: Record<string, number> = {};
       for (const [sl, delta] of Object.entries(deltas.powers[aptId] ?? {})) {
@@ -387,9 +377,8 @@ export function computePerLevelAptitudeSlots(
   // Add baseline unspent slots to the first level (e.g., Human racial bonus feat)
   for (const [, apt] of Object.entries(baselineAptitudes)) {
     const baselineAvailable = apt.allowed - apt.spent;
-    if (baselineAvailable > 0 && perLevelFeatSlots[apt.id]?.[0] !== undefined) {
+    if (baselineAvailable > 0 && perLevelFeatSlots[apt.id]?.[0] !== undefined)
       perLevelFeatSlots[apt.id][0] += baselineAvailable;
-    }
   }
 
   return { perLevelFeatSlots, perLevelPowerSlots };
@@ -445,9 +434,7 @@ export function getDeferredAptitudeSources(
       const list = parseAptitudeAllowed(mod.target);
       if (list === undefined) continue;
       const aptId = rulesetData.aptitudeIdBySlug.get(list);
-      if (aptId && deferredAptIdSet.has(aptId)) {
-        sources.set(aptId, mod.sourceId);
-      }
+      if (aptId && deferredAptIdSet.has(aptId)) sources.set(aptId, mod.sourceId);
     }
   }
   return sources;

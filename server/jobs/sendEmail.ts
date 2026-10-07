@@ -18,9 +18,8 @@ export async function sendEmailTask(payload: unknown, helpers: JobHelpers): Prom
   const { to, from, subject } = email;
 
   if (!smtpTransport && !resend) {
-    if (isProduction()) {
-      throw new Error("Email service not configured");
-    }
+    if (isProduction()) throw new Error("Email service not configured");
+
     helpers.logger.warn(`Email service not configured — skipping send to ${to.join(", ")}`);
     return;
   }
@@ -40,8 +39,7 @@ export async function sendEmailTask(payload: unknown, helpers: JobHelpers): Prom
   }
 
   const result = await resend!.emails.send({ from, to, subject, html, text });
-  if (result.error) {
-    throw new Error(result.error.message);
-  }
+  if (result.error) throw new Error(result.error.message);
+
   helpers.logger.info(`Email sent via Resend to ${to.join(", ")}: ${subject}`);
 }

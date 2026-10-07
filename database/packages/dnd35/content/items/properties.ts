@@ -1,8 +1,6 @@
 /** Builders the generated items are written with: their weapon, armor or shield properties. */
 
 import type { Property } from "@/database/packages/dnd35/content/customization/types.ts";
-import { getArmorDefinition, getShieldDefinition } from "@/database/packages/dnd35/content/items/armor.ts";
-import { getWeaponDefinition } from "@/database/packages/dnd35/content/items/weapons.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,
@@ -31,6 +29,9 @@ import {
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
 } from "@/shared/dnd3.5/properties/index.ts";
+
+import { getArmorDefinition, getShieldDefinition } from "./armor.ts";
+import { getWeaponDefinition } from "./weapons.ts";
 
 export function armorProperties(armorTypeName: string): Property[] {
   const def = getArmorDefinition(armorTypeName);
@@ -80,15 +81,11 @@ export function weaponProperties(weaponTypeName: string): Property[] {
     { type: WEAPON_TYPE, value: weaponTypeName },
   ];
 
-  if (def.range && def.range > 0) {
-    props.push({ type: WEAPON_RANGE, value: String(def.range) });
-  }
-  if (def.ranged) {
-    props.push({ type: WEAPON_RANGED, value: "true" });
-  }
-  if (def.reach && def.reach > 0) {
-    props.push({ type: WEAPON_REACH, value: String(def.reach) });
-  }
+  if (def.range && def.range > 0) props.push({ type: WEAPON_RANGE, value: String(def.range) });
+
+  if (def.ranged) props.push({ type: WEAPON_RANGED, value: "true" });
+
+  if (def.reach && def.reach > 0) props.push({ type: WEAPON_REACH, value: String(def.reach) });
 
   return props;
 }

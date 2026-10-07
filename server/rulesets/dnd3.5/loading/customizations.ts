@@ -1,8 +1,6 @@
 /** What each loaded entity carries: its properties, modifiers and requirements, and the character's modifiers in order. */
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import type { SharedCharacterData } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
-import type { buildFeats, buildPowers } from "@/server/rulesets/dnd3.5/loading/picks.ts";
 import type {
   CustomizedFeat,
   CustomizedKlassLevel,
@@ -12,6 +10,9 @@ import type {
 } from "@/server/rulesets/engine/types.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import type { KlassLevel, Modifier, Race, Requirement } from "@/shared/relations.ts";
+
+import type { SharedCharacterData } from "./DetailedCharacterDataLoader.ts";
+import type { buildFeats, buildPowers } from "./picks.ts";
 
 /**
  * The character's modifiers and requirement groups, in order: its own modifiers, its race's, its equipped items',
@@ -68,11 +69,8 @@ export function collectModifiers(
   for (const modifier of modifiers) {
     const fromRuleset = rulesetData.requirementsByEntity.get(modifier.id) ?? [];
     const fromExtra = extraReqsByEntityId.get(modifier.id) ?? [];
-    if (fromExtra.length === 0) {
-      requirementGroups.push(fromRuleset);
-    } else {
-      requirementGroups.push([...fromRuleset, ...fromExtra]);
-    }
+    if (fromExtra.length === 0) requirementGroups.push(fromRuleset);
+    else requirementGroups.push([...fromRuleset, ...fromExtra]);
   }
   return { modifiers, requirementGroups };
 }
@@ -164,12 +162,9 @@ export function toCustomizedKlassLevels(klassLevelsRaw: KlassLevel[], rulesetDat
       klassLevelProperties.set(klassLevel.id, entry);
     }
     for (const prop of klassLevel.properties) {
-      if (prop.type === KLASS_LEVEL_BAB) {
-        entry.bab = Number(prop.value);
-      }
-      if (prop.type === KLASS_LEVEL_SKILL_POINTS) {
-        entry.skills = Number(prop.value);
-      }
+      if (prop.type === KLASS_LEVEL_BAB) entry.bab = Number(prop.value);
+
+      if (prop.type === KLASS_LEVEL_SKILL_POINTS) entry.skills = Number(prop.value);
     }
   }
   return { klassLevels, klassLevelProperties };

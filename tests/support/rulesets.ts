@@ -7,10 +7,11 @@ import { RulesetCache, type RulesetSources } from "@/server/cache/rulesetCache/i
 import { EntityCopy, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db } from "@/server/database/index.ts";
 import { Properties, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
-import { api, expectOk } from "@/tests/support/api.ts";
-import { insertRows } from "@/tests/support/database.ts";
-import { uniqueId } from "@/tests/support/seed.ts";
-import { createTestUser } from "@/tests/support/users.ts";
+
+import { api, expectOk } from "./api.ts";
+import { insertRows } from "./database.ts";
+import { uniqueId } from "./seed.ts";
+import { createTestUser } from "./users.ts";
 
 const writtenSeededRulesets = new Set<string>();
 
