@@ -19,7 +19,7 @@ import {
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { ActionMenuItem } from "@/client/src/components/common/index.ts";
 import {
@@ -197,7 +197,6 @@ export function Layout() {
   }, [completeOnboarding, updateUser]);
 
   const location = useLocation();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { signOut } = useAuthRequests();
   // Sidebar item of the first path segment ("rulesets" for /rulesets/123);
@@ -212,16 +211,6 @@ export function Layout() {
     menu.closeMenu();
     void queryClient.cancelQueries();
     signOut.mutate();
-  };
-
-  const handleProfile = () => {
-    menu.closeMenu();
-    navigate("/profile");
-  };
-
-  const handleSettings = () => {
-    menu.closeMenu();
-    navigate("/settings");
   };
 
   return (
@@ -284,16 +273,9 @@ export function Layout() {
           </Stack>
 
           <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
-            <ActionMenuItem icon={AccountCircleIcon} label="Profile" onClick={handleProfile} />
-            <ActionMenuItem
-              icon={HistoryIcon}
-              label="Activity"
-              onClick={() => {
-                menu.closeMenu();
-                navigate("/activities");
-              }}
-            />
-            <ActionMenuItem icon={SettingsIcon} label="Settings" onClick={handleSettings} />
+            <ActionMenuItem icon={AccountCircleIcon} label="Profile" to="/profile" onClick={menu.closeMenu} />
+            <ActionMenuItem icon={HistoryIcon} label="Activity" to="/activities" onClick={menu.closeMenu} />
+            <ActionMenuItem icon={SettingsIcon} label="Settings" to="/settings" onClick={menu.closeMenu} />
             <Divider />
             <ActionMenuItem icon={LogoutIcon} label="Sign Out" onClick={handleSignOut} />
           </Menu>

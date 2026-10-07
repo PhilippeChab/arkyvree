@@ -78,8 +78,7 @@ interface GroupedRowProps {
 const FEATS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
   { key: "aptitudes", label: "Aptitudes", width: "15%" },
-  { key: "prerequisites", label: "Prerequisites", width: "20%" },
-  { key: "description", label: "Description", width: "40%" },
+  { key: "description", label: "Description", width: "60%" },
 ];
 
 const GROUPED_COLUMNS = [

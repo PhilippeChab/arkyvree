@@ -5,6 +5,7 @@ import { BlankNote, SubsectionTitle } from "@/client/src/components/common/index
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { capitalize } from "@/shared/text.ts";
 
+import { formatSpeed, iterativeAttacks } from "./combatValues.ts";
 import { StatField } from "./StatField.tsx";
 import type { Dnd35CombatAndSavesSectionProps } from "./types.ts";
 
@@ -20,13 +21,6 @@ const AC_PARTS = [
   ["Misc", "misc"],
 ] as const;
 
-function iterativeAttacks(bab: number): string {
-  const attacks: string[] = [];
-  for (let bonus = bab; bonus > 0; bonus -= 5) attacks.push(formatSigned(bonus));
-
-  return attacks.length > 0 ? attacks.join("/") : formatSigned(bab);
-}
-
 export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSectionProps) {
   const bab = combat?.bab ?? 0;
 
@@ -41,7 +35,7 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: { xs: 1, sm: 2 } }}>
               <StatField label="HP" value={combat?.hp?.total ?? 0} />
               <StatField label="Initiative" value={formatSigned(combat?.initiative?.total)} />
-              <StatField label="Speed" value={`${combat?.speed?.total ?? 30} ft.`} />
+              <StatField label="Speed" value={formatSpeed(combat?.speed?.total)} />
 
               <StatField label="BAB" value={iterativeAttacks(bab)} />
               <StatField label="Grapple" value={formatSigned(combat?.grapple?.total)} />

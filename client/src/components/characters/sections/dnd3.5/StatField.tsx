@@ -4,7 +4,8 @@ import { EmptyValue } from "@/client/src/components/common/index.ts";
 
 interface StatFieldProps {
   label: string;
-  value: string | number;
+  /** None shows an empty value. */
+  value?: string | number;
 }
 
 export function StatField({ label, value }: StatFieldProps) {

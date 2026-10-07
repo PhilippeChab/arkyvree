@@ -1,6 +1,6 @@
 import { Alert, Container, Menu, Stack } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import {
   CharacterDetailSkeleton,
@@ -17,7 +17,6 @@ import { campaignCharacterQuery } from "./campaignQueries.ts";
 
 export default function CampaignCharacterPage() {
   const { id: campaignId = "", characterId = "" } = useParams<{ characterId: string; id: string }>();
-  const navigate = useNavigate();
   const menu = useAnchorMenu();
 
   const { data, isLoading, error } = useQuery(campaignCharacterQuery(campaignId, characterId));
@@ -68,7 +67,8 @@ export default function CampaignCharacterPage() {
               <ActionMenuItem
                 icon={EditIcon}
                 label="Edit Character"
-                onClick={menu.closeMenuAnd(() => navigate(`/characters/${characterId}`))}
+                to={`/characters/${characterId}`}
+                onClick={menu.closeMenu}
               />
             )}
             <ActionMenuItem

@@ -428,6 +428,16 @@ describe("frontend rules", () => {
           "client/src/clicked.tsx": 'export const c = <Button onClick={() => navigate("/x")}>Go</Button>;\n',
           "client/src/back.tsx": "export const b = <Button onClick={() => navigate(-1)}>Back</Button>;\n",
           "client/src/card.tsx": 'export const d = <ListCard onClick={() => navigate("/x")} />;\n',
+          "client/src/menu.tsx":
+            'export const m = <ActionMenuItem label="Edit" onClick={menu.closeMenuAnd(() => navigate("/x"))} />;\n',
+          "client/src/handler.tsx":
+            'export function H() {\n  const handleProfile = () => {\n    menu.closeMenu();\n    navigate("/profile");\n  };\n' +
+            '  return <ActionMenuItem label="Profile" onClick={handleProfile} />;\n}\n',
+          "client/src/item.tsx":
+            'export const i = <ActionMenuItem label="Profile" to="/profile" onClick={menu.closeMenu} />;\n',
+          "client/src/acting.tsx":
+            'export function A() {\n  const handleSave = () => {\n    save();\n    navigate("/x");\n  };\n' +
+            "  return <Button onClick={handleSave}>Save</Button>;\n}\n",
           "client/src/window.tsx": 'export const w = () => window.open("https://x", "_blank");\n',
           "client/src/params.tsx":
             'import { useSearchParams } from "react-router-dom";\nexport const p = useSearchParams;\n',
@@ -441,6 +451,8 @@ describe("frontend rules", () => {
     ).toEqual([
       "navigation client/src/alias.tsx",
       "navigation client/src/clicked.tsx",
+      "navigation client/src/handler.tsx",
+      "navigation client/src/menu.tsx",
       "navigation client/src/params.tsx",
       "navigation client/src/window.tsx",
     ]);
