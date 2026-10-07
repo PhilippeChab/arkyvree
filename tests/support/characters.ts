@@ -2,13 +2,28 @@ import type { InferInsertModel } from "drizzle-orm";
 import type { InferRequestType } from "hono/client";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
-import { db } from "@/server/database/index.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
+import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type Db, db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
+import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Character, Session } from "@/shared/relations.ts";
 
 import { api, expectOk } from "./api.ts";
 import { getSeedCtx, uniqueId } from "./seed.ts";
+
+/**
+ * `record`, built as the class a test picks (`Kind`: a familiar, a mount…) the way the server builds a character
+ * (`buildCharacter`): its rows read, in `scope` when given, a bonded creature's master built first.
+ */
+export async function buildAs<C extends DetailedCharacterInterface>(
+  Kind: new (record: Character) => C,
+  record: Character,
+  options: { database?: Db; projected?: Parameters<C["build"]>[2]; scope?: RulesetScope } = {},
+) {
+  return await buildCharacter({ createDetailedCharacter: (made: Character) => new Kind(made) }, record, options);
+}
 
 /**
  * A new character of `session`'s, created through the service: a Human on the seeded ruleset, unless `values` says

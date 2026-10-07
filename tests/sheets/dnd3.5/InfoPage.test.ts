@@ -4,6 +4,7 @@ import { isValidElement, type ReactNode } from "react";
 
 import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import InfoPage from "@/server/sheets/dnd3.5/InfoPage.tsx";
+import { buildAs } from "@/tests/support/characters.ts";
 import { findSeededCharacter } from "@/tests/support/seed.ts";
 
 /** The text a page's element tree shows, its components called, each piece in order. */
@@ -17,8 +18,7 @@ function textOf(node: ReactNode): string[] {
 
 describe("InfoPage", () => {
   test("shows a height and a weight as the player wrote them, free text without a unit added", async () => {
-    const detailed = new DetailedCharacter(await findSeededCharacter("Bjorn Ironhand"));
-    await detailed.build();
+    const detailed = await buildAs(DetailedCharacter, await findSeededCharacter("Bjorn Ironhand"));
     const { physiology } = detailed.components.identity.getIdentity();
     physiology.height = `5'11"`;
     physiology.weight = "82 kg";

@@ -1,15 +1,18 @@
-import type { ValidationIssue } from "@/engine/core/types.ts";
+import type { RulesetView, ValidationIssue } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import { db, memoizeRequest } from "@/server/database/index.ts";
-import { Characters, Visibility } from "@/server/repositories/index.ts";
 import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { toVirtualFeat } from "@/server/rulesets/dnd3.5/loading/customizations.ts";
+import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
+import type { CharacterRows } from "@/server/rulesets/engine/types.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 import { type BondedRaceStatBlock, getBondedRaceStats, STAT_BLOCK_FEAT_SKILL_BONUSES } from "./bondedRaceData.ts";
 
 export default abstract class DetailedCharacterBonded extends Dnd35DetailedCharacter {
   protected cachedTotalHD: number | null = null;
+
+  /** The creature's master, built before it (`buildCharacter`): what its sheet derives from. */
+  protected master?: Dnd35DetailedCharacter;
 
   /**
    * The stat block's feats, as any granted feat is: possessed and counted, and listed with the feats the creature has
@@ -36,7 +39,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
       this.modifierEvaluator.evaluateModifiers(this.components, featModifiers, this.requirementEvaluator);
   }
 
-  protected abstract applyMasterDerivation(parentCharacterId: string, rulesetData: RulesetData): Promise<void>;
+  protected abstract applyMasterDerivation(master: Dnd35DetailedCharacter): void;
 
   /** The stat block's skills, then its feats, which add their bonuses to the totals set without them. */
   protected applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: RulesetData): void {
@@ -73,15 +76,10 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     return { budget: [], ranks: [] };
   }
 
-  protected async loadMaster(parentCharacterId: string, rulesetData: RulesetData): Promise<Dnd35DetailedCharacter> {
-    return await memoizeRequest(`bonded-master:${parentCharacterId}`, async () => {
-      const masterRecord = await Characters.findOne(db, { id: parentCharacterId }, Visibility.All);
-      if (!masterRecord) throw new Error(`Bonded's master not found: ${parentCharacterId}`);
-
-      const composed = new Dnd35DetailedCharacter(masterRecord);
-      await composed.build(db, undefined, { ruleset: this.ruleset!, rulesetData });
-      return composed;
-    });
+  /** The creature's master, which its build is given: one it was saved with and its build lacks is an error. */
+  protected requireMaster(): Dnd35DetailedCharacter {
+    if (!this.master) throw new Error(`Bonded's master not built: ${this.character.parentCharacterId}`);
+    return this.master;
   }
 
   /**
@@ -90,8 +88,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
    * modifier adds on top. Then the character's own setup, Weapon Finesse on the natural attacks included.
    */
   protected override async preRequirementProcessing(rulesetData: RulesetData): Promise<void> {
-    if (this.character.parentCharacterId)
-      await this.applyMasterDerivation(this.character.parentCharacterId, rulesetData);
+    if (this.character.parentCharacterId) this.applyMasterDerivation(this.requireMaster());
 
     const raceStats = getBondedRaceStats(this.race?.name);
     if (raceStats) {
@@ -106,5 +103,16 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     if (this.cachedTotalHD !== null) this.components.combat.setHitDiceOverride(this.cachedTotalHD);
 
     await super.preRequirementProcessing(rulesetData);
+  }
+
+  /** Builds the creature from its rows, its sheet derived from its `master`'s, which comes built. */
+  override async build(
+    rows: CharacterRows,
+    view: RulesetView,
+    projectedData?: Dnd35ProjectedCharacterData,
+    master?: Dnd35DetailedCharacter,
+  ) {
+    this.master = master;
+    await super.build(rows, view, projectedData, master);
   }
 }

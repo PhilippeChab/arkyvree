@@ -16,12 +16,8 @@ import type { ProjectedCharacterData, ProjectedCharacterLevel } from "@/engine/c
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import type { Db } from "@/server/database/index.ts";
-import type {
-  Dnd35DetailedCharacter,
-  Dnd35ProjectedCharacterData,
-  Dnd35RulesetModule,
-} from "@/server/rulesets/dnd3.5/index.ts";
+import type { Dnd35ProjectedCharacterData, Dnd35RulesetModule } from "@/server/rulesets/dnd3.5/index.ts";
+import type { CharacterRows } from "@/server/rulesets/engine/types.ts";
 import type { Character, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 export type FeatPick = { aptitudeId: string; featId: string };
@@ -268,15 +264,13 @@ export function projectPlannedLevels(
   return { projectedData, allAutoGrantedFeatRecords };
 }
 
-/** The aptitudes of the character as saved, before its planned levels: built from the projected character's data. */
+/** The aptitudes of the character as saved, before its planned levels: built from the rows its projection was. */
 export async function buildBaselineAptitudes(
-  database: Db,
   rulesetModule: Dnd35RulesetModule,
   characterRecord: Character,
-  projectedCharacter: Dnd35DetailedCharacter,
+  rows: CharacterRows,
   scope: RulesetScope,
 ) {
-  const preloaded = await projectedCharacter.preload(database, scope);
-  const baselineCharacter = await buildCharacter(rulesetModule, characterRecord, { database, scope: preloaded });
+  const baselineCharacter = await buildCharacter(rulesetModule, characterRecord, { rows, scope });
   return baselineCharacter.components.aptitudes.getAptitudes();
 }

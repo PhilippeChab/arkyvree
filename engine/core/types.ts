@@ -25,7 +25,6 @@ import type {
   Skill,
 } from "@/shared/relations.ts";
 
-import type { CowData } from "./cow/index.ts";
 import type { RulesetData } from "./view/index.ts";
 
 type ProjectedFeat = Feat & {
@@ -160,22 +159,6 @@ export interface LoadedCharacterData {
 }
 
 /**
- * Shared character data, the loader's `loadSharedData`.
- * Returned by `detailedCharacter.preload()` and accepted by `build()` to avoid
- * duplicate DB queries when building the same character with different projections.
- */
-export interface PreloadedCharacterData extends PreloadedRulesetData {
-  /** Opaque bag of shared DB results — only consumed by DetailedCharacter.build() */
-  _shared: unknown;
-}
-
-export interface PreloadedRulesetData {
-  cowData: CowData;
-  ruleset: Ruleset;
-  rulesetData: RulesetData;
-}
-
-/**
  * Generic projected character data for requirement evaluation. Only carries
  * concepts common to every level-based system (character levels + feats).
  * Ruleset-specific projections (skill ranks, spell levels, save DCs, …) live
@@ -207,6 +190,12 @@ export type RequirementIssue = {
   message: string;
   requirementTree?: string;
 };
+
+/** A ruleset as a character's build reads it: its row, and its view, composed by copy-on-write. */
+export interface RulesetView {
+  ruleset: Ruleset;
+  rulesetData: RulesetData;
+}
 
 export type SkillWithRank = Skill & {
   characterLevelId: string;

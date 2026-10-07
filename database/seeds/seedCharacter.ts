@@ -15,11 +15,11 @@ import {
   levelPowersInCharacter,
   levelSkillsInCharacter,
 } from "@/drizzle/schema.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { CharacterLevels, Characters } from "@/server/repositories/index.ts";
-import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { reconcileAllBondedKinds } from "@/server/services/characters/levels/index.ts";
 import { type Alignment, type Gender, type ItemLocation } from "@/shared/enums.ts";
@@ -76,8 +76,7 @@ async function reconcileBondedForCharacter(tx: Db, characterId: string): Promise
 
   await withRulesetScope(tx, master.rulesetId, async ({ ruleset, rulesetData }) => {
     const module = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailed = module.createDetailedCharacter(master) as Dnd35DetailedCharacter;
-    await detailed.build(tx, undefined, { ruleset, cowData: rulesetData.cow, rulesetData });
+    const detailed = await buildCharacter(module, master, { database: tx, scope: { ruleset, rulesetData } });
     await reconcileAllBondedKinds(tx, master, detailed, rulesetData);
   });
 }

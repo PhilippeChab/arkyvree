@@ -7,6 +7,7 @@ import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharac
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
+import { buildAs } from "@/tests/support/characters.ts";
 import { createSeedCharacter } from "@/tests/support/levelFixtures.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
@@ -49,8 +50,7 @@ describe("A fork's own description of an inherited", () => {
       await addPowers(db, forkCtx, levelIds, [{ levelIndex: 0, powerName: name, aptitude: "Wizard Spells" }]);
     else await addSkills(db, forkCtx, levelIds, [{ levelIndex: 0, skillName: name, rank: 4 }]);
 
-    const character = new DetailedCharacter((await Characters.findOne(db, { id: characterId }))!);
-    await character.build();
+    const character = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: characterId }))!);
     const levels = Object.values(character.components.classes.getCharacterClasses()).flatMap((k) => k.levels);
     const descriptions = new Map(
       levels
@@ -79,8 +79,7 @@ test("A fork's own saving throw of an inherited spell is on the sheet", async ()
   const levelIds = await addClassLevels(db, forkCtx, characterId, "Wizard", [1], [4]);
   await addPowers(db, forkCtx, levelIds, [{ levelIndex: 0, powerName: name, aptitude: "Wizard Spells" }]);
 
-  const character = new DetailedCharacter((await Characters.findOne(db, { id: characterId }))!);
-  await character.build();
+  const character = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: characterId }))!);
   const power = Object.values(character.components.classes.getCharacterClasses())
     .flatMap((k) => k.levels)
     .flatMap((level) => level.powers)

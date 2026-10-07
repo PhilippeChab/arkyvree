@@ -81,7 +81,7 @@ import type { ItemLocation } from "@/shared/enums.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
+import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows, measure } from "@/tests/support/database.ts";
 import { createTestItem } from "@/tests/support/items.ts";
 import { addCharacterLevel, createTestKlassLevel, findKlassLevel } from "@/tests/support/levels.ts";
@@ -168,8 +168,7 @@ async function asHalfling(name: string) {
 }
 
 async function build(character: Character) {
-  const detailed = new DetailedCharacter(character);
-  await detailed.build();
+  const detailed = await buildAs(DetailedCharacter, character);
   return detailed;
 }
 
@@ -453,10 +452,10 @@ describe("DetailedCharacter", () => {
         weight: "80",
       };
       await expect(
-        new DetailedCharacter({ ...character, rulesetId: NIL_UUID, raceId: NIL_UUID } as Character).build(),
+        buildAs(DetailedCharacter, { ...character, rulesetId: NIL_UUID, raceId: NIL_UUID } as Character),
       ).rejects.toThrow("Ruleset not found");
       await expect(
-        new DetailedCharacter({ ...character, rulesetId, raceId: NIL_UUID } as Character).build(),
+        buildAs(DetailedCharacter, { ...character, rulesetId, raceId: NIL_UUID } as Character),
       ).rejects.toThrow("Race not found");
     });
 
@@ -464,12 +463,9 @@ describe("DetailedCharacter", () => {
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const own = await build(bjorn);
       await withRulesetScope(db, bjorn.rulesetId, async (scope) => {
-        const inScope = new DetailedCharacter(bjorn);
-        const built = await measure(() => inScope.build(db, undefined, scope));
+        const built = await measure(() => buildAs(DetailedCharacter, bjorn, { scope }));
         expect(built.timing.cacheHits + built.timing.cacheMisses).toBe(0);
-        expect(buildFullCharacterResponse(bjorn, inScope)).toEqual(buildFullCharacterResponse(bjorn, own));
-        const preloaded = await measure(() => inScope.preload(db, scope));
-        expect(preloaded.timing.cacheHits + preloaded.timing.cacheMisses).toBe(0);
+        expect(buildFullCharacterResponse(bjorn, built.result)).toEqual(buildFullCharacterResponse(bjorn, own));
       });
     });
 
@@ -477,8 +473,9 @@ describe("DetailedCharacter", () => {
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const ownScope = await measure(() => withRulesetScope(db, bjorn.rulesetId, async () => {}));
       await withRulesetScope(db, (await findSeededRuleset(DND35_DMG_NAME)).id, async (otherScope) => {
-        const detailed = new DetailedCharacter(bjorn);
-        const { timing } = await measure(() => detailed.build(db, undefined, otherScope));
+        const { result: detailed, timing } = await measure(() =>
+          buildAs(DetailedCharacter, bjorn, { scope: otherScope }),
+        );
         expect(timing.cacheHits + timing.cacheMisses).toBe(ownScope.timing.cacheHits + ownScope.timing.cacheMisses);
         expect(detailed.getRuleset()?.id).toBe(bjorn.rulesetId);
       });
@@ -3135,9 +3132,8 @@ describe("DetailedCharacter", () => {
         }))!;
         const firstLevel = (await findKlassLevel(thaumaturgist.id, 1))!;
 
-        const detailed = new DetailedCharacter((await Characters.findOne(db, { id: characterId }))!);
         const now = new Date().toISOString();
-        await detailed.build(undefined, {
+        const projected = {
           characterLevels: [
             {
               id: "00000000-0000-0000-0000-000000000099",
@@ -3150,7 +3146,9 @@ describe("DetailedCharacter", () => {
               deletedAt: null,
             },
           ],
-        });
+        };
+        const record = (await Characters.findOne(db, { id: characterId }))!;
+        const detailed = await buildAs(DetailedCharacter, record, { projected });
         expect(requirementIssues(detailed)).toEqual([]);
       });
     });

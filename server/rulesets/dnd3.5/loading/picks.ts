@@ -1,9 +1,8 @@
 /** The character's levels and its picks of skills, feats and powers: saved, granted and projected. */
 
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Db } from "@/server/database/index.ts";
-import { CharacterLevelFeats, CharacterLevelPowers, CharacterLevelSkills } from "@/server/repositories/index.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
+import type { CharacterRows } from "@/server/rulesets/engine/types.ts";
 import type {
   CharacterLevel,
   FeatWithAptitudes,
@@ -95,7 +94,7 @@ function toPowerRow(
 
 /** The feats: picked and given (deduped), then projected, in character-level order; and the given per aptitude. */
 export function buildFeats(
-  picks: Awaited<ReturnType<typeof fetchPicks>>,
+  picks: CharacterRows["picks"],
   rulesetData: RulesetData,
   projectedData: Dnd35ProjectedCharacterData | undefined,
   { allCharacterLevels, characterLevels }: Levels,
@@ -145,7 +144,7 @@ export function buildFeats(
  * composes them; then the projected ones.
  */
 export function buildPicks(
-  picks: Awaited<ReturnType<typeof fetchPicks>>,
+  picks: CharacterRows["picks"],
   rulesetData: RulesetData,
   projectedData: Dnd35ProjectedCharacterData | undefined,
   levels: Levels,
@@ -168,7 +167,7 @@ export function buildPicks(
  * Divine's Bane on Complete Warrior's copy of the favored soul's list) may have no link row of its own.
  */
 export function buildPowers(
-  picks: Awaited<ReturnType<typeof fetchPicks>>,
+  picks: CharacterRows["picks"],
   rulesetData: RulesetData,
   projectedData: Dnd35ProjectedCharacterData | undefined,
   { allCharacterLevels, characterLevels }: Levels,
@@ -229,20 +228,6 @@ export function resolveLevels(
   return {
     characterLevels,
     allCharacterLevels,
-    realCharacterLevelIds: characterLevels.map((level) => level.id),
     klassLevelIds: allCharacterLevels.map((level) => level.klassLevelId),
-  };
-}
-
-/**
- * Round 4: the saved levels' picks (3 queries), as the links they are, by the picked entity's name: the entities are
- * the view's, as what the levels' class levels grant is.
- */
-export async function fetchPicks(database: Db, realCharacterLevelIds: string[]) {
-  const where = { characterLevelIds: realCharacterLevelIds };
-  return {
-    skills: await CharacterLevelSkills.findMany(database, where),
-    feats: await CharacterLevelFeats.findMany(database, where),
-    powers: await CharacterLevelPowers.findMany(database, where),
   };
 }

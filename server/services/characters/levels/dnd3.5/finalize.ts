@@ -10,7 +10,7 @@ import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
-import { buildCharacter } from "@/server/builds/index.ts";
+import { buildCharacter, readCharacterRows } from "@/server/builds/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
@@ -241,17 +241,14 @@ async function levelDistributionData(
     rulesetData,
   );
 
-  // Build full character with all planned levels to get aptitude pools
-  const fullCharacter = await buildCharacter(rulesetModule, characterRecord, {
-    database: tx,
-    projected: projectedData,
-    scope,
-  });
+  // Build full character with all planned levels to get aptitude pools, and the baseline from the same rows
+  const rows = await readCharacterRows(tx, characterRecord);
+  const fullCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, rows, scope });
   const levelUpProjector = rulesetModule.createLevelUpProjector(fullCharacter);
   const { featPoolIds, powerPoolIds } = poolIds(fullCharacter.components.aptitudes, rulesetData);
 
   // Compute per-level feat/power slots from modifier data directly
-  const baselineApts = await buildBaselineAptitudes(tx, rulesetModule, characterRecord, fullCharacter, scope);
+  const baselineApts = await buildBaselineAptitudes(rulesetModule, characterRecord, rows, scope);
   const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
   const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
     rulesetData,

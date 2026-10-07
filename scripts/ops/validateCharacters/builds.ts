@@ -1,4 +1,5 @@
 import { rulesetsInRules } from "@/drizzle/schema.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import { db } from "@/server/database/index.ts";
 
 import type { Character } from "./queries.ts";
@@ -19,8 +20,7 @@ export async function checkBuilds(characters: Character[]) {
     if (char.kind !== "pc") continue;
     try {
       const ruleset = rulesetNames.get(char.rulesetId);
-      const detailed = (await moduleOf(char.rulesetId)).createDetailedCharacter(char);
-      await detailed.build();
+      const detailed = await buildCharacter(await moduleOf(char.rulesetId), char);
       const validation = detailed.validate();
 
       if (!validation.valid) {

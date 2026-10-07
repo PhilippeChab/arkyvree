@@ -5,7 +5,7 @@
  */
 
 import { type RulesetData } from "@/engine/core/view/index.ts";
-import { buildCharacter } from "@/server/builds/index.ts";
+import { buildCharacter, readCharacterRows } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
@@ -122,7 +122,12 @@ export async function getLevelUpPreview(
       rulesetData,
     );
 
-    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
+    const rows = await readCharacterRows(db, characterRecord);
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, {
+      projected: projectedData,
+      rows,
+      scope,
+    });
     const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
     const { featPools, powerPools, featsToSelect, powersToSelect } = splitPools(
       detailedCharacter.components.aptitudes,
@@ -143,7 +148,7 @@ export async function getLevelUpPreview(
 
     // Per-level aptitude slots for auto-assignment
     // Build baseline character (without planned levels) to capture existing spent
-    const baselineApts = await buildBaselineAptitudes(db, rulesetModule, characterRecord, detailedCharacter, scope);
+    const baselineApts = await buildBaselineAptitudes(rulesetModule, characterRecord, rows, scope);
 
     const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
       rulesetData,

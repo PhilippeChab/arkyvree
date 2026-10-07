@@ -9,9 +9,9 @@ import type {
 } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { readClassLevelFields } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";
+import type { CharacterRows } from "@/server/rulesets/engine/types.ts";
 import type { FeatWithAptitudes, KlassLevel, Modifier, Race, Requirement } from "@/shared/relations.ts";
 
-import type { SharedCharacterData } from "./DetailedCharacterDataLoader.ts";
 import type { buildFeats, buildPowers } from "./picks.ts";
 
 /**
@@ -107,7 +107,7 @@ export function toCustomizedFeats(
  * item's, are its other requirements, which its modifiers need
  */
 export function toCustomizedInventory(
-  inventory: SharedCharacterData["inventory"],
+  inventory: CharacterRows["inventory"],
   rulesetData: RulesetData,
 ): InventoryEntry[] {
   return inventory.map((inv) => {
