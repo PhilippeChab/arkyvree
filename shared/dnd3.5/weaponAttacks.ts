@@ -2,12 +2,12 @@ import { capitalize } from "@/shared/text.ts";
 
 /** What a sheet's weapon row reads of a weapon: its to-hit, its thrown and two-weapon attacks, and its range. */
 interface WeaponAttacks {
-  ranged: boolean;
+  offend: { damage: string; total: number[] } | null;
   range: number;
-  tohit: { total: number[] };
+  ranged: boolean;
   thrown: { total: number[] } | null;
-  twoweapon: { total: number[]; thrown: number[] | null; damage?: string } | null;
-  offend: { total: number[]; damage: string } | null;
+  tohit: { total: number[] };
+  twoweapon: { damage?: string; thrown: number[] | null; total: number[] } | null;
 }
 
 /**
@@ -15,11 +15,11 @@ interface WeaponAttacks {
  * its damage when it isn't the weapon's (a double weapon's other end).
  */
 export interface AttackRow {
+  attack: number[];
+  damage?: string;
   key: string;
   label: string;
-  attack: number[];
   range: string;
-  damage?: string;
 }
 
 /** A weapon slot's label, as an item's location names it. */

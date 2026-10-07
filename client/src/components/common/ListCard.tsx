@@ -13,14 +13,14 @@ interface ListCardGridProps {
 interface ListCardProps extends Omit<ComponentProps<typeof StyledCard>, "children" | "title"> {
   /** Defaults to the title's initial. */
   avatar?: ReactNode;
+  avatarSrc?: string;
   /** Brand colour of the avatar's gradient. */
   avatarTone?: "primary" | "secondary";
-  avatarSrc?: string;
-  title: string;
   /** Corner control, e.g. a star toggle. */
   corner?: ReactNode;
-  pills?: ReactNode;
   description: string | null | undefined;
+  pills?: ReactNode;
+  title: string;
 }
 
 /** Card of the ruleset, character and campaign grids. */

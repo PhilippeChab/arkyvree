@@ -8,18 +8,18 @@ import { TargetPathBrowser } from "./TargetPathBrowser.tsx";
 import { useTargetPath } from "./useTargetPath.ts";
 
 interface TargetPathInputProps {
-  value: string;
+  disabled?: boolean;
+  entityType?: string;
+  error?: boolean;
+  fullWidth?: boolean;
+  helperText?: string;
+  kind: TargetPathKind;
+  label?: string;
   /** The new path, and what it takes when it's a complete one picked from the list. */
   onChange: (value: string, picked?: PathInfo) => void;
-  rulesetId: string;
-  kind: TargetPathKind;
-  entityType?: string;
-  label?: string;
   required?: boolean;
-  error?: boolean;
-  helperText?: string;
-  disabled?: boolean;
-  fullWidth?: boolean;
+  rulesetId: string;
+  value: string;
 }
 
 export function TargetPathInput({

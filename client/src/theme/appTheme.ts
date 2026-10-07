@@ -32,9 +32,9 @@ declare module "@mui/material/styles" {
 
 /** The auth pages' brand backdrop, its gradient's stops from top to bottom. */
 interface Backdrop {
-  top: string;
-  middle: string;
   bottom: string;
+  middle: string;
+  top: string;
 }
 
 /** The shadows the app casts under a box (`boxShadow`), by what casts them. */
@@ -92,10 +92,10 @@ interface DropShadows {
 
 /** The brand gold: `main` the theme's own (brighter on the dark theme), `light` and `dark` the two golds, `faint` its glow behind a logo. */
 interface Gold {
-  main: string;
-  light: string;
   dark: string;
   faint: string;
+  light: string;
+  main: string;
 }
 
 /** The sidebar's own colors: its expand toggle's, at rest and hovered. */

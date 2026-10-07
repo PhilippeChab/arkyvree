@@ -27,7 +27,7 @@ export function toSafeUser(user: InferSelectModel<typeof usersInAccount>) {
  */
 export async function openSession(
   tx: Db,
-  user: { id: string; emailAddress: string },
+  user: { emailAddress: string; id: string },
   type: "signIn" | "signUp",
   data?: { provider: "google" },
 ) {
@@ -66,7 +66,7 @@ export async function purgeDemoSessionUser(tx: Db, sessionId: string | undefined
  * Signs in the owner of a Google account Google has verified (`sub` and `email` from its ID token): its returning
  * user, the account with its email (which it links and verifies), or a new user.
  */
-export async function signInAsGoogleAccount(payload: { sub: string; email: string }, existingSessionId?: string) {
+export async function signInAsGoogleAccount(payload: { email: string; sub: string }, existingSessionId?: string) {
   const email = payload.email.toLowerCase();
 
   return await withTransaction(async (tx) => {

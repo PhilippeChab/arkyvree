@@ -9,14 +9,14 @@ import { NAME_RULES } from "@/client/src/lib/validation.ts";
 import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
 
 interface BulkVariantsDialogProps {
-  open: boolean;
-  onClose: () => void;
-  baseItemName: string;
   baseItemDescription?: string | null;
+  baseItemName: string;
   /** Reset by the caller before opening, with `variantRow(item, 1)`. */
   form: UseFormReturn<BulkVariantsFormValues>;
-  onSubmit: (variants: VariantRow[]) => void;
   isLoading: boolean;
+  onClose: () => void;
+  onSubmit: (variants: VariantRow[]) => void;
+  open: boolean;
 }
 
 const MAX_VARIANTS = 50;

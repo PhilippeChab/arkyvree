@@ -2,8 +2,8 @@ import { readEnv } from "@/server/environment.ts";
 import { onCacheHit, onCacheMiss } from "@/server/timing.ts";
 
 interface CacheEntry<T> {
-  value: T;
   expiresAt: number;
+  value: T;
 }
 
 const SWEEP_INTERVAL_MS = 60 * 1000;

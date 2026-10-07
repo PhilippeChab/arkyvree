@@ -44,12 +44,12 @@ import { type Dnd35Components } from "./components.ts";
  * caller via `withRulesetScope` — the loader never fetches it itself.
  */
 export interface DataLoader {
-  loadSharedData(database: Db | undefined, preloaded: PreloadedRulesetData): Promise<PreloadedRulesetData>;
   load(
     database: Db | undefined,
     projectedData: unknown | undefined,
     preloaded: PreloadedCharacterData | PreloadedRulesetData,
   ): Promise<Dnd35LoadedCharacterData>;
+  loadSharedData(database: Db | undefined, preloaded: PreloadedRulesetData): Promise<PreloadedRulesetData>;
 }
 
 /**
@@ -66,93 +66,6 @@ export default abstract class CharacterState {
   abstract readonly modifierEvaluator: ModifierEvaluator;
 
   abstract readonly requirementEvaluator: RequirementEvaluator;
-
-  // Context data
-  protected ruleset: Ruleset | undefined = undefined;
-
-  protected player: Player | undefined = undefined;
-
-  protected campaign: Campaign | undefined = undefined;
-
-  // Ruleset data
-  protected rulesetAbilities: RulesetAbility[] = [];
-
-  protected rulesetSaves: RulesetSave[] = [];
-
-  protected rulesetSkills: Skill[] = [];
-
-  protected rulesetFeats: Feat[] = [];
-
-  protected rulesetFeatProperties: Property[] = [];
-
-  protected rulesetPowers: PowerWithAptitudes[] = [];
-
-  protected rulesetPowerProperties: Property[] = [];
-
-  protected rulesetAptitudes: Aptitude[] = [];
-
-  protected rulesetKlasses: Klass[] = [];
-
-  // Character data
-  protected race: CustomizedRace = {} as CustomizedRace;
-
-  protected languages: Language[] = [];
-
-  protected inventory: InventoryEntry[] = [];
-
-  protected characterAbilityScores: { abilityId: string; name: string; score: number }[] = [];
-
-  protected characterLevels: CharacterLevel[] = [];
-
-  protected klassLevels: CustomizedKlassLevel[] = [];
-
-  protected klassSkills: KlassSkill[] = [];
-
-  protected klassLevelSaves: KlassLevelSave[] = [];
-
-  protected klasses: Klass[] = [];
-
-  protected feats: CustomizedFeat[] = [];
-
-  protected skills: SkillWithRank[] = [];
-
-  protected powers: CustomizedPower[] = [];
-
-  // Derived data
-  protected klassLevelFeatCountsByAptitudeId: Record<string, number> = {};
-
-  protected klassLevelPowerCountsByAptitudeId: Record<string, number> = {};
-
-  protected leveledAptitudeIds: Set<string> = new Set();
-
-  protected featListIds: Set<string> = new Set();
-
-  // Modifier/requirement collections
-  protected builtComponents: Dnd35Components | null = null;
-
-  protected modifiers: Modifier[] = [];
-
-  protected requirementGroups: Requirement[][] = [];
-
-  /** The item each modifier an item is the source of belongs to, by the modifier's id. */
-  protected itemModifiers = new Map<string, string>();
-
-  /** The gated modifiers applied while their requirements held, whose requirements don't hold on the final sheet. */
-  protected modifiersPastTheirGates: Modifier[] = [];
-
-  protected validRulesetIds = new Set<string>();
-
-  protected targetPaths!: TargetPathsTraverser;
-
-  /**
-   * The item a requirement group is of, whose weapon its own paths (`weapon.wielded`) read: an item's requirements, or
-   * those of a modifier the item is the source of.
-   */
-  protected itemOf = (group: Requirement[]): string | undefined => {
-    const [owner] = group;
-    if (owner?.entityType === "items") return owner.entityId;
-    return owner?.entityType === "modifiers" ? this.itemModifiers.get(owner.entityId) : undefined;
-  };
 
   /**
    * The sources a modifier applies from: its own, or, for an item's modifier on the item itself (a weapon's own paths)
@@ -175,16 +88,14 @@ export default abstract class CharacterState {
       .map((entry) => entry.id);
   };
 
-  // Dnd3.5-specific data
-  protected skillPointAbilityId: string | null = null;
+  // Modifier/requirement collections
+  protected builtComponents: Dnd35Components | null = null;
 
-  protected skillProperties: Map<string, SkillFlags> = new Map();
+  protected campaign: Campaign | undefined = undefined;
 
-  protected klassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
+  protected characterAbilityScores: { abilityId: string; name: string; score: number }[] = [];
 
-  protected klassBonusSpellAbilityMap = new Map<string, string>();
-
-  protected klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
+  protected characterLevels: CharacterLevel[] = [];
 
   // Diagnostic helpers (resolveEntityName / resolveModifierSourceName) run
   // per unmet-requirement when formatting validation errors. Build lookup
@@ -195,12 +106,101 @@ export default abstract class CharacterState {
   // future code mutates those post-build, invalidate this field first.
   protected diagnosticsIndex?: {
     featsById: Map<string, CustomizedFeat>;
-    powersById: Map<string, CustomizedPower>;
-    klassLevelsById: Map<string, CustomizedKlassLevel>;
-    rulesetKlassesById: Map<string, Klass>;
     inventoryByItemId: Map<string, InventoryEntry>;
+    klassLevelsById: Map<string, CustomizedKlassLevel>;
     modifierOwner: Map<string, { name: string; type: string }>;
+    powersById: Map<string, CustomizedPower>;
+    rulesetKlassesById: Map<string, Klass>;
   };
+
+  protected featListIds: Set<string> = new Set();
+
+  protected feats: CustomizedFeat[] = [];
+
+  protected inventory: InventoryEntry[] = [];
+
+  /** The item each modifier an item is the source of belongs to, by the modifier's id. */
+  protected itemModifiers = new Map<string, string>();
+
+  /**
+   * The item a requirement group is of, whose weapon its own paths (`weapon.wielded`) read: an item's requirements, or
+   * those of a modifier the item is the source of.
+   */
+  protected itemOf = (group: Requirement[]): string | undefined => {
+    const [owner] = group;
+    if (owner?.entityType === "items") return owner.entityId;
+    return owner?.entityType === "modifiers" ? this.itemModifiers.get(owner.entityId) : undefined;
+  };
+
+  protected klassBonusSpellAbilityMap = new Map<string, string>();
+
+  protected klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
+
+  protected klasses: Klass[] = [];
+
+  // Derived data
+  protected klassLevelFeatCountsByAptitudeId: Record<string, number> = {};
+
+  protected klassLevelPowerCountsByAptitudeId: Record<string, number> = {};
+
+  protected klassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
+
+  protected klassLevels: CustomizedKlassLevel[] = [];
+
+  protected klassLevelSaves: KlassLevelSave[] = [];
+
+  protected klassSkills: KlassSkill[] = [];
+
+  protected languages: Language[] = [];
+
+  protected leveledAptitudeIds: Set<string> = new Set();
+
+  protected modifiers: Modifier[] = [];
+
+  /** The gated modifiers applied while their requirements held, whose requirements don't hold on the final sheet. */
+  protected modifiersPastTheirGates: Modifier[] = [];
+
+  protected player: Player | undefined = undefined;
+
+  protected powers: CustomizedPower[] = [];
+
+  // Character data
+  protected race: CustomizedRace = {} as CustomizedRace;
+
+  protected requirementGroups: Requirement[][] = [];
+
+  // Context data
+  protected ruleset: Ruleset | undefined = undefined;
+
+  // Ruleset data
+  protected rulesetAbilities: RulesetAbility[] = [];
+
+  protected rulesetAptitudes: Aptitude[] = [];
+
+  protected rulesetFeatProperties: Property[] = [];
+
+  protected rulesetFeats: Feat[] = [];
+
+  protected rulesetKlasses: Klass[] = [];
+
+  protected rulesetPowerProperties: Property[] = [];
+
+  protected rulesetPowers: PowerWithAptitudes[] = [];
+
+  protected rulesetSaves: RulesetSave[] = [];
+
+  protected rulesetSkills: Skill[] = [];
+
+  // Dnd3.5-specific data
+  protected skillPointAbilityId: string | null = null;
+
+  protected skillProperties: Map<string, SkillFlags> = new Map();
+
+  protected skills: SkillWithRank[] = [];
+
+  protected targetPaths!: TargetPathsTraverser;
+
+  protected validRulesetIds = new Set<string>();
 
   /** Create the data loader for this ruleset. */
   protected abstract createDataLoader(): DataLoader;

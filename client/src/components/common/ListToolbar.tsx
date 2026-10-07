@@ -2,10 +2,10 @@ import { Box, Paper, Stack, Toolbar } from "@mui/material";
 import type { ReactNode } from "react";
 
 interface ListToolbarProps {
-  /** At its start: a search, a picker, its filters */
-  children?: ReactNode;
   /** At its end: the list's actions (Add, its filter and sort menus) */
   actions?: ReactNode;
+  /** At its start: a search, a picker, its filters */
+  children?: ReactNode;
 }
 
 /** The bar above a list, a page's or a tab's: what narrows or adds to it at its start, its actions at its end. */

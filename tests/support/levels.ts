@@ -17,9 +17,9 @@ import { createTestCharacter } from "./characters.ts";
 import { uniqueId } from "./seed.ts";
 
 type LevelPicks = {
-  feats?: { featId: string; aptitudeId: string }[];
-  powers?: { powerId: string; aptitudeId: string }[];
-  skills?: { skillId: string; rank: number }[];
+  feats?: { aptitudeId: string; featId: string }[];
+  powers?: { aptitudeId: string; powerId: string }[];
+  skills?: { rank: number; skillId: string }[];
 };
 
 /** Gives a character a level in a class level, with these picks, straight in the database: no level-up rule applies. */

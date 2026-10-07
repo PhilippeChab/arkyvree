@@ -7,7 +7,7 @@ import { createCampaign, postPlayerInvite } from "@/tests/e2e/support/campaigns.
 import { createCharacter } from "@/tests/e2e/support/characters.ts";
 import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
-type Campaign = { id: string; characters: Record<(typeof VISIBILITIES)[number], { id: string; name: string }> };
+type Campaign = { characters: Record<(typeof VISIBILITIES)[number], { id: string; name: string }>; id: string };
 
 /**
  * A player's characters in a campaign, by the visibility the player links each with: the Game Master sees them all,

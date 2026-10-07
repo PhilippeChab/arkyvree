@@ -16,20 +16,20 @@ import { ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/co
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 interface ContributorRow {
-  id: string;
   email: string;
-  status: string;
+  id: string;
   role?: string;
+  status: string;
   user?: { username?: string | null } | null;
 }
 
 interface ContributorsTableProps<T extends ContributorRow> {
-  owner: { username?: string | null; emailAddress: string } | null;
   contributors: T[];
-  /** Show the Role column (rulesets have roles, characters don't). */
-  showRoles?: boolean;
+  owner: { emailAddress: string; username?: string | null } | null;
   /** Row buttons; when omitted there is no Actions column. */
   renderActions?: (contributor: T) => ReactNode;
+  /** Show the Role column (rulesets have roles, characters don't). */
+  showRoles?: boolean;
 }
 
 function contributorStatusColor(status: string): "warning" | "success" | "error" | "default" {

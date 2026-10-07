@@ -2,14 +2,14 @@ import { readEnv } from "@/server/environment.ts";
 import { UnauthorizedError } from "@/server/errors/index.ts";
 
 interface GoogleTokenPayload {
-  sub: string;
+  aud: string;
   email: string;
   email_verified: boolean;
+  exp: number;
+  iss: string;
   name?: string;
   picture?: string;
-  aud: string;
-  iss: string;
-  exp: number;
+  sub: string;
 }
 
 const GOOGLE_CLIENT_ID = readEnv("GOOGLE_CLIENT_ID");

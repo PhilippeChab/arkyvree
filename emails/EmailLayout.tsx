@@ -4,8 +4,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { APP_URL, colors, fontStack } from "./emailStyles.ts";
 
 interface EmailLayoutProps {
-  preview: string;
   children: ReactNode;
+  preview: string;
 }
 
 const accentBar: CSSProperties = {

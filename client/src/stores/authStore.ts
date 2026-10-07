@@ -7,15 +7,15 @@ import type { AuthUser } from "./authUser.ts";
 
 /** Who is signed in, and the emails waiting for a code. The requests that change it are `useAuthRequests`'. */
 interface AuthState {
-  user: AuthUser | null;
+  clearSession: (options?: { byUser?: boolean }) => void;
   isAuthenticated: boolean;
-  pendingVerificationEmail: string | null;
   pendingPasswordResetEmail: string | null;
+  pendingVerificationEmail: string | null;
   /** The user signed out (rather than the server ending the session): their private pages send them to sign in afresh */
   signedOutByUser: boolean;
-  clearSession: (options?: { byUser?: boolean }) => void;
   /** Merge fields into the signed-in user, e.g. after a profile update. */
   updateUser: (patch: Partial<AuthUser>) => void;
+  user: AuthUser | null;
 }
 
 const SIGNED_OUT = {

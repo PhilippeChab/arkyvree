@@ -32,8 +32,8 @@ type Contributor = InferResponseType<(typeof rpc.api.rulesets)[":id"]["contribut
 type ContributorInvite = InferRequestType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$post"]>["json"];
 
 interface ContributorsSectionProps {
-  ruleset: RulesetDetail;
   onLeave?: () => void;
+  ruleset: RulesetDetail;
 }
 
 interface RoleFormData {

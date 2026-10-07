@@ -9,7 +9,7 @@ class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtension
     super(rulesetExtensionsInRules);
   }
 
-  async archive(db: Db, where: { rulesetId: string; extensionId: string }) {
+  async archive(db: Db, where: { extensionId: string; rulesetId: string }) {
     return await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
@@ -39,7 +39,7 @@ class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtension
       .where(and(eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)));
   }
 
-  async upsert(db: Db, values: { rulesetId: string; extensionId: string }) {
+  async upsert(db: Db, values: { extensionId: string; rulesetId: string }) {
     return await db
       .insert(this.table)
       .values(values)

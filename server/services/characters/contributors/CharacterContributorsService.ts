@@ -17,7 +17,7 @@ class CharacterContributorsService {
   private async answerInvite(
     tx: Db,
     session: Session,
-    contributor: { id: string; characterId: string },
+    contributor: { characterId: string; id: string },
     characterName: string | undefined,
     status: "Active" | "Rejected",
   ) {
@@ -62,9 +62,9 @@ class CharacterContributorsService {
     session: Session,
     characterId: string,
     where: {
-      search?: string;
       orderBy?: "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {

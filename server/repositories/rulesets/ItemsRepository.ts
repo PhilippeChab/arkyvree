@@ -25,7 +25,7 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
     });
   }
 
-  private async findNamed(db: Db, where: { rulesetIds: string[]; names: string[] }) {
+  private async findNamed(db: Db, where: { names: string[]; rulesetIds: string[] }) {
     if (where.rulesetIds.length === 0 || where.names.length === 0) return [];
     return await db.query.itemsInRules.findMany({
       where: this.where([
@@ -38,7 +38,7 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
 
   private async findTemplates(
     db: Db,
-    where: { rulesetId: string; ancestorRulesetIds?: string[]; type?: string; isTemplate: true },
+    where: { ancestorRulesetIds?: string[]; isTemplate: true; rulesetId: string; type?: string },
   ) {
     const rulesetCondition = this.buildRulesetCondition(db, where);
 
@@ -63,9 +63,9 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
     db: Db,
     where:
       | { ids: string[] }
-      | { rulesetIds: string[]; names: string[] }
+      | { names: string[]; rulesetIds: string[] }
       | { sourceItemId: string }
-      | { rulesetId: string; ancestorRulesetIds?: string[]; type?: string; isTemplate: true },
+      | { ancestorRulesetIds?: string[]; isTemplate: true; rulesetId: string; type?: string },
   ) {
     if ("ids" in where) return await this.findListed(db, where);
     if ("names" in where) return await this.findNamed(db, where);
@@ -115,7 +115,7 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof itemsInRules>>,
-    where: { id: string; expectedUpdatedAt?: string } | { sourceItemId: string },
+    where: { expectedUpdatedAt?: string; id: string } | { sourceItemId: string },
   ) {
     if ("id" in where) return await super.update(db, values, where);
     return await this.updateCopies(db, values, where.sourceItemId);

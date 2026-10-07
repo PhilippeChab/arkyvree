@@ -12,9 +12,9 @@ export class ApiError extends Error {
     this.issues = issues;
   }
 
-  status: number;
-
   errorName: string;
 
   issues?: ApiValidationIssue[];
+
+  status: number;
 }

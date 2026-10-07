@@ -49,12 +49,12 @@ const OWNERS = `
  * The tables compared by business key alone, each built from names on both sides: a link by what it joins (an
  * aptitude by its ruleset and name, so a ruleset's own copy and the base's differ), a customization by its owner.
  */
-const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => Promise<IdentifiedRow[]> }[] = [
+const KEYED_TABLES: { pull: (query: Query, rulesetId: string) => Promise<IdentifiedRow[]>; table: string }[] = [
   {
     table: "rules.feats_aptitudes",
     pull: async (query, rulesetId) =>
       keyed(
-        await query<{ feat_name: string; apt_ruleset: string; apt_name: string }>(
+        await query<{ apt_name: string; apt_ruleset: string; feat_name: string }>(
           `select f.name as feat_name, ar.name as apt_ruleset, a.name as apt_name
              from rules.feats_aptitudes fa
              join rules.feats f on f.id = fa.feat_id
@@ -70,7 +70,7 @@ const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => 
     table: "rules.powers_aptitudes",
     pull: async (query, rulesetId) =>
       keyed(
-        await query<{ power_name: string; apt_ruleset: string; apt_name: string; level: number | null }>(
+        await query<{ apt_name: string; apt_ruleset: string; level: number | null; power_name: string }>(
           `select p.name as power_name, ar.name as apt_ruleset, a.name as apt_name, pa.level
              from rules.powers_aptitudes pa
              join rules.powers p on p.id = pa.power_id
@@ -101,12 +101,12 @@ const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => 
     pull: async (query: Query, rulesetId: string) =>
       keyed(
         await query<{
+          apt_name: string;
+          apt_ruleset: string;
+          free: boolean;
           klass_name: string;
           level: number;
           name: string;
-          apt_ruleset: string;
-          apt_name: string;
-          free: boolean;
         }>(
           `select k.name as klass_name, kl.level, g.name, ar.name as apt_ruleset, a.name as apt_name, kg.free
              from rules.klass_level_${granted} kg
@@ -127,7 +127,7 @@ const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => 
     table: "rules.klass_skills",
     pull: async (query, rulesetId) =>
       keyed(
-        await query<{ klass_name: string; skill_ruleset: string; skill_name: string }>(
+        await query<{ klass_name: string; skill_name: string; skill_ruleset: string }>(
           `select k.name as klass_name, sr.name as skill_ruleset, s.name as skill_name
              from rules.klass_skills ks
              join rules.klasses k on k.id = ks.klass_id
@@ -144,7 +144,7 @@ const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => 
     table: "rules.klass_level_saves",
     pull: async (query, rulesetId) =>
       keyed(
-        await query<{ klass_name: string; level: number; save_ruleset: string; save_name: string; base: number }>(
+        await query<{ base: number; klass_name: string; level: number; save_name: string; save_ruleset: string }>(
           `select k.name as klass_name, kl.level, sr.name as save_ruleset, sv.name as save_name, kls.base
              from rules.klass_level_saves kls
              join rules.klass_levels kl on kl.id = kls.klass_level_id
@@ -176,7 +176,7 @@ const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => 
     table: "rules.entity_snapshots",
     pull: async (query, rulesetId) =>
       keyed(
-        await query<{ entity_type: string; source: string | null; forked: string | null }>(
+        await query<{ entity_type: string; forked: string | null; source: string | null }>(
           `with labels as (${ENTITY_LABELS})
            select s.entity_type, src.label as source, frk.label as forked
              from rules.entity_snapshots s
@@ -193,10 +193,10 @@ const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => 
     pull: async (query, rulesetId) =>
       keyed(
         await query<{
-          source_type: string;
-          source_name: string;
-          target: string;
           operator: string;
+          source_name: string;
+          source_type: string;
+          target: string;
           value: string;
           value_type: string;
         }>(
@@ -216,14 +216,14 @@ const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => 
     pull: async (query, rulesetId) =>
       keyed(
         await query<{
-          entity_type: string;
+          chaining_operator: string | null;
           entity_name: string;
+          entity_type: string;
           level: string;
-          target: string | null;
           operator: string | null;
+          target: string | null;
           value: string | null;
           value_type: string | null;
-          chaining_operator: string | null;
         }>(
           `with owners as (${OWNERS}),
            scoped_modifiers as (
@@ -250,11 +250,11 @@ const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => 
     pull: async (query, rulesetId) =>
       keyed(
         await query<{
-          entity_type: string;
+          description: string | null;
           entity_name: string;
+          entity_type: string;
           type: string;
           value: string;
-          description: string | null;
         }>(
           `with owners as (${OWNERS}), labels as (${ENTITY_LABELS})
            select o.t as entity_type, o.name as entity_name, p.type, p.description,
@@ -343,7 +343,7 @@ async function pullRulesetRow(query: Query, rulesetId: string): Promise<Identifi
 
 /** The system rulesets (the base rulesets and the published extensions), which seeds write, by name and base rules. */
 async function systemRulesets(query: Query) {
-  const rows = await query<{ id: string; name: string; base_rules: string }>(
+  const rows = await query<{ base_rules: string; id: string; name: string }>(
     `select id, name, base_rules from rules.rulesets where user_id is null and system = true and deleted_at is null`,
   );
   return new Map(rows.map((r) => [`${r.name}|${r.base_rules}`, r]));
@@ -354,9 +354,9 @@ export async function diffContent(target: Query, reference: Query) {
   const refByName = await systemRulesets(reference);
   const tgtByName = await systemRulesets(target);
   const result: {
-    onlyInTarget: string[];
+    drifted: { ruleset: string; tables: { diff: TableDiff; table: string }[] }[];
     onlyInReference: string[];
-    drifted: { ruleset: string; tables: { table: string; diff: TableDiff }[] }[];
+    onlyInTarget: string[];
   } = { onlyInTarget: [], onlyInReference: [], drifted: [] };
 
   for (const key of [...new Set([...refByName.keys(), ...tgtByName.keys()])].sort()) {
@@ -368,7 +368,7 @@ export async function diffContent(target: Query, reference: Query) {
     } else if (!tgt) {
       result.onlyInReference.push(name);
     } else {
-      const tables: { table: string; diff: TableDiff }[] = [];
+      const tables: { diff: TableDiff; table: string }[] = [];
       for (const table of COMPARED_TABLES) {
         const diff = collectDiff(await pullTable(reference, table, ref.id), await pullTable(target, table, tgt.id));
         if (!diffIsEmpty(diff)) tables.push({ table, diff });

@@ -21,8 +21,8 @@ type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;
  * nested customization (a modifier's requirement) resolves through the same copy.
  */
 interface Owner {
-  id: string;
   copiedIds?: ReadonlyMap<string, string>;
+  id: string;
 }
 
 /** Each customization kind's repository: what a change to a copied entity's customization resolves the row through. */
@@ -54,9 +54,9 @@ export default class RulesetEdit {
     this.cow = cow;
   }
 
-  private readonly ruleset: RulesetSources;
-
   private readonly cow: CowData;
+
+  private readonly ruleset: RulesetSources;
 
   /** Copies an inherited entity into the ruleset (or returns the copy it has), on the ruleset's source chain. */
   private async copyEntity(tx: Db, entityType: RulesetEntityType, entityId: string): Promise<CopiedEntity> {
@@ -224,7 +224,7 @@ export default class RulesetEdit {
     entityId: string,
     kind: CustomizationKind,
     customizationId: string,
-  ): Promise<{ resolvedEntityId: string; resolvedCustomizationId: string }> {
+  ): Promise<{ resolvedCustomizationId: string; resolvedEntityId: string }> {
     const owner = await this.cowOwnerOf(tx, entityType, entityId);
     const resolvedCustomizationId = await this.resolveExistingCustomization(tx, entityId, owner, kind, customizationId);
     return { resolvedEntityId: owner.id, resolvedCustomizationId };
@@ -260,7 +260,7 @@ export default class RulesetEdit {
     tx: Db,
     entityType: RulesetEntityType,
     entity: { id: string; rulesetId: string },
-  ): Promise<{ id: string; copied: boolean }> {
+  ): Promise<{ copied: boolean; id: string }> {
     if (entity.rulesetId === this.ruleset.id) return { id: entity.id, copied: false };
     const copy = await this.copyEntity(tx, entityType, entity.id);
     return { id: copy.entity.id, copied: true };

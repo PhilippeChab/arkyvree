@@ -1,9 +1,9 @@
 import { type UIEvent } from "react";
 
 interface InfiniteList {
+  fetchNextPage: () => unknown;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
-  fetchNextPage: () => unknown;
 }
 
 /**

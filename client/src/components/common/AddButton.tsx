@@ -3,12 +3,12 @@ import { Button, type ButtonProps } from "@mui/material";
 import { AddIcon } from "@/client/src/components/icons/index.ts";
 
 interface AddButtonProps {
+  disabled?: boolean;
   label: string;
   onClick: () => void;
-  variant?: ButtonProps["variant"];
   size?: ButtonProps["size"];
-  disabled?: boolean;
   sx?: ButtonProps["sx"];
+  variant?: ButtonProps["variant"];
 }
 
 /** A button that adds something (a row, a level, a contributor): its words after the add icon. */

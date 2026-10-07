@@ -32,12 +32,12 @@ import type { WizardSchoolReference } from "@/database/packages/dnd35-from-parse
 export type ClassesOf = (book: string) => ClassReferenceFile[];
 export type ReferenceByType = {
   class: ClassReference;
-  feat: FeatReference;
-  spell: SpellReference;
   domain: DomainReference;
-  race: RaceReference;
+  feat: FeatReference;
   item: ItemReference;
   magicItem: MagicItemReference;
+  race: RaceReference;
+  spell: SpellReference;
   wizardSchool: WizardSchoolReference;
 };
 export type ReferenceType = keyof ReferenceByType;

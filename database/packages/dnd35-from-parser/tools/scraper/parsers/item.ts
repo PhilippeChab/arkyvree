@@ -68,9 +68,9 @@ export function parseArmorHtml(html: string): ArmorRow[] {
 }
 
 export function parseGoodsHtml(html: string): {
+  cost: string;
   name: string;
   tableId: string;
-  cost: string;
   weight: string;
 }[] {
   const $ = cheerio.load(html);

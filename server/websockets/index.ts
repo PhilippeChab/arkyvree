@@ -4,8 +4,8 @@
  * notified, pushed to once it's answered (`collectNotified`).
  */
 
-export { BUILD_ID } from "./buildId.ts";
 export { default as BroadcastListener } from "./BroadcastListener.ts";
+export { BUILD_ID } from "./buildId.ts";
 export { default as Connections } from "./Connections.ts";
 export { publishWsEvent } from "./events.ts";
 export { collectNotified, noteNotified } from "./notifiedUsers.ts";

@@ -49,7 +49,7 @@ export async function expectOk<T extends ClientResponse<unknown>>(response: T | 
  * The response, once it answered `status`: an error, which a route's types don't list (they list what it returns,
  * and what it throws reaches the app's `onError`). Any other status fails the test with the response's body.
  */
-export async function expectStatus<T extends { status: number; clone(): { text(): Promise<string> } }>(
+export async function expectStatus<T extends { clone(): { text(): Promise<string> }; status: number }>(
   response: T | Promise<T>,
   status: number,
 ) {

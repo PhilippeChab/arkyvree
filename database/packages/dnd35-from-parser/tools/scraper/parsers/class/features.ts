@@ -19,7 +19,7 @@ import { capitalizeTitle } from "./capitalizeTitle.ts";
 import { findSectionHeader } from "./sections.ts";
 
 /** A feature's type (Ex, Su, Sp), when its heading gives one, and its description. */
-type FeatureDescription = { type?: string; desc: string };
+type FeatureDescription = { desc: string; type?: string };
 
 type RawFeature = ClassReference["raw"]["classFeatures"][number];
 
@@ -109,7 +109,7 @@ function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): strin
 function findSubOptionColumns(
   $: cheerio.CheerioAPI,
   table: cheerio.Cheerio<AnyNode>,
-): { nameCol: number; effectCol: number } {
+): { effectCol: number; nameCol: number } {
   // Find the header row with the most <th> cells (skip title rows with 1 spanning th, and footnote rows)
   const headerRows = table.find("tr").filter((_, row) => $(row).children("th").length > 1);
   if (headerRows.length === 0) return { nameCol: -1, effectCol: -1 };
@@ -214,7 +214,7 @@ function subOptionRows(
   $: cheerio.CheerioAPI,
   table: cheerio.Cheerio<AnyNode>,
   parentKey: string,
-): { key: string; desc: string }[] {
+): { desc: string; key: string }[] {
   const { nameCol, effectCol } = findSubOptionColumns($, table);
   if (nameCol < 0) return [];
   return table

@@ -1,4 +1,4 @@
-export { AptitudeAutocomplete, AptitudesAutocomplete, type Aptitude } from "./AptitudesAutocomplete.tsx";
+export { type Aptitude, AptitudeAutocomplete, AptitudesAutocomplete } from "./AptitudesAutocomplete.tsx";
 export { EMPTY_MODIFIER, EMPTY_REQUIREMENT } from "./emptyForms.ts";
 export { ModifierForm, type ModifierFormData } from "./ModifierForm.tsx";
 export { PropertyTypeInput } from "./PropertyTypeInput.tsx";

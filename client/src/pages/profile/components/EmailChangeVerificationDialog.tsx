@@ -15,8 +15,8 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface EmailChangeVerificationDialogProps {
-  open: boolean;
   onClose: () => void;
+  open: boolean;
   pendingEmail: string;
 }
 

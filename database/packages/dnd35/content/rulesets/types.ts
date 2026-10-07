@@ -14,15 +14,15 @@ import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardS
 /** An extension's book, as the parser generates it (`generated/<book>/index.ts`). */
 export type BookContent = {
   aptitudes: string[];
-  standaloneFeats: FeatSeed[];
+  classes: ClassSeed[];
   classFeats: FeatSeed[];
   /** Core feats the book changes. */
   cowFeats: CowFeatEntry[];
-  spells: SpellSeed[];
   /** Core spells the book adds to its spell lists. */
   cowSpells: CowSpellEntry[];
   domains: DomainSeed[];
-  classes: ClassSeed[];
+  spells: SpellSeed[];
+  standaloneFeats: FeatSeed[];
 };
 
 /**
@@ -30,32 +30,32 @@ export type BookContent = {
  * bonded creatures.
  */
 export type CoreContent = {
+  abilities: AbilitySeed[];
   aptitudes: string[];
+  bonds: BondContent[];
+  classes: ClassSeed[];
+  domains: DomainSeed[];
+  feats: FeatSeed[];
+  items: ItemSeed[];
   languages: LanguageSeed[];
   races: RaceSeed[];
-  abilities: AbilitySeed[];
-  skills: SkillSeed[];
   saves: SaveSeed[];
-  feats: FeatSeed[];
-  classes: ClassSeed[];
+  skills: SkillSeed[];
+  spells: SpellSeed[];
   /** The items others are made from, which a new ruleset starts with. */
   templateItems: ItemSeed[];
-  items: ItemSeed[];
-  spells: SpellSeed[];
   wizardSchools: WizardSchoolSeed[];
-  domains: DomainSeed[];
-  bonds: BondContent[];
 };
 
 /** A core feat an extension changes: more aptitudes it's taken in, and the class levels that also qualify for it. */
 export type CowFeatEntry = {
+  aptitudes: string[];
   feat: string;
   requirements: { className: string; level: number }[];
-  aptitudes: string[];
 };
 
 /** A core spell an extension adds to its spell lists, each at its level there. */
 export type CowSpellEntry = {
-  spell: string;
   aptitudes: { aptitude: string; level: number }[];
+  spell: string;
 };

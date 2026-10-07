@@ -15,9 +15,9 @@ type Powers = LevelUpFormData["selectedPowers"];
 
 /** What the skill slots say a level's points may go to. */
 interface SkillLimits {
-  skills: { id: string; isClassSkill: boolean; currentRank: number }[];
-  totalCharacterLevel: number;
   skillPointsToSpend: number;
+  skills: { currentRank: number; id: string; isClassSkill: boolean }[];
+  totalCharacterLevel: number;
 }
 
 /** The feat pools grown by the picked feats' "add" aptitude modifiers. */

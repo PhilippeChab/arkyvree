@@ -11,16 +11,16 @@ import { stripSeparators } from "@/shared/text.ts";
 
 type SkillsData = {
   [key: string]: {
-    name: string;
+    readonly ability: number; // Bonus from ability modifier
     description?: string | null;
     innate: boolean;
-    trained: boolean;
-    rank: number; // Rank from levels
-    readonly ability: number; // Bonus from ability modifier
-    readonly weight: number; // Armor check penalty, from armor, shield and load
-    size: number; // Size modifier (Hide only)
     misc: number; // Misc from items
+    name: string;
+    rank: number; // Rank from levels
+    size: number; // Size modifier (Hide only)
     readonly total: number; // Total from everything
+    trained: boolean;
+    readonly weight: number; // Armor check penalty, from armor, shield and load
   };
 };
 
@@ -41,32 +41,32 @@ export default class SkillsComponent {
     private readonly classes: ClassesComponent,
   ) {}
 
-  private readonly skillBudget = { total: 0, available: 0, spent: 0, perlevel: 0 };
+  /** Each skill's key ability, by the skill's slug. */
+  private readonly abilityNameBySkill = new Map<string, string>();
 
   private readonly innateSkillIds: Set<string> = new Set<string>();
 
   private readonly rankBySkillId: Map<string, number> = new Map<string, number>();
 
-  /** Each skill's key ability, by the skill's slug. */
-  private readonly abilityNameBySkill = new Map<string, string>();
+  private readonly skillBudget = { total: 0, available: 0, spent: 0, perlevel: 0 };
 
   private readonly skills: SkillsData = {} as SkillsData;
 
   private characterArmors: { getArmors(): ArmorsData } | null = null;
 
-  private characterShields: { getShields(): ShieldsData } | null = null;
-
   private characterEncumbrance: {
     getEncumbrance(): { checkpenalty: number };
   } | null = null;
 
-  private skillPointRulesetAbilities: RulesetAbility[] = [];
+  private characterShields: { getShields(): ShieldsData } | null = null;
+
+  private raceSize = "Medium";
 
   private skillPointAbilityId: string | null = null;
 
   private skillPointKlassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
 
-  private raceSize = "Medium";
+  private skillPointRulesetAbilities: RulesetAbility[] = [];
 
   /** The armor check penalty a skill armor weighs on takes: the worse of the armor and shield's and the load's. */
   private armorCheckPenalty(): number {
@@ -117,7 +117,7 @@ export default class SkillsComponent {
   getEnrichedSkills<T extends { id: string; name: string }>(
     allSkills: T[],
     classSkillIds: Set<string>,
-  ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[] {
+  ): (T & { currentRank: number; isClassSkill: boolean; isCurrentClassSkill: boolean })[] {
     return allSkills.map((skill) => {
       const skillData = this.skills[stripSeparators(skill.name)];
       return {
@@ -152,7 +152,7 @@ export default class SkillsComponent {
    * level), and the bonus each level adds: what the level-up wizard recomputes the points from when it raises the
    * skill point ability.
    */
-  getSkillPointBases(): { pointsPerLevel: number[]; bonusPerLevel: number } {
+  getSkillPointBases(): { bonusPerLevel: number; pointsPerLevel: number[] } {
     const levels = Object.values(this.classes.getClasses())
       .flatMap((klass) => klass.levels)
       .sort((a, b) => a.characterLevel.position - b.characterLevel.position);

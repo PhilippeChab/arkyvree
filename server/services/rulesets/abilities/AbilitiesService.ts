@@ -7,9 +7,9 @@ class AbilitiesService {
     rulesetId: string,
     where: {
       childOnly?: boolean;
-      search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {

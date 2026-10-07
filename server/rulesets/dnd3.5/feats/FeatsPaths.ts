@@ -33,17 +33,6 @@ export const FAMILY_COUNT = "count";
 
 /** The feats' target paths: each feat's possession and count, and its family's. */
 export default class FeatsPaths implements PathCategory<Dnd35Components> {
-  /** A feat's possession (`feats.<slug>.possessed`): what a modifier sets to grant it, and a requirement checks. */
-  static possessed(slug: string): string {
-    return `feats.${slug}.possessed`;
-  }
-
-  /** The feat whose possession a target names (`feats.<slug>.possessed`), or undefined for another target. */
-  static parsePossessed(target: string): string | undefined {
-    const parts = target.split(".");
-    return parts.length === 3 && parts[0] === "feats" && parts[2] === "possessed" ? parts[1] : undefined;
-  }
-
   /**
    * Each family's wildcard paths, and its count's. A family named like a feat shares the feat's key, where `count` is
    * the feat's (`FeatsComponent.injectGroupings`): the family's count isn't reachable there.
@@ -117,11 +106,22 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  readonly name = "feats";
-  readonly label = "Feats";
-  readonly description = "Feat possession and stackable count";
+  /** The feat whose possession a target names (`feats.<slug>.possessed`), or undefined for another target. */
+  static parsePossessed(target: string): string | undefined {
+    const parts = target.split(".");
+    return parts.length === 3 && parts[0] === "feats" && parts[2] === "possessed" ? parts[1] : undefined;
+  }
+
+  /** A feat's possession (`feats.<slug>.possessed`): what a modifier sets to grant it, and a requirement checks. */
+  static possessed(slug: string): string {
+    return `feats.${slug}.possessed`;
+  }
+
   readonly component = { key: "feats", getter: "getFeats" } as const;
+  readonly description = "Feat possession and stackable count";
   readonly groupDescriptionTemplates = { feats: "{name} feat possession" };
+  readonly label = "Feats";
+  readonly name = "feats";
 
   /** Every family the rules know, a feat of the ruleset in it or not (an extension's checks of another book's), by its slug. */
   private familyLabels(rulesetData: RulesetData) {

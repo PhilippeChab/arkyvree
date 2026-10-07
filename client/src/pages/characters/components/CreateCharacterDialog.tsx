@@ -48,14 +48,14 @@ import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
 interface AbilityCardProps {
-  name: string;
-  score: number;
-  onIncrease: () => void;
-  onDecrease: () => void;
-  canIncrease: boolean;
-  canDecrease: boolean;
   bottomInfo: string;
+  canDecrease: boolean;
+  canIncrease: boolean;
   isSettled?: boolean;
+  name: string;
+  onDecrease: () => void;
+  onIncrease: () => void;
+  score: number;
 }
 
 type AbilityOption = Pick<RulesetAbility, "id" | "name">;
@@ -65,16 +65,16 @@ interface AbilityScoresHandle {
 }
 
 interface AbilityScoresSectionProps {
-  ref: Ref<AbilityScoresHandle>;
   abilities: AbilityOption[];
   control: Control<CreateCharacterFormData>;
-  onRollingChange: (rolling: boolean) => void;
   method: RollMethodId;
+  onRollingChange: (rolling: boolean) => void;
+  ref: Ref<AbilityScoresHandle>;
 }
 
 interface CreateCharacterDialogProps {
-  open: boolean;
   onClose: () => void;
+  open: boolean;
 }
 
 /** What the character is created with, its alignment and gender unpicked ("") until they're chosen. */

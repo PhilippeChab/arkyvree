@@ -23,8 +23,8 @@ type InventorySlotData = {
 
 type RawInventoryEntry = CharacterInventory & {
   item: Item & {
-    properties: Property[];
     modifiers: Modifier[];
+    properties: Property[];
     requirements: Requirement[];
   };
 };

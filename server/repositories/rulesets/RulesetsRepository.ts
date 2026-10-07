@@ -296,10 +296,10 @@ class RulesetsRepository extends include(
     db: Db,
     session: Session,
     where: {
-      scope?: RulesetScope;
-      search?: string;
       orderBy?: "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      scope?: RulesetScope;
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {
@@ -357,7 +357,7 @@ class RulesetsRepository extends include(
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof rulesetsInRules>>,
-    where: { id: string; expectedUpdatedAt?: string },
+    where: { expectedUpdatedAt?: string; id: string },
   ) {
     return await db
       .update(this.table)

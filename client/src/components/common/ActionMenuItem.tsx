@@ -2,14 +2,14 @@ import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import type { ElementType } from "react";
 
 interface ActionMenuItemProps {
-  icon: ElementType;
-  label: string;
   /** A second line under the label ("Create your own editable copy"). */
   description?: string;
-  intent?: Intent;
-  onClick: () => void;
   /** An outside page it opens, in a new tab (the help center). */
   href?: string;
+  icon: ElementType;
+  intent?: Intent;
+  label: string;
+  onClick: () => void;
 }
 
 /** What an action does, shown by its color (see docs/ui-buttons.md). */

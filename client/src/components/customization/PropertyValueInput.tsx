@@ -4,19 +4,19 @@ import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
 import { propertyValueCompletionsQuery } from "./customizationQueries.ts";
 
 interface PropertyValueInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  rulesetId: string;
-  propertyType: string;
-  label?: string;
-  required?: boolean;
-  error?: boolean;
-  helperText?: string;
   disabled?: boolean;
+  error?: boolean;
   fullWidth?: boolean;
-  placeholder?: string;
+  helperText?: string;
+  label?: string;
   multiline?: boolean;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  propertyType: string;
+  required?: boolean;
   rows?: number;
+  rulesetId: string;
+  value: string;
 }
 
 export function PropertyValueInput({

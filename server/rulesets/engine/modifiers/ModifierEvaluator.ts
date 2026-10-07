@@ -17,11 +17,11 @@ import {
 import type { Modifier } from "@/shared/relations.ts";
 
 type ModifierResults = {
-  modifiers: Modifier[];
-  skippedModifiers: { warning: string; modifier: Modifier }[];
-  unappliedModifiers: Modifier[];
-  inactiveModifiers: Modifier[];
   appliedModifiers: Modifier[];
+  inactiveModifiers: Modifier[];
+  modifiers: Modifier[];
+  skippedModifiers: { modifier: Modifier; warning: string }[];
+  unappliedModifiers: Modifier[];
 };
 
 export default class ModifierEvaluator {
@@ -33,6 +33,17 @@ export default class ModifierEvaluator {
     private readonly targetPaths: TargetPathsTraverser,
     private readonly sourcesOf: (modifier: Modifier) => string[] = (modifier) => [modifier.sourceId],
   ) {}
+
+  private static pathsOverlap(target: string, referencedPath: string): boolean {
+    const targetParts = target.split(".");
+    const refParts = referencedPath.split(".");
+    const len = Math.min(targetParts.length, refParts.length);
+    for (let i = 0; i < len; i++) {
+      if (targetParts[i] === "*" || refParts[i] === "*") continue;
+      if (targetParts[i] !== refParts[i]) return false;
+    }
+    return true;
+  }
 
   /**
    * The source keys (`id:type`) an evaluation of requirements leaves unmet or invalid: a modifier is gated out when its
@@ -49,17 +60,6 @@ export default class ModifierEvaluator {
       blockedKeys.add(`${inv.requirement.entityId}:${inv.requirement.entityType}`);
 
     return blockedKeys;
-  }
-
-  private static pathsOverlap(target: string, referencedPath: string): boolean {
-    const targetParts = target.split(".");
-    const refParts = referencedPath.split(".");
-    const len = Math.min(targetParts.length, refParts.length);
-    for (let i = 0; i < len; i++) {
-      if (targetParts[i] === "*" || refParts[i] === "*") continue;
-      if (targetParts[i] !== refParts[i]) return false;
-    }
-    return true;
   }
 
   private readonly results: ModifierResults = {

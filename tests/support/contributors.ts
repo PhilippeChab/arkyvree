@@ -2,7 +2,7 @@ import { db } from "@/server/database/index.ts";
 import { CharacterContributors, Contributors } from "@/server/repositories/index.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
-type Contributor = { id: string; emailAddress: string };
+type Contributor = { emailAddress: string; id: string };
 
 /** Makes `user` an active contributor of a character, as if they accepted an invite from `invitedBy`. */
 export async function addCharacterContributor(characterId: string, user: Contributor, invitedBy: string) {

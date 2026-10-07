@@ -48,7 +48,7 @@ class CharacterLevelsRepository extends include(
   // Archived characters count: one can be restored, and its picks must still resolve.
   private async existsKlassPickFromExtension(
     db: Db,
-    where: { hostRulesetId: string; extensionRulesetId: string; shadowKlassIds: string[] },
+    where: { extensionRulesetId: string; hostRulesetId: string; shadowKlassIds: string[] },
   ) {
     const klassCondition =
       where.shadowKlassIds.length > 0
@@ -101,7 +101,7 @@ class CharacterLevelsRepository extends include(
     where:
       | { klassId: string; rulesetId: string }
       | { klassLevelId: string; rulesetId: string }
-      | { hostRulesetId: string; extensionRulesetId: string; shadowKlassIds: string[] },
+      | { extensionRulesetId: string; hostRulesetId: string; shadowKlassIds: string[] },
   ): Promise<boolean> {
     if ("klassId" in where) return await this.existsKlassPick(db, where);
     if ("klassLevelId" in where) return await this.existsKlassLevelPick(db, where);

@@ -5,10 +5,10 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 
 /** The spellcasting target paths: the highest arcane and divine spell levels castable. */
 export default class SpellcastingPaths implements PathCategory<Dnd35Components> {
-  readonly name = "spellcasting";
-  readonly label = "Spellcasting";
-  readonly description = "Maximum arcane or divine spell level castable";
   readonly component = { key: "spellcasting", getter: "getSpellcasting" } as const;
+  readonly description = "Maximum arcane or divine spell level castable";
+  readonly label = "Spellcasting";
+  readonly name = "spellcasting";
 
   generate(_rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
     if (kind !== "requirement") return [];

@@ -17,8 +17,8 @@ type Seed = (db: Db) => Promise<void>;
  */
 export interface ContentPackage {
   name: string;
-  type: "base_ruleset" | "extension";
-  seedsVersion: number;
   seeds: Seed[];
+  seedsVersion: number;
+  type: "base_ruleset" | "extension";
   updates?: Record<number, Seed>;
 }

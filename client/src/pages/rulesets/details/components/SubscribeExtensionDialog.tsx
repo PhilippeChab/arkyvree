@@ -10,10 +10,10 @@ import { type RulesetListItem, rulesetPickerQuery } from "@/client/src/lib/queri
 type ExtensionRuleset = RulesetListItem;
 
 interface SubscribeExtensionDialogProps {
-  open: boolean;
+  isLoading: boolean;
   onClose: () => void;
   onConfirm: (extensionIds: string[]) => void;
-  isLoading: boolean;
+  open: boolean;
   subscribedExtensionIds: string[];
 }
 

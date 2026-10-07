@@ -10,11 +10,11 @@ import { findExportableCharacter, getCharacterPdfTargetTable } from "@/server/se
 import { publishWsEvent } from "@/server/websockets/index.ts";
 
 interface GeneratePdfPayload {
-  userId: string;
-  characterId: string;
-  characterName: string;
   /** Set when a Game Master exports a character of their campaign. */
   campaignId?: string;
+  characterId: string;
+  characterName: string;
+  userId: string;
 }
 
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB

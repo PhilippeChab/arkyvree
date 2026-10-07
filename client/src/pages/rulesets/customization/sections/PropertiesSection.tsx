@@ -27,12 +27,12 @@ type PropertiesArray = InferResponseType<
   200
 >;
 interface PropertiesSectionProps {
-  ruleset: RulesetDetail;
-  entityType: CustomizableEntityType;
-  entityId: string;
   data?: Property[];
-  queryKeysToInvalidate?: readonly (readonly unknown[])[];
+  entityId: string;
+  entityType: CustomizableEntityType;
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
+  queryKeysToInvalidate?: readonly (readonly unknown[])[];
+  ruleset: RulesetDetail;
 }
 
 type Property = PropertiesArray[number];

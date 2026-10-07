@@ -7,7 +7,7 @@ import { type ThemeMode } from "@/client/src/contexts/themeContext.ts";
 import { useThemeMode } from "@/client/src/contexts/useThemeMode.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 
-const THEME_MODE_OPTIONS: { value: ThemeMode; label: string; icon: ReactNode }[] = [
+const THEME_MODE_OPTIONS: { icon: ReactNode; label: string; value: ThemeMode }[] = [
   { value: "light", label: "Light", icon: <LightModeIcon /> },
   { value: "dark", label: "Dark", icon: <DarkModeIcon /> },
   { value: "system", label: "System", icon: <SettingsBrightnessIcon /> },

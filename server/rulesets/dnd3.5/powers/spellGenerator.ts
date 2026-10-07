@@ -19,16 +19,16 @@ import {
 import { stripSeparators } from "@/shared/text.ts";
 
 export interface SpellFields {
-  school: string;
-  subschool?: string;
-  descriptors?: string[];
-  castingTime?: string;
-  rangeType?: string;
-  target?: string;
   areaOfEffect?: string;
-  duration?: string;
-  spellResistance?: string;
+  castingTime?: string;
   components?: string[];
+  descriptors?: string[];
+  duration?: string;
+  rangeType?: string;
+  school: string;
+  spellResistance?: string;
+  subschool?: string;
+  target?: string;
 }
 
 /** The property types `generateSpellProperties` writes. */

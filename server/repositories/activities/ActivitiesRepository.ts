@@ -30,12 +30,12 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
   async findPage(
     db: Db,
     where: {
-      userId: string;
-      targetTable?: string;
-      type?: string;
-      search?: string;
       orderBy?: "createdAt" | "type";
       orderDir?: "asc" | "desc";
+      search?: string;
+      targetTable?: string;
+      type?: string;
+      userId: string;
     },
     pagination: { limit: number; page: number },
   ) {

@@ -5,13 +5,13 @@ import { pingWorker } from "@/server/queue.ts";
 import type { EmailJobPayload } from "./templates.ts";
 
 type SendArgs = {
-  to: string | string[];
-  subject: string;
   from?: string;
+  subject: string;
+  to: string | string[];
 } & EmailJobPayload;
 
 class EmailService {
-  async send(options: SendArgs): Promise<{ success: boolean; error?: string }> {
+  async send(options: SendArgs): Promise<{ error?: string; success: boolean }> {
     if (isTest()) return { success: false, error: "Email service not configured" };
 
     try {

@@ -19,9 +19,9 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 interface ShareDialogProps {
-  open: boolean;
-  onClose: () => void;
   characterId: string;
+  onClose: () => void;
+  open: boolean;
   shareToken: string | null;
 }
 

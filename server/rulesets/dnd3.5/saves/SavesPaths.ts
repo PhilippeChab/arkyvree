@@ -45,15 +45,15 @@ export default class SavesPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  readonly name = "saves";
-
-  readonly label = "Saving Throws";
+  readonly component = { key: "savingThrows", getter: "getSavingThrows" } as const;
 
   readonly description = "Fortitude, Reflex, and Will saving throws";
 
-  readonly component = { key: "savingThrows", getter: "getSavingThrows" } as const;
-
   readonly groupDescriptionTemplates = { saves: "{name} saving throw components" };
+
+  readonly label = "Saving Throws";
+
+  readonly name = "saves";
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
     return SavesPaths.generateSavePaths(rulesetData.saves, kind);

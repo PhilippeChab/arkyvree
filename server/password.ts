@@ -23,7 +23,7 @@ export function hashPassword(password: string) {
 export async function verifyPassword(
   password: string,
   digest: string,
-): Promise<{ verified: boolean; needsRehash: boolean }> {
+): Promise<{ needsRehash: boolean; verified: boolean }> {
   if (digest.startsWith("$argon2"))
     return { verified: await Bun.password.verify(password, digest), needsRehash: false };
   const verified = sameDigest(await sha256(password), digest);

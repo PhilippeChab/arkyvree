@@ -113,7 +113,7 @@ export async function checkReferences() {
   console.log("═══ Phase 1: Reference Integrity ═══\n");
   let issues = 0;
   for (const check of refChecks) {
-    const broken = await query<{ id: string; name: string; entityId: string }>(check.sql);
+    const broken = await query<{ entityId: string; id: string; name: string }>(check.sql);
     if (broken.length > 0) {
       issues += broken.length;
       console.error(`✗ ${check.label}: ${broken.length} dangling reference(s)`);

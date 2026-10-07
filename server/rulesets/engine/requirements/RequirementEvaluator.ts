@@ -6,10 +6,10 @@ import { extractTemplateExpression, isTemplateValue } from "@/shared/customizati
 import type { Requirement } from "@/shared/relations.ts";
 
 type RequirementResults = {
-  requirements: Requirement[][];
-  invalidRequirements: { warning: string; requirement: Requirement }[];
-  unmetRequirementGroups: Requirement[][];
   fulfilledRequirementGroups: Requirement[][];
+  invalidRequirements: { requirement: Requirement; warning: string }[];
+  requirements: Requirement[][];
+  unmetRequirementGroups: Requirement[][];
 };
 
 export default class RequirementEvaluator {

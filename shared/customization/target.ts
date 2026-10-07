@@ -1,43 +1,43 @@
 export interface PaginatedCompletions {
   items: PathCompletion[];
-  page: number;
   nextPage: number | undefined;
+  page: number;
   segmentLabels: Record<string, string>;
 }
 
 export interface PathCompletion {
-  label: string;
   detail: string;
   documentation: string;
   insertText: string;
   kind: "category" | "property" | "value" | "operator" | "group";
-  sortOrder?: number;
-  /** Present on leaf completions (kind="property") — full path for this item */
-  path?: string;
-  /** Present on leaf completions — value type of the target */
-  valueType?: PathValueType;
-  /** Present on leaf completions — allowed operators */
-  operators?: string[];
-  /** Present on leaf completions — possible values for enum-like targets */
-  possibleValues?: { value: string; label: string }[];
-  /** Present on leaf completions whose `set` takes only these values */
-  setValues?: { value: string; label: string }[];
+  label: string;
   /** Present on leaf completions that take a literal value only */
   literalOnly?: boolean;
+  /** Present on leaf completions — allowed operators */
+  operators?: string[];
+  /** Present on leaf completions (kind="property") — full path for this item */
+  path?: string;
+  /** Present on leaf completions — possible values for enum-like targets */
+  possibleValues?: { label: string; value: string }[];
+  /** Present on leaf completions whose `set` takes only these values */
+  setValues?: { label: string; value: string }[];
+  sortOrder?: number;
+  /** Present on leaf completions — value type of the target */
+  valueType?: PathValueType;
 }
 
 export interface PathError {
-  message: string;
-  position: { start: number; end: number };
-  severity: "error" | "warning" | "info";
   code: string;
+  message: string;
+  position: { end: number; start: number };
+  severity: "error" | "warning" | "info";
 }
 
 export interface PathValidationResult {
-  isValid: boolean;
-  errors: PathError[];
-  suggestions: string[];
   completions: PathCompletion[];
+  errors: PathError[];
+  isValid: boolean;
+  suggestions: string[];
   /** A valid path's definition */
   target?: TargetPath;
 }
@@ -46,15 +46,11 @@ export interface PathValidationResult {
 export type PathValueType = "number" | "string" | "boolean";
 
 export interface TargetPath {
-  path: string;
+  /** When set, this path is only available for modifiers on these entity types */
+  allowedEntityTypes?: string[];
   category: string;
   description: string;
   groupDescription?: string;
-  valueType: PathValueType;
-  operators: string[];
-  possibleValues?: { value: string; label: string }[];
-  /** When set, a `set` on this path takes only these values: a spell level's slots set to -1 are all known */
-  setValues?: { value: string; label: string }[];
   /**
    * A literal value only, never a template: code that has no character to resolve a template with reads it (the
    * level-up wizard and the class tables count a pool's slots)
@@ -62,11 +58,15 @@ export interface TargetPath {
   literalOnly?: boolean;
   /** The least number an operator other than a restricted `set` takes: a pool's slots grow, -1 being all known */
   minValue?: number;
-  sortOrder?: number;
-  /** When set, this path is only available for modifiers on these entity types */
-  allowedEntityTypes?: string[];
+  operators: string[];
+  path: string;
+  possibleValues?: { label: string; value: string }[];
   /** It reaches several values (a skill family's skills) or a list (a spell's property values): no template reads it */
   readsMany?: boolean;
+  /** When set, a `set` on this path takes only these values: a spell level's slots set to -1 are all known */
+  setValues?: { label: string; value: string }[];
+  sortOrder?: number;
+  valueType: PathValueType;
 }
 
 /** What a listing offers: a modifier's targets, a requirement's, or the paths a template reads, one value each. */

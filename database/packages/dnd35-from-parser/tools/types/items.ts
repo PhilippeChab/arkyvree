@@ -1,78 +1,78 @@
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 export type ArmorRow = {
-  name: string;
+  acBonus: string;
+  arcaneSpellFailure: string;
+  armorCheckPenalty: string;
   category: string;
   cost: string;
-  acBonus: string;
   maxDexBonus: string;
-  armorCheckPenalty: string;
-  arcaneSpellFailure: string;
-  speed30: string;
+  name: string;
   speed20: string;
+  speed30: string;
   weight: string;
 };
 
 /** An item's fields an override sets. */
-export type ItemFields = { description?: string; costGp?: string; weight?: string; skip?: boolean };
+export type ItemFields = { costGp?: string; description?: string; skip?: boolean; weight?: string };
 
 export type ItemReference = {
-  _meta: Omit<ScrapedMeta<"item">, "sourceUrl"> & { sourceUrls: { weapons: string; armor: string; goods: string } };
-
-  raw: {
-    weapons: WeaponRow[];
-    armor: ArmorRow[];
-    goods: {
-      name: string;
-      tableId: string;
-      cost: string;
-      weight: string;
-    }[];
-  };
+  _meta: Omit<ScrapedMeta<"item">, "sourceUrl"> & { sourceUrls: { armor: string; goods: string; weapons: string } };
 
   detected: {
-    weapons: Record<
-      string,
-      {
-        generatorName: string | null;
-        proficiency: string;
-        costGp: string;
-        weight: string;
-      }
-    >;
     armor: Record<
       string,
       {
-        generatorName: string | null;
-        type: "Armor" | "Shield";
-        proficiencyCategory: string;
         costGp: string;
+        generatorName: string | null;
+        proficiencyCategory: string;
+        type: "Armor" | "Shield";
         weight: string;
       }
     >;
     goods: Record<
       string,
       {
+        category: string;
         costGp: string;
         weight: string;
-        category: string;
       }
     >;
     unresolved: string[];
+    weapons: Record<
+      string,
+      {
+        costGp: string;
+        generatorName: string | null;
+        proficiency: string;
+        weight: string;
+      }
+    >;
   };
 
   overrides?: Overrides<ItemFields> & { nameMap?: Record<string, string> };
+
+  raw: {
+    armor: ArmorRow[];
+    goods: {
+      cost: string;
+      name: string;
+      tableId: string;
+      weight: string;
+    }[];
+    weapons: WeaponRow[];
+  };
 };
 
 export type WeaponRow = {
-  name: string;
-  proficiency: string;
   category: string;
   cost: string;
-  dmgSmall: string;
-  dmgMedium: string;
   critical: string;
+  damageType: string;
+  dmgMedium: string;
+  dmgSmall: string;
+  name: string;
+  proficiency: string;
   rangeIncrement: string;
   weight: string;
-  damageType: string;
 };

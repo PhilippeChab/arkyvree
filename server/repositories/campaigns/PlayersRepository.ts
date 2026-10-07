@@ -30,7 +30,7 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
   }
 
   /** Whether the user plays in a live campaign on the ruleset: what lets a member create on a private ruleset. */
-  async exists(db: Db, where: { userId: string; rulesetId: string }) {
+  async exists(db: Db, where: { rulesetId: string; userId: string }) {
     const [row] = await db
       .select({ one: sql`1` })
       .from(this.table)
@@ -65,7 +65,7 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
 
   async findOne(
     db: Db,
-    where: { id: string } | { id: string; campaignId: string } | { userId: string; campaignId: string },
+    where: { id: string } | { campaignId: string; id: string } | { campaignId: string; userId: string },
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {
     return await db.query.playersInCampaign.findFirst({
@@ -78,7 +78,7 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
 
   async findPage(
     db: Db,
-    where: { campaignId: string; search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: { campaignId: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: { limit: number; page: number },
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {

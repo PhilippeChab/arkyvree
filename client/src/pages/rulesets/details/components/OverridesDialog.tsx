@@ -35,12 +35,12 @@ type Change = ChangesResponse[number];
 type ChangesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["changes"]["$get"], 200>;
 
 interface OverridesDialogProps {
-  open: boolean;
-  onClose: () => void;
-  rulesetId: string;
   /** The ruleset's base rules, whose words name the entity types */
   baseRules: string;
   canEdit?: boolean;
+  onClose: () => void;
+  open: boolean;
+  rulesetId: string;
 }
 
 /** A change the fork can undo: an entity it modified or deleted, which the restore route takes back. */

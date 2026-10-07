@@ -374,22 +374,6 @@ function reorder(text, statements, items) {
   };
 }
 
-/** Whether evaluating `node` runs code: a call, `new`, `await`, an assignment (not what a function inside it holds). */
-function runsCode(node) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some(runsCode);
-  if (FUNCTION_VALUES.has(node.type) && node.type !== "ClassExpression") return false;
-  if (
-    /^(CallExpression|NewExpression|AwaitExpression|AssignmentExpression|UpdateExpression|TaggedTemplateExpression|ImportExpression)$/.test(
-      node.type,
-    )
-  )
-    return true;
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && runsCode(child),
-  );
-}
-
 /** The names a file declares at its top, its imports' included. */
 function topLevelNames(program) {
   const names = new Set();
@@ -461,6 +445,22 @@ export function runsAtLoad(statement) {
   }
   if (exportsDefaultValue(statement)) return runsCode(declaration);
   return false;
+}
+
+/** Whether evaluating `node` runs code: a call, `new`, `await`, an assignment (not what a function inside it holds). */
+export function runsCode(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(runsCode);
+  if (FUNCTION_VALUES.has(node.type) && node.type !== "ClassExpression") return false;
+  if (
+    /^(CallExpression|NewExpression|AwaitExpression|AssignmentExpression|UpdateExpression|TaggedTemplateExpression|ImportExpression)$/.test(
+      node.type,
+    )
+  )
+    return true;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && runsCode(child),
+  );
 }
 
 export default {

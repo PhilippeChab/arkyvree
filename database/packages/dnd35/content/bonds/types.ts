@@ -7,9 +7,9 @@ import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts"
  * class, all of `kind`.
  */
 export type BondContent = {
-  kind: string;
   aptitudes: string[];
   feats: FeatSeed[];
-  races: RaceSeed[];
+  kind: string;
   klass: ClassSeed;
+  races: RaceSeed[];
 };

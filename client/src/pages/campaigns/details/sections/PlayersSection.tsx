@@ -71,7 +71,7 @@ const STATUS_CHIPS = {
   assigned: null,
   pending: { icon: <PendingIcon sx={{ fontSize: 14 }} />, label: "Invite Pending", color: "warning" },
   unassigned: { icon: <UnassignedIcon sx={{ fontSize: 14 }} />, label: "Unassigned", color: "default" },
-} as const satisfies Record<PlayerState, { icon: ReactNode; label: string; color: "warning" | "default" } | null>;
+} as const satisfies Record<PlayerState, { color: "warning" | "default"; icon: ReactNode; label: string } | null>;
 
 export function PlayersSection({ campaign }: PlayersSectionProps) {
   const queryClient = useQueryClient();
@@ -136,7 +136,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   });
 
   const editMutation = useMutation({
-    mutationFn: async ({ playerId, data }: { playerId: string; data: PlayerFormData }) => {
+    mutationFn: async ({ playerId, data }: { data: PlayerFormData; playerId: string }) => {
       return parseResponse(
         rpc.api.campaigns[":id"].players[":playerId"].$put({
           param: { id: campaign.id, playerId },

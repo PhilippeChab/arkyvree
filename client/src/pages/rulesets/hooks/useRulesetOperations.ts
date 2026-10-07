@@ -32,9 +32,9 @@ export function useRulesetOperations() {
   const [subscribeDialogOpen, setSubscribeDialogOpen] = useState(false);
   const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState(false);
   const [unsubscribeTarget, setUnsubscribeTarget] = useState<{
-    rulesetId: string;
     extensionId: string;
     extensionName: string;
+    rulesetId: string;
   } | null>(null);
 
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset | null>(null);
@@ -50,7 +50,7 @@ export function useRulesetOperations() {
   const forkForm = useFormWith<ForkRulesetFormData>({ name: "", description: "", private: false });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data, updatedAt }: { id: string; data: EditRulesetFormData; updatedAt?: string }) => {
+    mutationFn: async ({ id, data, updatedAt }: { data: EditRulesetFormData; id: string; updatedAt?: string }) => {
       return parseResponse(
         rpc.api.rulesets[":id"].$put({
           param: { id },
@@ -69,7 +69,7 @@ export function useRulesetOperations() {
   });
 
   const forkMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: ForkRulesetFormData }) => {
+    mutationFn: async ({ id, data }: { data: ForkRulesetFormData; id: string }) => {
       return parseResponse(
         rpc.api.rulesets[":id"].fork.$post({
           param: { id },
@@ -147,7 +147,7 @@ export function useRulesetOperations() {
   });
 
   const subscribeMutation = useMutation({
-    mutationFn: async ({ id, extensionIds }: { id: string; extensionIds: string[] }) => {
+    mutationFn: async ({ id, extensionIds }: { extensionIds: string[]; id: string }) => {
       return parseResponse(
         rpc.api.rulesets[":id"].subscribe.$post({
           param: { id },
@@ -168,7 +168,7 @@ export function useRulesetOperations() {
   });
 
   const unsubscribeMutation = useMutation({
-    mutationFn: async ({ id, extensionId }: { id: string; extensionId: string }) => {
+    mutationFn: async ({ id, extensionId }: { extensionId: string; id: string }) => {
       return parseResponse(
         rpc.api.rulesets[":id"].unsubscribe.$post({
           param: { id },

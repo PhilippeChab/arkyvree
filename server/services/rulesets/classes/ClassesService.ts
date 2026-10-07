@@ -16,9 +16,9 @@ class ClassesService {
     session: Session,
     rulesetId: string,
     body: {
-      name: string;
       description?: string | null;
       hd?: number;
+      name: string;
     },
   ) {
     const result = await withTransaction(async (tx) => {
@@ -106,9 +106,9 @@ class ClassesService {
     where: {
       childOnly?: boolean;
       kind?: string;
-      search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {
@@ -123,9 +123,9 @@ class ClassesService {
     rulesetId: string,
     klassId: string,
     body: {
-      name: string;
       description?: string | null;
       hd?: number;
+      name: string;
       updatedAt?: string;
     },
   ) {

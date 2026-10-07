@@ -29,7 +29,7 @@ class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersI
   }
 
   /** Levels' grants, or a ruleset's classes' grants from lists (`aptitudeIds`). */
-  async findMany(db: Db, where: { klassLevelIds: string[] } | { rulesetId: string; aptitudeIds: string[] }) {
+  async findMany(db: Db, where: { klassLevelIds: string[] } | { aptitudeIds: string[]; rulesetId: string }) {
     if ("klassLevelIds" in where && where.klassLevelIds.length === 0) return [];
     if ("aptitudeIds" in where && where.aptitudeIds.length === 0) return [];
     return await db.query.klassLevelPowersInRules.findMany({

@@ -5,8 +5,8 @@ import { DiceSpinner } from "./DiceSpinner.tsx";
 interface LoadMoreButtonProps {
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
-  onClick: () => void;
   label?: string;
+  onClick: () => void;
   /** `large` for a page's main list, `medium` for lists inside a section or dialog. */
   size?: "medium" | "large";
 }

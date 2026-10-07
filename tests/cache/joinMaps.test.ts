@@ -69,7 +69,7 @@ describe("cache join-maps — parity with repository queries", () => {
 
     expect(fromCache.length).toBe(fromDb.length);
     // klass_level_powers has no `id` column — sort by (powerId, aptitudeId).
-    const sortByPowerApt = <T extends { powerId: string; aptitudeId: string }>(xs: T[]) =>
+    const sortByPowerApt = <T extends { aptitudeId: string; powerId: string }>(xs: T[]) =>
       [...xs].sort((a, b) => a.powerId.localeCompare(b.powerId) || a.aptitudeId.localeCompare(b.aptitudeId));
     const mapRow = (r: (typeof fromDb)[number]) => ({
       klassLevelId: r.klassLevelId,

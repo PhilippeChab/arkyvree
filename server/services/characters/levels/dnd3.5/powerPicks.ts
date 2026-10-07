@@ -28,11 +28,11 @@ export async function getAvailablePowers(
   klassId: string,
   level: number,
   where: {
+    excludeSchools?: string[];
+    pendingLevelFeatPicks?: FeatPick[];
     powerLevel?: number;
     search?: string;
-    excludeSchools?: string[];
     selectedFeatPicks?: FeatPick[];
-    pendingLevelFeatPicks?: FeatPick[];
   },
   pagination: { limit: number; page: number },
   excludeCharacterLevelId?: string,

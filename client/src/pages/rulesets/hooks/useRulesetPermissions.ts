@@ -5,9 +5,6 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 type RulesetData = Pick<RulesetDetail, "userId" | "status" | "contributorRole">;
 
 interface RulesetPermissions {
-  isOwner: boolean;
-  isContributor: boolean;
-  contributorRole: string | null;
   /** Owner, Admin, or Editor — can CRUD entities (feats, skills, etc.) */
   canEditEntities: boolean;
   /** Owner or Admin — can update ruleset name/description/privacy, archive */
@@ -16,6 +13,9 @@ interface RulesetPermissions {
   canManageContributors: boolean;
   /** Owner only. Demo users blocked. */
   canPublish: boolean;
+  contributorRole: string | null;
+  isContributor: boolean;
+  isOwner: boolean;
 }
 
 export function useRulesetPermissions(ruleset: RulesetData | undefined): RulesetPermissions {

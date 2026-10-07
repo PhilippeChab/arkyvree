@@ -11,17 +11,17 @@
  * which works on every plan (including Launch / Free).
  */
 type Project = {
+  active_time_seconds: number;
+  compute_time_seconds: number;
+  consumption_period_end: string;
+  consumption_period_start: string;
+  data_storage_bytes_hour: number;
+  data_transfer_bytes: number;
   id: string;
   name: string;
-  compute_time_seconds: number;
-  active_time_seconds: number;
-  written_data_bytes: number;
-  data_transfer_bytes: number;
-  synthetic_storage_size: number;
-  data_storage_bytes_hour: number;
-  consumption_period_start: string;
-  consumption_period_end: string;
   owner?: { subscription_type?: string };
+  synthetic_storage_size: number;
+  written_data_bytes: number;
 };
 
 const API = "https://console.neon.tech/api/v2";

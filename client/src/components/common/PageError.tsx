@@ -2,11 +2,11 @@ import { Button, Paper, Stack, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 
 interface PageErrorProps {
-  message: string;
   /** The way out ("Back to Campaigns"), when the page has one. */
   backLabel?: string;
   /** Where it goes: a link */
   backTo?: string;
+  message: string;
 }
 
 /** A page that couldn't load what it shows: the reason, and a way back. */

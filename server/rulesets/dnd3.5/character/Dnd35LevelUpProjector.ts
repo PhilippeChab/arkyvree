@@ -38,7 +38,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
   getCharacterEnrichedSkills<T extends { id: string; name: string }>(
     allSkills: T[],
     classSkillIds: Set<string>,
-  ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[] {
+  ): (T & { currentRank: number; isClassSkill: boolean; isCurrentClassSkill: boolean })[] {
     return this.character.components.skills.getEnrichedSkills(allSkills, classSkillIds);
   }
 
@@ -67,7 +67,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
   }
 
   async evaluateClassAvailability(
-    candidates: { klassName: string; klassLevel: KlassLevel; requirementGroups: Requirement[][] }[],
+    candidates: { klassLevel: KlassLevel; klassName: string; requirementGroups: Requirement[][] }[],
     projectedCharacterLevel: ProjectedCharacterLevel,
   ): Promise<Map<string, boolean>> {
     const results = new Map<string, boolean>();

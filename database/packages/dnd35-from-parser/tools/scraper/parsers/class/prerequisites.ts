@@ -83,7 +83,7 @@ function parsePrerequisiteText(text: string): Parsed {
 
 /** The spellcasting the prerequisites require: a spell level of a kind (arcane, divine, any), or a kind from 1st. */
 function requiredCasterLevels(text: string): NonNullable<Parsed["casterLevel"]> {
-  const casterLevels: { type: "divine" | "arcane" | "any"; level: number }[] = [];
+  const casterLevels: { level: number; type: "divine" | "arcane" | "any" }[] = [];
 
   const spellLevelRegex = /(\d+)(?:st|nd|rd|th)[- ]level\s+(divine|arcane)\s*spells?/gi;
   let slMatch;
@@ -152,11 +152,11 @@ function requiredFeats(text: string): string[] {
 }
 
 /** The base saves the prerequisites require ("Fort save +4"), each by its full name; none when they name none. */
-function requiredSaves(text: string): { name: string; base: number }[] | undefined {
+function requiredSaves(text: string): { base: number; name: string }[] | undefined {
   const saveRegex = /(?:Fort(?:itude)?|Ref(?:lex)?|Will)\s+(?:save\s+)?(?:bonus\s*)?\+(\d+)/gi;
   const saveMatches = [...text.matchAll(saveRegex)];
   if (saveMatches.length === 0) return undefined;
-  const saves: { name: string; base: number }[] = [];
+  const saves: { base: number; name: string }[] = [];
   for (const s of saveMatches) {
     const m = s[0].match(/(Fort(?:itude)?|Ref(?:lex)?|Will)\s+(?:save\s+)?(?:bonus\s*)?\+(\d+)/i);
     if (m) {

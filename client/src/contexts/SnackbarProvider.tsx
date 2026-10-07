@@ -10,10 +10,10 @@ interface SnackbarProviderProps {
 }
 
 interface ToastItem {
-  message: string;
-  severity: AlertColor;
   action?: ToastAction;
+  message: string;
   persistent?: boolean;
+  severity: AlertColor;
 }
 
 export function SnackbarProvider({ children }: SnackbarProviderProps) {

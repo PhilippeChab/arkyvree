@@ -13,23 +13,23 @@ interface RulesetSectionConfig<
   TUpdated,
   TDeleted,
 > {
-  rulesetId: string;
-  sectionName: string;
-  label: string;
-  /** The section's own rows, a factory's options (`modifiersQuery(…)`), read unless `data` hands them over */
-  query?: UseQueryOptions<TData[], DefaultError, TData[], SectionKey>;
-  data?: TData[];
-  queryKeysToInvalidate?: readonly (readonly unknown[])[];
-  /** Resolves to the created entity; its id is handed to `onCreateSuccess`. */
-  createFn: (data: TFormData) => Promise<TCreated>;
-  updateFn?: (id: string, data: TFormData) => Promise<TUpdated>;
-  deleteFn?: (id: string) => Promise<TDeleted>;
-  onCreateSuccess?: (created: TCreated) => void;
-  onUpdateSuccess?: (data: TUpdated) => void;
-  onDeleteSuccess?: (data: TDeleted) => void;
-  onEditDialogClose?: () => void;
   /** Every field's value in an empty form: the create form's, and the edit form's until a row's values replace them */
   createDefaults: TFormData & DefaultValues<TFormData>;
+  /** Resolves to the created entity; its id is handed to `onCreateSuccess`. */
+  createFn: (data: TFormData) => Promise<TCreated>;
+  data?: TData[];
+  deleteFn?: (id: string) => Promise<TDeleted>;
+  label: string;
+  onCreateSuccess?: (created: TCreated) => void;
+  onDeleteSuccess?: (data: TDeleted) => void;
+  onEditDialogClose?: () => void;
+  onUpdateSuccess?: (data: TUpdated) => void;
+  /** The section's own rows, a factory's options (`modifiersQuery(…)`), read unless `data` hands them over */
+  query?: UseQueryOptions<TData[], DefaultError, TData[], SectionKey>;
+  queryKeysToInvalidate?: readonly (readonly unknown[])[];
+  rulesetId: string;
+  sectionName: string;
+  updateFn?: (id: string, data: TFormData) => Promise<TUpdated>;
 }
 
 /** Where a section's rows are cached, which its saves refresh */
@@ -109,7 +109,7 @@ export function useRulesetSection<
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: TFormData }) =>
+    mutationFn: ({ id, data }: { data: TFormData; id: string }) =>
       updateFn ? updateFn(id, data) : Promise.reject(new Error(`${label} can't be updated here`)),
     onSuccess: (data) => {
       snackbar.success(`${label} updated`);

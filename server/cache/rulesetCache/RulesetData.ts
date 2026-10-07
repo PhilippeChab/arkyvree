@@ -132,6 +132,8 @@ export default class RulesetData {
 
   readonly aptitudes: Aptitude[];
 
+  private readonly built: Partial<Indices> = {};
+
   /**
    * COW context. Most consumers can ignore this and let the id Maps auto-resolve, but lineage/sibling-aware code can
    * reach it through here without taking `cowData` as a separate parameter.
@@ -143,6 +145,10 @@ export default class RulesetData {
   readonly items: Item[];
 
   readonly klasses: Klass[];
+
+  private readonly klassLevelFeats: KlassLevelFeat[];
+
+  private readonly klassLevelPowers: KlassLevelPower[];
 
   readonly klassLevels: KlassLevel[];
 
@@ -156,25 +162,19 @@ export default class RulesetData {
 
   readonly mechanics: Mechanic[];
 
+  private readonly modifiers: Modifier[];
+
   readonly powers: PowerWithAptitudes[];
 
+  private readonly properties: Property[];
+
   readonly races: Race[];
+
+  private readonly requirements: Requirement[];
 
   readonly saves: RulesetSave[];
 
   readonly skills: Skill[];
-
-  private readonly built: Partial<Indices> = {};
-
-  private readonly klassLevelFeats: KlassLevelFeat[];
-
-  private readonly klassLevelPowers: KlassLevelPower[];
-
-  private readonly modifiers: Modifier[];
-
-  private readonly properties: Property[];
-
-  private readonly requirements: Requirement[];
 
   /**
    * Wraps a string-keyed Map so `.get(key)` and `.has(key)` look the key up as `resolveKey` maps it: consumers can pass

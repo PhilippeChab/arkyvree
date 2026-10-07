@@ -3,8 +3,8 @@ import { Stack } from "@mui/material";
 import { FaqHelpIcon } from "./FaqHelpIcon.tsx";
 
 interface HelpLabelProps {
-  label: string;
   help: string;
+  label: string;
 }
 
 /** A label with its help: the question-mark icon whose tooltip explains it (a section tab's, a field's). */

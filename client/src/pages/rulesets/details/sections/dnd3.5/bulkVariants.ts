@@ -12,7 +12,7 @@ export interface BulkVariantsFormValues {
 export type VariantRow = VariantsRequest["json"]["variants"][number];
 
 /** The nth variant row of an item: its name numbered, its description copied. */
-export function variantRow(item: { name: string; description?: string | null }, copyNumber: number): VariantRow {
+export function variantRow(item: { description?: string | null; name: string }, copyNumber: number): VariantRow {
   return {
     name: `${item.name} (Copy ${copyNumber})`,
     description: item.description ?? "",

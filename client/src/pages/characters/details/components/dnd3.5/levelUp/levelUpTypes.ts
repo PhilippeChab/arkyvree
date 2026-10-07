@@ -26,10 +26,10 @@ export type GroupedFeatRow = InferResponseType<LevelsApi["available-feats"]["gro
 export type LeveledUpAttribute = AttributesData["attributes"];
 /** The picks a level wizard collects. */
 export interface LevelUpFormData {
-  selectedClass: SelectedKlass | null;
-  selectedHP: number | null;
   selectedAttribute: string | null;
+  selectedClass: SelectedKlass | null;
   selectedFeats: Record<string, SelectedFeat[]>;
+  selectedHP: number | null;
   selectedPowers: Record<string, SelectedPower[]>;
   skillPointAllocations: Record<string, number>;
 }

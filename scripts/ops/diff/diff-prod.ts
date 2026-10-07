@@ -92,10 +92,10 @@ async function main() {
       console.log("## Package drift\n");
 
       const { rows: remotePackages } = await client.query<{
+        applied_at: string;
         name: string;
         type: string;
         version: number;
-        applied_at: string;
       }>(`select name, type, version, applied_at from rules.content_packages order by name`);
 
       const remoteMap = new Map(remotePackages.map((p) => [p.name, p]));

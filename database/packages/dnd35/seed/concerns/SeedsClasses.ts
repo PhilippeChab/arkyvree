@@ -49,7 +49,7 @@ const SAVE: Record<SaveType, (level: number) => number> = {
 /** A spellcaster's slots in one of its lists, gated by its requirements. */
 function listSlots(
   spells: NonNullable<ClassSeed["spells"]>,
-  list: { slug: string; requirements: RequirementEntry[] },
+  list: { requirements: RequirementEntry[]; slug: string },
 ): (ModifierSeed & { level: number })[] {
   const slot = (spellLevel: number, kind: string) =>
     `aptitudes.${list.slug}.${spellLevel + (spells.noCantrips ? 1 : 0)}.${kind}`;

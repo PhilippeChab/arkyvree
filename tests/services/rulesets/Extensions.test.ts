@@ -130,7 +130,7 @@ async function favoredSoulOnMixedFork() {
     1,
   );
   const list = Object.values(aptitudePools).find((pool) => pool.name === "Favored Soul Spells")!;
-  const offer = (where: { search: string; powerLevel?: number }) =>
+  const offer = (where: { powerLevel?: number; search: string }) =>
     CharacterLevelsService.getAvailablePowers(
       fork.session,
       fork.character.id,

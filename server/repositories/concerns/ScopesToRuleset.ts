@@ -7,13 +7,13 @@ import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** A ruleset entity list's filters: the ruleset's own entities and its source chain's, and a campaign's on it. */
 export type RulesetEntityFilters<Extra extends object = object> = Extra & {
-  rulesetId: string;
   ancestorRulesetIds?: string[];
-  childOnly?: boolean;
   campaignId?: string;
-  search?: string;
+  childOnly?: boolean;
   orderBy?: "name" | "createdAt" | "updatedAt";
   orderDir?: "asc" | "desc";
+  rulesetId: string;
+  search?: string;
 };
 
 /**

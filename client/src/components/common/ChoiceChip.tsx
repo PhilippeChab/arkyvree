@@ -2,8 +2,8 @@ import { Chip } from "@mui/material";
 
 interface ChoiceChipProps {
   label: string;
-  selected: boolean;
   onClick: () => void;
+  selected: boolean;
 }
 
 /** One of several to choose from (a level's feat or spell pools): filled while it's the one chosen. */

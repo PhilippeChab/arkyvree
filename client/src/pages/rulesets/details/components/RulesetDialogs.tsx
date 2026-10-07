@@ -22,59 +22,59 @@ import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 interface ArchiveRulesetDialogProps {
-  open: boolean;
+  isLoading: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  isLoading: boolean;
+  open: boolean;
 }
 
 interface EditRulesetDialogProps {
-  open: boolean;
-  onClose: () => void;
+  canBeExtension: boolean;
   form: UseFormReturn<EditRulesetFormData>;
-  onSubmit: (data: EditRulesetFormData) => void;
   isLoading: boolean;
   isPublic: boolean;
-  canBeExtension: boolean;
+  onClose: () => void;
+  onSubmit: (data: EditRulesetFormData) => void;
+  open: boolean;
 }
 
 interface ForkRulesetDialogProps {
-  open: boolean;
-  onClose: () => void;
   form: UseFormReturn<ForkRulesetFormData>;
-  onSubmit: (data: ForkRulesetFormData) => void;
   isLoading: boolean;
+  onClose: () => void;
+  onSubmit: (data: ForkRulesetFormData) => void;
+  open: boolean;
 }
 
 interface PrivacyToggleProps {
-  value: boolean;
-  onChange: (isPrivate: boolean) => void;
   disabled: boolean;
+  onChange: (isPrivate: boolean) => void;
+  value: boolean;
 }
 
 interface PublishRulesetDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: (kind: PublishKind) => void;
-  isLoading: boolean;
   canBeExtension: boolean;
+  isLoading: boolean;
   /** What it's published as, which its opener sets to the ruleset's kind */
   kind: PublishKind;
+  onClose: () => void;
+  onConfirm: (kind: PublishKind) => void;
   onKindChange: (kind: PublishKind) => void;
+  open: boolean;
 }
 
 interface RulesetKindToggleProps {
-  value: PublishKind;
-  onChange: (kind: PublishKind) => void;
   disabled: boolean;
+  onChange: (kind: PublishKind) => void;
+  value: PublishKind;
 }
 
 interface UnsubscribeExtensionDialogProps {
-  open: boolean;
+  extensionName: string;
+  isLoading: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  isLoading: boolean;
-  extensionName: string;
+  open: boolean;
 }
 
 export type EditRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["$put"]>["json"];

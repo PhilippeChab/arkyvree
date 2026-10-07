@@ -15,9 +15,9 @@ class SavesService {
     session: Session,
     rulesetId: string,
     body: {
-      name: string;
-      description?: string | null;
       abilityId: string;
+      description?: string | null;
+      name: string;
     },
   ) {
     const result = await withTransaction(async (tx) => {
@@ -94,9 +94,9 @@ class SavesService {
     rulesetId: string,
     where: {
       childOnly?: boolean;
-      search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {
@@ -111,9 +111,9 @@ class SavesService {
     rulesetId: string,
     saveId: string,
     body: {
-      name: string;
-      description?: string | null;
       abilityId: string;
+      description?: string | null;
+      name: string;
       updatedAt?: string;
     },
   ) {

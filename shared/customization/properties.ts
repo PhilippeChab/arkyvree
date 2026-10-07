@@ -1,23 +1,23 @@
 export interface PropertyType {
-  value: string;
-  isStatic: boolean;
-  entityType?: string;
   description?: string;
+  entityType?: string;
+  isStatic: boolean;
   usageCount?: number;
+  value: string;
 }
 
 export interface PropertyTypeCompletion {
+  detail?: string;
+  entityType?: string;
+  kind: "engine" | "custom";
   label: string;
   value: string;
-  detail?: string;
-  kind: "engine" | "custom";
-  entityType?: string;
 }
 
 export interface PropertyValueCompletion {
+  kind: "engine" | "custom";
   label: string;
   value: string;
-  kind: "engine" | "custom";
 }
 
 /** Values in the order of `options`, those it doesn't name after them as given. */

@@ -90,11 +90,11 @@ import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/
 import { makeSession } from "@/tests/support/users.ts";
 
 type Carried = {
+  equipped?: boolean;
   item: string;
   location?: ItemLocation;
-  weaponSet?: number;
-  equipped?: boolean;
   quantity?: number;
+  weaponSet?: number;
 };
 
 type Detailed = Awaited<ReturnType<typeof build>>;
@@ -295,8 +295,8 @@ async function proficientWith(name: string, item: string, location: "Main Hand" 
 /** A modifier of the character's race, gated by `requirements` when given: it applies to the seeded character. */
 async function raceModifier(
   name: string,
-  modifier: { target: string; value: string; operator?: string },
-  requirements: { target: string; operator: string; value: string; valueType: string }[] = [],
+  modifier: { operator?: string; target: string; value: string },
+  requirements: { operator: string; target: string; value: string; valueType: string }[] = [],
 ) {
   const character = await findSeededCharacter(name);
   const [created] = await Modifiers.create(db, {
@@ -345,7 +345,7 @@ async function requiringWithBonus(
 async function seedHuman(
   name: string,
   abilities: Record<string, number>,
-  values: { xp?: number; rulesetId?: string; alignment?: "Neutral Good" | "Chaotic Neutral" | "Neutral Evil" } = {},
+  values: { alignment?: "Neutral Good" | "Chaotic Neutral" | "Neutral Evil"; rulesetId?: string; xp?: number } = {},
 ) {
   const ctx = await getSeedCtx();
   return createCharacter(db, ctx, {

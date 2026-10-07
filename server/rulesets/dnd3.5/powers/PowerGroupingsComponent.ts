@@ -8,9 +8,9 @@ type PowerGroup = Record<string, PowerDcsByClass>;
 type PowerGroupingsData = Record<string, PowerGroup>;
 
 export type PowerDc = {
+  readonly ability: number;
   base: number;
   level: number;
-  readonly ability: number;
   misc: number;
   readonly total: number;
 };
@@ -38,7 +38,7 @@ export default class PowerGroupingsComponent {
    * The spell's other classes keep theirs. Its school and descriptor groupings and its entry hold it.
    */
   registerPower(
-    power: { name: string; powerLevel: number | null; abilityDcName: string | null; aptitudeSlug: string },
+    power: { abilityDcName: string | null; aptitudeSlug: string; name: string; powerLevel: number | null },
     properties: Property[],
   ): PowerDc | null {
     if (power.powerLevel == null || power.abilityDcName == null) return null;

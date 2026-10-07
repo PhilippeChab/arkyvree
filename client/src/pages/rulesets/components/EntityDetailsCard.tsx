@@ -4,20 +4,20 @@ import type { FormEventHandler, ReactNode } from "react";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 
 interface EntityDetailsCardProps {
-  title: string;
   /** Facts shown next to the title in the read-only view. */
   chips?: ReactNode;
   description?: string | null;
-  /** Read-only body for entities without a description; replaces it. */
-  readOnlyBody?: ReactNode;
   /** The inline edit form, for editors; everyone else sees the description. */
   edit?: {
-    fields: ReactNode;
-    onSubmit: FormEventHandler;
     canSave: boolean;
+    fields: ReactNode;
     isSaving: boolean;
+    onSubmit: FormEventHandler;
   };
+  /** Read-only body for entities without a description; replaces it. */
+  readOnlyBody?: ReactNode;
   sx?: SxProps<Theme>;
+  title: string;
 }
 
 /** Card at the top of a ruleset entity page: its edit form, or its description. */

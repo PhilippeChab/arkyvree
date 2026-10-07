@@ -6,10 +6,10 @@ type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
 
 /** Body of every API error response. */
 export interface ErrorJson {
-  error: string;
   cause: string;
+  error: string;
+  issues?: { category: string; entityName?: string; entityType?: string; message: string; requirementTree?: string }[];
   message: string;
-  issues?: { category: string; message: string; entityName?: string; entityType?: string; requirementTree?: string }[];
 }
 
 export const STALE_ENTITY_MESSAGE = "This was modified by someone else. Please refresh and try again.";

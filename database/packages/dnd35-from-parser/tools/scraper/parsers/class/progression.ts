@@ -88,8 +88,8 @@ export function detectBonusSpellAbility($: cheerio.CheerioAPI): string | undefin
 }
 
 export function parseProgression($: cheerio.CheerioAPI): {
-  progression: ClassReference["raw"]["progression"];
   hasCantrips?: boolean;
+  progression: ClassReference["raw"]["progression"];
 } {
   const progression: ClassReference["raw"]["progression"] = [];
   let hasCantrips: boolean | undefined;

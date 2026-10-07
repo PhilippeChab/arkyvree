@@ -41,8 +41,8 @@ async function sweepOne(blobId: string, key: string, logger: Logger): Promise<Sw
 }
 
 export async function sweepPendingBlobs(
-  opts: { ttlMs?: number; batchSize?: number; logger?: Logger; now?: Date } = {},
-): Promise<{ swept: number; failed: number }> {
+  opts: { batchSize?: number; logger?: Logger; now?: Date; ttlMs?: number } = {},
+): Promise<{ failed: number; swept: number }> {
   const logger = opts.logger ?? noopLogger;
 
   if (!isStorageConfigured()) {

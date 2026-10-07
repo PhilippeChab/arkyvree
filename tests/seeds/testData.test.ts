@@ -25,10 +25,10 @@ import { namesOf } from "./freshSeed.ts";
 type Character = typeof charactersInCharacter.$inferSelect;
 
 function inventoryLine(item: {
-  name: string;
-  quantity: number;
   equipped?: boolean;
   location?: string | null;
+  name: string;
+  quantity: number;
   weaponSet?: number | null;
 }) {
   return `${item.name} x${item.quantity}${item.equipped ? ", equipped" : ""} in ${item.location ?? "—"} set ${item.weaponSet ?? "—"}`;

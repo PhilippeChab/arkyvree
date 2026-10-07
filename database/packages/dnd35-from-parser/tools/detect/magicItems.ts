@@ -9,7 +9,7 @@ import { parseCost, parseWeight } from "./items.ts";
 import { readSkillBonuses } from "./skillBonuses.ts";
 import { SAVE_MAP } from "./targets.ts";
 
-type Modifier = { target: string; operator: string; value: string; valueType: string };
+type Modifier = { operator: string; target: string; value: string; valueType: string };
 
 const ABILITY_MAP: Record<string, string> = {
   strength: "abilities.strength.misc",

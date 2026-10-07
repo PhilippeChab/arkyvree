@@ -9,7 +9,7 @@ import {
 import { capitalize } from "@/shared/text.ts";
 
 /** What a specific armor's or shield's text says of itself, over its base's: its stats, weight and enhancement. */
-export type ArmorStats = { properties: Property[]; weight?: string; enhancement?: number };
+export type ArmorStats = { enhancement?: number; properties: Property[]; weight?: string };
 
 /** "This +3 banded mail", "this +1 heavy steel shield", or a shield that "has a +3 enhancement bonus". */
 const ENHANCEMENT = [

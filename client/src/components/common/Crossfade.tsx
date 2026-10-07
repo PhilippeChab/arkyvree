@@ -4,10 +4,10 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { DURATION, transitionOf } from "@/client/src/theme/animations.ts";
 
 interface CrossfadeProps {
-  showFirst: boolean;
+  duration?: number;
   first: ReactNode;
   second: ReactNode;
-  duration?: number;
+  showFirst: boolean;
 }
 
 export function Crossfade({ showFirst, first, second, duration = DURATION.brisk }: CrossfadeProps) {

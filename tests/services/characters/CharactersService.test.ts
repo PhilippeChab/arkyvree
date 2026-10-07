@@ -230,9 +230,9 @@ describe("CharactersService", () => {
       const list = async (where: Parameters<typeof CharactersService.getCharacters>[1] = {}) =>
         (await CharactersService.getCharacters(session, where, page)).items as {
           id: string;
+          levels?: unknown[];
           name: string;
           race?: unknown;
-          levels?: unknown[];
         }[];
       expect(await list()).toEqual([]);
 

@@ -13,29 +13,24 @@ import type { CharacterInventory, Item, Modifier, Property, Requirement } from "
 
 type RawInventoryEntry = CharacterInventory & {
   item: Item & {
-    properties: Property[];
     modifiers: Modifier[];
+    properties: Property[];
     requirements: Requirement[];
   };
 };
 
 export type EncumbranceData = {
   carriedweight: number;
-  readonly lightload: number;
-  readonly mediumload: number;
+  readonly checkpenalty: number;
   readonly heavyload: number;
+  readonly lightload: number;
   readonly load: LoadCategory;
   readonly maxdex: number;
-  readonly checkpenalty: number;
+  readonly mediumload: number;
 };
 
 export default class EncumbranceComponent {
   constructor(private readonly abilities: AbilitiesComponent) {}
-
-  private raceSize = "Medium";
-
-  /** Whether the race walks on four legs (RACE_QUADRUPED), which carries more for its size. */
-  private quadruped = false;
 
   /**
    * The carried weight is an input, which a modifier can change; the loads, the load category and its penalties are
@@ -66,6 +61,11 @@ export default class EncumbranceComponent {
       },
     };
   })();
+
+  /** Whether the race walks on four legs (RACE_QUADRUPED), which carries more for its size. */
+  private quadruped = false;
+
+  private raceSize = "Medium";
 
   private getCarryingCapacity(str: number): number {
     if (str <= 0) return 0;

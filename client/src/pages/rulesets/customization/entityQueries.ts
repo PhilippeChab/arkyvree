@@ -18,12 +18,12 @@ type CustomizedModifier = InferResponseType<
 
 export type ClassLevel = InferResponseType<(typeof rulesetApi)["class-levels"][":classLevelId"]["$get"], 200>;
 export type CustomizationEntity =
-  | { type: "feats"; entity: Feat }
-  | { type: "races"; entity: Race }
-  | { type: "items"; entity: Item }
-  | { type: "powers"; entity: Power }
-  | { type: "klass_levels"; entity: ClassLevel }
-  | { type: "modifiers"; entity: CustomizedModifier };
+  | { entity: Feat; type: "feats" }
+  | { entity: Race; type: "races" }
+  | { entity: Item; type: "items" }
+  | { entity: Power; type: "powers" }
+  | { entity: ClassLevel; type: "klass_levels" }
+  | { entity: CustomizedModifier; type: "modifiers" };
 export type Feat = InferResponseType<(typeof rulesetApi)["feats"][":featId"]["$get"], 200>;
 export type Item = InferResponseType<(typeof rulesetApi)["items"][":itemId"]["$get"], 200>;
 export type Power = InferResponseType<(typeof rulesetApi)["powers"][":powerId"]["$get"], 200>;

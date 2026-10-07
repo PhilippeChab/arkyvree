@@ -6,9 +6,9 @@
  */
 export function parseCliArgs(argv = process.argv.slice(2)): {
   bookFilter?: string;
-  typeFilter?: string;
-  nameFilter?: string;
   keyFilter?: string;
+  nameFilter?: string;
+  typeFilter?: string;
 } {
   const args = [...argv];
 

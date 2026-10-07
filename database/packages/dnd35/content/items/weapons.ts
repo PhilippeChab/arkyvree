@@ -6,15 +6,16 @@
 type DamageType = "Bludgeoning" | "Piercing" | "Slashing";
 
 interface WeaponDefinition {
-  proficiency: "Simple" | "Martial" | "Exotic";
-  family: string;
   baseDamage: string;
-  criticalRange: number;
   criticalMultiplier: number;
-  /** A ranged weapon (thrown or projectile, not used in melee), which attacks with Dexterity (WEAPON_RANGED). */
-  ranged?: true;
-  /** How Strength applies to its damage when not by its slot: a bow's "Rating", a crossbow's "None". */
-  strengthDamage?: "Rating" | "None";
+  criticalRange: number;
+  damageTypes: DamageType[];
+  /** A double weapon's other end's damage dice (WEAPON_DOUBLE_DAMAGE): in two hands, it fights as two weapons. */
+  doubleDamage?: string;
+  /** The race that treats it as a martial weapon (its weapon familiarity): a dwarf's waraxe and urgrosh, a gnome's hooked hammer. */
+  familiarity?: string;
+  family: string;
+  finessable?: boolean;
   /** A composite bow's Strength rating (WEAPON_MIGHTY): its damage's Strength cap, below which it takes −2 to attack. */
   mighty?: number;
   /** Its penalty on attack rolls in one hand (WEAPON_ONE_HANDED_PENALTY): a crossbow's, which takes two hands to load. */
@@ -24,16 +25,15 @@ interface WeaponDefinition {
    * can use it two-handed as a martial weapon.
    */
   oneHandTraining?: true;
-  /** The race that treats it as a martial weapon (its weapon familiarity): a dwarf's waraxe and urgrosh, a gnome's hooked hammer. */
-  familiarity?: string;
-  /** A double weapon's other end's damage dice (WEAPON_DOUBLE_DAMAGE): in two hands, it fights as two weapons. */
-  doubleDamage?: string;
-  damageTypes: DamageType[];
+  proficiency: "Simple" | "Martial" | "Exotic";
+  range?: number;
+  /** A ranged weapon (thrown or projectile, not used in melee), which attacks with Dexterity (WEAPON_RANGED). */
+  ranged?: true;
+  reach?: number;
   /** Its effort, as the weapon table gives it for a Medium wielder: Tiny or Small light, Medium one-handed, Large two-handed (bows). */
   size: string;
-  range?: number;
-  reach?: number;
-  finessable?: boolean;
+  /** How Strength applies to its damage when not by its slot: a bow's "Rating", a crossbow's "None". */
+  strengthDamage?: "Rating" | "None";
 }
 
 /**

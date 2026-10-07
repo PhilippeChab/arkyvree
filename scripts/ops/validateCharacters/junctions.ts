@@ -8,9 +8,9 @@ export async function checkJunctions() {
   let issues = 0;
   // Every (feat_id, aptitude_id) in level_feats should exist in feats_aptitudes
   const badFeatCombos = await query<{
+    aptName: string;
     charName: string;
     featName: string;
-    aptName: string;
     featRuleset: string;
   }>(
     sql`SELECT DISTINCT c.name as "charName", f.name as "featName",
@@ -38,9 +38,9 @@ export async function checkJunctions() {
 
   // Every (power_id, aptitude_id) in level_powers should exist in powers_aptitudes
   const badPowerCombos = await query<{
+    aptName: string;
     charName: string;
     powerName: string;
-    aptName: string;
     powerRuleset: string;
   }>(
     sql`SELECT DISTINCT c.name as "charName", p.name as "powerName",

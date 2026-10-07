@@ -22,18 +22,18 @@ import {
  * `create`: a method, whose looser check lets each repository's insert model stand for a copied row.
  */
 interface EntityRepository {
-  lock: (db: Db, where: { id: string }, mode?: "update" | "share") => Promise<boolean>;
-  exists: (db: Db, where: { id: string }) => Promise<boolean>;
-  findOne: (db: Db, where: { id: string } | { name: string; rulesetId: string }) => Promise<EntityWithId | undefined>;
-  findMany: (db: Db, where: { ids: string[] }) => Promise<EntityWithId[]>;
   create(db: Db, values: Record<string, unknown>): Promise<EntityWithId[]>;
   delete: (db: Db, where: { id: string }) => Promise<unknown>;
+  exists: (db: Db, where: { id: string }) => Promise<boolean>;
+  findMany: (db: Db, where: { ids: string[] }) => Promise<EntityWithId[]>;
+  findOne: (db: Db, where: { id: string } | { name: string; rulesetId: string }) => Promise<EntityWithId | undefined>;
+  lock: (db: Db, where: { id: string }, mode?: "update" | "share") => Promise<boolean>;
 }
 
 export interface EntityWithId {
+  [key: string]: unknown;
   id: string;
   rulesetId: string;
-  [key: string]: unknown;
 }
 
 export const ENTITY_REPOS: Record<RulesetEntityType, EntityRepository> = {

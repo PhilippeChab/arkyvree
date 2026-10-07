@@ -9,24 +9,24 @@ import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts"
 import { stripSeparators } from "@/shared/text.ts";
 
 type FeatEntry = {
-  entry: FeatReference["raw"][number];
   detected: FeatReference["detected"][string];
+  entry: FeatReference["raw"][number];
   mapped: FeatReference["mapping"][string];
 };
 
 /** A template feat's family, which the generated code makes a feat of per item (weapon, skill, school…). */
 export type TemplateFamily = {
-  type: TemplateType;
-  familyName: string;
   aptitudes: string[];
-  requirements: RequirementEntry[];
+  description: string;
+  familyName: string;
   featNameMap: Record<string, string>;
   modifiers: ModifierSeed[];
-  description: string;
   /** The content's list its feats are made over, as the generated code names it (`ALL_WEAPONS`, `SKILL_NAMES`…). */
   options: string;
   /** Its feats require proficiency with their weapon (`proficiencyRequirements`). */
   proficient: boolean;
+  requirements: RequirementEntry[];
+  type: TemplateType;
 };
 
 /** The kind of item a template family makes a feat for. */

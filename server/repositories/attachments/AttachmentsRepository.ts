@@ -27,7 +27,7 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
     return await db.insert(this.table).values(values).returning();
   }
 
-  async delete(db: Db, where: { id: string } | { recordType: string; recordIds: string[] }) {
+  async delete(db: Db, where: { id: string } | { recordIds: string[]; recordType: string }) {
     if ("id" in where) return await this.deleteOne(db, where.id);
     return await this.deleteRecords(db, where.recordType, where.recordIds);
   }
@@ -39,7 +39,7 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
     });
   }
 
-  async findOne(db: Db, where: { id: string } | { recordType: string; recordId: string; name: string }) {
+  async findOne(db: Db, where: { id: string } | { name: string; recordId: string; recordType: string }) {
     return await db.query.attachmentsInStorage.findFirst({
       where: this.branchWhere(
         ["id" in where && eq(this.table.id, where.id), "recordId" in where && eq(this.table.recordId, where.recordId)],
@@ -51,7 +51,7 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
     });
   }
 
-  async findOneWithBlob(db: Db, where: { recordType: string; recordId: string; name: string }) {
+  async findOneWithBlob(db: Db, where: { name: string; recordId: string; recordType: string }) {
     const rows = await db
       .select({ id: this.table.id, key: blobsInStorage.key })
       .from(this.table)

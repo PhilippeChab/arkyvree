@@ -3,17 +3,17 @@ import { useController, type UseFormReturn } from "react-hook-form";
 import { ConditionFields } from "./ConditionFields.tsx";
 
 interface ModifierFormProps {
-  form: UseFormReturn<ModifierFormData>;
-  rulesetId: string;
   /** Filters target-path completions to those allowed for this entity type. */
   entityType?: string;
+  form: UseFormReturn<ModifierFormData>;
   mode: "create" | "edit";
+  rulesetId: string;
 }
 
 export interface ModifierFormData {
+  operator: string;
   target: string;
   value: string;
-  operator: string;
 }
 
 export function ModifierForm({ form, rulesetId, entityType, mode }: ModifierFormProps) {

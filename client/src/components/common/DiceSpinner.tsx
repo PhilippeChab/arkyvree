@@ -4,7 +4,7 @@ import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { ANIMATIONS, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface DiceSpinnerProps {
-  size?: "small" | "medium" | "large";
+  children?: ReactNode;
   /**
    * Wrapper mode: when `children` is provided, DiceSpinner wraps them in a
    * `position: relative` span so callers (typically Buttons) don't shrink
@@ -14,7 +14,7 @@ interface DiceSpinnerProps {
    * Without children, DiceSpinner renders standalone (existing behavior).
    */
   loading?: boolean;
-  children?: ReactNode;
+  size?: "small" | "medium" | "large";
   /** Standalone medium / large only: the centered block's spacing (`py`, `minHeight`). */
   sx?: SxProps<Theme>;
 }

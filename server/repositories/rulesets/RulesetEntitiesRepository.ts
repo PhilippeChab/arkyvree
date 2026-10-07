@@ -35,7 +35,7 @@ class RulesetEntitiesRepository {
    * The rulesets' own entities of these types, by id and name, each with its type and ruleset: live rows of the
    * ruleset itself, not a campaign's, and not a copy-on-write copy (a copy keeps its source's name).
    */
-  async findNativeNames(db: Db, where: { rulesetIds: string[]; entityTypes: RulesetEntityType[] }) {
+  async findNativeNames(db: Db, where: { entityTypes: RulesetEntityType[]; rulesetIds: string[] }) {
     if (where.rulesetIds.length === 0) return [];
     const subqueries = where.entityTypes.map((entityType) => {
       const table = ENTITY_TABLES[entityType];
@@ -75,7 +75,7 @@ class RulesetEntitiesRepository {
    * a skill's ability, and, by the class, its skills and its levels' saves, granted feats and granted spells. What the
    * ruleset would keep dangling were those entities to leave it.
    */
-  async findReferences(db: Db, where: { rulesetId: string; entityIds: string[] }) {
+  async findReferences(db: Db, where: { entityIds: string[]; rulesetId: string }) {
     if (where.entityIds.length === 0) return [];
     const { rulesetId, entityIds } = where;
     const columns = (entityType: RulesetEntityType, column: AnyPgColumn) => {

@@ -6,7 +6,7 @@ import type { Modifier, Requirement } from "@/shared/relations.ts";
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-type DiagnosticColumn = { label: string; width: string; centered?: boolean };
+type DiagnosticColumn = { centered?: boolean; label: string; width: string };
 
 const MODIFIER_COLUMNS: DiagnosticColumn[] = [
   { label: "SOURCE TYPE", width: "20%" },
@@ -25,7 +25,7 @@ const REQUIREMENT_COLUMNS: DiagnosticColumn[] = [
 ];
 
 /** The diagnostics page's counts above a section's tables. */
-function DiagnosticCounts({ counts }: { counts: { label: string; color: string }[] }) {
+function DiagnosticCounts({ counts }: { counts: { color: string; label: string }[] }) {
   return (
     <View style={{ marginBottom: 10, flexDirection: "row", justifyContent: "space-between" }}>
       {counts.map(({ label, color }) => (
@@ -182,11 +182,11 @@ function DiagnosticTable({
   max = rows.length,
   noun,
 }: {
-  title: string;
   columns: DiagnosticColumn[];
-  rows: (string | null | undefined)[][];
   max?: number;
   noun?: string;
+  rows: (string | null | undefined)[][];
+  title: string;
 }) {
   if (rows.length === 0) return null;
   const cellStyle = (column: DiagnosticColumn) => ({

@@ -103,7 +103,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const bulkForm = useFormWith<BulkVariantsFormValues>({ variants: [] });
 
   const duplicateMutation = useMutation({
-    mutationFn: async ({ sourceId, data }: { sourceId: string; data: ItemFormInternal }) => {
+    mutationFn: async ({ sourceId, data }: { data: ItemFormInternal; sourceId: string }) => {
       return parseResponse(
         rpc.api.rulesets[":id"].items[":itemId"].duplicate.$post({
           param: { id: ruleset.id, itemId: sourceId },

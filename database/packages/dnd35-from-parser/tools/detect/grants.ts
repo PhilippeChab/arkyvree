@@ -8,9 +8,9 @@ import { bonus, setFlag } from "@/database/packages/dnd35/content/customization/
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
 
 const COMPANION_GRANT_PATTERNS: {
-  pattern: RegExp;
   aptitudeSlug: string;
   bondedKind: string;
+  pattern: RegExp;
 }[] = [
   { pattern: /^Summon Familiar \((.+)\)$/, aptitudeSlug: "familiarbond", bondedKind: "familiar" },
   { pattern: /^Animal Companion \((.+)\)$/, aptitudeSlug: "animalcompanionbond", bondedKind: "animalcompanion" },

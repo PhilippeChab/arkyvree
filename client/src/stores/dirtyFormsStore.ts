@@ -2,8 +2,8 @@ import { create } from "zustand";
 
 interface DirtyFormsState {
   count: number;
-  increment: () => void;
   decrement: () => void;
+  increment: () => void;
 }
 
 /**

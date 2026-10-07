@@ -6,14 +6,14 @@
 
 /** A row of the tree, with the rows it groups, in level order. */
 export interface RequirementNode<R extends RequirementRow> {
-  requirement: R;
   children: RequirementNode<R>[];
+  requirement: R;
 }
 
 /** What places a row in the tree: its level, and whether it groups the rows under it. */
 export interface RequirementRow {
-  level: string;
   chainingOperator: string | null;
+  level: string;
 }
 
 /** A number, compared as one (`"9"` before `"10"`). */
@@ -71,9 +71,9 @@ export default class RequirementTree<R extends RequirementRow> {
     return new RequirementTree(roots, detached);
   }
 
-  /** The top-level rows, in level order, each with the rows it groups. */
-  readonly roots: RequirementNode<R>[];
-
   /** The rows under a condition, in level order. */
   readonly detached: R[];
+
+  /** The top-level rows, in level order, each with the rows it groups. */
+  readonly roots: RequirementNode<R>[];
 }

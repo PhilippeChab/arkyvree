@@ -7,11 +7,11 @@ import { EMAIL_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 interface InviteContributorDialogProps {
-  open: boolean;
+  isLoading: boolean;
   onClose: () => void;
   /** Send the invite and call `onSent` once it succeeds; on failure the typed email stays. */
   onSubmit: (data: InviteContributorFormData, onSent: () => void) => void;
-  isLoading: boolean;
+  open: boolean;
   /** Roles offered; no role picker when omitted. */
   roles?: ContributorRole[];
 }

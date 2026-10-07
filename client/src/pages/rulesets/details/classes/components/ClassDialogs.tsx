@@ -12,18 +12,18 @@ import {
 import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
 
 interface ConfirmActionProps {
-  open: boolean;
+  isLoading: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  isLoading: boolean;
+  open: boolean;
 }
 
 interface CreateLevelDialogProps {
-  open: boolean;
-  onClose: () => void;
   form: UseFormReturn<CreateLevelFormData>;
-  onSubmit: (data: CreateLevelFormData) => void;
   isLoading: boolean;
+  onClose: () => void;
+  onSubmit: (data: CreateLevelFormData) => void;
+  open: boolean;
   rulesetId: string;
 }
 

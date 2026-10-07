@@ -8,18 +8,18 @@ import { useAnchorMenu, useIsMobile } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface EntityDetailLayoutProps {
+  /** Momentarily nowhere sensible to go back to. */
+  backDisabled?: boolean;
+  /** Where Back goes: a link */
+  backTo: string;
+  canDelete: boolean;
+  children: ReactNode;
   entityName?: string;
+  isLoading?: boolean;
+  onDelete?: () => void;
   rulesetName?: string;
   /** Replaces "<ruleset> Ruleset" under the title. */
   subtitle?: ReactNode;
-  /** Where Back goes: a link */
-  backTo: string;
-  /** Momentarily nowhere sensible to go back to. */
-  backDisabled?: boolean;
-  canDelete: boolean;
-  onDelete?: () => void;
-  isLoading?: boolean;
-  children: ReactNode;
 }
 
 type EntityPageErrorProps = ComponentProps<typeof PageError>;

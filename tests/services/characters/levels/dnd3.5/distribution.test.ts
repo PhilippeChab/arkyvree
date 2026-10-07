@@ -35,7 +35,7 @@ describe("computePerLevelAptitudeSlots", () => {
     const [first, second] = planned.perLevelPowerSlots[clericSpells];
     expect([first["1"], "1" in second]).toEqual([999, false]);
     // The first level the character's already: its 1st-level spells all known, the second planned
-    const baseline: Record<string, { id: string; allowed: number; spent: number }> = {
+    const baseline: Record<string, { allowed: number; id: string; spent: number }> = {
       clericspells: { id: clericSpells, allowed: 0, spent: 0, ...{ "1": { allowed: -1, spent: 0 } } },
     };
     const next = computePerLevelAptitudeSlots(rulesetData, [levels[1]], [[]], [], [clericSpells], 1, baseline);

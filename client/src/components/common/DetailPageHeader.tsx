@@ -6,19 +6,19 @@ import { ArrowBackIcon, MoreVertIcon } from "@/client/src/components/icons/index
 import { DURATION } from "@/client/src/theme/animations.ts";
 
 interface DetailPageHeaderProps {
-  /** Its text, or what renames it (a character's name, clicked) */
-  title: ReactNode;
-  /** Shown in the title's place while the page's record is renamed */
-  titleEditor?: ReactNode;
-  /** Inline control after the title, e.g. a star toggle. */
-  titleAdornment?: ReactNode;
   /** Where Back goes, a link; without it (a shared sheet's viewer has nowhere to go back to), its corner stays empty */
   backTo?: string;
-  /** Opens the page's action menu; the button is hidden when omitted. */
-  onMenuOpen?: (event: MouseEvent<HTMLElement>) => void;
+  children?: ReactNode;
   chips?: ReactNode;
   description: ReactNode;
-  children?: ReactNode;
+  /** Opens the page's action menu; the button is hidden when omitted. */
+  onMenuOpen?: (event: MouseEvent<HTMLElement>) => void;
+  /** Its text, or what renames it (a character's name, clicked) */
+  title: ReactNode;
+  /** Inline control after the title, e.g. a star toggle. */
+  titleAdornment?: ReactNode;
+  /** Shown in the title's place while the page's record is renamed */
+  titleEditor?: ReactNode;
 }
 
 interface SectionContentProps {
@@ -26,18 +26,18 @@ interface SectionContentProps {
 }
 
 interface SectionTabsProps<K extends string> {
-  tabs: SectionTab<K>[];
-  value: K;
+  "aria-label": string;
   onChange: (key: K) => void;
   /** Warm a tab's data before it is clicked. */
   onTabHover?: (key: K) => void;
-  "aria-label": string;
+  tabs: SectionTab<K>[];
+  value: K;
 }
 
 export interface SectionTab<K extends string> {
+  icon: ElementType;
   key: K;
   label: ReactNode;
-  icon: ElementType;
 }
 
 /** Centered title block of a ruleset, campaign or character page, with back and menu buttons. */

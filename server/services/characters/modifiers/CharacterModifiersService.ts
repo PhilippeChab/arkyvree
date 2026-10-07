@@ -16,7 +16,7 @@ class CharacterModifiersService {
   async createModifier(
     session: Session,
     characterId: string,
-    body: { target: string; value: string; operator: string },
+    body: { operator: string; target: string; value: string },
   ) {
     return withTransaction(async (tx) => {
       const character = await getEditableCharacter(tx, session, characterId);
@@ -98,7 +98,7 @@ class CharacterModifiersService {
     session: Session,
     characterId: string,
     modifierId: string,
-    body: { target: string; value: string; operator: string; updatedAt?: string },
+    body: { operator: string; target: string; updatedAt?: string; value: string },
   ) {
     return withTransaction(async (tx) => {
       const character = await getEditableCharacter(tx, session, characterId);

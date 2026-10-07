@@ -19,21 +19,21 @@ import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 interface PowerBody {
-  name: string;
-  description?: string | null;
   aptitudes?: { id: string; level?: number }[];
-  saveId?: string | null;
-  saveEffect?: string | null;
-  school?: string;
-  subschool?: string;
-  descriptors?: string[];
-  castingTime?: string;
-  rangeType?: string;
-  target?: string;
   areaOfEffect?: string;
-  duration?: string;
-  spellResistance?: string;
+  castingTime?: string;
   components?: string[];
+  description?: string | null;
+  descriptors?: string[];
+  duration?: string;
+  name: string;
+  rangeType?: string;
+  saveEffect?: string | null;
+  saveId?: string | null;
+  school?: string;
+  spellResistance?: string;
+  subschool?: string;
+  target?: string;
   updatedAt?: string;
 }
 
@@ -222,12 +222,12 @@ class PowersService {
   async getPowers(
     rulesetId: string,
     where: {
-      childOnly?: boolean;
       aptitudeId?: string;
+      childOnly?: boolean;
       level?: number;
-      search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {

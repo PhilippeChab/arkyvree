@@ -5,8 +5,8 @@ import { EquipmentTable } from "./EquipmentTable.tsx";
 import { SheetSection } from "./SheetSection.tsx";
 
 interface ReadOnlyEquipmentSectionProps {
-  equipment: EquipmentRow[];
   encumbrance?: EncumbranceData;
+  equipment: EquipmentRow[];
 }
 
 export function ReadOnlyEquipmentSection({ equipment, encumbrance }: ReadOnlyEquipmentSectionProps) {

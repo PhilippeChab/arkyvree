@@ -7,7 +7,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-export type PerLevelExpansion = { newTarget: string; levels: number[]; ordinal: string };
+export type PerLevelExpansion = { levels: number[]; newTarget: string; ordinal: string };
 
 /**
  * Build maps for aptitude target remapping after per-level expansion.
@@ -17,7 +17,7 @@ export type PerLevelExpansion = { newTarget: string; levels: number[]; ordinal: 
 function buildAptitudeExpansionMaps(
   preMerged: AptitudePick[] | undefined,
   expanded: AptitudePick[] | undefined,
-): { remap: Map<string, string>; perLevel: Map<string, PerLevelExpansion[]> } {
+): { perLevel: Map<string, PerLevelExpansion[]>; remap: Map<string, string> } {
   const remap = new Map<string, string>();
   const perLevel = new Map<string, PerLevelExpansion[]>();
   if (!preMerged || !expanded) return { remap, perLevel };

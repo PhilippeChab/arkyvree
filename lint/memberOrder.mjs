@@ -2,15 +2,20 @@
  * One order for every class and every file's declarations: by name (ignoring case), in each of their groups. A router's
  * routes sort by HTTP method and path. `oxlint --fix` puts a file in order.
  *
- * - A class's methods: its private and protected ones first, then its public ones, the sync ones before the async ones
- *   in each, by name. The constructor, statics and fields stay at the top, in their own order (a field's initializer
- *   may read an earlier one).
+ * - A class's members, in groups: its constructor, its static fields, its static methods, its readonly fields, its other
+ *   fields, then its methods, its private and protected ones before its public ones. Each group goes by name, its
+ *   methods sync before async; a field goes right below a field its initializer reads, which runs as the class is
+ *   built (`this.lines`), and `--fix` never swaps two fields whose initializers run code: it suggests it.
  * - A file's types, constants and functions, in each run of them: by name, within the sections `file-layout` gives
  *   them (its own types, then the ones it exports; the same for its constants; its helpers, then its exports), its
  *   functions sync before async. What a constant reads goes right above it: the file reads it as it loads. A function
  *   is hoisted: it goes by name, whatever it calls. `--fix` never swaps two constants whose values run code (a call,
  *   `new`, `await`): it suggests it, which `--fix-suggestions` applies once nothing depends on the order they run in. A
  *   comment set apart by a blank line ends a run: `--fix` would lose its place, and `comment-style` reports it.
+ * - A type's members (an interface's, a type literal's): its call and index signatures first, in their order, then its
+ *   properties and methods by name, an overload's signatures together. An enum's members go by name, each with its
+ *   value, when every one has its value written (an implicit one is its place). A list of names an export gives goes by
+ *   name, and an index's re-exports (`export { x } from "./x.ts"`, a run of them) by the module they're from.
  * - A router's routes group by HTTP method (GET, POST, PUT, PATCH, DELETE), then sort by path: a fixed segment
  *   before a parameter, which Hono needs anyway (it matches overlapping routes in the order they're registered).
  *   Its sub-routers (`.route()`) come first, in their own order, then its routes, which must not overlap theirs:
@@ -21,7 +26,7 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-import { declarationOf, rankStatements, runsAtLoad } from "./layout.mjs";
+import { declarationOf, rankStatements, runsAtLoad, runsCode } from "./layout.mjs";
 
 /** What a `.use()` after a route or a sub-router is told. */
 const LATE_MIDDLEWARE =
@@ -100,46 +105,74 @@ function checkChain(context, outermost) {
 }
 
 function checkClass(context, body) {
+  if (body.body.length < 2) return;
   const text = context.sourceCode.text;
-  const [bodyStart, bodyEnd] = rangeOf(body);
+  const [bodyStart] = rangeOf(body);
   // A comment ending the line of the `{`, or of a member, stays with it.
   const headEnd = bodyStart + 1 + trailingComment(text, bodyStart + 1);
-  const members = [];
+  const className = body.parent?.id?.name;
   const asyncNames = new Set(
     body.body.filter((node) => node.value?.async).map((node) => node.key?.name ?? node.key?.value),
   );
+  const members = [];
   for (const [index, node] of body.body.entries()) {
-    const [start, memberEnd] = rangeOf(node);
-    const end = memberEnd + trailingComment(text, memberEnd);
+    const [codeStart, codeEnd] = rangeOf(node);
     const previousEnd = index === 0 ? headEnd : members[index - 1].end;
-    // What sits between the previous member and this one: its comments.
-    const comments = text.slice(previousEnd, start).trim();
-    members.push({ node, index, rank: memberRank(node, asyncNames), start, end, comments });
+    // Its comments, those between the previous member and its code, go with it; the space before them stays in place
+    const between = text.slice(previousEnd, codeStart);
+    const start = previousEnd + (between.length - between.trimStart().length);
+    const end = codeEnd + trailingComment(text, codeEnd);
+    const field = isField(node);
+    members.push({
+      node,
+      index,
+      name: memberName(node),
+      field,
+      rank: memberRank(node, asyncNames),
+      // What a field's initializer runs as the class is built: code (`new`, a call), and the class's fields it reads
+      runs: node.type === "StaticBlock" || (field && runsCode(node.value)),
+      reads: field ? fieldReads(node.value, node.static ? className : undefined) : [],
+      start,
+      end,
+    });
   }
-  const sorted = [...members].sort(compareMembers);
-  const indent = " ".repeat(context.sourceCode.getLocFromIndex?.(members[0]?.start ?? 0)?.column ?? 2);
-  const tail = text.slice(members.at(-1)?.end ?? headEnd, bodyEnd - 1).trim();
+  for (const member of members) {
+    member.uses = members.filter(
+      (other) =>
+        other !== member &&
+        other.field &&
+        other.node.static === member.node.static &&
+        member.reads.includes(other.name),
+    );
+  }
+  const { order, cycle } = sortRun(members);
+  if (cycle.length > 0) {
+    context.report({
+      node: cycle[0].node,
+      message: `Fields whose initializers read each other (${cycle.map((m) => m.name).join(", ")}): untangle them.`,
+    });
+    return;
+  }
+  // Two fields whose initializers run code keep their order under `--fix`: it never changes the order code runs in
+  const running = order.filter((member) => member.runs);
+  const safe = running.every((member, i) => i === 0 || member.index > running[i - 1].index);
+  // Each keeps the spacing of the place it takes
+  const gaps = members.map((member, i) => text.slice(i === 0 ? headEnd : members[i - 1].end, member.start));
   reportOrder(
     context,
     members,
-    sorted,
+    order,
     {
-      range: [bodyStart, bodyEnd],
-      text: (order) =>
-        text.slice(bodyStart, headEnd) +
-        order
-          .map(
-            (m, i) =>
-              (i === 0 ? "\n" : "\n\n") +
-              indent +
-              (m.comments ? m.comments + "\n" + indent : "") +
-              text.slice(m.start, m.end),
-          )
-          .join("") +
-        (tail ? "\n\n" + indent + tail : "") +
-        "\n}",
+      range: [headEnd, members.at(-1).end],
+      text: (order) => order.map((member, i) => gaps[i] + text.slice(member.start, member.end)).join(""),
     },
-    "Members go in order: the private and protected methods, then the public ones, each sync before async, then by name.",
+    "Members go in groups: the constructor, the static fields, the static methods, the readonly fields, the other " +
+      "fields, then the private and protected methods, then the public ones. Each group by name, a field below one " +
+      "its initializer reads, methods sync before async." +
+      (safe
+        ? ""
+        : " Two fields' initializers run code, which `--fix` never reorders: move them, or `--fix-suggestions` does."),
+    safe,
   );
 }
 
@@ -184,6 +217,103 @@ function checkDeclarations(context, program) {
   checkRun(context, run, runItemOf);
 }
 
+/** An enum's members by name, when each has its value written: an implicit value is the member's place. */
+function checkEnum(context, enumNode) {
+  const members = enumNode.members ?? enumNode.body?.members ?? [];
+  if (members.length < 2 || members.some((member) => !member.initializer)) return;
+  checkList(
+    context,
+    members,
+    (member) => [member.id?.name ?? member.id?.value ?? ""],
+    "An enum's members go by name, each with its value.",
+    context.sourceCode.text.indexOf("{", rangeOf(enumNode.id)[1]) + 1,
+  );
+}
+
+/** The names an export lists (`export { b, a } from "./x.ts"`), by name. */
+function checkExportSpecifiers(context, statement) {
+  checkList(
+    context,
+    statement.specifiers,
+    (specifier) => [specifier.exported?.name ?? specifier.exported?.value ?? ""],
+    "The names an export lists go by name.",
+    context.sourceCode.text.indexOf("{", rangeOf(statement)[0]) + 1,
+  );
+}
+
+/**
+ * Members of one list in order (`rankOf` gives each its place): each with its comments, in the place of another, which
+ * keeps its spacing and its separator (a type member's `;`, which the last one of a one-line type has none of).
+ */
+function checkList(context, nodes, rankOf, message, headEnd) {
+  if (nodes.length < 2) return;
+  const text = context.sourceCode.text;
+  // Where the list starts: after its `{`, or the statement before it, which its caller gives
+  const listStart = headEnd;
+  const items = [];
+  for (const [index, node] of nodes.entries()) {
+    const [codeStart, codeEnd] = rangeOf(node);
+    const between = text.slice(index === 0 ? listStart : items[index - 1].end, codeStart);
+    // Its comments, those right above its code (after a separator and the last blank line), go with it
+    const blank = [...between.matchAll(/\n[ \t]*\n/g)].at(-1);
+    const attached = (blank ? between.slice(blank.index + blank[0].length) : between)
+      .replace(/^\s*[;,]?/, "")
+      .trimStart();
+    const start = codeStart - attached.length;
+    const trailing = trailingComment(text, codeEnd);
+    const separator = /[;,]$/.test(text.slice(codeStart, codeEnd)) ? text[codeEnd - 1] : "";
+    items.push({ node, index, rank: rankOf(node), start, codeEnd, end: codeEnd + trailing, separator, trailing });
+  }
+  const sorted = [...items].sort((a, b) => compareRanks(a.rank, b.rank) || a.index - b.index);
+  const gaps = items.map((item, i) => (i === 0 ? "" : text.slice(items[i - 1].end, item.start)));
+  // A member's text without its separator, which its place gives it back
+  const body = (item) =>
+    text.slice(item.start, item.codeEnd - item.separator.length) + text.slice(item.codeEnd, item.end);
+  reportOrder(
+    context,
+    items,
+    sorted,
+    {
+      range: [items[0].start, items.at(-1).end],
+      text: (order) =>
+        order
+          .map((item, i) => {
+            const own = body(item);
+            const comment = item.end - item.codeEnd;
+            // Its separator goes before the comment ending its line
+            return gaps[i] + own.slice(0, own.length - comment) + items[i].separator + own.slice(own.length - comment);
+          })
+          .join(""),
+    },
+    message,
+  );
+}
+
+/** A file's runs of re-exports (`export { x } from "./x.ts"`), each by the module it's from, a type's after a value's. */
+function checkReExports(context, program) {
+  let run = [];
+  let before = 0;
+  const flush = () => {
+    checkList(
+      context,
+      run,
+      (statement) => [statement.source.value, statement.exportKind === "type" ? 1 : 0],
+      "An index's re-exports go by the module they're from.",
+      before,
+    );
+    run = [];
+  };
+  for (const statement of program.body) {
+    if (/^Export(Named|All)Declaration$/.test(statement.type) && statement.source) {
+      run.push(statement);
+      continue;
+    }
+    flush();
+    before = rangeOf(statement)[1];
+  }
+  flush();
+}
+
 /** A run of a file's types, constants or functions, in order; `runItemOf` finds the run item of what one reads. */
 function checkRun(context, items, runItemOf) {
   if (items.length < 2) return;
@@ -224,12 +354,20 @@ function checkRun(context, items, runItemOf) {
   );
 }
 
-function compareMembers(a, b) {
-  if (a.rank[0] !== b.rank[0]) return a.rank[0] - b.rank[0];
-  // The constructor, statics and fields keep their order.
-  if (a.rank[0] < -1) return a.index - b.index;
-  // A getter and its setter, or an overload's signatures and body, stay in their order.
-  return compareRanks(a.rank, b.rank) || a.index - b.index;
+/** A type's members: its call and index signatures first, in their order, then its properties and methods by name. */
+function checkTypeMembers(context, members, headEnd) {
+  checkList(
+    context,
+    members,
+    (member) =>
+      /^TS(CallSignature|ConstructSignature)Declaration$/.test(member.type)
+        ? [0]
+        : member.type === "TSIndexSignature"
+          ? [1]
+          : [2, memberName(member)],
+    "A type's members go by name, after its call and index signatures; an overload's signatures stay together.",
+    headEnd,
+  );
 }
 
 /** Two names' order: alphabetical, ignoring case, then by case. */
@@ -254,11 +392,49 @@ function compareRunMembers(a, b) {
   return (a.mount ? 0 : compareRoutes(a.route, b.route)) || a.index - b.index;
 }
 
+/**
+ * Where a class member goes: [rank, async, name]. The constructor (-4), statics (-3) and fields (-2) keep their order;
+ * private and protected methods (-1), then public ones (0), sort sync before async, then by name. `asyncNames`: the
+ * methods with an async body, whose overload signatures go with it.
+ *
+ * A class member's names its field initializer reads off the class: `this.lines`, and `Telemetry.provider` when static.
+ */
+function fieldReads(value, className) {
+  const reads = [];
+  const visit = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const child of node) visit(child);
+      return;
+    }
+    // A function's body runs when it's called, not as the class is built
+    if (/^(ArrowFunctionExpression|FunctionExpression|ClassExpression)$/.test(node.type)) return;
+    if (
+      node.type === "MemberExpression" &&
+      !node.computed &&
+      (node.object.type === "ThisExpression" ||
+        (className && node.object.type === "Identifier" && node.object.name === className))
+    )
+      reads.push(node.property.name);
+    for (const [key, child] of Object.entries(node))
+      if (key !== "parent" && child && typeof child === "object") visit(child);
+  };
+  visit(value);
+  return reads;
+}
+
 /** A top-level function statement's declaration, exported or not, or null: a run of them sorts. */
 function functionOf(statement) {
   const declaration = declarationOf(statement);
   const isFunction = declaration?.type === "FunctionDeclaration" || declaration?.type === "TSDeclareFunction";
   return isFunction && declaration.id ? declaration : null;
+}
+
+/** Whether a class member is a field (a property, a `declare` one or an `accessor` one), not a method. */
+function isField(member) {
+  return /^(PropertyDefinition|TSAbstractPropertyDefinition|AccessorProperty|TSAbstractAccessorProperty)$/.test(
+    member.type,
+  );
 }
 
 function isMount(call) {
@@ -278,20 +454,27 @@ function isUse(call) {
   return call.callee.type === "MemberExpression" && call.callee.property.name === "use";
 }
 
+/** A class member's name, as written: its key's (a private one without its `#`); none for a computed one. */
+function memberName(member) {
+  const name = member.computed ? undefined : (member.key?.name ?? member.key?.value);
+  return typeof name === "string" ? name : "";
+}
+
 /**
- * Where a class member goes: [rank, async, name]. The constructor (-4), statics (-3) and fields (-2) keep their order;
- * private and protected methods (-1), then public ones (0), sort sync before async, then by name. `asyncNames`: the
- * methods with an async body, whose overload signatures go with it.
+ * A class member's place: its group (the constructor, static fields, static methods, readonly fields, other fields,
+ * private and protected methods, public methods), then within it, a method's async-ness and its name, a field's name.
  */
 function memberRank(member, asyncNames) {
-  if (member.kind === "constructor") return [-4, 0, ""];
-  if (member.static) return [-3, 0, ""];
-  if (member.type !== "MethodDefinition" && member.type !== "TSAbstractMethodDefinition") return [-2, 0, ""];
-  const name = member.key?.name ?? member.key?.value;
-  if (typeof name !== "string") return [-2, 0, ""];
+  const name = memberName(member);
+  if (member.kind === "constructor") return [-7];
+  if (member.type === "TSIndexSignature") return [-8];
+  if (member.type === "StaticBlock") return [-6, ""];
   const isPublic =
     (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
-  return [isPublic ? 0 : -1, asyncNames.has(name) ? 1 : 0, name];
+  const async = asyncNames.has(name) ? 1 : 0;
+  if (isField(member)) return [member.static ? -6 : member.readonly ? -4 : -3, name];
+  if (member.static) return [-5, isPublic ? 1 : 0, async, name];
+  return [isPublic ? 0 : -1, async, name];
 }
 
 function rangeOf(node) {
@@ -408,9 +591,22 @@ export default {
           ClassBody(body) {
             checkClass(context, body);
           },
+          ExportNamedDeclaration(statement) {
+            if (statement.specifiers?.length > 1) checkExportSpecifiers(context, statement);
+          },
+          TSEnumDeclaration(enumNode) {
+            checkEnum(context, enumNode);
+          },
+          TSInterfaceBody(body) {
+            checkTypeMembers(context, body.body, rangeOf(body)[0] + 1);
+          },
+          TSTypeLiteral(literal) {
+            checkTypeMembers(context, literal.members, rangeOf(literal)[0] + 1);
+          },
           Program(program) {
             // A declaration file follows the module it types.
             checkDeclarations(context, program);
+            checkReExports(context, program);
           },
           CallExpression(call) {
             if (!/\/server\/routers\//.test(context.filename)) return;

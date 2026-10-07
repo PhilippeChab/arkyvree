@@ -3,11 +3,11 @@ import { MenuItem, TextField } from "@mui/material";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 
 interface SpellLevelFilterProps {
-  /** The level, or "" for all of them. */
-  value: number | "";
-  onChange: (level: number | "") => void;
   /** Adds an "All" choice. */
   allowAll?: boolean;
+  onChange: (level: number | "") => void;
+  /** The level, or "" for all of them. */
+  value: number | "";
 }
 
 const SPELL_LEVELS = Array.from({ length: MAX_SPELL_LEVEL + 1 }, (_, level) => level);

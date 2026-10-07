@@ -28,19 +28,19 @@ export type EquipmentRow = CharacterDetail["equipment"][number];
 
 /** The add and edit inventory dialogs' form: the item (add only) and where and how it's carried. */
 export interface InventoryFormData {
-  selectedItem: RulesetItem | null;
-  quantity: number;
   location: ItemLocation | "none";
+  quantity: number;
+  remainingCharges: number;
+  selectedItem: RulesetItem | null;
+  totalCharges: number;
   /** As shown, from 1 (see `shownWeaponSet`). */
   weaponSet: number;
-  totalCharges: number;
-  remainingCharges: number;
 }
 
 /** The item fields placement depends on. */
 export interface ItemColumns {
-  type: string | null;
   slot: string;
+  type: string | null;
 }
 
 export type PlacementProfile = ReturnType<typeof placementProfile>;

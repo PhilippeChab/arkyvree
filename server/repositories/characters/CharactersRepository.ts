@@ -41,7 +41,7 @@ class CharactersRepository extends include(
 
   private async existsRacePickFromExtension(
     db: Db,
-    where: { hostRulesetId: string; extensionRulesetId: string; shadowRaceIds: string[] },
+    where: { extensionRulesetId: string; hostRulesetId: string; shadowRaceIds: string[] },
   ) {
     const raceCondition =
       where.shadowRaceIds.length > 0
@@ -145,7 +145,7 @@ class CharactersRepository extends include(
     db: Db,
     where:
       | { raceId: string; rulesetId: string }
-      | { hostRulesetId: string; extensionRulesetId: string; shadowRaceIds: string[] },
+      | { extensionRulesetId: string; hostRulesetId: string; shadowRaceIds: string[] },
   ): Promise<boolean> {
     if ("raceId" in where) return await this.existsRacePick(db, where);
     return await this.existsRacePickFromExtension(db, where);
@@ -177,8 +177,8 @@ class CharactersRepository extends include(
       | { id: string }
       | { id: string; userId: string }
       | { shareToken: string }
-      | { parentCharacterId: string; kind: "familiar" | "animalcompanion" | "mount" }
-      | { id: string; editorId: string },
+      | { kind: "familiar" | "animalcompanion" | "mount"; parentCharacterId: string }
+      | { editorId: string; id: string },
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {
     if ("editorId" in where) return await this.findEditable(db, { id: where.id, userId: where.editorId }, visibility);
@@ -204,14 +204,14 @@ class CharactersRepository extends include(
   async findPage(
     db: Db,
     where: {
-      userId: string;
-      visibility?: Visibility;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
       // "owner" → only characters this user owns; "contributor" → only
       // characters they contribute to. Default (undefined) returns both.
       accessRole?: "owner" | "contributor";
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+      search?: string;
+      userId: string;
+      visibility?: Visibility;
     },
     pagination: { limit: number; page: number },
   ) {
@@ -285,7 +285,7 @@ class CharactersRepository extends include(
   /** The user's characters on the ruleset that no campaign links: what a campaign can link. */
   async findUnlinkedPage(
     db: Db,
-    where: { userId: string; rulesetId: string; search?: string },
+    where: { rulesetId: string; search?: string; userId: string },
     pagination: { limit: number; page: number },
   ) {
     return await this.withPagination(pagination, async ({ limit, offset }) => {
@@ -357,7 +357,7 @@ class CharactersRepository extends include(
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof charactersInCharacter>>,
-    where: { id: string; expectedUpdatedAt?: string },
+    where: { expectedUpdatedAt?: string; id: string },
   ) {
     return await db
       .update(this.table)

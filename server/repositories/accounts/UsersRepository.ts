@@ -36,11 +36,11 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
   async create(
     db: Db,
     values: {
-      username?: string;
       emailAddress: string;
-      password?: string;
-      expiresAt?: string;
       emailVerifiedAt?: string;
+      expiresAt?: string;
+      password?: string;
+      username?: string;
     },
   ) {
     const passwordDigest = values.password ? await hashPassword(values.password) : undefined;

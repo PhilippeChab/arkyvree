@@ -2,7 +2,7 @@ import type { TargetPathsInterface } from "@/server/rulesets/engine/types.ts";
 import type { PathCompletion, TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
 import { capitalize } from "@/shared/text.ts";
 
-type SegmentInfo = { examplePath: TargetPath | null; isGroup: boolean; groupDesc: string | undefined };
+type SegmentInfo = { examplePath: TargetPath | null; groupDesc: string | undefined; isGroup: boolean };
 
 /**
  * The segments that come after `baseDot` and start with `segmentPrefix`, each with its first path, whether it's a group

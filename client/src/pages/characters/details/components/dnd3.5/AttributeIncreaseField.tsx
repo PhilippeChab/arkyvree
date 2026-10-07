@@ -11,8 +11,8 @@ interface AttributeIncreaseFieldProps {
   attributes: LeveledUpAttribute;
   baseRules: BaseRules;
   name: string;
-  value: string | null;
   onChange: (abilityId: string) => void;
+  value: string | null;
 }
 
 /** The ability a level's attribute increase goes to, each with its score and modifier. */

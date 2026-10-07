@@ -15,7 +15,7 @@ class PropertyTypesService {
    * properties use it, the most used first.
    */
   private countPropertyTypes(rulesetData: RulesetData, entityType?: PropertyEntityType, query = "") {
-    const counts = new Map<string, { type: string; entityType: string; count: number }>();
+    const counts = new Map<string, { count: number; entityType: string; type: string }>();
     const groups = entityType
       ? [rulesetData.propertiesByEntityType.get(entityType) ?? []]
       : [...rulesetData.propertiesByEntityType.values()];

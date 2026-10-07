@@ -1,8 +1,8 @@
 import type { PathValueType, TargetPath } from "@/shared/customization/target.ts";
 
 interface PathChoice {
-  value: string;
   label: string;
+  value: string;
 }
 
 /** What a complete target path takes: its value type, operators and values. */

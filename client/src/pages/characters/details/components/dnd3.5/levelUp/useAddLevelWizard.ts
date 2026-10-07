@@ -19,10 +19,10 @@ import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 type FinalizeJson = InferRequestType<(typeof rpc.api.characters.levels)[":characterId"]["finalize"]["$post"]>["json"];
 
 interface UseAddLevelWizardParams {
-  open: boolean;
-  onClose: () => void;
-  characterId: string;
   baseRules: BaseRules;
+  characterId: string;
+  onClose: () => void;
+  open: boolean;
 }
 
 export const ADD_STEP_CONTENT = ["class-plan", "hp", "attributes", "skills", "feats", "powers", "review"] as const;

@@ -4,7 +4,7 @@ import { abilityQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
 export default function AbilityDetailsPage() {
-  const { id: rulesetId = "", abilityId = "" } = useParams<{ id: string; abilityId: string }>();
+  const { id: rulesetId = "", abilityId = "" } = useParams<{ abilityId: string; id: string }>();
 
   return (
     <RulesetEntityDetail

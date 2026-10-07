@@ -41,7 +41,7 @@ import { indent, listField, quote } from "./literals.ts";
  * A builder an item's field is written with: what it gives an item of a name (`of`, none when it gives it nothing),
  * and whether it's called with the name (`simple("Club")`) or is the value itself (`SHIELD_PROF`).
  */
-type ItemBuilder<V> = { name: string; of: (item: string) => V[] | undefined; called: boolean };
+type ItemBuilder<V> = { called: boolean; name: string; of: (item: string) => V[] | undefined };
 
 /** A content type a generated file declares its values with. */
 export type DeclaredType = keyof typeof DECLARED_TYPES;
@@ -114,15 +114,15 @@ const ITEM_REQUIREMENTS: ItemBuilder<RequirementEntry>[] = [
 export class CodeFile {
   constructor(private readonly importTable: ImportTable = REQUIREMENT_IMPORTS) {}
 
-  readonly lines: string[] = [];
-
-  readonly uses = new Set<string>();
-
   /** The content types the file declares its values with. */
   private readonly declared = new Set<DeclaredType>();
 
   /** The names the file imports from the generated files beside it, by module. */
   private readonly gathered = new Map<string, string[]>();
+
+  readonly lines: string[] = [];
+
+  readonly uses = new Set<string>();
 
   /** A check written with its builder: `builder(target, value)`. */
   private builderCall(

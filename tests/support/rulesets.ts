@@ -58,8 +58,8 @@ export async function createSeededForkWithAptitude() {
 export async function createSeededTestRuleset(
   userId: string,
   options: {
-    name?: string;
     description?: string;
+    name?: string;
     private?: boolean;
     status?: "Draft" | "Published" | "Archived";
   } = {},
@@ -136,9 +136,9 @@ export async function createTestUserAndRuleset(aptitudeNames: string[] = []) {
 
 /** A change to `ruleset`'s entities, as a service makes in its scope, outside one. */
 export async function editRuleset(ruleset: {
-  id: string;
-  extensionRulesetIds: string[];
   ancestorRulesetIds: string[];
+  extensionRulesetIds: string[];
+  id: string;
 }) {
   return new RulesetEdit(ruleset, await RulesetCache.getCowData(ruleset));
 }

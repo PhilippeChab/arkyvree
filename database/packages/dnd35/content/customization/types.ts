@@ -2,7 +2,7 @@
 export type Modifier = ModifierEffect & { requirements?: never };
 
 /** A modifier's effect: its target, operator and value. */
-export type ModifierEffect = { target: string; operator: string; value: string; valueType: string };
+export type ModifierEffect = { operator: string; target: string; value: string; valueType: string };
 
 /** A feat's modifier, which applies only while its requirements are met. */
 export type ModifierSeed = ModifierEffect & { requirements?: RequirementEntry[] };
@@ -11,7 +11,7 @@ export type ModifierSeed = ModifierEffect & { requirements?: RequirementEntry[] 
 export type Property = { type: string; value: string };
 
 /** A check: `target` compared to `value` with `operator`. */
-export type RequirementCondition = { target: string; operator: string; value: string; valueType: string };
+export type RequirementCondition = { operator: string; target: string; value: string; valueType: string };
 
 /** A requirement: a check, or a group of them. */
 export type RequirementEntry = RequirementCondition | RequirementGroup;

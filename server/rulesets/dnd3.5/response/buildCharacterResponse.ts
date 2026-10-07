@@ -71,7 +71,7 @@ function identityWithPrivateNotes(detailedCharacter: Dnd35DetailedCharacter) {
 }
 
 export function buildBondedMap(
-  bondedByKind: Partial<Record<string, { record: InferSelectModel<typeof charactersInCharacter>; detailed: unknown }>>,
+  bondedByKind: Partial<Record<string, { detailed: unknown; record: InferSelectModel<typeof charactersInCharacter> }>>,
   transform?: (entry: ReturnType<typeof buildBondedResponse>) => ReturnType<typeof buildBondedResponse>,
 ): Record<string, ReturnType<typeof buildBondedResponse>> {
   const out: Record<string, ReturnType<typeof buildBondedResponse>> = {};

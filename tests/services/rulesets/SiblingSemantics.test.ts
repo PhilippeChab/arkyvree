@@ -70,7 +70,7 @@ function typeOf(data: RulesetData, id: string): RulesetEntityType | undefined {
  * with the winner's before it was copied: the winners compared, and the mismatches, by winner and kind.
  */
 async function compareCopies(
-  ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
+  ruleset: { ancestorRulesetIds: string[]; extensionRulesetIds: string[]; id: string },
   winnerIds: string[],
 ) {
   const before = await RulesetCache.getData(ruleset);

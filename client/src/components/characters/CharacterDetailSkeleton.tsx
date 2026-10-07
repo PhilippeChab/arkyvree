@@ -12,8 +12,8 @@ import {
 } from "@/client/src/theme/animations.ts";
 
 interface SectionProps {
-  index: number;
   children: ReactNode;
+  index: number;
 }
 
 function Section({ index, children }: SectionProps) {

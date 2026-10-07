@@ -6,11 +6,11 @@ import { DURATION, EASING, fadeInUpSx, PREFERS_REDUCED_MOTION, transitionOf } fr
 import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 
 interface StyledCardProps extends Omit<CardProps, "children"> {
+  animationIndex?: number;
+  animationOffset?: number;
   children: ReactNode;
   isArchived?: boolean;
   isPrivate?: boolean;
-  animationIndex?: number;
-  animationOffset?: number;
   onClick?: () => void;
 }
 

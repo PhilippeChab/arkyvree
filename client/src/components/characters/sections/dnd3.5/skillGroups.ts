@@ -1,6 +1,6 @@
 export type SkillRow<S> =
-  | { type: "skill"; skill: S; group: string | null }
-  | { type: "group"; prefix: string; count: number };
+  | { group: string | null; skill: S; type: "skill" }
+  | { count: number; prefix: string; type: "group" };
 
 /** "Knowledge (arcana)" → "Knowledge": the part before the parenthesis groups related skills. */
 function getSkillGroup(name: string): string | null {

@@ -3,12 +3,12 @@ import { MenuItem, TextField } from "@mui/material";
 import { MODIFIER_OPERATOR_LABELS, REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 
 interface OperatorSelectProps {
+  error?: boolean;
   kind: "modifier" | "requirement";
-  value: string;
   onChange: (value: string) => void;
   /** The operators the target path allows. */
   operators: string[];
-  error?: boolean;
+  value: string;
 }
 
 const OPERATOR_LABELS = { modifier: MODIFIER_OPERATOR_LABELS, requirement: REQUIREMENT_OPERATOR_LABELS };

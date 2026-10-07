@@ -5,8 +5,8 @@ import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 export type Paginated<T> = {
   items: T[];
-  page: number;
   nextPage: number | undefined;
+  page: number;
 };
 
 /** A page of a list held in memory, shaped like the repositories' pages. */

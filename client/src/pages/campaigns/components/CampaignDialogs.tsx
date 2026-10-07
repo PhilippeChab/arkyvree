@@ -32,35 +32,35 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 import type { PlayerFormData, PlayerSlot } from "./players.ts";
 
 interface AddPlayerDialogProps {
-  open: boolean;
-  onClose: () => void;
   form: UseFormReturn<PlayerFormData>;
-  onSubmit: (data: PlayerFormData) => void;
   isLoading: boolean;
+  onClose: () => void;
+  onSubmit: (data: PlayerFormData) => void;
+  open: boolean;
 }
 
 interface CreateCampaignDialogProps {
-  open: boolean;
-  onClose: () => void;
   form: UseFormReturn<CreateCampaignFormData>;
-  onSubmit: (data: CreateCampaignFormData) => void;
   isLoading: boolean;
+  onClose: () => void;
+  onSubmit: (data: CreateCampaignFormData) => void;
+  open: boolean;
 }
 
 interface EditCampaignDialogProps {
-  open: boolean;
-  onClose: () => void;
   form: UseFormReturn<EditCampaignFormData>;
-  onSubmit: (data: EditCampaignFormData) => void;
   isLoading: boolean;
+  onClose: () => void;
+  onSubmit: (data: EditCampaignFormData) => void;
+  open: boolean;
 }
 
 interface EditPlayerDialogProps {
-  open: boolean;
-  onClose: () => void;
   form: UseFormReturn<PlayerFormData>;
-  onSubmit: (data: PlayerFormData) => void;
   isLoading: boolean;
+  onClose: () => void;
+  onSubmit: (data: PlayerFormData) => void;
+  open: boolean;
   /** The slot being edited, from `getPlayerSlot`. */
   slot: PlayerSlot | null;
 }
@@ -71,11 +71,11 @@ interface PlayerFieldProps {
 }
 
 interface RemovePlayerDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
   isLoading: boolean;
   isSelfRemoval?: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  open: boolean;
   /** The slot being removed, from `getPlayerSlot`. */
   slot: PlayerSlot | null;
 }

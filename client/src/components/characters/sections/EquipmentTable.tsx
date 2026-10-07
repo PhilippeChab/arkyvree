@@ -19,12 +19,12 @@ import { capitalize } from "@/shared/text.ts";
 import { type EncumbranceData, type EquipmentRow, formatSlotDisplay } from "./equipment.ts";
 
 interface EquipmentTableProps<T extends EquipmentTableRow> {
-  rows: T[];
   encumbrance?: EncumbranceData;
-  /** Links each item to its page in this ruleset. */
-  rulesetId?: string;
   /** The row's actions, when the viewer can change the inventory. */
   renderActions?: (row: T) => ReactNode;
+  rows: T[];
+  /** Links each item to its page in this ruleset. */
+  rulesetId?: string;
 }
 
 type EquipmentTableRow = Omit<EquipmentRow, "type" | "updatedAt">;

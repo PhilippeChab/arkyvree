@@ -19,17 +19,17 @@ import type DetailedCharacter from "./character/DetailedCharacter.ts";
 
 /** A projected power row with 3.5 spell-level and save-name fields. */
 type Dnd35ProjectedPower = Power & {
-  klassLevelId: string;
-  characterLevelId: string;
   aptitudeId: string;
+  characterLevelId: string;
+  klassLevelId: string;
   powerLevel: number | null;
   saveName: string | null;
 };
 
 /** A projected skill row with a 3.5 rank allocation. */
 type Dnd35ProjectedSkill = Skill & {
-  klassLevelId: string;
   characterLevelId: string;
+  klassLevelId: string;
   rank: number;
 };
 
@@ -46,6 +46,13 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
     existingLevelCount: number,
     rulesetData: RulesetData,
   ): Promise<number[]>;
+  /** Enriches a skill list with class-skill flags and current rank — 3.5 skill ranks. */
+  getCharacterEnrichedSkills<T extends { id: string; name: string }>(
+    allSkills: T[],
+    classSkillIds: Set<string>,
+  ): (T & { currentRank: number; isClassSkill: boolean; isCurrentClassSkill: boolean })[];
+  /** Keyed-by-name 3.5 skill data (rank, innate/class-skill flags). */
+  getCharacterSkills(): Record<string, unknown>;
   /** Wizard specialist-school exclusions + client-supplied prohibited schools.
    *  Must be called inside a cowContext so stored pre-COW feat ids on the
    *  repo reads inside come back post-COW. */
@@ -59,22 +66,15 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
   ): Promise<string[]>;
   /** 3.5 skill-points budget — a 3.5-native concept (skill points per level
    *  × INT mod, doubled at first level), not universal. */
-  getSkillBudget(): { total: number; available: number; spent: number; perlevel: number };
+  getSkillBudget(): { available: number; perlevel: number; spent: number; total: number };
   /** Every level's points per level before the minimum, in the budget's order, and the bonus each adds. */
-  getSkillPointBases(): { pointsPerLevel: number[]; bonusPerLevel: number };
-  /** Keyed-by-name 3.5 skill data (rank, innate/class-skill flags). */
-  getCharacterSkills(): Record<string, unknown>;
-  /** Enriches a skill list with class-skill flags and current rank — 3.5 skill ranks. */
-  getCharacterEnrichedSkills<T extends { id: string; name: string }>(
-    allSkills: T[],
-    classSkillIds: Set<string>,
-  ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[];
+  getSkillPointBases(): { bonusPerLevel: number; pointsPerLevel: number[] };
 }
 
 /** 3.5 projected character data — extends the generic shape with 3.5 skill/power rows. */
 export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
-  skills?: Dnd35ProjectedSkill[];
   powers?: Dnd35ProjectedPower[];
+  skills?: Dnd35ProjectedSkill[];
 }
 
 /** The 3.5 rules' module: its characters, level-up projector and kinds of character, by their own types. */

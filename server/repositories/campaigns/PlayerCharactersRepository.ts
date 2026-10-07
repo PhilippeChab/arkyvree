@@ -34,7 +34,7 @@ class PlayerCharactersRepository extends include(
    * Whether the character is linked in a live campaign: the campaign not archived, the link not removed, its player not
    * archived. `CharactersPolicy.canHardDelete` reads it, so a character an archived campaign orphaned can be deleted.
    */
-  async exists(db: Db, where: { characterId: string; campaignArchived: false }): Promise<boolean> {
+  async exists(db: Db, where: { campaignArchived: false; characterId: string }): Promise<boolean> {
     const rows = await db
       .select({ id: this.table.characterId })
       .from(this.table)
@@ -55,9 +55,9 @@ class PlayerCharactersRepository extends include(
   async findOne(
     db: Db,
     where:
-      | { playerId: string; characterId: string }
+      | { characterId: string; playerId: string }
       | { characterId: string }
-      | { characterId: string; campaignId: string },
+      | { campaignId: string; characterId: string },
   ) {
     return await db.query.playerCharactersInCampaign.findFirst({
       where: this.branchWhere(
@@ -83,9 +83,9 @@ class PlayerCharactersRepository extends include(
   async findPage(
     db: Db,
     where: ({ playerId: string } | { characterId: string } | { playerIds: string[] }) & {
-      search?: string;
       orderBy?: "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
       visibilityPlayerId?: string;
     },
     pagination: { limit: number; page: number },
@@ -133,7 +133,7 @@ class PlayerCharactersRepository extends include(
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof playerCharactersInCampaign>>,
-    where: { playerId: string; characterId: string },
+    where: { characterId: string; playerId: string },
   ) {
     return await db
       .update(this.table)

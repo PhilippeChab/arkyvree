@@ -19,27 +19,27 @@ type Direction = "asc" | "desc";
 type RulesetListParams = InferRequestType<typeof rpc.api.rulesets.$get>["query"];
 
 export interface ActivityListFilters {
-  search: string;
   orderBy: NonNullable<ActivityListParams["orderBy"]>;
   orderDir: Direction;
+  search: string;
 }
 export type CampaignDetail = InferResponseType<(typeof rpc.api.campaigns)[":id"]["$get"], 200>;
 export interface CampaignListFilters {
-  view: "active" | "archived";
-  search: string;
   orderBy: NonNullable<CampaignListParams["orderBy"]>;
   orderDir: Direction;
+  search: string;
+  view: "active" | "archived";
 }
 export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id"]["$get"], 200>;
 export interface CharacterListFilters {
-  view: "active" | "shared" | "archived";
-  search: string;
   orderBy: NonNullable<CharacterListParams["orderBy"]>;
   orderDir: Direction;
+  search: string;
+  view: "active" | "shared" | "archived";
 }
 export interface NotificationListFilters {
-  search: string;
   orderDir: Direction;
+  search: string;
   unreadOnly: boolean;
 }
 export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
@@ -47,10 +47,10 @@ export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["
 export type RulesetItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
 
 export interface RulesetListFilters {
-  scope: RulesetListParams["scope"];
-  search: string;
   orderBy: NonNullable<RulesetListParams["orderBy"]>;
   orderDir: Direction;
+  scope: RulesetListParams["scope"];
+  search: string;
 }
 
 export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];

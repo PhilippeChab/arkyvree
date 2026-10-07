@@ -29,7 +29,7 @@ function FeatsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter
             {} as Record<string, typeof allFeats>,
           );
 
-          const featEntries: { key: string; label: string; description: string }[] = [];
+          const featEntries: { description: string; key: string; label: string }[] = [];
           for (const [groupIndex, featGroup] of Object.values(groupedFeats).entries()) {
             const feat = featGroup[0];
             const count = featGroup.length;

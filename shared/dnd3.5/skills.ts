@@ -52,7 +52,7 @@ export function distributeSkillPoints(
   points: number,
   perLevelClassSkillIds: string[][],
   perLevelSkillPoints: number[],
-): { ranks: number; perLevel: number[] } {
+): { perLevel: number[]; ranks: number } {
   const perLevel = perLevelSkillPoints.map(() => 0);
   let ranks = 0;
   let remaining = points;

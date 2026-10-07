@@ -2,12 +2,12 @@ import { readEnv } from "@/server/environment.ts";
 import { InternalError } from "@/server/errors/index.ts";
 
 export interface StorageBackend {
-  presignPut(key: string, opts: { contentType: string; expiresIn?: number }): string;
-  publicUrl(key: string): string;
   deleteObject(key: string): Promise<void>;
   objectExists(key: string): Promise<boolean>;
   /** Returns object metadata or `null` if the object does not exist. */
-  objectStats(key: string): Promise<{ size: number; etag: string } | null>;
+  objectStats(key: string): Promise<{ etag: string; size: number } | null>;
+  presignPut(key: string, opts: { contentType: string; expiresIn?: number }): string;
+  publicUrl(key: string): string;
 }
 
 /**
@@ -55,7 +55,7 @@ class S3StorageBackend implements StorageBackend {
     return await Bun.s3.exists(key);
   }
 
-  async objectStats(key: string): Promise<{ size: number; etag: string } | null> {
+  async objectStats(key: string): Promise<{ etag: string; size: number } | null> {
     try {
       const stats = await Bun.s3.stat(key);
       return { size: stats.size, etag: stats.etag };

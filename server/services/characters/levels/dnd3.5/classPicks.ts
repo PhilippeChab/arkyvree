@@ -47,7 +47,7 @@ function pendingProjection(
   rulesetData: RulesetData,
   pendingLevelKlassLevelIds?: string[],
   pendingFeatPicks?: FeatPick[],
-  pendingSkillAllocations?: { skillId: string; rank: number }[],
+  pendingSkillAllocations?: { rank: number; skillId: string }[],
 ): Dnd35ProjectedCharacterData | undefined {
   const skillAnchorLevel = pendingLevels[0] ?? buildProjectedCharacterLevel(characterId, "");
   const autoGrantedRecords = pendingLevelKlassLevelIds?.length
@@ -111,7 +111,7 @@ export async function getAvailableKlasses(
   pendingLevelKlassLevelIds?: string[],
   pendingLevelAbilityIds?: (string | undefined)[],
   pendingFeatPicks?: FeatPick[],
-  pendingSkillAllocations?: { skillId: string; rank: number }[],
+  pendingSkillAllocations?: { rank: number; skillId: string }[],
 ) {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 

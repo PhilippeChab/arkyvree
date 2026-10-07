@@ -7,31 +7,31 @@ import { useAnchorMenu } from "@/client/src/hooks/index.ts";
 import { ListToolbar } from "./ListToolbar.tsx";
 
 interface SearchBarProps<TFilter extends string = string, TSort extends string = string> {
-  searchValue: string;
-  onSearchChange: (value: string) => void;
-  searchPlaceholder?: string;
-
+  actions?: ReactNode;
   filterOptions?: FilterOption<TFilter>[];
+  filters?: ReactNode;
+
   filterValue?: TFilter;
   onFilterChange?: (value: TFilter | undefined) => void;
+  onSearchChange: (value: string) => void;
 
-  sortOptions?: SortOption<TSort>[];
-  sortField?: TSort;
-  sortDirection?: "asc" | "desc";
   onSortChange?: (field: TSort, direction: "asc" | "desc") => void;
+  searchPlaceholder?: string;
+  searchValue: string;
+  sortDirection?: "asc" | "desc";
 
-  filters?: ReactNode;
-  actions?: ReactNode;
+  sortField?: TSort;
+  sortOptions?: SortOption<TSort>[];
 }
 
 export interface FilterOption<T extends string = string> {
-  value: T | undefined;
   label: string;
+  value: T | undefined;
 }
 
 export interface SortOption<T extends string = string> {
-  field: T;
   direction: "asc" | "desc";
+  field: T;
   label: string;
 }
 

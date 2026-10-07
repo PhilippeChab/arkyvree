@@ -52,7 +52,7 @@ export function getPlannedClassSkills(rulesetData: RulesetData, klassIds: string
  */
 export function getPlannedKlassLevels(
   rulesetData: RulesetData,
-  levels: { klassId: string; level: number; abilityId: string | null }[],
+  levels: { abilityId: string | null; klassId: string; level: number }[],
   rulesetIds?: Set<string>,
 ) {
   return levels.map(({ klassId, level, abilityId }, i) => {

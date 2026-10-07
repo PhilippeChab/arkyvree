@@ -22,21 +22,21 @@ import {
 interface CharacterSheetBodyProps {
   character: CharacterData;
   characterId: string;
-  readOnly?: boolean;
-  identityReadOnly?: boolean;
-  /** The portrait can't be changed; defaults to the identity's read-only state. */
-  portraitReadOnly?: boolean;
-  partial?: boolean;
-  onEditLevel?: (editingLevel: EditingLevel) => void;
-  onAddLevel?: () => void;
-  onRemoveLevel?: () => void;
-  onViewBondedSheet?: (bondedId: string) => void;
-  equipmentMode: "editable" | "readonly";
-  rulesetId?: string;
   /** The owner's view only: the character's diagnostics, shown under the sheet. */
   diagnostics?: Pick<CharacterDetail, "validation" | "requirements" | "modifiers">;
+  equipmentMode: "editable" | "readonly";
+  identityReadOnly?: boolean;
+  onAddLevel?: () => void;
+  onEditLevel?: (editingLevel: EditingLevel) => void;
+  onRemoveLevel?: () => void;
+  onViewBondedSheet?: (bondedId: string) => void;
+  partial?: boolean;
+  /** The portrait can't be changed; defaults to the identity's read-only state. */
+  portraitReadOnly?: boolean;
   /** Pre-resolved portrait URL for unauthenticated views. */
   portraitUrl?: string | null;
+  readOnly?: boolean;
+  rulesetId?: string;
 }
 
 export function CharacterSheetBody({
@@ -99,7 +99,7 @@ export function CharacterSheetBody({
             renderFeatExtra={(() => {
               const bondedMap = "bonded" in character ? character.bonded : null;
               if (!bondedMap) return undefined;
-              const matches: { suffix: string; bonded: NonNullable<(typeof bondedMap)[string]> }[] = [];
+              const matches: { bonded: NonNullable<(typeof bondedMap)[string]>; suffix: string }[] = [];
               for (const [kind, bonded] of Object.entries(bondedMap)) {
                 if (!bonded) continue;
                 const bondedKind = oneOf(kind, BONDED_KIND_SLUGS);

@@ -22,11 +22,11 @@ import type { BaseRules, LevelUpFormData } from "./levelUpTypes.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
 interface UseLevelWizardParams {
-  open: boolean;
-  onClose: () => void;
-  characterId: string;
   baseRules: BaseRules;
+  characterId: string;
   editingLevelId: string;
+  onClose: () => void;
+  open: boolean;
 }
 
 export type LevelWizard = ReturnType<typeof useLevelWizard>;

@@ -16,19 +16,19 @@ import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 import { DiceSpinner } from "./DiceSpinner.tsx";
 
 interface AttachmentFieldProps {
-  recordType: string;
-  recordId: string | undefined;
-  name: string;
   label?: string;
-  variant?: "avatar" | "portrait";
-  /** Pixel size of the displayed image. Defaults: 128 (avatar), 220 (portrait). */
-  size?: number;
+  name: string;
   /** Hide upload/delete controls — useful when viewing other users' content. */
   readOnly?: boolean;
+  recordId: string | undefined;
+  recordType: string;
   /** Show a white ring + drop shadow around the image — for hero/profile placements. */
   ring?: boolean;
+  /** Pixel size of the displayed image. Defaults: 128 (avatar), 220 (portrait). */
+  size?: number;
   /** Pre-resolved URL for unauthenticated views (e.g. shared character page). Skips the GET and forces readOnly. */
   url?: string | null;
+  variant?: "avatar" | "portrait";
 }
 
 const ACCEPT = ALLOWED_IMAGE_TYPES.join(",");

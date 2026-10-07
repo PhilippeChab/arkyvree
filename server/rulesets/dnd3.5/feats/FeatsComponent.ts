@@ -8,9 +8,9 @@ type FeatsData = {
 };
 
 export type FeatEntry = {
+  count: number;
   name: string;
   possessed: boolean;
-  count: number;
 };
 
 /** A feat's entry, not a family's group: a group's values are its feats. */

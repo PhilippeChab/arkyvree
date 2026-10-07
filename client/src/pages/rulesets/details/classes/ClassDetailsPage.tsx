@@ -97,8 +97,8 @@ export default function ClassDetailsPage() {
     classId = "",
     section,
   } = useParams<{
-    id: string;
     classId: string;
+    id: string;
     section?: string;
   }>();
   const backUrl = entityPageState(location.state).from ?? `/rulesets/${rulesetId}/classes`;

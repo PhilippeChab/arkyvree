@@ -90,13 +90,13 @@ export default class IdentityPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  readonly name = "identity";
-
-  readonly label = "Identity";
+  readonly component = { key: "identity", getter: "getIdentity" } as const;
 
   readonly description = "Physiology, level, XP, and background";
 
-  readonly component = { key: "identity", getter: "getIdentity" } as const;
+  readonly label = "Identity";
+
+  readonly name = "identity";
 
   readonly pathDescriptions = {
     "identity.physiology": "Character name, description, age, gender, height, weight",

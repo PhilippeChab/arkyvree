@@ -15,10 +15,10 @@ import { rpc } from "@/client/src/services/rpc.ts";
  * and the planned levels before it, not saved yet (their class levels, ability increases and feat picks).
  */
 export interface PickerLevel extends StepLevel {
-  selectedFeatPicks: string | undefined;
-  pendingKlassLevelIds?: string;
   pendingAbilityIds?: string;
   pendingFeatPicks?: string;
+  pendingKlassLevelIds?: string;
+  selectedFeatPicks: string | undefined;
 }
 
 /**
@@ -26,9 +26,9 @@ export interface PickerLevel extends StepLevel {
  * and the saved level it edits.
  */
 export interface StepLevel {
+  characterLevelId?: string;
   classId: string | undefined;
   level: number | undefined;
-  characterLevelId?: string;
 }
 
 /** The step's level as the endpoints' query, once its class and level are known. */

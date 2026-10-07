@@ -19,8 +19,8 @@ class CharacterLevelPowersRepository extends LevelPicksRepository<typeof levelPo
     where:
       | { powerId: string; rulesetId: string }
       | { aptitudeId: string; rulesetId: string }
-      | { hostRulesetId: string; extensionRulesetId: string; shadowPowerIds: string[] }
-      | { hostRulesetId: string; extensionRulesetId: string; shadowAptitudeIds: string[] },
+      | { extensionRulesetId: string; hostRulesetId: string; shadowPowerIds: string[] }
+      | { extensionRulesetId: string; hostRulesetId: string; shadowAptitudeIds: string[] },
   ): Promise<boolean> {
     const { table } = this;
     if ("powerId" in where)

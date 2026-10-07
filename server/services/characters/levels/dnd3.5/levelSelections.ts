@@ -18,10 +18,10 @@ import { getSavedKlassLevel } from "./classes.ts";
 import { buildPowerLevelLookup } from "./distribution.ts";
 import { resolveAptitudeModifiers } from "./featPicks.ts";
 
-type AptitudeModifier = { aptitudeId: string; value: number; operator: string };
+type AptitudeModifier = { aptitudeId: string; operator: string; value: number };
 
 /** A level's picked feats by pool, each with the pools its modifiers add slots to. */
-function featSelections(levelFeats: { featId: string; aptitudeId: string }[], rulesetData: RulesetData) {
+function featSelections(levelFeats: { aptitudeId: string; featId: string }[], rulesetData: RulesetData) {
   const aptitudeModByFeat =
     levelFeats.length > 0
       ? resolveAptitudeModifiers(
@@ -32,7 +32,7 @@ function featSelections(levelFeats: { featId: string; aptitudeId: string }[], ru
 
   const feats: Record<
     string,
-    Array<{ id: string; name: string; description?: string; aptitudeModifiers: AptitudeModifier[] }>
+    Array<{ aptitudeModifiers: AptitudeModifier[]; description?: string; id: string; name: string }>
   > = {};
   for (const f of levelFeats) {
     if (!feats[f.aptitudeId]) feats[f.aptitudeId] = [];
@@ -48,14 +48,14 @@ function featSelections(levelFeats: { featId: string; aptitudeId: string }[], ru
 }
 
 /** A level's picked powers by pool, each with its spell level in the pool when it has one. */
-function powerSelections(levelPowers: { powerId: string; aptitudeId: string }[], rulesetData: RulesetData) {
+function powerSelections(levelPowers: { aptitudeId: string; powerId: string }[], rulesetData: RulesetData) {
   // All IDs are post-COW on both sides.
   const powerLevelMap = buildPowerLevelLookup(
     rulesetData,
     levelPowers.map((p) => p.powerId),
   );
 
-  const powers: Record<string, Array<{ id: string; name: string; description?: string; powerLevel?: number }>> = {};
+  const powers: Record<string, Array<{ description?: string; id: string; name: string; powerLevel?: number }>> = {};
   for (const p of levelPowers) {
     if (!powers[p.aptitudeId]) powers[p.aptitudeId] = [];
     const level = powerLevelMap.get(`${p.powerId}:${p.aptitudeId}`);

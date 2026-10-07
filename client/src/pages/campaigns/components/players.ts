@@ -16,9 +16,9 @@ export type PlayerFormData = InferRequestType<PlayersApi["$post"]>["json"];
  * slot always has its invite; an assigned one can still have one out.
  */
 export type PlayerSlot =
-  | { state: "assigned"; name: string; pendingInvite?: PendingInvite }
-  | { state: "pending"; name: string; pendingInvite: PendingInvite }
-  | { state: "unassigned"; name: string; pendingInvite?: undefined };
+  | { name: string; pendingInvite?: PendingInvite; state: "assigned" }
+  | { name: string; pendingInvite: PendingInvite; state: "pending" }
+  | { name: string; pendingInvite?: undefined; state: "unassigned" };
 
 export type PlayerState = PlayerSlot["state"];
 
@@ -49,7 +49,7 @@ export function getPlayerSlot(player: CampaignPlayer): PlayerSlot {
 export function playerDisplay(
   player: CampaignPlayer,
   slot = getPlayerSlot(player),
-): { name: string; email: string | null | undefined } {
+): { email: string | null | undefined; name: string } {
   switch (slot.state) {
     case "assigned":
       return {

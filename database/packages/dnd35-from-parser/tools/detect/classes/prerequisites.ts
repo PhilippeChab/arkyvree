@@ -443,9 +443,9 @@ function validRequirements(reqs: RequirementEntry[], errors: string[]): Requirem
 }
 
 export function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]["parsed"]): {
-  requirements: RequirementEntry[];
-  featNameMap: Record<string, string>;
   errors: string[];
+  featNameMap: Record<string, string>;
+  requirements: RequirementEntry[];
   unresolvedPrereqs: string[];
 } {
   const reqs: RequirementEntry[] = [];

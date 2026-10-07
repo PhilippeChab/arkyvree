@@ -9,19 +9,19 @@ import * as cheerio from "cheerio";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 
 /** A domain version of the domain index: its page's slug ("celerity-cd") and its label ("Celerity (CD)"). */
-export type DomainIndexEntry = { slug: string; label: string };
+export type DomainIndexEntry = { label: string; slug: string };
 
 /** A domain version's page: its book (the rulebook's slug, "complete-divine--56") and page, its granted power, its spells. */
 export type DomainPage = {
-  label: string;
   bookSlug?: string;
-  page?: number;
   description: string;
+  label: string;
+  page?: number;
   spells: DomainPageSpell[];
 };
 
 /** A spell a domain's page lists: its page (`<book>/<spell>`), its name and its edition ("Core (3.5)"). */
-export type DomainPageSpell = { path: string; name: string; edition: string };
+export type DomainPageSpell = { edition: string; name: string; path: string };
 
 /** The book's code a domain version's label ends with ("Celerity (CD)" → "CD"), if any. */
 export function parseDomainBookCode(label: string) {

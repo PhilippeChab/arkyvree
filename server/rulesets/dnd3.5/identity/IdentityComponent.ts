@@ -3,26 +3,26 @@ import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesCompo
 import { type Character, type Language, type Race } from "@/shared/relations.ts";
 
 type IdentityData = {
-  physiology: {
-    name: string;
-    description: string;
-    age?: number;
-    gender: string;
-    height: string;
-    weight: string;
-    race: Race;
-    languages: Language[];
-  };
-  beliefs: {
-    deity: string;
-    alignment: string;
-  };
   background: {
     notes: string;
+  };
+  beliefs: {
+    alignment: string;
+    deity: string;
   };
   meta: {
     level: number;
     xp: number;
+  };
+  physiology: {
+    age?: number;
+    description: string;
+    gender: string;
+    height: string;
+    languages: Language[];
+    name: string;
+    race: Race;
+    weight: string;
   };
 };
 

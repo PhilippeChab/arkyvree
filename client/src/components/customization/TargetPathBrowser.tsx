@@ -25,14 +25,14 @@ import { targetCompletionsQuery } from "./customizationQueries.ts";
 import { type PathInfo, toPathInfo } from "./pathValues.ts";
 
 interface TargetPathBrowserProps {
-  rulesetId: string;
-  kind: TargetPathKind;
-  entityType?: string;
-  segments: string[];
-  isComplete: boolean;
   disabled?: boolean;
+  entityType?: string;
+  isComplete: boolean;
+  kind: TargetPathKind;
   /** The new path, and what it takes when it's a leaf picked from the list. */
   onChange: (value: string, picked?: PathInfo) => void;
+  rulesetId: string;
+  segments: string[];
 }
 
 /** A leaf's path and what it takes, which its completion carries; none for a group. */

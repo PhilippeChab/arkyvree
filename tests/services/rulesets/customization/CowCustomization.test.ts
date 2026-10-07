@@ -29,11 +29,11 @@ import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 type Kind = {
-  rowsOf: (ownerType: string, ownerId: string) => Promise<Row[]>;
-  list: (rulesetId: string, ownerType: string, ownerId: string) => Promise<Row[]>;
   create: (session: Session, rulesetId: string, ownerType: string, ownerId: string) => Promise<Written>;
-  update: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
+  list: (rulesetId: string, ownerType: string, ownerId: string) => Promise<Row[]>;
   remove: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
+  rowsOf: (ownerType: string, ownerId: string) => Promise<Row[]>;
+  update: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
 };
 
 type Row = { id: string };

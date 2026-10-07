@@ -90,7 +90,7 @@ describe("member order", () => {
     expect(fs.readFileSync(service, "utf8")).toBe(
       [
         "class FeatsService {",
-        // Fields keep their order, first: an initializer may read an earlier field.
+        // Fields first, by name, but below a field their initializer reads.
         "  readonly zz = 1;",
         "",
         "  readonly aa = this.zz + 1;",
@@ -219,6 +219,153 @@ describe("member order", () => {
     await runOxlint(["-c", config, "--fix", "--fix-suggestions", running]);
     expect(fs.readFileSync(running, "utf8")).toBe("const a = make();\nconst b = make();\n");
     fs.rmSync(dir, { recursive: true });
+  });
+
+  test("puts a class's members in groups with oxlint --fix: constructor, statics, readonly fields, other fields, methods", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
+    const config = path.join(dir, ".oxlintrc.json");
+    fs.writeFileSync(
+      config,
+      JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/member-order": "error" } }),
+    );
+    const store = path.join(dir, "Store.ts");
+    fs.writeFileSync(
+      store,
+      [
+        "class Store {",
+        "  async load() {}",
+        "  count = 0;",
+        "  label?: string;",
+        "  readonly b = 2;",
+        "  /** The first. */",
+        "  readonly a = 1;",
+        "  static zeta() {}",
+        "  static async beta() {}",
+        "  private static alpha() {}",
+        "  static VERSION = 1;",
+        "  constructor() {}",
+        "}",
+        "",
+      ].join("\n"),
+    );
+    await runOxlint(["-c", config, "--fix", dir]);
+    expect(fs.readFileSync(store, "utf8")).toBe(
+      [
+        "class Store {",
+        "  constructor() {}",
+        "  static VERSION = 1;",
+        // Static methods as methods are: private before public, sync before async, then by name
+        "  private static alpha() {}",
+        "  static zeta() {}",
+        "  static async beta() {}",
+        "  /** The first. */",
+        "  readonly a = 1;",
+        "  readonly b = 2;",
+        "  count = 0;",
+        "  label?: string;",
+        "  async load() {}",
+        "}",
+        "",
+      ].join("\n"),
+    );
+  });
+
+  test("puts a type's members, an enum's and an index's re-exports in order with oxlint --fix, comments and all", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
+    const config = path.join(dir, ".oxlintrc.json");
+    fs.writeFileSync(
+      config,
+      JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/member-order": "error" } }),
+    );
+    const index = path.join(dir, "index.ts");
+    fs.writeFileSync(
+      index,
+      [
+        "/** The index: a `{` in a comment is no list's start. */",
+        "",
+        "type A = { b: string; a: number };",
+        "interface B {",
+        "  /** The zed, `{{ }}`. */",
+        "  z: string; // about z",
+        "  y(): void;",
+        "  y(n: number): void;",
+        "  (x: number): string;",
+        "  [key: string]: unknown;",
+        "  a: string;",
+        "}",
+        "enum E {",
+        '  B = "b",',
+        "  /** The a. */",
+        '  A = "a",',
+        "}",
+        "enum Implicit {",
+        "  B,",
+        "  A,",
+        "}",
+        'export type { T } from "./t.ts";',
+        'export { d, c } from "./c.ts";',
+        'export { b } from "./b.ts";',
+        "",
+      ].join("\n"),
+    );
+    // A list inside one that moves (an export's names, a nested type's members) settles on the next pass: oxlint
+    // applies one of two overlapping fixes at a time
+    await runOxlint(["-c", config, "--fix", dir]);
+    await runOxlint(["-c", config, "--fix", dir]);
+    expect(fs.readFileSync(index, "utf8")).toBe(
+      [
+        "/** The index: a `{` in a comment is no list's start. */",
+        "",
+        // Each place keeps its separator: the last member of a one-line type has none
+        "type A = { a: number; b: string };",
+        // Call and index signatures first, in their order, then by name, an overload's signatures together
+        "interface B {",
+        "  (x: number): string;",
+        "  [key: string]: unknown;",
+        "  a: string;",
+        "  y(): void;",
+        "  y(n: number): void;",
+        "  /** The zed, `{{ }}`. */",
+        "  z: string; // about z",
+        "}",
+        "enum E {",
+        "  /** The a. */",
+        '  A = "a",',
+        '  B = "b",',
+        "}",
+        // An implicit value is the member's place
+        "enum Implicit {",
+        "  B,",
+        "  A,",
+        "}",
+        // By module, a type's after a value's; an export's names by name
+        'export { b } from "./b.ts";',
+        'export { c, d } from "./c.ts";',
+        'export type { T } from "./t.ts";',
+        "",
+      ].join("\n"),
+    );
+  });
+
+  test("suggests, never fixes, a new order for two fields whose initializers run code", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
+    const config = path.join(dir, ".oxlintrc.json");
+    fs.writeFileSync(
+      config,
+      JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/member-order": "error" } }),
+    );
+    const cache = path.join(dir, "Cache.ts");
+    const source = ["class Cache {", "  readonly zz = new Map();", "", "  readonly aa = new Map();", "}", ""].join(
+      "\n",
+    );
+    fs.writeFileSync(cache, source);
+    const { stdout } = await runOxlint(["-c", config, "--fix", dir]);
+    expect(fs.readFileSync(cache, "utf8")).toBe(source);
+    expect(stdout).toContain("Two fields' initializers run code");
+    await runOxlint(["-c", config, "--fix", "--fix-suggestions", dir]);
+    expect(fs.readFileSync(cache, "utf8")).toBe(
+      ["class Cache {", "  readonly aa = new Map();", "", "  readonly zz = new Map();", "}", ""].join("\n"),
+    );
   });
 
   test("orders a file's functions and a class's methods sync first, a callee above its caller, with oxlint --fix", async () => {

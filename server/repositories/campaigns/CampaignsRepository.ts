@@ -81,11 +81,11 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
   async findPage(
     db: Db,
     where: {
-      userId: string;
-      visibility?: Visibility;
-      search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
+      userId: string;
+      visibility?: Visibility;
     },
     pagination: { limit: number; page: number },
   ) {

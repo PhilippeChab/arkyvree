@@ -16,21 +16,21 @@ import { useTargetPath } from "./useTargetPath.ts";
 
 /** A form's field, as `useController` binds it: its value, its change and its error. */
 interface BoundField {
-  field: { value: string | undefined; onChange: (value: string) => void };
+  field: { onChange: (value: string) => void; value: string | undefined };
   fieldState: { error?: FieldError };
 }
 
 type ConditionField = "target" | "operator" | "value";
 
 interface ConditionFieldsProps {
-  kind: "modifier" | "requirement";
-  rulesetId: string;
   /** Filters target-path completions to those allowed for this entity type. Not applied to the template path picker. */
   entityType?: string;
-  /** "create" autofills value/operator from the path's defaults; "edit" preserves the loaded values. */
-  mode: "create" | "edit";
   /** Its form's target, operator and value, each bound to the form (`useController`). */
   fields: Record<ConditionField, BoundField>;
+  kind: "modifier" | "requirement";
+  /** "create" autofills value/operator from the path's defaults; "edit" preserves the loaded values. */
+  mode: "create" | "edit";
+  rulesetId: string;
 }
 
 /**

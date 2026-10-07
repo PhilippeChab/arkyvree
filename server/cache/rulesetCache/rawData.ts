@@ -61,28 +61,28 @@ type RawEntities = Pick<
 
 export interface RulesetRawData {
   abilities: RulesetAbility[];
-  saves: RulesetSave[];
-  skills: Skill[];
-  feats: FeatWithAptitudes[];
-  powers: PowerWithAptitudes[];
   aptitudes: Aptitude[];
-  klasses: Klass[];
-  races: Race[];
-  languages: Language[];
+  feats: FeatWithAptitudes[];
   items: Item[];
-  mechanics: Mechanic[];
-  klassLevels: KlassLevel[];
-  klassSkills: KlassSkill[];
+  klasses: Klass[];
   klassLevelFeats: KlassLevelFeat[];
   klassLevelPowers: KlassLevelPower[];
+  klassLevels: KlassLevel[];
   klassLevelSaves: KlassLevelSave[];
+  klassSkills: KlassSkill[];
+  languages: Language[];
   leveledAptitudeIds: Set<string>;
-  /** Every property row owned by this ruleset — all entityTypes. Consumers filter. */
-  properties: Property[];
+  mechanics: Mechanic[];
   /** Every modifier whose source is an entity in this ruleset — all sourceTypes. */
   modifiers: Modifier[];
+  powers: PowerWithAptitudes[];
+  /** Every property row owned by this ruleset — all entityTypes. Consumers filter. */
+  properties: Property[];
+  races: Race[];
   /** Every requirement row in this ruleset, including those attached to modifiers. */
   requirements: Requirement[];
+  saves: RulesetSave[];
+  skills: Skill[];
 }
 
 /**

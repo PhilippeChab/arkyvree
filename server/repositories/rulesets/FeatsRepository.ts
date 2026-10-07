@@ -52,10 +52,10 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
   async findGroupPage(
     db: Db,
     where: {
-      rulesetId: string;
       ancestorRulesetIds?: string[];
       childOnly?: boolean;
       ids?: string[];
+      rulesetId: string;
       search?: string;
     },
     pagination: { limit: number; page: number },
@@ -143,7 +143,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
   /** A picker's page of these feats (a list's, as the ruleset composes it), a family's variants as one row. */
   async findOptionGroupPage(
     db: Db,
-    where: { ids: string[]; excludeFeatIds?: string[]; search?: string },
+    where: { excludeFeatIds?: string[]; ids: string[]; search?: string },
     pagination: { limit: number; page: number },
   ) {
     const { ids, excludeFeatIds, search } = where;
@@ -200,7 +200,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
   /** A picker's page of these feats (a list's, as the ruleset composes it), by name: a family's, when one is given. */
   async findOptionPage(
     db: Db,
-    where: { ids: string[]; excludeFeatIds?: string[]; family?: string; search?: string },
+    where: { excludeFeatIds?: string[]; family?: string; ids: string[]; search?: string },
     pagination: { limit: number; page: number },
   ) {
     const { ids, excludeFeatIds, family, search } = where;
@@ -250,7 +250,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
 
   async findPage(
     db: Db,
-    where: RulesetEntityFilters<{ ids?: string[]; family?: string }>,
+    where: RulesetEntityFilters<{ family?: string; ids?: string[] }>,
     pagination: { limit: number; page: number },
   ) {
     if (where.ids !== undefined && where.ids.length === 0) return this.paginated([], pagination);

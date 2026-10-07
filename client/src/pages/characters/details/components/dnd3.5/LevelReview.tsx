@@ -6,14 +6,14 @@ import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { LevelReviewState } from "./levelUpFactory.ts";
 
 interface LevelReviewProps {
-  wizard: LevelReviewState;
   /** The wizard's own groups (classes, HP, attributes), listed first. */
   children: ReactNode;
+  wizard: LevelReviewState;
 }
 
 interface ReviewGroupProps {
-  title: string;
   children: ReactNode;
+  title: string;
 }
 
 interface ReviewItemProps {

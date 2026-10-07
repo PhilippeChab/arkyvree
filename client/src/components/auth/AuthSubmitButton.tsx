@@ -4,9 +4,9 @@ import type { ReactNode } from "react";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 
 interface AuthSubmitButtonProps {
-  loading: boolean;
-  disabled?: boolean;
   children: ReactNode;
+  disabled?: boolean;
+  loading: boolean;
 }
 
 /** An auth form's full-width submit button, spinning while the request runs. */

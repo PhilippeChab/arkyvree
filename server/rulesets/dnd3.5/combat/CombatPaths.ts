@@ -229,13 +229,13 @@ export default class CombatPaths implements PathCategory<Dnd35Components> {
     }));
   }
 
-  readonly name = "combat";
-
-  readonly label = "Combat";
+  readonly component = { key: "combat", getter: "getCombat" } as const;
 
   readonly description = "AC, hit points, attack bonuses, initiative, speed, armor and shield";
 
-  readonly component = { key: "combat", getter: "getCombat" } as const;
+  readonly label = "Combat";
+
+  readonly name = "combat";
 
   readonly pathDescriptions = {
     "combat.ac": "AC bonuses and totals",

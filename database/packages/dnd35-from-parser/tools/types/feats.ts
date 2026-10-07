@@ -8,53 +8,41 @@ import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 /** A feat's fields a mapping derives and an override sets. */
 type FeatFields = {
-  description?: string;
   aptitudes?: string[];
-  requirements?: RequirementEntry[];
+  description?: string;
+  featNameMap?: Record<string, string>;
   modifiers?: ModifierSeed[];
   properties?: Property[];
-  stackable?: boolean;
+  requirements?: RequirementEntry[];
   selectable?: boolean;
-  featNameMap?: Record<string, string>;
   skip?: boolean;
+  stackable?: boolean;
 };
 
 /** Template expansion config for family feats (Weapon Focus, Skill Focus, etc.) */
-type FeatTemplate = { type: "weapon" | "skill" | "school" | "crossbow"; familyName: string };
+type FeatTemplate = { familyName: string; type: "weapon" | "skill" | "school" | "crossbow" };
 
 export type FeatReference = {
   _meta: ScrapedMeta<"feat">;
-
-  /** All feats scraped from the page */
-  raw: {
-    name: string;
-    featType: string;
-    prerequisiteText: string;
-    benefit: string;
-    normal?: string;
-    special?: string;
-  }[];
 
   /** Auto-detected requirements for each feat */
   detected: {
     [featName: string]: {
       aptitudes: string[];
-      requirements: RequirementEntry[];
-      featNameMap: Record<string, string>;
-      stackable?: boolean;
-      modifiers?: ModifierSeed[];
-      properties?: Property[];
       /** Invalid paths that failed validation — bugs to fix */
       errors?: string[];
+      featNameMap: Record<string, string>;
+      modifiers?: ModifierSeed[];
+      properties?: Property[];
+      requirements: RequirementEntry[];
+      stackable?: boolean;
+      template?: FeatTemplate;
       /** Modifier text we couldn't auto-parse — needs human review */
       unresolvedModifiers?: string[];
       /** Prerequisite text we recognized but couldn't map to a requirement */
       unresolvedPrereqs?: string[];
-      template?: FeatTemplate;
     };
   };
-
-  overrides?: Overrides<FeatFields>;
 
   /** Merged data per feat: derived from detected and the overrides when the reference is loaded */
   mapping: Record<
@@ -64,4 +52,16 @@ export type FeatReference = {
       template?: FeatTemplate;
     }
   >;
+
+  overrides?: Overrides<FeatFields>;
+
+  /** All feats scraped from the page */
+  raw: {
+    benefit: string;
+    featType: string;
+    name: string;
+    normal?: string;
+    prerequisiteText: string;
+    special?: string;
+  }[];
 };

@@ -10,16 +10,16 @@ export interface FormDialogProps<TFormValues extends FieldValues = FieldValues> 
   ModalProps,
   "onClose" | "children"
 > {
+  children: ReactNode;
   /**
    * The React Hook Form instance bound to the dialog. While the form is
    * dirty, backdrop click and Escape are ignored so users don't lose work.
    * Explicit Cancel / submit / close buttons should still call `onClose`.
    */
   form: UseFormReturn<TFormValues>;
-  onClose: () => void;
   /** Optional: also block close while a mutation is in flight. */
   isLoading?: boolean;
-  children: ReactNode;
+  onClose: () => void;
 }
 
 /**

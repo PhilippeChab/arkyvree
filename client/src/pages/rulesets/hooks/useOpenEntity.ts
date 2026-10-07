@@ -5,10 +5,10 @@ import { isRecord } from "@/shared/isRecord.ts";
 
 /** The router state a ruleset entity's page is opened with. */
 interface EntityPageState {
-  /** The list to go back to. */
-  from?: string;
   /** Set when a copy-on-write moved the page from this entity to its copy. */
   copiedFrom?: string;
+  /** The list to go back to. */
+  from?: string;
 }
 
 /** Reads an entity page's router state; anything else in it is ignored. */

@@ -36,9 +36,9 @@ class RulesetChangesService {
     }
 
     type ChangeRow =
-      | { entityType: RestorableEntityType; status: "modified"; sourceEntityId: string; entityId: string; name: string }
-      | { entityType: RestorableEntityType; status: "deleted"; sourceEntityId: string; name: string }
-      | { entityType: RulesetEntityType; status: "added"; entityId: string; name: string };
+      | { entityId: string; entityType: RestorableEntityType; name: string; sourceEntityId: string; status: "modified" }
+      | { entityType: RestorableEntityType; name: string; sourceEntityId: string; status: "deleted" }
+      | { entityId: string; entityType: RulesetEntityType; name: string; status: "added" };
 
     const changes: ChangeRow[] = [];
 

@@ -24,11 +24,11 @@ import { parseCliArgs } from "./args.ts";
 
 type OverrideEntry = {
   book: string;
-  refType: string;
-  refName: string;
   entryName: string;
   keys: string[];
   prereqText?: string;
+  refName: string;
+  refType: string;
 };
 
 function collectClassOverrides(data: StoredReference<"class">, book: string, fileName: string): OverrideEntry[] {

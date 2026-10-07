@@ -12,10 +12,10 @@ import {
 } from "./warningPreferences.ts";
 
 interface UserPreferencesState {
-  warnings: Record<WarningKey, WarningPreference>;
-  shouldWarn: (key: WarningKey) => boolean;
   setWarningEnabled: (key: WarningKey, enabled: boolean) => void;
+  shouldWarn: (key: WarningKey) => boolean;
   suppressWarningForSession: (key: WarningKey) => void;
+  warnings: Record<WarningKey, WarningPreference>;
 }
 
 export const useUserPreferencesStore = create<UserPreferencesState>()(

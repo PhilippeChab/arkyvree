@@ -15,12 +15,12 @@ import type CombatComponent from "./CombatComponent.ts";
 type ShieldsData = Record<string, ShieldSlot>;
 
 type ShieldSlot = {
-  name: string;
-  itemId: string;
-  /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
-  proficient: boolean;
   ac: { bonus: number; misc: number; readonly total: number };
   checkpenalty: number;
+  itemId: string;
+  name: string;
+  /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
+  proficient: boolean;
   spellfailure: number;
 };
 

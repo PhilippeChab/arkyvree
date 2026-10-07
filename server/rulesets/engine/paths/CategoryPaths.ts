@@ -24,7 +24,7 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
 
   private readonly byName: ReadonlyMap<string, PathCategory<C>>;
 
-  private readonly componentOf: Record<string, { key: string; getter: string }>;
+  private readonly componentOf: Record<string, { getter: string; key: string }>;
 
   private readonly labelOf: Record<string, string>;
 

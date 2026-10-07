@@ -23,22 +23,6 @@ export default abstract class SpellcastingState {
     protected readonly modifierEvaluator: ModifierEvaluator,
   ) {}
 
-  /**
-   * The highest arcane and divine spell levels the character casts (`spellcasting.arcane`, `spellcasting.divine`):
-   * estimated from its spell slots' modifiers before modifiers apply, so requirements like Scribe Scroll's can read
-   * them, then computed from its classes' slots after.
-   */
-  protected casterLevels = { arcane: 0, divine: 0 };
-
-  protected bonusKlassLevelClassMap = new Map<string, string>();
-
-  protected bonusKlassLevelModifiers: Modifier[] = [];
-
-  protected bonusKlassLevels: KlassLevel[] = [];
-
-  /** Maps bonus klass level ID → granting source name (e.g. "Stormlord Level 1") */
-  protected bonusKlassLevelAttribution = new Map<string, string>();
-
   protected allAptitudePowers: Array<
     Power & {
       aptitudeId: string;
@@ -49,15 +33,31 @@ export default abstract class SpellcastingState {
 
   protected aptitudePowerProperties: Property[] = [];
 
-  protected powerAptitudeLinks: { powerId: string; aptitudeId: string }[] = [];
+  /** Maps bonus klass level ID → granting source name (e.g. "Stormlord Level 1") */
+  protected bonusKlassLevelAttribution = new Map<string, string>();
 
-  protected spellTags: Record<string, string[]> = {};
+  protected bonusKlassLevelClassMap = new Map<string, string>();
+
+  protected bonusKlassLevelModifiers: Modifier[] = [];
+
+  protected bonusKlassLevels: KlassLevel[] = [];
+
+  /**
+   * The highest arcane and divine spell levels the character casts (`spellcasting.arcane`, `spellcasting.divine`):
+   * estimated from its spell slots' modifiers before modifiers apply, so requirements like Scribe Scroll's can read
+   * them, then computed from its classes' slots after.
+   */
+  protected casterLevels = { arcane: 0, divine: 0 };
+
+  /** Each class's spell lists, by its id (`loadClassLists`). */
+  protected classListsByKlassId = new Map<string, Set<string>>();
+
+  protected powerAptitudeLinks: { aptitudeId: string; powerId: string }[] = [];
 
   /** Where each spell tag shows, by its name. */
   protected spellTagLists: Record<string, SpellTagLists> = {};
 
-  /** Each class's spell lists, by its id (`loadClassLists`). */
-  protected classListsByKlassId = new Map<string, Set<string>>();
+  protected spellTags: Record<string, string[]> = {};
 
   /**
    * A class's list that knows every spell of a spell level (`allowed` all known), if one does: where the spells of a

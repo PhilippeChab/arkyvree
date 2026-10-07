@@ -7,14 +7,14 @@ import type { FormSync } from "@/client/src/hooks/index.ts";
 import type { EditorProps } from "./types.ts";
 
 interface EditorSaveOptions<TForm, TSaved> {
-  sync: FormSync<TForm & FieldValues>;
-  /** Sends the form; resolves to the saved row. */
-  saveFn: (data: TForm) => Promise<TSaved>;
   entityId: string;
-  onSaved: EditorProps<unknown>["onSaved"];
-  listKey: QueryKey;
   /** "Feat", "Class level"… for the toasts. */
   label: string;
+  listKey: QueryKey;
+  onSaved: EditorProps<unknown>["onSaved"];
+  /** Sends the form; resolves to the saved row. */
+  saveFn: (data: TForm) => Promise<TSaved>;
+  sync: FormSync<TForm & FieldValues>;
 }
 
 /** The save of a customization editor: rebaselines the form and hands the saved row to the page. */

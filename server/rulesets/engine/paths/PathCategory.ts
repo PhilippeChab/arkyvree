@@ -5,7 +5,7 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 import type PathTraverser from "./PathTraverser.ts";
 
 /** A component of `C`, by its key, and the getter that hands its data to a path: both checked against `C`. */
-export type ComponentSpec<C> = { [K in keyof C & string]: { key: K; getter: GetterOf<C[K]> } }[keyof C & string];
+export type ComponentSpec<C> = { [K in keyof C & string]: { getter: GetterOf<C[K]>; key: K } }[keyof C & string];
 
 /** The names of `T`'s methods a path can call without arguments: the getters its data comes from. */
 export type GetterOf<T> = { [M in keyof T]-?: T[M] extends () => unknown ? M : never }[keyof T] & string;
@@ -15,23 +15,23 @@ export type GetterOf<T> = { [M in keyof T]-?: T[M] extends () => unknown ? M : n
  * components `C`.
  */
 export interface PathCategory<C = Components> {
-  /** A path's first element */
-  name: string;
-  /** Its name in the path picker */
-  label: string;
-  description: string;
   /** The component its data comes from, and the getter that hands it to a path: none when its paths resolve their own way */
   component?: ComponentSpec<C>;
+  description: string;
   /** Whether an entry's name also reaches the entries its name starts: a skill's subtypes */
   expandsSubtypes?: true;
-  /** A group of its paths' description (`abilities`, `items.weapons`), `{name}` the group's label */
-  groupDescriptionTemplates?: Record<string, string>;
-  /** A path prefix's description (`combat.ac`) */
-  pathDescriptions?: Record<string, string>;
   /** Its target paths a modifier or a requirement may name, for the ruleset's data */
   generate?(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[];
   /** Its paths' own segments' labels (`base`, `misc`…), before the ruleset's names */
   getSegmentLabels?(): Record<string, string>;
+  /** A group of its paths' description (`abilities`, `items.weapons`), `{name}` the group's label */
+  groupDescriptionTemplates?: Record<string, string>;
+  /** Its name in the path picker */
+  label: string;
+  /** A path's first element */
+  name: string;
+  /** A path prefix's description (`combat.ac`) */
+  pathDescriptions?: Record<string, string>;
   /** Whether a target reads its source itself (an item's own weapon: the place its item is held), not the sheet */
   readsSource?(target: string): boolean;
   /** A target it resolves its own way, or null for the walk from its component's data */

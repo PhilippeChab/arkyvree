@@ -33,10 +33,10 @@ import type {
 import type { RulesetEffects, RulesetRules } from "./module/index.ts";
 
 type ProjectedFeat = Feat & {
-  klassLevelId: string;
-  characterLevelId: string;
   aptitudeId: string;
+  characterLevelId: string;
   klassLevelFeatId?: string;
+  klassLevelId: string;
   modifiers: Modifier[];
   properties: Property[];
   requirements: Requirement[];
@@ -58,19 +58,19 @@ export type Components = Record<string, Component>;
  * by characterLevelId) skip them naturally without a flag check.
  */
 export type CustomizedFeat = Feat & {
-  klassLevelId: string;
-  characterLevelId: string;
   aptitudeId: string;
+  characterLevelId: string;
   klassLevelFeatId?: string;
-  virtual?: boolean;
+  klassLevelId: string;
   modifiers: Modifier[];
   properties: Property[];
   requirements: Requirement[];
+  virtual?: boolean;
 };
 
 export type CustomizedKlassLevel = KlassLevel & {
-  properties: Property[];
   modifiers: Modifier[];
+  properties: Property[];
   requirements: Requirement[];
 };
 
@@ -81,42 +81,42 @@ export type CustomizedKlassLevel = KlassLevel & {
  * relies on `virtual` (or `free`, for klass-granted powers).
  */
 export type CustomizedPower = Power & {
-  klassLevelId: string;
-  characterLevelId: string;
   aptitudeId: string;
+  characterLevelId: string;
   free?: boolean;
-  virtual?: boolean;
-  saveName: string | null;
+  klassLevelId: string;
+  modifiers: Modifier[];
   powerLevel: number | null;
   properties: Property[];
-  modifiers: Modifier[];
   requirements: Requirement[];
+  saveName: string | null;
+  virtual?: boolean;
 };
 
 export type CustomizedRace = Race & {
-  properties: Property[];
   modifiers: Modifier[];
+  properties: Property[];
   requirements: Requirement[];
 };
 
 export interface DetailedCharacterInterface {
-  /** The character's rows its builds share, read through `database`, in `scope` when it's the character's ruleset's. */
-  preload(database?: Db, scope?: RulesetScope): Promise<PreloadedCharacterData>;
+  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean;
   /**
    * Builds the character, in `scope` when it's the character's ruleset's (the one its caller holds, or a `preload()`'s,
    * whose shared rows it reads too): no build reads the ruleset or composes its view again.
    */
   build(database?: Db, projectedData?: unknown, scope?: RulesetScope | PreloadedCharacterData): Promise<void>;
-  validate(): ValidationResult;
-  formatRequirements(requirements: Requirement[]): string;
-  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean;
-  getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[];
-  getRuleset(): Ruleset | undefined;
-  getPlayer(): Player | undefined;
-  getCampaign(): Campaign | undefined;
   readonly components: Components;
+  formatRequirements(requirements: Requirement[]): string;
+  getCampaign(): Campaign | undefined;
+  getPlayer(): Player | undefined;
+  getRuleset(): Ruleset | undefined;
+  getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[];
   getVirtuallyPossessedFeatIds(): string[];
   getVirtuallyPossessedPowerIds(): string[];
+  /** The character's rows its builds share, read through `database`, in `scope` when it's the character's ruleset's. */
+  preload(database?: Db, scope?: RulesetScope): Promise<PreloadedCharacterData>;
+  validate(): ValidationResult;
 }
 
 /** A built character and the sheet that renders it, typed by the module that made them. */
@@ -124,20 +124,20 @@ export type DetailedCharacterWithSheet<
   Character extends DetailedCharacterInterface = DetailedCharacterInterface,
   Kind extends string = string,
 > = {
-  detailedCharacter: Character;
   CharacterSheetComponent: FC<{
     detailedCharacter: Character;
     kind?: Kind;
     portraitUrl?: string | null;
   }>;
+  detailedCharacter: Character;
 };
 
 export type InventoryEntry = CharacterInventory & {
   item: Item & {
-    properties: Property[];
     modifiers: Modifier[];
     /** The base item's requirements: its template's, or its own when it is one */
     proficiency: Requirement[];
+    properties: Property[];
     /** Its other requirements, which its modifiers need */
     requirements: Requirement[];
   };
@@ -155,44 +155,44 @@ export interface LevelUpProjector {
   /** Evaluate whether candidate klass levels' requirements are met against
    *  a projected character state (including in-flight batch levels). */
   evaluateClassAvailability(
-    candidates: { klassName: string; klassLevel: KlassLevel; requirementGroups: Requirement[][] }[],
+    candidates: { klassLevel: KlassLevel; klassName: string; requirementGroups: Requirement[][] }[],
     projectedCharacterLevel: ProjectedCharacterLevel,
   ): Promise<Map<string, boolean>>;
 }
 
 /** Base result of character data loading. Rulesets extend with specific fields. */
 export interface LoadedCharacterData {
-  ruleset: Ruleset | undefined;
-  player: Player | undefined;
   campaign: Campaign | undefined;
-  rulesetAbilities: RulesetAbility[];
-  rulesetSaves: RulesetSave[];
-  rulesetSkills: Skill[];
-  rulesetFeats: Feat[];
-  rulesetFeatProperties: Property[];
-  rulesetPowers: PowerWithAptitudes[];
-  rulesetPowerProperties: Property[];
-  rulesetAptitudes: Aptitude[];
-  rulesetKlasses: Klass[];
-  leveledAptitudeIds: Set<string>;
+  characterAbilityScores: { abilityId: string; name: string; score: number }[];
+  characterLevels: CharacterLevel[];
   /** The spell lists a feat brings (a domain's, a specialist's school): their spells come with it, never learned. */
   featListIds: Set<string>;
-  characterAbilityScores: { abilityId: string; name: string; score: number }[];
-  race: CustomizedRace;
-  languages: Language[];
-  inventory: InventoryEntry[];
-  characterLevels: CharacterLevel[];
-  klassLevels: CustomizedKlassLevel[];
-  klassSkills: KlassSkill[];
-  klassLevelSaves: KlassLevelSave[];
-  klasses: Klass[];
   feats: CustomizedFeat[];
-  skills: SkillWithRank[];
-  powers: CustomizedPower[];
+  inventory: InventoryEntry[];
+  klasses: Klass[];
   klassLevelFeatCountsByAptitudeId: Record<string, number>;
   klassLevelPowerCountsByAptitudeId: Record<string, number>;
+  klassLevels: CustomizedKlassLevel[];
+  klassLevelSaves: KlassLevelSave[];
+  klassSkills: KlassSkill[];
+  languages: Language[];
+  leveledAptitudeIds: Set<string>;
   modifiers: Modifier[];
+  player: Player | undefined;
+  powers: CustomizedPower[];
+  race: CustomizedRace;
   requirementGroups: Requirement[][];
+  ruleset: Ruleset | undefined;
+  rulesetAbilities: RulesetAbility[];
+  rulesetAptitudes: Aptitude[];
+  rulesetFeatProperties: Property[];
+  rulesetFeats: Feat[];
+  rulesetKlasses: Klass[];
+  rulesetPowerProperties: Property[];
+  rulesetPowers: PowerWithAptitudes[];
+  rulesetSaves: RulesetSave[];
+  rulesetSkills: Skill[];
+  skills: SkillWithRank[];
   validRulesetIds: Set<string>;
 }
 
@@ -207,8 +207,8 @@ export interface PreloadedCharacterData extends PreloadedRulesetData {
 }
 
 export interface PreloadedRulesetData {
-  ruleset: Ruleset;
   cowData: CowData;
+  ruleset: Ruleset;
   rulesetData: RulesetData;
 }
 
@@ -220,8 +220,8 @@ export interface PreloadedRulesetData {
  * `server/rulesets/dnd3.5/types.ts`.
  */
 export interface ProjectedCharacterData {
-  excludeCharacterLevelIds?: string[];
   characterLevels?: ProjectedCharacterLevel[];
+  excludeCharacterLevelIds?: string[];
   feats?: ProjectedFeat[];
   givenFeats?: ProjectedFeat[];
 }
@@ -239,9 +239,9 @@ export interface PropertyTypesProvider {
 
 export type RequirementIssue = {
   category: "requirements";
-  message: string;
   entityName?: string;
   entityType?: string;
+  message: string;
   requirementTree?: string;
 };
 
@@ -254,36 +254,36 @@ export interface RulesetModule<
   Projector extends LevelUpProjector = LevelUpProjector,
   Kind extends string = string,
 > {
-  /** What the ruleset answers the services, without the database */
-  rules: RulesetRules;
-  /** What the ruleset does in a service's transaction */
-  effects: RulesetEffects;
-  seedTemplateItems(tx: Db, rulesetId: string): Promise<void>;
   createDetailedCharacter(record: CharacterRecord, kind?: Kind): Character;
-  createLevelUpProjector(character: Character): Projector;
   createDetailedCharacterWithSheet(
     record: CharacterRecord,
     kind?: Kind,
   ): Promise<DetailedCharacterWithSheet<Character, Kind>>;
-  createTargetPaths(): TargetPathsInterface;
+  createLevelUpProjector(character: Character): Projector;
   createPropertyTypes(): PropertyTypesProvider;
+  createTargetPaths(): TargetPathsInterface;
+  /** What the ruleset does in a service's transaction */
+  effects: RulesetEffects;
+  /** What the ruleset answers the services, without the database */
+  rules: RulesetRules;
+  seedTemplateItems(tx: Db, rulesetId: string): Promise<void>;
 }
 
 export type SkillWithRank = Skill & {
-  klassLevelId: string;
   characterLevelId: string;
+  klassLevelId: string;
   rank: number;
 };
 
 export interface TargetPathsInterface extends TargetPathsTraverser {
+  getCategories(): string[];
+  getCategoryDescriptions(): Record<string, string>;
+  getGroupDescriptionTemplates(): Record<string, string>;
+  getPathDescriptions(): Record<string, string>;
   getTargetPathsAndLabels(
     rulesetData: RulesetData,
     kind: TargetPathKind,
   ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>;
-  getCategories(): string[];
-  getCategoryDescriptions(): Record<string, string>;
-  getPathDescriptions(): Record<string, string>;
-  getGroupDescriptionTemplates(): Record<string, string>;
 }
 export interface TargetPathsTraverser {
   /** Whether a target reads its source itself (a weapon's own paths: the place its item is held), not the sheet. */
@@ -293,22 +293,22 @@ export interface TargetPathsTraverser {
 
 export type TraversePathResult = {
   component: Component | null;
-  object: unknown;
   data: unknown;
-  key: string;
-  resolvedPath: string | null;
   error: string | null;
+  key: string;
+  object: unknown;
+  resolvedPath: string | null;
 };
 
 export type ValidationIssue = {
   category: "aptitudes" | "skills" | "requirements" | "modifiers" | "integrity";
-  message: string;
   entityName?: string;
   entityType?: string;
+  message: string;
   requirementTree?: string;
 };
 
 export type ValidationResult = {
-  valid: boolean;
   issues: ValidationIssue[];
+  valid: boolean;
 };

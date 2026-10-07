@@ -65,7 +65,7 @@ function levelsOf(klass: string, hps: number[]): BatchLevel[] {
 async function eligible(
   search: string,
   level: number,
-  options: { strength?: number; pendingPicks?: string[]; increases?: (string | undefined)[] } = {},
+  options: { increases?: (string | undefined)[]; pendingPicks?: string[]; strength?: number } = {},
 ) {
   const ctx = await getSeedCtx();
   const characterId = await createSeedCharacter(ctx, "fighter", {
@@ -154,11 +154,11 @@ describe("finalizing several levels at once", () => {
     ],
   };
   const CASES: {
-    name: string;
     build: keyof typeof BUILDS;
-    values?: Parameters<typeof createSeedCharacter>[2];
     levels: BatchLevel[];
+    name: string;
     plan: Omit<LevelPlan, "hp">;
+    values?: Parameters<typeof createSeedCharacter>[2];
   }[] = [
     {
       name: "a fighter's first four levels, with an ability increase at the fourth",

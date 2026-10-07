@@ -78,7 +78,7 @@ export function useAuthRequests() {
 
   const verifyEmail = useMutation({
     mutationKey,
-    mutationFn: (json: { emailAddress: string; code: string }) =>
+    mutationFn: (json: { code: string; emailAddress: string }) =>
       parseResponse(rpc.auth["verify-email"].$post({ json })),
     onSuccess: signedIn,
   });
@@ -97,7 +97,7 @@ export function useAuthRequests() {
 
   const resetPassword = useMutation({
     mutationKey,
-    mutationFn: (json: { emailAddress: string; code: string; newPassword: string; newPasswordConfirmation: string }) =>
+    mutationFn: (json: { code: string; emailAddress: string; newPassword: string; newPasswordConfirmation: string }) =>
       parseResponse(rpc.auth["reset-password"].$post({ json })),
     // Its email waits until the user signs in: the reset page stays to send them there
   });

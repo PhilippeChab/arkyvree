@@ -9,7 +9,7 @@ import { signIn } from "@/tests/e2e/support/signIn.ts";
  * A fork's own entities of each kind with a page of its own: created from its section, renamed on its page (surviving a
  * reload), and deleted from there.
  */
-const KINDS: { section: string; label: string; fill?: (page: Page) => Promise<void> }[] = [
+const KINDS: { fill?: (page: Page) => Promise<void>; label: string; section: string }[] = [
   { section: "languages", label: "Language" },
   { section: "mechanics", label: "Mechanic" },
   { section: "aptitudes", label: "Aptitude" },

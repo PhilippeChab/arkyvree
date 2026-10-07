@@ -9,12 +9,12 @@ import { type Db } from "@/server/database/index.ts";
 
 /** The seeded core rules' ids by name: its seed context, and the languages, races, classes and items characters name. */
 export type SeedContext = RulesetSeedContext & {
+  itemMap: Record<string, string>;
+  /** Klass id by kind, then name. Use `klassMap.pc["Fighter"]`, `klassMap.familiar["Familiar"]`. */
+  klassMap: Record<string, Record<string, string>>;
   langMap: Record<string, string>;
   /** Race id by kind, then name. Use `raceMap.pc["Human"]`, `raceMap.familiar["Owl"]`. */
   raceMap: Record<string, Record<string, string>>;
-  /** Klass id by kind, then name. Use `klassMap.pc["Fighter"]`, `klassMap.familiar["Familiar"]`. */
-  klassMap: Record<string, Record<string, string>>;
-  itemMap: Record<string, string>;
 };
 
 /**
@@ -23,7 +23,7 @@ export type SeedContext = RulesetSeedContext & {
  * so name collisions between e.g. familiar-kind and animalcompanion-kind rows
  * resolve unambiguously at the call site.
  */
-function buildKindMap(rows: { name: string; id: string; kind: string }[]): Record<string, Record<string, string>> {
+function buildKindMap(rows: { id: string; kind: string; name: string }[]): Record<string, Record<string, string>> {
   const out: Record<string, Record<string, string>> = {};
   for (const row of rows) (out[row.kind] ??= {})[row.name] = row.id;
 

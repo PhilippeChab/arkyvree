@@ -384,7 +384,7 @@ function multiOptionFeatRequirements(
   text: string,
   featText: string,
   featNameMap: Record<string, string>,
-): { requirements: RequirementEntry[]; featText: string } {
+): { featText: string; requirements: RequirementEntry[] } {
   const reqs: RequirementEntry[] = [];
   const multiOptionFeatRegex = /([A-Z][a-zA-Z ]+?)\s*\(([a-z][^)]*(?:,|or)[^)]+)\)/g;
   let multiMatch: RegExpExecArray | null;
@@ -409,8 +409,8 @@ function multiOptionFeatRequirements(
 }
 
 function parsePrerequisiteText(text: string): {
-  requirements: RequirementEntry[];
   featNameMap: Record<string, string>;
+  requirements: RequirementEntry[];
   unresolvedPrereqs: string[];
 } {
   const reqs: RequirementEntry[] = [];
@@ -526,7 +526,7 @@ function skillRankRequirements(text: string): RequirementEntry[] {
  * A feat's spellcasting ability requirement, "Spellcasting ability (Int or Cha) 15" → or(Int ≥ 15, Cha ≥ 15), and the
  * text it was read from (`matched`), which no feat is read from.
  */
-function spellcastingAbilityRequirements(text: string): { requirements: RequirementEntry[]; matched?: string } {
+function spellcastingAbilityRequirements(text: string): { matched?: string; requirements: RequirementEntry[] } {
   const spellcastingAbilityMatch = text.match(/[Ss]pellcasting ability\s*\(([^)]+)\)\s*(\d+)/);
   if (!spellcastingAbilityMatch) return { requirements: [] };
   const options = spellcastingAbilityMatch[1]

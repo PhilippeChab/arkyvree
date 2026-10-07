@@ -1,2 +1,2 @@
 export { ContributorsTable } from "./ContributorsTable.tsx";
-export { InviteContributorDialog, type ContributorRole } from "./InviteContributorDialog.tsx";
+export { type ContributorRole, InviteContributorDialog } from "./InviteContributorDialog.tsx";
