@@ -11,7 +11,7 @@ export function GeneratesRaces<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingRaces extends Base {
     /** A book's races file (races.ts). */
     writeRaces(ref: RaceReference, book: string) {
-      const seeds = Library.book(book).raceSeeds(ref);
+      const seeds = Library.book(book).races(ref).seeds();
       this.log(`Built ${seeds.length} race seeds`);
 
       const { path, list } = BOOK_FILES.races;

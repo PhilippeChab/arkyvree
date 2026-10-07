@@ -35,18 +35,19 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
       const featRef = References.find(book, "feat");
       // Each feats file's lists, by file, as the generator writes them: the domains' feat pools', the reference's
       const seeds = Library.book(book);
-      const feats = featRef && seeds.featSeeds(featRef);
+      const feats = featRef && seeds.feats(featRef);
+      const domainRef = seeds.reference("domain");
       const featFiles = [
         {
           path: BOOK_FILES.domainFeats.path,
-          lists: seeds.domainSeeds().poolFeats.length > 0 ? [BOOK_FILES.domainFeats.list] : [],
+          lists: domainRef && seeds.domains(domainRef).poolFeats().length > 0 ? [BOOK_FILES.domainFeats.list] : [],
         },
         {
           path: FEATS_FILE,
           lists: feats
             ? [
-                ...[...feats.byType.keys()].map(getFeatTypeList),
-                ...feats.templates.map(({ familyName }) => getTemplateList(familyName)),
+                ...[...feats.byType().keys()].map(getFeatTypeList),
+                ...feats.templates().map(({ familyName }) => getTemplateList(familyName)),
               ]
             : [],
         },
@@ -69,7 +70,7 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
     writeFeats(ref: FeatReference, book: string) {
       const seeds = Library.book(book);
       const file = new CodeFile();
-      file.featsFile(seeds.featSeeds(ref), seeds.requirableFamilies());
+      file.featsFile(seeds.feats(ref), seeds.requirableFamilies());
       this.write(join(this.dir, book, FEATS_FILE), file.code());
     }
   }

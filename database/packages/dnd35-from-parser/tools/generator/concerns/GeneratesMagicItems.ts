@@ -11,7 +11,7 @@ export function GeneratesMagicItems<B extends Constructor<BaseGenerator>>(Base: 
   abstract class GeneratingMagicItems extends Base {
     /** A book's magic items' files, a file per kind. */
     writeMagicItems(ref: MagicItemReference, book: string) {
-      const seeds = Library.book(book).magicItemSeeds(ref);
+      const seeds = Library.book(book).magicItems(ref).seeds();
       for (const { path, list, seeds: kind } of ITEM_FILES) {
         if (!(kind in seeds)) continue;
         this.writeList(

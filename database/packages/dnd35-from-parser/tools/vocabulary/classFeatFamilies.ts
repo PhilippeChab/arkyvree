@@ -13,7 +13,8 @@ const CLASS_FEAT_FAMILIES: { family: string; pattern: RegExp }[] = [
 /** The families of class features, Favored Enemy's included, which a prerequisite checks by the family's name. */
 export const CLASS_FEAT_FAMILY_NAMES = [...CLASS_FEAT_FAMILIES.map(({ family }) => family), FAVORED_ENEMY_FAMILY];
 
-export function detectClassFeatFamily(name: string): string | undefined {
+/** The family of class features a feature of `name` is ("Rage (Barbarian)": Rage), if any. */
+export function findClassFeatFamily(name: string): string | undefined {
   for (const { pattern, family } of CLASS_FEAT_FAMILIES) if (pattern.test(name)) return family;
 
   return undefined;

@@ -11,6 +11,9 @@ import type { RaceReference } from "./races.ts";
 import type { SpellReference } from "./spells.ts";
 import type { WizardSchoolReference } from "./wizardSchools.ts";
 
+/** A reference's text checked against the fixed set the seed accepts: the option it is, or why it isn't one. */
+export type Checked<T> = { ok: true; value: T } | { ok: false; problem: string };
+
 /**
  * A domain's or a race's detected modifiers, the invalid paths (bugs to fix) and the text that couldn't be parsed (to
  * review). Their modifiers have no requirements: only a feat's has.

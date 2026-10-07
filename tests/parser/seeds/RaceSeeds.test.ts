@@ -2,10 +2,14 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import { checkOneOf } from "@/database/packages/dnd35-from-parser/tools/seeds/checks.ts";
-import { buildRaceSeeds, getSeededRaces } from "@/database/packages/dnd35-from-parser/tools/seeds/races.ts";
+import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
+
+/** A race reference's seeds, as its book makes them. */
+function racesOf(reference: ReturnType<typeof stored<"race">>) {
+  return Library.book(reference._meta.book).races(References.resolve("race", reference));
+}
 
 /** A committed reference of `type` as stored. */
 function stored<T extends ReferenceType>(file: string, type: T) {
@@ -17,7 +21,9 @@ describe("A race reference's races", () => {
     const reference = stored("srd/races.json", "race");
     const [skipped] = reference.raw;
     reference.overrides = { ...reference.overrides, [skipped.name]: { skip: true } };
-    const names = buildRaceSeeds(References.resolve("race", reference)).map(({ name }) => name);
+    const names = racesOf(reference)
+      .seeds()
+      .map(({ name }) => name);
     expect(names).not.toContain(skipped.name);
     expect(names).toHaveLength(reference.raw.length - 1);
   });
@@ -29,15 +35,17 @@ describe("A race reference's races", () => {
     const size = first.size === "Small" ? "Large" : "Small";
     reference.overrides = { ...reference.overrides, [first.name]: { ...reference.overrides?.[first.name], size } };
     const sizeOf = (name: string) =>
-      getSeededRaces(References.resolve("race", reference)).find((race) => race.name === name)?.size;
+      racesOf(reference)
+        .seeded()
+        .find((race) => race.name === name)?.size;
     expect(sizeOf(first.name)).toEqual({ ok: true, value: size });
-    expect(sizeOf(second.name)).toEqual(checkOneOf(second.size, SIZE_OPTIONS, `${second.name}'s size`));
+    expect(sizeOf(second.name)).toMatchObject({ ok: true, value: second.size });
 
     reference.overrides = { ...reference.overrides, [first.name]: { size: "Titanic" } };
     expect(sizeOf(first.name)).toEqual({
       ok: false,
       problem: `${first.name}'s size: "Titanic" isn't one of ${SIZE_OPTIONS.join(", ")}`,
     });
-    expect(() => buildRaceSeeds(References.resolve("race", reference))).toThrow(`${first.name}'s size`);
+    expect(() => racesOf(reference).seeds()).toThrow(`${first.name}'s size`);
   });
 });

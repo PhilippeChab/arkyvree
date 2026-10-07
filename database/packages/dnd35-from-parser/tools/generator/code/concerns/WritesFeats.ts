@@ -6,11 +6,10 @@ import {
   quote,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import {
-  type buildReferenceFeats,
-  resolveFamilyChecks,
+  FeatSeeds,
   type TemplateFamily,
   type TemplateType,
-} from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
+} from "@/database/packages/dnd35-from-parser/tools/seeds/FeatSeeds.ts";
 import {
   expandTemplateDescription,
   normalizeDescription,
@@ -23,9 +22,6 @@ import type {
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
-
-/** What a feat reference makes: its feats by feat type, and its template families. */
-type ReferenceFeats = ReturnType<typeof buildReferenceFeats>;
 
 /**
  * Writing a feat, and a template family's feats made per item (weapon, skill, school…). What a template's code uses
@@ -223,21 +219,21 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
     }
 
     /**
-     * A feats file's lists (what a feat reference makes, `buildReferenceFeats`): a list per feat type, each feat's
-     * checks of a family its own (`resolveFamilyChecks`), and a template family's feats made per item; `families` the
+     * A feats file's lists (what a feat reference makes, `FeatSeeds`): a list per feat type, each feat's
+     * checks of a family its own (`FeatSeeds.familyChecks`), and a template family's feats made per item; `families` the
      * families a feat can require.
      */
-    featsFile({ byType, templates }: Pick<ReferenceFeats, "byType" | "templates">, families: Set<string>): void {
-      for (const [type, feats] of byType) {
+    featsFile(seeds: FeatSeeds, families: Set<string>): void {
+      for (const [type, feats] of seeds.byType()) {
         this.list(
           getFeatTypeList(type),
           "FeatSeed",
           feats.flatMap((feat) =>
-            this.feat({ ...feat, requirements: resolveFamilyChecks(feat.requirements ?? [], families) }),
+            this.feat({ ...feat, requirements: FeatSeeds.familyChecks(feat.requirements ?? [], families) }),
           ),
         );
       }
-      for (const family of templates) this.featTemplate(family, families);
+      for (const family of seeds.templates()) this.featTemplate(family, families);
     }
 
     /**

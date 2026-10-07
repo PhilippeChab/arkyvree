@@ -12,7 +12,11 @@ export function GeneratesDomains<B extends Constructor<BaseGenerator>>(Base: B) 
      * A book's domains file and its domains' feat pools: those of its domains reference, none for a book without one.
      */
     writeDomains(book: string) {
-      const { seeds, poolFeats } = Library.book(book).domainSeeds();
+      const seedsOfBook = Library.book(book);
+      const ref = seedsOfBook.reference("domain");
+      const domainSeeds = ref && seedsOfBook.domains(ref);
+      const seeds = domainSeeds ? domainSeeds.seeds() : [];
+      const poolFeats = domainSeeds ? domainSeeds.poolFeats() : [];
       this.log(`Built ${seeds.length} domain seeds`);
 
       // A book without domains has an empty list of them

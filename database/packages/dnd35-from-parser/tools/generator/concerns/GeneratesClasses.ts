@@ -25,9 +25,9 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
 
       const seeds = Library.book(book);
       const file = new CodeFile();
-      file.classSeed(seeds.classSeed(ref));
+      file.classSeed(seeds.classes(ref).seed());
       this.write(classPath, file.code(), getClassReviewNotes(ref));
-      this.writeList(featPath, featsFile.list, "FeatSeed", seeds.classFeatSeeds(ref), (featFile, feat) =>
+      this.writeList(featPath, featsFile.list, "FeatSeed", seeds.classes(ref).feats(), (featFile, feat) =>
         featFile.feat(feat),
       );
     }

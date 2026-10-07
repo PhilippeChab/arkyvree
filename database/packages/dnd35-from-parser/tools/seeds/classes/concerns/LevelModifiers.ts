@@ -14,7 +14,7 @@ export function LevelModifiers<B extends Constructor<BaseClassSeeds>>(Base: B) {
      * The class's level modifiers: its overrides', then those its table's columns give (`mapping.columns`, an
      * override's), at each level a column's value changes: a number's rise, or its text.
      */
-    levelModifiers(): (ModifierSeed & { level: number })[] {
+    protected levelModifiers(): (ModifierSeed & { level: number })[] {
       const fromColumns = Object.entries(this.ref.mapping.columns ?? {}).flatMap(
         ([column, { target, operator, requirements }]) => {
           if (!this.ref.raw.progression.some((row) => row.columns?.[column] !== undefined))
