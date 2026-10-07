@@ -1,8 +1,6 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import type { Components } from "@/engine/core/types.ts";
 import type { CharacterKind } from "@/engine/rulesets/dnd3.5/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
@@ -25,7 +23,7 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Alignment, Gender } from "@/shared/enums.ts";
-import type { Requirement, Session } from "@/shared/relations.ts";
+import type { Session } from "@/shared/relations.ts";
 
 import { type BondedEntry, loadBondedByKind } from "./bonded.ts";
 import { getClassLevelsByCharacter } from "./classLevels.ts";
@@ -164,62 +162,10 @@ class CharactersService extends include(Object, Archives) {
         pagination,
       );
 
-      const races = result.items;
-
-      if (races.length === 0) return { items: [], page: result.page, nextPage: result.nextPage };
-
-      // Requirements come from the composed cache — compose pre-merges sibling
-      // requirements into the winner's bucket, so the lookup is already correct
-      // across multi-extension COW forks.
-      const requirementsByRace = new Map<string, Requirement[]>();
-      let anyRequirements = false;
-      for (const race of races) {
-        const reqs = rulesetData.requirementsByEntity.get(race.id);
-        if (reqs && reqs.length > 0) {
-          requirementsByRace.set(race.id, reqs);
-          anyRequirements = true;
-        }
-      }
-
-      if (!anyRequirements) {
-        return {
-          items: races.map((race) => ({ ...race, eligible: true })),
-          page: result.page,
-          nextPage: result.nextPage,
-        };
-      }
-
-      // Build a minimal identity component from form data.
-      // Only include fields that are actually provided — missing fields cause
-      // path traversal to fail gracefully (node not in tree → lenient evaluation).
-      const identityData: Record<string, Record<string, unknown>> = {
-        physiology: {},
-        beliefs: {},
-        background: {},
-        meta: {},
-      };
-      if (formData.alignment) identityData.beliefs.alignment = formData.alignment;
-      if (formData.gender) identityData.physiology.gender = formData.gender;
-
-      const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-      const targetPaths = rulesetModule.createTargetPaths();
-      const components: Components = {
-        identity: { getIdentity: () => identityData },
-      };
-
-      const annotatedRaces = races.map((race) => {
-        const reqs = requirementsByRace.get(race.id);
-        if (!reqs || reqs.length === 0) return { ...race, eligible: true };
-
-        const tempRequirements = new RequirementEvaluator(targetPaths);
-        tempRequirements.evaluateRequirements(components, [reqs]);
-        const { unmetRequirementGroups } = tempRequirements.getRequirements();
-        // Only check unmetRequirementGroups — invalidRequirements represent
-        // paths we can't evaluate from partial form data (treated as passing)
-        return { ...race, eligible: unmetRequirementGroups.length === 0 };
-      });
-
-      return { items: annotatedRaces, page: result.page, nextPage: result.nextPage };
+      // The requirements come from the composed view, which merges siblings' into the winner's
+      const rules = RulesetFactory.fromBaseRules(ruleset.baseRules).rules.races;
+      const items = rules.enrichWithEligibility(result.items, rulesetData.requirementsByEntity, formData);
+      return { items, page: result.page, nextPage: result.nextPage };
     });
   }
 
