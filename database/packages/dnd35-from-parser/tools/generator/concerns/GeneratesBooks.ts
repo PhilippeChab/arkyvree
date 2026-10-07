@@ -1,10 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-import {
-  type BaseGenerator,
-  GENERATED_HEADER,
-} from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { formatImport } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -28,7 +25,6 @@ export function GeneratesBooks<B extends Constructor<BaseGenerator>>(Base: B) {
       const files = [...new Set(present.map((part) => part.file))].sort();
 
       const lines: string[] = [];
-      lines.push(...GENERATED_HEADER);
       lines.push(`import type { BookContent } from "@/database/packages/dnd35/content/rulesets/types.ts";`);
       for (const file of files) {
         const names = present

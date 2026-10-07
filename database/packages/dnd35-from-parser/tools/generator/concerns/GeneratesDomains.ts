@@ -1,10 +1,7 @@
 import { existsSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 
-import {
-  type BaseGenerator,
-  GENERATED_HEADER,
-} from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { stringifyModifier } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
@@ -52,10 +49,7 @@ export function GeneratesDomains<B extends Constructor<BaseGenerator>>(Base: B) 
       );
       this.write(
         join(this.dir, book, "feats", "domainFeats.ts"),
-        file.code([
-          ...GENERATED_HEADER,
-          `import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`,
-        ]),
+        file.code([`import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`]),
       );
     }
 
@@ -72,7 +66,6 @@ export function GeneratesDomains<B extends Constructor<BaseGenerator>>(Base: B) 
         this.write(
           dataPath,
           [
-            ...GENERATED_HEADER,
             `import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";`,
             ``,
             `export const ALL_DOMAINS: DomainSeed[] = [];`,

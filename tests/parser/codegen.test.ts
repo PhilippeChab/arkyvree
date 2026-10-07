@@ -24,7 +24,6 @@ import { buildClassSeed } from "@/database/packages/dnd35-from-parser/tools/seed
 import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/featSeeds.ts";
 import { buildClassModifiers } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/modifiers.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import { getClassReviewNotes } from "@/database/packages/dnd35-from-parser/tools/validate/classReview.ts";
 import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   Modifier,
@@ -43,7 +42,7 @@ function check(operator: string, valueType: string, value: string): RequirementC
 
 /** A class reference's generated ClassSeed file. */
 function classCode(ref: ClassReference) {
-  return new ClassFile(buildClassSeed(ref), getClassReviewNotes(ref)).classCode();
+  return new ClassFile(buildClassSeed(ref)).classCode();
 }
 
 function classRef(book: string, slug: string) {

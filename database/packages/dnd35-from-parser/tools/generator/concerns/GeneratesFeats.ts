@@ -1,10 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import {
-  type BaseGenerator,
-  GENERATED_HEADER,
-} from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { buildCoreSystemFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
 import {
   generateFavoredEnemyFeats,
@@ -38,7 +35,6 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
       const aptitudes = collectAptitudes(feats, book);
 
       const aptLines: string[] = [];
-      aptLines.push(...GENERATED_HEADER);
       aptLines.push(``);
       aptLines.push(`export const ALL_APTITUDES: string[] = [`);
       for (const apt of aptitudes) {
@@ -89,7 +85,6 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
 
       // Each feat file's lists, imported once, and the lists of them all
       const lines = [
-        ...GENERATED_HEADER,
         `import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`,
         ...featFiles.map(({ file, exports }) => formatImport(exports, `./${file.replace(".ts", "")}.ts`)),
         ...(hasClassFeats ? [formatImport(["ALL_CLASS_FEATS"], "./classes/index.ts")] : []),

@@ -26,7 +26,7 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
         rmSync(classPath, { force: true });
         rmSync(featPath, { force: true });
       } else {
-        this.write(classPath, new ClassFile(buildClassSeed(ref), getClassReviewNotes(ref)).classCode());
+        this.write(classPath, new ClassFile(buildClassSeed(ref)).classCode(), getClassReviewNotes(ref));
         this.write(featPath, generateClassFeatSeeds(ref));
       }
     }

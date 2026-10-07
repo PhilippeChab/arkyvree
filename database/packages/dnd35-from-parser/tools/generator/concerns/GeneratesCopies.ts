@@ -1,9 +1,6 @@
 import { join } from "node:path";
 
-import {
-  type BaseGenerator,
-  GENERATED_HEADER,
-} from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { buildCowFeats, buildCowSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/copies.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -15,7 +12,6 @@ export function GeneratesCopies<B extends Constructor<BaseGenerator>>(Base: B) {
     writeCowFeats(book: string) {
       if (!this.copiesFromCore(book)) return;
       const lines = [
-        ...GENERATED_HEADER,
         `import type { CowFeatEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";`,
         ``,
         `export const COW_FEATS: CowFeatEntry[] = [`,
@@ -33,7 +29,6 @@ export function GeneratesCopies<B extends Constructor<BaseGenerator>>(Base: B) {
     writeCowSpells(book: string) {
       if (!this.copiesFromCore(book)) return;
       const lines = [
-        ...GENERATED_HEADER,
         `import type { CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";`,
         ``,
         `export const COW_SPELLS: CowSpellEntry[] = [`,
