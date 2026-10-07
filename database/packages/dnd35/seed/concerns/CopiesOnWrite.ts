@@ -19,7 +19,7 @@ import {
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Copying the core's feats and spells into an extension that changes them. */
 export function CopiesOnWrite<B extends Constructor<BaseSeeder>>(Base: B) {

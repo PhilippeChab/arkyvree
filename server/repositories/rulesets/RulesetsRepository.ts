@@ -20,8 +20,8 @@ import {
   rulesetsInRules,
   starredRulesetsInAccount,
 } from "@/drizzle/schema.ts";
+import { include } from "@/lib/mixins.ts";
 import type { Db } from "@/server/database/index.ts";
-import { include } from "@/server/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 import { Paginates } from "@/server/repositories/concerns/Paginates.ts";

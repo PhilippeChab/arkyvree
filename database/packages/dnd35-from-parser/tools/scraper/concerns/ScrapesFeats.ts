@@ -2,7 +2,7 @@ import References from "@/database/packages/dnd35-from-parser/tools/references/R
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import { FeatPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/FeatPage.ts";
 import { type FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Scraping a book's feats (dndtools.net) into its feat reference. */
 export function ScrapesFeats<B extends Constructor<BaseScraper>>(Base: B) {

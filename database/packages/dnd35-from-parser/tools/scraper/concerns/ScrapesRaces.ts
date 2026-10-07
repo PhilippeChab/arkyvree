@@ -2,7 +2,7 @@ import References from "@/database/packages/dnd35-from-parser/tools/references/R
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import { RacePage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/RacePage.ts";
 import { type RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Scraping a book's races (dndtools.net) into its race reference. */
 export function ScrapesRaces<B extends Constructor<BaseScraper>>(Base: B) {

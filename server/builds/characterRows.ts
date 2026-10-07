@@ -1,3 +1,4 @@
+import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import {
   Campaigns,
@@ -13,7 +14,6 @@ import {
   Players,
   Requirements,
 } from "@/server/repositories/index.ts";
-import type { CharacterRows } from "@/server/rulesets/engine/types.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /**

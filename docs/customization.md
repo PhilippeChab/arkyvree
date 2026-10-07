@@ -87,7 +87,7 @@ requirements: [
 
 Properties are key-value pairs attached to entities via `customization.properties`. They store metadata used by the character engine (e.g., weapon damage dice, armor AC bonus, spell school). See [Auto-Generated Customization](#auto-generated-customization) below for all property types.
 
-A ruleset's property names are constants in `shared/` (`shared/dnd3.5/properties/`), which the engine, the seeds, the parser, the client and the tests import instead of writing the name. Their descriptions and values are there too (`ENTITY_PROPERTY_TYPES`, `getStaticPropertyValues` in `shared/dnd3.5/properties/propertyTypes.ts`), which the ruleset's `Dnd35PropertyTypes` (`server/rulesets/dnd3.5/Dnd35PropertyTypes.ts`) serves the services.
+A ruleset's property names are constants in `shared/` (`shared/dnd3.5/properties/`), which the engine, the seeds, the parser, the client and the tests import instead of writing the name. Their descriptions and values are there too (`ENTITY_PROPERTY_TYPES`, `getStaticPropertyValues` in `shared/dnd3.5/properties/propertyTypes.ts`), which the ruleset's `Dnd35PropertyTypes` (`engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts`) serves the services.
 
 ## Wildcard Patterns
 
@@ -155,7 +155,7 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 ## Auto-Generated Customization
 
-Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from their domain's effects (`server/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts` with `powers/powerFields.ts` and `powers/spellGenerator.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`database/packages/dnd35/content/items/weapons.ts`, `armor.ts`). They're an item's fields: `ItemsRules.readProperties` reads them (`items/itemFields.ts`, which the combat components and the inventory's rules read with too), and `ItemsEffects.properties` says how they're stored. An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
+Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from their domain's effects (`engine/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts` with `powers/powerFields.ts` and `powers/spellGenerator.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`database/packages/dnd35/content/items/weapons.ts`, `armor.ts`). They're an item's fields: `ItemsRules.readProperties` reads them (`items/itemFields.ts`, which the combat components and the inventory's rules read with too), and `ItemsEffects.properties` says how they're stored. An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
 
 Every area's effects take one shape: each says what to write, and the service writes it (`server/services/rulesets/effectWrites.ts`).
 - `properties(id, fields)` gives the fields of the entity's form as its properties, in place of those it stored before (`writeProperties`). Its other properties stay.
@@ -208,7 +208,7 @@ Proficiency requirements (on the item, checked at equip time):
 
 The engine reads a weapon's proficiency of the inventory entry holding it (`areRequirementsMet(…, { sourceId })`), so `weapon.wielded`, like the rest of an item's own weapon's paths (`weapon.tohit.*`, `weapon.damage.*`), is read of that entry. An item held in two places (a dagger in each hand, a bastard sword in two weapon sets) is a weapon in each, each with its own proficiency, and an item's modifier on its weapon behind a gate reaches each weapon whose gate is met there (`sourcesOf`): a bonus gated on `weapon.wielded == mainhand` goes to the main-hand dagger, not the off-hand one. A race's proficiencies are its modifiers: the elf's martial ones (longsword, rapier, longbow and shortbow, composite ones included).
 
-An item's proficiency is its base item's requirements: its template's, or its own when it's a template. An equipped weapon whose proficiency is unmet isn't proficient: −4 to hit, and nothing else (its modifiers still apply). Its own requirements on top of a template, or a plain item's, are its other requirements: unmet, its own modifiers don't apply, and it keeps its proficiency (the loader's `toCustomizedInventory`, `server/rulesets/dnd3.5/loading/customizations.ts`).
+An item's proficiency is its base item's requirements: its template's, or its own when it's a template. An equipped weapon whose proficiency is unmet isn't proficient: −4 to hit, and nothing else (its modifiers still apply). Its own requirements on top of a template, or a plain item's, are its other requirements: unmet, its own modifiers don't apply, and it keeps its proficiency (the loader's `toCustomizedInventory`, `engine/rulesets/dnd3.5/loading/customizations.ts`).
 
 ### Armor (type = "Armor")
 
@@ -262,7 +262,7 @@ On update: changing BAB progression or skill points re-syncs the properties (del
 
 ### Skills
 
-Properties auto-generated from the skill form's fields in `SkillsEffects.properties()`. They're a skill's fields: `SkillsRules.readProperties` reads them (`readSkillFields` in `server/rulesets/dnd3.5/skills/skillFields.ts`, which the skill API and the engine read with too), and the core rules' seeder writes them with `toSkillProperties`, as the effects do:
+Properties auto-generated from the skill form's fields in `SkillsEffects.properties()`. They're a skill's fields: `SkillsRules.readProperties` reads them (`readSkillFields` in `engine/rulesets/dnd3.5/skills/skillFields.ts`, which the skill API and the engine read with too), and the core rules' seeder writes them with `toSkillProperties`, as the effects do:
 - `SKILL_IMPACTED_BY_WEIGHT` — whether armor check penalty applies
 - `SKILL_CHECK_PENALTY_MULTIPLIER` — how many times over a skill armor weighs on takes the penalty (2 on Swim; absent means 1)
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed

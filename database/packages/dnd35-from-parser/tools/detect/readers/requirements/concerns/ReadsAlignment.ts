@@ -1,7 +1,7 @@
 import type { BaseRequirementReading } from "@/database/packages/dnd35-from-parser/tools/detect/readers/requirements/BaseRequirementReading.ts";
 import { eqStr, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** The nine alignments, lowercased: what a prerequisite names one by ("neutral" is true neutral). */
 const ALIGNMENT_NAMES = [

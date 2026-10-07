@@ -96,6 +96,7 @@ const ROUTE_METHODS = new Set(["get", "post", "put", "patch", "delete", "route"]
 const RUNTIME_FREE_TREES = [
   ["shared/", "`shared/` runs in the client too"],
   ["engine/", "`engine/` computes over the data it's given"],
+  ["lib/", "`lib/` is what the engine shares with the server"],
 ];
 
 /** Each test area and the source tree it mirrors. */

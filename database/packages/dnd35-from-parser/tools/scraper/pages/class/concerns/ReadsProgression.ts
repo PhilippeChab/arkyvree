@@ -4,7 +4,7 @@ import { type AnyNode } from "domhandler";
 import { type DndToolsPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/DndToolsPage.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Split a Special column value on commas/periods, but not inside parentheses. */
 function splitSpecial(text: string): string[] {

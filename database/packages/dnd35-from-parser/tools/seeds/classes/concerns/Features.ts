@@ -5,7 +5,7 @@ import {
   isPluralVariantOf,
 } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Build a map from pool parent variant names (lowercase) → mapping seedName.
  *  Used to resolve occurrences like "Special Ability" to "Special Abilities (Rogue)". */

@@ -1,7 +1,7 @@
+import type { DetailedCharacterInterface } from "@/engine/core/module/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
-import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 import type { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character } from "@/shared/relations.ts";

@@ -2,6 +2,8 @@ import { afterEach, expect, test } from "bun:test";
 
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
+import AbilitiesComponent from "@/engine/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
+import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
@@ -21,8 +23,6 @@ import {
   type RulesetEntityType,
   Rulesets,
 } from "@/server/repositories/index.ts";
-import AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
-import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";

@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { buildBondedMap, buildFullCharacterResponse, redactPrivateNotes } from "@/engine/rulesets/dnd3.5/index.ts";
 import { denyDemoUser, exportRateLimit, type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
-import { buildBondedMap, buildFullCharacterResponse, redactPrivateNotes } from "@/server/rulesets/dnd3.5/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 
 const characterParams = idParam.extend({ characterId: z.string().uuid() });

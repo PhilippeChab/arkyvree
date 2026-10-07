@@ -2,7 +2,7 @@ import References from "@/database/packages/dnd35-from-parser/tools/references/R
 import { BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import { ClassPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/class/ClassPage.ts";
 import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Scraping a book's classes (dndtools.net): a reference per class. */
 export function ScrapesClasses<B extends Constructor<BaseScraper>>(Base: B) {

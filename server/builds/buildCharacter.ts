@@ -1,7 +1,7 @@
+import type { CharacterRows, DetailedCharacterInterface } from "@/engine/core/module/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db, memoizeRequest, withCowContext } from "@/server/database/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
-import type { CharacterRows, DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import { readCharacterRows } from "./characterRows.ts";

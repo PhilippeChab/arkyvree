@@ -1,7 +1,7 @@
 import { type BaseBookGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseBookGenerator.ts";
 import { ClassFiles } from "@/database/packages/dnd35-from-parser/tools/generator/ClassFiles.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Generating a book's classes: each class's file and its feats'. */
 export function GeneratesClasses<B extends Constructor<BaseBookGenerator>>(Base: B) {

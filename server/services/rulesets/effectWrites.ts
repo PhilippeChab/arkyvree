@@ -1,15 +1,15 @@
-import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
-import type { Db } from "@/server/database/index.ts";
-import { ConflictError } from "@/server/errors/index.ts";
-import { Feats, FeatsAptitudes, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import type {
   FeatsEffects,
   GeneratedFeatRemoval,
   GeneratedFeatsWrite,
   PropertiesWrite,
   RequirementWrite,
-} from "@/server/rulesets/engine/module/index.ts";
+} from "@/engine/core/module/index.ts";
+import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
+import type { Db } from "@/server/database/index.ts";
+import { ConflictError } from "@/server/errors/index.ts";
+import { Feats, FeatsAptitudes, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 
 /** Whether the scope's ruleset or its chain has a feat of this name: one a write makes is made once. */
 async function isFeatPresent(tx: Db, scope: RulesetScope, name: string) {

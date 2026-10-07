@@ -1,6 +1,6 @@
+import type { Constructor } from "@/lib/mixins.ts";
 import { findScopedEntity, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import type { Constructor } from "@/server/mixins.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { Modifier } from "@/shared/relations.ts";
 

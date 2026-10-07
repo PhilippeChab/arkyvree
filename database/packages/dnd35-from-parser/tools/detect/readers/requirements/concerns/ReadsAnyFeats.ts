@@ -2,7 +2,7 @@ import type { BaseRequirementReading } from "@/database/packages/dnd35-from-pars
 import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/numbers.ts";
 import { eq, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

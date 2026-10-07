@@ -10,9 +10,9 @@ import {
   savesInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
-import type { Constructor } from "@/server/mixins.ts";
-import { toRulesetProperties } from "@/server/rulesets/dnd3.5/ruleset/rulesetFields.ts";
-import { toSkillProperties } from "@/server/rulesets/dnd3.5/skills/skillFields.ts";
+import { toRulesetProperties } from "@/engine/rulesets/dnd3.5/ruleset/rulesetFields.ts";
+import { toSkillProperties } from "@/engine/rulesets/dnd3.5/skills/skillFields.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding a base ruleset's own rules: its abilities, saves, skills and languages. */
 export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {

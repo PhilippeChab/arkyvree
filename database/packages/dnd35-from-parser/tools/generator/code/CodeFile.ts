@@ -1,4 +1,4 @@
-import { include } from "@/server/mixins.ts";
+import { include } from "@/lib/mixins.ts";
 
 import { BaseCodeFile } from "./BaseCodeFile.ts";
 import { WritesClasses } from "./concerns/WritesClasses.ts";

@@ -1,6 +1,6 @@
 import { type BaseBookGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseBookGenerator.ts";
 import BookLayout from "@/database/packages/dnd35-from-parser/tools/generator/BookLayout.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Generating what a book copies from the core rules: its copied feats (cowFeats.ts) and spells (cowSpells.ts). */
 export function GeneratesCopies<B extends Constructor<BaseBookGenerator>>(Base: B) {

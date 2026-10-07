@@ -1,4 +1,4 @@
-import { include } from "@/server/mixins.ts";
+import { include } from "@/lib/mixins.ts";
 
 import { BaseScraper } from "./BaseScraper.ts";
 import { ScrapesClasses } from "./concerns/ScrapesClasses.ts";

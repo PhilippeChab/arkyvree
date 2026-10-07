@@ -2,7 +2,7 @@ import References from "@/database/packages/dnd35-from-parser/tools/references/R
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import { SpellPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/SpellPage.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Scraping a book's spells (dndtools.net) into its spell reference. */
 export function ScrapesSpells<B extends Constructor<BaseScraper>>(Base: B) {

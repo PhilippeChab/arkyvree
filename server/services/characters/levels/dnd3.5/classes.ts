@@ -9,8 +9,8 @@
  */
 
 import type { RulesetData } from "@/engine/core/view/index.ts";
+import { isSkillSubtypeOf } from "@/engine/rulesets/dnd3.5/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
-import { isSkillSubtypeOf } from "@/server/rulesets/dnd3.5/index.ts";
 
 /** The skills class skill records make class skills: theirs, and the ruleset's subtypes of them ("Craft (…)" of Craft). */
 export function getClassSkillIds(

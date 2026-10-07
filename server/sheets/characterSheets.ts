@@ -1,5 +1,5 @@
+import type { CharacterKind } from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
-import type { CharacterKind } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";

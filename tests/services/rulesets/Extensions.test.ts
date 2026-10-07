@@ -10,6 +10,7 @@ import {
   DND35_DMG_NAME,
 } from "@/database/packages/dnd35/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
+import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
@@ -39,7 +40,6 @@ import {
   Saves,
   Skills,
 } from "@/server/repositories/index.ts";
-import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { getListPowerIds } from "@/server/services/rulesets/aptitudes/listMembers.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";

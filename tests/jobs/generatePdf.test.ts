@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { Exports, Modifiers, Notifications, Requirements } from "@/server/repositories/index.ts";
-import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { buildCharacterSheet } from "@/server/sheets/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { silentJobHelpers } from "@/tests/support/jobs.ts";

@@ -13,9 +13,9 @@ import {
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import type { Constructor } from "@/server/mixins.ts";
-import { toClassProperties } from "@/server/rulesets/dnd3.5/classes/classFields.ts";
-import { toClassLevelProperties } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";
+import { toClassProperties } from "@/engine/rulesets/dnd3.5/classes/classFields.ts";
+import { toClassLevelProperties } from "@/engine/rulesets/dnd3.5/classes/classLevelFields.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A class's levels, as seeded: each level's id and number. */

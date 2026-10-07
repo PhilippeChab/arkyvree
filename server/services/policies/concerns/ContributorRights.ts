@@ -1,5 +1,5 @@
+import type { Constructor } from "@/lib/mixins.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import type { Constructor } from "@/server/mixins.ts";
 import type RulesetRoles from "@/server/services/policies/RulesetRoles.ts";
 
 /** Who may see and manage a ruleset's contributors. */

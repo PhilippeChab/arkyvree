@@ -3,7 +3,7 @@ import { type DndToolsPage } from "@/database/packages/dnd35-from-parser/tools/s
 import { Page } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/Page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Reading a prestige class's prerequisites: its page's Requirements section, and what its text asks. */
 export function ReadsPrerequisites<B extends Constructor<DndToolsPage>>(Base: B) {

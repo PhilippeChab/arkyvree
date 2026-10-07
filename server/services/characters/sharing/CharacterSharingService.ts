@@ -1,11 +1,11 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
+import type { CharacterKind } from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Characters } from "@/server/repositories/index.ts";
-import type { CharacterKind } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { loadBondedByKind } from "@/server/services/characters/bonded.ts";

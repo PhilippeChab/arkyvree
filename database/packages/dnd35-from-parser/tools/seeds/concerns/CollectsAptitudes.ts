@@ -4,7 +4,7 @@ import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/vocabular
 import { CLERIC_DOMAIN, specialistSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { buildCoreFeats } from "@/database/packages/dnd35/data/feats/coreFeats.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** Collecting the aptitudes a book's seeds use. */

@@ -1,11 +1,10 @@
 import { baseRules } from "@/drizzle/schema.ts";
+import type { RulesetModule } from "@/engine/core/module/index.ts";
+import { createRulesetModule as createDnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-
-import { createRulesetModule as createDnd35Module } from "./dnd3.5/index.ts";
-import type { RulesetModule } from "./engine/types.ts";
 
 /**
  * Each base rules' module, built once: a module keeps no state (its rules and effects are fieldless, its factories make

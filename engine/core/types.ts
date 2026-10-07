@@ -111,7 +111,7 @@ export type InventoryEntry = CharacterInventory & {
  *
  * Ruleset-specific methods (skill budgets, spell schools, skill-points-per-
  * level, class-skill enrichment, …) live on per-ruleset extensions, e.g.
- * `Dnd35LevelUpProjector` in `server/rulesets/dnd3.5/types.ts`.
+ * `Dnd35LevelUpProjector` in `engine/rulesets/dnd3.5/types.ts`.
  */
 export interface LevelUpProjector {
   /** Evaluate whether candidate klass levels' requirements are met against
@@ -163,7 +163,7 @@ export interface LoadedCharacterData {
  * concepts common to every level-based system (character levels + feats).
  * Ruleset-specific projections (skill ranks, spell levels, save DCs, …) live
  * on per-ruleset extensions — e.g. `Dnd35ProjectedCharacterData` in
- * `server/rulesets/dnd3.5/types.ts`.
+ * `engine/rulesets/dnd3.5/types.ts`.
  */
 export interface ProjectedCharacterData {
   characterLevels?: ProjectedCharacterLevel[];

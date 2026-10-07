@@ -1,6 +1,6 @@
 import type { BaseRequirementReading } from "@/database/packages/dnd35-from-parser/tools/detect/readers/requirements/BaseRequirementReading.ts";
 import { findOptionName, getFeatOptions } from "@/database/packages/dnd35-from-parser/tools/vocabulary/featOptions.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /**

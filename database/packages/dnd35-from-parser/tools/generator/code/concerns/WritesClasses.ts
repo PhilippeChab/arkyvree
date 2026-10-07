@@ -1,7 +1,7 @@
 import BookLayout from "@/database/packages/dnd35-from-parser/tools/generator/BookLayout.ts";
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Writing a class: its seed, field by field, as the list its file exports. */
 export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {

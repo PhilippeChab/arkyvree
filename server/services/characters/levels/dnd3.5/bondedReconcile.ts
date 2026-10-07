@@ -1,8 +1,8 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
+import { type Dnd35DetailedCharacter, getBondedRaceStats } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterAbilities, CharacterLevels, Characters } from "@/server/repositories/index.ts";
-import { type Dnd35DetailedCharacter, getBondedRaceStats } from "@/server/rulesets/dnd3.5/index.ts";
 import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character } from "@/shared/relations.ts";
 

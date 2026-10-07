@@ -1,6 +1,6 @@
 import type { Column, SQL, Table } from "drizzle-orm";
 
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 export type Paginated<T> = {

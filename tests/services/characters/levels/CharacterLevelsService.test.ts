@@ -10,6 +10,7 @@ import {
   powersInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
+import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
@@ -34,7 +35,6 @@ import {
   Requirements,
   Skills,
 } from "@/server/repositories/index.ts";
-import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";

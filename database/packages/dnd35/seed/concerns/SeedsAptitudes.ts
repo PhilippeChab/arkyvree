@@ -1,6 +1,6 @@
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { aptitudesInRules } from "@/drizzle/schema.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding aptitudes. */
 export function SeedsAptitudes<B extends Constructor<BaseSeeder>>(Base: B) {

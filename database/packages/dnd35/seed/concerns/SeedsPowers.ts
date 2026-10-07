@@ -1,7 +1,7 @@
 import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { powersAptitudesInRules, powersInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** A saving throw as its save and effect: "Will negates" is Will, "negates". Text that names no save is all effect. */
 function parseSavingThrow(savingThrow: string | undefined, saveMap: Record<string, string>) {

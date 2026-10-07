@@ -5,7 +5,7 @@ import BookLayout, {
   type BookPart,
 } from "@/database/packages/dnd35-from-parser/tools/generator/BookLayout.ts";
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Writing a book's indexes, each of the lists of the files beside it, and the book's own index. */
 export function WritesIndexes<B extends Constructor<BaseCodeFile>>(Base: B) {

@@ -48,14 +48,13 @@ describe("architecture rules", () => {
         "server/cache/c.ts": 'import { w } from "@/server/cow/index.ts";\nexport const c = w;\n',
         "server/cow/w.ts": 'import { s } from "@/server/services/s.ts";\nexport const w = s;\n',
         "server/rulesets/e.ts": 'import { w } from "@/server/cow/index.ts";\nexport const e = w;\n',
-        // The engine's machinery names no ruleset, not even for a type; a ruleset builds on the machinery
-        "server/rulesets/engine/m.ts":
-          'import type { C } from "@/server/rulesets/dnd3.5/index.ts";\nexport type M = C;\n',
-        "server/rulesets/dnd3.5/r.ts": 'import type { M } from "@/server/rulesets/engine/m.ts";\nexport type R = M;\n',
-        "server/rulesets/engine/f.ts":
-          'import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";\nexport const f = RulesetFactory;\n',
-        "server/rulesets/engine/paths/p.ts":
-          'import type { M } from "@/server/rulesets/engine/m.ts";\nexport type P = M;\n',
+        // The engine's machinery names no ruleset, not even for a type; a ruleset builds on the machinery and lib/
+        "engine/core/module/m.ts": 'import type { C } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type M = C;\n',
+        "engine/rulesets/dnd3.5/r.ts": 'import type { M } from "@/engine/core/module/m.ts";\nexport type R = M;\n',
+        "engine/rulesets/dnd3.5/i.ts": 'import { include } from "@/lib/mixins.ts";\nexport const i = include;\n',
+        // lib/ imports nothing of the app
+        "lib/l.ts":
+          'import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";\nexport const l = RulesetFactory;\n',
         "shared/s.ts": 'import type { T } from "@/drizzle/schema.ts";\nexport type S = T;\n',
         // The engine reads nothing itself: neither the server nor the database, and the schema for its types alone
         "engine/core/view/v.ts": 'import { db } from "@/server/database/index.ts";\nexport const v = db;\n',
@@ -81,14 +80,14 @@ describe("architecture rules", () => {
       "layers client/src/w.ts",
       "layers database/packages/dnd35/content/d.ts",
       "layers database/packages/dnd35/content/s.ts",
+      "layers engine/core/module/m.ts",
       "layers engine/core/view/r.ts",
       "layers engine/core/view/v.ts",
+      "layers lib/l.ts",
       "layers server/cache/c.ts",
       "layers server/cow/w.ts",
       "layers server/database/d.ts",
       "layers server/repositories/A.ts",
-      "layers server/rulesets/engine/f.ts",
-      "layers server/rulesets/engine/m.ts",
       "layers server/services/s.ts",
     ]);
   });

@@ -2,7 +2,7 @@ import type { BaseClassDetector } from "@/database/packages/dnd35-from-parser/to
 import { FeatureText } from "@/database/packages/dnd35-from-parser/tools/detect/classes/FeatureText.ts";
 import { stripOrdinalPrefix } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { type AptitudePick } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** Description patterns that indicate gameplay/tactical choices, not character-build picks.

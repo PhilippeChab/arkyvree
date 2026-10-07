@@ -12,7 +12,7 @@
 
 import { DndToolsPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/DndToolsPage.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import { include } from "@/server/mixins.ts";
+import { include } from "@/lib/mixins.ts";
 
 import { ReadsFeatures } from "./concerns/ReadsFeatures.ts";
 import { ReadsPrerequisites } from "./concerns/ReadsPrerequisites.ts";

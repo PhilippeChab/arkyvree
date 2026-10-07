@@ -1,6 +1,6 @@
 import { eq, type SQL, type Table } from "drizzle-orm";
 
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** An edit that applies only to the version of the row it started from. */

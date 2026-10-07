@@ -1,6 +1,6 @@
 import type { BaseClassSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/BaseClassSeeds.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** A table cell's number: "+10 ft." is 10, "−2" (a typographic minus) is -2, a dash none. */
 function cellNumber(cell: string) {

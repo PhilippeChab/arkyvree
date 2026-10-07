@@ -4,12 +4,12 @@ import { ABILITY_NAMES } from "@/database/packages/dnd35-from-parser/tools/vocab
 import { SAVE_NAMES } from "@/database/packages/dnd35-from-parser/tools/vocabulary/saves.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
-import AbilitiesPaths from "@/server/rulesets/dnd3.5/abilities/AbilitiesPaths.ts";
-import CombatPaths from "@/server/rulesets/dnd3.5/combat/CombatPaths.ts";
-import WeaponPaths from "@/server/rulesets/dnd3.5/combat/WeaponPaths.ts";
-import IdentityPaths from "@/server/rulesets/dnd3.5/identity/IdentityPaths.ts";
-import SavesPaths from "@/server/rulesets/dnd3.5/saves/SavesPaths.ts";
-import SkillsPaths from "@/server/rulesets/dnd3.5/skills/SkillsPaths.ts";
+import AbilitiesPaths from "@/engine/rulesets/dnd3.5/abilities/AbilitiesPaths.ts";
+import CombatPaths from "@/engine/rulesets/dnd3.5/combat/CombatPaths.ts";
+import WeaponPaths from "@/engine/rulesets/dnd3.5/combat/WeaponPaths.ts";
+import IdentityPaths from "@/engine/rulesets/dnd3.5/identity/IdentityPaths.ts";
+import SavesPaths from "@/engine/rulesets/dnd3.5/saves/SavesPaths.ts";
+import SkillsPaths from "@/engine/rulesets/dnd3.5/skills/SkillsPaths.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /**

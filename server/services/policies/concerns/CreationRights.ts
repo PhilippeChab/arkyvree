@@ -1,5 +1,5 @@
+import type { Constructor } from "@/lib/mixins.ts";
 import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import type { Constructor } from "@/server/mixins.ts";
 import type RulesetRoles from "@/server/services/policies/RulesetRoles.ts";
 
 /** Who may create a campaign or a character on a ruleset. */

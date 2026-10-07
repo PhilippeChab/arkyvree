@@ -7,11 +7,11 @@
  * - annotateRequirements — attaches eligibility and requirement tree info to candidate entities
  */
 
+import type { DetailedCharacterInterface } from "@/engine/core/module/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterLevelFeats } from "@/server/repositories/index.ts";
-import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 
 import { loadFeatCustomizations } from "./projection.ts";
 
