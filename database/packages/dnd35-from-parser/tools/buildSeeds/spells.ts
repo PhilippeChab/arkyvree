@@ -4,7 +4,7 @@ import {
   getInheritedLevel,
   getInheritedLists,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
-import ClassSpellMaps from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classSpellMaps.ts";
+import ClassSpellMaps from "@/database/packages/dnd35-from-parser/tools/buildSeeds/ClassSpellMaps.ts";
 import { listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { normalizeDescription, normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";

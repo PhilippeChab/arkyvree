@@ -9,12 +9,12 @@ import type Dnd35DetailedCharacterBonded from "./bonded/DetailedCharacterBonded.
 import Dnd35DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.ts";
 import Dnd35DetailedCharacterMount from "./bonded/DetailedCharacterMount.ts";
 import Dnd35DetailedCharacter from "./character/DetailedCharacter.ts";
-import Dnd35LevelUpProjector from "./character/LevelUpProjector.ts";
+import Dnd35LevelUpProjector from "./character/Dnd35LevelUpProjector.ts";
+import Dnd35PropertyTypes from "./Dnd35PropertyTypes.ts";
+import Dnd35TargetPaths from "./Dnd35TargetPaths.ts";
 import { seedTemplateItems } from "./items/seedTemplateItems.ts";
-import Dnd35PropertyTypes from "./PropertyTypes.ts";
 import { createServiceHooks } from "./serviceHooks.ts";
 import Dnd35DetailedCharacterSheet from "./sheet/DetailedCharacterSheet.tsx";
-import Dnd35TargetPaths from "./TargetPaths.ts";
 
 function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35DetailedCharacterBonded | null {
   switch (kind) {

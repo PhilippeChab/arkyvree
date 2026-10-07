@@ -1,4 +1,4 @@
-import { ApiError } from "@/client/src/services/apiError.ts";
+import { ApiError } from "@/client/src/services/ApiError.ts";
 
 /** The record is gone or no longer visible to this viewer (404 / 403), not a passing failure. */
 export function accessLost(error: unknown): boolean {

@@ -162,7 +162,7 @@ Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`,
 - **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`RulesetCache.getCowData`, `EntityCopy`) and target-path cache keys.
 - **Scope internals** (`withRulesetScope` wiring): `RulesetCache.getData`, which gets its `CowData` (`RulesetCache.getCowData`); `RulesetCache.invalidate*` drop it with the rest.
 - **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `CowData.resolveRows`, then the engine's `refreshEntityData` (`rulesets/dnd3.5/loading/refreshEntityData.ts`) takes the view's fields (a name, a description) for the row the id now names.
-- **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `RulesetCache.getRawData`, `RulesetCache.isRawDataPinned`.
+- **Raw-tier test probes** (`tests/cache/rulesetCache/RulesetCache.test.ts`): `RulesetCache.getRawData`, `RulesetCache.isRawDataPinned`.
 - **AsyncLocalStorage wiring**: `withCowContext`, `getCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy, `idMatches` (`ResolvesCopies`) and a ruleset entity list's sibling losers (`ScopesToRuleset`).
 
 ## Ruleset Cache
@@ -481,7 +481,7 @@ sequenceDiagram
 5. Add a `<entity>ById` getter to `RulesetData`, like `featsById`: built on first read (`this.built.<entity>ById ??= …`) from `buildById(this.<entities>)` **and** wrapped with `this.resolvingIds(map)` so `.get` auto-resolves stored pre-COW ids.
 6. If callers need a filter like "X by Y", add that index as a getter too, wrapped the same way.
 7. If the entity carries inline join arrays (like `powersAptitudesInRules`), remap the nested ids in the compose step too — `CowData.resolveRows` only touches top-level fields.
-8. Update `tests/cache/rulesetCache.test.ts` with a smoke test (the existing compose+invalidation patterns are copy-paste templates); include a COW-fork assertion so regressions in the auto-resolve path are caught.
+8. Update `tests/cache/rulesetCache/RulesetCache.test.ts` with a smoke test (the existing compose+invalidation patterns are copy-paste templates); include a COW-fork assertion so regressions in the auto-resolve path are caught.
 9. Migrate callers: `Repo.findOne(db, { id })` inside a `withRulesetScope` → `rulesetData.<entity>ById.get(id)`. No canonicalize needed — the wrapper handles it. Either access pattern works; the cache Map is preferred when you already have `rulesetData` in scope.
 
 ## A repository method's verb
@@ -504,7 +504,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `server/rulesets/dnd3.5/character/AbstractDetailedCharacter.ts` — `build()` wraps in `withRulesetScope` and hands preloaded ruleset data to the data loader
 - `server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts` — requires `PreloadedRulesetData`; never fetches ruleset-level state itself
 - `server/timing.ts` — hit/miss counters surfaced in request logs
-- `tests/cache/rulesetCache.test.ts` — compose + invalidation + pinning semantics + COW-fork auto-resolve
+- `tests/cache/rulesetCache/RulesetCache.test.ts` — compose + invalidation + pinning semantics + COW-fork auto-resolve
 - `tests/cache/joinMaps.test.ts` — accessor-map parity with replaced repo queries
 - `tests/cache/requestCache.test.ts` — dedup semantics + tx bypass + post-mutation invalidation
 - `tests/services/characters/levels/CharacterLevelsService.test.ts` — COW fork regression (wizard prohibited-school feat COW'd)

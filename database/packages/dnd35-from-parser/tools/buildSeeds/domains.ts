@@ -7,7 +7,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
 import { type DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";

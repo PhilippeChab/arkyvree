@@ -72,6 +72,7 @@
     "arkyvree/empty-list-reads": "error",
     "arkyvree/no-null-reads": "error",
     "arkyvree/test-placement": "error",
+    "arkyvree/class-file-names": "error",
     "arkyvree/concern-shape": "error",
     "arkyvree/comment-style": "error",
     "arkyvree/policy-shape": "error",

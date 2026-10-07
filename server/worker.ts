@@ -6,7 +6,7 @@ import { MemoryCache } from "@/server/cache/index.ts";
 import { waitForDatabase } from "@/server/database/index.ts";
 import { readEnv } from "@/server/environment.ts";
 import { createWorkerEvents, createWorkerPool, crontab, taskList, workerLogger } from "@/server/jobs/runner.ts";
-import Shutdown from "@/server/shutdown.ts";
+import Shutdown from "@/server/Shutdown.ts";
 
 async function main() {
   // Web mutations cannot invalidate this process’s in-memory cache. Each job

@@ -20,6 +20,7 @@
 
 - Strict typing enabled
 - PascalCase for components/classes, camelCase for functions, 'use' prefix for hooks
+- A module that declares a class and exports it, or its shared instance (`export default new X()`), is named after the class (`arkyvree/class-file-names`): `FeatsService.ts`, `Telemetry.ts`, `ReferenceLoader.ts`, `Dnd35LevelsHooks.ts`. A module of several classes is named for what groups them (`server/errors/`), and a router's `new Hono()` is another module's class
 - Use `@/` path alias for cross-directory imports, never `../` (`arkyvree/no-parent-imports`: `bun run lint --fix` rewrites one)
 - The server reads its environment through `server/environment.ts`, which lists every variable it reads and what for: `readEnv("APP_URL")`, `isProduction()`, `isTest()`, `isDevelopment()` (`NODE_ENV=development` explicitly: it unmasks errors, so it's never assumed; "not production" is `!isProduction()`). Never `process.env` or `Bun.env` elsewhere in the server or `shared/` (`arkyvree/environment`); a default stays with the code that reads the variable
 - Make sure typescript passes before finishing a task - use tsgo
@@ -128,7 +129,7 @@ Anything that _throws_ on the basis of ownership is a permission check and shoul
 
 **API Layer:**
 
-- RPC client (`client/src/services/rpc.ts`) wraps Hono's `hc` client; its fetch throws `ApiError` (`client/src/services/apiError.ts`) for typed error handling
+- RPC client (`client/src/services/rpc.ts`) wraps Hono's `hc` client; its fetch throws `ApiError` (`client/src/services/ApiError.ts`) for typed error handling
 - `ApiError` includes `status` (HTTP code) and `errorName` (server error class name)
 - The API is called through TanStack Query only: a request is made in a function a query or a mutation runs, named `…Fn` as TanStack's `queryFn` and `mutationFn` are, wherever it's handed (`useRulesetSection`'s `createFn`, an editor's `saveFn`, `CompletionAutocomplete`'s `pageFn`; `arkyvree/api-calls-in-queries`). A request a click makes is a mutation, and a read it needs is `queryClient.fetchQuery`
 - The RPC fetch throws `ApiError` on every non-2xx response, so never check `response.ok`. Read bodies with `parseResponse(rpc.api.x.$get(...))` (from `hono/client`), which also narrows to the success type. To react to a specific status (e.g. show "not found"), catch `ApiError` and test `error.status`

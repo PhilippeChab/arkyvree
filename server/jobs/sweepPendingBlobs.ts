@@ -2,7 +2,7 @@ import type { JobHelpers } from "graphile-worker";
 
 import { db, withTransaction } from "@/server/database/index.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
-import ObjectStorage, { isStorageConfigured } from "@/server/storage/s3.ts";
+import ObjectStorage, { isStorageConfigured } from "@/server/storage/ObjectStorage.ts";
 import { UNATTACHED_BLOB_TTL_MS } from "@/shared/attachments.ts";
 
 interface Logger {

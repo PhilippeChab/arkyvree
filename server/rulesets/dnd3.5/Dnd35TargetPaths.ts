@@ -45,7 +45,7 @@ import ItemsPaths from "./combat/ItemsPaths.ts";
 import WeaponPaths from "./combat/WeaponPaths.ts";
 import FeatsPaths from "./feats/FeatsPaths.ts";
 import IdentityPaths from "./identity/IdentityPaths.ts";
-import { Dnd35LevelsHooks } from "./levels/LevelsHooks.ts";
+import { Dnd35LevelsHooks } from "./levels/Dnd35LevelsHooks.ts";
 import PowersPaths from "./powers/PowersPaths.ts";
 import SavesPaths from "./saves/SavesPaths.ts";
 import SkillsPaths from "./skills/SkillsPaths.ts";

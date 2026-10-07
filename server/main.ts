@@ -6,7 +6,7 @@ import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { waitForDatabase } from "@/server/database/index.ts";
 import { isProduction, readEnv, REQUIRED_IN_PRODUCTION } from "@/server/environment.ts";
 import { application } from "@/server/routers/application.ts";
-import Shutdown from "@/server/shutdown.ts";
+import Shutdown from "@/server/Shutdown.ts";
 import { BroadcastListener } from "@/server/websockets/index.ts";
 
 /** Stops a production start that lacks a variable production needs. */

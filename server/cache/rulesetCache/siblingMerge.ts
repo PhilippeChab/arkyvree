@@ -10,7 +10,7 @@
  * it), unless the winner already holds the same condition.
  */
 
-import RequirementTree, { type RequirementNode } from "@/shared/customization/requirementTree.ts";
+import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 type ModifierKey = Pick<Modifier, "target" | "value" | "operator" | "valueType">;

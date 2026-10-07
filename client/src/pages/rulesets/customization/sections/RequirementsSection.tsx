@@ -34,7 +34,7 @@ import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
-import RequirementTree, { type RequirementNode } from "@/shared/customization/requirementTree.ts";
+import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { SectionAddButton } from "./SectionAddButton.tsx";

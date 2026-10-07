@@ -2,7 +2,7 @@ import { matchMutation, MutationCache, QueryCache, QueryClient } from "@tanstack
 
 import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { ApiError } from "@/client/src/services/apiError.ts";
+import { ApiError } from "@/client/src/services/ApiError.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 /** A 401 signs the session out: the server no longer knows it. */

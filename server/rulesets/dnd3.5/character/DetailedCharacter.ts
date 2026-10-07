@@ -13,11 +13,12 @@ import CombatComponent from "@/server/rulesets/dnd3.5/combat/CombatComponent.ts"
 import EncumbranceComponent from "@/server/rulesets/dnd3.5/combat/EncumbranceComponent.ts";
 import ShieldsComponent from "@/server/rulesets/dnd3.5/combat/ShieldsComponent.ts";
 import WeaponsComponent from "@/server/rulesets/dnd3.5/combat/WeaponsComponent.ts";
+import TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import FeatGroupingsComponent from "@/server/rulesets/dnd3.5/feats/FeatGroupingsComponent.ts";
 import FeatsComponent from "@/server/rulesets/dnd3.5/feats/FeatsComponent.ts";
 import IdentityComponent from "@/server/rulesets/dnd3.5/identity/IdentityComponent.ts";
 import InventoryComponent from "@/server/rulesets/dnd3.5/items/InventoryComponent.ts";
-import { Dnd35LevelsHooks } from "@/server/rulesets/dnd3.5/levels/LevelsHooks.ts";
+import { Dnd35LevelsHooks } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsHooks.ts";
 import DetailedCharacterDataLoader, {
   type Dnd35LoadedCharacterData,
 } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
@@ -26,7 +27,6 @@ import PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts"
 import SavingThrowsComponent from "@/server/rulesets/dnd3.5/saves/SavingThrowsComponent.ts";
 import SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
 import SpellcastingComponent from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingComponent.ts";
-import TargetPaths from "@/server/rulesets/dnd3.5/TargetPaths.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import type { SkillFlags } from "@/server/rulesets/engine/hooks/index.ts";
 import ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";

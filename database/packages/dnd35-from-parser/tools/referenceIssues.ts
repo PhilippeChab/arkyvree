@@ -3,7 +3,7 @@ import { getSeededMagicItems } from "@/database/packages/dnd35-from-parser/tools
 import { getSeededRaces, getSkippedRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
 import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/checkOverrides.ts";
 import { type listReferenceFiles } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
 import { readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { findUnresolvedItems } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";

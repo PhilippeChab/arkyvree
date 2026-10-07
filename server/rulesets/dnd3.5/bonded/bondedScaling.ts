@@ -1,4 +1,4 @@
-import { Dnd35LevelsHooks } from "@/server/rulesets/dnd3.5/levels/LevelsHooks.ts";
+import { Dnd35LevelsHooks } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsHooks.ts";
 
 import type { BondedRaceStatBlock } from "./bondedRaceData.ts";
 

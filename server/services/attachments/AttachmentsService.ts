@@ -4,7 +4,7 @@ import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { readEnv } from "@/server/environment.ts";
 import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
-import ObjectStorage from "@/server/storage/s3.ts";
+import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
 

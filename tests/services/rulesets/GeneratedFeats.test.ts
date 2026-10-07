@@ -16,7 +16,7 @@ import {
   Rulesets,
   Skills,
 } from "@/server/repositories/index.ts";
-import { Dnd35SkillsHooks } from "@/server/rulesets/dnd3.5/skills/SkillsHooks.ts";
+import { Dnd35SkillsHooks } from "@/server/rulesets/dnd3.5/skills/Dnd35SkillsHooks.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";

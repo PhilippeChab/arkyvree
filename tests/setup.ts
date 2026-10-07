@@ -10,7 +10,7 @@ import type { NodePgClient } from "drizzle-orm/node-postgres";
 import type { PoolClient } from "pg";
 
 import { createTestDbFromClient, createTestPool, setTestDb } from "@/server/database/test.ts";
-import ObjectStorage from "@/server/storage/s3.ts";
+import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { forgetSeededRulesetWrites } from "@/tests/support/rulesets.ts";
 import { fakeStorage } from "@/tests/support/storage.ts";
 
