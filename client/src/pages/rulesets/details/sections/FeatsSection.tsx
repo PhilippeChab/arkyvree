@@ -2,13 +2,11 @@ import {
   Box,
   Button,
   Chip,
-  Paper,
   Skeleton,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   ToggleButton,
@@ -30,6 +28,7 @@ import {
   NoMatchesState,
   SearchBar,
   SectionContent,
+  TableFrame,
   toggleProps,
 } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
@@ -282,12 +281,12 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const renderGroupedTable = () => {
     if (groupedQuery.isLoading) {
       return (
-        <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_LOADING_SX}>
+        <TableFrame sx={TABLE_CONTAINER_LOADING_SX}>
           <Table sx={TABLE_SX}>
             <TableHead>
               <TableRow>
                 {GROUPED_COLUMNS.map((col) => (
-                  <TableCell key={col.key} sx={{ width: col.width, fontWeight: 600 }}>
+                  <TableCell key={col.key} sx={{ width: col.width }}>
                     {col.label}
                   </TableCell>
                 ))}
@@ -305,7 +304,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </TableFrame>
       );
     }
 
@@ -322,12 +321,12 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     let rowIndex = 0;
 
     return (
-      <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_SX}>
+      <TableFrame sx={TABLE_CONTAINER_SX}>
         <Table sx={TABLE_SX}>
           <TableHead>
             <TableRow>
               {GROUPED_COLUMNS.map((col) => (
-                <TableCell key={col.key} sx={{ width: col.width, fontWeight: 600 }}>
+                <TableCell key={col.key} sx={{ width: col.width }}>
                   {col.label}
                 </TableCell>
               ))}
@@ -358,7 +357,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             })}
           </TableBody>
         </Table>
-      </TableContainer>
+      </TableFrame>
     );
   };
 

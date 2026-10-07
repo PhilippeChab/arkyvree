@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 import {
   AddButton,
-  BlankState,
+  BlankNote,
   ConfirmDialog,
   DialogFooter,
   DiceSpinner,
@@ -15,7 +15,7 @@ import {
   Modal,
 } from "@/client/src/components/common/index.ts";
 import { ContributorsTable, InviteContributorDialog } from "@/client/src/components/contributors/index.ts";
-import { ContributorsIcon, DeleteIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
+import { DeleteIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState } from "@/client/src/hooks/index.ts";
 import { firstPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -123,20 +123,12 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
               ) : error ? (
                 <LoadError what="Contributors" error={error} />
               ) : contributors.length === 0 && !owner ? (
-                <BlankState
-                  icon={ContributorsIcon}
-                  title="No contributors yet"
-                  description={
-                    canInvite
-                      ? "Invite collaborators to help maintain this character."
-                      : "This character has no other contributors."
-                  }
-                  action={
-                    canInvite ? (
-                      <AddButton variant="outlined" label="Invite a Contributor" onClick={() => setInviteOpen(true)} />
-                    ) : undefined
-                  }
-                />
+                <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+                  <BlankNote>No contributors yet</BlankNote>
+                  {canInvite && (
+                    <AddButton variant="outlined" label="Invite a Contributor" onClick={() => setInviteOpen(true)} />
+                  )}
+                </Stack>
               ) : (
                 <Stack spacing={2}>
                   <ContributorsTable

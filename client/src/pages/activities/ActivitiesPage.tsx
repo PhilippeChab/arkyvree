@@ -2,12 +2,10 @@ import {
   Box,
   Chip,
   Container,
-  Paper,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Tooltip,
@@ -20,14 +18,15 @@ import {
   CLICKABLE_SX,
   clickableProps,
   CREATED_SORTS,
-  DiceSpinner,
   LoadError,
   LoadMoreButton,
   NoMatchesState,
   PageHeader,
+  PageLoader,
   PageTransition,
   SearchBar,
   type SortOption,
+  TableFrame,
 } from "@/client/src/components/common/index.ts";
 import { HistoryIcon } from "@/client/src/components/icons/index.ts";
 import { isNavigableTarget, useListParams, useOpenActivityTarget, usePageTitle } from "@/client/src/hooks/index.ts";
@@ -72,22 +71,18 @@ export default function ActivitiesPage() {
             />
 
             {isLoading ? (
-              <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
+              <PageLoader />
             ) : error ? (
               <LoadError what="Activity logs" error={error} />
             ) : activities.length > 0 ? (
               // With nothing more to load, the page ends three units below the table, as the table's margin left it
               <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>
-                <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+                <TableFrame>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>
-                          <strong>Action</strong>
-                        </TableCell>
-                        <TableCell>
-                          <strong>Date</strong>
-                        </TableCell>
+                        <TableCell>Action</TableCell>
+                        <TableCell>Date</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -125,7 +120,7 @@ export default function ActivitiesPage() {
                       })}
                     </TableBody>
                   </Table>
-                </TableContainer>
+                </TableFrame>
 
                 <LoadMoreButton
                   size="large"

@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import {
   BlankState,
   CREATED_SORTS,
-  DiceSpinner,
   type FilterOption,
   InfoPill,
   ListCard,
@@ -16,6 +15,7 @@ import {
   NoMatchesState,
   PageActionButton,
   PageHeader,
+  PageLoader,
   PageTransition,
   SearchBar,
   type SortOption,
@@ -96,7 +96,7 @@ export default function CampaignsPage() {
           />
 
           {isLoading ? (
-            <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
+            <PageLoader />
           ) : error ? (
             <LoadError what="Campaigns" error={error} />
           ) : campaigns.length > 0 ? (

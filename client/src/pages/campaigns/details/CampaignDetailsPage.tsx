@@ -9,8 +9,8 @@ import {
   ConfirmDialog,
   DeleteDialog,
   DetailPageHeader,
-  DiceSpinner,
   PageError,
+  PageLoader,
   PageTransition,
   type SectionTab,
   SectionTabs,
@@ -123,7 +123,7 @@ export default function CampaignDetailsPage() {
   if (isLoading) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <DiceSpinner sx={{ minHeight: 400 }} />
+        <PageLoader />
       </Container>
     );
   }

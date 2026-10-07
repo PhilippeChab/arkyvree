@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ElementType } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { DiceSpinner, GoldDivider, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
+import { GoldDivider, LoadError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
 import { FaqIcon, MapIcon, PersonIcon, RulesetIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
@@ -100,7 +100,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <DiceSpinner size="large" sx={{ minHeight: "80vh" }} />
+        <PageLoader />
       </Container>
     );
   }

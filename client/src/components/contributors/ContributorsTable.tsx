@@ -1,18 +1,7 @@
-import {
-  Chip,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
+import { Chip, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/common/index.ts";
+import { ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX, TableFrame } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 interface ContributorRow {
@@ -79,7 +68,7 @@ export function ContributorsTable<T extends ContributorRow>({
   );
 
   return (
-    <TableContainer component={Paper} variant="outlined">
+    <TableFrame>
       <Table size={isMobile ? "small" : "medium"}>
         <TableHead>
           <TableRow>
@@ -150,6 +139,6 @@ export function ContributorsTable<T extends ContributorRow>({
           ))}
         </TableBody>
       </Table>
-    </TableContainer>
+    </TableFrame>
   );
 }

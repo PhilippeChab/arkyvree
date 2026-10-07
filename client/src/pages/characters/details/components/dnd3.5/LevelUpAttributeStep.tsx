@@ -1,7 +1,6 @@
-import { Alert } from "@mui/material";
 import { useController } from "react-hook-form";
 
-import { DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import { BlankNote, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
 
 import { AttributeIncreaseField } from "./AttributeIncreaseField.tsx";
 import type { LevelUpAttributeStepProps } from "./levelUpFactory.ts";
@@ -11,7 +10,7 @@ export function LevelUpAttributeStep({ wizard, baseRules }: LevelUpAttributeStep
   const { field } = useController({ control, name: "selectedAttribute" });
   if (isLoadingAttributes) return <DiceSpinner />;
   if (attributesError) return <LoadError what="Attributes" error={attributesError} />;
-  if (!attributeData?.isAvailable) return <Alert severity="info">No attribute increase at this level.</Alert>;
+  if (!attributeData?.isAvailable) return <BlankNote>No attribute increase at this level.</BlankNote>;
 
   return (
     <AttributeIncreaseField

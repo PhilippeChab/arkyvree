@@ -1,13 +1,11 @@
 import {
   Box,
   IconButton,
-  Paper,
   Skeleton,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Tooltip,
@@ -22,6 +20,7 @@ import {
   NoMatchesState,
   ROW_ACTIONS_HOVER_SX,
   ROW_ACTIONS_SX,
+  TableFrame,
 } from "@/client/src/components/common/index.ts";
 import { ContentCopyIcon, DeleteIcon, EditIcon, LibraryAddIcon } from "@/client/src/components/icons/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
@@ -42,7 +41,7 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   columns: Column[];
   data?: T[];
   emptyDescription?: string;
-  emptyIcon?: ElementType;
+  emptyIcon: ElementType;
   emptyTitle?: string;
   /** Its query's failure, shown while there are no rows to keep (a failed refetch keeps them). */
   error?: unknown;
@@ -92,12 +91,12 @@ export function RulesetSectionTable<T extends { id: string }>({
 
   if (isLoading) {
     return (
-      <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_LOADING_SX}>
+      <TableFrame sx={TABLE_CONTAINER_LOADING_SX}>
         <Table sx={TABLE_SX}>
           <TableHead>
             <TableRow>
               {visibleColumns.map((column) => (
-                <TableCell key={column.key} sx={{ width: column.width, fontWeight: 600 }}>
+                <TableCell key={column.key} sx={{ width: column.width }}>
                   {column.label}
                 </TableCell>
               ))}
@@ -115,7 +114,7 @@ export function RulesetSectionTable<T extends { id: string }>({
             ))}
           </TableBody>
         </Table>
-      </TableContainer>
+      </TableFrame>
     );
   }
 
@@ -130,12 +129,12 @@ export function RulesetSectionTable<T extends { id: string }>({
   }
 
   return (
-    <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_SX}>
+    <TableFrame sx={TABLE_CONTAINER_SX}>
       <Table sx={TABLE_SX}>
         <TableHead>
           <TableRow>
             {visibleColumns.map((column) => (
-              <TableCell key={column.key} sx={{ width: column.width, fontWeight: 600 }}>
+              <TableCell key={column.key} sx={{ width: column.width }}>
                 {column.label}
               </TableCell>
             ))}
@@ -249,6 +248,6 @@ export function RulesetSectionTable<T extends { id: string }>({
           ))}
         </TableBody>
       </Table>
-    </TableContainer>
+    </TableFrame>
   );
 }

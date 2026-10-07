@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { BlankState, ConfirmDialog } from "@/client/src/components/common/index.ts";
+import { BlankNote, ConfirmDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState } from "@/client/src/hooks/index.ts";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
@@ -99,7 +99,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
           })}
         </Stack>
       ) : (
-        <BlankState title="No ability scores available" />
+        <BlankNote>No ability scores available</BlankNote>
       )}
       <ConfirmDialog
         open={decreaseDialog.open}

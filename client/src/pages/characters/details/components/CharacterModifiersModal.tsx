@@ -6,7 +6,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Toolbar,
@@ -18,7 +17,7 @@ import { useState } from "react";
 
 import {
   AddButton,
-  BlankState,
+  BlankNote,
   CreateDialog,
   DeleteDialog,
   DiceSpinner,
@@ -28,6 +27,7 @@ import {
   Modal,
   ROW_ACTIONS_HOVER_SX,
   ROW_ACTIONS_SX,
+  TableFrame,
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_MODIFIER,
@@ -35,7 +35,7 @@ import {
   type ModifierFormData,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
-import { CloseIcon, ContentCopyIcon, DeleteIcon, EditIcon, TuneIcon } from "@/client/src/components/icons/index.ts";
+import { CloseIcon, ContentCopyIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
@@ -194,20 +194,16 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
           ) : error && modifiers.length === 0 ? (
             <LoadError what="Modifiers" error={error} />
           ) : modifiers.length === 0 ? (
-            <BlankState
-              icon={TuneIcon}
-              title="No modifiers"
-              description="Add custom bonuses or overrides to this character."
-            />
+            <BlankNote>No modifiers</BlankNote>
           ) : (
-            <TableContainer>
+            <TableFrame>
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, width: "40%" }}>Target</TableCell>
-                    <TableCell sx={{ fontWeight: 600, width: "15%" }}>Operator</TableCell>
-                    <TableCell sx={{ fontWeight: 600, width: "25%" }}>Value</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600, width: "20%" }} />
+                    <TableCell sx={{ width: "40%" }}>Target</TableCell>
+                    <TableCell sx={{ width: "15%" }}>Operator</TableCell>
+                    <TableCell sx={{ width: "25%" }}>Value</TableCell>
+                    <TableCell align="right" sx={{ width: "20%" }} />
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -267,7 +263,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                   ))}
                 </TableBody>
               </Table>
-            </TableContainer>
+            </TableFrame>
           )}
         </DialogContent>
       </Modal>

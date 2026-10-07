@@ -2,7 +2,7 @@ import { Box, Collapse, Link as MuiLink, Stack, Typography } from "@mui/material
 import { type ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { BlankState, ToggleLabel } from "@/client/src/components/common/index.ts";
+import { BlankNote, ToggleLabel } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 import { SheetSection } from "./SheetSection.tsx";
@@ -172,7 +172,7 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
           {hasVirtual && <GrantedFeatsSection feats={grantedFeats} rulesetId={rulesetId} />}
         </Stack>
       ) : (
-        <BlankState title="No feats or special abilities available" />
+        <BlankNote>No feats or special abilities available</BlankNote>
       )}
     </SheetSection>
   );

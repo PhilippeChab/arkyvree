@@ -2,12 +2,10 @@ import {
   Box,
   Chip,
   IconButton,
-  Paper,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Tooltip,
@@ -30,6 +28,7 @@ import {
   ROW_ACTIONS_SX,
   SearchBar,
   SectionContent,
+  TableFrame,
 } from "@/client/src/components/common/index.ts";
 import {
   DeleteIcon,
@@ -268,18 +267,15 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
           !playersError &&
           (players.length > 0 ? (
             <Stack spacing={2}>
-              <TableContainer
-                component={Paper}
-                sx={{ borderRadius: 2, border: 1, borderColor: "divider", overflowX: "auto" }}
-              >
+              <TableFrame>
                 <Table sx={{ width: "100%" }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: "action.hover" }}>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Player</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Role</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Joined</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "10%" }}>Actions</TableCell>
+                    <TableRow>
+                      <TableCell sx={{ width: "20%" }}>Player</TableCell>
+                      <TableCell sx={{ width: "20%" }}>Role</TableCell>
+                      <TableCell sx={{ width: "20%" }}>Status</TableCell>
+                      <TableCell sx={{ width: "20%" }}>Joined</TableCell>
+                      <TableCell sx={{ width: "10%" }}>Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -405,7 +401,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                     })}
                   </TableBody>
                 </Table>
-              </TableContainer>
+              </TableFrame>
 
               <LoadMoreButton
                 hasNextPage={hasNextPage}

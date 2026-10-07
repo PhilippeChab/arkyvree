@@ -1,7 +1,7 @@
 import { Autocomplete, Box, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 
 import { BlankState, ListToolbar, LoadError, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { CloseIcon } from "@/client/src/components/icons/index.ts";
+import { CloseIcon, SkillsIcon } from "@/client/src/components/icons/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { truncate } from "@/client/src/lib/truncate.ts";
 import { RemoveSkillDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
@@ -94,6 +94,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         <LoadError what="Class skills" error={error} />
       ) : !classSkills || classSkills.length === 0 ? (
         <BlankState
+          icon={SkillsIcon}
           title="No class skills assigned"
           description={
             canEdit

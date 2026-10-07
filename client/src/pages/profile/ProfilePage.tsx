@@ -6,12 +6,14 @@ import { type ReactNode, useState } from "react";
 import { GoogleSignInButton } from "@/client/src/components/auth/index.ts";
 import {
   AttachmentField,
+  CardTitle,
   DiceSpinner,
   EmailField,
   FormTextField,
   LoadError,
   PageError,
   PageHeader,
+  PageLoader,
   PageTransition,
   PasswordField,
 } from "@/client/src/components/common/index.ts";
@@ -56,12 +58,7 @@ function ProfileCard({ title, children, danger = false }: ProfileCardProps) {
     <Card sx={[danger && { border: 1, borderColor: "error.main" }]}>
       <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
         <Stack spacing={danger ? 1 : 3}>
-          <Typography
-            component="h2"
-            sx={{ fontWeight: 700, typography: { xs: "h6", sm: "h5" }, color: danger ? "error.main" : undefined }}
-          >
-            {title}
-          </Typography>
+          <CardTitle danger={danger}>{title}</CardTitle>
           <Box>{children}</Box>
         </Stack>
       </CardContent>
@@ -183,7 +180,7 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <DiceSpinner size="large" sx={{ minHeight: 400 }} />
+        <PageLoader />
       </Container>
     );
   }

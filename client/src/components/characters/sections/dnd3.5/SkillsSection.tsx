@@ -12,14 +12,14 @@ import {
 import { useMemo } from "react";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { BlankState } from "@/client/src/components/common/index.ts";
+import { BlankNote } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 
 import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
 import type { Dnd35SkillsSectionProps } from "./types.ts";
 
 /** The narrow number columns' headers. */
-const COLUMN_HEADER_SX = { fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
+const COLUMN_HEADER_SX = { fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
 
 export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
   const sortedSkills = useMemo(() => Object.values(skills).sort((a, b) => a.name.localeCompare(b.name)), [skills]);
@@ -45,7 +45,7 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
               </colgroup>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Skill</TableCell>
+                  <TableCell>Skill</TableCell>
                   <TableCell align="center" sx={COLUMN_HEADER_SX}>
                     Rank
                   </TableCell>
@@ -89,7 +89,7 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
           </TableContainer>
         </Stack>
       ) : (
-        <BlankState title="No skills available" />
+        <BlankNote>No skills available</BlankNote>
       )}
     </SheetSection>
   );

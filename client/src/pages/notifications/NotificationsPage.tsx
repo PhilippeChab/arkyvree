@@ -3,12 +3,10 @@ import {
   Box,
   Button,
   Container,
-  Paper,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Tooltip,
@@ -27,8 +25,10 @@ import {
   LoadMoreButton,
   NoMatchesState,
   PageHeader,
+  PageLoader,
   PageTransition,
   SearchBar,
+  TableFrame,
 } from "@/client/src/components/common/index.ts";
 import { CircleIcon, NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
@@ -103,25 +103,19 @@ export default function NotificationsPage() {
             />
 
             {isLoading ? (
-              <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
+              <PageLoader />
             ) : error ? (
               <LoadError what="Notifications" error={error} />
             ) : notifications.length > 0 ? (
               // With nothing more to load, the page ends three units below the table, as the table's margin left it
               <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>
-                <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+                <TableFrame>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>
-                          <strong>Notification</strong>
-                        </TableCell>
-                        <TableCell>
-                          <strong>When</strong>
-                        </TableCell>
-                        <TableCell>
-                          <strong>Actions</strong>
-                        </TableCell>
+                        <TableCell>Notification</TableCell>
+                        <TableCell>When</TableCell>
+                        <TableCell>Actions</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -179,7 +173,7 @@ export default function NotificationsPage() {
                       })}
                     </TableBody>
                   </Table>
-                </TableContainer>
+                </TableFrame>
 
                 <LoadMoreButton
                   size="large"

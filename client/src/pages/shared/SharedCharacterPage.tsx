@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
 import { CharacterHeader, CharacterSheetBody, downloadPdf } from "@/client/src/components/characters/index.ts";
-import { ActionMenuItem, DiceSpinner, PageError, PageTransition } from "@/client/src/components/common/index.ts";
+import { ActionMenuItem, PageError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
 import { DownloadIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, usePageTitle } from "@/client/src/hooks/index.ts";
@@ -33,7 +33,7 @@ export default function SharedCharacterPage() {
   if (isLoading) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <DiceSpinner sx={{ minHeight: 400 }} />
+        <PageLoader />
       </Container>
     );
   }

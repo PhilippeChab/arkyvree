@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import {
   BlankState,
   CREATED_SORTS,
-  DiceSpinner,
   type FilterOption,
   ListCard,
   ListCardGrid,
@@ -16,6 +15,7 @@ import {
   NoMatchesState,
   PageActionButton,
   PageHeader,
+  PageLoader,
   PageTransition,
   SearchBar,
   type SortOption,
@@ -100,7 +100,7 @@ export default function CharactersPage() {
           />
 
           {isLoading ? (
-            <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
+            <PageLoader />
           ) : error ? (
             <LoadError what="Characters" error={error} />
           ) : characters.length > 0 ? (

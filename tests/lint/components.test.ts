@@ -204,7 +204,7 @@ describe("component rules", () => {
     ]);
   });
 
-  test("a dialog asks before a loss with an InlineConfirm, never by hand", async () => {
+  test("a confirmation is a ConfirmDialog, over a dialog too, never by hand", async () => {
     expect(
       await lintRepo(
         {
@@ -214,12 +214,101 @@ describe("component rules", () => {
           "client/src/message.tsx":
             "export const m = <ConfirmDialog message={<>Are you sure you want to remove <b>it</b>?</>} />;\n",
           "client/src/inline.tsx":
-            'export const i = <InlineConfirm open cancelLabel="Keep" confirmLabel="Revoke">Revoke this link?</InlineConfirm>;\n',
-          "client/src/components/common/InlineConfirm.tsx":
-            "export const c = <AnimatedAlert in={open} action={<Button>Go</Button>} />;\n",
+            'export const i = <InlineConfirm open cancelLabel="Keep" confirmLabel="Revoke">Are you sure?</InlineConfirm>;\n',
+          "client/src/components/common/ValidationIssuesAlert.tsx":
+            "export const v = <AnimatedAlert in={open} action={<Button>Proceed Anyway</Button>} />;\n",
         },
-        ["inline-confirms"],
+        ["confirm-dialogs"],
       ),
-    ).toEqual(["inline-confirms client/src/asked.tsx", "inline-confirms client/src/bar.tsx"]);
+    ).toEqual([
+      "confirm-dialogs client/src/asked.tsx",
+      "confirm-dialogs client/src/bar.tsx",
+      "confirm-dialogs client/src/inline.tsx",
+    ]);
+  });
+
+  test("a table's frame is a TableFrame, and the theme draws its header", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/framed.tsx": "export const f = <TableContainer component={Paper}><Table /></TableContainer>;\n",
+          "client/src/bare.tsx": "export const b = <TableContainer><Table /></TableContainer>;\n",
+          "client/src/strong.tsx":
+            "export const s = <TableHead><TableRow><TableCell><strong>Name</strong></TableCell></TableRow></TableHead>;\n",
+          "client/src/tinted.tsx":
+            'export const t = <TableHead><TableRow sx={{ bgcolor: "action.hover" }} /></TableHead>;\n',
+          "client/src/weighted.tsx":
+            "const HEADER_SX = { fontWeight: 600 };\n" +
+            "export const w = <TableHead><TableRow><TableCell sx={HEADER_SX}>Name</TableCell></TableRow></TableHead>;\n",
+          "client/src/sized.tsx":
+            'export const z = <TableHead><TableRow><TableCell sx={{ width: "20%" }}>Name</TableCell></TableRow></TableHead>;\n',
+          "client/src/body.tsx":
+            "export const y = <TableBody><TableRow><TableCell sx={{ fontWeight: 600 }}>Total</TableCell></TableRow></TableBody>;\n",
+          "client/src/components/common/TableFrame.tsx":
+            'export const o = <TableContainer component={Paper} variant="outlined" />;\n',
+        },
+        ["table-frames"],
+      ),
+    ).toEqual([
+      "table-frames client/src/framed.tsx",
+      "table-frames client/src/strong.tsx",
+      "table-frames client/src/tinted.tsx",
+      "table-frames client/src/weighted.tsx",
+    ]);
+  });
+
+  test("a card's title is a CardTitle", async () => {
+    const title =
+      'export const t = <Typography component="h2" sx={{ typography: { xs: "h6", sm: "h5" } }}>Skills</Typography>;\n';
+    expect(
+      await lintRepo(
+        {
+          "client/src/title.tsx": title,
+          "client/src/fixed.tsx": 'export const f = <Typography component="h2" variant="h6">Characters</Typography>;\n',
+          "client/src/sub.tsx":
+            'export const s = <Typography component="h3" sx={{ typography: { xs: "body1", sm: "h6" } }}>Set 1</Typography>;\n',
+          "client/src/components/common/CardTitle.tsx": title,
+        },
+        ["card-titles"],
+      ),
+    ).toEqual(["card-titles client/src/title.tsx"]);
+  });
+
+  test("an empty list's line is a BlankNote", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/line.tsx": 'export const l = <Typography variant="body2">No local changes</Typography>;\n',
+          "client/src/alert.tsx":
+            'export const a = <Alert severity="info">No feats to select at this level.</Alert>;\n',
+          "client/src/value.tsx": "export const v = <Typography>No</Typography>;\n",
+          "client/src/slot.tsx": "export const s = <Typography>No {label}</Typography>;\n",
+          "client/src/note.tsx": "export const n = <BlankNote>No local changes</BlankNote>;\n",
+        },
+        ["blank-notes"],
+      ),
+    ).toEqual(["blank-notes client/src/alert.tsx", "blank-notes client/src/line.tsx"]);
+  });
+
+  test("a page's first load is a PageLoader, and no spinner takes a height or the large size", async () => {
+    const page = "export const p = <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />;\n";
+    const large = 'export const l = <DiceSpinner size="large" />;\n';
+    expect(
+      await lintRepo(
+        {
+          "client/src/tall.tsx": "export const t = <DiceSpinner sx={{ minHeight: 400 }} />;\n",
+          "client/src/large.tsx": large,
+          "client/src/page.tsx": page,
+          "client/src/section.tsx": "export const s = <DiceSpinner sx={{ py: 4 }} />;\n",
+          "client/src/components/common/PageLoader.tsx": page,
+          "client/src/components/characters/CharacterDetailSkeleton.tsx": large,
+        },
+        ["page-loaders"],
+      ),
+    ).toEqual([
+      "page-loaders client/src/large.tsx",
+      "page-loaders client/src/page.tsx",
+      "page-loaders client/src/tall.tsx",
+    ]);
   });
 });

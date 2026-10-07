@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { DiceSpinner, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
+import { LoadError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
 import { CheckIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
@@ -138,7 +138,7 @@ export function InviteLandingPage({
   if (isLoading) {
     return (
       <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
-        <DiceSpinner size="large" sx={{ minHeight: 300 }} />
+        <PageLoader />
       </Container>
     );
   }

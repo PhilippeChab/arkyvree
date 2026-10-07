@@ -12,7 +12,7 @@ import {
 import { type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 
-import { BlankState } from "@/client/src/components/common/index.ts";
+import { BlankNote } from "@/client/src/components/common/index.ts";
 import { AddIcon, EditIcon, ExpandMoreIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
 
@@ -169,7 +169,7 @@ export function ClassesSection({
           })}
         </Stack>
       ) : (
-        <BlankState title="No classes available" />
+        <BlankNote>No classes available</BlankNote>
       )}
     </SheetSection>
   );
