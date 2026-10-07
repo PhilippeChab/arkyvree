@@ -1,5 +1,5 @@
+import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import { BadRequestError } from "@/server/errors/index.ts";
 import type { InventoryRules, WeaponFields } from "@/server/rulesets/engine/module/index.ts";
 
 import { readItemFields } from "./itemFields.ts";
@@ -27,6 +27,6 @@ export class Dnd35InventoryRules implements InventoryRules {
     const weaponSize = this.weaponFields(rulesetData, itemId).size;
     const sizeIndex = weaponSize === null ? undefined : SIZE_ORDER[weaponSize];
     if (sizeIndex !== undefined && sizeIndex > SIZE_ORDER.Medium && location !== "Two Handed")
-      throw new BadRequestError("This weapon requires two hands");
+      throw new RulesError("invalid", "This weapon requires two hands");
   }
 }
