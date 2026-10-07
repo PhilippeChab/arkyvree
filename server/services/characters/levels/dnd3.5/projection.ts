@@ -283,5 +283,5 @@ export async function buildBaselineAptitudes(
   const preloaded = await projectedCharacter.preload();
   const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
   await baselineCharacter.build(database, undefined, preloaded);
-  return baselineCharacter.getDetailedCharacterAptitudes().getAptitudes();
+  return baselineCharacter.components.aptitudes.getAptitudes();
 }

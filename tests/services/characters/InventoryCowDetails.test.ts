@@ -45,7 +45,7 @@ describe("COW inventory item details", () => {
         }
         const detailedCharacter = new DetailedCharacter(character);
         await detailedCharacter.build();
-        return detailedCharacter.getDetailedCharacterInventory().getFlatInventory();
+        return detailedCharacter.components.inventory.getFlatInventory();
       };
 
       expect((await readInventory())[0].item.name).toBe(item.name);

@@ -1,6 +1,6 @@
 import { isTraversable } from "@/server/rulesets/engine/paths/isTraversable.ts";
 import { hasValueType, parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
-import { readHolder } from "@/server/rulesets/engine/paths/readHolder.ts";
+import { readComponent } from "@/server/rulesets/engine/paths/readComponent.ts";
 import {
   evaluateTemplateExpression,
   extractReferencedPaths,
@@ -8,7 +8,12 @@ import {
   isTemplateValue,
 } from "@/server/rulesets/engine/paths/templateExpression.ts";
 import type RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
-import type { Holder, Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import type {
+  Component,
+  Components,
+  TargetPathsTraverser,
+  TraversePathResult,
+} from "@/server/rulesets/engine/types.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 type DetailedCharacterComprehensiveModifiers = {
@@ -65,11 +70,11 @@ export default class ModifierEvaluator {
     skippedModifiers: [],
   };
 
-  private applyModifier(modifier: Modifier, result: TraversePathResult, holder: Holder, holders: Holders) {
+  private applyModifier(modifier: Modifier, result: TraversePathResult, component: Component, components: Components) {
     const { data } = result;
 
     // Resolve the modifier value — template references or literal conversion
-    const typedValue = this.resolveModifierValue(modifier, data, holders);
+    const typedValue = this.resolveModifierValue(modifier, data, components);
     if (typedValue === null) return;
 
     if (!hasValueType(data, typeof typedValue)) {
@@ -87,7 +92,7 @@ export default class ModifierEvaluator {
       appliedTarget !== modifier.target ? { ...modifier, target: appliedTarget } : modifier,
     );
 
-    readHolder(holder, "updateAvailables");
+    readComponent(component, "updateAvailables");
   }
 
   /**
@@ -149,13 +154,17 @@ export default class ModifierEvaluator {
   }
 
   /**
-   * The modifier's value, typed: a template reference resolved against the holders, or the literal coerced to its value
+   * The modifier's value, typed: a template reference resolved against the components, or the literal coerced to its value
    * type (which the target's must match). Null when it can't be (each reason recorded).
    */
-  private resolveModifierValue(modifier: Modifier, data: unknown, holders: Holders): number | string | boolean | null {
+  private resolveModifierValue(
+    modifier: Modifier,
+    data: unknown,
+    components: Components,
+  ): number | string | boolean | null {
     const { value, valueType } = modifier;
     if (isTemplateValue(value)) {
-      const resolved = this.resolveTemplateValue(value, holders, modifier);
+      const resolved = this.resolveTemplateValue(value, components, modifier);
       if (resolved === null) return null;
       // NaN passes `typeof === "number"`; ±Infinity too. Both come from
       // edge cases (zero-arg min/max/floor/ceil/abs, division ambiguities)
@@ -180,12 +189,12 @@ export default class ModifierEvaluator {
 
   private resolveTemplateValue(
     template: string,
-    holders: Holders,
+    components: Components,
     modifier: Modifier,
   ): number | string | boolean | null {
     const expression = extractTemplateExpression(template);
     if (!expression) return null;
-    return evaluateTemplateExpression(expression, holders, this.targetPaths, (warning) => {
+    return evaluateTemplateExpression(expression, components, this.targetPaths, (warning) => {
       this.detailedCharacterModifiers.skippedModifiers.push({ warning, modifier });
     });
   }
@@ -230,11 +239,11 @@ export default class ModifierEvaluator {
     return chained;
   }
 
-  evaluateModifier(modifier: Modifier, holders: Holders) {
+  evaluateModifier(modifier: Modifier, components: Components) {
     const { target } = modifier;
 
     const results = this.sourcesOf(modifier).flatMap((sourceId) =>
-      this.targetPaths.traversePathInit(target, holders, { sourceId }),
+      this.targetPaths.traversePathInit(target, components, { sourceId }),
     );
     if (results.length === 0) {
       this.detailedCharacterModifiers.inactiveModifiers.push(modifier);
@@ -246,13 +255,13 @@ export default class ModifierEvaluator {
           warning: result.error,
           modifier,
         });
-      } else if (result.holder) {
-        this.applyModifier(modifier, result, result.holder, holders);
+      } else if (result.component) {
+        this.applyModifier(modifier, result, result.component, components);
       }
     }
   }
 
-  evaluateModifiers(holders: Holders, modifiers: Modifier[], characterRequirements: RequirementEvaluator) {
+  evaluateModifiers(components: Components, modifiers: Modifier[], characterRequirements: RequirementEvaluator) {
     // A modifier is dropped if its source entity OR the modifier itself has an unmet or invalid requirement
     const blockedKeys = ModifierEvaluator.blockedKeys(characterRequirements);
 
@@ -264,7 +273,7 @@ export default class ModifierEvaluator {
       if (isTemplateValue(modifier.value)) {
         templateModifiers.push(modifier);
       } else {
-        this.evaluateModifier(modifier, holders);
+        this.evaluateModifier(modifier, components);
       }
     }
 
@@ -274,7 +283,7 @@ export default class ModifierEvaluator {
     const chainedIds = this.warnOnTemplateChaining(templateModifiers);
     for (const modifier of templateModifiers) {
       if (chainedIds.has(modifier.id)) continue;
-      this.evaluateModifier(modifier, holders);
+      this.evaluateModifier(modifier, components);
     }
   }
 

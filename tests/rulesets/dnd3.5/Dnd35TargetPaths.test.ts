@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
 import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import type { Holders } from "@/server/rulesets/engine/types.ts";
+import type { Components } from "@/server/rulesets/engine/types.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 
 const targetPaths = new Dnd35TargetPaths();
 
-/** Holders exposing `data` through their getters: `{ skills: {...} }` → `skills.getSkills()`. */
-function holders(data: Record<string, unknown>): Holders {
+/** Components exposing `data` through their getters: `{ skills: {...} }` → `skills.getSkills()`. */
+function components(data: Record<string, unknown>): Components {
   return Object.fromEntries(
     Object.entries(data).map(([name, value]) => [
       name,
@@ -19,7 +19,7 @@ function holders(data: Record<string, unknown>): Holders {
 /** What a target resolves to: each result's value, or its error. */
 function resolve(target: string, data: Record<string, unknown>) {
   return targetPaths
-    .traversePathInit(target, holders(data))
+    .traversePathInit(target, components(data))
     .map((r) => (r.error === null ? r.data : { error: r.error }));
 }
 
@@ -153,7 +153,7 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
       const owned = { possessed: true };
       const paths = (target: string, data: Record<string, unknown>) =>
         targetPaths
-          .traversePathInit(target, holders(data))
+          .traversePathInit(target, components(data))
           .map((r) => r.resolvedPath)
           .sort();
       expect(paths("abilities.strength.score", { abilities: { strength: { score: 18 } } })).toEqual([
@@ -178,10 +178,10 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
   describe("reports", () => {
     test.each([
       ["an unknown category", "invalidcategory.something", {}, "Unknown category: invalidcategory"],
-      ["a missing holder", "abilities.strength.score", {}, "Abilities holder not found"],
-      ["a missing weapons holder", "items.weapons.Longsword.damage", {}, "weapons holder not found"],
-      ["a missing armors holder", "items.armors.Chainmail.bonus", {}, "armors holder not found"],
-      ["a holder without data", "abilities.strength.score", { abilities: null }, "Abilities not found"],
+      ["a missing component", "abilities.strength.score", {}, "Abilities holder not found"],
+      ["a missing weapons component", "items.weapons.Longsword.damage", {}, "weapons holder not found"],
+      ["a missing armors component", "items.armors.Chainmail.bonus", {}, "armors holder not found"],
+      ["a component without data", "abilities.strength.score", { abilities: null }, "Abilities not found"],
       [
         "a wildcard at the end",
         "abilities.*",
@@ -205,11 +205,11 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
       ["a prefix as the last element", "skills.craft", { skills: { craftarmorsmithing: { rank: 12 } } }],
       ["a missing spell school", "powers.groups.illusion.*.dc.misc", { powers: {} }],
     ] as const)("%s as not found, without a path", (_, target, data) => {
-      const [result] = targetPaths.traversePathInit(target, holders(data));
+      const [result] = targetPaths.traversePathInit(target, components(data));
       expect(result).toMatchObject({ error: expect.stringContaining("Element not found"), resolvedPath: null });
     });
 
-    test("a getter that throws, without a holder", () => {
+    test("a getter that throws, without a component", () => {
       const [result] = targetPaths.traversePathInit("abilities.strength.score", {
         abilities: {
           getAbilities: () => {
@@ -217,7 +217,7 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
           },
         },
       });
-      expect(result).toMatchObject({ error: expect.stringContaining("Failed to traverse path"), holder: null });
+      expect(result).toMatchObject({ error: expect.stringContaining("Failed to traverse path"), component: null });
     });
   });
 });

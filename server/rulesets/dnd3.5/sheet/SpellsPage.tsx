@@ -46,10 +46,10 @@ const SPELL_PROPERTY_ORDER = Object.keys(ENTITY_PROPERTY_TYPES.powers ?? {});
 const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
 
 function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
-  const identity = detailedCharacter.getDetailedCharacterIdentity();
-  const classes = detailedCharacter.getDetailedCharacterClasses();
-  const powers = detailedCharacter.getDetailedCharacterPowers();
-  const aptitudes = detailedCharacter.getDetailedCharacterAptitudes();
+  const identity = detailedCharacter.components.identity;
+  const classes = detailedCharacter.components.classes;
+  const powers = detailedCharacter.components.powers;
+  const aptitudes = detailedCharacter.components.aptitudes;
   const identityData = identity.getIdentity();
 
   const sorted = buildSpellGroups({

@@ -11,7 +11,7 @@ function computeBondedTargetHD(kind: BondedKind, detailedMaster: Dnd35DetailedCh
   // template modifier (e.g. Druid → `{{ [classes.druid.level] }}`, Ranger →
   // `{{ floor([classes.ranger.level] / 2) }}`). Adding a new contributor
   // class needs only a feat with the right template — no change here.
-  return Math.max(1, detailedMaster.getDetailedCharacterBonds().getBondedLevel(kind));
+  return Math.max(1, detailedMaster.components.bonded.getBondedLevel(kind));
 }
 
 async function createBonded(
@@ -58,7 +58,7 @@ async function reconcileBonded(
   rulesetData: RulesetData,
 ): Promise<void> {
   const { className } = BONDED_KIND_BY_SLUG[kind];
-  const targetRaceName = detailedMaster.getDetailedCharacterBonds().getBondedRace(kind);
+  const targetRaceName = detailedMaster.components.bonded.getBondedRace(kind);
 
   // SELECT … FOR UPDATE on the master serializes concurrent reconciles for
   // the same character — without it, two overlapping finalizeLevelUp /

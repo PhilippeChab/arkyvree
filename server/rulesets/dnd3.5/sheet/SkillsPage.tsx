@@ -7,8 +7,8 @@ import { formatModifier } from "./format.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
 
 function SkillsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
-  const identity = detailedCharacter.getDetailedCharacterIdentity();
-  const skills = detailedCharacter.getDetailedCharacterSkills();
+  const identity = detailedCharacter.components.identity;
+  const skills = detailedCharacter.components.skills;
   const identityData = identity.getIdentity();
   return (
     <Page size="A4" style={styles.page}>
@@ -30,8 +30,8 @@ function SkillsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 12 }}>
             <Text style={{ fontSize: FONT_SIZE.sm, color: "#666", fontStyle: "italic" }}>* = Class Skill</Text>
             <Text style={{ fontSize: FONT_SIZE.sm, color: "#333" }}>
-              Skill Points: {detailedCharacter.getDetailedCharacterSkills().getSkillBudget().spent || 0} /{" "}
-              {detailedCharacter.getDetailedCharacterSkills().getSkillBudget().total || 0}
+              Skill Points: {detailedCharacter.components.skills.getSkillBudget().spent || 0} /{" "}
+              {detailedCharacter.components.skills.getSkillBudget().total || 0}
             </Text>
           </View>
         </View>

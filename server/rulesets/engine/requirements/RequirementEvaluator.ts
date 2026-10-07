@@ -4,7 +4,7 @@ import {
   extractTemplateExpression,
   isTemplateValue,
 } from "@/server/rulesets/engine/paths/templateExpression.ts";
-import type { Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import type { Components, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import RequirementTree, { getParentLevel, type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
@@ -109,7 +109,7 @@ export default class RequirementEvaluator {
     }
   }
 
-  private evaluateRequirement(requirement: Requirement, result: TraversePathResult, holders: Holders): boolean {
+  private evaluateRequirement(requirement: Requirement, result: TraversePathResult, components: Components): boolean {
     const { valueType } = requirement;
     const { data } = result;
 
@@ -119,7 +119,7 @@ export default class RequirementEvaluator {
     }
 
     // Resolve the value side — template references first, then literal coercion.
-    const typedValue = this.resolveRequirementValue(requirement, holders);
+    const typedValue = this.resolveRequirementValue(requirement, components);
     if (typedValue === null) return false;
 
     if (!hasValueType(data, typeof typedValue)) {
@@ -129,7 +129,7 @@ export default class RequirementEvaluator {
     return this.compareRequirement(requirement, data, typedValue);
   }
 
-  private evaluateRequirementsGroup(requirements: Requirement[], holders: Holders, sourceId: string | undefined) {
+  private evaluateRequirementsGroup(requirements: Requirement[], components: Components, sourceId: string | undefined) {
     // The rows the tree holds: every group, and each condition that could be evaluated, with whether it was met
     const evaluated: Requirement[] = [];
     const fulfilled = new Map<Requirement, boolean>();
@@ -138,7 +138,7 @@ export default class RequirementEvaluator {
       if (requirement.chainingOperator !== null) {
         evaluated.push(requirement);
       } else if (requirement.target) {
-        const results = this.targetPaths.traversePathInit(requirement.target, holders, { sourceId });
+        const results = this.targetPaths.traversePathInit(requirement.target, components, { sourceId });
         const validResults: TraversePathResult[] = [];
 
         for (const result of results) {
@@ -158,7 +158,7 @@ export default class RequirementEvaluator {
           evaluated.push(requirement);
           fulfilled.set(
             requirement,
-            validResults.some((result) => this.evaluateRequirement(requirement, result, holders)),
+            validResults.some((result) => this.evaluateRequirement(requirement, result, components)),
           );
         }
       }
@@ -184,10 +184,10 @@ export default class RequirementEvaluator {
   }
 
   /**
-   * The requirement's value, typed: a template reference resolved against the holders, or the literal coerced to its
+   * The requirement's value, typed: a template reference resolved against the components, or the literal coerced to its
    * value type. Null when it can't be (each reason recorded).
    */
-  private resolveRequirementValue(requirement: Requirement, holders: Holders): number | string | boolean | null {
+  private resolveRequirementValue(requirement: Requirement, components: Components): number | string | boolean | null {
     const { value, valueType } = requirement;
     if (typeof value === "string" && isTemplateValue(value)) {
       const expression = extractTemplateExpression(value);
@@ -195,7 +195,7 @@ export default class RequirementEvaluator {
         this.warn(requirement, `Invalid template expression: ${value}`);
         return null;
       }
-      const resolved = evaluateTemplateExpression(expression, holders, this.targetPaths, (warning) =>
+      const resolved = evaluateTemplateExpression(expression, components, this.targetPaths, (warning) =>
         this.warn(requirement, warning),
       );
       if (resolved === null) return null;
@@ -224,12 +224,12 @@ export default class RequirementEvaluator {
 
   /** Evaluates the groups, each with the item it's of (`itemOf`), which a weapon's own paths (`weapon.wielded`) read. */
   evaluateRequirements(
-    holders: Holders,
+    components: Components,
     requirements: Requirement[][],
     itemOf: (group: Requirement[]) => string | undefined = () => undefined,
   ) {
     for (const group of requirements) {
-      this.evaluateRequirementsGroup(group, holders, itemOf(group));
+      this.evaluateRequirementsGroup(group, components, itemOf(group));
     }
   }
 
@@ -241,10 +241,10 @@ export default class RequirementEvaluator {
    * Whether a condition (a requirement on a path, not a chain of them) is met: by any of what its path reaches, the item
    * it's of (`sourceId`) its weapon's own paths.
    */
-  isConditionMet(requirement: Requirement, holders: Holders, sourceId?: string): boolean {
+  isConditionMet(requirement: Requirement, components: Components, sourceId?: string): boolean {
     if (!requirement.target) return false;
     return this.targetPaths
-      .traversePathInit(requirement.target, holders, { sourceId })
-      .some((result) => !result.error && this.evaluateRequirement(requirement, result, holders));
+      .traversePathInit(requirement.target, components, { sourceId })
+      .some((result) => !result.error && this.evaluateRequirement(requirement, result, components));
   }
 }

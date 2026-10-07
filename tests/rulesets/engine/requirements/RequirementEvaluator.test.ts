@@ -44,7 +44,7 @@ function requirement(values: Partial<Requirement> = {}): Requirement {
 /** A path's value, or its error. */
 function result(data: unknown, error: string | null = null): TraversePathResult {
   return {
-    holder: error ? null : {},
+    component: error ? null : {},
     object: error ? null : { key: data },
     data,
     key: "possessed",

@@ -17,19 +17,15 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     if (featNames.length === 0) return;
     const featModifiers: Modifier[] = [];
     for (const featName of featNames) {
-      const entry = this.detailedCharacterFeats.getFeat(featName);
+      const entry = this.components.feats.getFeat(featName);
       if (entry) entry.possessed = true;
       const featRow = rulesetData.feats.find((f) => f.name === featName);
       if (!featRow) continue;
       const mods = rulesetData.modifiersBySource.get(featRow.id);
       if (mods) featModifiers.push(...mods);
     }
-    if (featModifiers.length > 0 && this.holders) {
-      this.detailedCharacterModifiers.evaluateModifiers(
-        this.holders,
-        featModifiers,
-        this.detailedCharacterRequirements,
-      );
+    if (featModifiers.length > 0 && this.components) {
+      this.modifierEvaluator.evaluateModifiers(this.components, featModifiers, this.requirementEvaluator);
     }
   }
 
@@ -46,7 +42,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
    */
   protected applySkillTotals(totals: Record<string, number>, ranks: Record<string, number> = {}): void {
     for (const [skillName, total] of Object.entries(totals)) {
-      this.detailedCharacterSkills.setStatBlockTotal(skillName, total, ranks[skillName] ?? 0);
+      this.components.skills.setStatBlockTotal(skillName, total, ranks[skillName] ?? 0);
     }
   }
 
@@ -91,20 +87,20 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     const raceStats = getBondedRaceStats(this.race?.name);
     if (raceStats) {
       if (raceStats.naturalAttacks.length > 0) {
-        this.detailedCharacterCombat.setNaturalAttacks(raceStats.naturalAttacks);
+        this.components.combat.setNaturalAttacks(raceStats.naturalAttacks);
       }
       this.applyRaceDefaults(raceStats, rulesetData);
     }
 
     if (this.cachedTotalHD !== null) {
-      this.detailedCharacterCombat.setHitDiceOverride(this.cachedTotalHD);
+      this.components.combat.setHitDiceOverride(this.cachedTotalHD);
     }
     await super.preRequirementProcessing(rulesetData);
   }
 
   override validate(): ValidationResult {
     const issues: ValidationIssue[] = [];
-    const aptitudes = this.detailedCharacterAptitudes.getAptitudes();
+    const aptitudes = this.components.aptitudes.getAptitudes();
     for (const [, aptitude] of Object.entries(aptitudes)) {
       if (aptitude.allowed === -1) continue;
       if (aptitude.available > 0) {

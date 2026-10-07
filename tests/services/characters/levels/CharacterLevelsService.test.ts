@@ -1539,7 +1539,7 @@ describe("LevelsService", () => {
 
       const { detailedCharacter: detailed } = await CharactersService.getCharacter(session, characterId);
       if (!(detailed instanceof DetailedCharacter)) throw new Error("Not a D&D 3.5 character");
-      expect(detailed.getDetailedCharacterSkills().getSkillBudget()).toMatchObject({
+      expect(detailed.components.skills.getSkillBudget()).toMatchObject({
         total: 18,
         spent: 18,
         available: 0,

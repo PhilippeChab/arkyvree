@@ -6,8 +6,8 @@ import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
 function FeatsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
-  const identity = detailedCharacter.getDetailedCharacterIdentity();
-  const classes = detailedCharacter.getDetailedCharacterClasses();
+  const identity = detailedCharacter.components.identity;
+  const classes = detailedCharacter.components.classes;
   const identityData = identity.getIdentity();
   const classData = classes.getCharacterClasses();
   return (

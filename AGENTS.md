@@ -25,7 +25,7 @@
 - The server reads its environment through `server/environment.ts`, which lists every variable it reads and what for: `readEnv("APP_URL")`, `isProduction()`, `isTest()`, `isDevelopment()` (`NODE_ENV=development` explicitly: it unmasks errors, so it's never assumed; "not production" is `!isProduction()`). Never `process.env` or `Bun.env` elsewhere in the server or `shared/` (`arkyvree/environment`); a default stays with the code that reads the variable
 - Make sure typescript passes before finishing a task - use tsgo
 - Always use Hono's Infer types instead of recreating types in the frontend
-- Do not use `any` (`typescript/no-explicit-any`): an untyped value is `unknown`, narrowed by checks (`isRecord`, the engine's `isTraversable`). A rest parameter may be `any[]`, which TypeScript requires of a mixin's constructor (TS2545, `server/mixins.ts`); the engine's holders are `object`s, their getters read by name through `readHolder`
+- Do not use `any` (`typescript/no-explicit-any`): an untyped value is `unknown`, narrowed by checks (`isRecord`, the engine's `isTraversable`). A rest parameter may be `any[]`, which TypeScript requires of a mixin's constructor (TS2545, `server/mixins.ts`); the engine's components are `object`s to the path walk, each read through the getter its path category names (`ComponentSpec`, checked against the ruleset's components) by `readComponent`
 
 ## Backend Architecture
 

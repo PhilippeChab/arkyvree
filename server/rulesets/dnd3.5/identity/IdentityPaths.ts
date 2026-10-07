@@ -1,4 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { MODIFIER_OPERATORS, NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
@@ -35,7 +36,7 @@ const SEGMENT_LABELS: Record<string, string> = {
 };
 
 /** The identity's target paths: physiology, beliefs, background, level and XP. */
-export default class IdentityPaths implements PathCategory {
+export default class IdentityPaths implements PathCategory<Dnd35Components> {
   static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
@@ -95,7 +96,7 @@ export default class IdentityPaths implements PathCategory {
 
   readonly description = "Physiology, level, XP, and background";
 
-  readonly holder = { key: "identity", getter: "getIdentity" };
+  readonly component = { key: "identity", getter: "getIdentity" } as const;
 
   readonly pathDescriptions = {
     "identity.physiology": "Character name, description, age, gender, height, weight",

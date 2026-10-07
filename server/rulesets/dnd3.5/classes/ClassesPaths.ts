@@ -1,4 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
@@ -6,7 +7,7 @@ import type { Klass } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** The classes' target paths: each class's level and caster level. */
-export default class ClassesPaths implements PathCategory {
+export default class ClassesPaths implements PathCategory<Dnd35Components> {
   static generateTargetPaths(klasses: Klass[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
@@ -41,7 +42,7 @@ export default class ClassesPaths implements PathCategory {
 
   readonly description = "Class levels and bonus caster levels";
 
-  readonly holder = { key: "classes", getter: "getClasses" };
+  readonly component = { key: "classes", getter: "getClasses" } as const;
 
   readonly groupDescriptionTemplates = { classes: "{name} class level and caster level" };
 

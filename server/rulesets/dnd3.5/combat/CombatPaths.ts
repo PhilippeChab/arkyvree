@@ -1,4 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import { ARMOR_CATEGORIES } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import { LOAD_CATEGORIES } from "@/server/rulesets/dnd3.5/constants.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
@@ -196,7 +197,7 @@ const ENCUMBRANCE_PATHS = [
 ];
 
 /** The combat target paths: AC, hit points, attacks, initiative, speed, encumbrance. */
-export default class CombatPaths implements PathCategory {
+export default class CombatPaths implements PathCategory<Dnd35Components> {
   static generateCombatPaths(kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
@@ -234,7 +235,7 @@ export default class CombatPaths implements PathCategory {
 
   readonly description = "AC, hit points, attack bonuses, initiative, speed, armor and shield";
 
-  readonly holder = { key: "combat", getter: "getCombat" };
+  readonly component = { key: "combat", getter: "getCombat" } as const;
 
   readonly pathDescriptions = {
     "combat.ac": "AC bonuses and totals",

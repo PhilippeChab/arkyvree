@@ -9,7 +9,7 @@ function evaluate(applied: Modifier, value: number | boolean | string[]) {
   const modifiers = new ModifierEvaluator({
     readsSource: () => false,
     traversePathInit: () => [
-      { holder: {}, object: target, data: target.misc, key: "misc", resolvedPath: applied.target, error: null },
+      { component: {}, object: target, data: target.misc, key: "misc", resolvedPath: applied.target, error: null },
     ],
   });
   modifiers.evaluateModifier(applied, {});

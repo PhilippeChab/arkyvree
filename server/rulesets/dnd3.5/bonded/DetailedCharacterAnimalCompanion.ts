@@ -55,7 +55,7 @@ function basicsAt(effectiveLevel: number): BasicsRow {
  * an AC needs no code change here — just the right feat template.
  */
 function getAnimalCompanionEffectiveLevel(master: Dnd35DetailedCharacter): number {
-  return master.getDetailedCharacterBonds().getBondedLevel("animalcompanion");
+  return master.components.bonded.getBondedLevel("animalcompanion");
 }
 
 /**
@@ -74,7 +74,7 @@ export default class DetailedCharacterAnimalCompanion extends DetailedCharacterA
     const baseHD = raceStats?.baseHD ?? 1;
     const totalHD = baseHD + row.bonusHD;
 
-    const abilities = this.detailedCharacterAbilities.getAbilities();
+    const abilities = this.components.abilities.getAbilities();
     if (row.strDex !== 0) {
       if (abilities["strength"]) {
         abilities["strength"].misc += row.strDex;

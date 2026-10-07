@@ -54,9 +54,7 @@ describe("A fork's own description of an inherited", () => {
 
       const character = new DetailedCharacter((await Characters.findOne(db, { id: characterId }))!);
       await character.build();
-      const levels = Object.values(character.getDetailedCharacterClasses().getCharacterClasses()).flatMap(
-        (k) => k.levels,
-      );
+      const levels = Object.values(character.components.classes.getCharacterClasses()).flatMap((k) => k.levels);
       const descriptions = new Map(
         levels.flatMap((level) => [...level.feats, ...level.powers]).map((entity) => [entity.name, entity.description]),
       );

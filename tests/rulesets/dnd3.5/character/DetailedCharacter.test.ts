@@ -97,13 +97,13 @@ type Detailed = Awaited<ReturnType<typeof build>>;
 const WIZARD_SCORES = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 16, Wisdom: 10, Charisma: 10 };
 
 function allPowers(detailed: Detailed) {
-  return Object.values(detailed.getDetailedCharacterClasses().getCharacterClasses()).flatMap((klass) =>
+  return Object.values(detailed.components.classes.getCharacterClasses()).flatMap((klass) =>
     klass.levels.flatMap((level) => level.powers),
   );
 }
 
 function dexterityMisc(detailed: Detailed) {
-  return detailed.getDetailedCharacterAbilities().getAbilities().dexterity.misc;
+  return detailed.components.abilities.getAbilities().dexterity.misc;
 }
 
 /** A requirement's check that a number is `value`. */
@@ -141,7 +141,7 @@ function requiring(
 }
 
 function spellLevel(detailed: Detailed, aptitude: string, level: number) {
-  return (detailed.getDetailedCharacterAptitudes().getAptitudes()[aptitude] as Record<string, unknown>)[
+  return (detailed.components.aptitudes.getAptitudes()[aptitude] as Record<string, unknown>)[
     String(level)
   ] as AptitudeLevelData;
 }
@@ -151,7 +151,7 @@ function spellUses(detailed: Detailed, aptitude: string, levels: number[]) {
 }
 
 function weaponSet(detailed: Detailed, set = "0") {
-  return detailed.getDetailedCharacterCombat().getCombat().weaponsets[set];
+  return detailed.components.combat.getCombat().weaponsets[set];
 }
 
 /** The seeded character, now a halfling. */
@@ -460,7 +460,7 @@ describe("DetailedCharacter", () => {
       expect(bjorn.getRuleset()?.name).toBe(DND35_RULESET_NAME);
       expect(bjorn.getPlayer()).toBeUndefined();
       expect(bjorn.getCampaign()).toBeUndefined();
-      expect(bjorn.getDetailedCharacterIdentity().getIdentity()).toMatchObject({
+      expect(bjorn.components.identity.getIdentity()).toMatchObject({
         physiology: { name: "Bjorn Ironhand", race: { name: "Human" } },
         beliefs: { alignment: "Lawful Good" },
         meta: { xp: 10000 },
@@ -468,7 +468,7 @@ describe("DetailedCharacter", () => {
 
       // No increases or misc bonuses: each total is the base score.
       const scores = { strength: 18, dexterity: 14, constitution: 16, intelligence: 12, wisdom: 10, charisma: 8 };
-      const abilities = bjorn.getDetailedCharacterAbilities();
+      const abilities = bjorn.components.abilities;
       for (const [ability, score] of Object.entries(scores)) {
         expect(abilities.getAbilities()[ability as keyof typeof scores]).toMatchObject({
           base: score,
@@ -497,7 +497,7 @@ describe("DetailedCharacter", () => {
       ["Fenn Ashwalker", "Half-Elf", "Neutral Good"],
     ])("validates seeded character %s", async (name, race, alignment) => {
       const detailed = await buildSeeded(name);
-      expect(detailed.getDetailedCharacterIdentity().getIdentity()).toMatchObject({
+      expect(detailed.components.identity.getIdentity()).toMatchObject({
         physiology: { name, race: { name: race } },
         beliefs: { alignment },
       });
@@ -505,7 +505,7 @@ describe("DetailedCharacter", () => {
     });
 
     test("lists only the classes the character has levels in", async () => {
-      const classes = (await buildSeeded("Vex Flamecaller")).getDetailedCharacterClasses();
+      const classes = (await buildSeeded("Vex Flamecaller")).components.classes;
       // getClasses holds every class of the ruleset, at level 0 when the character has none.
       expect(Object.keys(classes.getClasses()).length).toBeGreaterThan(1);
       expect(Object.entries(classes.getCharacterClasses()).map(([key, klass]) => [key, klass.level])).toEqual([
@@ -513,7 +513,7 @@ describe("DetailedCharacter", () => {
       ]);
     });
     test("lists a level's skills, then its picked and its granted feats, each by name", async () => {
-      const zen = (await buildSeeded("Zen Whitepetal")).getDetailedCharacterClasses().getCharacterClasses();
+      const zen = (await buildSeeded("Zen Whitepetal")).components.classes.getCharacterClasses();
       const [first] = zen["monk"].levels;
       const names = (rows: { name: string }[]) => rows.map((row) => row.name);
       expect(names(first.skills)).toEqual(["Balance", "Jump", "Listen", "Spot", "Tumble"]);
@@ -533,7 +533,7 @@ describe("DetailedCharacter", () => {
   describe("saving throws", () => {
     test("add the class's base, the ability and misc bonuses", async () => {
       // Fighter 5: good Fortitude 4, poor Reflex and Will 1. Great Fortitude adds 2.
-      const bjorn = (await buildSeeded("Bjorn Ironhand")).getDetailedCharacterSavingThrows();
+      const bjorn = (await buildSeeded("Bjorn Ironhand")).components.savingThrows;
       expect(bjorn.getSavingThrows()).toMatchObject({
         fortitude: { base: 4, ability: 3, misc: 2, total: 9 },
         reflex: { base: 1, ability: 2, misc: 0, total: 3 },
@@ -545,12 +545,12 @@ describe("DetailedCharacter", () => {
     test("add a paladin's charisma through Divine Grace, a template modifier", async () => {
       // Paladin 5, CHA 15 (+2): good Fortitude 4, poor Reflex and Will 1.
       const aldric = await buildSeeded("Aldric Dawnbringer");
-      expect(aldric.getDetailedCharacterSavingThrows().getSavingThrows()).toMatchObject({
+      expect(aldric.components.savingThrows.getSavingThrows()).toMatchObject({
         fortitude: { base: 4, misc: 2, total: 8 },
         reflex: { base: 1, misc: 2, total: 3 },
         will: { base: 1, misc: 2, total: 4 },
       });
-      const { appliedModifiers, skippedModifiers } = aldric.getDetailedCharacterModifiers().getModifiers();
+      const { appliedModifiers, skippedModifiers } = aldric.modifierEvaluator.getModifiers();
       // The wildcard over saves gives one modifier each.
       expect(
         appliedModifiers.filter((m) => m.value === "{{ [abilities.charisma.modifier] }}").length,
@@ -562,7 +562,7 @@ describe("DetailedCharacter", () => {
   describe("hit points", () => {
     test("add each level's constitution bonus, with the race's", async () => {
       // A dwarf (CON 16 + 2): +4 at each of 4 levels, on 10 + 8 + 7 + 12 rolled; Toughness adds 3.
-      const hp = (await buildSeeded("Kael Stormborn")).getDetailedCharacterCombat().getCombat().hp;
+      const hp = (await buildSeeded("Kael Stormborn")).components.combat.getCombat().hp;
       expect(hp).toMatchObject({ base: 37, constitution: 16, misc: 3, total: 56 });
     });
 
@@ -574,9 +574,7 @@ describe("DetailedCharacter", () => {
         { xp: 1000 },
       );
       await addClassLevels(db, ctx, characterId, "Fighter", [1, 2], [1, 4]);
-      const hp = (await build((await Characters.findOne(db, { id: characterId }))!))
-        .getDetailedCharacterCombat()
-        .getCombat().hp;
+      const hp = (await build((await Characters.findOne(db, { id: characterId }))!)).components.combat.getCombat().hp;
       // CON 6 takes 2 off each roll: the 1 rolled still gives 1, the 4 gives 2.
       expect(hp).toMatchObject({ base: 5, constitution: -2, total: 3 });
     });
@@ -591,9 +589,9 @@ describe("DetailedCharacter", () => {
         { xp: 1000 },
       );
       await addClassLevels(db, ctx, characterId, "Fighter", [1, 2], [10, 6]);
-      const budget = (await build((await Characters.findOne(db, { id: characterId }))!))
-        .getDetailedCharacterSkills()
-        .getSkillBudget();
+      const budget = (
+        await build((await Characters.findOne(db, { id: characterId }))!)
+      ).components.skills.getSkillBudget();
       // A human fighter with INT 3: 2 - 4 = -2 a level, at least 1, and the human's 1 beside: 2 (8 at the first level) + 2.
       expect(budget.total).toBe(10);
     });
@@ -606,9 +604,7 @@ describe("DetailedCharacter", () => {
         await buildCarrying("Bjorn Ironhand", [
           { item: (await createAbilityItem("dexterity", 4, "Hands")).id, location: "Hands" },
         ])
-      )
-        .getDetailedCharacterCombat()
-        .getCombat();
+      ).components.combat.getCombat();
       expect(combat.initiative.dexterity).toBe(4);
       expect(combat.ac.dexterity).toBe(4);
     });
@@ -628,7 +624,7 @@ describe("DetailedCharacter", () => {
         },
         offhand: { name: "Shortsword", damage: { base: "1d6", types: ["Piercing"], strength: 2 } },
       });
-      expect(Object.keys(bjorn.getDetailedCharacterWeapons().getWeapons())).toEqual(
+      expect(Object.keys(bjorn.components.weapons.getWeapons())).toEqual(
         expect.arrayContaining(["longsword", "shortsword"]),
       );
     });
@@ -639,7 +635,7 @@ describe("DetailedCharacter", () => {
         name: "Greataxe",
         damage: { base: "1d12", critical: { range: 1, multiplier: 3 }, strength: 6 },
       });
-      expect(bjorn.getDetailedCharacterWeapons().getWeapons()["greataxe"]).toBeDefined();
+      expect(bjorn.components.weapons.getWeapons()["greataxe"]).toBeDefined();
     });
 
     test("group a weapon under its type, not its name", async () => {
@@ -658,9 +654,7 @@ describe("DetailedCharacter", () => {
       );
       const weapons = (
         await buildCarrying("Bjorn Ironhand", [{ item: variant.id, location: "Main Hand", weaponSet: 0 }])
-      )
-        .getDetailedCharacterWeapons()
-        .getWeapons();
+      ).components.weapons.getWeapons();
       expect(weapons["longsword"]).toBeDefined();
       expect(weapons["longsword1"]).toBeUndefined();
     });
@@ -1147,7 +1141,7 @@ describe("DetailedCharacter", () => {
         { item: "Shortbow", location: "Two Handed", weaponSet: 2 },
       ]);
       const detailed = await build(halfling);
-      const { bab, throwing } = detailed.getDetailedCharacterCombat().getCombat();
+      const { bab, throwing } = detailed.components.combat.getCombat();
       expect(throwing.tohit).toBe(1);
       expect(detailed.areRequirementsMet(requiring("combat.throwing.tohit", exactly(1)))).toBe(true);
       /** A weapon's first attack without the bonus: its base attack and its parts. */
@@ -1287,8 +1281,7 @@ describe("DetailedCharacter", () => {
           { item: "Luck Blade, 0 Wishes", location: "Main Hand", weaponSet: 0 },
         ]);
         expect(weaponSet(elara).mainhand).toMatchObject({ proficient: false, tohit: { misc: -4 } });
-        const will = (character: DetailedCharacter) =>
-          character.getDetailedCharacterSavingThrows().getSavingThrows().will;
+        const will = (character: DetailedCharacter) => character.components.savingThrows.getSavingThrows().will;
         expect(will(elara).misc).toBe(will(await buildCarrying("Elara Starweaver")).misc + 1);
       });
 
@@ -1436,9 +1429,7 @@ describe("DetailedCharacter", () => {
       test.each(["Main Hand", "Two Handed"] as const)(
         "doubles strength to damage with an exotic weapon held %s",
         async (location) => {
-          const exotic = Object.values(
-            (await setupUncannyBlow(location)).getDetailedCharacterWeapons().getWeapons()["exotic"],
-          );
+          const exotic = Object.values((await setupUncannyBlow(location)).components.weapons.getWeapons()["exotic"]);
           // STR 18: +4 doubled.
           expect(exotic).toHaveLength(1);
           expect(exotic[0].damage).toMatchObject({ strmultiplier: 2, strength: 8 });
@@ -1451,9 +1442,7 @@ describe("DetailedCharacter", () => {
     test("keeps a dodge bonus in touch AC and loses it flat-footed, with the Dexterity bonus", async () => {
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const ac = async () => {
-        const { total, touch, flatfooted, dexterity } = (await build(bjorn))
-          .getDetailedCharacterCombat()
-          .getCombat().ac;
+        const { total, touch, flatfooted, dexterity } = (await build(bjorn)).components.combat.getCombat().ac;
         return { total, touch, flatfooted, dexterity };
       };
       const before = await ac();
@@ -1491,16 +1480,15 @@ describe("DetailedCharacter", () => {
         for (let level = 1; level <= duelistLevels; level++) {
           await addCharacterLevel(characterId, (await findKlassLevel(duelist.id, level))!.id);
         }
-        return (await build((await Characters.findOne(db, { id: characterId }))!))
-          .getDetailedCharacterCombat()
-          .getCombat().ac.dodge;
+        return (await build((await Characters.findOne(db, { id: characterId }))!)).components.combat.getCombat().ac
+          .dodge;
       };
       // Intelligence 16 (+3): +1 at the first duelist level, +2 at the second; Intelligence 8 (−1): nothing
       expect([await dodgeAt(16, 1), await dodgeAt(16, 2), await dodgeAt(8, 2)]).toEqual([1, 2, 0]);
     });
 
     test("keeps the Dexterity bonus flat-footed with uncanny dodge: a barbarian 2's, not a barbarian 1's", async () => {
-      const acOf = async (name: string) => (await buildSeeded(name)).getDetailedCharacterCombat().getCombat().ac;
+      const acOf = async (name: string) => (await buildSeeded(name)).components.combat.getCombat().ac;
       // Grak is a barbarian 3; Kael a barbarian 1 and fighter 3
       const grak = await acOf("Grak Thunderfist");
       expect(grak).toMatchObject({ uncannydodge: true, flatfooted: grak.total });
@@ -1511,7 +1499,7 @@ describe("DetailedCharacter", () => {
 
     test("adds armor, capping dexterity at its limit, and shows its penalties", async () => {
       const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: "Chain Mail", location: "Torso" }]);
-      expect(bjorn.getDetailedCharacterArmors().getArmors()["chainmail"]).toMatchObject({
+      expect(bjorn.components.armors.getArmors()["chainmail"]).toMatchObject({
         name: "Chain Mail",
         ac: { bonus: 5, total: 5 },
         checkpenalty: -5,
@@ -1519,15 +1507,15 @@ describe("DetailedCharacter", () => {
         maxdex: 2,
       });
       // DEX 14 (+2), within Chain Mail's 2.
-      expect(bjorn.getDetailedCharacterCombat().getCombat().ac).toMatchObject({ armor: 5, dexterity: 2, total: 17 });
+      expect(bjorn.components.combat.getCombat().ac).toMatchObject({ armor: 5, dexterity: 2, total: 17 });
     });
 
     test("takes a specific armor's own stats: its enhancement, its material's, and its category", async () => {
       // An elf rogue: DEX 20 (+5)
       const wearing = async (item: string) => {
         const lyra = await buildCarrying("Lyra Shadowstep", [{ item, location: "Torso" }]);
-        const [armor] = Object.values(lyra.getDetailedCharacterArmors().getArmors());
-        return { armor, combat: lyra.getDetailedCharacterCombat().getCombat() };
+        const [armor] = Object.values(lyra.components.armors.getArmors());
+        return { armor, combat: lyra.components.combat.getCombat() };
       };
       // Elven chain: light chainmail, +4 Dexterity at most
       const elven = await wearing("Elven Chain");
@@ -1546,13 +1534,13 @@ describe("DetailedCharacter", () => {
 
     test("adds a shield, dexterity uncapped", async () => {
       const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: "Heavy Steel Shield", location: "Off Hand" }]);
-      expect(bjorn.getDetailedCharacterShields().getShields()["heavysteelshield"]).toMatchObject({
+      expect(bjorn.components.shields.getShields()["heavysteelshield"]).toMatchObject({
         name: "Heavy Steel Shield",
         ac: { bonus: 2, total: 2 },
         checkpenalty: -2,
         spellfailure: 15,
       });
-      expect(bjorn.getDetailedCharacterCombat().getCombat().ac).toMatchObject({ shield: 2, dexterity: 2, total: 14 });
+      expect(bjorn.components.combat.getCombat().ac).toMatchObject({ shield: 2, dexterity: 2, total: 14 });
     });
 
     test("adds armor and shield together, a weapon in hand", async () => {
@@ -1562,9 +1550,9 @@ describe("DetailedCharacter", () => {
         { item: "Light Wooden Shield", location: "Off Hand" },
       ]);
       expect(weaponSet(bjorn).mainhand!.name).toBe("Longsword");
-      expect(bjorn.getDetailedCharacterArmors().getArmors()["chainmail"].ac.bonus).toBe(5);
-      expect(bjorn.getDetailedCharacterShields().getShields()["lightwoodenshield"].ac.bonus).toBe(1);
-      expect(bjorn.getDetailedCharacterCombat().getCombat().ac).toMatchObject({
+      expect(bjorn.components.armors.getArmors()["chainmail"].ac.bonus).toBe(5);
+      expect(bjorn.components.shields.getShields()["lightwoodenshield"].ac.bonus).toBe(1);
+      expect(bjorn.components.combat.getCombat().ac).toMatchObject({
         base: 10,
         armor: 5,
         shield: 1,
@@ -1582,14 +1570,14 @@ describe("DetailedCharacter", () => {
         sourceItemId: itemMap["Full Plate"],
       });
       const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: derived.id, location: "Torso" }]);
-      expect(bjorn.getDetailedCharacterArmors().getArmors()["fullplate1"]).toMatchObject({
+      expect(bjorn.components.armors.getArmors()["fullplate1"]).toMatchObject({
         name: "Full Plate +1",
         ac: { bonus: 8 },
         maxdex: 1,
         checkpenalty: -6,
         spellfailure: 35,
       });
-      expect(bjorn.getDetailedCharacterCombat().getCombat().ac).toMatchObject({ armor: 8, dexterity: 1, total: 19 });
+      expect(bjorn.components.combat.getCombat().ac).toMatchObject({ armor: 8, dexterity: 1, total: 19 });
     });
 
     test("lowers a masterwork armor or shield's check penalty by 1", async () => {
@@ -1620,13 +1608,13 @@ describe("DetailedCharacter", () => {
         { item: armor.id, location: "Torso" },
         { item: shield.id, location: "Off Hand" },
       ]);
-      expect(bjorn.getDetailedCharacterArmors().getArmors()["chainmailmasterwork"]).toMatchObject({
+      expect(bjorn.components.armors.getArmors()["chainmailmasterwork"]).toMatchObject({
         checkpenalty: -4,
         ac: { bonus: 5 },
         spellfailure: 30,
         maxdex: 2,
       });
-      expect(bjorn.getDetailedCharacterShields().getShields()["heavysteelshield"]).toMatchObject({
+      expect(bjorn.components.shields.getShields()["heavysteelshield"]).toMatchObject({
         checkpenalty: -1,
         ac: { bonus: 2 },
         spellfailure: 15,
@@ -1636,7 +1624,7 @@ describe("DetailedCharacter", () => {
     test("adds a monk's wisdom when unarmored, through a template modifier its requirements gate", async () => {
       // Monk 3: DEX 16 (+3), WIS 16 (+3).
       const zen = await buildSeeded("Zen Whitepetal");
-      expect(zen.getDetailedCharacterCombat().getCombat().ac).toMatchObject({
+      expect(zen.components.combat.getCombat().ac).toMatchObject({
         base: 10,
         dexterity: 3,
         armor: 0,
@@ -1644,16 +1632,14 @@ describe("DetailedCharacter", () => {
         misc: 3,
         total: 16,
       });
-      const acBonus = zen
-        .getDetailedCharacterModifiers()
+      const acBonus = zen.modifierEvaluator
         .getModifiers()
         .appliedModifiers.find(
           (m) => m.value === "{{ max(0, [abilities.wisdom.modifier]) }}" && m.target === "combat.ac.misc",
         );
       expect(acBonus).toBeDefined();
       // Its requirements: no armor, no shield, a light load.
-      const gates = zen
-        .getDetailedCharacterRequirements()
+      const gates = zen.requirementEvaluator
         .getRequirements()
         .fulfilledRequirementGroups.filter((group) =>
           group.some((r) => r.entityId === acBonus!.id && r.entityType === "modifiers"),
@@ -1668,15 +1654,15 @@ describe("DetailedCharacter", () => {
       ["Full Plate", 20],
       ["Leather Armor", 30],
     ])("under %s is %i feet", async (armor, speed) => {
-      const combat = (await buildCarrying("Bjorn Ironhand", [{ item: armor, location: "Torso" }]))
-        .getDetailedCharacterCombat()
-        .getCombat();
+      const combat = (
+        await buildCarrying("Bjorn Ironhand", [{ item: armor, location: "Torso" }])
+      ).components.combat.getCombat();
       expect(combat.speed).toMatchObject({ base: 30, total: speed });
     });
 
     test("of a dwarf stays 20 feet in medium or heavy armor, by the race's property", async () => {
       // A dwarf barbarian in scale mail: fast movement's +10 on the base, which medium armor allows
-      const speed = async () => (await buildSeeded("Kael Stormborn")).getDetailedCharacterCombat().getCombat().speed;
+      const speed = async () => (await buildSeeded("Kael Stormborn")).components.combat.getCombat().speed;
       expect(await speed()).toMatchObject({ base: 30, misc: 0, total: 30 });
 
       const { raceMap, rulesetId } = await getSeedCtx();
@@ -1701,7 +1687,7 @@ describe("DetailedCharacter", () => {
       ["Zen Whitepetal", ["Leather Armor"], 30],
     ] as const)("of %s wearing %j is %i feet: fast movement by its armor", async (name, armors, speed) => {
       const carried = armors.map((item) => ({ item, location: "Torso" as const }));
-      expect((await buildCarrying(name, carried)).getDetailedCharacterCombat().getCombat().speed.total).toBe(speed);
+      expect((await buildCarrying(name, carried)).components.combat.getCombat().speed.total).toBe(speed);
     });
 
     test("and AC of a prestige class follow its table: a sacred fist's, a dwarven defender's", async () => {
@@ -1718,9 +1704,9 @@ describe("DetailedCharacter", () => {
         for (let level = 1; level <= levels; level++) {
           await addCharacterLevel(characterId, (await findKlassLevel(klass.id, level))!.id);
         }
-        const { speed, ac } = (await build((await Characters.findOne(db, { id: characterId }))!))
-          .getDetailedCharacterCombat()
-          .getCombat();
+        const { speed, ac } = (
+          await build((await Characters.findOne(db, { id: characterId }))!)
+        ).components.combat.getCombat();
         return { speed: speed.total, misc: ac.misc, dodge: ac.dodge };
       };
       // Sacred fist 6: +20 feet, +2 AC; dwarven defender 4: +2 dodge
@@ -1731,7 +1717,7 @@ describe("DetailedCharacter", () => {
     test("of a monk loses fast movement under a medium load, and her AC bonus with it", async () => {
       const zen = await findSeededCharacter("Zen Whitepetal");
       const sheet = async () => {
-        const { speed, ac, encumbrance } = (await build(zen)).getDetailedCharacterCombat().getCombat();
+        const { speed, ac, encumbrance } = (await build(zen)).components.combat.getCombat();
         return { load: encumbrance.load, speed: speed.total, misc: ac.misc };
       };
       const light = await sheet();
@@ -1743,7 +1729,7 @@ describe("DetailedCharacter", () => {
         sourceType: "races",
         target: "combat.encumbrance.carriedweight",
         operator: "add",
-        value: String(Math.ceil((await build(zen)).getDetailedCharacterCombat().getCombat().encumbrance.lightload + 1)),
+        value: String(Math.ceil((await build(zen)).components.combat.getCombat().encumbrance.lightload + 1)),
         valueType: "number",
       });
       invalidateSeededRuleset((await getSeedCtx()).rulesetId);
@@ -1763,7 +1749,7 @@ describe("DetailedCharacter", () => {
     test("skip a part the sheet computes, and say why: it would be overwritten, or read stale", async () => {
       const modifier = await raceModifier("Bjorn Ironhand", { target: "skills.climb.total", value: "5" });
       const bjorn = await buildSeeded("Bjorn Ironhand");
-      expect(bjorn.getDetailedCharacterModifiers().getModifiers().skippedModifiers).toContainEqual({
+      expect(bjorn.modifierEvaluator.getModifiers().skippedModifiers).toContainEqual({
         modifier: expect.objectContaining({ id: modifier.id }),
         warning: "Target skills.climb.total is computed from the sheet: a modifier can't change it",
       });
@@ -1783,7 +1769,7 @@ describe("DetailedCharacter", () => {
       invalidateSeededRuleset(rulesetId);
       await raceModifier("Bjorn Ironhand", { target: "combat.ac.armor", value: "2" });
       const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: "Chain Mail", location: "Torso" }]);
-      expect(bjorn.getDetailedCharacterCombat().getCombat().ac.armor).toBe(8);
+      expect(bjorn.components.combat.getCombat().ac.armor).toBe(8);
     });
 
     test("gated by a requirement, read the sheet the other modifiers have changed", async () => {
@@ -1792,7 +1778,7 @@ describe("DetailedCharacter", () => {
         { target: "abilities.strength.total", operator: "greater_than_or_equal", value: "20", valueType: "number" },
       ]);
       const initiative = async (carried: Carried[]) =>
-        (await buildCarrying("Bjorn Ironhand", carried)).getDetailedCharacterCombat().getCombat().initiative.misc;
+        (await buildCarrying("Bjorn Ironhand", carried)).components.combat.getCombat().initiative.misc;
       const belt = { item: (await createAbilityItem("strength", 2, "Waist")).id, location: "Waist" as const };
       expect([await initiative([]), await initiative([belt])]).toEqual([0, 5]);
     });
@@ -1806,8 +1792,8 @@ describe("DetailedCharacter", () => {
         { target: "combat.hp.misc", operator: "greater_than_or_equal", value: "5", valueType: "number" },
       ]);
       const bjorn = await buildSeeded("Bjorn Ironhand");
-      expect(bjorn.getDetailedCharacterAbilities().getAbilities().strength.total).toBe(14);
-      expect(bjorn.getDetailedCharacterCombat().getCombat().hp.misc).toBe(5);
+      expect(bjorn.components.abilities.getAbilities().strength.total).toBe(14);
+      expect(bjorn.components.combat.getCombat().hp.misc).toBe(5);
       const race = (await Races.findOne(db, { id: (await findSeededCharacter("Bjorn Ironhand")).raceId }))!.name;
       expect(
         bjorn
@@ -1845,7 +1831,7 @@ describe("DetailedCharacter", () => {
       // An elf wizard, INT 18: a headband's +2 makes her modifier 5, each DC one higher
       const dcs = async (carried: Carried[]) =>
         Object.values(
-          (await buildCarrying("Elara Starweaver", carried)).getDetailedCharacterPowerGroupings().getPowerGroupings(),
+          (await buildCarrying("Elara Starweaver", carried)).components.powerGroupings.getPowerGroupings(),
         ).flatMap((group) => Object.values(group).flatMap((byClass) => Object.values(byClass).map((dc) => dc.total)));
       const before = await dcs([]);
       const headband = { item: (await createAbilityItem("intelligence", 2, "Head")).id, location: "Head" as const };
@@ -1853,8 +1839,7 @@ describe("DetailedCharacter", () => {
     });
 
     test("apply a feat's bonus", async () => {
-      const toughness = (await buildSeeded("Kael Stormborn"))
-        .getDetailedCharacterModifiers()
+      const toughness = (await buildSeeded("Kael Stormborn")).modifierEvaluator
         .getModifiers()
         .appliedModifiers.find((m) => m.target === "combat.hp.misc");
       expect(toughness).toMatchObject({ operator: "add", value: "3" });
@@ -1863,7 +1848,7 @@ describe("DetailedCharacter", () => {
     test("hold a weapon feat's bonus until the weapon is in hand", async () => {
       // Weapon Focus and Weapon Specialization: Longsword.
       const targets = ["items.weapons.longsword.tohit.misc", "items.weapons.longsword.damage.misc"];
-      const empty = (await buildCarrying("Bjorn Ironhand")).getDetailedCharacterModifiers().getModifiers();
+      const empty = (await buildCarrying("Bjorn Ironhand")).modifierEvaluator.getModifiers();
       expect(targets.map((target) => empty.inactiveModifiers.find((m) => m.target === target)?.value)).toEqual([
         "1",
         "2",
@@ -1871,17 +1856,15 @@ describe("DetailedCharacter", () => {
 
       const armed = (
         await buildCarrying("Bjorn Ironhand", [{ item: "Longsword", location: "Main Hand", weaponSet: 0 }])
-      )
-        .getDetailedCharacterModifiers()
-        .getModifiers();
+      ).modifierEvaluator.getModifiers();
       expect(armed.inactiveModifiers.filter((m) => m.target.includes("longsword"))).toEqual([]);
       expect(targets.every((target) => armed.appliedModifiers.some((m) => m.target === target))).toBe(true);
     });
 
     test("leave none unapplied or skipped for a valid character", async () => {
-      const { unappliedModifiers, skippedModifiers } = (await buildSeeded("Bjorn Ironhand"))
-        .getDetailedCharacterModifiers()
-        .getModifiers();
+      const { unappliedModifiers, skippedModifiers } = (
+        await buildSeeded("Bjorn Ironhand")
+      ).modifierEvaluator.getModifiers();
       expect(unappliedModifiers.filter((m) => m.target.startsWith("items.weapons.longsword."))).toEqual([]);
       expect(skippedModifiers).toEqual([]);
     });
@@ -1893,9 +1876,9 @@ describe("DetailedCharacter", () => {
         ["Bjorn Ironhand", 5],
         ["Kael Stormborn", 3],
       ] as const) {
-        const { fulfilledRequirementGroups, unmetRequirementGroups, invalidRequirements } = (await buildSeeded(name))
-          .getDetailedCharacterRequirements()
-          .getRequirements();
+        const { fulfilledRequirementGroups, unmetRequirementGroups, invalidRequirements } = (
+          await buildSeeded(name)
+        ).requirementEvaluator.getRequirements();
         expect(fulfilledRequirementGroups.length).toBeGreaterThanOrEqual(feats);
         expect(unmetRequirementGroups).toEqual([]);
         expect(invalidRequirements).toEqual([]);
@@ -1915,9 +1898,9 @@ describe("DetailedCharacter", () => {
             eq(characterAbilitiesInCharacter.abilityId, abilityMap["Strength"]),
           ),
         );
-      expect(
-        (await build(bjorn)).getDetailedCharacterRequirements().getRequirements().unmetRequirementGroups.length,
-      ).toBeGreaterThan(0);
+      expect((await build(bjorn)).requirementEvaluator.getRequirements().unmetRequirementGroups.length).toBeGreaterThan(
+        0,
+      );
     });
 
     test("mark in their tree the conditions unmet, judged as the requirements are", async () => {
@@ -1971,10 +1954,10 @@ describe("DetailedCharacter", () => {
       await addCharacterLevel(bjorn.id, (await findKlassLevel(klassMap.pc["Barbarian"], 1))!.id);
       const detailed = await build(bjorn);
 
-      const general = detailed.getDetailedCharacterAptitudes().getAptitudes()["general"];
+      const general = detailed.components.aptitudes.getAptitudes()["general"];
       expect(general.available).toBeGreaterThanOrEqual(0);
       expect(general.available).toBe(general.allowed - general.spent);
-      const nonStacking = Object.values(detailed.getDetailedCharacterClasses().getCharacterClasses())
+      const nonStacking = Object.values(detailed.components.classes.getCharacterClasses())
         .flatMap((klass) => klass.levels.flatMap((level) => level.feats))
         .filter((f) => !f.stackable)
         .map((f) => f.id);
@@ -2007,14 +1990,13 @@ describe("DetailedCharacter", () => {
         );
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
 
-        const feats = detailed.getDetailedCharacterFeats().getFeats() as Record<string, { possessed: boolean }>;
+        const feats = detailed.components.feats.getFeats() as Record<string, { possessed: boolean }>;
         expect([feats["weaponfocuslongsword"].possessed, feats["martialweaponproficiencylongsword"].possessed]).toEqual(
           [true, true],
         );
         // No longsword in hand: the focus bonus waits.
         expect(
-          detailed
-            .getDetailedCharacterModifiers()
+          detailed.modifierEvaluator
             .getModifiers()
             .inactiveModifiers.find((m) => m.target === "items.weapons.longsword.tohit.misc"),
         ).toMatchObject({ value: "1", operator: "add" });
@@ -2037,8 +2019,7 @@ describe("DetailedCharacter", () => {
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
 
         expect(
-          (detailed.getDetailedCharacterFeats().getFeats()["exoticweaponproficiencywhip"] as { possessed: boolean })
-            .possessed,
+          (detailed.components.feats.getFeats()["exoticweaponproficiencywhip"] as { possessed: boolean }).possessed,
         ).toBe(true);
         expect(
           requirementIssues(detailed).find((issue) => issue.entityName === "Exotic Weapon Proficiency: Whip"),
@@ -2066,11 +2047,11 @@ describe("DetailedCharacter", () => {
       // Each level's High Arcana (Archmage) grants one pick of the High Arcana
       const highArcanaPicks = async () => {
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
-        const { allowed, spent } = detailed.getDetailedCharacterAptitudes().getAptitudes()["archmagehigharcana"];
+        const { allowed, spent } = detailed.components.aptitudes.getAptitudes()["archmagehigharcana"];
         return {
           allowed,
           spent,
-          granted: detailed.getDetailedCharacterFeats().getFeat("High Arcana (Archmage)")?.count,
+          granted: detailed.components.feats.getFeat("High Arcana (Archmage)")?.count,
         };
       };
       expect(await highArcanaPicks()).toEqual({ allowed: 2, spent: 2, granted: 2 });
@@ -2173,7 +2154,7 @@ describe("DetailedCharacter", () => {
       test("add the spell's level, the casting ability and focus bonuses, shared across its groupings", async () => {
         // A wizard, INT 18 (+4), with Spell Focus: Evocation.
         const elara = await buildSeeded("Elara Starweaver");
-        const groupings = elara.getDetailedCharacterPowerGroupings().getPowerGroupings();
+        const groupings = elara.components.powerGroupings.getPowerGroupings();
         expect(Object.keys(groupings)).toEqual(expect.arrayContaining(["evocation", "abjuration", "conjuration"]));
         expect(Object.keys(groupings["evocation"]).length).toBeGreaterThanOrEqual(2);
 
@@ -2189,23 +2170,21 @@ describe("DetailedCharacter", () => {
         });
         // The school's and the descriptor's groupings and the spell hold the same DC; the spell's name isn't a grouping
         expect(groupings["fire"]["burninghands"]["wizard"]).toBe(burningHands);
-        expect(elara.getDetailedCharacterPowers().getPower("Burning Hands")?.dc?.["wizard"]).toBe(burningHands);
+        expect(elara.components.powers.getPower("Burning Hands")?.dc?.["wizard"]).toBe(burningHands);
         expect(groupings["burninghands"]).toBeUndefined();
       });
 
       test("use the class's casting ability: charisma for a sorcerer", async () => {
         // CHA 18 (+4), no Spell Focus.
-        const dc = (await buildSeeded("Vex Flamecaller")).getDetailedCharacterPowerGroupings().getPowerGroupings()[
-          "evocation"
-        ]?.["burninghands"]?.["sorcerer"];
+        const dc = (await buildSeeded("Vex Flamecaller")).components.powerGroupings.getPowerGroupings()["evocation"]?.[
+          "burninghands"
+        ]?.["sorcerer"];
         expect(dc).toMatchObject({ base: 10, level: 1, ability: 4, total: 15 });
       });
 
       test("leave empty groupings for a character without spells", async () => {
         // Groupings exist for every school, so a Spell Focus has somewhere to point.
-        const groupings = (await buildSeeded("Bjorn Ironhand"))
-          .getDetailedCharacterPowerGroupings()
-          .getPowerGroupings();
+        const groupings = (await buildSeeded("Bjorn Ironhand")).components.powerGroupings.getPowerGroupings();
         expect(Object.keys(groupings).length).toBeGreaterThan(0);
         expect(Object.values(groupings).every((bucket) => Object.keys(bucket).length === 0)).toBe(true);
       });
@@ -2248,7 +2227,7 @@ describe("DetailedCharacter", () => {
         }
 
         const detailed = await build(theron);
-        expect(detailed.getDetailedCharacterClasses().getCharacterClasses()["cleric"]).toMatchObject({
+        expect(detailed.components.classes.getCharacterClasses()["cleric"]).toMatchObject({
           level: 3,
           bonuscasterlevel: bonus,
         });
@@ -2268,12 +2247,12 @@ describe("DetailedCharacter", () => {
     test("give a cleric every spell of the levels it can cast, and none above", async () => {
       // Cleric 3 casts up to second level.
       const theron = await buildSeeded("Theron Lightbringer");
-      expect(theron.getDetailedCharacterAptitudes().isLeveledAptitude("clericspells")).toBe(true);
+      expect(theron.components.aptitudes.isLeveledAptitude("clericspells")).toBe(true);
       const knowsAll = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].filter(
         (level) => spellLevel(theron, "clericspells", level)?.allowed === ALLOWED_ALL,
       );
       expect(knowsAll).toEqual([0, 1, 2]);
-      const levels = Object.values(theron.getDetailedCharacterPowers().getFlatPowers())
+      const levels = Object.values(theron.components.powers.getFlatPowers())
         .map((entry) => (entry.power as { powerLevel?: number | null }).powerLevel)
         .filter((level) => level != null);
       expect(levels.every((level) => knowsAll.includes(level!))).toBe(true);
@@ -2283,12 +2262,11 @@ describe("DetailedCharacter", () => {
       test("join the cleric's list with the domain's tag, up to the levels it casts", async () => {
         // Sun domain: Heat Metal (2nd level, not a cleric spell), Fire Shield (4th).
         const theron = await buildSeeded("Theron Lightbringer");
-        const clericPowers = theron
-          .getDetailedCharacterClasses()
+        const clericPowers = theron.components.classes
           .getCharacterClasses()
           ["cleric"].levels.flatMap((level) => level.powers);
         const heatMetal = clericPowers.find((p) => p.name === "Heat Metal")!;
-        expect(heatMetal.aptitudeId).toBe(theron.getDetailedCharacterAptitudes().getAptitudes()["clericspells"].id);
+        expect(heatMetal.aptitudeId).toBe(theron.components.aptitudes.getAptitudes()["clericspells"].id);
         expect(theron.getSpellTags()[heatMetal.id]).toContain("Sun Domain");
         expect(allPowers(theron).map((p) => p.name)).not.toContain("Fire Shield");
       });
@@ -2333,7 +2311,7 @@ describe("DetailedCharacter", () => {
         }
 
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
-        expect(detailed.getDetailedCharacterClasses().getCharacterClasses()["cleric"]).toMatchObject({
+        expect(detailed.components.classes.getCharacterClasses()["cleric"]).toMatchObject({
           level: 7,
           bonuscasterlevel: 5,
         });
@@ -2470,7 +2448,7 @@ describe("DetailedCharacter", () => {
             await addCharacterLevel(characterId, klassLevel.id, level === 1 ? { feats: [fire] } : {});
           }
           const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
-          const list = detailed.getDetailedCharacterAptitudes().getAptitudes()["divinecrusaderspells"].id;
+          const list = detailed.components.aptitudes.getAptitudes()["divinecrusaderspells"].id;
           return {
             uses: spellUses(detailed, "divinecrusaderspells", [1, 2, 3, 4, 5, 6, 7, 8, 9]),
             known: allPowers(detailed)
@@ -2532,7 +2510,7 @@ describe("DetailedCharacter", () => {
           );
         }
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
-        const aptitudes = detailed.getDetailedCharacterAptitudes().getAptitudes();
+        const aptitudes = detailed.components.aptitudes.getAptitudes();
         const onList = (list: string) =>
           allPowers(detailed)
             .filter((power) => power.aptitudeId === aptitudes[list].id)
@@ -2601,7 +2579,7 @@ describe("DetailedCharacter", () => {
           const characterId = await seedHuman(`Test Raider ${levels}`, WIZARD_SCORES);
           for (let level = 1; level <= levels; level++) await addCharacterLevel(characterId, levelIds[level]);
           const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
-          const list = detailed.getDetailedCharacterAptitudes().getAptitudes()["testraiderspells"].id;
+          const list = detailed.components.aptitudes.getAptitudes()["testraiderspells"].id;
           return allPowers(detailed)
             .filter((power) => power.aptitudeId === list)
             .map((power) => power.name)
@@ -2650,7 +2628,7 @@ describe("DetailedCharacter", () => {
         });
         await addCharacterLevel(characterId, levelIds[1]);
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
-        const aptitudes = detailed.getDetailedCharacterAptitudes().getAptitudes();
+        const aptitudes = detailed.components.aptitudes.getAptitudes();
         const onList = (list: string) =>
           allPowers(detailed)
             .filter((power) => power.aptitudeId === aptitudes[list].id)
@@ -2671,7 +2649,7 @@ describe("DetailedCharacter", () => {
           feats: [{ featId: ctx.featMap["Sun Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }],
         });
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
-        const sunDomainSpells = detailed.getDetailedCharacterAptitudes().getAptitudes()["sundomainspells"].id;
+        const sunDomainSpells = detailed.components.aptitudes.getAptitudes()["sundomainspells"].id;
         expect(spellLevel(detailed, "sundomainspells", 1)).toMatchObject({ allowed: ALLOWED_ALL, uses: 1 });
         expect(
           allPowers(detailed)
@@ -2706,7 +2684,7 @@ describe("DetailedCharacter", () => {
         // A wizard 1 with Intelligence 16: one first-level spell, one for Intelligence, one from the feat
         expect(spellUses(detailed, "wizardspells", [1])).toEqual([3]);
         expect(Object.values(detailed.getSpellTags()).flat()).not.toContain("Test Arcane Reserve");
-        expect(detailed.getDetailedCharacterPowers().getSpellEntry("magicmissile", "wizard")).toBeDefined();
+        expect(detailed.components.powers.getSpellEntry("magicmissile", "wizard")).toBeDefined();
       });
 
       test("open a specialist's school slot at the spell levels bonus caster levels reach", async () => {
@@ -2811,7 +2789,7 @@ describe("DetailedCharacter", () => {
           ],
         });
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
-        const clericSpells = detailed.getDetailedCharacterAptitudes().getAptitudes()["clericspells"].id;
+        const clericSpells = detailed.components.aptitudes.getAptitudes()["clericspells"].id;
         const onClericList = allPowers(detailed)
           .filter((power) => power.aptitudeId === clericSpells)
           .map((power) => power.name);
@@ -2831,7 +2809,7 @@ describe("DetailedCharacter", () => {
         );
         expect(tagLists["Prayers of the Sun"].joinsClassList).toBe(true);
         expect(tagLists["Moon Domain"]).toEqual({ aptitudeIds: [moon.id, clericSpells], joinsClassList: false });
-        const powers = detailed.getDetailedCharacterPowers();
+        const powers = detailed.components.powers;
         expect(powers.getSpellEntry("dawnhymn", "sunprayers")).toBeUndefined();
         expect(powers.getSpellEntry("duskhymn", "moondomain")).toBeUndefined();
         expect(powers.getSpellEntry("bless", "cleric")).toBeDefined();
@@ -2869,7 +2847,7 @@ describe("DetailedCharacter", () => {
       const detailed = await build(record);
 
       // Spell Focus: Enchantment adds 1 to both
-      const dcs = detailed.getDetailedCharacterPowers().getPower("Hold Person")?.dc;
+      const dcs = detailed.components.powers.getPower("Hold Person")?.dc;
       expect({ wizard: dcs?.["wizard"]?.total, bard: dcs?.["bard"]?.total }).toEqual({
         wizard: 10 + 3 + 3 + 1,
         bard: 10 + 2 + 1 + 1,
@@ -2886,7 +2864,7 @@ describe("DetailedCharacter", () => {
 
     describe("granted by a feat's modifier", () => {
       test("are known, next to those picked", async () => {
-        const spells = (await setupGrantedSpell()).getDetailedCharacterPowers();
+        const spells = (await setupGrantedSpell()).components.powers;
         expect(
           ["magicmissile", "detectmagic", "burninghands"].map((spell) => spells.getSpellEntry(spell, "wizard")?.known),
         ).toEqual([true, true, false]);
@@ -2895,7 +2873,7 @@ describe("DetailedCharacter", () => {
       test("aren't held to their own prerequisites", async () => {
         // Magic Missile needs wizard 5 here; the grant is the gate.
         const detailed = await setupGrantedSpell({ requirement: true });
-        expect(detailed.getDetailedCharacterPowers().getSpellEntry("magicmissile", "wizard")?.known).toBe(true);
+        expect(detailed.components.powers.getSpellEntry("magicmissile", "wizard")?.known).toBe(true);
         expect(requirementIssues(detailed).find((issue) => issue.entityName === "Magic Missile")).toBeUndefined();
       });
 
@@ -2988,8 +2966,7 @@ describe("DetailedCharacter", () => {
       // A race's +100 lbs: the sheet's encumbrance is the encumbrance's own, which the modifier changes
       const { rulesetId } = await getSeedCtx();
       for (const name of ["Lyra Shadowstep", "Bjorn Ironhand"]) {
-        const carried = async () =>
-          (await buildSeeded(name)).getDetailedCharacterCombat().getCombat().encumbrance.carriedweight;
+        const carried = async () => (await buildSeeded(name)).components.combat.getCombat().encumbrance.carriedweight;
         const before = await carried();
         const character = await findSeededCharacter(name);
         const [modifier] = await Modifiers.create(db, {
@@ -3033,7 +3010,7 @@ describe("DetailedCharacter", () => {
 
       const initiative = async (barrels: number) => {
         await carry(bjorn, barrels ? [{ item: "Barrel (empty)", quantity: barrels, equipped: false }] : []);
-        return (await build(bjorn)).getDetailedCharacterCombat().getCombat().initiative.misc;
+        return (await build(bjorn)).components.combat.getCombat().initiative.misc;
       };
       expect([await initiative(4), await initiative(0)]).toEqual([5, 0]);
     });
@@ -3050,14 +3027,14 @@ describe("DetailedCharacter", () => {
         maxdex: Infinity,
         checkpenalty: 0,
       };
-      expect(bjorn.getDetailedCharacterEncumbrance().getEncumbrance()).toMatchObject(light);
-      expect(bjorn.getDetailedCharacterCombat().getCombat().encumbrance).toMatchObject({
+      expect(bjorn.components.encumbrance.getEncumbrance()).toMatchObject(light);
+      expect(bjorn.components.combat.getCombat().encumbrance).toMatchObject({
         load: "light",
         heavyload: 300,
         carriedweight: 95,
       });
 
-      expect((await buildCarrying("Bjorn Ironhand")).getDetailedCharacterEncumbrance().getEncumbrance()).toMatchObject({
+      expect((await buildCarrying("Bjorn Ironhand")).components.encumbrance.getEncumbrance()).toMatchObject({
         carriedweight: 0,
         load: "light",
         maxdex: Infinity,
@@ -3065,9 +3042,9 @@ describe("DetailedCharacter", () => {
       });
       // Weight times quantity: ten 1 lb torches.
       expect(
-        (await buildCarrying("Bjorn Ironhand", [{ item: "Torch", quantity: 10, equipped: false }]))
-          .getDetailedCharacterEncumbrance()
-          .getEncumbrance().carriedweight,
+        (
+          await buildCarrying("Bjorn Ironhand", [{ item: "Torch", quantity: 10, equipped: false }])
+        ).components.encumbrance.getEncumbrance().carriedweight,
       ).toBe(10);
     });
 
@@ -3076,7 +3053,7 @@ describe("DetailedCharacter", () => {
       ["Elara Starweaver", { heavyload: 80, mediumload: 53, lightload: 26 }],
       ["Grak Thunderfist", { heavyload: 400, mediumload: 266, lightload: 133 }],
     ])("sets %s's loads by strength", async (name, loads) => {
-      expect((await buildSeeded(name)).getDetailedCharacterEncumbrance().getEncumbrance()).toMatchObject(loads);
+      expect((await buildSeeded(name)).components.encumbrance.getEncumbrance()).toMatchObject(loads);
     });
 
     test.each([
@@ -3104,37 +3081,38 @@ describe("DetailedCharacter", () => {
     ] as [string, Carried[], object][])(
       "of a %s load caps dexterity and costs checks",
       async (load, carried, expected) => {
-        expect(
-          (await buildCarrying("Bjorn Ironhand", carried)).getDetailedCharacterEncumbrance().getEncumbrance(),
-        ).toMatchObject({ load, ...expected });
+        expect((await buildCarrying("Bjorn Ironhand", carried)).components.encumbrance.getEncumbrance()).toMatchObject({
+          load,
+          ...expected,
+        });
       },
     );
 
     test("slows the character", async () => {
       const barrels = (quantity: number): Carried[] => [{ item: "Barrel (empty)", quantity, equipped: false }];
-      expect(
-        (await buildCarrying("Bjorn Ironhand", barrels(4))).getDetailedCharacterCombat().getCombat(),
-      ).toMatchObject({ encumbrance: { load: "medium" }, speed: { base: 30, total: 20 } });
-      expect(
-        (await buildCarrying("Bjorn Ironhand", barrels(11))).getDetailedCharacterCombat().getCombat(),
-      ).toMatchObject({ encumbrance: { load: "overloaded" }, speed: { total: 5 } });
+      expect((await buildCarrying("Bjorn Ironhand", barrels(4))).components.combat.getCombat()).toMatchObject({
+        encumbrance: { load: "medium" },
+        speed: { base: 30, total: 20 },
+      });
+      expect((await buildCarrying("Bjorn Ironhand", barrels(11))).components.combat.getCombat()).toMatchObject({
+        encumbrance: { load: "overloaded" },
+        speed: { total: 5 },
+      });
       // A dwarf keeps its speed under a medium load, the barbarian's fast movement with it: only a heavy load stops that
-      const kael = (await buildCarrying("Kael Stormborn", barrels(3))).getDetailedCharacterCombat().getCombat();
+      const kael = (await buildCarrying("Kael Stormborn", barrels(3))).components.combat.getCombat();
       expect(kael).toMatchObject({ encumbrance: { load: "medium" }, speed: { base: 30, total: 30 } });
     });
 
     test("caps dexterity in armor class and costs weight-affected skills, swim double, unless the armor costs more", async () => {
       // A heavy load's max dex 1, over DEX 14's +2.
       expect(
-        (await buildCarrying("Bjorn Ironhand", [{ item: "Barrel (empty)", quantity: 7, equipped: false }]))
-          .getDetailedCharacterCombat()
-          .getCombat(),
+        (
+          await buildCarrying("Bjorn Ironhand", [{ item: "Barrel (empty)", quantity: 7, equipped: false }])
+        ).components.combat.getCombat(),
       ).toMatchObject({ encumbrance: { maxdex: 1 }, ac: { dexterity: 1, total: 11 } });
 
       const skills = async (carried: Carried[]) => {
-        const { swim, climb } = (await buildCarrying("Bjorn Ironhand", carried))
-          .getDetailedCharacterSkills()
-          .getSkills();
+        const { swim, climb } = (await buildCarrying("Bjorn Ironhand", carried)).components.skills.getSkills();
         return [swim?.weight, climb?.weight];
       };
       // A medium load's -3, twice that on Swim.
@@ -3159,9 +3137,9 @@ describe("DetailedCharacter", () => {
         rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
       const strength = async () => {
-        const { misc, total } = (await build((await Characters.findOne(db, { id: characterId }))!))
-          .getDetailedCharacterAbilities()
-          .getAbilities().strength;
+        const { misc, total } = (
+          await build((await Characters.findOne(db, { id: characterId }))!)
+        ).components.abilities.getAbilities().strength;
         return { misc, total };
       };
       await addCharacterLevel(characterId, (await findKlassLevel(dragonDisciple.id, 1))!.id);

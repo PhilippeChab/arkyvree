@@ -1,18 +1,27 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import type { Holders, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import type { Components, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 
 import type PathTraverser from "./PathTraverser.ts";
 
-/** A category of target paths (`abilities`, `skills`…): its names, and how a path in it reaches its data. */
-export interface PathCategory {
+/** A component of `C`, by its key, and the getter that hands its data to a path: both checked against `C`. */
+export type ComponentSpec<C> = { [K in keyof C & string]: { key: K; getter: GetterOf<C[K]> } }[keyof C & string];
+
+/** The names of `T`'s methods a path can call without arguments: the getters its data comes from. */
+export type GetterOf<T> = { [M in keyof T]-?: T[M] extends () => unknown ? M : never }[keyof T] & string;
+
+/**
+ * A category of target paths (`abilities`, `skills`…): its names, and how a path in it reaches its data in the
+ * components `C`.
+ */
+export interface PathCategory<C = Components> {
   /** A path's first element */
   name: string;
   /** Its name in the path picker */
   label: string;
   description: string;
   /** The component its data comes from, and the getter that hands it to a path: none when its paths resolve their own way */
-  holder?: { key: string; getter: string };
+  component?: ComponentSpec<C>;
   /** Whether an entry's name also reaches the entries its name starts: a skill's subtypes */
   expandsSubtypes?: true;
   /** A group of its paths' description (`abilities`, `items.weapons`), `{name}` the group's label */
@@ -25,11 +34,11 @@ export interface PathCategory {
   getSegmentLabels?(): Record<string, string>;
   /** Whether a target reads its source itself (an item's own weapon: the place its item is held), not the sheet */
   readsSource?(target: string): boolean;
-  /** A target it resolves its own way, or null for the walk from its holder's data */
+  /** A target it resolves its own way, or null for the walk from its component's data */
   resolve?(
     target: string,
     rest: string[],
-    holders: Holders,
+    components: Components,
     traverser: PathTraverser,
     context?: { sourceId?: string },
   ): TraversePathResult[] | null;

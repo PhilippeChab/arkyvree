@@ -3,6 +3,7 @@ export type { default as AbilitiesComponent } from "./abilities/AbilitiesCompone
 export { ALLOWED_ALL } from "./aptitudes/AptitudesComponent.ts";
 export type { default as AptitudesComponent } from "./aptitudes/AptitudesComponent.ts";
 export type { ValidationResult } from "./character/AbstractDetailedCharacter.ts";
+export type { Dnd35Components } from "./character/components.ts";
 export type { default as Dnd35DetailedCharacter } from "./character/DetailedCharacter.ts";
 export type { default as IdentityComponent } from "./identity/IdentityComponent.ts";
 export { isSkillSubtypeOf } from "./skills/SkillsComponent.ts";

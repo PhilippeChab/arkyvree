@@ -1,4 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
@@ -13,7 +14,7 @@ const NAVIGATABLE_PATHS = [
 ];
 
 /** The saving throws' target paths: each save's components. */
-export default class SavesPaths implements PathCategory {
+export default class SavesPaths implements PathCategory<Dnd35Components> {
   static generateTargetPaths(saves: RulesetSave[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
@@ -50,7 +51,7 @@ export default class SavesPaths implements PathCategory {
 
   readonly description = "Fortitude, Reflex, and Will saving throws";
 
-  readonly holder = { key: "savingThrows", getter: "getSavingThrows" };
+  readonly component = { key: "savingThrows", getter: "getSavingThrows" } as const;
 
   readonly groupDescriptionTemplates = { saves: "{name} saving throw components" };
 

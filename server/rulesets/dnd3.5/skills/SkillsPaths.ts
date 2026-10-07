@@ -1,14 +1,17 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
+import type { GetterOf, PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import PathTraverser from "@/server/rulesets/engine/paths/PathTraverser.ts";
-import { readHolder } from "@/server/rulesets/engine/paths/readHolder.ts";
-import type { Holders, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import { readComponent } from "@/server/rulesets/engine/paths/readComponent.ts";
+import type { Components, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { MODIFIER_OPERATORS, NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { deriveSegmentLabels } from "@/shared/customization/target.ts";
 import type { Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import type SkillsComponent from "./SkillsComponent.ts";
 
 const BUDGET_PATHS = [
   { path: "perlevel", description: "Bonus skill points per level (a human's)", requirementOnly: false },
@@ -29,7 +32,7 @@ const NAVIGATABLE_PATHS = [
 ];
 
 /** The skills' target paths: each skill's ranks and modifiers (a skill's name reaching its subtypes), and the budget. */
-export default class SkillsPaths implements PathCategory {
+export default class SkillsPaths implements PathCategory<Dnd35Components> {
   /** The skill families no skill of their own names, by their slug: "knowledge" for the Knowledge skills. */
   static getFamilyLabels(skills: Pick<Skill, "name">[]): Record<string, string> {
     const names = new Set(skills.map((skill) => skill.name));
@@ -105,7 +108,7 @@ export default class SkillsPaths implements PathCategory {
 
   readonly description = "Skill ranks and modifiers";
 
-  readonly holder = { key: "skills", getter: "getSkills" };
+  readonly component = { key: "skills", getter: "getSkills" } as const;
 
   readonly expandsSubtypes = true;
 
@@ -125,11 +128,16 @@ export default class SkillsPaths implements PathCategory {
   }
 
   /** skills.budget: the skill points' budget, from its own getter. Null for a skill's path. */
-  resolve(target: string, rest: string[], holders: Holders, traverser: PathTraverser): TraversePathResult[] | null {
+  resolve(
+    target: string,
+    rest: string[],
+    components: Components,
+    traverser: PathTraverser,
+  ): TraversePathResult[] | null {
     if (rest[0] !== "budget") return null;
-    const holder = holders["skills"];
-    if (!holder) return PathTraverser.failed(null, target, "Skills holder not found");
-    const budgetData = readHolder(holder, "getSkillBudget");
-    return traverser.traverse(holder, rest.slice(1), budgetData, "budget", 0, ["skills", "budget"]);
+    const component = components["skills"];
+    if (!component) return PathTraverser.failed(null, target, "Skills holder not found");
+    const budgetData = readComponent(component, "getSkillBudget" satisfies GetterOf<SkillsComponent>);
+    return traverser.traverse(component, rest.slice(1), budgetData, "budget", 0, ["skills", "budget"]);
   }
 }

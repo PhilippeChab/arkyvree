@@ -7,9 +7,9 @@ import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
 function InventoryPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
-  const identity = detailedCharacter.getDetailedCharacterIdentity();
-  const combat = detailedCharacter.getDetailedCharacterCombat();
-  const inventory = detailedCharacter.getDetailedCharacterInventory();
+  const identity = detailedCharacter.components.identity;
+  const combat = detailedCharacter.components.combat;
+  const inventory = detailedCharacter.components.inventory;
   const identityData = identity.getIdentity();
   const combatData = combat.getCombat();
   return (

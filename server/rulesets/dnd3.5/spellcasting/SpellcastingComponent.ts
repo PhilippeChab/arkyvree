@@ -71,7 +71,7 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
     this.casterLevels = { arcane: maxArcane, divine: maxDivine };
   }
 
-  /** The highest arcane and divine spell levels the character casts: the `spellcasting` holder's, its target paths'. */
+  /** The highest arcane and divine spell levels the character casts: the `spellcasting` component's, its target paths'. */
   getSpellcasting(): { arcane: number; divine: number } {
     return this.casterLevels;
   }

@@ -26,11 +26,11 @@ function InfoPage({
   portraitUrl?: string | null;
 }) {
   const ruleset = detailedCharacter.getRuleset();
-  const identity = detailedCharacter.getDetailedCharacterIdentity();
-  const abilities = detailedCharacter.getDetailedCharacterAbilities();
-  const combat = detailedCharacter.getDetailedCharacterCombat();
-  const savingThrows = detailedCharacter.getDetailedCharacterSavingThrows();
-  const classes = detailedCharacter.getDetailedCharacterClasses();
+  const identity = detailedCharacter.components.identity;
+  const abilities = detailedCharacter.components.abilities;
+  const combat = detailedCharacter.components.combat;
+  const savingThrows = detailedCharacter.components.savingThrows;
+  const classes = detailedCharacter.components.classes;
   const identityData = identity.getIdentity();
   const abilityData = abilities.getAbilities();
   const combatData = combat.getCombat();

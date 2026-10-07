@@ -807,7 +807,7 @@ describe("an extension's content in a fork", () => {
 
     const detailed = new DetailedCharacter(character);
     await detailed.build();
-    const [level] = detailed.getDetailedCharacterClasses().getClasses()["favoredsoul"].levels;
+    const [level] = detailed.components.classes.getClasses()["favoredsoul"].levels;
     expect(Object.fromEntries(level.powers.map((power) => [power.name, power.powerLevel]))).toEqual({
       Bane: 1,
       "Bless Water": 1,

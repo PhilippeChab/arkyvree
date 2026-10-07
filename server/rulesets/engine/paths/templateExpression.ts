@@ -2,7 +2,7 @@
  * Template expression parser for modifier values.
  *
  * Syntax:
- *   [path.to.value]            — resolved from holders via traversePathInit
+ *   [path.to.value]            — resolved from components via traversePathInit
  *   123, -4, 0.5               — number literals
  *   name(arg1, arg2, ...)      — function call (min, max, floor, ceil, abs)
  *   a + b, a - b, a * b, a / b — infix arithmetic with standard precedence
@@ -17,7 +17,7 @@
  * to numbers; non-numeric paths throw at evaluation).
  */
 
-import type { Holders, TargetPathsTraverser } from "@/server/rulesets/engine/types.ts";
+import type { Components, TargetPathsTraverser } from "@/server/rulesets/engine/types.ts";
 
 type AstNode =
   | { type: "number"; value: number }
@@ -197,7 +197,7 @@ class Parser {
  */
 export function evaluateTemplateExpression(
   expression: string,
-  holders: Holders,
+  components: Components,
   targetPaths: TargetPathsTraverser,
   onWarning?: (warning: string) => void,
 ): number | string | boolean | null {
@@ -211,7 +211,7 @@ export function evaluateTemplateExpression(
   }
 
   const resolvePath = (path: string): number | string | boolean | null => {
-    const results = targetPaths.traversePathInit(path, holders);
+    const results = targetPaths.traversePathInit(path, components);
     if (results.length === 0 || results[0].error) {
       onWarning?.(`Path "${path}" could not be resolved`);
       return null;
