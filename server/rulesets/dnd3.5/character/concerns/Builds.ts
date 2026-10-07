@@ -1,15 +1,15 @@
 import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import type { PreloadedCharacterData, PreloadedRulesetData } from "@/engine/core/types.ts";
+import type { RulesetView } from "@/engine/core/types.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
-import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { type Db, db, withCowContext } from "@/server/database/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import type CharacterState from "@/server/rulesets/dnd3.5/character/CharacterState.ts";
 import { readFeatFields } from "@/server/rulesets/dnd3.5/feats/featFields.ts";
 import FeatsPaths from "@/server/rulesets/dnd3.5/feats/FeatsPaths.ts";
 import { type Dnd35LoadedCharacterData } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
 import PowersPaths from "@/server/rulesets/dnd3.5/powers/PowersPaths.ts";
+import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
+import type { CharacterRows, DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
@@ -238,18 +238,6 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       }
     }
 
-    /**
-     * Runs `fn` in the scope the caller holds, when it's the character's ruleset's: its copy-on-write context and its
-     * view, without reading the ruleset or composing its view again. Without one, `fn` runs in a scope of its own.
-     */
-    private async inScope<T>(database: Db, scope: RulesetScope | undefined, fn: (scope: RulesetScope) => Promise<T>) {
-      if (scope?.ruleset.id !== this.character.rulesetId)
-        return await withRulesetScope(database, this.character.rulesetId, fn);
-
-      const { ruleset, rulesetData } = scope;
-      return await withCowContext(rulesetData.cow, () => fn({ ruleset, rulesetData }));
-    }
-
     protected async postModifierProcessing(rulesetData: RulesetData): Promise<void> {
       this.components.spellcasting.fetchBonusCasterLevelData(
         rulesetData,
@@ -294,57 +282,45 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       );
     }
 
-    async build(database: Db = db, projectedData?: unknown, scope?: RulesetScope | PreloadedCharacterData) {
-      const dataLoader = this.createDataLoader();
+    /**
+     * Builds the character from its rows (`rows`) in its ruleset's `view`, with a level-up's `projectedData`: it reads
+     * nothing. A bonded creature's `master` comes built (`DetailedCharacterBonded`); a character of its own needs none.
+     */
+    async build(
+      rows: CharacterRows,
+      view: RulesetView,
+      projectedData?: Dnd35ProjectedCharacterData,
+      _master?: DetailedCharacterInterface,
+    ) {
+      const { rulesetData } = view;
+      // 1. Assemble the data from the rows and the view
+      this.applyLoadedData(this.createDataLoader().load(rows, view, projectedData));
 
-      // The scope activates the cowContext and hands the ruleset and its view to every step. The data loader requires
-      // them — never fetches on its own — and takes the shared rows of a `preload()` when it's given one.
-      return await this.inScope(database, scope, async ({ ruleset, rulesetData }) => {
-        const preloadedForLoad: PreloadedCharacterData | PreloadedRulesetData =
-          scope && "_shared" in scope ? scope : { ruleset, cowData: rulesetData.cow, rulesetData };
-        // 1. Load data
-        const data = await dataLoader.load(database, projectedData, preloadedForLoad);
-        this.applyLoadedData(data);
+      // 2. Normalize: each component's initialize, from the loaded data
+      this.normalizeData();
 
-        // 2. Normalize: each component's initialize, from the loaded data
-        this.normalizeData();
+      // 3. Pre-apply possession modifiers: the feats and spells they grant, before anything reads them
+      this.preApplyPossessionModifiers();
 
-        // 3. Pre-apply possession modifiers: the feats and spells they grant, before anything reads them
-        this.preApplyPossessionModifiers();
+      // 4. The components the evaluators walk
+      this.builtComponents = this.components;
 
-        // 4. The components the evaluators walk
-        this.builtComponents = this.components;
+      // 5. Pre-requirement processing (the spellcasting component, a bonded creature's master and stat block)
+      await this.preRequirementProcessing(rulesetData);
 
-        // 5. Pre-requirement processing (the spellcasting component, a bonded creature's master and stat block)
-        await this.preRequirementProcessing(rulesetData);
+      // 6. Post-requirement processing (proficiency penalties, which check requirements of their own)
+      this.postRequirementProcessing();
 
-        // 6. Post-requirement processing (proficiency penalties, which check requirements of their own)
-        this.postRequirementProcessing();
+      // 7. Non-power modifiers, and the requirements that gate them
+      const powerModifiers = this.modifiers.filter((m) => PowersPaths.isPowerTarget(m.target));
+      const otherModifiers = this.modifiers.filter((m) => !PowersPaths.isPowerTarget(m.target));
+      this.applyModifiersInRounds(otherModifiers);
 
-        // 7. Non-power modifiers, and the requirements that gate them
-        const powerModifiers = this.modifiers.filter((m) => PowersPaths.isPowerTarget(m.target));
-        const otherModifiers = this.modifiers.filter((m) => !PowersPaths.isPowerTarget(m.target));
-        this.applyModifiersInRounds(otherModifiers);
+      // 8. Post-modifier processing: the spellcasting (bonus caster levels, bonus spells, known spells)
+      await this.postModifierProcessing(rulesetData);
 
-        // 8. Post-modifier processing: the spellcasting (bonus caster levels, bonus spells, known spells)
-        await this.postModifierProcessing(rulesetData);
-
-        // 9. Power modifiers, gated by the final requirement evaluation
-        this.modifierEvaluator.evaluateModifiers(this.builtComponents, powerModifiers, this.requirementEvaluator);
-      });
-    }
-
-    async preload(database: Db = db, scope?: RulesetScope): Promise<PreloadedCharacterData> {
-      const dataLoader = this.createDataLoader();
-      return await this.inScope(database, scope, async ({ ruleset, rulesetData }) => {
-        const shared = await dataLoader.loadSharedData(database, { ruleset, cowData: rulesetData.cow, rulesetData });
-        return {
-          ruleset,
-          cowData: shared.cowData,
-          rulesetData: shared.rulesetData,
-          _shared: shared,
-        };
-      });
+      // 9. Power modifiers, gated by the final requirement evaluation
+      this.modifierEvaluator.evaluateModifiers(this.builtComponents, powerModifiers, this.requirementEvaluator);
     }
   }
 

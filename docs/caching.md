@@ -100,7 +100,7 @@ The request-dedup key for these calls includes a per-cowData identity tag, so tw
 3. Activates a cowContext via `withCowContext(rulesetData.cow, fn)` — AsyncLocalStorage-backed. The activation is a no-op if the `CowData` resolves no id (`isEmpty()`), so bases / extensions pay nothing.
 4. Calls `fn({ ruleset, rulesetData })` — non-null invariants let callbacks skip defensive branches.
 
-Every downstream read inside `fn` — including nested `detailedCharacter.build()`, `validateAndFetchLevelSelections`, `insertLevelChildren`, anything — sees the same context.
+Every downstream read inside `fn` — including a nested `buildCharacter` (the character's rows it reads), `validateAndFetchLevelSelections`, `insertLevelChildren`, anything — sees the same context.
 
 `withRulesetScopes(tx, rulesetIds, fn)` is the multi-ruleset variant for list endpoints that span characters from several rulesets at once. It pre-loads `rulesetData` for every unique id and hands the map to `fn`, without activating a cowContext (a single context can only represent one ruleset). Inside `fn`, all lookups go through the per-ruleset `rulesetData.*` Maps, which each resolve stored ids through their own ruleset's `CowData` and therefore still auto-resolve.
 
@@ -154,7 +154,7 @@ From `server/cache/rulesetCache/index.ts`: `RulesetCache`, the class that holds 
 
 ### Framework / copy primitives
 
-Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`, `RulesetChangesService` (reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
+Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`, `RulesetChangesService` (reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, which resolves the rows it's given, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
 
 - **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `EntityCopy` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateItem` / `createVariants` and `ModifiersService.duplicateModifier`. `EntityCopy` also copies the entity's relationships and class levels and merges its siblings (its private methods).
 - **Extensions** (`RulesetExtensionsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `EntityCopy` copies an entity on its first edit.
@@ -298,7 +298,7 @@ Paginated / searched / filtered queries (e.g. `Feats.findPage({ search, paginati
 
 Within a single HTTP request, two calls to the same `Repo.findOne(db, ...)` / `Repo.findMany(db, ...)` with the same args return the same `Promise`. The second caller piggybacks on the first's in-flight query — no second round trip.
 
-Why this matters: our read paths have legitimate architectural duplicates. `powerPicks.getAvailablePowers` calls `Characters.findOne`, then later `detailedCharacter.build()` internally calls `Rulesets.findOne` — the same rows the outer function already looked up.
+Why this matters: our read paths have legitimate architectural duplicates. `powerPicks.getAvailablePowers` calls `Characters.findOne`, then later `buildCharacter` reads the character's rows — some the outer function already looked up.
 
 ### How it works
 
@@ -502,8 +502,8 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve
 - `server/repositories/concerns/ResolvesCopies.ts` — `idMatches()` predicate for cowContext-aware composite-key WHERE clauses
-- `server/rulesets/dnd3.5/character/concerns/Builds.ts` — `build()` wraps in `withRulesetScope` and hands preloaded ruleset data to the data loader
-- `server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts` — requires `PreloadedRulesetData`; never fetches ruleset-level state itself
+- `server/builds/buildCharacter.ts` — `buildCharacter` runs a build in the character's ruleset's scope (the caller's, or `withRulesetScope`), reads its rows there (`readCharacterRows`) and builds a bonded creature's master first
+- `server/rulesets/dnd3.5/character/concerns/Builds.ts` — `build(rows, view, projected, master)` reads nothing: the data loader assembles the character's data from the rows and the view
 - `server/timing.ts` — hit/miss counters surfaced in request logs
 - `tests/cache/rulesetCache/RulesetCache.test.ts` — compose + invalidation + pinning semantics + COW-fork auto-resolve
 - `tests/cache/joinMaps.test.ts` — accessor-map parity with replaced repo queries

@@ -1,4 +1,3 @@
-import type { RulesetData } from "@/engine/core/view/index.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 
 import { getBondedRaceStats } from "./bondedRaceData.ts";
@@ -66,8 +65,7 @@ function getAnimalCompanionEffectiveLevel(master: Dnd35DetailedCharacter): numbe
  *   bonuses apply on top of the race's ability modifiers.
  */
 export default class DetailedCharacterAnimalCompanion extends DetailedCharacterAdvancingBonded {
-  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: RulesetData): Promise<void> {
-    const master = await this.loadMaster(parentCharacterId, rulesetData);
+  protected applyMasterDerivation(master: Dnd35DetailedCharacter): void {
     const effective = getAnimalCompanionEffectiveLevel(master);
     const row = basicsAt(effective);
     const raceStats = getBondedRaceStats(this.race?.name);

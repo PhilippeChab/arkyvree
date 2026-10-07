@@ -5,14 +5,10 @@ import { readClassFields } from "@/server/rulesets/dnd3.5/classes/classFields.ts
 import { readRulesetFields } from "@/server/rulesets/dnd3.5/ruleset/rulesetFields.ts";
 import { readSkillFields } from "@/server/rulesets/dnd3.5/skills/skillFields.ts";
 import { collectClassListIds, collectFeatListIds } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
-
-import type { SharedCharacterData } from "./DetailedCharacterDataLoader.ts";
+import type { CharacterRows } from "@/server/rulesets/engine/types.ts";
 
 /** A character ability's score, with its ability's name. */
-export function buildAbilityScore(
-  record: SharedCharacterData["characterAbilityRecords"][number],
-  abilityLookup: Map<string, string>,
-) {
+export function buildAbilityScore(record: CharacterRows["abilities"][number], abilityLookup: Map<string, string>) {
   return { abilityId: record.abilityId, name: abilityLookup.get(record.abilityId) ?? "Unknown", score: record.score };
 }
 
@@ -21,12 +17,11 @@ export function buildAbilityScore(
  * their saves, and classes and their skills (one per level), and its classes once each. languagesById is wrapped by
  * RulesetComposition — stored pre-COW language ids auto-resolve on lookup.
  */
-export function readCachedRows(shared: SharedCharacterData, klassLevelIds: string[]) {
-  const { rulesetData } = shared;
+export function readCachedRows(rows: CharacterRows, rulesetData: RulesetData, klassLevelIds: string[]) {
   const klassLevelsRaw = klassLevelIds.flatMap((id) => rulesetData.klassLevelsById.get(id) ?? []);
   const klassIds = klassLevelsRaw.map((level) => level.klassId);
   return {
-    languages: shared.characterLanguages.flatMap((l) => rulesetData.languagesById.get(l.languageId) ?? []),
+    languages: rows.languages.flatMap((l) => rulesetData.languagesById.get(l.languageId) ?? []),
     klassLevelsRaw,
     klassLevelSaves: klassLevelIds.flatMap((id) => rulesetData.klassLevelSavesByKlassLevelId.get(id) ?? []),
     klasses: klassIds.flatMap((id) => rulesetData.klassesById.get(id) ?? []),

@@ -7,6 +7,7 @@ import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/response/bu
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
+import { buildAs } from "@/tests/support/characters.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
@@ -42,8 +43,7 @@ describe("COW inventory item details", () => {
       const readInventory = async () => {
         if (view === "editable inventory") return CharacterInventoryService.getInventory(session, character.id);
 
-        const detailedCharacter = new DetailedCharacter(character);
-        await detailedCharacter.build();
+        const detailedCharacter = await buildAs(DetailedCharacter, character);
         return detailedCharacter.components.inventory.getFlatInventory();
       };
 
@@ -86,8 +86,7 @@ describe("COW inventory item details", () => {
       description: "Campaign-specific equipment description.",
       type: "Weapon",
     });
-    const detailedCharacter = new DetailedCharacter(character);
-    await detailedCharacter.build();
+    const detailedCharacter = await buildAs(DetailedCharacter, character);
 
     const response = buildFullCharacterResponse(character, detailedCharacter);
     expect(response.equipment[0]).toMatchObject({

@@ -1,25 +1,66 @@
 import type {
   Components,
   LevelUpProjector,
-  PreloadedCharacterData,
   PropertyTypesProvider,
   RequirementIssue,
+  RulesetView,
   TargetPathsInterface,
   ValidationResult,
 } from "@/engine/core/types.ts";
-import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import type { Db } from "@/server/database/index.ts";
-import type { Campaign, Character as CharacterRecord, Player, Requirement, Ruleset } from "@/shared/relations.ts";
+import type {
+  CharacterAbilities,
+  CharacterInventory,
+  CharacterLanguages,
+  CharacterLevelFeats,
+  CharacterLevelPowers,
+  CharacterLevelSkills,
+} from "@/server/repositories/index.ts";
+import type {
+  Campaign,
+  CharacterLevel,
+  Character as CharacterRecord,
+  Modifier,
+  Player,
+  Requirement,
+  Ruleset,
+} from "@/shared/relations.ts";
 
 import type { ModuleEffects, ModuleRules } from "./module/index.ts";
+
+/**
+ * A character's own rows, which the server reads (`server/builds/`) and its module builds the character from: its seat
+ * in a campaign, its ability scores, languages, inventory and levels, every saved level's picks (the links, whose
+ * entities are the view's), and the modifiers set on the character itself, with their requirements. Read in its
+ * ruleset's scope, their references are the view's ids.
+ */
+export interface CharacterRows {
+  abilities: Awaited<ReturnType<typeof CharacterAbilities.findMany>>;
+  campaign: Campaign | undefined;
+  inventory: Awaited<ReturnType<typeof CharacterInventory.findMany>>;
+  languages: Awaited<ReturnType<typeof CharacterLanguages.findMany>>;
+  levels: CharacterLevel[];
+  modifiers: Modifier[];
+  picks: {
+    feats: Awaited<ReturnType<typeof CharacterLevelFeats.findMany>>;
+    powers: Awaited<ReturnType<typeof CharacterLevelPowers.findMany>>;
+    skills: Awaited<ReturnType<typeof CharacterLevelSkills.findMany>>;
+  };
+  player: Player | undefined;
+  requirements: Requirement[];
+}
 
 export interface DetailedCharacterInterface {
   areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean;
   /**
-   * Builds the character, in `scope` when it's the character's ruleset's (the one its caller holds, or a `preload()`'s,
-   * whose shared rows it reads too): no build reads the ruleset or composes its view again.
+   * Builds the character from its rows (`rows`), in its ruleset's `view`, with a level-up's `projectedData`: a bonded
+   * creature's `master` built first. A build reads nothing: the server reads what it's given (`buildCharacter`).
    */
-  build(database?: Db, projectedData?: unknown, scope?: RulesetScope | PreloadedCharacterData): Promise<void>;
+  build(
+    rows: CharacterRows,
+    view: RulesetView,
+    projectedData?: unknown,
+    master?: DetailedCharacterInterface,
+  ): Promise<void>;
   readonly components: Components;
   formatRequirements(requirements: Requirement[]): string;
   getCampaign(): Campaign | undefined;
@@ -31,8 +72,6 @@ export interface DetailedCharacterInterface {
   getRuleset(): Ruleset | undefined;
   getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[];
   getVirtuallyPossessedPowerIds(): string[];
-  /** The character's rows its builds share, read through `database`, in `scope` when it's the character's ruleset's. */
-  preload(database?: Db, scope?: RulesetScope): Promise<PreloadedCharacterData>;
   validate(): ValidationResult;
 }
 

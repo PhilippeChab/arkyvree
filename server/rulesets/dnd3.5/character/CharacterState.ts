@@ -6,14 +6,14 @@ import type {
   CustomizedPower,
   CustomizedRace,
   InventoryEntry,
-  PreloadedCharacterData,
-  PreloadedRulesetData,
+  RulesetView,
   SkillWithRank,
   TargetPathsTraverser,
 } from "@/engine/core/types.ts";
-import type { Db } from "@/server/database/index.ts";
 import type { Dnd35LoadedCharacterData } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
+import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import type { SkillFields } from "@/server/rulesets/engine/module/index.ts";
+import type { CharacterRows } from "@/server/rulesets/engine/types.ts";
 import type {
   Aptitude,
   Campaign,
@@ -37,19 +37,9 @@ import type {
 
 import { type Dnd35Components } from "./components.ts";
 
-/**
- * Data loader interface that ruleset implementations must provide.
- * Handles DB fetching of character-level data + each entity's customizations. Ruleset-
- * level data (`ruleset`, `cowData`, `rulesetData`) is always supplied by the
- * caller via `withRulesetScope` — the loader never fetches it itself.
- */
+/** What assembles a character's data from its rows and its ruleset's view: reading nothing. */
 export interface DataLoader {
-  load(
-    database: Db | undefined,
-    projectedData: unknown | undefined,
-    preloaded: PreloadedCharacterData | PreloadedRulesetData,
-  ): Promise<Dnd35LoadedCharacterData>;
-  loadSharedData(database: Db | undefined, preloaded: PreloadedRulesetData): Promise<PreloadedRulesetData>;
+  load(rows: CharacterRows, view: RulesetView, projectedData?: Dnd35ProjectedCharacterData): Dnd35LoadedCharacterData;
 }
 
 /**

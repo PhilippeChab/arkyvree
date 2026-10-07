@@ -1,4 +1,5 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
+import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 
 import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
@@ -20,14 +21,7 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
   /** The master's skill ranks, by skill slug: the familiar's where they're better than its own. */
   private masterSkillRanks: Record<string, number> = {};
 
-  /** The stat block's skills, then its master's ranks where they're better. */
-  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: RulesetData): void {
-    super.applyRaceDefaults(raceStats, rulesetData);
-    this.components.skills.applyBetterRanks(this.masterSkillRanks);
-  }
-
-  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: RulesetData): Promise<void> {
-    const master = await this.loadMaster(parentCharacterId, rulesetData);
+  protected applyMasterDerivation(master: Dnd35DetailedCharacter): void {
     const masterLevel = master.components.identity.getIdentity().meta.level;
     const naBonus = Math.min(10, Math.max(1, Math.ceil(masterLevel / 2)));
     const familiarInt = Math.min(15, 5 + Math.ceil(masterLevel / 2));
@@ -58,5 +52,11 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
 
     // Familiar HP = ½ master HP only — no per-HD Con component.
     this.cachedTotalHD = 0;
+  }
+
+  /** The stat block's skills, then its master's ranks where they're better. */
+  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: RulesetData): void {
+    super.applyRaceDefaults(raceStats, rulesetData);
+    this.components.skills.applyBetterRanks(this.masterSkillRanks);
   }
 }

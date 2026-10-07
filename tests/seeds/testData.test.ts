@@ -18,6 +18,7 @@ import {
 } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
+import { buildAs } from "@/tests/support/characters.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 import { namesOf } from "./freshSeed.ts";
@@ -158,8 +159,7 @@ test("The test data seeds the seed user's characters as written, each valid, wit
   for (const seed of CHARACTERS) {
     const character = masters.find(({ name }) => name === seed.name)!;
     expect(await written(character)).toEqual(seeded(seed, rulesetId));
-    const detailed = new DetailedCharacter(character);
-    await detailed.build();
+    const detailed = await buildAs(DetailedCharacter, character);
     expect({ name: seed.name, validation: detailed.validate() }).toEqual({
       name: seed.name,
       validation: { valid: true, issues: [] },

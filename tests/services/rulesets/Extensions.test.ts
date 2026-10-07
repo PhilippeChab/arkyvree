@@ -49,7 +49,7 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
+import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel, createTestKlassLevel, pickFeat } from "@/tests/support/levels.ts";
 import {
   copyEntity,
@@ -805,8 +805,7 @@ describe("an extension's content in a fork", () => {
       ],
     });
 
-    const detailed = new DetailedCharacter(character);
-    await detailed.build();
+    const detailed = await buildAs(DetailedCharacter, character);
     const [level] = detailed.components.classes.getClasses()["favoredsoul"].levels;
     expect(Object.fromEntries(level.powers.map((power) => [power.name, power.powerLevel]))).toEqual({
       Bane: 1,
@@ -898,8 +897,7 @@ describe("an extension's content in a fork", () => {
     }
     RulesetCache.invalidate(draft.id);
 
-    const detailed = new DetailedCharacter(character);
-    await detailed.build();
+    const detailed = await buildAs(DetailedCharacter, character);
     expect(detailed.validate().issues.filter((issue) => issue.entityName === "Damage Reduction (Barbarian)")).toEqual(
       [],
     );

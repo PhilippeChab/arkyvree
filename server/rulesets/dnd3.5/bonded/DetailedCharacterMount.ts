@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 
 import { getBondedRaceStats } from "./bondedRaceData.ts";
 import DetailedCharacterAdvancingBonded from "./DetailedCharacterAdvancingBonded.ts";
@@ -31,8 +31,7 @@ function bracketAt(paladinLevel: number): MountRow | null {
  *   the bracket value (overriding the animal's natural Int 2).
  */
 export default class DetailedCharacterMount extends DetailedCharacterAdvancingBonded {
-  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: RulesetData): Promise<void> {
-    const master = await this.loadMaster(parentCharacterId, rulesetData);
+  protected applyMasterDerivation(master: Dnd35DetailedCharacter): void {
     const effective = master.components.bonded.getBondedLevel("mount");
     const row = bracketAt(effective);
     const raceStats = getBondedRaceStats(this.race?.name);
