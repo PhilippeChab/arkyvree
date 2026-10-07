@@ -60,6 +60,10 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     return Object.fromEntries(this.categories.map(({ name, description }) => [name, description]));
   }
 
+  getEntityNamingCategories(): string[] {
+    return this.categories.filter((category) => category.namesEntities).map(({ name }) => name);
+  }
+
   getGroupDescriptionTemplates(): Record<string, string> {
     return Object.assign({}, ...this.categories.map(({ groupDescriptionTemplates }) => groupDescriptionTemplates));
   }

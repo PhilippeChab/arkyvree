@@ -103,6 +103,8 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
 
   readonly name = "items";
 
+  readonly namesEntities = true;
+
   readonly pathDescriptions = {
     "items.weapons": "Per-weapon attack, damage, critical, and how it's wielded",
     "items.armors": "Per-armor AC, check penalty, spell failure, and max dexterity",

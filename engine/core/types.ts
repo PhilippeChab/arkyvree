@@ -34,6 +34,8 @@ export interface RulesetView {
 export interface TargetPathsInterface extends TargetPathsTraverser {
   getCategories(): string[];
   getCategoryDescriptions(): Record<string, string>;
+  /** The categories whose paths name an entity under their group, whose segment a description skips */
+  getEntityNamingCategories(): string[];
   getGroupDescriptionTemplates(): Record<string, string>;
   getPathDescriptions(): Record<string, string>;
   getTargetPathsAndLabels(rulesetData: RulesetData, kind: TargetPathKind): TargetPathCatalog;

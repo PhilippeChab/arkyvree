@@ -18,9 +18,12 @@ function buildSegmentDescriber(
   const pathDescriptions = generator.getPathDescriptions();
   const groupTemplates = generator.getGroupDescriptionTemplates();
 
+  const entityNaming = new Set(generator.getEntityNamingCategories());
+
   return (fullPrefix: string, segment: string, fallback?: string): string => {
     if (pathDescriptions[fullPrefix]) return pathDescriptions[fullPrefix];
     const prefixParts = fullPrefix.split(".");
+    const namesEntity = entityNaming.has(prefixParts[0]);
 
     if (segment === "*") {
       if (prefixParts.length === 2) {
@@ -30,7 +33,7 @@ function buildSegmentDescriber(
       return kind === "requirement" ? "Any in this group" : "All in this group";
     }
 
-    if (prefixParts.length >= 4 && prefixParts[0] === "items") {
+    if (prefixParts.length >= 4 && namesEntity) {
       const structuralKey = [prefixParts[0], prefixParts[1], ...prefixParts.slice(3)].join(".");
       if (pathDescriptions[structuralKey]) return pathDescriptions[structuralKey];
     }
@@ -40,7 +43,7 @@ function buildSegmentDescriber(
       if (template) return template.replace("{name}", segmentLabels[segment] || capitalize(segment));
     }
 
-    if (prefixParts.length === 3 && prefixParts[0] === "items") {
+    if (prefixParts.length === 3 && namesEntity) {
       const template = groupTemplates[`${prefixParts[0]}.${prefixParts[1]}`];
       if (template) return template.replace("{name}", segmentLabels[segment] || capitalize(segment));
     }

@@ -30,6 +30,11 @@ export interface PathCategory<C = Components> {
   label: string;
   /** A path's first element */
   name: string;
+  /**
+   * Whether its paths name an entity under their group (`items.weapons.<item>.…`): a path's description and its group's
+   * template skip the entity's segment
+   */
+  namesEntities?: true;
   /** A path prefix's description (`combat.ac`) */
   pathDescriptions?: Record<string, string>;
   /** Whether a target reads its source itself (an item's own weapon: the place its item is held), not the sheet */
