@@ -1,6 +1,5 @@
 import type { PowerDc, PowerDcsByClass } from "@/server/rulesets/dnd3.5/powers/PowerGroupingsComponent.ts";
-import { formatPropertyType, formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { type Aptitude, type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -36,67 +35,6 @@ type PowerGroupsNamespace = Record<string, PowerGroupEntry>;
 export default class PowersComponent {
   /** `propertyValues`: a property type's options in their order (the ruleset's), which a spell lists its values in. */
   constructor(private readonly propertyValues: (type: string) => readonly string[] | null) {}
-
-  static getSegmentLabels(): Record<string, string> {
-    return { properties: "Properties", known: "Known" };
-  }
-
-  static generateTargetPaths(
-    powers: (PowerWithAptitudes & { properties: Property[] })[],
-    aptitudes: Aptitude[],
-    featListIds: Set<string>,
-    kind: "modifier" | "requirement",
-  ): TargetPath[] {
-    const paths: TargetPath[] = [];
-
-    // Property paths
-    for (const power of powers) {
-      const normalizedPowerName = stripSeparators(power.name);
-
-      const propertyTypes = new Set(power.properties.map((p) => p.type));
-      for (const type of propertyTypes) {
-        paths.push({
-          path: `powers.${normalizedPowerName}.properties.${type}`,
-          category: "powers",
-          description: `${power.name} ${formatPropertyType(type)} property`,
-          valueType: "string",
-          // A list of values: one of them is required or added, never the whole list as text
-          operators: kind === "modifier" ? ["add", "subtract"] : ["contains", "not_contains"],
-        });
-      }
-    }
-
-    // Spell known paths, but on the lists a feat brings (a domain's, a specialist's school): their spells come with it
-    const aptitudeIdToSlug = new Map<string, string>();
-    for (const apt of aptitudes) {
-      if (featListIds.has(apt.id)) continue;
-      aptitudeIdToSlug.set(apt.id, toSpellPossessionSlug(apt.name));
-    }
-
-    const seen = new Set<string>();
-    for (const power of powers) {
-      const spellSlug = stripSeparators(power.name);
-      for (const pa of power.powersAptitudesInRules) {
-        if (pa.level == null) continue;
-        const aptSlug = aptitudeIdToSlug.get(pa.aptitudeId);
-        if (!aptSlug) continue;
-
-        const path = `powers.${spellSlug}.${aptSlug}.known`;
-        if (seen.has(path)) continue;
-        seen.add(path);
-
-        paths.push({
-          path,
-          category: "powers",
-          description: `Whether ${power.name} is known`,
-          valueType: "boolean",
-          operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
-        });
-      }
-    }
-
-    return paths;
-  }
 
   private readonly detailedCharacterPowers: DetailedCharacterComprehensivePowers = {};
 

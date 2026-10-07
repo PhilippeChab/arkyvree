@@ -1,9 +1,9 @@
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import type IdentityComponent from "@/server/rulesets/dnd3.5/identity/IdentityComponent.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { JOINS_CLASS_LIST } from "./AptitudesPaths.ts";
 
 type AptitudesById = Map<string, DetailedCharacterComprehensiveAptitudes[string]>;
 
@@ -28,59 +28,6 @@ export type AptitudeLevelData = {
   available: number;
 };
 
-const ALLOWED_ENTITY_TYPES = ["feats", "klass_levels", "races"];
-
-/**
- * A spell list's spells joining the list of the class that gives it (`aptitudes.<list>.joinsclasslist`): a cleric's
- * domain joins the cleric's list. A feat or a class level sets it, and the class is its own, or the one whose level gave
- * the feat.
- */
-const JOINS_CLASS_LIST = {
-  path: "joinsclasslist",
-  label: "Joins Class List",
-  description: "Whether its spells join the list of the class whose level gave it",
-  allowedEntityTypes: ["feats", "klass_levels"],
-};
-
-const NAVIGATABLE_PATHS = [
-  {
-    path: "uses",
-    description: "Uses per day (casts, charges, etc.)",
-    type: "number" as const,
-    allowedEntityTypes: ALLOWED_ENTITY_TYPES,
-  },
-  {
-    path: "allowed",
-    description: "Slots for known spells or feats",
-    type: "number" as const,
-    allowedEntityTypes: ALLOWED_ENTITY_TYPES,
-  },
-];
-
-const POOL_SLOT_MODIFIERS: Pick<TargetPath, "operators" | "literalOnly" | "minValue"> = {
-  operators: ["add"],
-  literalOnly: true,
-  minValue: 0,
-};
-/**
- * What a modifier on a pool's slots may do: grant more (`add` 0 or more: -1 is all known), or make a spell level's all
- * known (`set` -1). The level-up wizard and the class tables count these without a character, the sheet's way: other
- * operators, and templates, would count differently there than on the sheet. A pool's own uses per day count on the
- * sheet alone.
- */
-const SPELL_LEVEL_SLOT_MODIFIERS: Record<
-  string,
-  Pick<TargetPath, "operators" | "setValues" | "literalOnly" | "minValue">
-> = {
-  allowed: {
-    operators: ["add", "set"],
-    setValues: [{ value: "-1", label: "All known" }],
-    literalOnly: true,
-    minValue: 0,
-  },
-  uses: { operators: ["add"], literalOnly: true, minValue: 0 },
-};
-
 export const ALLOWED_ALL = -1;
 
 export default class AptitudesComponent {
@@ -95,64 +42,6 @@ export default class AptitudesComponent {
     /** The general feats a character has at its total level: the ruleset's rule, which a bonded creature has none of. */
     private readonly countGeneralFeats: (totalLevel: number) => number,
   ) {}
-
-  static getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(NAVIGATABLE_PATHS, { [JOINS_CLASS_LIST.path]: JOINS_CLASS_LIST.label });
-  }
-
-  static generateTargetPaths(
-    aptitudes: Aptitude[],
-    kind: "modifier" | "requirement",
-    leveledAptitudeIds: Set<string>,
-    maxSpellLevel: number,
-  ): TargetPath[] {
-    const paths: TargetPath[] = [];
-    const operators = getNumericOperators(kind);
-
-    for (const aptitude of aptitudes) {
-      const normalizedAptitudeName = stripSeparators(aptitude.name);
-
-      if (leveledAptitudeIds.has(aptitude.id)) {
-        // Generate per-level paths for leveled aptitudes (0..maxSpellLevel)
-        for (let level = 0; level <= maxSpellLevel; level++) {
-          for (const subPath of NAVIGATABLE_PATHS) {
-            paths.push({
-              path: `aptitudes.${normalizedAptitudeName}.${level}.${subPath.path}`,
-              category: "aptitudes",
-              description: subPath.description,
-              valueType: subPath.type,
-              operators,
-              ...("allowedEntityTypes" in subPath && { allowedEntityTypes: subPath.allowedEntityTypes }),
-              ...(kind === "modifier" && SPELL_LEVEL_SLOT_MODIFIERS[subPath.path]),
-            });
-          }
-        }
-        paths.push({
-          path: `aptitudes.${normalizedAptitudeName}.${JOINS_CLASS_LIST.path}`,
-          category: "aptitudes",
-          description: JOINS_CLASS_LIST.description,
-          valueType: "boolean",
-          operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
-          allowedEntityTypes: JOINS_CLASS_LIST.allowedEntityTypes,
-        });
-      } else {
-        // Generate flat paths for non-leveled aptitudes
-        for (const subPath of NAVIGATABLE_PATHS) {
-          paths.push({
-            path: `aptitudes.${normalizedAptitudeName}.${subPath.path}`,
-            category: "aptitudes",
-            description: subPath.description,
-            valueType: subPath.type,
-            operators,
-            ...("allowedEntityTypes" in subPath && { allowedEntityTypes: subPath.allowedEntityTypes }),
-            ...(kind === "modifier" && subPath.path === "allowed" && POOL_SLOT_MODIFIERS),
-          });
-        }
-      }
-    }
-
-    return paths;
-  }
 
   private readonly detailedCharacterComprehensiveAptitudes: DetailedCharacterComprehensiveAptitudes = {};
 

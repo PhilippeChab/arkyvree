@@ -35,22 +35,3 @@ describe("PowersComponent.addPowerEntries", () => {
     });
   });
 });
-
-describe("PowersComponent.generateTargetPaths", () => {
-  test("offers a spell's values of a type as a list: one of them required, or added or taken", async () => {
-    const { rulesetId } = await getSeedCtx();
-    const enthrall = (await Powers.findOne(db, { name: "Enthrall", rulesetId }))!;
-    const properties = await Properties.findMany(db, { entityIds: [enthrall.id], entityType: "powers" });
-    const operatorsOf = (kind: "modifier" | "requirement") =>
-      PowersComponent.generateTargetPaths(
-        [{ ...enthrall, powersAptitudesInRules: [], properties }],
-        [],
-        new Set(),
-        kind,
-      ).find((path) => path.path === `powers.enthrall.properties.${SPELL_COMPONENT}`)?.operators;
-    expect([operatorsOf("requirement"), operatorsOf("modifier")]).toEqual([
-      ["contains", "not_contains"],
-      ["add", "subtract"],
-    ]);
-  });
-});

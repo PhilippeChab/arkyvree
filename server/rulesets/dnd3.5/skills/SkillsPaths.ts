@@ -1,16 +1,128 @@
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import PathTraverser from "@/server/rulesets/engine/paths/PathTraverser.ts";
 import { readHolder } from "@/server/rulesets/engine/paths/readHolder.ts";
 import type { Holders, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import { getNumericOperators } from "@/shared/customization/operators.ts";
+import { MODIFIER_OPERATORS, NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
+import type { TargetPath } from "@/shared/customization/target.ts";
+import { deriveSegmentLabels } from "@/shared/customization/target.ts";
+import type { Skill } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
+
+const BUDGET_PATHS = [
+  { path: "perlevel", description: "Bonus skill points per level (a human's)", requirementOnly: false },
+  { path: "total", description: "Skill points from every level", requirementOnly: true },
+  { path: "spent", description: "Skill points spent", requirementOnly: true },
+  { path: "available", description: "Skill points left to spend", requirementOnly: true },
+];
+
+const NAVIGATABLE_PATHS = [
+  { path: "rank", description: "Total ranks invested", type: "number" as const },
+  { path: "ability", description: "From key ability modifier", type: "number" as const, requirementOnly: true },
+  { path: "weight", description: "Armor check penalty (ACP)", type: "number" as const, requirementOnly: true },
+  { path: "size", description: "Size modifier (Hide only)", type: "number" as const },
+  { path: "misc", description: "From feats, items, and spells", type: "number" as const },
+  { path: "total", description: "Final skill check bonus", type: "number" as const, requirementOnly: true },
+  { path: "trained", description: "Whether at least 1 rank is invested", type: "boolean" as const },
+  { path: "innate", description: "Whether skill is a class skill", type: "boolean" as const },
+];
 
 /** The skills' target paths: each skill's ranks and modifiers (a skill's name reaching its subtypes), and the budget. */
 export default class SkillsPaths implements PathCategory {
+  /** The skill families no skill of their own names, by their slug: "knowledge" for the Knowledge skills. */
+  static getFamilyLabels(skills: Pick<Skill, "name">[]): Record<string, string> {
+    const names = new Set(skills.map((skill) => skill.name));
+    const labels: Record<string, string> = {};
+    for (const skill of skills) {
+      const family = skill.name.match(/^(.+?) \(/)?.[1];
+      if (family && !names.has(family)) labels[stripSeparators(family)] = family;
+    }
+    return labels;
+  }
+
+  /**
+   * Each skill's paths, and a family's that no skill of its own names: `skills.knowledge.rank` reaches every Knowledge
+   * skill, as the engine reads it (any of them for a requirement, all for a modifier).
+   */
+  static generateTargetPaths(skills: Skill[], kind: "modifier" | "requirement"): TargetPath[] {
+    const paths: TargetPath[] = [];
+    const entries = [
+      ...skills.map((skill) => ({ slug: stripSeparators(skill.name), prefix: "" })),
+      ...Object.entries(SkillsPaths.getFamilyLabels(skills)).map(([slug, family]) => ({
+        slug,
+        prefix: kind === "requirement" ? `Any ${family} skill — ` : `All ${family} skills — `,
+      })),
+    ];
+
+    for (const { slug, prefix } of entries) {
+      for (const subPath of NAVIGATABLE_PATHS) {
+        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
+        paths.push({
+          path: `skills.${slug}.${subPath.path}`,
+          category: "skills",
+          description: `${prefix}${subPath.description}`,
+          valueType: subPath.type,
+          operators:
+            kind === "modifier"
+              ? subPath.type === "boolean"
+                ? ["set"]
+                : [...MODIFIER_OPERATORS]
+              : subPath.type === "boolean"
+                ? ["equal", "not_equal"]
+                : [...NUMERIC_REQUIREMENT_OPERATORS],
+        });
+      }
+    }
+
+    // The skill point budget: a level's bonus points (a human's) are an input, the rest is counted
+    for (const { path, description, requirementOnly } of BUDGET_PATHS) {
+      if (requirementOnly && kind === "modifier") continue;
+      paths.push({
+        path: `skills.budget.${path}`,
+        category: "skills",
+        description,
+        valueType: "number",
+        operators: getNumericOperators(kind),
+      });
+    }
+
+    paths.push({
+      path: "skills.*.misc",
+      category: "skills",
+      description: "Misc bonus applied to every skill",
+      groupDescription: kind === "requirement" ? "Any skill" : "All skills",
+      valueType: "number",
+      operators: getNumericOperators(kind),
+    });
+
+    return paths;
+  }
+
   readonly name = "skills";
+
   readonly label = "Skills";
+
   readonly description = "Skill ranks and modifiers";
+
   readonly holder = { key: "skills", getter: "getSkills" };
+
   readonly expandsSubtypes = true;
+
   readonly groupDescriptionTemplates = { skills: "{name} skill rank and modifiers" };
+
+  generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
+    return SkillsPaths.generateTargetPaths(rulesetData.skills, kind);
+  }
+
+  getSegmentLabels(): Record<string, string> {
+    return {
+      ...deriveSegmentLabels(NAVIGATABLE_PATHS),
+      ...deriveSegmentLabels(BUDGET_PATHS),
+      budget: "Skill Points",
+      perlevel: "Per Level",
+    };
+  }
 
   /** skills.budget: the skill points' budget, from its own getter. Null for a skill's path. */
   resolve(target: string, rest: string[], holders: Holders, traverser: PathTraverser): TraversePathResult[] | null {

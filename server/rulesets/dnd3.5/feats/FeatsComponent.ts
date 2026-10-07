@@ -1,5 +1,3 @@
-import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Feat } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -15,55 +13,12 @@ export type FeatEntry = {
   count: number;
 };
 
-const NAVIGATABLE_PATHS = [
-  { path: "possessed", description: "Whether the character has this feat", type: "boolean" as const },
-  {
-    path: "count",
-    description: "Times taken (stackable feats only)",
-    type: "number" as const,
-    requirementOnly: true,
-    stackableOnly: true,
-  },
-];
-
 /** A feat's entry, not a family's group: a group's values are its feats. */
 function isFeatEntry(entry: FeatEntry | FeatGroupEntry | undefined): entry is FeatEntry {
   return typeof entry?.possessed === "boolean";
 }
 
 export default class FeatsComponent {
-  static getSegmentLabels(): Record<string, string> {
-    return { possessed: "Possessed", count: "Count" };
-  }
-
-  static generateTargetPaths(feats: Feat[], kind: "modifier" | "requirement"): TargetPath[] {
-    const paths: TargetPath[] = [];
-
-    for (const feat of feats) {
-      const normalizedFeatName = stripSeparators(feat.name);
-
-      for (const subPath of NAVIGATABLE_PATHS) {
-        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
-        if ("stackableOnly" in subPath && subPath.stackableOnly && !feat.stackable) continue;
-
-        paths.push({
-          path: `feats.${normalizedFeatName}.${subPath.path}`,
-          category: "feats",
-          description: subPath.description,
-          valueType: subPath.type,
-          operators:
-            kind === "modifier"
-              ? ["set"]
-              : subPath.type === "number"
-                ? [...NUMERIC_REQUIREMENT_OPERATORS]
-                : ["equal", "not_equal"],
-        });
-      }
-    }
-
-    return paths;
-  }
-
   private readonly detailedCharacterFeats: DetailedCharacterComprehensiveFeats = {};
 
   /** The feat of that name: none for a family's name, whose group no feat shares. */

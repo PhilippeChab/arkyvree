@@ -413,12 +413,13 @@ server/
 │       ├── index.ts                       (the module's entry: createRulesetModule, the response builders)
 │       ├── rulesetModule.ts               (RulesetModule impl)
 │       ├── types.ts                       (Dnd35ProjectedCharacterData, Dnd35LevelUpProjector)
-│       ├── Dnd35TargetPaths.ts
+│       ├── Dnd35TargetPaths.ts            (the categories' order and the ruleset's names' labels)
 │       ├── character/                     (AbstractDetailedCharacter, DetailedCharacter, Dnd35LevelUpProjector)
 │       ├── loading/                       (DetailedCharacterDataLoader)
 │       ├── response/                      (buildCharacterResponse: the 3.5 API response shape)
 │       ├── abilities/ aptitudes/ classes/ feats/ identity/ powers/ saves/
-│       │                                  (each domain's component, and its hooks: AbilitiesComponent, …)
+│       │                                  (each domain's component, its paths' category and its hooks:
+│       │                                  AbilitiesComponent, AbilitiesPaths, …)
 │       ├── skills/                        (SkillsComponent: the 3.5 rank system, Dnd35SkillsHooks)
 │       ├── combat/                        (CombatComponent, which includes ArmorClass, HitPoints, Attacks, InitiativeAndSpeed;
 │       │                                  ArmorsComponent, ShieldsComponent, WeaponsComponent, EncumbranceComponent)

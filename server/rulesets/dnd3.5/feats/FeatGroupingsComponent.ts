@@ -1,24 +1,12 @@
 import type FeatsComponent from "@/server/rulesets/dnd3.5/feats/FeatsComponent.ts";
 import type { FeatEntry } from "@/server/rulesets/dnd3.5/feats/FeatsComponent.ts";
-import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import { FAMILY_COUNT } from "./FeatsPaths.ts";
+
 type FeatGroup = Record<string, FeatEntry>;
 type FeatGroupingsData = Record<string, FeatGroup>;
-
-/**
- * A family's `count`: how many times the character has its feats, all together (every class's sneak attack dice). It's
- * read when checked, and isn't enumerable: the family's wildcard (`feats.<family>.*`) reaches its feats only, never
- * their count.
- */
-const FAMILY_COUNT = "count";
-
-const NAVIGATABLE_PATHS = [
-  { path: "possessed", description: "Whether this feat is possessed", type: "boolean" as const },
-  { path: "count", description: "Times this feat was taken", type: "number" as const, requirementOnly: true },
-];
 
 function familyGroup(): FeatGroup {
   const group: FeatGroup = {};
@@ -33,55 +21,6 @@ export default class FeatGroupingsComponent {
     private readonly detailedCharacterFeats: FeatsComponent,
     private readonly groupingProperties: readonly string[],
   ) {}
-
-  static getSegmentLabels(): Record<string, string> {
-    return { possessed: "Possessed", [FAMILY_COUNT]: "Count" };
-  }
-
-  /**
-   * Each family's wildcard paths, and its count's. A family named like a feat shares the feat's key, where `count` is
-   * the feat's (`FeatsComponent.injectGroupings`): the family's count isn't reachable there.
-   */
-  static generateTargetPaths(
-    featGroupings: string[],
-    kind: "modifier" | "requirement",
-    labels: Record<string, string>,
-    featKeys: ReadonlySet<string>,
-  ): TargetPath[] {
-    const paths: TargetPath[] = [];
-
-    for (const grouping of featGroupings) {
-      const displayName = labels[grouping] || grouping;
-      for (const subPath of NAVIGATABLE_PATHS) {
-        if (subPath.requirementOnly && kind === "modifier") continue;
-        paths.push({
-          path: `feats.${grouping}.*.${subPath.path}`,
-          category: "feats",
-          description: `${kind === "requirement" ? "Any" : "All"} ${displayName} feats — ${subPath.description}`,
-          groupDescription: `${kind === "requirement" ? "Any" : "All"} ${displayName} feats`,
-          valueType: subPath.type,
-          operators:
-            kind === "modifier"
-              ? ["set"]
-              : subPath.type === "number"
-                ? [...NUMERIC_REQUIREMENT_OPERATORS]
-                : ["equal", "not_equal"],
-        });
-      }
-      if (kind === "requirement" && !featKeys.has(grouping)) {
-        paths.push({
-          path: `feats.${grouping}.${FAMILY_COUNT}`,
-          category: "feats",
-          description: `${displayName} feats — Times taken, all together`,
-          groupDescription: `${displayName} feats`,
-          valueType: "number",
-          operators: [...NUMERIC_REQUIREMENT_OPERATORS],
-        });
-      }
-    }
-
-    return paths;
-  }
 
   private readonly featGroupings: FeatGroupingsData = {};
 

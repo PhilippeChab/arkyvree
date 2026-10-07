@@ -1,11 +1,16 @@
-import type { Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Holders, TargetPathsInterface, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import type { TargetPath } from "@/shared/customization/target.ts";
 
 import type { PathCategory } from "./PathCategory.ts";
 import PathTraverser from "./PathTraverser.ts";
 import { readHolder } from "./readHolder.ts";
 
-/** A ruleset's target paths, by category: how a target reaches its data, and how the path picker describes them. */
-export default abstract class CategoryPaths implements TargetPathsTraverser {
+/**
+ * A ruleset's target paths, by category: the paths each lists, how a target reaches its data, and how the path picker
+ * labels and describes them.
+ */
+export default abstract class CategoryPaths implements TargetPathsInterface {
   constructor(private readonly categories: readonly PathCategory[]) {
     this.byName = new Map(categories.map((category) => [category.name, category]));
     this.holderOf = Object.fromEntries(categories.flatMap(({ name, holder }) => (holder ? [[name, holder]] : [])));
@@ -22,6 +27,12 @@ export default abstract class CategoryPaths implements TargetPathsTraverser {
   private readonly labelOf: Record<string, string>;
 
   protected readonly traverser: PathTraverser;
+
+  /** The labels of the ruleset's own names (its entities', its properties' values), added to the categories'. */
+  protected abstract labelNames(
+    rulesetData: RulesetData,
+    segmentLabels: Record<string, string>,
+  ): Record<string, string>;
 
   /** A category's data, from its holder's getter, traversed with the rest of the path. */
   private traverseCategory(target: string, category: string, rest: string[], holders: Holders): TraversePathResult[] {
@@ -66,5 +77,21 @@ export default abstract class CategoryPaths implements TargetPathsTraverser {
     } catch (error) {
       return PathTraverser.failed(null, target, `Failed to traverse path: ${error}`);
     }
+  }
+
+  /** Every path each category lists, in the categories' order, and each segment's label. */
+  async getTargetPathsAndLabels(
+    rulesetData: RulesetData,
+    kind: "modifier" | "requirement",
+  ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
+    const segmentLabels: Record<string, string> = {
+      "*": "All",
+      ...this.labelOf,
+      ...Object.assign({}, ...this.categories.map((category) => category.getSegmentLabels?.())),
+    };
+    return {
+      paths: this.categories.flatMap((category) => category.generate?.(rulesetData, kind) ?? []),
+      segmentLabels: this.labelNames(rulesetData, segmentLabels),
+    };
   }
 }

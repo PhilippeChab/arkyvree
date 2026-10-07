@@ -20,8 +20,6 @@
  *     changes — just the right template modifier on the new feat.
  */
 
-import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
 import { BONDED_KINDS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 
 type DetailedCharacterBondedSlot = {
@@ -34,37 +32,6 @@ type DetailedCharacterComprehensiveBonds = {
 };
 
 export default class BondsComponent {
-  static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
-    const paths: TargetPath[] = [];
-    for (const b of BONDED_KINDS) {
-      paths.push({
-        path: `bonded.${b.slug}.race`,
-        category: "bonded",
-        description: `${b.label} race name`,
-        valueType: "string" as const,
-        operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
-      });
-      paths.push({
-        path: `bonded.${b.slug}.level`,
-        category: "bonded",
-        description: `${b.label} effective level (summed from granting classes)`,
-        valueType: "number" as const,
-        operators: kind === "modifier" ? ["add", "subtract", "set"] : [...NUMERIC_REQUIREMENT_OPERATORS],
-      });
-    }
-    return paths;
-  }
-
-  static getSegmentLabels(): Record<string, string> {
-    const labels: Record<string, string> = {
-      bonded: "Bonded",
-      race: "Race",
-      level: "Effective level",
-    };
-    for (const b of BONDED_KINDS) labels[b.slug] = b.label;
-    return labels;
-  }
-
   protected readonly bonds: DetailedCharacterComprehensiveBonds = BONDED_KINDS.reduce((acc, b) => {
     acc[b.slug] = { race: "", level: 0 };
     return acc;

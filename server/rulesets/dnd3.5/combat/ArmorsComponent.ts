@@ -1,6 +1,4 @@
 import type CombatComponent from "@/server/rulesets/dnd3.5/combat/CombatComponent.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,
@@ -29,47 +27,8 @@ type ArmorSlot = {
 
 const ARMOR_GROUPING_PROPERTIES = [ARMOR_TYPE] as const;
 
-const NAVIGATABLE_ARMOR_PATHS = [
-  { path: "ac.bonus", description: "Base AC bonus from armor", type: "number" as const },
-  { path: "ac.misc", description: "Other bonuses to armor AC", type: "number" as const },
-  { path: "ac.total", description: "Total AC from this armor", type: "number" as const, requirementOnly: true },
-  { path: "checkpenalty", description: "Penalty to Str/Dex skill checks", type: "number" as const },
-  { path: "spellfailure", description: "Arcane spell failure chance", type: "number" as const },
-  { path: "maxdex", description: "Maximum Dexterity bonus to AC", type: "number" as const },
-];
-
-const SEGMENT_LABELS: Record<string, string> = {
-  ac: "Armor Class",
-  checkpenalty: "Check Penalty",
-  spellfailure: "Spell Failure",
-  maxdex: "Maximum Dexterity",
-};
-
 export default class ArmorsComponent {
   constructor(private readonly characterCombat: CombatComponent) {}
-
-  static getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(NAVIGATABLE_ARMOR_PATHS, { armors: "Armors", ...SEGMENT_LABELS });
-  }
-
-  static generateTargetPaths(armorGroupings: string[], kind: "modifier" | "requirement"): TargetPath[] {
-    const paths: TargetPath[] = [];
-
-    for (const grouping of armorGroupings) {
-      for (const subPath of NAVIGATABLE_ARMOR_PATHS) {
-        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
-        paths.push({
-          path: `items.armors.${grouping}.${subPath.path}`,
-          category: "items",
-          description: subPath.description,
-          valueType: subPath.type,
-          operators: getNumericOperators(kind),
-        });
-      }
-    }
-
-    return paths;
-  }
 
   private readonly armors: ArmorsData = {};
 

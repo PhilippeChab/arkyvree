@@ -1,6 +1,4 @@
 import type CombatComponent from "@/server/rulesets/dnd3.5/combat/CombatComponent.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import {
   ARMOR_CHECK_PENALTY,
   ITEM_MASTERWORK,
@@ -25,47 +23,10 @@ type ShieldSlot = {
   spellfailure: number;
 };
 
-const NAVIGATABLE_SHIELD_PATHS = [
-  { path: "ac.bonus", description: "Base AC bonus from shield", type: "number" as const },
-  { path: "ac.misc", description: "Other bonuses to shield AC", type: "number" as const },
-  { path: "ac.total", description: "Total AC from this shield", type: "number" as const, requirementOnly: true },
-  { path: "checkpenalty", description: "Penalty to Str/Dex skill checks", type: "number" as const },
-  { path: "spellfailure", description: "Arcane spell failure chance", type: "number" as const },
-];
-
-const SEGMENT_LABELS: Record<string, string> = {
-  ac: "Armor Class",
-  checkpenalty: "Check Penalty",
-  spellfailure: "Spell Failure",
-};
-
 const SHIELD_GROUPING_PROPERTIES = [SHIELD_TYPE] as const;
 
 export default class ShieldsComponent {
   constructor(private readonly characterCombat: CombatComponent) {}
-
-  static getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(NAVIGATABLE_SHIELD_PATHS, { shields: "Shields", ...SEGMENT_LABELS });
-  }
-
-  static generateTargetPaths(shieldGroupings: string[], kind: "modifier" | "requirement"): TargetPath[] {
-    const paths: TargetPath[] = [];
-
-    for (const grouping of shieldGroupings) {
-      for (const subPath of NAVIGATABLE_SHIELD_PATHS) {
-        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
-        paths.push({
-          path: `items.shields.${grouping}.${subPath.path}`,
-          category: "items",
-          description: subPath.description,
-          valueType: subPath.type,
-          operators: getNumericOperators(kind),
-        });
-      }
-    }
-
-    return paths;
-  }
 
   private readonly shields: ShieldsData = {};
 
