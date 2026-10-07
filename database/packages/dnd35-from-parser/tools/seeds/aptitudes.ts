@@ -8,6 +8,7 @@ import { getClassSpellLists } from "@/database/packages/dnd35-from-parser/tools/
 import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/domains.ts";
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/spells.ts";
 import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/wizardSchools.ts";
+import { CLERIC_DOMAIN, specialistSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -51,14 +52,14 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
 
   // Domain aptitudes: the book's domains, and their feat pools'
   const domains = buildBookDomainSeeds(book);
-  if (domains.seeds.length > 0) names.add("Cleric Domain");
+  if (domains.seeds.length > 0) names.add(CLERIC_DOMAIN);
   for (const feat of domains.poolFeats) for (const apt of feat.aptitudes) names.add(apt);
 
   // Wizard school aptitudes
   const wsRef = ReferenceLoader.find(book, "wizardSchool");
   if (wsRef) {
     for (const school of buildWizardSchoolSeeds(wsRef)) {
-      names.add(`${school.name} Specialist Spells`);
+      names.add(specialistSpells(school.name));
     }
   }
 

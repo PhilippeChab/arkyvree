@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
+import { classSpells, specialistSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import type { SpellcastingClass } from "@/database/packages/dnd35/seed/spellTable.ts";
@@ -23,13 +24,13 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
             this.spellListSlots(
               this.ctx.featMap[`${s.name} Specialist`],
               "feats",
-              `${stripSeparators(s.name)}specialistspells`,
+              stripSeparators(specialistSpells(s.name)),
             ),
           ),
         wizard,
       );
 
-      const wizardSpells = this.ctx.aptMap["Wizard Spells"];
+      const wizardSpells = this.ctx.aptMap[classSpells("Wizard")];
       if (!wizardSpells) return;
       const spells = await this.db
         .select({
@@ -50,7 +51,7 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
       await this.insertAll(
         powersAptitudesInRules,
         spells.flatMap(({ powerId, level, school }) => {
-          const aptitudeId = this.ctx.aptMap[`${school} Specialist Spells`];
+          const aptitudeId = this.ctx.aptMap[specialistSpells(school)];
           if (school === "Universal" || !aptitudeId || level === null) return [];
           return [{ powerId, aptitudeId, level }];
         }),

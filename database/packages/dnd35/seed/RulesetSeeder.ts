@@ -1,5 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 
+import { CLERIC_DOMAIN, domainFeat, domainSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
@@ -201,14 +202,14 @@ export class RulesetSeeder extends include(
   async seedDomains(domains: DomainSeed[], cleric: SpellcastingClass) {
     if (domains.length === 0) return;
 
-    await this.seedAptitudes(domains.map((d) => `${d.name} Domain Spells`));
+    await this.seedAptitudes(domains.map((d) => domainSpells(d.name)));
     await this.seedFeats(
-      domains.map((d) => ({ name: `${d.name} Domain`, description: d.description, aptitudes: ["Cleric Domain"] })),
+      domains.map((d) => ({ name: domainFeat(d.name), description: d.description, aptitudes: [CLERIC_DOMAIN] })),
     );
     await this.insertGatedSpellSlots(
       domains.flatMap((d) => {
-        const featId = this.ctx.featMap[`${d.name} Domain`];
-        const list = `${stripSeparators(d.name)}domainspells`;
+        const featId = this.ctx.featMap[domainFeat(d.name)];
+        const list = stripSeparators(domainSpells(d.name));
         return [
           ...this.spellListSlots(featId, "feats", list),
           this.joinsClassList(featId, "feats", list),
@@ -223,10 +224,10 @@ export class RulesetSeeder extends include(
       for (const spell of d.spells) {
         const powerId = await this.ownPower(spell.name);
         if (!powerId) {
-          console.warn(`[domain seed] Domain spell not found in DB: "${spell.name}" (${d.name} Domain)`);
+          console.warn(`[domain seed] Domain spell not found in DB: "${spell.name}" (${domainFeat(d.name)})`);
           continue;
         }
-        links.push({ powerId, aptitudeId: this.ctx.aptMap[`${d.name} Domain Spells`], level: spell.level });
+        links.push({ powerId, aptitudeId: this.ctx.aptMap[domainSpells(d.name)], level: spell.level });
       }
     }
     await this.insertAll(

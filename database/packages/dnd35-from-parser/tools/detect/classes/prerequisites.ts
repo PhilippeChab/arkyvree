@@ -15,6 +15,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/detect/targets.ts";
 import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { domainFeat } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import { proficiencyRequirements } from "@/database/packages/dnd35/content/items/proficiencies.ts";
@@ -257,7 +258,7 @@ function parseSpecialAbilityRequirement(
   const domainMatch = text.match(/access to the (\w+) domain/i);
   if (domainMatch) {
     const domainName = domainMatch[1].charAt(0).toUpperCase() + domainMatch[1].slice(1).toLowerCase();
-    const name = `${domainName} Domain`;
+    const name = domainFeat(domainName);
     featNameMap[stripSeparators(name)] = name;
     return eq(feat(name));
   }
