@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { type Ref, useMemo, useState } from "react";
 
 import { BlankNote, DiceSpinner, LoadError, NextPageSpinner } from "@/client/src/components/common/index.ts";
 import { ChevronRightIcon, ClearIcon, FilterListIcon, PublicIcon } from "@/client/src/components/icons/index.ts";
@@ -27,6 +27,8 @@ import { type PathInfo, toPathInfo } from "./pathValues.ts";
 interface TargetPathBrowserProps {
   disabled?: boolean;
   entityType?: string;
+  /** Its search field's: the target's form field `ref`, so a failed submit focuses it. */
+  inputRef?: Ref<HTMLInputElement>;
   isComplete: boolean;
   kind: TargetPathKind;
   /** The new path, and what it takes when it's a leaf picked from the list. */
@@ -50,6 +52,7 @@ export function TargetPathBrowser({
   isComplete,
   disabled,
   onChange,
+  inputRef,
 }: TargetPathBrowserProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
@@ -173,6 +176,7 @@ export function TargetPathBrowser({
               placeholder="Search…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              inputRef={inputRef}
               fullWidth
             />
             <Tooltip

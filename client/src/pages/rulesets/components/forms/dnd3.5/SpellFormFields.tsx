@@ -199,6 +199,7 @@ export function SpellFormFields({
       {!hideProperties && <SpellPropertyFields form={form} />}
       <AptitudesAutocomplete
         rulesetId={rulesetId}
+        inputRef={field.ref}
         value={selectedAptitudes}
         onChange={(next) => {
           aptitudes.remember(next);

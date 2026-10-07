@@ -85,7 +85,7 @@ export function RecentNotificationsCard() {
                       <InviteActionButtons
                         onAccept={() => actions.accept(notification)}
                         onReject={() => actions.reject(notification)}
-                        disabled={actions.isAnswering(notification)}
+                        pending={actions.answering(notification)}
                       />
                     )}
                   </Stack>

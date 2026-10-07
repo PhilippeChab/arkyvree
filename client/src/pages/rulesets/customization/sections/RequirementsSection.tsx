@@ -132,12 +132,12 @@ export function RequirementsSection({
         ),
       );
     },
-    updateFn: async (requirementId: string, data: RequirementFormData) => {
+    updateFn: async (requirementId: string, data: RequirementFormData, updatedAt: string | undefined) => {
       return tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirementId"].$put({
             param: { ...entityParam, requirementId },
-            json: data,
+            json: { ...data, updatedAt },
           }),
         ),
       );
@@ -158,21 +158,14 @@ export function RequirementsSection({
   const canDelete = canEdit;
   const isPublished = ruleset.status === "Published";
 
-  /** Opens the create dialog for a root requirement (null) or a child of the given level. */
+  /**
+   * Opens the create dialog for a root requirement (null) or a child of the given level, empty: its type, its parent and
+   * its form are set as it opens, never as it closes, so its content holds while it fades out.
+   */
   const openCreate = (parentLevel: string | null) => {
     setCreateParentLevel(parentLevel);
     setCreateRequirementType("condition");
     handleCreate();
-  };
-
-  // Reset per-dialog state so reopening a dialog doesn't inherit the previous session's.
-  const resetCreateState = () => {
-    setCreateRequirementType("condition");
-    setCreateParentLevel(null);
-    createForm.reset();
-  };
-  const resetEditState = () => {
-    setEditRequirementType("condition");
   };
 
   const computeNextLevel = useCallback(
@@ -416,10 +409,7 @@ export function RequirementsSection({
       </Stack>
       <CreateDialog
         open={createDialogOpen}
-        onClose={() => {
-          setCreateDialogOpen(false);
-          resetCreateState();
-        }}
+        onClose={() => setCreateDialogOpen(false)}
         title="Create Requirement"
         form={createForm}
         onSubmit={(data) =>
@@ -439,10 +429,7 @@ export function RequirementsSection({
       </CreateDialog>
       <EditDialog
         open={editDialogOpen}
-        onClose={() => {
-          setEditDialogOpen(false);
-          resetEditState();
-        }}
+        onClose={() => setEditDialogOpen(false)}
         title="Edit Requirement"
         form={editForm}
         onSubmit={(data) => {
@@ -450,6 +437,7 @@ export function RequirementsSection({
           updateMutation.mutate({
             id: selectedRequirement.id,
             data: requirementPayload(editRequirementType, selectedRequirement.level, data),
+            updatedAt: selectedRequirement.updatedAt,
           });
         }}
         isLoading={updateMutation.isPending}

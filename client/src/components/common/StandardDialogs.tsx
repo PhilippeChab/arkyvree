@@ -15,6 +15,8 @@ interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   isLoading: boolean;
   maxWidth?: DialogProps["maxWidth"];
   onClose: () => void;
+  /** It has faded out: a dialog mounted with its opening is let go (`useDialogState`'s `onExited`). */
+  onExited?: () => void;
   onSubmit: (data: T) => void;
   open: boolean;
   submitIcon?: ReactNode;
@@ -54,6 +56,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
   fixedHeight = false,
   submitLabel,
   submitIcon,
+  onExited,
 }: FormActionDialogProps<T>) {
   return (
     <FormDialog
@@ -66,6 +69,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
         paper: fixedHeight
           ? { sx: { height: { sm: typeof fixedHeight === "string" ? fixedHeight : "80vh" } } }
           : undefined,
+        transition: { onExited },
       }}
     >
       {/* A column only in a dialog of a fixed height, whose content scrolls between the title and the actions */}

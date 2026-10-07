@@ -1,10 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormWith } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import type { CreateCampaignFormData } from "@/client/src/pages/campaigns/components/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -14,7 +13,8 @@ export function useCampaignOperations() {
   const snackbar = useSnackbar();
   const navigate = useNavigate();
 
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  // Mounted as it opens, its picker's own state starting clean
+  const createDialog = useDialogState();
 
   const createForm = useFormWith<CreateCampaignFormData>({
     name: "",
@@ -29,7 +29,7 @@ export function useCampaignOperations() {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.campaigns.lists,
       });
-      setCreateDialogOpen(false);
+      createDialog.close();
       navigate(`/campaigns/${data.campaign.id}`);
     },
     onError: (error) => {
@@ -40,7 +40,7 @@ export function useCampaignOperations() {
   // Opened empty, whatever a cancelled one held
   const handleCreate = () => {
     createForm.reset();
-    setCreateDialogOpen(true);
+    createDialog.openWith(true);
   };
 
   const confirmCreate = (data: CreateCampaignFormData) => {
@@ -48,8 +48,7 @@ export function useCampaignOperations() {
   };
 
   return {
-    createDialogOpen,
-    setCreateDialogOpen,
+    createDialog,
     createForm,
     createMutation,
     handleCreate,

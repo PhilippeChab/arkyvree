@@ -14,10 +14,15 @@ import {
   LoadMoreButton,
   Modal,
 } from "@/client/src/components/common/index.ts";
-import { ContributorsTable, InviteContributorDialog } from "@/client/src/components/contributors/index.ts";
+import {
+  ContributorsTable,
+  EMPTY_INVITE,
+  InviteContributorDialog,
+  type InviteContributorFormData,
+} from "@/client/src/components/contributors/index.ts";
 import { DeleteIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDialogState } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { firstPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { characterContributorsQuery } from "@/client/src/pages/characters/characterQueries.ts";
@@ -40,6 +45,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
   const navigate = useNavigate();
 
   const [inviteOpen, setInviteOpen] = useState(false);
+  const inviteForm = useFormWith<InviteContributorFormData>(EMPTY_INVITE);
   const removeDialog = useDialogState<Contributor>();
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
 
@@ -53,6 +59,12 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
 
   const contributors = pageItems(data);
   const owner = firstPage(data)?.owner ?? null;
+
+  // Opened empty, whatever a cancelled one held
+  const handleInvite = () => {
+    inviteForm.reset();
+    setInviteOpen(true);
+  };
 
   const inviteMutation = useMutation({
     mutationFn: (email: string) =>
@@ -103,7 +115,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                 Contributors can edit this character and download its PDF.
               </Typography>
               {canInvite ? (
-                <AddButton label="Invite" onClick={() => setInviteOpen(true)} />
+                <AddButton label="Invite" onClick={handleInvite} />
               ) : !isOwner ? (
                 <Button
                   variant="outlined"
@@ -125,9 +137,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
               ) : contributors.length === 0 && !owner ? (
                 <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
                   <BlankNote>No contributors yet</BlankNote>
-                  {canInvite && (
-                    <AddButton variant="outlined" label="Invite a Contributor" onClick={() => setInviteOpen(true)} />
-                  )}
+                  {canInvite && <AddButton variant="outlined" label="Invite a Contributor" onClick={handleInvite} />}
                 </Stack>
               ) : (
                 <Stack spacing={2}>
@@ -167,7 +177,8 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
       <InviteContributorDialog
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
-        onSubmit={({ email }, onSent) => inviteMutation.mutate(email, { onSuccess: onSent })}
+        form={inviteForm}
+        onSubmit={({ email }) => inviteMutation.mutate(email)}
         isLoading={inviteMutation.isPending}
       />
 

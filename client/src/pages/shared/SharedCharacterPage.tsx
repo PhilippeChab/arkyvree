@@ -1,16 +1,23 @@
 import { Container, Menu, Stack } from "@mui/material";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
-import { CharacterHeader, CharacterSheetBody, downloadPdf } from "@/client/src/components/characters/index.ts";
+import { CharacterHeader, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
 import { ActionMenuItem, PageError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
 import { DownloadIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, usePageTitle } from "@/client/src/hooks/index.ts";
+import { saveBlob } from "@/client/src/lib/download.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { ApiError } from "@/client/src/services/ApiError.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { sharedCharacterQuery } from "./sharedQueries.ts";
+
+/** The sheet's file name: the character's, with what a file name can't hold replaced. */
+function sheetFileName(characterName: string | undefined) {
+  return `${(characterName || "character").replace(/[/\\?%*:|"<>]/g, "_").slice(0, 200)}-sheet.pdf`;
+}
 
 export default function SharedCharacterPage() {
   const { shareToken = "" } = useParams<{ shareToken: string }>();
@@ -21,14 +28,18 @@ export default function SharedCharacterPage() {
 
   usePageTitle(character?.identity?.physiology?.name);
 
-  const handleDownloadPdf = () => {
-    if (!shareToken) return;
-    downloadPdf(
-      () => rpc.api.shared.characters[":shareToken"]["pdf"]["$get"]({ param: { shareToken } }),
-      character?.identity?.physiology?.name,
-      (msg) => snackbar.error(msg, "Failed to download PDF"),
-    );
-  };
+  const downloadPdf = useMutation({
+    // A file: its body is a blob, never JSON
+    mutationFn: async () => (await rpc.api.shared.characters[":shareToken"].pdf.$get({ param: { shareToken } })).blob(),
+    onSuccess: (blob) => saveBlob(blob, sheetFileName(character?.identity?.physiology?.name)),
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 429)
+        snackbar.warning("Too many PDF requests: try again in a minute");
+      else snackbar.error(error, "Failed to download PDF");
+    },
+    // The menu waits with it, its item a spinner
+    onSettled: menu.closeMenu,
+  });
 
   if (isLoading) {
     return (
@@ -57,7 +68,12 @@ export default function SharedCharacterPage() {
             onMenuOpen={menu.openMenu}
           />
           <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
-            <ActionMenuItem icon={DownloadIcon} label="Download PDF" onClick={menu.closeMenuAnd(handleDownloadPdf)} />
+            <ActionMenuItem
+              icon={DownloadIcon}
+              label="Download PDF"
+              pending={downloadPdf.isPending}
+              onClick={() => downloadPdf.mutate()}
+            />
           </Menu>
 
           <CharacterSheetBody

@@ -7,7 +7,7 @@ import { openContext } from "@/tests/e2e/support/signIn.ts";
 /** Starts a demo from the sign-up page, which lands on the dashboard under the demo banner. */
 async function startDemo(page: Page) {
   await page.goto("/sign-up");
-  await page.getByRole("button", { name: /Try the demo/ }).click();
+  await page.getByRole("button", { name: /Try the Demo/ }).click();
   await page.waitForURL("/dashboard", { timeout: 15_000 });
   await expect(page.getByText(/Demo mode/)).toBeVisible({ timeout: 10_000 });
 }
@@ -24,7 +24,7 @@ test.describe("Demo", () => {
     // Signing in is for returning users: it ends the demo, and offers none.
     await page.goto("/sign-in");
     await expect(page.getByRole("button", { name: /^Sign In$/ })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole("button", { name: /Try the demo/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Try the Demo/ })).toHaveCount(0);
     await expect(page.getByText(/Demo mode/)).toHaveCount(0);
     await page.goto("/dashboard");
     await page.waitForURL(/\/sign-in/, { timeout: 10_000 });

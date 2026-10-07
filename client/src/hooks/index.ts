@@ -27,6 +27,5 @@ export { type RulesetSave, useRulesetSaves } from "./useRulesetSaves.ts";
 export { useSearchParam } from "./useSearchParam.ts";
 export { useSearchText } from "./useSearchText.ts";
 export { useStaggerAnimation } from "./useStaggerAnimation.ts";
-export { useStartDemo } from "./useStartDemo.ts";
 export { useToggleSet } from "./useToggleSet.ts";
 export { useValidationIssues } from "./useValidationIssues.ts";

@@ -16,6 +16,8 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface EmailChangeVerificationDialogProps {
   onClose: () => void;
+  /** It has faded out: its opener lets it go, so the next opening starts clean. */
+  onExited: () => void;
   open: boolean;
   pendingEmail: string;
 }
@@ -24,7 +26,13 @@ interface EmailVerificationFormData {
   digits: string[];
 }
 
-export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: EmailChangeVerificationDialogProps) {
+/** Takes the code sent to the new email address; mounted while it's open. */
+export function EmailChangeVerificationDialog({
+  open,
+  onClose,
+  onExited,
+  pendingEmail,
+}: EmailChangeVerificationDialogProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -34,20 +42,13 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
   const form = useFormWith<EmailVerificationFormData>({ digits: EMPTY_VERIFICATION_CODE });
   const digits = form.watch("digits");
 
-  const handleClose = () => {
-    form.reset();
-    setError(null);
-    setResendSuccess(false);
-    onClose();
-  };
-
   const verifyMutation = useMutation({
     mutationFn: (code: string) => parseResponse(rpc.auth["verify-email-change"].$post({ json: { code } })),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.me });
       updateUser({ emailAddress: data.emailAddress, pendingEmailAddress: data.pendingEmailAddress });
       snackbar.success("Email address updated");
-      handleClose();
+      onClose();
     },
     onError: (error) => setError(errorMessage(error, "Failed to verify the code")),
   });
@@ -70,7 +71,14 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
   const isComplete = digits.every((d) => d !== "");
 
   return (
-    <FormDialog open={open} onClose={handleClose} form={form} isLoading={verifyMutation.isPending} maxWidth="xs">
+    <FormDialog
+      open={open}
+      onClose={onClose}
+      form={form}
+      isLoading={verifyMutation.isPending}
+      maxWidth="xs"
+      slotProps={{ transition: { onExited } }}
+    >
       <DialogTitle>Verify New Email</DialogTitle>
       <form onSubmit={form.handleSubmit(handleVerify)} noValidate>
         {/* Deeper at the bottom, under the resend link */}
@@ -109,7 +117,7 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
           </Stack>
         </DialogContent>
         <DialogFooter
-          onCancel={handleClose}
+          onCancel={onClose}
           pending={verifyMutation.isPending}
           action={{ label: "Verify", disabled: !isComplete }}
         />

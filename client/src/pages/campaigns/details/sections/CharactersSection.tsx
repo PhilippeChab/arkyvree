@@ -37,6 +37,7 @@ import {
   useAnchorMenu,
   useAttachments,
   useDebouncedValue,
+  useDialogState,
   useListboxQuery,
   useSearchText,
   useStaggerAnimation,
@@ -68,6 +69,8 @@ interface CharactersSectionProps {
 interface LinkCharacterDialogProps {
   campaignId: string;
   onClose: () => void;
+  /** It has faded out: its opener lets it go, so the next opening starts clean. */
+  onExited: () => void;
   open: boolean;
 }
 
@@ -192,7 +195,8 @@ function CharacterCard({
   );
 }
 
-function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogProps) {
+/** Picks one of the user's characters and its visibility; mounted while it's open, its pick and search its own. */
+function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharacterDialogProps) {
   const queryClient = useQueryClient();
   const [selectedCharacter, setSelectedCharacter] = useState<UnlinkedCharacter | null>(null);
   const [characterSearch, setCharacterSearch] = useState("");
@@ -224,9 +228,6 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.characters.unlinked(campaignId),
       });
-      setSelectedCharacter(null);
-      setCharacterSearch("");
-      setVisibility("Private");
       onClose();
     },
     onError: (error) => {
@@ -239,7 +240,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open} onClose={onClose} slotProps={{ transition: { onExited } }}>
       <DialogTitle>Link Character to Campaign</DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ pt: 2 }}>
@@ -315,7 +316,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
 }
 
 export function CharactersSection({ campaign }: CharactersSectionProps) {
-  const [isLinkDialogOpen, setLinkDialogOpen] = useState(false);
+  const linkDialog = useDialogState();
 
   // Search state with debounce
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("characterSearch");
@@ -348,7 +349,9 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
         <SearchBar
           {...searchTextProps}
           searchPlaceholder="Search characters…"
-          actions={!campaign.deletedAt && <AddButton label="Link Character" onClick={() => setLinkDialogOpen(true)} />}
+          actions={
+            !campaign.deletedAt && <AddButton label="Link Character" onClick={() => linkDialog.openWith(true)} />
+          }
         />
 
         {/* Loading State */}
@@ -413,7 +416,14 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
           ))}
       </Stack>
 
-      <LinkCharacterDialog open={isLinkDialogOpen} onClose={() => setLinkDialogOpen(false)} campaignId={campaign.id} />
+      {linkDialog.target && (
+        <LinkCharacterDialog
+          open={linkDialog.open}
+          onClose={linkDialog.close}
+          onExited={linkDialog.onExited}
+          campaignId={campaign.id}
+        />
+      )}
     </SectionContent>
   );
 }

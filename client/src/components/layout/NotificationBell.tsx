@@ -133,7 +133,7 @@ export function NotificationBell() {
                     <InviteActionButtons
                       onAccept={() => actions.accept(notification, (path) => menu.closeMenuAnd(() => navigate(path))())}
                       onReject={() => actions.reject(notification)}
-                      disabled={actions.isAnswering(notification)}
+                      pending={actions.answering(notification)}
                     />
                   </Stack>
                 ) : (

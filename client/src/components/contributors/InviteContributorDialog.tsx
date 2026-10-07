@@ -1,16 +1,17 @@
 import { DialogContent, DialogTitle, Stack } from "@mui/material";
 import type { InferRequestType } from "hono/client";
+import type { UseFormReturn } from "react-hook-form";
 
 import { DialogFooter, EmailField, FormDialog, SelectField } from "@/client/src/components/common/index.ts";
-import { useFormWith } from "@/client/src/hooks/index.ts";
 import { EMAIL_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 interface InviteContributorDialogProps {
+  /** Its opener's, reset as it opens (`EMPTY_INVITE`): a failed invite keeps what was typed. */
+  form: UseFormReturn<InviteContributorFormData>;
   isLoading: boolean;
   onClose: () => void;
-  /** Send the invite and call `onSent` once it succeeds; on failure the typed email stays. */
-  onSubmit: (data: InviteContributorFormData, onSent: () => void) => void;
+  onSubmit: (data: InviteContributorFormData) => void;
   open: boolean;
   /** Roles offered; no role picker when omitted. */
   roles?: ContributorRole[];
@@ -25,17 +26,17 @@ export interface InviteContributorFormData {
   role: ContributorRole;
 }
 
-export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, roles }: InviteContributorDialogProps) {
-  const form = useFormWith<InviteContributorFormData>({ email: "", role: "Editor" });
-
-  const handleClose = () => {
-    form.reset();
-    onClose();
-  };
-
+export function InviteContributorDialog({
+  open,
+  onClose,
+  onSubmit,
+  isLoading,
+  roles,
+  form,
+}: InviteContributorDialogProps) {
   return (
-    <FormDialog open={open} onClose={handleClose} form={form} isLoading={isLoading}>
-      <form onSubmit={form.handleSubmit((data) => onSubmit(data, () => form.reset()))} noValidate>
+    <FormDialog open={open} onClose={onClose} form={form} isLoading={isLoading}>
+      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <DialogTitle>Invite Contributor</DialogTitle>
         {/* Deeper at the bottom, under the last field */}
         <DialogContent sx={{ pb: 3.5 }}>
@@ -45,7 +46,7 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
             {roles && <SelectField control={form.control} name="role" label="Role" options={roles} />}
           </Stack>
         </DialogContent>
-        <DialogFooter onCancel={handleClose} pending={isLoading} action={{ label: "Invite" }} />
+        <DialogFooter onCancel={onClose} pending={isLoading} action={{ label: "Invite" }} />
       </form>
     </FormDialog>
   );

@@ -43,6 +43,8 @@ interface CreateCampaignDialogProps {
   form: UseFormReturn<CreateCampaignFormData>;
   isLoading: boolean;
   onClose: () => void;
+  /** It has faded out: its opener lets it go, so the next opening's picker starts clean. */
+  onExited: () => void;
   onSubmit: (data: CreateCampaignFormData) => void;
   open: boolean;
 }
@@ -154,7 +156,15 @@ export function AddPlayerDialog({ open, onClose, form, onSubmit, isLoading }: Ad
   );
 }
 
-export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading }: CreateCampaignDialogProps) {
+/** A new campaign's name, ruleset and description; mounted while it's open, the ruleset's search and pick its own. */
+export function CreateCampaignDialog({
+  open,
+  onClose,
+  onExited,
+  form,
+  onSubmit,
+  isLoading,
+}: CreateCampaignDialogProps) {
   const [rulesetSearch, setRulesetSearch] = useState("");
   const debouncedRulesetSearch = useDebouncedValue(rulesetSearch);
 
@@ -181,6 +191,7 @@ export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading 
       form={form}
       onSubmit={onSubmit}
       isLoading={isLoading}
+      onExited={onExited}
     >
       <BaseRulesetAlert ruleset={selectedRuleset} />
       <NameField control={form.control} name="name" rules={NAME_RULES} autoFocus disabled={isLoading} />

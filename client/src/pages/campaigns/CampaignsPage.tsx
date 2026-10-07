@@ -54,8 +54,7 @@ export default function CampaignsPage() {
 
   const view = oneOf(searchParams.get("view"), ["active", "archived"], "active");
 
-  const { createDialogOpen, setCreateDialogOpen, createForm, createMutation, handleCreate, confirmCreate } =
-    useCampaignOperations();
+  const { createDialog, createForm, createMutation, handleCreate, confirmCreate } = useCampaignOperations();
 
   const listQuery = campaignListQuery({ view, search, orderBy, orderDir });
   const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
@@ -174,13 +173,16 @@ export default function CampaignsPage() {
           )}
         </Stack>
 
-        <CreateCampaignDialog
-          open={createDialogOpen}
-          onClose={() => setCreateDialogOpen(false)}
-          form={createForm}
-          onSubmit={confirmCreate}
-          isLoading={createMutation.isPending}
-        />
+        {createDialog.target && (
+          <CreateCampaignDialog
+            open={createDialog.open}
+            onClose={createDialog.close}
+            onExited={createDialog.onExited}
+            form={createForm}
+            onSubmit={confirmCreate}
+            isLoading={createMutation.isPending}
+          />
+        )}
       </Container>
     </PageTransition>
   );

@@ -78,10 +78,20 @@ function notificationData(n: NotificationLike): NotificationData {
 }
 
 /**
- * What a user can do with a notification, shared by the bell, the dashboard
- * card and the notifications page: answer an invite, download a ready PDF, or
- * open the entity the notification is about.
+ * What a user can do with a notification, shared by the bell, the dashboard card and the notifications page: answer an
+ * invite, download a ready PDF, or open the entity the notification is about.
+ *
+ * A pending answer's invite and answer, read off its mutation: its key's last part, its variables' notification.
  */
+function pendingAnswerOf(
+  mutationKey: readonly unknown[] | undefined,
+  variables: unknown,
+): { answer: "accept" | "reject"; id: string } | undefined {
+  const answer = mutationKey?.at(-1);
+  const id = isRecord(variables) && isRecord(variables.notification) ? variables.notification.id : undefined;
+  return typeof id === "string" && (answer === "accept" || answer === "reject") ? { id, answer } : undefined;
+}
+
 export function useNotificationActions() {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
@@ -116,7 +126,7 @@ export function useNotificationActions() {
   };
 
   const acceptMutation = useMutation({
-    mutationKey: ANSWER_INVITE_KEY,
+    mutationKey: [...ANSWER_INVITE_KEY, "accept"],
     mutationFn: async ({ notification, type }: InviteAnswer) => {
       await INVITES[type].acceptFn(notification.targetId);
     },
@@ -130,7 +140,7 @@ export function useNotificationActions() {
   });
 
   const rejectMutation = useMutation({
-    mutationKey: ANSWER_INVITE_KEY,
+    mutationKey: [...ANSWER_INVITE_KEY, "reject"],
     mutationFn: async ({ notification, type }: InviteAnswer) => {
       await INVITES[type].rejectFn(notification.targetId);
     },
@@ -141,15 +151,15 @@ export function useNotificationActions() {
     onError: (error, { notification }) => handleInviteError(error, notification),
   });
 
-  const answeringIds = useMutationState({
+  const pendingAnswers = useMutationState({
     filters: { mutationKey: ANSWER_INVITE_KEY, status: "pending" },
-    select: (mutation) => (mutation.state.variables as InviteAnswer).notification.id,
+    select: (mutation) => pendingAnswerOf(mutation.options.mutationKey, mutation.state.variables),
   });
 
   const isActionable = (n: NotificationLike) => isInviteType(n.type) && !n.readAt;
 
-  /** Whether this invite is being accepted or rejected right now. */
-  const isAnswering = (n: NotificationLike) => answeringIds.includes(n.id);
+  /** The answer being sent to this invite right now, if any. */
+  const answering = (n: NotificationLike) => pendingAnswers.find((pending) => pending?.id === n.id)?.answer ?? null;
 
   const isDownloadable = (n: NotificationLike) => n.type === "pdfReady";
 
@@ -214,7 +224,7 @@ export function useNotificationActions() {
     open,
     accept,
     reject,
-    isAnswering,
+    answering,
     markAllRead,
   };
 }

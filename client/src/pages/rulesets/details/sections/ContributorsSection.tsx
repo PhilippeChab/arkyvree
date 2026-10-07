@@ -16,7 +16,9 @@ import {
 import {
   type ContributorRole,
   ContributorsTable,
+  EMPTY_INVITE,
   InviteContributorDialog,
+  type InviteContributorFormData,
 } from "@/client/src/components/contributors/index.ts";
 import { ContributorsIcon, DeleteIcon, EditIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -54,6 +56,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   const assignableRoles: ContributorRole[] = isOwner ? ["Admin", "Editor", "Viewer"] : ["Editor", "Viewer"];
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const inviteForm = useFormWith<InviteContributorFormData>(EMPTY_INVITE);
   // Contributor whose role is being edited; the role itself lives in roleForm.
   const roleDialog = useDialogState<string>();
   const roleForm = useFormWith<RoleFormData>({ role: "Editor" });
@@ -70,6 +73,12 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
 
   const contributors = pageItems(data);
   const owner = firstPage(data)?.owner ?? null;
+
+  // Opened empty, whatever a cancelled one held
+  const handleInvite = () => {
+    inviteForm.reset();
+    setInviteDialogOpen(true);
+  };
 
   const inviteMutation = useMutation({
     mutationFn: (invite: ContributorInvite) =>
@@ -145,7 +154,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
               Leave
             </Button>
           )}
-          {canInvite && <AddButton label="Invite" onClick={() => setInviteDialogOpen(true)} />}
+          {canInvite && <AddButton label="Invite" onClick={handleInvite} />}
         </Stack>
       )}
       {contributors.length === 0 && !owner ? (
@@ -156,9 +165,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
             canInvite ? "Invite collaborators to help build this ruleset" : "This ruleset has no contributors"
           }
           action={
-            canInvite ? (
-              <AddButton variant="outlined" label="Invite a Contributor" onClick={() => setInviteDialogOpen(true)} />
-            ) : undefined
+            canInvite ? <AddButton variant="outlined" label="Invite a Contributor" onClick={handleInvite} /> : undefined
           }
         />
       ) : (
@@ -217,7 +224,8 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
       <InviteContributorDialog
         open={inviteDialogOpen}
         onClose={() => setInviteDialogOpen(false)}
-        onSubmit={(invite, onSent) => inviteMutation.mutate(invite, { onSuccess: onSent })}
+        form={inviteForm}
+        onSubmit={(invite) => inviteMutation.mutate(invite)}
         isLoading={inviteMutation.isPending}
         roles={assignableRoles}
       />

@@ -2,6 +2,8 @@ import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import type { ElementType } from "react";
 import { Link } from "react-router-dom";
 
+import { DiceSpinner } from "./DiceSpinner.tsx";
+
 interface ActionMenuItemProps {
   /** A second line under the label ("Create your own editable copy"). */
   description?: string;
@@ -12,6 +14,8 @@ interface ActionMenuItemProps {
   label: string;
   /** Its click: closing its menu, and the action when it has no `href` or `to`. */
   onClick: () => void;
+  /** The request it started is running: it waits, a spinner for its icon (a menu kept open until it's done). */
+  pending?: boolean;
   /** A page of the app it opens: a link, as everything that only navigates is. */
   to?: string;
 }
@@ -33,6 +37,7 @@ export function ActionMenuItem({
   intent = "default",
   onClick,
   href,
+  pending = false,
   to,
 }: ActionMenuItemProps) {
   const color = intent === "default" ? undefined : INTENT_COLORS[intent];
@@ -42,9 +47,9 @@ export function ActionMenuItem({
       ? { component: Link, to }
       : {};
   return (
-    <MenuItem {...link} onClick={onClick} sx={{ color }}>
+    <MenuItem {...link} onClick={onClick} disabled={pending} sx={{ color }}>
       <ListItemIcon sx={{ color: color && "inherit" }}>
-        <Icon fontSize="small" />
+        {pending ? <DiceSpinner size="small" /> : <Icon fontSize="small" />}
       </ListItemIcon>
       <ListItemText primary={label} secondary={description} />
     </MenuItem>
