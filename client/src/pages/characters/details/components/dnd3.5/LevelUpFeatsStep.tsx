@@ -1,16 +1,4 @@
-import {
-  Box,
-  Button,
-  Chip,
-  Collapse,
-  List,
-  ListItemButton,
-  ListItemText,
-  Skeleton,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Collapse, List, ListItemButton, ListItemText, Stack, TextField, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useController } from "react-hook-form";
@@ -21,9 +9,11 @@ import {
   DiceSpinner,
   ExpandArrow,
   LoadError,
+  LoadMoreButton,
   NextPageSpinner,
   SubsectionTitle,
   ToggleLabel,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -93,14 +83,7 @@ function FeatFamilyExpansion({
   const variants = pageItems(query.data);
   const previousItemCount = itemsBeforeLastPage(query.data);
 
-  if (query.isLoading) {
-    return (
-      <Box sx={{ pl: 6, py: 1 }}>
-        <Skeleton variant="text" width="60%" />
-        <Skeleton variant="text" width="40%" />
-      </Box>
-    );
-  }
+  if (query.isLoading) return <DiceSpinner sx={{ py: 4 }} />;
 
   if (query.error && variants.length === 0) {
     return (
@@ -145,15 +128,11 @@ function FeatFamilyExpansion({
           </OptionTooltip>
         );
       })}
-      {query.hasNextPage && (
-        <Box sx={{ pl: 6, py: 0.5 }}>
-          <Button size="small" onClick={() => query.fetchNextPage()} disabled={query.isFetchingNextPage}>
-            <DiceSpinner size="small" loading={query.isFetchingNextPage}>
-              Load More
-            </DiceSpinner>
-          </Button>
-        </Box>
-      )}
+      <LoadMoreButton
+        hasNextPage={!!query.hasNextPage}
+        isFetchingNextPage={query.isFetchingNextPage}
+        onClick={() => query.fetchNextPage()}
+      />
     </>
   );
 }
@@ -190,7 +169,7 @@ export function LevelUpFeatsStep({ wizard, characterId }: LevelUpFeatsStepProps)
   const hasSelectableFeats = aptitudePools.some((pool) => pool.available > 0);
 
   if (!hasSelectableFeats && featData.autoGrantedFeats.length === 0)
-    return <BlankNote>No feats to select at this level.</BlankNote>;
+    return <BlankNote>No feats to select at this level</BlankNote>;
 
   return (
     <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
@@ -248,18 +227,19 @@ export function LevelUpFeatsStep({ wizard, characterId }: LevelUpFeatsStepProps)
                   Selected {currentPool?.name} Feats ({currentPoolFeats.length}/{currentPool?.available || 0}):
                 </SubsectionTitle>
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
-                  {currentPoolFeats.length > 0
-                    ? currentPoolFeats.map((feat) => (
-                        <OptionTooltip key={feat.id} description={feat.description} maxLength={200}>
-                          <Chip
-                            label={feat.name}
-                            onDelete={() => feats.onChange(withoutPick(selectedFeats, selectedAptitude, feat.id))}
-                          />
-                        </OptionTooltip>
-                      ))
-                    : Array.from({ length: currentPool?.available || 0 }, (_, i) => (
-                        <Skeleton key={i} variant="rounded" width={100} height={32} />
-                      ))}
+                  {currentPoolFeats.length > 0 ? (
+                    currentPoolFeats.map((feat) => (
+                      <OptionTooltip key={feat.id} description={feat.description} maxLength={200}>
+                        <ValueChip
+                          color="default"
+                          label={feat.name}
+                          onDelete={() => feats.onChange(withoutPick(selectedFeats, selectedAptitude, feat.id))}
+                        />
+                      </OptionTooltip>
+                    ))
+                  ) : (
+                    <BlankNote>None selected yet</BlankNote>
+                  )}
                 </Stack>
               </Stack>
 
@@ -279,7 +259,7 @@ export function LevelUpFeatsStep({ wizard, characterId }: LevelUpFeatsStepProps)
                   ) : availableFeatsError && groupedFeats.length === 0 ? (
                     <LoadError what="Feats" error={availableFeatsError} />
                   ) : groupedFeats.length === 0 && featSearch ? (
-                    <BlankNote>Nothing matches "{featSearch}". Try another search.</BlankNote>
+                    <BlankNote>Nothing matches "{featSearch}" — try another search</BlankNote>
                   ) : (
                     <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }} onScroll={handleFeatsScroll}>
                       {groupedFeats.map((row) => {

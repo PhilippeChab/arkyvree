@@ -1,8 +1,8 @@
-import { Chip, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { parseResponse } from "hono/client";
 import { useController } from "react-hook-form";
 
-import { BlankNote } from "@/client/src/components/common/index.ts";
+import { BlankNote, ValueChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -93,11 +93,10 @@ export function ClassLevelEditor({
       chips={level.saves.map(
         (save) =>
           saveName(save.saveId) && (
-            <Chip
+            <ValueChip
+              color="default"
               key={save.saveId}
               label={`${saveName(save.saveId)}: ${formatSigned(save.base)}`}
-              size="small"
-              variant="outlined"
             />
           ),
       )}
@@ -105,11 +104,11 @@ export function ClassLevelEditor({
         level.feats.length > 0 ? (
           <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
             {sortedFeats(level).map((feat) => (
-              <Chip key={featKey(asLevelFeat(feat))} label={featLabel(feat)} size="small" variant="outlined" />
+              <ValueChip color="default" key={featKey(asLevelFeat(feat))} label={featLabel(feat)} />
             ))}
           </Stack>
         ) : (
-          <BlankNote>No feats at this level.</BlankNote>
+          <BlankNote>No feats at this level</BlankNote>
         )
       }
       edit={

@@ -9,7 +9,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { memo, useCallback } from "react";
@@ -23,6 +22,7 @@ import { computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5
 
 import type { SkillsData } from "./levelUp/index.ts";
 import type { LevelUpSkillsStepProps } from "./levelUpFactory.ts";
+import { OptionTooltip } from "./OptionTooltip.tsx";
 
 interface SkillAllocationRowProps {
   hidden: boolean;
@@ -83,11 +83,11 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
       hidden={hidden}
       renderName={(label) =>
         skill.description ? (
-          <Tooltip describeChild title={skill.description} enterTouchDelay={0} arrow>
+          <OptionTooltip description={skill.description}>
             <Box component="span" sx={{ borderBottom: 1, borderBottomStyle: "dashed", cursor: "help" }}>
               {label}
             </Box>
-          </Tooltip>
+          </OptionTooltip>
         ) : (
           label
         )
@@ -253,7 +253,7 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
           )}
         </Stack>
       </Stack>
-      <TableContainer sx={{ overflowX: "auto", mx: { xs: -2, sm: 0 }, width: { xs: "calc(100% + 32px)", sm: "100%" } }}>
+      <TableContainer sx={{ overflowX: "auto" }}>
         <Table size="small" sx={{ minWidth: 420, tableLayout: "fixed" }}>
           <colgroup>
             <col />

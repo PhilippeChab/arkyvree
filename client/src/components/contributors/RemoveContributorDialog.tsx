@@ -37,7 +37,6 @@ export function RemoveContributorDialog({
       }
       confirmLabel="Remove"
       confirmColor="error"
-      maxWidth="xs"
     />
   );
 }

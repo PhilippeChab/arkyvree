@@ -1,7 +1,15 @@
-import { Autocomplete, Box, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Stack, TextField, Typography } from "@mui/material";
 
-import { BlankState, ListToolbar, LoadError, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { CloseIcon, SkillsIcon } from "@/client/src/components/icons/index.ts";
+import {
+  BlankState,
+  DiceSpinner,
+  ListToolbar,
+  LoadError,
+  Panel,
+  ScrollSafeListbox,
+  ValueChip,
+} from "@/client/src/components/common/index.ts";
+import { SkillsIcon } from "@/client/src/components/icons/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { truncate } from "@/client/src/lib/truncate.ts";
 import { RemoveSkillDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
@@ -33,7 +41,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
   const unassignedSkills = availableSkills.filter((skill) => !classSkills?.some((cs) => cs.skillId === skill.id));
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={3}>
       {canEdit && (
         <ListToolbar>
           <Box sx={{ minWidth: { xs: "100%", sm: 300 } }}>
@@ -84,11 +92,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         </ListToolbar>
       )}
       {isLoading ? (
-        <Stack spacing={1}>
-          {[...Array(3)].map((_, index) => (
-            <Skeleton key={index} variant="rectangular" height={40} />
-          ))}
-        </Stack>
+        <DiceSpinner sx={{ py: 4 }} />
       ) : error && !classSkills?.length ? (
         <LoadError what="Class skills" error={error} />
       ) : !classSkills || classSkills.length === 0 ? (
@@ -102,25 +106,19 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
           }
         />
       ) : (
-        <Paper sx={{ p: 2, boxShadow: 1, borderRadius: 2 }}>
+        <Panel>
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
             {classSkills.map((classSkill) => (
-              <Chip
+              <ValueChip
                 key={classSkill.skillId}
                 label={classSkill.skillsInRule.name}
-                variant="outlined"
+
                 color="primary"
-                deleteIcon={canEdit ? <CloseIcon /> : undefined}
                 onDelete={canEdit ? () => handleRemoveSkill(classSkill.skillId) : undefined}
-                sx={{
-                  "& .MuiChip-deleteIcon": {
-                    fontSize: "18px",
-                  },
-                }}
               />
             ))}
           </Stack>
-        </Paper>
+        </Panel>
       )}
       <RemoveSkillDialog
         open={removeDialog.open}

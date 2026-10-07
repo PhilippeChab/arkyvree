@@ -1,5 +1,4 @@
 import {
-  Chip,
   Link as MuiLink,
   Stack,
   Table,
@@ -13,7 +12,7 @@ import {
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-import { EmptyValue } from "@/client/src/components/common/index.ts";
+import { EmptyValue, ROW_ACTIONS_HOVER_SX, RowActions, StatusChip } from "@/client/src/components/common/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { capitalize } from "@/shared/text.ts";
 
@@ -21,7 +20,7 @@ import { type EncumbranceData, type EquipmentRow, formatSlotDisplay } from "./eq
 
 interface EquipmentTableProps<T extends EquipmentTableRow> {
   encumbrance?: EncumbranceData;
-  /** The row's actions, when the viewer can change the inventory. */
+  /** The row's `RowAction`s, when the viewer can change the inventory. */
   renderActions?: (row: T) => ReactNode;
   rows: T[];
   /** Links each item to its page in this ruleset. */
@@ -52,12 +51,15 @@ export function EquipmentTable<T extends EquipmentTableRow>({
               <TableCell align="center">Weight</TableCell>
               <TableCell align="center">Value</TableCell>
               <TableCell>Description</TableCell>
-              {renderActions && <TableCell align="center">Actions</TableCell>}
+              {renderActions && <TableCell align="right">Actions</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
             {rows.map((entry) => (
-              <TableRow key={entry.id} sx={{ bgcolor: entry.equipped ? "action.hover" : undefined }}>
+              <TableRow
+                key={entry.id}
+                sx={[ROW_ACTIONS_HOVER_SX, { bgcolor: entry.equipped ? "action.hover" : undefined }]}
+              >
                 <TableCell>
                   {rulesetId ? (
                     <MuiLink
@@ -90,7 +92,11 @@ export function EquipmentTable<T extends EquipmentTableRow>({
                 <TableCell sx={{ fontSize: "0.875rem", minWidth: 220 }}>
                   {entry.description || <EmptyValue />}
                 </TableCell>
-                {renderActions && <TableCell align="center">{renderActions(entry)}</TableCell>}
+                {renderActions && (
+                  <TableCell align="right">
+                    <RowActions>{renderActions(entry)}</RowActions>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -122,9 +128,8 @@ export function EquipmentTable<T extends EquipmentTableRow>({
             Heavy: {encumbrance.heavyload ?? 0}
           </Typography>
           {encumbrance.load && encumbrance.load !== "light" && (
-            <Chip
+            <StatusChip
               label={capitalize(encumbrance.load)}
-              size="small"
               color={encumbrance.load === "overloaded" ? "error" : encumbrance.load === "heavy" ? "warning" : "info"}
             />
           )}

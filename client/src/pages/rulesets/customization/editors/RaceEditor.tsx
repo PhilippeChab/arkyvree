@@ -1,6 +1,6 @@
-import { Chip } from "@mui/material";
 import { parseResponse } from "hono/client";
 
+import { ValueChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { EMPTY_RACE, type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
@@ -53,8 +53,8 @@ export function RaceEditor({
       description={race.description}
       chips={
         <>
-          <Chip label={race.size} size="small" color="secondary" sx={{ fontWeight: 600 }} />
-          <Chip label={`${race.baseSpeed} ft`} size="small" color="info" variant="outlined" />
+          <ValueChip label={race.size} />
+          <ValueChip label={`${race.baseSpeed} ft`} color="info" />
         </>
       }
       edit={

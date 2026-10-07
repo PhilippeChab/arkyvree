@@ -18,8 +18,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { BlankNote, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
 import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
+import { NotificationMessage } from "@/client/src/components/notifications/index.ts";
 import { useAnchorMenu, useNotificationActions } from "@/client/src/hooks/index.ts";
-import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
 import { ONE_MINUTE } from "@/client/src/lib/durations.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
@@ -42,7 +42,8 @@ const LINK_ROW_SX = { ...ROW_SX, py: 0.75, justifyContent: "center" } as const;
 function NotificationSummary({ notification }: NotificationSummaryProps) {
   return (
     <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "baseline", width: "100%" }}>
-      <Typography variant="body2">{formatNotificationMessage(notification.type, notification.data)}</Typography>
+      {/* The bell lists unread ones alone: no dot */}
+      <NotificationMessage notification={notification} />
       <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0 }}>
         {formatRelativeTime(notification.createdAt)}
       </Typography>
@@ -75,18 +76,20 @@ export function NotificationBell() {
 
   return (
     <>
-      <IconButton
-        size="large"
-        color="inherit"
-        onClick={menu.openMenu}
-        aria-label={formatCount(unreadCount, "unread notification")}
-        sx={{ animation: shake ? ANIMATIONS.bellShake : undefined, [PREFERS_REDUCED_MOTION]: { animation: "none" } }}
-        onAnimationEnd={() => setShake(false)}
-      >
-        <Badge badgeContent={unreadCount} color="error">
-          <NotificationsIcon />
-        </Badge>
-      </IconButton>
+      <Tooltip title="Notifications">
+        <IconButton
+          size="large"
+          color="inherit"
+          onClick={menu.openMenu}
+          aria-label={formatCount(unreadCount, "unread notification")}
+          sx={{ animation: shake ? ANIMATIONS.bellShake : undefined, [PREFERS_REDUCED_MOTION]: { animation: "none" } }}
+          onAnimationEnd={() => setShake(false)}
+        >
+          <Badge badgeContent={unreadCount} color="error">
+            <NotificationsIcon />
+          </Badge>
+        </IconButton>
+      </Tooltip>
       {/* A panel, not a menu: its heading, its list, and a link to the whole page */}
       <Popover
         anchorEl={menu.anchorEl}
@@ -137,19 +140,13 @@ export function NotificationBell() {
                     />
                   </Stack>
                 ) : (
-                  <Tooltip
-                    describeChild
+                  <ListItemButton
                     key={notification.id}
-                    title={formatActivityDetails(notification.data) ?? ""}
-                    arrow
-                    enterDelay={300}
-                    placement="left"
-                    slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
+                    onClick={menu.closeMenuAnd(() => actions.open(notification))}
+                    sx={ROW_SX}
                   >
-                    <ListItemButton onClick={menu.closeMenuAnd(() => actions.open(notification))} sx={ROW_SX}>
-                      <NotificationSummary notification={notification} />
-                    </ListItemButton>
-                  </Tooltip>
+                    <NotificationSummary notification={notification} />
+                  </ListItemButton>
                 ),
               )}
               <Divider />

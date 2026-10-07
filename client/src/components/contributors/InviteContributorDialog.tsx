@@ -38,10 +38,8 @@ export function InviteContributorDialog({
     <FormDialog open={open} onClose={onClose} form={form} isLoading={isLoading}>
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <DialogTitle>Invite Contributor</DialogTitle>
-        {/* Deeper at the bottom, under the last field */}
-        <DialogContent sx={{ pb: 3.5 }}>
-          {/* The first field's own top: MUI zeroes the content's top padding under a title */}
-          <Stack spacing={3} sx={{ pt: 2 }}>
+        <DialogContent>
+          <Stack spacing={3} sx={{ pt: 1 }}>
             <EmailField control={form.control} name="email" rules={EMAIL_RULES} label="Email Address" autoFocus />
             {roles && <SelectField control={form.control} name="role" label="Role" options={roles} />}
           </Stack>

@@ -12,7 +12,7 @@ import {
 import {
   ArchiveIcon,
   ExtensionIcon,
-  LockIcon,
+  PrivateIcon,
   PublicIcon,
   PublishIcon,
   RulesetIcon,
@@ -103,7 +103,7 @@ function PrivacyToggle({ value, onChange, disabled }: PrivacyToggleProps) {
         </ToggleButton>
         <ToggleButton value>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <LockIcon fontSize="small" />
+            <PrivateIcon fontSize="small" />
             <Typography variant="body2">Private</Typography>
           </Stack>
         </ToggleButton>

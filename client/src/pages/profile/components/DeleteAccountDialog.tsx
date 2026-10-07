@@ -1,4 +1,4 @@
-import { DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
+import { DialogContent, DialogContentText, DialogTitle, Stack } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
@@ -64,18 +64,16 @@ export function DeleteAccountDialog({ open, onClose, onExited, hasPassword }: De
       onClose={onClose}
       form={form}
       isLoading={deleteMutation.isPending}
-      maxWidth="xs"
       slotProps={{ transition: { onExited } }}
     >
-      <DialogTitle>Delete Account</DialogTitle>
       <form onSubmit={handleSubmit(handleDelete)} noValidate>
-        {/* Deeper at the bottom, under the field */}
-        <DialogContent sx={{ pb: 3.5 }}>
-          <Stack spacing={2}>
-            <Typography variant="body2">
+        <DialogTitle>Delete Account</DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ pt: 1 }}>
+            <DialogContentText>
               This action is <strong>permanent</strong> and cannot be undone. All your characters, campaign memberships,
               and account data will be removed.
-            </Typography>
+            </DialogContentText>
 
             {/* In a spaced column, which spaces an alert even closed: mounted only while it shows */}
             {error && (

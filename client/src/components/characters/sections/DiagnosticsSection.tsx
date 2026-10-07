@@ -3,9 +3,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Chip,
   Collapse,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -20,8 +18,11 @@ import { Fragment, type ReactNode, useMemo } from "react";
 import {
   CardTitle,
   CLICKABLE_SX,
+  CountChip,
   EmptyValue,
   ExpandArrow,
+  Panel,
+  StatusChip,
   SubsectionTitle,
   toggleProps,
 } from "@/client/src/components/common/index.ts";
@@ -148,7 +149,7 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
                 </TableCell>
                 <TableCell sx={{ ...TABLE_CELL_SX, fontWeight: 600 }}>{source}</TableCell>
                 <TableCell sx={TABLE_CELL_SX} colSpan={4}>
-                  <Chip label={rules.length} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.75rem" }} />
+                  <CountChip label={rules.length} />
                 </TableCell>
               </TableRow>
               <TableRow>
@@ -276,16 +277,12 @@ function SkippedModifierTable({ items }: SkippedModifierTableProps) {
 
 export function DiagnosticsSection({ validation, requirements, modifiers }: DiagnosticsSectionProps) {
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+    <Panel>
       <Accordion defaultExpanded={false} disableGutters sx={ACCORDION_SX}>
         <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />} sx={SUMMARY_SX}>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <CardTitle>Diagnostics</CardTitle>
-            <Chip
-              label={validation.valid ? "Valid" : "Invalid"}
-              color={validation.valid ? "success" : "error"}
-              size="small"
-            />
+            <StatusChip label={validation.valid ? "Valid" : "Invalid"} color={validation.valid ? "success" : "error"} />
           </Stack>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 0, pt: 2 }}>
@@ -310,25 +307,10 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               <Stack direction="row" spacing={2} sx={{ alignItems: "center", pb: 1 }}>
                 <SubsectionTitle>Requirements</SubsectionTitle>
                 <Stack direction="row" spacing={1}>
-                  <Chip
-                    label={`Fulfilled: ${requirements.fulfilledRequirementGroups.length}`}
-                    color="success"
-                    size="small"
-                    variant="outlined"
-                  />
-                  <Chip
-                    label={`Unmet: ${requirements.unmetRequirementGroups.length}`}
-                    color="error"
-                    size="small"
-                    variant="outlined"
-                  />
+                  <CountChip label={`Fulfilled: ${requirements.fulfilledRequirementGroups.length}`} color="success" />
+                  <CountChip label={`Unmet: ${requirements.unmetRequirementGroups.length}`} color="error" />
                   {requirements.invalidRequirements.length > 0 && (
-                    <Chip
-                      label={`Invalid: ${requirements.invalidRequirements.length}`}
-                      color="warning"
-                      size="small"
-                      variant="outlined"
-                    />
+                    <CountChip label={`Invalid: ${requirements.invalidRequirements.length}`} color="warning" />
                   )}
                 </Stack>
               </Stack>
@@ -343,30 +325,15 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               <Stack direction="row" spacing={2} sx={{ alignItems: "center", pb: 1 }}>
                 <SubsectionTitle>Modifiers</SubsectionTitle>
                 <Stack direction="row" sx={{ flexWrap: "wrap", columnGap: 1.5, rowGap: 0.5 }}>
-                  <Chip
-                    label={`Applied: ${modifiers.appliedModifiers.length}`}
-                    color="success"
-                    size="small"
-                    variant="outlined"
-                  />
+                  <CountChip label={`Applied: ${modifiers.appliedModifiers.length}`} color="success" />
                   {modifiers.unappliedModifiers.length > 0 && (
-                    <Chip
-                      label={`Unapplied: ${modifiers.unappliedModifiers.length}`}
-                      color="error"
-                      size="small"
-                      variant="outlined"
-                    />
+                    <CountChip label={`Unapplied: ${modifiers.unappliedModifiers.length}`} color="error" />
                   )}
                   {modifiers.inactiveModifiers.length > 0 && (
-                    <Chip label={`Inactive: ${modifiers.inactiveModifiers.length}`} size="small" variant="outlined" />
+                    <CountChip label={`Inactive: ${modifiers.inactiveModifiers.length}`} />
                   )}
                   {modifiers.skippedModifiers.length > 0 && (
-                    <Chip
-                      label={`Skipped: ${modifiers.skippedModifiers.length}`}
-                      color="warning"
-                      size="small"
-                      variant="outlined"
-                    />
+                    <CountChip label={`Skipped: ${modifiers.skippedModifiers.length}`} color="warning" />
                   )}
                 </Stack>
               </Stack>
@@ -378,6 +345,6 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
           </Stack>
         </AccordionDetails>
       </Accordion>
-    </Paper>
+    </Panel>
   );
 }

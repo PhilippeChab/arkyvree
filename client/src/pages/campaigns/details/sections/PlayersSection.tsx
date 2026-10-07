@@ -1,16 +1,4 @@
-import {
-  Box,
-  Chip,
-  IconButton,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { type ReactNode, useState } from "react";
@@ -20,24 +8,28 @@ import {
   AddButton,
   BlankState,
   ConfirmDialog,
-  DiceSpinner,
   EmptyValue,
   LoadError,
   LoadMoreButton,
   NoMatchesState,
+  RoleChip,
   ROW_ACTIONS_HOVER_SX,
-  ROW_ACTIONS_SX,
+  RowAction,
+  RowActions,
   SearchBar,
   SectionContent,
+  StatusChip,
   TableFrame,
+  TableSkeleton,
 } from "@/client/src/components/common/index.ts";
 import {
+  CharacterIcon,
   DeleteIcon,
   EditIcon,
   GMIcon,
   LeaveIcon,
   PendingIcon,
-  PlayerIcon,
+  PlayersIcon,
   RevokeIcon,
   UnassignedIcon,
 } from "@/client/src/components/icons/index.ts";
@@ -69,6 +61,15 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 interface PlayersSectionProps {
   campaign: CampaignDetail;
 }
+
+/** The players table's columns: its header, and its first load's */
+const PLAYER_COLUMNS = [
+  { key: "player", label: "Player", width: "20%" },
+  { key: "role", label: "Role", width: "20%" },
+  { key: "status", label: "Status", width: "20%" },
+  { key: "joined", label: "Joined", width: "20%" },
+  { align: "right" as const, key: "actions", label: "Actions", width: "10%" },
+];
 
 const STATUS_CHIPS = {
   assigned: null,
@@ -236,7 +237,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
           }
         />
         {/* Loading State */}
-        {playersLoading && <DiceSpinner sx={{ py: 4 }} />}
+        {playersLoading && <TableSkeleton columns={PLAYER_COLUMNS} />}
         {/* Error State: only while nothing has loaded, a failed refetch keeping the table */}
         {playersLoadFailed && (
           // The room below the error, at the end of the tab
@@ -253,11 +254,11 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                 <Table sx={{ width: "100%" }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ width: "20%" }}>Player</TableCell>
-                      <TableCell sx={{ width: "20%" }}>Role</TableCell>
-                      <TableCell sx={{ width: "20%" }}>Status</TableCell>
-                      <TableCell sx={{ width: "20%" }}>Joined</TableCell>
-                      <TableCell sx={{ width: "10%" }}>Actions</TableCell>
+                      {PLAYER_COLUMNS.map((column) => (
+                        <TableCell key={column.key} align={column.align} sx={{ width: column.width }}>
+                          {column.label}
+                        </TableCell>
+                      ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -292,35 +293,30 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Chip
+                            <RoleChip
                               icon={
-                                isGameMaster ? <GMIcon sx={{ fontSize: 14 }} /> : <PlayerIcon sx={{ fontSize: 14 }} />
+                                isGameMaster ? (
+                                  <GMIcon sx={{ fontSize: 14 }} />
+                                ) : (
+                                  <CharacterIcon sx={{ fontSize: 14 }} />
+                                )
                               }
                               label={player.role}
-                              size="small"
                               color={isGameMaster ? "warning" : "primary"}
-                              variant="filled"
-                              sx={{ fontWeight: 500 }}
                             />
                           </TableCell>
                           <TableCell>
                             {displayInfo.statusChip ? (
-                              <Chip
+                              <StatusChip
                                 icon={displayInfo.statusChip.icon}
                                 label={displayInfo.statusChip.label}
-                                size="small"
                                 color={displayInfo.statusChip.color}
-                                variant="outlined"
-                                sx={{ fontWeight: 500 }}
                               />
                             ) : (
-                              <Chip
-                                icon={<PlayerIcon sx={{ fontSize: 14 }} />}
+                              <StatusChip
+                                icon={<CharacterIcon sx={{ fontSize: 14 }} />}
                                 label="Active"
-                                size="small"
                                 color="success"
-                                variant="outlined"
-                                sx={{ fontWeight: 500 }}
                               />
                             )}
                           </TableCell>
@@ -333,47 +329,28 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                               <EmptyValue />
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell align="right">
                             {canEditPlayer && (
-                              <Stack className="row-actions" direction="row" spacing={0.5} sx={ROW_ACTIONS_SX}>
+                              <RowActions>
                                 {canManagePlayers && (
-                                  <Tooltip title="Edit">
-                                    <IconButton
-                                      aria-label="Edit"
-                                      size="small"
-                                      onClick={() => handleEditPlayer(player)}
-                                      sx={{ color: "primary.main" }}
-                                    >
-                                      <EditIcon fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
+                                  <RowAction icon={EditIcon} label="Edit" onClick={() => handleEditPlayer(player)} />
                                 )}
                                 {slot.state === "pending" && canManageInvites && !campaign.deletedAt && (
-                                  <Tooltip title="Revoke Invite">
-                                    <span>
-                                      <IconButton
-                                        aria-label="Revoke Invite"
-                                        size="small"
-                                        onClick={() => handleRevokeInvite(slot.pendingInvite.id)}
-                                        sx={{ color: "warning.main" }}
-                                        disabled={revokeInviteMutation.isPending}
-                                      >
-                                        <RevokeIcon fontSize="small" />
-                                      </IconButton>
-                                    </span>
-                                  </Tooltip>
+                                  <RowAction
+                                    icon={RevokeIcon}
+                                    label="Revoke Invite"
+                                    intent="caution"
+                                    onClick={() => handleRevokeInvite(slot.pendingInvite.id)}
+                                    disabled={revokeInviteMutation.isPending}
+                                  />
                                 )}
-                                <Tooltip title={isCurrentUser ? "Leave" : "Remove"}>
-                                  <IconButton
-                                    aria-label={isCurrentUser ? "Leave" : "Remove"}
-                                    size="small"
-                                    onClick={() => handleRemovePlayer(player)}
-                                    sx={{ color: isCurrentUser ? "warning.main" : "error.main" }}
-                                  >
-                                    {isCurrentUser ? <LeaveIcon fontSize="small" /> : <DeleteIcon fontSize="small" />}
-                                  </IconButton>
-                                </Tooltip>
-                              </Stack>
+                                <RowAction
+                                  icon={isCurrentUser ? LeaveIcon : DeleteIcon}
+                                  label={isCurrentUser ? "Leave" : "Remove"}
+                                  intent={isCurrentUser ? "caution" : "destructive"}
+                                  onClick={() => handleRemovePlayer(player)}
+                                />
+                              </RowActions>
                             )}
                           </TableCell>
                         </TableRow>
@@ -393,7 +370,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
             <NoMatchesState search={searchQuery} />
           ) : (
             <BlankState
-              icon={PlayerIcon}
+              icon={PlayersIcon}
               title="No players in this campaign"
               description="Add players to start your adventure together"
               action={

@@ -5,20 +5,13 @@ import { DiceSpinner } from "./DiceSpinner.tsx";
 interface LoadMoreButtonProps {
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
-  label?: string;
   onClick: () => void;
   /** `large` for a page's main list, `medium` for lists inside a section or dialog. */
   size?: "medium" | "large";
 }
 
-/** Fetches the next page of an infinite query; renders nothing on the last page. */
-export function LoadMoreButton({
-  hasNextPage,
-  isFetchingNextPage,
-  onClick,
-  label = "Load More",
-  size = "medium",
-}: LoadMoreButtonProps) {
+/** Fetches the next page of an infinite query, "Load More" wherever it shows; renders nothing on the last page. */
+export function LoadMoreButton({ hasNextPage, isFetchingNextPage, onClick, size = "medium" }: LoadMoreButtonProps) {
   if (!hasNextPage) return null;
 
   return (
@@ -40,7 +33,7 @@ export function LoadMoreButton({
         ]}
       >
         <DiceSpinner size="small" loading={isFetchingNextPage}>
-          {label}
+          Load More
         </DiceSpinner>
       </Button>
     </Stack>

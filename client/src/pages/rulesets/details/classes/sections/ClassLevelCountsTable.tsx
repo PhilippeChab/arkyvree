@@ -1,7 +1,7 @@
-import { Chip, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { type ElementType, useMemo } from "react";
 
-import { EmptyValue } from "@/client/src/components/common/index.ts";
+import { EmptyValue, ValueChip } from "@/client/src/components/common/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 
 interface ClassLevelCountsTableProps<L extends { id: string; level: number }> {
@@ -53,7 +53,7 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
   const sortedLevels = useMemo(() => levels && [...levels].sort((a, b) => a.level - b.level), [levels]);
 
   const renderCell = (level: L, columnKey: string) => {
-    if (columnKey === "level") return <Chip label={level.level} size="small" color="primary" />;
+    if (columnKey === "level") return <ValueChip label={level.level} color="primary" />;
 
     const value = countOf(level, columnKey.replace("count_", ""));
     return (

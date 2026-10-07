@@ -1,6 +1,6 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
 
-import { lintRepo } from "./lintRepo.ts";
+import { lines, lintRepo } from "./lintRepo.ts";
 
 // Each test runs oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);
@@ -12,12 +12,16 @@ describe("component rules", () => {
         {
           "client/src/raw.tsx": 'import { DialogActions } from "@mui/material";\nexport const r = <DialogActions />;\n',
           "client/src/footer.tsx": "export const f = <DialogFooter onCancel={close} />;\n",
+          "client/src/steps.tsx":
+            'export const s = <DialogFooter onCancel={close} action={{ label: "Next" }}><Button onClick={back}>Back</Button></DialogFooter>;\n',
+          "client/src/action.tsx":
+            'export const a = <DialogFooter onCancel={close}><Button variant="contained" onClick={next}>Next</Button></DialogFooter>;\n',
           "client/src/components/common/DialogFooter.tsx":
             'import { DialogActions } from "@mui/material";\nexport const d = <DialogActions />;\n',
         },
         ["dialog-footers"],
       ),
-    ).toEqual(["dialog-footers client/src/raw.tsx"]);
+    ).toEqual(["dialog-footers client/src/action.tsx", "dialog-footers client/src/raw.tsx"]);
   });
 
   test("a button that adds something is an AddButton", async () => {
@@ -25,13 +29,15 @@ describe("component rules", () => {
       await lintRepo(
         {
           "client/src/raw.tsx": "export const r = <Button startIcon={<AddIcon />}>Add</Button>;\n",
+          "client/src/words.tsx": 'export const w = <Button variant="contained" onClick={add}>Add Item</Button>;\n',
           "client/src/other.tsx": "export const o = <Button startIcon={<EditIcon />}>Edit</Button>;\n",
+          "client/src/address.tsx": "export const d = <Button onClick={go}>Address Book</Button>;\n",
           "client/src/add.tsx": 'export const a = <AddButton label="Add" onClick={add} />;\n',
           "client/src/components/common/AddButton.tsx": "export const b = <Button startIcon={<AddIcon />} />;\n",
         },
         ["add-buttons"],
       ),
-    ).toEqual(["add-buttons client/src/raw.tsx"]);
+    ).toEqual(["add-buttons client/src/raw.tsx", "add-buttons client/src/words.tsx"]);
   });
 
   test("an action written as a link is a LinkButton", async () => {
@@ -81,10 +87,18 @@ describe("component rules", () => {
           "client/src/tree.tsx": "export const t = <Tooltip title={feat.requirementTree}><span /></Tooltip>;\n",
           "client/src/cut.tsx": "export const c = <Tooltip title={text.slice(0, 200)}><span /></Tooltip>;\n",
           "client/src/plain.tsx": 'export const p = <Tooltip title="Edit"><span /></Tooltip>;\n',
+          "client/src/pages/characters/details/components/dnd3.5/LevelUpSkillsStep.tsx":
+            "export const s = <Tooltip title={skill.description}><span /></Tooltip>;\n",
+          "client/src/pages/characters/details/components/dnd3.5/LevelWizardDialog.tsx":
+            'export const w = <Tooltip title="Edit"><span /></Tooltip>;\n',
         },
         ["option-tooltips"],
       ),
-    ).toEqual(["option-tooltips client/src/cut.tsx", "option-tooltips client/src/tree.tsx"]);
+    ).toEqual([
+      "option-tooltips client/src/cut.tsx",
+      "option-tooltips client/src/pages/characters/details/components/dnd3.5/LevelUpSkillsStep.tsx",
+      "option-tooltips client/src/tree.tsx",
+    ]);
   });
 
   test("a menu keeps its anchor through useAnchorMenu", async () => {
@@ -286,10 +300,20 @@ describe("component rules", () => {
           "client/src/value.tsx": "export const v = <Typography>No</Typography>;\n",
           "client/src/slot.tsx": "export const s = <Typography>No {label}</Typography>;\n",
           "client/src/note.tsx": "export const n = <BlankNote>No local changes</BlankNote>;\n",
+          "client/src/period.tsx": "export const p = <BlankNote>No feats at this level.</BlankNote>;\n",
+          "client/src/search.tsx":
+            'export const s = <BlankNote>Nothing matches "{search}" — try another search</BlankNote>;\n',
+          "client/src/options.tsx": 'export const o = <Autocomplete noOptionsText="No values found." />;\n',
+          "client/src/bare.tsx": 'export const b = <Autocomplete noOptionsText="No values found" />;\n',
         },
         ["blank-notes"],
       ),
-    ).toEqual(["blank-notes client/src/alert.tsx", "blank-notes client/src/line.tsx"]);
+    ).toEqual([
+      "blank-notes client/src/alert.tsx",
+      "blank-notes client/src/line.tsx",
+      "blank-notes client/src/options.tsx",
+      "blank-notes client/src/period.tsx",
+    ]);
   });
 
   test("a page's first load is a PageLoader, and any other spinner takes a section's spacing alone", async () => {
@@ -317,6 +341,19 @@ describe("component rules", () => {
       "page-loaders client/src/page.tsx",
       "page-loaders client/src/tall.tsx",
     ]);
+  });
+
+  test("a character sheet's page loads with the sheet's skeleton", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/shared.tsx": "export const s = loading ? <PageLoader /> : <CharacterSheetBody />;\n",
+          "client/src/sheet.tsx": "export const c = loading ? <CharacterDetailSkeleton /> : <CharacterSheetBody />;\n",
+          "client/src/list.tsx": "export const l = loading ? <PageLoader /> : <ListCardGrid />;\n",
+        },
+        ["page-loaders"],
+      ),
+    ).toEqual(["page-loaders client/src/shared.tsx"]);
   });
 
   test("a heading under a card's is a SubsectionTitle 8px above its content, an entry's name an EntryTitle", async () => {
@@ -360,6 +397,114 @@ describe("component rules", () => {
     ).toEqual(["page-gaps client/src/list.tsx", "page-gaps client/src/sheet.tsx"]);
   });
 
+  test("a page starts 32px under the app bar, a tab's content 56px under its tabs", async () => {
+    const own = 'export const o = <Box role="tabpanel" sx={{ py: 3 }} />;\n';
+    expect(
+      await lintRepo(
+        {
+          "client/src/top.tsx": 'export const t = <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }} />;\n',
+          "client/src/column.tsx": 'export const c = <Container maxWidth="xl" />;\n',
+          "client/src/end.tsx": 'export const e = <Container maxWidth="lg" sx={{ pb: { xs: 5, sm: 7 } }} />;\n',
+          "client/src/invite.tsx": 'export const i = <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }} />;\n',
+          "client/src/panel.tsx": own,
+          "client/src/tab.tsx": "export const p = <SectionTabPanel hidden={hidden} />;\n",
+          "client/src/components/common/DetailPageHeader.tsx": own,
+        },
+        ["page-gaps"],
+      ),
+    ).toEqual(["page-gaps client/src/panel.tsx", "page-gaps client/src/top.tsx"]);
+  });
+
+  test("a page's title is its header's", async () => {
+    const title = 'export const t = <Typography component="h1">Fighter</Typography>;\n';
+    expect(
+      await lintRepo(
+        {
+          "client/src/pages/rulesets/components/EntityDetailLayout.tsx": title,
+          "client/src/header.tsx": "export const h = <DetailPageHeader title={name} description={ruleset} />;\n",
+          "client/src/components/common/DetailPageHeader.tsx": title,
+          "client/src/components/auth/AuthLayoutRoute.tsx": title,
+        },
+        ["page-titles"],
+      ),
+    ).toEqual(["page-titles client/src/pages/rulesets/components/EntityDetailLayout.tsx"]);
+  });
+
+  test("a panel is a Panel: flat paper, its padding and corner the theme's", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/card.tsx":
+            "export const c = <Card><CardContent><CardTitle>Theme</CardTitle></CardContent></Card>;\n",
+          "client/src/auth.tsx": 'export const a = <Card><Typography component="h1">Sign In</Typography></Card>;\n',
+          "client/src/list.tsx": "export const l = <Card onClick={open}><Avatar /></Card>;\n",
+          "client/src/paper.tsx": "export const p = <Paper sx={{ p: { xs: 2, sm: 3 } }}><Box /></Paper>;\n",
+          "client/src/stack.tsx": "export const s = <Stack component={Paper} spacing={3} sx={{ p: 3 }} />;\n",
+          "client/src/banner.tsx": "export const b = <Paper sx={{ p: 4, background: gradient }} />;\n",
+          "client/src/frame.tsx": 'export const f = <Paper variant="outlined" sx={{ p: 1 }} />;\n',
+          "client/src/bare.tsx": 'export const r = <Paper sx={{ overflow: "hidden" }} />;\n',
+          "client/src/corner.tsx": "export const k = <Panel sx={{ borderRadius: 3 }} />;\n",
+          "client/src/padded.tsx": "export const d = <Panel sx={{ py: 6 }} />;\n",
+          "client/src/panel.tsx": 'export const n = <Panel spacing={3} sx={{ textAlign: "center" }} />;\n',
+          "client/src/components/common/Panel.tsx": "export const o = <Stack component={Paper} sx={{ p: 4 }} />;\n",
+        },
+        ["panels"],
+      ),
+    ).toEqual([
+      "panels client/src/auth.tsx",
+      "panels client/src/card.tsx",
+      "panels client/src/corner.tsx",
+      "panels client/src/padded.tsx",
+      "panels client/src/paper.tsx",
+      "panels client/src/stack.tsx",
+    ]);
+  });
+
+  test("a list's actions sit in its toolbar, the list 24px under it and its Load More 16px under the list", async () => {
+    const more = "<LoadMoreButton hasNextPage={more} isFetchingNextPage={fetching} onClick={next} />";
+    expect(
+      await lintRepo(
+        {
+          "client/src/close.tsx": "export const c = <Stack spacing={2}><SearchBar /><Table /></Stack>;\n",
+          "client/src/toolbar.tsx":
+            "export const t = <Stack spacing={3}>{canEdit && <ListToolbar />}<Table /></Stack>;\n",
+          "client/src/far.tsx": `export const f = <Stack spacing={3}><Table />${more}</Stack>;\n`,
+          "client/src/more.tsx": `export const m = <Stack spacing={2}><Table />${more}</Stack>;\n`,
+          "client/src/bare.tsx":
+            'export const b = <Stack direction="row" sx={{ justifyContent: "flex-end" }}><AddButton label="Add" /></Stack>;\n',
+          "client/src/save.tsx":
+            'export const s = <Stack direction="row" sx={{ justifyContent: "flex-end" }}><Button>Save</Button></Stack>;\n',
+          "client/src/bar.tsx": 'export const a = <ListToolbar actions={<AddButton label="Add" onClick={add} />} />;\n',
+        },
+        ["list-toolbars"],
+      ),
+    ).toEqual([
+      "list-toolbars client/src/bare.tsx",
+      "list-toolbars client/src/close.tsx",
+      "list-toolbars client/src/far.tsx",
+    ]);
+  });
+
+  test("a skeleton means loading: a table's is a TableSkeleton, anything else's a spinner", async () => {
+    const own = "export const o = <Skeleton />;\n";
+    expect(
+      await lintRepo(
+        {
+          "client/src/table.tsx":
+            "export const t = <Table><TableHead /><TableBody><TableRow><TableCell><Skeleton /></TableCell></TableRow></TableBody></Table>;\n",
+          "client/src/rows.tsx":
+            "export const r = <TableRow><TableCell colSpan={2}><Skeleton /></TableCell></TableRow>;\n",
+          "client/src/hidden.tsx": 'export const h = <>{partial && <Skeleton variant="rounded" height={40} />}</>;\n',
+          "client/src/bars.tsx": 'export const b = <Stack spacing={1}><Skeleton variant="rectangular" /></Stack>;\n',
+          "client/src/components/common/TableSkeleton.tsx": own,
+          "client/src/components/characters/CharacterDetailSkeleton.tsx": own,
+          "client/src/pages/rulesets/components/EntityDetailLayout.tsx": own,
+        },
+        ["skeletons"],
+      ),
+    ).toEqual(["skeletons client/src/bars.tsx", "skeletons client/src/hidden.tsx", "skeletons client/src/table.tsx"]);
+  });
+
   test("a value that isn't there is an EmptyValue", async () => {
     const own = "export const o = <Box>—</Box>;\n";
     expect(
@@ -370,14 +515,101 @@ describe("component rules", () => {
           "client/src/helper.ts": 'export function slot(worn: boolean) {\n  return worn ? "Hand" : "—";\n}\n',
           "client/src/separator.tsx": "export const s = <Typography>— {uses}/day</Typography>;\n",
           "client/src/value.tsx": "export const v = <TableCell>{value ?? <EmptyValue />}</TableCell>;\n",
-          "client/src/components/common/EmptyValue.tsx": own,
+          "client/src/stock.tsx":
+            'export const s = <DetailPageHeader description={ruleset.description || "Explore the rules"} />;\n',
+          "client/src/words.tsx":
+            'export const w = <Typography>{description || "No description provided"}</Typography>;\n',
+          "client/src/shared.tsx": "export const d = <Typography>{description || NO_DESCRIPTION}</Typography>;\n",
+          "client/src/form.ts": 'export const f = { description: item.description ?? "" };\n',
+          "client/src/components/common/EmptyValue.tsx": `${own}export const NO_DESCRIPTION = "No description provided";\n`,
         },
         ["empty-values"],
       ),
     ).toEqual([
       "empty-values client/src/fallback.tsx",
       "empty-values client/src/helper.ts",
+      "empty-values client/src/stock.tsx",
       "empty-values client/src/text.tsx",
+      "empty-values client/src/words.tsx",
+    ]);
+  });
+
+  test("a notification shows through NotificationMessage, and what it changed through ActivityDetails", async () => {
+    const details = "export const d = <Tooltip title={formatActivityDetails(data)} />;\n";
+    const own = "export const m = <Typography>{formatNotificationMessage(type, data)}</Typography>;\n";
+    expect(
+      await lintRepo(
+        {
+          "client/src/bell.tsx": own,
+          "client/src/card.tsx": "export const c = <NotificationMessage notification={notification} unread />;\n",
+          "client/src/components/notifications/ActivityDetails.tsx": details,
+          "client/src/components/notifications/NotificationMessage.tsx": own,
+          "client/src/log.tsx": details,
+        },
+        ["notification-messages"],
+      ),
+    ).toEqual(["notification-messages client/src/bell.tsx", "notification-messages client/src/log.tsx"]);
+  });
+
+  test("a row's actions are a RowActions of RowActions, in a row that reveals them", async () => {
+    const own = 'export const o = <Stack className="row-actions" sx={ROW_ACTIONS_SX} />;\n';
+    expect(
+      await lintRepo(
+        {
+          "client/src/table.tsx": lines(
+            "export const t = (",
+            "  <TableRow sx={[CLICKABLE_SX, ROW_ACTIONS_HOVER_SX]}>",
+            "    <TableCell>",
+            "      <RowActions>",
+            '        {canEdit && <RowAction icon={EditIcon} label="Edit" onClick={edit} />}',
+            '        <RowAction icon={DeleteIcon} label="Delete" intent="destructive" onClick={remove} />',
+            "      </RowActions>",
+            "    </TableCell>",
+            "  </TableRow>",
+            ");",
+          ),
+          "client/src/button.tsx": lines(
+            "export const b = (",
+            "  <TableRow sx={ROW_ACTIONS_HOVER_SX}>",
+            "    <RowActions>",
+            '      <IconButton aria-label="Edit" onClick={edit} />',
+            "    </RowActions>",
+            "  </TableRow>",
+            ");",
+          ),
+          "client/src/hidden.tsx": lines(
+            "export const h = (",
+            "  <TableRow>",
+            "    <RowActions>",
+            '      <RowAction icon={EditIcon} label="Edit" onClick={edit} />',
+            "    </RowActions>",
+            "  </TableRow>",
+            ");",
+          ),
+          "client/src/class.tsx": 'export const c = <Stack className="row-actions" />;\n',
+          "client/src/render.tsx": lines(
+            "export const r = (",
+            "  <ContributorsTable",
+            '    renderActions={(row) => <Tooltip title="Remove"><IconButton aria-label="Remove" /></Tooltip>}',
+            "  />",
+            ");",
+          ),
+          "client/src/callback.tsx": lines(
+            "export const k = (",
+            "  <ContributorsTable",
+            '    renderActions={(row) => <RowAction icon={DeleteIcon} label="Remove" onClick={remove} />}',
+            "  />",
+            ");",
+          ),
+          "client/src/components/common/RowActions.tsx": own,
+        },
+        ["row-actions"],
+      ),
+    ).toEqual([
+      "row-actions client/src/button.tsx",
+      "row-actions client/src/class.tsx",
+      "row-actions client/src/hidden.tsx",
+      "row-actions client/src/render.tsx",
     ]);
   });
 });

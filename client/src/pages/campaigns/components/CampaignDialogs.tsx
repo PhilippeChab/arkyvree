@@ -15,12 +15,12 @@ import {
   SelectField,
 } from "@/client/src/components/common/index.ts";
 import {
+  CharacterIcon,
+  DeleteIcon,
   EditIcon,
   GMIcon,
   LeaveIcon,
   PersonAddIcon,
-  PersonIcon,
-  PersonRemoveIcon,
   SendIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
@@ -115,7 +115,7 @@ function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
       rules={requiredRules("Role is required")}
       disabled={isLoading}
       options={[
-        { value: "Player Character", label: <RoleLabel icon={PersonIcon} label="Player Character" /> },
+        { value: "Player Character", label: <RoleLabel icon={CharacterIcon} label="Player Character" /> },
         { value: "Game Master", label: <RoleLabel icon={GMIcon} label="Game Master" /> },
       ]}
     />
@@ -319,7 +319,7 @@ export function RemovePlayerDialog({
       }
       confirmLabel={isSelfRemoval ? "Leave" : "Remove Player"}
       confirmColor={isSelfRemoval ? "warning" : "error"}
-      confirmIcon={isSelfRemoval ? <LeaveIcon /> : <PersonRemoveIcon />}
+      confirmIcon={isSelfRemoval ? <LeaveIcon /> : <DeleteIcon />}
     />
   );
 }

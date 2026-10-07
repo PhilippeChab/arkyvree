@@ -31,9 +31,7 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
           <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
             * indicates a class skill
           </Typography>
-          <TableContainer
-            sx={{ overflowX: "auto", mx: { xs: -2, sm: 0 }, width: { xs: "calc(100% + 32px)", sm: "100%" } }}
-          >
+          <TableContainer sx={{ overflowX: "auto" }}>
             <Table size="small" sx={{ minWidth: 400, tableLayout: "fixed" }}>
               <colgroup>
                 <col />

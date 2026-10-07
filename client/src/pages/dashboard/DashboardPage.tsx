@@ -15,9 +15,10 @@ import { useQuery } from "@tanstack/react-query";
 import type { ElementType } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { GoldDivider, LoadError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
-import { FaqIcon, MapIcon, PersonIcon, RulesetIcon } from "@/client/src/components/icons/index.ts";
+import { GoldDivider, PageError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
+import { CampaignIcon, CharacterIcon, HelpIcon, RulesetIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { dashboardStatsQuery } from "@/client/src/lib/queries.ts";
 import { DURATION, EASING, fadeInUpSx, PREFERS_REDUCED_MOTION, transitionOf } from "@/client/src/theme/animations.ts";
@@ -99,7 +100,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <PageLoader />
       </Container>
     );
@@ -107,15 +108,15 @@ export default function DashboardPage() {
 
   if (error && !dashboardStats) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <LoadError what="Dashboard statistics" error={error} sx={{ borderRadius: 3 }} />
+      <Container maxWidth="xl">
+        <PageError message={loadFailureMessage("Dashboard", error)} />
       </Container>
     );
   }
 
   return (
     <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <Stack spacing={4}>
           {/* Hero Section */}
           <Paper
@@ -219,7 +220,7 @@ export default function DashboardPage() {
                       "&:hover": { color: "common.white" },
                     }}
                   >
-                    <FaqIcon sx={{ fontSize: 18 }} />
+                    <HelpIcon sx={{ fontSize: 18 }} />
                     Help
                   </Stack>
                 </Box>
@@ -232,7 +233,7 @@ export default function DashboardPage() {
 
             <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap" }}>
               <StatCard
-                icon={PersonIcon}
+                icon={CharacterIcon}
                 count={dashboardStats?.totalCharacters ?? 0}
                 label="Characters"
                 tagline="Heroes ready for adventure"
@@ -241,7 +242,7 @@ export default function DashboardPage() {
                 animationIndex={0}
               />
               <StatCard
-                icon={MapIcon}
+                icon={CampaignIcon}
                 count={dashboardStats?.totalCampaigns ?? 0}
                 label="Campaigns"
                 tagline="Epic quests in progress"

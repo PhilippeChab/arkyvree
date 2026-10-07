@@ -26,8 +26,8 @@
  *   with a flex `display`; a grid is a `Box` (`display: "grid"`), never MUI's `Grid`; an element is a `Box` or a
  *   `Typography`, never a raw `div` or `p`; a spacer is `flexGrow: 1`.
  * - `spacing`: the gap between blocks is their `Stack`'s `spacing`, never a block's own margin, on any side; an
- *   indent is padding, a heading's gutter `gutterBottom`. A margin only aligns (`mx: "auto"`), resets (`0`) or bleeds
- *   past its parent's padding (`mx: -2`).
+ *   indent is padding, a heading's gutter `gutterBottom`. A margin only aligns (`mx: "auto"`) or resets (`0`): nothing
+ *   bleeds past its parent's padding (a wide table keeps it, and scrolls sideways).
  * - `sx-conventions`: `sx` is written one way: MUI's shorthand keys (`bgcolor`, `p`, `mt`), an object whose values
  *   may read the theme (`color: (theme) => …`), never a function of its own; a caller's `sx` and a style on a
  *   condition join it as an array (`sx={[{ … }, open && { … }, ...(Array.isArray(sx) ? sx : [sx])]}`); no `!important`. The theme's
@@ -164,11 +164,10 @@ const STYLED_SOURCES = new Set(["@mui/material", "@mui/material/styles", "@mui/s
 /** The props that time a component's own transition (`<Collapse timeout={…}>`) */
 const TIMING_PROPS = new Set(["timeout", "transitionDuration"]);
 
-/** Whether a margin only aligns (`auto`), resets (`0`) or bleeds past its parent's padding (`-2`), on every side and screen it names */
-function alignsResetsOrBleeds(value) {
+/** Whether a margin only aligns (`auto`) or resets (`0`), on every side and screen it names */
+function alignsOrResets(value) {
   if (value.type === "ObjectExpression")
-    return value.properties.every((p) => p.type === "Property" && alignsResetsOrBleeds(p.value));
-  if (value.type === "UnaryExpression") return value.operator === "-" && value.argument.type === "Literal";
+    return value.properties.every((p) => p.type === "Property" && alignsOrResets(p.value));
   if (value.type !== "Literal") return false;
   return value.value === 0 || value.value === "auto";
 }
@@ -370,13 +369,13 @@ function createSpacing(context) {
       const key = keyName(node);
       if (!MARGINS.has(key) && !LONGHANDS.get(key)?.startsWith("m")) return;
       if (node.parent.type !== "ObjectExpression" || (!sxOwner(node.parent) && !isSxConstant(node.parent))) return;
-      if (alignsResetsOrBleeds(node.value)) return;
+      if (alignsOrResets(node.value)) return;
       context.report({
         node,
         message:
           "The gap between blocks is their `Stack`'s `spacing`, never a block's own margin; an indent is padding, a " +
-          'heading\'s gutter `gutterBottom`. A margin only aligns (`mx: "auto"`), resets (`0`) or bleeds past its ' +
-          "parent's padding (`mx: -2`), side by side, never in one string.",
+          'heading\'s gutter `gutterBottom`. A margin only aligns (`mx: "auto"`) or resets (`0`), side by side, never ' +
+          "in one string: nothing bleeds past its parent's padding.",
       });
     },
   };

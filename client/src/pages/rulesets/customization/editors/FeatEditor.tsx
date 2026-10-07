@@ -1,6 +1,6 @@
-import { Chip } from "@mui/material";
 import { parseResponse } from "hono/client";
 
+import { ValueChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
@@ -60,7 +60,7 @@ export function FeatEditor({
       title="Feat Details"
       description={feat.description}
       chips={featAptitudes(feat).map((apt) => (
-        <Chip key={apt.id} label={apt.name} size="small" color="primary" variant="outlined" />
+        <ValueChip key={apt.id} label={apt.name} />
       ))}
       edit={
         canEdit

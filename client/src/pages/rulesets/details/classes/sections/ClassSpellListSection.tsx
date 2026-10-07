@@ -3,7 +3,7 @@ import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-qu
 import type { InferResponseType } from "hono/client";
 
 import { LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
-import { SpellListIcon } from "@/client/src/components/icons/index.ts";
+import { PowersIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
@@ -110,7 +110,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
           columns={COLUMNS}
           onRowClick={handleRowClick}
           renderCell={renderCell}
-          emptyIcon={SpellListIcon}
+          emptyIcon={PowersIcon}
           emptyTitle="No spells"
           emptyDescription={
             lists.length === 0 && !isLoadingLists

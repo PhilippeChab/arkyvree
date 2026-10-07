@@ -1,7 +1,7 @@
-import { Autocomplete, Chip, DialogContent, DialogContentText, DialogTitle, Stack, TextField } from "@mui/material";
+import { Autocomplete, DialogContent, DialogContentText, DialogTitle, Stack, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
 
-import { DialogFooter, Modal, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { DialogFooter, Modal, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
 import { ExtensionIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
@@ -70,7 +70,7 @@ function SubscribeExtensionForm({
             renderValue={(value, getItemProps) =>
               value.map((option, index) => {
                 const { key, ...tagProps } = getItemProps({ index });
-                return <Chip key={key} label={option.name} size="small" {...tagProps} />;
+                return <ValueChip color="default" key={key} label={option.name} {...tagProps} />;
               })
             }
             renderInput={(params) => <TextField {...params} label="Select Extensions" />}
@@ -104,12 +104,7 @@ export function SubscribeExtensionDialog({ open, onClose, isLoading, ...form }: 
   };
 
   return (
-    <Modal
-      open={open}
-      onClose={handleClose}
-      maxWidth="md"
-      slotProps={{ paper: { sx: { minHeight: { xs: undefined, sm: 600 } } } }}
-    >
+    <Modal open={open} onClose={handleClose} slotProps={{ paper: { sx: { minHeight: { xs: undefined, sm: 600 } } } }}>
       <SubscribeExtensionForm onClose={handleClose} isLoading={isLoading} {...form} />
     </Modal>
   );

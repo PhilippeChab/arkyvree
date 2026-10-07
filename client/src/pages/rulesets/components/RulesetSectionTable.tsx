@@ -1,15 +1,4 @@
-import {
-  Box,
-  IconButton,
-  Skeleton,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tooltip,
-} from "@mui/material";
+import { Table, TableBody, TableCell, type TableCellProps, TableHead, TableRow } from "@mui/material";
 import { type ElementType, type ReactNode, useMemo, useRef } from "react";
 
 import {
@@ -19,20 +8,23 @@ import {
   LoadError,
   NoMatchesState,
   ROW_ACTIONS_HOVER_SX,
-  ROW_ACTIONS_SX,
+  RowAction,
+  RowActions,
   TableFrame,
+  TableSkeleton,
 } from "@/client/src/components/common/index.ts";
-import { ContentCopyIcon, DeleteIcon, EditIcon, LibraryAddIcon } from "@/client/src/components/icons/index.ts";
+import { CopyIcon, DeleteIcon, EditIcon, LibraryAddIcon } from "@/client/src/components/icons/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
 import { TABLE_CONTAINER_LOADING_SX, TABLE_CONTAINER_SX, TABLE_SX } from "./tableStyles.ts";
 
 interface Column {
+  align?: TableCellProps["align"];
   hideOnMobile?: boolean;
   key: string;
   label: string;
-  width: string;
+  width?: string;
 }
 
 interface RulesetSectionTableProps<T extends { id: string }> {
@@ -58,6 +50,9 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   /** What it lists, as a failure names it ("Races"). */
   what: string;
 }
+
+/** The column a row's actions take, at its end */
+const ACTIONS_COLUMN: Column = { align: "right", key: "actions", label: "Actions" };
 
 export function RulesetSectionTable<T extends { id: string }>({
   data,
@@ -89,34 +84,9 @@ export function RulesetSectionTable<T extends { id: string }>({
   const showInlineActions =
     (canEdit && onEdit) || (canDelete && onDelete) || (canEdit && onDuplicate) || (canEdit && onCreateVariants);
 
-  if (isLoading) {
-    return (
-      <TableFrame sx={TABLE_CONTAINER_LOADING_SX}>
-        <Table sx={TABLE_SX}>
-          <TableHead>
-            <TableRow>
-              {visibleColumns.map((column) => (
-                <TableCell key={column.key} sx={{ width: column.width }}>
-                  {column.label}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {[...Array(5)].map((_, index) => (
-              <TableRow key={index}>
-                {visibleColumns.map((column) => (
-                  <TableCell key={column.key}>
-                    <Skeleton variant="text" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableFrame>
-    );
-  }
+  const headerColumns = showInlineActions ? [...visibleColumns, ACTIONS_COLUMN] : visibleColumns;
+
+  if (isLoading) return <TableSkeleton columns={headerColumns} sx={TABLE_CONTAINER_LOADING_SX} tableSx={TABLE_SX} />;
 
   if (error && !data?.length) return <LoadError what={what} error={error} />;
 
@@ -133,8 +103,8 @@ export function RulesetSectionTable<T extends { id: string }>({
       <Table sx={TABLE_SX}>
         <TableHead>
           <TableRow>
-            {visibleColumns.map((column) => (
-              <TableCell key={column.key} sx={{ width: column.width }}>
+            {headerColumns.map((column) => (
+              <TableCell key={column.key} align={column.align} sx={{ width: column.width }}>
                 {column.label}
               </TableCell>
             ))}
@@ -156,94 +126,32 @@ export function RulesetSectionTable<T extends { id: string }>({
               }
               onMouseLeave={onRowMouseEnter ? () => clearTimeout(hoverTimer.current) : undefined}
               onFocus={onRowMouseEnter ? () => onRowMouseEnter(item) : undefined}
-              sx={[{ position: "relative" }, !!onRowClick && CLICKABLE_SX, ROW_ACTIONS_HOVER_SX, fadeInUpSx(index)]}
+              sx={[!!onRowClick && CLICKABLE_SX, ROW_ACTIONS_HOVER_SX, fadeInUpSx(index)]}
             >
-              {visibleColumns.map((column, index) => (
-                <TableCell
-                  key={column.key}
-                  sx={{ position: index === visibleColumns.length - 1 && showInlineActions ? "relative" : undefined }}
-                >
-                  {index === visibleColumns.length - 1 && showInlineActions ? (
-                    <>
-                      <Box
-                        sx={{
-                          pr:
-                            [
-                              canEdit && onEdit,
-                              canEdit && onDuplicate,
-                              canEdit && onCreateVariants,
-                              canDelete && onDelete,
-                            ].filter(Boolean).length * 5,
-                        }}
-                      >
-                        {renderCell(item, column.key)}
-                      </Box>
-                      <Stack
-                        className="row-actions"
-                        direction="row"
-                        spacing={0.5}
-                        sx={{
-                          position: "absolute",
-                          right: 8,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          ...ROW_ACTIONS_SX,
-                          bgcolor: "background.paper",
-                          borderRadius: 1,
-                          boxShadow: 1,
-                          p: 0.25,
-                          width: canDelete ? "auto" : "fit-content",
-                        }}
-                      >
-                        {canEdit && onEdit && (
-                          <Tooltip title="Edit">
-                            <IconButton
-                              aria-label="Edit"
-                              size="small"
-                              onClick={() => onEdit(item)}
-                              sx={{ color: "primary.main" }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {canEdit && onDuplicate && (
-                          <Tooltip title="Duplicate">
-                            <IconButton aria-label="Duplicate" size="small" onClick={() => onDuplicate(item)}>
-                              <ContentCopyIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {canEdit && onCreateVariants && (
-                          <Tooltip title="Create Variants">
-                            <IconButton
-                              aria-label="Create Variants"
-                              size="small"
-                              onClick={() => onCreateVariants(item)}
-                            >
-                              <LibraryAddIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {canDelete && onDelete && (
-                          <Tooltip title="Delete">
-                            <IconButton
-                              aria-label="Delete"
-                              size="small"
-                              onClick={() => onDelete(item.id)}
-                              sx={{ color: "error.main" }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </Stack>
-                    </>
-                  ) : (
-                    renderCell(item, column.key)
-                  )}
-                </TableCell>
+              {visibleColumns.map((column) => (
+                <TableCell key={column.key}>{renderCell(item, column.key)}</TableCell>
               ))}
+              {showInlineActions && (
+                <TableCell align="right">
+                  <RowActions>
+                    {canEdit && onEdit && <RowAction icon={EditIcon} label="Edit" onClick={() => onEdit(item)} />}
+                    {canEdit && onDuplicate && (
+                      <RowAction icon={CopyIcon} label="Duplicate" onClick={() => onDuplicate(item)} />
+                    )}
+                    {canEdit && onCreateVariants && (
+                      <RowAction icon={LibraryAddIcon} label="Create Variants" onClick={() => onCreateVariants(item)} />
+                    )}
+                    {canDelete && onDelete && (
+                      <RowAction
+                        icon={DeleteIcon}
+                        label="Delete"
+                        intent="destructive"
+                        onClick={() => onDelete(item.id)}
+                      />
+                    )}
+                  </RowActions>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

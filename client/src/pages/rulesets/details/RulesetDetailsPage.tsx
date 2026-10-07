@@ -1,7 +1,5 @@
 import {
   Alert,
-  Box,
-  Chip,
   Container,
   DialogContent,
   DialogTitle,
@@ -15,10 +13,11 @@ import {
 } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import {
   ActionMenuItem,
+  CountChip,
   DetailPageHeader,
   DialogFooter,
   HelpLabel,
@@ -28,7 +27,10 @@ import {
   PageLoader,
   PageTransition,
   type SectionTab,
+  SectionTabPanel,
   SectionTabs,
+  StatusChip,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import {
   AbilitiesIcon,
@@ -36,11 +38,11 @@ import {
   ArchiveIcon,
   ClassesIcon,
   CompareArrowsIcon,
+  ContributorsIcon,
   EditIcon,
   ExtensionIcon,
   FeatsIcon,
   ForkIcon,
-  GroupIcon,
   HelpIcon,
   ItemsIcon,
   LanguagesIcon,
@@ -95,24 +97,7 @@ function getStatusChip(status: RulesetDetail["status"]) {
   const { icon: StatusIcon, color, tooltip } = RULESET_STATUS[status];
   return (
     <Tooltip describeChild title={tooltip}>
-      <Chip
-        icon={<StatusIcon />}
-        label={status}
-        size="medium"
-        color={color}
-        variant="filled"
-        sx={
-          status === "Archived"
-            ? {
-                fontWeight: 600,
-                // Muted greys, darker on the dark theme
-                bgcolor: (theme) => (theme.palette.mode === "dark" ? "grey.800" : "grey.400"),
-                color: (theme) => (theme.palette.mode === "dark" ? "grey.400" : "grey.700"),
-                "& .MuiChip-icon": { color: (theme) => (theme.palette.mode === "dark" ? "grey.500" : "grey.600") },
-              }
-            : { fontWeight: 600 }
-        }
-      />
+      <StatusChip icon={<StatusIcon />} label={status} color={color} />
     </Tooltip>
   );
 }
@@ -240,7 +225,7 @@ export default function RulesetDetailsPage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <PageLoader />
       </Container>
     );
@@ -249,7 +234,7 @@ export default function RulesetDetailsPage() {
   // A failed background refetch keeps the loaded page (and any edits in progress) on screen.
   if (!ruleset) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <PageError message={loadFailureMessage("Ruleset", error)} backLabel="Back to Rulesets" backTo={"/rulesets"} />
       </Container>
     );
@@ -257,7 +242,7 @@ export default function RulesetDetailsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <Stack spacing={4}>
           <DetailPageHeader
             title={ruleset.name}
@@ -284,50 +269,28 @@ export default function RulesetDetailsPage() {
             chips={
               <>
                 {getStatusChip(ruleset.status)}
-                <Chip
+                <StatusChip
                   icon={ruleset.private ? <PrivateIcon /> : <PublicIcon />}
                   label={ruleset.private ? "Private" : "Public"}
-                  size="medium"
                   color={ruleset.private ? "warning" : "success"}
-                  variant="filled"
-                  sx={{ fontWeight: 600 }}
                 />
-                {isExtension && (
-                  <Chip
-                    icon={<ExtensionIcon />}
-                    label="Extension"
-                    size="medium"
-                    color="secondary"
-                    variant="filled"
-                    sx={{ fontWeight: 600 }}
-                  />
-                )}
+                {isExtension && <ValueChip icon={<ExtensionIcon />} label="Extension" color="secondary" />}
                 {ruleset.rulesetId && ruleset.rulesetName && (
-                  <Chip
+                  <ValueChip
                     icon={<ForkIcon />}
                     label={`Forked from ${ruleset.rulesetName}`}
-                    size="medium"
                     color="info"
-                    variant="outlined"
-                    component={Link}
                     to={`/rulesets/${ruleset.rulesetId}`}
-                    clickable
-                    sx={{ fontWeight: 500 }}
-                    onMouseEnter={prefetchParent}
-                    onFocus={prefetchParent}
+                    onPrefetch={prefetchParent}
                   />
                 )}
                 {subscribedExtensions && subscribedExtensions.length > 0 && (
                   <>
-                    <Chip
+                    <CountChip
                       icon={<ExtensionIcon />}
                       label={formatCount(subscribedExtensions.length, "extension")}
-                      size="medium"
                       color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
-                      variant="outlined"
-                      clickable
                       onClick={extensionsMenu.openMenu}
-                      sx={{ fontWeight: 500 }}
                     />
                     <Popover
                       open={extensionsMenu.open}
@@ -336,19 +299,15 @@ export default function RulesetDetailsPage() {
                       anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
                       transformOrigin={{ vertical: "top", horizontal: "center" }}
                     >
-                      <Stack spacing={1} sx={{ p: 1.5, maxWidth: 360 }}>
+                      {/* Each extension as long as its name, at the start of the list */}
+                      <Stack spacing={1} sx={{ p: 1.5, maxWidth: 360, alignItems: "flex-start" }}>
                         {subscribedExtensions.map((ext) => (
-                          <Chip
+                          <ValueChip
                             key={ext.extensionId}
                             icon={<ExtensionIcon />}
                             label={ext.extensionName}
-                            size="medium"
                             color={ext.updateAvailable ? "warning" : "default"}
-                            variant="outlined"
-                            component={Link}
                             to={`/rulesets/${ext.extensionId}`}
-                            clickable
-                            sx={{ fontWeight: 500, justifyContent: "flex-start" }}
                             onDelete={
                               isOwner
                                 ? (e: MouseEvent) => {
@@ -366,7 +325,7 @@ export default function RulesetDetailsPage() {
                 )}
               </>
             }
-            description={ruleset.description || "Explore the complete rules and content for this game system"}
+            description={ruleset.description}
           >
             {ruleset.system && ruleset.baseRules === "Dungeons & Dragons: 3.5" && (
               <RulesetLicenseNotice key={ruleset.id} name={ruleset.name} />
@@ -397,7 +356,7 @@ export default function RulesetDetailsPage() {
             />
           </Stack>
 
-          <Box role="tabpanel" sx={{ py: 3 }}>
+          <SectionTabPanel>
             {/* Keyed by ruleset: a tab's list keeps its previous data while a search loads, never another ruleset's. */}
             <currentTab.component
               key={ruleset.id}
@@ -405,28 +364,17 @@ export default function RulesetDetailsPage() {
               childOnly={childOnly}
               onChildOnlyChange={setChildOnly}
             />
-          </Box>
+          </SectionTabPanel>
         </Stack>
 
-        <Menu
-          anchorEl={menu.anchorEl}
-          open={menu.open}
-          onClose={menu.closeMenu}
-          slotProps={{ paper: { sx: { minWidth: 200 } } }}
-        >
+        <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
           {ruleset.status === "Published" && !isExtension && !isFork && (
-            <ActionMenuItem
-              icon={ForkIcon}
-              label="Fork"
-              description="Create your own editable copy"
-              onClick={menu.closeMenuAnd(() => handleFork(ruleset))}
-            />
+            <ActionMenuItem icon={ForkIcon} label="Fork" onClick={menu.closeMenuAnd(() => handleFork(ruleset))} />
           )}
           {!!ruleset.rulesetId && (
             <ActionMenuItem
               icon={CompareArrowsIcon}
               label="Local Changes"
-              description="View added, modified, and deleted entities"
               onClick={menu.closeMenuAnd(() => setOverridesDialogOpen(true))}
             />
           )}
@@ -438,15 +386,13 @@ export default function RulesetDetailsPage() {
               <ActionMenuItem
                 icon={ExtensionIcon}
                 label="Subscribe"
-                description="Add content from a sourcebook"
                 onClick={menu.closeMenuAnd(() => handleSubscribe(ruleset))}
               />
             )}
           {showContributorsMenu && (
             <ActionMenuItem
-              icon={GroupIcon}
+              icon={ContributorsIcon}
               label="Contributors"
-              description="Admin, Editor, Viewer"
               onClick={menu.closeMenuAnd(() => setContributorsDialogOpen(true))}
             />
           )}
@@ -579,12 +525,8 @@ export default function RulesetDetailsPage() {
           </>
         )}
 
-        <Modal open={contributorsDialogOpen} onClose={() => setContributorsDialogOpen(false)} maxWidth="md">
-          <DialogTitle>
-            <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <GroupIcon /> Contributors
-            </Stack>
-          </DialogTitle>
+        <Modal open={contributorsDialogOpen} onClose={() => setContributorsDialogOpen(false)}>
+          <DialogTitle>Contributors</DialogTitle>
           <DialogContent>
             <ContributorsSection ruleset={ruleset} onLeave={() => navigate("/rulesets")} />
           </DialogContent>

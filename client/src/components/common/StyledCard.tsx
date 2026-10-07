@@ -9,15 +9,14 @@ interface StyledCardProps extends Omit<CardProps, "children"> {
   animationIndex?: number;
   animationOffset?: number;
   children: ReactNode;
+  /** Marks the card with the warning stripe and border: a private one says so in its chip */
   isArchived?: boolean;
-  isPrivate?: boolean;
   onClick?: () => void;
 }
 
 export function StyledCard({
   children,
   isArchived = false,
-  isPrivate = false,
   animationIndex,
   animationOffset,
   onClick,
@@ -47,15 +46,10 @@ export function StyledCard({
             left: 0,
             right: 0,
             height: 4,
-            background: (theme) => {
-              if (isArchived)
-                return `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`;
-
-              if (isPrivate)
-                return `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`;
-
-              return `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`;
-            },
+            background: (theme) =>
+              isArchived
+                ? `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`
+                : `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
           },
         },
         !!onClick && CLICKABLE_SX,

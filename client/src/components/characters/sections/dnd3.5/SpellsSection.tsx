@@ -1,6 +1,5 @@
 import {
   Box,
-  Chip,
   Collapse,
   Link as MuiLink,
   Stack,
@@ -23,6 +22,7 @@ import {
   SubsectionTitle,
   ToggleLabel,
   toggleProps,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
@@ -144,13 +144,11 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
                 spell.name
               )}
               {spell.tags?.map((tag) => (
-                <Chip
+                <ValueChip
                   key={tag.name}
                   label={tag.name}
-                  size="small"
-                  variant="outlined"
+
                   color={tag.joinsClassList ? "secondary" : "primary"}
-                  sx={{ height: 20, fontSize: "0.7rem" }}
                 />
               ))}
             </Stack>

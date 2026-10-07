@@ -2,8 +2,12 @@ import { Container, Menu, Stack } from "@mui/material";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
-import { CharacterHeader, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
-import { ActionMenuItem, PageError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
+import {
+  CharacterDetailSkeleton,
+  CharacterHeader,
+  CharacterSheetBody,
+} from "@/client/src/components/characters/index.ts";
+import { ActionMenuItem, PageError, PageTransition } from "@/client/src/components/common/index.ts";
 import { DownloadIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, usePageTitle } from "@/client/src/hooks/index.ts";
@@ -41,18 +45,12 @@ export default function SharedCharacterPage() {
     onSettled: menu.closeMenu,
   });
 
-  if (isLoading) {
-    return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageLoader />
-      </Container>
-    );
-  }
+  if (isLoading) return <CharacterDetailSkeleton />;
 
   // A passing refetch failure keeps the loaded sheet; a revoked link hides it.
   if (!character || accessLost(error)) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <PageError message={loadFailureMessage("Character sheet", error)} />
       </Container>
     );
@@ -60,7 +58,7 @@ export default function SharedCharacterPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 2 }}>
+      <Container maxWidth="xl">
         <Stack spacing={4}>
           <CharacterHeader
             name={character.identity?.physiology?.name ?? ""}

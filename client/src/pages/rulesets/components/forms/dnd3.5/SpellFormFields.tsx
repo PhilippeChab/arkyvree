@@ -1,4 +1,4 @@
-import { Autocomplete, Chip, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Stack, TextField, Typography } from "@mui/material";
 import { Controller, useController, type UseFormReturn } from "react-hook-form";
 
 import {
@@ -7,6 +7,7 @@ import {
   NameField,
   SelectField,
   SubsectionTitle,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
 import type { RulesetSave } from "@/client/src/hooks/index.ts";
@@ -139,7 +140,7 @@ function TagsField({ form, name, label, options }: TagsFieldProps) {
           renderValue={(value, getItemProps) =>
             value.map((option, index) => {
               const { key, ...tagProps } = getItemProps({ index });
-              return <Chip key={key} label={option} size="small" {...tagProps} />;
+              return <ValueChip color="default" key={key} label={option} {...tagProps} />;
             })
           }
           renderInput={(params) => <TextField {...params} label={label} />}

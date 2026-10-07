@@ -1,8 +1,10 @@
-import { Button, Paper, Stack, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 
+import { Panel } from "./Panel.tsx";
+
 interface PageErrorProps {
-  /** The way out ("Back to Campaigns"), when the page has one. */
+  /** The way out, named for where it goes ("Back to Campaigns"), when the page has one. */
   backLabel?: string;
   /** Where it goes: a link */
   backTo?: string;
@@ -12,7 +14,7 @@ interface PageErrorProps {
 /** A page that couldn't load what it shows: the reason, and a way back. */
 export function PageError({ message, backLabel, backTo }: PageErrorProps) {
   return (
-    <Paper sx={{ p: { xs: 2, sm: 4 }, textAlign: "center" }}>
+    <Panel sx={{ textAlign: "center" }}>
       <Stack spacing={2} sx={{ alignItems: "center" }}>
         <Typography role="alert" variant="h5" component="p" gutterBottom sx={{ color: "error.main" }}>
           {message}
@@ -23,6 +25,6 @@ export function PageError({ message, backLabel, backTo }: PageErrorProps) {
           </Button>
         )}
       </Stack>
-    </Paper>
+    </Panel>
   );
 }

@@ -1,9 +1,8 @@
-import { FormControlLabel, Stack, Switch, Tooltip } from "@mui/material";
+import { FormControlLabel, Stack, Switch } from "@mui/material";
 import { useRef, useState } from "react";
 import type { FieldError, RefCallBack } from "react-hook-form";
 
-import { Crossfade } from "@/client/src/components/common/index.ts";
-import { HelpOutlinedIcon } from "@/client/src/components/icons/index.ts";
+import { Crossfade, HelpLabel } from "@/client/src/components/common/index.ts";
 import { isValuelessOperator } from "@/shared/customization/operators.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 
@@ -150,15 +149,10 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
             />
           }
           label={
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-              Template
-              <Tooltip
-                title="Compute the value from another path or an expression. Wrap paths in [brackets] and use floor/ceil/min/max plus +-*/ for arithmetic. Examples: [abilities.charisma.modifier], floor([classes.ranger.level] / 2), max(0, [classes.beastmaster.level] + 3)."
-                arrow
-              >
-                <HelpOutlinedIcon sx={{ fontSize: 16, color: "text.secondary", cursor: "help" }} />
-              </Tooltip>
-            </Stack>
+            <HelpLabel
+              label="Template"
+              help="Compute the value from another path or an expression. Wrap paths in [brackets] and use floor/ceil/min/max plus +-*/ for arithmetic. Examples: [abilities.charisma.modifier], floor([classes.ranger.level] / 2), max(0, [classes.beastmaster.level] + 3)."
+            />
           }
         />
         {templateMode && <TemplateExpressionToolbar inputRef={expressionInputRef} disabled={!templateMode} />}

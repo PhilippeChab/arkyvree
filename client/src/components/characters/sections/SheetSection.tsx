@@ -1,7 +1,7 @@
-import { Box, Paper, Stack } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { CardTitle } from "@/client/src/components/common/index.ts";
+import { CardTitle, Panel } from "@/client/src/components/common/index.ts";
 
 interface SheetSectionProps {
   /** Controls shown beside the title, e.g. an Add button. */
@@ -13,7 +13,7 @@ interface SheetSectionProps {
 /** Titled panel of the character sheet. */
 export function SheetSection({ title, action, children }: SheetSectionProps) {
   return (
-    <Stack component={Paper} spacing={3} sx={{ p: { xs: 2, sm: 3 } }}>
+    <Panel spacing={3}>
       <Stack
         direction="row"
         spacing={1}
@@ -23,6 +23,6 @@ export function SheetSection({ title, action, children }: SheetSectionProps) {
         {action}
       </Stack>
       <Box>{children}</Box>
-    </Stack>
+    </Panel>
   );
 }

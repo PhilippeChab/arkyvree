@@ -19,12 +19,12 @@ import {
 import {
   AddIcon,
   ArchiveIcon,
-  DeleteForeverIcon,
+  ContributorsIcon,
+  DeleteIcon,
   DownloadIcon,
-  GroupIcon,
+  ModifiersIcon,
   RemoveIcon,
   ShareIcon,
-  TuneIcon,
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -129,7 +129,7 @@ export default function CharacterDetailsPage() {
   // A failed background refetch keeps the loaded page (and any edits in progress) on screen.
   if (!character) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <PageError
           message={loadFailureMessage("Character", error)}
           backLabel="Back to Characters"
@@ -146,7 +146,7 @@ export default function CharacterDetailsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 2 }}>
+      <Container maxWidth="xl">
         <Stack spacing={4}>
           <CharacterHeader
             name={character.identity?.physiology?.name ?? ""}
@@ -177,7 +177,7 @@ export default function CharacterDetailsPage() {
                 !isDemo && (
                   <ActionMenuItem
                     key="contributors"
-                    icon={GroupIcon}
+                    icon={ContributorsIcon}
                     label="Contributors"
                     onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
                   />
@@ -185,7 +185,7 @@ export default function CharacterDetailsPage() {
                 isOwner && (
                   <ActionMenuItem
                     key="hard-delete"
-                    icon={DeleteForeverIcon}
+                    icon={DeleteIcon}
                     label="Delete Permanently"
                     intent="destructive"
                     onClick={menu.closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
@@ -208,7 +208,7 @@ export default function CharacterDetailsPage() {
                 />,
                 <ActionMenuItem
                   key="manage-modifiers"
-                  icon={TuneIcon}
+                  icon={ModifiersIcon}
                   label="Manage Modifiers"
                   onClick={menu.closeMenuAnd(() => setModifiersOpen(true))}
                 />,
@@ -221,7 +221,7 @@ export default function CharacterDetailsPage() {
                 !isDemo && (
                   <ActionMenuItem
                     key="contributors"
-                    icon={GroupIcon}
+                    icon={ContributorsIcon}
                     label="Contributors"
                     onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
                   />

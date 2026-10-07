@@ -49,7 +49,7 @@ test.describe("Characters", () => {
     await selectOption(page, "Race");
     await dialog.locator('input[name="height"]').fill("5 feet 8 inches");
     await dialog.locator('input[name="weight"]').fill("150 lbs");
-    await dialog.getByRole("button", { name: /Roll All Ability Scores/i }).click();
+    await dialog.getByRole("button", { name: /^Roll All$/ }).click();
     await selectOption(page, "Alignment");
     await selectOption(page, "Gender");
     await submit.click();

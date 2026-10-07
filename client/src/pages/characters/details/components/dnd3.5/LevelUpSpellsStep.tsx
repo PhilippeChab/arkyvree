@@ -1,4 +1,4 @@
-import { Chip, List, ListItemButton, ListItemText, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { List, ListItemButton, ListItemText, Stack, TextField, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
 import { spellLevelName } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
@@ -9,6 +9,7 @@ import {
   LoadError,
   NextPageSpinner,
   SubsectionTitle,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 
 import { type PowerAptitudePool, withoutPick } from "./levelUp/index.ts";
@@ -66,7 +67,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   );
 
   if (totalPowersToSelect === 0 && autoGrantedFree.length === 0 && autoGrantedNonFree.length === 0)
-    return <BlankNote>No spells to select at this level.</BlankNote>;
+    return <BlankNote>No spells to select at this level</BlankNote>;
 
   return (
     <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
@@ -183,20 +184,19 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                   {poolAvailable}):
                 </SubsectionTitle>
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
-                  {levelPowers.length > 0
-                    ? levelPowers.map((power) => (
-                        <OptionTooltip key={power.id} description={power.description} maxLength={200}>
-                          <Chip
-                            label={power.name}
-                            onDelete={() =>
-                              powers.onChange(withoutPick(selectedPowers, selectedPowerAptitude, power.id))
-                            }
-                          />
-                        </OptionTooltip>
-                      ))
-                    : Array.from({ length: poolAvailable }, (_, i) => (
-                        <Skeleton key={i} variant="rounded" width={100} height={32} />
-                      ))}
+                  {levelPowers.length > 0 ? (
+                    levelPowers.map((power) => (
+                      <OptionTooltip key={power.id} description={power.description} maxLength={200}>
+                        <ValueChip
+                          color="default"
+                          label={power.name}
+                          onDelete={() => powers.onChange(withoutPick(selectedPowers, selectedPowerAptitude, power.id))}
+                        />
+                      </OptionTooltip>
+                    ))
+                  ) : (
+                    <BlankNote>None selected yet</BlankNote>
+                  )}
                 </Stack>
               </Stack>
 
@@ -216,7 +216,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                   ) : availablePowersError && availablePowers.length === 0 ? (
                     <LoadError what="Spells" error={availablePowersError} />
                   ) : pickablePowers.length === 0 && powerSearch ? (
-                    <BlankNote>Nothing matches "{powerSearch}". Try another search.</BlankNote>
+                    <BlankNote>Nothing matches "{powerSearch}" — try another search</BlankNote>
                   ) : (
                     <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }} onScroll={handlePowersScroll}>
                       {pickablePowers.map((power) => (

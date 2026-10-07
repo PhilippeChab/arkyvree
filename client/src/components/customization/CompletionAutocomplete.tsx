@@ -1,4 +1,4 @@
-import { Autocomplete, Chip, ListItem, ListItemText, Stack, TextField } from "@mui/material";
+import { Autocomplete, ListItem, ListItemText, Stack, TextField } from "@mui/material";
 import {
   type DefaultError,
   type InfiniteData,
@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { type Ref, useMemo } from "react";
 
-import { DiceSpinner, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 
@@ -117,10 +117,9 @@ export function CompletionAutocomplete<
               primary={
                 <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
                   {option.label}
-                  <Chip
+                  <ValueChip
                     label={option.kind}
-                    size="small"
-                    variant="outlined"
+
                     color={option.kind === "engine" ? "primary" : "default"}
                   />
                 </Stack>
@@ -154,18 +153,6 @@ export function CompletionAutocomplete<
           placeholder={placeholder}
           multiline={multiline}
           rows={rows}
-          slotProps={{
-            ...params.slotProps,
-            input: {
-              ...params.slotProps.input,
-              endAdornment: (
-                <>
-                  {isLoading && <DiceSpinner size="small" />}
-                  {params.slotProps.input.endAdornment}
-                </>
-              ),
-            },
-          }}
         />
       )}
     />

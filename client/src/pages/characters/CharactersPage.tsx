@@ -1,4 +1,4 @@
-import { Button, Chip, Container, Stack } from "@mui/material";
+import { Button, Container, Stack } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
@@ -16,9 +16,10 @@ import {
   PageTransition,
   SearchBar,
   type SortOption,
+  StatusChip,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
-import { ArchiveIcon, GroupIcon, ShieldIcon } from "@/client/src/components/icons/index.ts";
+import { ArchiveIcon, CharacterIcon, ContributorsIcon } from "@/client/src/components/icons/index.ts";
 import {
   useCharacterPortraits,
   useDialogState,
@@ -72,7 +73,7 @@ export default function CharactersPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <Stack spacing={4}>
           <PageHeader
             variant="tinted"
@@ -81,70 +82,69 @@ export default function CharactersPage() {
             action={createButton("Create Character")}
           />
 
-          <SearchBar
-            {...searchBarProps}
-            searchPlaceholder="Search characters…"
-            filterOptions={CHARACTER_FILTER_OPTIONS}
-            filterValue={view}
-            onFilterChange={(value) => updateSearchParams({ view: value })}
-            sortOptions={CHARACTER_SORT_OPTIONS}
-          />
+          <Stack spacing={3}>
+            <SearchBar
+              {...searchBarProps}
+              searchPlaceholder="Search characters…"
+              filterOptions={CHARACTER_FILTER_OPTIONS}
+              filterValue={view}
+              onFilterChange={(value) => updateSearchParams({ view: value })}
+              sortOptions={CHARACTER_SORT_OPTIONS}
+            />
 
-          <ListPageResults
-            list={characters}
-            what="Characters"
-            search={search}
-            loadMoreLabel="Load More Characters"
-            empty={
-              view === "archived" ? (
-                <BlankState
-                  icon={ArchiveIcon}
-                  title="No archived characters"
-                  description="Characters you archive will appear here. You can restore them at any time."
-                  action={viewActiveButton}
-                />
-              ) : view === "shared" ? (
-                <BlankState
-                  icon={GroupIcon}
-                  title="No shared characters"
-                  description="Characters other users invite you to contribute to will appear here."
-                  action={viewActiveButton}
-                />
-              ) : (
-                <BlankState
-                  icon={ShieldIcon}
-                  title="No characters yet"
-                  description="Create your first character to start your adventure"
-                  action={createButton("Create Your First Character")}
-                />
-              )
-            }
-          >
-            <ListCardGrid>
-              {characters.items.map((character, index) => (
-                <ListCard
-                  key={character.id}
-                  isArchived={view === "archived"}
-                  animationIndex={index}
-                  animationOffset={characters.offset}
-                  onClick={() => navigate(`/characters/${character.id}`)}
-                  onMouseEnter={() => prefetchCharacter(character.id)}
-                  onFocus={() => prefetchCharacter(character.id)}
-                  avatarSrc={portraitsByCharacterId.get(character.id) ?? undefined}
-                  title={character.name}
-                  description={character.description}
-                  pills={
-                    <>
-                      {character.accessRole === "contributor" && (
-                        <Chip label="Shared" size="small" color="info" variant="outlined" />
-                      )}
-                      <CharacterBuildChips race={character.race} levels={character.levels} />
-                    </>
-                  }
-                />
-              ))}
-            </ListCardGrid>
-          </ListPageResults>
+            <ListPageResults
+              list={characters}
+              what="Characters"
+              search={search}
+              empty={
+                view === "archived" ? (
+                  <BlankState
+                    icon={ArchiveIcon}
+                    title="No archived characters"
+                    description="Characters you archive will appear here. You can restore them at any time."
+                    action={viewActiveButton}
+                  />
+                ) : view === "shared" ? (
+                  <BlankState
+                    icon={ContributorsIcon}
+                    title="No shared characters"
+                    description="Characters other users invite you to contribute to will appear here."
+                    action={viewActiveButton}
+                  />
+                ) : (
+                  <BlankState
+                    icon={CharacterIcon}
+                    title="No characters yet"
+                    description="Create your first character to start your adventure"
+                    action={createButton("Create Your First Character")}
+                  />
+                )
+              }
+            >
+              <ListCardGrid>
+                {characters.items.map((character, index) => (
+                  <ListCard
+                    key={character.id}
+                    isArchived={view === "archived"}
+                    animationIndex={index}
+                    animationOffset={characters.offset}
+                    onClick={() => navigate(`/characters/${character.id}`)}
+                    onMouseEnter={() => prefetchCharacter(character.id)}
+                    onFocus={() => prefetchCharacter(character.id)}
+                    avatarSrc={portraitsByCharacterId.get(character.id) ?? undefined}
+                    title={character.name}
+                    description={character.description}
+                    pills={
+                      <>
+                        {character.accessRole === "contributor" && <StatusChip label="Shared" color="info" />}
+                        <CharacterBuildChips race={character.race} levels={character.levels} />
+                      </>
+                    }
+                  />
+                ))}
+              </ListCardGrid>
+            </ListPageResults>
+          </Stack>
         </Stack>
         {createDialog.target && (
           <CreateCharacterDialog

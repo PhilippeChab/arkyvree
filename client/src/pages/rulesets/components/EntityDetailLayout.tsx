@@ -1,13 +1,12 @@
-import { Box, IconButton, Menu, Skeleton, Stack, Typography } from "@mui/material";
+import { Container, Menu, Skeleton, Stack } from "@mui/material";
 import { type ComponentProps, type ReactNode } from "react";
-import { Link } from "react-router-dom";
 
-import { ActionMenuItem, PageError, PageTransition } from "@/client/src/components/common/index.ts";
-import { ArrowBackIcon, DeleteIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
-import { useAnchorMenu, useIsMobile } from "@/client/src/hooks/index.ts";
+import { ActionMenuItem, DetailPageHeader, PageError, PageTransition } from "@/client/src/components/common/index.ts";
+import { DeleteIcon } from "@/client/src/components/icons/index.ts";
+import { useAnchorMenu } from "@/client/src/hooks/index.ts";
 
 interface EntityDetailLayoutProps {
-  /** Momentarily nowhere sensible to go back to. */
+  /** Momentarily nowhere sensible to go back to: Back hides meanwhile. */
   backDisabled?: boolean;
   /** Where Back goes: a link */
   backTo: string;
@@ -23,9 +22,7 @@ interface EntityDetailLayoutProps {
 
 type EntityPageErrorProps = ComponentProps<typeof PageError>;
 
-/** An entity page's column: centered, up to 1200px. */
-const PAGE_SX = { maxWidth: 1200, mx: "auto", p: { xs: 2, sm: 3 } } as const;
-
+/** An entity page: its column (up to 1200px), opening on the detail pages' header, its delete in the header's menu. */
 export function EntityDetailLayout({
   entityName,
   rulesetName,
@@ -37,92 +34,54 @@ export function EntityDetailLayout({
   isLoading,
   children,
 }: EntityDetailLayoutProps) {
-  const isMobile = useIsMobile();
   const menu = useAnchorMenu();
 
   if (isLoading) {
     return (
-      <Stack spacing={4} sx={PAGE_SX}>
-        <Stack
-          direction="row"
-          sx={{ alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
-        >
-          <Skeleton variant="circular" width={40} height={40} sx={{ position: "absolute", left: 0 }} />
-          <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, sm: 8 } }}>
-            <Skeleton variant="text" width={200} height={40} sx={{ mx: "auto" }} />
-            <Skeleton variant="text" width={150} height={24} sx={{ mx: "auto" }} />
-          </Box>
+      <Container maxWidth="lg">
+        {/* The header's skeleton, as tall as `DetailPageHeader`, then the details panel's */}
+        <Stack spacing={4}>
+          <Stack
+            direction="row"
+            sx={{ alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
+          >
+            <Skeleton variant="circular" width={48} height={48} sx={{ position: "absolute", left: 0 }} />
+            <Stack spacing={1} sx={{ flexGrow: 1, alignItems: "center", px: { xs: 5, md: 8 } }}>
+              <Skeleton variant="text" width={240} sx={{ typography: { xs: "h4", md: "h3" } }} />
+              <Skeleton variant="text" width={160} sx={{ typography: "body1" }} />
+            </Stack>
+          </Stack>
+          <Skeleton variant="rounded" height={200} />
         </Stack>
-        <Skeleton variant="rounded" height={200} sx={{ borderRadius: 2 }} />
-      </Stack>
+      </Container>
     );
   }
 
   return (
     <PageTransition>
-      {/* The page's blocks: its header, then what the page holds (a details card, its tabs, a tab's panel) */}
-      <Stack spacing={4} sx={PAGE_SX}>
-        <Stack
-          direction="row"
-          sx={{ alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
-        >
-          <IconButton
-            aria-label="Back"
-            component={Link}
-            to={backTo}
-            disabled={backDisabled}
-            size={isMobile ? "medium" : "large"}
-            sx={{
-              position: "absolute",
-              left: 0,
-              "&:hover": { bgcolor: "action.hover" },
-            }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <Stack spacing={0.5} sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, sm: 8 } }}>
-            <Typography component="h1" sx={{ fontWeight: 600, typography: { xs: "h5", md: "h4" } }}>
-              {entityName}
-            </Typography>
-            <Typography component="div" variant="body2" sx={{ color: "text.secondary" }}>
-              {subtitle || `${rulesetName} Ruleset`}
-            </Typography>
-          </Stack>
+      <Container maxWidth="lg">
+        {/* The page's blocks: its header, then what the page holds (a details card, its tabs, a tab's panel) */}
+        <Stack spacing={4}>
+          <DetailPageHeader
+            title={entityName}
+            description={subtitle || `${rulesetName} Ruleset`}
+            backTo={backDisabled ? undefined : backTo}
+            onMenuOpen={canDelete && onDelete ? menu.openMenu : undefined}
+          />
           {canDelete && onDelete && (
-            <>
-              <IconButton
-                aria-label="More Actions"
-                size={isMobile ? "medium" : "large"}
-                onClick={menu.openMenu}
-                sx={{
-                  position: "absolute",
-                  right: 0,
-                  "&:hover": { bgcolor: "action.hover" },
-                }}
-              >
-                <MoreVertIcon />
-              </IconButton>
-              <Menu
-                anchorEl={menu.anchorEl}
-                // The menu button can unmount and come back (e.g. while a copy loads): only
-                // anchor to one still on the page.
-                open={!!menu.anchorEl?.isConnected}
-                onClose={menu.closeMenu}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-              >
-                <ActionMenuItem
-                  icon={DeleteIcon}
-                  label="Delete"
-                  intent="destructive"
-                  onClick={menu.closeMenuAnd(onDelete)}
-                />
-              </Menu>
-            </>
+            // The menu button can unmount and come back (e.g. while a copy loads): only anchor to one still on the page
+            <Menu anchorEl={menu.anchorEl} open={!!menu.anchorEl?.isConnected} onClose={menu.closeMenu}>
+              <ActionMenuItem
+                icon={DeleteIcon}
+                label="Delete Permanently"
+                intent="destructive"
+                onClick={menu.closeMenuAnd(onDelete)}
+              />
+            </Menu>
           )}
+          {children}
         </Stack>
-        {children}
-      </Stack>
+      </Container>
     </PageTransition>
   );
 }
@@ -130,8 +89,8 @@ export function EntityDetailLayout({
 /** An entity page that couldn't load its entity, in the page's column. */
 export function EntityPageError({ ...props }: EntityPageErrorProps) {
   return (
-    <Box sx={PAGE_SX}>
+    <Container maxWidth="lg">
       <PageError {...props} />
-    </Box>
+    </Container>
   );
 }

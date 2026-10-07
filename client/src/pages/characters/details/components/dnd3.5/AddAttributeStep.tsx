@@ -18,7 +18,7 @@ export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
   if (isLoadingAttributes) return <DiceSpinner />;
   if (attributesError && !attributeData) return <LoadError what="Attributes" error={attributesError} />;
   if (!attributeData?.isAvailable || abilityIncreaseLevels.length === 0)
-    return <BlankNote>No attribute increase at these levels.</BlankNote>;
+    return <BlankNote>No attribute increase at these levels</BlankNote>;
 
   return (
     <Stack spacing={1.5}>

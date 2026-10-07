@@ -1,10 +1,11 @@
-import { Alert, Card, CardContent, Chip, IconButton, Stack, Typography } from "@mui/material";
+import { Alert, Card, CardContent, Stack, Typography } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 
 import {
+  AddButton,
   BlankState,
   CreateDialog,
   DeleteDialog,
@@ -12,8 +13,13 @@ import {
   EditDialog,
   EmptyValue,
   ExpandArrow,
+  ListToolbar,
   LoadError,
+  ROW_ACTIONS_HOVER_SX,
+  RowAction,
+  RowActions,
   SectionContent,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_REQUIREMENT,
@@ -36,7 +42,6 @@ import type { CustomizationOwnerType } from "@/shared/customization/entities.ts"
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
 type Requirement = RequirementsArray[number];
@@ -265,16 +270,15 @@ export function RequirementsSection({
             sx={{
               borderLeft: node.requirement.level.split(".").length > 1 ? 3 : "none", // Visual hierarchy
               borderColor: "primary.main",
+              ...ROW_ACTIONS_HOVER_SX,
             }}
           >
             <CardContent sx={{ py: 1.5, px: 2, "&:last-child": { pb: 1.5 } }}>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-                <Chip
+                <ValueChip
                   label={requirement.level}
-                  size="small"
+
                   color="default"
-                  variant="filled"
-                  sx={{ fontWeight: 700, minWidth: 32, fontFamily: "monospace" }}
                 />
 
                 {requirementIsChaining ? (
@@ -282,7 +286,7 @@ export function RequirementsSection({
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
                       Chaining:
                     </Typography>
-                    <Chip label={requirement.chainingOperator} size="small" color="warning" variant="outlined" />
+                    <ValueChip label={requirement.chainingOperator} color="warning" />
                   </Stack>
                 ) : (
                   <>
@@ -292,11 +296,10 @@ export function RequirementsSection({
                       <EmptyValue />
                     )}
                     {requirement.operator && (
-                      <Chip
+                      <ValueChip
                         label={REQUIREMENT_OPERATOR_LABELS[requirement.operator] || requirement.operator}
-                        size="small"
+
                         color="secondary"
-                        variant="outlined"
                       />
                     )}
                     <Typography variant="body2">
@@ -317,45 +320,40 @@ export function RequirementsSection({
                     {formatDate(requirement.createdAt)}
                   </Typography>
 
-                  {canEdit && requirementIsChaining && (
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      title="Add Child Requirement"
-                      aria-label="Add Child Requirement"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openCreate(node.requirement.level);
-                      }}
-                    >
-                      <AddIcon fontSize="small" />
-                    </IconButton>
-                  )}
-                  {canEdit && (
-                    <IconButton
-                      size="small"
-                      aria-label="Edit Requirement"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditRequirement(requirement);
-                      }}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  )}
-                  {canDelete && (
-                    <IconButton
-                      size="small"
-                      color="error"
-                      aria-label="Delete Requirement"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(requirement.id);
-                      }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  )}
+                  {/* The tree item toggles on a click: an action's click stops at its button */}
+                  <RowActions>
+                    {canEdit && requirementIsChaining && (
+                      <RowAction
+                        icon={AddIcon}
+                        label="Add Child Requirement"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openCreate(node.requirement.level);
+                        }}
+                      />
+                    )}
+                    {canEdit && (
+                      <RowAction
+                        icon={EditIcon}
+                        label="Edit Requirement"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditRequirement(requirement);
+                        }}
+                      />
+                    )}
+                    {canDelete && (
+                      <RowAction
+                        icon={DeleteIcon}
+                        label="Delete Requirement"
+                        intent="destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(requirement.id);
+                        }}
+                      />
+                    )}
+                  </RowActions>
                 </Stack>
               </Stack>
             </CardContent>
@@ -369,8 +367,8 @@ export function RequirementsSection({
 
   return (
     <SectionContent>
-      <Stack spacing={2}>
-        {canEdit && <SectionAddButton label="Add Requirement" onClick={() => openCreate(null)} />}
+      <Stack spacing={3}>
+        {canEdit && <ListToolbar actions={<AddButton label="Add Requirement" onClick={() => openCreate(null)} />} />}
         {/* Loading State */}
         {isLoading && <DiceSpinner sx={{ py: 4 }} />}
         {/* Error State: only while nothing has loaded, a failed refetch keeping the tree */}

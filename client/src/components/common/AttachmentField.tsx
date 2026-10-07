@@ -3,7 +3,7 @@ import { type DragEvent, useState } from "react";
 
 import {
   CloudUploadOutlinedIcon,
-  DeleteOutlineIcon,
+  DeleteIcon,
   ImageOutlinedIcon,
   PhotoCameraOutlinedIcon,
 } from "@/client/src/components/icons/index.ts";
@@ -277,7 +277,7 @@ export function AttachmentField({
                 "&:hover": { bgcolor: "error.main", color: "error.contrastText" },
               }}
             >
-              <DeleteOutlineIcon fontSize="small" />
+              <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}

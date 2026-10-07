@@ -1,7 +1,5 @@
 import {
   Box,
-  Button,
-  Chip,
   Skeleton,
   Stack,
   Table,
@@ -20,8 +18,8 @@ import {
   BlankState,
   CLICKABLE_SX,
   clickableProps,
+  CountChip,
   CreateDialog,
-  DiceSpinner,
   EmptyValue,
   ExpandArrow,
   LoadError,
@@ -30,6 +28,7 @@ import {
   SearchBar,
   SectionContent,
   TableFrame,
+  TableSkeleton,
   toggleProps,
 } from "@/client/src/components/common/index.ts";
 import { AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
@@ -121,7 +120,7 @@ function GroupedRow({
             </Stack>
           </TableCell>
           <TableCell>
-            <Chip label={formatCount(row.variantCount, "variant")} size="small" variant="outlined" />
+            <CountChip label={formatCount(row.variantCount, "variant")} />
           </TableCell>
         </TableRow>
         {isExpanded && variantQuery.isLoading && (
@@ -163,15 +162,11 @@ function GroupedRow({
         {isExpanded && variantQuery.hasNextPage && (
           <TableRow>
             <TableCell colSpan={2} sx={{ pl: 6 }}>
-              <Button
-                size="small"
+              <LoadMoreButton
+                hasNextPage
+                isFetchingNextPage={variantQuery.isFetchingNextPage}
                 onClick={() => variantQuery.fetchNextPage()}
-                disabled={variantQuery.isFetchingNextPage}
-              >
-                <DiceSpinner size="small" loading={variantQuery.isFetchingNextPage}>
-                  Load More
-                </DiceSpinner>
-              </Button>
+              />
             </TableCell>
           </TableRow>
         )}
@@ -275,34 +270,8 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const fetchNextPage = grouped ? groupedQuery.fetchNextPage : flatQuery.fetchNextPage;
 
   const renderGroupedTable = () => {
-    if (groupedQuery.isLoading) {
-      return (
-        <TableFrame sx={TABLE_CONTAINER_LOADING_SX}>
-          <Table sx={TABLE_SX}>
-            <TableHead>
-              <TableRow>
-                {GROUPED_COLUMNS.map((col) => (
-                  <TableCell key={col.key} sx={{ width: col.width }}>
-                    {col.label}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {[...Array(5)].map((_, i) => (
-                <TableRow key={i}>
-                  {GROUPED_COLUMNS.map((col) => (
-                    <TableCell key={col.key}>
-                      <Skeleton variant="text" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableFrame>
-      );
-    }
+    if (groupedQuery.isLoading)
+      return <TableSkeleton columns={GROUPED_COLUMNS} sx={TABLE_CONTAINER_LOADING_SX} tableSx={TABLE_SX} />;
 
     if (groupedQuery.error && groupedFeats.length === 0) return <LoadError what="Feats" error={groupedQuery.error} />;
 

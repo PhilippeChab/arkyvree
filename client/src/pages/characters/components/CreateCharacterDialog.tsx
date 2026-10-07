@@ -1,14 +1,18 @@
-import { Chip, IconButton, MenuItem, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { IconButton, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferRequestType, parseResponse } from "hono/client";
 import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
+import { RollAllButton } from "@/client/src/components/characters/index.ts";
 import {
   BaseRulesetAlert,
+  BlankNote,
+  CountChip,
   CreateDialog,
   DescriptionField,
+  DiceSpinner,
   FormTextField,
   LoadError,
   NameField,
@@ -16,7 +20,7 @@ import {
   SelectField,
   SubsectionTitle,
 } from "@/client/src/components/common/index.ts";
-import { AddIcon, CasinoIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
+import { AddIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
   type RulesetAbility,
@@ -450,7 +454,11 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     return race.eligible ? undefined : "Not open to this alignment or gender: pick another";
   };
 
-  const { data: abilityItems, error: abilitiesError } = useRulesetAbilities(selectedRulesetId || undefined);
+  const {
+    data: abilityItems,
+    error: abilitiesError,
+    isLoading: abilitiesLoading,
+  } = useRulesetAbilities(selectedRulesetId || undefined);
   const baseRules = selectedRuleset?.baseRules;
   const rulesetAbilities = useMemo(() => {
     const items = abilityItems ?? [];
@@ -631,15 +639,10 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
               ))}
             </TextField>
             {isDiceMethod(rollMethod) && (
-              <IconButton
+              <RollAllButton
                 onClick={() => abilityScoresRef.current?.rollAll()}
                 disabled={!rulesetAbilities.length || abilityRolling}
-                color="primary"
-                size="small"
-                aria-label="Roll All Ability Scores"
-              >
-                <CasinoIcon />
-              </IconButton>
+              />
             )}
             {rollMethod === "point-buy" &&
               (() => {
@@ -647,10 +650,9 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
                 const spent = rulesetAbilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[scores[a.id]] ?? 0), 0);
                 const remaining = POINT_BUY_TOTAL - spent;
                 return (
-                  <Chip
+                  <CountChip
                     label={`${remaining} / ${POINT_BUY_TOTAL} pts`}
                     color={remaining < 0 ? "error" : remaining === 0 ? "success" : "default"}
-                    size="small"
                   />
                 );
               })()}
@@ -665,12 +667,12 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
             />
           ) : abilitiesError ? (
             <LoadError what="Abilities" error={abilitiesError} />
+          ) : abilitiesLoading ? (
+            <DiceSpinner sx={{ py: 4 }} />
           ) : (
-            <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
-              {Array.from({ length: 6 }, (_, i) => (
-                <Skeleton key={i} variant="rounded" height={100} sx={{ minWidth: 100, flex: "1 1 0" }} />
-              ))}
-            </Stack>
+            <BlankNote>
+              {selectedRulesetId ? "No abilities in this ruleset" : "Pick a ruleset to see its abilities"}
+            </BlankNote>
           )}
         </Stack>
       </Stack>

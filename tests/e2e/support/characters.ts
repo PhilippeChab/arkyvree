@@ -52,7 +52,7 @@ export async function fillNewCharacter(page: Page, name: string) {
   await dialog.locator('input[name="weight"]').fill("150 lbs");
   await expect(dialog.getByText("Strength", { exact: true })).toBeVisible({ timeout: 10_000 });
   // Scores start empty under 4d6 Drop Lowest.
-  await dialog.getByRole("button", { name: /Roll All Ability Scores/i }).click();
+  await dialog.getByRole("button", { name: /^Roll All$/ }).click();
   await selectOption(page, "Alignment");
   await selectOption(page, "Gender");
   return dialog;

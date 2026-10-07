@@ -1,4 +1,4 @@
-import { Alert, Container, Menu, Stack } from "@mui/material";
+import { Container, Menu, Stack } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
@@ -30,20 +30,13 @@ export default function CampaignCharacterPage() {
 
   usePageTitle(data?.identity?.physiology?.name);
 
-  if (!campaignId || !characterId) {
-    return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="error">Invalid campaign or character ID.</Alert>
-      </Container>
-    );
-  }
-
   if (isLoading) return <CharacterDetailSkeleton />;
 
-  // A passing refetch failure keeps the loaded sheet; a revoked visibility or unlink hides it.
+  // A passing refetch failure keeps the loaded sheet; a revoked visibility or unlink hides it. An address without its
+  // ids loads nothing, and says so here too.
   if (!data || accessLost(error)) {
     return (
-      <Container maxWidth="xl" sx={{ py: 2 }}>
+      <Container maxWidth="xl">
         <PageError
           message={loadFailureMessage("Character", error)}
           backLabel="Back to Campaign"
@@ -55,7 +48,7 @@ export default function CampaignCharacterPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 2 }}>
+      <Container maxWidth="xl">
         <Stack spacing={4}>
           <CharacterHeader
             name={data.identity?.physiology?.name ?? ""}

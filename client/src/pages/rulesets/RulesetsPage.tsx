@@ -17,11 +17,11 @@ import {
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
 import {
-  BookIcon,
   ExtensionIcon,
   ForkIcon,
-  LockIcon,
+  PrivateIcon,
   PublicIcon,
+  RulesetIcon,
   StarBorderIcon,
   StarIcon,
 } from "@/client/src/components/icons/index.ts";
@@ -77,7 +77,7 @@ export default function RulesetsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <Stack spacing={4}>
           <PageHeader
             variant="tinted"
@@ -85,111 +85,112 @@ export default function RulesetsPage() {
             subtitle="Choose your adventure system and dive into infinite possibilities"
           />
 
-          <SearchBar
-            {...searchBarProps}
-            searchPlaceholder="Search rulesets…"
-            filterOptions={RULESET_FILTER_OPTIONS}
-            filterValue={scope}
-            onFilterChange={(value) => updateSearchParams({ scope: value })}
-            sortOptions={RULESET_SORT_OPTIONS}
-          />
+          <Stack spacing={3}>
+            <SearchBar
+              {...searchBarProps}
+              searchPlaceholder="Search rulesets…"
+              filterOptions={RULESET_FILTER_OPTIONS}
+              filterValue={scope}
+              onFilterChange={(value) => updateSearchParams({ scope: value })}
+              sortOptions={RULESET_SORT_OPTIONS}
+            />
 
-          <ListPageResults
-            list={rulesets}
-            what="Rulesets"
-            search={search}
-            empty={
-              <BlankState
-                icon={BookIcon}
-                title="No rulesets found"
-                description="Try another filter, or fork a base ruleset"
-              />
-            }
-          >
-            <ListCardGrid>
-              {rulesets.items.map((ruleset, index) => {
-                const status = RULESET_STATUS[ruleset.status];
-                // The page opens on the Races tab, with "Local changes" on for extensions.
-                const prefetch = () => {
-                  void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.id));
-                  void prefetchSection(queryClient, ruleset.id, "races", ruleset.kind === "extension");
-                };
-                return (
-                  <ListCard
-                    key={ruleset.id}
-                    isPrivate={ruleset.private}
-                    isArchived={ruleset.status === "Archived"}
-                    animationIndex={index}
-                    animationOffset={rulesets.offset}
-                    onClick={() => navigate(`/rulesets/${ruleset.id}`)}
-                    onMouseEnter={prefetch}
-                    onFocus={prefetch}
-                    avatar={<BookIcon sx={{ fontSize: 18 }} />}
-                    title={ruleset.name}
-                    description={ruleset.description}
-                    corner={
-                      ruleset.isStarrable && (
-                        <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
-                          {ruleset.starCount > 0 && (
-                            <Typography
-                              variant="caption"
-                              sx={{ color: "warning.main", fontWeight: 600, lineHeight: 1 }}
+            <ListPageResults
+              list={rulesets}
+              what="Rulesets"
+              search={search}
+              empty={
+                <BlankState
+                  icon={RulesetIcon}
+                  title="No rulesets found"
+                  description="Try another filter, or fork a base ruleset"
+                />
+              }
+            >
+              <ListCardGrid>
+                {rulesets.items.map((ruleset, index) => {
+                  const status = RULESET_STATUS[ruleset.status];
+                  // The page opens on the Races tab, with "Local changes" on for extensions.
+                  const prefetch = () => {
+                    void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.id));
+                    void prefetchSection(queryClient, ruleset.id, "races", ruleset.kind === "extension");
+                  };
+                  return (
+                    <ListCard
+                      key={ruleset.id}
+                      isArchived={ruleset.status === "Archived"}
+                      animationIndex={index}
+                      animationOffset={rulesets.offset}
+                      onClick={() => navigate(`/rulesets/${ruleset.id}`)}
+                      onMouseEnter={prefetch}
+                      onFocus={prefetch}
+                      avatar={<RulesetIcon sx={{ fontSize: 18 }} />}
+                      title={ruleset.name}
+                      description={ruleset.description}
+                      corner={
+                        ruleset.isStarrable && (
+                          <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
+                            {ruleset.starCount > 0 && (
+                              <Typography
+                                variant="caption"
+                                sx={{ color: "warning.main", fontWeight: 600, lineHeight: 1 }}
+                              >
+                                {ruleset.starCount}
+                              </Typography>
+                            )}
+                            <IconButton
+                              size="small"
+                              aria-label="Star Ruleset"
+                              aria-pressed={ruleset.isStarred}
+                              onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
+                              sx={{
+                                color: ruleset.isStarred ? "warning.main" : "action.disabled",
+                                "&:hover": { color: "warning.main" },
+                              }}
                             >
-                              {ruleset.starCount}
-                            </Typography>
-                          )}
-                          <IconButton
-                            size="small"
-                            aria-label="Star Ruleset"
-                            aria-pressed={ruleset.isStarred}
-                            onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
-                            sx={{
-                              color: ruleset.isStarred ? "warning.main" : "action.disabled",
-                              "&:hover": { color: "warning.main" },
-                            }}
-                          >
-                            {ruleset.isStarred ? <StarIcon /> : <StarBorderIcon />}
-                          </IconButton>
-                        </Stack>
-                      )
-                    }
-                    pills={
-                      <>
-                        <InfoPill
-                          icon={status.icon}
-                          label={ruleset.status}
-                          color={status.color}
-                          tooltip={status.tooltip}
-                        />
-                        {ruleset.private ? (
-                          <InfoPill icon={LockIcon} label="Private" color="warning" tooltip="Private ruleset" />
-                        ) : (
-                          <InfoPill icon={PublicIcon} label="Public" color="success" tooltip="Public ruleset" />
-                        )}
-                        {ruleset.kind === "extension" ? (
+                              {ruleset.isStarred ? <StarIcon /> : <StarBorderIcon />}
+                            </IconButton>
+                          </Stack>
+                        )
+                      }
+                      pills={
+                        <>
                           <InfoPill
-                            icon={ExtensionIcon}
-                            label="Extension"
-                            color="secondary"
-                            tooltip={ruleset.userId ? "Extension" : "Official Extension"}
+                            icon={status.icon}
+                            label={ruleset.status}
+                            color={status.color}
+                            tooltip={status.tooltip}
                           />
-                        ) : (
-                          ruleset.rulesetId && (
+                          {ruleset.private ? (
+                            <InfoPill icon={PrivateIcon} label="Private" color="warning" tooltip="Private ruleset" />
+                          ) : (
+                            <InfoPill icon={PublicIcon} label="Public" color="success" tooltip="Public ruleset" />
+                          )}
+                          {ruleset.kind === "extension" ? (
                             <InfoPill
-                              icon={ForkIcon}
-                              label="Fork"
-                              color="info"
-                              tooltip={`Forked from ${ruleset.rulesetName}`}
+                              icon={ExtensionIcon}
+                              label="Extension"
+                              color="secondary"
+                              tooltip={ruleset.userId ? "Extension" : "Official Extension"}
                             />
-                          )
-                        )}
-                      </>
-                    }
-                  />
-                );
-              })}
-            </ListCardGrid>
-          </ListPageResults>
+                          ) : (
+                            ruleset.rulesetId && (
+                              <InfoPill
+                                icon={ForkIcon}
+                                label="Fork"
+                                color="info"
+                                tooltip={`Forked from ${ruleset.rulesetName}`}
+                              />
+                            )
+                          )}
+                        </>
+                      }
+                    />
+                  );
+                })}
+              </ListCardGrid>
+            </ListPageResults>
+          </Stack>
         </Stack>
       </Container>
     </PageTransition>

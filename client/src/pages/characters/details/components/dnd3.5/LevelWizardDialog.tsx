@@ -1,13 +1,7 @@
 import { Button, DialogContent, DialogTitle, Stack, Step, StepLabel, Stepper } from "@mui/material";
 import type { ReactNode } from "react";
 
-import {
-  ConfirmDialog,
-  DialogFooter,
-  DiceSpinner,
-  Modal,
-  ValidationIssuesAlert,
-} from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, DialogFooter, Modal, ValidationIssuesAlert } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 import type { LevelWizard } from "./levelUp/index.ts";
@@ -111,17 +105,21 @@ export function LevelWizardDialog({
             <Stack sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>{children}</Stack>
           </Stack>
         </Stack>
-        <DialogFooter onCancel={wizard.handleCancel} pending={isSaving} sx={{ flexShrink: 0 }}>
+        <DialogFooter
+          onCancel={wizard.handleCancel}
+          pending={isSaving}
+          action={{
+            label: wizard.isLastStep ? finishLabel : "Next",
+            onClick: wizard.handleNext,
+            disabled: wizard.isNextDisabled,
+          }}
+          sx={{ flexShrink: 0 }}
+        >
           {wizard.activeStep !== 0 && (
             <Button onClick={wizard.handleBack} disabled={isSaving}>
               Back
             </Button>
           )}
-          <Button onClick={wizard.handleNext} disabled={wizard.isNextDisabled || isSaving}>
-            <DiceSpinner size="small" loading={isSaving}>
-              {wizard.isLastStep ? finishLabel : "Next"}
-            </DiceSpinner>
-          </Button>
         </DialogFooter>
       </Modal>
       <ConfirmDialog

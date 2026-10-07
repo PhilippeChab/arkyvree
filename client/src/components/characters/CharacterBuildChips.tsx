@@ -1,4 +1,4 @@
-import { Chip } from "@mui/material";
+import { ValueChip } from "@/client/src/components/common/index.ts";
 
 interface CharacterBuildChipsProps {
   /** Its classes, each at the highest level it reached. */
@@ -6,23 +6,13 @@ interface CharacterBuildChipsProps {
   race: string;
 }
 
-/** A character card's build, among its pills: its race, then each of its classes and its level. */
+/** A character card's build, among its pills: its race, gold, then each of its classes and its level. */
 export function CharacterBuildChips({ levels, race }: CharacterBuildChipsProps) {
   return (
     <>
-      <Chip
-        label={race}
-        size="small"
-        variant="outlined"
-        sx={{ borderColor: "secondary.main", color: "secondary.main", fontWeight: 500 }}
-      />
+      <ValueChip label={race} color="secondary" />
       {levels.map((level) => (
-        <Chip
-          key={level.klass}
-          label={`${level.klass} ${level.level}`}
-          size="small"
-          sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 500 }}
-        />
+        <ValueChip key={level.klass} label={`${level.klass} ${level.level}`} />
       ))}
     </>
   );

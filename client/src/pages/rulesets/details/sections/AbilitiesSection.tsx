@@ -2,7 +2,7 @@ import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-import { LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
+import { ListToolbar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
 import { AbilitiesIcon } from "@/client/src/components/icons/index.ts";
 import type { RulesetAbility } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -54,29 +54,33 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
   return (
     <SectionContent>
-      <Stack spacing={1}>
-        {/* No search bar here: the actions sit alone, and take no space when there are none. */}
-        <Stack direction="row" sx={{ justifyContent: "flex-end", "&:empty": { display: "none" } }}>
-          <SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange} />
+      <Stack spacing={3}>
+        {/* No search here: the toolbar holds the actions alone, and only on a fork, which has "Local Changes" */}
+        {!!ruleset.rulesetId && (
+          <ListToolbar
+            actions={<SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange} />}
+          />
+        )}
+        <Stack spacing={2}>
+          <RulesetSectionTable
+            what="Abilities"
+            error={error}
+            data={abilities}
+            isLoading={isLoading}
+            columns={ABILITIES_COLUMNS}
+            onRowClick={handleRowClick}
+            onRowMouseEnter={handleRowMouseEnter}
+            renderCell={renderCell}
+            emptyIcon={AbilitiesIcon}
+            emptyTitle="No abilities"
+            emptyDescription="No abilities available for this ruleset."
+          />
+          <LoadMoreButton
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
         </Stack>
-        <RulesetSectionTable
-          what="Abilities"
-          error={error}
-          data={abilities}
-          isLoading={isLoading}
-          columns={ABILITIES_COLUMNS}
-          onRowClick={handleRowClick}
-          onRowMouseEnter={handleRowMouseEnter}
-          renderCell={renderCell}
-          emptyIcon={AbilitiesIcon}
-          emptyTitle="No abilities"
-          emptyDescription="No abilities available for this ruleset."
-        />
-        <LoadMoreButton
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          onClick={() => fetchNextPage()}
-        />
       </Stack>
     </SectionContent>
   );

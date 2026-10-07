@@ -1,5 +1,6 @@
-import { Box, Button, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, IconButton, Stack, TextField, Typography } from "@mui/material";
 
+import { RollAllButton } from "@/client/src/components/characters/index.ts";
 import { SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 
@@ -18,9 +19,7 @@ export function AddHpStep({ wizard }: AddHpStepProps) {
     // The step's own space under its last field
     <Stack spacing={3} sx={{ pb: 1 }}>
       <Stack direction="row" spacing={1}>
-        <Button startIcon={<CasinoIcon />} onClick={onRollAll} size="small">
-          Roll All
-        </Button>
+        <RollAllButton onClick={onRollAll} />
         <Button onClick={onMaxAll} size="small">
           Max All
         </Button>
@@ -36,7 +35,9 @@ export function AddHpStep({ wizard }: AddHpStepProps) {
                 <IconButton onClick={() => onRoll(index)} color="primary" size="small" aria-label={`Roll d${level.hd}`}>
                   <CasinoIcon />
                 </IconButton>
-                <Chip label="MAX" size="small" variant="outlined" onClick={() => onHpChange(index, level.hd)} />
+                <Button size="small" onClick={() => onHpChange(index, level.hd)}>
+                  Max
+                </Button>
               </Stack>
               <Typography variant="body2" sx={{ color: "text.secondary" }} gutterBottom>
                 Enter HP gain (1 to {level.hd}). Average: {Math.ceil(level.hd / 2)}, Maximum: {level.hd}

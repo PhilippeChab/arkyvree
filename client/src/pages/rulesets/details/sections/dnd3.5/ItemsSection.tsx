@@ -1,4 +1,4 @@
-import { Chip, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
@@ -9,6 +9,7 @@ import {
   LoadMoreButton,
   SearchBar,
   SectionContent,
+  StatusChip,
 } from "@/client/src/components/common/index.ts";
 import { ItemsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -157,7 +158,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       case "name":
         return item.name;
       case "template":
-        if (item.isTemplate) return <Chip label="Template" size="small" color="info" />;
+        if (item.isTemplate) return <StatusChip label="Template" color="info" />;
         if (item.templateName) {
           return (
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
