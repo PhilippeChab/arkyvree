@@ -129,4 +129,17 @@ export default class PowersComponent {
     }
     this.powers.groups = namespace;
   }
+
+  /**
+   * Every spell a list has at a level lists its DC paths (`powers.<spell>.dc.*.misc`): one the character doesn't cast
+   * gets an empty DC there once the cast ones have theirs, so a modifier on it reaches nothing and a requirement on it is
+   * unmet, as a school's empty group.
+   */
+  seedEmptyDcs(rulesetPowers: PowerWithAptitudes[]): void {
+    for (const power of rulesetPowers) {
+      if (!power.powersAptitudesInRules.some((pa) => pa.level != null)) continue;
+      const entry: { dc?: PowerDcsByClass } = (this.powers[stripSeparators(power.name)] ??= {});
+      entry.dc ??= {};
+    }
+  }
 }
