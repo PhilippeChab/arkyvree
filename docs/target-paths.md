@@ -6,6 +6,8 @@ Paths marked "req only" are available as requirement targets but not modifier ta
 
 A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity`, `size`, `touch` and `flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size`, `tohit.gearpenalty`, `damage.strength` and `wielded`, the armor's `category` and whether a shield is `held`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
 
+A path on a value the character doesn't have reaches nothing: a modifier on it is inactive, and a requirement on it unmet rather than invalid. Such a value is a leaf holding `null` or `undefined`, such as a bow's or a crossbow's `damage.strmultiplier` (its Strength doesn't follow its hand). So a field a modifier must be able to `set` holds an empty value when unset (`""`, `0`), never `null` or `undefined`: an unset height or weight is `""`, which `is_empty` reads as empty. An unset age is the exception, on purpose: a character without one has no age to compare or set.
+
 ## abilities
 
 | Path | Type | Description |

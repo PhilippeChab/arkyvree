@@ -46,6 +46,7 @@ import {
   buildFullCharacterResponse,
   buildVirtualEntities,
 } from "@/server/rulesets/dnd3.5/response/buildCharacterResponse.ts";
+import { hasValueType } from "@/server/rulesets/engine/paths/literalValue.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import {
@@ -521,6 +522,64 @@ describe("DetailedCharacter", () => {
         notes: "A wandering smith",
         privateNotes: "Owes the thieves' guild",
       });
+    });
+
+    test("reaches no value a character doesn't have, and reads an unset height or weight as empty", async () => {
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
+      const unset = await build({ ...bjorn, age: null, height: null, weight: null });
+      const targetPaths = new Dnd35TargetPaths();
+      expect(targetPaths.traversePathInit("identity.physiology.age", unset.components)).toEqual([]);
+      const old = requiring("identity.physiology.age", {
+        operator: "greater_than_or_equal",
+        value: "100",
+        valueType: "number",
+      });
+      const evaluator = new RequirementEvaluator(targetPaths);
+      evaluator.evaluateRequirements(unset.components, old);
+      expect(evaluator.getRequirements().invalidRequirements).toEqual([]);
+      expect(unset.areRequirementsMet(old)).toBe(false);
+      for (const field of ["height", "weight"]) {
+        const empty = requiring(`identity.physiology.${field}`, {
+          operator: "is_empty",
+          value: "",
+          valueType: "string",
+        });
+        expect([field, unset.areRequirementsMet(empty)]).toEqual([field, true]);
+      }
+
+      // A bow's Strength doesn't follow its hand: its share holds no value, which a path reaches nothing of
+      const archer = await buildCarrying("Bjorn Ironhand", [
+        { item: "Composite Longbow", location: "Two Handed", weaponSet: 0 },
+      ]);
+      expect(
+        targetPaths.traversePathInit("items.weapons.compositelongbow.damage.strmultiplier", archer.components),
+      ).toEqual([]);
+      expect(
+        targetPaths.traversePathInit("items.weapons.compositelongbow.damage.base", archer.components),
+      ).toHaveLength(1);
+    });
+
+    test("reaches only values of the type each listed path declares", async () => {
+      const targetPaths = new Dnd35TargetPaths();
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
+      const characters = [
+        await buildCarrying("Bjorn Ironhand", [{ item: "Heavy Crossbow", location: "Two Handed", weaponSet: 0 }]),
+        await build({ ...bjorn, age: null, height: null, weight: null }),
+        await buildSeeded("Elara Starweaver"),
+      ];
+      const { paths } = await withRulesetScope(db, bjorn.rulesetId, ({ rulesetData }) =>
+        targetPaths.getTargetPathsAndLabels(rulesetData, "requirement"),
+      );
+      expect(paths.length).toBeGreaterThan(5000);
+      const mismatches = characters.flatMap((detailed) =>
+        paths.flatMap(({ path, valueType }) =>
+          targetPaths
+            .traversePathInit(path, detailed.components)
+            .filter((result) => result.error === null && !hasValueType(result.data, valueType))
+            .map((result) => `${path}: ${typeof result.data}, declared ${valueType}`),
+        ),
+      );
+      expect(mismatches).toEqual([]);
     });
 
     test("reads a seeded character's identity, abilities and ruleset", async () => {

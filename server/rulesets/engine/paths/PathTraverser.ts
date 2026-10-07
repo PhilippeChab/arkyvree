@@ -122,6 +122,9 @@ export default class PathTraverser {
 
     const path = [...pathParts, formattedKey];
     if (rest.length !== 0) return this.traverse(component, rest, currentValue[key], key, maxDepth, path);
+    // A leaf that holds no value (an unset age, a bow's Strength share) is reached by nothing: a modifier on it is
+    // inactive, a requirement on it unmet
+    if (currentValue[key] === null || currentValue[key] === undefined) return [];
 
     return [
       {
