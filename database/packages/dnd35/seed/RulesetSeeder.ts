@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 
 import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.ts";
-import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";
+import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
 import type { BookContent, CoreContent } from "@/database/packages/dnd35/content/rulesets/types.ts";
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 import { BaseSeeder, type SeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
@@ -196,7 +196,7 @@ export class RulesetSeeder extends include(
    * each spell level, once the cleric casts that level (`clericSpellLevels`), and joins it to the cleric's list, plus
    * the domain's own modifiers.
    */
-  async seedDomains(domains: DomainDefinition[], clericSpellLevels: Record<number, number>) {
+  async seedDomains(domains: DomainSeed[], clericSpellLevels: Record<number, number>) {
     if (domains.length === 0) return;
 
     await this.seedAptitudes(domains.map((d) => `${d.name} Domain Spells`));

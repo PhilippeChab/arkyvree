@@ -1,4 +1,4 @@
-/** A magic item reference's seeds: its ItemDef[], by category. */
+/** A magic item reference's seeds: its ItemSeed[], by category. */
 
 import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/detect/armorStats.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/detect/magicItems.ts";
@@ -12,18 +12,18 @@ import {
 import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { Modifier, Property } from "@/database/packages/dnd35/content/customization/types.ts";
 import { armorProperties } from "@/database/packages/dnd35/content/items/properties.ts";
-import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
+import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 import { MAGIC_AURA, MAGIC_CASTER_LEVEL } from "@/shared/dnd3.5/properties/index.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 export type MagicItemSeedSets = {
-  magicArmor: ItemDef[];
-  magicShields: ItemDef[];
-  magicWeapons: ItemDef[];
-  wondrousItems: ItemDef[];
-  rings: ItemDef[];
-  rods: ItemDef[];
-  staffs: ItemDef[];
+  magicArmor: ItemSeed[];
+  magicShields: ItemSeed[];
+  magicWeapons: ItemSeed[];
+  wondrousItems: ItemSeed[];
+  rings: ItemSeed[];
+  rods: ItemSeed[];
+  staffs: ItemSeed[];
 };
 
 /** The specific armor and shields, whose text gives what they change of their base's. */
@@ -56,15 +56,15 @@ export function buildMagicItemSeeds(
   ref: MagicItemReference,
   baseWeights: Record<string, string> = {},
 ): MagicItemSeedSets {
-  const magicArmor: ItemDef[] = [];
-  const magicShields: ItemDef[] = [];
-  const magicWeapons: ItemDef[] = [];
-  const wondrousItems: ItemDef[] = [];
-  const rings: ItemDef[] = [];
-  const rods: ItemDef[] = [];
-  const staffs: ItemDef[] = [];
+  const magicArmor: ItemSeed[] = [];
+  const magicShields: ItemSeed[] = [];
+  const magicWeapons: ItemSeed[] = [];
+  const wondrousItems: ItemSeed[] = [];
+  const rings: ItemSeed[] = [];
+  const rods: ItemSeed[] = [];
+  const staffs: ItemSeed[] = [];
 
-  const categoryBuckets: Record<MagicItemCategory, ItemDef[]> = {
+  const categoryBuckets: Record<MagicItemCategory, ItemSeed[]> = {
     specificArmor: magicArmor,
     specificShield: magicShields,
     specificWeapon: magicWeapons,

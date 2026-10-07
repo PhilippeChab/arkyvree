@@ -4,8 +4,8 @@ import { eq, inArray } from "drizzle-orm";
 
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 import * as r from "@/database/packages/dnd35/content/customization/requirements.ts";
-import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
-import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
+import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
+import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
 import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 import type { SeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
@@ -51,7 +51,7 @@ function gatedSlots(list: string, classTarget: string) {
   }).flat();
 }
 
-function item(name: string, fields: Partial<ItemDef> = {}): ItemDef {
+function item(name: string, fields: Partial<ItemSeed> = {}): ItemSeed {
   return {
     name,
     description: "",
@@ -82,7 +82,7 @@ function levelProperties(bab: number, skillPoints: number) {
   return [`${KLASS_LEVEL_BAB} ${bab}`, `${KLASS_LEVEL_SKILL_POINTS} ${skillPoints}`];
 }
 
-function race(name: string, fields: Partial<RaceDefinition> = {}): RaceDefinition {
+function race(name: string, fields: Partial<RaceSeed> = {}): RaceSeed {
   return {
     name,
     description: "",

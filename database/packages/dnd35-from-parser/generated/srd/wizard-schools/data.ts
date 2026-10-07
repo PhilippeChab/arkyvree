@@ -1,6 +1,6 @@
-import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
+import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
 
-export const WIZARD_SCHOOLS: WizardSchoolDefinition[] = [
+export const WIZARD_SCHOOLS: WizardSchoolSeed[] = [
   {
     name: "Abjuration",
     description:

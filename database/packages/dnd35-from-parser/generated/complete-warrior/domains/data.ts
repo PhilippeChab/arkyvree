@@ -1,6 +1,6 @@
-import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";
+import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
 
-export const ALL_DOMAINS: DomainDefinition[] = [
+export const ALL_DOMAINS: DomainSeed[] = [
   {
     name: "Courage",
     description:

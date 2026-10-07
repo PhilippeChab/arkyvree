@@ -2,9 +2,9 @@
 
 import { simple } from "@/database/packages/dnd35/content/items/proficiencies.ts";
 import { weaponProperties } from "@/database/packages/dnd35/content/items/properties.ts";
-import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
+import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 
-export const SIMPLE_WEAPONS: ItemDef[] = [
+export const SIMPLE_WEAPONS: ItemSeed[] = [
   {
     name: "Club",
     description: "A club is a one-handed simple melee weapon that can also be thrown.",

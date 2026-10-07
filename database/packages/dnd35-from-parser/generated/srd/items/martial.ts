@@ -2,9 +2,9 @@
 
 import { martial } from "@/database/packages/dnd35/content/items/proficiencies.ts";
 import { weaponProperties } from "@/database/packages/dnd35/content/items/properties.ts";
-import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
+import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 
-export const MARTIAL_WEAPONS: ItemDef[] = [
+export const MARTIAL_WEAPONS: ItemSeed[] = [
   {
     name: "Throwing Axe",
     description: "A throwing axe is a light martial melee weapon designed to be thrown.",

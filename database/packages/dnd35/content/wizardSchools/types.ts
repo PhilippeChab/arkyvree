@@ -1,5 +1,5 @@
 /** A school of magic a wizard can specialize in, and how many schools its specialist gives up. */
-export type WizardSchoolDefinition = {
+export type WizardSchoolSeed = {
   name: string;
   description: string;
   prohibitedSchoolCount: number;

@@ -4,7 +4,7 @@ import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.
 import { bonus, grantFeat, setNum, setStr } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { gte, lt } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
+import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/data/bonds/raceProperties.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
@@ -123,7 +123,7 @@ const ANIMAL_COMPANION_RACE_PICK_FEATS: FeatSeed[] = ANIMAL_COMPANION_RACE_NAMES
   modifiers: [setStr("bonded.animalcompanion.race", race)],
 }));
 
-const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
+const ANIMAL_COMPANION_RACES: RaceSeed[] = [
   {
     name: "Badger",
     description: "A burrowing carnivore known for its tenacity. Strong claws and a thick hide.",

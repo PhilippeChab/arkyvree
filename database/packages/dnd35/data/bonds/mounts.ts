@@ -3,7 +3,7 @@ import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 import { setStr } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
+import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/data/bonds/raceProperties.ts";
 
 const SPECIAL_MOUNT_APTITUDE = "Special Mount Bond";
@@ -88,7 +88,7 @@ const SPECIAL_MOUNT_RACE_PICK_FEATS: FeatSeed[] = SPECIAL_MOUNT_RACE_NAMES.map((
   modifiers: [setStr("bonded.mount.race", race)],
 }));
 
-const SPECIAL_MOUNT_RACES: RaceDefinition[] = [
+const SPECIAL_MOUNT_RACES: RaceSeed[] = [
   {
     name: "Heavy Warhorse",
     description:

@@ -20,19 +20,19 @@ import {
 import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races/data.ts";
 import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/spells/index.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
-import type { AbilityDefinition } from "@/database/packages/dnd35/content/abilities/types.ts";
+import type { AbilitySeed } from "@/database/packages/dnd35/content/abilities/types.ts";
 import { spellLevelsOf } from "@/database/packages/dnd35/content/classes/spellLevels.ts";
-import type { LanguageDefinition } from "@/database/packages/dnd35/content/languages/types.ts";
+import type { LanguageSeed } from "@/database/packages/dnd35/content/languages/types.ts";
 import type { CoreContent } from "@/database/packages/dnd35/content/rulesets/types.ts";
-import type { SaveDefinition } from "@/database/packages/dnd35/content/saves/types.ts";
-import type { SkillDefinition } from "@/database/packages/dnd35/content/skills/types.ts";
+import type { SaveSeed } from "@/database/packages/dnd35/content/saves/types.ts";
+import type { SkillSeed } from "@/database/packages/dnd35/content/skills/types.ts";
 import { ANIMAL_COMPANIONS } from "@/database/packages/dnd35/data/bonds/animalCompanions.ts";
 import { FAMILIARS } from "@/database/packages/dnd35/data/bonds/familiars.ts";
 import { SPECIAL_MOUNTS } from "@/database/packages/dnd35/data/bonds/mounts.ts";
 import { TEMPLATE_ITEMS } from "@/database/packages/dnd35/data/templateItems.ts";
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 
-export const ABILITIES: AbilityDefinition[] = [
+export const ABILITIES: AbilitySeed[] = [
   { name: "Strength", description: "Measures physical power and carrying capacity" },
   { name: "Dexterity", description: "Measures agility, reflexes, and balance" },
   { name: "Constitution", description: "Measures health, stamina, and vital force" },
@@ -42,7 +42,7 @@ export const ABILITIES: AbilityDefinition[] = [
 ];
 
 // oxfmt-ignore
-export const LANGUAGES: LanguageDefinition[] = [
+export const LANGUAGES: LanguageSeed[] = [
   { name: "Abyssal", type: "Exotic", description: "The language of demons, full of curses and threats." },
   { name: "Aquan", type: "Exotic", description: "The language of the sea" },
   { name: "Auran", type: "Exotic", description: "The language of the sky" },
@@ -67,7 +67,7 @@ export const LANGUAGES: LanguageDefinition[] = [
 
 /** The saves, each with the ability it adds. */
 // oxfmt-ignore
-export const SAVES: SaveDefinition[] = [
+export const SAVES: SaveSeed[] = [
   { name: "Fortitude", description: "Represents physical toughness and resistance to physical threats like poison, disease, and fatigue", ability: "Constitution" },
   { name: "Reflex", description: "Represents agility and the ability to dodge area attacks like fireballs and dragon breath", ability: "Dexterity" },
   { name: "Will", description: "Represents mental resilience and resistance to mind-affecting spells and effects", ability: "Wisdom" },
@@ -78,7 +78,7 @@ export const SAVES: SaveDefinition[] = [
  * penalty is applied to Swim checks") and whether it can be used untrained.
  */
 // oxfmt-ignore
-export const SKILLS: SkillDefinition[] = [
+export const SKILLS: SkillSeed[] = [
   { name: "Appraise", description: "Determine the value of an item.", ability: "Intelligence", impactedByWeight: false, usableWithoutTraining: true },
   { name: "Balance", description: "Keep your balance while walking on a narrow or treacherous surface.", ability: "Dexterity", impactedByWeight: true, usableWithoutTraining: true },
   { name: "Bluff", description: "Convince others that what you are saying is true or make others believe something that isn't true.", ability: "Charisma", impactedByWeight: false, usableWithoutTraining: true },

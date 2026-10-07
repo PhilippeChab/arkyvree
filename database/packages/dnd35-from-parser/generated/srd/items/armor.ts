@@ -6,9 +6,9 @@ import {
   MEDIUM_ARMOR_PROF,
 } from "@/database/packages/dnd35/content/items/proficiencies.ts";
 import { armorProperties } from "@/database/packages/dnd35/content/items/properties.ts";
-import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
+import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 
-export const ARMOR: ItemDef[] = [
+export const ARMOR: ItemSeed[] = [
   {
     name: "Banded Mail",
     description: "Banded mail is heavy armor made of overlapping strips of metal sewn to a leather backing.",

@@ -9,7 +9,7 @@ import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/
 import { stringifyModifier } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/domains.ts";
-import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";
+import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -17,9 +17,9 @@ import type { Constructor } from "@/server/mixins.ts";
 export function GeneratesDomains<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingDomains extends Base {
     /** A book's domains file (data.ts). */
-    private domainsCode(seeds: DomainDefinition[]): string {
+    private domainsCode(seeds: DomainSeed[]): string {
       const lines: string[] = [];
-      lines.push(`export const ALL_DOMAINS: DomainDefinition[] = [`);
+      lines.push(`export const ALL_DOMAINS: DomainSeed[] = [`);
       for (const d of seeds) {
         lines.push(`  {`);
         lines.push(`    name: ${quote(d.name)},`);
@@ -35,7 +35,7 @@ export function GeneratesDomains<B extends Constructor<BaseGenerator>>(Base: B) 
       lines.push(`];`);
       lines.push(``);
       return [
-        `import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";`,
+        `import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";`,
         ``,
         ...lines,
       ].join("\n");
@@ -73,9 +73,9 @@ export function GeneratesDomains<B extends Constructor<BaseGenerator>>(Base: B) 
           dataPath,
           [
             ...GENERATED_HEADER,
-            `import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";`,
+            `import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";`,
             ``,
-            `export const ALL_DOMAINS: DomainDefinition[] = [];`,
+            `export const ALL_DOMAINS: DomainSeed[] = [];`,
             ``,
           ].join("\n"),
         );

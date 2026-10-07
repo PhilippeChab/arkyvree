@@ -4,7 +4,7 @@ import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.
 import { bonus, grantFeat, setStr } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
+import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/data/bonds/raceProperties.ts";
 
 const FAMILIAR_APTITUDE = "Familiar Bond";
@@ -129,7 +129,7 @@ const FAMILIAR_RACE_PICK_FEATS: FeatSeed[] = FAMILIAR_RACE_NAMES.map((race) => (
   modifiers: [setStr("bonded.familiar.race", race), ...MASTER_BENEFITS[race].modifiers],
 }));
 
-const FAMILIAR_RACES: RaceDefinition[] = [
+const FAMILIAR_RACES: RaceSeed[] = [
   {
     name: "Bat",
     description:

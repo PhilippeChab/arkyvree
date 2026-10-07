@@ -1,4 +1,5 @@
 import type { ScrapedMeta } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
+import type { BabType, SaveType } from "@/database/packages/dnd35/content/classes/types.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 
 /** A class feature's fields a mapping derives and an override sets. */
@@ -36,8 +37,6 @@ type Saves = { fortitude: SaveType; reflex: SaveType; will: SaveType };
 
 /** A class level pick of an aptitude's feats. */
 export type AptitudePick = { levels: number[]; target: string };
-
-export type BabType = "good" | "medium" | "poor";
 
 /** Existing feats a class lets its player pick, as an aptitude (at `levels` only, when given). */
 export type BonusFeatList = { aptitude: string; feats: string[]; levels?: number[] };
@@ -201,5 +200,3 @@ export type InheritedSpellList = {
   excludeDescriptors?: string[];
   additions?: Record<string, string[]>;
 };
-
-export type SaveType = "good" | "poor";

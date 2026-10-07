@@ -1,7 +1,7 @@
-import type { AbilityDefinition } from "@/database/packages/dnd35/content/abilities/types.ts";
-import type { LanguageDefinition } from "@/database/packages/dnd35/content/languages/types.ts";
-import type { SaveDefinition } from "@/database/packages/dnd35/content/saves/types.ts";
-import type { SkillDefinition } from "@/database/packages/dnd35/content/skills/types.ts";
+import type { AbilitySeed } from "@/database/packages/dnd35/content/abilities/types.ts";
+import type { LanguageSeed } from "@/database/packages/dnd35/content/languages/types.ts";
+import type { SaveSeed } from "@/database/packages/dnd35/content/saves/types.ts";
+import type { SkillSeed } from "@/database/packages/dnd35/content/skills/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   abilitiesInRules,
@@ -22,7 +22,7 @@ import {
 export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingCoreRules extends Base {
     /** The abilities, and Intelligence as the one skill points come from. */
-    async seedAbilities(abilities: AbilityDefinition[]) {
+    async seedAbilities(abilities: AbilitySeed[]) {
       Object.assign(
         this.ctx.abilityMap,
         BaseSeeder.idsByName(
@@ -41,14 +41,14 @@ export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
     }
 
     /** The languages. */
-    async seedLanguages(languages: LanguageDefinition[]) {
+    async seedLanguages(languages: LanguageSeed[]) {
       await this.db
         .insert(languagesInRules)
         .values(languages.map((language) => ({ rulesetId: this.ctx.rulesetId, ...language })));
     }
 
     /** The saves, each with its ability. */
-    async seedSaves(saves: SaveDefinition[]) {
+    async seedSaves(saves: SaveSeed[]) {
       Object.assign(
         this.ctx.saveMap,
         BaseSeeder.idsByName(
@@ -68,7 +68,7 @@ export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
     }
 
     /** The skills, each with its ability, and their properties. */
-    async seedSkills(skills: SkillDefinition[]) {
+    async seedSkills(skills: SkillSeed[]) {
       Object.assign(
         this.ctx.skillMap,
         BaseSeeder.idsByName(

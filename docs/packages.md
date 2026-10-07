@@ -32,12 +32,12 @@ database/packages/
     ├── extensions/       # One file per extension package
     ├── content/          # What the data is written with: a folder per kind of content, its types, its builders and the tables they read
     │   ├── customization/    # Requirement, modifier and property types; eq(), gte(), or(), feat(), bonus()…
-    │   ├── items/            # ItemDef; the weapon, armor and shield tables, their properties and proficiencies (simple(), martial()…)
+    │   ├── items/            # ItemSeed; the weapon, armor and shield tables, their properties and proficiencies (simple(), martial()…)
     │   ├── classes/          # ClassSeed; the class level each of a class's spell levels opens at
-    │   ├── feats/, spells/, races/, domains/   # FeatSeed; PowerSeed, SpellSeed; RaceDefinition; DomainDefinition
-    │   ├── wizardSchools/    # WizardSchoolDefinition; the wizard's school feats
+    │   ├── feats/, spells/, races/, domains/   # FeatSeed; PowerSeed, SpellSeed; RaceSeed; DomainSeed
+    │   ├── wizardSchools/    # WizardSchoolSeed; the wizard's school feats
     │   ├── bonds/            # BondContent; "a Cat", "an Owl" for the bonds' descriptions
-    │   ├── abilities/, saves/, skills/, languages/   # The core rules' own: AbilityDefinition, SaveDefinition…
+    │   ├── abilities/, saves/, skills/, languages/   # The core rules' own: AbilitySeed, SaveSeed…
     │   └── rulesets/         # CoreContent, BookContent: what a ruleset is seeded with
     ├── data/             # The hand-written data
     │   ├── core.ts           # The core ruleset, its abilities, saves, skills, languages, and CORE: all it's seeded with

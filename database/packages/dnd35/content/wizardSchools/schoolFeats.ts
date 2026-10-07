@@ -1,7 +1,7 @@
 import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
+import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
 import { WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 
 const PROHIBITED_SCHOOL = "Prohibited School";
@@ -11,7 +11,7 @@ const SPECIALIZATION = "Wizard Specialization";
  * A wizard's choice of school: a specialist feat per school, which allows as many prohibited schools as it names, or
  * the generalist's; then a feat per school to prohibit.
  */
-export function wizardSchoolFeats(schools: WizardSchoolDefinition[]): FeatSeed[] {
+export function wizardSchoolFeats(schools: WizardSchoolSeed[]): FeatSeed[] {
   const requirements = () => [gte("classes.wizard.level", 1)];
   return [
     ...schools.map((s) => ({

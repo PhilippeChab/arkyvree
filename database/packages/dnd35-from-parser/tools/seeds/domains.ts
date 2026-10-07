@@ -1,5 +1,5 @@
 /**
- * A domain reference's seeds: its DomainDefinition[], and the FeatSeed[] of its feat pools (a War Domain Weapon feat
+ * A domain reference's seeds: its DomainSeed[], and the FeatSeed[] of its feat pools (a War Domain Weapon feat
  * per martial weapon).
  */
 
@@ -11,7 +11,7 @@ import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referen
 import { type DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
 import { grantFeat } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
-import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";
+import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import {
   ALL_WEAPONS,
@@ -58,7 +58,7 @@ function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
 }
 
 /** A domain of the domains reference, as its mapping and overrides make it. */
-function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainDefinition {
+function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainSeed {
   const mapping = ref.mapping?.[entry.name];
   const override = ref.overrides?.[entry.name];
   const spellSource = override?.spells ?? entry.spells;
@@ -77,7 +77,7 @@ function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number])
  * A domains reference's domains, as their mapping and overrides make them, their spells named as the spell references
  * name them. `parser:validate` reports a spell neither the core rules nor the book has.
  */
-function domainSeeds(ref: DomainReference): DomainDefinition[] {
+function domainSeeds(ref: DomainReference): DomainSeed[] {
   const spellNames = getDomainSpellNames(ref._meta.book);
   const seeds = ref.raw.map((entry) => domainSeed(ref, entry));
   for (const seed of seeds) {
@@ -101,7 +101,7 @@ function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | s
 }
 
 /** A book's domains as it prints them (`reference/<book>/domains.json`; none for a book without), and their feat pools' feats. */
-export function buildBookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[] } {
+export function buildBookDomainSeeds(book: string): { seeds: DomainSeed[]; poolFeats: FeatSeed[] } {
   const ref = ReferenceLoader.find(book, "domain");
   if (!ref) return { seeds: [], poolFeats: [] };
   return { seeds: domainSeeds(ref), poolFeats: buildDomainFeatPoolSeeds(ref) };

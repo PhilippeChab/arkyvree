@@ -1,4 +1,4 @@
-import type { PowerSeed } from "@/database/packages/dnd35/content/spells/types.ts";
+import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 
 export const LEVEL_8_SPELLS: PowerSeed[] = [
   {

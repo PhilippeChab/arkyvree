@@ -3,11 +3,8 @@
  * level advancement.
  */
 
-import {
-  type BabType,
-  type ClassReference,
-  type SaveType,
-} from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import type { BabType, SaveType } from "@/database/packages/dnd35/content/classes/types.ts";
 
 function detectSave(
   progression: ClassReference["raw"]["progression"],
