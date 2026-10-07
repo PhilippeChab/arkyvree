@@ -154,11 +154,11 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 ## Auto-Generated Customization
 
-Some entities get properties, requirements, or feats auto-generated on create/update/delete. Generators live in the 3.5 domain folders (`server/rulesets/dnd3.5/items/armorGenerator.ts`, `weaponGenerator.ts`, `powers/spellGenerator.ts`), triggered by each domain's effects (`dnd3.5/powers/Dnd35PowersEffects.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`).
+Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from their domain's effects (`server/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts` with `powers/spellGenerator.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`database/packages/dnd35/data/weaponDefinitions.ts`, `armorDefinitions.ts`).
 
 ### Weapons (type = "Weapon")
 
-Properties generated from `WEAPON_TYPE_DEFINITIONS` in `weaponGenerator.ts`:
+Properties generated from `WEAPON_TYPE_DEFINITIONS` in `weaponDefinitions.ts`:
 
 | Property Type              | Example (Longsword)                 |
 |----------------------------|-------------------------------------|
@@ -205,7 +205,7 @@ An item's proficiency is its base item's requirements: its template's, or its ow
 
 ### Armor (type = "Armor")
 
-Properties generated from `ARMOR_TYPE_DEFINITIONS` in `armorGenerator.ts`:
+Properties generated from `ARMOR_TYPE_DEFINITIONS` in `armorDefinitions.ts`:
 
 | Property Type        | Example (Chain Mail) |
 |----------------------|----------------------|
@@ -225,7 +225,7 @@ Armor or a shield is equipped only when its proficiency is met, unless forced. W
 
 ### Shields (type = "Shield")
 
-Properties generated from `SHIELD_TYPE_DEFINITIONS` in `armorGenerator.ts`:
+Properties generated from `SHIELD_TYPE_DEFINITIONS` in `armorDefinitions.ts`:
 
 | Property Type        | Example (Heavy Steel Shield) |
 |----------------------|------------------------------|
