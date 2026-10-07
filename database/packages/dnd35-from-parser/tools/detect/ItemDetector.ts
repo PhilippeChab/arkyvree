@@ -1,3 +1,4 @@
+import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/database/packages/dnd35/content/items/armor.ts";
 import { getWeaponDefinition } from "@/database/packages/dnd35/content/items/weapons.ts";
@@ -77,73 +78,14 @@ const TABLE_CATEGORIES: Record<string, string> = {
   tableTransport: "Transport",
 };
 
+/** An item's name as the generator writes it: its override's (`nameMap`), else its table's default, else its own. */
+function generatorNameOf(srdName: string, defaults: Record<string, string>, nameMap?: Record<string, string>): string {
+  return nameMap?.[srdName] || defaults[srdName] || srdName;
+}
+
 /** Ammunition — not equippable weapons */
 function isAmmunition(name: string): boolean {
   return /^(Arrows|Bolts|Bullets)\b/.test(name);
-}
-
-function resolveArmorName(srdName: string, overrideNameMap?: Record<string, string>): string {
-  if (overrideNameMap?.[srdName]) return overrideNameMap[srdName];
-  if (DEFAULT_ARMOR_NAME_MAP[srdName]) return DEFAULT_ARMOR_NAME_MAP[srdName];
-  return srdName;
-}
-
-function resolveWeaponName(srdName: string, overrideNameMap?: Record<string, string>): string {
-  if (overrideNameMap?.[srdName]) return overrideNameMap[srdName];
-  if (DEFAULT_WEAPON_NAME_MAP[srdName]) return DEFAULT_WEAPON_NAME_MAP[srdName];
-  return srdName;
-}
-
-export function buildItemDetected(
-  raw: ItemReference["raw"],
-  overrideNameMap?: Record<string, string>,
-): ItemReference["detected"] {
-  const weapons: ItemReference["detected"]["weapons"] = {};
-  const armor: ItemReference["detected"]["armor"] = {};
-  const goods: ItemReference["detected"]["goods"] = {};
-
-  for (const w of raw.weapons) {
-    if (DEFAULT_WEAPON_SKIPS.has(w.name)) continue;
-    if (isAmmunition(w.name)) continue;
-
-    const resolved = resolveWeaponName(w.name, overrideNameMap);
-    const def = getWeaponDefinition(resolved);
-
-    weapons[w.name] = {
-      generatorName: def ? resolved : null,
-      proficiency: w.proficiency,
-      costGp: readCost(w.cost),
-      weight: readWeight(w.weight),
-    };
-  }
-
-  for (const a of raw.armor) {
-    if (DEFAULT_ARMOR_SKIPS.has(a.name)) continue;
-    if (a.category === "Extras") continue;
-
-    const isShieldCategory = a.category === "Shields";
-    const resolved = resolveArmorName(a.name, overrideNameMap);
-    const def = isShieldCategory ? getShieldDefinition(resolved) : getArmorDefinition(resolved);
-    const itemType: "Armor" | "Shield" = isShieldCategory ? "Shield" : "Armor";
-
-    armor[a.name] = {
-      generatorName: def ? resolved : null,
-      type: itemType,
-      proficiencyCategory: a.category,
-      costGp: readCost(a.cost),
-      weight: readWeight(a.weight),
-    };
-  }
-
-  for (const g of raw.goods) {
-    goods[g.name] = {
-      costGp: readCost(g.cost),
-      weight: readWeight(g.weight),
-      category: TABLE_CATEGORIES[g.tableId] ?? g.tableId,
-    };
-  }
-
-  return { weapons, armor, goods, unresolved: findUnresolvedItems({ weapons, armor }) };
 }
 
 /**
@@ -162,4 +104,75 @@ export function findUnresolvedItems(
       .filter(([name, piece]) => !piece.generatorName && !skipped(name))
       .map(([name, piece]) => `${piece.type.toLowerCase()}: ${name}`),
   ];
+}
+
+/**
+ * An item reference's detector: each weapon's, armor's, shield's and good's cost and weight, and the definition the
+ * generator has of each weapon, armor and shield, by its name as the generator writes it (`detected`).
+ */
+export class ItemDetector {
+  constructor(stored: Pick<ItemReference, "_meta" | "overrides" | "raw">) {
+    this.stored = stored;
+  }
+
+  /** The reference as stored. */
+  private readonly stored: Pick<ItemReference, "_meta" | "overrides" | "raw">;
+
+  /** The items' detected section: the weapons, armor and goods, and the weapons and armor with no definition. */
+  detected(): ItemReference["detected"] {
+    const { overrides, raw } = this.stored;
+    const nameMap = overrides?.nameMap;
+    const weapons: ItemReference["detected"]["weapons"] = {};
+    const armor: ItemReference["detected"]["armor"] = {};
+    const goods: ItemReference["detected"]["goods"] = {};
+
+    for (const w of raw.weapons) {
+      if (DEFAULT_WEAPON_SKIPS.has(w.name)) continue;
+      if (isAmmunition(w.name)) continue;
+
+      const resolved = generatorNameOf(w.name, DEFAULT_WEAPON_NAME_MAP, nameMap);
+      const def = getWeaponDefinition(resolved);
+
+      weapons[w.name] = {
+        generatorName: def ? resolved : null,
+        proficiency: w.proficiency,
+        costGp: readCost(w.cost),
+        weight: readWeight(w.weight),
+      };
+    }
+
+    for (const a of raw.armor) {
+      if (DEFAULT_ARMOR_SKIPS.has(a.name)) continue;
+      if (a.category === "Extras") continue;
+
+      const isShieldCategory = a.category === "Shields";
+      const resolved = generatorNameOf(a.name, DEFAULT_ARMOR_NAME_MAP, nameMap);
+      const def = isShieldCategory ? getShieldDefinition(resolved) : getArmorDefinition(resolved);
+      const itemType: "Armor" | "Shield" = isShieldCategory ? "Shield" : "Armor";
+
+      armor[a.name] = {
+        generatorName: def ? resolved : null,
+        type: itemType,
+        proficiencyCategory: a.category,
+        costGp: readCost(a.cost),
+        weight: readWeight(a.weight),
+      };
+    }
+
+    for (const g of raw.goods) {
+      goods[g.name] = {
+        costGp: readCost(g.cost),
+        weight: readWeight(g.weight),
+        category: TABLE_CATEGORIES[g.tableId] ?? g.tableId,
+      };
+    }
+
+    return { weapons, armor, goods, unresolved: findUnresolvedItems({ weapons, armor }) };
+  }
+
+  /** The reference with what's derived from it: its detected section. */
+  resolve(): ItemReference {
+    const { _meta, overrides, raw } = this.stored;
+    return { _meta, raw, ...sanitizeJsonValues({ overrides, detected: this.detected() }) };
+  }
 }

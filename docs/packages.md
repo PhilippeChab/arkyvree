@@ -63,7 +63,7 @@ database/packages/dnd35-from-parser/
     │   ├── BaseScraper.ts    # A scraper's core: its book, its HttpClient, the listings, saving a reference
     │   ├── Scraper.ts        # A concern per kind of reference (concerns/): ScrapesClasses, ScrapesFeats…
     │   └── parsers/          # A page's HTML → what its reference stores
-    ├── detect/           # A reference's raw → its detected and mapping, a module per kind (classes/: ClassDetector, its concerns and its ClassMapping; feats.ts…)
+    ├── detect/           # A reference's raw → its detected and mapping: a detector per kind (ClassDetector in classes/, with its concerns and its ClassMapping; FeatDetector, SpellDetector…)
     │   ├── vocabulary.ts     # The names the books give abilities, saves, skills and races, as slugs and paths
     │   └── readers/          # What a phrase says, in any kind of reference: requirements/ (FeatPrerequisites, ClassPrerequisites), modifiers/ (BonusText, a reading per kind of text), items/ (cost, weight, stats, base item)
     ├── text/             # The scraped text: sanitized, normalized, entry names
@@ -152,7 +152,7 @@ A reference file (`reference/<book>/…json`) has three parts:
 - **`raw`** — what the scraper read. Re-scraping replaces it.
 - **`overrides`** — corrections made by hand. Re-scraping keeps them. Nothing else in the file is hand-edited.
 
-What the generator reads is derived from the two each time a reference is loaded (`ReferenceLoader`, which derives them with `tools/references/resolve.ts` and the detectors in `tools/detect/`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`) and `mapping` (the entities to generate). Items and magic items have only `detected`; spells and wizard schools, neither. The overrides win over both. So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
+What the generator reads is derived from the two each time a reference is loaded (`ReferenceLoader`, which derives them with `tools/references/resolve.ts` and the detectors in `tools/detect/`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`) and `mapping` (the entities to generate). Items, magic items and spells have only `detected`; wizard schools, neither. The overrides win over both. So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
 
 `bun run parser:validate` lists:
 - unresolved detections, and items without a definition (the generator leaves them out), not yet listed in `overrides.reviewed`; and entries of `overrides.reviewed` that cover none of them, or repeat one;

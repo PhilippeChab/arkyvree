@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { buildFeatDetected } from "@/database/packages/dnd35-from-parser/tools/detect/feats.ts";
-import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/detect/races.ts";
+import { FeatDetector } from "@/database/packages/dnd35-from-parser/tools/detect/FeatDetector.ts";
+import { RaceDetector } from "@/database/packages/dnd35-from-parser/tools/detect/RaceDetector.ts";
 import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import {
@@ -17,6 +17,8 @@ import {
   getSeededMagicItems,
 } from "@/database/packages/dnd35-from-parser/tools/seeds/magicItems.ts";
 import { buildRaceSeeds, getSeededRaces } from "@/database/packages/dnd35-from-parser/tools/seeds/races.ts";
+import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
+import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 
@@ -38,7 +40,12 @@ function classRequirementsOf(book: string, slug: string) {
 }
 
 function featDetectedOf(name: string, prerequisiteText: string) {
-  return buildFeatDetected([{ name, featType: "general", prerequisiteText, benefit: "", special: "" }])[name];
+  return featsDetected([{ name, featType: "general", prerequisiteText, benefit: "", special: "" }])[name];
+}
+
+/** What a feat reference's detector detects in `raw`, in a book with no classes. */
+function featsDetected(raw: FeatReference["raw"]) {
+  return new FeatDetector({ _meta: { book: "srd", scrapedAt: "", sourceUrl: "", type: "feat" }, raw }, []).detected();
 }
 
 function race(name: string, abilityAdjustments: { ability: string; value: number }[], ...features: string[]) {
@@ -50,6 +57,11 @@ function race(name: string, abilityAdjustments: { ability: string; value: number
     abilityAdjustments,
     features: features.map((feature) => ({ name: feature, description: "" })),
   };
+}
+
+/** What a race reference's detector detects in `raw`. */
+function racesDetected(raw: RaceReference["raw"]) {
+  return new RaceDetector({ _meta: { book: "srd", scrapedAt: "", sourceUrl: "", type: "race" }, raw }).detected();
 }
 
 /** A committed reference of `type` as stored. */
@@ -87,7 +99,7 @@ describe("A loaded reference", () => {
     ["srd/races.json", "race", { detected: true, mapping: true }],
     ["srd/items.json", "item", { detected: true, mapping: false }],
     ["srd/magicItems.json", "magicItem", { detected: true, mapping: false }],
-    ["srd/spells.json", "spell", { detected: false, mapping: false }],
+    ["srd/spells.json", "spell", { detected: true, mapping: false }],
     ["srd/wizardSchools.json", "wizardSchool", { detected: false, mapping: false }],
   ];
 
@@ -159,7 +171,7 @@ describe("A feat's detected aptitudes", () => {
       benefit: "",
       special,
     });
-    const detected = buildFeatDetected([
+    const detected = featsDetected([
       feat("Mounted Combat", "A fighter may select Mounted Combat as one of his fighter bonus feats."),
       feat("Deadly Defense", "A fighter can select Deadly Defense as one of his fighter bonus feats (PH 38)."),
       feat("Shield Proficiency", "Fighters automatically have Shield Proficiency as a bonus feat."),
@@ -244,7 +256,7 @@ describe("A feat's detected template", () => {
       benefit,
       special,
     });
-    const detected = buildFeatDetected([
+    const detected = featsDetected([
       feat(
         "Skill Focus",
         "You get a +3 bonus on all checks involving that skill.",
@@ -273,7 +285,7 @@ describe("A feat's detected template", () => {
 
 describe("A race's detected modifiers", () => {
   test("are its ability adjustments, and its unconditional skill and save bonuses", () => {
-    const detected = buildRaceDetected([
+    const detected = racesDetected([
       race(
         "Stout",
         [

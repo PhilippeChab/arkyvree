@@ -1,20 +1,21 @@
 /**
  * A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else:
  * re-scraping replaces `raw` and keeps `overrides`. What the generator reads is derived from the two each time a
- * reference is loaded: `detected`, parsed from `raw`, and `mapping`, the entities to generate (items and magic items
- * have only `detected`; spells and wizard schools, neither). The overrides win over both, so a correction takes effect
+ * reference is loaded: `detected`, parsed from `raw`, and `mapping`, the entities to generate (items, magic items and
+ * spells have only `detected`; wizard schools, neither). The overrides win over both, so a correction takes effect
  * at the next generate and can't be lost to a re-scrape.
  */
 
 import { existsSync, readFileSync } from "node:fs";
 
 import { ClassDetector } from "@/database/packages/dnd35-from-parser/tools/detect/classes/ClassDetector.ts";
-import { buildDomainDetected, buildDomainMapping } from "@/database/packages/dnd35-from-parser/tools/detect/domains.ts";
-import { buildFeatDetected, buildFeatMapping } from "@/database/packages/dnd35-from-parser/tools/detect/feats.ts";
-import { buildItemDetected } from "@/database/packages/dnd35-from-parser/tools/detect/items.ts";
-import { buildMagicItemDetected } from "@/database/packages/dnd35-from-parser/tools/detect/magicItems.ts";
-import { buildRaceDetected, buildRaceMapping } from "@/database/packages/dnd35-from-parser/tools/detect/races.ts";
-import { sanitizeJsonValues, stringifyStably } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
+import { DomainDetector } from "@/database/packages/dnd35-from-parser/tools/detect/DomainDetector.ts";
+import { FeatDetector } from "@/database/packages/dnd35-from-parser/tools/detect/FeatDetector.ts";
+import { ItemDetector } from "@/database/packages/dnd35-from-parser/tools/detect/ItemDetector.ts";
+import { MagicItemDetector } from "@/database/packages/dnd35-from-parser/tools/detect/MagicItemDetector.ts";
+import { RaceDetector } from "@/database/packages/dnd35-from-parser/tools/detect/RaceDetector.ts";
+import { SpellDetector } from "@/database/packages/dnd35-from-parser/tools/detect/SpellDetector.ts";
+import { stringifyStably } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import type { ClassReference, ClassReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
@@ -47,48 +48,13 @@ const RESOLVERS: {
   [T in ReferenceType]: (stored: StoredReference<T>, classesOf: ClassesOf) => ReferenceByType[T];
 } = {
   class: (stored) => new ClassDetector(stored).resolve(),
-  feat: ({ _meta, raw, overrides }, classesOf) => {
-    const feats = sanitizeJsonValues(raw);
-    const detected = buildFeatDetected(feats);
-    return {
-      _meta,
-      raw,
-      ...sanitizeJsonValues({
-        overrides,
-        detected,
-        mapping: buildFeatMapping(feats, detected, overrides ?? {}, classesOf(_meta.book)),
-      }),
-    };
-  },
-  domain: ({ _meta, raw, overrides }) => {
-    const detected = buildDomainDetected(raw);
-    return {
-      _meta,
-      raw,
-      ...sanitizeJsonValues({ overrides, detected, mapping: buildDomainMapping(raw, detected, overrides ?? {}) }),
-    };
-  },
-  race: ({ _meta, raw, overrides }) => {
-    const races = sanitizeJsonValues(raw);
-    const detected = buildRaceDetected(races);
-    return {
-      _meta,
-      raw,
-      ...sanitizeJsonValues({ overrides, detected, mapping: buildRaceMapping(races, detected, overrides ?? {}) }),
-    };
-  },
-  item: ({ _meta, raw, overrides }) => ({
-    _meta,
-    raw,
-    ...sanitizeJsonValues({ overrides, detected: buildItemDetected(raw, overrides?.nameMap) }),
-  }),
-  magicItem: ({ _meta, raw, overrides }) => ({
-    _meta,
-    raw,
-    ...sanitizeJsonValues({ overrides, detected: buildMagicItemDetected(raw) }),
-  }),
-  // Nothing to derive: the reference is as stored
-  spell: (stored) => stored,
+  domain: (stored) => new DomainDetector(stored).resolve(),
+  feat: (stored, classesOf) => new FeatDetector(stored, classesOf(stored._meta.book)).resolve(),
+  item: (stored) => new ItemDetector(stored).resolve(),
+  magicItem: (stored) => new MagicItemDetector(stored).resolve(),
+  race: (stored) => new RaceDetector(stored).resolve(),
+  spell: (stored) => new SpellDetector(stored).resolve(),
+  // Nothing to detect: the reference is as stored
   wizardSchool: (stored) => stored,
 };
 

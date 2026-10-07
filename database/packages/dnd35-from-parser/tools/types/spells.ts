@@ -1,7 +1,12 @@
+import type { Property } from "@/database/packages/dnd35/content/customization/types.ts";
+
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 export type SpellReference = {
   _meta: ScrapedMeta<"spell">;
+
+  /** What each spell's text gives: its properties and its saving throw, normalized, its base spell's where it lacks some */
+  detected: Record<string, { properties: Property[]; savingThrow: string }>;
 
   overrides?: Overrides<{
     description?: string;

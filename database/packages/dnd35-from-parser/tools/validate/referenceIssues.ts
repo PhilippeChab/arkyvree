@@ -1,4 +1,4 @@
-import { findUnresolvedItems } from "@/database/packages/dnd35-from-parser/tools/detect/items.ts";
+import { findUnresolvedItems } from "@/database/packages/dnd35-from-parser/tools/detect/ItemDetector.ts";
 import { type listReferenceFiles } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
