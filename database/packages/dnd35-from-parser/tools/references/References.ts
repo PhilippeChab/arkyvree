@@ -83,8 +83,6 @@ function withoutScrapedAt(stored: unknown): string {
  * loads each file once, as the generator reads the same references many times.
  */
 class References {
-  /** The books' references: a folder per book. */
-  readonly dir = join(import.meta.dirname!, "../../reference");
   /** The references loaded, by type and file. */
   private readonly loaded: { [T in ReferenceType]: Map<string, ReferenceByType[T]> } = {
     class: new Map(),
@@ -96,6 +94,8 @@ class References {
     magicItem: new Map(),
     wizardSchool: new Map(),
   };
+  /** The books' references: a folder per book. */
+  readonly dir = join(import.meta.dirname!, "../../reference");
 
   /** The books with references: the folders of `dir` (a symlinked one too), sorted, so generation is the same on every filesystem. */
   books(): string[] {
