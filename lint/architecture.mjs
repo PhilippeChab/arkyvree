@@ -2,7 +2,8 @@
  * The architecture, as rules: what each layer may import, where queries are built, and how a folder is entered.
  *
  * - `layers`: a layer imports only what's below it (database < repositories < cache < copy-on-write's writes <
- *   the engine < services < jobs < routers; the middlewares sit on the repositories, beside the services). The cache
+ *   the engine < services < jobs < routers; the middlewares sit on the repositories, beside the services). Within the
+ *   engine, its machinery (`rulesets/engine/`) sits below the rulesets that run on it (`rulesets/dnd3.5/`). The cache
  *   holds copy-on-write's read side (the view a ruleset's reads see), `cow/` its write side. The server reads the
  *   content packages, never the seeders. A content package's `content/` (the types and builders its data is written
  *   with, and the tables they read) imports nothing of its data, its seeder, its extensions, the parser or the server.
@@ -67,6 +68,8 @@ const LAYERS = [
     deny: ["server/rulesets/", "server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
   },
   { layer: "server/rulesets/", deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"] },
+  // The engine is the machinery every ruleset runs on: the rulesets build on it, and it names none of them
+  { layer: "server/rulesets/engine/", deny: ["server/rulesets/"], allow: ["server/rulesets/engine/"] },
   { layer: "server/services/", deny: ["server/jobs/", "server/middlewares/", "server/routers/"] },
   { layer: "server/jobs/", deny: ["server/middlewares/", "server/routers/"] },
   { layer: "server/middlewares/", deny: ["server/services/", "server/jobs/", "server/routers/"] },

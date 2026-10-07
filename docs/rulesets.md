@@ -410,12 +410,13 @@ server/
 │   │   └── paths/                         (PathTraverser, CategoryPaths, PathCategory, readComponent, templateExpression, …)
 │   └── dnd3.5/                            ← 3.5-specific implementation
 │       ├── index.ts                       (the module's entry: createRulesetModule, the response builders)
-│       ├── rulesetModule.ts               (RulesetModule impl)
-│       ├── types.ts                       (Dnd35ProjectedCharacterData, Dnd35LevelUpProjector)
+│       ├── rulesetModule.ts               (createRulesetModule: the 3.5 module, a Dnd35RulesetModule)
+│       ├── types.ts                       (Dnd35RulesetModule, CharacterKind, Dnd35ProjectedCharacterData, Dnd35LevelUpProjector)
 │       ├── Dnd35TargetPaths.ts            (the categories' order and the ruleset's names' labels)
 │       ├── character/                     (CharacterState, its concerns: Builds, Validates, PossessesVirtually;
 │       │                                  DetailedCharacter, which wires them; components.ts; Dnd35LevelUpProjector)
-│       ├── loading/                       (DetailedCharacterDataLoader)
+│       ├── loading/                       (DetailedCharacterDataLoader, and its steps: customizations, picks,
+│       │                                  possessions, rulesetReadings, refreshEntityData)
 │       ├── response/                      (buildCharacterResponse: the 3.5 API response shape)
 │       ├── abilities/ aptitudes/ classes/ feats/ identity/ powers/ saves/
 │       │                                  (each domain's component, its paths' category, its rules and effects:
@@ -500,15 +501,15 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
 }
 ```
 
-Services inside `dnd3.5/` annotate locals with the `Dnd35*` variants and cast the projector factory's return type once at the entry point:
+A module is typed by what it builds: `RulesetModule<Character, Projector, Kind>`. The 3.5 module is `Dnd35RulesetModule` (`RulesetModule<DetailedCharacter, Dnd35LevelUpProjector, CharacterKind>`), and `RulesetFactory` hands out each module's own type, so the services inside `dnd3.5/` get the 3.5 character and projector without a cast:
 
 ```ts
 // inside server/services/characters/levels/dnd3.5/…
 const projectedData: Dnd35ProjectedCharacterData = { /* skills, powers */ };
-const levelUpProjector = rulesetModule.createLevelUpProjector(dc) as Dnd35LevelUpProjector;
+const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter); // a Dnd35LevelUpProjector
 ```
 
-The cast is local to 3.5 code — generic consumers never see 3.5 vocabulary.
+The engine's own types name no ruleset (`arkyvree/layers`): its `DetailedCharacterInterface` holds `Components`, which the 3.5 character narrows to its own.
 
 ### Rules and effects
 
@@ -584,7 +585,7 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 
 ### How to add a new ruleset
 
-1. **Define the module**: `server/rulesets/<ruleset>/index.ts` implementing `RulesetModule`. Provide `rules` and `effects` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `seedTemplateItems`, etc.
+1. **Define the module**: `server/rulesets/<ruleset>/rulesetModule.ts`, whose factory returns a `RulesetModule` of its own character, projector and kinds (`Dnd35RulesetModule`). Provide `rules` and `effects` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `seedTemplateItems`, etc.
 2. **Write its character** in `server/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`buildComponents`), and `DetailedCharacter`, which includes the concerns. 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).
 3. **Extend the types** in `server/rulesets/<ruleset>/types.ts`:
    - `<Ruleset>ProjectedCharacterData extends ProjectedCharacterData` (add skill/power shapes if your ruleset has ranked skills or leveled spells).

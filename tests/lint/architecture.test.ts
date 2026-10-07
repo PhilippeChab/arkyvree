@@ -48,6 +48,14 @@ describe("architecture rules", () => {
         "server/cache/c.ts": 'import { w } from "@/server/cow/index.ts";\nexport const c = w;\n',
         "server/cow/w.ts": 'import { s } from "@/server/services/s.ts";\nexport const w = s;\n',
         "server/rulesets/e.ts": 'import { w } from "@/server/cow/index.ts";\nexport const e = w;\n',
+        // The engine's machinery names no ruleset, not even for a type; a ruleset builds on the machinery
+        "server/rulesets/engine/m.ts":
+          'import type { C } from "@/server/rulesets/dnd3.5/index.ts";\nexport type M = C;\n',
+        "server/rulesets/dnd3.5/r.ts": 'import type { M } from "@/server/rulesets/engine/m.ts";\nexport type R = M;\n',
+        "server/rulesets/engine/f.ts":
+          'import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";\nexport const f = RulesetFactory;\n',
+        "server/rulesets/engine/paths/p.ts":
+          'import type { M } from "@/server/rulesets/engine/m.ts";\nexport type P = M;\n',
         "shared/s.ts": 'import type { T } from "@/drizzle/schema.ts";\nexport type S = T;\n',
         "client/src/c.ts": 'import type { App } from "@/server/routers/application.ts";\nexport type C = App;\n',
         "client/src/v.ts": 'import { app } from "@/server/routers/application.ts";\nexport const v = app;\n',
@@ -66,6 +74,8 @@ describe("architecture rules", () => {
       "layers server/cow/w.ts",
       "layers server/database/d.ts",
       "layers server/repositories/A.ts",
+      "layers server/rulesets/engine/f.ts",
+      "layers server/rulesets/engine/m.ts",
       "layers server/services/s.ts",
     ]);
   });
