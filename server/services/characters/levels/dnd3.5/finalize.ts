@@ -11,7 +11,6 @@ import { getTableName } from "drizzle-orm";
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import {
-  type AptitudesComponent,
   buildPowerLevelLookup,
   buildProjectedAutoGrantedFeats,
   buildProjectedCharacterLevel,
@@ -53,31 +52,6 @@ import { reconcileAllBondedKinds } from "./bondedReconcile.ts";
 import { validateAndFetchLevelSelections } from "./validation.ts";
 
 type LevelSelections = Awaited<ReturnType<typeof validateAndFetchLevelSelections>>;
-
-/**
- * The feat and power pools of the character with its planned levels: a leveled aptitude is a power pool, an unleveled
- * one a feat pool, and a power pool too when it has powers.
- */
-function poolIds(aptitudesInstance: AptitudesComponent, rulesetData: RulesetData) {
-  const featPoolIds: string[] = [];
-  const powerPoolIds: string[] = [];
-  const nonLeveledAptitudeIds: string[] = [];
-
-  for (const [key, aptitude] of Object.entries(aptitudesInstance.getAptitudes())) {
-    if (aptitudesInstance.isLeveledAptitude(key)) powerPoolIds.push(aptitude.id);
-    else nonLeveledAptitudeIds.push(aptitude.id);
-  }
-
-  const sharedAptitudeIds = new Set(
-    nonLeveledAptitudeIds.filter((id) => rulesetData.aptitudeIdsByHavingPowers.has(id)),
-  );
-  for (const aptId of nonLeveledAptitudeIds) {
-    if (sharedAptitudeIds.has(aptId)) powerPoolIds.push(aptId);
-
-    featPoolIds.push(aptId);
-  }
-  return { featPoolIds, powerPoolIds };
-}
 
 /** The edited level's projection: the level with its new HP, ability and selections, in place of its saved row. */
 function projectEdit(
@@ -245,7 +219,7 @@ async function levelDistributionData(
   const rows = await readCharacterRows(tx, characterRecord);
   const fullCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, rows, scope });
   const levelUpProjector = rulesetModule.createLevelUpProjector(fullCharacter);
-  const { featPoolIds, powerPoolIds } = poolIds(fullCharacter.components.aptitudes, rulesetData);
+  const { featPools, powerPools } = fullCharacter.components.aptitudes.getLevelUpPools(rulesetData);
 
   // Compute per-level feat/power slots from modifier data directly
   const baselineApts = await buildBaselineAptitudes(rulesetModule, characterRecord, rows, scope);
@@ -254,8 +228,8 @@ async function levelDistributionData(
     rulesetData,
     klassLevelIds,
     allAutoGrantedFeatRecords,
-    featPoolIds,
-    powerPoolIds,
+    Object.keys(featPools),
+    Object.keys(powerPools),
     baseLevelCount,
     baselineApts,
   );

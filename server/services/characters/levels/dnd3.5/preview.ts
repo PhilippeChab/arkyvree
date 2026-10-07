@@ -6,7 +6,6 @@
 
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import {
-  type AptitudesComponent,
   computePerLevelAptitudeSlots,
   type Dnd35LevelUpProjector,
   type Dnd35RulesetModule,
@@ -24,8 +23,6 @@ import type { Session } from "@/shared/relations.ts";
 
 import { buildBaselineAptitudes } from "./baseline.ts";
 
-type PowerPools = ReturnType<AptitudesComponent["extractPowerPools"]>;
-
 /** The planned levels (by index) that take an ability increase, after the character's `existingCount` levels. */
 function abilityIncreaseLevels(rulesetModule: Dnd35RulesetModule, existingCount: number, plannedCount: number) {
   const levels: number[] = [];
@@ -40,37 +37,6 @@ function autoGrantedPowers(rulesetData: RulesetData, klassLevelIds: string[]) {
   return klassLevelIds
     .flatMap((klassLevelId) => rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevelId) ?? [])
     .map((rec) => ({ ...rec.powersInRule, free: rec.free }));
-}
-
-/**
- * The planned levels' pools and what's left to pick in them: an unleveled pool is a feat pool, and a power pool too
- * when it has powers (shared); a leveled one is a power pool.
- */
-function splitPools(aptitudesInstance: AptitudesComponent, rulesetData: RulesetData) {
-  const powerPools: PowerPools = aptitudesInstance.extractPowerPools();
-  const nonLeveledAptitudeIds = aptitudesInstance.getNonLeveledAptitudeIds();
-  const sharedAptitudeIds = new Set(
-    nonLeveledAptitudeIds.filter((id) => rulesetData.aptitudeIdsByHavingPowers.has(id)),
-  );
-
-  const featPools: Record<
-    string,
-    { allowed: number; available: number; id: string; name: string; shared: boolean; spent: number }
-  > = {};
-  let featsToSelect = 0;
-  let powersToSelect = 0;
-  for (const aptId of nonLeveledAptitudeIds) {
-    const pool = powerPools[aptId];
-    if (sharedAptitudeIds.has(aptId)) {
-      featPools[aptId] = { ...pool, shared: true };
-      powersToSelect += pool.available;
-    } else {
-      featPools[aptId] = { ...pool, shared: false };
-      delete powerPools[aptId];
-      featsToSelect += pool.available;
-    }
-  }
-  return { featPools, powerPools, featsToSelect, powersToSelect };
 }
 
 /**
@@ -131,10 +97,8 @@ export async function getLevelUpPreview(
       scope,
     });
     const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
-    const { featPools, powerPools, featsToSelect, powersToSelect } = splitPools(
-      detailedCharacter.components.aptitudes,
-      rulesetData,
-    );
+    const { featPools, featsToSelect, powerPools, powersToSelect } =
+      detailedCharacter.components.aptitudes.getLevelUpPools(rulesetData);
 
     const existingLevels = await CharacterLevels.findMany(db, { characterId });
     const abilities = detailedCharacter.components.abilities;

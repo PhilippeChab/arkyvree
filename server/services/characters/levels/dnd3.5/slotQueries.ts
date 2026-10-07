@@ -7,9 +7,7 @@
  * - getAttributeSlots — ability score increase availability
  */
 
-import { type RulesetData } from "@/engine/core/view/index.ts";
 import {
-  type AptitudesComponent,
   buildPendingCharacterLevels,
   buildProjectedCharacterLevel,
   buildProjectedGivenFeats,
@@ -37,15 +35,6 @@ type LevelProjection = {
   pendingLevelAbilityIds?: (string | undefined)[];
   pendingLevelKlassLevelIds?: string[];
 };
-
-/** A projected character's spell pools, without the non-leveled aptitudes no spell belongs to (feat pools). */
-function spellPools(aptitudes: AptitudesComponent, rulesetData: RulesetData) {
-  const pools = aptitudes.extractPowerPools();
-  for (const aptitudeId of aptitudes.getNonLeveledAptitudeIds())
-    if (!rulesetData.aptitudeIdsByHavingPowers.has(aptitudeId)) delete pools[aptitudeId];
-
-  return pools;
-}
 
 /** The feat pools of a projected level: a pool is shared when its aptitude has spells too, and isn't counted then. */
 async function featSlots(
@@ -75,12 +64,8 @@ async function featSlots(
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
 
-    const aptitudePools = detailedCharacter.components.aptitudes.extractFeatPools();
-    let featsToSelect = 0;
-    for (const pool of Object.values(aptitudePools)) {
-      pool.shared = rulesetData.aptitudeIdsByHavingPowers.has(pool.id);
-      if (!pool.shared) featsToSelect += pool.available;
-    }
+    const { featPools: aptitudePools, featsToSelect } =
+      detailedCharacter.components.aptitudes.getLevelUpPools(rulesetData);
 
     return {
       featsToSelect,
@@ -108,8 +93,8 @@ async function powerSlots(
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
 
-    const aptitudePools = spellPools(detailedCharacter.components.aptitudes, rulesetData);
-    const powersToSelect = Object.values(aptitudePools).reduce((total, pool) => total + pool.available, 0);
+    const { powerPools: aptitudePools, powersToSelect } =
+      detailedCharacter.components.aptitudes.getLevelUpPools(rulesetData);
     const autoGrantedPowers = (rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? []).map(
       (rec) => ({ ...rec.powersInRule, free: rec.free }),
     );
