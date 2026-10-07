@@ -1,6 +1,7 @@
 /** What each loaded entity carries: its properties, modifiers and requirements, and the character's modifiers in order. */
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { readClassLevelFields } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";
 import type {
   CustomizedFeat,
   CustomizedKlassLevel,
@@ -8,7 +9,6 @@ import type {
   CustomizedRace,
   InventoryEntry,
 } from "@/server/rulesets/engine/types.ts";
-import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import type { FeatWithAptitudes, KlassLevel, Modifier, Race, Requirement } from "@/shared/relations.ts";
 
 import type { SharedCharacterData } from "./DetailedCharacterDataLoader.ts";
@@ -145,19 +145,7 @@ export function toCustomizedKlassLevels(klassLevelsRaw: KlassLevel[], rulesetDat
     }))
     .sort((a, b) => a.level - b.level);
 
-  const klassLevelProperties = new Map<string, { bab: number; skills: number }>();
-  for (const klassLevel of klassLevels) {
-    let entry = klassLevelProperties.get(klassLevel.id);
-    if (!entry) {
-      entry = { bab: 0, skills: 0 };
-      klassLevelProperties.set(klassLevel.id, entry);
-    }
-    for (const prop of klassLevel.properties) {
-      if (prop.type === KLASS_LEVEL_BAB) entry.bab = Number(prop.value);
-
-      if (prop.type === KLASS_LEVEL_SKILL_POINTS) entry.skills = Number(prop.value);
-    }
-  }
+  const klassLevelProperties = new Map(klassLevels.map((level) => [level.id, readClassLevelFields(level.properties)]));
   return { klassLevels, klassLevelProperties };
 }
 

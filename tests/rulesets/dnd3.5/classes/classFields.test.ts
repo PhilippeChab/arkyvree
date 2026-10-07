@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { readClassFields } from "@/server/rulesets/dnd3.5/classes/classFields.ts";
+import { readClassFields, toClassProperties } from "@/server/rulesets/dnd3.5/classes/classFields.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 
 describe("A class's fields", () => {
@@ -26,5 +26,15 @@ describe("A class's fields", () => {
         { type: KLASS_CASTER_TYPE, value: "Divine" },
       ]).casterType,
     ).toBe("Arcane");
+  });
+
+  test("are stored as a row per field the class has, which reads back as the fields", () => {
+    expect(toClassProperties("class-id", { bonusSpellAbilityId: null, casterType: null })).toEqual([]);
+    const rows = toClassProperties("class-id", { bonusSpellAbilityId: "wisdom-id", casterType: "Divine" });
+    expect(rows).toEqual([
+      { entityId: "class-id", entityType: "klasses", type: KLASS_BONUS_SPELL_ABILITY_ID, value: "wisdom-id" },
+      { entityId: "class-id", entityType: "klasses", type: KLASS_CASTER_TYPE, value: "Divine" },
+    ]);
+    expect(readClassFields(rows)).toEqual({ bonusSpellAbilityId: "wisdom-id", casterType: "Divine" });
   });
 });

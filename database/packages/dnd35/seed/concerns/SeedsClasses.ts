@@ -14,12 +14,8 @@ import {
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/server/mixins.ts";
-import {
-  KLASS_BONUS_SPELL_ABILITY_ID,
-  KLASS_CASTER_TYPE,
-  KLASS_LEVEL_BAB,
-  KLASS_LEVEL_SKILL_POINTS,
-} from "@/shared/dnd3.5/properties/index.ts";
+import { toClassProperties } from "@/server/rulesets/dnd3.5/classes/classFields.ts";
+import { toClassLevelProperties } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A class's levels, as seeded: each level's id and number. */
@@ -159,25 +155,12 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
 
     /** Its properties and its levels': its bonus spell ability and caster type, each level's base attack and points. */
     private async insertProperties(def: ClassSeed, klassId: string, levels: Levels) {
-      const bonusSpellAbilityId = def.bonusSpellAbility && this.ctx.abilityMap[def.bonusSpellAbility];
+      const bonusSpellAbilityId = (def.bonusSpellAbility && this.ctx.abilityMap[def.bonusSpellAbility]) || null;
       await this.insertAll(propertiesInCustomization, [
-        ...(bonusSpellAbilityId
-          ? [
-              {
-                entityId: klassId,
-                entityType: "klasses",
-                type: KLASS_BONUS_SPELL_ABILITY_ID,
-                value: bonusSpellAbilityId,
-              },
-            ]
-          : []),
-        ...(def.casterType
-          ? [{ entityId: klassId, entityType: "klasses", type: KLASS_CASTER_TYPE, value: def.casterType }]
-          : []),
-        ...levels.flatMap(({ id, level }) => [
-          { entityId: id, entityType: "klass_levels", type: KLASS_LEVEL_BAB, value: String(BAB[def.bab](level)) },
-          { entityId: id, entityType: "klass_levels", type: KLASS_LEVEL_SKILL_POINTS, value: String(def.skillPoints) },
-        ]),
+        ...toClassProperties(klassId, { bonusSpellAbilityId, casterType: def.casterType ?? null }),
+        ...levels.flatMap(({ id, level }) =>
+          toClassLevelProperties(id, { bab: BAB[def.bab](level), skills: def.skillPoints }),
+        ),
       ]);
     }
 

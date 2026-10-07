@@ -1,9 +1,10 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
+import { readClassLevelFields } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";
 import type { Dnd35LevelUpProjector as Dnd35LevelUpProjectorInterface } from "@/server/rulesets/dnd3.5/types.ts";
 import type { ProjectedCharacterLevel } from "@/server/rulesets/engine/types.ts";
-import { KLASS_LEVEL_SKILL_POINTS, SPELL_SCHOOL, WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import { SPELL_SCHOOL, WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import type { KlassLevel, Requirement } from "@/shared/relations.ts";
 
@@ -17,21 +18,11 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
    * ability's modifier.
    */
   computeSkillPointBasesPerLevel(klassLevelIds: string[], rulesetData: RulesetData): number[] {
-    const skillPointsByKlassLevelId = new Map<string, number>();
-    for (const klassLevelId of klassLevelIds) {
-      const props = rulesetData.propertiesByEntity.get(klassLevelId);
-      if (!props) continue;
-      for (const p of props) {
-        if (p.entityType === "klass_levels" && p.type === KLASS_LEVEL_SKILL_POINTS) {
-          skillPointsByKlassLevelId.set(p.entityId, Number(p.value));
-          break;
-        }
-      }
-    }
-
     const skills = this.character.components.skills;
     return klassLevelIds.map((klassLevelId) =>
-      skills.getLevelPointsPerLevel(skillPointsByKlassLevelId.get(klassLevelId) ?? 0),
+      skills.getLevelPointsPerLevel(
+        readClassLevelFields(rulesetData.propertiesByEntity.get(klassLevelId) ?? []).skills,
+      ),
     );
   }
 
