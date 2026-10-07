@@ -57,10 +57,10 @@ describe("A power's fields", () => {
     ).toEqual({ components: ["V"], descriptors: ["Fire", "Light"], school: "Evocation", target: "One creature" });
   });
 
-  test("are stored as a row per field with a value, none for an empty one, and none at all without a school", () => {
-    expect(toPowerProperties("power", { duration: "1 round", target: "You" })).toEqual([]);
+  test("are kept in a property per field with a value, none for an empty one, and none at all without a school", () => {
+    expect(toPowerProperties({ duration: "1 round", target: "You" })).toEqual([]);
     expect(
-      multiset(toPowerProperties("power", { components: ["V"], duration: "", school: "Evocation", target: "You" })),
+      multiset(toPowerProperties({ components: ["V"], duration: "", school: "Evocation", target: "You" })),
     ).toEqual([`${SPELL_COMPONENT}=V`, `${SPELL_SCHOOL}=Evocation`, `${SPELL_TARGET}=You`]);
   });
 
@@ -80,8 +80,7 @@ describe("A power's fields", () => {
     expect(rowsByPower.size).toBeGreaterThan(2000);
 
     const mismatches = [...rowsByPower].filter(
-      ([powerId, stored]) =>
-        multiset(toPowerProperties(powerId, readPowerFields(stored))).join("|") !== multiset(stored).join("|"),
+      ([, stored]) => multiset(toPowerProperties(readPowerFields(stored))).join("|") !== multiset(stored).join("|"),
     );
     expect([...new Set(mismatches.map(([, stored]) => stored[0].name))].toSorted()).toEqual(
       SPELLS_THE_FIELDS_CANNOT_HOLD,

@@ -1,6 +1,8 @@
-import type { RulesetFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
-import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
+import type { PropertyValue } from "@/engine/core/module/index.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
+
+/** A ruleset's own fields its properties hold: the ability its characters' skill points come from. */
+export type RulesetFields = { skillPointAbilityId: string | null };
 
 /** The property types a ruleset's own fields are stored as. */
 export const RULESET_FIELD_PROPERTY_TYPES = [RULESET_SKILL_POINT_ABILITY_ID];
@@ -14,15 +16,8 @@ export function readRulesetFields(properties: { type: string; value: string }[])
   return { skillPointAbilityId: skillPointAbility?.value ?? null };
 }
 
-/** A ruleset's own fields as the rows of its properties, a row per field with a value: what its effects and the seeds store. */
-export function toRulesetProperties(rulesetId: string, fields: RulesetFields): PropertyRecord[] {
+/** A ruleset's own fields as the properties that keep them, one per field with a value: what the seeds store. */
+export function toRulesetProperties(fields: RulesetFields): PropertyValue[] {
   if (fields.skillPointAbilityId === null) return [];
-  return [
-    {
-      entityId: rulesetId,
-      entityType: "rulesets",
-      type: RULESET_SKILL_POINT_ABILITY_ID,
-      value: fields.skillPointAbilityId,
-    },
-  ];
+  return [{ type: RULESET_SKILL_POINT_ABILITY_ID, value: fields.skillPointAbilityId }];
 }

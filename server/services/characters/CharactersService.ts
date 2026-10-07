@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { describeCharacter } from "@/engine/index.ts";
+import { describeCharacter, openRacePicker } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/builds/index.ts";
 import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
@@ -19,7 +19,6 @@ import {
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Alignment, Gender } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -151,8 +150,8 @@ class CharactersService extends include(Object, Archives) {
     where: { search?: string },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { sourceChain } = scope.rulesetData.cow;
 
       // Races.findPage's output has its FK fields auto-resolved by
       // the Proxy since cowContext is active. No manual `CowData.resolveRows` pass.
@@ -163,8 +162,7 @@ class CharactersService extends include(Object, Archives) {
       );
 
       // The requirements come from the composed view, which merges siblings' into the winner's
-      const rules = RulesetFactory.fromBaseRules(ruleset.baseRules).rules.races;
-      const items = rules.enrichWithEligibility(result.items, rulesetData.requirementsByEntity, formData);
+      const items = openRacePicker(scope, formData).annotate(result.items);
       return { items, page: result.page, nextPage: result.nextPage };
     });
   }

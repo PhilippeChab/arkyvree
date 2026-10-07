@@ -15,8 +15,9 @@ describe("RulesetFactory", () => {
 
   test("builds the D&D 3.5 module", () => {
     const module = RulesetFactory.fromBaseRules("Dungeons & Dragons: 3.5");
-    expect(module.rules).toBeDefined();
-    expect(module.effects).toBeDefined();
+    expect(module.characters).toBeDefined();
+    expect(module.entities).toBeDefined();
+    expect(module.levelUp).toBeDefined();
     expect(module.createDetailedCharacter).toBeFunction();
     expect(module.createTargetPaths).toBeFunction();
     expect(module.createPropertyTypes).toBeFunction();

@@ -1,6 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
+import { planItemSave } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import {
@@ -12,7 +13,6 @@ import {
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Items } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
@@ -57,12 +57,12 @@ class ItemsService extends include(Object, Variants) {
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "items", body.name);
 
-          const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+          const { columns } = planItemSave({ ruleset, rulesetData }, body);
           const rows = await Items.create(tx, {
             name: body.name,
             description: body.description,
             type: body.type,
-            slot: rules.items.resolveSlot(body.type, body.slot),
+            slot: columns.slot,
             rulesetId,
             weight: body.weight?.toString(),
             costGp: body.costGp?.toString(),
@@ -203,15 +203,14 @@ class ItemsService extends include(Object, Variants) {
           const { id: targetId, copied } = await edit.cowToEdit(tx, "items", item);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-          const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-          const slot = rules.items.resolveSlot(body.type, body.slot);
+          const { columns } = planItemSave({ ruleset, rulesetData }, body);
           const rows = await Items.update(
             tx,
             {
               name: body.name,
               description: body.description,
               type: body.type,
-              slot,
+              slot: columns.slot,
               weight: body.weight?.toString(),
               costGp: body.costGp?.toString(),
               sourceItemId: item.isTemplate ? null : body.sourceItemId,

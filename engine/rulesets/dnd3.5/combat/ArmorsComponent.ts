@@ -1,4 +1,4 @@
-import type { ItemFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
+import type { ItemFields } from "@/engine/rulesets/dnd3.5/items/itemFields.ts";
 import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

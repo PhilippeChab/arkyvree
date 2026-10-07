@@ -1,12 +1,12 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassesInRules } from "@/drizzle/schema.ts";
+import { describeClass } from "@/engine/index.ts";
 import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Klasses } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -90,22 +90,10 @@ class ClassesService {
   }
 
   async getClass(rulesetId: string, klassId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
-
-      const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-      const properties = rulesetData.propertiesByEntity.get(klass.id) ?? [];
-      const { bonusSpellAbilityId, casterType } = rules.classes.readProperties(properties);
-      const propertyIds = rules.classes.getPropertyIds(properties);
-
-      return {
-        ...klass,
-        bonusSpellAbilityId,
-        bonusSpellPropertyId: propertyIds.bonusSpellAbilityId,
-        casterTypeValue: casterType,
-        casterTypePropertyId: propertyIds.casterType,
-      };
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { sourceChain } = scope.rulesetData.cow;
+      const klass = findScopedEntity(scope.rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
+      return describeClass(scope, klass);
     });
   }
 

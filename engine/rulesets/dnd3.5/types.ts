@@ -37,8 +37,8 @@ import type {
 
 import type DetailedCharacter from "./character/DetailedCharacter.ts";
 import type { Dnd35Characters } from "./character/Dnd35Characters.ts";
+import type { Dnd35Entities } from "./Dnd35Entities.ts";
 import type { Dnd35LevelUp } from "./levelUp/Dnd35LevelUp.ts";
-import type { ModuleEffects, ModuleRules } from "./module/index.ts";
 
 /** A projected power row with 3.5 spell-level and save-name fields. */
 type Dnd35ProjectedPower = Power & {
@@ -157,9 +157,8 @@ export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
 /** The 3.5 rules' module: its characters and kinds of character, and its parts, by their own types. */
 export interface Dnd35RulesetModule extends RulesetModule<DetailedCharacter, CharacterKind> {
   characters: Dnd35Characters;
-  effects: ModuleEffects;
+  entities: Dnd35Entities;
   levelUp: Dnd35LevelUp;
-  rules: ModuleRules;
 }
 
 export type InventoryEntry = CharacterInventory & {
@@ -228,14 +227,6 @@ export interface ProjectedCharacterData {
  * level's, and a new level has none, the loader placing it after the saved levels in the order given.
  */
 export type ProjectedCharacterLevel = Omit<CharacterLevel, "position"> & { position?: number };
-
-/** A property row a 3.5 effect writes for an entity: a skill's flags, a class level's base attack and skill points. */
-export type PropertyRecord = {
-  entityId: string;
-  entityType: string;
-  type: string;
-  value: string;
-};
 
 export type SkillWithRank = Skill & {
   characterLevelId: string;

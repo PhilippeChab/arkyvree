@@ -1,5 +1,5 @@
 import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/constants.ts";
-import type { WeaponFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
+import type { WeaponFields } from "@/engine/rulesets/dnd3.5/items/itemFields.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type CombatComponent from "./CombatComponent.ts";

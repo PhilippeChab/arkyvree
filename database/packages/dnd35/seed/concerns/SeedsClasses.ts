@@ -157,9 +157,17 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
     private async insertProperties(def: ClassSeed, klassId: string, levels: Levels) {
       const bonusSpellAbilityId = (def.bonusSpellAbility && this.ctx.abilityMap[def.bonusSpellAbility]) || null;
       await this.insertAll(propertiesInCustomization, [
-        ...toClassProperties(klassId, { bonusSpellAbilityId, casterType: def.casterType ?? null }),
+        ...this.propertyRows(
+          klassId,
+          "klasses",
+          toClassProperties({ bonusSpellAbilityId, casterType: def.casterType ?? null }),
+        ),
         ...levels.flatMap(({ id, level }) =>
-          toClassLevelProperties(id, { bab: BAB[def.bab](level), skills: def.skillPoints }),
+          this.propertyRows(
+            id,
+            "klass_levels",
+            toClassLevelProperties({ bab: BAB[def.bab](level), skills: def.skillPoints }),
+          ),
         ),
       ]);
     }

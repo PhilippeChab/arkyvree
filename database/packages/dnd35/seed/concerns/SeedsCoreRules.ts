@@ -30,7 +30,13 @@ export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
       );
       await this.db
         .insert(propertiesInCustomization)
-        .values(toRulesetProperties(this.ctx.rulesetId, { skillPointAbilityId: this.ctx.abilityMap["Intelligence"] }));
+        .values(
+          this.propertyRows(
+            this.ctx.rulesetId,
+            "rulesets",
+            toRulesetProperties({ skillPointAbilityId: this.ctx.abilityMap["Intelligence"] }),
+          ),
+        );
     }
 
     /** The languages. */
@@ -81,11 +87,15 @@ export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
       await this.insertAll(
         propertiesInCustomization,
         skills.flatMap(({ name, impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining }) =>
-          toSkillProperties(this.ctx.skillMap[name], {
-            impactedByWeight: impactedByWeight ?? false,
-            checkPenaltyMultiplier: checkPenaltyMultiplier ?? 1,
-            usableWithoutTraining: usableWithoutTraining ?? false,
-          }),
+          this.propertyRows(
+            this.ctx.skillMap[name],
+            "skills",
+            toSkillProperties({
+              impactedByWeight: impactedByWeight ?? false,
+              checkPenaltyMultiplier: checkPenaltyMultiplier ?? 1,
+              usableWithoutTraining: usableWithoutTraining ?? false,
+            }),
+          ),
         ),
       );
     }

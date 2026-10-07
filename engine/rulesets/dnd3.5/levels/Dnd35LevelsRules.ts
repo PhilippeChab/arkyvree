@@ -1,7 +1,6 @@
-import type { LevelsRules } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-export class Dnd35LevelsRules implements LevelsRules {
+export class Dnd35LevelsRules {
   /** The aptitude the general feats count toward, by its name, which a ruleset keeps (`Dnd35AptitudesRules`). */
   static readonly GENERAL_FEATS_APTITUDE = "General";
   /** Its slug: what the engine, the target paths (`aptitudes.general.*`) and the effects know it by. */

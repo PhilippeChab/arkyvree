@@ -4,7 +4,22 @@
  * caller hands it: nothing outside the engine imports anything else of it.
  */
 
-export { checkEquipping, describeCharacter, describePartialCharacter } from "./api/characters.ts";
+export { checkEquipping, describeCharacter, describePartialCharacter, openRacePicker } from "./api/characters.ts";
+export {
+  checkAptitudeEdit,
+  describeClass,
+  describeClassFeatPools,
+  describeClassLevels,
+  describeClassSpellLists,
+  describeClassSpells,
+  describeClassSpellsKnown,
+  describeSkills,
+  planClassLevelSave,
+  planItemSave,
+  planPowerSave,
+  planSkillDelete,
+  planSkillSave,
+} from "./api/entities.ts";
 export {
   checkCharacter,
   describeLevel,
@@ -20,5 +35,13 @@ export {
   planLevelEdit,
   planLevelUp,
 } from "./api/levelUp.ts";
-export type { CharacterInput, CharacterRows } from "./core/module/index.ts";
+export type {
+  CharacterInput,
+  CharacterRows,
+  EntityWrites,
+  GeneratedFeatRemoval,
+  GeneratedFeatsWrite,
+  PropertiesWrite,
+  RequirementWrite,
+} from "./core/module/index.ts";
 export type { RulesetView } from "./core/types.ts";

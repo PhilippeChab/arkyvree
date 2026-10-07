@@ -28,12 +28,12 @@ describe("A class's fields", () => {
     ).toBe("Arcane");
   });
 
-  test("are stored as a row per field the class has, which reads back as the fields", () => {
-    expect(toClassProperties("class-id", { bonusSpellAbilityId: null, casterType: null })).toEqual([]);
-    const rows = toClassProperties("class-id", { bonusSpellAbilityId: "wisdom-id", casterType: "Divine" });
+  test("are kept in a property per field the class has, which reads back as the fields", () => {
+    expect(toClassProperties({ bonusSpellAbilityId: null, casterType: null })).toEqual([]);
+    const rows = toClassProperties({ bonusSpellAbilityId: "wisdom-id", casterType: "Divine" });
     expect(rows).toEqual([
-      { entityId: "class-id", entityType: "klasses", type: KLASS_BONUS_SPELL_ABILITY_ID, value: "wisdom-id" },
-      { entityId: "class-id", entityType: "klasses", type: KLASS_CASTER_TYPE, value: "Divine" },
+      { type: KLASS_BONUS_SPELL_ABILITY_ID, value: "wisdom-id" },
+      { type: KLASS_CASTER_TYPE, value: "Divine" },
     ]);
     expect(readClassFields(rows)).toEqual({ bonusSpellAbilityId: "wisdom-id", casterType: "Divine" });
   });

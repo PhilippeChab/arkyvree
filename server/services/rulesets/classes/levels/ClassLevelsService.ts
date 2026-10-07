@@ -1,29 +1,32 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import { type RulesetData } from "@/engine/core/view/index.ts";
+import { describeClassFeatPools, describeClassLevels, planClassLevelSave, type RulesetView } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { KlassLevelFeats, KlassLevels, KlassLevelSaves, Properties } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { writeProperties, writeRequirement } from "@/server/services/rulesets/effectWrites.ts";
-import type { BaseRules } from "@/shared/enums.ts";
-import type { KlassLevel, KlassLevelFeat, Modifier, Property, Session } from "@/shared/relations.ts";
+import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
+import type { KlassLevel, Session } from "@/shared/relations.ts";
 
 import { ListsSpells } from "./concerns/ListsSpells.ts";
 
+/**
+ * A class level's body: the feats it grants, its saves' base bonuses, and the fields its ruleset's rules keep
+ * (`planClassLevelSave`).
+ */
+type ClassLevelBody = Parameters<typeof planClassLevelSave>[2] & {
+  feats?: Array<{ aptitudeId: string; featId: string; free?: boolean }>;
+  saves?: Array<{ base: number; saveId: string }>;
+};
+
 class ClassLevelsService extends include(Object, ListsSpells) {
-  private buildClassLevelDetail<L extends KlassLevel>(
-    ruleset: { baseRules: BaseRules },
-    rulesetData: RulesetData,
-    level: L,
-  ) {
-    const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+  private buildClassLevelDetail<L extends KlassLevel>(scope: RulesetView, level: L) {
+    const { rulesetData } = scope;
     const properties = rulesetData.propertiesByEntity.get(level.id) ?? [];
     const modifiers = rulesetData.modifiersBySource.get(level.id) ?? [];
     const requirements = rulesetData.requirementsByEntity.get(level.id) ?? [];
@@ -43,7 +46,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
     const savesData = levelSaves.map((ls) => ({ saveId: ls.saveId, base: ls.base }));
 
     return {
-      ...rules.classLevels.enrichWithProperties([level], properties)[0],
+      ...describeClassLevels(scope, [level])[0],
       feats: featsData,
       saves: savesData,
       modifiers,
@@ -53,18 +56,11 @@ class ClassLevelsService extends include(Object, ListsSpells) {
   }
 
   private async listClassLevels(rulesetId: string, classId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { rulesetData } = scope;
       const { sourceChain } = rulesetData.cow;
       const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-
-      const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
-
-      const levelProperties: Property[] = [];
-      for (const level of levels) {
-        const ps = rulesetData.propertiesByEntity.get(level.id);
-        if (ps) levelProperties.push(...ps);
-      }
 
       const enrichedLevels = levels.map((level) => {
         const levelFeats = rulesetData.klassLevelFeatsByKlassLevel.get(level.id) ?? [];
@@ -90,7 +86,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         };
       });
 
-      return rules.classLevels.enrichWithProperties(enrichedLevels, levelProperties);
+      return describeClassLevels(scope, enrichedLevels);
     });
   }
 
@@ -98,35 +94,26 @@ class ClassLevelsService extends include(Object, ListsSpells) {
     session: Session,
     rulesetId: string,
     classId: string,
-    body: {
-      bab: number;
-      feats?: Array<{ aptitudeId: string; featId: string; free?: boolean }>;
-      level: number;
-      saves?: Array<{ base: number; saveId: string }>;
-      skills: number;
-    },
+    body: ClassLevelBody & { level: number },
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           const { sourceChain } = rulesetData.cow;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
           const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+          const writes = planClassLevelSave(scope, klass, body);
 
           // Copy an inherited class: the new level row would otherwise belong to the parent ruleset's class.
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
-          const { effects } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-          const { feats, saves, bab, skills, ...levelData } = body;
-          const rows = await KlassLevels.create(tx, {
-            ...levelData,
-            klassId: targetKlassId,
-          });
+          const { feats, saves } = body;
+          const rows = await KlassLevels.create(tx, { level: body.level, klassId: targetKlassId });
           const klassLevel = rows[0];
-
-          await writeProperties(tx, effects.classLevels.properties(klassLevel.id, { bab, skills }));
+          const entity = { entityId: klassLevel.id, entityType: "klass_levels" } as const;
 
           if (feats && feats.length > 0) {
             for (const feat of feats) {
@@ -150,7 +137,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
             );
           }
 
-          await writeRequirement(tx, effects.classLevels.previousLevelRequirement(klassLevel, klass.name));
+          const properties = await writeEntityWrites(tx, scope, entity, writes);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -160,7 +147,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
             data: { entityName: klass.name, level: klassLevel.level },
           });
 
-          return { ...klassLevel, bab, skills };
+          return describeClassLevels(scope, [klassLevel], properties)[0];
         }),
     );
     RulesetCache.invalidate(rulesetId);
@@ -209,51 +196,23 @@ class ClassLevelsService extends include(Object, ListsSpells) {
   }
 
   async getClassLevel(rulesetId: string, classId: string, levelId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { rulesetData } = scope;
       const { sourceChain } = rulesetData.cow;
       const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
       const level = rulesetData.klassLevelsById.get(levelId);
       if (!level || level.klassId !== klass.id) throw new NotFoundError("Class level not found");
 
-      return this.buildClassLevelDetail(ruleset, rulesetData, level);
+      return this.buildClassLevelDetail(scope, level);
     });
   }
 
   async getClassLevelFeatPools(rulesetId: string, classId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-
-      const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-      const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
-
-      const levelModifiers: Modifier[] = [];
-      const levelFeats: KlassLevelFeat[] = [];
-      for (const level of levels) {
-        const ms = rulesetData.modifiersBySource.get(level.id);
-        if (ms) levelModifiers.push(...ms);
-        const lfs = rulesetData.klassLevelFeatsByKlassLevel.get(level.id);
-        if (lfs) levelFeats.push(...lfs);
-      }
-
-      // Stackable feats (e.g. "Bonus Feat (Fighter)") share one feat record linked
-      // to multiple klass levels, so we duplicate the modifier per level occurrence.
-      const remappedFeatModifiers: Modifier[] = [];
-      for (const lf of levelFeats) {
-        const mods = rulesetData.modifiersBySource.get(lf.featId);
-        if (!mods) continue;
-        for (const mod of mods) {
-          if (mod.sourceType !== "feats") continue;
-          remappedFeatModifiers.push({ ...mod, sourceId: lf.klassLevelId });
-        }
-      }
-
-      return rules.classLevels.enrichWithFeatPools(
-        levels,
-        [...levelModifiers, ...remappedFeatModifiers],
-        rulesetData.aptitudes,
-      );
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { sourceChain } = scope.rulesetData.cow;
+      const klass = findScopedEntity(scope.rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+      return describeClassFeatPools(scope, klass.id);
     });
   }
 
@@ -262,7 +221,8 @@ class ClassLevelsService extends include(Object, ListsSpells) {
   }
 
   async getClassLevelWithClassName(rulesetId: string, classLevelId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { rulesetData } = scope;
       const { sourceChain } = rulesetData.cow;
 
       const level = rulesetData.klassLevelsById.get(classLevelId);
@@ -272,29 +232,15 @@ class ClassLevelsService extends include(Object, ListsSpells) {
 
       // Its class's name, which its page shows, and the ruleset that holds its class: an inherited one's level is
       // inherited too
-      return this.buildClassLevelDetail(ruleset, rulesetData, {
-        ...level,
-        name: klass.name,
-        rulesetId: klass.rulesetId,
-      });
+      return this.buildClassLevelDetail(scope, { ...level, name: klass.name, rulesetId: klass.rulesetId });
     });
   }
 
-  async updateClassLevel(
-    session: Session,
-    rulesetId: string,
-    classId: string,
-    levelId: string,
-    body: {
-      bab?: number;
-      feats?: Array<{ aptitudeId: string; featId: string; free?: boolean }>;
-      saves?: Array<{ base: number; saveId: string }>;
-      skills?: number;
-    },
-  ) {
+  async updateClassLevel(session: Session, rulesetId: string, classId: string, levelId: string, body: ClassLevelBody) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           const { sourceChain } = rulesetData.cow;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
@@ -307,28 +253,12 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
 
-          const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-          const { feats, saves, bab, skills } = body;
+          const { feats, saves } = body;
+          const entity = { entityId: resolvedLevelId, entityType: "klass_levels" } as const;
 
-          if (bab !== undefined || skills !== undefined) {
-            // When the COW just happened, the new level's properties exist in
-            // the DB but not in rulesetData.propertiesByEntity (composed before
-            // the COW). Read straight from the DB so a partial body doesn't
-            // silently zero the unspecified field.
-            const currentProps =
-              resolvedLevelId === level.id
-                ? (rulesetData.propertiesByEntity.get(resolvedLevelId) ?? [])
-                : await Properties.findMany(tx, { entityIds: [resolvedLevelId], entityType: "klass_levels" });
-            const currentValues = rules.classLevels.readProperties(currentProps);
-
-            await writeProperties(
-              tx,
-              effects.classLevels.properties(resolvedLevelId, {
-                bab: bab ?? currentValues.bab,
-                skills: skills ?? currentValues.skills,
-              }),
-            );
-          }
+          // What it kept: a level the copy just made has its properties in the database, not in the view
+          const kept = await Properties.findMany(tx, { entityIds: [resolvedLevelId], entityType: "klass_levels" });
+          await writeEntityWrites(tx, scope, entity, planClassLevelSave(scope, klass, body, { properties: kept }));
 
           if (feats !== undefined) {
             await KlassLevelFeats.delete(tx, { klassLevelId: resolvedLevelId });
@@ -374,7 +304,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
             entityType: "klass_levels",
           });
 
-          return rules.classLevels.enrichWithProperties([{ ...level, id: resolvedLevelId }], finalProps)[0];
+          return describeClassLevels(scope, [{ ...level, id: resolvedLevelId }], finalProps)[0];
         }),
     );
     RulesetCache.invalidate(rulesetId);

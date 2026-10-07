@@ -1,12 +1,12 @@
 import { getTableName } from "drizzle-orm";
 
 import { aptitudesInRules } from "@/drizzle/schema.ts";
+import { checkAptitudeEdit } from "@/engine/index.ts";
 import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Aptitudes } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -61,7 +61,7 @@ class AptitudesService {
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
-          RulesetFactory.fromBaseRules(ruleset.baseRules).rules.aptitudes.validateNameKept(aptitude);
+          checkAptitudeEdit({ ruleset, rulesetData }, aptitude);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "aptitudes", aptitude);
@@ -130,7 +130,7 @@ class AptitudesService {
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
-          RulesetFactory.fromBaseRules(ruleset.baseRules).rules.aptitudes.validateNameKept(aptitude, body.name);
+          checkAptitudeEdit({ ruleset, rulesetData }, aptitude, body.name);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "aptitudes", aptitude);

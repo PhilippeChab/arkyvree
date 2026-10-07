@@ -54,7 +54,7 @@ describe("An item's fields", () => {
       const sourceItemId = own[0].sourceItemId;
       const template = sourceItemId ? (rowsByItem.get(sourceItemId) ?? []).filter((r) => !ownTypes.has(r.type)) : [];
       for (const stored of [own, [...template, ...own]]) {
-        const rebuilt = toItemProperties(itemId, readItemFields(stored));
+        const rebuilt = toItemProperties(readItemFields(stored));
         if (multiset(rebuilt).join("|") !== multiset(stored).join("|")) mismatches.push(itemId);
       }
     }

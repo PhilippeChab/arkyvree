@@ -1,57 +1,44 @@
 import { getTableName } from "drizzle-orm";
 
 import { skillsInRules } from "@/drizzle/schema.ts";
+import { describeSkills, planSkillDelete, planSkillSave } from "@/engine/index.ts";
 import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Skills } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { removeGeneratedFeat, writeGeneratedFeats, writeProperties } from "@/server/services/rulesets/effectWrites.ts";
-import type { Property, Session } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
+import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
+import type { Session } from "@/shared/relations.ts";
+
+/** A skill's body: its row's columns, and the fields its ruleset's rules keep (`planSkillSave`). */
+type SkillBody = Parameters<typeof planSkillSave>[1] & {
+  description?: string | null;
+  name: string;
+  primaryAbilityId: string;
+};
 
 class SkillsService {
-  async createSkill(
-    session: Session,
-    rulesetId: string,
-    body: {
-      checkPenaltyMultiplier: number;
-      description?: string | null;
-      impactedByWeight: boolean;
-      name: string;
-      primaryAbilityId: string;
-      usableWithoutTraining: boolean;
-    },
-  ) {
+  async createSkill(session: Session, rulesetId: string, body: SkillBody) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          if (stripSeparators(body.name) === "budget") throw new BadRequestError('"Budget" is a reserved skill name');
+          const writes = planSkillSave(scope, body);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "skills", body.name);
 
-          const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-
-          const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, ...skillData } = body;
-          const fields = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
-          const rows = await Skills.create(tx, { ...skillData, rulesetId });
+          const { name, description, primaryAbilityId } = body;
+          const rows = await Skills.create(tx, { name, description, primaryAbilityId, rulesetId });
           const skill = rows[0];
 
           if (tombstoneAncestorId) await edit.repointTombstone(tx, "skills", tombstoneAncestorId, skill.id);
 
-          await writeProperties(tx, effects.skills.properties(skill.id, fields));
-          await writeGeneratedFeats(
-            tx,
-            { ruleset, rulesetData },
-            effects.feats,
-            effects.skills.generatedFeats(body.name),
-          );
+          const properties = await writeEntityWrites(tx, scope, { entityId: skill.id, entityType: "skills" }, writes);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -61,7 +48,7 @@ class SkillsService {
             data: { entityName: skill.name },
           });
 
-          return { ...skill, ...rules.skills.normalizeFields(fields) };
+          return describeSkills(scope, [skill], properties)[0];
         }),
     );
     RulesetCache.invalidate(rulesetId);
@@ -71,7 +58,8 @@ class SkillsService {
   async deleteSkill(session: Session, rulesetId: string, skillId: string) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           const { sourceChain } = rulesetData.cow;
 
           const inUse = await hasCharacterPicks(tx, "skills", skillId, rulesetId);
@@ -82,8 +70,12 @@ class SkillsService {
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "skills", skill);
 
-          const { effects } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-          await removeGeneratedFeat(tx, { ruleset, rulesetData }, effects.skills.removedFeat(skill.name));
+          await writeEntityWrites(
+            tx,
+            scope,
+            { entityId: targetId, entityType: "skills" },
+            planSkillDelete(scope, skill),
+          );
 
           // FK CASCADE on klass_skills.skill_id wipes those join rows.
           // The database deletes its customizations with it.
@@ -106,14 +98,10 @@ class SkillsService {
   }
 
   async getSkill(rulesetId: string, skillId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
-
-      const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-      const properties = rulesetData.propertiesByEntity.get(skill.id) ?? [];
-      const [enriched] = rules.skills.enrichWithProperties([skill], properties);
-      return enriched;
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { sourceChain } = scope.rulesetData.cow;
+      const skill = findScopedEntity(scope.rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
+      return describeSkills(scope, [skill])[0];
     });
   }
 
@@ -127,70 +115,40 @@ class SkillsService {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { sourceChain } = scope.rulesetData.cow;
       const result = await Skills.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-
-      // Flatten per-skill properties from the cache into a single array for
-      // enrichWithProperties (which does the entity-type filtering internally).
-      const properties: Property[] = [];
-      for (const s of result.items) {
-        const ps = rulesetData.propertiesByEntity.get(s.id);
-        if (ps) properties.push(...ps);
-      }
-
-      return {
-        ...result,
-        items: rules.skills.enrichWithProperties(result.items, properties),
-      };
+      return { ...result, items: describeSkills(scope, result.items) };
     });
   }
 
-  async updateSkill(
-    session: Session,
-    rulesetId: string,
-    skillId: string,
-    body: {
-      checkPenaltyMultiplier: number;
-      description?: string | null;
-      impactedByWeight: boolean;
-      name: string;
-      primaryAbilityId: string;
-      updatedAt?: string;
-      usableWithoutTraining: boolean;
-    },
-  ) {
+  async updateSkill(session: Session, rulesetId: string, skillId: string, body: SkillBody & { updatedAt?: string }) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           const { sourceChain } = rulesetData.cow;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
-
-          if (stripSeparators(body.name) === "budget") throw new BadRequestError('"Budget" is a reserved skill name');
+          const writes = planSkillSave(scope, body, skill);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "skills", skill);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-          const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-          const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, updatedAt: _u, ...skillData } = body;
-          const fields = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
-          const rows = await Skills.update(tx, skillData, { id: targetId, expectedUpdatedAt });
+          const { name, description, primaryAbilityId } = body;
+          const rows = await Skills.update(
+            tx,
+            { name, description, primaryAbilityId },
+            { id: targetId, expectedUpdatedAt },
+          );
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedSkill = rows[0];
 
-          await writeProperties(tx, effects.skills.properties(targetId, fields));
-
-          if (skill.name !== body.name) {
-            const scope = { ruleset, rulesetData };
-            await removeGeneratedFeat(tx, scope, effects.skills.removedFeat(skill.name));
-            await writeGeneratedFeats(tx, scope, effects.feats, effects.skills.generatedFeats(body.name));
-          }
+          const properties = await writeEntityWrites(tx, scope, { entityId: targetId, entityType: "skills" }, writes);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -203,7 +161,7 @@ class SkillsService {
             },
           });
 
-          return { ...updatedSkill, ...rules.skills.normalizeFields(fields) };
+          return describeSkills(scope, [updatedSkill], properties)[0];
         }),
     );
     RulesetCache.invalidate(rulesetId);

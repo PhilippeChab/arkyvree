@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { addClassLevels } from "@/database/seeds/seedCharacter.ts";
-import { Dnd35SkillsEffects } from "@/engine/rulesets/dnd3.5/skills/Dnd35SkillsEffects.ts";
+import { planSkillDelete } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -19,7 +19,7 @@ import {
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
-import { removeGeneratedFeat } from "@/server/services/rulesets/effectWrites.ts";
+import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -34,7 +34,7 @@ import {
   createTestRuleset,
   createTestUserAndRuleset,
 } from "@/tests/support/rulesets.ts";
-import { getSeedCtx } from "@/tests/support/seed.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 function skill(abilityId: string, name: string, fields: Record<string, unknown> = {}) {
@@ -366,10 +366,10 @@ describe("an inherited skill's Skill Focus", () => {
 
   test("is cleaned up from the rules the caller loaded, without another lookup", async () => {
     const { fork } = await seededForkWithClimb();
-    await withRulesetScope(db, fork.id, async ({ ruleset, rulesetData }) => {
-      const { timing } = await measure(() =>
-        removeGeneratedFeat(db, { ruleset, rulesetData }, new Dnd35SkillsEffects().removedFeat("No generated feat")),
-      );
+    await withRulesetScope(db, fork.id, async (scope) => {
+      const entity = { entityId: NIL_UUID, entityType: "skills" } as const;
+      const writes = planSkillDelete(scope, { name: "No generated feat" });
+      const { timing } = await measure(() => writeEntityWrites(db, scope, entity, writes));
       expect(timing).toMatchObject({ queryCount: 0, cacheHits: 0, cacheMisses: 0 });
     });
   });

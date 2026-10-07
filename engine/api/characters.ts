@@ -30,3 +30,8 @@ export function describeCharacter(view: RulesetView, ...args: After<Characters["
 export function describePartialCharacter(view: RulesetView, ...args: After<Characters["describePartialCharacter"]>) {
   return charactersOf(view).describePartialCharacter(view, ...args);
 }
+
+/** The race picker for a new character of what its form says: each race of a page, with whether it can pick it. */
+export function openRacePicker(view: RulesetView, ...args: After<Characters["openRacePicker"]>) {
+  return charactersOf(view).openRacePicker(view, ...args);
+}

@@ -4,10 +4,11 @@ import type ClassesComponent from "@/engine/rulesets/dnd3.5/classes/ClassesCompo
 import type { ArmorsData } from "@/engine/rulesets/dnd3.5/combat/ArmorsComponent.ts";
 import type { ShieldsData } from "@/engine/rulesets/dnd3.5/combat/ShieldsComponent.ts";
 import { SIZE_HIDE_MOD } from "@/engine/rulesets/dnd3.5/constants.ts";
-import type { SkillFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import type { SkillFields } from "./skillFields.ts";
 
 type SkillsData = {
   [key: string]: {

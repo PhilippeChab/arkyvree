@@ -1,5 +1,4 @@
-import type { PowerFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
-import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
+import type { PropertyValue } from "@/engine/core/module/index.ts";
 import {
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
@@ -12,6 +11,20 @@ import {
   SPELL_SUBSCHOOL,
   SPELL_TARGET,
 } from "@/shared/dnd3.5/properties/index.ts";
+
+/** A power's fields its properties hold: a spell's school, components, range… */
+export interface PowerFields {
+  areaOfEffect?: string;
+  castingTime?: string;
+  components?: string[];
+  descriptors?: string[];
+  duration?: string;
+  rangeType?: string;
+  school?: string;
+  spellResistance?: string;
+  subschool?: string;
+  target?: string;
+}
 
 /** A power's fields that hold one value each, by the property type that stores it, in the order its rows are written. */
 const SINGLE_FIELD_TYPES = [
@@ -50,17 +63,12 @@ export function readPowerFields(properties: { type: string; value: string }[]): 
 }
 
 /**
- * A power's fields as the rows of its properties, what its effects store: a row per field with a value, one per
+ * A power's fields as the properties that keep them, what a save stores: one per field with a value, one per
  * descriptor and component, and none at all without a school (a power that isn't a spell has none).
  */
-export function toPowerProperties(powerId: string, fields: PowerFields): PropertyRecord[] {
+export function toPowerProperties(fields: PowerFields): PropertyValue[] {
   if (!fields.school) return [];
-  const row = (type: string, value: string): PropertyRecord => ({
-    entityId: powerId,
-    entityType: "powers",
-    type,
-    value,
-  });
+  const row = (type: string, value: string): PropertyValue => ({ type, value });
   return [
     ...SINGLE_FIELD_TYPES.flatMap(([field, type]) => (fields[field] ? [row(type, fields[field])] : [])),
     ...(fields.descriptors ?? []).map((descriptor) => row(SPELL_DESCRIPTOR, descriptor)),

@@ -1,12 +1,14 @@
-import type { ClassFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
-import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
+import type { PropertyValue } from "@/engine/core/module/index.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
+
+/** A class's fields its properties hold: the ability its bonus spells and spell DCs use, and the spells it casts. */
+export type ClassFields = { bonusSpellAbilityId: string | null; casterType: "Arcane" | "Divine" | null };
 
 /** The property types a class's fields are stored as. */
 export const CLASS_FIELD_PROPERTY_TYPES = [KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE];
 
 /**
- * A class's fields, read off the rows of its properties: each from the first row of its type (the effects' `properties` write
+ * A class's fields, read off the rows of its properties: each from the first row of its type (the seeds write
  * one), and a caster type only as one of the two the engine casts by.
  */
 export function readClassFields(properties: { type: string; value: string }[]): ClassFields {
@@ -18,14 +20,9 @@ export function readClassFields(properties: { type: string; value: string }[]): 
   };
 }
 
-/** A class's fields as the rows of its properties, one for each field it has: what its effects and the seeds store. */
-export function toClassProperties(klassId: string, fields: ClassFields): PropertyRecord[] {
-  const property = (type: string, value: string): PropertyRecord => ({
-    entityId: klassId,
-    entityType: "klasses",
-    type,
-    value,
-  });
+/** A class's fields as the properties that keep them, one for each field it has: what the seeds store. */
+export function toClassProperties(fields: ClassFields): PropertyValue[] {
+  const property = (type: string, value: string): PropertyValue => ({ type, value });
   return [
     ...(fields.bonusSpellAbilityId ? [property(KLASS_BONUS_SPELL_ABILITY_ID, fields.bonusSpellAbilityId)] : []),
     ...(fields.casterType ? [property(KLASS_CASTER_TYPE, fields.casterType)] : []),

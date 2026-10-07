@@ -3,7 +3,7 @@ import { type CharacterRows } from "@/engine/core/module/index.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesetView, TargetPathsTraverser } from "@/engine/core/types.ts";
 import type { Dnd35LoadedCharacterData } from "@/engine/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
-import { type SkillFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
+import type { SkillFields } from "@/engine/rulesets/dnd3.5/skills/skillFields.ts";
 import {
   type CustomizedFeat,
   type CustomizedKlassLevel,
