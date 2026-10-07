@@ -18,9 +18,8 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 
-const BASE_DIR = join(import.meta.dirname!, "../../");
-const GENERATOR = join(BASE_DIR, "tools/generate.ts");
-const SCRAPER = join(BASE_DIR, "tools/scraper/index.ts");
+const GENERATOR = join(import.meta.dirname!, "generate.ts");
+const SCRAPER = join(import.meta.dirname!, "scrape.ts");
 
 /**
  * Build CLI args for the scraper.
