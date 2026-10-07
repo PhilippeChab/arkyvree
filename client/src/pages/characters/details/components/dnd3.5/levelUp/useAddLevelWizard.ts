@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
-import { type InferRequestType, parseResponse } from "hono/client";
+import { parseResponse } from "hono/client";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -12,11 +12,14 @@ import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
 import { featPickString, fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
-import { availableFeatsGroupedQuery, availablePowersQuery, levelPreviewQuery } from "./levelUpQueries.ts";
+import {
+  availableFeatsGroupedQuery,
+  availablePowersQuery,
+  levelPreviewQuery,
+  type PickerLevel,
+} from "./levelUpQueries.ts";
 import type { BaseRules, SelectedKlass } from "./levelUpTypes.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
-
-type FinalizeJson = InferRequestType<(typeof rpc.api.characters.levels)[":characterId"]["finalize"]["$post"]>["json"];
 
 interface UseAddLevelWizardParams {
   baseRules: BaseRules;
@@ -353,6 +356,17 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     return ids.join(",");
   }, [previewQuery.data?.levelDetails, currentFeatSlotLevelIndex, abilityIncreases]);
 
+  // The level the next feat pick lands on, and what it's checked against: the feat list's, and a family's variants'
+  const featPicker: PickerLevel = {
+    classId: slotLevelDetail?.klassId ?? firstClass?.id,
+    level: slotLevelDetail?.level,
+    selectedFeatPicks: allSelectedFeatPickString,
+    pendingKlassLevelIds: pendingKlassLevelIdsUpToSlot,
+    pendingAbilityIds: pendingAbilityIdsUpToSlot,
+    // None of the picks is saved yet: they're all pending
+    pendingFeatPicks: allSelectedFeatPickString,
+  };
+
   const {
     items: groupedFeats,
     isLoading: isLoadingAvailableFeats,
@@ -360,15 +374,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     onScroll: handleFeatsScroll,
     isFetchingNextPage: isFetchingNextFeatsPage,
   } = useListboxQuery({
-    ...availableFeatsGroupedQuery(characterId, selectedAptitude, debouncedFeatSearch, {
-      classId: slotLevelDetail?.klassId ?? firstClass?.id,
-      level: slotLevelDetail?.level,
-      selectedFeatPicks: allSelectedFeatPickString,
-      pendingKlassLevelIds: pendingKlassLevelIdsUpToSlot,
-      pendingAbilityIds: pendingAbilityIdsUpToSlot,
-      // None of the picks is saved yet: they're all pending
-      pendingFeatPicks: allSelectedFeatPickString,
-    }),
+    ...availableFeatsGroupedQuery(characterId, selectedAptitude, debouncedFeatSearch, featPicker),
     enabled: open && activeStep === featsStep,
   });
 
@@ -399,9 +405,30 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     setAbilityIncreases({});
   }, [resetPicks]);
 
+  // Pool-level picks; the backend distributes them to the levels.
   const finalizeMutation = useMutation({
-    mutationFn: (json: FinalizeJson) =>
-      parseResponse(rpc.api.characters.levels[":characterId"].finalize.$post({ param: { characterId }, json })),
+    mutationFn: async ({ force }: { force: boolean }) => {
+      // The plan's levels as its preview lists them, which must have loaded, each with its HP set
+      const preview = previewQuery.data;
+      if (!preview) throw new Error("The plan hasn't finished loading");
+      const levels = preview.levelDetails.map((detail, i) => {
+        const hp = hpValues[i];
+        if (!hp) throw new Error("HP not selected");
+        return { klassId: detail.klassId, level: detail.level, hp, abilityId: abilityIncreases[i] ?? null };
+      });
+      return parseResponse(
+        rpc.api.characters.levels[":characterId"].finalize.$post({
+          param: { characterId },
+          json: {
+            levels,
+            skills: skillPointAllocations,
+            feats: pickIds(selectedFeats),
+            powers: pickIds(selectedPowers),
+            force,
+          },
+        }),
+      );
+    },
     onSuccess: async () => {
       await refreshAfterSave();
       snackbar.success(`Added ${formatCount(validClassCount, "level")}`);
@@ -413,45 +440,15 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
 
   const isLastStep = activeStep === ADD_STEP_CONTENT.length - 1;
 
-  // Pool-level picks; the backend distributes them to the levels.
-  const finalize = useCallback(
-    (force: boolean) => {
-      const preview = previewQuery.data;
-      if (!preview) return;
-
-      finalizeMutation.mutate({
-        levels: preview.levelDetails.map((d, i) => ({
-          klassId: d.klassId,
-          level: d.level,
-          hp: hpValues[i] ?? 1,
-          abilityId: abilityIncreases[i] ?? null,
-        })),
-        skills: skillPointAllocations,
-        feats: pickIds(selectedFeats),
-        powers: pickIds(selectedPowers),
-        force,
-      });
-    },
-    [
-      previewQuery.data,
-      hpValues,
-      abilityIncreases,
-      skillPointAllocations,
-      selectedFeats,
-      selectedPowers,
-      finalizeMutation,
-    ],
-  );
-
   const handleNext = useCallback(() => {
-    if (isLastStep) finalize(false);
+    if (isLastStep) finalizeMutation.mutate({ force: false });
     else setActiveStep((prev) => prev + 1);
-  }, [isLastStep, finalize, setActiveStep]);
+  }, [isLastStep, finalizeMutation, setActiveStep]);
 
   const handleForceSubmit = useCallback(() => {
     setValidationErrors([]);
-    finalize(true);
-  }, [finalize, setValidationErrors]);
+    finalizeMutation.mutate({ force: true });
+  }, [finalizeMutation, setValidationErrors]);
 
   const hasProgress = activeStep > 0 || classPlan.some((k) => k !== null);
 
@@ -528,8 +525,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     availableFeatsError,
     isFetchingNextFeatsPage,
     allKlassLevelIds,
-    firstClass,
-    lastLevel,
+    featPicker,
     handleFeatsScroll,
 
     // Powers (step 6)

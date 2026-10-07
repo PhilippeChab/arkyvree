@@ -33,6 +33,7 @@ import {
   type AptitudePool,
   availableFeatFamilyQuery,
   type FeatsData,
+  type PickerLevel,
   type SelectedFeat,
   withoutPick,
 } from "./levelUp/index.ts";
@@ -45,16 +46,12 @@ interface AutoGrantedFeatsProps {
 }
 
 interface FeatFamilyExpansionProps {
-  allSelectedFeatPickString?: string;
   aptitudeId: string;
   characterId: string;
-  editingLevelId?: string;
   family: string;
-  klassId: string;
-  klassLevel: number;
   onSelectedFeatsChange: (value: Record<string, SelectedFeat[]>) => void;
-  pendingLevelFeatPicks?: string;
-  pendingLevelKlassLevelIds?: string;
+  /** The level the family's row is checked at, so its variants are checked at it too. */
+  picker: PickerLevel;
   selectedAptitude: string;
   selectedFeats: Record<string, SelectedFeat[]>;
 }
@@ -82,26 +79,14 @@ function AutoGrantedFeats({ feats, defaultCollapsed }: AutoGrantedFeatsProps) {
 function FeatFamilyExpansion({
   characterId,
   aptitudeId,
-  klassId,
-  klassLevel,
   family,
-  editingLevelId,
-  allSelectedFeatPickString,
-  pendingLevelKlassLevelIds,
-  pendingLevelFeatPicks,
+  picker,
   selectedAptitude,
   selectedFeats,
   onSelectedFeatsChange,
 }: FeatFamilyExpansionProps) {
   const query = useInfiniteQuery({
-    ...availableFeatFamilyQuery(characterId, aptitudeId, family, {
-      classId: klassId,
-      level: klassLevel,
-      characterLevelId: editingLevelId,
-      selectedFeatPicks: allSelectedFeatPickString,
-      pendingKlassLevelIds: pendingLevelKlassLevelIds,
-      pendingFeatPicks: pendingLevelFeatPicks,
-    }),
+    ...availableFeatFamilyQuery(characterId, aptitudeId, family, picker),
     placeholderData: keepPreviousData,
   });
 
@@ -173,15 +158,7 @@ function FeatFamilyExpansion({
   );
 }
 
-export function LevelUpFeatsStep({
-  wizard,
-  characterId,
-  klassId,
-  klassLevel,
-  editingLevelId,
-  pendingLevelKlassLevelIds,
-  pendingLevelFeatPicks,
-}: LevelUpFeatsStepProps) {
+export function LevelUpFeatsStep({ wizard, characterId }: LevelUpFeatsStepProps) {
   const {
     featData,
     isLoadingFeats,
@@ -197,7 +174,7 @@ export function LevelUpFeatsStep({
     isFetchingNextFeatsPage,
     expandedFeatFamilies,
     toggleFeatFamily,
-    allSelectedFeatPickString,
+    featPicker,
     featSearch,
     setFeatSearch,
     handleFeatsScroll,
@@ -327,13 +304,8 @@ export function LevelUpFeatsStep({
                                 <FeatFamilyExpansion
                                   characterId={characterId}
                                   aptitudeId={selectedAptitude}
-                                  klassId={klassId}
-                                  klassLevel={klassLevel}
                                   family={family}
-                                  editingLevelId={editingLevelId}
-                                  allSelectedFeatPickString={allSelectedFeatPickString}
-                                  pendingLevelKlassLevelIds={pendingLevelKlassLevelIds}
-                                  pendingLevelFeatPicks={pendingLevelFeatPicks}
+                                  picker={featPicker}
                                   selectedAptitude={selectedAptitude}
                                   selectedFeats={selectedFeats}
                                   onSelectedFeatsChange={feats.onChange}
