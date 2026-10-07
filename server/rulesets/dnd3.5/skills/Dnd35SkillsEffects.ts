@@ -4,36 +4,12 @@ import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, Modifiers, Properties } from "@/server/repositories/index.ts";
 import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
-import type { PropertyRecord } from "@/server/rulesets/dnd3.5/types.ts";
-import type { SkillFlags, SkillsEffects } from "@/server/rulesets/engine/module/index.ts";
-import {
-  SKILL_CHECK_PENALTY_MULTIPLIER,
-  SKILL_IMPACTED_BY_WEIGHT,
-  SKILL_USABLE_WITHOUT_TRAINING,
-} from "@/shared/dnd3.5/properties/index.ts";
+import type { SkillFields, SkillsEffects } from "@/server/rulesets/engine/module/index.ts";
 
-import { normalizeSkillFlags } from "./skillFlags.ts";
+import { normalizeSkillFields, SKILL_FIELD_PROPERTY_TYPES, toSkillProperties } from "./skillFields.ts";
 import SkillsPaths from "./SkillsPaths.ts";
 
 export class Dnd35SkillsEffects implements SkillsEffects {
-  private buildProperties(skillId: string, flags: SkillFlags): PropertyRecord[] {
-    const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining } = normalizeSkillFlags(flags);
-    const property = (type: string, value: string): PropertyRecord => ({
-      entityId: skillId,
-      entityType: "skills",
-      type,
-      value,
-    });
-    return [
-      ...(impactedByWeight ? [property(SKILL_IMPACTED_BY_WEIGHT, "true")] : []),
-      // A skill takes the penalty once unless it says otherwise.
-      ...(checkPenaltyMultiplier !== 1
-        ? [property(SKILL_CHECK_PENALTY_MULTIPLIER, String(checkPenaltyMultiplier))]
-        : []),
-      ...(usableWithoutTraining ? [property(SKILL_USABLE_WITHOUT_TRAINING, "true")] : []),
-    ];
-  }
-
   async deleteFeats(tx: Db, scope: RulesetScope, skillName: string): Promise<void> {
     const { ruleset, rulesetData } = scope;
     const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
@@ -78,14 +54,10 @@ export class Dnd35SkillsEffects implements SkillsEffects {
     ]);
   }
 
-  async syncProperties(tx: Db, skillId: string, flags: SkillFlags): Promise<void> {
-    await Properties.delete(tx, {
-      entityIds: [skillId],
-      entityType: "skills",
-      types: [SKILL_IMPACTED_BY_WEIGHT, SKILL_CHECK_PENALTY_MULTIPLIER, SKILL_USABLE_WITHOUT_TRAINING],
-    });
+  async syncProperties(tx: Db, skillId: string, fields: SkillFields): Promise<void> {
+    await Properties.delete(tx, { entityIds: [skillId], entityType: "skills", types: SKILL_FIELD_PROPERTY_TYPES });
 
-    const records = this.buildProperties(skillId, flags);
+    const records = toSkillProperties(skillId, normalizeSkillFields(fields));
     if (records.length > 0) await Properties.createMany(tx, records);
   }
 }

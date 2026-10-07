@@ -12,7 +12,7 @@ import {
   Requirements,
 } from "@/server/repositories/index.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
-import type { SkillFlags } from "@/server/rulesets/engine/module/index.ts";
+import type { SkillFields } from "@/server/rulesets/engine/module/index.ts";
 import type {
   LoadedCharacterData,
   PreloadedCharacterData,
@@ -43,8 +43,8 @@ export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
   klassBonusSpellAbilityMap: Map<string, string>;
   klassCasterTypeMap: Map<string, "Arcane" | "Divine">;
   klassLevelProperties: Map<string, { bab: number; skills: number }>;
+  skillFields: Map<string, SkillFields>;
   skillPointAbilityId: string | null;
-  skillProperties: Map<string, SkillFlags>;
 }
 
 /** Resolves stored ids through the override map, when there is one. */

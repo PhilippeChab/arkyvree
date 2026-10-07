@@ -262,7 +262,7 @@ On update: changing BAB progression or skill points re-syncs the properties (del
 
 ### Skills
 
-Properties auto-generated from the skill form's fields in `SkillsEffects.syncProperties()`, and read back by `readSkillFlags` (`server/rulesets/dnd3.5/skills/skillFlags.ts`) for the skill API and the engine alike:
+Properties auto-generated from the skill form's fields in `SkillsEffects.syncProperties()`. They're a skill's fields: `SkillsRules.readProperties` reads them (`readSkillFields` in `server/rulesets/dnd3.5/skills/skillFields.ts`, which the skill API and the engine read with too), and the core rules' seeder writes them with `toSkillProperties`, as the effects do:
 - `SKILL_IMPACTED_BY_WEIGHT` — whether armor check penalty applies
 - `SKILL_CHECK_PENALTY_MULTIPLIER` — how many times over a skill armor weighs on takes the penalty (2 on Swim; absent means 1)
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed

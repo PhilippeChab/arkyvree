@@ -26,7 +26,7 @@ export type {
   RaceFields,
   RacesRules,
   RulesetRules,
-  SkillFlags,
+  SkillFields,
   SkillsRules,
   WeaponFields,
 } from "./rules.ts";
