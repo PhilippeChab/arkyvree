@@ -1,9 +1,7 @@
 /** A class's feats file (feats/classes/<slug>.ts): the feats its features are, and the domains it picks from. */
 
-import {
-  buildClassDomainPickFeats,
-  buildClassFeatSeeds,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
+import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/featSeeds.ts";
+import { buildClassDomainPickFeats } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/spellSlots.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { stringifyProperty } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { quote, toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";

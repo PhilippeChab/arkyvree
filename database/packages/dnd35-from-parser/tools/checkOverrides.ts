@@ -1,4 +1,4 @@
-import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
+import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/spellSlots.ts";
 import { generateClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/classFeatsFile.ts";
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import { resolveReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";

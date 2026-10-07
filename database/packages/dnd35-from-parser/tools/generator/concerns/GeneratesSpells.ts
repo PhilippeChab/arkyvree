@@ -1,11 +1,11 @@
 import { existsSync, readdirSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 
+import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/spellSlots.ts";
 import {
-  getClassSpells,
   getInheritedLevel,
   getInheritedLists,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
+} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/inheritedLists.ts";
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/spells.ts";
 import {
   type BaseGenerator,

@@ -31,6 +31,107 @@ const ARMOR_CATEGORIES = new Set<MagicItemCategory>(["specificArmor", "specificS
 /** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
 const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
 
+/**
+ * A magic item's seed. A specific armor or shield takes the stats its text gives (`readArmorStats`) and its
+ * enhancement bonus to AC, a specific weapon made from a base one its enhancement bonus to attack and damage
+ * (`readWeaponEnhancement`); an item made from a base one weighs what its base does (`baseWeights`, by name) unless it
+ * says otherwise.
+ */
+function buildMagicItem(
+  ref: MagicItemReference,
+  { name, det, override: ovr, slot }: ReturnType<typeof getSeededMagicItems>[number],
+  baseWeights: Record<string, string>,
+): ItemDef {
+  const costGp = ovr?.costGp ?? det.costGp;
+  // Find the raw entry for description
+  const rawEntry = ref.raw.find((r) => r.name === name);
+  const baseItemRaw =
+    ovr?.baseItem !== undefined
+      ? ovr.baseItem
+      : (det.baseItem ?? detectBaseItem(name, rawEntry?.description ?? "", det.category));
+  const sourceItem = baseItemRaw ?? undefined;
+
+  const description = normalizeDescription(ovr?.description ?? rawEntry?.description ?? "");
+  const stats = ARMOR_CATEGORIES.has(det.category) ? readArmorStats(description) : undefined;
+  const statedWeight = stats?.weight ?? (det.weight !== "0" ? det.weight : undefined);
+  const weight = ovr?.weight ?? statedWeight ?? (sourceItem && baseWeights[sourceItem]) ?? det.weight;
+
+  const properties = magicItemProperties(det, ovr, stats);
+  // An override's modifiers, an empty list too, win over those detected
+  const modifiers = ovr?.modifiers ?? [
+    ...(det.modifiers ?? []),
+    ...magicItemEnhancement(det, stats, sourceItem, description),
+  ];
+
+  // A template is made from nothing: its base armor's properties are its own, under those it changes
+  if (ovr?.template && (det.category !== "specificArmor" || !sourceItem)) {
+    throw new Error(`${name}: only a specific armor made from a base armor can be a template`);
+  }
+  return {
+    name: magicItemName(name, det.category),
+    description,
+    weight,
+    costGp,
+    type: det.itemType,
+    slot: slot && getCheckedValue(slot),
+    ...(ovr?.template && sourceItem
+      ? { isTemplate: true as const, properties: withOwnProperties(armorProperties(sourceItem), properties) }
+      : { properties, ...(sourceItem ? { sourceItem } : {}) }),
+    ...(modifiers.length ? { modifiers } : {}),
+  };
+}
+
+/**
+ * A magic item's enhancement bonus: an armor's or a shield's to its part of the AC, a weapon's made from a base one to
+ * its own attack and damage (not ammunition's, made from no weapon, which no hand holds).
+ */
+function magicItemEnhancement(
+  det: MagicItemReference["detected"][string],
+  stats: ReturnType<typeof readArmorStats> | undefined,
+  sourceItem: string | undefined,
+  description: string,
+): Modifier[] {
+  if (stats?.enhancement) {
+    return [
+      {
+        target: det.category === "specificArmor" ? "combat.ac.armor" : "combat.ac.shield",
+        operator: "add",
+        value: String(stats.enhancement),
+        valueType: "number",
+      },
+    ];
+  }
+  return det.category === "specificWeapon" && sourceItem ? weaponEnhancementModifiers(description) : [];
+}
+
+/** A ring's, a rod's or a staff's name, its category's word singular and in it ("Metamagic Rods" → "Metamagic Rod"). */
+function magicItemName(name: string, category: MagicItemCategory): string {
+  const categoryWord = CATEGORY_PREFIX[category];
+  if (!categoryWord) return name;
+  // Normalize plural category in name: "Metamagic Rods" → "Metamagic Rod"
+  const itemName = name
+    .replace(/\bRods\b/g, "Rod")
+    .replace(/\bRings\b/g, "Ring")
+    .replace(/\bStaffs\b/g, "Staff");
+  return new RegExp(`\\b${categoryWord}\\b`, "i").test(itemName) ? itemName : `${categoryWord} of ${itemName}`;
+}
+
+/** A magic item's properties: its aura and caster level, those its armor stats give, then its override's. */
+function magicItemProperties(
+  det: MagicItemReference["detected"][string],
+  ovr: ReturnType<typeof getSeededMagicItems>[number]["override"],
+  stats: ReturnType<typeof readArmorStats> | undefined,
+): Property[] {
+  const aura = ovr?.aura ?? det.aura;
+  const casterLevel = ovr?.casterLevel ?? det.casterLevel;
+  const properties: Property[] = [];
+  if (aura) properties.push({ type: MAGIC_AURA, value: aura });
+  if (casterLevel) properties.push({ type: MAGIC_CASTER_LEVEL, value: String(casterLevel) });
+  properties.push(...(stats?.properties ?? []));
+  if (ovr?.properties) properties.push(...ovr.properties);
+  return properties;
+}
+
 /** A weapon's enhancement bonus, as modifiers of the weapon holding it: its attack's and its damage's. */
 function weaponEnhancementModifiers(description: string): Modifier[] {
   const enhancement = readWeaponEnhancement(description);
@@ -46,12 +147,7 @@ function withOwnProperties(base: Property[], own: Property[]): Property[] {
   return [...base.filter((property) => !ownTypes.has(property.type)), ...own];
 }
 
-/**
- * The magic item seeds, by kind. A specific armor or shield takes the stats its text gives (`readArmorStats`) and its
- * enhancement bonus to AC, a specific weapon made from a base one its enhancement bonus to attack and damage
- * (`readWeaponEnhancement`); an item made from a base one weighs what its base does (`baseWeights`, by name) unless it
- * says otherwise.
- */
+/** The magic item seeds, by kind (`buildMagicItem`): an item of a kind the seed has none of throws. */
 export function buildMagicItemSeeds(
   ref: MagicItemReference,
   baseWeights: Record<string, string> = {},
@@ -74,77 +170,10 @@ export function buildMagicItemSeeds(
     staff: staffs,
   };
 
-  for (const { name, det, override: ovr, slot } of getSeededMagicItems(ref)) {
-    const costGp = ovr?.costGp ?? det.costGp;
-    // Find the raw entry for description
-    const rawEntry = ref.raw.find((r) => r.name === name);
-    const baseItemRaw =
-      ovr?.baseItem !== undefined
-        ? ovr.baseItem
-        : (det.baseItem ?? detectBaseItem(name, rawEntry?.description ?? "", det.category));
-    const sourceItem = baseItemRaw ?? undefined;
-
-    const description = normalizeDescription(ovr?.description ?? rawEntry?.description ?? "");
-    const stats = ARMOR_CATEGORIES.has(det.category) ? readArmorStats(description) : undefined;
-    const statedWeight = stats?.weight ?? (det.weight !== "0" ? det.weight : undefined);
-    const weight = ovr?.weight ?? statedWeight ?? (sourceItem && baseWeights[sourceItem]) ?? det.weight;
-
-    const aura = ovr?.aura ?? det.aura;
-    const casterLevel = ovr?.casterLevel ?? det.casterLevel;
-    const properties: Property[] = [];
-    if (aura) properties.push({ type: MAGIC_AURA, value: aura });
-    if (casterLevel) properties.push({ type: MAGIC_CASTER_LEVEL, value: String(casterLevel) });
-    properties.push(...(stats?.properties ?? []));
-    if (ovr?.properties) properties.push(...ovr.properties);
-    // Its enhancement bonus: an armor's or a shield's to its part of the AC, a weapon's to its own attack and damage
-    // (not ammunition's, made from no weapon, which no hand holds)
-    const enhancement: Modifier[] = stats?.enhancement
-      ? [
-          {
-            target: det.category === "specificArmor" ? "combat.ac.armor" : "combat.ac.shield",
-            operator: "add",
-            value: String(stats.enhancement),
-            valueType: "number",
-          },
-        ]
-      : det.category === "specificWeapon" && sourceItem
-        ? weaponEnhancementModifiers(description)
-        : [];
-    // An override's modifiers, an empty list too, win over those detected
-    const modifiers = ovr?.modifiers ?? [...(det.modifiers ?? []), ...enhancement];
-
-    const bucket = categoryBuckets[det.category];
-    if (!bucket) throw new Error(`${name}: the seed has no magic items of the category "${det.category}"`);
-
-    const categoryWord = CATEGORY_PREFIX[det.category];
-    let itemName = name;
-    if (categoryWord) {
-      // Normalize plural category in name: "Metamagic Rods" → "Metamagic Rod"
-      itemName = itemName
-        .replace(/\bRods\b/g, "Rod")
-        .replace(/\bRings\b/g, "Ring")
-        .replace(/\bStaffs\b/g, "Staff");
-      if (!new RegExp(`\\b${categoryWord}\\b`, "i").test(itemName)) {
-        itemName = `${categoryWord} of ${itemName}`;
-      }
-    }
-
-    // A template is made from nothing: its base armor's properties are its own, under those it changes
-    if (ovr?.template && (det.category !== "specificArmor" || !sourceItem)) {
-      throw new Error(`${name}: only a specific armor made from a base armor can be a template`);
-    }
-    bucket.push({
-      name: itemName,
-      description,
-      weight,
-      costGp,
-      type: det.itemType,
-      slot: slot && getCheckedValue(slot),
-      ...(ovr?.template && sourceItem
-        ? { isTemplate: true as const, properties: withOwnProperties(armorProperties(sourceItem), properties) }
-        : { properties, ...(sourceItem ? { sourceItem } : {}) }),
-      ...(modifiers.length ? { modifiers } : {}),
-    });
+  for (const entry of getSeededMagicItems(ref)) {
+    const bucket = categoryBuckets[entry.det.category];
+    if (!bucket) throw new Error(`${entry.name}: the seed has no magic items of the category "${entry.det.category}"`);
+    bucket.push(buildMagicItem(ref, entry, baseWeights));
   }
 
   return { magicArmor, magicShields, magicWeapons, wondrousItems, rings, rods, staffs };

@@ -3,11 +3,11 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
+import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/featSeeds.ts";
 import {
   buildClassDomainPickFeats,
-  buildClassFeatSeeds,
   getClassSpellLists,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
+} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/spellSlots.ts";
 import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/spells.ts";
 import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/wizardSchools.ts";
@@ -16,12 +16,91 @@ import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/Referen
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+type AptitudeSource = Pick<FeatSeed, "name" | "aptitudes" | "modifiers">;
+
+/**
+ * The aptitudes a feat's modifier names that no name in `names` has: a class feature's own ("Grace (Duelist)" picks
+ * from "Duelist Grace"), or its name's. Added to `names`.
+ */
+function addModifierAptitudes(feats: AptitudeSource[], names: Set<string>) {
+  for (const feat of feats) {
+    for (const mod of feat.modifiers ?? []) {
+      const slugMatch = mod.target.match(/^aptitudes\.([^.]+)\./);
+      if (!slugMatch) continue;
+      const slug = slugMatch[1];
+      if ([...names].some((n) => stripSeparators(n) === slug)) continue;
+      const featParenMatch = feat.name.match(/^(.+?)\s*\(([^)]+)\)$/);
+      if (featParenMatch) {
+        const candidate = `${featParenMatch[2]} ${featParenMatch[1]}`;
+        if (stripSeparators(candidate) === slug) names.add(candidate);
+        else if (stripSeparators(featParenMatch[1]) === slug) names.add(featParenMatch[1]);
+      }
+    }
+  }
+}
+
+/**
+ * The spell lists an extension's own spells are on: a sibling extension's list it keeps (each extension makes its own
+ * copy). None for the core rules.
+ */
+function bookSpellAptitudes(book: string): Set<string> {
+  const spellAptitudes = new Set<string>();
+  if (book === "srd") return spellAptitudes;
+  const spellRefPath = join(REFERENCE_DIR, book, "spells.json");
+  if (existsSync(spellRefPath)) {
+    const spellRef = ReferenceLoader.load(spellRefPath, "spell");
+    const { spells } = buildSpellSeeds(spellRef, book);
+    for (const spell of spells) {
+      for (const apt of spell.aptitudes) spellAptitudes.add(apt);
+    }
+  }
+  return spellAptitudes;
+}
+
+/** A book's domains' aptitudes (Cleric Domain, and their feat pools') and its wizard schools' spell lists. */
+function domainAndSchoolAptitudes(book: string): string[] {
+  const names: string[] = [];
+  // Domain aptitudes: the book's domains, and their feat pools'
+  const domains = buildBookDomainSeeds(book);
+  if (domains.seeds.length > 0) names.push("Cleric Domain");
+  for (const feat of domains.poolFeats) names.push(...feat.aptitudes);
+
+  // Wizard school aptitudes
+  const wsRefPath = join(REFERENCE_DIR, book, "wizardSchools.json");
+  if (existsSync(wsRefPath)) {
+    const wsRef = ReferenceLoader.load(wsRefPath, "wizardSchool");
+    for (const school of buildWizardSchoolSeeds(wsRef)) names.push(`${school.name} Specialist Spells`);
+  }
+  return names;
+}
+
+/**
+ * Removes from `names` the aptitudes other books' classes create (their class features and spell lists), but a
+ * sibling extension's spell list the book's spells are on (`spellAptitudes`).
+ */
+function removeOtherBooksAptitudes(names: Set<string>, book: string, spellAptitudes: Set<string>) {
+  for (const other of listReferenceBooks()) {
+    if (other === book) continue;
+    const isSibling = other !== "srd" && book !== "srd";
+    for (const { ref } of ReferenceLoader.loadClasses(other)) {
+      if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
+      for (const spellApt of getClassSpellLists(ref)) {
+        if (isSibling && spellAptitudes.has(spellApt)) {
+          names.add(spellApt);
+        } else {
+          names.delete(spellApt);
+        }
+      }
+    }
+  }
+}
+
 /** A book's aptitudes: its feats' (`feats`, and its classes'), its classes' and spell lists', its domains' feat pools. */
-export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[], book: string): string[] {
+export function collectAptitudes(feats: AptitudeSource[], book: string): string[] {
   const names = new Set<string>();
 
   // Collect all feats: standalone feats + class feature feats from reference JSONs
-  const allFeats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] = [...feats];
+  const allFeats: AptitudeSource[] = [...feats];
   for (const { ref } of ReferenceLoader.loadClasses(book)) {
     allFeats.push(...buildClassFeatSeeds(ref), ...buildClassDomainPickFeats(ref));
     if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
@@ -39,65 +118,9 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
   }
 
   // From feat modifier targets referencing aptitudes
-  for (const feat of allFeats) {
-    for (const mod of feat.modifiers ?? []) {
-      const slugMatch = mod.target.match(/^aptitudes\.([^.]+)\./);
-      if (!slugMatch) continue;
-      const slug = slugMatch[1];
-      if ([...names].some((n) => stripSeparators(n) === slug)) continue;
-      const featParenMatch = feat.name.match(/^(.+?)\s*\(([^)]+)\)$/);
-      if (featParenMatch) {
-        const candidate = `${featParenMatch[2]} ${featParenMatch[1]}`;
-        if (stripSeparators(candidate) === slug) names.add(candidate);
-        else if (stripSeparators(featParenMatch[1]) === slug) names.add(featParenMatch[1]);
-      }
-    }
-  }
-
-  // Domain aptitudes: the book's domains, and their feat pools'
-  const domains = buildBookDomainSeeds(book);
-  if (domains.seeds.length > 0) names.add("Cleric Domain");
-  for (const feat of domains.poolFeats) for (const apt of feat.aptitudes) names.add(apt);
-
-  // Wizard school aptitudes
-  const wsRefPath = join(REFERENCE_DIR, book, "wizardSchools.json");
-  if (existsSync(wsRefPath)) {
-    const wsRef = ReferenceLoader.load(wsRefPath, "wizardSchool");
-    for (const school of buildWizardSchoolSeeds(wsRef)) {
-      names.add(`${school.name} Specialist Spells`);
-    }
-  }
-
-  // For extension books: collect aptitudes referenced by this book's spells
-  // so we can keep sibling spell list aptitudes (each extension creates its own copy).
-  const spellAptitudes = new Set<string>();
-  if (book !== "srd") {
-    const spellRefPath = join(REFERENCE_DIR, book, "spells.json");
-    if (existsSync(spellRefPath)) {
-      const spellRef = ReferenceLoader.load(spellRefPath, "spell");
-      const { spells } = buildSpellSeeds(spellRef, book);
-      for (const spell of spells) {
-        for (const apt of spell.aptitudes) spellAptitudes.add(apt);
-      }
-    }
-  }
-
-  // Exclude aptitudes created by other books (class features + spell lists).
-  // For sibling extension spell lists, keep them if this book's spells reference them.
-  for (const other of listReferenceBooks()) {
-    if (other === book) continue;
-    const isSibling = other !== "srd" && book !== "srd";
-    for (const { ref } of ReferenceLoader.loadClasses(other)) {
-      if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
-      for (const spellApt of getClassSpellLists(ref)) {
-        if (isSibling && spellAptitudes.has(spellApt)) {
-          names.add(spellApt);
-        } else {
-          names.delete(spellApt);
-        }
-      }
-    }
-  }
+  addModifierAptitudes(allFeats, names);
+  for (const name of domainAndSchoolAptitudes(book)) names.add(name);
+  removeOtherBooksAptitudes(names, book, bookSpellAptitudes(book));
 
   return [...names].sort();
 }

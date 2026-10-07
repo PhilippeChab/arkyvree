@@ -8,10 +8,8 @@ import {
   WIZARD_SCHOOL_FEATS,
 } from "@/database/packages/dnd35-from-parser/generated/srd/feats/feats.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
-import {
-  buildClassFeatSeeds,
-  buildClassModifiers,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
+import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/featSeeds.ts";
+import { buildClassModifiers } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/modifiers.ts";
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { buildCoreSystemFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";

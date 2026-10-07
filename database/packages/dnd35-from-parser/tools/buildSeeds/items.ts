@@ -12,29 +12,64 @@ export type ItemSeedSets = {
   goods: ItemDef[];
 };
 
-export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
+/** The reference's armor and shields: those the generator has a definition of, unless skipped. */
+function buildArmorSeeds(ref: ItemReference): Pick<ItemSeedSets, "armor" | "shields"> {
+  const armor: ItemDef[] = [];
+  const shields: ItemDef[] = [];
+  for (const [srdName, det] of Object.entries(ref.detected.armor)) {
+    if (!det.generatorName) continue;
+    const item = correctedItem(ref, srdName, det);
+    if (!item) continue;
+    const { costGp, weight } = item;
+    const categoryLabel = det.proficiencyCategory.replace(/ armor$/i, "");
+    const description = item.description ?? `${det.type === "Shield" ? "A shield" : `${categoryLabel} armor`}.`;
+
+    const seed: ItemDef = {
+      name: det.generatorName,
+      description,
+      weight,
+      costGp,
+      type: det.type,
+      ...(det.type === "Armor" ? { slot: "Torso" as const } : { slot: "Off Hand" as const }),
+      properties: [], // filled at runtime via armorProperties()/shieldProperties()
+    };
+
+    if (det.type === "Shield") shields.push(seed);
+    else armor.push(seed);
+  }
+  return { armor, shields };
+}
+
+/** The reference's goods, unless skipped. */
+function buildGoodsSeeds(ref: ItemReference): ItemDef[] {
+  const goods: ItemDef[] = [];
+  for (const [name, det] of Object.entries(ref.detected.goods)) {
+    const item = correctedItem(ref, name, det);
+    if (!item) continue;
+
+    goods.push({
+      name,
+      description: item.description ?? "",
+      weight: item.weight,
+      costGp: item.costGp,
+      type: "Other",
+      slot: "Other" as const,
+      properties: [],
+    });
+  }
+  return goods;
+}
+
+/** The reference's weapons, by proficiency: those the generator has a definition of, unless skipped. */
+function buildWeaponSeeds(
+  ref: ItemReference,
+): Pick<ItemSeedSets, "simpleWeapons" | "martialWeapons" | "exoticWeapons"> {
   const simpleWeapons: ItemDef[] = [];
   const martialWeapons: ItemDef[] = [];
   const exoticWeapons: ItemDef[] = [];
-  const armor: ItemDef[] = [];
-  const shields: ItemDef[] = [];
-  const goods: ItemDef[] = [];
-
-  /** An item's cost, weight and description (its override's, else as detected), unless it's skipped. */
-  const corrected = (srdName: string, det: { costGp: string; weight: string }) => {
-    const override = ref.overrides?.[srdName];
-    if (override?.skip) return undefined;
-    return {
-      costGp: override?.costGp ?? det.costGp,
-      weight: override?.weight ?? det.weight,
-      description: override?.description,
-    };
-  };
-
-  // Build weapons
   for (const [srdName, det] of Object.entries(ref.detected.weapons)) {
     if (!det.generatorName) continue;
-    const item = corrected(srdName, det);
+    const item = correctedItem(ref, srdName, det);
     if (!item) continue;
     const { costGp, weight } = item;
     // Find the raw entry for category info
@@ -56,45 +91,20 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
     else if (det.proficiency === "Martial") martialWeapons.push(seed);
     else exoticWeapons.push(seed);
   }
+  return { simpleWeapons, martialWeapons, exoticWeapons };
+}
 
-  // Build armor & shields
-  for (const [srdName, det] of Object.entries(ref.detected.armor)) {
-    if (!det.generatorName) continue;
-    const item = corrected(srdName, det);
-    if (!item) continue;
-    const { costGp, weight } = item;
-    const categoryLabel = det.proficiencyCategory.replace(/ armor$/i, "");
-    const description = item.description ?? `${det.type === "Shield" ? "A shield" : `${categoryLabel} armor`}.`;
+/** An item's cost, weight and description (its override's, else as detected), unless it's skipped. */
+function correctedItem(ref: ItemReference, srdName: string, det: { costGp: string; weight: string }) {
+  const override = ref.overrides?.[srdName];
+  if (override?.skip) return undefined;
+  return {
+    costGp: override?.costGp ?? det.costGp,
+    weight: override?.weight ?? det.weight,
+    description: override?.description,
+  };
+}
 
-    const seed: ItemDef = {
-      name: det.generatorName,
-      description,
-      weight,
-      costGp,
-      type: det.type,
-      ...(det.type === "Armor" ? { slot: "Torso" as const } : { slot: "Off Hand" as const }),
-      properties: [], // filled at runtime via armorProperties()/shieldProperties()
-    };
-
-    if (det.type === "Shield") shields.push(seed);
-    else armor.push(seed);
-  }
-
-  // Build goods
-  for (const [name, det] of Object.entries(ref.detected.goods)) {
-    const item = corrected(name, det);
-    if (!item) continue;
-
-    goods.push({
-      name,
-      description: item.description ?? "",
-      weight: item.weight,
-      costGp: item.costGp,
-      type: "Other",
-      slot: "Other" as const,
-      properties: [],
-    });
-  }
-
-  return { simpleWeapons, martialWeapons, exoticWeapons, armor, shields, goods };
+export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
+  return { ...buildWeaponSeeds(ref), ...buildArmorSeeds(ref), goods: buildGoodsSeeds(ref) };
 }
