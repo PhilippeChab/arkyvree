@@ -33,7 +33,7 @@ database/packages/
     ├── content/          # What the data is written with: a folder per kind of content, its types and builders
     │   ├── customization/    # Requirement, modifier and property types; eq(), gte(), or(), feat(), bonus()…
     │   ├── items/            # ItemDef; weapon, armor and shield properties and proficiencies (simple(), martial()…)
-    │   ├── classes/          # ClassSeed; the class level each of a class's spell levels opens at
+    │   ├── classes/          # ClassSeed
     │   ├── feats/, spells/, races/, domains/   # FeatSeed; PowerSeed, SpellSeed; RaceDefinition; DomainDefinition
     │   ├── wizardSchools/    # WizardSchoolDefinition; the wizard's school feats
     │   ├── bonds/            # BondContent; "a Cat", "an Owl" for the bonds' descriptions
@@ -48,6 +48,7 @@ database/packages/
         ├── BaseSeeder.ts     # A seeder's core: its database, its context (SeedContext), the rows and inserts every step shares
         ├── RulesetSeeder.ts  # createCore, createExtension; seedCore, seedBook: the steps made of steps
         ├── concerns/         # A step per kind of row: SeedsFeats, SeedsClasses, CopiesOnWrite…
+        └── spellTable.ts     # A spellcaster's table: the class level each of its spell levels opens at
 
 database/packages/dnd35-from-parser/
 ├── reference/            # Scraped JSON (raw + overrides)
