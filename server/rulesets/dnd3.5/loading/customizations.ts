@@ -1,14 +1,14 @@
 /** What each loaded entity carries: its properties, modifiers and requirements, and the character's modifiers in order. */
 
-import type { RulesetData } from "@/engine/core/view/index.ts";
-import { readClassLevelFields } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";
 import type {
   CustomizedFeat,
   CustomizedKlassLevel,
   CustomizedPower,
   CustomizedRace,
   InventoryEntry,
-} from "@/server/rulesets/engine/types.ts";
+} from "@/engine/core/types.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
+import { readClassLevelFields } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";
 import type { FeatWithAptitudes, KlassLevel, Modifier, Race, Requirement } from "@/shared/relations.ts";
 
 import type { SharedCharacterData } from "./DetailedCharacterDataLoader.ts";

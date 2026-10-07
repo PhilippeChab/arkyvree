@@ -1,3 +1,4 @@
+import type { CustomizedRace } from "@/engine/core/types.ts";
 import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import {
   CARRYING_CAPACITY,
@@ -8,7 +9,6 @@ import {
   SIZE_CARRY_MULTIPLIERS,
 } from "@/server/rulesets/dnd3.5/constants.ts";
 import { readRaceFields } from "@/server/rulesets/dnd3.5/races/raceFields.ts";
-import type { CustomizedRace } from "@/server/rulesets/engine/types.ts";
 import type { CharacterInventory, Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 type RawInventoryEntry = CharacterInventory & {

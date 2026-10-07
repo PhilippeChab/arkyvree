@@ -128,7 +128,7 @@ requirements: [gte("skills.knowledge*.rank", 5)]
 requirements: [gte("skills.craft*.rank", 10)]
 ```
 
-The `*` suffix matches any key starting with the prefix. This is handled by the engine's path walk (`PathTraverser`, `server/rulesets/engine/paths/`).
+The `*` suffix matches any key starting with the prefix. This is handled by the engine's path walk (`PathTraverser`, `engine/core/paths/`).
 
 A skill's name without the `*` reaches its subtypes too: next to the skill of that name (`skills.craft.rank`, Craft and each Craft (…)), or alone when no skill has it (`skills.knowledge.rank`: implicit prefix expansion). Only skills: anywhere else a name reaches its own entry only. A feat's name is that feat, not the feats whose names it starts (`feats.dodge.possessed` isn't met by Dodge Bonus (Swashbuckler)), and names nothing when no feat has it (`feats.light.possessed`, not Lightning Reflexes). A family of feats is checked by its group.
 

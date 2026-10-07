@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Components } from "@/engine/core/types.ts";
 import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import type { Components } from "@/server/rulesets/engine/types.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 
 const targetPaths = new Dnd35TargetPaths();

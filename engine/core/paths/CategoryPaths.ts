@@ -1,5 +1,5 @@
+import type { Components, TargetPathsInterface, TraversePathResult } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Components, TargetPathsInterface, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
 
 import type { PathCategory } from "./PathCategory.ts";

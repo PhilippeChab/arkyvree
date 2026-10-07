@@ -1,8 +1,8 @@
+import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { parseAptitudePool, parseAptitudeSpellLevel } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 import { collectClassLists } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { ClassLevelFields, ClassLevelsRules } from "@/server/rulesets/engine/module/index.ts";
-import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { readClassLevelFields } from "./classLevelFields.ts";

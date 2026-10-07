@@ -1,4 +1,4 @@
-import type { TargetPathsInterface } from "@/server/rulesets/engine/types.ts";
+import type { TargetPathsInterface } from "@/engine/core/types.ts";
 import type { PathCompletion, TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
 import { capitalize } from "@/shared/text.ts";
 

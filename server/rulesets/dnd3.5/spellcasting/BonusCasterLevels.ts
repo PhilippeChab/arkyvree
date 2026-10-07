@@ -1,11 +1,11 @@
+import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
+import type { Components, CustomizedFeat, CustomizedKlassLevel } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import AptitudesPaths from "@/server/rulesets/dnd3.5/aptitudes/AptitudesPaths.ts";
 import { parseAptitudeSpellLevel } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 import ClassesPaths from "@/server/rulesets/dnd3.5/classes/ClassesPaths.ts";
-import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
-import type { Components, CustomizedFeat, CustomizedKlassLevel } from "@/server/rulesets/engine/types.ts";
 import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";

@@ -1,11 +1,11 @@
+import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts";
+import PathTraverser from "@/engine/core/paths/PathTraverser.ts";
+import { collectPropertySlugs } from "@/engine/core/paths/propertySlugs.ts";
+import { readComponent } from "@/engine/core/paths/readComponent.ts";
+import type { Components, TraversePathResult } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import { UNARMED_STRIKE } from "@/server/rulesets/dnd3.5/constants.ts";
-import type { GetterOf, PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
-import PathTraverser from "@/server/rulesets/engine/paths/PathTraverser.ts";
-import { collectPropertySlugs } from "@/server/rulesets/engine/paths/propertySlugs.ts";
-import { readComponent } from "@/server/rulesets/engine/paths/readComponent.ts";
-import type { Components, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { ARMOR_TYPE, SHIELD_TYPE, WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";

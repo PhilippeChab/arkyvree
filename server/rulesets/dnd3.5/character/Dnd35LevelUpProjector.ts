@@ -1,10 +1,10 @@
+import type { ProjectedCharacterLevel } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
 import { readClassLevelFields } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";
 import { readFeatFields } from "@/server/rulesets/dnd3.5/feats/featFields.ts";
 import type { Dnd35LevelUpProjector as Dnd35LevelUpProjectorInterface } from "@/server/rulesets/dnd3.5/types.ts";
-import type { ProjectedCharacterLevel } from "@/server/rulesets/engine/types.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import type { KlassLevel, Requirement } from "@/shared/relations.ts";

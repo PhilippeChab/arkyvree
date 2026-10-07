@@ -9,9 +9,10 @@
  * inherit a dialect that doesn't apply to them.
  */
 
+import type { LevelUpProjector, ProjectedCharacterData } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { LevelUpProjector, ProjectedCharacterData, RulesetModule } from "@/server/rulesets/engine/types.ts";
+import type { RulesetModule } from "@/server/rulesets/engine/types.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Power, Skill } from "@/shared/relations.ts";
 

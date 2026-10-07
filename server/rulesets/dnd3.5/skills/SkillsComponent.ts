@@ -1,10 +1,10 @@
+import type { ValidationIssue } from "@/engine/core/types.ts";
 import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import type { ArmorsData } from "@/server/rulesets/dnd3.5/combat/ArmorsComponent.ts";
 import type { ShieldsData } from "@/server/rulesets/dnd3.5/combat/ShieldsComponent.ts";
 import { SIZE_HIDE_MOD } from "@/server/rulesets/dnd3.5/constants.ts";
 import type { SkillFields } from "@/server/rulesets/engine/module/index.ts";
-import type { ValidationIssue } from "@/server/rulesets/engine/types.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";

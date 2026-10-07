@@ -2,12 +2,12 @@
  * Feats a level-up can pick: those available for an aptitude pool, flat or grouped by feat family.
  */
 
+import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Feats } from "@/server/repositories/index.ts";
 import { type Dnd35ProjectedCharacterData, parseAptitudePool } from "@/server/rulesets/dnd3.5/index.ts";
-import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";

@@ -1,3 +1,6 @@
+import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
+import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
+import type { PreloadedCharacterData, PreloadedRulesetData } from "@/engine/core/types.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, db, withCowContext } from "@/server/database/index.ts";
@@ -7,9 +10,6 @@ import { readFeatFields } from "@/server/rulesets/dnd3.5/feats/featFields.ts";
 import FeatsPaths from "@/server/rulesets/dnd3.5/feats/FeatsPaths.ts";
 import { type Dnd35LoadedCharacterData } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
 import PowersPaths from "@/server/rulesets/dnd3.5/powers/PowersPaths.ts";
-import ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
-import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
-import type { PreloadedCharacterData, PreloadedRulesetData } from "@/server/rulesets/engine/types.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";

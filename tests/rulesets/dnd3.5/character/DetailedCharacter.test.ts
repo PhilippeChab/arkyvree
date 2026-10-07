@@ -24,6 +24,8 @@ import {
   powersInRules,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
+import { hasValueType } from "@/engine/core/paths/literalValue.ts";
+import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -46,8 +48,6 @@ import {
   buildFullCharacterResponse,
   buildVirtualEntities,
 } from "@/server/rulesets/dnd3.5/response/buildCharacterResponse.ts";
-import { hasValueType } from "@/server/rulesets/engine/paths/literalValue.ts";
-import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import {
   ARMOR_AC_BONUS,

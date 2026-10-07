@@ -1,3 +1,4 @@
+import type ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import AptitudesComponent from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import BondsComponent from "@/server/rulesets/dnd3.5/bonded/BondsComponent.ts";
@@ -16,7 +17,6 @@ import PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts"
 import SavingThrowsComponent from "@/server/rulesets/dnd3.5/saves/SavingThrowsComponent.ts";
 import SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
 import SpellcastingComponent from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingComponent.ts";
-import type ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
 import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
 
 /** The parts a 3.5 character is built from, by the key its target paths reach each by. */

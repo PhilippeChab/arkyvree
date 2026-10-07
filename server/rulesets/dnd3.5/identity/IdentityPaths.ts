@@ -1,6 +1,6 @@
+import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
-import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import {
   getNumericOperators,
   MODIFIER_OPERATORS,
