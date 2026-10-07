@@ -53,11 +53,8 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     rulesetId: ruleset.id,
     sectionName: "powers",
     label: "Spell",
-    createFn: async (data) => {
-      if (!data.aptitudes?.length) throw new Error("At least one aptitude must be selected");
-
-      return parseResponse(rpc.api.rulesets[":id"].powers.$post({ param: { id: ruleset.id }, json: data }));
-    },
+    createFn: async (data) =>
+      parseResponse(rpc.api.rulesets[":id"].powers.$post({ param: { id: ruleset.id }, json: data })),
     onCreateSuccess: (created) => openEntity(`powers/${created.id}/customization`),
   });
 
@@ -158,7 +155,13 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Spell" maxWidth="md" fixedHeight>
-        <SpellFormFields form={createForm} rulesetId={ruleset.id} saves={createSaves} savesError={createSavesError} />
+        <SpellFormFields
+          form={createForm}
+          rulesetId={ruleset.id}
+          saves={createSaves}
+          savesError={createSavesError}
+          aptitudesRequired
+        />
       </CreateDialog>
     </SectionContent>
   );

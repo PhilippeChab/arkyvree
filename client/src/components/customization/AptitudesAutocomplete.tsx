@@ -1,6 +1,7 @@
 import { Autocomplete, Chip, TextField } from "@mui/material";
 import { type InferResponseType } from "hono/client";
 import { type Ref } from "react";
+import type { FieldError } from "react-hook-form";
 
 import { type rpc } from "@/client/src/services/rpc.ts";
 
@@ -18,6 +19,7 @@ interface AptitudeAutocompleteProps {
 
 interface AptitudesAutocompleteProps {
   disabled?: boolean;
+  error?: FieldError;
   /** Its form field's `ref`, so a failed submit focuses it. */
   inputRef?: Ref<HTMLInputElement>;
   onChange: (aptitudes: Aptitude[]) => void;
@@ -65,6 +67,7 @@ export function AptitudesAutocomplete({
   disabled,
   scope,
   inputRef,
+  error,
 }: AptitudesAutocompleteProps) {
   const { fetchedOptions, autocompleteProps } = useAptitudeOptions(rulesetId, scope);
 
@@ -86,7 +89,9 @@ export function AptitudesAutocomplete({
           return <Chip key={key} label={option.name} size="small" {...chipProps} />;
         })
       }
-      renderInput={(params) => <TextField {...params} inputRef={inputRef} label="Aptitudes" />}
+      renderInput={(params) => (
+        <TextField {...params} inputRef={inputRef} label="Aptitudes" error={!!error} helperText={error?.message} />
+      )}
     />
   );
 }

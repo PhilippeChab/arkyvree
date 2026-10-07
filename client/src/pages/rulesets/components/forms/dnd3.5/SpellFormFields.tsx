@@ -10,7 +10,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
 import type { RulesetSave } from "@/client/src/hooks/index.ts";
-import { NAME_RULES } from "@/client/src/lib/validation.ts";
+import { APTITUDES_RULES, NAME_RULES, readNumberInput } from "@/client/src/lib/validation.ts";
 import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/forms/useAptitudeLookup.ts";
 import {
   MAX_SPELL_LEVEL,
@@ -33,6 +33,8 @@ import {
 type Save = RulesetSave;
 
 interface SpellFormFieldsProps {
+  /** A new spell needs an aptitude; an existing one may lose its own. */
+  aptitudesRequired?: boolean;
   form: UseFormReturn<SpellFormData>;
   hideProperties?: boolean;
   /** Aptitudes the form may already hold (the spell's own), so they show by name. */
@@ -58,21 +60,13 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
   return (
     <>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <SelectField
-          control={form.control}
-          name="school"
-          label="School"
-          options={SPELL_SCHOOLS}
-          emptyLabel="None"
-          emptyValue=""
-        />
+        <SelectField control={form.control} name="school" label="School" options={SPELL_SCHOOLS} emptyLabel="None" />
         <SelectField
           control={form.control}
           name="subschool"
           label="Subschool"
           options={SPELL_SUBSCHOOLS}
           emptyLabel="None"
-          emptyValue=""
         />
       </Stack>
       <TagsField form={form} name="descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
@@ -90,7 +84,6 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
           label="Range"
           options={SPELL_RANGE_TYPES}
           emptyLabel="None"
-          emptyValue=""
         />
       </Stack>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -123,7 +116,6 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
           label="Spell Resistance"
           options={SPELL_RESISTANCE_OPTIONS}
           emptyLabel="None"
-          emptyValue=""
         />
       </Stack>
       <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />
@@ -164,14 +156,17 @@ export function SpellFormFields({
   savesError,
   hideProperties,
   knownAptitudes = [],
+  aptitudesRequired = false,
 }: SpellFormFieldsProps) {
   // Aptitudes and their levels live in the form, sorted by aptitude name.
   const aptitudes = useAptitudeLookup(knownAptitudes);
   const { field, fieldState } = useController({
     control: form.control,
     name: "aptitudes",
-    rules: { validate: areSpellLevelsValid },
+    rules: { ...(aptitudesRequired && APTITUDES_RULES), validate: areSpellLevelsValid },
   });
+  // An empty list is the list's error; a level's is its input's
+  const levelsInvalid = fieldState.error?.type === "validate";
   const selected = field.value ?? [];
   const selectedAptitudes = aptitudes.resolve(selected.map((a) => a.id));
   const setSelected = (next: SpellAptitude[]) => field.onChange(next);
@@ -200,6 +195,7 @@ export function SpellFormFields({
       <AptitudesAutocomplete
         rulesetId={rulesetId}
         inputRef={field.ref}
+        error={levelsInvalid ? undefined : fieldState.error}
         value={selectedAptitudes}
         onChange={(next) => {
           aptitudes.remember(next);
@@ -221,10 +217,10 @@ export function SpellFormFields({
                   size="small"
                   slotProps={{ htmlInput: { min: 0, max: MAX_SPELL_LEVEL } }}
                   value={levelOf(apt.id) ?? ""}
-                  error={!!fieldState.error && spellLevelError(levelOf(apt.id)) !== undefined}
-                  helperText={!!fieldState.error && spellLevelError(levelOf(apt.id))}
+                  error={levelsInvalid && spellLevelError(levelOf(apt.id)) !== undefined}
+                  helperText={levelsInvalid && spellLevelError(levelOf(apt.id))}
                   onChange={(e) => {
-                    const level = e.target.value === "" ? undefined : parseInt(e.target.value);
+                    const level = readNumberInput(e.target.value);
                     setSelected(selected.map((a) => (a.id === apt.id ? spellAptitude(a.id, level) : a)));
                   }}
                   sx={{ width: 80 }}

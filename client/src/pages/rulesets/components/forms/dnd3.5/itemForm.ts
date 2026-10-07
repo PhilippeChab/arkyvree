@@ -16,8 +16,6 @@ export type TemplateType = NonNullable<
   InferRequestType<(typeof rpc.api.rulesets)[":id"]["templates"]["$get"]>["query"]["type"]
 >;
 
-export const DECIMAL_PATTERN = { value: /^(\d+\.?\d*|\.\d+)?$/, message: "Must be a number" };
-
 function parseNumericField(value: string | undefined): number | undefined {
   if (value === undefined || value.trim() === "") return undefined;
   const n = Number(value);
@@ -37,10 +35,10 @@ export function toItemForm(
     description: item.description ?? "",
     costGp: formatDecimal(item.costGp) ?? "",
     weight: formatDecimal(item.weight) ?? "",
-    type: item.type,
-    slot: item.slot ?? undefined,
+    type: item.type ?? "",
+    slot: item.slot ?? "",
     isTemplate: item.isTemplate,
-    sourceItemId: item.isTemplate ? undefined : (item.sourceItemId ?? undefined),
+    sourceItemId: item.isTemplate ? "" : (item.sourceItemId ?? ""),
   };
 }
 

@@ -8,11 +8,11 @@ import {
   NameField,
   SelectField,
 } from "@/client/src/components/common/index.ts";
-import { NAME_RULES } from "@/client/src/lib/validation.ts";
+import { DECIMAL_RULES, NAME_RULES } from "@/client/src/lib/validation.ts";
 import { ITEM_TYPE_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
-import { DECIMAL_PATTERN, isTemplateType, type ItemFormInternal, type TemplateType } from "./itemForm.ts";
+import { isTemplateType, type ItemFormInternal, type TemplateType } from "./itemForm.ts";
 import { itemTemplatesQuery } from "./itemFormQueries.ts";
 
 interface ItemFormFieldsProps {
@@ -29,9 +29,6 @@ interface TemplateSelectorProps {
   type: TemplateType;
 }
 
-/** A cost or a weight: a decimal number, or empty. */
-const DECIMAL_RULES = { pattern: DECIMAL_PATTERN };
-
 function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorProps) {
   const { data: templates, isLoading, error } = useQuery(itemTemplatesQuery(rulesetId, type));
 
@@ -44,7 +41,6 @@ function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorP
         label={`${type} Template`}
         options={templates?.map((t) => ({ value: t.id, label: t.name })) ?? []}
         emptyLabel="None"
-        emptyValue=""
         disabled={isLoading || disabled}
       />
       {!!error && <LoadError what="Templates" error={error} />}
@@ -95,7 +91,6 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
         label="Item Type"
         options={ITEM_TYPE_OPTIONS}
         emptyLabel="None"
-        emptyValue=""
         onChange={handleTypeChange}
         disabled={lockType}
       />
@@ -108,7 +103,6 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
           label="Slot"
           options={LOCATION_OPTIONS}
           emptyLabel="None"
-          emptyValue=""
           disabled={lockType}
         />
       )}

@@ -24,7 +24,11 @@ const itemBody = z.object({
     .nullable()
     .optional()
     .transform((v) => v ?? undefined),
-  type: z.string().nullable().optional(),
+  type: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v) => v || null),
   slot: z
     .union([z.enum(location.enumValues), z.literal("")])
     .optional()

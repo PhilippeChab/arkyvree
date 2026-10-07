@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormWith } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { RulesetListItem } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -14,6 +14,13 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { useToggleRulesetStar } from "./useToggleRulesetStar.ts";
 
 type Ruleset = RulesetListItem;
+
+/** An extension a ruleset unsubscribes from, and the ruleset. */
+interface UnsubscribeTarget {
+  extensionId: string;
+  extensionName: string;
+  rulesetId: string;
+}
 /** Published as a base ruleset or as an extension. */
 export type PublishKind = NonNullable<
   InferRequestType<(typeof rpc.api.rulesets)[":id"]["publish"]["$post"]>["json"]["kind"]
@@ -24,20 +31,14 @@ export function useRulesetOperations() {
   const snackbar = useSnackbar();
   const navigate = useNavigate();
 
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [forkDialogOpen, setForkDialogOpen] = useState(false);
-  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  // Each dialog keeps the ruleset (or the extension) it acts on while it fades out
+  const editDialog = useDialogState<Ruleset>();
+  const forkDialog = useDialogState<Ruleset>();
+  const archiveDialog = useDialogState<Ruleset>();
+  const publishDialog = useDialogState<Ruleset>();
   const [publishKind, setPublishKind] = useState<PublishKind>("ruleset");
-  const [subscribeDialogOpen, setSubscribeDialogOpen] = useState(false);
-  const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState(false);
-  const [unsubscribeTarget, setUnsubscribeTarget] = useState<{
-    extensionId: string;
-    extensionName: string;
-    rulesetId: string;
-  } | null>(null);
-
-  const [selectedRuleset, setSelectedRuleset] = useState<Ruleset | null>(null);
+  const subscribeDialog = useDialogState<Ruleset>();
+  const unsubscribeDialog = useDialogState<UnsubscribeTarget>();
 
   /**
    * Refetches a ruleset and the lists that show it: the ruleset itself after an edit, an archive or a publish, which
@@ -65,7 +66,7 @@ export function useRulesetOperations() {
     onSuccess: (_, { id }) => {
       snackbar.success("Ruleset updated");
       void refreshRuleset(id);
-      setEditDialogOpen(false);
+      editDialog.close();
     },
     onError: (error) => {
       snackbar.error(error, "Failed to update ruleset");
@@ -86,7 +87,7 @@ export function useRulesetOperations() {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.rulesets.lists,
       });
-      setForkDialogOpen(false);
+      forkDialog.close();
       navigate(`/rulesets/${data.id}`);
     },
     onError: (error) => {
@@ -105,7 +106,7 @@ export function useRulesetOperations() {
     onSuccess: (_, id) => {
       snackbar.success("Ruleset archived");
       void refreshRuleset(id);
-      setArchiveDialogOpen(false);
+      archiveDialog.close();
     },
     onError: (error) => {
       snackbar.error(error, "Failed to archive ruleset");
@@ -143,7 +144,7 @@ export function useRulesetOperations() {
     onSuccess: (_, { id }) => {
       snackbar.success("Ruleset published");
       void refreshRuleset(id);
-      setPublishDialogOpen(false);
+      publishDialog.close();
     },
     onError: (error) => {
       snackbar.error(error, "Failed to publish ruleset");
@@ -163,7 +164,7 @@ export function useRulesetOperations() {
       snackbar.success(
         `Subscribed to ${extensionIds.length === 1 ? "extension" : formatCount(extensionIds.length, "extension")}`,
       );
-      setSubscribeDialogOpen(false);
+      subscribeDialog.close();
       void refreshRuleset(id, true);
     },
     onError: (error) => {
@@ -182,8 +183,7 @@ export function useRulesetOperations() {
     },
     onSuccess: (_, { id }) => {
       snackbar.success("Unsubscribed from extension");
-      setUnsubscribeDialogOpen(false);
-      setUnsubscribeTarget(null);
+      unsubscribeDialog.close();
       void refreshRuleset(id, true);
     },
     onError: (error) => {
@@ -192,100 +192,59 @@ export function useRulesetOperations() {
   });
 
   const handleEdit = (ruleset: Ruleset) => {
-    setSelectedRuleset(ruleset);
     editForm.reset({
       name: ruleset.name,
       description: ruleset.description,
       private: ruleset.private,
       kind: ruleset.kind,
     });
-    setEditDialogOpen(true);
+    editDialog.openWith(ruleset);
   };
 
   const handleFork = (ruleset: Ruleset) => {
-    setSelectedRuleset(ruleset);
     forkForm.reset({
       name: `${ruleset.name} (Fork)`,
       description: ruleset.description,
       private: false,
     });
-    setForkDialogOpen(true);
+    forkDialog.openWith(ruleset);
   };
 
-  const handleArchive = (ruleset: Ruleset) => {
-    setSelectedRuleset(ruleset);
-    setArchiveDialogOpen(true);
-  };
+  const handleArchive = (ruleset: Ruleset) => archiveDialog.openWith(ruleset);
 
   const handlePublish = (ruleset: Ruleset) => {
-    setSelectedRuleset(ruleset);
     setPublishKind(ruleset.kind ?? "ruleset");
-    setPublishDialogOpen(true);
+    publishDialog.openWith(ruleset);
   };
 
-  const handleSubscribe = (ruleset: Ruleset) => {
-    setSelectedRuleset(ruleset);
-    setSubscribeDialogOpen(true);
-  };
+  const handleSubscribe = (ruleset: Ruleset) => subscribeDialog.openWith(ruleset);
 
   const confirmSubscribe = (extensionIds: string[]) => {
-    if (selectedRuleset) {
-      subscribeMutation.mutate({
-        id: selectedRuleset.id,
-        extensionIds,
-      });
-    }
+    if (subscribeDialog.target) subscribeMutation.mutate({ id: subscribeDialog.target.id, extensionIds });
   };
 
-  const handleUnsubscribe = (rulesetId: string, extensionId: string, extensionName: string) => {
-    setUnsubscribeTarget({ rulesetId, extensionId, extensionName });
-    setUnsubscribeDialogOpen(true);
-  };
+  const handleUnsubscribe = (rulesetId: string, extensionId: string, extensionName: string) =>
+    unsubscribeDialog.openWith({ rulesetId, extensionId, extensionName });
 
   const confirmUnsubscribe = () => {
-    if (unsubscribeTarget) {
-      unsubscribeMutation.mutate({
-        id: unsubscribeTarget.rulesetId,
-        extensionId: unsubscribeTarget.extensionId,
-      });
-    }
-  };
-
-  const confirmEdit = (data: EditRulesetFormData) => {
-    if (selectedRuleset) updateMutation.mutate({ id: selectedRuleset.id, data });
+    const target = unsubscribeDialog.target;
+    if (target) unsubscribeMutation.mutate({ id: target.rulesetId, extensionId: target.extensionId });
   };
 
   const confirmFork = (data: ForkRulesetFormData) => {
-    if (selectedRuleset) forkMutation.mutate({ id: selectedRuleset.id, data });
-  };
-
-  const confirmArchive = () => {
-    if (selectedRuleset) archiveMutation.mutate(selectedRuleset.id);
-  };
-
-  const confirmPublish = (kind?: PublishKind) => {
-    if (selectedRuleset) publishMutation.mutate({ id: selectedRuleset.id, kind });
+    if (forkDialog.target) forkMutation.mutate({ id: forkDialog.target.id, data });
   };
 
   return {
-    editDialogOpen,
-    setEditDialogOpen,
-    forkDialogOpen,
-    setForkDialogOpen,
-    archiveDialogOpen,
-    setArchiveDialogOpen,
-    publishDialogOpen,
-    setPublishDialogOpen,
+    /** Each dialog: `open`, `close`, and what it acts on (`target`). */
+    editDialog,
+    forkDialog,
+    archiveDialog,
+    publishDialog,
     publishKind,
     setPublishKind,
-    subscribeDialogOpen,
-    setSubscribeDialogOpen,
-    unsubscribeDialogOpen,
-    setUnsubscribeDialogOpen,
-    unsubscribeTarget,
-
-    selectedRuleset,
-    setSelectedRuleset,
+    subscribeDialog,
+    unsubscribeDialog,
 
     editForm,
     forkForm,
@@ -304,10 +263,7 @@ export function useRulesetOperations() {
     handlePublish,
     handleSubscribe,
     handleUnsubscribe,
-    confirmEdit,
     confirmFork,
-    confirmArchive,
-    confirmPublish,
     confirmSubscribe,
     confirmUnsubscribe,
     toggleStar,

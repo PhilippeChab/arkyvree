@@ -100,10 +100,7 @@ export default function CharacterDetailsPage() {
       void invalidateCharacterListings(queryClient);
       navigate("/characters");
     },
-    onError: (err) => {
-      snackbar.error(err, "Failed to archive character");
-      setArchiveConfirmOpen(false);
-    },
+    onError: (err) => snackbar.error(err, "Failed to archive character"),
   });
 
   const unarchiveMutation = useMutation({
@@ -124,10 +121,7 @@ export default function CharacterDetailsPage() {
       // Gone: don't let Back render it from the cache
       queryClient.removeQueries({ queryKey: QUERY_KEYS.characters.detail(id) });
     },
-    onError: (err) => {
-      snackbar.error(err, "Failed to delete character");
-      setHardDeleteConfirmOpen(false);
-    },
+    onError: (err) => snackbar.error(err, "Failed to delete character"),
   });
 
   if (isLoading) return <CharacterDetailSkeleton />;

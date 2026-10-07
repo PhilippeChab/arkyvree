@@ -21,8 +21,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
     availableSkillsError,
     setSkillSearch,
     handleSkillsScroll,
-    deleteDialogOpen,
-    setDeleteDialogOpen,
+    removeDialog,
     addSkillMutation,
     removeSkillMutation,
     handleAddSkill,
@@ -124,8 +123,8 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         </Paper>
       )}
       <RemoveSkillDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+        open={removeDialog.open}
+        onClose={removeDialog.close}
         onConfirm={confirmRemoveSkill}
         isLoading={removeSkillMutation.isPending}
       />

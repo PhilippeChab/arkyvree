@@ -95,7 +95,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         ...toItemForm(item),
         name: `${item.name} (Copy)`,
         // The copy is based on the source: on the template itself, or on the source's own template.
-        sourceItemId: item.isTemplate ? item.id : (item.sourceItemId ?? undefined),
+        sourceItemId: item.isTemplate ? item.id : (item.sourceItemId ?? ""),
         isTemplate: false,
       },
       { keepDefaultValues: true },
@@ -121,7 +121,6 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       snackbar.success("Item created");
       invalidateRulesetEdit(queryClient, ruleset.id, [QUERY_KEYS.rulesets.section(ruleset.id, "items")]);
       setCreateDialogOpen(false);
-      setDuplicateSourceId(null);
       openEntity(`items/${created.id}/customization`);
     },
     onError: (err: Error) => {

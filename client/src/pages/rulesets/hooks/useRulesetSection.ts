@@ -3,7 +3,7 @@ import { useState } from "react";
 import { type DefaultValues, type FieldValues } from "react-hook-form";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormWith } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { heldSectionQuery, invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
@@ -23,7 +23,6 @@ interface RulesetSectionConfig<
   label: string;
   onCreateSuccess?: (created: TCreated) => void;
   onDeleteSuccess?: (data: TDeleted) => void;
-  onEditDialogClose?: () => void;
   onUpdateSuccess?: (data: TUpdated) => void;
   /** The section's own rows, a factory's options (`modifiersQuery(…)`), read unless `data` hands them over */
   query?: UseQueryOptions<TData[], DefaultError, TData[], SectionKey>;
@@ -38,7 +37,7 @@ interface RulesetSectionConfig<
 type SectionKey = ReturnType<typeof QUERY_KEYS.rulesets.section>;
 
 export function useRulesetSection<
-  TData extends { id: string },
+  TData extends { id: string; updatedAt?: string },
   TFormData extends FieldValues,
   TCreated extends { id: string } = { id: string },
   TUpdated = unknown,
@@ -56,18 +55,15 @@ export function useRulesetSection<
   onCreateSuccess,
   onUpdateSuccess,
   onDeleteSuccess,
-  onEditDialogClose,
   createDefaults,
 }: RulesetSectionConfig<TData, TFormData, TCreated, TUpdated, TDeleted>) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  const [selectedItem, setSelectedItem] = useState<TData | null>(null);
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  // A row's edit and delete dialogs keep it while they fade out
+  const editDialog = useDialogState<TData>();
+  const deleteDialog = useDialogState<string>();
 
   const createForm = useFormWith<TFormData>(createDefaults);
   const editForm = useFormWith<TFormData>(createDefaults);
@@ -82,13 +78,6 @@ export function useRulesetSection<
   );
 
   const data = externalData ?? queryData;
-
-  const closeEditDialog = () => {
-    setEditDialogOpen(false);
-    setSelectedItem(null);
-    editForm.reset();
-    onEditDialogClose?.();
-  };
 
   const invalidateOnMutation = () =>
     invalidateRulesetEdit(queryClient, rulesetId, [
@@ -115,7 +104,7 @@ export function useRulesetSection<
     onSuccess: (data) => {
       snackbar.success(`${label} updated`);
       invalidateOnMutation();
-      closeEditDialog();
+      editDialog.close();
       onUpdateSuccess?.(data);
     },
     onError: (error) => {
@@ -127,9 +116,8 @@ export function useRulesetSection<
     mutationFn: (id: string) => (deleteFn ? deleteFn(id) : Promise.reject(new Error(`${label} can't be deleted here`))),
     onSuccess: (data) => {
       invalidateOnMutation();
-      setDeleteDialogOpen(false);
+      deleteDialog.close();
       snackbar.success(`${label} deleted`);
-      setItemToDelete(null);
       onDeleteSuccess?.(data);
     },
     onError: (error) => {
@@ -143,21 +131,13 @@ export function useRulesetSection<
     setCreateDialogOpen(true);
   };
 
-  const handleEdit = (item: TData, resetData?: TFormData) => {
-    setSelectedItem(item);
-    if (resetData) editForm.reset(resetData);
-
-    setEditDialogOpen(true);
+  // Opened on the row's values, whatever the form held before
+  const handleEdit = (item: TData, values: TFormData) => {
+    editForm.reset(values);
+    editDialog.openWith(item);
   };
 
-  const handleDelete = (itemId: string) => {
-    setItemToDelete(itemId);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (itemToDelete) deleteMutation.mutate(itemToDelete);
-  };
+  const handleDelete = (itemId: string) => deleteDialog.openWith(itemId);
 
   return {
     data,
@@ -165,16 +145,11 @@ export function useRulesetSection<
     error,
 
     createDialogOpen,
-    editDialogOpen,
-    deleteDialogOpen,
     setCreateDialogOpen,
-    setEditDialogOpen,
-    closeEditDialog,
-    setDeleteDialogOpen,
-
-    selectedItem,
-    itemToDelete,
-    setSelectedItem,
+    /** A row's edit dialog: `open`, `close`, and the row it edits (`target`). */
+    editDialog,
+    /** A row's delete dialog: `open`, `close`, and the id it deletes (`target`). */
+    deleteDialog,
 
     createForm,
     editForm,
@@ -186,15 +161,37 @@ export function useRulesetSection<
     handleCreate,
     handleEdit,
     handleDelete,
-    confirmDelete,
 
-    /** The create dialog's wiring: `<CreateDialog {...createDialogProps} title="…">`. */
+    /**
+     * The dialogs' wiring: `<CreateDialog {...createDialogProps} title="…">`, `<EditDialog {...editDialogProps} …>`,
+     * `<DeleteDialog {...deleteDialogProps} …>`. A section that sends something else than its form's values (a
+     * requirement's level, a duplicate's source) overrides `onSubmit` after the spread.
+     */
     createDialogProps: {
       open: createDialogOpen,
       onClose: () => setCreateDialogOpen(false),
       form: createForm,
       onSubmit: (data: TFormData) => createMutation.mutate(data),
       isLoading: createMutation.isPending,
+    },
+    editDialogProps: {
+      open: editDialog.open,
+      onClose: editDialog.close,
+      form: editForm,
+      // Under the row's token, as its dialog opened on it
+      onSubmit: (data: TFormData) => {
+        if (editDialog.target)
+          updateMutation.mutate({ id: editDialog.target.id, data, updatedAt: editDialog.target.updatedAt });
+      },
+      isLoading: updateMutation.isPending,
+    },
+    deleteDialogProps: {
+      open: deleteDialog.open,
+      onClose: deleteDialog.close,
+      onConfirm: () => {
+        if (deleteDialog.target) deleteMutation.mutate(deleteDialog.target);
+      },
+      isLoading: deleteMutation.isPending,
     },
   };
 }

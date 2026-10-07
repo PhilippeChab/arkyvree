@@ -12,7 +12,9 @@
  * - `controlled-inputs`: every input is controlled, and a form's field is bound one way: through `useController` (the
  *   shared fields, `FormTextField`, `Controller`), never `register` (uncontrolled), and never a value `watch` reads
  *   with a `setValue` for its change. A form starts every field with a value: it's made with `useFormWith` (a whole
- *   `defaultValues`), never react-hook-form's `useForm`, which takes some.
+ *   `defaultValues`), never react-hook-form's `useForm`, which takes some. A field written in the user's event (what
+ *   follows from a pick) is marked dirty as its input would: `setValue(name, value, { shouldDirty: true })`. A field's
+ *   error shows where its binding puts it (`fieldState.error`), never read from `formState.errors`.
  * - `effect-writes`: an effect synchronizes with what's outside React, and never does what an event or a render does: it
  *   never writes a form's field (`setValue`, `resetField`, `reset`, but `useFormSync`'s, which follows the server),
  *   navigates (a redirect is a rendered `<Navigate>`) nor calls back its owner (an `on…` prop, or a callback a ref
@@ -423,6 +425,13 @@ function createControlledInputs(context) {
   if (!inClient(context)) return {};
   // What a file reads with `watch`, held in a variable
   const watched = new Set();
+  const reportErrorsRead = (node) =>
+    context.report({
+      node,
+      message:
+        "A field's error shows where its binding puts it (`fieldState.error`; the shared fields say it under " +
+        "themselves), never read from `formState.errors` beside it.",
+    });
   return {
     ImportSpecifier(node) {
       if (node.parent.source.value !== "react-hook-form" || node.imported.name !== "useForm") return;
@@ -436,10 +445,16 @@ function createControlledInputs(context) {
     },
     CallExpression(node) {
       const callee = node.callee;
-      const isRegister =
-        (callee.type === "Identifier" && callee.name === "register") ||
-        (callee.type === "MemberExpression" && callee.property.name === "register");
-      if (!isRegister) return;
+      const name = callee.type === "Identifier" ? callee.name : callee.property?.name;
+      if (name === "setValue" && writesField(node) && !marksDirty(node.arguments[2])) {
+        context.report({
+          node,
+          message:
+            "A field written in the user's event is marked dirty, `setValue(name, value, { shouldDirty: true })`, as " +
+            "its own input marks it: the form's Save and its close guard see the change.",
+        });
+      }
+      if (name !== "register") return;
       context.report({
         node,
         message:
@@ -449,6 +464,16 @@ function createControlledInputs(context) {
     },
     VariableDeclarator(node) {
       if (node.id.type === "Identifier" && readsWatch(node.init)) watched.add(node.id.name);
+    },
+    // `form.formState.errors`
+    MemberExpression(node) {
+      if (node.property.name === "errors" && node.object.property?.name === "formState") reportErrorsRead(node);
+    },
+    // `const { formState: { errors } } = form`
+    Property(node) {
+      const pattern = node.parent;
+      if (pattern.type !== "ObjectPattern" || node.key.name !== "errors") return;
+      if (pattern.parent.type === "Property" && pattern.parent.key.name === "formState") reportErrorsRead(node);
     },
     JSXAttribute(node) {
       if (node.name.type !== "JSXIdentifier" || !VALUE_PROPS.has(node.name.name)) return;
@@ -1058,6 +1083,16 @@ function localFunction(name, node) {
   return null;
 }
 
+/** Whether `setValue`'s options mark the field dirty: `{ shouldDirty: true }`. */
+function marksDirty(options) {
+  return (
+    options?.type === "ObjectExpression" &&
+    options.properties.some(
+      (p) => p.type === "Property" && p.key.name === "shouldDirty" && p.value.type === "Literal" && p.value.value,
+    )
+  );
+}
+
 /** Whether `node` names one of `names`. */
 function namesOne(node, names) {
   if (!node || typeof node !== "object") return false;
@@ -1112,6 +1147,12 @@ function requestMethod(callee) {
   if (callee.type !== "MemberExpression") return null;
   const name = callee.computed ? callee.property.value : callee.property.name;
   return REQUEST_METHODS.has(name) ? name : null;
+}
+
+/** Whether a `setValue` call writes a form's field: react-hook-form's takes its path first, a state setter its value alone. */
+function writesField(node) {
+  const [path, value] = node.arguments;
+  return !!value && (path.type === "Literal" || path.type === "TemplateLiteral");
 }
 
 export default {

@@ -19,10 +19,17 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDebouncedValue, useFormWith, useListboxQuery, useValidationIssues } from "@/client/src/hooks/index.ts";
+import {
+  useDebouncedValue,
+  useDialogState,
+  useFormWith,
+  useListboxQuery,
+  useValidationIssues,
+} from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
+import type { RulesetItem } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import { type RPC, rpc } from "@/client/src/services/rpc.ts";
@@ -79,11 +86,11 @@ export function EquipmentSection({
   const { data: inventoryItems = [], error: inventoryError } = useQuery(characterInventoryQuery(characterId));
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { validationErrors, setValidationErrors, handleSaveError } = useValidationIssues("Failed to save item");
-  const [editingEntry, setEditingEntry] = useState<InventoryEntry | null>(null);
-  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null);
+  // An entry's edit and remove dialogs keep it while they fade out
+  const editDialog = useDialogState<InventoryEntry>();
+  const deleteDialog = useDialogState<string>();
+  const editingEntry = editDialog.target;
   const [itemSearch, setItemSearch] = useState("");
   const debouncedItemSearch = useDebouncedValue(itemSearch);
 
@@ -107,11 +114,11 @@ export function EquipmentSection({
         if (addForm.getValues("selectedItem")?.id !== itemId) return;
         const { columns, profile } = placementOf(detail);
         const detected = detectSlotFromItem(columns);
-        if (detected) addForm.setValue("location", detected);
-        else if (!profile.isWeapon) addForm.setValue("location", "none");
+        if (detected) addForm.setValue("location", detected, { shouldDirty: true });
+        else if (!profile.isWeapon) addForm.setValue("location", "none", { shouldDirty: true });
         if (profile.charges.has) {
-          addForm.setValue("totalCharges", profile.charges.defaultCount);
-          addForm.setValue("remainingCharges", profile.charges.defaultCount);
+          addForm.setValue("totalCharges", profile.charges.defaultCount, { shouldDirty: true });
+          addForm.setValue("remainingCharges", profile.charges.defaultCount, { shouldDirty: true });
         }
       },
       // The details' query shows its own failure
@@ -149,12 +156,19 @@ export function EquipmentSection({
   } = useListboxQuery({ ...rulesetItemSearchQuery(rulesetId, debouncedItemSearch), enabled: addDialogOpen });
 
   const addMutation = useMutation({
-    mutationFn: async ({ data, force = false }: { data: InventoryFormData; force?: boolean }) => {
-      if (!data.selectedItem) throw new Error("No item selected");
+    mutationFn: async ({
+      item,
+      data,
+      force = false,
+    }: {
+      data: InventoryFormData;
+      force?: boolean;
+      item: RulesetItem;
+    }) => {
       return parseResponse(
         rpc.api.characters.inventory[":characterId"].$post({
           param: { characterId },
-          json: { itemId: data.selectedItem.id, ...placementPayload(data, !!addProfile?.charges.has), force },
+          json: { itemId: item.id, ...placementPayload(data, !!addProfile?.charges.has), force },
         }),
       );
     },
@@ -191,7 +205,7 @@ export function EquipmentSection({
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.characters.detail(characterId),
       });
-      setEditDialogOpen(false);
+      editDialog.close();
       setValidationErrors([]);
     },
     onError: handleSaveError,
@@ -210,8 +224,7 @@ export function EquipmentSection({
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.characters.detail(characterId),
       });
-      setDeleteDialogOpen(false);
-      setDeletingEntryId(null);
+      deleteDialog.close();
     },
     onError: (error) => {
       snackbar.error(error, "Failed to remove item");
@@ -226,7 +239,6 @@ export function EquipmentSection({
   };
 
   const handleEditItem = (entry: InventoryEntry) => {
-    setEditingEntry(entry);
     editForm.reset({
       quantity: entry.quantity ?? 1,
       location: oneOf(entry.location, LOCATION_CHOICES, "none"),
@@ -234,12 +246,14 @@ export function EquipmentSection({
       totalCharges: entry.totalCharges ?? 0,
       remainingCharges: entry.remainingCharges ?? 0,
     });
-    setEditDialogOpen(true);
+    editDialog.openWith(entry);
   };
 
-  const handleDeleteItem = (entryId: string) => {
-    setDeletingEntryId(entryId);
-    setDeleteDialogOpen(true);
+  const handleDeleteItem = (entryId: string) => deleteDialog.openWith(entryId);
+
+  // The item's rule holds the submit until one is picked
+  const handleAddSubmit = (data: InventoryFormData, force?: boolean) => {
+    if (data.selectedItem) addMutation.mutate({ item: data.selectedItem, data, force });
   };
 
   // A dialog's warnings: in its spaced fields, so mounted only while they show
@@ -327,7 +341,7 @@ export function EquipmentSection({
         }}
         title="Add Item to Inventory"
         form={addForm}
-        onSubmit={(data) => addMutation.mutate({ data })}
+        onSubmit={(data) => handleAddSubmit(data)}
         isLoading={addMutation.isPending}
         maxWidth="md"
       >
@@ -337,7 +351,7 @@ export function EquipmentSection({
           () =>
             void addForm.handleSubmit((data) => {
               setValidationErrors([]);
-              addMutation.mutate({ data, force: true });
+              handleAddSubmit(data, true);
             })(),
         )}
         {!!inventoryError && <LoadError what="Inventory" error={inventoryError} />}
@@ -362,9 +376,9 @@ export function EquipmentSection({
                 if (newValue) {
                   fillPlacement(newValue.id);
                 } else {
-                  addForm.setValue("location", "none");
-                  addForm.setValue("totalCharges", 0);
-                  addForm.setValue("remainingCharges", 0);
+                  addForm.setValue("location", "none", { shouldDirty: true });
+                  addForm.setValue("totalCharges", 0, { shouldDirty: true });
+                  addForm.setValue("remainingCharges", 0, { shouldDirty: true });
                 }
               }}
               onInputChange={(_, value, reason) => {
@@ -428,9 +442,9 @@ export function EquipmentSection({
       </CreateDialog>
       {/* Edit Item Dialog */}
       <EditDialog
-        open={editDialogOpen}
+        open={editDialog.open}
         onClose={() => {
-          setEditDialogOpen(false);
+          editDialog.close();
           setValidationErrors([]);
         }}
         title="Edit Inventory Item"
@@ -440,7 +454,7 @@ export function EquipmentSection({
         maxWidth="md"
       >
         {requirementAlert(
-          validationErrors.length > 0 && editDialogOpen,
+          validationErrors.length > 0 && editDialog.open,
           editingEntry
             ? () =>
                 void editForm.handleSubmit((data) => {
@@ -460,15 +474,12 @@ export function EquipmentSection({
       </EditDialog>
       {/* Remove Confirmation */}
       <DeleteDialog
-        open={deleteDialogOpen}
-        onClose={() => {
-          setDeleteDialogOpen(false);
-          setDeletingEntryId(null);
-        }}
+        open={deleteDialog.open}
+        onClose={deleteDialog.close}
         title="Remove Item"
         message="Are you sure you want to remove this item from the inventory? This action cannot be undone."
         confirmLabel="Remove"
-        onConfirm={() => deletingEntryId && removeMutation.mutate(deletingEntryId)}
+        onConfirm={() => deleteDialog.target && removeMutation.mutate(deleteDialog.target)}
         isLoading={removeMutation.isPending}
       />
     </SheetSection>

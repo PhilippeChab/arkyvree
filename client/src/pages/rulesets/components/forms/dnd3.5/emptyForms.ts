@@ -7,7 +7,16 @@ import type { SpellFormData } from "./spellForm.ts";
 
 export const EMPTY_CLASS: ClassFormData = { name: "", description: "", hd: 8 };
 
-export const EMPTY_ITEM: ItemFormInternal = { name: "", description: "", costGp: "", weight: "", isTemplate: false };
+export const EMPTY_ITEM: ItemFormInternal = {
+  name: "",
+  description: "",
+  costGp: "",
+  weight: "",
+  type: "",
+  slot: "",
+  isTemplate: false,
+  sourceItemId: "",
+};
 
 export const EMPTY_SKILL: SkillFormData = {
   name: "",
@@ -18,4 +27,20 @@ export const EMPTY_SKILL: SkillFormData = {
   usableWithoutTraining: false,
 };
 
-export const EMPTY_SPELL: SpellFormData = { name: "", description: "", aptitudes: [] };
+export const EMPTY_SPELL: SpellFormData = {
+  name: "",
+  description: "",
+  saveId: "",
+  saveEffect: "",
+  school: "",
+  subschool: "",
+  descriptors: [],
+  castingTime: "",
+  rangeType: "",
+  target: "",
+  areaOfEffect: "",
+  duration: "",
+  spellResistance: "",
+  components: [],
+  aptitudes: [],
+};

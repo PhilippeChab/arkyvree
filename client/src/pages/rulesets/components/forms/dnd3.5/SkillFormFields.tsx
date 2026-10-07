@@ -44,7 +44,7 @@ export function SkillFormFields({ form, abilities, abilitiesError }: SkillFormFi
         label="Impacted by Weight"
         // The multiplier field hides with the weight, and a hidden field isn't validated: drop its value.
         onChange={(checked) => {
-          if (!checked) form.setValue("checkPenaltyMultiplier", 1);
+          if (!checked) form.setValue("checkPenaltyMultiplier", 1, { shouldDirty: true });
         }}
       />
       {impactedByWeight && (
