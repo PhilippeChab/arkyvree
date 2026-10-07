@@ -1,7 +1,8 @@
 export { ALLOWED_ALL } from "./aptitudes/AptitudesComponent.ts";
 export type { default as AptitudesComponent } from "./aptitudes/AptitudesComponent.ts";
 export { parseAptitudeAllowed, parseAptitudePool, parseAptitudeSpellLevel } from "./aptitudes/aptitudeTargets.ts";
-export { getBondedRaceStats } from "./bonded/bondedRaceData.ts";
+export { planBondedCreature, planBondedLevels } from "./bonded/bondedPlans.ts";
+export type { NewBondedCreature } from "./bonded/bondedPlans.ts";
 export type { default as Dnd35DetailedCharacterBonded } from "./bonded/DetailedCharacterBonded.ts";
 export type { default as Dnd35DetailedCharacter } from "./character/DetailedCharacter.ts";
 export { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";

@@ -454,8 +454,11 @@ engine/rulesets/
     │                                      KnownPowers; SpellcastingPaths)
     ├── items/                             (InventoryComponent, the slots, itemFields: an item's fields off its
     │                                      properties; Dnd35InventoryRules, Dnd35ItemsRules, Dnd35ItemsEffects)
+    ├── levelUp/                           (the level-up's rules: planned class levels, slots and their distribution,
+    │                                      projections, a level's selections checked)
     ├── levels/                            (Dnd35LevelsRules)
-    └── bonded/                            (the bonded creatures' characters, BondsComponent, BondedPaths)
+    └── bonded/                            (the bonded creatures' characters, BondsComponent, BondedPaths; bondedPlans:
+                                           what a master's creatures become as the master's levels change)
 ```
 
 In the server: the registry that hands the modules out (`server/rulesets/RulesetFactory.ts`), the builds (`server/builds/`), and what writes the effects' writes (`server/services/rulesets/effectWrites.ts`).
@@ -470,14 +473,12 @@ server/
 │   │       ├── CharacterLevelsService.ts  ← thin dispatcher; forwards to the ruleset impl
 │   │       └── dnd3.5/                    ← 3.5-only level-up flows
 │   │           ├── classPicks.ts, featPicks.ts, powerPicks.ts, levelSelections.ts
-│   │           ├── bondedReconcile.ts
+│   │           ├── bondedReconcile.ts     (the bonded creatures the module plans, written)
 │   │           ├── slotQueries.ts
 │   │           ├── preview.ts
 │   │           ├── finalize.ts
-│   │           ├── projection.ts
-│   │           ├── classes.ts
-│   │           ├── validation.ts
-│   │           └── distribution.ts
+│   │           ├── baseline.ts
+│   │           └── validation.ts
 │   └── rulesets/                          ← entity CRUD for feats/powers/aptitudes/…
 └── routers/
     └── api/
