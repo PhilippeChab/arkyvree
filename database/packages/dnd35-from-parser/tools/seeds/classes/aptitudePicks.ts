@@ -77,14 +77,6 @@ function expandPerLevelAptitudePicks(
   return result;
 }
 
-/** Merge detected aptitude picks with overrides. Overrides win per-target; detected picks not in overrides are preserved. */
-function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[]): AptitudePick[] | undefined {
-  if (!overrides) return detected;
-  if (!detected) return overrides;
-  const overrideTargets = new Set(overrides.map((p) => p.target));
-  return [...detected.filter((p) => !overrideTargets.has(p.target)), ...overrides];
-}
-
 /** A class's aptitude picks (`picks`), but those its features' modifiers already give (`remap`ped or split `perLevel`). */
 export function buildClassAptitudePicks(
   ref: ClassReference,
@@ -106,17 +98,13 @@ export function buildClassAptitudePicks(
 }
 
 /**
- * A class's aptitude picks: detected, with the overrides', then split per level where a bonus feat list has one per
+ * A class's aptitude picks: its mapping's (detected, with the overrides'), then split per level where a bonus feat list has one per
  * level (`aptitudePicks`); the first level each aptitude gets a pick (`aptitudeMinLevel`, by slug); and how the split
  * retargets the merged picks (`remap` one to one, `perLevel` one to several).
  */
 export function getClassAptitudePicks(ref: ClassReference) {
-  const { overrides } = ref;
-  const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides?.aptitudePicks);
-  const aptitudePicks = expandPerLevelAptitudePicks(
-    mergedPicks,
-    overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists,
-  );
+  const mergedPicks = ref.mapping.aptitudePicks;
+  const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, ref.mapping.bonusFeatLists);
   const aptitudeMinLevel = new Map<string, number>();
   for (const pick of aptitudePicks ?? []) {
     const slug = pick.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1];

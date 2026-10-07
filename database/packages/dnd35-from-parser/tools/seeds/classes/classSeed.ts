@@ -1,4 +1,4 @@
-/** A class reference's seed: what its file holds, each field its overrides' or else what's detected. */
+/** A class reference's seed: what its file holds, as its mapping (its overrides applied) and its detected section give it. */
 
 import { resolveFamilyChecks } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
 import TemplateFamilies from "@/database/packages/dnd35-from-parser/tools/seeds/TemplateFamilies.ts";
@@ -10,13 +10,10 @@ import { stripSeparators } from "@/shared/text.ts";
 import { buildClassAptitudePicks, getClassAptitudePicks } from "./aptitudePicks.ts";
 import { buildClassFeatures } from "./features.ts";
 import { buildClassModifiers } from "./modifiers.ts";
-import { getClassSpells } from "./spellSlots.ts";
 
 /** A class's spellcasting: its bonus spells' ability and its caster type, which one without the other refuses. */
 function buildClassCasting(ref: ClassReference): Pick<ClassSeed, "bonusSpellAbility" | "casterType"> {
-  const overrides = ref.overrides ?? {};
-  const bonusSpellAbility = overrides.bonusSpellAbility ?? ref.mapping.bonusSpellAbility;
-  const casterType = overrides.casterType ?? ref.detected.casterType;
+  const { bonusSpellAbility, casterType } = ref.mapping;
   if (bonusSpellAbility && !casterType)
     throw new Error(`${ref.raw.name}: has bonusSpellAbility ("${bonusSpellAbility}") but no casterType`);
 
@@ -28,7 +25,7 @@ function buildClassCasting(ref: ClassReference): Pick<ClassSeed, "bonusSpellAbil
 
 /** A class's spells: its slots per day and spells known by level, and the lists it casts from. None without slots. */
 function buildClassSpells(ref: ClassReference): ClassSeed["spells"] {
-  const spells = getClassSpells(ref);
+  const { spells } = ref.mapping;
   if (!spells) return undefined;
   return {
     slug: spells.slug,
@@ -51,32 +48,28 @@ function buildClassSpells(ref: ClassReference): ClassSeed["spells"] {
  */
 export function buildClassSeed(ref: ClassReference): ClassSeed {
   const { detected, mapping, raw } = ref;
-  const overrides = ref.overrides ?? {};
-  const requirements = resolveFamilyChecks(
-    overrides.requirements ?? detected.requirements,
-    TemplateFamilies.requirable(ref._meta.book),
-  );
+  const requirements = resolveFamilyChecks(mapping.requirements, TemplateFamilies.requirable(ref._meta.book));
   const picks = getClassAptitudePicks(ref);
   const { classFeatures, autoFreeFeats } = buildClassFeatures(ref, picks.perLevel);
-  const freeFeats = [...(overrides.freeFeats ?? []), ...autoFreeFeats];
+  const freeFeats = [...(mapping.freeFeats ?? []), ...autoFreeFeats];
   const casting = buildClassCasting(ref);
   const spells = buildClassSpells(ref);
   const modifiers = buildClassModifiers(ref);
   const aptitudePicks = buildClassAptitudePicks(ref, picks);
   return {
     name: raw.name,
-    description: normalizeDescription(overrides.description ?? raw.description),
+    description: normalizeDescription(mapping.description),
     hd: detected.hd,
     levels: detected.levels,
     skillPoints: detected.skillPoints,
-    bab: overrides.bab ?? detected.bab,
-    saves: overrides.saves ?? detected.saves,
-    classSkills: overrides.classSkills ?? raw.classSkills,
+    bab: mapping.bab,
+    saves: mapping.saves,
+    classSkills: mapping.classSkills,
     requirements,
     ...(detected.casterLevelAdvancement ? { casterLevelAdvancement: detected.casterLevelAdvancement } : {}),
     ...(mapping.classFeatureAptitude ? { classFeatureAptitude: mapping.classFeatureAptitude } : {}),
     ...(classFeatures.length > 0 ? { classFeatures } : {}),
-    ...(overrides.proficiencies?.length ? { proficiencies: overrides.proficiencies } : {}),
+    ...(mapping.proficiencies?.length ? { proficiencies: mapping.proficiencies } : {}),
     ...(freeFeats.length > 0 ? { freeFeats } : {}),
     ...casting,
     ...(spells ? { spells } : {}),

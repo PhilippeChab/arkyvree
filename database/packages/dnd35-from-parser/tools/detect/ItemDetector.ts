@@ -170,9 +170,31 @@ export class ItemDetector {
     return { weapons, armor, goods, unresolved: findUnresolvedItems({ weapons, armor }) };
   }
 
-  /** The reference with what's derived from it: its detected section. */
+  /** Each item's cost and weight, its override's or else as detected, its override's description, and its skip. */
+  mapping(detected: ItemReference["detected"]): ItemReference["mapping"] {
+    const { overrides } = this.stored;
+    const corrected = (items: Record<string, { costGp: string; weight: string }>) =>
+      Object.fromEntries(
+        Object.entries(items).map(([name, det]) => {
+          const override = overrides?.[name];
+          return [
+            name,
+            {
+              costGp: override?.costGp ?? det.costGp,
+              weight: override?.weight ?? det.weight,
+              ...(override?.description !== undefined ? { description: override.description } : {}),
+              ...(override?.skip ? { skip: true } : {}),
+            },
+          ];
+        }),
+      );
+    return { weapons: corrected(detected.weapons), armor: corrected(detected.armor), goods: corrected(detected.goods) };
+  }
+
+  /** The reference with what's derived from it: its detected section and its mapping. */
   resolve(): ItemReference {
     const { _meta, overrides, raw } = this.stored;
-    return { _meta, raw, ...sanitizeJsonValues({ overrides, detected: this.detected() }) };
+    const detected = this.detected();
+    return { _meta, raw, ...sanitizeJsonValues({ overrides, detected, mapping: this.mapping(detected) }) };
   }
 }

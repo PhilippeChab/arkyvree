@@ -2,7 +2,7 @@ import { BenefitModifiers } from "@/database/packages/dnd35-from-parser/tools/de
 import { readProficiencyModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/proficiencies.ts";
 import { isPluralVariantOf } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
-import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { type AptitudePick, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { type NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -13,6 +13,14 @@ import { CHOICE_PATTERN, readPoolSubOptions } from "./featureText.ts";
 
 /** A pool's aptitude, the level it opens at, and whether its picks stack. */
 type PoolAptitude = { aptitude: string; level: number; stackable?: true };
+
+/** Its detected aptitude picks, an override's for the same aptitude replacing a detected one. */
+function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[]): AptitudePick[] | undefined {
+  if (!overrides) return detected;
+  if (!detected) return overrides;
+  const overrideTargets = new Set(overrides.map((p) => p.target));
+  return [...detected.filter((p) => !overrideTargets.has(p.target)), ...overrides];
+}
 
 /**
  * A class reference's mapping, built step by step from what its detector read: its pools (features whose description
@@ -198,13 +206,19 @@ export class ClassMapping {
     }
   }
 
-  /** Its overrides: no spells of its own (`noSpells`), and each feature's fields (a `null` one removes the detected). */
+  /**
+   * Its overrides of its spells: none of its own (`noSpells`), the fields of its spells (`spells`) and its bonus spells'
+   * ability; and each feature's fields (a `null` one removes the detected).
+   */
   private applyOverrides(mapping: ClassReference["mapping"]) {
     const { overrides } = this.detector.stored;
     if (overrides?.noSpells) {
       delete mapping.spells;
       delete mapping.bonusSpellAbility;
     }
+    if (mapping.spells && overrides?.spells) mapping.spells = { ...mapping.spells, ...overrides.spells };
+    const bonusSpellAbility = overrides?.bonusSpellAbility ?? mapping.bonusSpellAbility;
+    if (bonusSpellAbility !== undefined) mapping.bonusSpellAbility = bonusSpellAbility;
     for (const [name, fields] of Object.entries(overrides?.features ?? {})) {
       const feature: Record<string, unknown> = Object.assign(mapping.features[name] ?? {}, fields);
       for (const [key, value] of Object.entries(feature)) if (value === null) delete feature[key];
@@ -425,6 +439,38 @@ export class ClassMapping {
     return occurrenceMap;
   }
 
+  /**
+   * The class's fields its overrides can set, each its override's, else as detected or scraped: its summary, its
+   * caster type, its aptitude picks (the detected ones an override's for the same aptitude replaces), its bonus feat
+   * lists; and what only an override gives (its free feats, its proficiencies, its level modifiers and the table columns
+   * they're read from, its skip).
+   */
+  private overriddenFields(): Omit<
+    ClassReference["mapping"],
+    "bonusSpellAbility" | "classFeatureAptitude" | "features" | "occurrenceMap" | "spells"
+  > {
+    const overrides = this.detector.stored.overrides ?? {};
+    const { detected, raw } = this;
+    const casterType = overrides.casterType ?? detected.casterType;
+    const aptitudePicks = mergeAptitudePicks(detected.aptitudePicks, overrides.aptitudePicks);
+    const bonusFeatLists = overrides.bonusFeatLists ?? detected.bonusFeatLists;
+    return {
+      bab: overrides.bab ?? detected.bab,
+      saves: overrides.saves ?? detected.saves,
+      classSkills: overrides.classSkills ?? raw.classSkills,
+      description: overrides.description ?? raw.description,
+      requirements: overrides.requirements ?? detected.requirements,
+      ...(casterType ? { casterType } : {}),
+      ...(aptitudePicks ? { aptitudePicks } : {}),
+      ...(bonusFeatLists ? { bonusFeatLists } : {}),
+      ...(overrides.freeFeats ? { freeFeats: overrides.freeFeats } : {}),
+      ...(overrides.proficiencies ? { proficiencies: overrides.proficiencies } : {}),
+      ...(overrides.modifiers ? { modifiers: overrides.modifiers } : {}),
+      ...(overrides.columns ? { columns: overrides.columns } : {}),
+      ...(overrides.skip ? { skip: true } : {}),
+    };
+  }
+
   /** What the class's page gives. */
   private get raw(): ClassReference["raw"] {
     return this.detector.raw;
@@ -465,6 +511,7 @@ export class ClassMapping {
     const mapping: ClassReference["mapping"] = {
       classFeatureAptitude: `${raw.name} Class Feature`,
       features: this.features,
+      ...this.overriddenFields(),
     };
 
     // Auto-populate spells from detected data

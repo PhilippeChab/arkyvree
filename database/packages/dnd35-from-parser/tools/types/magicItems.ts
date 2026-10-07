@@ -46,6 +46,26 @@ export type MagicItemReference = {
     }
   >;
 
+  /**
+   * Each magic item as the seeds make it, its overrides applied: its base item, cost, description, modifiers (its
+   * enhancement's too), properties (its aura's, its caster level's, its stats' and its override's), slot and weight
+   * (none when it weighs what its base item does), and whether it's a template or skipped
+   */
+  mapping: Record<
+    string,
+    {
+      baseItem?: string;
+      costGp: string;
+      description: string;
+      modifiers: Modifier[];
+      properties: Property[];
+      skip?: boolean;
+      slot?: string;
+      template?: boolean;
+      weight?: string;
+    }
+  >;
+
   overrides?: Overrides<MagicItemFields & { aura?: string; casterLevel?: number }>;
 
   raw: {

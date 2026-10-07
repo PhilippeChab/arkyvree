@@ -3,7 +3,6 @@ import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
 import { buildClassSeed } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/classSeed.ts";
-import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/spellSlots.ts";
 import { sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
@@ -82,7 +81,7 @@ export function checkClassOverrides(stored: StoredReference<"class">): {
               const ref = without((copy) => copy.spells && Reflect.deleteProperty(copy.spells, key));
               return redundant(
                 ref,
-                alike(Reflect.get(getClassSpells(withAll) ?? {}, key), Reflect.get(getClassSpells(ref) ?? {}, key)),
+                alike(Reflect.get(withAll.mapping.spells ?? {}, key), Reflect.get(ref.mapping.spells ?? {}, key)),
               );
             })
             .map((key) => `spells.${key}`)

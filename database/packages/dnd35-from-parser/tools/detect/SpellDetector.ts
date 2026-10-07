@@ -200,7 +200,8 @@ function withBaseSpellFields(rawEntry: RawSpell, rawByName: Map<string, RawSpell
 
 /**
  * A spell reference's detector: what each spell's text gives (`detected`: its properties and its saving throw,
- * normalized), the fields it lacks taken from the spell it "functions like".
+ * normalized), the fields it lacks taken from the spell it "functions like"; and its description and level entries,
+ * its overrides applied (`mapping`).
  */
 export class SpellDetector {
   constructor(stored: Pick<SpellReference, "_meta" | "overrides" | "raw">) {
@@ -227,8 +228,25 @@ export class SpellDetector {
     return detected;
   }
 
-  /** The reference with what's derived from it: its detected section. */
+  /** Each spell's description and level entries, its overrides applied. */
+  mapping(): SpellReference["mapping"] {
+    const { overrides, raw } = this.stored;
+    return Object.fromEntries(
+      raw.map((entry) => {
+        const override = overrides?.[entry.name];
+        return [
+          entry.name,
+          {
+            description: override?.description ?? entry.description,
+            levelEntries: [...entry.levelEntries, ...(override?.levelEntries ?? [])],
+          },
+        ];
+      }),
+    );
+  }
+
+  /** The reference with what's derived from it: its detected section and its mapping. */
   resolve(): SpellReference {
-    return { ...this.stored, detected: this.detected() };
+    return { ...this.stored, detected: this.detected(), mapping: this.mapping() };
   }
 }

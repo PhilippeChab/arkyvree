@@ -5,7 +5,7 @@ import type { Modifier } from "@/database/packages/dnd35/content/customization/t
 
 import type { ModifierReading } from "./readers/modifiers/ModifierReading.ts";
 
-/** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override. */
+/** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override and itself. */
 export function buildModifierMapping<
   E extends { description: string; name: string },
   O extends { description?: string; modifiers?: Modifier[] },
@@ -14,7 +14,7 @@ export function buildModifierMapping<
   raw: E[],
   detected: Record<string, { modifiers: Modifier[] } | undefined>,
   overrides: Record<string, O | undefined>,
-  extra: (override: O | undefined) => X,
+  extra: (override: O | undefined, entry: E) => X,
 ) {
   const mapping: Record<string, { description: string; modifiers?: Modifier[] } & X> = {};
   for (const entry of raw) {
@@ -23,7 +23,7 @@ export function buildModifierMapping<
     mapping[entry.name] = {
       description: override?.description ?? entry.description,
       ...(modifiers.length > 0 ? { modifiers } : {}),
-      ...extra(override),
+      ...extra(override, entry),
     };
   }
   return mapping;

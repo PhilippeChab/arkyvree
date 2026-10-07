@@ -58,7 +58,7 @@ Each reference JSON stores:
 - **`raw`** — Scraped data, never manually edited. Replaced on re-scrape.
 - **`overrides`** — Corrections made by hand. Kept on re-scrape.
 
-Loading a reference (`ReferenceLoader`, `tools/references/ReferenceLoader.ts`) derives the rest (`resolveReference`, `tools/references/resolve.ts`, with the detectors in `tools/detect/`): **`detected`** (BAB, saves, requirements, modifiers… parsed from `raw`) and **`mapping`** (the entities to generate). Items, magic items and spells have only `detected` (a spell's: its properties and saving throw, normalized); wizard schools, neither. The overrides win over both. A correction takes effect at the next `parser:generate`, without re-scraping. See `reference/README.md`.
+Loading a reference (`ReferenceLoader`, `tools/references/ReferenceLoader.ts`) derives the rest (`resolveReference`, `tools/references/resolve.ts`, with the detectors in `tools/detect/`): **`detected`** (BAB, saves, requirements, modifiers… parsed from `raw`; a spell's properties and saving throw, normalized; wizard schools have none) and **`mapping`** (each entity as the seeds make it: what's detected and scraped, its overrides applied, which win over both). The seeds read the mapping, and the detected values no override changes, never the overrides. A correction takes effect at the next `parser:generate`, without re-scraping. See `reference/README.md`.
 
 `generated/` holds only what the generator writes: hand-written content goes in `database/packages/dnd35/data/`, and what content is written with (its types and builders) in `database/packages/dnd35/content/`.
 

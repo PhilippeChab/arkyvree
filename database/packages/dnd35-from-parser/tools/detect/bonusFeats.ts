@@ -20,8 +20,8 @@ export function getBonusFeatAptitudes(classes: ClassReferenceFile[]): Map<string
 
   for (const { ref } of classes) {
     // Bonus feat lists → aptitudes
-    const lists = ref.detected?.bonusFeatLists;
-    if (lists) for (const list of lists) for (const featName of list.feats) add(featName, list.aptitude);
+    for (const list of ref.mapping.bonusFeatLists ?? [])
+      for (const featName of list.feats) add(featName, list.aptitude);
 
     // "gains X as a bonus feat" in class feature descriptions → class feature aptitude
     const aptitude = ref.mapping?.classFeatureAptitude;
@@ -45,7 +45,7 @@ export function getBonusFeatClassLevels(
   const map = new Map<string, { classSlug: string; minLevel: number }[]>();
 
   for (const { ref } of classes) {
-    const lists = ref.detected?.bonusFeatLists;
+    const lists = ref.mapping.bonusFeatLists;
     if (!lists) continue;
     // The class's path segment (`classes.wujen.level`), as every class path names it: its name's, not its file's
     const classSlug = stripSeparators(ref.raw.name);

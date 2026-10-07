@@ -7,11 +7,17 @@ export type RaceReference = {
 
   detected: Record<string, DetectedModifiers>;
 
+  /** Each race as the seeds make it: its overrides applied */
   mapping: Record<
     string,
     {
+      baseSpeed: number;
       description?: string;
       modifiers?: Modifier[];
+      name: string;
+      properties?: Property[];
+      size: string;
+      skip?: boolean;
     }
   >;
 

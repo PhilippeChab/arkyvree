@@ -5,8 +5,6 @@ import { type InheritedSpellList } from "@/database/packages/dnd35-from-parser/t
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 
-import { getClassSpells } from "./classes/spellSlots.ts";
-
 /**
  * A spell's level on a list a class draws on (`inheritsFrom`): on the first of its classes' lists that has it, when
  * it's of the list's schools and has none of its excluded descriptors.
@@ -29,8 +27,8 @@ export function getInheritedLevel(
 export function getInheritedLists(book: string): { aptitude: string; list: InheritedSpellList }[] {
   const lists: { aptitude: string; list: InheritedSpellList }[] = [];
   for (const { ref } of ReferenceLoader.loadClasses(book)) {
-    const spells = getClassSpells(ref);
-    if (!spells || !ref.raw?.name || ref.overrides?.skip) continue;
+    const { spells } = ref.mapping;
+    if (!spells || !ref.raw?.name) continue;
     if (spells.inheritsFrom) lists.push({ aptitude: classSpells(ref.raw.name), list: spells.inheritsFrom });
     for (const list of spells.lists ?? []) lists.push({ aptitude: list.name, list: list.inheritsFrom });
   }

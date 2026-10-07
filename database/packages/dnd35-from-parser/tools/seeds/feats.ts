@@ -9,7 +9,6 @@ import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts"
 import { stripSeparators } from "@/shared/text.ts";
 
 type FeatEntry = {
-  detected: FeatReference["detected"][string];
   entry: FeatReference["raw"][number];
   mapped: FeatReference["mapping"][string];
 };
@@ -47,21 +46,20 @@ const OWN_WEAPONS: Record<string, string> = { "Exotic Weapon Proficiency": "EXOT
 const PROFICIENT_FAMILIES = new Set(["Improved Critical", "Weapon Focus"]);
 
 /**
- * What a feat reference makes: its feats by feat type, and its template families. An epic feat is left out unless an
- * override keeps it.
+ * What a feat reference makes: its feats by feat type, and its template families, but those its mapping skips (an epic
+ * feat, unless an override keeps it).
  */
 export function buildReferenceFeats(ref: FeatReference) {
   const kept: FeatEntry[] = [];
   for (const entry of ref.raw) {
     const mapped = ref.mapping[entry.name];
     if (!mapped || mapped.skip) continue;
-    if (entry.featType === "epic" && ref.overrides?.[entry.name]?.skip !== false) continue;
-    kept.push({ entry, detected: ref.detected[entry.name], mapped });
+    kept.push({ entry, mapped });
   }
 
   const byType = new Map<string, FeatSeed[]>();
   const templates: TemplateFamily[] = [];
-  for (const { entry, detected, mapped } of kept) {
+  for (const { entry, mapped } of kept) {
     if (mapped.template) {
       const { type, familyName } = mapped.template;
       templates.push({
@@ -69,7 +67,7 @@ export function buildReferenceFeats(ref: FeatReference) {
         familyName,
         aptitudes: mapped.aptitudes ?? [],
         requirements: mapped.requirements ?? [],
-        featNameMap: { ...(detected?.featNameMap ?? {}), ...(mapped.featNameMap ?? {}) },
+        featNameMap: mapped.featNameMap ?? {},
         modifiers: mapped.modifiers ?? [],
         description: mapped.description ?? entry.benefit,
         options: OWN_WEAPONS[familyName] ?? FAMILY_OPTIONS[type],

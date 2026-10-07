@@ -22,7 +22,7 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
       const classPath = join(this.dir, book, "classes", `${slug}.ts`);
       const featPath = join(this.dir, book, "feats", "classes", `${slug}.ts`);
 
-      if (ref.overrides?.skip) {
+      if (ref.mapping.skip) {
         // A class left out of the seed: its files go, and the indexes leave it out
         rmSync(classPath, { force: true });
         rmSync(featPath, { force: true });

@@ -1,5 +1,8 @@
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 
+/** An item as the seeds make it: its cost and weight, its override's or else as detected, and its override's description. */
+type ItemMapping = { costGp: string; description?: string; skip?: boolean; weight: string };
+
 export type ArmorRow = {
   acBonus: string;
   arcaneSpellFailure: string;
@@ -48,6 +51,13 @@ export type ItemReference = {
         weight: string;
       }
     >;
+  };
+
+  /** Each weapon, armor, shield and good as the seeds make it: its overrides applied */
+  mapping: {
+    armor: Record<string, ItemMapping>;
+    goods: Record<string, ItemMapping>;
+    weapons: Record<string, ItemMapping>;
   };
 
   overrides?: Overrides<ItemFields> & { nameMap?: Record<string, string> };

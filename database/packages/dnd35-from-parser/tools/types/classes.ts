@@ -80,9 +80,18 @@ export type ClassReference = {
     unresolvedPrereqs?: string[];
   };
 
+  /** The class as the seeds make it: its features, its spells, and each field an override sets, its override applied */
   mapping: {
+    aptitudePicks?: AptitudePick[];
+    bab: BabType;
+    bonusFeatLists?: BonusFeatList[];
     bonusSpellAbility?: string;
+    casterType?: "Arcane" | "Divine";
     classFeatureAptitude: string;
+    classSkills: string[];
+    /** The table columns its levels' modifiers read, by header */
+    columns?: Record<string, ColumnModifier>;
+    description: string;
     features: {
       [rawName: string]: ClassFeatureFields & {
         /** Override the default classFeatureAptitude for this specific feat */
@@ -91,8 +100,14 @@ export type ClassReference = {
         level?: number;
       };
     };
+    freeFeats?: [number, string, string][];
+    modifiers?: (ModifierSeed & { level: number })[];
     /** Map from feature occurrence name → mapping key (derived at load, used by generator) */
     occurrenceMap?: Record<string, string>;
+    proficiencies?: string[];
+    requirements: RequirementEntry[];
+    saves: Saves;
+    skip?: boolean;
     spells?: ClassSpells;
   };
 

@@ -156,7 +156,8 @@ export class FeatDetector {
         ...(ovr?.selectable === false ? { selectable: false } : {}),
         ...(det.template ? { template: det.template } : {}),
         ...(Object.keys(featNameMap).length > 0 ? { featNameMap } : {}),
-        ...(ovr?.skip ? { skip: true } : {}),
+        // An epic feat is left out unless an override keeps it
+        ...(ovr?.skip || (entry.featType === "epic" && ovr?.skip !== false) ? { skip: true } : {}),
       };
     }
     return mapping;

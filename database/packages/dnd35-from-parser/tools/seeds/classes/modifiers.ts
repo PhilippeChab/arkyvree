@@ -1,4 +1,4 @@
-/** A class's level modifiers: its overrides', and those its table's columns give. */
+/** A class's level modifiers: its overrides', and those its table's columns give, as its mapping names them. */
 
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
@@ -9,11 +9,11 @@ function cellNumber(cell: string) {
 }
 
 /**
- * A class's level modifiers: its overrides', then those its table's columns give (`overrides.columns`), at each level a
- * column's value changes: a number's rise, or its text.
+ * A class's level modifiers: its overrides', then those its table's columns give (`mapping.columns`, an override's), at
+ * each level a column's value changes: a number's rise, or its text.
  */
 export function buildClassModifiers(ref: ClassReference): (ModifierSeed & { level: number })[] {
-  const fromColumns = Object.entries(ref.overrides?.columns ?? {}).flatMap(
+  const fromColumns = Object.entries(ref.mapping.columns ?? {}).flatMap(
     ([column, { target, operator, requirements }]) => {
       if (!ref.raw.progression.some((row) => row.columns?.[column] !== undefined))
         throw new Error(`${ref.raw.name}: its table has no "${column}" column`);
@@ -32,5 +32,5 @@ export function buildClassModifiers(ref: ClassReference): (ModifierSeed & { leve
       });
     },
   );
-  return [...(ref.overrides?.modifiers ?? []), ...fromColumns];
+  return [...(ref.mapping.modifiers ?? []), ...fromColumns];
 }

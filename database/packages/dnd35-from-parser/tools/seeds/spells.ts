@@ -13,7 +13,8 @@ type RawSpell = SpellReference["raw"][number];
 
 /**
  * A spell's aptitudes (its classes' spell lists, and the lists of other books' classes inherit, `othersInherited`), its
- * level on each, and its lowest level: on a list it's on, else in any level entry, else 0.
+ * level on each, and its lowest level: on a list it's on, else in any level entry, else 0. Its level entries are the
+ * scraped ones: an override's extra entries reach only the copies an extension makes of a core spell (#359).
  */
 function spellLevels(entry: RawSpell, othersInherited: ReturnType<typeof getInheritedLists>) {
   const aptitudes = new Set<string>();
@@ -73,7 +74,7 @@ export function buildSpellSeeds(ref: SpellReference, book?: string): { spells: S
     const hasVaryingLevels = Object.values(aptitudeLevels).some((l) => l !== minLevel);
     const seed: SpellSeed = {
       name: entry.name,
-      description: normalizeDescription(ref.overrides?.[entry.name]?.description ?? entry.description),
+      description: normalizeDescription(ref.mapping[entry.name].description),
       aptitudes: [...aptitudes].sort(),
       ...(hasVaryingLevels ? { aptitudeLevels } : {}),
       savingThrow,

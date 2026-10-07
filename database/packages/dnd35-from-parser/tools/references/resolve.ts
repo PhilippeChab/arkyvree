@@ -1,9 +1,9 @@
 /**
  * A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else:
  * re-scraping replaces `raw` and keeps `overrides`. What the generator reads is derived from the two each time a
- * reference is loaded: `detected`, parsed from `raw`, and `mapping`, the entities to generate (items, magic items and
- * spells have only `detected`; wizard schools, neither). The overrides win over both, so a correction takes effect
- * at the next generate and can't be lost to a re-scrape.
+ * reference is loaded, by its kind's detector: `detected`, parsed from `raw` (wizard schools have none), and
+ * `mapping`, each entity as the seeds make it, its overrides applied. The overrides win over both, so a correction
+ * takes effect at the next generate and can't be lost to a re-scrape.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -15,6 +15,7 @@ import { ItemDetector } from "@/database/packages/dnd35-from-parser/tools/detect
 import { MagicItemDetector } from "@/database/packages/dnd35-from-parser/tools/detect/MagicItemDetector.ts";
 import { RaceDetector } from "@/database/packages/dnd35-from-parser/tools/detect/RaceDetector.ts";
 import { SpellDetector } from "@/database/packages/dnd35-from-parser/tools/detect/SpellDetector.ts";
+import { WizardSchoolDetector } from "@/database/packages/dnd35-from-parser/tools/detect/WizardSchoolDetector.ts";
 import { stringifyStably } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import type { ClassReference, ClassReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
@@ -54,8 +55,7 @@ const RESOLVERS: {
   magicItem: (stored) => new MagicItemDetector(stored).resolve(),
   race: (stored) => new RaceDetector(stored).resolve(),
   spell: (stored) => new SpellDetector(stored).resolve(),
-  // Nothing to detect: the reference is as stored
-  wizardSchool: (stored) => stored,
+  wizardSchool: (stored) => new WizardSchoolDetector(stored).resolve(),
 };
 
 const STORED_KEYS = new Set(["_meta", "raw", "overrides"]);

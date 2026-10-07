@@ -8,14 +8,12 @@ import { setFlag } from "@/database/packages/dnd35/content/customization/modifie
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { getClassSpells } from "./spellSlots.ts";
-
 /**
  * The feats a class's domain pool offers (`spells.domainPool`, a divine crusader's): one per domain her book and the
  * core rules have, each joining that domain's list to hers. The domain gives her its spells, not its granted power.
  */
 export function buildClassDomainPickFeats(ref: ClassReference): FeatSeed[] {
-  const pool = getClassSpells(ref)?.domainPool;
+  const pool = ref.mapping.spells?.domainPool;
   if (!pool) return [];
   const book = ref._meta.book;
   const domains = [
