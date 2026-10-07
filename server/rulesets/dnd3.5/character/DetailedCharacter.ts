@@ -280,7 +280,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.rulesetKlasses,
     );
     this.components.spellcasting.applyBonusCasterLevelModifiers(
-      this.holders!,
+      this.components!,
       this.feats,
       this.featListIds,
       // A target counted as met reads as one any value meets: a class's level gate, which its spell levels replace

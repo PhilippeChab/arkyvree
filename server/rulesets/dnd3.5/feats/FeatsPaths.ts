@@ -1,4 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
@@ -31,7 +32,7 @@ const FEAT_PATHS = [
 export const FAMILY_COUNT = "count";
 
 /** The feats' target paths: each feat's possession and count, and its family's. */
-export default class FeatsPaths implements PathCategory {
+export default class FeatsPaths implements PathCategory<Dnd35Components> {
   /**
    * Each family's wildcard paths, and its count's. A family named like a feat shares the feat's key, where `count` is
    * the feat's (`FeatsComponent.injectGroupings`): the family's count isn't reachable there.
@@ -108,7 +109,7 @@ export default class FeatsPaths implements PathCategory {
   readonly name = "feats";
   readonly label = "Feats";
   readonly description = "Feat possession and stackable count";
-  readonly holder = { key: "feats", getter: "getFeats" };
+  readonly component = { key: "feats", getter: "getFeats" } as const;
   readonly groupDescriptionTemplates = { feats: "{name} feat possession" };
 
   /** Every family the rules know, a feat of the ruleset in it or not (an extension's checks of another book's), by its slug. */

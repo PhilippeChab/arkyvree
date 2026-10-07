@@ -1,4 +1,4 @@
-import type { Holder, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import type { Component, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { isTraversable } from "./isTraversable.ts";
@@ -23,13 +23,13 @@ export default class PathTraverser {
   constructor(private readonly subtypeCategories: ReadonlySet<string>) {}
 
   /** A path that reaches no value, with why. */
-  static failed(holder: Holder | null, key: string, error: string): TraversePathResult[] {
-    return [{ holder, object: null, data: null, key, resolvedPath: null, error }];
+  static failed(component: Component | null, key: string, error: string): TraversePathResult[] {
+    return [{ component, object: null, data: null, key, resolvedPath: null, error }];
   }
 
   /** Each of `entries` traversed with the rest of the path, under its own slug: a skill and its subtypes. */
   private traverseEach(
-    holder: Holder,
+    component: Component,
     entries: [string, unknown][],
     rest: string[],
     maxDepth: number,
@@ -37,7 +37,7 @@ export default class PathTraverser {
   ): TraversePathResult[] {
     return entries.flatMap(([key, value]) => {
       const slug = stripSeparators(key);
-      return this.traverse(holder, rest, value as Record<string, unknown>, slug, maxDepth, [...pathParts, slug]);
+      return this.traverse(component, rest, value as Record<string, unknown>, slug, maxDepth, [...pathParts, slug]);
     });
   }
 
@@ -47,7 +47,7 @@ export default class PathTraverser {
    * wildcard in turn. A wildcard can't end a path.
    */
   private traverseWildcard(
-    holder: Holder,
+    component: Component,
     next: string,
     rest: string[],
     currentValue: unknown,
@@ -66,29 +66,29 @@ export default class PathTraverser {
       const formattedKey = stripSeparators(key);
       if (!formattedKey || (prefix && !formattedKey.startsWith(prefix))) continue;
       if (rest.length === 0)
-        return PathTraverser.failed(holder, lastKey, `Wildcard modifier not supported as last element`);
+        return PathTraverser.failed(component, lastKey, `Wildcard modifier not supported as last element`);
       const nextElement = stripSeparators(rest[0]);
       // A value without the next path element is a group: recurse with a wildcard into its children.
       const elements = nextElement && !(nextElement in value) ? ["*", ...rest] : rest;
-      results.push(...this.traverse(holder, elements, value, key, maxDepth, [...pathParts, formattedKey]));
+      results.push(...this.traverse(component, elements, value, key, maxDepth, [...pathParts, formattedKey]));
     }
     return results;
   }
 
   /** The rest of a path (`elements`) walked from `currentValue`, which `pathParts` reached. */
   traverse(
-    holder: Holder,
+    component: Component,
     elements: string[],
     currentValue: unknown,
     lastKey: string,
     maxDepth: number = 0,
     pathParts: string[] = [],
   ): TraversePathResult[] {
-    if (maxDepth > 10) return PathTraverser.failed(holder, lastKey, `Max depth reached`);
+    if (maxDepth > 10) return PathTraverser.failed(component, lastKey, `Max depth reached`);
     maxDepth++;
     const [next, ...rest] = elements;
     if (next === "*" || next.endsWith("*")) {
-      return this.traverseWildcard(holder, next, rest, currentValue, lastKey, maxDepth, pathParts);
+      return this.traverseWildcard(component, next, rest, currentValue, lastKey, maxDepth, pathParts);
     }
 
     const formattedKey = stripSeparators(next);
@@ -96,7 +96,7 @@ export default class PathTraverser {
     // Anywhere else, a name another starts is another entry: a feat's ("dodge" isn't "dodgebonusswashbuckler",
     // "light" isn't "lightningreflexes"), checked by its family's group if it has one (`feats.weaponfocus.*`)
     const reachesSubtypes = rest.length > 0 && this.subtypeCategories.has(pathParts[0]);
-    if (!formattedKey) return PathTraverser.failed(holder, formattedKey, `Element not found: ${next}`);
+    if (!formattedKey) return PathTraverser.failed(component, formattedKey, `Element not found: ${next}`);
     // A path that steps past a value (`abilities.strength.total.x`) fails whole, wildcard branches and all:
     // traversePathInit answers the throw with the path's one error.
     if (!isTraversable(currentValue)) throw new Error(`Element not found: ${next}`);
@@ -104,14 +104,15 @@ export default class PathTraverser {
       // A skill not found may name only its subtypes ("knowledge" for "knowledgearcana", "knowledgehistory"…):
       // expand to all of them like an implicit wildcard
       const prefixMatches = reachesSubtypes ? subtypesOf(currentValue, formattedKey) : [];
-      if (prefixMatches.length === 0) return PathTraverser.failed(holder, formattedKey, `Element not found: ${next}`);
-      return this.traverseEach(holder, prefixMatches, rest, maxDepth, pathParts);
+      if (prefixMatches.length === 0)
+        return PathTraverser.failed(component, formattedKey, `Element not found: ${next}`);
+      return this.traverseEach(component, prefixMatches, rest, maxDepth, pathParts);
     }
     const subtypeMatches = reachesSubtypes ? subtypesOf(currentValue, formattedKey) : [];
     if (subtypeMatches.length > 0) {
       // The skill itself, then its subtypes.
       return this.traverseEach(
-        holder,
+        component,
         [[formattedKey, currentValue[formattedKey]], ...subtypeMatches],
         rest,
         maxDepth,
@@ -121,11 +122,11 @@ export default class PathTraverser {
 
     const path = [...pathParts, formattedKey];
     if (rest.length !== 0) {
-      return this.traverse(holder, rest, currentValue[formattedKey], formattedKey, maxDepth, path);
+      return this.traverse(component, rest, currentValue[formattedKey], formattedKey, maxDepth, path);
     }
     return [
       {
-        holder,
+        component,
         object: currentValue,
         data: currentValue[formattedKey],
         key: formattedKey,

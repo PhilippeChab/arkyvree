@@ -1,11 +1,12 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { BONDED_KINDS } from "@/shared/dnd3.5/bondedKinds.ts";
 
 /** The bonded creature's target paths: its kind's race. */
-export default class BondedPaths implements PathCategory {
+export default class BondedPaths implements PathCategory<Dnd35Components> {
   static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
     for (const b of BONDED_KINDS) {
@@ -33,7 +34,7 @@ export default class BondedPaths implements PathCategory {
 
   readonly description = "Familiar, animal companion, or mount race";
 
-  readonly holder = { key: "bonded", getter: "getBonds" };
+  readonly component = { key: "bonded", getter: "getBonds" } as const;
 
   generate(_rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
     return BondedPaths.generateTargetPaths(kind);

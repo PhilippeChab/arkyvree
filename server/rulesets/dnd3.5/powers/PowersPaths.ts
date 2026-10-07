@@ -1,4 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import { collectFeatListIds } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { collectPropertySlugs } from "@/server/rulesets/engine/paths/propertySlugs.ts";
@@ -17,7 +18,7 @@ const NAVIGATABLE_POWER_DC_PATHS = [
 ];
 
 /** The spells' target paths: each spell's DC, possession and properties. */
-export default class PowersPaths implements PathCategory {
+export default class PowersPaths implements PathCategory<Dnd35Components> {
   static generatePowerPaths(
     powers: (PowerWithAptitudes & { properties: Property[] })[],
     aptitudes: Aptitude[],
@@ -112,7 +113,7 @@ export default class PowersPaths implements PathCategory {
 
   readonly description = "Spell DC, possession, and properties";
 
-  readonly holder = { key: "powers", getter: "getPowers" };
+  readonly component = { key: "powers", getter: "getPowers" } as const;
 
   readonly groupDescriptionTemplates = { powers: "{name} spell DC and properties" };
 

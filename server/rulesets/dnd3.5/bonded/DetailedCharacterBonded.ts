@@ -24,8 +24,8 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
       const mods = rulesetData.modifiersBySource.get(featRow.id);
       if (mods) featModifiers.push(...mods);
     }
-    if (featModifiers.length > 0 && this.holders) {
-      this.modifierEvaluator.evaluateModifiers(this.holders, featModifiers, this.requirementEvaluator);
+    if (featModifiers.length > 0 && this.components) {
+      this.modifierEvaluator.evaluateModifiers(this.components, featModifiers, this.requirementEvaluator);
     }
   }
 

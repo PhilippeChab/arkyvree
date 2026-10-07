@@ -18,7 +18,7 @@ import {
   visibilityMap,
 } from "@/server/repositories/index.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
-import type { CharacterKind, Holders } from "@/server/rulesets/engine/types.ts";
+import type { CharacterKind, Components } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getClassLevelsByCharacter } from "@/server/services/characters/classLevels.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -193,7 +193,7 @@ class CharactersService extends include(Object, Archives) {
         };
       }
 
-      // Build a minimal identity holder from form data.
+      // Build a minimal identity component from form data.
       // Only include fields that are actually provided — missing fields cause
       // path traversal to fail gracefully (node not in tree → lenient evaluation).
       const identityData: Record<string, Record<string, unknown>> = {
@@ -207,7 +207,7 @@ class CharactersService extends include(Object, Archives) {
 
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const targetPaths = rulesetModule.createTargetPaths();
-      const holders: Holders = {
+      const components: Components = {
         identity: { getIdentity: () => identityData },
       };
 
@@ -216,7 +216,7 @@ class CharactersService extends include(Object, Archives) {
         if (!reqs || reqs.length === 0) return { ...race, eligible: true };
 
         const tempRequirements = new RequirementEvaluator(targetPaths);
-        tempRequirements.evaluateRequirements(holders, [reqs]);
+        tempRequirements.evaluateRequirements(components, [reqs]);
         const { unmetRequirementGroups } = tempRequirements.getRequirements();
         // Only check unmetRequirementGroups — invalidRequirements represent
         // paths we can't evaluate from partial form data (treated as passing)

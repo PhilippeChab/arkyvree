@@ -408,7 +408,7 @@ server/
 │   │   │   └── …
 │   │   ├── modifiers/ModifierEvaluator.ts
 │   │   ├── requirements/RequirementEvaluator.ts
-│   │   └── paths/                         (readHolder, templateExpression, literalValue, isTraversable)
+│   │   └── paths/                         (PathTraverser, CategoryPaths, PathCategory, readComponent, templateExpression, …)
 │   └── dnd3.5/                            ← 3.5-specific implementation
 │       ├── index.ts                       (the module's entry: createRulesetModule, the response builders)
 │       ├── rulesetModule.ts               (RulesetModule impl)

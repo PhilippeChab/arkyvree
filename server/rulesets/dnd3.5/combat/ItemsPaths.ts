@@ -1,17 +1,22 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import { buildWeaponPaths } from "@/server/rulesets/dnd3.5/combat/WeaponPaths.ts";
 import { UNARMED_STRIKE } from "@/server/rulesets/dnd3.5/constants.ts";
-import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
+import type { GetterOf, PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import PathTraverser from "@/server/rulesets/engine/paths/PathTraverser.ts";
 import { collectPropertySlugs } from "@/server/rulesets/engine/paths/propertySlugs.ts";
-import { readHolder } from "@/server/rulesets/engine/paths/readHolder.ts";
-import type { Holders, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import { readComponent } from "@/server/rulesets/engine/paths/readComponent.ts";
+import type { Components, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { deriveSegmentLabels } from "@/shared/customization/target.ts";
 import { ARMOR_TYPE, SHIELD_TYPE, WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import type ArmorsComponent from "./ArmorsComponent.ts";
+import type ShieldsComponent from "./ShieldsComponent.ts";
+import type WeaponsComponent from "./WeaponsComponent.ts";
 
 const ARMOR_LABELS: Record<string, string> = {
   ac: "Armor Class",
@@ -44,7 +49,7 @@ const SHIELD_LABELS: Record<string, string> = {
 };
 
 /** The equipped items' target paths: items.weapons / items.armors / items.shields, a grouping's items. */
-export default class ItemsPaths implements PathCategory {
+export default class ItemsPaths implements PathCategory<Dnd35Components> {
   static generateWeaponPaths(weaponGroupings: string[], kind: "modifier" | "requirement"): TargetPath[] {
     return weaponGroupings.flatMap((grouping) => buildWeaponPaths(`items.weapons.${grouping}`, "items", kind));
   }
@@ -136,26 +141,34 @@ export default class ItemsPaths implements PathCategory {
   }
 
   /** A grouping's equipped items. Null for another sub-category, or a path that names none. */
-  resolve(target: string, rest: string[], holders: Holders, traverser: PathTraverser): TraversePathResult[] | null {
+  resolve(
+    target: string,
+    rest: string[],
+    components: Components,
+    traverser: PathTraverser,
+  ): TraversePathResult[] | null {
     if (rest.length === 0) return null;
     const [subcategory, grouping, ...subPath] = rest;
     if (subcategory !== "weapons" && subcategory !== "armors" && subcategory !== "shields") return null;
-    const holder = holders[subcategory];
-    if (!holder) return PathTraverser.failed(null, target, `${subcategory} holder not found`);
+    const component = components[subcategory];
+    if (!component) return PathTraverser.failed(null, target, `${subcategory} holder not found`);
     const pathParts = ["items", subcategory, stripSeparators(grouping)];
 
     if (subcategory === "weapons") {
-      const groups = readHolder(holder, "getWeapons");
+      const groups = readComponent(component, "getWeapons" satisfies GetterOf<WeaponsComponent>);
       const group = isRecord(groups) ? groups[stripSeparators(grouping)] : undefined;
       if (!isRecord(group)) return [];
       return Object.entries(group).flatMap(([key, weapon]) =>
-        traverser.traverse(holder, subPath, weapon, key, 0, pathParts),
+        traverser.traverse(component, subPath, weapon, key, 0, pathParts),
       );
     }
-    const getterMap = { armors: "getArmors", shields: "getShields" } as const;
-    const groups = readHolder(holder, getterMap[subcategory]);
+    const getterMap = { armors: "getArmors", shields: "getShields" } as const satisfies {
+      armors: GetterOf<ArmorsComponent>;
+      shields: GetterOf<ShieldsComponent>;
+    };
+    const groups = readComponent(component, getterMap[subcategory]);
     const group = isRecord(groups) ? groups[stripSeparators(grouping)] : undefined;
     if (!group) return [];
-    return traverser.traverse(holder, subPath, group, grouping, 0, pathParts);
+    return traverser.traverse(component, subPath, group, grouping, 0, pathParts);
   }
 }

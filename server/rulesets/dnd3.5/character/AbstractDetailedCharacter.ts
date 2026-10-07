@@ -9,7 +9,6 @@ import RequirementEvaluator from "@/server/rulesets/engine/requirements/Requirem
 import type {
   DetailedCharacterInterface,
   FeatWithPMR,
-  Holders,
   InventoryEntry,
   KlassLevelWithPMR,
   LoadedCharacterData,
@@ -160,7 +159,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   protected featListIds: Set<string> = new Set();
 
   // Modifier/requirement collections
-  protected holders: Holders | null = null;
+  protected builtComponents: Dnd35Components | null = null;
 
   protected modifiers: Modifier[] = [];
 
@@ -251,7 +250,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
    * the validation read.
    */
   private applyModifiersInRounds(modifiers: Modifier[]): void {
-    const holders = this.holders!;
+    const components = this.builtComponents!;
     const groups = this.requirementGroups.filter((group) => group.length > 0);
     const gateKey = (r: Requirement) => `${r.entityId}:${r.entityType}`;
     const keysOf = (m: Modifier) => [`${m.sourceId}:${m.sourceType}`, `${m.id}:modifiers`];
@@ -259,7 +258,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     const literal = modifiers.filter((m) => !isTemplateValue(m.value));
 
     for (const modifier of literal.filter((m) => !keysOf(m).some((key) => gateKeys.has(key)))) {
-      this.modifierEvaluator.evaluateModifier(modifier, holders);
+      this.modifierEvaluator.evaluateModifier(modifier, components);
     }
     let waiting = literal.filter((m) => keysOf(m).some((key) => gateKeys.has(key)));
     const appliedGated: Modifier[] = [];
@@ -267,19 +266,19 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       const waitingKeys = new Set(waiting.flatMap(keysOf));
       const round = new RequirementEvaluator(this.targetPaths);
       round.evaluateRequirements(
-        holders,
+        components,
         groups.filter((group) => group.some((r) => waitingKeys.has(gateKey(r)))),
         this.itemOf,
       );
       const blocked = ModifierEvaluator.blockedKeys(round);
       const ready = waiting.filter((m) => !keysOf(m).some((key) => blocked.has(key)));
       if (ready.length === 0) break;
-      for (const modifier of ready) this.modifierEvaluator.evaluateModifier(modifier, holders);
+      for (const modifier of ready) this.modifierEvaluator.evaluateModifier(modifier, components);
       appliedGated.push(...ready);
       waiting = waiting.filter((m) => !ready.includes(m));
     }
 
-    this.requirementEvaluator.evaluateRequirements(holders, groups, this.itemOf);
+    this.requirementEvaluator.evaluateRequirements(components, groups, this.itemOf);
     // A modifier can break a requirement already met, another's or its own: the modifiers it gated stay applied (undoing
     // them could loop, two modifiers breaking each other's), and validation reports them. A ready one a round skipped,
     // or that reached nothing, didn't apply
@@ -290,7 +289,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     );
     // The modifiers still waiting are recorded as gated out; the templates apply, or are, by the final evaluation
     this.modifierEvaluator.evaluateModifiers(
-      holders,
+      components,
       [...waiting, ...modifiers.filter((m) => isTemplateValue(m.value))],
       this.requirementEvaluator,
     );
@@ -352,7 +351,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     }
   }
 
-  /** Ruleset-specific setup before requirement evaluation (e.g. spellcasting holder). */
+  /** Ruleset-specific setup before requirement evaluation (e.g. spellcasting component). */
   protected abstract preRequirementProcessing(rulesetData: RulesetData): Promise<void>;
 
   /** An unmet requirement group's issue: on the entity of `owner`, one of its requirements, or naming its targets. */
@@ -376,7 +375,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
    * (its hand) reach nothing, as for a weapon not yet held.
    */
   areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean {
-    if (!this.holders) return false;
+    if (!this.builtComponents) return false;
 
     const tempRequirements = new RequirementEvaluator(this.targetPaths);
     const nonEmpty = requirementGroups.filter((group) => group.length > 0);
@@ -384,7 +383,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
     const sourceId = context?.sourceId;
     tempRequirements.evaluateRequirements(
-      this.holders,
+      this.builtComponents,
       nonEmpty,
       sourceId === undefined ? this.itemOf : () => sourceId ?? undefined,
     );
@@ -399,7 +398,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     // Each condition evaluated as the requirements are, templates and every operator included
     const conditions = new RequirementEvaluator(this.targetPaths);
     const isLeafMet = (req: Requirement) =>
-      !!this.holders && conditions.isConditionMet(req, this.holders, this.itemOf([req]));
+      !!this.builtComponents && conditions.isConditionMet(req, this.builtComponents, this.itemOf([req]));
 
     const formatNode = (node: RequirementNode<Requirement>, indent: string): string => {
       const req = node.requirement;
@@ -434,13 +433,13 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   abstract getSpellTags(): Record<string, string[]>;
 
   getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[] {
-    if (!this.holders) return [];
+    if (!this.builtComponents) return [];
 
     const tempRequirements = new RequirementEvaluator(this.targetPaths);
     const nonEmpty = requirementGroups.filter((group) => group.length > 0);
     if (nonEmpty.length === 0) return [];
 
-    tempRequirements.evaluateRequirements(this.holders, nonEmpty, this.itemOf);
+    tempRequirements.evaluateRequirements(this.builtComponents, nonEmpty, this.itemOf);
     const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
     const issues: RequirementIssue[] = [];
 
@@ -583,10 +582,10 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       // 3. Pre-apply possession modifiers (universal)
       this.preApplyPossessionModifiers();
 
-      // 4. Build holders (subclass — includes ruleset-specific holders)
-      this.holders = this.components;
+      // 4. Build components (subclass — includes ruleset-specific components)
+      this.builtComponents = this.components;
 
-      // 5. Pre-requirement processing (subclass — e.g. the spellcasting holder, a bonded creature's stat block)
+      // 5. Pre-requirement processing (subclass — e.g. the spellcasting component, a bonded creature's stat block)
       await this.preRequirementProcessing(rulesetData);
 
       // 6. Post-requirement processing (subclass — e.g. proficiency penalties, which check requirements of their own)
@@ -601,7 +600,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       await this.postModifierProcessing(rulesetData);
 
       // 9. Evaluate power modifiers (universal)
-      this.modifierEvaluator.evaluateModifiers(this.holders, powerModifiers, this.requirementEvaluator);
+      this.modifierEvaluator.evaluateModifiers(this.builtComponents, powerModifiers, this.requirementEvaluator);
     });
   }
 

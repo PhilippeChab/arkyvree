@@ -1,4 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import { Dnd35LevelsHooks } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsHooks.ts";
 import { collectClassListIds } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
@@ -62,7 +63,7 @@ export const JOINS_CLASS_LIST = {
 };
 
 /** The aptitudes' target paths: each aptitude's uses and slots. */
-export default class AptitudesPaths implements PathCategory {
+export default class AptitudesPaths implements PathCategory<Dnd35Components> {
   static generateTargetPaths(
     aptitudes: Aptitude[],
     kind: "modifier" | "requirement",
@@ -120,7 +121,7 @@ export default class AptitudesPaths implements PathCategory {
   readonly name = "aptitudes";
   readonly label = "Aptitudes";
   readonly description = "Uses and selection slots";
-  readonly holder = { key: "aptitudes", getter: "getAptitudes" };
+  readonly component = { key: "aptitudes", getter: "getAptitudes" } as const;
   readonly groupDescriptionTemplates = { aptitudes: "{name} uses and slots" };
 
   /** The leveled aptitudes: those with spells at a level, and those a class gives slots in before they have any. */

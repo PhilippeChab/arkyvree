@@ -1,12 +1,15 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import { WIELDED_VALUES } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
-import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
+import type { GetterOf, PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import type PathTraverser from "@/server/rulesets/engine/paths/PathTraverser.ts";
-import { readHolder } from "@/server/rulesets/engine/paths/readHolder.ts";
-import type { Holders, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import { readComponent } from "@/server/rulesets/engine/paths/readComponent.ts";
+import type { Components, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import { MODIFIER_OPERATORS, NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { isRecord } from "@/shared/isRecord.ts";
+
+import type CombatComponent from "./CombatComponent.ts";
 
 /**
  * A weapon's paths: a weapon group's (`items.weapons.<group>.tohit.misc`), and an item's own weapon's
@@ -69,7 +72,7 @@ export function buildWeaponPaths(prefix: string, category: string, kind: "modifi
  * An item's own weapon's target paths (weapon.tohit.* / weapon.damage.* / weapon.wielded): the weapon slots holding
  * its source, the item (its modifiers), or one entry of it (a weapon's proficiency).
  */
-export default class WeaponPaths implements PathCategory {
+export default class WeaponPaths implements PathCategory<Dnd35Components> {
   /** The paths an item's modifiers and requirements read on its own weapon (`weapon.tohit.misc`), wherever it's held. */
   static generateItemWeaponPaths(kind: "modifier" | "requirement"): TargetPath[] {
     return buildWeaponPaths("weapon", "weapon", kind);
@@ -110,19 +113,19 @@ export default class WeaponPaths implements PathCategory {
   resolve(
     target: string,
     rest: string[],
-    holders: Holders,
+    components: Components,
     traverser: PathTraverser,
     context?: { sourceId?: string },
   ): TraversePathResult[] | null {
     if (!this.readsSource(target)) return null;
     const sourceId = context?.sourceId;
     if (!sourceId) return [];
-    const combatHolder = holders["combat"];
-    if (!combatHolder) return [];
-    const weaponsHolder = holders["weapons"];
-    if (!weaponsHolder) return [];
+    const combatComponent = components["combat"];
+    if (!combatComponent) return [];
+    const weaponsComponent = components["weapons"];
+    if (!weaponsComponent) return [];
 
-    const combat = readHolder(combatHolder, "getCombat");
+    const combat = readComponent(combatComponent, "getCombat" satisfies GetterOf<CombatComponent>);
     if (!isRecord(combat) || !isRecord(combat.weaponsets)) return [];
     const results: TraversePathResult[] = [];
     for (const weaponSet of Object.values(combat.weaponsets)) {
@@ -130,7 +133,7 @@ export default class WeaponPaths implements PathCategory {
         // Its item's (a modifier's source), or its entry's (a proficiency read of the entry holding it)
         const held = weapon as { itemId?: string | null; entryId?: string | null } | null;
         if (held && typeof held === "object" && (held.itemId === sourceId || held.entryId === sourceId)) {
-          results.push(...traverser.traverse(weaponsHolder, rest, weapon, rest[0], 0, ["weapon"]));
+          results.push(...traverser.traverse(weaponsComponent, rest, weapon, rest[0], 0, ["weapon"]));
         }
       }
     }

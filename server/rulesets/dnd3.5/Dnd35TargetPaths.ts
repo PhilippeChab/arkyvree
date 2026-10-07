@@ -1,6 +1,7 @@
 /** The paths an entity's modifiers and requirements name, in the 3.5 rules: each category's, and the ruleset's labels. */
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import CategoryPaths from "@/server/rulesets/engine/paths/CategoryPaths.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
@@ -25,7 +26,7 @@ import SkillsPaths from "./skills/SkillsPaths.ts";
 import SpellcastingPaths from "./spellcasting/SpellcastingPaths.ts";
 
 /** The 3.5 rules' categories of target paths, in the path picker's order (`getCategories`). */
-const DND35_PATH_CATEGORIES: PathCategory[] = [
+const DND35_PATH_CATEGORIES: PathCategory<Dnd35Components>[] = [
   new AbilitiesPaths(),
   new SkillsPaths(),
   new SavesPaths(),
@@ -41,7 +42,7 @@ const DND35_PATH_CATEGORIES: PathCategory[] = [
   new BondedPaths(),
 ];
 
-export default class Dnd35TargetPaths extends CategoryPaths {
+export default class Dnd35TargetPaths extends CategoryPaths<Dnd35Components> {
   constructor() {
     super(DND35_PATH_CATEGORIES);
   }

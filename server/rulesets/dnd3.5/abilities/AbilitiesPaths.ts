@@ -1,4 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
@@ -13,7 +14,7 @@ const NAVIGATABLE_PATHS = [
 ];
 
 /** The abilities' target paths: each ability's score and modifier. */
-export default class AbilitiesPaths implements PathCategory {
+export default class AbilitiesPaths implements PathCategory<Dnd35Components> {
   static generateTargetPaths(abilities: RulesetAbility[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
@@ -50,7 +51,7 @@ export default class AbilitiesPaths implements PathCategory {
 
   readonly description = "Ability scores and modifiers";
 
-  readonly holder = { key: "abilities", getter: "getAbilities" };
+  readonly component = { key: "abilities", getter: "getAbilities" } as const;
 
   readonly groupDescriptionTemplates = { abilities: "{name} ability score and modifier" };
 

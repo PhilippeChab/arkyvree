@@ -1,13 +1,14 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 
 /** The spellcasting target paths: the highest arcane and divine spell levels castable. */
-export default class SpellcastingPaths implements PathCategory {
+export default class SpellcastingPaths implements PathCategory<Dnd35Components> {
   readonly name = "spellcasting";
   readonly label = "Spellcasting";
   readonly description = "Maximum arcane or divine spell level castable";
-  readonly holder = { key: "spellcasting", getter: "getSpellcasting" };
+  readonly component = { key: "spellcasting", getter: "getSpellcasting" } as const;
 
   generate(_rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
     if (kind !== "requirement") return [];

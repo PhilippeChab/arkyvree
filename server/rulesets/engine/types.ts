@@ -45,6 +45,14 @@ type ProjectedFeat = Feat & {
 
 export type CharacterKind = (typeof CHARACTER_KINDS_DND35)[number];
 
+/**
+ * A character component component (abilities, skills, combat, etc.): a class instance whose getters the target paths call
+ * by name (`readComponent`).
+ */
+export type Component = object;
+
+export type Components = Record<string, Component>;
+
 export interface DetailedCharacterInterface {
   preload(): Promise<PreloadedCharacterData>;
   build(
@@ -90,14 +98,6 @@ export type FeatWithPMR = Feat & {
   properties: Property[];
   requirements: Requirement[];
 };
-
-/**
- * A character component holder (abilities, skills, combat, etc.): a class instance whose getters the target paths call
- * by name (`readHolder`).
- */
-export type Holder = object;
-
-export type Holders = Record<string, Holder>;
 
 export type InventoryEntry = CharacterInventory & {
   item: Item & {
@@ -272,11 +272,11 @@ export interface TargetPathsInterface extends TargetPathsTraverser {
 export interface TargetPathsTraverser {
   /** Whether a target reads its source itself (a weapon's own paths: the place its item is held), not the sheet. */
   readsSource(target: string): boolean;
-  traversePathInit(target: string, holders: Holders, context?: { sourceId?: string }): TraversePathResult[];
+  traversePathInit(target: string, components: Components, context?: { sourceId?: string }): TraversePathResult[];
 }
 
 export type TraversePathResult = {
-  holder: Holder | null;
+  component: Component | null;
   object: unknown;
   data: unknown;
   key: string;

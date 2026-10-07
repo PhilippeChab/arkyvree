@@ -4,7 +4,7 @@ import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/ap
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import { SLOT_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
-import type { FeatWithPMR, Holders, KlassLevelWithPMR } from "@/server/rulesets/engine/types.ts";
+import type { Components, FeatWithPMR, KlassLevelWithPMR } from "@/server/rulesets/engine/types.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -191,7 +191,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
      * feat brings (`featListIds`) follow their class's spell levels. `isGateMet` takes the targets to count as met.
      */
     applyBonusCasterLevelModifiers(
-      holders: Holders,
+      components: Components,
       feats: FeatWithPMR[],
       featListIds: Set<string>,
       isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
@@ -201,7 +201,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       );
 
       for (const modifier of aptitudeModifiers) {
-        this.characterModifiers.evaluateModifier(modifier, holders);
+        this.characterModifiers.evaluateModifier(modifier, components);
       }
 
       this.syncFeatListSlots(feats, featListIds, isGateMet);
