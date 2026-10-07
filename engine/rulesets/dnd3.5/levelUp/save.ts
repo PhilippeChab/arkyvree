@@ -148,7 +148,7 @@ export function planLevelUp(
   for (const [i, { klass, klassLevel }] of klassLevelEntries.entries()) {
     const { hp, abilityId } = levels[i];
     const levelPicks = distributed[i];
-    if (rows.levels.some((saved) => saved.klassLevelId === klassLevel.id))
+    if (otherLevels.some((other) => other.klassLevelId === klassLevel.id))
       throw new RulesError("invalid", `Level ${i + 1}: This level has already been finalized`);
     checkAbilityIncrease(rows.levels.length + i, abilityId, `Level ${i + 1}: `);
     checkLevel({ klass, klassLevel, hp, abilityId, ...levelPicks }, otherLevels, pickedFeatIds, rulesetData);
