@@ -1,5 +1,6 @@
 export { createRulesetModule } from "./rulesetModule.ts";
 export { ALLOWED_ALL } from "./aptitudes/AptitudesComponent.ts";
+export { parseAptitudeAllowed, parseAptitudePool, parseAptitudeSpellLevel } from "./aptitudes/aptitudeTargets.ts";
 export type { default as AptitudesComponent } from "./aptitudes/AptitudesComponent.ts";
 export type { default as Dnd35DetailedCharacter } from "./character/DetailedCharacter.ts";
 export { isSkillSubtypeOf } from "./skills/SkillsComponent.ts";

@@ -1,10 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-
-/** A spell list whose spells join the list of the class that gives it, as a cleric's domain does: `aptitudes.<list>.joinsclasslist`. */
-export const JOIN_TARGET = /^aptitudes\.([^.]+)\.joinsclasslist$/;
-
-/** A spell list's slot at a spell level: `aptitudes.<list>.<level>.uses` or `.allowed`. */
-export const SLOT_TARGET = /^aptitudes\.([^.]+)\.\d+\.(?:uses|allowed)$/;
+import { parseAptitudeJoin, parseAptitudeSpellLevel } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 
 /** The spell lists the ruleset's class levels give slots in, by aptitude id: each a class's own (`collectClassLists`). */
 export function collectClassListIds(
@@ -31,7 +26,7 @@ export function collectClassLists({
   const listsByKlassId = new Map<string, Set<string>>();
   for (const klassLevel of klassLevels) {
     for (const modifier of modifiersBySource.get(klassLevel.id) ?? []) {
-      const list = SLOT_TARGET.exec(modifier.target)?.[1];
+      const list = parseAptitudeSpellLevel(modifier.target)?.list;
       if (list === undefined) continue;
       const lists = listsByKlassId.get(klassLevel.klassId) ?? new Set<string>();
       lists.add(list);
@@ -64,5 +59,5 @@ export function collectFeatListIds(
 
 /** The spell list a modifier gives slots in or joins to its class's list, if it does either. */
 export function listOpenedBy(target: string): string | undefined {
-  return SLOT_TARGET.exec(target)?.[1] ?? JOIN_TARGET.exec(target)?.[1];
+  return parseAptitudeSpellLevel(target)?.list ?? parseAptitudeJoin(target);
 }

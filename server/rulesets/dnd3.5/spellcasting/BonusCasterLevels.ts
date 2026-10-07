@@ -2,9 +2,9 @@ import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import AptitudesPaths from "@/server/rulesets/dnd3.5/aptitudes/AptitudesPaths.ts";
+import { parseAptitudeSpellLevel } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 import ClassesPaths from "@/server/rulesets/dnd3.5/classes/ClassesPaths.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
-import { SLOT_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import type { Components, CustomizedFeat, CustomizedKlassLevel } from "@/server/rulesets/engine/types.ts";
 import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
@@ -81,7 +81,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         const className = classNameByKlassLevelId.get(feat.klassLevelId);
         if (!className) continue;
         for (const modifier of feat.modifiers) {
-          const list = SLOT_TARGET.exec(modifier.target)?.[1];
+          const list = parseAptitudeSpellLevel(modifier.target)?.list;
           const listId = list === undefined ? undefined : aptitudes[list]?.id;
           if (list === undefined || !listId || !featListIds.has(listId)) continue;
           const slots = slotsByList.get(list) ?? { className, featId: feat.id, modifiers: [] };

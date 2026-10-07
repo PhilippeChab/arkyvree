@@ -8,6 +8,7 @@
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { ALLOWED_ALL, Dnd35LevelsRules, type Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
+import { parseAptitudeAllowed, parseAptitudePool, parseAptitudeSpellLevel } from "@/server/rulesets/dnd3.5/index.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { isRecord } from "@/shared/isRecord.ts";
@@ -42,9 +43,6 @@ export interface PerLevelDistributionData {
 /** The slots an all-known spell level counts as: every spell of its level. */
 const ALL_KNOWN_SLOTS = 999;
 
-const FEAT_POOL_TARGET = /^aptitudes\.(\w+)\.allowed$/;
-const SPELL_POOL_TARGET = /^aptitudes\.(\w+)\.(\d+)\.allowed$/;
-
 /**
  * Adds what modifiers targeting a pool's `aptitudes.<slug>.allowed` (a feat pool) or `aptitudes.<slug>.<level>.allowed`
  * (a power pool's spell level) give a level. Setting a spell level's to -1, "all spells known", counts as all of them.
@@ -60,20 +58,20 @@ function addModifierDeltas(
     // A pool's slots take a literal: an add, or a spell level's set to -1 (the paths allow nothing else)
     const value = parseLiteralValue(mod.value, "number");
     if (typeof value !== "number") continue;
-    const featMatch = FEAT_POOL_TARGET.exec(mod.target);
-    if (featMatch) {
-      const aptId = aptitudeSlugToId.get(featMatch[1]);
+    const pool = parseAptitudePool(mod.target);
+    if (pool !== undefined) {
+      const aptId = aptitudeSlugToId.get(pool);
       if (aptId && perLevelFeatSlots[aptId]) {
         deltas.feats[aptId] = (deltas.feats[aptId] ?? 0) + value;
       }
       continue;
     }
-    const spellMatch = SPELL_POOL_TARGET.exec(mod.target);
-    if (spellMatch) {
-      const aptId = aptitudeSlugToId.get(spellMatch[1]);
+    const slot = parseAptitudeSpellLevel(mod.target);
+    if (slot?.field === "allowed") {
+      const aptId = aptitudeSlugToId.get(slot.list);
       if (aptId && perLevelPowerSlots[aptId]) {
         if (!deltas.powers[aptId]) deltas.powers[aptId] = {};
-        const spellLevel = spellMatch[2];
+        const spellLevel = String(slot.level);
         if (mod.operator === "set" && value === -1) {
           deltas.powers[aptId][spellLevel] = ALL_KNOWN_SLOTS;
         } else {
@@ -444,9 +442,9 @@ export function getDeferredAptitudeSources(
     const mods = rulesetData.modifiersBySource.get(featId);
     if (!mods) continue;
     for (const mod of mods) {
-      const match = mod.target.match(/^aptitudes\.(\w+)\..*allowed/);
-      if (!match) continue;
-      const aptId = rulesetData.aptitudeIdBySlug.get(match[1]);
+      const list = parseAptitudeAllowed(mod.target);
+      if (list === undefined) continue;
+      const aptId = rulesetData.aptitudeIdBySlug.get(list);
       if (aptId && deferredAptIdSet.has(aptId)) {
         sources.set(aptId, mod.sourceId);
       }
