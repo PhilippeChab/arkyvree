@@ -1,14 +1,14 @@
 import type { Db } from "@/server/database/index.ts";
 import { Properties, Requirements } from "@/server/repositories/index.ts";
 import type { PropertyRecord } from "@/server/rulesets/dnd3.5/types.ts";
-import type { ClassLevelsEffects } from "@/server/rulesets/engine/module/index.ts";
+import type { ClassLevelFields, ClassLevelsEffects } from "@/server/rulesets/engine/module/index.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 
 import ClassesPaths from "./ClassesPaths.ts";
 
 export class Dnd35ClassLevelsEffects implements ClassLevelsEffects {
-  private buildProperties(levelId: string, body: { bab: number; skills: number }): PropertyRecord[] {
-    const { bab, skills } = body;
+  private buildProperties(levelId: string, fields: ClassLevelFields): PropertyRecord[] {
+    const { bab, skills } = fields;
 
     return [
       {
@@ -41,14 +41,14 @@ export class Dnd35ClassLevelsEffects implements ClassLevelsEffects {
     }
   }
 
-  async syncProperties(tx: Db, levelId: string, body: { bab: number; skills: number }): Promise<void> {
+  async syncProperties(tx: Db, levelId: string, fields: ClassLevelFields): Promise<void> {
     await Properties.delete(tx, {
       entityIds: [levelId],
       entityType: "klass_levels",
       types: [KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS],
     });
 
-    const records = this.buildProperties(levelId, body);
+    const records = this.buildProperties(levelId, fields);
     await Properties.createMany(tx, records);
   }
 }

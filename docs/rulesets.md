@@ -530,7 +530,24 @@ The engine's own types name no ruleset (`arkyvree/layers`): its `DetailedCharact
 What a ruleset answers the services, and what it does in their transactions, are its module's `rules` and `effects`: interfaces in `server/rulesets/engine/module/` (`rules.ts`, `effects.ts`), implemented per area in the ruleset's domain folders (`dnd3.5/levels/Dnd35LevelsRules.ts`, `dnd3.5/skills/Dnd35SkillsEffects.ts`, …).
 
 - **A rule** reads no database: a predicate, a constant, or a reading of rows the service already has (`rules.levels.isAbilityIncreaseLevel`, `rules.classLevels.enrichWithSpellsPerDay`, `rules.inventory.validateWeaponHands`).
-- **An effect** writes in the service's transaction (`effects.skills.syncProperties`, `effects.powers.generateProperties`). One that reads the ruleset takes the caller's scope (`RulesetScope`: the ruleset and its view, `withRulesetScope`'s), and runs in its copy-on-write context: `effects.skills.generateSkillFeat(tx, scope, name)`.
+- **An effect** writes in the service's transaction (`effects.skills.syncProperties`, `effects.powers.syncProperties`). One that reads the ruleset takes the caller's scope (`RulesetScope`: the ruleset and its view, `withRulesetScope`'s), and runs in its copy-on-write context: `effects.skills.generateFeats(tx, scope, name)`.
+
+Each method starts with the verb of what it does, the same in every area:
+
+| Side | Verb | What it does | Example |
+|---|---|---|---|
+| Rules | `read…` | reads typed values off properties | `classLevels.readProperties` |
+| Rules | `enrichWith…` | adds those values to rows | `skills.enrichWithProperties` |
+| Rules | `get…` | looks a value up | `classLevels.getSpellListIds` |
+| Rules | `is…` | answers yes or no | `levels.isAbilityIncreaseLevel` |
+| Rules | `resolve…` | picks among candidates | `items.resolveSlot` |
+| Rules | `extract…` | reads a value out of a request's fields | `powers.extractGroupingValue` |
+| Rules | `normalize…` | gives fields the shape they're stored in | `skills.normalizeFlags` |
+| Rules | `validate…` | throws | `inventory.validateWeaponHands` |
+| Effects | `syncProperties` | stores an entity's fields as its properties, in place of those it stored before | `classLevels`, `skills`, `powers` |
+| Effects | `generateFeats` | makes the feats an entity brings, or its grouping shares (see [customization](customization.md#auto-generated-customization)) | `skills`, `powers` |
+| Effects | `deleteFeats` | removes the feats that are an entity's own | `skills` |
+| Effects | `require…` | writes what an entity requires | `classLevels.requirePreviousLevel` |
 
 ```ts
 // server/rulesets/engine/module/rules.ts  (engine interface)

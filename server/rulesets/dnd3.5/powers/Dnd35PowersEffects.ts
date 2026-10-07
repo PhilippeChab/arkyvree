@@ -1,33 +1,41 @@
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { PowerBody, PowersEffects } from "@/server/rulesets/engine/module/index.ts";
+import { Properties } from "@/server/repositories/index.ts";
+import type { PowerFields, PowersEffects } from "@/server/rulesets/engine/module/index.ts";
 
-import { generateSpellFocusFeats, generateSpellProperties, type SpellFields } from "./spellGenerator.ts";
+import {
+  generateSpellFocusFeats,
+  generateSpellProperties,
+  SPELL_FIELD_PROPERTY_TYPES,
+  type SpellFields,
+} from "./spellGenerator.ts";
 
 export class Dnd35PowersEffects implements PowersEffects {
-  private extractSpellFields(body: PowerBody): SpellFields | null {
-    if (typeof body.school !== "string" || body.school.length === 0) return null;
+  private extractSpellFields(fields: PowerFields): SpellFields | null {
+    if (typeof fields.school !== "string" || fields.school.length === 0) return null;
     return {
-      school: body.school,
-      subschool: body.subschool,
-      descriptors: body.descriptors,
-      castingTime: body.castingTime,
-      rangeType: body.rangeType,
-      target: body.target,
-      areaOfEffect: body.areaOfEffect,
-      duration: body.duration,
-      spellResistance: body.spellResistance,
-      components: body.components,
+      school: fields.school,
+      subschool: fields.subschool,
+      descriptors: fields.descriptors,
+      castingTime: fields.castingTime,
+      rangeType: fields.rangeType,
+      target: fields.target,
+      areaOfEffect: fields.areaOfEffect,
+      duration: fields.duration,
+      spellResistance: fields.spellResistance,
+      components: fields.components,
     };
   }
 
-  async generateGroupingFeats(tx: Db, scope: RulesetScope, value: string): Promise<void> {
-    await generateSpellFocusFeats(tx, scope, value);
+  async generateFeats(tx: Db, scope: RulesetScope, grouping: string): Promise<void> {
+    await generateSpellFocusFeats(tx, scope, grouping);
   }
 
-  async generateProperties(tx: Db, powerId: string, body: PowerBody): Promise<void> {
-    const fields = this.extractSpellFields(body);
-    if (!fields) return;
-    await generateSpellProperties(tx, powerId, fields);
+  /** A spell's fields, as properties: none without a school. */
+  async syncProperties(tx: Db, powerId: string, fields: PowerFields): Promise<void> {
+    await Properties.delete(tx, { entityIds: [powerId], entityType: "powers", types: SPELL_FIELD_PROPERTY_TYPES });
+
+    const spellFields = this.extractSpellFields(fields);
+    if (spellFields) await generateSpellProperties(tx, powerId, spellFields);
   }
 }

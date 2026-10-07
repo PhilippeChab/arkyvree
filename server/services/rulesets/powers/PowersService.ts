@@ -58,40 +58,6 @@ class PowersService {
     if (featAptitudes.length > 0) throw new ConflictError("Cannot link spell to aptitude(s) already used for feats");
   }
 
-  /**
-   * Regenerates a power's spell properties from the body, and its grouping feats when its grouping (the school)
-   * changes.
-   */
-  private async regenerateSpellProperties(
-    tx: Db,
-    rulesetModule: Pick<RulesetModule, "effects" | "rules">,
-    scope: RulesetScope,
-    powerId: string,
-    body: PowerBody,
-  ) {
-    const { effects, rules } = rulesetModule;
-    const existingProps = await Properties.findMany(tx, {
-      entityIds: [powerId],
-      entityType: "powers",
-      type: rules.powers.primaryGroupingType,
-    });
-    const oldGroupingValue = existingProps.length > 0 ? existingProps[0].value : null;
-
-    await Properties.delete(tx, {
-      entityIds: [powerId],
-      entityType: "powers",
-      types: rules.powers.generatedPropertyTypes,
-    });
-
-    const newGroupingValue = rules.powers.extractGroupingValue(body);
-    if (newGroupingValue) {
-      await effects.powers.generateProperties(tx, powerId, body);
-
-      if (newGroupingValue !== oldGroupingValue)
-        await effects.powers.generateGroupingFeats(tx, scope, newGroupingValue);
-    }
-  }
-
   /** Replaces a power's aptitude links with these. */
   private async replaceAptitudes(tx: Db, powerId: string, aptitudes: NonNullable<PowerBody["aptitudes"]>) {
     await PowersAptitudes.delete(tx, { powerId });
@@ -111,6 +77,30 @@ class PowersService {
         })),
       );
     }
+  }
+
+  /** Stores a power's fields as its properties, and brings its grouping's feats when its grouping (the school) changes. */
+  private async syncSpellProperties(
+    tx: Db,
+    rulesetModule: Pick<RulesetModule, "effects" | "rules">,
+    scope: RulesetScope,
+    powerId: string,
+    body: PowerBody,
+  ) {
+    const { effects, rules } = rulesetModule;
+    // Read before the sync, which replaces the property that holds it
+    const existingProps = await Properties.findMany(tx, {
+      entityIds: [powerId],
+      entityType: "powers",
+      type: rules.powers.primaryGroupingType,
+    });
+    const oldGroupingValue = existingProps.length > 0 ? existingProps[0].value : null;
+
+    await effects.powers.syncProperties(tx, powerId, body);
+
+    const newGroupingValue = rules.powers.extractGroupingValue(body);
+    if (newGroupingValue && newGroupingValue !== oldGroupingValue)
+      await effects.powers.generateFeats(tx, scope, newGroupingValue);
   }
 
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
@@ -150,11 +140,9 @@ class PowersService {
           });
         }
 
+        await effects.powers.syncProperties(tx, power.id, body);
         const groupingValue = rules.powers.extractGroupingValue(body);
-        if (groupingValue) {
-          await effects.powers.generateProperties(tx, power.id, body);
-          await effects.powers.generateGroupingFeats(tx, { ruleset, rulesetData }, groupingValue);
-        }
+        if (groupingValue) await effects.powers.generateFeats(tx, { ruleset, rulesetData }, groupingValue);
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,
@@ -284,7 +272,7 @@ class PowersService {
         if (body.aptitudes !== undefined) await this.replaceAptitudes(tx, targetId, body.aptitudes);
 
         if (SPELL_FIELDS.some((field) => body[field] !== undefined))
-          await this.regenerateSpellProperties(tx, rulesetModule, { ruleset, rulesetData }, targetId, body);
+          await this.syncSpellProperties(tx, rulesetModule, { ruleset, rulesetData }, targetId, body);
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,

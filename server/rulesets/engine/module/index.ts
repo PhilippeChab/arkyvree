@@ -2,11 +2,12 @@ export type { ClassLevelsEffects, PowersEffects, RulesetEffects, SkillsEffects }
 export type {
   AptitudesRules,
   ClassesRules,
+  ClassLevelFields,
   ClassLevelsRules,
   InventoryRules,
   ItemsRules,
   LevelsRules,
-  PowerBody,
+  PowerFields,
   PowersRules,
   RulesetRules,
   SkillFlags,

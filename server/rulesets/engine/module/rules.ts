@@ -21,6 +21,9 @@ export interface ClassesRules {
   };
 }
 
+/** A class level's fields its properties hold: its base attack bonus and its skill points. */
+export type ClassLevelFields = { bab: number; skills: number };
+
 /** The rules a class level follows: its base attack and skill points, and the spells and feat pools its table shows. */
 export interface ClassLevelsRules {
   enrichWithFeatPools<T extends { id: string; level: number }>(
@@ -31,7 +34,7 @@ export interface ClassLevelsRules {
   enrichWithProperties<T extends { id: string }>(
     levels: T[],
     properties: { entityId: string; type: string; value: string }[],
-  ): (T & { bab: number; skills: number })[];
+  ): (T & ClassLevelFields)[];
   enrichWithSpellsKnown<T extends { id: string; level: number }>(
     levels: T[],
     modifiers: { operator: string; sourceId: string; target: string; value: string }[],
@@ -48,7 +51,7 @@ export interface ClassLevelsRules {
     rulesetData: Pick<RulesetData, "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
     klassId: string,
   ): string[];
-  readProperties(properties: { type: string; value: string }[]): { bab: number; skills: number };
+  readProperties(properties: { type: string; value: string }[]): ClassLevelFields;
 }
 
 /** The rules a character's inventory follows. */
@@ -72,8 +75,8 @@ export interface LevelsRules {
   isAbilityIncreaseLevel(totalLevel: number): boolean;
 }
 
-/** A power's fields its form sends, which its generated properties hold. */
-export interface PowerBody {
+/** A power's fields its properties hold: a spell's school, components, range… */
+export interface PowerFields {
   areaOfEffect?: string;
   castingTime?: string;
   components?: string[];
@@ -86,11 +89,10 @@ export interface PowerBody {
   target?: string;
 }
 
-/** The rules a power follows: how it's grouped (a spell's school), and which of its properties are generated. */
+/** The rules a power follows: how it's grouped (a spell's school). */
 export interface PowersRules {
-  extractGroupingValue(body: PowerBody): string | null;
-  /** The property types `PowersEffects.generateProperties` writes: a save replaces these and keeps any others. */
-  readonly generatedPropertyTypes: readonly string[];
+  extractGroupingValue(fields: PowerFields): string | null;
+  /** The property type that holds a power's grouping. */
   readonly primaryGroupingType: string;
 }
 
@@ -115,4 +117,6 @@ export interface SkillsRules {
     skills: T[],
     properties: { entityId: string; type: string; value: string }[],
   ): (T & SkillFlags)[];
+  /** The flags as a skill keeps them, which `SkillsEffects.syncProperties` stores. */
+  normalizeFlags(flags: SkillFlags): SkillFlags;
 }
