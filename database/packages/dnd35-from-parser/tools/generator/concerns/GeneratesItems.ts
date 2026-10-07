@@ -9,7 +9,7 @@ import type { Constructor } from "@/server/mixins.ts";
 /** Generating a book's mundane items: its weapons, armor, shields and goods. */
 export function GeneratesItems<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingItems extends Base {
-    /** A book's mundane items' files, a file per kind, and their index. */
+    /** A book's mundane items' files, a file per kind. */
     writeItems(ref: ItemReference, book: string) {
       const seeds = Library.book(book).itemSeeds(ref);
       for (const { path, list, seeds: kind } of ITEM_FILES) {
@@ -22,7 +22,6 @@ export function GeneratesItems<B extends Constructor<BaseGenerator>>(Base: B) {
           (file, item) => file.item(item),
         );
       }
-      this.writeItemIndex(book);
 
       this.log(
         `\nDone! Generated ${seeds.simpleWeapons.length} simple, ${seeds.martialWeapons.length} martial, ${seeds.exoticWeapons.length} exotic weapons`,

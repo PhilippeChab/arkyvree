@@ -49,7 +49,7 @@ describe("The generator", () => {
     const folder = mkdtempSync(join(tmpdir(), "generated-"));
     try {
       cpSync(GENERATED, folder, { recursive: true });
-      // Items alone keep the magic items in their index, and a class or domains its book's feat lists in their order
+      // A reference regenerates its whole book: what its references make together (its indexes, its aptitudes) too
       const references = [
         "srd/items.json",
         "srd/classes/wizard.json",
@@ -64,6 +64,25 @@ describe("The generator", () => {
         }),
       ).toEqual([]);
       expectCommitted(folder);
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  test("removes the files of a book it generates that it no longer makes, and leaves the other books'", () => {
+    const folder = mkdtempSync(join(tmpdir(), "generated-"));
+    try {
+      cpSync(GENERATED, folder, { recursive: true });
+      for (const book of ["srd", "complete-divine"]) writeFileSync(join(folder, book, "classes/retired.ts"), code("x"));
+      expect(
+        generateAtomically(folder, (copy) => {
+          new Generator(copy, true).generateReference(join(REFERENCE_DIR, "srd/classes/wizard.json"));
+          return [];
+        }),
+      ).toEqual([]);
+      expect(filesOf(folder).filter((file) => file.endsWith("retired.ts"))).toEqual([
+        "complete-divine/classes/retired.ts",
+      ]);
     } finally {
       rmSync(folder, { recursive: true, force: true });
     }

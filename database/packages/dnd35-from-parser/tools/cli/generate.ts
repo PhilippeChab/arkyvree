@@ -1,9 +1,10 @@
 /**
- * Generates the content package's seed data from the references: every book's (a book, `--type` to narrow), or one
- * reference file's, into generated/ as a whole or not at all.
+ * Generates the content package's seed data from the references, a book at a time: every book's, the books a filter
+ * picks (a book, the books with a reference of a `--type`, the book a name's reference is in), or one reference file's
+ * book, into generated/ as a whole or not at all.
  *
  * Usage:
- *   bun run parser:generate [<book>] [--type <type>]
+ *   bun run parser:generate [<book>] [<name>] [--type <type>]
  *   bun run parser:generate <reference>.json
  */
 
@@ -43,7 +44,7 @@ function main() {
   }
   if (failures.length > 0) {
     console.error(
-      `${failures.length} reference(s) failed, so generated/ is unchanged:\n${failures.map((f) => `  ${f}`).join("\n")}`,
+      `${failures.length} book(s) failed, so generated/ is unchanged:\n${failures.map((f) => `  ${f}`).join("\n")}`,
     );
     process.exit(1);
   }

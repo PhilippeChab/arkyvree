@@ -1,5 +1,4 @@
-import { readdirSync, rmSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { basename, join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import {
@@ -15,21 +14,12 @@ import type { Constructor } from "@/server/mixins.ts";
 /** Generating a book's spells: a file per spell level, and their index. */
 export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingSpells extends Base {
-    /** Regenerate spells/index.ts for a book from existing level .ts files. */
+    /** A book's spells' index (spells/index.ts): each spell level file the generator wrote, its spells at its level. */
     writeSpellIndex(book: string) {
-      const spellDir = dirname(join(this.dir, book, BOOK_FILES.spells.path));
-      let allFiles: string[];
-      try {
-        allFiles = readdirSync(spellDir);
-      } catch {
-        return; // no spells for this book
-      }
-
-      // The spell level files it has (cantrips.ts, level1.ts…), by level
+      // The spell level files the generator wrote (cantrips.ts, level1.ts…), by level
       const levelFiles = SPELL_LEVELS.map((level) => ({ level, ...getSpellFile(level) })).filter(({ path }) =>
-        allFiles.includes(basename(path)),
+        this.wrote(book, path),
       );
-
       if (levelFiles.length === 0) return;
 
       const file = new CodeFile();
@@ -42,7 +32,7 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
       this.write(join(this.dir, book, BOOK_FILES.spells.path), file.code());
     }
 
-    /** A spell reference's files, one per spell level, the stale ones removed. */
+    /** A spell reference's files, one per spell level with spells. */
     writeSpells(ref: SpellReference, book: string) {
       const spells = Library.book(book).spellSeeds(ref);
       this.log(`Built ${spells.length} spell seeds`);
@@ -51,7 +41,7 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
       const beyond = spells.find((spell) => !SPELL_LEVELS.includes(spell.level));
       if (beyond) throw new Error(`${beyond.name}: level ${beyond.level}, where a spell's is 0 to 9`);
 
-      // A file per spell level, its spells without their level (its file's), the levels without spells' removed
+      // A file per spell level, its spells without their level (its file's)
       const byLevel = Map.groupBy(spells, (spell) => spell.level);
       for (const level of SPELL_LEVELS) {
         const { path, list } = getSpellFile(level);
@@ -60,8 +50,6 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
           this.writeList(join(this.dir, book, path), list, "PowerSeed", levelSpells, (file, spell) =>
             file.spell(spell),
           );
-        } else {
-          rmSync(join(this.dir, book, path), { force: true });
         }
       }
     }
