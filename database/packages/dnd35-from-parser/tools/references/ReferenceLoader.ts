@@ -9,8 +9,9 @@ import {
   type ReferenceByType,
   type ReferenceType,
   resolveReference,
+  type StoredReference,
 } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
-import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import type { ClassReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 /** Freezes a value and everything in it. */
 function deepFreeze<T>(value: T): T {
@@ -45,13 +46,13 @@ class ReferenceLoader {
     const key = resolve(path);
     const cached = cache.get(key);
     if (cached) return cached;
-    const reference = deepFreeze(resolveReference(type, readStoredReference(key, type)));
+    const reference = deepFreeze(this.resolve(type, readStoredReference(key, type)));
     cache.set(key, reference);
     return reference;
   }
 
   /** A book's class references with their file's name, sorted by it: none for a book without classes. */
-  loadClasses(book: string): { file: string; ref: ClassReference }[] {
+  loadClasses(book: string): ClassReferenceFile[] {
     const dir = join(REFERENCE_DIR, book, "classes");
     if (!existsSync(dir)) return [];
     return readdirSync(dir)
@@ -59,6 +60,14 @@ class ReferenceLoader {
       .sort()
       .map((file) => ({ file, ref: this.load(join(dir, file), "class") }))
       .filter(({ ref }) => !ref.overrides?.skip);
+  }
+
+  /**
+   * A reference with what the generator reads derived from it, uncached: a feat reference's is derived with its book's
+   * classes, which this loads.
+   */
+  resolve<T extends ReferenceType>(type: T, stored: StoredReference<T>): ReferenceByType[T] {
+    return resolveReference(type, stored, (book) => this.loadClasses(book));
   }
 }
 

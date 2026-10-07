@@ -3,10 +3,10 @@
  * them.
  */
 
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import type { ClassReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
-/** Build map of feat name → additional aptitudes from all class bonusFeatLists in a given book. */
-export function loadBonusFeatAptitudes(book: string): Map<string, string[]> {
+/** Build map of feat name → additional aptitudes from the bonusFeatLists of a book's `classes`. */
+export function getBonusFeatAptitudes(classes: ClassReferenceFile[]): Map<string, string[]> {
   const map = new Map<string, string[]>();
 
   function add(featName: string, aptitude: string) {
@@ -17,7 +17,7 @@ export function loadBonusFeatAptitudes(book: string): Map<string, string[]> {
     }
   }
 
-  for (const { ref } of ReferenceLoader.loadClasses(book)) {
+  for (const { ref } of classes) {
     // Bonus feat lists → aptitudes
     const lists = ref.detected?.bonusFeatLists;
     if (lists) {
@@ -43,11 +43,13 @@ export function loadBonusFeatAptitudes(book: string): Map<string, string[]> {
   return map;
 }
 
-/** Build map of feat name → class levels that grant it as a bonus feat (for alternate prereqs). */
-export function loadBonusFeatClassLevels(book: string): Map<string, { classSlug: string; minLevel: number }[]> {
+/** Build map of feat name → the class levels of a book's `classes` that grant it as a bonus feat (for alternate prereqs). */
+export function getBonusFeatClassLevels(
+  classes: ClassReferenceFile[],
+): Map<string, { classSlug: string; minLevel: number }[]> {
   const map = new Map<string, { classSlug: string; minLevel: number }[]>();
 
-  for (const { file, ref } of ReferenceLoader.loadClasses(book)) {
+  for (const { file, ref } of classes) {
     const lists = ref.detected?.bonusFeatLists;
     if (!lists) continue;
     const classSlug = file.replace(".json", "");

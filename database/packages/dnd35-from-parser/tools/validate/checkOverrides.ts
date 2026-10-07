@@ -1,9 +1,7 @@
 import { generateClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/classFeatsFile.ts";
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
-import {
-  resolveReference,
-  type StoredReference,
-} from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import { type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
 import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/classes.ts";
 import { sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
@@ -44,7 +42,7 @@ export function checkClassOverrides(stored: StoredReference<"class">): {
 } {
   const overrides = stored.overrides ?? {};
   const resolve = (rest: ClassOverrides) =>
-    resolveReference("class", { _meta: stored._meta, raw: stored.raw, overrides: rest });
+    ReferenceLoader.resolve("class", { _meta: stored._meta, raw: stored.raw, overrides: rest });
   const withAll = resolve(overrides);
   const output = generated(withAll);
   if (output instanceof Error) return { refusal: output.message, redundant: [], ignored: [] };

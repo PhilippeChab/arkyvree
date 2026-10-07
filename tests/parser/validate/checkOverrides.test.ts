@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import {
   readStoredReference,
-  resolveReference,
   type StoredReference,
 } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
 import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/validate/checkOverrides.ts";
@@ -25,7 +25,7 @@ function classReference(
 }
 
 function derived(stored: StoredReference<"class">) {
-  return resolveReference("class", { _meta: stored._meta, raw: stored.raw });
+  return ReferenceLoader.resolve("class", { _meta: stored._meta, raw: stored.raw });
 }
 
 describe("A redundant class override", () => {

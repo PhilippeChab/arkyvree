@@ -1,7 +1,7 @@
 import { parseAlignmentRequirement } from "@/database/packages/dnd35-from-parser/tools/detect/alignment.ts";
 import {
-  loadBonusFeatAptitudes,
-  loadBonusFeatClassLevels,
+  getBonusFeatAptitudes,
+  getBonusFeatClassLevels,
 } from "@/database/packages/dnd35-from-parser/tools/detect/bonusFeats.ts";
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/detect/conditional.ts";
 import { parseFamilyOptions, stripFeatChoice } from "@/database/packages/dnd35-from-parser/tools/detect/featOptions.ts";
@@ -21,6 +21,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/detect/targets.ts";
 import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
+import type { ClassReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
@@ -671,15 +672,18 @@ export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["det
   return detected;
 }
 
-/** A feat reference's mapping: what was detected, with its overrides merged in. */
+/**
+ * A feat reference's mapping: what was detected, with its overrides merged in, and what its book's `classes` give its
+ * feats (the aptitudes and class levels of the bonus feat lists that name them).
+ */
 export function buildFeatMapping(
   raw: FeatReference["raw"],
   detected: FeatReference["detected"],
   overrides: NonNullable<FeatReference["overrides"]>,
-  book: string,
+  classes: ClassReferenceFile[],
 ): FeatReference["mapping"] {
-  const bonusFeatAptitudes = loadBonusFeatAptitudes(book);
-  const bonusFeatClassLevels = loadBonusFeatClassLevels(book);
+  const bonusFeatAptitudes = getBonusFeatAptitudes(classes);
+  const bonusFeatClassLevels = getBonusFeatClassLevels(classes);
   const mapping: FeatReference["mapping"] = {};
   for (const entry of raw) {
     const det = detected[entry.name];

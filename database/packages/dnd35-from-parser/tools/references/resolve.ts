@@ -19,7 +19,7 @@ import { buildItemDetected } from "@/database/packages/dnd35-from-parser/tools/d
 import { buildMagicItemDetected } from "@/database/packages/dnd35-from-parser/tools/detect/magicItems.ts";
 import { buildRaceDetected, buildRaceMapping } from "@/database/packages/dnd35-from-parser/tools/detect/races.ts";
 import { sanitizeJsonValues, stringifyStably } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
-import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import type { ClassReference, ClassReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
@@ -28,6 +28,8 @@ import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import type { WizardSchoolReference } from "@/database/packages/dnd35-from-parser/tools/types/wizardSchools.ts";
 
+/** A book's class references (`ReferenceLoader.loadClasses`), which a feat reference's mapping reads. */
+export type ClassesOf = (book: string) => ClassReferenceFile[];
 export type ReferenceByType = {
   class: ClassReference;
   feat: FeatReference;
@@ -45,7 +47,9 @@ export type StoredReference<T extends ReferenceType = ReferenceType> = Pick<
   "_meta" | "raw" | "overrides"
 >;
 
-const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => ReferenceByType[T] } = {
+const RESOLVERS: {
+  [T in ReferenceType]: (stored: StoredReference<T>, classesOf: ClassesOf) => ReferenceByType[T];
+} = {
   // A class's mapping: its features as detected, with the overrides applied (a null field removes the detected one).
   class: ({ _meta, raw, overrides }) => {
     const scraped = structuredClone(raw);
@@ -65,7 +69,7 @@ const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => Referen
     mapping.occurrenceMap = buildOccurrenceMap(mapping.features, detected.featureOccurrences);
     return { _meta, raw: scraped, ...sanitizeJsonValues({ overrides, detected, mapping }) };
   },
-  feat: ({ _meta, raw, overrides }) => {
+  feat: ({ _meta, raw, overrides }, classesOf) => {
     const feats = sanitizeJsonValues(raw);
     const detected = buildFeatDetected(feats);
     return {
@@ -74,7 +78,7 @@ const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => Referen
       ...sanitizeJsonValues({
         overrides,
         detected,
-        mapping: buildFeatMapping(feats, detected, overrides ?? {}, _meta.book),
+        mapping: buildFeatMapping(feats, detected, overrides ?? {}, classesOf(_meta.book)),
       }),
     };
   },
@@ -132,9 +136,13 @@ export function readStoredReference<T extends ReferenceType>(path: string, type:
 
 /**
  * A reference with what the generator reads derived from it, in the shape a reference file has: keys sorted,
- * no undefined values.
+ * no undefined values. A feat reference's is derived with its book's classes (`classesOf`).
  */
-export function resolveReference<T extends ReferenceType>(type: T, stored: StoredReference<T>): ReferenceByType[T] {
-  const resolve: (stored: StoredReference<T>) => ReferenceByType[T] = RESOLVERS[type];
-  return JSON.parse(stringifyStably(resolve(stored)));
+export function resolveReference<T extends ReferenceType>(
+  type: T,
+  stored: StoredReference<T>,
+  classesOf: ClassesOf,
+): ReferenceByType[T] {
+  const resolve: (stored: StoredReference<T>, classesOf: ClassesOf) => ReferenceByType[T] = RESOLVERS[type];
+  return JSON.parse(stringifyStably(resolve(stored, classesOf)));
 }
