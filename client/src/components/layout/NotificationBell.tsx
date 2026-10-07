@@ -96,6 +96,8 @@ export function NotificationBell() {
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         slotProps={{
           paper: {
+            role: "dialog",
+            "aria-label": "Notifications",
             sx: { width: { xs: "90vw", sm: 450 }, maxHeight: 480 },
           },
         }}

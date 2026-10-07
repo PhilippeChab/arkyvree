@@ -204,9 +204,7 @@ test.describe("Characters", () => {
     const revoked = anyone.waitForResponse((r) => /\/api\/shared\/characters\/[A-Za-z0-9_-]+$/.test(r.url()));
     await anyone.goto(shareUrl);
     expect((await revoked).status()).toBe(404);
-    await expect(
-      anyone.getByRole("alert").filter({ hasText: /not available or the link has been revoked/i }),
-    ).toBeVisible();
+    await expect(anyone.getByRole("alert").filter({ hasText: /Character sheet not found/i })).toBeVisible();
     await expect(anyone.locator(`text="${name}"`)).toHaveCount(0);
 
     await owner.context().close();
@@ -222,7 +220,7 @@ test.describe("Characters", () => {
     );
     await openActionsMenu(page, /^Download PDF$/);
     expect((await queued).status()).toBe(202);
-    await expect(page.locator("text=/Your PDF is being generated/i")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("text=/Generating your PDF/i")).toBeVisible({ timeout: 10_000 });
   });
 
   test("a modifier added at runtime can be removed", async ({ page, ownerUser }) => {
