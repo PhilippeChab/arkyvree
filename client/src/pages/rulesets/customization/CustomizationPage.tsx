@@ -1,5 +1,6 @@
 import { Box, Stack, Typography } from "@mui/material";
 import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { type ReactNode, useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -155,7 +156,7 @@ function CustomizationView({
   const deleteMutation = useMutation({
     mutationFn: () => {
       if (!isEditable(data)) throw new Error(`${label} can't be deleted here`);
-      return deleteEntity(data, rulesetId, entityId);
+      return deleteEntityFn(data, rulesetId, entityId);
     },
     onSuccess: () => {
       invalidateRulesetEdit(queryClient, rulesetId, [
@@ -318,25 +319,27 @@ function tabsFor(type: CustomizationPageType) {
   return type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
 }
 
-async function deleteEntity(data: EditableEntity, id: string, entityId: string) {
+async function deleteEntityFn(data: EditableEntity, id: string, entityId: string) {
   const api = rpc.api.rulesets[":id"];
   switch (data.type) {
     case "feats":
-      await api.feats[":featId"].$delete({ param: { id, featId: entityId } });
+      await parseResponse(api.feats[":featId"].$delete({ param: { id, featId: entityId } }));
       return;
     case "races":
-      await api.races[":raceId"].$delete({ param: { id, raceId: entityId } });
+      await parseResponse(api.races[":raceId"].$delete({ param: { id, raceId: entityId } }));
       return;
     case "items":
-      await api.items[":itemId"].$delete({ param: { id, itemId: entityId } });
+      await parseResponse(api.items[":itemId"].$delete({ param: { id, itemId: entityId } }));
       return;
     case "powers":
-      await api.powers[":powerId"].$delete({ param: { id, powerId: entityId } });
+      await parseResponse(api.powers[":powerId"].$delete({ param: { id, powerId: entityId } }));
       return;
     case "klass_levels":
-      await api.classes[":classId"].levels[":levelId"].$delete({
-        param: { id, classId: data.entity.klassId, levelId: entityId },
-      });
+      await parseResponse(
+        api.classes[":classId"].levels[":levelId"].$delete({
+          param: { id, classId: data.entity.klassId, levelId: entityId },
+        }),
+      );
       return;
     default:
       return data satisfies never;

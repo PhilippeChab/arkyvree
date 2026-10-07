@@ -108,7 +108,7 @@ export function targetCompletionsQuery(
     queryFn: rulesetId
       ? async ({ pageParam }) => {
           return parseResponse(
-            rpc.api.rulesets[":id"].customization["target"].paths.completions.$post({
+            rpc.api.rulesets[":id"].customization.target.paths.completions.$post({
               param: { id: rulesetId },
               json: {
                 partialPath,
@@ -137,7 +137,7 @@ export function targetPathQuery(rulesetId: string, kind: TargetPathKind, path: s
     queryFn: path
       ? async () => {
           const { target } = await parseResponse(
-            rpc.api.rulesets[":id"].customization["target"].paths.validate.$post({
+            rpc.api.rulesets[":id"].customization.target.paths.validate.$post({
               param: { id: rulesetId },
               json: { path, kind, entityType: entityType || undefined },
             }),

@@ -1,5 +1,6 @@
 import { Alert, Container, Menu, Stack } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
 import {
@@ -21,11 +22,11 @@ export default function CampaignCharacterPage() {
 
   const { data, isLoading, error } = useQuery(campaignCharacterQuery(campaignId, characterId));
 
-  const pdfExport = usePdfExport(() =>
-    rpc.api.campaigns[":id"].characters[":characterId"]["pdf"]["$post"]({
-      param: { id: campaignId, characterId },
-    }),
-  );
+  const exportFn = () =>
+    parseResponse(
+      rpc.api.campaigns[":id"].characters[":characterId"].pdf.$post({ param: { id: campaignId, characterId } }),
+    );
+  const pdfExport = usePdfExport(exportFn);
 
   usePageTitle(data?.identity?.physiology?.name);
 

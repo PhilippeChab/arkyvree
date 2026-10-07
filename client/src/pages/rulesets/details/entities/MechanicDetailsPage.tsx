@@ -29,8 +29,8 @@ export default function MechanicDetailsPage() {
           name: mechanic.name,
           description: mechanic.description ?? "",
         }),
-        update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
-        remove: () => endpoint.$delete({ param }),
+        updateFn: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
+        removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <MechanicFormFields form={form} />,
       }}
     />

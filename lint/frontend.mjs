@@ -18,10 +18,11 @@
  *   navigates (a redirect is a rendered `<Navigate>`) nor calls back its owner (an `on…` prop, or a callback a ref
  *   holds). A change happens in the event that causes it, and
  *   what follows from data is derived as it renders.
- * - `api-calls-in-queries`: the API is called through TanStack Query only: an `rpc` request (`$get`, `$post`…) is made in
- *   a function a query or a mutation runs, which caches, dedupes and reports it. Such a function is named `…Fn`, as
- *   TanStack's `queryFn` and `mutationFn` are, wherever it's handed (`useRulesetSection`'s `createFn`, an editor's
- *   `saveFn`).
+ * - `api-calls-in-queries`: the API is called through TanStack Query only: an `rpc` request (`$get`, `$post`…, off
+ *   `rpc` or a part of it a variable holds) is made in a function a query or a mutation runs, which caches, dedupes and
+ *   reports it. Such a function is named `…Fn`, as TanStack's `queryFn` and `mutationFn` are, wherever it's handed
+ *   (`useRulesetSection`'s `createFn`, an editor's `saveFn`, a `const exportFn` handed to `usePdfExport`, a module's
+ *   `function deleteEntityFn`); a queries module's (`…Queries.ts`) helpers are its queries'.
  * - `load-errors`: a list, a section or a step that failed to load says so with `LoadError` (`components/common`), in
  *   `loadFailureMessage`'s words: an error `Alert` never writes its own "Failed to load…".
  * - `component-props`: a component destructures its props in its signature, typed by one named type: its own
@@ -43,8 +44,10 @@
  *   `keepPreviousData`, and its durations are named. The cache is written in a mutation's callbacks, and an infinite
  *   query's items are `pageItems(data)`.
  * - `parsed-responses`: a request's answer is read with `parseResponse(…)`.
- * - `error-reads`: an error's toast names what failed when the error has no message (`snackbar.error(error, "Failed
- *   to …")`); an error shows through `errorMessage`, never its raw `message`.
+ * - `dot-notation`: a member named by an identifier is read with a dot (`rpc.api.characters.share.$post`); brackets are
+ *   for a name that isn't one (`[":id"]`, `["class-levels"]`).
+ * - `error-reads`: an error shows through `errorMessage`, never its raw `message` (its toast names what failed:
+ *   `snackbar.error(error, "Failed to …")`, whose fallback TypeScript requires).
  * - `browser-storage`: what the browser keeps is a store's (`client/src/stores/`, zustand's `persist`).
  * - `date-formats`: a date is shown through `lib/formatDate.ts`, in the viewer's language.
  * - `navigation`: a control that only navigates is a link (`component={Link} to`), an external link an anchor, never
@@ -184,11 +187,10 @@ function createAccessibleIconButtons(context) {
 
 function createApiCallsInQueries(context) {
   if (!inClient(context)) return {};
+  const queriesModule = isQueriesModule(context);
   return {
     CallExpression(node) {
-      const callee = node.callee;
-      if (callee.type !== "MemberExpression" || callee.computed || !REQUEST_METHODS.has(callee.property.name)) return;
-      if (!fromRpc(callee) || inQueryFunction(node)) return;
+      if (!requestMethod(node.callee) || inQueryFunction(node) || queriesModule) return;
       context.report({
         node,
         message:
@@ -520,6 +522,23 @@ function createDialogConventions(context) {
   };
 }
 
+function createDotNotation(context) {
+  if (!inClient(context)) return {};
+  return {
+    MemberExpression(node) {
+      const key = node.property;
+      if (!node.computed || key.type !== "Literal" || typeof key.value !== "string") return;
+      if (!/^[A-Za-z_$][\w$]*$/.test(key.value)) return;
+      context.report({
+        node: key,
+        message:
+          "A member named by an identifier is read with a dot (`rpc.api.characters.share.$post`); brackets are for " +
+          'a name that isn\'t one (`[":id"]`, `["class-levels"]`).',
+      });
+    },
+  };
+}
+
 function createEffectWrites(context) {
   if (!inClient(context)) return {};
   const syncsForms = repoPath(context.filename) === "client/src/hooks/useFormSync.ts";
@@ -562,20 +581,6 @@ function createEffectWrites(context) {
 function createErrorReads(context) {
   if (!inClient(context)) return {};
   return {
-    CallExpression(node) {
-      const callee = node.callee;
-      if (callee.type !== "MemberExpression" || callee.property.name !== "error") return;
-      if (callee.object.type !== "Identifier" || callee.object.name !== "snackbar") return;
-      const [first, fallback] = node.arguments;
-      const literal = first?.type === "Literal" || first?.type === "TemplateLiteral";
-      if (!literal && !fallback) {
-        context.report({
-          node,
-          message:
-            'An error\'s toast names what failed when the error has no message: `snackbar.error(error, "Failed to …")`.',
-        });
-      }
-    },
     MemberExpression(node) {
       if (node.computed || node.property.name !== "message") return;
       if (node.object.type === "Identifier" && caughtError(node.object)) {
@@ -799,11 +804,10 @@ function createNavigation(context) {
 
 function createParsedResponses(context) {
   if (!inClient(context)) return {};
+  const queriesModule = isQueriesModule(context);
   return {
     CallExpression(node) {
-      const callee = node.callee;
-      if (callee.type !== "MemberExpression" || callee.computed || !REQUEST_METHODS.has(callee.property.name)) return;
-      if (!fromRpc(callee) || !inQueryFunction(node)) return;
+      if (!requestMethod(node.callee) || !(inQueryFunction(node) || queriesModule)) return;
       let parent = node.parent;
       while (parent?.type === "AwaitExpression") parent = parent.parent;
       if (
@@ -963,13 +967,6 @@ function createTooltips(context) {
   };
 }
 
-/** Whether a member chain starts at `rpc`: `rpc.api.rulesets[":id"].$get`. */
-function fromRpc(node) {
-  let object = node;
-  while (object.type === "MemberExpression") object = object.object;
-  return object.type === "Identifier" && object.name === "rpc";
-}
-
 /** Whether `enabled` tests a value the query needs (`!!id`, `Boolean(id)`, `id !== undefined`) */
 function gatesOnValue(node) {
   if (
@@ -1032,10 +1029,19 @@ function inQueryFunction(node) {
         ? p.key.name
         : p.type === "JSXAttribute" && p.name.type === "JSXIdentifier"
           ? p.name.name
-          : null;
+          : p.type === "VariableDeclarator" && p.id.type === "Identifier"
+            ? p.id.name
+            : p.type === "FunctionDeclaration" && p.id
+              ? p.id.name
+              : null;
     if (name?.endsWith("Fn")) return true;
   }
   return false;
+}
+
+/** Whether the linted file is a queries module (`…Queries.ts`, `lib/queries.ts`), whose every request a query makes. */
+function isQueriesModule(context) {
+  return /(^|\/)(queries|\w+Queries)\.ts$/.test(repoPath(context.filename));
 }
 
 /** The function a component declares under `name`, in a block around `node`: `const handleX = () => {…}`. */
@@ -1101,6 +1107,13 @@ function readsWatch(node) {
   );
 }
 
+/** The request a call makes (`$get`…`$delete`), read off its callee, a dot's or a bracket's; null for any other call. */
+function requestMethod(callee) {
+  if (callee.type !== "MemberExpression") return null;
+  const name = callee.computed ? callee.property.value : callee.property.name;
+  return REQUEST_METHODS.has(name) ? name : null;
+}
+
 export default {
   "accessible-icon-buttons": { meta: { type: "problem" }, create: createAccessibleIconButtons },
   "dialog-conventions": { meta: { type: "problem" }, create: createDialogConventions },
@@ -1120,6 +1133,7 @@ export default {
   "constant-names": { meta: { type: "suggestion" }, create: createConstantNames },
   queries: { meta: { type: "suggestion" }, create: createQueries },
   "parsed-responses": { meta: { type: "suggestion" }, create: createParsedResponses },
+  "dot-notation": { meta: { type: "suggestion" }, create: createDotNotation },
   "error-reads": { meta: { type: "suggestion" }, create: createErrorReads },
   "browser-storage": { meta: { type: "suggestion" }, create: createBrowserStorage },
   "date-formats": { meta: { type: "suggestion" }, create: createDateFormats },

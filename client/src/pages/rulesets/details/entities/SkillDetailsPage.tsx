@@ -37,8 +37,8 @@ export default function SkillDetailsPage() {
           checkPenaltyMultiplier: skill.checkPenaltyMultiplier,
           usableWithoutTraining: skill.usableWithoutTraining,
         }),
-        update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
-        remove: () => endpoint.$delete({ param }),
+        updateFn: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
+        removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <SkillFormFields form={form} abilities={abilities} abilitiesError={abilitiesError} />,
       }}
       renderChips={(skill) => {

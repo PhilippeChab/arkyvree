@@ -6,10 +6,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthPage, AuthSubmitButton, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
-import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+import { emailNotVerified, errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { EMAIL_RULES, requiredRules } from "@/client/src/lib/validation.ts";
-import { ApiError } from "@/client/src/services/ApiError.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 type SignInFormData = InferRequestType<(typeof rpc.auth)["sign-in"]["$post"]>["json"];
@@ -31,8 +30,7 @@ export default function SignInPage() {
     setError(null);
     auth.signIn.mutate(data, {
       onError: (error) => {
-        if (error instanceof ApiError && error.errorName === "EmailNotVerifiedError")
-          navigate("/verify-email", { state: { from: "sign-in", redirect } });
+        if (emailNotVerified(error)) navigate("/verify-email", { state: { from: "sign-in", redirect } });
         else setError(errorMessage(error, "Failed to sign in"));
       },
     });

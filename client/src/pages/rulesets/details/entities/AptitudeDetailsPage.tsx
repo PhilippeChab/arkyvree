@@ -29,8 +29,8 @@ export default function AptitudeDetailsPage() {
           name: aptitude.name,
           description: aptitude.description ?? "",
         }),
-        update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
-        remove: () => endpoint.$delete({ param }),
+        updateFn: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
+        removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <AptitudeFormFields form={form} />,
       }}
     />

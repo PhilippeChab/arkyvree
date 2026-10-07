@@ -165,7 +165,7 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
       // The picks are saved as the level's slots fit them, which must have loaded
       if (!featData || !powerData) throw new Error("The level hasn't finished loading");
       return parseResponse(
-        rpc.api.characters.levels[":characterId"][":characterLevelId"]["$put"]({
+        rpc.api.characters.levels[":characterId"][":characterLevelId"].$put({
           param: { characterId, characterLevelId: editingLevelId },
           json: {
             hp: data.selectedHP,

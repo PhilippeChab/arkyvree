@@ -35,7 +35,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
   const generateMutation = useMutation({
     mutationFn: async () => {
       return parseResponse(
-        rpc.api.characters[":id"]["share"]["$post"]({
+        rpc.api.characters[":id"].share.$post({
           param: { id: characterId },
         }),
       );
@@ -52,7 +52,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
   const revokeMutation = useMutation({
     mutationFn: async () => {
       return parseResponse(
-        rpc.api.characters[":id"]["share"]["$delete"]({
+        rpc.api.characters[":id"].share.$delete({
           param: { id: characterId },
         }),
       );

@@ -81,7 +81,7 @@ export function EquipmentSection({
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { validationErrors, setValidationErrors, handleSaveError } = useValidationIssues();
+  const { validationErrors, setValidationErrors, handleSaveError } = useValidationIssues("Failed to save item");
   const [editingEntry, setEditingEntry] = useState<InventoryEntry | null>(null);
   const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null);
   const [itemSearch, setItemSearch] = useState("");

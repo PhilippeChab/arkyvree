@@ -37,11 +37,15 @@ interface EntityBase {
 interface EntityEditing<TEntity, TForm extends FieldValues> {
   /** The form before its entity's values fill it in */
   empty: TForm & DefaultValues<TForm>;
-  remove: () => Promise<unknown>;
+  /** Deletes the entity: the delete mutation's request. */
+  removeFn: () => Promise<unknown>;
   renderFields: (form: UseFormReturn<TForm>) => ReactNode;
   toFormValues: (entity: TEntity) => TForm;
-  /** Saves the form; resolves to the saved entity, whose id changes when a fork copies an inherited one. */
-  update: (data: TForm, updatedAt: string | undefined) => Promise<TEntity>;
+  /**
+   * Saves the form, the save mutation's request; resolves to the saved entity, whose id changes when a fork copies an
+   * inherited one.
+   */
+  updateFn: (data: TForm, updatedAt: string | undefined) => Promise<TEntity>;
 }
 
 interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> {
@@ -84,7 +88,7 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
 
   const saveMutation = useMutation({
     mutationFn: async (data: TForm) => {
-      const saved = await editing.update(data, sync.updatedAt());
+      const saved = await editing.updateFn(data, sync.updatedAt());
       return { sourceId: entityId, saved, values: editing.toFormValues(saved) };
     },
     onSuccess: ({ saved, sourceId, values }) => {
@@ -149,7 +153,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   const canEdit = !!editing && canEditEntities;
 
   const deleteMutation = useMutation({
-    mutationFn: () => (editing ? editing.remove() : Promise.reject(new Error(`${label} can't be deleted`))),
+    mutationFn: () => (editing ? editing.removeFn() : Promise.reject(new Error(`${label} can't be deleted`))),
     onSuccess: () => {
       invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, section)]);
       snackbar.success(`${label} deleted`);

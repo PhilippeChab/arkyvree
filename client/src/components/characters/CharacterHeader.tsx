@@ -42,7 +42,7 @@ function CharacterNameEditor({ characterId, updatedAt, parentCharacterId, name, 
   const { field } = useController({ control: form.control, name: "name" });
   const rename = useMutation({
     mutationFn: (next: string) =>
-      parseResponse(rpc.api.characters[":id"]["$put"]({ param: { id: characterId }, json: { name: next, updatedAt } })),
+      parseResponse(rpc.api.characters[":id"].$put({ param: { id: characterId }, json: { name: next, updatedAt } })),
     onSuccess: async () => {
       // The character refetches, and its cards, so the new name shows everywhere
       void invalidateCharacterListings(queryClient);
