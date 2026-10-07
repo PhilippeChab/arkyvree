@@ -242,7 +242,8 @@ DC formula: `base (10) + spell level + ability modifier + misc`
 | Path | Type | Description |
 |------|------|-------------|
 | `identity.background.notes` | string | Public notes |
-| `identity.background.privateNotes` | string | Private notes (GM only) |
+
+A character's private notes have no path: the engine holds them apart from what paths read, so no modifier can copy them into a field others see, and no requirement can tell them by whether it's met.
 
 ### identity.meta
 

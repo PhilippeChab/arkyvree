@@ -5,10 +5,7 @@ import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { MODIFIER_OPERATORS, NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 
-const NAVIGATABLE_BACKGROUND_PATHS = [
-  { path: "notes", description: "Public notes", type: "string" as const },
-  { path: "privateNotes", description: "Private notes (GM only)", type: "string" as const },
-];
+const NAVIGATABLE_BACKGROUND_PATHS = [{ path: "notes", description: "Public notes", type: "string" as const }];
 
 const NAVIGATABLE_BELIEFS_PATHS = [
   { path: "deity", description: "Character deity", type: "string" as const },
@@ -101,7 +98,7 @@ export default class IdentityPaths implements PathCategory<Dnd35Components> {
   readonly pathDescriptions = {
     "identity.physiology": "Character name, description, age, gender, height, weight",
     "identity.beliefs": "Deity and alignment",
-    "identity.background": "Notes and private notes",
+    "identity.background": "Notes",
     "identity.meta": "Character level and experience points",
     "identity.physiology.race": "Character race name and size",
   };

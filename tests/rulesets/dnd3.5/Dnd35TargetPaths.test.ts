@@ -81,10 +81,10 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
       ],
       [
         "a spell's properties next to its groupings",
-        "powers.magicmissile.properties.spellschool",
+        "powers.magicmissile.properties.SPELL_SCHOOL",
         {
           powers: {
-            magicmissile: { properties: { spellschool: "Evocation" } },
+            magicmissile: { properties: { SPELL_SCHOOL: "Evocation" } },
             groups: { evocation: { magicmissile: {} } },
           },
         },
