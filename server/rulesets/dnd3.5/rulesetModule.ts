@@ -17,6 +17,7 @@ import Dnd35TargetPaths from "./Dnd35TargetPaths.ts";
 import { Dnd35FeatsEffects } from "./feats/Dnd35FeatsEffects.ts";
 import { Dnd35FeatsRules } from "./feats/Dnd35FeatsRules.ts";
 import { Dnd35InventoryRules } from "./items/Dnd35InventoryRules.ts";
+import { Dnd35ItemsEffects } from "./items/Dnd35ItemsEffects.ts";
 import { Dnd35ItemsRules } from "./items/Dnd35ItemsRules.ts";
 import { seedTemplateItems } from "./items/seedTemplateItems.ts";
 import { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
@@ -64,6 +65,7 @@ export function createRulesetModule(): Dnd35RulesetModule {
       classes: new Dnd35ClassesEffects(),
       classLevels: new Dnd35ClassLevelsEffects(),
       feats: new Dnd35FeatsEffects(),
+      items: new Dnd35ItemsEffects(),
       powers: new Dnd35PowersEffects(),
       races: new Dnd35RacesEffects(),
       skills: new Dnd35SkillsEffects(),

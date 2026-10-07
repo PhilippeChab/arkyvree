@@ -1,6 +1,5 @@
 import { UNARMED_STRIKE } from "@/server/rulesets/dnd3.5/constants.ts";
-import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
-import { WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
+import type { WeaponFields } from "@/server/rulesets/engine/module/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type CombatComponent from "./CombatComponent.ts";
@@ -42,7 +41,7 @@ export default class WeaponsComponent {
   }
 
   /** A slot's weapon under each group the listing offers: its type, its proficiency, and a gauntlet's unarmed strike. */
-  registerWeapon(setIndex: number, slot: string, properties: WeaponProperty[]): void {
+  registerWeapon(setIndex: number, slot: string, weapon: WeaponFields): void {
     const slotKey = SLOT_MAP[slot];
     if (!slotKey) return;
 
@@ -51,17 +50,15 @@ export default class WeaponsComponent {
     if (!weaponRef) return;
 
     const weaponKey = `${setKey}_${slotKey}`;
-    const weaponType = properties.find((p) => p.type === WEAPON_TYPE);
-    const grouping = weaponType ? stripSeparators(weaponType.value) : "";
+    const grouping = weapon.type === null ? "" : stripSeparators(weapon.type);
     if (grouping) {
       if (!this.weapons[grouping]) this.weapons[grouping] = {};
 
       this.weapons[grouping][weaponKey] = weaponRef;
     }
 
-    const proficiency = properties.find((p) => p.type === WEAPON_PROFICIENCY);
-    if (proficiency) {
-      const profGrouping = stripSeparators(proficiency.value);
+    if (weapon.proficiency !== null) {
+      const profGrouping = stripSeparators(weapon.proficiency);
       if (profGrouping) {
         if (!this.weapons[profGrouping]) this.weapons[profGrouping] = {};
 
@@ -70,6 +67,6 @@ export default class WeaponsComponent {
     }
 
     // RAW: a strike with a gauntlet is otherwise considered an unarmed attack.
-    if (weaponType?.value === "Gauntlet") this.registerUnarmedStrike(setIndex, slot);
+    if (weapon.type === "Gauntlet") this.registerUnarmedStrike(setIndex, slot);
   }
 }

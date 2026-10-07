@@ -11,6 +11,7 @@ import {
   type Requirement,
 } from "@/shared/relations.ts";
 
+import { readItemFields } from "./itemFields.ts";
 import { getInventorySlot } from "./slots.ts";
 
 type InventoryData = Record<string, InventorySlotData> & {
@@ -74,6 +75,7 @@ export default class InventoryComponent {
         else propertiesMap[prop.type] = prop.value;
       }
 
+      const fields = readItemFields(entry.item.properties);
       const isArmor = entry.item.type === "Armor";
       const isShield = entry.item.type === "Shield";
       const isWeapon = entry.item.type === "Weapon";
@@ -100,16 +102,16 @@ export default class InventoryComponent {
           setIndex,
           entry.location as "Main Hand" | "Off Hand" | "Two Handed",
           entry.item,
-          entry.item.properties,
+          fields.weapon,
           { itemId: entry.item.id, entryId: entry.id },
         );
 
         // A weapon without a proficiency fills no slot: what the slot holds (an empty hand's unarmed strike) isn't it
-        if (weapon) this.weapons.registerWeapon(setIndex, entry.location as string, entry.item.properties);
+        if (weapon) this.weapons.registerWeapon(setIndex, entry.location as string, fields.weapon);
       } else if (isArmor) {
-        this.armors.registerArmor(entry.item, entry.item.properties);
+        this.armors.registerArmor(entry.item, fields);
       } else if (isShield) {
-        this.shields.registerShield(entry.item, entry.item.properties);
+        this.shields.registerShield(entry.item, fields);
       } else {
         // Non-combat equipment goes into flat equipment slots
         this.inventory[slot] = {

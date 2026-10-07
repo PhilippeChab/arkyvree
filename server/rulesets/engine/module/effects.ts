@@ -1,7 +1,15 @@
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 
-import type { ClassFields, ClassLevelFields, FeatFields, PowerFields, RaceFields, SkillFlags } from "./rules.ts";
+import type {
+  ClassFields,
+  ClassLevelFields,
+  FeatFields,
+  ItemFields,
+  PowerFields,
+  RaceFields,
+  SkillFlags,
+} from "./rules.ts";
 
 /** What a ruleset writes when a class is saved: its fields. */
 export interface ClassesEffects {
@@ -21,6 +29,16 @@ export interface ClassLevelsEffects {
 export interface FeatsEffects {
   /** Stores the feat's fields as its properties, in place of those it stored before. */
   syncProperties(tx: Db, featId: string, fields: FeatFields): Promise<void>;
+}
+
+/** What a ruleset writes when an item is saved: its fields. */
+export interface ItemsEffects {
+  /**
+   * Stores exactly the item's fields given, as its own properties, in place of those it stored before: for an item made
+   * from a template, the fields it overrides, which its template's fill in when read (`RulesetData.itemProperties`). A
+   * list can't be overridden to none: an item without damage types or magic auras of its own reads its template's.
+   */
+  syncProperties(tx: Db, itemId: string, fields: ItemFields): Promise<void>;
 }
 
 /** What a ruleset writes when a power is saved: its fields, and the feats of its grouping. */
@@ -45,6 +63,7 @@ export interface RulesetEffects {
   classes: ClassesEffects;
   classLevels: ClassLevelsEffects;
   feats: FeatsEffects;
+  items: ItemsEffects;
   powers: PowersEffects;
   races: RacesEffects;
   skills: SkillsEffects;

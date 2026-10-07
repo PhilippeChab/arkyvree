@@ -1,17 +1,20 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
-import type { InventoryRules } from "@/server/rulesets/engine/module/index.ts";
-import { WEAPON_ONE_HAND_TRAINING, WEAPON_SIZE } from "@/shared/dnd3.5/properties/index.ts";
+import type { InventoryRules, WeaponFields } from "@/server/rulesets/engine/module/index.ts";
 
+import { readItemFields } from "./itemFields.ts";
 import { SIZE_ORDER } from "./slots.ts";
 
 export class Dnd35InventoryRules implements InventoryRules {
-  /** A weapon whose WEAPON_ONE_HAND_TRAINING is true, its own or its template's: a bastard sword, a dwarven waraxe. */
+  /** The weapon fields of an item, its own merged with its template's. */
+  private weaponFields(rulesetData: RulesetData, itemId: string): WeaponFields {
+    const item = rulesetData.itemsById.get(itemId) ?? { id: itemId, sourceItemId: null };
+    return readItemFields(rulesetData.itemProperties(item)).weapon;
+  }
+
+  /** A weapon whose one-hand training is true, its own or its template's: a bastard sword, a dwarven waraxe. */
   isUnwieldyInOneHand(rulesetData: RulesetData, itemId: string): boolean {
-    const properties = rulesetData.itemProperties(
-      rulesetData.itemsById.get(itemId) ?? { id: itemId, sourceItemId: null },
-    );
-    return properties.find((p) => p.type === WEAPON_ONE_HAND_TRAINING)?.value === "true";
+    return this.weaponFields(rulesetData, itemId).oneHandTraining === true;
   }
 
   /**
@@ -21,11 +24,8 @@ export class Dnd35InventoryRules implements InventoryRules {
    * two-handed.
    */
   validateWeaponHands(rulesetData: RulesetData, itemId: string, location: string): void {
-    const properties = rulesetData.itemProperties(
-      rulesetData.itemsById.get(itemId) ?? { id: itemId, sourceItemId: null },
-    );
-    const weaponSize = properties.find((p) => p.type === WEAPON_SIZE)?.value;
-    const sizeIndex = weaponSize === undefined ? undefined : SIZE_ORDER[weaponSize];
+    const weaponSize = this.weaponFields(rulesetData, itemId).size;
+    const sizeIndex = weaponSize === null ? undefined : SIZE_ORDER[weaponSize];
     if (sizeIndex !== undefined && sizeIndex > SIZE_ORDER.Medium && location !== "Two Handed")
       throw new BadRequestError("This weapon requires two hands");
   }

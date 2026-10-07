@@ -1,12 +1,5 @@
-import {
-  ARMOR_CHECK_PENALTY,
-  ITEM_MASTERWORK,
-  ITEM_SPELL_FAILURE,
-  SHIELD_AC_BONUS,
-  SHIELD_PROFICIENCY,
-  SHIELD_TYPE,
-} from "@/shared/dnd3.5/properties/index.ts";
-import type { Item, Property } from "@/shared/relations.ts";
+import type { ItemFields } from "@/server/rulesets/engine/module/index.ts";
+import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type CombatComponent from "./CombatComponent.ts";
@@ -24,8 +17,6 @@ type ShieldSlot = {
   spellfailure: number;
 };
 
-const SHIELD_GROUPING_PROPERTIES = [SHIELD_TYPE] as const;
-
 export default class ShieldsComponent {
   constructor(private readonly combat: CombatComponent) {}
 
@@ -35,16 +26,14 @@ export default class ShieldsComponent {
     return this.shields;
   }
 
-  registerShield(item: Item, properties: Property[]): void {
-    const shieldType = properties.find((p) => p.type === SHIELD_PROFICIENCY);
-    if (!shieldType) return;
+  registerShield(item: Item, fields: ItemFields): void {
+    if (fields.shield.proficiency === null) return;
 
-    const acBonus = Number(properties.find((p) => p.type === SHIELD_AC_BONUS)?.value ?? 0);
-    let checkPenalty = Number(properties.find((p) => p.type === ARMOR_CHECK_PENALTY)?.value ?? 0);
-    const spellFailure = Number(properties.find((p) => p.type === ITEM_SPELL_FAILURE)?.value ?? 0);
+    const acBonus = fields.shield.acBonus ?? 0;
+    let checkPenalty = fields.checkPenalty ?? 0;
+    const spellFailure = fields.spellFailure ?? 0;
 
-    const isMasterwork = properties.some((p) => p.type === ITEM_MASTERWORK && p.value === "true");
-    if (isMasterwork) checkPenalty = Math.min(checkPenalty + 1, 0);
+    if (fields.masterwork === true) checkPenalty = Math.min(checkPenalty + 1, 0);
 
     const shieldSlot: ShieldSlot = {
       name: item.name,
@@ -62,19 +51,11 @@ export default class ShieldsComponent {
       spellfailure: spellFailure,
     };
 
-    const groupingValues: string[] = [];
+    // Under its type: a heavy wooden shield's `heavywooden`
+    const grouping = fields.shield.type === null ? "" : stripSeparators(fields.shield.type);
+    if (grouping) this.shields[grouping] = shieldSlot;
 
-    for (const prop of properties) {
-      if ((SHIELD_GROUPING_PROPERTIES as readonly string[]).includes(prop.type))
-        groupingValues.push(stripSeparators(prop.value));
-    }
-
-    for (const grouping of groupingValues) {
-      if (!grouping) continue;
-      this.shields[grouping] = shieldSlot;
-    }
-
-    this.combat.addShield(properties);
+    this.combat.addShield(fields);
   }
 }
 

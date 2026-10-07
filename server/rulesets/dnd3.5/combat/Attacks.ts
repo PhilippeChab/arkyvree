@@ -1,24 +1,9 @@
 import type { Constructor } from "@/server/mixins.ts";
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/server/rulesets/dnd3.5/constants.ts";
+import { NO_WEAPON_FIELDS } from "@/server/rulesets/dnd3.5/items/itemFields.ts";
 import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/server/rulesets/dnd3.5/items/slots.ts";
-import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
-import {
-  DAMAGE_TYPE,
-  WEAPON_BASE_DAMAGE,
-  WEAPON_CRITICAL_MULTIPLIER,
-  WEAPON_CRITICAL_RANGE,
-  WEAPON_DOUBLE_DAMAGE,
-  WEAPON_FINESSABLE,
-  WEAPON_MIGHTY,
-  WEAPON_ONE_HANDED_PENALTY,
-  WEAPON_PROFICIENCY,
-  WEAPON_RANGE,
-  WEAPON_RANGED,
-  WEAPON_REACH,
-  WEAPON_SIZE,
-  WEAPON_STRENGTH_DAMAGE,
-} from "@/shared/dnd3.5/properties/index.ts";
+import type { WeaponFields } from "@/server/rulesets/engine/module/index.ts";
 import { type Item } from "@/shared/relations.ts";
 
 import type CombatState from "./CombatState.ts";
@@ -82,12 +67,12 @@ function formatDamageTotal(damage: WeaponSlot["damage"]): string {
  */
 function handTraits(
   slot: "Main Hand" | "Off Hand" | "Two Handed",
-  property: (type: string) => WeaponProperty | undefined,
+  weapon: WeaponFields,
 ): { light: boolean; penalty: number; share: number } {
-  const light = (SIZE_ORDER[property(WEAPON_SIZE)?.value ?? ""] ?? Infinity) < SIZE_ORDER.Medium;
+  const light = (SIZE_ORDER[weapon.size ?? ""] ?? Infinity) < SIZE_ORDER.Medium;
   const share =
     slot === "Two Handed" && light ? SLOT_STRENGTH_MULTIPLIERS["Main Hand"] : SLOT_STRENGTH_MULTIPLIERS[slot];
-  const penalty = slot === "Two Handed" ? 0 : Number(property(WEAPON_ONE_HANDED_PENALTY)?.value ?? 0);
+  const penalty = slot === "Two Handed" ? 0 : (weapon.oneHandedPenalty ?? 0);
   return { light, share, penalty };
 }
 
@@ -106,12 +91,12 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * Dexterity on a ranged weapon's, and a bow's Strength rating (its WEAPON_MIGHTY) when Strength adds to its damage
      * by it.
      */
-    private abilitiesOf(ranged: boolean, strengthDamage: string, mighty: WeaponProperty | undefined): WeaponAbilities {
+    private abilitiesOf(ranged: boolean, strengthDamage: string, mighty: number | null): WeaponAbilities {
       return {
         attack: ranged ? "Dexterity" : "Strength",
         finesse: false,
-        strengthRating: strengthDamage === "Rating" ? Number(mighty?.value ?? 0) : null,
-        ratingRequired: strengthDamage === "Rating" && mighty !== undefined,
+        strengthRating: strengthDamage === "Rating" ? (mighty ?? 0) : null,
+        ratingRequired: strengthDamage === "Rating" && mighty !== null,
       };
     }
 
@@ -283,12 +268,11 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * the Strength its hand or its kind adds (`strmultiplier`, an input), its magic and misc bonuses, and its critical.
      */
     private weaponDamage(
-      properties: WeaponProperty[],
+      weapon: WeaponFields,
       dice: { read: () => string; write: (value: string) => void },
       strmultiplier: number | null,
       strengthRating: number | null,
     ): WeaponSlot["damage"] {
-      const property = (type: string) => properties.find((p) => p.type === type);
       const strengthDamage = (multiplier: number | null) => this.strengthDamage(multiplier, strengthRating);
       return {
         get base() {
@@ -306,11 +290,11 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         get total() {
           return formatDamageTotal(this);
         },
-        types: properties.filter((p) => p.type === DAMAGE_TYPE).map((p) => p.value),
+        types: [...weapon.damageTypes],
         strmultiplier,
         critical: {
-          range: Number(property(WEAPON_CRITICAL_RANGE)?.value ?? 1),
-          multiplier: Number(property(WEAPON_CRITICAL_MULTIPLIER)?.value ?? 1),
+          range: weapon.criticalRange ?? 1,
+          multiplier: weapon.criticalMultiplier ?? 1,
         },
       };
     }
@@ -326,19 +310,18 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       setIndex: number,
       slot: "Main Hand" | "Off Hand" | "Two Handed",
       item: Pick<Item, "name">,
-      properties: WeaponProperty[],
+      fields: WeaponFields,
       held: { entryId: string; itemId: string } | null = null,
       natural: { kind: NaturalAttackKind; repeats: boolean } | null = null,
     ): WeaponSlot | null {
-      const property = (type: string) => properties.find((p) => p.type === type);
-      const proficiency = property(WEAPON_PROFICIENCY)?.value;
+      const proficiency = fields.proficiency;
       if (!proficiency) return null;
-      const ranged = properties.some((p) => p.type === WEAPON_RANGED && p.value === "true");
-      const { light, share: handShare, penalty: handPenalty } = handTraits(slot, property);
+      const ranged = fields.ranged === true;
+      const { light, share: handShare, penalty: handPenalty } = handTraits(slot, fields);
       // Strength adds to damage by the slot's share unless the weapon says otherwise: a bow's rating, a crossbow's none
-      const strengthDamage = property(WEAPON_STRENGTH_DAMAGE)?.value ?? "Slot";
-      const abilities = this.abilitiesOf(ranged, strengthDamage, property(WEAPON_MIGHTY));
-      let dice = property(WEAPON_BASE_DAMAGE)?.value ?? "unknown";
+      const strengthDamage = fields.strengthDamage ?? "Slot";
+      const abilities = this.abilitiesOf(ranged, strengthDamage, fields.mighty);
+      let dice = fields.baseDamage ?? "unknown";
       const sizedDice = proficiency !== NATURAL_PROFICIENCY;
 
       const slotKey = SLOT_MAP[slot];
@@ -366,11 +349,11 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         entryId: held?.entryId ?? null,
         natural: natural?.kind ?? null,
         proficient: true,
-        finessable: properties.some((p) => p.type === WEAPON_FINESSABLE && p.value === "true"),
+        finessable: fields.finessable === true,
         light,
         ranged,
-        range: Number(property(WEAPON_RANGE)?.value ?? 0),
-        reach: Number(property(WEAPON_REACH)?.value ?? 0),
+        range: fields.range ?? 0,
+        reach: fields.reach ?? 0,
         wielded: slotKey,
         tohit: {
           get strength() {
@@ -399,7 +382,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           return sheet.offEnd(this);
         },
         damage: this.weaponDamage(
-          properties,
+          fields,
           {
             read: sheet.dice,
             write: (value) => {
@@ -411,8 +394,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         ),
       };
       this.weaponAbilities.set(weapon, abilities);
-      const otherDice = property(WEAPON_DOUBLE_DAMAGE)?.value;
-      if (otherDice) this.doubleWeapons.set(weapon, otherDice);
+      if (fields.doubleDamage) this.doubleWeapons.set(weapon, fields.doubleDamage);
       this.combat.weaponsets[setKey][slotKey] = weapon;
       return weapon;
     }
@@ -480,16 +462,17 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         const setIndex = Math.floor(idx / slots.length);
         const slot = slots[idx % slots.length];
         const displayName = attack.count && attack.count > 1 ? `${attack.name} (x${attack.count})` : attack.name;
-        const props: WeaponProperty[] = [
-          { type: WEAPON_PROFICIENCY, value: NATURAL_PROFICIENCY },
-          { type: WEAPON_BASE_DAMAGE, value: attack.damage },
-          { type: DAMAGE_TYPE, value: attack.type },
-          { type: WEAPON_CRITICAL_RANGE, value: "1" },
-          { type: WEAPON_CRITICAL_MULTIPLIER, value: "2" },
-          { type: WEAPON_FINESSABLE, value: "true" },
-        ];
+        const fields: WeaponFields = {
+          ...NO_WEAPON_FIELDS,
+          proficiency: NATURAL_PROFICIENCY,
+          baseDamage: attack.damage,
+          damageTypes: [attack.type],
+          criticalRange: 1,
+          criticalMultiplier: 2,
+          finessable: true,
+        };
         const kind = attack.secondary ? "secondary" : "primary";
-        const weapon = this.addWeapon(setIndex, slot, { name: displayName }, props, null, {
+        const weapon = this.addWeapon(setIndex, slot, { name: displayName }, fields, null, {
           kind,
           repeats: attack === primary,
         });

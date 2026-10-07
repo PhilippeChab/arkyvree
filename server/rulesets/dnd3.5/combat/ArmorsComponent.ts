@@ -1,13 +1,5 @@
-import {
-  ARMOR_AC_BONUS,
-  ARMOR_CHECK_PENALTY,
-  ARMOR_MAX_DEX,
-  ARMOR_PROFICIENCY,
-  ARMOR_TYPE,
-  ITEM_MASTERWORK,
-  ITEM_SPELL_FAILURE,
-} from "@/shared/dnd3.5/properties/index.ts";
-import type { Item, Property } from "@/shared/relations.ts";
+import type { ItemFields } from "@/server/rulesets/engine/module/index.ts";
+import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type CombatComponent from "./CombatComponent.ts";
@@ -26,8 +18,6 @@ type ArmorSlot = {
   spellfailure: number;
 };
 
-const ARMOR_GROUPING_PROPERTIES = [ARMOR_TYPE] as const;
-
 export default class ArmorsComponent {
   constructor(private readonly combat: CombatComponent) {}
 
@@ -37,17 +27,15 @@ export default class ArmorsComponent {
     return this.armors;
   }
 
-  registerArmor(item: Item, properties: Property[]): void {
-    const armorType = properties.find((p) => p.type === ARMOR_PROFICIENCY);
-    if (!armorType) return;
+  registerArmor(item: Item, fields: ItemFields): void {
+    if (fields.armor.proficiency === null) return;
 
-    const acBonus = Number(properties.find((p) => p.type === ARMOR_AC_BONUS)?.value ?? 0);
-    let checkPenalty = Number(properties.find((p) => p.type === ARMOR_CHECK_PENALTY)?.value ?? 0);
-    const spellFailure = Number(properties.find((p) => p.type === ITEM_SPELL_FAILURE)?.value ?? 0);
-    const maxDex = Number(properties.find((p) => p.type === ARMOR_MAX_DEX)?.value ?? 99);
+    const acBonus = fields.armor.acBonus ?? 0;
+    let checkPenalty = fields.checkPenalty ?? 0;
+    const spellFailure = fields.spellFailure ?? 0;
+    const maxDex = fields.maxDex ?? 99;
 
-    const isMasterwork = properties.some((p) => p.type === ITEM_MASTERWORK && p.value === "true");
-    if (isMasterwork) checkPenalty = Math.min(checkPenalty + 1, 0);
+    if (fields.masterwork === true) checkPenalty = Math.min(checkPenalty + 1, 0);
 
     const armorSlot: ArmorSlot = {
       name: item.name,
@@ -66,19 +54,11 @@ export default class ArmorsComponent {
       maxdex: maxDex,
     };
 
-    const groupingValues: string[] = [];
+    // Under its type: a full plate's `fullplate`
+    const grouping = fields.armor.type === null ? "" : stripSeparators(fields.armor.type);
+    if (grouping) this.armors[grouping] = armorSlot;
 
-    for (const prop of properties) {
-      if ((ARMOR_GROUPING_PROPERTIES as readonly string[]).includes(prop.type))
-        groupingValues.push(stripSeparators(prop.value));
-    }
-
-    for (const grouping of groupingValues) {
-      if (!grouping) continue;
-      this.armors[grouping] = armorSlot;
-    }
-
-    this.combat.addArmor(properties);
+    this.combat.addArmor(fields);
   }
 }
 
