@@ -49,8 +49,9 @@ export default class Dnd35TargetPaths extends CategoryPaths<Dnd35Components> {
 
   /** The ruleset's names: its entities', skill families', spell lists', and its properties' values. */
   protected labelNames(rulesetData: RulesetData, segmentLabels: Record<string, string>): Record<string, string> {
-    const { abilities, saves, skills, feats, items, aptitudes, klasses, powers, propertiesByEntityType } = rulesetData;
-    for (const entity of [...abilities, ...saves, ...skills, ...feats, ...items, ...aptitudes, ...klasses, ...powers])
+    const { abilities, saves, skills, feats, aptitudes, klasses, powers, propertiesByEntityType } = rulesetData;
+    // An item is reached by its type or its proficiency, its properties' values below, never by its name
+    for (const entity of [...abilities, ...saves, ...skills, ...feats, ...aptitudes, ...klasses, ...powers])
       segmentLabels[stripSeparators(entity.name)] = entity.name;
 
     Object.assign(segmentLabels, SkillsPaths.getFamilyLabels(skills), {

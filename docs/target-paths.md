@@ -89,7 +89,7 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 
 ## items.weapons
 
-Grouped by weapon type, family, complexity, and item name. `items.weapons.unarmedstrike` is always there: every character strikes unarmed, and a gauntlet's strike is unarmed too.
+Grouped by weapon type (`WEAPON_TYPE`) and proficiency (`WEAPON_PROFICIENCY`: simple, martial, exotic), as the picker lists them; an item is never reached by its name. `items.weapons.unarmedstrike` is always there: every character strikes unarmed, and a gauntlet's strike is unarmed too.
 
 | Path | Type | Description |
 |------|------|-------------|
@@ -131,7 +131,7 @@ An item's own weapon: written on an item (its modifiers and requirements), `weap
 
 ## items.armors
 
-Grouped by armor type and item name.
+Grouped by armor type (`ARMOR_TYPE`), as the picker lists them; an item is never reached by its name.
 
 | Path | Type | Description |
 |------|------|-------------|
@@ -144,7 +144,7 @@ Grouped by armor type and item name.
 
 ## items.shields
 
-Grouped by shield type and item name.
+Grouped by shield type (`SHIELD_TYPE`), as the picker lists them; an item is never reached by its name.
 
 | Path | Type | Description |
 |------|------|-------------|

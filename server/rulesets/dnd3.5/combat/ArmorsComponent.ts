@@ -73,8 +73,6 @@ export default class ArmorsComponent {
         groupingValues.push(stripSeparators(prop.value));
     }
 
-    groupingValues.push(stripSeparators(item.name));
-
     for (const grouping of groupingValues) {
       if (!grouping) continue;
       this.armors[grouping] = armorSlot;

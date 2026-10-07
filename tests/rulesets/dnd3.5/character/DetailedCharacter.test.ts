@@ -1506,6 +1506,26 @@ describe("DetailedCharacter", () => {
     });
   });
 
+  describe("item groups", () => {
+    test("reach an armor by its type, and nothing by its item's name", async () => {
+      const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: "Elven Chain", location: "Torso" }]);
+      const targetPaths = new Dnd35TargetPaths();
+      const errorsOf = (path: string) => targetPaths.traversePathInit(path, bjorn.components).map((r) => r.error);
+      expect(errorsOf("items.armors.chainmail.ac.misc")).toEqual([null]);
+      expect(errorsOf("items.armors.elvenchain.ac.misc")).toEqual([]);
+    });
+
+    test("leave an empty hand's unarmed strike to its own group when what it holds fills no slot (an arrow)", async () => {
+      const bjorn = await buildCarrying("Bjorn Ironhand", [
+        { item: "Slaying Arrow", location: "Main Hand", weaponSet: 0 },
+      ]);
+      const targetPaths = new Dnd35TargetPaths();
+      const read = (path: string) => targetPaths.traversePathInit(path, bjorn.components);
+      expect(read("items.weapons.slayingarrow.damage")).toEqual([]);
+      expect(read("items.weapons.unarmedstrike.damage").map((r) => r.error)).toEqual([null]);
+    });
+  });
+
   describe("armor class", () => {
     test("keeps a dodge bonus in touch AC and loses it flat-footed, with the Dexterity bonus", async () => {
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
@@ -1638,7 +1658,8 @@ describe("DetailedCharacter", () => {
         sourceItemId: itemMap["Full Plate"],
       });
       const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: derived.id, location: "Torso" }]);
-      expect(bjorn.components.armors.getArmors()["fullplate1"]).toMatchObject({
+      // By its template's type, which it inherits: an item is never reached by its name
+      expect(bjorn.components.armors.getArmors()["fullplate"]).toMatchObject({
         name: "Full Plate +1",
         ac: { bonus: 8 },
         maxdex: 1,
@@ -1676,7 +1697,7 @@ describe("DetailedCharacter", () => {
         { item: armor.id, location: "Torso" },
         { item: shield.id, location: "Off Hand" },
       ]);
-      expect(bjorn.components.armors.getArmors()["chainmailmasterwork"]).toMatchObject({
+      expect(bjorn.components.armors.getArmors()["chainmail"]).toMatchObject({
         checkpenalty: -4,
         ac: { bonus: 5 },
         spellfailure: 30,
