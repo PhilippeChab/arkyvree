@@ -1,5 +1,5 @@
+import { type Resolved } from "@/database/packages/dnd35-from-parser/tools/detect/BaseDetector.ts";
 import { ClassPrerequisites } from "@/database/packages/dnd35-from-parser/tools/detect/readers/requirements/ClassPrerequisites.ts";
-import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { include } from "@/server/mixins.ts";
 
@@ -25,7 +25,7 @@ import {
  */
 export class ClassDetector extends include(BaseClassDetector, AptitudePicks, BonusFeatLists) {
   /** The class's detected section. */
-  detected(): ClassReference["detected"] {
+  protected detected(): ClassReference["detected"] {
     const { raw } = this;
     const { requirements, errors, unresolved } = new ClassPrerequisites(raw.prerequisites.parsed);
     const spellsPerDay = readSpellsPerDay(raw.progression);
@@ -53,11 +53,16 @@ export class ClassDetector extends include(BaseClassDetector, AptitudePicks, Bon
     };
   }
 
-  /** The reference with what's derived from it: its detected section and its mapping, its overrides applied. */
-  resolve(): ClassReference {
-    const { _meta, overrides } = this.stored;
-    const detected = this.detected();
-    const mapping = new ClassMapping(this, detected).build();
-    return { _meta, raw: this.raw, ...sanitizeJsonValues({ overrides, detected, mapping }) };
+  /** The class's entities, a `ClassMapping`'s: what's detected and scraped, its overrides applied. */
+  protected mapping(detected: ClassReference["detected"]): ClassReference["mapping"] {
+    return new ClassMapping(this, detected).build();
+  }
+
+  /**
+   * The reference with what's derived from it (`BaseDetector.resolve`), its raw the one the class is read from: its
+   * alignment filled in from its overrides when its page names none.
+   */
+  resolve(): Resolved<ClassReference> {
+    return { ...super.resolve(), raw: this.raw };
   }
 }

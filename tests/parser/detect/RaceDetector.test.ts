@@ -25,7 +25,8 @@ function race(name: string, abilityAdjustments: { ability: string; value: number
 
 /** What a race reference's detector detects in `raw`. */
 function racesDetected(raw: RaceReference["raw"]) {
-  return new RaceDetector({ _meta: { book: "srd", scrapedAt: "", sourceUrl: "", type: "race" }, raw }).detected();
+  return new RaceDetector({ _meta: { book: "srd", scrapedAt: "", sourceUrl: "", type: "race" }, raw }).resolve()
+    .detected;
 }
 
 describe("A race's detected modifiers", () => {
@@ -80,6 +81,41 @@ describe("A race's detected modifiers", () => {
         ...["fortitude", "reflex", "will", "fortitude", "reflex", "will"].map((save) => add(`saves.${save}.misc`, 1)),
         add("skills.hide.misc", 2),
       ],
+    });
+  });
+});
+
+describe("A race's mapping", () => {
+  test("takes its description and modifiers from its override, else from what's scraped and detected", () => {
+    const strong = (name: string) => ({
+      ...race(name, [{ ability: "Strength", value: 2 }]),
+      description: `${name} text`,
+    });
+    const dexterity = add("abilities.dexterity.misc", 2);
+    const { mapping } = new RaceDetector({
+      _meta: { book: "srd", scrapedAt: "", sourceUrl: "", type: "race" },
+      raw: [
+        strong("Detected"),
+        { ...race("None", []), description: "None text" },
+        strong("Overridden"),
+        strong("Cleared"),
+      ],
+      overrides: {
+        Overridden: { description: "Corrected", modifiers: [dexterity], skip: true },
+        Cleared: { modifiers: [] },
+      },
+    }).resolve();
+    const medium = { size: "Medium", baseSpeed: 30 };
+    expect(mapping).toEqual({
+      Detected: {
+        name: "Detected",
+        description: "Detected text",
+        modifiers: [add("abilities.strength.misc", 2)],
+        ...medium,
+      },
+      None: { name: "None", description: "None text", ...medium },
+      Overridden: { name: "Overridden", description: "Corrected", modifiers: [dexterity], skip: true, ...medium },
+      Cleared: { name: "Cleared", description: "Cleared text", ...medium },
     });
   });
 });

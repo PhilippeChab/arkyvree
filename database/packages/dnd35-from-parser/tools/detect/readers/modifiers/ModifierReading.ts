@@ -1,4 +1,4 @@
-import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/detect/paths.ts";
+import TargetPaths from "@/database/packages/dnd35-from-parser/tools/detect/readers/TargetPaths.ts";
 import type { ModifierEffect, ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
 
 /**
@@ -15,7 +15,7 @@ export class ModifierReading<M extends ModifierEffect = ModifierSeed> {
   protected keepValidModifiers() {
     const read = this.modifiers.splice(0);
     for (const modifier of read) {
-      if (isValidModifierPath(modifier.target)) this.modifiers.push(modifier);
+      if (TargetPaths.isModifierPath(modifier.target)) this.modifiers.push(modifier);
       else this.errors.push(`Invalid modifier path "${modifier.target}": ${modifier.operator} ${modifier.value}`);
     }
   }

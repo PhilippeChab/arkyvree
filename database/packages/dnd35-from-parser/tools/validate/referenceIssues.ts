@@ -1,4 +1,4 @@
-import { findUnresolvedItems } from "@/database/packages/dnd35-from-parser/tools/detect/ItemDetector.ts";
+import { ItemDetector } from "@/database/packages/dnd35-from-parser/tools/detect/ItemDetector.ts";
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import { getSeededMagicItems } from "@/database/packages/dnd35-from-parser/tools/seeds/magicItems.ts";
@@ -151,7 +151,9 @@ export function findReferenceIssues(refs: ReferenceFile[]): Issue[] {
           // An item the generator has no definition of isn't generated, whether its override skips it or not
           const data = References.load(ref.path, "item");
           const review = reviewOf(data.overrides?.reviewed);
-          const unresolved = findUnresolvedItems(data.detected, (name) => Boolean(data.overrides?.[name]?.skip));
+          const unresolved = ItemDetector.unresolvedItems(data.detected, (name) =>
+            Boolean(data.overrides?.[name]?.skip),
+          );
           unreviewed(
             review,
             unresolved.map((text) => ({ kind: "unresolved item" as const, text })),

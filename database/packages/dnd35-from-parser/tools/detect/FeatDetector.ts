@@ -4,8 +4,9 @@ import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/
 import { and, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
-import { getBonusFeatAptitudes, getBonusFeatClassLevels } from "./bonusFeats.ts";
+import { BaseDetector } from "./BaseDetector.ts";
 import { BenefitModifiers } from "./readers/modifiers/BenefitModifiers.ts";
 import { FeatPrerequisites } from "./readers/requirements/FeatPrerequisites.ts";
 
@@ -60,9 +61,9 @@ function isStackable(entry: FeatReference["raw"][number]): boolean {
  * family, template), read from its page sanitized, and the feats it makes (`mapping`): those, its overrides applied,
  * and what its book's classes give them (the aptitudes and class levels of the bonus feat lists that name them).
  */
-export class FeatDetector {
+export class FeatDetector extends BaseDetector<FeatReference> {
   constructor(stored: Pick<FeatReference, "_meta" | "overrides" | "raw">, classes: ClassReferenceFile[]) {
-    this.stored = stored;
+    super(stored);
     this.classes = classes;
     this.feats = sanitizeJsonValues(stored.raw);
   }
@@ -71,11 +72,66 @@ export class FeatDetector {
   private readonly classes: ClassReferenceFile[];
   /** The feats its page gives, sanitized. */
   private readonly feats: FeatReference["raw"];
-  /** The reference as stored. */
-  private readonly stored: Pick<FeatReference, "_meta" | "overrides" | "raw">;
+
+  /**
+   * Each feat's aptitudes from the book's classes: the bonus feat lists that name it, and the class feature aptitude of
+   * a class whose feature says it "gains X as a bonus feat".
+   */
+  private bonusFeatAptitudes(): Map<string, string[]> {
+    const map = new Map<string, string[]>();
+
+    function add(featName: string, aptitude: string) {
+      const existing = map.get(featName) ?? [];
+      if (!existing.includes(aptitude)) {
+        existing.push(aptitude);
+        map.set(featName, existing);
+      }
+    }
+
+    for (const { ref } of this.classes) {
+      // Bonus feat lists → aptitudes
+      for (const list of ref.mapping.bonusFeatLists ?? [])
+        for (const featName of list.feats) add(featName, list.aptitude);
+
+      // "gains X as a bonus feat" in class feature descriptions → class feature aptitude
+      const aptitude = ref.mapping?.classFeatureAptitude;
+      if (!aptitude) continue;
+      const grantRegex = /gains (?:the )?([A-Z][^.]*?) (?:feat [^.]*)?as a bonus feat/g;
+      for (const cf of ref.raw.classFeatures) {
+        let match: RegExpExecArray | null;
+        while ((match = grantRegex.exec(cf.description)) !== null) {
+          const name = match[1].replace(/\s*\([^)]*\)\s*$/, "").trim();
+          add(name, aptitude);
+        }
+      }
+    }
+    return map;
+  }
+
+  /** Each feat's class levels that grant it as a bonus feat (for alternate prerequisites), from the book's classes' lists. */
+  private bonusFeatClassLevels(): Map<string, { classSlug: string; minLevel: number }[]> {
+    const map = new Map<string, { classSlug: string; minLevel: number }[]>();
+
+    for (const { ref } of this.classes) {
+      const lists = ref.mapping.bonusFeatLists;
+      if (!lists) continue;
+      // The class's path segment (`classes.wujen.level`), as every class path names it: its name's, not its file's
+      const classSlug = stripSeparators(ref.raw.name);
+      for (const list of lists) {
+        if (!list.levels?.length) continue;
+        const minLevel = Math.min(...list.levels);
+        for (const featName of list.feats) {
+          const existing = map.get(featName) ?? [];
+          existing.push({ classSlug, minLevel });
+          map.set(featName, existing);
+        }
+      }
+    }
+    return map;
+  }
 
   /** Each feat's detected section. */
-  detected(): FeatReference["detected"] {
+  protected detected(): FeatReference["detected"] {
     const detected: FeatReference["detected"] = {};
 
     for (const entry of this.feats) {
@@ -121,10 +177,10 @@ export class FeatDetector {
    * Each feat's mapping: what was detected, its overrides merged in, and what its book's classes give it (the
    * aptitudes and class levels of the bonus feat lists that name it).
    */
-  mapping(detected: FeatReference["detected"]): FeatReference["mapping"] {
+  protected mapping(detected: FeatReference["detected"]): FeatReference["mapping"] {
     const overrides = this.stored.overrides ?? {};
-    const bonusFeatAptitudes = getBonusFeatAptitudes(this.classes);
-    const bonusFeatClassLevels = getBonusFeatClassLevels(this.classes);
+    const bonusFeatAptitudes = this.bonusFeatAptitudes();
+    const bonusFeatClassLevels = this.bonusFeatClassLevels();
     const mapping: FeatReference["mapping"] = {};
     for (const entry of this.feats) {
       const det = detected[entry.name];
@@ -161,12 +217,5 @@ export class FeatDetector {
       };
     }
     return mapping;
-  }
-
-  /** The reference with what's derived from it: its detected section and its mapping. */
-  resolve(): FeatReference {
-    const { _meta, overrides, raw } = this.stored;
-    const detected = this.detected();
-    return { _meta, raw, ...sanitizeJsonValues({ overrides, detected, mapping: this.mapping(detected) }) };
   }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { FeatDetector } from "@/database/packages/dnd35-from-parser/tools/detect/FeatDetector.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 
@@ -10,7 +11,8 @@ function featDetectedOf(name: string, prerequisiteText: string) {
 
 /** What a feat reference's detector detects in `raw`, in a book with no classes. */
 function featsDetected(raw: FeatReference["raw"]) {
-  return new FeatDetector({ _meta: { book: "srd", scrapedAt: "", sourceUrl: "", type: "feat" }, raw }, []).detected();
+  return new FeatDetector({ _meta: { book: "srd", scrapedAt: "", sourceUrl: "", type: "feat" }, raw }, []).resolve()
+    .detected;
 }
 
 describe("A feat's detected aptitudes", () => {
@@ -98,5 +100,22 @@ describe("A feat's detected template", () => {
       "Precocious Apprentice": null,
       "Magical Appraisal": null,
     });
+  });
+});
+
+describe("A feat's mapping", () => {
+  test("takes the class levels of a bonus feat list naming it as alternatives, the class by its name's path segment", () => {
+    const wuJen = References.loadClasses("complete-arcane").find(({ file }) => file === "wuJen.json");
+    if (!wuJen) throw new Error("Wu Jen isn't a class of Complete Arcane's");
+    const ref = structuredClone(wuJen.ref);
+    ref.mapping.bonusFeatLists = [{ aptitude: "Wu Jen Bonus Feat", feats: ["Dodge"], levels: [5, 10] }];
+    const dodge = { name: "Dodge", featType: "general", prerequisiteText: "Dex 13.", benefit: "", special: "" };
+    const { detected, mapping } = new FeatDetector(
+      { _meta: { book: "complete-arcane", scrapedAt: "", sourceUrl: "", type: "feat" }, raw: [dodge] },
+      [{ file: wuJen.file, ref }],
+    ).resolve();
+    expect(detected.Dodge.requirements).toHaveLength(1);
+    expect(mapping.Dodge.requirements).toEqual([or(detected.Dodge.requirements[0], gte("classes.wujen.level", 5))]);
+    expect(mapping.Dodge.aptitudes).toContain("Wu Jen Bonus Feat");
   });
 });

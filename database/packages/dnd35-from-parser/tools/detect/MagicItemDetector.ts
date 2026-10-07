@@ -8,6 +8,7 @@ import { bonus } from "@/database/packages/dnd35/content/customization/modifiers
 import type { Modifier, Property } from "@/database/packages/dnd35/content/customization/types.ts";
 import { MAGIC_AURA, MAGIC_CASTER_LEVEL } from "@/shared/dnd3.5/properties/index.ts";
 
+import { BaseDetector, type Resolved } from "./BaseDetector.ts";
 import { readArmorStats } from "./readers/items/armorStats.ts";
 import { readBaseItem } from "./readers/items/baseItems.ts";
 import { readMagicItemMetadata } from "./readers/items/magicItemMetadata.ts";
@@ -31,19 +32,17 @@ function weaponEnhancementModifiers(description: string): Modifier[] {
  * (`readArmorStats`) and its enhancement bonus to AC, a specific weapon made from a base one its enhancement bonus to
  * attack and damage (`readWeaponEnhancement`).
  */
-export class MagicItemDetector {
+export class MagicItemDetector extends BaseDetector<MagicItemReference> {
   constructor(stored: Pick<MagicItemReference, "_meta" | "overrides" | "raw">) {
-    this.stored = stored;
+    super(stored);
     this.overrides = sanitizeJsonValues(stored.overrides);
   }
 
   /** Its overrides, sanitized: its mapping is made of them, its descriptions normalized after, as the seeds write them. */
   private readonly overrides: MagicItemReference["overrides"];
-  /** The reference as stored. */
-  private readonly stored: Pick<MagicItemReference, "_meta" | "overrides" | "raw">;
 
   /** Each item's detected section: its metadata, its base item, its modifiers. */
-  detected(): MagicItemReference["detected"] {
+  protected detected(): MagicItemReference["detected"] {
     const detected: MagicItemReference["detected"] = {};
 
     for (const entry of this.stored.raw) {
@@ -64,7 +63,7 @@ export class MagicItemDetector {
   }
 
   /** Each item as the seeds make it: what was detected and what its text gives, its override over both. */
-  mapping(detected: MagicItemReference["detected"]): MagicItemReference["mapping"] {
+  protected mapping(detected: MagicItemReference["detected"]): MagicItemReference["mapping"] {
     const { overrides } = this;
     const { raw } = this.stored;
     const mapping: MagicItemReference["mapping"] = {};
@@ -113,7 +112,7 @@ export class MagicItemDetector {
    * The reference with what's derived from it: its detected section, sanitized, and its mapping, made of its sanitized
    * sections (sanitizing a normalized description again would change it).
    */
-  resolve(): MagicItemReference {
+  resolve(): Resolved<MagicItemReference> {
     const { _meta, overrides, raw } = this.stored;
     const sanitized = sanitizeJsonValues({ overrides, detected: this.detected() });
     return { _meta, raw, ...sanitized, mapping: this.mapping(sanitized.detected) };
