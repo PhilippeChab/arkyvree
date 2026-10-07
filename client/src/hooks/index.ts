@@ -3,6 +3,7 @@ export { useAttachment } from "./useAttachment.ts";
 export { useAttachments } from "./useAttachments.ts";
 export { checkSession, useAuthRequests } from "./useAuthRequests.ts";
 export { useDebouncedValue } from "./useDebouncedValue.ts";
+export { useDialogState } from "./useDialogState.ts";
 export { useDirtyForm } from "./useDirtyForm.ts";
 export { useDetachAttachment } from "./useDetachAttachment.ts";
 export { useDirectUpload } from "./useDirectUpload.ts";

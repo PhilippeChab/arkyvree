@@ -10,6 +10,7 @@ import {
   CreateDialog,
   DescriptionField,
   FormTextField,
+  LoadError,
   NameField,
   RulesetPicker,
   SelectField,
@@ -33,6 +34,7 @@ import {
   type RollMethodId,
   STANDARD_ARRAY,
 } from "@/client/src/lib/dice.ts";
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -366,6 +368,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
   const {
     data: rulesetsData,
     isLoading: isRulesetsLoading,
+    error: rulesetsError,
     fetchNextPage: fetchNextRulesetsPage,
     hasNextPage: hasNextRulesetsPage,
     isFetchingNextPage: isFetchingNextRulesetsPage,
@@ -377,6 +380,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
   const {
     data: campaignRulesetsData,
     isLoading: isCampaignRulesetsLoading,
+    error: campaignRulesetsError,
     fetchNextPage: fetchNextCampaignRulesetsPage,
     hasNextPage: hasNextCampaignRulesetsPage,
     isFetchingNextPage: isFetchingNextCampaignRulesetsPage,
@@ -388,6 +392,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
   const {
     data: myDraftsData,
     isLoading: isMyDraftsLoading,
+    error: myDraftsError,
     fetchNextPage: fetchNextMyDraftsPage,
     hasNextPage: hasNextMyDraftsPage,
     isFetchingNextPage: isFetchingNextMyDraftsPage,
@@ -419,7 +424,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
     items: races,
     isPending: isRacesPending,
     isPlaceholderData: isRacesPlaceholder,
-    isError: isRacesError,
+    error: racesError,
     onScroll: handleRacesScroll,
   } = useListboxQuery({
     ...availableRacesQuery(selectedRulesetId, selectedAlignment, selectedGender),
@@ -429,7 +434,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
   // A race the list for the current ruleset, alignment and gender doesn't offer, once it has loaded, is refused, and
   // the field says why. While a new list loads, the previous one is still shown, and a failed load says nothing.
   const selectedRaceId = watch("raceId");
-  const racesSettled = !!selectedRulesetId && !isRacesPending && !isRacesPlaceholder && !isRacesError;
+  const racesSettled = !!selectedRulesetId && !isRacesPending && !isRacesPlaceholder && !racesError;
   const raceIssue = (raceId: string) => {
     if (!raceId || !racesSettled) return undefined;
     const race = races.find((r) => r.id === raceId);
@@ -437,7 +442,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
     return race.eligible ? undefined : "Not open to this alignment or gender: pick another";
   };
 
-  const { data: abilityItems } = useRulesetAbilities(selectedRulesetId || undefined);
+  const { data: abilityItems, error: abilitiesError } = useRulesetAbilities(selectedRulesetId || undefined);
   const baseRules = selectedRuleset?.baseRules;
   const rulesetAbilities = useMemo(() => {
     const items = abilityItems ?? [];
@@ -555,6 +560,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
               onSearch={setRulesetSearch}
               onScroll={handleRulesetsScroll}
               loading={isRulesetsLoading || isCampaignRulesetsLoading || isMyDraftsLoading}
+              loadError={rulesetsError ?? campaignRulesetsError ?? myDraftsError}
               error={fieldState.error}
               inputRef={field.ref}
             />
@@ -566,7 +572,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
           name="raceId"
           label="Race"
           rules={raceRules}
-          helperText={raceIssue(selectedRaceId)}
+          helperText={racesError ? loadFailureMessage("Races", racesError) : raceIssue(selectedRaceId)}
           options={races.map((race) => ({ value: race.id, label: race.name, disabled: !race.eligible }))}
           disabled={!selectedRulesetId}
           onMenuScroll={handleRacesScroll}
@@ -621,7 +627,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
             disabled={!rulesetAbilities.length || abilityRolling}
             color="primary"
             size="small"
-            aria-label="Roll all ability scores"
+            aria-label="Roll All Ability Scores"
           >
             <CasinoIcon />
           </IconButton>
@@ -648,6 +654,8 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
           onRollingChange={setAbilityRolling}
           method={rollMethod}
         />
+      ) : abilitiesError ? (
+        <LoadError what="Abilities" error={abilitiesError} />
       ) : (
         <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
           {Array.from({ length: 6 }, (_, i) => (
@@ -682,7 +690,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
       <DescriptionField
         control={control}
         name="description"
-        placeholder="Character appearance, personality, or background..."
+        placeholder="Character appearance, personality, or background…"
       />
       <FormTextField
         control={control}
@@ -690,7 +698,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
         label="Notes"
         multiline
         minRows={3}
-        placeholder="Campaign notes, character development, reminders..."
+        placeholder="Campaign notes, character development, reminders…"
         fullWidth
         sx={{ "& textarea": { resize: "vertical" } }}
       />

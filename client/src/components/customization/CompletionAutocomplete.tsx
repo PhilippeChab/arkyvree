@@ -10,6 +10,7 @@ import { useMemo } from "react";
 
 import { DiceSpinner, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 
 /** A suggestion of the customization completion endpoints. */
 interface Completion {
@@ -74,7 +75,12 @@ export function CompletionAutocomplete<
   // Controlled: what's typed is the value, which every keystroke and pick reports
   const debouncedInputValue = useDebouncedValue(value);
 
-  const { items, isLoading, onScroll } = useListboxQuery({
+  const {
+    items,
+    isLoading,
+    error: loadError,
+    onScroll,
+  } = useListboxQuery({
     ...query(debouncedInputValue),
     enabled: enabled && !disabled,
     placeholderData: keepPreviousData,
@@ -128,7 +134,7 @@ export function CompletionAutocomplete<
       disabled={disabled}
       loading={isLoading}
       loadingText={loadingText}
-      noOptionsText={noOptionsText}
+      noOptionsText={emptyOptionsText("Suggestions", loadError, noOptionsText)}
       filterOptions={(options) => options}
       slotProps={{
         listbox: {

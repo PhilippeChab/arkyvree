@@ -2,6 +2,8 @@ import { Autocomplete, TextField } from "@mui/material";
 import type { Ref, UIEventHandler } from "react";
 import type { FieldError } from "react-hook-form";
 
+import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
+
 import { AnimatedAlert } from "./AnimatedAlert.tsx";
 import { ScrollSafeListbox } from "./ScrollSafeListbox.tsx";
 
@@ -27,6 +29,8 @@ interface RulesetPickerProps<R extends PickableRuleset> {
   /** Loads the next page as the list nears its end (see `createListboxScrollHandler`). */
   onScroll: UIEventHandler<HTMLElement>;
   loading?: boolean;
+  /** Why the rulesets didn't load, said where they'd show. */
+  loadError?: unknown;
   disabled?: boolean;
   error?: FieldError;
   /** The Controller's `field.ref`, so a failed submit focuses the input. */
@@ -50,6 +54,7 @@ export function RulesetPicker<R extends PickableRuleset>({
   onSearch,
   onScroll,
   loading,
+  loadError,
   disabled,
   error,
   inputRef,
@@ -67,6 +72,7 @@ export function RulesetPicker<R extends PickableRuleset>({
       }}
       filterOptions={(options) => options}
       loading={loading}
+      noOptionsText={emptyOptionsText("Rulesets", loadError)}
       disabled={disabled}
       renderInput={(params) => (
         <TextField {...params} inputRef={inputRef} label="Ruleset" error={!!error} helperText={error?.message} />

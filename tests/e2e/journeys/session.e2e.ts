@@ -17,7 +17,7 @@ test.describe("A session", () => {
   });
 
   test("ends when the user signs out, the protected pages sending them to sign in", async ({ page }) => {
-    await page.getByRole("button", { name: "Account menu" }).click();
+    await page.getByRole("button", { name: "Account Menu" }).click();
     await page.getByRole("menuitem", { name: "Sign Out" }).click();
     await expect(page).toHaveURL(/\/sign-in/, { timeout: 10_000 });
 

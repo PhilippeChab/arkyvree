@@ -24,6 +24,7 @@ import {
   DiceSpinner,
   EditDialog,
   FaqHelpIcon,
+  LoadError,
   Modal,
   ROW_ACTIONS_HOVER_SX,
   ROW_ACTIONS_SX,
@@ -67,7 +68,11 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   const createForm = useFormWith<ModifierFormData>(EMPTY_MODIFIER);
   const editForm = useFormWith<ModifierFormData>(EMPTY_MODIFIER);
 
-  const { data: modifiers = [], isLoading } = useQuery({ ...characterModifiersQuery(characterId), enabled: open });
+  const {
+    data: modifiers = [],
+    isLoading,
+    error,
+  } = useQuery({ ...characterModifiersQuery(characterId), enabled: open });
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
@@ -186,6 +191,8 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         <DialogContent sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
           {isLoading ? (
             <DiceSpinner sx={{ py: 8 }} />
+          ) : error && modifiers.length === 0 ? (
+            <LoadError what="Modifiers" error={error} />
           ) : modifiers.length === 0 ? (
             <BlankState
               icon={TuneIcon}
@@ -240,16 +247,16 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                           className="row-actions"
                           sx={{ justifyContent: "flex-end", ...ROW_ACTIONS_SX }}
                         >
-                          <IconButton size="small" aria-label="Edit modifier" onClick={() => handleEdit(mod)}>
+                          <IconButton size="small" aria-label="Edit Modifier" onClick={() => handleEdit(mod)}>
                             <EditIcon fontSize="small" />
                           </IconButton>
-                          <IconButton size="small" aria-label="Duplicate modifier" onClick={() => handleDuplicate(mod)}>
+                          <IconButton size="small" aria-label="Duplicate Modifier" onClick={() => handleDuplicate(mod)}>
                             <ContentCopyIcon fontSize="small" />
                           </IconButton>
                           <IconButton
                             size="small"
                             color="error"
-                            aria-label="Delete modifier"
+                            aria-label="Delete Modifier"
                             onClick={() => handleDelete(mod)}
                           >
                             <DeleteIcon fontSize="small" />
@@ -297,7 +304,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         }}
         onConfirm={() => selectedModifier && deleteMutation.mutate(selectedModifier.id)}
         title="Delete Modifier"
-        message="Are you sure you want to delete this modifier?"
+        message="Are you sure you want to delete this modifier? This action cannot be undone."
         isLoading={deleteMutation.isPending}
       />
     </>

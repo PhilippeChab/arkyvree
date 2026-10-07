@@ -13,12 +13,14 @@ import {
   DeleteDialog,
   DiceSpinner,
   EditDialog,
+  LoadError,
   ScrollSafeListbox,
   ValidationIssueList,
 } from "@/client/src/components/common/index.ts";
 import { DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useFormWith, useListboxQuery, useValidationIssues } from "@/client/src/hooks/index.ts";
+import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -73,7 +75,8 @@ export function EquipmentSection({
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
-  const { data: inventoryItems = [] } = useQuery(characterInventoryQuery(characterId));
+  // The inventory the dialogs check a slot against
+  const { data: inventoryItems = [], error: inventoryError } = useQuery(characterInventoryQuery(characterId));
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -94,7 +97,7 @@ export function EquipmentSection({
   const editWeaponSet = editForm.watch("weaponSet");
 
   // The picked item's details (add dialog): its placement profile
-  const { data: itemDetail } = useQuery(rulesetItemQuery(rulesetId, selectedItem?.id));
+  const { data: itemDetail, error: itemDetailError } = useQuery(rulesetItemQuery(rulesetId, selectedItem?.id));
   const addProfile = useMemo(() => (itemDetail ? placementOf(itemDetail).profile : null), [itemDetail]);
 
   // An item picked in the add dialog fills its slot and charges once its details arrive, unless another was picked since
@@ -141,6 +144,7 @@ export function EquipmentSection({
   const {
     items: searchItems,
     isLoading: isLoadingSearch,
+    error: searchError,
     onScroll: handleItemsScroll,
   } = useListboxQuery({ ...rulesetItemSearchQuery(rulesetId, debouncedItemSearch), enabled: addDialogOpen });
 
@@ -356,6 +360,7 @@ export function EquipmentSection({
               addMutation.mutate({ data, force: true });
             })(),
         )}
+        {!!inventoryError && <LoadError what="Inventory" error={inventoryError} />}
         {addSlotWarning && (
           <AnimatedAlert in severity="warning">
             {addSlotWarning}
@@ -386,6 +391,7 @@ export function EquipmentSection({
                 if (reason === "input") setItemSearch(value);
               }}
               loading={isLoadingSearch}
+              noOptionsText={emptyOptionsText("Items", searchError)}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -437,6 +443,7 @@ export function EquipmentSection({
             />
           )}
         />
+        {!!selectedItem && !!itemDetailError && <LoadError what="Item" error={itemDetailError} />}
         <InventoryPlacementFields form={addForm} profile={selectedItem ? addProfile : null} />
       </CreateDialog>
       {/* Edit Item Dialog */}
@@ -462,6 +469,7 @@ export function EquipmentSection({
                 })()
             : undefined,
         )}
+        {!!inventoryError && <LoadError what="Inventory" error={inventoryError} />}
         {editSlotWarning && (
           <AnimatedAlert in severity="warning">
             {editSlotWarning}
@@ -478,7 +486,7 @@ export function EquipmentSection({
           setDeletingEntryId(null);
         }}
         title="Remove Item"
-        message="Are you sure you want to remove this item from the inventory?"
+        message="Are you sure you want to remove this item from the inventory? This action cannot be undone."
         confirmLabel="Remove"
         onConfirm={() => deletingEntryId && removeMutation.mutate(deletingEntryId)}
         isLoading={removeMutation.isPending}

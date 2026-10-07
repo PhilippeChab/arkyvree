@@ -181,7 +181,6 @@ export function EditRulesetDialog({
       form={form}
       onSubmit={onSubmit}
       isLoading={isLoading}
-      submitLabel="Save Changes"
     >
       <NameField control={form.control} name="name" rules={NAME_RULES} autoFocus disabled={isLoading} />
       <DescriptionField control={form.control} name="description" disabled={isLoading} rows={4} />

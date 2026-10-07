@@ -139,7 +139,6 @@ export function ModifiersSection({
   const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
 
   const handleAddModifier = () => {
-    createForm.reset();
     setDuplicateSourceId(null);
     handleCreate();
   };
@@ -172,14 +171,13 @@ export function ModifiersSection({
       );
     },
     onSuccess: (data) => {
-      snackbar.success("Modifier created successfully");
+      snackbar.success("Modifier created");
       queryClient.invalidateQueries({ queryKey: modifiersQuery(ruleset.id, entityType, entityId).queryKey });
       for (const queryKey of queryKeysToInvalidate ?? []) queryClient.invalidateQueries({ queryKey });
 
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.changes(ruleset.id) });
       setCreateDialogOpen(false);
       setDuplicateSourceId(null);
-      createForm.reset();
       handleResolvedEntityId(data);
     },
     onError: (err: Error) => {
@@ -234,6 +232,7 @@ export function ModifiersSection({
         {canEdit && <SectionAddButton label="Add Modifier" onClick={handleAddModifier} />}
 
         <RulesetSectionTable
+          what="Modifiers"
           data={modifiers}
           isLoading={isLoading}
           columns={MODIFIERS_COLUMNS}

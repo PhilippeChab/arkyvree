@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 
 import type { Aptitude } from "./AptitudesAutocomplete.tsx";
 import { aptitudeOptionsQuery } from "./customizationQueries.ts";
@@ -14,6 +15,7 @@ export function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells"
   const {
     items: fetchedOptions,
     isLoading,
+    error,
     onScroll,
   } = useListboxQuery(aptitudeOptionsQuery(rulesetId, debouncedSearch, scope));
 
@@ -26,6 +28,7 @@ export function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells"
     },
     filterOptions: (options: Aptitude[]) => options,
     loading: isLoading,
+    noOptionsText: emptyOptionsText("Aptitudes", error),
     fullWidth: true,
     slotProps: { listbox: { component: ScrollSafeListbox, onScroll } },
   };

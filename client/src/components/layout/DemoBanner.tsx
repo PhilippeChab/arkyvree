@@ -66,7 +66,7 @@ export function DemoBanner() {
             },
           }}
         >
-          Sign up
+          Sign Up
         </Button>
       </Stack>
     </Stack>

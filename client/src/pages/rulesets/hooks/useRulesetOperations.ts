@@ -59,10 +59,9 @@ export function useRulesetOperations() {
       );
     },
     onSuccess: (_, { id }) => {
-      snackbar.success("Ruleset updated successfully");
+      snackbar.success("Ruleset updated");
       void refreshRuleset(id);
       setEditDialogOpen(false);
-      editForm.reset();
     },
     onError: (error) => {
       snackbar.error(error, "Failed to update ruleset");
@@ -79,12 +78,11 @@ export function useRulesetOperations() {
       );
     },
     onSuccess: (data) => {
-      snackbar.success("Ruleset forked successfully");
+      snackbar.success("Ruleset forked");
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.rulesets.lists,
       });
       setForkDialogOpen(false);
-      forkForm.reset();
       navigate(`/rulesets/${data.id}`);
     },
     onError: (error) => {
@@ -101,7 +99,7 @@ export function useRulesetOperations() {
       );
     },
     onSuccess: (_, id) => {
-      snackbar.success("Ruleset archived successfully");
+      snackbar.success("Ruleset archived");
       void refreshRuleset(id);
       setArchiveDialogOpen(false);
     },
@@ -119,7 +117,7 @@ export function useRulesetOperations() {
       );
     },
     onSuccess: (_, id) => {
-      snackbar.success("Ruleset unarchived successfully");
+      snackbar.success("Ruleset unarchived");
       void refreshRuleset(id);
     },
     onError: (error) => {
@@ -139,7 +137,7 @@ export function useRulesetOperations() {
       );
     },
     onSuccess: (_, { id }) => {
-      snackbar.success("Ruleset published successfully");
+      snackbar.success("Ruleset published");
       void refreshRuleset(id);
       setPublishDialogOpen(false);
     },
@@ -159,7 +157,7 @@ export function useRulesetOperations() {
     },
     onSuccess: (_, { id, extensionIds }) => {
       snackbar.success(
-        `Subscribed to ${extensionIds.length === 1 ? "extension" : formatCount(extensionIds.length, "extension")} successfully`,
+        `Subscribed to ${extensionIds.length === 1 ? "extension" : formatCount(extensionIds.length, "extension")}`,
       );
       setSubscribeDialogOpen(false);
       void refreshRuleset(id);
@@ -179,7 +177,7 @@ export function useRulesetOperations() {
       );
     },
     onSuccess: (_, { id }) => {
-      snackbar.success("Unsubscribed from extension successfully");
+      snackbar.success("Unsubscribed from extension");
       setUnsubscribeDialogOpen(false);
       setUnsubscribeTarget(null);
       void refreshRuleset(id);

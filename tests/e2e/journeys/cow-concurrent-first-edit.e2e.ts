@@ -14,7 +14,7 @@ test("concurrent first edits preserve every property on one fork copy", async ({
   expect(baseId).toBeTruthy();
 
   const forkName = uniqueName("Concurrent COW");
-  await page.getByRole("button", { name: "More actions" }).first().click();
+  await page.getByRole("button", { name: "More Actions" }).first().click();
   await page.getByRole("menuitem", { name: /^Fork\b/ }).click();
   const dialog = page.getByRole("dialog", { name: "Fork Ruleset" });
   await dialog.locator('input[name="name"]').fill(forkName);

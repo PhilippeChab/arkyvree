@@ -2,6 +2,7 @@ import { Chip } from "@mui/material";
 import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
+import { LoadError } from "@/client/src/components/common/index.ts";
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { EMPTY_SAVE, type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -13,7 +14,7 @@ export default function SaveDetailsPage() {
   const { id: rulesetId = "", saveId = "" } = useParams<{ id: string; saveId: string }>();
   const param = { id: rulesetId, saveId };
   const endpoint = rpc.api.rulesets[":id"].saves[":saveId"];
-  const { data: abilities = [] } = useRulesetAbilities(rulesetId);
+  const { data: abilities = [], error: abilitiesError } = useRulesetAbilities(rulesetId);
 
   return (
     <RulesetEntityDetail
@@ -31,9 +32,10 @@ export default function SaveDetailsPage() {
         }),
         update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
         remove: () => endpoint.$delete({ param }),
-        renderFields: (form) => <SaveFormFields form={form} abilities={abilities} />,
+        renderFields: (form) => <SaveFormFields form={form} abilities={abilities} abilitiesError={abilitiesError} />,
       }}
       renderChips={(save) => {
+        if (abilitiesError && abilities.length === 0) return <LoadError what="Abilities" error={abilitiesError} />;
         const linkedAbilityName = abilities.find((a) => a.id === save.abilityId)?.name;
         return linkedAbilityName && <Chip label={linkedAbilityName} color="secondary" sx={{ fontWeight: 600 }} />;
       }}

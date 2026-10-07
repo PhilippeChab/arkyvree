@@ -24,6 +24,7 @@ import {
   clickableProps,
   CreateDialog,
   DiceSpinner,
+  LoadError,
   LoadMoreButton,
   NoMatchesState,
   SearchBar,
@@ -126,6 +127,13 @@ function GroupedRow({
           <TableRow>
             <TableCell colSpan={2} sx={{ pl: 6 }}>
               <Skeleton variant="text" width="60%" />
+            </TableCell>
+          </TableRow>
+        )}
+        {isExpanded && !!variantQuery.error && variants.length === 0 && (
+          <TableRow>
+            <TableCell colSpan={2} sx={{ pl: 6 }}>
+              <LoadError what="Variants" error={variantQuery.error} />
             </TableCell>
           </TableRow>
         )}
@@ -303,6 +311,8 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       );
     }
 
+    if (groupedQuery.error && groupedFeats.length === 0) return <LoadError what="Feats" error={groupedQuery.error} />;
+
     if (groupedFeats.length === 0) {
       return searchQuery ? (
         <NoMatchesState search={searchQuery} />
@@ -359,7 +369,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       <Stack spacing={3}>
         <SearchBar
           {...searchTextProps}
-          searchPlaceholder="Search feats..."
+          searchPlaceholder="Search feats…"
           filters={
             <Box sx={{ width: { xs: "100%", sm: 200 } }}>
               <AptitudeAutocomplete
@@ -385,7 +395,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
                 onChange={handleGroupedToggle}
                 sx={{ textTransform: "none" }}
               >
-                Group families
+                Group Families
               </ToggleButton>
             </SectionActions>
           }
@@ -395,6 +405,8 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             renderGroupedTable()
           ) : (
             <RulesetSectionTable
+              what="Feats"
+              error={flatQuery.error}
               data={feats}
               search={searchQuery}
               isLoading={isLoading}

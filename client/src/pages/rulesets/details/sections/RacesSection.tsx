@@ -47,7 +47,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     onCreateSuccess: (created) => openEntity(`races/${created.id}/customization`),
   });
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...racesQuery(ruleset.id, { search, childOnly, kind, orderBy, orderDir }),
     placeholderData: keepPreviousData,
   });
@@ -85,7 +85,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       <Stack spacing={3}>
         <SearchBar
           {...searchBarProps}
-          searchPlaceholder="Search races..."
+          searchPlaceholder="Search races…"
           actions={
             <SectionActions
               ruleset={ruleset}
@@ -98,6 +98,8 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         />
         <Stack spacing={2}>
           <RulesetSectionTable
+            what="Races"
+            error={error}
             data={races}
             search={search}
             isLoading={isLoading}

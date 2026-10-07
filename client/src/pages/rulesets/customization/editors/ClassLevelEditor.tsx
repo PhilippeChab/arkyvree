@@ -64,7 +64,7 @@ export function ClassLevelEditor({
   });
   const { field: feats } = useController({ control: form.control, name: "feats" });
   const sync = useFormSync(form, toClassLevelForm(level), { key: recordKey, adoptKey });
-  const { data: rulesetSaves } = useRulesetSaves(rulesetId);
+  const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
   const saveMutation = useEditorSave({
     sync,
     entityId,
@@ -113,6 +113,8 @@ export function ClassLevelEditor({
               fields: (
                 <ClassLevelFields
                   rulesetId={rulesetId}
+                  rulesetSaves={rulesetSaves}
+                  savesError={savesError}
                   saves={saves.value ?? []}
                   onSavesChange={saves.onChange}
                   savesInvalid={!!savesState.error}

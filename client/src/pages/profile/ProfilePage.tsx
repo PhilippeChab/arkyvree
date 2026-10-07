@@ -9,13 +9,15 @@ import {
   DiceSpinner,
   EmailField,
   FormTextField,
+  LoadError,
   PageError,
   PageHeader,
   PageTransition,
   PasswordField,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormSync, useFormWith, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormSync, useFormWith, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { currentUserQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
@@ -79,14 +81,14 @@ export default function ProfilePage() {
   const updateUser = useAuthStore((s) => s.updateUser);
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
+  const verifyDialog = useDialogState<string>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const { data: userData, isLoading } = useQuery(currentUserQuery());
+  const { data: userData, isLoading, error: userError } = useQuery(currentUserQuery());
 
   const hasPassword = userData?.hasPassword ?? true;
 
-  const { data: linkedAccounts } = useQuery(linkedAccountsQuery());
+  const { data: linkedAccounts, error: linkedAccountsError } = useQuery(linkedAccountsQuery());
 
   const isGoogleLinked = linkedAccounts?.some((a) => a.provider === "google") ?? false;
 
@@ -142,10 +144,10 @@ export default function ProfilePage() {
       });
 
       if (data.pendingEmailAddress) {
-        setVerifyDialogOpen(true);
+        verifyDialog.openWith(data.pendingEmailAddress);
         snackbar.success("Verification code sent to your new email");
       } else {
-        snackbar.success("Profile updated successfully");
+        snackbar.success("Profile updated");
       }
     },
     onError: (error) => snackbar.error(error, "Failed to update profile"),
@@ -163,7 +165,7 @@ export default function ProfilePage() {
     onSuccess: () => {
       passwordForm.reset();
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.me });
-      snackbar.success(hasPassword ? "Password updated successfully" : "Password set successfully");
+      snackbar.success(hasPassword ? "Password updated" : "Password set");
     },
     onError: (error) => snackbar.error(error, hasPassword ? "Failed to update password" : "Failed to set password"),
   });
@@ -190,7 +192,7 @@ export default function ProfilePage() {
   if (!userData) {
     return (
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <PageError message="Failed to load your profile. Please try again later." />
+        <PageError message={loadFailureMessage("Profile", userError)} />
       </Container>
     );
   }
@@ -210,7 +212,11 @@ export default function ProfilePage() {
                 severity="info"
                 action={
                   <Stack direction="row" spacing={1}>
-                    <Button size="small" variant="contained" onClick={() => setVerifyDialogOpen(true)}>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => verifyDialog.openWith(userData.pendingEmailAddress ?? "")}
+                    >
                       Verify
                     </Button>
                     <Button
@@ -219,7 +225,9 @@ export default function ProfilePage() {
                       onClick={() => cancelEmailChangeMutation.mutate()}
                       disabled={cancelEmailChangeMutation.isPending}
                     >
-                      Cancel
+                      <DiceSpinner size="small" loading={cancelEmailChangeMutation.isPending}>
+                        Cancel
+                      </DiceSpinner>
                     </Button>
                   </Stack>
                 }
@@ -263,7 +271,7 @@ export default function ProfilePage() {
 
                     <Button type="submit" variant="contained" color="primary" disabled={profileMutation.isPending}>
                       <DiceSpinner size="small" loading={profileMutation.isPending}>
-                        Save Changes
+                        Save
                       </DiceSpinner>
                     </Button>
                   </Stack>
@@ -273,6 +281,9 @@ export default function ProfilePage() {
 
             <ProfileCard title="Linked Accounts">
               <Stack spacing={1}>
+                {!!linkedAccountsError && !linkedAccounts && (
+                  <LoadError what="Linked accounts" error={linkedAccountsError} />
+                )}
                 <Stack
                   direction="row"
                   spacing={2}
@@ -362,13 +373,11 @@ export default function ProfilePage() {
             </ProfileCard>
           </Stack>
 
-          {userData?.pendingEmailAddress && (
-            <EmailChangeVerificationDialog
-              open={verifyDialogOpen}
-              onClose={() => setVerifyDialogOpen(false)}
-              pendingEmail={userData.pendingEmailAddress}
-            />
-          )}
+          <EmailChangeVerificationDialog
+            open={verifyDialog.open}
+            onClose={verifyDialog.close}
+            pendingEmail={verifyDialog.target ?? ""}
+          />
         </Stack>
 
         <DeleteAccountDialog

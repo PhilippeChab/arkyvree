@@ -47,7 +47,7 @@ test.describe("Rulesets", () => {
     await dialog.locator('input[name="name"]').fill(`${name} renamed`);
     await dialog.locator('textarea[name="description"]').first().fill(description);
     const saved = apiResponse(page, "PUT", /\/api\/rulesets\/[a-f0-9-]+(?:\?|$)/);
-    await dialog.getByRole("button", { name: /Save Changes/ }).click();
+    await dialog.getByRole("button", { name: "Update" }).click();
     await saved;
 
     await page.reload();
@@ -164,14 +164,14 @@ test.describe("A starred ruleset", () => {
         .locator('xpath=ancestor::*[contains(@class, "MuiCard-root")][1]')
         .getByRole("button", { name, exact: true });
     const starred = apiResponse(page, "POST", /\/api\/rulesets\/[a-f0-9-]+\/star/);
-    await star("Star ruleset").click();
+    await star("Star Ruleset").click();
     await starred;
 
     await filterList(page, /^Starred$/);
     await expect(page).toHaveURL(/scope=starred/);
     const unstarred = apiResponse(page, "DELETE", /\/api\/rulesets\/[a-f0-9-]+\/star/);
-    await expect(star("Star ruleset")).toHaveAttribute("aria-pressed", "true");
-    await star("Star ruleset").click();
+    await expect(star("Star Ruleset")).toHaveAttribute("aria-pressed", "true");
+    await star("Star Ruleset").click();
     await unstarred;
     await expect(page.getByRole("heading", { name: "Core SRD 3.5" })).toHaveCount(0, { timeout: 15_000 });
   });

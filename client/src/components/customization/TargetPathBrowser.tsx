@@ -14,7 +14,7 @@ import {
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { DiceSpinner, NextPageSpinner } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, NextPageSpinner } from "@/client/src/components/common/index.ts";
 import { ChevronRightIcon, ClearIcon, FilterListIcon, PublicIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
@@ -70,6 +70,7 @@ export function TargetPathBrowser({
   const {
     data: completionsData,
     isLoading,
+    error,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -156,7 +157,7 @@ export function TargetPathBrowser({
         {breadcrumbSegments.length > 0 && !disabled && (
           // A unit from the last chip
           <Stack direction="row" sx={{ pl: 0.25 }}>
-            <IconButton size="small" aria-label="Clear path" onClick={handleClear}>
+            <IconButton size="small" aria-label="Clear Path" onClick={handleClear}>
               <ClearIcon fontSize="small" />
             </IconButton>
           </Stack>
@@ -169,12 +170,13 @@ export function TargetPathBrowser({
           <Stack direction="row" spacing={0.5} sx={{ position: "relative", alignItems: "center" }}>
             <TextField
               size="small"
-              placeholder="Search..."
+              placeholder="Search…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
             />
             <Tooltip
+              describeChild
               title={
                 searchEverywhere
                   ? "Searching everywhere — click to limit to this level"
@@ -186,7 +188,7 @@ export function TargetPathBrowser({
                 size="small"
                 onClick={() => setSearchEverywhere((prev) => !prev)}
                 color={searchEverywhere ? "primary" : "default"}
-                aria-label="Search everywhere"
+                aria-label="Search Everywhere"
                 aria-pressed={searchEverywhere}
               >
                 {searchEverywhere ? <PublicIcon fontSize="small" /> : <FilterListIcon fontSize="small" />}
@@ -254,7 +256,8 @@ export function TargetPathBrowser({
                 </Tooltip>
               );
             })}
-            {completions.length === 0 && !isLoading && (
+            {!!error && completions.length === 0 && <LoadError what="Paths" error={error} />}
+            {!error && completions.length === 0 && !isLoading && (
               <Typography variant="body2" sx={{ color: "text.secondary", px: 2, py: 1 }}>
                 No results
               </Typography>

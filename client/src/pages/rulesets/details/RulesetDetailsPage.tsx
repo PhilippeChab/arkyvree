@@ -8,7 +8,6 @@ import {
   Divider,
   IconButton,
   Menu,
-  MenuItem,
   Popover,
   Stack,
   Tooltip,
@@ -24,6 +23,7 @@ import {
   DialogFooter,
   DiceSpinner,
   HelpLabel,
+  LoadError,
   Modal,
   PageError,
   PageTransition,
@@ -41,6 +41,7 @@ import {
   FeatsIcon,
   ForkIcon,
   GroupIcon,
+  HelpIcon,
   ItemsIcon,
   LanguagesIcon,
   MechanicsIcon,
@@ -119,7 +120,9 @@ export default function RulesetDetailsPage() {
 
   usePageTitle(ruleset?.name);
 
-  const { data: subscribedExtensions } = useQuery(rulesetExtensionsQuery(id, ruleset?.rulesetId));
+  const { data: subscribedExtensions, error: extensionsError } = useQuery(
+    rulesetExtensionsQuery(id, ruleset?.rulesetId),
+  );
 
   const queryClient = useQueryClient();
   // Warm the parent ruleset while the pointer is on the "Forked from" chip.
@@ -267,7 +270,7 @@ export default function RulesetDetailsPage() {
                 <IconButton
                   onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
                   size="small"
-                  aria-label="Star ruleset"
+                  aria-label="Star Ruleset"
                   aria-pressed={ruleset.isStarred}
                   sx={{
                     flexShrink: 0,
@@ -374,9 +377,10 @@ export default function RulesetDetailsPage() {
             )}
           </DetailPageHeader>
 
-          {/* An archived ruleset's notice, above its tabs */}
+          {/* An archived ruleset's notice, and extensions that failed to load, above its tabs */}
           <Stack spacing={3}>
             {/* Read-Only Banner for Archived Rulesets */}
+            {!!extensionsError && !subscribedExtensions && <LoadError what="Extensions" error={extensionsError} />}
             {ruleset.status === "Archived" && (
               <Alert severity="info">
                 <Typography variant="body2">
@@ -391,9 +395,9 @@ export default function RulesetDetailsPage() {
               tabs={tabConfig}
               value={currentTab.key}
               onChange={(key) => navigate(`/rulesets/${id}/${key}`)}
-              // Changing tab clears the URL's filters, so it opens with the ruleset's default "Local changes".
+              // Changing tab clears the URL's filters, so it opens with the ruleset's default "Local Changes".
               onTabHover={(key) => void prefetchSection(queryClient, id, key, isExtension)}
-              aria-label="ruleset details tabs"
+              aria-label="Ruleset Details Tabs"
             />
           </Stack>
 
@@ -425,7 +429,7 @@ export default function RulesetDetailsPage() {
           {!!ruleset.rulesetId && (
             <ActionMenuItem
               icon={CompareArrowsIcon}
-              label="Local changes"
+              label="Local Changes"
               description="View added, modified, and deleted entities"
               onClick={menu.closeMenuAnd(() => setOverridesDialogOpen(true))}
             />
@@ -454,19 +458,13 @@ export default function RulesetDetailsPage() {
             ruleset.rulesetId &&
             ruleset.status !== "Archived" && [
               <Divider key="sync-divider" />,
-              <MenuItem
+              <ActionMenuItem
                 key="faq-link"
-                component="a"
+                icon={HelpIcon}
+                label="Learn More in Help Center"
                 href={EXTERNAL_LINKS.help}
-                target="_blank"
-                rel="noopener noreferrer"
                 onClick={menu.closeMenu}
-                sx={{ justifyContent: "center" }}
-              >
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  Learn more in Help Center
-                </Typography>
-              </MenuItem>,
+              />,
             ]}
           {canEditRuleset &&
             ruleset.status !== "Archived" && [

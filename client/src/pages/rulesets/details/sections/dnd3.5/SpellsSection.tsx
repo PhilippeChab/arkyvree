@@ -61,7 +61,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     onCreateSuccess: (created) => openEntity(`powers/${created.id}/customization`),
   });
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...powersQuery(ruleset.id, {
       search: searchQuery,
       childOnly,
@@ -73,7 +73,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
 
   const spells = pageItems(data);
 
-  const { data: createSaves = [] } = useRulesetSaves(ruleset.id, createDialogOpen);
+  const { data: createSaves = [], error: createSavesError } = useRulesetSaves(ruleset.id, createDialogOpen);
 
   const handleCreate = () => {
     createForm.reset();
@@ -109,7 +109,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       <Stack spacing={3}>
         <SearchBar
           {...searchTextProps}
-          searchPlaceholder="Search spells..."
+          searchPlaceholder="Search spells…"
           filters={
             <>
               <Box sx={{ width: { xs: "100%", sm: 200 } }}>
@@ -136,6 +136,8 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
         />
         <Stack spacing={2}>
           <RulesetSectionTable
+            what="Spells"
+            error={error}
             data={spells}
             search={searchQuery}
             isLoading={isLoading}
@@ -156,7 +158,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Spell" maxWidth="md" fixedHeight>
-        <SpellFormFields form={createForm} rulesetId={ruleset.id} saves={createSaves} />
+        <SpellFormFields form={createForm} rulesetId={ruleset.id} saves={createSaves} savesError={createSavesError} />
       </CreateDialog>
     </SectionContent>
   );

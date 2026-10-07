@@ -41,7 +41,7 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
         <DialogContent sx={{ pb: 3.5 }}>
           {/* The first field's own top: MUI zeroes the content's top padding under a title */}
           <Stack spacing={3} sx={{ pt: 2 }}>
-            <EmailField control={form.control} name="email" rules={EMAIL_RULES} label="Email address" autoFocus />
+            <EmailField control={form.control} name="email" rules={EMAIL_RULES} label="Email Address" autoFocus />
             {roles && <SelectField control={form.control} name="role" label="Role" options={roles} />}
           </Stack>
         </DialogContent>

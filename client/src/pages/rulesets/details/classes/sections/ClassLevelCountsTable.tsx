@@ -7,6 +7,8 @@ interface ClassLevelCountsTableProps<L extends { id: string; level: number }> {
   title: string;
   levels: L[] | undefined;
   isLoading: boolean;
+  /** Its query's failure. */
+  error: unknown;
   /** The column keys a class level has counts for: its feat pools, or its spell levels. */
   keysOf: (level: L) => string[];
   countOf: (level: L, key: string) => number | "All" | undefined;
@@ -22,6 +24,7 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
   title,
   levels,
   isLoading,
+  error,
   keysOf,
   countOf,
   compareKeys,
@@ -67,6 +70,8 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
       </Stack>
 
       <RulesetSectionTable
+        what={title}
+        error={error}
         data={keys.length > 0 ? sortedLevels : undefined}
         isLoading={isLoading}
         columns={columns}

@@ -18,6 +18,7 @@ import {
   BlankState,
   CLICKABLE_SX,
   clickableProps,
+  LoadError,
   NoMatchesState,
   ROW_ACTIONS_HOVER_SX,
   ROW_ACTIONS_SX,
@@ -38,6 +39,10 @@ interface Column {
 interface RulesetSectionTableProps<T extends { id: string }> {
   data?: T[];
   isLoading: boolean;
+  /** Its query's failure, shown while there are no rows to keep (a failed refetch keeps them). */
+  error?: unknown;
+  /** What it lists, as a failure names it ("Races"). */
+  what: string;
   columns: Column[];
   canEdit?: boolean;
   canDelete?: boolean;
@@ -58,6 +63,8 @@ interface RulesetSectionTableProps<T extends { id: string }> {
 export function RulesetSectionTable<T extends { id: string }>({
   data,
   isLoading,
+  error,
+  what,
   columns,
   canEdit = false,
   canDelete = false,
@@ -111,6 +118,8 @@ export function RulesetSectionTable<T extends { id: string }>({
       </TableContainer>
     );
   }
+
+  if (error && !data?.length) return <LoadError what={what} error={error} />;
 
   if (!data || data.length === 0) {
     return search ? (
@@ -217,9 +226,9 @@ export function RulesetSectionTable<T extends { id: string }>({
                           </Tooltip>
                         )}
                         {canEdit && onCreateVariants && (
-                          <Tooltip title="Create variants">
+                          <Tooltip title="Create Variants">
                             <IconButton
-                              aria-label="Create variants"
+                              aria-label="Create Variants"
                               size="small"
                               onClick={(e) => {
                                 e.stopPropagation();

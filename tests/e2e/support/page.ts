@@ -24,7 +24,7 @@ export async function filterList(page: Page, item: RegExp) {
 
 /** Picks `item` in the actions menu of the ruleset, character or campaign on the page. */
 export async function openActionsMenu(page: Page, item: string | RegExp) {
-  await page.getByRole("button", { name: "More actions" }).first().click();
+  await page.getByRole("button", { name: "More Actions" }).first().click();
   const menu = page.getByRole("menu");
   await expect(menu).toBeVisible();
   await menu.getByRole("menuitem", { name: item }).click();

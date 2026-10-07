@@ -2,7 +2,13 @@ import { Button, Paper, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
-import { BlankState, CLICKABLE_SX, clickableProps, DiceSpinner } from "@/client/src/components/common/index.ts";
+import {
+  BlankState,
+  CLICKABLE_SX,
+  clickableProps,
+  DiceSpinner,
+  LoadError,
+} from "@/client/src/components/common/index.ts";
 import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useNotificationActions } from "@/client/src/hooks/index.ts";
@@ -14,7 +20,7 @@ import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 export function RecentNotificationsCard() {
   const actions = useNotificationActions();
 
-  const { data: notifications, isLoading } = useQuery(recentNotificationsQuery());
+  const { data: notifications, isLoading, error } = useQuery(recentNotificationsQuery());
 
   const items = notifications?.items ?? [];
 
@@ -33,6 +39,8 @@ export function RecentNotificationsCard() {
         </Stack>
         {isLoading ? (
           <DiceSpinner sx={{ py: 4 }} />
+        ) : error && items.length === 0 ? (
+          <LoadError what="Notifications" error={error} />
         ) : items.length === 0 ? (
           <BlankState
             icon={NotificationsIcon}

@@ -54,7 +54,7 @@ export function BulkVariantsDialog({
       slotProps={{ paper: { sx: { maxHeight: "85vh" } } }}
     >
       <form onSubmit={form.handleSubmit(submit)} noValidate>
-        <DialogTitle>Create variants of {baseItemName}</DialogTitle>
+        <DialogTitle>Create Variants of {baseItemName}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -83,11 +83,11 @@ export function BulkVariantsDialog({
                       minRows={1}
                     />
                   </Stack>
-                  <Tooltip title="Remove variant">
+                  <Tooltip title="Remove Variant">
                     <Box component="span" sx={{ pt: 0.5 }}>
                       <IconButton
                         size="small"
-                        aria-label="Remove variant"
+                        aria-label="Remove Variant"
                         onClick={() => remove(index)}
                         disabled={fields.length === 1 || isLoading}
                       >
@@ -100,7 +100,7 @@ export function BulkVariantsDialog({
             </Stack>
             <AddButton
               variant="outlined"
-              label="Add variant"
+              label="Add Variant"
               onClick={() =>
                 append(variantRow({ name: baseItemName, description: baseItemDescription }, fields.length + 1))
               }

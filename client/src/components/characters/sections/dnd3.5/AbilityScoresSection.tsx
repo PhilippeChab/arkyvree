@@ -1,11 +1,11 @@
 import { Box, Stack } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useState } from "react";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankState, ConfirmDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { useDialogState } from "@/client/src/hooks/index.ts";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -65,7 +65,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
     },
   });
 
-  const [pendingChange, setPendingChange] = useState<{ abilityId: string; score: number } | null>(null);
+  const decreaseDialog = useDialogState<{ abilityId: string; score: number }>();
   const shouldWarn = useUserPreferencesStore((s) => s.shouldWarn);
   const suppressWarningForSession = useUserPreferencesStore((s) => s.suppressWarningForSession);
 
@@ -74,7 +74,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
     const currentBase = current?.base || 10;
 
     if (score > currentBase || !shouldWarn("abilityDecrease")) updateMutation.mutate({ abilityId, score });
-    else setPendingChange({ abilityId, score });
+    else decreaseDialog.openWith({ abilityId, score });
   };
 
   return (
@@ -102,15 +102,15 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
         <BlankState title="No ability scores available" />
       )}
       <ConfirmDialog
-        open={pendingChange !== null}
-        onClose={() => setPendingChange(null)}
+        open={decreaseDialog.open}
+        onClose={decreaseDialog.close}
         title="Decrease Ability Score"
-        message="Changing ability scores may break character prerequisites."
+        message="Are you sure you want to decrease this ability score? It may break the prerequisites of what the character took."
         confirmLabel="Decrease"
         onConfirm={() => {
-          if (pendingChange) {
-            updateMutation.mutate(pendingChange);
-            setPendingChange(null);
+          if (decreaseDialog.target) {
+            updateMutation.mutate(decreaseDialog.target);
+            decreaseDialog.close();
             suppressWarningForSession("abilityDecrease");
           }
         }}

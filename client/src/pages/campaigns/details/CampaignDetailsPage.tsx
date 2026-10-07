@@ -81,10 +81,9 @@ export default function CampaignDetailsPage() {
     mutationFn: (data: EditCampaignFormData) =>
       parseResponse(rpc.api.campaigns[":id"].$put({ param: { id }, json: data })),
     onSuccess: () => {
-      snackbar.success("Campaign updated successfully");
+      snackbar.success("Campaign updated");
       invalidateCampaign();
       setEditDialogOpen(false);
-      editForm.reset();
     },
     onError: (error) => snackbar.error(error, "Failed to update campaign"),
   });
@@ -92,7 +91,7 @@ export default function CampaignDetailsPage() {
   const archiveMutation = useMutation({
     mutationFn: () => parseResponse(rpc.api.campaigns[":id"].$delete({ param: { id } })),
     onSuccess: () => {
-      snackbar.success("Campaign archived successfully");
+      snackbar.success("Campaign archived");
       invalidateCampaign();
       navigate("/campaigns");
     },
@@ -102,7 +101,7 @@ export default function CampaignDetailsPage() {
   const unarchiveMutation = useMutation({
     mutationFn: () => parseResponse(rpc.api.campaigns[":id"].unarchive.$post({ param: { id } })),
     onSuccess: () => {
-      snackbar.success("Campaign unarchived successfully");
+      snackbar.success("Campaign unarchived");
       invalidateCampaign();
     },
     onError: (error) => snackbar.error(error, "Failed to unarchive campaign"),
@@ -175,7 +174,7 @@ export default function CampaignDetailsPage() {
               value={currentTab}
               // Each tab's search has its own URL param, so switching keeps both.
               onChange={(key) => navigate({ pathname: `/campaigns/${id}/${key}`, search: location.search })}
-              aria-label="campaign details tabs"
+              aria-label="Campaign Details Tabs"
             />
           </Stack>
 
@@ -208,7 +207,7 @@ export default function CampaignDetailsPage() {
                 <ActionMenuItem
                   key="hard-delete"
                   icon={DeleteForeverIcon}
-                  label="Delete permanently"
+                  label="Delete Permanently"
                   intent="destructive"
                   onClick={menu.closeMenuAnd(() => setHardDeleteDialogOpen(true))}
                 />,
@@ -260,10 +259,10 @@ export default function CampaignDetailsPage() {
           open={hardDeleteDialogOpen}
           onClose={() => setHardDeleteDialogOpen(false)}
           onConfirm={() => hardDeleteMutation.mutate()}
-          title="Delete permanently"
-          message="This will permanently delete this campaign, its players, invites, and all campaign-specific ruleset extensions. This cannot be undone."
+          title="Delete Permanently"
+          message="Are you sure you want to permanently delete this campaign? Its players, invites and campaign-specific ruleset extensions go with it. This action cannot be undone."
           isLoading={hardDeleteMutation.isPending}
-          confirmLabel="Delete permanently"
+          confirmLabel="Delete Permanently"
         />
       </Container>
     </PageTransition>

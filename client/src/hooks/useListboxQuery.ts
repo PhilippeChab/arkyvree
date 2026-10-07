@@ -18,8 +18,8 @@ interface ListPage {
 
 /**
  * An infinite query behind a listbox (an Autocomplete's or a Select's options):
- * the items loaded so far, and the `onScroll` that fetches the next page near the
- * bottom. Give the listbox `ScrollSafeListbox` so the new options keep the scroll.
+ * the items loaded so far, why they didn't load, and the `onScroll` that fetches the
+ * next page near the bottom. Give the listbox `ScrollSafeListbox` so the new options keep the scroll.
  */
 export function useListboxQuery<
   TPage extends ListPage,
@@ -27,9 +27,9 @@ export function useListboxQuery<
   TPageParam,
   TData extends InfiniteData<TPage, unknown> = InfiniteData<TPage, TPageParam>,
 >(options: UseInfiniteQueryOptions<TPage, DefaultError, TData, TKey, TPageParam>) {
-  const { data, isLoading, isPending, isPlaceholderData, isError, hasNextPage, isFetchingNextPage, fetchNextPage } =
+  const { data, isLoading, isPending, isPlaceholderData, error, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useInfiniteQuery(options);
   const items = useMemo(() => pageItems<TPage["items"][number]>(data), [data]);
   const onScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
-  return { items, onScroll, isLoading, isPending, isPlaceholderData, isError, isFetchingNextPage };
+  return { items, onScroll, isLoading, isPending, isPlaceholderData, error, isFetchingNextPage };
 }

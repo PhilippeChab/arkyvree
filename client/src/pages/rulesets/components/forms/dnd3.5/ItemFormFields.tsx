@@ -1,7 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { type UseFormReturn } from "react-hook-form";
 
-import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
+import {
+  DescriptionField,
+  FormTextField,
+  LoadError,
+  NameField,
+  SelectField,
+} from "@/client/src/components/common/index.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
 import { ITEM_TYPE_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
@@ -27,19 +33,22 @@ interface TemplateSelectorProps {
 const DECIMAL_RULES = { pattern: DECIMAL_PATTERN };
 
 function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorProps) {
-  const { data: templates, isLoading } = useQuery(itemTemplatesQuery(rulesetId, type));
+  const { data: templates, isLoading, error } = useQuery(itemTemplatesQuery(rulesetId, type));
 
   // Empty until the templates load (a value with no option is out of range); one this ruleset no longer has shows as "None".
   return (
-    <SelectField
-      control={form.control}
-      name="sourceItemId"
-      label={`${type} Template`}
-      options={templates?.map((t) => ({ value: t.id, label: t.name })) ?? []}
-      emptyLabel="None"
-      emptyValue=""
-      disabled={isLoading || disabled}
-    />
+    <>
+      <SelectField
+        control={form.control}
+        name="sourceItemId"
+        label={`${type} Template`}
+        options={templates?.map((t) => ({ value: t.id, label: t.name })) ?? []}
+        emptyLabel="None"
+        emptyValue=""
+        disabled={isLoading || disabled}
+      />
+      {!!error && <LoadError what="Templates" error={error} />}
+    </>
   );
 }
 

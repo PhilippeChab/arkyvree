@@ -49,7 +49,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     onCreateSuccess: (created) => openEntity(`languages/${created.id}`),
   });
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...languagesQuery(ruleset.id, { search: searchQuery, childOnly }),
     placeholderData: keepPreviousData,
   });
@@ -85,7 +85,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       <Stack spacing={3}>
         <SearchBar
           {...searchTextProps}
-          searchPlaceholder="Search languages..."
+          searchPlaceholder="Search languages…"
           actions={
             <SectionActions
               ruleset={ruleset}
@@ -98,6 +98,8 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
         />
         <Stack spacing={2}>
           <RulesetSectionTable
+            what="Languages"
+            error={error}
             data={languages}
             search={searchQuery}
             isLoading={isLoading}

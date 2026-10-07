@@ -85,14 +85,16 @@ export default function NotificationsPage() {
                   borderRadius: 2,
                 }}
               >
-                Mark all as read
+                <DiceSpinner size="small" loading={actions.markAllRead.isPending}>
+                  Mark All as Read
+                </DiceSpinner>
               </Button>
             }
           />
           <Stack spacing={3}>
             <SearchBar
               {...searchBarProps}
-              searchPlaceholder="Search notifications..."
+              searchPlaceholder="Search notifications…"
               filterOptions={FILTER_OPTIONS}
               filterValue={unreadOnly ? "unread" : undefined}
               onFilterChange={(value) => updateSearchParams({ filter: value })}

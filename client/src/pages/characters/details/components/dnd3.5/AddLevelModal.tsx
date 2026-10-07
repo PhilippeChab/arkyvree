@@ -17,11 +17,13 @@ import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 interface AddLevelModalProps {
   open: boolean;
   onClose: () => void;
+  /** It has faded out: its owner unmounts it. */
+  onExited: () => void;
   characterId: string;
   baseRules: BaseRules;
 }
 
-export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLevelModalProps) {
+export function AddLevelModal({ open, onClose, onExited, characterId, baseRules }: AddLevelModalProps) {
   const wizard = useAddLevelWizard({
     open,
     onClose,
@@ -49,6 +51,7 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
   const {
     items: availableKlasses,
     isLoading: isLoadingKlasses,
+    error: klassesError,
     onScroll: handleKlassListScroll,
   } = useListboxQuery({
     ...availableClassesQuery(
@@ -103,6 +106,7 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
             availableKlasses={availableKlasses}
             quickAddKlasses={quickAddKlasses}
             isLoadingKlasses={isLoadingKlasses}
+            klassesError={klassesError}
             handleKlassListScroll={handleKlassListScroll}
             setKlassSearch={setKlassSearch}
           />
@@ -136,6 +140,7 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
   return (
     <LevelWizardDialog
       open={open}
+      onExited={onExited}
       title="Add Level"
       wizard={wizard}
       stepLabels={ADD_STEP_LABELS}

@@ -339,8 +339,8 @@ export function RequirementsSection({
                     <IconButton
                       size="small"
                       color="primary"
-                      title="Add child requirement"
-                      aria-label="Add child requirement"
+                      title="Add Child Requirement"
+                      aria-label="Add Child Requirement"
                       onClick={(e) => {
                         e.stopPropagation();
                         openCreate(node.requirement.level);
@@ -352,7 +352,7 @@ export function RequirementsSection({
                   {canEdit && (
                     <IconButton
                       size="small"
-                      aria-label="Edit requirement"
+                      aria-label="Edit Requirement"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEditRequirement(requirement);
@@ -365,7 +365,7 @@ export function RequirementsSection({
                     <IconButton
                       size="small"
                       color="error"
-                      aria-label="Delete requirement"
+                      aria-label="Delete Requirement"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(requirement.id);

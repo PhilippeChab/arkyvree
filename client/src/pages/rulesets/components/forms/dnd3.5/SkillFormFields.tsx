@@ -17,11 +17,13 @@ type Ability = RulesetAbility;
 interface SkillFormFieldsProps {
   form: UseFormReturn<SkillFormData>;
   abilities: Ability[];
+  /** Why the abilities didn't load. */
+  abilitiesError: unknown;
 }
 
 export type SkillFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"];
 
-export function SkillFormFields({ form, abilities }: SkillFormFieldsProps) {
+export function SkillFormFields({ form, abilities, abilitiesError }: SkillFormFieldsProps) {
   const impactedByWeight = !!form.watch("impactedByWeight");
 
   return (
@@ -34,6 +36,7 @@ export function SkillFormFields({ form, abilities }: SkillFormFieldsProps) {
         label="Primary Ability"
         rules={requiredRules("Primary ability is required")}
         options={abilities.map((ability) => ({ value: ability.id, label: ability.name }))}
+        loadError={abilitiesError}
       />
       <SwitchField
         control={form.control}

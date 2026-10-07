@@ -38,6 +38,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
     setSelectedPowerLevel,
     availablePowers,
     isLoadingAvailablePowers,
+    availablePowersError,
     isFetchingNextPowersPage,
     powerSearch,
     setPowerSearch,
@@ -220,7 +221,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                 <Stack spacing={1} sx={{ flex: 1, minHeight: 0 }}>
                   <TextField
                     label={`Search ${currentPool?.name}${levelLabel ? ` ${levelLabel}` : ""} Spells`}
-                    placeholder="Search spells..."
+                    placeholder="Search spells…"
                     value={powerSearch}
                     onChange={(e) => setPowerSearch(e.target.value)}
                     fullWidth
@@ -228,6 +229,8 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                   />
                   {isLoadingAvailablePowers && availablePowers.length === 0 ? (
                     <DiceSpinner />
+                  ) : availablePowersError && availablePowers.length === 0 ? (
+                    <LoadError what="Spells" error={availablePowersError} />
                   ) : pickablePowers.length === 0 && powerSearch ? (
                     <NoMatchesState search={powerSearch} />
                   ) : (

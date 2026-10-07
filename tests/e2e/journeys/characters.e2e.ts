@@ -49,7 +49,7 @@ test.describe("Characters", () => {
     await selectOption(page, "Race");
     await dialog.locator('input[name="height"]').fill("5 feet 8 inches");
     await dialog.locator('input[name="weight"]').fill("150 lbs");
-    await dialog.getByRole("button", { name: /Roll all ability scores/i }).click();
+    await dialog.getByRole("button", { name: /Roll All Ability Scores/i }).click();
     await selectOption(page, "Alignment");
     await selectOption(page, "Gender");
     await submit.click();
@@ -62,7 +62,7 @@ test.describe("Characters", () => {
     await expect(wizard).toBeHidden();
     await renameInPlace(page, name, `${name} renamed`);
     // A reopened wizard would cover the page: its actions menu still opens, the wizard closed
-    await page.getByRole("button", { name: "More actions" }).first().click({ timeout: 5_000 });
+    await page.getByRole("button", { name: "More Actions" }).first().click({ timeout: 5_000 });
     await expect(page.getByRole("menu")).toBeVisible();
     await expect(wizard).toBeHidden();
     await page.keyboard.press("Escape");
@@ -132,7 +132,7 @@ test.describe("Characters", () => {
     await page.locator(`text="${name} renamed"`).first().click();
     await openActionsMenu(page, /^Unarchive$/);
     await expect(page.locator(`h5:has-text("${name} renamed")`)).toBeVisible({ timeout: 10_000 });
-    await page.getByRole("button", { name: "More actions" }).first().click();
+    await page.getByRole("button", { name: "More Actions" }).first().click();
     await expect(page.getByRole("menu").getByRole("menuitem", { name: /^Archive$/ })).toBeVisible();
   });
 
@@ -242,7 +242,7 @@ test.describe("Characters", () => {
     const row = manager.locator("table tbody tr").filter({ hasText: /Abilities.*Strength.*Misc/ });
     await expect(row.locator('text="1"').first()).toBeVisible({ timeout: 15_000 });
 
-    await row.getByRole("button", { name: "Delete modifier" }).click();
+    await row.getByRole("button", { name: "Delete Modifier" }).click();
     const removed = apiResponse(page, "DELETE", /\/api\/characters\/modifiers\/[a-f0-9-]+\/modifiers\/[a-f0-9-]+/);
     await page
       .getByRole("dialog", { name: "Delete Modifier" })

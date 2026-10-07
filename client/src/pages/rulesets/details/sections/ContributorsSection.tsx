@@ -20,7 +20,7 @@ import {
 } from "@/client/src/components/contributors/index.ts";
 import { ContributorsIcon, DeleteIcon, EditIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormWith } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { firstPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -55,9 +55,9 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   // Contributor whose role is being edited; the role itself lives in roleForm.
-  const [roleTargetId, setRoleTargetId] = useState<string | null>(null);
+  const roleDialog = useDialogState<string>();
   const roleForm = useFormWith<RoleFormData>({ role: "Editor" });
-  const [removeTarget, setRemoveTarget] = useState<Contributor | null>(null);
+  const removeDialog = useDialogState<Contributor>();
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
 
   const contributorsQuery = rulesetContributorsQuery(ruleset.id);
@@ -93,7 +93,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
     onSuccess: () => {
       snackbar.success("Role updated");
       queryClient.invalidateQueries({ queryKey: contributorsKey });
-      setRoleTargetId(null);
+      roleDialog.close();
     },
     onError: (error) => snackbar.error(error, "Failed to update role"),
   });
@@ -108,7 +108,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
     onSuccess: () => {
       snackbar.success("Contributor removed");
       queryClient.invalidateQueries({ queryKey: contributorsKey });
-      setRemoveTarget(null);
+      removeDialog.close();
     },
     onError: (error) => snackbar.error(error, "Failed to remove contributor"),
   });
@@ -116,7 +116,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   const leaveMutation = useMutation({
     mutationFn: () => parseResponse(rpc.api.rulesets[":id"].contributors.leave.$post({ param: { id: ruleset.id } })),
     onSuccess: () => {
-      snackbar.success("You have left this ruleset");
+      snackbar.success("You left the ruleset");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.lists });
       setLeaveDialogOpen(false);
       onLeave?.();
@@ -175,13 +175,13 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
                     return (
                       <>
                         {canEditRoles && outranks && contributor.status === "Active" && (
-                          <Tooltip title="Edit role">
+                          <Tooltip title="Edit Role">
                             <IconButton
-                              aria-label="Edit role"
+                              aria-label="Edit Role"
                               size="small"
                               onClick={() => {
                                 roleForm.reset({ role: contributor.role });
-                                setRoleTargetId(contributor.id);
+                                roleDialog.openWith(contributor.id);
                               }}
                             >
                               <EditIcon fontSize="small" />
@@ -194,7 +194,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
                               aria-label="Remove"
                               size="small"
                               color="error"
-                              onClick={() => setRemoveTarget(contributor)}
+                              onClick={() => removeDialog.openWith(contributor)}
                             >
                               <DeleteIcon fontSize="small" />
                             </IconButton>
@@ -222,35 +222,34 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
         roles={assignableRoles}
       />
       <EditDialog
-        open={!!roleTargetId}
-        onClose={() => setRoleTargetId(null)}
-        title="Update Role"
+        open={roleDialog.open}
+        onClose={roleDialog.close}
+        title="Edit Role"
         form={roleForm}
-        onSubmit={({ role }) => roleTargetId && updateRoleMutation.mutate({ contributorId: roleTargetId, role })}
+        onSubmit={({ role }) =>
+          roleDialog.target && updateRoleMutation.mutate({ contributorId: roleDialog.target, role })
+        }
         isLoading={updateRoleMutation.isPending}
-        submitLabel="Save"
         maxWidth="xs"
       >
         <SelectField control={roleForm.control} name="role" label="Role" options={assignableRoles} />
       </EditDialog>
-      {removeTarget && (
-        <ConfirmDialog
-          open
-          onClose={() => setRemoveTarget(null)}
-          onConfirm={() => revokeMutation.mutate(removeTarget.id)}
-          isLoading={revokeMutation.isPending}
-          title="Remove Contributor"
-          message={
-            <>
-              Are you sure you want to remove <strong>{removeTarget.user?.username || removeTarget.email}</strong> as a
-              contributor?
-            </>
-          }
-          confirmLabel="Remove"
-          confirmColor="error"
-          maxWidth="xs"
-        />
-      )}
+      <ConfirmDialog
+        open={removeDialog.open}
+        onClose={removeDialog.close}
+        onConfirm={() => removeDialog.target && revokeMutation.mutate(removeDialog.target.id)}
+        isLoading={revokeMutation.isPending}
+        title="Remove Contributor"
+        message={
+          <>
+            Are you sure you want to remove{" "}
+            <strong>{removeDialog.target?.user?.username || removeDialog.target?.email}</strong> as a contributor?
+          </>
+        }
+        confirmLabel="Remove"
+        confirmColor="error"
+        maxWidth="xs"
+      />
       <ConfirmDialog
         open={leaveDialogOpen}
         onClose={() => setLeaveDialogOpen(false)}

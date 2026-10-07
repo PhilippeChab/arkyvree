@@ -6,7 +6,7 @@ import { useCallback, useState } from "react";
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { ItemsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
 import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { RulesetItem } from "@/client/src/lib/queries.ts";
@@ -66,12 +66,11 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   });
 
   const handleAddItem = () => {
-    createForm.reset();
     setDuplicateSourceId(null);
     handleCreate();
   };
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...itemsQuery(ruleset.id, { search: searchQuery, childOnly }),
     placeholderData: keepPreviousData,
   });
@@ -100,7 +99,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   };
 
   const snackbar = useSnackbar();
-  const [bulkItem, setBulkItem] = useState<Item | null>(null);
+  const bulkDialog = useDialogState<Item>();
   const bulkForm = useFormWith<BulkVariantsFormValues>({ variants: [] });
 
   const duplicateMutation = useMutation({
@@ -113,12 +112,11 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       );
     },
     onSuccess: (created) => {
-      snackbar.success("Item created successfully");
+      snackbar.success("Item created");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(ruleset.id, "items") });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.changes(ruleset.id) });
       setCreateDialogOpen(false);
       setDuplicateSourceId(null);
-      createForm.reset();
       openEntity(`items/${created.id}/customization`);
     },
     onError: (err: Error) => {
@@ -138,7 +136,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     onSuccess: (data) => {
       const count = data.length;
       snackbar.success(`Created ${formatCount(count, "variant")}`);
-      setBulkItem(null);
+      bulkDialog.close();
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(ruleset.id, "items") });
     },
     onError: (err: Error) => {
@@ -189,7 +187,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       <Stack spacing={3}>
         <SearchBar
           {...searchTextProps}
-          searchPlaceholder="Search items..."
+          searchPlaceholder="Search items…"
           actions={
             <SectionActions
               ruleset={ruleset}
@@ -202,6 +200,8 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         />
         <Stack spacing={2}>
           <RulesetSectionTable
+            what="Items"
+            error={error}
             data={items}
             search={searchQuery}
             isLoading={isLoading}
@@ -210,7 +210,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             onDuplicate={handleDuplicate}
             onCreateVariants={(item) => {
               bulkForm.reset({ variants: [variantRow(item, 1)] });
-              setBulkItem(item);
+              bulkDialog.openWith(item);
             }}
             onRowClick={handleRowClick}
             onRowMouseEnter={handleRowMouseEnter}
@@ -241,14 +241,14 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         <ItemFormFields form={createForm} rulesetId={ruleset.id} lockType={!!duplicateSourceId} />
       </CreateDialog>
       <BulkVariantsDialog
-        open={bulkItem !== null}
-        onClose={() => setBulkItem(null)}
+        open={bulkDialog.open}
+        onClose={bulkDialog.close}
         form={bulkForm}
-        baseItemName={bulkItem?.name ?? ""}
-        baseItemDescription={bulkItem?.description ?? null}
+        baseItemName={bulkDialog.target?.name ?? ""}
+        baseItemDescription={bulkDialog.target?.description ?? null}
         onSubmit={(variants) => {
-          if (!bulkItem) return;
-          bulkMutation.mutate({ itemId: bulkItem.id, variants });
+          if (!bulkDialog.target) return;
+          bulkMutation.mutate({ itemId: bulkDialog.target.id, variants });
         }}
         isLoading={bulkMutation.isPending}
       />

@@ -356,6 +356,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   const {
     items: groupedFeats,
     isLoading: isLoadingAvailableFeats,
+    error: availableFeatsError,
     onScroll: handleFeatsScroll,
     isFetchingNextPage: isFetchingNextFeatsPage,
   } = useListboxQuery({
@@ -374,6 +375,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   const {
     items: availablePowers,
     isLoading: isLoadingAvailablePowers,
+    error: availablePowersError,
     onScroll: handlePowersScroll,
     isFetchingNextPage: isFetchingNextPowersPage,
   } = useListboxQuery({
@@ -523,6 +525,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     adjustedFeatPools,
     groupedFeats,
     isLoadingAvailableFeats,
+    availableFeatsError,
     isFetchingNextFeatsPage,
     allKlassLevelIds,
     firstClass,
@@ -535,6 +538,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     powersError,
     availablePowers,
     isLoadingAvailablePowers,
+    availablePowersError,
     isFetchingNextPowersPage,
     handlePowersScroll,
 

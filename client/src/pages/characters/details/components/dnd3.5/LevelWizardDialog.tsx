@@ -14,6 +14,8 @@ import type { LevelWizard } from "./levelUp/index.ts";
 
 interface LevelWizardDialogProps {
   open: boolean;
+  /** It has faded out (`useDialogState`'s `onExited`): its owner unmounts it. */
+  onExited: () => void;
   title: string;
   wizard: WizardControls;
   stepLabels: readonly string[];
@@ -44,6 +46,7 @@ type WizardControls = Pick<
 /** The Add Level / Edit Level dialog: stepper, cancel confirmation, validation warnings and navigation. */
 export function LevelWizardDialog({
   open,
+  onExited,
   title,
   wizard,
   stepLabels,
@@ -61,6 +64,7 @@ export function LevelWizardDialog({
         if (reason !== "backdropClick" && !isSaving) wizard.handleCancel();
       }}
       maxWidth="md"
+      slotProps={{ transition: { onExited } }}
       sx={[!isMobile && { "& .MuiDialog-paper": { height: "90vh", maxHeight: "90vh" } }]}
     >
       <DialogTitle>{title}</DialogTitle>
@@ -72,7 +76,7 @@ export function LevelWizardDialog({
           action={
             <Stack direction="row" spacing={1}>
               <Button size="small" onClick={() => wizard.setShowCancelConfirm(false)}>
-                Keep editing
+                Keep Editing
               </Button>
               <Button
                 size="small"

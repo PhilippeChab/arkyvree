@@ -3,7 +3,13 @@ import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/re
 import { parseResponse } from "hono/client";
 import { useCallback } from "react";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  CreateDialog,
+  LoadError,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+} from "@/client/src/components/common/index.ts";
 import { SavesIcon } from "@/client/src/components/icons/index.ts";
 import { type RulesetSave, useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -45,9 +51,9 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     onCreateSuccess: (created) => openEntity(`saves/${created.id}`),
   });
 
-  const { data: abilities = [] } = useRulesetAbilities(ruleset.id);
+  const { data: abilities = [], error: abilitiesError } = useRulesetAbilities(ruleset.id);
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...savesQuery(ruleset.id, { search: searchQuery, childOnly }),
     placeholderData: keepPreviousData,
   });
@@ -84,7 +90,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       <Stack spacing={3}>
         <SearchBar
           {...searchTextProps}
-          searchPlaceholder="Search saves..."
+          searchPlaceholder="Search saves…"
           actions={
             <SectionActions
               ruleset={ruleset}
@@ -96,7 +102,10 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           }
         />
         <Stack spacing={2}>
+          {!!abilitiesError && abilities.length === 0 && <LoadError what="Abilities" error={abilitiesError} />}
           <RulesetSectionTable
+            what="Saves"
+            error={error}
             data={saves}
             search={searchQuery}
             isLoading={isLoading}
@@ -117,7 +126,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Save">
-        <SaveFormFields form={createForm} abilities={abilities} />
+        <SaveFormFields form={createForm} abilities={abilities} abilitiesError={abilitiesError} />
       </CreateDialog>
     </SectionContent>
   );

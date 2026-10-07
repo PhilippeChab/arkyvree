@@ -20,7 +20,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
 
   const skillsQuery = classSkillsQuery(rulesetId, classId);
   const classSkillsKey = skillsQuery.queryKey;
-  const { data: classSkills, isLoading } = useQuery(skillsQuery);
+  const { data: classSkills, isLoading, error } = useQuery(skillsQuery);
 
   // Available skills with server-side search and pagination
   const [skillSearch, setSkillSearch] = useState("");
@@ -29,6 +29,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
   const {
     items: availableSkills,
     isLoading: isAvailableSkillsLoading,
+    error: availableSkillsError,
     onScroll: handleSkillsScroll,
   } = useListboxQuery(skillOptionsQuery(rulesetId, debouncedSkillSearch));
 
@@ -69,7 +70,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
       return { previousClassSkills };
     },
     onSuccess: () => {
-      snackbar.success("Skill added to class successfully");
+      snackbar.success("Skill added to class");
     },
     onError: (err, _skillId, context) => {
       snackbar.error(err, "Failed to add skill to class");
@@ -111,7 +112,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
       return { previousClassSkills };
     },
     onSuccess: () => {
-      snackbar.success("Skill removed from class successfully");
+      snackbar.success("Skill removed from class");
     },
     onError: (err, _skillId, context) => {
       snackbar.error(err, "Failed to remove skill from class");
@@ -145,7 +146,9 @@ export function useClassSkills(rulesetId: string, classId: string) {
     classSkills,
     availableSkills,
     isLoading,
+    error,
     isAvailableSkillsLoading,
+    availableSkillsError,
 
     setSkillSearch,
     handleSkillsScroll,

@@ -131,7 +131,7 @@ function RulesetList({ filters }: RulesetListProps) {
                     )}
                     <IconButton
                       size="small"
-                      aria-label="Star ruleset"
+                      aria-label="Star Ruleset"
                       aria-pressed={ruleset.isStarred}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -212,7 +212,7 @@ export default function RulesetsPage() {
 
           <SearchBar
             {...searchBarProps}
-            searchPlaceholder="Search rulesets..."
+            searchPlaceholder="Search rulesets…"
             filterOptions={RULESET_FILTER_OPTIONS}
             filterValue={scope}
             onFilterChange={(value) => updateSearchParams({ scope: value })}

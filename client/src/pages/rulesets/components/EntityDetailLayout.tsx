@@ -1,8 +1,8 @@
-import { Box, IconButton, Menu, MenuItem, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, IconButton, Menu, Skeleton, Stack, Typography } from "@mui/material";
 import { type ComponentProps, type ReactNode } from "react";
 
-import { PageError } from "@/client/src/components/common/index.ts";
-import { ArrowBackIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
+import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
+import { ArrowBackIcon, DeleteIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
 import { useAnchorMenu, useIsMobile } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
@@ -95,7 +95,7 @@ export function EntityDetailLayout({
         {canDelete && onDelete && (
           <>
             <IconButton
-              aria-label="More actions"
+              aria-label="More Actions"
               size={isMobile ? "medium" : "large"}
               onClick={menu.openMenu}
               sx={{
@@ -115,9 +115,12 @@ export function EntityDetailLayout({
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               transformOrigin={{ vertical: "top", horizontal: "right" }}
             >
-              <MenuItem onClick={menu.closeMenuAnd(onDelete)} sx={{ color: "error.main" }}>
-                Delete
-              </MenuItem>
+              <ActionMenuItem
+                icon={DeleteIcon}
+                label="Delete"
+                intent="destructive"
+                onClick={menu.closeMenuAnd(onDelete)}
+              />
             </Menu>
           </>
         )}

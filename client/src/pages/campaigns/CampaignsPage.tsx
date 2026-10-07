@@ -88,7 +88,7 @@ export default function CampaignsPage() {
 
           <SearchBar
             {...searchBarProps}
-            searchPlaceholder="Search campaigns..."
+            searchPlaceholder="Search campaigns…"
             filterOptions={CAMPAIGN_FILTER_OPTIONS}
             filterValue={view}
             onFilterChange={(value) => updateSearchParams({ view: value })}

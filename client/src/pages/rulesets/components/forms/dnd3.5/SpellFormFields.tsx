@@ -30,6 +30,8 @@ interface SpellFormFieldsProps {
   form: UseFormReturn<SpellFormData>;
   rulesetId: string;
   saves: Save[];
+  /** Why the saves didn't load. */
+  savesError: unknown;
   hideProperties?: boolean;
   /** Aptitudes the form may already hold (the spell's own), so they show by name. */
   knownAptitudes?: Aptitude[];
@@ -149,7 +151,14 @@ function TagsField({ form, name, label, options }: TagsFieldProps) {
   );
 }
 
-export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownAptitudes = [] }: SpellFormFieldsProps) {
+export function SpellFormFields({
+  form,
+  rulesetId,
+  saves,
+  savesError,
+  hideProperties,
+  knownAptitudes = [],
+}: SpellFormFieldsProps) {
   // Aptitudes and their levels live in the form, sorted by aptitude name.
   const aptitudes = useAptitudeLookup(knownAptitudes);
   const { field, fieldState } = useController({
@@ -172,6 +181,7 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
         label="Saving Throw"
         emptyLabel="None"
         options={saves.map((save) => ({ value: save.id, label: save.name }))}
+        loadError={savesError}
       />
       <FormTextField
         control={form.control}

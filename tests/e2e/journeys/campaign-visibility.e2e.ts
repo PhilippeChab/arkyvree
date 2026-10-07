@@ -76,7 +76,7 @@ test.describe("A campaign character", () => {
       await page.goto(`/campaigns/${campaign.id}/characters/${id}`);
       await expect(page.getByText(name, { exact: true }).first()).toBeVisible({ timeout: 15_000 });
       await expect(buildShown(page)).toBeVisible();
-      await page.getByRole("button", { name: "More actions" }).click();
+      await page.getByRole("button", { name: "More Actions" }).click();
       const menu = page.getByRole("menu");
       await expect(menu.getByRole("menuitem", { name: "Download PDF" })).toBeVisible();
       await expect(menu.getByRole("menuitem", { name: "Edit Character" })).toHaveCount(0);

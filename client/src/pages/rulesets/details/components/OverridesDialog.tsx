@@ -18,7 +18,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { type InferResponseType, parseResponse } from "hono/client";
 import { Link } from "react-router-dom";
 
-import { DialogFooter, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { DialogFooter, DiceSpinner, LoadError, Modal } from "@/client/src/components/common/index.ts";
 import { CompareArrowsIcon, RestoreIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -60,7 +60,11 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
-  const { data: changes, isLoading } = useQuery({
+  const {
+    data: changes,
+    isLoading,
+    error,
+  } = useQuery({
     ...rulesetChangesQuery(rulesetId),
     enabled: open,
     placeholderData: keepPreviousData,
@@ -96,11 +100,12 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
       <DialogTitle>
         <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <CompareArrowsIcon />
-          Local changes
+          Local Changes
         </Stack>
       </DialogTitle>
       <DialogContent sx={{ maxHeight: "60vh" }}>
         {isLoading && <DiceSpinner sx={{ py: 4 }} />}
+        {!!error && !changes && <LoadError what="Local changes" error={error} />}
         <Collapse in={!isLoading && !!changes && changes.length === 0} timeout={DURATION.normal} unmountOnExit>
           <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>
             No local changes
@@ -145,10 +150,10 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                           <Box sx={{ px: 2, py: 1, flex: 1 }}>{rowContent}</Box>
                         )}
                         {showRevert && (
-                          <Tooltip title="Revert to parent version">
+                          <Tooltip title="Revert to Parent Version">
                             <span>
                               <IconButton
-                                aria-label="Revert to parent version"
+                                aria-label="Revert to Parent Version"
                                 size="small"
                                 onClick={() =>
                                   revertMutation.mutate({
@@ -159,7 +164,15 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                                 disabled={revertMutation.isPending}
                                 sx={{ flexShrink: 0 }}
                               >
-                                <RestoreIcon fontSize="small" />
+                                <DiceSpinner
+                                  size="small"
+                                  loading={
+                                    revertMutation.isPending &&
+                                    revertMutation.variables.sourceEntityId === change.sourceEntityId
+                                  }
+                                >
+                                  <RestoreIcon fontSize="small" />
+                                </DiceSpinner>
                               </IconButton>
                             </span>
                           </Tooltip>

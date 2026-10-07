@@ -95,8 +95,8 @@ function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
       control={form.control}
       name="email"
       rules={OPTIONAL_EMAIL_RULES}
-      label="Email address"
-      placeholder="Enter an email to send an invite..."
+      label="Email Address"
+      placeholder="Enter an email to send an invite…"
       type="email"
       fullWidth
       disabled={isLoading}
@@ -161,6 +161,7 @@ export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading 
   const {
     items: publishedRulesets,
     isLoading: rulesetsLoading,
+    error: rulesetsError,
     onScroll: handleRulesetsScroll,
   } = useListboxQuery({
     ...rulesetPickerQuery("published", debouncedRulesetSearch),
@@ -198,6 +199,7 @@ export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading 
             onSearch={setRulesetSearch}
             onScroll={handleRulesetsScroll}
             loading={rulesetsLoading}
+            loadError={rulesetsError}
             disabled={isLoading}
             error={fieldState.error}
             inputRef={field.ref}
@@ -218,7 +220,6 @@ export function EditCampaignDialog({ open, onClose, form, onSubmit, isLoading }:
       form={form}
       onSubmit={onSubmit}
       isLoading={isLoading}
-      submitLabel="Save Changes"
     >
       <NameField control={form.control} name="name" rules={NAME_RULES} autoFocus disabled={isLoading} />
       <DescriptionField control={form.control} name="description" disabled={isLoading} rows={4} />
@@ -261,7 +262,7 @@ export function EditPlayerDialog({ open, onClose, form, onSubmit, isLoading, slo
 
       {pendingInvite ? (
         <TextField
-          label="Invited email"
+          label="Invited Email"
           fullWidth
           value={pendingInvite.usersInAccount?.emailAddress ?? pendingInvite.email ?? ""}
           disabled

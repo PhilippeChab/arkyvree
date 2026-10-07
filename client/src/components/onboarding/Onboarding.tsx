@@ -158,8 +158,6 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
     onStepChange(activeStep - 1);
   };
 
-  if (!open) return null;
-
   const gradientBar = (
     <Box
       sx={{
@@ -347,7 +345,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
 
   if (effectiveMode === "dialog" || !anchorEl) {
     return (
-      <Modal open onClose={onClose} aria-labelledby="onboarding-step-title">
+      <Modal open={open} onClose={onClose} aria-labelledby="onboarding-step-title">
         {gradientBar}
         <DialogContent sx={{ p: 0 }}>{stepContent}</DialogContent>
         {stepperDots}
@@ -356,6 +354,8 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
     );
   }
 
+  // The tour's popper, not a dialog, goes with it
+  if (!open) return null;
   return (
     <OnboardingPopper anchorEl={anchorEl} onClose={onClose}>
       {gradientBar}

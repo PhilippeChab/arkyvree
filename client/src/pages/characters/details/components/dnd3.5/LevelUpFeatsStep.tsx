@@ -124,6 +124,14 @@ function FeatFamilyExpansion({
     );
   }
 
+  if (query.error && variants.length === 0) {
+    return (
+      <Box sx={{ pl: 6, py: 1 }}>
+        <LoadError what="Variants" error={query.error} />
+      </Box>
+    );
+  }
+
   return (
     <>
       {variants.map((feat, i) => {
@@ -192,6 +200,7 @@ export function LevelUpFeatsStep({
     setSelectedAptitude,
     groupedFeats,
     isLoadingAvailableFeats,
+    availableFeatsError,
     isFetchingNextFeatsPage,
     expandedFeatFamilies,
     toggleFeatFamily,
@@ -291,7 +300,7 @@ export function LevelUpFeatsStep({
                 <Stack spacing={1} sx={{ flex: 1, minHeight: 0 }}>
                   <TextField
                     label={`Search ${currentPool?.name} Feats`}
-                    placeholder="Search feats..."
+                    placeholder="Search feats…"
                     value={featSearch}
                     onChange={(e) => setFeatSearch(e.target.value)}
                     fullWidth
@@ -299,6 +308,8 @@ export function LevelUpFeatsStep({
                   />
                   {isLoadingAvailableFeats && groupedFeats.length === 0 ? (
                     <DiceSpinner />
+                  ) : availableFeatsError && groupedFeats.length === 0 ? (
+                    <LoadError what="Feats" error={availableFeatsError} />
                   ) : groupedFeats.length === 0 && featSearch ? (
                     <NoMatchesState search={featSearch} />
                   ) : (

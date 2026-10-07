@@ -1,6 +1,8 @@
 import { Tooltip } from "@mui/material";
 import type { ReactElement } from "react";
 
+import { truncate } from "@/client/src/lib/truncate.ts";
+
 interface OptionTooltipProps {
   description?: string | null;
   /** What the option asks that the character lacks: shown instead of its description, as a tree. */
@@ -24,7 +26,7 @@ export function OptionTooltip({
   children,
 }: OptionTooltipProps) {
   const text = description ?? "";
-  const shown = maxLength !== undefined && text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+  const shown = maxLength === undefined ? text : truncate(text, maxLength);
   return (
     <Tooltip
       describeChild
