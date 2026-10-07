@@ -7,6 +7,7 @@
  */
 
 import type { RulesetData } from "@/engine/core/view/index.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
@@ -75,8 +76,7 @@ async function validateItemRequirements(
   if (ownRequirements.length === 0 && templateRequirements.length === 0) return;
 
   const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-  const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await detailedCharacter.build(tx, undefined, scope);
+  const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { database: tx, scope });
 
   // Two entities' requirements, each its own group: their levels each start at "1"
   const issues = detailedCharacter.getUnmetRequirementIssues([templateRequirements, ownRequirements]);
@@ -107,8 +107,7 @@ async function validateWeaponInOneHand(
   const proficiency = proficiencyOf ? (rulesetData.requirementsByEntity.get(proficiencyOf) ?? []) : [];
   if (proficiency.length === 0) return;
 
-  const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await detailedCharacter.build(tx, undefined, scope);
+  const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { database: tx, scope });
   if (!detailedCharacter.areRequirementsMet([proficiency], { sourceId: null })) {
     // An issue, as an unmet requirement is: the form shows it, and can equip it anyway (`force`)
     const message = "This weapon is too large to use in one hand without its proficiency";

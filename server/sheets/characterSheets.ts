@@ -1,3 +1,4 @@
+import { buildCharacter } from "@/server/builds/index.ts";
 import type { CharacterKind } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { BaseRules } from "@/shared/enums.ts";
@@ -13,7 +14,6 @@ const CHARACTER_SHEETS = {
 /** A character built by its ruleset's module, and the sheet its base rules print it with. */
 export async function buildCharacterSheet(record: CharacterRecord, kind: CharacterKind = "pc") {
   const baseRules = await RulesetFactory.findBaseRules(record.rulesetId);
-  const detailedCharacter = RulesetFactory.fromBaseRules(baseRules).createDetailedCharacter(record, kind);
-  await detailedCharacter.build();
+  const detailedCharacter = await buildCharacter(RulesetFactory.fromBaseRules(baseRules), record, { kind });
   return { detailedCharacter, CharacterSheetComponent: CHARACTER_SHEETS[baseRules] };
 }

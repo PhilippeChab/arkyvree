@@ -10,6 +10,7 @@ import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
@@ -241,8 +242,11 @@ async function levelDistributionData(
   );
 
   // Build full character with all planned levels to get aptitude pools
-  const fullCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await fullCharacter.build(tx, projectedData, scope);
+  const fullCharacter = await buildCharacter(rulesetModule, characterRecord, {
+    database: tx,
+    projected: projectedData,
+    scope,
+  });
   const levelUpProjector = rulesetModule.createLevelUpProjector(fullCharacter);
   const { featPoolIds, powerPoolIds } = poolIds(fullCharacter.components.aptitudes, rulesetData);
 
@@ -309,8 +313,11 @@ async function ownedPoolNames(
   const baselineData: Dnd35ProjectedCharacterData = {
     excludeCharacterLevelIds: onwardIds,
   };
-  const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await baselineCharacter.build(tx, baselineData, scope);
+  const baselineCharacter = await buildCharacter(rulesetModule, characterRecord, {
+    database: tx,
+    projected: baselineData,
+    scope,
+  });
   const baselineApts = baselineCharacter.components.aptitudes.getAptitudes();
   const baselineAllowed = new Map<string, number>();
   for (const apt of Object.values(baselineApts)) baselineAllowed.set(apt.name, apt.allowed);
@@ -331,8 +338,11 @@ async function ownedPoolNames(
     givenFeats: buildProjectedGivenFeats(autoGrantedRecords, projectedLevelForFilter.id, featCustomizations),
     ...buildProjectedSelections(klassLevelId, projectedLevelForFilter.id, skills, validationResult),
   };
-  const withLevelCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await withLevelCharacter.build(tx, withLevelData, scope);
+  const withLevelCharacter = await buildCharacter(rulesetModule, characterRecord, {
+    database: tx,
+    projected: withLevelData,
+    scope,
+  });
   const withLevelApts = withLevelCharacter.components.aptitudes.getAptitudes();
   const owned = new Set<string>();
   for (const apt of Object.values(withLevelApts))
@@ -412,8 +422,7 @@ export async function finalizeLevelUp(
         baseExistingLevels,
       );
 
-      const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-      await detailedCharacter.build(tx, undefined, scope);
+      const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { database: tx, scope });
 
       if (!force) {
         const { valid, issues } = detailedCharacter.validate();
@@ -450,8 +459,7 @@ export async function removeLevel(session: Session, characterId: string) {
 
     await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
       const rulesetModule = RulesetFactory.fromBaseRules(scope.ruleset.baseRules);
-      const reconcileCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-      await reconcileCharacter.build(tx, undefined, scope);
+      const reconcileCharacter = await buildCharacter(rulesetModule, characterRecord, { database: tx, scope });
       await reconcileAllBondedKinds(tx, characterRecord, reconcileCharacter, scope.rulesetData);
     });
 
@@ -508,12 +516,11 @@ export async function updateLevel(
         rulesetData,
       });
 
-      const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-      await detailedCharacter.build(
-        tx,
-        projectEdit(characterId, characterLevel, klassLevel.id, hp, abilityId, skills, validationResult),
+      const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, {
+        database: tx,
+        projected: projectEdit(characterId, characterLevel, klassLevel.id, hp, abilityId, skills, validationResult),
         scope,
-      );
+      });
       const { valid, issues } = detailedCharacter.validate();
       if (!valid && !force) {
         // Keep all non-aptitude issues, and only aptitude issues for pools this level owns

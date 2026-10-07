@@ -633,7 +633,7 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 
 ### How to add a new ruleset
 
-The printed sheet isn't the module's: `server/sheets/` holds each base rules' sheet (`server/sheets/dnd3.5/`), which renders the character the module builds, and `buildCharacterSheet` builds a character with its ruleset's sheet. A new ruleset adds its sheet there.
+The server builds a character through `buildCharacter` (`server/builds/`), with the module the character's ruleset gives: `buildCharacter(module, record, { kind, projected, scope, database })`, the character typed by its module's. The printed sheet isn't the module's: `server/sheets/` holds each base rules' sheet (`server/sheets/dnd3.5/`), which renders the character the module builds, and `buildCharacterSheet` builds a character with its ruleset's sheet. A new ruleset adds its sheet there.
 
 1. **Define the module**: `server/rulesets/<ruleset>/rulesetModule.ts`, whose factory returns a `RulesetModule` of its own character, projector and kinds (`Dnd35RulesetModule`). Provide `rules` and `effects` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `createTargetPaths` and `createPropertyTypes`. A new ruleset's template items come with its base, which its content package seeds: a fork reads them through its chain.
 2. **Write its character** in `server/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`buildComponents`), and `DetailedCharacter`, which includes the concerns. 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).

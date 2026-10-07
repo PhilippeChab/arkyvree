@@ -1,6 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Characters } from "@/server/repositories/index.ts";
@@ -58,8 +59,7 @@ class CharacterSharingService {
     if (!characterRecord) throw new NotFoundError("Character not found");
 
     const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build();
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord);
 
     const bondedByKind = await loadBondedByKind(rulesetModule, characterRecord.id);
     const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");

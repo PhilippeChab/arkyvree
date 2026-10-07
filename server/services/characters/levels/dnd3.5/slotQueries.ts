@@ -8,6 +8,7 @@
  */
 
 import { type RulesetData } from "@/engine/core/view/index.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -71,8 +72,7 @@ async function featSlots(
     };
 
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData, scope);
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
 
     const aptitudePools = detailedCharacter.components.aptitudes.extractFeatPools();
     let featsToSelect = 0;
@@ -105,8 +105,7 @@ async function powerSlots(
     const { data: projectedData } = await projectLevel(characterId, klassLevel.id, projection);
 
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData, scope);
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
 
     const aptitudePools = spellPools(detailedCharacter.components.aptitudes, rulesetData);
     const powersToSelect = Object.values(aptitudePools).reduce((total, pool) => total + pool.available, 0);
@@ -166,8 +165,7 @@ export async function getAttributeSlots(
   const projectedData: Dnd35ProjectedCharacterData | undefined =
     excludeIds.length > 0 ? { excludeCharacterLevelIds: excludeIds } : undefined;
 
-  const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await detailedCharacter.build(undefined, projectedData);
+  const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData });
   const abilities = detailedCharacter.components.abilities;
 
   return {
@@ -239,8 +237,7 @@ export async function getSkillSlots(
     });
 
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData, scope);
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
 
     const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
     const skillsBreakdown = levelUpProjector.getSkillBudget();

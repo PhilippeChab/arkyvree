@@ -4,6 +4,7 @@
 
 import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Feats } from "@/server/repositories/index.ts";
@@ -78,8 +79,7 @@ async function projectFeatPick(
   };
 
   const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-  const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await detailedCharacter.build(undefined, projectedData, scope);
+  const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
   return { detailedCharacter, excludeFeatIds: detailedCharacter.getHeldNonStackableFeatIds() };
 }
 

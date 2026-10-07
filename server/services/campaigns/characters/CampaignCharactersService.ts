@@ -1,6 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
@@ -73,8 +74,7 @@ class CampaignCharactersService {
     const isPartial = link.visibility === "Partial" && !isOwner && !isGM && !canEdit;
 
     const rulesetModule = await RulesetFactory.fromRulesetId(character.rulesetId);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(character);
-    await detailedCharacter.build();
+    const detailedCharacter = await buildCharacter(rulesetModule, character);
 
     const bondedByKind = isPartial ? {} : await loadBondedByKind(rulesetModule, character.id);
 

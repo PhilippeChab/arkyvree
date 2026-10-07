@@ -14,6 +14,7 @@
 
 import type { ProjectedCharacterData, ProjectedCharacterLevel } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type {
@@ -276,7 +277,6 @@ export async function buildBaselineAptitudes(
   scope: RulesetScope,
 ) {
   const preloaded = await projectedCharacter.preload(database, scope);
-  const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await baselineCharacter.build(database, undefined, preloaded);
+  const baselineCharacter = await buildCharacter(rulesetModule, characterRecord, { database, scope: preloaded });
   return baselineCharacter.components.aptitudes.getAptitudes();
 }

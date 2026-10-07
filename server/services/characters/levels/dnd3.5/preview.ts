@@ -5,6 +5,7 @@
  */
 
 import { type RulesetData } from "@/engine/core/view/index.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
@@ -121,8 +122,7 @@ export async function getLevelUpPreview(
       rulesetData,
     );
 
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData, scope);
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
     const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
     const { featPools, powerPools, featsToSelect, powersToSelect } = splitPools(
       detailedCharacter.components.aptitudes,

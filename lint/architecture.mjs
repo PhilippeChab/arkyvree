@@ -34,6 +34,7 @@ const ABOVE_REPOSITORIES = [
   "server/cow/",
   "server/services/",
   "server/rulesets/",
+  "server/builds/",
   "server/sheets/",
   "server/jobs/",
   "server/middlewares/",
@@ -58,6 +59,7 @@ const LAYERS = [
     deny: [
       "server/cow/",
       "server/rulesets/",
+      "server/builds/",
       "server/sheets/",
       "server/services/",
       "server/jobs/",
@@ -69,6 +71,7 @@ const LAYERS = [
     layer: "server/cow/",
     deny: [
       "server/rulesets/",
+      "server/builds/",
       "server/sheets/",
       "server/services/",
       "server/jobs/",
@@ -78,6 +81,18 @@ const LAYERS = [
   },
   {
     layer: "server/rulesets/",
+    deny: [
+      "server/builds/",
+      "server/sheets/",
+      "server/services/",
+      "server/jobs/",
+      "server/middlewares/",
+      "server/routers/",
+    ],
+  },
+  // The server's side of a character's build: what the module builds it from, read and given
+  {
+    layer: "server/builds/",
     deny: ["server/sheets/", "server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
   },
   // A sheet prints the character a ruleset's module builds: above the rulesets, below what renders it

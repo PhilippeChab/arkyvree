@@ -3,6 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { Components } from "@/engine/core/types.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -232,8 +233,7 @@ class CharactersService extends include(Object, Archives) {
       await getEditableCharacter(db, session, record.parentCharacterId, Visibility.All);
 
       const rulesetModule = await RulesetFactory.fromRulesetId(record.rulesetId);
-      const detailedBonded = rulesetModule.createDetailedCharacter(record, record.kind as CharacterKind);
-      await detailedBonded.build();
+      const detailedBonded = await buildCharacter(rulesetModule, record, { kind: record.kind as CharacterKind });
 
       return {
         character: record,
@@ -245,8 +245,7 @@ class CharactersService extends include(Object, Archives) {
     const characterRecord = await getEditableCharacter(db, session, characterId, Visibility.All);
 
     const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build();
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord);
 
     const bondedByKind = await loadBondedByKind(rulesetModule, characterId);
 
