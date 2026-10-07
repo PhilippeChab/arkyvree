@@ -22,12 +22,13 @@ async function requestTimes(fetch: (url: string) => Promise<unknown>) {
 
 describe("The scraper's HTTP client", () => {
   test("sends the requests made together one delay apart", async () => {
-    const client = new HttpClient({ noCache: true, delay: 100 });
+    const client = new HttpClient({ noCache: true, delay: 200 });
     const times = await requestTimes((url) =>
       Promise.all([1, 2, 3].map((page) => client.fetchHtml(`${url}?page=${page}`))),
     );
     expect(times).toHaveLength(3);
-    for (let i = 1; i < times.length; i++) expect(times[i] - times[i - 1]).toBeGreaterThanOrEqual(90);
+    // The server sees when each request arrives, not when it was sent: a connection's setup delays the first one
+    for (let i = 1; i < times.length; i++) expect(times[i] - times[i - 1]).toBeGreaterThanOrEqual(150);
   });
 
   test("sends them at once with no delay", async () => {
