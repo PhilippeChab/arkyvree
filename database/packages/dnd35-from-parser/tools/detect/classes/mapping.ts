@@ -15,6 +15,7 @@ import { findWithPluralVariants, isPluralVariantOf } from "@/database/packages/d
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { type NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
+import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A pool's aptitude, the level it opens at, and whether its picks stack. */
@@ -86,12 +87,7 @@ class InitialMapping {
           if (hasPerLevelLists) feat.stackable = undefined;
           // Add the aptitude pick modifier
           if (!feat.modifiers) feat.modifiers = [];
-          feat.modifiers.push({
-            target: pick.target,
-            operator: "add" as const,
-            value: "1",
-            valueType: "number" as const,
-          });
+          feat.modifiers.push(bonus(pick.target, 1));
           break;
         }
       }

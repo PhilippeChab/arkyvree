@@ -1,7 +1,7 @@
 import { formatWithArticle } from "@/database/packages/dnd35/content/bonds/articles.ts";
 import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
-import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
+import { bonus, grantFeat, setStr } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
@@ -126,15 +126,7 @@ const FAMILIAR_RACE_PICK_FEATS: FeatSeed[] = FAMILIAR_RACE_NAMES.map((race) => (
   description: `Bond with ${formatWithArticle(race)} as your familiar: while it's within a mile of you, you gain ${MASTER_BENEFITS[race].benefit}. The familiar appears on your sheet with stats derived from your level and the ${race} race profile.`,
   selectable: true,
   aptitudes: [FAMILIAR_APTITUDE],
-  modifiers: [
-    {
-      target: "bonded.familiar.race",
-      operator: "set",
-      value: race,
-      valueType: "string",
-    },
-    ...MASTER_BENEFITS[race].modifiers,
-  ],
+  modifiers: [setStr("bonded.familiar.race", race), ...MASTER_BENEFITS[race].modifiers],
 }));
 
 const FAMILIAR_RACES: RaceDefinition[] = [
@@ -192,7 +184,7 @@ const FAMILIAR_RACES: RaceDefinition[] = [
       "A venomous tiny serpent (the 3.5 SRD's 'Tiny Viper' familiar option). Viper familiars grant their masters a +3 bonus on Bluff checks.",
     size: "Tiny",
     baseSpeed: 15,
-    modifiers: [{ target: "feats.poison.possessed", operator: "set", value: "true", valueType: "boolean" }],
+    modifiers: [grantFeat("Poison")],
   },
   {
     name: "Toad",

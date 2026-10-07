@@ -1,3 +1,4 @@
+import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
@@ -18,14 +19,7 @@ export function wizardSchoolFeats(schools: WizardSchoolDefinition[]): FeatSeed[]
       description: s.description,
       aptitudes: [SPECIALIZATION],
       requirements: requirements(),
-      modifiers: [
-        {
-          target: "aptitudes.prohibitedschool.allowed",
-          operator: "add",
-          value: String(s.prohibitedSchoolCount),
-          valueType: "number",
-        },
-      ],
+      modifiers: [bonus("aptitudes.prohibitedschool.allowed", s.prohibitedSchoolCount)],
     })),
     {
       name: "Generalist",

@@ -6,6 +6,7 @@ import type {
   MagicItemCategory,
   MagicItemReference,
 } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
+import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 
 type Modifier = { target: string; operator: string; value: string; valueType: string };
 
@@ -160,27 +161,27 @@ const NAME_MODIFIER_PATTERNS: { pattern: RegExp; toModifiers: (match: RegExpMatc
   // Gauntlets of Ogre Power — +2 Strength (no +N in name, hardcoded)
   {
     pattern: /^Gauntlets of Ogre Power$/i,
-    toModifiers: () => [{ target: "abilities.strength.misc", operator: "add", value: "2", valueType: "number" }],
+    toModifiers: () => [bonus("abilities.strength.misc", "2")],
   },
   // Amulet of Natural Armor +N
   {
     pattern: /Natural Armor\s*\+(\d+)$/i,
-    toModifiers: (m) => [{ target: "combat.ac.natural", operator: "add", value: m[1], valueType: "number" }],
+    toModifiers: (m) => [bonus("combat.ac.natural", m[1])],
   },
   // Bracers of Armor +N
   {
     pattern: /^Bracers of Armor\s*\+(\d+)$/i,
-    toModifiers: (m) => [{ target: "combat.ac.armor", operator: "add", value: m[1], valueType: "number" }],
+    toModifiers: (m) => [bonus("combat.ac.armor", m[1])],
   },
   // Cloak of Resistance +N
   {
     pattern: /^Cloak of Resistance\s*\+(\d+)$/i,
-    toModifiers: (m) => [{ target: "saves.*.misc", operator: "add", value: m[1], valueType: "number" }],
+    toModifiers: (m) => [bonus("saves.*.misc", m[1])],
   },
   // Protection +N (deflection to AC)
   {
     pattern: /^Protection\s*\+(\d+)$/i,
-    toModifiers: (m) => [{ target: "combat.ac.deflection", operator: "add", value: m[1], valueType: "number" }],
+    toModifiers: (m) => [bonus("combat.ac.deflection", m[1])],
   },
   // Generic ability score items: "Belt of Giant Strength +4", "Amulet of Health +2", etc.
   // Must be LAST — matches any "...Word +N" name, resolves via ability name or alias
@@ -190,12 +191,12 @@ const NAME_MODIFIER_PATTERNS: { pattern: RegExp; toModifiers: (match: RegExpMatc
       const nameWords = m[1].trim().toLowerCase();
       for (const ability of Object.keys(ABILITY_MAP)) {
         if (nameWords.endsWith(ability)) {
-          return [{ target: ABILITY_MAP[ability], operator: "add", value: m[2], valueType: "number" }];
+          return [bonus(ABILITY_MAP[ability], m[2])];
         }
       }
       for (const [alias, ability] of Object.entries(NAME_ABILITY_ALIAS)) {
         if (nameWords.endsWith(alias)) {
-          return [{ target: ABILITY_MAP[ability], operator: "add", value: m[2], valueType: "number" }];
+          return [bonus(ABILITY_MAP[ability], m[2])];
         }
       }
       return [];

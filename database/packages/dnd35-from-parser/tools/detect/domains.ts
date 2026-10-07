@@ -7,6 +7,7 @@ import {
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/detect/paths.ts";
 import { SKILL_MAP as BASE_SKILL_MAP } from "@/database/packages/dnd35-from-parser/tools/detect/targets.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
+import { setFlag } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -35,7 +36,7 @@ function detectDomainModifiers(description: string): ModifierDetection<Modifier>
   if (/add all knowledge skills/i.test(description)) {
     for (const name of ALL_KNOWLEDGE_SKILLS) {
       const slug = stripSeparators(name);
-      modifiers.push({ target: `skills.${slug}.innate`, operator: "set", value: "true", valueType: "boolean" });
+      modifiers.push(setFlag(`skills.${slug}.innate`));
     }
   }
 
@@ -54,7 +55,7 @@ function detectDomainModifiers(description: string): ModifierDetection<Modifier>
         if (!name) continue;
         const slug = SKILL_MAP[name.toLowerCase()];
         if (slug) {
-          modifiers.push({ target: `skills.${slug}.innate`, operator: "set", value: "true", valueType: "boolean" });
+          modifiers.push(setFlag(`skills.${slug}.innate`));
         } else {
           unresolvedModifiers.push(`Unresolved class skill: "${name}"`);
         }

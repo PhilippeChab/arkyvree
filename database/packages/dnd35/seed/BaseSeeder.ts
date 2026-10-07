@@ -1,5 +1,7 @@
 import type { PgTable } from "drizzle-orm/pg-core";
 
+import { bonus, setFlag, setNum } from "@/database/packages/dnd35/content/customization/modifiers.ts";
+import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   Modifier,
   ModifierSeed,
@@ -62,14 +64,7 @@ export class BaseSeeder {
 
   /** A spell list's spells joining the list of the class whose level gave the source: a cleric's domain, the cleric's. */
   protected joinsClassList(sourceId: string, sourceType: string, list: string): ModifierRow {
-    return {
-      sourceId,
-      sourceType,
-      target: `aptitudes.${list}.joinsclasslist`,
-      value: "true",
-      valueType: "boolean",
-      operator: "set",
-    };
+    return { sourceId, sourceType, ...setFlag(`aptitudes.${list}.joinsclasslist`) };
   }
 
   /** A source's modifiers as rows. */
@@ -117,22 +112,8 @@ export class BaseSeeder {
    */
   protected spellListSlots(sourceId: string, sourceType: string, list: string): ModifierRow[] {
     return Array.from({ length: 9 }, (_, i) => [
-      {
-        sourceId,
-        sourceType,
-        target: `aptitudes.${list}.${i + 1}.uses`,
-        value: "1",
-        valueType: "number",
-        operator: "add",
-      },
-      {
-        sourceId,
-        sourceType,
-        target: `aptitudes.${list}.${i + 1}.allowed`,
-        value: "-1",
-        valueType: "number",
-        operator: "set",
-      },
+      { sourceId, sourceType, ...bonus(`aptitudes.${list}.${i + 1}.uses`, 1) },
+      { sourceId, sourceType, ...setNum(`aptitudes.${list}.${i + 1}.allowed`, -1) },
     ]).flat();
   }
 
@@ -163,17 +144,7 @@ export class BaseSeeder {
         const spellLevel = target.match(/^aptitudes\.\w+\.(\d+)\.(uses|allowed)$/)?.[1];
         const classLevel = spellLevel === undefined ? undefined : spellLevels[Number(spellLevel)];
         if (classLevel === undefined || classLevel <= 1) return [];
-        return [
-          {
-            entityId: id,
-            entityType: "modifiers",
-            level: "1",
-            target: classTarget,
-            operator: "greater_than_or_equal",
-            value: String(classLevel),
-            valueType: "number",
-          },
-        ];
+        return [{ entityId: id, entityType: "modifiers", level: "1", ...gte(classTarget, classLevel) }];
       }),
     );
   }

@@ -9,6 +9,7 @@ import {
   type MagicItemCategory,
   type MagicItemReference,
 } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
+import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { Modifier, Property } from "@/database/packages/dnd35/content/customization/types.ts";
 import { armorProperties } from "@/database/packages/dnd35/content/items/properties.ts";
 import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
@@ -35,9 +36,8 @@ const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Rin
 function weaponEnhancementModifiers(description: string): Modifier[] {
   const enhancement = readWeaponEnhancement(description);
   if (!enhancement) return [];
-  const bonus = (target: string, value: number): Modifier[] =>
-    value ? [{ target, operator: "add", value: String(value), valueType: "number" }] : [];
-  return [...bonus("weapon.tohit.magic", enhancement.attack), ...bonus("weapon.damage.magic", enhancement.damage)];
+  const bonusOf = (target: string, value: number): Modifier[] => (value ? [bonus(target, value)] : []);
+  return [...bonusOf("weapon.tohit.magic", enhancement.attack), ...bonusOf("weapon.damage.magic", enhancement.damage)];
 }
 
 /** The properties of `base`, those of `own` over them by type. */
@@ -99,14 +99,7 @@ export function buildMagicItemSeeds(
     // Its enhancement bonus: an armor's or a shield's to its part of the AC, a weapon's to its own attack and damage
     // (not ammunition's, made from no weapon, which no hand holds)
     const enhancement: Modifier[] = stats?.enhancement
-      ? [
-          {
-            target: det.category === "specificArmor" ? "combat.ac.armor" : "combat.ac.shield",
-            operator: "add",
-            value: String(stats.enhancement),
-            valueType: "number",
-          },
-        ]
+      ? [bonus(det.category === "specificArmor" ? "combat.ac.armor" : "combat.ac.shield", stats.enhancement)]
       : det.category === "specificWeapon" && sourceItem
         ? weaponEnhancementModifiers(description)
         : [];

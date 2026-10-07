@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { CORE_BOOK, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { type DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
+import { grantFeat } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
@@ -19,7 +20,6 @@ import {
   SIMPLE_WEAPONS,
 } from "@/database/packages/dnd35/content/items/weapons.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
-import { stripSeparators } from "@/shared/text.ts";
 
 function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
   const results: FeatSeed[] = [];
@@ -32,14 +32,7 @@ function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
     const items = resolveFeatPoolItems(pool.items);
 
     for (const item of items) {
-      const itemSlug = stripSeparators(item);
-
-      const modifiers: ModifierSeed[] = pool.grants.map((family) => ({
-        target: `feats.${stripSeparators(family)}${itemSlug}.possessed`,
-        operator: "set",
-        value: "true",
-        valueType: "boolean",
-      }));
+      const modifiers: ModifierSeed[] = pool.grants.map((family) => grantFeat(`${family}: ${item}`));
 
       const properties = pool.grants.map((family) => ({
         type: FEAT_FAMILY,

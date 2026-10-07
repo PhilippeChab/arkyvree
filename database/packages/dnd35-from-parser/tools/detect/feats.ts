@@ -23,6 +23,7 @@ import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools
 import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { ClassReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
+import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
@@ -749,24 +750,24 @@ export function detectModifiers(benefit: string): ModifierDetection {
   const conditional = (index: number, length: number) => isConditional(benefit, index, index + length);
 
   // Skill bonuses: "+N bonus on [all] X checks [and Y checks]", "+N bonus on your X check"
-  for (const bonus of readSkillBonuses(benefit, (match) => conditional(match.index, match[0].length))) {
-    if (bonus.slug) {
-      modifiers.push({ target: `skills.${bonus.slug}.misc`, operator: "add", value: bonus.value, valueType: "number" });
+  for (const skillBonus of readSkillBonuses(benefit, (match) => conditional(match.index, match[0].length))) {
+    if (skillBonus.slug) {
+      modifiers.push(bonus(`skills.${skillBonus.slug}.misc`, skillBonus.value));
     } else {
-      unresolvedModifiers.push(`Unresolved skill: "${extractSentence(bonus.index)}"`);
+      unresolvedModifiers.push(`Unresolved skill: "${extractSentence(skillBonus.index)}"`);
     }
   }
 
   // Pattern: "+N bonus on initiative checks" or "+N to initiative"
   const initMatch = benefit.match(/\+(\d+)\s+(?:bonus (?:on|to)\s+)?initiative/i);
   if (initMatch && !conditional(benefit.indexOf(initMatch[0]), initMatch[0].length)) {
-    modifiers.push({ target: "combat.initiative.misc", operator: "add", value: initMatch[1], valueType: "number" });
+    modifiers.push(bonus("combat.initiative.misc", initMatch[1]));
   }
 
   // Pattern: "+N hit points" or "gain +N hit points"
   const hpMatch = benefit.match(/\+(\d+)\s+hit points/i);
   if (hpMatch && !conditional(benefit.indexOf(hpMatch[0]), hpMatch[0].length)) {
-    modifiers.push({ target: "combat.hp.misc", operator: "add", value: hpMatch[1], valueType: "number" });
+    modifiers.push(bonus("combat.hp.misc", hpMatch[1]));
   }
 
   // Pattern: "+N bonus on Fortitude/Reflex/Will saves/saving throws"
@@ -777,14 +778,14 @@ export function detectModifiers(benefit: string): ModifierDetection {
     if (conditional(match.index, match[0].length)) continue;
     const slug = SAVE_MAP[match[2].toLowerCase()];
     if (slug) {
-      modifiers.push({ target: `saves.${slug}.misc`, operator: "add", value: match[1], valueType: "number" });
+      modifiers.push(bonus(`saves.${slug}.misc`, match[1]));
     }
   }
 
   // Pattern: "+N natural armor bonus" or "+N to natural armor"
   const natArmorMatch = benefit.match(/\+(\d+)\s+(?:natural armor|to natural armor)/i);
   if (natArmorMatch) {
-    modifiers.push({ target: "combat.ac.natural", operator: "add", value: natArmorMatch[1], valueType: "number" });
+    modifiers.push(bonus("combat.ac.natural", natArmorMatch[1]));
   }
 
   // Pattern: "+N bonus on [all] attack rolls ... using the selected weapon"
@@ -792,7 +793,7 @@ export function detectModifiers(benefit: string): ModifierDetection {
     /\+(\d+)\s+bonus on (?:all\s+)?attack rolls[^.]*(?:using the selected weapon|using \w+)/i,
   );
   if (weaponAttackMatch) {
-    modifiers.push({ target: "weapon.tohit.misc", operator: "add", value: weaponAttackMatch[1], valueType: "number" });
+    modifiers.push(bonus("weapon.tohit.misc", weaponAttackMatch[1]));
   }
 
   // Pattern: "+N bonus on [all] damage rolls ... using the selected weapon"
@@ -800,7 +801,7 @@ export function detectModifiers(benefit: string): ModifierDetection {
     /\+(\d+)\s+bonus on (?:all\s+)?damage rolls[^.]*(?:using the selected weapon|using \w+)/i,
   );
   if (weaponDamageMatch) {
-    modifiers.push({ target: "weapon.damage.misc", operator: "add", value: weaponDamageMatch[1], valueType: "number" });
+    modifiers.push(bonus("weapon.damage.misc", weaponDamageMatch[1]));
   }
 
   // Pattern: "threat range is doubled" (Improved Critical)
@@ -812,13 +813,13 @@ export function detectModifiers(benefit: string): ModifierDetection {
   const speedMatch =
     benefit.match(/\+?(\d+)\s*(?:feet|foot|ft\.?)\s*faster\b/i) ?? benefit.match(/\+(\d+)\s*(?:feet|foot|ft\.?)\b/i);
   if (speedMatch && !conditional(benefit.indexOf(speedMatch[0]), speedMatch[0].length)) {
-    modifiers.push({ target: "combat.speed.misc", operator: "add", value: speedMatch[1], valueType: "number" });
+    modifiers.push(bonus("combat.speed.misc", speedMatch[1]));
   }
 
   // Pattern: "+N bonus on grapple checks"
   const grappleMatch = benefit.match(/\+(\d+)\s+bonus on (?:all\s+)?grapple checks/i);
   if (grappleMatch && !conditional(benefit.indexOf(grappleMatch[0]), grappleMatch[0].length)) {
-    modifiers.push({ target: "combat.grapple.misc", operator: "add", value: grappleMatch[1], valueType: "number" });
+    modifiers.push(bonus("combat.grapple.misc", grappleMatch[1]));
   }
 
   // Validate all paths — invalid paths are errors, not unresolved

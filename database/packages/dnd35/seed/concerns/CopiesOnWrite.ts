@@ -5,6 +5,7 @@
 
 import { and, eq, like } from "drizzle-orm";
 
+import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
@@ -69,10 +70,7 @@ export function CopiesOnWrite<B extends Constructor<BaseSeeder>>(Base: B) {
           entityId: featId,
           entityType: "feats",
           level: `${group.level}.${next + i}`,
-          target: `classes.${className}.level`,
-          operator: "greater_than_or_equal",
-          value: String(level),
-          valueType: "number",
+          ...gte(`classes.${className}.level`, level),
         })),
       );
     }

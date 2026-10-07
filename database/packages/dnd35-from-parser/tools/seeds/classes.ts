@@ -25,7 +25,8 @@ import {
   type InheritedSpellList,
 } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
-import { feat, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import { bonus, grantFeat, setFlag } from "@/database/packages/dnd35/content/customization/modifiers.ts";
+import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { FAVORED_ENEMY_FAMILY } from "@/database/packages/dnd35/data/feats/favoredEnemy.ts";
@@ -199,9 +200,7 @@ function spellcastingAdvanceFeats(ref: ClassReference, classSlug: string): FeatS
         casterType === "Divine" ? "Bonus Divine Caster Level" : "Bonus Arcane Caster Level",
         "Bonus Caster Level",
       ],
-      modifiers: [
-        { target: `classes.${classSlug}.bonuscasterlevel`, operator: "add", value: "1", valueType: "number" },
-      ],
+      modifiers: [bonus(`classes.${classSlug}.bonuscasterlevel`, 1)],
       requirements: classLevelRequirement(classSlug, 1),
     },
   ];
@@ -225,14 +224,7 @@ export function buildClassDomainPickFeats(ref: ClassReference): FeatSeed[] {
       description: `The ${name} domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.`,
       selectable: true,
       aptitudes: [pool],
-      modifiers: [
-        {
-          target: `aptitudes.${stripSeparators(name)}domainspells.joinsclasslist`,
-          operator: "set",
-          value: "true",
-          valueType: "boolean",
-        },
-      ],
+      modifiers: [setFlag(`aptitudes.${stripSeparators(name)}domainspells.joinsclasslist`)],
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -270,9 +262,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
       ...(feature.modifiers ?? []).map((m) => ({ ...m, target: aptitudeTargetRemap.get(m.target) ?? m.target })),
       ...buildCompanionGrantModifiers(name, feature.description ?? ""),
       ...buildUncannyDodgeModifiers(name),
-      ...(lockedType
-        ? [{ target: feat(`Favored Enemy: ${lockedType}`), operator: "set", value: "true", valueType: "boolean" }]
-        : []),
+      ...(lockedType ? [grantFeat(`Favored Enemy: ${lockedType}`)] : []),
     ];
     // A pick in a pool of the class's own (not its class features) opens at the pool's first pick.
     const poolLevel =

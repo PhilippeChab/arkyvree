@@ -1,3 +1,4 @@
+import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { eq, feat } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
@@ -14,9 +15,7 @@ const favoredEnemySpecializationUmbrella: FeatSeed = {
   stackable: true,
   selectable: false,
   aptitudes: ["Ranger Class Feature"],
-  modifiers: [
-    { target: "aptitudes.favoredenemyspecialization.allowed", operator: "add", value: "1", valueType: "number" },
-  ],
+  modifiers: [bonus("aptitudes.favoredenemyspecialization.allowed", 1)],
 };
 
 export const FAVORED_ENEMY_FAMILY = "Favored Enemy";

@@ -9,6 +9,7 @@ import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools
 import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/detect/skillBonuses.ts";
 import { SAVE_MAP } from "@/database/packages/dnd35-from-parser/tools/detect/targets.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
+import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 
 const ABILITY_MAP: Record<string, string> = {
@@ -38,12 +39,7 @@ function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetec
   for (const adj of entry.abilityAdjustments) {
     const slug = ABILITY_MAP[adj.ability.toLowerCase()];
     if (slug) {
-      modifiers.push({
-        target: `abilities.${slug}.misc`,
-        operator: "add",
-        value: String(adj.value),
-        valueType: "number",
-      });
+      modifiers.push(bonus(`abilities.${slug}.misc`, adj.value));
     } else {
       unresolvedModifiers.push(`Unknown ability: "${adj.ability}"`);
     }
@@ -64,13 +60,7 @@ function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetec
 }
 
 function detectSaveBonuses(text: string, modifiers: Modifier[]): void {
-  const add = (save: string, bonus: string) =>
-    modifiers.push({
-      target: `saves.${save}.misc`,
-      operator: "add",
-      value: String(parseInt(bonus, 10)),
-      valueType: "number",
-    });
+  const add = (save: string, value: string) => modifiers.push(bonus(`saves.${save}.misc`, parseInt(value, 10)));
 
   // "+N racial bonus on all saving throws"
   for (const match of text.matchAll(/\+(\d+)\s+racial\s+bonus\s+on\s+all\s+saving\s+throws/gi)) {
