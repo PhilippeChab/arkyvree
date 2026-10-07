@@ -2,6 +2,7 @@ import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db, memoizeRequest } from "@/server/database/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
 import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
+import { toVirtualFeat } from "@/server/rulesets/dnd3.5/loading/customizations.ts";
 import type { ValidationIssue, ValidationResult } from "@/server/rulesets/engine/types.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
@@ -10,16 +11,26 @@ import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.t
 export default abstract class DetailedCharacterBonded extends Dnd35DetailedCharacter {
   protected cachedTotalHD: number | null = null;
 
+  /**
+   * The stat block's feats, as any granted feat is: possessed and counted, and listed with the feats the creature has
+   * without a pick (`getVirtuallyPossessedFeats`: its sheet and PDF), their modifiers applied. A feat the creature
+   * already has, from a modifier that grants it, stays as it is, as a granted feat the character has does.
+   */
   protected applyGrantedFeats(featNames: string[], rulesetData: RulesetData): void {
     if (featNames.length === 0) return;
     const featModifiers: Modifier[] = [];
     for (const featName of featNames) {
       const entry = this.components.feats.getFeat(featName);
-      if (entry) entry.possessed = true;
+      if (entry?.possessed) continue;
+      if (entry) {
+        entry.possessed = true;
+        entry.count += 1;
+      }
       const featRow = rulesetData.feats.find((f) => f.name === featName);
       if (!featRow) continue;
       const mods = rulesetData.modifiersBySource.get(featRow.id);
       if (mods) featModifiers.push(...mods);
+      this.feats.push(toVirtualFeat(featRow, rulesetData));
     }
     if (featModifiers.length > 0 && this.components)
       this.modifierEvaluator.evaluateModifiers(this.components, featModifiers, this.requirementEvaluator);
