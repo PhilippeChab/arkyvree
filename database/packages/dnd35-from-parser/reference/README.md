@@ -1,6 +1,6 @@
 # Reference JSON Schema
 
-A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. Loading it (`ReferenceLoader`, by `tools/references/resolve.ts` and the detectors in `tools/detect/`) derives what the generator reads: `detected`, parsed from `raw`, and `mapping`, the entities to generate (items, magic items and spells have only `detected`; wizard schools, neither). The overrides win over both. So a correction takes effect at the next `parser:generate`, and re-scraping (which replaces `raw`) keeps it.
+A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. Loading it (`ReferenceLoader`, by `tools/references/resolve.ts` and the detectors in `tools/detect/`) derives what the generator reads: `detected`, parsed from `raw` (wizard schools have none), and `mapping`, each entity as the seeds make it, its overrides applied (they win over both). The seeds read the mapping, never the overrides. So a correction takes effect at the next `parser:generate`, and re-scraping (which replaces `raw`) keeps it.
 
 A class reference, as stored (see `tools/types/classes.ts` for the definitive types):
 
@@ -97,9 +97,10 @@ Next to `detected` and `mapping`, the loaded reference keeps `_meta` as stored; 
 
 ## How the generator reads it
 
-1. Start with `detected` values (bab, saves, requirements, aptitudePicks, etc.)
-2. Layer on `mapping` (features, spells, classFeatureAptitude)
-3. `overrides` win over both — any field set there replaces the detected or mapped value, except `spells`: its fields go over the detected spells, and a class with none detected ignores them (`parser:validate` reports it)
-4. For features specifically: `overrides.features[name]` fields are merged on top of the detected feature (set a field to `null` to delete it)
+The generator reads a class's `mapping` (`ClassMapping` builds it), and what no override changes (its hit die, levels, feature occurrences…) in `detected`:
+
+1. Its features, spells and `classFeatureAptitude`, derived from `detected`
+2. Each field an override sets (bab, saves, requirements, aptitudePicks, bonusFeatLists, casterType, bonusSpellAbility, classSkills, description, freeFeats, proficiencies, modifiers, columns, skip): the override's, else the detected or scraped value. `aptitudePicks` keeps the detected picks an override's for the same aptitude doesn't replace, and `spells`' fields go over the detected spells: a class with none detected ignores them (`parser:validate` reports it)
+3. For features specifically: `overrides.features[name]` fields are merged on top of the detected feature (set a field to `null` to delete it)
 
 `bun run parser:validate` reports a class override that changes nothing, so remove it: it holds what's derived without it, and the class's generated files come out the same without it. An override that differs from what's derived stays, even when nothing uses it today.

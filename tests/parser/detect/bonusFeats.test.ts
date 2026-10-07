@@ -8,7 +8,7 @@ describe("A bonus feat list's class levels", () => {
     const wuJen = ReferenceLoader.loadClasses("complete-arcane").find(({ file }) => file === "wuJen.json");
     if (!wuJen) throw new Error("Wu Jen isn't a class of Complete Arcane's");
     const ref = structuredClone(wuJen.ref);
-    ref.detected.bonusFeatLists = [{ aptitude: "Wu Jen Bonus Feat", feats: ["Dodge"], levels: [5, 10] }];
+    ref.mapping.bonusFeatLists = [{ aptitude: "Wu Jen Bonus Feat", feats: ["Dodge"], levels: [5, 10] }];
     expect(getBonusFeatClassLevels([{ file: wuJen.file, ref }]).get("Dodge")).toEqual([
       { classSlug: "wujen", minLevel: 5 },
     ]);

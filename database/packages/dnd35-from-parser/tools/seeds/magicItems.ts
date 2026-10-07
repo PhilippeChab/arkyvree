@@ -1,18 +1,13 @@
 /** A magic item reference's seeds: its ItemSeed[], by category. */
 
-import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/detect/readers/items/armorStats.ts";
-import { readBaseItem } from "@/database/packages/dnd35-from-parser/tools/detect/readers/items/baseItems.ts";
-import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/detect/readers/items/weaponStats.ts";
-import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import {
   type MagicItemCategory,
   type MagicItemReference,
 } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
-import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
-import type { Modifier, Property } from "@/database/packages/dnd35/content/customization/types.ts";
+import type { Property } from "@/database/packages/dnd35/content/customization/types.ts";
 import { armorProperties } from "@/database/packages/dnd35/content/items/properties.ts";
 import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
-import { ARMOR_PROFICIENCY, MAGIC_AURA, MAGIC_CASTER_LEVEL } from "@/shared/dnd3.5/properties/index.ts";
+import { ARMOR_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 import { checkOneOf, getCheckedValue } from "./checks.ts";
@@ -28,9 +23,6 @@ export type MagicItemSeedSets = {
   wondrousItems: ItemSeed[];
 };
 
-/** The specific armor and shields, whose text gives what they change of their base's. */
-const ARMOR_CATEGORIES = new Set<MagicItemCategory>(["specificArmor", "specificShield"]);
-
 /** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
 const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
 
@@ -40,14 +32,6 @@ function templateOf(properties: Property[]): Pick<ItemSeed, "isTemplate" | "requ
   return { isTemplate: true, requirements: getArmorProficiency(category), properties };
 }
 
-/** A weapon's enhancement bonus, as modifiers of the weapon holding it: its attack's and its damage's. */
-function weaponEnhancementModifiers(description: string): Modifier[] {
-  const enhancement = readWeaponEnhancement(description);
-  if (!enhancement) return [];
-  const bonusOf = (target: string, value: number): Modifier[] => (value ? [bonus(target, value)] : []);
-  return [...bonusOf("weapon.tohit.magic", enhancement.attack), ...bonusOf("weapon.damage.magic", enhancement.damage)];
-}
-
 /** The properties of `base`, those of `own` over them by type. */
 function withOwnProperties(base: Property[], own: Property[]): Property[] {
   const ownTypes = new Set(own.map((property) => property.type));
@@ -55,10 +39,8 @@ function withOwnProperties(base: Property[], own: Property[]): Property[] {
 }
 
 /**
- * The magic item seeds, by kind. A specific armor or shield takes the stats its text gives (`readArmorStats`) and its
- * enhancement bonus to AC, a specific weapon made from a base one its enhancement bonus to attack and damage
- * (`readWeaponEnhancement`); an item made from a base one weighs what its base does (`baseWeights`, by name) unless it
- * says otherwise.
+ * The magic item seeds, by kind, as their mapping makes them (their overrides applied, the stats their text gives): an
+ * item made from a base one weighs what its base does (`baseWeights`, by name) unless it says otherwise.
  */
 export function buildMagicItemSeeds(
   ref: MagicItemReference,
@@ -82,37 +64,9 @@ export function buildMagicItemSeeds(
     staff: staffs,
   };
 
-  for (const { name, det, override: ovr, slot } of getSeededMagicItems(ref)) {
-    const costGp = ovr?.costGp ?? det.costGp;
-    // Find the raw entry for description
-    const rawEntry = ref.raw.find((r) => r.name === name);
-    const baseItemRaw =
-      ovr?.baseItem !== undefined
-        ? ovr.baseItem
-        : (det.baseItem ?? readBaseItem(name, rawEntry?.description ?? "", det.category));
-    const sourceItem = baseItemRaw ?? undefined;
-
-    const description = normalizeDescription(ovr?.description ?? rawEntry?.description ?? "");
-    const stats = ARMOR_CATEGORIES.has(det.category) ? readArmorStats(description) : undefined;
-    const statedWeight = stats?.weight ?? (det.weight !== "0" ? det.weight : undefined);
-    const weight = ovr?.weight ?? statedWeight ?? (sourceItem && baseWeights[sourceItem]) ?? det.weight;
-
-    const aura = ovr?.aura ?? det.aura;
-    const casterLevel = ovr?.casterLevel ?? det.casterLevel;
-    const properties: Property[] = [];
-    if (aura) properties.push({ type: MAGIC_AURA, value: aura });
-    if (casterLevel) properties.push({ type: MAGIC_CASTER_LEVEL, value: String(casterLevel) });
-    properties.push(...(stats?.properties ?? []));
-    if (ovr?.properties) properties.push(...ovr.properties);
-    // Its enhancement bonus: an armor's or a shield's to its part of the AC, a weapon's to its own attack and damage
-    // (not ammunition's, made from no weapon, which no hand holds)
-    const enhancement: Modifier[] = stats?.enhancement
-      ? [bonus(det.category === "specificArmor" ? "combat.ac.armor" : "combat.ac.shield", stats.enhancement)]
-      : det.category === "specificWeapon" && sourceItem
-        ? weaponEnhancementModifiers(description)
-        : [];
-    // An override's modifiers, an empty list too, win over those detected
-    const modifiers = ovr?.modifiers ?? [...(det.modifiers ?? []), ...enhancement];
+  for (const { name, det, item, slot } of getSeededMagicItems(ref)) {
+    const sourceItem = item.baseItem;
+    const weight = item.weight ?? (sourceItem && baseWeights[sourceItem]) ?? det.weight;
 
     const bucket = categoryBuckets[det.category];
     if (!bucket) throw new Error(`${name}: the seed has no magic items of the category "${det.category}"`);
@@ -129,20 +83,20 @@ export function buildMagicItemSeeds(
     }
 
     // A template is made from nothing: its base armor's properties are its own, under those it changes
-    if (ovr?.template && (det.category !== "specificArmor" || !sourceItem))
+    if (item.template && (det.category !== "specificArmor" || !sourceItem))
       throw new Error(`${name}: only a specific armor made from a base armor can be a template`);
 
     bucket.push({
       name: itemName,
-      description,
+      description: item.description,
       weight,
-      costGp,
+      costGp: item.costGp,
       type: det.itemType,
       slot: slot && getCheckedValue(slot),
-      ...(ovr?.template && sourceItem
-        ? templateOf(withOwnProperties(armorProperties(sourceItem), properties))
-        : { properties, ...(sourceItem ? { sourceItem } : {}) }),
-      ...(modifiers.length ? { modifiers } : {}),
+      ...(item.template && sourceItem
+        ? templateOf(withOwnProperties(armorProperties(sourceItem), item.properties))
+        : { properties: item.properties, ...(sourceItem ? { sourceItem } : {}) }),
+      ...(item.modifiers.length ? { modifiers: item.modifiers } : {}),
     });
   }
 
@@ -150,15 +104,15 @@ export function buildMagicItemSeeds(
 }
 
 /**
- * The magic items a magic item reference seeds (those its overrides don't skip), each with its override and its slot,
- * checked when it has one: the override's, else as detected. Generation throws a slot's problem, and
- * `parser:validate` reports it.
+ * The magic items a magic item reference seeds (those its mapping doesn't skip), each with its mapping and its slot,
+ * checked when it has one. Generation throws a slot's problem, and `parser:validate` reports it.
  */
 export function getSeededMagicItems(ref: MagicItemReference) {
   return Object.entries(ref.detected).flatMap(([name, det]) => {
-    const override = ref.overrides?.[name];
-    if (override?.skip) return [];
-    const slot = override?.slot ?? det.slot;
-    return [{ name, det, override, slot: slot ? checkOneOf(slot, LOCATION_OPTIONS, `${name}'s slot`) : undefined }];
+    const item = ref.mapping[name];
+    if (item.skip) return [];
+    return [
+      { name, det, item, slot: item.slot ? checkOneOf(item.slot, LOCATION_OPTIONS, `${name}'s slot`) : undefined },
+    ];
   });
 }

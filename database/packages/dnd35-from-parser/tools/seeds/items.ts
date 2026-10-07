@@ -41,22 +41,11 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
   const shields: ItemSeed[] = [];
   const goods: ItemSeed[] = [];
 
-  /** An item's cost, weight and description (its override's, else as detected), unless it's skipped. */
-  const corrected = (srdName: string, det: { costGp: string; weight: string }) => {
-    const override = ref.overrides?.[srdName];
-    if (override?.skip) return undefined;
-    return {
-      costGp: override?.costGp ?? det.costGp,
-      weight: override?.weight ?? det.weight,
-      description: override?.description,
-    };
-  };
-
   // Build weapons
   for (const [srdName, det] of Object.entries(ref.detected.weapons)) {
     if (!det.generatorName) continue;
-    const item = corrected(srdName, det);
-    if (!item) continue;
+    const item = ref.mapping.weapons[srdName];
+    if (item.skip) continue;
     const { costGp, weight } = item;
     // Find the raw entry for category info
     const rawWeapon = ref.raw.weapons.find((w) => w.name === srdName);
@@ -87,8 +76,8 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
   // Build armor & shields
   for (const [srdName, det] of Object.entries(ref.detected.armor)) {
     if (!det.generatorName) continue;
-    const item = corrected(srdName, det);
-    if (!item) continue;
+    const item = ref.mapping.armor[srdName];
+    if (item.skip) continue;
     const { costGp, weight } = item;
     const categoryLabel = det.proficiencyCategory.replace(/ armor$/i, "");
     const description = item.description ?? `${det.type === "Shield" ? "A shield" : `${categoryLabel} armor`}.`;
@@ -118,9 +107,9 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
   }
 
   // Build goods
-  for (const [name, det] of Object.entries(ref.detected.goods)) {
-    const item = corrected(name, det);
-    if (!item) continue;
+  for (const name of Object.keys(ref.detected.goods)) {
+    const item = ref.mapping.goods[name];
+    if (item.skip) continue;
 
     goods.push({
       name,

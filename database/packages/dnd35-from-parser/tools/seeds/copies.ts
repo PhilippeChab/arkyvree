@@ -8,7 +8,6 @@ import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referen
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";
 
-import { getClassSpells } from "./classes/spellSlots.ts";
 import { getInheritedLevel, getInheritedLists } from "./inheritedLists.ts";
 
 /** The spells a book's inherited lists add (`additions`), each at its level there, into `entries`. */
@@ -55,7 +54,7 @@ export function buildCowFeats(book: string): CowFeatEntry[] {
   // A feat in several lists joins each, once
   const copies = new Map<string, CowFeatEntry>();
   for (const { ref } of classes) {
-    for (const list of ref.overrides?.bonusFeatLists ?? ref.detected?.bonusFeatLists ?? []) {
+    for (const list of ref.mapping.bonusFeatLists ?? []) {
       for (const feat of list.feats) {
         if (ownFeats.has(feat)) continue;
         const copy = copies.get(feat);
@@ -77,7 +76,7 @@ export function buildCowSpells(book: string): CowSpellEntry[] {
   // Build map: className → aptitude name for classes that have spell lists
   const classToApt = new Map<string, string>();
   for (const { ref } of classes)
-    if (getClassSpells(ref) && ref.raw?.name) classToApt.set(ref.raw.name, classSpells(ref.raw.name));
+    if (ref.mapping.spells && ref.raw?.name) classToApt.set(ref.raw.name, classSpells(ref.raw.name));
 
   // The lists classes draw on (`inheritsFrom`), each its class's aptitude
   const bookInheritedLists = getInheritedLists(book);
@@ -98,8 +97,7 @@ export function buildCowSpells(book: string): CowSpellEntry[] {
       const isSameBook = bookSpellNames.has(spell.name);
       const isFromBase = otherBook === CORE_BOOK;
       const matchedApts: { aptitude: string; level: number }[] = [];
-      const overrideLe = ref.overrides?.[spell.name]?.levelEntries ?? [];
-      const levelEntries = [...spell.levelEntries, ...overrideLe];
+      const { levelEntries } = ref.mapping[spell.name];
       for (const le of levelEntries) {
         // Direct class matches: only from the core rules (not siblings); the book seeds its own spells itself
         if (!isSameBook && isFromBase) {

@@ -57,17 +57,15 @@ function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
   return results;
 }
 
-/** A domain of the domains reference, as its mapping and overrides make it. */
+/** A domain of the domains reference, as its mapping makes it. */
 function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainSeed {
-  const mapping = ref.mapping?.[entry.name];
-  const override = ref.overrides?.[entry.name];
-  const spellSource = override?.spells ?? entry.spells;
+  const mapping = ref.mapping[entry.name];
 
   return {
-    name: override?.name ?? entry.name,
-    description: mapping?.description ?? entry.description,
-    ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
-    spells: spellSource
+    name: mapping.name,
+    description: mapping.description ?? entry.description,
+    ...(mapping.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
+    spells: mapping.spells
       .map((s) => ({ name: s.name, level: s.level }))
       .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)),
   };

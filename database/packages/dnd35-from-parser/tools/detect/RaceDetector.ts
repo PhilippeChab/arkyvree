@@ -24,9 +24,23 @@ export class RaceDetector {
     return detectModifiersOf(this.races, (entry) => new RaceModifiers(entry));
   }
 
-  /** Each race's description and modifiers: its override's, else what's scraped and detected. */
+  /**
+   * Each race as the seeds make it: its description and modifiers, its name, size and speed, its override's or else
+   * what's scraped and detected; the properties its override gives, and whether its override skips it.
+   */
   mapping(detected: RaceReference["detected"]): RaceReference["mapping"] {
-    return buildModifierMapping(this.races, detected, this.stored.overrides ?? {}, () => ({}));
+    return buildModifierMapping(
+      this.races,
+      detected,
+      this.stored.overrides ?? {},
+      (override: NonNullable<RaceReference["overrides"]>[string] | undefined, entry: RaceReference["raw"][number]) => ({
+        name: override?.name ?? entry.name,
+        size: override?.size ?? entry.size,
+        baseSpeed: override?.baseSpeed ?? entry.baseSpeed,
+        ...(override?.properties?.length ? { properties: override.properties } : {}),
+        ...(override?.skip ? { skip: true } : {}),
+      }),
+    );
   }
 
   /** The reference with what's derived from it: its detected section and its mapping. */

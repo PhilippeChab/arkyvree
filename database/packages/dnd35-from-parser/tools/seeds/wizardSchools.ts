@@ -6,7 +6,7 @@ import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardS
 export function buildWizardSchoolSeeds(ref: WizardSchoolReference): WizardSchoolSeed[] {
   return ref.raw.map((entry) => ({
     name: entry.name,
-    description: ref.overrides?.[entry.name]?.description ?? entry.description,
+    description: ref.mapping[entry.name].description,
     prohibitedSchoolCount: entry.prohibitedSchoolCount,
   }));
 }

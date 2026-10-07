@@ -122,16 +122,13 @@ export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>)
           return review;
         }
         case "feat": {
-          // The generator skips epic feats unless an override keeps them.
+          // The generator skips what the mapping skips: an epic feat, unless an override keeps it, and an override's
           const data = ReferenceLoader.load(ref.path, "feat");
-          const { overrides } = data;
-          const review = reviewOf(overrides?.reviewed);
+          const review = reviewOf(data.overrides?.reviewed);
           entityIssues(
             data.detected,
             review,
-            new Set(
-              data.raw.filter((f) => f.featType === "epic" && overrides?.[f.name]?.skip !== false).map((f) => f.name),
-            ),
+            new Set(Object.keys(data.mapping).filter((name) => data.mapping[name].skip)),
           );
           return review;
         }

@@ -24,8 +24,8 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
     if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
     for (const list of getClassSpellLists(ref)) names.add(list);
 
-    // From detected bonusFeatLists
-    if (ref.detected?.bonusFeatLists) for (const list of ref.detected.bonusFeatLists) names.add(list.aptitude);
+    // From its bonus feat lists
+    for (const list of ref.mapping.bonusFeatLists ?? []) names.add(list.aptitude);
   }
 
   // From feat aptitudes

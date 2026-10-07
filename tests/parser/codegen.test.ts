@@ -292,7 +292,7 @@ describe("A generated class", () => {
     const monk = structuredClone(classRef("srd", "monk"));
     const modifiers = (column: string) =>
       buildClassModifiers(monk)
-        .filter(({ target }) => target === monk.overrides?.columns?.[column]?.target)
+        .filter(({ target }) => target === monk.mapping.columns?.[column]?.target)
         .map(({ level, value, operator }) => `${level} ${operator} ${value}`);
     // "+0 ft." … "+60 ft."; "+0" … "+4"; "1d6" … "2d10"
     expect(modifiers("Unarmored Speed Bonus")).toEqual([
@@ -314,14 +314,14 @@ describe("A generated class", () => {
     ]);
     // Gated as its mapping says
     expect(buildClassModifiers(monk).find(({ target }) => target === "combat.speed.base")?.requirements).toEqual(
-      monk.overrides?.columns?.["Unarmored Speed Bonus"]?.requirements,
+      monk.mapping.columns?.["Unarmored Speed Bonus"]?.requirements,
     );
     // A blank cell keeps the value above it, and a typographic minus is a minus
     monk.raw.progression[5].columns!["AC Bonus"] = "";
     monk.raw.progression[6].columns!["AC Bonus"] = "\u22121";
     expect(modifiers("AC Bonus").slice(0, 4)).toEqual(["5 add 1", "7 add -2", "8 add 2", "10 add 1"]);
     // A column its table doesn't have
-    monk.overrides!.columns = { "Ki Points": { target: "combat.ac.misc", operator: "add" } };
+    monk.mapping.columns = { "Ki Points": { target: "combat.ac.misc", operator: "add" } };
     expect(() => buildClassModifiers(monk)).toThrow('Monk: its table has no "Ki Points" column');
   });
 

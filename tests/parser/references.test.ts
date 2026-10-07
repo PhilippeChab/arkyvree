@@ -97,10 +97,10 @@ describe("A loaded reference", () => {
     ["srd/feats.json", "feat", { detected: true, mapping: true }],
     ["srd/domains.json", "domain", { detected: true, mapping: true }],
     ["srd/races.json", "race", { detected: true, mapping: true }],
-    ["srd/items.json", "item", { detected: true, mapping: false }],
-    ["srd/magicItems.json", "magicItem", { detected: true, mapping: false }],
-    ["srd/spells.json", "spell", { detected: true, mapping: false }],
-    ["srd/wizardSchools.json", "wizardSchool", { detected: false, mapping: false }],
+    ["srd/items.json", "item", { detected: true, mapping: true }],
+    ["srd/magicItems.json", "magicItem", { detected: true, mapping: true }],
+    ["srd/spells.json", "spell", { detected: true, mapping: true }],
+    ["srd/wizardSchools.json", "wizardSchool", { detected: false, mapping: true }],
   ];
 
   test("keeps its overrides at the top, as stored, next to what it derives", () => {

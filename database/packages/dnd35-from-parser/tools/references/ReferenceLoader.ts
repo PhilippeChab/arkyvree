@@ -66,7 +66,7 @@ class ReferenceLoader {
       .filter((file) => file.endsWith(".json"))
       .sort()
       .map((file) => ({ file, ref: this.load(join(dir, file), "class") }))
-      .filter(({ ref }) => !ref.overrides?.skip);
+      .filter(({ ref }) => !ref.mapping.skip);
   }
 
   /**

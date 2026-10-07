@@ -16,12 +16,15 @@ export type DomainReference = {
 
   detected: Record<string, DetectedModifiers>;
 
+  /** Each domain as the seeds make it: its overrides applied */
   mapping: Record<
     string,
     {
       description?: string;
       featPool?: DomainFeatPool;
       modifiers?: Modifier[];
+      name: string;
+      spells: { level: number; name: string }[];
     }
   >;
 
