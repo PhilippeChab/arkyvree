@@ -1,4 +1,4 @@
-import type { PowerFields, PowersRules } from "@/engine/core/module/index.ts";
+import type { PowerFields, PowersRules } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import { readPowerFields } from "./powerFields.ts";
 

@@ -1,6 +1,5 @@
-import type { ClassLevelFields } from "@/engine/core/module/rules/index.ts";
-
-import type { PropertiesWrite, RequirementWrite } from "./writes.ts";
+import type { PropertiesWrite, RequirementWrite } from "@/engine/core/module/index.ts";
+import type { ClassLevelFields } from "@/engine/rulesets/dnd3.5/module/rules/index.ts";
 
 /** What a ruleset writes when a class level is saved: its fields, and what it requires of the class's earlier levels. */
 export interface ClassLevelsEffects {

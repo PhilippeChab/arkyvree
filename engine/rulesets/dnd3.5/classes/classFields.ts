@@ -1,4 +1,4 @@
-import type { ClassFields } from "@/engine/core/module/index.ts";
+import type { ClassFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 

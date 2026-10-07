@@ -1,4 +1,4 @@
-import type { RulesetFields, RulesetsRules } from "@/engine/core/module/index.ts";
+import type { RulesetFields, RulesetsRules } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import { readRulesetFields } from "./rulesetFields.ts";
 

@@ -1,4 +1,4 @@
-import type { ClassLevelFields } from "@/engine/core/module/index.ts";
+import type { ClassLevelFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 

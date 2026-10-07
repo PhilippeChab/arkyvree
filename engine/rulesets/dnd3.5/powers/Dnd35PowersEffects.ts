@@ -1,10 +1,11 @@
-import type { GeneratedFeatsWrite, PowerFields, PowersEffects, PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { GeneratedFeatsWrite, PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { FeatFields, PowerFields, PowersEffects } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import { POWER_FIELD_PROPERTY_TYPES, toPowerProperties } from "./powerFields.ts";
 import { buildSpellFocusFeats } from "./spellGenerator.ts";
 
 export class Dnd35PowersEffects implements PowersEffects {
-  generatedFeats(grouping: string): GeneratedFeatsWrite {
+  generatedFeats(grouping: string): GeneratedFeatsWrite<FeatFields> {
     return buildSpellFocusFeats(grouping);
   }
 

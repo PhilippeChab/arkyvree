@@ -1,7 +1,7 @@
-import type { RaceFields, RacesRules } from "@/engine/core/module/index.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { Components } from "@/engine/core/types.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
+import type { RaceFields, RacesRules } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
 import { readRaceFields } from "./raceFields.ts";

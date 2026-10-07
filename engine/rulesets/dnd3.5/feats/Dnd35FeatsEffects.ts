@@ -1,4 +1,5 @@
-import type { FeatFields, FeatsEffects, PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { FeatFields, FeatsEffects } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import { FEAT_FIELD_PROPERTY_TYPES, toFeatProperties } from "./featFields.ts";
 

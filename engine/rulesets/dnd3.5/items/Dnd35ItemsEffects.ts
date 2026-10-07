@@ -1,4 +1,5 @@
-import type { ItemFields, ItemsEffects, PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { ItemFields, ItemsEffects } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import { ITEM_FIELD_PROPERTY_TYPES, toItemProperties } from "./itemFields.ts";
 

@@ -1,4 +1,4 @@
-import type { ItemFields, ItemsRules } from "@/engine/core/module/index.ts";
+import type { ItemFields, ItemsRules } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 
 import { readItemFields } from "./itemFields.ts";

@@ -1,4 +1,4 @@
-import type { FeatFields } from "@/engine/core/module/index.ts";
+import type { FeatFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
 import {
   FEAT_FAMILY,

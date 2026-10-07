@@ -1,4 +1,5 @@
-import type { ClassesEffects, ClassFields, PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { ClassesEffects, ClassFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import { CLASS_FIELD_PROPERTY_TYPES, toClassProperties } from "./classFields.ts";
 

@@ -105,23 +105,6 @@ export type InventoryEntry = CharacterInventory & {
   };
 };
 
-/**
- * Generic level-up projector surface — only operations that apply to every
- * level-based RPG.
- *
- * Ruleset-specific methods (skill budgets, spell schools, skill-points-per-
- * level, class-skill enrichment, …) live on per-ruleset extensions, e.g.
- * `Dnd35LevelUpProjector` in `engine/rulesets/dnd3.5/types.ts`.
- */
-export interface LevelUpProjector {
-  /** Evaluate whether candidate klass levels' requirements are met against
-   *  a projected character state (including in-flight batch levels). */
-  evaluateClassAvailability(
-    candidates: { klassLevel: KlassLevel; klassName: string; requirementGroups: Requirement[][] }[],
-    projectedCharacterLevel: ProjectedCharacterLevel,
-  ): Map<string, boolean>;
-}
-
 /** Base result of character data loading. Rulesets extend with specific fields. */
 export interface LoadedCharacterData {
   campaign: Campaign | undefined;

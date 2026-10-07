@@ -1,6 +1,6 @@
-import type { InventoryRules, WeaponFields } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { InventoryRules, WeaponFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import { readItemFields } from "./itemFields.ts";
 import { SIZE_ORDER } from "./slots.ts";

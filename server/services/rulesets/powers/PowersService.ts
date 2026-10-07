@@ -1,7 +1,6 @@
 import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
-import type { RulesetModule } from "@/engine/core/module/index.ts";
 import { getListPowerIds } from "@/engine/core/view/index.ts";
 import {
   findScopedEntity,
@@ -13,7 +12,7 @@ import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { FeatsAptitudes, Powers, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import { RulesetFactory, type RulesetModuleOf } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { writeGeneratedFeats, writeProperties } from "@/server/services/rulesets/effectWrites.ts";
@@ -83,7 +82,7 @@ class PowersService {
   /** Stores a power's fields as its properties, and brings its grouping's feats when its grouping (the school) changes. */
   private async syncSpellProperties(
     tx: Db,
-    rulesetModule: Pick<RulesetModule, "effects" | "rules">,
+    rulesetModule: Pick<RulesetModuleOf, "effects" | "rules">,
     scope: RulesetScope,
     powerId: string,
     body: PowerBody,

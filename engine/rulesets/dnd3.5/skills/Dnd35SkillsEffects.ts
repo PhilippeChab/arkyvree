@@ -1,19 +1,14 @@
-import type {
-  GeneratedFeatRemoval,
-  GeneratedFeatsWrite,
-  PropertiesWrite,
-  SkillFields,
-  SkillsEffects,
-} from "@/engine/core/module/index.ts";
+import type { GeneratedFeatRemoval, GeneratedFeatsWrite, PropertiesWrite } from "@/engine/core/module/index.ts";
 import { NO_FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/feats/featFields.ts";
 import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
+import type { FeatFields, SkillFields, SkillsEffects } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import { normalizeSkillFields, SKILL_FIELD_PROPERTY_TYPES, toSkillProperties } from "./skillFields.ts";
 import SkillsPaths from "./SkillsPaths.ts";
 
 export class Dnd35SkillsEffects implements SkillsEffects {
   /** The skill's Skill Focus: +3 to its checks. */
-  generatedFeats(skillName: string): GeneratedFeatsWrite {
+  generatedFeats(skillName: string): GeneratedFeatsWrite<FeatFields> {
     return {
       feats: [
         {

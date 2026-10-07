@@ -1,4 +1,4 @@
-import type { SkillFields, SkillsRules } from "@/engine/core/module/index.ts";
+import type { SkillFields, SkillsRules } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import { normalizeSkillFields, readSkillFields } from "./skillFields.ts";
 

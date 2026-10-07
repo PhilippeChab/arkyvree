@@ -1,4 +1,4 @@
-import type { SkillFields } from "@/engine/core/module/index.ts";
+import type { SkillFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,

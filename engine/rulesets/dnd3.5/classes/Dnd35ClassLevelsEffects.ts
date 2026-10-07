@@ -1,9 +1,5 @@
-import type {
-  ClassLevelFields,
-  ClassLevelsEffects,
-  PropertiesWrite,
-  RequirementWrite,
-} from "@/engine/core/module/index.ts";
+import type { PropertiesWrite, RequirementWrite } from "@/engine/core/module/index.ts";
+import type { ClassLevelFields, ClassLevelsEffects } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import ClassesPaths from "./ClassesPaths.ts";
 import { CLASS_LEVEL_FIELD_PROPERTY_TYPES, toClassLevelProperties } from "./classLevelFields.ts";

@@ -1,4 +1,5 @@
-import type { PropertiesWrite, RaceFields, RacesEffects } from "@/engine/core/module/index.ts";
+import type { PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { RaceFields, RacesEffects } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
 import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "@/shared/dnd3.5/properties/index.ts";
 

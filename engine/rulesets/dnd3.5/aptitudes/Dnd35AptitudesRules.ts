@@ -1,6 +1,6 @@
-import type { AptitudesRules } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
+import type { AptitudesRules } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 export class Dnd35AptitudesRules implements AptitudesRules {

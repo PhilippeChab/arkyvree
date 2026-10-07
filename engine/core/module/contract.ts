@@ -7,7 +7,6 @@ import type {
 } from "@/drizzle/schema.ts";
 import type {
   Components,
-  LevelUpProjector,
   PropertyTypesProvider,
   RequirementIssue,
   RulesetView,
@@ -25,30 +24,6 @@ import type {
   Requirement,
   Ruleset,
 } from "@/shared/relations.ts";
-
-import type {
-  ClassesEffects,
-  ClassLevelsEffects,
-  FeatsEffects,
-  ItemsEffects,
-  PowersEffects,
-  RacesEffects,
-  RulesetsEffects,
-  SkillsEffects,
-} from "./effects/index.ts";
-import type {
-  AptitudesRules,
-  ClassesRules,
-  ClassLevelsRules,
-  FeatsRules,
-  InventoryRules,
-  ItemsRules,
-  LevelsRules,
-  PowersRules,
-  RacesRules,
-  RulesetsRules,
-  SkillsRules,
-} from "./rules/index.ts";
 
 /**
  * A character's own rows, which the server reads (`server/builds/`) and its module builds the character from: its seat
@@ -94,56 +69,24 @@ export interface DetailedCharacterInterface {
 }
 
 /**
- * What a ruleset writes, one set of effects per area: each says what to write, and the service writes it in its
- * transaction (`server/services/rulesets/effectWrites.ts`).
- */
-export interface ModuleEffects {
-  classes: ClassesEffects;
-  classLevels: ClassLevelsEffects;
-  feats: FeatsEffects;
-  items: ItemsEffects;
-  powers: PowersEffects;
-  races: RacesEffects;
-  rulesets: RulesetsEffects;
-  skills: SkillsEffects;
-}
-
-/** What a ruleset answers the services without the database, one set of rules per area. */
-export interface ModuleRules {
-  aptitudes: AptitudesRules;
-  classes: ClassesRules;
-  classLevels: ClassLevelsRules;
-  feats: FeatsRules;
-  inventory: InventoryRules;
-  items: ItemsRules;
-  levels: LevelsRules;
-  powers: PowersRules;
-  races: RacesRules;
-  rulesets: RulesetsRules;
-  skills: SkillsRules;
-}
-
-/**
- * A base rules' module, typed by what it builds and answers: its characters, its level-up projector, the kinds of
- * character it knows, its level-up and its bonded creatures (`getRulesetModule` hands out each module's own type).
+ * A base rules' module, typed by what it builds: its characters and the kinds of character it knows. Its parts are its
+ * own, each typed by the module (`Dnd35RulesetModule`), which `getRulesetModule` hands out as it is: what it answers the
+ * services (`rules`), what it writes in their transactions (`effects`), a character's level-up (`levelUp`) and its
+ * bonded creatures (`bonded`).
  */
 export interface RulesetModule<
   Character extends DetailedCharacterInterface = DetailedCharacterInterface,
-  Projector extends LevelUpProjector = LevelUpProjector,
   Kind extends string = string,
-  LevelUp = unknown,
-  Bonded = unknown,
 > {
   /** What a master's bonded creatures become as the master's levels change, and the kinds they are */
-  bonded: Bonded;
+  bonded: object;
   createDetailedCharacter(record: CharacterRecord, kind?: Kind): Character;
-  createLevelUpProjector(character: Character): Projector;
   createPropertyTypes(): PropertyTypesProvider;
   createTargetPaths(): TargetPathsInterface;
   /** What the ruleset does in a service's transaction */
-  effects: ModuleEffects;
+  effects: object;
   /** What the ruleset answers a character's level-up, from the rows and characters the server reads and builds */
-  levelUp: LevelUp;
+  levelUp: object;
   /** What the ruleset answers the services, without the database */
-  rules: ModuleRules;
+  rules: object;
 }

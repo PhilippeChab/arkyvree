@@ -1,4 +1,4 @@
-import type { LevelsRules } from "@/engine/core/module/index.ts";
+import type { LevelsRules } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 export class Dnd35LevelsRules implements LevelsRules {

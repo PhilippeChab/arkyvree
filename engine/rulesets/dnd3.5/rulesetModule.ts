@@ -7,7 +7,6 @@ import Dnd35DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.t
 import Dnd35DetailedCharacterMount from "./bonded/DetailedCharacterMount.ts";
 import { Dnd35Bonded } from "./bonded/Dnd35Bonded.ts";
 import Dnd35DetailedCharacter from "./character/DetailedCharacter.ts";
-import Dnd35LevelUpProjector from "./character/Dnd35LevelUpProjector.ts";
 import { Dnd35ClassesEffects } from "./classes/Dnd35ClassesEffects.ts";
 import { Dnd35ClassesRules } from "./classes/Dnd35ClassesRules.ts";
 import { Dnd35ClassLevelsEffects } from "./classes/Dnd35ClassLevelsEffects.ts";
@@ -81,10 +80,6 @@ export function createRulesetModule(): Dnd35RulesetModule {
       const bonded = createBonded(record, kind);
       if (bonded) return bonded;
       return new Dnd35DetailedCharacter(record);
-    },
-
-    createLevelUpProjector(character) {
-      return new Dnd35LevelUpProjector(character);
     },
 
     createTargetPaths() {

@@ -8,12 +8,12 @@ import { createRulesetModule as createDnd35Module } from "./dnd3.5/index.ts";
  * a new character or path set on each call). One the database's enum gains has to be written here, or the engine
  * doesn't compile. Each keeps the type its factory gives it, a `RulesetModule` of its own character, projector, kinds,
  * level-up and bonded creatures (`Dnd35RulesetModule`), so the code that reads its parts needs no cast. The table checks
- * every member of the contract but the ones typed by the module's character, which its factory's return type checks:
- * the projector takes the module's own character, so a module can't widen to a `RulesetModule` of any character.
+ * every member of the contract but the character's factory, which its factory's return type checks: a module makes its
+ * own character, so it can't widen to a `RulesetModule` of any character.
  */
 const MODULES = {
   "Dungeons & Dragons: 3.5": createDnd35Module(),
-} satisfies Record<BaseRules, Omit<RulesetModule, "createDetailedCharacter" | "createLevelUpProjector">>;
+} satisfies Record<BaseRules, Omit<RulesetModule, "createDetailedCharacter">>;
 
 /** A base rules' module: what the server asks of a ruleset's characters and level-ups. */
 export function getRulesetModule(baseRules: BaseRules) {

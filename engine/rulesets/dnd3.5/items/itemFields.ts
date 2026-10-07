@@ -1,4 +1,4 @@
-import type { ItemFields, ProtectionFields, WeaponFields } from "@/engine/core/module/index.ts";
+import type { ItemFields, ProtectionFields, WeaponFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
 import {
   ARMOR_AC_BONUS,

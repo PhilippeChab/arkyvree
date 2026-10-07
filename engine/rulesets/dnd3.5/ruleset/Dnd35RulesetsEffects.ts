@@ -1,4 +1,5 @@
-import type { PropertiesWrite, RulesetFields, RulesetsEffects } from "@/engine/core/module/index.ts";
+import type { PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { RulesetFields, RulesetsEffects } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import { RULESET_FIELD_PROPERTY_TYPES, toRulesetProperties } from "./rulesetFields.ts";
 

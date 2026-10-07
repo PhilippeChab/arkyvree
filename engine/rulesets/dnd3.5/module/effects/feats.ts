@@ -1,6 +1,5 @@
-import type { FeatFields } from "@/engine/core/module/rules/index.ts";
-
-import type { PropertiesWrite } from "./writes.ts";
+import type { PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { FeatFields } from "@/engine/rulesets/dnd3.5/module/rules/index.ts";
 
 /** What a ruleset writes when a feat is saved: its fields. */
 export interface FeatsEffects {

@@ -1,23 +1,23 @@
 /**
  * D&D 3.5-specific type extensions layered on top of the generic ruleset types.
  *
- * The generic `ProjectedCharacterData` and `LevelUpProjector` in
- * `engine/core/module/contract.ts` only carry concepts that apply to every
- * level-based system. Anything 3.5-specific — skill ranks, spell levels,
+ * The generic `ProjectedCharacterData` in `engine/core/types.ts` only carries
+ * concepts that apply to every level-based system. Anything 3.5-specific — skill ranks, spell levels,
  * Fort/Ref/Will save names, skill-points-per-level, wizard-prohibited
  * schools, class-skill distinction — lives here so other rulesets don't
  * inherit a dialect that doesn't apply to them.
  */
 
 import type { RulesetModule } from "@/engine/core/module/index.ts";
-import type { LevelUpProjector, ProjectedCharacterData } from "@/engine/core/types.ts";
+import type { ProjectedCharacterData, ProjectedCharacterLevel } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
-import type { Power, Skill } from "@/shared/relations.ts";
+import type { KlassLevel, Power, Requirement, Skill } from "@/shared/relations.ts";
 
 import type { Dnd35Bonded } from "./bonded/Dnd35Bonded.ts";
 import type DetailedCharacter from "./character/DetailedCharacter.ts";
 import type { Dnd35LevelUp } from "./levelUp/Dnd35LevelUp.ts";
+import type { ModuleEffects, ModuleRules } from "./module/index.ts";
 
 /** A projected power row with 3.5 spell-level and save-name fields. */
 type Dnd35ProjectedPower = Power & {
@@ -39,11 +39,16 @@ type Dnd35ProjectedSkill = Skill & {
 export type CharacterKind = "pc" | BondedKind;
 
 /** 3.5 level-up projector — generic surface + 3.5 skill-points / schools / ranks. */
-export interface Dnd35LevelUpProjector extends LevelUpProjector {
+export interface Dnd35LevelUpProjector {
   /** Each planned level's points per level before the minimum, in the batch's order (class + ability modifier). */
   computeSkillPointBasesPerLevel(klassLevelIds: string[], rulesetData: RulesetData): number[];
   /** Each klass level's skill points, the skill point ability's modifier included, four times over at the first level. */
   computeSkillPointsPerLevel(klassLevelIds: string[], existingLevelCount: number, rulesetData: RulesetData): number[];
+  /** Whether each candidate class level's requirements are met by the character with the planned levels too. */
+  evaluateClassAvailability(
+    candidates: { klassLevel: KlassLevel; klassName: string; requirementGroups: Requirement[][] }[],
+    projectedCharacterLevel: ProjectedCharacterLevel,
+  ): Map<string, boolean>;
   /** Enriches a skill list with class-skill flags and current rank — 3.5 skill ranks. */
   getCharacterEnrichedSkills<T extends { id: string; name: string }>(
     allSkills: T[],
@@ -69,14 +74,13 @@ export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
   skills?: Dnd35ProjectedSkill[];
 }
 
-/** The 3.5 rules' module: its characters, level-up projector, kinds of character, level-up and bonded creatures. */
-export type Dnd35RulesetModule = RulesetModule<
-  DetailedCharacter,
-  Dnd35LevelUpProjector,
-  CharacterKind,
-  Dnd35LevelUp,
-  Dnd35Bonded
->;
+/** The 3.5 rules' module: its characters and kinds of character, and its parts, by their own types. */
+export interface Dnd35RulesetModule extends RulesetModule<DetailedCharacter, CharacterKind> {
+  bonded: Dnd35Bonded;
+  effects: ModuleEffects;
+  levelUp: Dnd35LevelUp;
+  rules: ModuleRules;
+}
 
 /** A property row a 3.5 effect writes for an entity: a skill's flags, a class level's base attack and skill points. */
 export type PropertyRecord = {

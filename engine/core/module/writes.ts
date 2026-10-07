@@ -1,4 +1,3 @@
-import type { FeatFields } from "@/engine/core/module/rules/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
@@ -10,11 +9,11 @@ type RequirementRow = Pick<Requirement, "level" | "operator" | "target" | "value
  * Focus): generated, in the pool `aptitudeSlug` names, with its fields, modifiers and requirements. None is made when
  * the ruleset has no such pool.
  */
-export interface GeneratedFeat {
+export interface GeneratedFeat<Fields = unknown> {
   aptitudeSlug: string;
   description: string;
   /** Its fields, which its properties store (`FeatsEffects.properties`) once it's made. */
-  fields: FeatFields;
+  fields: Fields;
   modifiers: Pick<Modifier, "operator" | "target" | "value" | "valueType">[];
   name: string;
   requirements: RequirementRow[];
@@ -27,8 +26,8 @@ export interface GeneratedFeatRemoval {
 }
 
 /** The feats a write makes, unless the ruleset or its chain has a feat named `unlessPresent` already. */
-export interface GeneratedFeatsWrite {
-  feats: GeneratedFeat[];
+export interface GeneratedFeatsWrite<Fields = unknown> {
+  feats: GeneratedFeat<Fields>[];
   unlessPresent?: string;
 }
 

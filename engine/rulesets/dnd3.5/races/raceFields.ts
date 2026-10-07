@@ -1,4 +1,4 @@
-import type { RaceFields } from "@/engine/core/module/index.ts";
+import type { RaceFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "@/shared/dnd3.5/properties/index.ts";
 
 /** The property types a race's fields are stored as. */

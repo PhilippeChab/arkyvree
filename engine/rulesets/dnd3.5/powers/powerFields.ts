@@ -1,4 +1,4 @@
-import type { PowerFields } from "@/engine/core/module/index.ts";
+import type { PowerFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
 import {
   SPELL_AREA_OF_EFFECT,

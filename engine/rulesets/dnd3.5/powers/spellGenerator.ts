@@ -2,13 +2,14 @@ import type { GeneratedFeatsWrite } from "@/engine/core/module/index.ts";
 import { NO_FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/feats/featFields.ts";
 import FeatsPaths from "@/engine/rulesets/dnd3.5/feats/FeatsPaths.ts";
 import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
+import type { FeatFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /**
  * The feats a spell school brings: Spell Focus and Greater Spell Focus, each a +1 to its spells' DCs, the greater one
  * requiring the other. Made once for the school, unless the ruleset or its chain has its Spell Focus.
  */
-export function buildSpellFocusFeats(schoolName: string): GeneratedFeatsWrite {
+export function buildSpellFocusFeats(schoolName: string): GeneratedFeatsWrite<FeatFields> {
   const strippedSchool = stripSeparators(schoolName);
   const dcBonus = {
     target: `powers.groups.${strippedSchool}.*.dc.misc`,

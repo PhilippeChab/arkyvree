@@ -1,6 +1,5 @@
-import type { RulesetFields } from "@/engine/core/module/rules/index.ts";
-
-import type { PropertiesWrite } from "./writes.ts";
+import type { PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { RulesetFields } from "@/engine/rulesets/dnd3.5/module/rules/index.ts";
 
 /** What a ruleset writes when its own fields are saved. */
 export interface RulesetsEffects {

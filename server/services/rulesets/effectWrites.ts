@@ -1,5 +1,4 @@
 import type {
-  FeatsEffects,
   GeneratedFeatRemoval,
   GeneratedFeatsWrite,
   PropertiesWrite,
@@ -10,6 +9,7 @@ import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import type { RulesetModuleOf } from "@/server/rulesets/RulesetFactory.ts";
 
 /** Whether the scope's ruleset or its chain has a feat of this name: one a write makes is made once. */
 async function isFeatPresent(tx: Db, scope: RulesetScope, name: string) {
@@ -42,8 +42,8 @@ export async function removeGeneratedFeat(tx: Db, scope: RulesetScope, removal: 
 export async function writeGeneratedFeats(
   tx: Db,
   scope: RulesetScope,
-  feats: FeatsEffects,
-  write: GeneratedFeatsWrite,
+  feats: RulesetModuleOf["effects"]["feats"],
+  write: GeneratedFeatsWrite<Parameters<RulesetModuleOf["effects"]["feats"]["properties"]>[1]>,
 ) {
   if (write.unlessPresent && (await isFeatPresent(tx, scope, write.unlessPresent))) return;
   const aptitudeIds = write.feats.map((feat) => scope.rulesetData.aptitudeIdBySlug.get(feat.aptitudeSlug));

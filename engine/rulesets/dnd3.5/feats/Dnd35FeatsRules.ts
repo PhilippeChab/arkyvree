@@ -1,4 +1,4 @@
-import type { FeatFields, FeatsRules } from "@/engine/core/module/index.ts";
+import type { FeatFields, FeatsRules } from "@/engine/rulesets/dnd3.5/module/index.ts";
 
 import { readFeatFields } from "./featFields.ts";
 

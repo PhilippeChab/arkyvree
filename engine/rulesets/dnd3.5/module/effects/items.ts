@@ -1,6 +1,5 @@
-import type { ItemFields } from "@/engine/core/module/rules/index.ts";
-
-import type { PropertiesWrite } from "./writes.ts";
+import type { PropertiesWrite } from "@/engine/core/module/index.ts";
+import type { ItemFields } from "@/engine/rulesets/dnd3.5/module/rules/index.ts";
 
 /** What a ruleset writes when an item is saved: its fields. */
 export interface ItemsEffects {
