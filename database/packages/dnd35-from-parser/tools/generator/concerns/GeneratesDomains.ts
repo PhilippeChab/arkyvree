@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/domains.ts";
+import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -23,7 +23,7 @@ export function GeneratesDomains<B extends Constructor<BaseGenerator>>(Base: B) 
 
     /** A book's domains file and its domains' feat pools: those of its domains reference, none for a book without one. */
     writeDomains(book: string) {
-      const { seeds, poolFeats } = buildBookDomainSeeds(book);
+      const { seeds, poolFeats } = Library.book(book).domainSeeds();
       this.log(`Built ${seeds.length} domain seeds`);
 
       const dataPath = join(this.dir, book, "domains.ts");

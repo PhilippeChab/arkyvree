@@ -2,7 +2,7 @@ import { findUnresolvedItems } from "@/database/packages/dnd35-from-parser/tools
 import { type listReferenceFiles } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
-import { findDomainSpellIssues } from "@/database/packages/dnd35-from-parser/tools/seeds/domains.ts";
+import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import { getSeededMagicItems } from "@/database/packages/dnd35-from-parser/tools/seeds/magicItems.ts";
 import { getSeededRaces, getSkippedRaces } from "@/database/packages/dnd35-from-parser/tools/seeds/races.ts";
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
@@ -136,7 +136,8 @@ export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>)
           const data = ReferenceLoader.load(ref.path, "domain");
           const review = reviewOf(data.overrides?.reviewed);
           entityIssues(data.detected, review);
-          for (const { domain, text } of findDomainSpellIssues(data)) notSeedable(domain, text);
+          for (const { domain, text } of Library.book(data._meta.book).domainSpellIssues(data))
+            notSeedable(domain, text);
           return review;
         }
         case "race": {

@@ -2,7 +2,7 @@ import { generateClassFeatSeeds } from "@/database/packages/dnd35-from-parser/to
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
-import { buildClassSeed } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/classSeed.ts";
+import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import { sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
@@ -22,7 +22,7 @@ function generated(ref: ClassReference): string | Error {
   try {
     return [
       ...getClassReviewNotes(ref),
-      new ClassFile(buildClassSeed(ref)).classCode(),
+      new ClassFile(Library.book(ref._meta.book).classSeed(ref)).classCode(),
       generateClassFeatSeeds(ref),
     ].join("\n");
   } catch (error) {

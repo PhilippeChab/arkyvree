@@ -1,9 +1,7 @@
-/** The spell lists classes draw on others' lists for (`inheritsFrom`), and a spell's level on one. */
+/** A spell's level on a list a class draws on others' lists for (`inheritsFrom`). */
 
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { type InheritedSpellList } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
-import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 
 /**
  * A spell's level on a list a class draws on (`inheritsFrom`): on the first of its classes' lists that has it, when
@@ -21,16 +19,4 @@ export function getInheritedLevel(
     if (entry) return entry.level;
   }
   return undefined;
-}
-
-/** The lists a book's classes draw on others' lists for (`inheritsFrom`): each class's own, or each of its `lists`. */
-export function getInheritedLists(book: string): { aptitude: string; list: InheritedSpellList }[] {
-  const lists: { aptitude: string; list: InheritedSpellList }[] = [];
-  for (const { ref } of ReferenceLoader.loadClasses(book)) {
-    const { spells } = ref.mapping;
-    if (!spells || !ref.raw?.name) continue;
-    if (spells.inheritsFrom) lists.push({ aptitude: classSpells(ref.raw.name), list: spells.inheritsFrom });
-    for (const list of spells.lists ?? []) lists.push({ aptitude: list.name, list: list.inheritsFrom });
-  }
-  return lists;
 }

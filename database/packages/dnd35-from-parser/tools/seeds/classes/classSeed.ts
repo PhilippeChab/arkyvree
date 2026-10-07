@@ -1,7 +1,7 @@
 /** A class reference's seed: what its file holds, as its mapping (its overrides applied) and its detected section give it. */
 
+import type { BaseBookSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/BaseBookSeeds.ts";
 import { resolveFamilyChecks } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
-import TemplateFamilies from "@/database/packages/dnd35-from-parser/tools/seeds/TemplateFamilies.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
@@ -42,15 +42,15 @@ function buildClassSpells(ref: ClassReference): ClassSeed["spells"] {
 }
 
 /**
- * A class reference's seed: its summary (name, description, hit die, levels, skills, BAB, saves, requirements), its
+ * A class reference's seed, `book` the book's whose families and feats it reads: its summary (name, description, hit die, levels, skills, BAB, saves, requirements), its
  * features and the feats it grants, its spellcasting, its level modifiers and its aptitude picks. Each is built in the
  * order its file is written, so a class the generator refuses fails on the same field.
  */
-export function buildClassSeed(ref: ClassReference): ClassSeed {
+export function buildClassSeed(ref: ClassReference, book: BaseBookSeeds): ClassSeed {
   const { detected, mapping, raw } = ref;
-  const requirements = resolveFamilyChecks(mapping.requirements, TemplateFamilies.requirable(ref._meta.book));
+  const requirements = resolveFamilyChecks(mapping.requirements, book.requirableFamilies());
   const picks = getClassAptitudePicks(ref);
-  const { classFeatures, autoFreeFeats } = buildClassFeatures(ref, picks.perLevel);
+  const { classFeatures, autoFreeFeats } = buildClassFeatures(ref, picks.perLevel, book);
   const freeFeats = [...(mapping.freeFeats ?? []), ...autoFreeFeats];
   const casting = buildClassCasting(ref);
   const spells = buildClassSpells(ref);

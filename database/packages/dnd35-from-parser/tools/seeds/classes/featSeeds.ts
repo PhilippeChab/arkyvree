@@ -4,6 +4,7 @@ import {
   readCompanionGrantModifiers,
   readUncannyDodgeModifiers,
 } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/grants.ts";
+import type { BaseBookSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/BaseBookSeeds.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { bonus, grantFeat } from "@/database/packages/dnd35/content/customization/modifiers.ts";
@@ -93,7 +94,7 @@ function spellcastingAdvanceFeats(ref: ClassReference, classSlug: string): FeatS
  * A class's own feats: its class features (other than the existing feats it grants), one per level for a feature
  * that gives a pick at several (its first, second… pick), and the feat advancing its spellcasting.
  */
-export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
+export function buildClassFeatSeeds(ref: ClassReference, book: BaseBookSeeds): FeatSeed[] {
   const { mapping } = ref;
   const classSlug = stripSeparators(ref.raw.name);
   const { aptitudeMinLevel, remap: aptitudeTargetRemap, perLevel: perLevelExpansion } = getClassAptitudePicks(ref);
@@ -105,7 +106,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
     const name = feature.seedName ?? (feature.aptitude ? `${key} (${feature.aptitude})` : key);
     const lockedType = lockedFavoredEnemies.get(key.toLowerCase());
     // An existing feat the class grants is a free feat, not one of its own.
-    if (!lockedType && findExistingFeatGranted(ref, name, feature.description)) continue;
+    if (!lockedType && findExistingFeatGranted(ref, name, feature.description, book)) continue;
 
     const description = normalizeDescription(feature.description ?? "");
     const aptitudes = [feature.aptitude ?? mapping.classFeatureAptitude];

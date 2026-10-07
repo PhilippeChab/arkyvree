@@ -6,32 +6,17 @@ import { generateFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/g
 import { getFeatsFileLists } from "@/database/packages/dnd35-from-parser/tools/generator/code/FeatsFile.ts";
 import { compareNames } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import { CORE_BOOK, getReferencePath } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import { collectAptitudes } from "@/database/packages/dnd35-from-parser/tools/seeds/aptitudes.ts";
-import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/domains.ts";
-import { getFeatAptitudeSources } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
-import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/wizardSchools.ts";
+import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
-import { buildCoreFeats } from "@/database/packages/dnd35/data/feats/coreFeats.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
 /** Generating a book's feats: its feat reference's, the core rules' favored enemies, their index and the aptitudes. */
 export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingFeats extends Base {
-    /** Regenerate aptitudes.ts for a book from reference JSONs: its feats', and the core rules' hand-written feats'. */
+    /** A book's aptitudes.ts: the aptitudes its seeds use (`BookSeeds.aptitudes`). */
     writeAptitudes(book: string) {
-      const featRef = ReferenceLoader.find(book, "feat");
-      const feats = [
-        ...(featRef ? getFeatAptitudeSources(featRef) : []),
-        ...(book === CORE_BOOK
-          ? buildCoreFeats(
-              buildWizardSchoolSeeds(ReferenceLoader.load(getReferencePath(CORE_BOOK, "wizardSchool"), "wizardSchool")),
-            )
-          : []),
-      ];
-
-      const aptitudes = collectAptitudes(feats, book);
+      const aptitudes = Library.book(book).aptitudes();
 
       const file = new CodeFile();
       file.list(
@@ -47,7 +32,10 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
       const featRef = ReferenceLoader.find(book, "feat");
       // Each feats file's lists, by file, as the generator writes them: the domains' feat pools', the reference's
       const featFiles = [
-        { file: "domainFeats.ts", lists: buildBookDomainSeeds(book).poolFeats.length > 0 ? ["DOMAIN_POOL_FEATS"] : [] },
+        {
+          file: "domainFeats.ts",
+          lists: Library.book(book).domainSeeds().poolFeats.length > 0 ? ["DOMAIN_POOL_FEATS"] : [],
+        },
         { file: "feats.ts", lists: featRef ? getFeatsFileLists(featRef) : [] },
       ].filter(({ lists }) => lists.length > 0);
       // A book with classes has a feats folder, its standalone feats none or not

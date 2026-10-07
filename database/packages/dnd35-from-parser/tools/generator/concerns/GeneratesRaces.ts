@@ -2,7 +2,7 @@ import { join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { buildRaceSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/races.ts";
+import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -11,7 +11,7 @@ export function GeneratesRaces<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingRaces extends Base {
     /** A book's races file (races.ts). */
     writeRaces(ref: RaceReference, book: string) {
-      const seeds = buildRaceSeeds(ref);
+      const seeds = Library.book(book).raceSeeds(ref);
       this.log(`Built ${seeds.length} race seeds`);
 
       const file = new CodeFile();

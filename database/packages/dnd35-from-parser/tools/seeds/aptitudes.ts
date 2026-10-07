@@ -4,23 +4,27 @@ import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-pa
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { CLERIC_DOMAIN, specialistSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
+import { buildCoreFeats } from "@/database/packages/dnd35/data/feats/coreFeats.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { buildClassDomainPickFeats } from "./classes/domainPicks.ts";
-import { buildClassFeatSeeds } from "./classes/featSeeds.ts";
+import type { BookSeeds } from "./BookSeeds.ts";
 import { getClassSpellLists } from "./classes/spellSlots.ts";
-import { buildBookDomainSeeds } from "./domains.ts";
-import { buildSpellSeeds } from "./spells.ts";
-import { buildWizardSchoolSeeds } from "./wizardSchools.ts";
 
-/** A book's aptitudes: its feats' (`feats`, and its classes'), its classes' and spell lists', its domains' feat pools. */
-export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[], book: string): string[] {
+/**
+ * A book's aptitudes: its feats' (its feat reference's, the core rules' hand-written ones, its classes'), its classes'
+ * and spell lists', its domains' and their feat pools', its wizard schools', and for an extension the other
+ * extensions' spell lists its spells are on; but those another book's classes make.
+ */
+export function collectAptitudes(book: BookSeeds): string[] {
   const names = new Set<string>();
 
   // Collect all feats: standalone feats + class feature feats from reference JSONs
-  const allFeats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] = [...feats];
-  for (const { ref } of ReferenceLoader.loadClasses(book)) {
-    allFeats.push(...buildClassFeatSeeds(ref), ...buildClassDomainPickFeats(ref));
+  const allFeats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] = [
+    ...book.featAptitudeSources(),
+    ...(book.book === CORE_BOOK ? buildCoreFeats(book.wizardSchoolSeeds()) : []),
+  ];
+  for (const { ref } of book.classReferences()) {
+    allFeats.push(...book.classFeatSeeds(ref));
     if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
     for (const list of getClassSpellLists(ref)) names.add(list);
 
@@ -48,30 +52,24 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
   }
 
   // Domain aptitudes: the book's domains, and their feat pools'
-  const domains = buildBookDomainSeeds(book);
+  const domains = book.domainSeeds();
   if (domains.seeds.length > 0) names.add(CLERIC_DOMAIN);
   for (const feat of domains.poolFeats) for (const apt of feat.aptitudes) names.add(apt);
 
   // Wizard school aptitudes
-  const wsRef = ReferenceLoader.find(book, "wizardSchool");
-  if (wsRef) for (const school of buildWizardSchoolSeeds(wsRef)) names.add(specialistSpells(school.name));
+  for (const school of book.wizardSchoolSeeds()) names.add(specialistSpells(school.name));
 
   // For extension books: collect aptitudes referenced by this book's spells
   // so we can keep sibling spell list aptitudes (each extension creates its own copy).
   const spellAptitudes = new Set<string>();
-  if (book !== CORE_BOOK) {
-    const spellRef = ReferenceLoader.find(book, "spell");
-    if (spellRef) {
-      const { spells } = buildSpellSeeds(spellRef, book);
-      for (const spell of spells) for (const apt of spell.aptitudes) spellAptitudes.add(apt);
-    }
-  }
+  if (book.book !== CORE_BOOK)
+    for (const spell of book.spellSeeds()) for (const apt of spell.aptitudes) spellAptitudes.add(apt);
 
   // Exclude aptitudes created by other books (class features + spell lists).
   // For sibling extension spell lists, keep them if this book's spells reference them.
   for (const other of listReferenceBooks()) {
-    if (other === book) continue;
-    const isSibling = other !== CORE_BOOK && book !== CORE_BOOK;
+    if (other === book.book) continue;
+    const isSibling = other !== CORE_BOOK && book.book !== CORE_BOOK;
     for (const { ref } of ReferenceLoader.loadClasses(other)) {
       if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
       for (const spellApt of getClassSpellLists(ref)) {

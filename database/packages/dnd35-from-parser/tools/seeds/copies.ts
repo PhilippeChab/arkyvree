@@ -5,16 +5,18 @@
 
 import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import type { InheritedSpellList } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";
 
-import { getInheritedLevel, getInheritedLists } from "./inheritedLists.ts";
+import type { BookSeeds } from "./BookSeeds.ts";
+import { getInheritedLevel } from "./inheritedLists.ts";
 
 /** The spells a book's inherited lists add (`additions`), each at its level there, into `entries`. */
 function addListAdditions(
   entries: Map<string, CowSpellEntry>,
   inheritable: Set<string>,
-  lists: ReturnType<typeof getInheritedLists>,
+  lists: { aptitude: string; list: InheritedSpellList }[],
 ) {
   for (const { aptitude, list } of lists) {
     for (const [level, names] of Object.entries(list.additions ?? {})) {
@@ -31,23 +33,16 @@ function addListAdditions(
   }
 }
 
-/** The names of a book's own spells, which it seeds itself: none needs copying. */
-function getBookSpellNames(book: string): Set<string> {
-  const names = new Set<string>();
-  for (const spell of ReferenceLoader.find(book, "spell")?.raw ?? []) names.add(spell.name);
-  return names;
-}
-
 /**
  * The core feats a book copies: those its classes' bonus feat lists (`bonusFeatLists`) name, each with the lists it
  * joins. A feat of the book's own feat pool, or one its classes' features are, needs none: the feat generator adds
  * the list to it.
  */
-export function buildCowFeats(book: string): CowFeatEntry[] {
-  const classes = ReferenceLoader.loadClasses(book);
+export function buildCowFeats(book: BookSeeds): CowFeatEntry[] {
+  const classes = book.classReferences();
   // The book's own feats and its classes' features, which the feats and class feats files give their lists
   const ownFeats = new Set<string>();
-  for (const feat of ReferenceLoader.find(book, "feat")?.raw ?? []) ownFeats.add(feat.name);
+  for (const feat of book.reference("feat")?.raw ?? []) ownFeats.add(feat.name);
   for (const { ref } of classes)
     for (const feat of Object.values(ref.mapping.features)) if (feat.seedName) ownFeats.add(feat.seedName);
 
@@ -70,8 +65,8 @@ export function buildCowFeats(book: string): CowFeatEntry[] {
  * The core spells a book copies: those its classes' lists take (by the level lines of the core rules' spells), and
  * those its classes' inherited lists (`inheritsFrom`) take or add, each with the lists it joins and its level on each.
  */
-export function buildCowSpells(book: string): CowSpellEntry[] {
-  const classes = ReferenceLoader.loadClasses(book);
+export function buildCowSpells(book: BookSeeds): CowSpellEntry[] {
+  const classes = book.classReferences();
 
   // Build map: className → aptitude name for classes that have spell lists
   const classToApt = new Map<string, string>();
@@ -79,10 +74,10 @@ export function buildCowSpells(book: string): CowSpellEntry[] {
     if (ref.mapping.spells && ref.raw?.name) classToApt.set(ref.raw.name, classSpells(ref.raw.name));
 
   // The lists classes draw on (`inheritsFrom`), each its class's aptitude
-  const bookInheritedLists = getInheritedLists(book);
+  const bookInheritedLists = book.inheritedLists();
 
   // This book's own spells don't need COW — they're seeded directly
-  const bookSpellNames = getBookSpellNames(book);
+  const bookSpellNames = book.spellNames();
 
   // Scan ALL other books' spell references
   const entries = new Map<string, CowSpellEntry>();

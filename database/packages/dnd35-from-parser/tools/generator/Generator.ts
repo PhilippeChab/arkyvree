@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, relative } from "node:path";
+import { relative } from "node:path";
 
 import type { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
 import {
@@ -108,13 +108,11 @@ export class Generator extends include(
     const refs = filterReferenceFiles(listReferenceFiles(), { bookFilter, typeFilter, nameFilter });
 
     const failures: string[] = [];
-    const generate = (path: string, book?: string) => {
+    const generate = (path: string) => {
       try {
-        this.generateReference(path, book);
+        this.generateReference(path);
       } catch (error) {
-        failures.push(
-          `${relative(REFERENCE_DIR, path)}${book ? ` (${book})` : ""}: ${error instanceof Error ? error.message : error}`,
-        );
+        failures.push(`${relative(REFERENCE_DIR, path)}: ${error instanceof Error ? error.message : error}`);
       }
     };
     // Each book with spells gets its domains file, an empty one when it has no domains reference, and its index
@@ -133,11 +131,11 @@ export class Generator extends include(
     return failures;
   }
 
-  /** Regenerates a reference's files (into `bookOverride`'s folder, when given), and its book's index. */
-  generateReference(jsonPath: string, bookOverride?: string) {
+  /** Regenerates a reference's files, and its book's index. */
+  generateReference(jsonPath: string) {
     const meta = JSON.parse(readFileSync(jsonPath, "utf-8"))._meta;
     if (!meta) throw new Error(`Invalid reference file: missing _meta in ${jsonPath}`);
-    const book = bookOverride ?? meta.book;
+    const { book } = meta;
 
     switch (meta.type) {
       case "class":
@@ -162,7 +160,7 @@ export class Generator extends include(
         this.writeItems(ReferenceLoader.load(jsonPath, "item"), book);
         break;
       case "magicItem":
-        this.writeMagicItems(ReferenceLoader.load(jsonPath, "magicItem"), book, dirname(jsonPath));
+        this.writeMagicItems(ReferenceLoader.load(jsonPath, "magicItem"), book);
         break;
       default:
         throw new Error(

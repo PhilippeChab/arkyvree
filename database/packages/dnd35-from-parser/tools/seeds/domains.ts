@@ -3,11 +3,6 @@
  * per martial weapon).
  */
 
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-
-import { CORE_BOOK, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { type DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
 import { grantFeat } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
@@ -21,7 +16,36 @@ import {
 } from "@/database/packages/dnd35/content/items/weapons.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
-function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
+/** A domain of the domains reference, as its mapping makes it. */
+function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainSeed {
+  const mapping = ref.mapping[entry.name];
+
+  return {
+    name: mapping.name,
+    description: mapping.description ?? entry.description,
+    ...(mapping.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
+    spells: mapping.spells
+      .map((s) => ({ name: s.name, level: s.level }))
+      .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)),
+  };
+}
+
+function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | string[]): string[] {
+  if (Array.isArray(items)) return items;
+  switch (items) {
+    case "martial":
+      return MARTIAL_WEAPONS;
+    case "simple":
+      return SIMPLE_WEAPONS;
+    case "exotic":
+      return EXOTIC_WEAPONS;
+    case "all":
+      return ALL_WEAPONS;
+  }
+}
+
+/** The feats of a domains reference's feat pools: a feat per item of each pool (a War Domain Weapon feat per martial weapon). */
+export function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
   const results: FeatSeed[] = [];
 
   for (const entry of ref.raw) {
@@ -57,91 +81,14 @@ function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
   return results;
 }
 
-/** A domain of the domains reference, as its mapping makes it. */
-function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number]): DomainSeed {
-  const mapping = ref.mapping[entry.name];
-
-  return {
-    name: mapping.name,
-    description: mapping.description ?? entry.description,
-    ...(mapping.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
-    spells: mapping.spells
-      .map((s) => ({ name: s.name, level: s.level }))
-      .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)),
-  };
-}
-
 /**
- * A domains reference's domains, as their mapping and overrides make them, their spells named as the spell references
- * name them. `parser:validate` reports a spell neither the core rules nor the book has.
+ * A domains reference's domains, as their mapping makes them, their spells named as the spell references name them
+ * (`spellNames`, by lowercase name). `parser:validate` reports a spell neither the core rules nor the book has.
  */
-function domainSeeds(ref: DomainReference): DomainSeed[] {
-  const spellNames = getDomainSpellNames(ref._meta.book);
+export function buildDomainSeeds(ref: DomainReference, spellNames: Map<string, string>): DomainSeed[] {
   const seeds = ref.raw.map((entry) => domainSeed(ref, entry));
   for (const seed of seeds)
     for (const spell of seed.spells) spell.name = spellNames.get(spell.name.toLowerCase()) ?? spell.name;
 
   return seeds;
-}
-
-function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | string[]): string[] {
-  if (Array.isArray(items)) return items;
-  switch (items) {
-    case "martial":
-      return MARTIAL_WEAPONS;
-    case "simple":
-      return SIMPLE_WEAPONS;
-    case "exotic":
-      return EXOTIC_WEAPONS;
-    case "all":
-      return ALL_WEAPONS;
-  }
-}
-
-/** A book's domains as it prints them (`reference/<book>/domains.json`; none for a book without), and their feat pools' feats. */
-export function buildBookDomainSeeds(book: string): { poolFeats: FeatSeed[]; seeds: DomainSeed[] } {
-  const ref = ReferenceLoader.find(book, "domain");
-  if (!ref) return { seeds: [], poolFeats: [] };
-  return { seeds: domainSeeds(ref), poolFeats: buildDomainFeatPoolSeeds(ref) };
-}
-
-/**
- * What a domains reference's lists lack, as generated: a spell neither the core rules nor the book has (the seed
- * leaves it out), a spell level from 1st to 9th without a spell, and a spell of the book whose level line puts it on
- * one of them at a level the list doesn't. An override of the domain's spells corrects them.
- */
-export function findDomainSpellIssues(ref: DomainReference): { domain: string; text: string }[] {
-  const spellNames = getDomainSpellNames(ref._meta.book);
-  const spellsPath = join(REFERENCE_DIR, ref._meta.book, "spells.json");
-  const bookSpells = existsSync(spellsPath) ? ReferenceLoader.load(spellsPath, "spell").raw : [];
-  const issues: { domain: string; text: string }[] = [];
-  for (const { name: domain, spells } of domainSeeds(ref)) {
-    const has = (name: string, level: number) =>
-      spells.some((spell) => spell.level === level && spell.name.toLowerCase() === name.toLowerCase());
-    for (const spell of spells) {
-      if (!spellNames.has(spell.name.toLowerCase()))
-        issues.push({ domain, text: `${spell.name} (level ${spell.level}) is no spell of the core rules or the book` });
-    }
-    for (let level = 1; level <= 9; level++)
-      if (!spells.some((spell) => spell.level === level)) issues.push({ domain, text: `no spell at level ${level}` });
-
-    for (const spell of bookSpells) {
-      for (const { className, level } of spell.levelEntries) {
-        if (className === domain && !has(spell.name, level))
-          issues.push({ domain, text: `the book's ${spell.name} is ${domain} ${level}, not on its list` });
-      }
-    }
-  }
-  return issues;
-}
-
-/** The spells a book's domains can name, by their lowercase name: the core rules' and the book's. */
-export function getDomainSpellNames(book: string): Map<string, string> {
-  const spellNames = (b: string) => ReferenceLoader.find(b, "spell")?.raw.map((spell) => spell.name) ?? [];
-  return new Map(
-    [...spellNames(CORE_BOOK), ...(book === CORE_BOOK ? [] : spellNames(book))].map((name) => [
-      name.toLowerCase(),
-      name,
-    ]),
-  );
 }

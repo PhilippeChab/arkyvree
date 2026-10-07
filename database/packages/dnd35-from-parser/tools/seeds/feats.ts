@@ -100,11 +100,13 @@ export function buildReferenceFeats(ref: FeatReference) {
 }
 
 /**
- * A feat reference's feats as the aptitude list reads them (names, aptitudes, modifiers): a template family once, as
+ * A feat reference's feats (what `buildReferenceFeats` makes of it) as the aptitude list reads them (names, aptitudes, modifiers): a template family once, as
  * its feats share their aptitudes and their modifiers only differ in the item they target.
  */
-export function getFeatAptitudeSources(ref: FeatReference): Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] {
-  const { byType, templates } = buildReferenceFeats(ref);
+export function getFeatAptitudeSources({
+  byType,
+  templates,
+}: ReturnType<typeof buildReferenceFeats>): Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] {
   return [
     ...[...byType.values()].flat(),
     ...templates.map(({ familyName, aptitudes, modifiers }) => ({ name: familyName, aptitudes, modifiers })),

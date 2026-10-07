@@ -2,7 +2,7 @@ import { join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { buildCowFeats, buildCowSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/copies.ts";
+import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
 /** Generating what a book copies from the core rules: its copied feats (cowFeats.ts) and spells (cowSpells.ts). */
@@ -15,7 +15,9 @@ export function GeneratesCopies<B extends Constructor<BaseGenerator>>(Base: B) {
       file.list(
         "COW_FEATS",
         "CowFeatEntry",
-        buildCowFeats(book).map((copy) => file.cowFeat(copy)),
+        Library.book(book)
+          .cowFeats()
+          .map((copy) => file.cowFeat(copy)),
       );
       this.write(join(this.dir, book, "cowFeats.ts"), file.code());
     }
@@ -27,7 +29,9 @@ export function GeneratesCopies<B extends Constructor<BaseGenerator>>(Base: B) {
       file.list(
         "COW_SPELLS",
         "CowSpellEntry",
-        buildCowSpells(book).map((copy) => file.cowSpell(copy)),
+        Library.book(book)
+          .cowSpells()
+          .map((copy) => file.cowSpell(copy)),
       );
       this.write(join(this.dir, book, "cowSpells.ts"), file.code());
     }
