@@ -39,14 +39,14 @@ export class BaseBookSeeds {
     this.shelf = shelf;
   }
 
-  /** The book. */
-  readonly book: string;
   /** What's built of the book, by what it is. */
   private readonly memos = new Map<string, unknown>();
   /** What's built of each of its references (or a reference made of one, a test's), by what it is. */
   private readonly memosOf = new WeakMap<object, Map<string, unknown>>();
   /** The library: the other books. */
   protected readonly shelf: Shelf;
+  /** The book. */
+  readonly book: string;
 
   /** The domains and feat pool feats of a domains reference, its spells named as `spellNames` names them. */
   protected domainsOf(ref: DomainReference): { poolFeats: FeatSeed[]; seeds: DomainSeed[] } {

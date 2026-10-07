@@ -60,13 +60,6 @@ export interface DataLoader {
 export default abstract class CharacterState {
   constructor(protected readonly character: Character) {}
 
-  /** The character's parts, each wired to the ones it reads (`buildComponents`). */
-  abstract readonly components: Dnd35Components;
-
-  abstract readonly modifierEvaluator: ModifierEvaluator;
-
-  abstract readonly requirementEvaluator: RequirementEvaluator;
-
   /**
    * The sources a modifier applies from: its own, or, for an item's modifier on the item itself (a weapon's own paths)
    * behind gates, each equipped entry of the item whose gates are met there. An item held in two places is a weapon in
@@ -87,6 +80,13 @@ export default abstract class CharacterState {
       )
       .map((entry) => entry.id);
   };
+
+  /** The character's parts, each wired to the ones it reads (`buildComponents`). */
+  abstract readonly components: Dnd35Components;
+
+  abstract readonly modifierEvaluator: ModifierEvaluator;
+
+  abstract readonly requirementEvaluator: RequirementEvaluator;
 
   // Modifier/requirement collections
   protected builtComponents: Dnd35Components | null = null;

@@ -23,12 +23,12 @@ export class BaseClassSeeds {
     this.classSlug = stripSeparators(ref.raw.name);
   }
 
+  /** The existing feat each feature grants, by its name and description. */
+  private readonly existingFeats = new Map<string, string | undefined>();
   /** Its book's seeds. */
   readonly book: BaseBookSeeds;
   /** The class's slug, as its paths name it (`classes.wujen.level`). */
   readonly classSlug: string;
-  /** The existing feat each feature grants, by its name and description. */
-  private readonly existingFeats = new Map<string, string | undefined>();
   /** The class's reference. */
   readonly ref: ClassReference;
   /** Its aptitude picks, once split. */
