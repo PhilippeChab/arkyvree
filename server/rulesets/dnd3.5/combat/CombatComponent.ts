@@ -1,15 +1,8 @@
 import { include } from "@/server/mixins.ts";
 import { UNARMED_STRIKE } from "@/server/rulesets/dnd3.5/constants.ts";
+import { NO_WEAPON_FIELDS } from "@/server/rulesets/dnd3.5/items/itemFields.ts";
 import type SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
 import type { CustomizedRace } from "@/server/rulesets/engine/types.ts";
-import {
-  DAMAGE_TYPE,
-  WEAPON_BASE_DAMAGE,
-  WEAPON_CRITICAL_MULTIPLIER,
-  WEAPON_CRITICAL_RANGE,
-  WEAPON_FINESSABLE,
-  WEAPON_PROFICIENCY,
-} from "@/shared/dnd3.5/properties/index.ts";
 import { type CharacterLevel } from "@/shared/relations.ts";
 
 import { ArmorClass } from "./ArmorClass.ts";
@@ -41,14 +34,20 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
     this.initializeGrapple();
     this.initializeSpeed(race);
 
-    this.addWeapon(0, "Main Hand", { name: UNARMED_STRIKE }, [
-      { type: WEAPON_PROFICIENCY, value: "Unarmed" },
-      { type: WEAPON_BASE_DAMAGE, value: "1d3" },
-      { type: DAMAGE_TYPE, value: "Bludgeoning" },
-      { type: WEAPON_CRITICAL_RANGE, value: "1" },
-      { type: WEAPON_CRITICAL_MULTIPLIER, value: "2" },
-      { type: WEAPON_FINESSABLE, value: "true" },
-    ]);
+    this.addWeapon(
+      0,
+      "Main Hand",
+      { name: UNARMED_STRIKE },
+      {
+        ...NO_WEAPON_FIELDS,
+        proficiency: "Unarmed",
+        baseDamage: "1d3",
+        damageTypes: ["Bludgeoning"],
+        criticalRange: 1,
+        criticalMultiplier: 2,
+        finessable: true,
+      },
+    );
   }
 
   /** The encumbrance the sheet shows: the encumbrance's own object, so what changes it (a modifier) is what's read. */

@@ -1,6 +1,6 @@
 import type { Constructor } from "@/server/mixins.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD } from "@/server/rulesets/dnd3.5/constants.ts";
-import { ARMOR_MAX_DEX, ARMOR_PROFICIENCY, SHIELD_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
+import type { ItemFields } from "@/server/rulesets/engine/module/index.ts";
 
 import type { ArmorsData } from "./ArmorsComponent.ts";
 import { ARMOR_CATEGORIES } from "./CombatState.ts";
@@ -86,21 +86,20 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /** An armor the character wears: the heaviest one worn (medium and heavy armor slow the character down). */
-    addArmor(properties: { type: string; value: string }[]) {
-      const category = properties.find((property) => property.type === ARMOR_PROFICIENCY)?.value.toLowerCase();
+    addArmor(fields: ItemFields) {
+      const category = fields.armor.proficiency?.toLowerCase();
       const worn = ARMOR_CATEGORIES.find((armor) => armor === category);
       const { armor } = this.combat;
       if (worn && ARMOR_CATEGORIES.indexOf(worn) > ARMOR_CATEGORIES.indexOf(armor.category)) armor.category = worn;
     }
 
     /** A shield the character carries: its maximum Dexterity bonus caps the AC's, a tower shield's bulk the attacks. */
-    addShield(properties: { type: string; value: string }[]) {
-      const category = properties.find((property) => property.type === SHIELD_PROFICIENCY)?.value;
+    addShield(fields: ItemFields) {
+      const category = fields.shield.proficiency;
       if (!category) return;
       this.combat.shield.held = true;
       if (category === "Tower") this.towerShield = true;
-      const dexterityLimitation = properties.find((property) => property.type === ARMOR_MAX_DEX)?.value ?? null;
-      if (dexterityLimitation) this.shieldMaxDex = Math.min(this.shieldMaxDex, Number(dexterityLimitation));
+      if (fields.maxDex !== null) this.shieldMaxDex = Math.min(this.shieldMaxDex, fields.maxDex);
     }
 
     setArmorsData(armors: ArmorsData): void {

@@ -13,7 +13,7 @@ import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { LevelUpProjector, ProjectedCharacterData, RulesetModule } from "@/server/rulesets/engine/types.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
-import type { Power, Property, Skill } from "@/shared/relations.ts";
+import type { Power, Skill } from "@/shared/relations.ts";
 
 import type DetailedCharacter from "./character/DetailedCharacter.ts";
 
@@ -87,6 +87,3 @@ export type PropertyRecord = {
   type: string;
   value: string;
 };
-
-/** What a weapon's stats read of a property: its type and its value (an item's, or a natural attack's). */
-export type WeaponProperty = Pick<Property, "type" | "value">;

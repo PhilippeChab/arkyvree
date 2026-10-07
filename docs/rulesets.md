@@ -423,9 +423,10 @@ server/
 │       ├── abilities/ aptitudes/ feats/ identity/ saves/
 │       │                                  (each domain's component and its paths' category: AbilitiesComponent,
 │       │                                  AbilitiesPaths, …; aptitudes/ also holds Dnd35AptitudesRules, feats/
-│       │                                  FeatGroupingsComponent)
-│       ├── classes/                       (ClassesComponent, ClassesPaths, Dnd35ClassesRules, Dnd35ClassLevelsRules,
-│       │                                  Dnd35ClassLevelsEffects)
+│       │                                  FeatGroupingsComponent, featFields, Dnd35FeatsRules, Dnd35FeatsEffects)
+│       ├── classes/                       (ClassesComponent, ClassesPaths; classFields and classLevelFields: a class's
+│       │                                  and a level's fields off their properties; Dnd35ClassesRules,
+│       │                                  Dnd35ClassesEffects, Dnd35ClassLevelsRules, Dnd35ClassLevelsEffects)
 │       ├── powers/                        (PowersComponent, PowerGroupingsComponent, PowersPaths, Dnd35PowersRules,
 │       │                                  Dnd35PowersEffects and its spellGenerator)
 │       ├── races/                         (raceFields: a race's fields off its properties; Dnd35RacesRules,
@@ -438,7 +439,9 @@ server/
 │       │                                  CombatPaths, ItemsPaths, WeaponPaths)
 │       ├── spellcasting/                  (SpellcastingComponent on SpellcastingState, which includes BonusCasterLevels,
 │       │                                  KnownPowers; SpellcastingPaths)
-│       ├── items/                         (InventoryComponent, the slots, Dnd35InventoryRules, Dnd35ItemsRules, seedTemplateItems)
+│       ├── items/                         (InventoryComponent, the slots, itemFields: an item's fields off its
+│       │                                  properties; Dnd35InventoryRules, Dnd35ItemsRules, Dnd35ItemsEffects,
+│       │                                  seedTemplateItems)
 │       ├── levels/                        (Dnd35LevelsRules)
 │       ├── bonded/                        (the bonded creatures' characters, BondsComponent, BondedPaths)
 │       └── sheet/                         (the PDF sheet)
@@ -546,7 +549,7 @@ Each method starts with the verb of what it does, the same in every area:
 | Rules | `extract…` | reads a value out of a request's fields | `powers.extractGroupingValue` |
 | Rules | `normalize…` | gives fields the shape they're stored in | `skills.normalizeFlags` |
 | Rules | `validate…` | throws | `inventory.validateWeaponHands` |
-| Effects | `syncProperties` | stores an entity's fields as its properties, in place of those it stored before | `classLevels`, `skills`, `powers`, `races` |
+| Effects | `syncProperties` | stores an entity's fields as its properties, in place of those it stored before | `classes`, `classLevels`, `feats`, `items`, `powers`, `races`, `skills` |
 | Effects | `generateFeats` | makes the feats an entity brings, or its grouping shares (see [customization](customization.md#auto-generated-customization)) | `skills`, `powers` |
 | Effects | `deleteFeats` | removes the feats that are an entity's own | `skills` |
 | Effects | `require…` | writes what an entity requires | `classLevels.requirePreviousLevel` |
