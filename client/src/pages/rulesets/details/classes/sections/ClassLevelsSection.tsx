@@ -1,8 +1,9 @@
-import { Button, Chip, Stack, Tooltip, Typography } from "@mui/material";
+import { Chip, Stack, Tooltip, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
-import { AddIcon, LevelsIcon } from "@/client/src/components/icons/index.ts";
+import { AddButton } from "@/client/src/components/common/index.ts";
+import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
@@ -116,11 +117,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
         <Typography variant="h6" component="h2">
           Class Levels
         </Typography>
-        {canEdit && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
-            Add Level
-          </Button>
-        )}
+        {canEdit && <AddButton label="Add Level" onClick={handleCreate} />}
       </Stack>
 
       <RulesetSectionTable

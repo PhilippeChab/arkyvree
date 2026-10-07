@@ -12,12 +12,23 @@ const bellShake = keyframes`
   75% { transform: rotate(4deg); }
 `;
 
-export const diceRoll = keyframes`
+const diceRoll = keyframes`
   0%   { transform: translateY(0)    rotate(0deg); }
   25%  { transform: translateY(-8px) rotate(90deg); }
   50%  { transform: translateY(0)    rotate(180deg); }
   75%  { transform: translateY(-8px) rotate(270deg); }
   100% { transform: translateY(0)    rotate(360deg); }
+`;
+
+const pulse = keyframes`
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+`;
+
+const settledPulse = keyframes`
+  0%   { box-shadow: none; }
+  50%  { box-shadow: 0 0 0 3px rgba(var(--mui-palette-primary-mainChannel) / 0.4); }
+  100% { box-shadow: none; }
 `;
 
 /** How motion eases: CSS's own curves, and Material's */
@@ -30,17 +41,6 @@ export const EASING = {
   decelerate: "cubic-bezier(0.0, 0.0, 0.2, 1)",
   emphasized: "cubic-bezier(0.2, 0, 0, 1)",
 } as const;
-
-export const pulse = keyframes`
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-`;
-
-export const settledPulse = keyframes`
-  0%   { box-shadow: none; }
-  50%  { box-shadow: 0 0 0 3px rgba(var(--mui-palette-primary-mainChannel) / 0.4); }
-  100% { box-shadow: none; }
-`;
 
 /** The animations the app runs, by what they show: the bell's ring, the dice of a spinner, a loading pulse, a value settling */
 export const ANIMATIONS = {

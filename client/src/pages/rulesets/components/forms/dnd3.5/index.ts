@@ -2,6 +2,7 @@ export { ClassFormFields, type ClassFormData } from "./ClassFormFields.tsx";
 export { ClassLevelFields } from "./ClassLevelFields.tsx";
 export {
   allLevelSaves,
+  areSaveBasesValid,
   type CreateLevelFormData,
   featKey,
   levelFeatLabel,

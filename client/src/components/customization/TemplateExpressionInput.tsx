@@ -2,6 +2,7 @@ import { IconButton, InputAdornment, Popover, TextField, Tooltip } from "@mui/ma
 import { type MouseEvent, type Ref, useImperativeHandle, useRef, useState } from "react";
 
 import { AccountTreeIcon } from "@/client/src/components/icons/index.ts";
+import { useAnchorMenu } from "@/client/src/hooks/index.ts";
 
 import { TargetPathInput } from "./TargetPathInput.tsx";
 
@@ -48,7 +49,7 @@ export function TemplateExpressionInput({
 }: TemplateExpressionInputProps) {
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const cursorRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
-  const [pickerAnchorEl, setPickerAnchorEl] = useState<HTMLElement | null>(null);
+  const picker = useAnchorMenu();
   const [pickerPath, setPickerPath] = useState("");
 
   const getSelection = () => {
@@ -98,11 +99,11 @@ export function TemplateExpressionInput({
   const openPicker = (event: MouseEvent<HTMLElement>) => {
     cursorRef.current = getSelection();
     setPickerPath("");
-    setPickerAnchorEl(event.currentTarget);
+    picker.openMenu(event);
   };
 
   const closePicker = () => {
-    setPickerAnchorEl(null);
+    picker.closeMenu();
     setPickerPath("");
   };
 
@@ -151,8 +152,8 @@ export function TemplateExpressionInput({
         }}
       />
       <Popover
-        open={Boolean(pickerAnchorEl)}
-        anchorEl={pickerAnchorEl}
+        open={picker.open}
+        anchorEl={picker.anchorEl}
         onClose={closePicker}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}

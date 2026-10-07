@@ -1,6 +1,5 @@
 import {
   Button,
-  DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
@@ -13,7 +12,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
 
-import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { DialogFooter, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
 import { CopyIcon, LinkOffIcon, RefreshIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -171,11 +170,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
           )}
         </Stack>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-          Close
-        </Button>
-      </DialogActions>
+      <DialogFooter onCancel={onClose} cancelLabel="Close" pending={isLoading} />
     </Modal>
   );
 }

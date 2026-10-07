@@ -1,4 +1,4 @@
-import { Autocomplete, Chip, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Chip, Stack, TextField, Typography } from "@mui/material";
 import { Controller, useController, type UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
@@ -16,7 +16,13 @@ import {
   SPELL_SUBSCHOOLS,
 } from "@/shared/dnd3.5/spells.ts";
 
-import { spellAptitude, type SpellAptitude, type SpellFormData } from "./spellForm.ts";
+import {
+  areSpellLevelsValid,
+  spellAptitude,
+  type SpellAptitude,
+  type SpellFormData,
+  spellLevelError,
+} from "./spellForm.ts";
 
 type Save = RulesetSave;
 
@@ -44,33 +50,21 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
   return (
     <>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <Controller
+        <SelectField
+          control={form.control}
           name="school"
-          control={form.control}
-          render={({ field }) => (
-            <TextField {...field} value={field.value ?? ""} label="School" fullWidth select>
-              <MenuItem value="">None</MenuItem>
-              {SPELL_SCHOOLS.map((s) => (
-                <MenuItem key={s} value={s}>
-                  {s}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
+          label="School"
+          options={SPELL_SCHOOLS}
+          emptyLabel="None"
+          emptyValue=""
         />
-        <Controller
-          name="subschool"
+        <SelectField
           control={form.control}
-          render={({ field }) => (
-            <TextField {...field} value={field.value ?? ""} label="Subschool" fullWidth select>
-              <MenuItem value="">None</MenuItem>
-              {SPELL_SUBSCHOOLS.map((s) => (
-                <MenuItem key={s} value={s}>
-                  {s}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
+          name="subschool"
+          label="Subschool"
+          options={SPELL_SUBSCHOOLS}
+          emptyLabel="None"
+          emptyValue=""
         />
       </Stack>
       <TagsField form={form} name="descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
@@ -82,19 +76,13 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
           fullWidth
           placeholder='e.g., "1 standard action"'
         />
-        <Controller
-          name="rangeType"
+        <SelectField
           control={form.control}
-          render={({ field }) => (
-            <TextField {...field} value={field.value ?? ""} label="Range" fullWidth select>
-              <MenuItem value="">None</MenuItem>
-              {SPELL_RANGE_TYPES.map((r) => (
-                <MenuItem key={r} value={r}>
-                  {r}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
+          name="rangeType"
+          label="Range"
+          options={SPELL_RANGE_TYPES}
+          emptyLabel="None"
+          emptyValue=""
         />
       </Stack>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -121,19 +109,13 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
           fullWidth
           placeholder='e.g., "1 round/level"'
         />
-        <Controller
-          name="spellResistance"
+        <SelectField
           control={form.control}
-          render={({ field }) => (
-            <TextField {...field} value={field.value ?? ""} label="Spell Resistance" fullWidth select>
-              <MenuItem value="">None</MenuItem>
-              {SPELL_RESISTANCE_OPTIONS.map((sr) => (
-                <MenuItem key={sr} value={sr}>
-                  {sr}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
+          name="spellResistance"
+          label="Spell Resistance"
+          options={SPELL_RESISTANCE_OPTIONS}
+          emptyLabel="None"
+          emptyValue=""
         />
       </Stack>
       <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />
@@ -170,7 +152,11 @@ function TagsField({ form, name, label, options }: TagsFieldProps) {
 export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownAptitudes = [] }: SpellFormFieldsProps) {
   // Aptitudes and their levels live in the form, sorted by aptitude name.
   const aptitudes = useAptitudeLookup(knownAptitudes);
-  const { field } = useController({ control: form.control, name: "aptitudes" });
+  const { field, fieldState } = useController({
+    control: form.control,
+    name: "aptitudes",
+    rules: { validate: areSpellLevelsValid },
+  });
   const selected = field.value ?? [];
   const selectedAptitudes = aptitudes.resolve(selected.map((a) => a.id));
   const setSelected = (next: SpellAptitude[]) => field.onChange(next);
@@ -220,6 +206,8 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
                   size="small"
                   slotProps={{ htmlInput: { min: 0, max: MAX_SPELL_LEVEL } }}
                   value={levelOf(apt.id) ?? ""}
+                  error={!!fieldState.error && spellLevelError(levelOf(apt.id)) !== undefined}
+                  helperText={!!fieldState.error && spellLevelError(levelOf(apt.id))}
                   onChange={(e) => {
                     const level = e.target.value === "" ? undefined : parseInt(e.target.value);
                     setSelected(selected.map((a) => (a.id === apt.id ? spellAptitude(a.id, level) : a)));

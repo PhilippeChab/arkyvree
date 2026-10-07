@@ -1,6 +1,5 @@
 import {
   Box,
-  Button,
   Chip,
   IconButton,
   Paper,
@@ -20,6 +19,7 @@ import { type ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
+  AddButton,
   BlankState,
   ConfirmDialog,
   DiceSpinner,
@@ -32,7 +32,6 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import {
-  AddIcon,
   DeleteIcon,
   EditIcon,
   GMIcon,
@@ -256,12 +255,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
           {...searchTextProps}
           searchPlaceholder="Search players..."
           actions={
-            canManagePlayers &&
-            !campaign.deletedAt && (
-              <Button variant="contained" startIcon={<AddIcon />} size="medium" onClick={handleAddPlayer}>
-                Add Player
-              </Button>
-            )
+            canManagePlayers && !campaign.deletedAt && <AddButton label="Add Player" onClick={handleAddPlayer} />
           }
         />
         {/* Loading State */}
@@ -441,9 +435,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
               description="Add players to start your adventure together"
               action={
                 canManagePlayers && !campaign.deletedAt ? (
-                  <Button variant="outlined" startIcon={<AddIcon />} size="large" onClick={handleAddPlayer}>
-                    Add Your First Player
-                  </Button>
+                  <AddButton variant="outlined" size="large" label="Add Your First Player" onClick={handleAddPlayer} />
                 ) : undefined
               }
             />

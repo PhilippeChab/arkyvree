@@ -20,6 +20,9 @@ export const NEW_PASSWORD_RULES = {
     `Password must be at least ${PASSWORD_MIN_LENGTH} characters`,
 } as const;
 
+/** React Hook Form rules for an email address that may be left empty (an invite's, sent only when given). */
+export const OPTIONAL_EMAIL_RULES = { pattern: EMAIL_RULES.pattern } as const;
+
 /** React Hook Form rules for an optional username, measured as it's stored (`sanitizeText`): 3 to 50 characters. */
 export const USERNAME_RULES = {
   validate: (value: unknown) => {
@@ -44,13 +47,25 @@ export function requiredRules(message: string) {
 }
 
 /**
+ * What's wrong with a whole number from `min` to `max` (no bound above when it's left out), in `wholeNumberRules`' words:
+ * an input outside a form's own fields (a list's) shows it, its field's `validate` checking the list.
+ */
+export function wholeNumberError(value: number, min: number, max?: number) {
+  if (!Number.isInteger(value)) return "Whole numbers only";
+  if (value < min) return `Minimum ${min}`;
+  if (max !== undefined && value > max) return `Maximum ${max}`;
+  return undefined;
+}
+
+/**
  * React Hook Form rules for a whole number of at least `min`, for a number field (`<FormTextField number />`). Use these
  * rather than native `min`: the browser's own check would block the submit before the field shows why.
  */
-export function wholeNumberRules(min: number, required?: string) {
+export function wholeNumberRules(min: number, required?: string, max?: number) {
   return {
     required,
     min: { value: min, message: `Minimum ${min}` },
+    ...(max !== undefined && { max: { value: max, message: `Maximum ${max}` } }),
     validate: (value: unknown) =>
       typeof value !== "number" || Number.isNaN(value) || Number.isInteger(value) || "Whole numbers only",
   };

@@ -4,6 +4,7 @@ import { type InferRequestType, type InferResponseType, parseResponse } from "ho
 import { useState } from "react";
 
 import {
+  AddButton,
   BlankState,
   ConfirmDialog,
   DiceSpinner,
@@ -17,7 +18,7 @@ import {
   ContributorsTable,
   InviteContributorDialog,
 } from "@/client/src/components/contributors/index.ts";
-import { AddIcon, ContributorsIcon, DeleteIcon, EditIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
+import { ContributorsIcon, DeleteIcon, EditIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { firstPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -144,11 +145,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
               Leave
             </Button>
           )}
-          {canInvite && (
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
-              Invite
-            </Button>
-          )}
+          {canInvite && <AddButton label="Invite" onClick={() => setInviteDialogOpen(true)} />}
         </Stack>
       )}
       {contributors.length === 0 && !owner ? (
@@ -160,9 +157,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
           }
           action={
             canInvite ? (
-              <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
-                Invite a Contributor
-              </Button>
+              <AddButton variant="outlined" label="Invite a Contributor" onClick={() => setInviteDialogOpen(true)} />
             ) : undefined
           }
         />

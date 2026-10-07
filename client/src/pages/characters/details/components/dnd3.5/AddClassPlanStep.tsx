@@ -1,11 +1,12 @@
-import { Autocomplete, Box, Button, Chip, IconButton, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Autocomplete, Box, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { useMemo } from "react";
 
-import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { AddIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
+import { AddButton, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { CloseIcon } from "@/client/src/components/icons/index.ts";
 
 import type { AvailableKlass } from "./levelUp/index.ts";
 import type { AddClassPlanStepProps } from "./levelUpFactory.ts";
+import { OptionTooltip } from "./OptionTooltip.tsx";
 
 export function AddClassPlanStep({
   wizard,
@@ -75,19 +76,16 @@ export function AddClassPlanStep({
   return (
     <Stack spacing={0.5}>
       <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-        <Button startIcon={<AddIcon />} onClick={onAddLevel} size="small">
-          Add Level
-        </Button>
+        <AddButton variant="text" size="small" label="Add Level" onClick={onAddLevel} />
         {quickAddClasses.map((klass) => (
-          <Button
+          <AddButton
             key={klass.id}
-            startIcon={<AddIcon />}
-            onClick={() => onQuickAddLevel(klass)}
+            variant="text"
             size="small"
+            label={`${klass.name} ${klass.nextLevel + (queuedCounts.get(klass.id) ?? 0)}`}
+            onClick={() => onQuickAddLevel(klass)}
             disabled={klass.atMax}
-          >
-            {klass.name} {klass.nextLevel + (queuedCounts.get(klass.id) ?? 0)}
-          </Button>
+          />
         ))}
       </Stack>
       {levels.map((selectedKlass, index) =>
@@ -129,23 +127,11 @@ export function AddClassPlanStep({
               renderOption={({ key, ...props }, option) => {
                 const adjustedLevel = getAdjustedNextLevel(option.id, index);
                 return (
-                  <Tooltip
-                    describeChild
+                  <OptionTooltip
                     key={key}
-                    title={
-                      !option.eligible && option.requirementTree ? option.requirementTree : (option.description ?? "")
-                    }
-                    placement="right"
-                    enterDelay={300}
-                    arrow
-                    slotProps={{
-                      tooltip: {
-                        sx:
-                          !option.eligible && option.requirementTree
-                            ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" }
-                            : { maxWidth: 500 },
-                      },
-                    }}
+                    description={option.description}
+                    requirementTree={!option.eligible ? option.requirementTree : undefined}
+                    descriptionWidth={500}
                   >
                     <li {...props} style={{ ...props.style, pointerEvents: "auto" }}>
                       <Box>
@@ -155,7 +141,7 @@ export function AddClassPlanStep({
                         </Typography>
                       </Box>
                     </li>
-                  </Tooltip>
+                  </OptionTooltip>
                 );
               }}
               renderInput={(params) => (

@@ -1,12 +1,11 @@
-import { MenuItem, Stack, TextField } from "@mui/material";
-import { useController, type UseFormReturn } from "react-hook-form";
+import { Stack } from "@mui/material";
+import { type UseFormReturn } from "react-hook-form";
 
-import { FormTextField } from "@/client/src/components/common/index.ts";
-import { oneOf } from "@/client/src/lib/oneOf.ts";
+import { FormTextField, SelectField } from "@/client/src/components/common/index.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { isHandLocation } from "@/shared/equipment.ts";
 
-import { type InventoryFormData, LOCATION_CHOICES, type PlacementProfile } from "./equipment.ts";
+import { type InventoryFormData, type PlacementProfile } from "./equipment.ts";
 
 interface InventoryPlacementFieldsProps {
   form: UseFormReturn<InventoryFormData>;
@@ -16,7 +15,7 @@ interface InventoryPlacementFieldsProps {
 
 /** How many of the item, where it's worn, its weapon set, and its charges: the add and edit dialogs' fields. */
 export function InventoryPlacementFields({ form, profile }: InventoryPlacementFieldsProps) {
-  const { field: location } = useController({ control: form.control, name: "location" });
+  const location = form.watch("location");
 
   return (
     <>
@@ -30,23 +29,13 @@ export function InventoryPlacementFields({ form, profile }: InventoryPlacementFi
       />
       {profile && (
         <>
-          <TextField
-            select
+          <SelectField
+            control={form.control}
+            name="location"
             label={profile.isWeapon ? "Hand Slot" : "Equipment Slot"}
-            value={location.value}
-            onChange={(e) => location.onChange(oneOf(e.target.value, LOCATION_CHOICES, "none"))}
-            onBlur={location.onBlur}
-            inputRef={location.ref}
-            fullWidth
-          >
-            <MenuItem value="none">Not Equipped</MenuItem>
-            {profile.locationOptions.map((loc) => (
-              <MenuItem key={loc} value={loc}>
-                {loc}
-              </MenuItem>
-            ))}
-          </TextField>
-          {profile.showWeaponSet && isHandLocation(location.value) && (
+            options={[{ value: "none", label: "Not Equipped" }, ...profile.locationOptions]}
+          />
+          {profile.showWeaponSet && isHandLocation(location) && (
             <FormTextField
               control={form.control}
               name="weaponSet"

@@ -1,18 +1,8 @@
-import {
-  Box,
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, DialogContent, DialogTitle, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
-import { DiceSpinner, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
-import { AddIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
+import { AddButton, DialogFooter, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
+import { CloseIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
 
@@ -63,7 +53,7 @@ export function BulkVariantsDialog({
       maxWidth="md"
       slotProps={{ paper: { sx: { maxHeight: "85vh" } } }}
     >
-      <form onSubmit={form.handleSubmit(submit)}>
+      <form onSubmit={form.handleSubmit(submit)} noValidate>
         <DialogTitle>Create variants of {baseItemName}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
@@ -108,29 +98,22 @@ export function BulkVariantsDialog({
                 </Stack>
               ))}
             </Stack>
-            <Button
+            <AddButton
               variant="outlined"
-              startIcon={<AddIcon />}
+              label="Add variant"
               onClick={() =>
                 append(variantRow({ name: baseItemName, description: baseItemDescription }, fields.length + 1))
               }
               disabled={fields.length >= MAX_VARIANTS || isLoading}
               sx={{ alignSelf: "flex-start" }}
-            >
-              Add variant
-            </Button>
+            />
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={isLoading}>
-            <DiceSpinner size="small" loading={isLoading}>
-              {`Create ${formatCount(fields.length, "variant")}`}
-            </DiceSpinner>
-          </Button>
-        </DialogActions>
+        <DialogFooter
+          onCancel={onClose}
+          pending={isLoading}
+          action={{ label: `Create ${formatCount(fields.length, "variant")}` }}
+        />
       </form>
     </FormDialog>
   );

@@ -1,7 +1,7 @@
-import { Button, ToggleButton } from "@mui/material";
+import { ToggleButton } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { AddIcon } from "@/client/src/components/icons/index.ts";
+import { AddButton } from "@/client/src/components/common/index.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
@@ -36,11 +36,7 @@ export function SectionActions({
           Local changes
         </ToggleButton>
       )}
-      {canEditEntities && onAdd && (
-        <Button variant="contained" startIcon={<AddIcon />} onClick={onAdd}>
-          {addLabel}
-        </Button>
-      )}
+      {canEditEntities && onAdd && <AddButton label={addLabel} onClick={onAdd} />}
     </>
   );
 }

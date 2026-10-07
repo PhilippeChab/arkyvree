@@ -73,7 +73,7 @@ export default function CampaignsPage() {
     void prefetchCampaignSections(queryClient, id);
   };
 
-  const createButton = (label: string) => <PageActionButton onClick={handleCreate}>{label}</PageActionButton>;
+  const createButton = (label: string) => <PageActionButton label={label} onClick={handleCreate} />;
 
   return (
     <PageTransition>

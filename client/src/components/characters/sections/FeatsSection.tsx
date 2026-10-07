@@ -49,7 +49,7 @@ function FeatRow({ name, label, description, extra }: FeatRowProps) {
               size="small"
               onClick={() => setOpen((p) => !p)}
               sx={{ p: 0 }}
-              aria-label={open ? `Hide ${label} details` : `Show ${label} details`}
+              aria-label={`${label} details`}
               aria-expanded={open}
             >
               {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
@@ -83,12 +83,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
         <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
           Granted ({feats.length})
         </Typography>
-        <IconButton
-          size="small"
-          sx={{ p: 0 }}
-          aria-label={open ? "Hide granted feats" : "Show granted feats"}
-          aria-expanded={open}
-        >
+        <IconButton size="small" sx={{ p: 0 }} aria-label="Granted feats" aria-expanded={open}>
           {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
         </IconButton>
       </Stack>

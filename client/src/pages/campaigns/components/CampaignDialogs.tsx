@@ -26,7 +26,7 @@ import {
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
-import { NAME_RULES, requiredRules } from "@/client/src/lib/validation.ts";
+import { NAME_RULES, OPTIONAL_EMAIL_RULES, requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 import type { PlayerFormData, PlayerSlot } from "./players.ts";
@@ -94,6 +94,7 @@ function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
     <FormTextField
       control={form.control}
       name="email"
+      rules={OPTIONAL_EMAIL_RULES}
       label="Email address"
       placeholder="Enter an email to send an invite..."
       type="email"

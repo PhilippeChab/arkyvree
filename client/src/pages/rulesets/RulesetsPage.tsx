@@ -131,7 +131,8 @@ function RulesetList({ filters }: RulesetListProps) {
                     )}
                     <IconButton
                       size="small"
-                      aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
+                      aria-label="Star ruleset"
+                      aria-pressed={ruleset.isStarred}
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleStar(ruleset.id, ruleset.isStarred);

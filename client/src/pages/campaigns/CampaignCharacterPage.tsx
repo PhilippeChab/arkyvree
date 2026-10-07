@@ -1,12 +1,11 @@
 import { Alert, Container, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
 import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
 import { ArrowBackIcon, DownloadIcon, EditIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
-import { usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -15,7 +14,7 @@ import { campaignCharacterQuery } from "./campaignQueries.ts";
 export default function CampaignCharacterPage() {
   const { id: campaignId = "", characterId = "" } = useParams<{ id: string; characterId: string }>();
   const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const menu = useAnchorMenu();
 
   const { data, isLoading, error } = useQuery(campaignCharacterQuery(campaignId, characterId));
 
@@ -26,12 +25,6 @@ export default function CampaignCharacterPage() {
   );
 
   usePageTitle(data?.identity?.physiology?.name);
-
-  const handleClose = () => setAnchorEl(null);
-  const closeMenuAnd = (then: () => void) => () => {
-    handleClose();
-    then();
-  };
 
   if (!campaignId || !characterId) {
     return (
@@ -76,25 +69,21 @@ export default function CampaignCharacterPage() {
 
             {data.canDownloadPdf && !data.deletedAt && (
               <Stack direction="row" spacing={1}>
-                <IconButton
-                  aria-label="More actions"
-                  onClick={(e) => setAnchorEl(e.currentTarget)}
-                  sx={{ color: "text.secondary" }}
-                >
+                <IconButton aria-label="More actions" onClick={menu.openMenu} sx={{ color: "text.secondary" }}>
                   <MoreVertIcon />
                 </IconButton>
-                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+                <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
                   {data.canEdit && (
                     <ActionMenuItem
                       icon={EditIcon}
                       label="Edit Character"
-                      onClick={closeMenuAnd(() => navigate(`/characters/${characterId}`))}
+                      onClick={menu.closeMenuAnd(() => navigate(`/characters/${characterId}`))}
                     />
                   )}
                   <ActionMenuItem
                     icon={DownloadIcon}
                     label="Download PDF"
-                    onClick={closeMenuAnd(() => pdfExport.mutate())}
+                    onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
                   />
                 </Menu>
               </Stack>

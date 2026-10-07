@@ -24,7 +24,7 @@ function parseNumericField(value: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export function isTemplateType(type: string | null | undefined): type is TemplateType {
+export function isTemplateType(type: unknown): type is TemplateType {
   return type === "Weapon" || type === "Armor" || type === "Shield";
 }
 

@@ -2,9 +2,10 @@ import { useController, type UseFormReturn } from "react-hook-form";
 
 import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
-import { requiredRules } from "@/client/src/lib/validation.ts";
+import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import {
   allLevelSaves,
+  areSaveBasesValid,
   ClassLevelFields,
   type CreateLevelFormData,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
@@ -28,7 +29,11 @@ interface CreateLevelDialogProps {
 
 export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, rulesetId }: CreateLevelDialogProps) {
   const { data: rulesetSaves } = useRulesetSaves(rulesetId, open);
-  const { field: saves } = useController({ control: form.control, name: "saves" });
+  const { field: saves, fieldState: savesState } = useController({
+    control: form.control,
+    name: "saves",
+    rules: { validate: areSaveBasesValid },
+  });
   const { field: feats } = useController({ control: form.control, name: "feats" });
 
   // The endpoint takes every ruleset save, 0 when unset.
@@ -47,7 +52,7 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
       <FormTextField
         control={form.control}
         name="level"
-        rules={requiredRules("Level is required")}
+        rules={wholeNumberRules(1, "Level is required", MAX_CLASS_LEVEL)}
         number
         label="Level"
         fullWidth
@@ -58,7 +63,7 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
       <FormTextField
         control={form.control}
         name="bab"
-        rules={requiredRules("Base Attack Bonus is required")}
+        rules={wholeNumberRules(0, "Base Attack Bonus is required")}
         number
         label="Base Attack Bonus"
         fullWidth
@@ -69,7 +74,7 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
       <FormTextField
         control={form.control}
         name="skills"
-        rules={requiredRules("Skill points are required")}
+        rules={wholeNumberRules(1, "Skill points are required")}
         number
         label="Skill Points"
         fullWidth
@@ -81,6 +86,7 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
         rulesetId={rulesetId}
         saves={saves.value ?? []}
         onSavesChange={saves.onChange}
+        savesInvalid={!!savesState.error}
         feats={feats.value ?? []}
         onFeatsChange={feats.onChange}
       />

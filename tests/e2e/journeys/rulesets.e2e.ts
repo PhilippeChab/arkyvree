@@ -170,7 +170,8 @@ test.describe("A starred ruleset", () => {
     await filterList(page, /^Starred$/);
     await expect(page).toHaveURL(/scope=starred/);
     const unstarred = apiResponse(page, "DELETE", /\/api\/rulesets\/[a-f0-9-]+\/star/);
-    await star("Unstar ruleset").click();
+    await expect(star("Star ruleset")).toHaveAttribute("aria-pressed", "true");
+    await star("Star ruleset").click();
     await unstarred;
     await expect(page.getByRole("heading", { name: "Core SRD 3.5" })).toHaveCount(0, { timeout: 15_000 });
   });

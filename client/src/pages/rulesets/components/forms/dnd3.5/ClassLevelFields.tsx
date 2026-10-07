@@ -3,8 +3,9 @@ import { useMemo, useState } from "react";
 
 import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
+import { MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
 
-import { featKey, type LevelFeat, levelFeatLabel, type LevelSave } from "./classLevelForm.ts";
+import { featKey, type LevelFeat, levelFeatLabel, type LevelSave, saveBaseError } from "./classLevelForm.ts";
 
 interface ClassLevelFieldsProps {
   rulesetId: string;
@@ -12,6 +13,8 @@ interface ClassLevelFieldsProps {
   onSavesChange: (saves: LevelSave[]) => void;
   feats: LevelFeat[];
   onFeatsChange: (feats: LevelFeat[]) => void;
+  /** Whether the form refused the saves: each base out of bounds says why. */
+  savesInvalid?: boolean;
   /** Labels for feats the options may not list (e.g. from a parent ruleset), by `featId-aptitudeId`. */
   featLabels?: Map<string, string>;
 }
@@ -27,6 +30,7 @@ export function ClassLevelFields({
   onSavesChange,
   feats,
   onFeatsChange,
+  savesInvalid,
   featLabels,
 }: ClassLevelFieldsProps) {
   const { data: rulesetSaves = [] } = useRulesetSaves(rulesetId);
@@ -97,7 +101,9 @@ export function ClassLevelFields({
               type="number"
               value={baseFor(save.id)}
               onChange={(e) => setBase(save.id, Number(e.target.value))}
-              slotProps={{ htmlInput: { min: 0, max: 12 } }}
+              error={savesInvalid && saveBaseError(baseFor(save.id)) !== undefined}
+              helperText={savesInvalid && saveBaseError(baseFor(save.id))}
+              slotProps={{ htmlInput: { min: 0, max: MAX_SAVE_BASE } }}
             />
           ))}
         </Box>

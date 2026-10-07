@@ -25,6 +25,16 @@ import {
 } from "./projection.ts";
 import { annotateRequirements } from "./validation.ts";
 
+/** A row of a feat's variants, which the picker opens into them: each variant says whether it's eligible. */
+function asFamilyRow<T extends object>(row: T) {
+  return {
+    ...row,
+    eligible: true as boolean,
+    aptitudeModifiers: [] as { aptitudeId: string; value: number; operator: string }[],
+    requirementTree: undefined as string | undefined,
+  };
+}
+
 /** Computes non-stackable feat IDs to exclude from browsing (existing, auto-granted, selected, virtual). */
 async function getExcludeNonStackableFeatIds(
   database: typeof db,
@@ -256,11 +266,7 @@ export async function getAvailableFeatsGrouped(
       // Annotate single-feat rows with eligibility + aptitude modifiers
       const singleRows = result.items.filter((r) => r.variantCount === 1);
       if (singleRows.length === 0) {
-        const items = result.items.map((row) => ({
-          ...row,
-          eligible: true as boolean,
-          aptitudeModifiers: [] as { aptitudeId: string; value: number; operator: string }[],
-        }));
+        const items = result.items.map(asFamilyRow);
         return { items, page: result.page, nextPage: result.nextPage };
       }
 
@@ -283,14 +289,10 @@ export async function getAvailableFeatsGrouped(
             ...row,
             eligible,
             aptitudeModifiers: aptitudeModByFeat.get(row.representativeId) ?? [],
-            ...(!eligible ? { requirementTree: requirementTreeMap.get(row.representativeId) } : {}),
+            requirementTree: eligible ? undefined : requirementTreeMap.get(row.representativeId),
           };
         }
-        return {
-          ...row,
-          eligible: true as boolean,
-          aptitudeModifiers: [] as { aptitudeId: string; value: number; operator: string }[],
-        };
+        return asFamilyRow(row);
       });
 
       return { items, page: result.page, nextPage: result.nextPage };

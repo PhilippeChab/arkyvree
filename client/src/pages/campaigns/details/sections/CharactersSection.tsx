@@ -2,9 +2,7 @@ import {
   Autocomplete,
   Avatar,
   Box,
-  Button,
   Chip,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Menu,
@@ -20,7 +18,9 @@ import { type SyntheticEvent, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
+  AddButton,
   BlankState,
+  DialogFooter,
   DiceSpinner,
   faqTooltip,
   LoadError,
@@ -32,9 +32,10 @@ import {
   SectionContent,
   StyledCard,
 } from "@/client/src/components/common/index.ts";
-import { AddIcon, CharacterIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
+import { CharacterIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
+  useAnchorMenu,
   useAttachments,
   useDebouncedValue,
   useListboxQuery,
@@ -99,7 +100,7 @@ function CharacterCard({
   const navigate = useNavigate();
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
-  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const menu = useAnchorMenu();
 
   // Warm the sheet while the pointer is on the card.
   const prefetchSheet = () => void queryClient.prefetchQuery(campaignCharacterQuery(campaignId, character.id));
@@ -195,7 +196,7 @@ function CharacterCard({
                 canEditVisibility
                   ? (e) => {
                       e.stopPropagation();
-                      setMenuAnchorEl(e.currentTarget);
+                      menu.openMenu(e);
                     }
                   : undefined
               }
@@ -203,11 +204,11 @@ function CharacterCard({
             />
             {canEditVisibility && (
               <Menu
-                anchorEl={menuAnchorEl}
-                open={Boolean(menuAnchorEl)}
+                anchorEl={menu.anchorEl}
+                open={menu.open}
                 onClose={(e: SyntheticEvent) => {
                   e.stopPropagation?.();
-                  setMenuAnchorEl(null);
+                  menu.closeMenu();
                 }}
               >
                 {VISIBILITY_OPTIONS.map((option) => (
@@ -216,7 +217,7 @@ function CharacterCard({
                     selected={option === character.visibility}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setMenuAnchorEl(null);
+                      menu.closeMenu();
                       if (option !== character.visibility) updateVisibility(option);
                     }}
                   >
@@ -375,16 +376,11 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
           </Stack>
         </Stack>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} variant="outlined" color="inherit">
-          Cancel
-        </Button>
-        <Button onClick={handleLinkCharacter} variant="contained" disabled={!selectedCharacter || isLinking}>
-          <DiceSpinner size="small" loading={isLinking}>
-            Link Character
-          </DiceSpinner>
-        </Button>
-      </DialogActions>
+      <DialogFooter
+        onCancel={onClose}
+        pending={isLinking}
+        action={{ label: "Link Character", onClick: handleLinkCharacter, disabled: !selectedCharacter }}
+      />
     </Modal>
   );
 }
@@ -426,13 +422,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
         <SearchBar
           {...searchTextProps}
           searchPlaceholder="Search characters..."
-          actions={
-            !campaign.deletedAt && (
-              <Button variant="contained" startIcon={<AddIcon />} size="medium" onClick={() => setLinkDialogOpen(true)}>
-                Link Character
-              </Button>
-            )
-          }
+          actions={!campaign.deletedAt && <AddButton label="Link Character" onClick={() => setLinkDialogOpen(true)} />}
         />
 
         {/* Loading State */}
