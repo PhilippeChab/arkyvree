@@ -9,7 +9,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import { type RulesetData, type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetData } from "@/engine/core/view/index.ts";
+import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import {

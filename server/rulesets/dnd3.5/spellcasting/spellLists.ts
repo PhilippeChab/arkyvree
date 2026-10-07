@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { parseAptitudeJoin, parseAptitudeSpellLevel } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 
 /** The spell lists the ruleset's class levels give slots in, by aptitude id: each a class's own (`collectClassLists`). */

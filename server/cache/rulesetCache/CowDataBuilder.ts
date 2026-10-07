@@ -1,4 +1,5 @@
-import { CowData, type Db, withCowContext } from "@/server/database/index.ts";
+import { CowData } from "@/engine/core/cow/index.ts";
+import { type Db, withCowContext } from "@/server/database/index.ts";
 import { Aptitudes, EntitySnapshots, KlassLevels, RulesetEntities } from "@/server/repositories/index.ts";
 
 type SnapshotsByRuleset = Map<string, Awaited<ReturnType<typeof EntitySnapshots.findMany>>>;

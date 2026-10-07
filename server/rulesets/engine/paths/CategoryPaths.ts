@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Components, TargetPathsInterface, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
 

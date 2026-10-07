@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { CowData } from "@/engine/core/cow/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { CowData, db, withCowContext } from "@/server/database/index.ts";
+import { db, withCowContext } from "@/server/database/index.ts";
 import { mapResultIds } from "@/server/repositories/copyOnWriteIds.ts";
 import { Characters, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";

@@ -5,7 +5,7 @@
  * stored links.
  */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 
 /** The ids of the ruleset's feats on a list. */
 export function getListFeatIds(rulesetData: RulesetData, aptitudeId: string): string[] {

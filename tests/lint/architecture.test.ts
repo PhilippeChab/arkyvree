@@ -57,6 +57,16 @@ describe("architecture rules", () => {
         "server/rulesets/engine/paths/p.ts":
           'import type { M } from "@/server/rulesets/engine/m.ts";\nexport type P = M;\n',
         "shared/s.ts": 'import type { T } from "@/drizzle/schema.ts";\nexport type S = T;\n',
+        // The engine reads nothing itself: neither the server nor the database, and the schema for its types alone
+        "engine/core/view/v.ts": 'import { db } from "@/server/database/index.ts";\nexport const v = db;\n',
+        "engine/core/view/t.ts": 'import type { T } from "@/drizzle/schema.ts";\nexport type V = T;\n',
+        // Its core names no ruleset
+        "engine/core/view/r.ts": 'import type { R } from "@/engine/rulesets/dnd3.5/r.ts";\nexport type V = R;\n',
+        // The client takes the engine's types, never its code
+        "client/src/e.ts":
+          'import type { RulesetData } from "@/engine/core/view/index.ts";\nexport type E = RulesetData;\n',
+        "client/src/w.ts":
+          'import { RulesetData } from "@/engine/core/view/index.ts";\nexport const w = RulesetData;\n',
         "client/src/c.ts": 'import type { App } from "@/server/routers/application.ts";\nexport type C = App;\n',
         "client/src/v.ts": 'import { app } from "@/server/routers/application.ts";\nexport const v = app;\n',
         // A content package's vocabulary reads neither its data nor the server
@@ -68,8 +78,11 @@ describe("architecture rules", () => {
       }),
     ).toEqual([
       "layers client/src/v.ts",
+      "layers client/src/w.ts",
       "layers database/packages/dnd35/content/d.ts",
       "layers database/packages/dnd35/content/s.ts",
+      "layers engine/core/view/r.ts",
+      "layers engine/core/view/v.ts",
       "layers server/cache/c.ts",
       "layers server/cow/w.ts",
       "layers server/database/d.ts",

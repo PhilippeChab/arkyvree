@@ -1,6 +1,6 @@
 /** What each loaded entity carries: its properties, modifiers and requirements, and the character's modifiers in order. */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { readClassLevelFields } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";
 import type {
   CustomizedFeat,

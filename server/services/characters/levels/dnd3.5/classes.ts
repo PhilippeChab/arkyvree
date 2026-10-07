@@ -8,7 +8,7 @@
  * - getSavedKlassLevel — a saved character level's class level and class, or a 404
  */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { isSkillSubtypeOf } from "@/server/rulesets/dnd3.5/index.ts";
 

@@ -34,7 +34,8 @@
       "@/shared/*": ["./shared/*"],
       "@/scripts/*": ["./scripts/*"],
       "@/emails/*": ["./emails/*"],
-      "@/database/*": ["./database/*"]
+      "@/database/*": ["./database/*"],
+      "@/engine/*": ["./engine/*"]
     },
 
     // Types
@@ -47,7 +48,8 @@
     "scripts/**/*",
     "tests/**/*",
     "emails/**/*",
-    "database/**/*"
+    "database/**/*",
+    "engine/**/*"
   ],
   "exclude": ["node_modules", "dist"]
 }

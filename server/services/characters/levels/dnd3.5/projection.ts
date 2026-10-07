@@ -12,7 +12,8 @@
  * - buildBaselineAptitudes — the aptitudes of the character as saved, before planned levels
  */
 
-import type { RulesetData, RulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type {
   Dnd35DetailedCharacter,

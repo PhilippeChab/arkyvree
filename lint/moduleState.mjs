@@ -83,7 +83,7 @@ function changedBinding(node) {
 }
 
 function createModuleState(context) {
-  if (!/^(server|shared|database)\//.test(repoPath(context.filename))) return {};
+  if (!/^(server|engine|shared|database)\//.test(repoPath(context.filename))) return {};
   const advice =
     "State lives in a class: a field of the class whose methods change it, its shared instance the module's export.";
   return {

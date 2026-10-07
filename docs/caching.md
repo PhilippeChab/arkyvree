@@ -61,7 +61,7 @@ flowchart LR
 
 ### The problem
 
-Ruleset entities can be [Copy-On-Write'd](./rulesets.md) in a fork. A COW creates a new entity with a new id; the ruleset's `CowData` (`server/database/CowData.ts`) records `preCowId → postCowId`. Characters saved **before** a COW store pre-COW ids in their rows (`level_feats.feat_id`, `character_abilities.ability_id`, ...). The composed ruleset cache is keyed by **post-COW ids**.
+Ruleset entities can be [Copy-On-Write'd](./rulesets.md) in a fork. A COW creates a new entity with a new id; the ruleset's `CowData` (`engine/core/cow/CowData.ts`) records `preCowId → postCowId`. Characters saved **before** a COW store pre-COW ids in their rows (`level_feats.feat_id`, `character_abilities.ability_id`, ...). The composed ruleset cache is keyed by **post-COW ids**.
 
 Without intervention, every lookup site had to remember to do `rulesetData.featsById.get(cow.resolve(storedId))`. Missing a call produced a silent cache miss. Three layers close the gap automatically.
 
@@ -126,31 +126,31 @@ The cow + rulesetCache modules have two kinds of callers. The split is by owners
 
 From `server/cache/rulesetCache/` (the scopes) and `server/cow/` (the copies):
 
-| Symbol                                   | Purpose                                                                                                                                                                         |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `withRulesetScope`                       | The single entry point for a single-ruleset operation.                                                                                                                          |
-| `withRulesetScopes`                      | Multi-ruleset list enrichment.                                                                                                                                                  |
-| `findScopedEntity`                       | The entity an id names in the composed view (the ruleset's own, or inherited through its source chain), or a 404.                                                               |
-| `RulesetEdit`                            | One change to a ruleset's entities, built in its scope (`new RulesetEdit(ruleset, rulesetData.cow)`); each method takes the transaction.                                        |
-| `RulesetEdit.cowToEdit` / `cowToDelete`  | The row a CRUD update or delete writes: the ruleset's own entity, or the copy of an inherited one (`cowToDelete` locks its own).                                                |
-| `RulesetEdit.cowOwner`                   | The row a customization create writes on: its owner, the ruleset's own (locked) or the copy of an inherited one (a class level's class copied with its levels).                 |
-| `RulesetEdit.cowCustomization`           | Resolve the modifier / property / requirement row an update or delete changes: copies an inherited owner, maps the row to its copy, re-checks a local row after the owner lock. |
-| `EntityCopy.create`                      | Fork an inherited entity into a ruleset: the copy, its customizations, relationships and merged siblings, and its snapshot.                                                    |
-| `lockEntityForMutation`                  | Lock an already-local owner before deleting its customizations.                                                                                                                 |
+| Symbol                                  | Purpose                                                                                                                                                                         |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `withRulesetScope`                      | The single entry point for a single-ruleset operation.                                                                                                                          |
+| `withRulesetScopes`                     | Multi-ruleset list enrichment.                                                                                                                                                  |
+| `findScopedEntity`                      | The entity an id names in the composed view (the ruleset's own, or inherited through its source chain), or a 404.                                                               |
+| `RulesetEdit`                           | One change to a ruleset's entities, built in its scope (`new RulesetEdit(ruleset, rulesetData.cow)`); each method takes the transaction.                                        |
+| `RulesetEdit.cowToEdit` / `cowToDelete` | The row a CRUD update or delete writes: the ruleset's own entity, or the copy of an inherited one (`cowToDelete` locks its own).                                                |
+| `RulesetEdit.cowOwner`                  | The row a customization create writes on: its owner, the ruleset's own (locked) or the copy of an inherited one (a class level's class copied with its levels).                 |
+| `RulesetEdit.cowCustomization`          | Resolve the modifier / property / requirement row an update or delete changes: copies an inherited owner, maps the row to its copy, re-checks a local row after the owner lock. |
+| `EntityCopy.create`                     | Fork an inherited entity into a ruleset: the copy, its customizations, relationships and merged siblings, and its snapshot.                                                     |
+| `lockEntityForMutation`                 | Lock an already-local owner before deleting its customizations.                                                                                                                 |
 
 For lineage checks (entity-belongs-to-sourceChain), `findScopedEntity`. For id canonicalization (pre-COW → post-COW) use `rulesetData.canonicalize(id)`. Sibling merging (aptitude links, modifiers, properties, requirements) is pre-baked into `rulesetData` by the compose step, so consumers only read `rulesetData.featsById`, `rulesetData.modifiersBySource`, etc. — never merge siblings themselves.
 
-From `server/cache/rulesetCache/index.ts`: `RulesetCache`, the class that holds the cache (`RulesetCache.ts`), and the types of what it holds.
+From `server/cache/rulesetCache/index.ts`: `RulesetCache`, the class that holds the cache (`RulesetCache.ts`). The view it composes, `RulesetData`, comes from `engine/core/view/index.ts`.
 
-| Symbol                                       | Purpose                                                                                               |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `RulesetCache.invalidate`                    | Clear the cache entries for a single ruleset. Call after every mutation.                              |
-| `RulesetCache.invalidateEntities`            | Same, but keep target-paths cache (used by customization mutations that don't change the entity set). |
-| `RulesetCache.invalidateAll`                 | Nuclear option — every ruleset. Used by tests and broad recomputations.                               |
-| `RulesetCache.warm`                          | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`.                      |
-| `RulesetData` (type)                   | Parameter / return type for scope callbacks and framework extension points.                           |
+| Symbol                            | Purpose                                                                                               |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `RulesetCache.invalidate`         | Clear the cache entries for a single ruleset. Call after every mutation.                              |
+| `RulesetCache.invalidateEntities` | Same, but keep target-paths cache (used by customization mutations that don't change the entity set). |
+| `RulesetCache.invalidateAll`      | Nuclear option — every ruleset. Used by tests and broad recomputations.                               |
+| `RulesetCache.warm`               | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`.                      |
+| `RulesetData` (type)              | Parameter / return type for scope callbacks and framework extension points.                           |
 
-`CowData`, the class `rulesetData.cow` is (`server/database/CowData.ts`), comes from `server/database/index.ts`: the cowContext holds it.
+`CowData`, the class `rulesetData.cow` is (`engine/core/cow/CowData.ts`), comes from `engine/core/cow/index.ts`: the cowContext holds it.
 
 ### Framework / copy primitives
 
@@ -265,7 +265,7 @@ Services used to query the DB for single rows even after the cache was warm. The
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `featsById`, `powersById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `klassesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `klassLevelsById` | Each entity of the composed view by id (a stored pre-COW id resolves to its copy)                                                                          |
 | `klassLevelByKlassAndLevel` (key `${klassId}:${level}`)                                                                                                                              | A class's level                                                                                                                                            |
-| `klassLevelsByKlassId`                                                                                                                                                               | A class's levels, sorted: the last its highest                                                                                                                          |
+| `klassLevelsByKlassId`                                                                                                                                                               | A class's levels, sorted: the last its highest                                                                                                             |
 | `propertiesByEntity`                                                                                                                                                                 | An entity's properties                                                                                                                                     |
 | `propertiesByEntityType` (key `"items"` / `"powers"` / `"rulesets"` / ...)                                                                                                           | Every property of one entity type                                                                                                                          |
 | `klassLevelFeatsWithFeatsByKlassLevel`, `klassLevelPowersWithPowersByKlassLevel`                                                                                                     | A class level's feats and powers, each with its entity                                                                                                     |
@@ -275,12 +275,12 @@ Services used to query the DB for single rows even after the cache was warm. The
 | `modifiersBySource`                                                                                                                                                                  | A source's modifiers                                                                                                                                       |
 | `requirementsByEntity`                                                                                                                                                               | An entity's requirements                                                                                                                                   |
 | `entityIdsByPropertyLookup` (key `${entityType}:${type}:${value}`)                                                                                                                   | The entities with a property value                                                                                                                         |
-| `klassLevelFeatsByKlassLevel`                                                                                                                                                         | A class level's feat rows, without their feats                                                                                                              |
+| `klassLevelFeatsByKlassLevel`                                                                                                                                                        | A class level's feat rows, without their feats                                                                                                             |
 | `modifiersById`                                                                                                                                                                      | Each modifier by id                                                                                                                                        |
 | `leveledAptitudeIds`                                                                                                                                                                 | The aptitudes counted by spell level (spell pools)                                                                                                         |
-| `aptitudeIdBySlug`, `aptitudeIdBySpellSlug`, `featIdBySlug`, `powerIdsBySlug`                                                                                                        | An aptitude, feat or powers by the slug a target path names them by (the modifier scans for `feats.<slug>.possessed` and `powers.<slug>.<aptitude>.known`) |
+| `aptitudeIdBySlug`, `featIdBySlug`, `powerIdsBySlug`                                                                                                                                 | An aptitude, feat or powers by the slug a target path names them by (the modifier scans for `feats.<slug>.possessed` and `powers.<slug>.<aptitude>.known`) |
 
-Each is a getter of `RulesetData` (`server/cache/rulesetCache/RulesetData.ts`), built from the composed lists the first time it's read and kept with the view: a request pays for the indices it reads. Building every one costs about 2.5 ms on the core ruleset and 10 ms on a fork using every extension, on top of composing its lists (under 1 ms and about 14 ms).
+Each is a getter of `RulesetData` (`engine/core/view/RulesetData.ts`), built from the composed lists the first time it's read and kept with the view: a request pays for the indices it reads. Building every one costs about 2.5 ms on the core ruleset and 10 ms on a fork using every extension, on top of composing its lists (under 1 ms and about 14 ms).
 
 Every id-keyed Map in this table is wrapped by `RulesetData.resolvingIds` — `.get(key)` / `.has(key)` auto-resolve `key` through `CowData.resolve`. Callers can pass stored pre-COW ids directly.
 
@@ -474,9 +474,9 @@ sequenceDiagram
 
 ## Adding a new entity to the ruleset cache
 
-1. Add the entity's type + an array field to `RulesetRawData` in `server/cache/rulesetCache/rawData.ts`.
+1. Add the entity's type + an array field to `RulesetRawData` in `engine/core/view/RulesetComposition.ts`, and its fetch to `server/cache/rulesetCache/rawData.ts`.
 2. Fetch it in the appropriate round of `fetchRulesetRawData` (rounds gate on dependencies — klass-level fetches need `klasses` first, customizations need all entity IDs).
-3. Add the composed array to `RulesetLists` and to `RulesetData` (`server/cache/rulesetCache/RulesetData.ts`).
+3. Add the composed array to `RulesetLists` and to `RulesetData` (`engine/core/view/RulesetData.ts`).
 4. Extend the compose step (`RulesetComposition`): concat across chain without the hidden rows (`this.composeRows`, which filters `cow.isHidden(id)`) → `cow.resolveRows` if it has FKs.
 5. Add a `<entity>ById` getter to `RulesetData`, like `featsById`: built on first read (`this.built.<entity>ById ??= …`) from `buildById(this.<entities>)` **and** wrapped with `this.resolvingIds(map)` so `.get` auto-resolves stored pre-COW ids.
 6. If callers need a filter like "X by Y", add that index as a getter too, wrapped the same way.
@@ -493,10 +493,11 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 ## References
 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
-- `server/cache/rulesetCache/` — `RulesetCache` (`RulesetCache.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up), the raw rows' fetch (`rawData.ts`), the compose step with its sibling merging and FK remap (`RulesetComposition.ts`), and the view it builds, whose lookup indices and resolving maps are built on first read (`RulesetData.ts`)
-- `server/cache/rulesetCache/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), the COW data's build (`CowDataBuilder.ts`; `RulesetCache` caches and invalidates it), the sibling merge's rules, which the compose step and a copy share (`siblingMerge.ts`), and the list the compose step gathers a merge's rows in (`SiblingRows.ts`)
+- `server/cache/rulesetCache/` — `RulesetCache` (`RulesetCache.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up; it hands the composition the ruleset's property order), and the raw rows' fetch (`rawData.ts`)
+- `server/cache/rulesetCache/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), and the COW data's build (`CowDataBuilder.ts`; `RulesetCache` caches and invalidates it)
+- `engine/core/view/` — the compose step with its sibling merging and FK remap (`RulesetComposition.ts`, with `RulesetRawData`, the rows it takes), the view it builds, whose lookup indices and resolving maps are built on first read (`RulesetData.ts`), the sibling merge's rules, which the compose step and a copy share (`siblingMerge.ts`), and the list the compose step gathers a merge's rows in (`SiblingRows.ts`)
 - `server/cow/` (copy-on-write's write side) — `RulesetEdit` (the rows a change writes, names a create takes), `EntityCopy` (a copy of an inherited entity), the copy primitives (`copyCustomizations.ts`)
-- `server/database/CowData.ts` — a ruleset's copy-on-write state: what an id resolves to, and whether it's overridden or a sibling loser
+- `engine/core/cow/CowData.ts` — a ruleset's copy-on-write state: what an id resolves to, and whether it's overridden or a sibling loser
 - `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `getCowContext` (infrastructure)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve

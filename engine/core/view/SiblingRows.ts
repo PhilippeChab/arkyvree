@@ -1,4 +1,4 @@
-import type { CowData } from "@/server/database/index.ts";
+import type { CowData } from "@/engine/core/cow/index.ts";
 
 /** A winner's rows of one kind, and each of its sibling losers', for a merge rule (`siblingMerge.ts`). */
 export interface SiblingGroup<T> {

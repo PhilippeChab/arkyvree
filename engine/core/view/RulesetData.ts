@@ -1,6 +1,4 @@
-import type { CowData } from "@/server/database/index.ts";
-import { sortProperties } from "@/shared/dnd3.5/properties/index.ts";
-import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import type { CowData } from "@/engine/core/cow/index.ts";
 import type {
   Aptitude,
   FeatWithAptitudes,
@@ -28,7 +26,6 @@ import { stripSeparators } from "@/shared/text.ts";
 interface Indices {
   abilitiesById: Map<string, RulesetAbility>;
   aptitudeIdBySlug: Map<string, string>;
-  aptitudeIdBySpellSlug: Map<string, string>;
   aptitudeIdsByHavingPowers: Set<string>;
   aptitudesById: Map<string, Aptitude>;
   entityIdsByPropertyLookup: Map<string, string[]>;
@@ -104,7 +101,8 @@ function buildById<T extends { id: string }>(list: T[]): Map<string, T> {
  * (`CowData.resolve`), so consumers don't thread `cow` through or call `canonicalize` on the common lookup path.
  */
 export default class RulesetData {
-  constructor(lists: RulesetLists, cow: CowData) {
+  /** `orderProperties`: the ruleset's order of an entity's properties, as its stat block shows them. */
+  constructor(lists: RulesetLists, cow: CowData, orderProperties: (properties: Property[]) => Property[]) {
     this.abilities = lists.abilities;
     this.aptitudes = lists.aptitudes;
     this.feats = lists.feats;
@@ -126,6 +124,7 @@ export default class RulesetData {
     this.saves = lists.saves;
     this.skills = lists.skills;
     this.cow = cow;
+    this.orderProperties = orderProperties;
   }
 
   private readonly built: Partial<Indices> = {};
@@ -135,6 +134,8 @@ export default class RulesetData {
   private readonly klassLevelPowers: KlassLevelPower[];
 
   private readonly modifiers: Modifier[];
+
+  private readonly orderProperties: (properties: Property[]) => Property[];
 
   private readonly properties: Property[];
 
@@ -241,7 +242,7 @@ export default class RulesetData {
 
   /** Each entity's properties as its stat block shows them, whoever reads them. */
   private get sortedProperties(): Property[] {
-    return (this.built.sortedProperties ??= sortProperties(this.properties));
+    return (this.built.sortedProperties ??= this.orderProperties(this.properties));
   }
 
   private get storedFeatsById(): Map<string, FeatWithAptitudes> {
@@ -266,16 +267,6 @@ export default class RulesetData {
    */
   get aptitudeIdBySlug(): Map<string, string> {
     return (this.built.aptitudeIdBySlug ??= new Map(this.aptitudes.map((apt) => [stripSeparators(apt.name), apt.id])));
-  }
-
-  /**
-   * `toSpellPossessionSlug(aptitude.name)` → aptitudeId: the "set powers.X.<apt>.known" modifier scan, in the
-   * virtually-possessed-power resolution path.
-   */
-  get aptitudeIdBySpellSlug(): Map<string, string> {
-    return (this.built.aptitudeIdBySpellSlug ??= new Map(
-      this.aptitudes.map((apt) => [toSpellPossessionSlug(apt.name), apt.id]),
-    ));
   }
 
   /** The aptitudes that have at least one power linked, from the powers' inline `powersAptitudesInRules` rows. */

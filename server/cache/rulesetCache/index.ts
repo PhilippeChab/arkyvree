@@ -12,11 +12,4 @@ export {
 } from "./CowDataBuilder.ts";
 export { findScopedEntity } from "./findScopedEntity.ts";
 export { default as RulesetCache } from "./RulesetCache.ts";
-export { default as RulesetData } from "./RulesetData.ts";
 export { type RulesetScope, withRulesetScope, withRulesetScopes } from "./scope.ts";
-export {
-  mergeSiblingAptitudeLinks,
-  mergeSiblingModifiers,
-  mergeSiblingProperties,
-  mergeSiblingRequirements,
-} from "./siblingMerge.ts";

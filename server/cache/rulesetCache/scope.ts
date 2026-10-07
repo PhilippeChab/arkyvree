@@ -1,9 +1,9 @@
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 
 import RulesetCache from "./RulesetCache.ts";
-import type RulesetData from "./RulesetData.ts";
 
 /** A ruleset and its view: what `withRulesetScope` hands its callback, and what an effect of the ruleset runs in. */
 export type RulesetScope = {

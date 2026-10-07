@@ -4,7 +4,8 @@
  * - getLevelUpPreview — computes merged pools, per-level skill points, and slot distributions for the level-up wizard
  */
 
-import { type RulesetData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetData } from "@/engine/core/view/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
 import type { AptitudesComponent, Dnd35LevelUpProjector, Dnd35RulesetModule } from "@/server/rulesets/dnd3.5/index.ts";

@@ -1,3 +1,4 @@
+import type { RulesetRawData } from "@/engine/core/view/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Abilities,
@@ -22,27 +23,6 @@ import {
   Saves,
   Skills,
 } from "@/server/repositories/index.ts";
-import type {
-  Aptitude,
-  FeatWithAptitudes,
-  Item,
-  Klass,
-  KlassLevel,
-  KlassLevelFeat,
-  KlassLevelPower,
-  KlassLevelSave,
-  KlassSkill,
-  Language,
-  Mechanic,
-  Modifier,
-  PowerWithAptitudes,
-  Property,
-  Race,
-  Requirement,
-  RulesetAbility,
-  RulesetSave,
-  Skill,
-} from "@/shared/relations.ts";
 
 type RawEntities = Pick<
   RulesetRawData,
@@ -58,32 +38,6 @@ type RawEntities = Pick<
   | "items"
   | "mechanics"
 >;
-
-export interface RulesetRawData {
-  abilities: RulesetAbility[];
-  aptitudes: Aptitude[];
-  feats: FeatWithAptitudes[];
-  items: Item[];
-  klasses: Klass[];
-  klassLevelFeats: KlassLevelFeat[];
-  klassLevelPowers: KlassLevelPower[];
-  klassLevels: KlassLevel[];
-  klassLevelSaves: KlassLevelSave[];
-  klassSkills: KlassSkill[];
-  languages: Language[];
-  leveledAptitudeIds: Set<string>;
-  mechanics: Mechanic[];
-  /** Every modifier whose source is an entity in this ruleset — all sourceTypes. */
-  modifiers: Modifier[];
-  powers: PowerWithAptitudes[];
-  /** Every property row owned by this ruleset — all entityTypes. Consumers filter. */
-  properties: Property[];
-  races: Race[];
-  /** Every requirement row in this ruleset, including those attached to modifiers. */
-  requirements: Requirement[];
-  saves: RulesetSave[];
-  skills: Skill[];
-}
 
 /**
  * Rounds 3 and 4: the customizations and the klass-level sub-tables. Customizations include everything keyed on

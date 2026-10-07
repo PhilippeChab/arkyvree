@@ -1,7 +1,9 @@
 import type { FC } from "react";
 
-import type { RulesetData, RulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import type { CowData, Db } from "@/server/database/index.ts";
+import type { CowData } from "@/engine/core/cow/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import type { Db } from "@/server/database/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
 import type {

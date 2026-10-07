@@ -1,8 +1,9 @@
 /** The feats and powers a character's modifiers make it possess without a pick. */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import FeatsPaths from "@/server/rulesets/dnd3.5/feats/FeatsPaths.ts";
 import PowersPaths from "@/server/rulesets/dnd3.5/powers/PowersPaths.ts";
+import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Modifier, PowerWithAptitudes } from "@/shared/relations.ts";
 
 /**
@@ -70,7 +71,7 @@ export function resolveVirtualPossessions(
       new Set(powerIds),
       rulesetData.powerIdsBySlug,
       rulesetData.powersById,
-      rulesetData.aptitudeIdBySpellSlug,
+      new Map(rulesetData.aptitudes.map((apt) => [toSpellPossessionSlug(apt.name), apt.id])),
     ),
   };
 }

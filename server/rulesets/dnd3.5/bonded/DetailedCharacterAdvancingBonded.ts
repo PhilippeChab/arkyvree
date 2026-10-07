@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 
 import type { BondedRaceStatBlock } from "./bondedRaceData.ts";
 import { scaleFeats, scaleSkillRanks } from "./bondedScaling.ts";
