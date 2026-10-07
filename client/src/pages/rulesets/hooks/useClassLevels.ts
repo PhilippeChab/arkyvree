@@ -6,6 +6,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { classLevelsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type LevelsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"], 200>;
@@ -38,9 +39,7 @@ export function useClassLevels(rulesetId: string, classId: string) {
     },
     onSuccess: () => {
       snackbar.success("Level created");
-      queryClient.invalidateQueries({
-        queryKey: classLevelsQuery(rulesetId, classId).queryKey,
-      });
+      invalidateRulesetEdit(queryClient, rulesetId, [classLevelsQuery(rulesetId, classId).queryKey]);
       setCreateDialogOpen(false);
     },
     onError: (error) => {

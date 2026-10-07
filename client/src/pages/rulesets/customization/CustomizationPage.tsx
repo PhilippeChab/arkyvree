@@ -21,6 +21,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
+import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import {
@@ -145,7 +146,7 @@ function CustomizationView({
 
   const handleSaved = (sourceId: string, saved: { id: string }, listKey: QueryKey, message: string) => {
     if (saved.id !== sourceId) followCopy(saved.id, sourceId);
-    void queryClient.invalidateQueries({ queryKey: listKey });
+    invalidateRulesetEdit(queryClient, rulesetId, [listKey]);
     snackbar.success(message);
     // Save responses lack relations (aptitudes, level feats): refetch the entity.
     return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.entity(rulesetId, type, saved.id) });
@@ -157,8 +158,10 @@ function CustomizationView({
       return deleteEntity(data, rulesetId, entityId);
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(rulesetId, type) });
-      if (klassLevelsKey) void queryClient.invalidateQueries({ queryKey: klassLevelsKey });
+      invalidateRulesetEdit(queryClient, rulesetId, [
+        QUERY_KEYS.rulesets.section(rulesetId, type),
+        ...(klassLevelsKey ? [klassLevelsKey] : []),
+      ]);
       snackbar.success(`${label} deleted`);
       navigate(backPath ?? listPath);
       // Gone: don't let Back render it from the cache.

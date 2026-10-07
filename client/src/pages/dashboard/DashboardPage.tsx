@@ -105,7 +105,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (error) {
+  if (error && !dashboardStats) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <LoadError what="Dashboard statistics" error={error} sx={{ borderRadius: 3 }} />

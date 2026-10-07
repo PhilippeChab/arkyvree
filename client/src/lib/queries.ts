@@ -4,11 +4,12 @@
  * page size drifts from the page's query is wasted, or worse, seeds the cache with pages of the wrong size.
  */
 
-import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
+import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
 import { rpc } from "@/client/src/services/rpc.ts";
 
+import { FOREVER } from "./durations.ts";
 import { QUERY_KEYS } from "./queryKeys.ts";
 
 type ActivityListParams = InferRequestType<typeof rpc.api.activities.$get>["query"];
@@ -170,6 +171,25 @@ export function dashboardStatsQuery() {
   });
 }
 
+/** After a write to a character's content: its sheet, and its level-up, which reads its abilities, levels and modifiers. */
+export function invalidateCharacter(queryClient: QueryClient, characterId: string) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.levelUp.all(characterId) }),
+  ]);
+}
+
+/**
+ * After a write a character's cards show (its name, race, levels, archive): the characters lists, and the campaigns'
+ * tabs, which list it in whichever campaigns it plays.
+ */
+export function invalidateCharacterListings(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.details }),
+  ]);
+}
+
 /** The user's notifications, a page at a time. */
 export function notificationListQuery(filters: NotificationListFilters) {
   return infiniteQueryOptions({
@@ -200,7 +220,7 @@ export function oglLicenseQuery() {
       if (!response.ok) throw new Error("Failed to load the license text");
       return response.text();
     },
-    staleTime: Infinity,
+    staleTime: FOREVER,
   });
 }
 

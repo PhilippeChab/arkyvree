@@ -32,6 +32,9 @@ import {
   EntityDetailsCard,
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
+import { propertiesQuery } from "@/client/src/pages/rulesets/customization/customizationQueries.ts";
+import { useCopyFollow } from "@/client/src/pages/rulesets/customization/sections/index.ts";
+import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
@@ -49,6 +52,7 @@ import {
   ClassSpellListSection,
   ClassSpellsKnownSection,
   ClassSpellsSection,
+  useFollowClassCopy,
 } from "./sections/index.ts";
 
 const SECTION_COMPONENTS = {
@@ -103,6 +107,10 @@ export default function ClassDetailsPage() {
   }>();
   const backUrl = entityPageState(location.state).from ?? `/rulesets/${rulesetId}/classes`;
   const currentTab: ClassSection = isClassSection(section) ? section : "levels";
+  // The bonus spell and caster type selects write the class's properties: a copy they make is followed, as its
+  // Properties tab's saves are
+  const followClassCopy = useFollowClassCopy(rulesetId, currentTab);
+  const { tag, follow } = useCopyFollow(classId, followClassCopy);
 
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
 
@@ -152,7 +160,7 @@ export default function ClassDetailsPage() {
       if (stillOpen && data.id !== sourceId)
         navigate(`/rulesets/${rulesetId}/classes/${data.id}/${currentTab}`, { replace: true, state: location.state });
 
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(rulesetId, "classes") });
+      invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, "classes")]);
       snackbar.success("Class updated");
     },
     onError: (err) => snackbar.error(err, "Failed to update class"),
@@ -162,26 +170,35 @@ export default function ClassDetailsPage() {
     mutationFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$delete({ param: { id: rulesetId, classId } })),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(rulesetId, "classes") });
+      invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, "classes")]);
       snackbar.success("Class deleted");
       navigate(backUrl);
+      // Gone, with its tabs: don't let Back render them from the cache
+      queryClient.removeQueries({ queryKey: classDetailQuery(rulesetId, classId).queryKey });
     },
     onError: (err) => snackbar.error(err, "Failed to delete class"),
   });
 
-  // Create, update or clear (empty value) the class's single property of a type.
-  const setClassProperty = async (type: string, propertyId: string | null | undefined, value: string) => {
+  // Create, update or clear (empty value) the class's single property of a type, as the Properties tab would: tagged
+  // with the class it was sent for, so a copy it makes of an inherited class is followed.
+  const setClassProperty = (type: string, propertyId: string | null | undefined, value: string) => {
     const param = { id: rulesetId, entityType: getUrlSegment("klasses"), entityId: classData?.id ?? classId };
     const endpoint = rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties;
-    if (!propertyId) await endpoint.$post({ param, json: { type, value } });
-    else if (!value) await endpoint[":propertyId"].$delete({ param: { ...param, propertyId } });
-    else await endpoint[":propertyId"].$put({ param: { ...param, propertyId }, json: { type, value } });
+    if (!propertyId) return tag(parseResponse(endpoint.$post({ param, json: { type, value } })));
+    if (!value) return tag(parseResponse(endpoint[":propertyId"].$delete({ param: { ...param, propertyId } })));
+    return tag(parseResponse(endpoint[":propertyId"].$put({ param: { ...param, propertyId }, json: { type, value } })));
   };
 
-  const handleClassPropertySaved = (message: string) => () => {
-    queryClient.invalidateQueries({ queryKey: classDetailQuery(rulesetId, classId).queryKey });
-    snackbar.success(message);
-  };
+  // What the Properties tab's own saves refresh: its list, the class (whose fields read the properties) and Local Changes
+  const handleClassPropertySaved =
+    (message: string) => (saved: { resolvedEntityId?: string; sourceEntityId: string }) => {
+      invalidateRulesetEdit(queryClient, rulesetId, [
+        propertiesQuery(rulesetId, "klasses", classId).queryKey,
+        classDetailQuery(rulesetId, classId).queryKey,
+      ]);
+      follow(saved);
+      snackbar.success(message);
+    };
 
   const bonusSpellMutation = useMutation({
     mutationFn: (abilityId: string) =>

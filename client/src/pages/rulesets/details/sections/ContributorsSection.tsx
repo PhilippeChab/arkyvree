@@ -126,7 +126,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
 
   if (isLoading) return <DiceSpinner sx={{ py: 4 }} />;
 
-  if (error) return <LoadError what="Contributors" error={error} />;
+  if (error && !data) return <LoadError what="Contributors" error={error} />;
 
   const canLeave = !isOwner && !!ruleset.contributorRole;
 

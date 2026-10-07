@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
 import { useDebouncedValue, useFormWith, useToggleSet, useValidationIssues } from "@/client/src/hooks/index.ts";
+import { invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 
 import type { LevelUpFormData } from "./levelUpTypes.ts";
@@ -71,6 +72,8 @@ export function useLevelWizardBase(characterId: string) {
   /** Drops the wizard's cached slots and refetches the sheet once the save lands. */
   const refreshAfterSave = useCallback(async () => {
     queryClient.removeQueries({ queryKey: QUERY_KEYS.characters.levelUp.all(characterId) });
+    // Its cards show its levels
+    void invalidateCharacterListings(queryClient);
     await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
   }, [queryClient, characterId]);
 

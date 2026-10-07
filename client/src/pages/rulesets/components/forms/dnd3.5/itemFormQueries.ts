@@ -11,7 +11,7 @@ import type { TemplateType } from "./itemForm.ts";
 /** The ruleset's templates of an item type (its weapons, armors or shields an item can be based on). */
 export function itemTemplatesQuery(rulesetId: string, type: TemplateType) {
   return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.section(rulesetId, `templates-${type}`),
+    queryKey: QUERY_KEYS.rulesets.itemTemplates(rulesetId, type),
     queryFn: () => parseResponse(rpc.api.rulesets[":id"].templates.$get({ param: { id: rulesetId }, query: { type } })),
   });
 }

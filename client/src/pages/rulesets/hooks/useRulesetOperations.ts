@@ -39,10 +39,14 @@ export function useRulesetOperations() {
 
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset | null>(null);
 
-  /** Refetches a ruleset and the lists that show it. */
-  const refreshRuleset = (id: string) =>
+  /**
+   * Refetches a ruleset and the lists that show it: the ruleset itself after an edit, an archive or a publish, which
+   * leave its sections as they were, and every section with it once its extensions change (`withContent`), whose
+   * content joins or leaves each of them.
+   */
+  const refreshRuleset = (id: string, withContent = false) =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.detail(id) }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.detail(id), exact: !withContent }),
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.lists }),
     ]);
 
@@ -160,7 +164,7 @@ export function useRulesetOperations() {
         `Subscribed to ${extensionIds.length === 1 ? "extension" : formatCount(extensionIds.length, "extension")}`,
       );
       setSubscribeDialogOpen(false);
-      void refreshRuleset(id);
+      void refreshRuleset(id, true);
     },
     onError: (error) => {
       snackbar.error(error, "Failed to subscribe to extension");
@@ -180,7 +184,7 @@ export function useRulesetOperations() {
       snackbar.success("Unsubscribed from extension");
       setUnsubscribeDialogOpen(false);
       setUnsubscribeTarget(null);
-      void refreshRuleset(id);
+      void refreshRuleset(id, true);
     },
     onError: (error) => {
       snackbar.error(error, "Failed to unsubscribe from extension");

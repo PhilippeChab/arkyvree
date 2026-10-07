@@ -215,7 +215,7 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
   );
 
   if (isLoadingSkills) return <DiceSpinner />;
-  if (skillsError) return <LoadError what="Skills" error={skillsError} />;
+  if (skillsError && !skillData) return <LoadError what="Skills" error={skillsError} />;
   if (!skillData) return null;
 
   const pointsSpent = Object.values(skillPointAllocations).reduce((sum, points) => sum + points, 0);

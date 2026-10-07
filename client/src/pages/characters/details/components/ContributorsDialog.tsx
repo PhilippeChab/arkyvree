@@ -120,7 +120,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
             <Stack sx={{ minHeight: { xs: 280, sm: 360 } }}>
               {isLoading ? (
                 <DiceSpinner sx={{ py: 4 }} />
-              ) : error ? (
+              ) : error && !data ? (
                 <LoadError what="Contributors" error={error} />
               ) : contributors.length === 0 && !owner ? (
                 <Stack spacing={2} sx={{ alignItems: "flex-start" }}>

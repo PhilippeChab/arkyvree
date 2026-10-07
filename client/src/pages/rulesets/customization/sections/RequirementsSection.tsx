@@ -12,6 +12,7 @@ import {
   EditDialog,
   EmptyValue,
   ExpandArrow,
+  LoadError,
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import {
@@ -96,6 +97,7 @@ export function RequirementsSection({
   const {
     data: requirements,
     isLoading,
+    error,
     createDialogOpen,
     editDialogOpen,
     deleteDialogOpen,
@@ -197,6 +199,7 @@ export function RequirementsSection({
   );
 
   // The requirements' tree, and after it a requirement under a condition (which groups nothing), so it can be fixed
+  const loadFailed = !!error && !requirements;
   const requirementsTree = useMemo((): RequirementTreeNode[] => {
     if (!requirements) return [];
     const tree = RequirementTree.fromRows(requirements);
@@ -386,8 +389,11 @@ export function RequirementsSection({
         {canEdit && <SectionAddButton label="Add Requirement" onClick={() => openCreate(null)} />}
         {/* Loading State */}
         {isLoading && <DiceSpinner sx={{ py: 4 }} />}
+        {/* Error State: only while nothing has loaded, a failed refetch keeping the tree */}
+        {loadFailed && <LoadError what="Requirements" error={error} />}
         {/* Content */}
         {!isLoading &&
+          !loadFailed &&
           (requirementsTree.length === 0 ? (
             <BlankState
               icon={RequirementsIcon}

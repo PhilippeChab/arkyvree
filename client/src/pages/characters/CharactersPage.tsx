@@ -101,7 +101,7 @@ export default function CharactersPage() {
 
           {isLoading ? (
             <PageLoader />
-          ) : error ? (
+          ) : error && characters.length === 0 ? (
             <LoadError what="Characters" error={error} />
           ) : characters.length > 0 ? (
             <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>

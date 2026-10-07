@@ -1,11 +1,4 @@
-import {
-  type QueryClient,
-  type QueryKey,
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type UseQueryOptions,
-} from "@tanstack/react-query";
+import { type QueryKey, useMutation, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import type { DefaultValues, FieldValues, UseFormReturn } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -22,6 +15,7 @@ import {
   EntityDetailsCard,
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
+import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
@@ -104,7 +98,7 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
       if (isStillOpen(`/rulesets/${rulesetId}/${section}/${sourceId}`) && saved.id !== sourceId)
         navigate(`/rulesets/${rulesetId}/${section}/${saved.id}`, { replace: true, state: location.state });
 
-      void invalidateSection(queryClient, rulesetId, section);
+      invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, section)]);
       snackbar.success(`${label} updated`);
     },
     onError: (err) => snackbar.error(err, `Failed to update ${label.toLowerCase()}`),
@@ -123,11 +117,6 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
       }}
     />
   );
-}
-
-/** Refetches the section that lists the entity. */
-function invalidateSection(queryClient: QueryClient, rulesetId: string, section: string) {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(rulesetId, section) });
 }
 
 /**
@@ -162,9 +151,11 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   const deleteMutation = useMutation({
     mutationFn: () => (editing ? editing.remove() : Promise.reject(new Error(`${label} can't be deleted`))),
     onSuccess: () => {
-      void invalidateSection(queryClient, rulesetId, section);
+      invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, section)]);
       snackbar.success(`${label} deleted`);
       navigate(backUrl);
+      // Gone: don't let Back render it from the cache
+      queryClient.removeQueries({ queryKey: query(entityId).queryKey });
     },
     onError: (err) => snackbar.error(err, `Failed to delete ${label.toLowerCase()}`),
   });

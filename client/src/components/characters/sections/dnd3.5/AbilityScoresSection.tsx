@@ -7,7 +7,7 @@ import { BlankNote, ConfirmDialog } from "@/client/src/components/common/index.t
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState } from "@/client/src/hooks/index.ts";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
-import { characterDetailQuery } from "@/client/src/lib/queries.ts";
+import { characterDetailQuery, invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useUserPreferencesStore } from "@/client/src/stores/userPreferencesStore.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
@@ -60,9 +60,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
 
       snackbar.error(error, "Failed to update ability score");
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
-    },
+    onSettled: () => invalidateCharacter(queryClient, characterId),
   });
 
   const decreaseDialog = useDialogState<{ abilityId: string; score: number }>();

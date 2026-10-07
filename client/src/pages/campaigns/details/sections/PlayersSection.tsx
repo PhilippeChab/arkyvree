@@ -58,7 +58,10 @@ import {
   RemovePlayerDialog,
   toPlayerPayload,
 } from "@/client/src/pages/campaigns/components/index.ts";
-import { campaignPlayersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
+import {
+  campaignPlayersQuery,
+  invalidateCampaignPlayers,
+} from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -113,6 +116,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   } = useInfiniteQuery({ ...campaignPlayersQuery(campaign.id, searchQuery), placeholderData: keepPreviousData });
 
   const players = pageItems(data);
+  const playersLoadFailed = !!playersError && !data;
 
   const addMutation = useMutation({
     mutationFn: async (data: PlayerFormData) => {
@@ -125,9 +129,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     },
     onSuccess: () => {
       snackbar.success("Player added");
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaign.id) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
+      invalidateCampaignPlayers(queryClient, campaign.id);
       setAddDialogOpen(false);
     },
     onError: (error) => {
@@ -146,9 +148,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     },
     onSuccess: () => {
       snackbar.success("Player updated");
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaign.id) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
+      invalidateCampaignPlayers(queryClient, campaign.id);
       setEditDialogOpen(false);
     },
     onError: (error) => {
@@ -171,10 +171,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         navigate("/campaigns", { replace: true });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
       } else {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaign.id) });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "characters") });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
+        invalidateCampaignPlayers(queryClient, campaign.id, true);
         setRemoveDialogOpen(false);
       }
     },
@@ -256,8 +253,8 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         />
         {/* Loading State */}
         {playersLoading && <DiceSpinner sx={{ py: 4 }} />}
-        {/* Error State */}
-        {playersError && (
+        {/* Error State: only while nothing has loaded, a failed refetch keeping the table */}
+        {playersLoadFailed && (
           // The room below the error, at the end of the tab
           <Box sx={{ pb: 3 }}>
             <LoadError what="Players" error={playersError} />
@@ -265,7 +262,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         )}
         {/* Table */}
         {!playersLoading &&
-          !playersError &&
+          !playersLoadFailed &&
           (players.length > 0 ? (
             <Stack spacing={2}>
               <TableFrame>

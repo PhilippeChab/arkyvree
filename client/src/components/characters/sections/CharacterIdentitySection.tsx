@@ -15,7 +15,7 @@ import {
 } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";
@@ -119,8 +119,8 @@ export function CharacterIdentitySection({
       ),
     onSuccess: async (saved, formData) => {
       sync.saved(formData, saved.updatedAt);
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.levelUp.all(characterId) });
+      void invalidateCharacterListings(queryClient);
+      await invalidateCharacter(queryClient, characterId);
     },
     onError: (err) => snackbar.error(err, "Failed to save character details"),
   });

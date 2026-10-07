@@ -27,7 +27,7 @@ import {
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import { itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { invalidateRulesetEdit, itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity, useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -119,8 +119,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     },
     onSuccess: (created) => {
       snackbar.success("Item created");
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(ruleset.id, "items") });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.changes(ruleset.id) });
+      invalidateRulesetEdit(queryClient, ruleset.id, [QUERY_KEYS.rulesets.section(ruleset.id, "items")]);
       setCreateDialogOpen(false);
       setDuplicateSourceId(null);
       openEntity(`items/${created.id}/customization`);
@@ -143,7 +142,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       const count = data.length;
       snackbar.success(`Created ${formatCount(count, "variant")}`);
       bulkDialog.close();
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(ruleset.id, "items") });
+      invalidateRulesetEdit(queryClient, ruleset.id, [QUERY_KEYS.rulesets.section(ruleset.id, "items")]);
     },
     onError: (err: Error) => {
       snackbar.error(err, "Failed to create variants");

@@ -182,7 +182,7 @@ export function LevelUpFeatsStep({ wizard, characterId }: LevelUpFeatsStepProps)
   // Changed from the picks as they fit the pools, which the wizard reads
   const { field: feats } = useController({ control, name: "selectedFeats" });
   if (isLoadingFeats) return <DiceSpinner />;
-  if (featsError) return <LoadError what="Feats" error={featsError} />;
+  if (featsError && !featData) return <LoadError what="Feats" error={featsError} />;
   if (!featData) return null;
 
   const aptitudePools: AptitudePool[] = Object.values(adjustedFeatPools);

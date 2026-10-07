@@ -37,7 +37,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   // Changed from the picks as they fit the pools, which the wizard reads
   const { field: powers } = useController({ control, name: "selectedPowers" });
   if (isLoadingPowers) return <DiceSpinner />;
-  if (powersError) return <LoadError what="Spells" error={powersError} />;
+  if (powersError && !powerData) return <LoadError what="Spells" error={powersError} />;
   if (!powerData) return null;
 
   const getPowerPoolAvailable = (pool: PowerAptitudePool) => {

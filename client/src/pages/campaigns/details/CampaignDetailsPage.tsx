@@ -72,8 +72,9 @@ export default function CampaignDetailsPage() {
   const [hardDeleteDialogOpen, setHardDeleteDialogOpen] = useState(false);
   const editForm = useFormWith<EditCampaignFormData>({ name: "", description: "" });
 
+  // The campaign itself and its lists: its tabs didn't change
   const invalidateCampaign = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(id) });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(id), exact: true });
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
   };
 
@@ -113,6 +114,8 @@ export default function CampaignDetailsPage() {
       snackbar.success("Campaign permanently deleted");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
       navigate("/campaigns");
+      // Gone, with its tabs: don't let Back render them from the cache
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.campaigns.detail(id) });
     },
     onError: (error) => snackbar.error(error, "Failed to delete campaign"),
   });

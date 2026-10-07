@@ -143,7 +143,7 @@ export function InviteLandingPage({
     );
   }
 
-  if (error) {
+  if (error && !invite) {
     return (
       <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
         <LoadError what="Invitation" error={error} />
