@@ -12,15 +12,24 @@ import { ActionMenuItem, PageError, PageTransition } from "@/client/src/componen
 import { DownloadIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useAnchorMenu, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { campaignDetailQuery } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { campaignCharacterQuery } from "./campaignQueries.ts";
+import { useCampaignPermissions } from "./hooks/index.ts";
 
 export default function CampaignCharacterPage() {
   const { id: campaignId = "", characterId = "" } = useParams<{ characterId: string; id: string }>();
   const menu = useAnchorMenu();
 
   const { data, isLoading, error } = useQuery(campaignCharacterQuery(campaignId, characterId));
+  // The viewer's role: the private notes show to the character's editors and the Game Master
+  const {
+    data: campaign,
+    isLoading: campaignLoading,
+    error: campaignError,
+  } = useQuery(campaignDetailQuery(campaignId));
+  const { isDM } = useCampaignPermissions(campaign);
 
   const exportFn = () =>
     parseResponse(
@@ -30,15 +39,16 @@ export default function CampaignCharacterPage() {
 
   usePageTitle(data?.identity?.physiology?.name);
 
-  if (isLoading) return <CharacterDetailSkeleton />;
+  if (isLoading || campaignLoading) return <CharacterDetailSkeleton />;
 
   // A passing refetch failure keeps the loaded sheet; a revoked visibility or unlink hides it. An address without its
   // ids loads nothing, and says so here too.
-  if (!data || accessLost(error)) {
+  const loadError = error ?? campaignError;
+  if (!data || !campaign || accessLost(loadError)) {
     return (
       <Container maxWidth="xl">
         <PageError
-          message={loadFailureMessage("Character", error)}
+          message={loadFailureMessage("Character", loadError)}
           backLabel="Back to Campaign"
           backTo={`/campaigns/${campaignId}/characters`}
         />
@@ -77,6 +87,7 @@ export default function CampaignCharacterPage() {
             readOnly
             partial={data.isPartial}
             equipmentMode="readonly"
+            showPrivateNotes={data.canEdit || isDM}
           />
         </Stack>
       </Container>

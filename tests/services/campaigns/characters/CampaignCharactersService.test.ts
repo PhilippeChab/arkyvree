@@ -182,12 +182,14 @@ describe("CampaignCharactersService", () => {
         visibility: "Public",
         description: publicOne.character.description,
       });
-      // Others' Partial ones: name only.
+      // Others' Partial ones: name and race only.
       expect(seen.get(partialOne.character.id)).toMatchObject({
         visibility: "Partial",
         name: partialOne.character.name,
+        race: "Human",
         description: null,
         levels: [],
+        totalLevel: null,
       });
       expect(seen.has(privateOne.character.id)).toBe(false);
 

@@ -1,12 +1,18 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
+import { addCharacterContributor } from "@/tests/support/contributors.ts";
+import { createWizardWithFamiliar } from "@/tests/support/levelFixtures.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 const characters = api.api.characters;
 const character = characters[":id"];
+
+/** What only a character's editors read, and its campaign's Game Master. */
+const PRIVATE_NOTES = "Plans to betray the party";
 
 async function languageNames(id: string) {
   return (await expectOk(character.$get({ param: { id } }))).identity.physiology.languages.map((l) => l.name).sort();
@@ -146,9 +152,44 @@ describe("characters", () => {
     });
   });
 
+  describe("private notes", () => {
+    test("saves a character's private notes, which its editors read and no one else", async () => {
+      const { id } = await postCharacter({ notes: "Public notes" });
+      const saved = await expectOk(character.$put({ param: { id }, json: { privateNotes: PRIVATE_NOTES } }));
+      expect(saved).toMatchObject({ notes: "Public notes", privateNotes: PRIVATE_NOTES });
+      expect((await expectOk(character.$get({ param: { id } }))).identity.background).toEqual({
+        notes: "Public notes",
+        privateNotes: PRIVATE_NOTES,
+      });
+
+      const contributor = await createSignedInUser("contributor");
+      await addCharacterContributor(id, contributor.user, SEED_USER_ID);
+      const theirs = contributor.api.api.characters[":id"];
+      await expectOk(theirs.$put({ param: { id }, json: { privateNotes: "Edited by a contributor" } }));
+      expect((await expectOk(theirs.$get({ param: { id } }))).identity.background.privateNotes).toBe(
+        "Edited by a contributor",
+      );
+
+      const { api: outsider } = await createSignedInUser("outsider");
+      await expectStatus(outsider.api.characters[":id"].$get({ param: { id } }), 404);
+      await expectStatus(outsider.api.characters[":id"].$put({ param: { id }, json: { privateNotes: "" } }), 404);
+    });
+
+    test("saves a bonded creature's private notes, which its master's sheet holds", async () => {
+      const { masterId, bonded } = await createWizardWithFamiliar();
+      await expectOk(character.$put({ param: { id: bonded.id }, json: { privateNotes: PRIVATE_NOTES } }));
+
+      const own = await expectOk(character.$get({ param: { id: bonded.id } }));
+      expect(own.identity.background.privateNotes).toBe(PRIVATE_NOTES);
+      const master = await expectOk(character.$get({ param: { id: masterId } }));
+      expect(master.bonded.familiar?.identity.background.privateNotes).toBe(PRIVATE_NOTES);
+    });
+  });
+
   describe("sharing", () => {
     test("shares a character with anyone holding its token, without its private notes", async () => {
       const { id } = await postCharacter();
+      await expectOk(character.$put({ param: { id }, json: { privateNotes: PRIVATE_NOTES } }));
       const { shareToken } = await expectOk(character.share.$post({ param: { id } }));
       expect(shareToken).toEqual(expect.any(String));
       expect(await expectOk(character.$get({ param: { id } }))).toMatchObject({ shareToken });
@@ -157,10 +198,23 @@ describe("characters", () => {
       const sheet = await expectOk(shared.$get({ param: { shareToken: shareToken! } }));
       expect(sheet.id).toBe(id);
       expect(sheet.identity.background).not.toHaveProperty("privateNotes");
+      expect(JSON.stringify(sheet)).not.toContain(PRIVATE_NOTES);
 
       const pdf = await shared.pdf.$get({ param: { shareToken: shareToken! } });
       expect(pdf.status).toBe(200);
       expect(pdf.headers.get("Content-Type")).toBe("application/pdf");
+    });
+
+    test("shares a master's bonded creature without its private notes", async () => {
+      const { masterId, bonded } = await createWizardWithFamiliar();
+      await expectOk(character.$put({ param: { id: bonded.id }, json: { privateNotes: PRIVATE_NOTES } }));
+      const { shareToken } = await expectOk(character.share.$post({ param: { id: masterId } }));
+
+      const sheet = await expectOk(
+        guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: shareToken! } }),
+      );
+      expect(sheet.bonded.familiar?.identity.background).not.toHaveProperty("privateNotes");
+      expect(JSON.stringify(sheet)).not.toContain(PRIVATE_NOTES);
     });
 
     test("stops sharing once the token is revoked", async () => {

@@ -366,6 +366,7 @@ class CharactersService extends include(Object, Archives) {
       languageIds?: string[];
       name?: string;
       notes?: string;
+      privateNotes?: string;
       updatedAt?: string;
       weight?: string | null;
       xp?: number;

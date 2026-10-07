@@ -8,17 +8,61 @@ import type { CampaignRole } from "@/shared/enums.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
+import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
+import { createWizardWithFamiliar } from "@/tests/support/levelFixtures.ts";
+import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+
+type Client = typeof api;
 
 const characters = api.api.campaigns[":id"].characters;
 const character = characters[":characterId"];
+
+/** What a filled character holds that a Partial one hides from the other players. */
+const SECRETS = {
+  deity: "Olidammara",
+  description: "A scar runs down her left cheek",
+  notes: "Owes the thieves' guild a favor",
+  privateNotes: "Plans to betray the party",
+};
 
 /** Adds a new user to the campaign with `role`, and returns a client signed in as them. */
 async function join(campaignId: string, role: CampaignRole) {
   const member = await createSignedInUser("member");
   const [player] = await Players.create(db, { campaignId, userId: member.user.id, role });
   return { ...member, player };
+}
+
+/**
+ * A campaign the seeded user plays in, with `characterId` linked as `visibility`, and its Game Master, a contributor of
+ * the character and another player, each a new member.
+ */
+async function linkWithMembers(characterId: string, visibility: "Partial" | "Public") {
+  const campaignId = (await postCampaign()).id;
+  const owner = (await Players.findOne(db, { campaignId, userId: SEED_USER_ID }))!;
+  await Players.update(db, { role: "Player Character" }, { id: owner.id });
+  await expectOk(characters.$post({ param: { id: campaignId }, json: { characterId, visibility } }));
+  const contributor = await join(campaignId, "Player Character");
+  await addCharacterContributor(characterId, contributor.user, SEED_USER_ID);
+  return {
+    campaignId,
+    gm: await join(campaignId, "Game Master"),
+    contributor,
+    player: await join(campaignId, "Player Character"),
+  };
+}
+
+/** The seeded user's character with a description, notes, private notes, a deity, an alignment, a language and a level. */
+async function postFilledCharacter() {
+  const { klassMap, langMap } = await getSeedCtx();
+  const { deity, description, notes, privateNotes } = SECRETS;
+  const { id } = await postCharacter({ alignment: "Chaotic Good", deity, description, notes });
+  await expectOk(
+    api.api.characters[":id"].$put({ param: { id }, json: { privateNotes, languageIds: [langMap["Draconic"]] } }),
+  );
+  await addCharacterLevel(id, (await findKlassLevel(klassMap.pc["Fighter"], 1))!.id);
+  return id;
 }
 
 async function queuedPdfPayload(characterId: string) {
@@ -39,6 +83,13 @@ async function setupExport(role: CampaignRole) {
   await Players.update(db, { role: "Player Character" }, { id: owner.id });
   await PlayerCharacters.create(db, { playerId: owner.id, characterId, visibility: "Private" });
   return { campaignId, characterId, member: await join(campaignId, role) };
+}
+
+/** The campaign character's sheet as `client` sees it. */
+async function sheetOf(client: Client, campaignId: string, characterId: string) {
+  return await expectOk(
+    client.api.campaigns[":id"].characters[":characterId"].$get({ param: { id: campaignId, characterId } }),
+  );
 }
 
 describe("campaigns characters", () => {
@@ -106,38 +157,120 @@ describe("campaigns characters", () => {
     await expectStatus(characters.$post({ param: { id: campaignId }, json: { characterId } }), 409);
   });
 
-  for (const visibility of ["Partial", "Public"] as const) {
-    test(`${visibility} hides private notes and share tokens from other players`, async () => {
-      const { campaignId, characterId } = await setup();
-      const shareToken = crypto.randomUUID();
-      await Characters.update(db, { privateNotes: "Secret GM notes", shareToken }, { id: characterId });
-      await expectOk(characters.$post({ param: { id: campaignId }, json: { characterId, visibility } }));
-      const viewer = await join(campaignId, "Player Character");
+  test("Public hides private notes and share tokens from other players", async () => {
+    const { campaignId, characterId } = await setup();
+    const shareToken = crypto.randomUUID();
+    await Characters.update(db, { privateNotes: SECRETS.privateNotes, shareToken }, { id: characterId });
+    await expectOk(characters.$post({ param: { id: campaignId }, json: { characterId, visibility: "Public" } }));
+    const viewer = await join(campaignId, "Player Character");
 
-      const body = await expectOk(
-        viewer.api.api.campaigns[":id"].characters[":characterId"].$get({ param: { id: campaignId, characterId } }),
-      );
-      expect(body.shareToken).toBeNull();
-      expect(body.identity.background.privateNotes).toBe("");
-      expect(JSON.stringify(body)).not.toContain("Secret GM notes");
-      expect(JSON.stringify(body)).not.toContain(shareToken);
-      if (visibility === "Partial") {
-        expect(body).toMatchObject({
-          equipment: [],
-          virtualFeats: [],
-          virtualPowers: [],
-          spellTags: {},
-          bonded: {},
-          skillBudget: { available: 0, spent: 0, total: 0 },
-          validation: { valid: true, issues: [] },
-        });
-      }
+    const body = await sheetOf(viewer.api, campaignId, characterId);
+    expect(body.shareToken).toBeNull();
+    expect(body.identity.background?.privateNotes).toBe("");
+    expect(JSON.stringify(body)).not.toContain(SECRETS.privateNotes);
+    expect(JSON.stringify(body)).not.toContain(shareToken);
 
-      const own = await expectOk(character.$get({ param: { id: campaignId, characterId } }));
-      expect(own.identity.background.privateNotes).toBe("Secret GM notes");
-      expect(own.shareToken).toBe(shareToken);
+    const own = await sheetOf(api, campaignId, characterId);
+    expect(own.identity.background?.privateNotes).toBe(SECRETS.privateNotes);
+    expect(own.shareToken).toBe(shareToken);
+  });
+
+  test("Partial shows other players a character's name and physical traits, and nothing else", async () => {
+    const characterId = await postFilledCharacter();
+    const shareToken = crypto.randomUUID();
+    await Characters.update(db, { shareToken }, { id: characterId });
+    const { campaignId, gm, player } = await linkWithMembers(characterId, "Partial");
+
+    const sheet = await sheetOf(player.api, campaignId, characterId);
+    expect(sheet.identity).toEqual({
+      background: null,
+      beliefs: null,
+      meta: null,
+      physiology: {
+        name: expect.stringMatching(/^Test Character/),
+        race: expect.objectContaining({ name: "Human" }),
+        age: 25,
+        gender: "Male",
+        height: "180",
+        weight: "80",
+        description: null,
+        languages: null,
+      },
     });
-  }
+    expect(sheet).toMatchObject({
+      isPartial: true,
+      shareToken: null,
+      classes: {},
+      equipment: [],
+      virtualFeats: [],
+      virtualPowers: [],
+      spellTags: {},
+      bonded: {},
+      skillBudget: { available: 0, spent: 0, total: 0 },
+      validation: { valid: true, issues: [] },
+    });
+    const text = JSON.stringify(sheet);
+    for (const hidden of [...Object.values(SECRETS), "Chaotic Good", "Draconic", "Fighter", shareToken])
+      expect(text).not.toContain(hidden);
+
+    const roster = await expectOk(
+      player.api.api.campaigns[":id"].characters.$get({ param: { id: campaignId }, query: {} }),
+    );
+    expect(roster.items).toEqual([
+      {
+        id: characterId,
+        name: sheet.identity.physiology.name,
+        description: null,
+        race: "Human",
+        levels: [],
+        totalLevel: null,
+        visibility: "Partial",
+        isOwn: false,
+      },
+    ]);
+
+    // The Game Master sees it whole.
+    expect((await sheetOf(gm.api, campaignId, characterId)).identity).toMatchObject({
+      background: { notes: SECRETS.notes, privateNotes: SECRETS.privateNotes },
+      beliefs: { alignment: "Chaotic Good", deity: SECRETS.deity },
+      meta: { level: 1 },
+      physiology: { description: SECRETS.description, languages: [expect.objectContaining({ name: "Draconic" })] },
+    });
+    const gmRoster = await expectOk(
+      gm.api.api.campaigns[":id"].characters.$get({ param: { id: campaignId }, query: {} }),
+    );
+    expect(gmRoster.items[0]).toMatchObject({ description: SECRETS.description, totalLevel: 1 });
+  });
+
+  test("shows a character's private notes to its editors and the Game Master, and blank to the other players", async () => {
+    const characterId = (await postCharacter()).id;
+    await expectOk(
+      api.api.characters[":id"].$put({ param: { id: characterId }, json: { privateNotes: SECRETS.privateNotes } }),
+    );
+    const { campaignId, gm, contributor, player } = await linkWithMembers(characterId, "Public");
+
+    const privateNotesOf = async (client: Client) =>
+      (await sheetOf(client, campaignId, characterId)).identity.background?.privateNotes;
+    expect(await privateNotesOf(api)).toBe(SECRETS.privateNotes);
+    expect(await privateNotesOf(contributor.api)).toBe(SECRETS.privateNotes);
+    expect(await privateNotesOf(gm.api)).toBe(SECRETS.privateNotes);
+    expect(await privateNotesOf(player.api)).toBe("");
+  });
+
+  test("shows a bonded creature's private notes to whoever reads its master's", async () => {
+    const { masterId, bonded } = await createWizardWithFamiliar();
+    await Characters.update(db, { privateNotes: SECRETS.privateNotes }, { id: bonded.id });
+    const { campaignId, gm, contributor, player } = await linkWithMembers(masterId, "Public");
+
+    const familiarNotesOf = async (client: Client) => {
+      const familiar = Object.values((await sheetOf(client, campaignId, masterId)).bonded)[0];
+      return familiar?.identity.background.privateNotes;
+    };
+    expect(await familiarNotesOf(api)).toBe(SECRETS.privateNotes);
+    expect(await familiarNotesOf(contributor.api)).toBe(SECRETS.privateNotes);
+    expect(await familiarNotesOf(gm.api)).toBe(SECRETS.privateNotes);
+    expect(await familiarNotesOf(player.api)).toBe("");
+  });
 
   describe("PDF export", () => {
     test("lets the Game Master export a player's character", async () => {

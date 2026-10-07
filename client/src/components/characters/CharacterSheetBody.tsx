@@ -37,6 +37,8 @@ interface CharacterSheetBodyProps {
   portraitUrl?: string | null;
   readOnly?: boolean;
   rulesetId?: string;
+  /** The viewer receives the private notes: the character's editors, and its campaign's Game Master. */
+  showPrivateNotes?: boolean;
 }
 
 export function CharacterSheetBody({
@@ -54,6 +56,7 @@ export function CharacterSheetBody({
   rulesetId,
   diagnostics,
   portraitUrl,
+  showPrivateNotes,
 }: CharacterSheetBodyProps) {
   const abilities = character.abilities || {};
   const saves = character.savingThrows || {};
@@ -71,6 +74,7 @@ export function CharacterSheetBody({
         portraitReadOnly={portraitReadOnly}
         partial={partial}
         portraitUrl={portraitUrl}
+        showPrivateNotes={showPrivateNotes}
       />
 
       {!partial && (

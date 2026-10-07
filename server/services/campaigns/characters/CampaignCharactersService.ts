@@ -145,14 +145,13 @@ class CampaignCharactersService {
           .map((id) => characterMap.get(id))
           .filter((char): char is NonNullable<typeof char> => char !== undefined);
 
-        // Map to final format, limiting data for Partial visibility characters
+        // Map to final format: a Partial character shows the other players its name and race, and none of its build
         const enrichedCharacters = orderedCharacters.map((char) => {
           const meta = characterMeta.get(char.id);
           const isOwn = meta?.playerId === member.id;
           const isPartial = !isGM && !isOwn && meta?.visibility === "Partial";
 
           const classLevels = classLevelsByCharacter.get(char.id) ?? [];
-          const totalLevel = classLevels.reduce((sum, lvl) => sum + lvl.level, 0);
           const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
           const race = rulesetData?.racesById.get(char.raceId);
 
@@ -162,7 +161,7 @@ class CampaignCharactersService {
             description: isPartial ? null : char.description,
             race: race?.name ?? "Unknown",
             levels: isPartial ? [] : classLevels,
-            totalLevel,
+            totalLevel: isPartial ? null : classLevels.reduce((sum, lvl) => sum + lvl.level, 0),
             visibility: meta?.visibility ?? "Private",
             isOwn,
           };

@@ -46,7 +46,9 @@ export default new Hono<SessionContext>()
       ...redactForViewer(response),
       shareToken: data.canEdit ? response.shareToken : null,
     };
-    // Explicit allowlist: a new full-response field must be considered here.
+    const { physiology } = response.identity;
+    // Explicit allowlist: a new full-response field, or identity field, must be considered here. A Partial character
+    // shows its name and physical traits (race, age, gender, height, weight), and nothing else.
     const visibleResponse = data.isPartial
       ? ({
           id: safeResponse.id,
@@ -62,7 +64,21 @@ export default new Hono<SessionContext>()
           deletedAt: safeResponse.deletedAt,
           updatedAt: safeResponse.updatedAt,
           shareToken: null,
-          identity: safeResponse.identity,
+          identity: {
+            background: null,
+            beliefs: null,
+            meta: null,
+            physiology: {
+              age: physiology.age,
+              description: null,
+              gender: physiology.gender,
+              height: physiology.height,
+              languages: null,
+              name: physiology.name,
+              race: physiology.race,
+              weight: physiology.weight,
+            } satisfies Record<keyof typeof physiology, unknown>,
+          } satisfies Record<keyof typeof response.identity, unknown>,
           skillBudget: { available: 0, spent: 0, total: 0 },
           abilities: {},
           combat: {},
