@@ -35,7 +35,13 @@ describe("A parser command's line", () => {
     expect(() => CommandLine.scrape(["class", "--delay", "1.5"])).toThrow(
       '--delay takes a whole number of milliseconds, not "1.5"',
     );
-    expect(() => CommandLine.scrape(["class", "--delay"])).toThrow('not "undefined"');
+    expect(() => CommandLine.scrape(["class", "--delay"])).toThrow("--delay takes a value");
     expect(() => CommandLine.scrape(["class", "--type", "feat"])).toThrow("Unknown option --type");
+  });
+
+  test("refuses an option given without its value, which would be read as not given", () => {
+    expect(() => CommandLine.scrape(["class", "--book"])).toThrow("--book takes a value");
+    expect(() => CommandLine.scrape(["class", "--url", "--no-cache"])).toThrow("--url takes a value");
+    expect(() => CommandLine.filters(["srd", "--type"])).toThrow("--type takes a value");
   });
 });

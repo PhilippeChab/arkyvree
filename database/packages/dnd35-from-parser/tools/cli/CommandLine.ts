@@ -6,8 +6,8 @@ type ScrapeRequest = { book: string; delay?: number; noCache: boolean; type?: st
 
 /**
  * A parser command's line, read one way by every command: its options (`--type <type>`, a flag such as `--no-cache`)
- * are taken out wherever they stand, an option the command doesn't take is refused (it would be read as a word), and
- * the words left are what the command names. Each command's grammar is a static method: the reference filters most
+ * are taken out wherever they stand, an option given without its value or one the command doesn't take is refused
+ * (it would be read as nothing, or as a word), and the words left are what the command names. Each command's grammar is a static method: the reference filters most
  * commands take (`filters`), and what `parser:scrape` takes (`scrape`).
  */
 export class CommandLine {
@@ -21,8 +21,8 @@ export class CommandLine {
    */
   static filters(argv = process.argv.slice(2)): ReferenceFilters & { keyFilter?: string } {
     const line = new CommandLine(argv);
-    const typeFilter = line.option("type")?.value;
-    const keyFilter = line.option("key")?.value;
+    const typeFilter = line.option("type");
+    const keyFilter = line.option("key");
     const [bookFilter, name] = line.words("a book is named without one (<book> [<name>] [--type <type>])");
     return { bookFilter, typeFilter, nameFilter: name?.toLowerCase(), keyFilter };
   }
@@ -35,12 +35,12 @@ export class CommandLine {
     const line = new CommandLine(argv);
     const noCache = line.flag("no-cache");
     const delay = line.option("delay");
-    if (delay && !(Number.isInteger(Number(delay.value)) && Number(delay.value) >= 0))
-      throw new Error(`--delay takes a whole number of milliseconds, not "${delay.value}"`);
-    const url = line.option("url")?.value;
-    const book = line.option("book")?.value ?? CORE_BOOK;
+    if (delay !== undefined && !(Number.isInteger(Number(delay)) && Number(delay) >= 0))
+      throw new Error(`--delay takes a whole number of milliseconds, not "${delay}"`);
+    const url = line.option("url");
+    const book = line.option("book") ?? CORE_BOOK;
     const [type] = line.words("<type> [--book <slug>] [--url <url>] [--no-cache] [--delay <ms>]");
-    return { type, book, url, noCache, ...(delay ? { delay: Number(delay.value) } : {}) };
+    return { type, book, url, noCache, ...(delay !== undefined ? { delay: Number(delay) } : {}) };
   }
 
   /** What's left of the line, as the command takes its options out. */
@@ -53,10 +53,16 @@ export class CommandLine {
     return index >= 0;
   }
 
-  /** Takes the option `--<name>` and its value out of the line: none when it isn't given. */
-  private option(name: string): { value?: string } | undefined {
+  /**
+   * Takes the option `--<name>` and its value out of the line: none when it isn't given. One given without a value (the
+   * line ends, or another option follows) is refused: it would be read as not given.
+   */
+  private option(name: string): string | undefined {
     const index = this.args.indexOf(`--${name}`);
-    return index >= 0 ? { value: this.args.splice(index, 2)[1] } : undefined;
+    if (index < 0) return undefined;
+    const [, value] = this.args.splice(index, 2);
+    if (value === undefined || value.startsWith("--")) throw new Error(`--${name} takes a value`);
+    return value;
   }
 
   /** The words left once the command took its options: another option is refused, `usage` saying what it takes. */
