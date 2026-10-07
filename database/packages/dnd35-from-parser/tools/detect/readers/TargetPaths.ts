@@ -55,7 +55,8 @@ class TargetPaths {
     if (/^feats\.[a-z]+(?:\.\*)?\.(?:possessed|count)$/.test(path)) return true;
     if (/^classes\.[a-z]+\.level$/.test(path)) return true;
     if (/^spellcasting\.(arcane|divine)$/.test(path)) return true;
-    // A skill group's rank ("skills.knowledge.rank"), or a subtype's its slug starts with ("skills.craftleatherworking.rank")
+    // A skill group's rank ("skills.knowledge.rank"), or a subtype's its slug starts with
+    // ("skills.craftleatherworking.rank")
     const skillMatch = path.match(/^skills\.([a-z]+)\.rank$/);
     if (skillMatch) {
       const slug = skillMatch[1];

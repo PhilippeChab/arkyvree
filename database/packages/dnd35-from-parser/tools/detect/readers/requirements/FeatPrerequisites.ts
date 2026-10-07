@@ -9,11 +9,7 @@ import type { RequirementEntry } from "@/database/packages/dnd35/content/customi
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { readAlignmentRequirement } from "./alignment.ts";
-import { readFamilyFeatRequirements } from "./anyFeats.ts";
-import { readFamilyOptions, stripFeatChoice } from "./featOptions.ts";
 import { RequirementReading } from "./RequirementReading.ts";
-import { readAnySkillRequirement } from "./skills.ts";
 
 /** The class abilities a prerequisite names, which no feat is read from: `CLASS_ABILITY_PREREQUISITES` reads them. */
 const ABILITY_PREREQ_PATTERNS = [
@@ -240,56 +236,6 @@ function isCommonPhrase(text: string): boolean {
   return false;
 }
 
-/** The feats a feat's prerequisite text names, its other prerequisites (abilities, ranks, levels…) left out. */
-function listedFeatNames(text: string): string[] {
-  const feats: string[] = [];
-
-  // Known feat patterns in prerequisite text
-  // They appear as capitalized names, sometimes with additional context
-  // We need to match things like "Power Attack", "Combat Expertise", "Dodge"
-  // but NOT ability scores, BAB, skill ranks, or generic phrases
-  // Remove ability scores, BAB, base save bonus, skill rank, and caster level clauses first
-  const cleaned = text
-    .replace(/(?:Base attack bonus|BAB)[:\s]+\+{1,2}\d+/gi, "")
-    .replace(/[Bb]ase\s+(?:Fortitude|Reflex|Will)\s+save\s+bonus\s+\+\d+/gi, "")
-    .replace(/\b(?:Str|Dex|Con|Int|Wis|Cha)\s+\d+/gi, "")
-    .replace(/[A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?\s+\d+\s+ranks?/gi, "")
-    .replace(/[Cc]aster level \d+(?:st|nd|rd|th)/g, "")
-    .replace(/\w+\s+level\s+\d+(?:st|nd|rd|th)?/gi, "")
-    .replace(/[Aa](?:bility|ble) to cast[^,.]+/gi, "")
-    .replace(/proficiency with[^,.]+/gi, "")
-    .replace(
-      /\b(?:Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal)\s+(?:or\s+(?:Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal|smaller)\s+)?size\b/gi,
-      "",
-    )
-    .replace(/must be[^,.]+/gi, "")
-    .trim();
-
-  // Split remaining text on comma boundaries
-  const parts = cleaned.split(/,\s*/);
-
-  for (const part of parts) {
-    let trimmed = part
-      .trim()
-      .replace(/\.$/, "")
-      .replace(/^and\s+/i, "");
-    if (!trimmed || trimmed.length < 3) continue;
-
-    // Strip weapon/school qualifiers — refers to the template family feat
-    trimmed = trimmed
-      .replace(/\s*\(?with (?:selected |the )?(?:weapon|school)(?:\s+chosen)?\)?$/i, "")
-      .replace(/\s+(?:in|of) the (?:chosen|selected|same) (?:school|weapon)$/i, "");
-
-    // A feat name: starts with uppercase, at least 2 chars, not a common phrase or class ability
-    if (trimmed.match(/^[A-Z][a-zA-Z]/) && !isCommonPhrase(trimmed)) {
-      const titled = titleCaseFeat(trimmed);
-      if (!ABILITY_PREREQ_PATTERNS.some((p) => p.test(titled))) feats.push(stripFeatChoice(titled) ?? titled);
-    }
-  }
-
-  return feats;
-}
-
 /** A feat's size requirements: "Small or Medium size", "Medium or smaller size", "Small size". */
 function sizeRequirements(text: string): RequirementEntry[] {
   const reqs: RequirementEntry[] = [];
@@ -319,23 +265,6 @@ function sizeRequirements(text: string): RequirementEntry[] {
   if (exactSizeMatch) {
     const size = SIZE_OPTIONS.find((s) => s.toLowerCase() === exactSizeMatch[1].toLowerCase())!;
     reqs.push(eqStr(RACE_SIZE_PATH, size));
-  }
-  return reqs;
-}
-
-/** A feat's skill rank requirements: "SkillName N ranks", "Knowledge (any)" any Knowledge skill. */
-function skillRankRequirements(text: string): RequirementEntry[] {
-  const reqs: RequirementEntry[] = [];
-  const skillRegex = /([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?)\s+(\d+)\s+ranks?/gi;
-  let skillMatch: RegExpExecArray | null;
-  while ((skillMatch = skillRegex.exec(text)) !== null) {
-    const name = skillMatch[1].trim();
-    const ranks = parseInt(skillMatch[2], 10);
-    // Skip false positives
-    if (name.match(/^(Base|Must|Any|Or|And|The|Can|Has|Level)$/i)) continue;
-
-    // "Knowledge (any)" → OR of all Knowledge skills; else the skill, or its base skill for a specialization
-    reqs.push(readAnySkillRequirement(name, ranks) ?? gte(`skills.${toSkillSlug(name)}.rank`, ranks));
   }
   return reqs;
 }
@@ -394,7 +323,7 @@ export class FeatPrerequisites extends RequirementReading {
     const relevantAlignment = /\brelevant alignment\b/i.test(entry.prerequisiteText ?? "")
       ? RELEVANT_ALIGNMENTS[/\((\w+)\)$/.exec(entry.name)?.[1].toLowerCase() ?? ""]
       : undefined;
-    const alignment = relevantAlignment && readAlignmentRequirement(relevantAlignment);
+    const alignment = relevantAlignment && this.alignmentRequirement(relevantAlignment);
     if (alignment) this.requirements.push(alignment);
   }
 
@@ -404,11 +333,61 @@ export class FeatPrerequisites extends RequirementReading {
     return eq(feat(name));
   }
 
+  /** The feats a feat's prerequisite text names, its other prerequisites (abilities, ranks, levels…) left out. */
+  private listedFeatNames(text: string): string[] {
+    const feats: string[] = [];
+
+    // Known feat patterns in prerequisite text
+    // They appear as capitalized names, sometimes with additional context
+    // We need to match things like "Power Attack", "Combat Expertise", "Dodge"
+    // but NOT ability scores, BAB, skill ranks, or generic phrases
+    // Remove ability scores, BAB, base save bonus, skill rank, and caster level clauses first
+    const cleaned = text
+      .replace(/(?:Base attack bonus|BAB)[:\s]+\+{1,2}\d+/gi, "")
+      .replace(/[Bb]ase\s+(?:Fortitude|Reflex|Will)\s+save\s+bonus\s+\+\d+/gi, "")
+      .replace(/\b(?:Str|Dex|Con|Int|Wis|Cha)\s+\d+/gi, "")
+      .replace(/[A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?\s+\d+\s+ranks?/gi, "")
+      .replace(/[Cc]aster level \d+(?:st|nd|rd|th)/g, "")
+      .replace(/\w+\s+level\s+\d+(?:st|nd|rd|th)?/gi, "")
+      .replace(/[Aa](?:bility|ble) to cast[^,.]+/gi, "")
+      .replace(/proficiency with[^,.]+/gi, "")
+      .replace(
+        /\b(?:Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal)\s+(?:or\s+(?:Fine|Diminutive|Tiny|Small|Medium|Large|Huge|Gargantuan|Colossal|smaller)\s+)?size\b/gi,
+        "",
+      )
+      .replace(/must be[^,.]+/gi, "")
+      .trim();
+
+    // Split remaining text on comma boundaries
+    const parts = cleaned.split(/,\s*/);
+
+    for (const part of parts) {
+      let trimmed = part
+        .trim()
+        .replace(/\.$/, "")
+        .replace(/^and\s+/i, "");
+      if (!trimmed || trimmed.length < 3) continue;
+
+      // Strip weapon/school qualifiers — refers to the template family feat
+      trimmed = trimmed
+        .replace(/\s*\(?with (?:selected |the )?(?:weapon|school)(?:\s+chosen)?\)?$/i, "")
+        .replace(/\s+(?:in|of) the (?:chosen|selected|same) (?:school|weapon)$/i, "");
+
+      // A feat name: starts with uppercase, at least 2 chars, not a common phrase or class ability
+      if (trimmed.match(/^[A-Z][a-zA-Z]/) && !isCommonPhrase(trimmed)) {
+        const titled = titleCaseFeat(trimmed);
+        if (!ABILITY_PREREQ_PATTERNS.some((p) => p.test(titled))) feats.push(this.featWithoutChoice(titled) ?? titled);
+      }
+    }
+
+    return feats;
+  }
+
   /** The feats a prerequisite lists, split on commas but not inside parentheses. */
   private listedFeatRequirements(text: string): RequirementEntry[] {
     // Strip numeric/dice suffixes (e.g. "Sudden Strike +8d6" → "Sudden Strike")
     // and book abbreviation suffixes (e.g. "Brutal Throw (CAd)" → "Brutal Throw")
-    return listedFeatNames(text).map((name) =>
+    return this.listedFeatNames(text).map((name) =>
       this.featRequirement(name.replace(/\s*\+\d+(?:d\d+)?$/, "").replace(BOOK_ABBREV_PATTERN, "")),
     );
   }
@@ -429,7 +408,7 @@ export class FeatPrerequisites extends RequirementReading {
       const featBase = titleCaseFeat(multiMatch[1].trim());
       // "Ability to fly (naturally, magically, or through shapechanging)" names no feat
       if (isCommonPhrase(featBase)) continue;
-      const options = readFamilyOptions(featBase, multiMatch[2]);
+      const options = this.familyOptions(featBase, multiMatch[2]);
       if (options.length >= 2) {
         reqs.push(or(...options.map((opt) => this.featRequirement(`${featBase}: ${titleCaseFeat(opt)}`))));
         // Strip this match so listedFeatNames doesn't also parse partial fragments
@@ -471,7 +450,7 @@ export class FeatPrerequisites extends RequirementReading {
     reqs.push(...this.listedFeatRequirements(multiOption.featText));
     reqs.push(...castingRequirements(cleanedText));
     reqs.push(...classLevelRequirements(cleanedText));
-    reqs.push(...skillRankRequirements(cleanedText));
+    reqs.push(...this.skillRankRequirements(cleanedText));
 
     // Class ability prerequisites — map to actual class feature feats
     reqs.push(...classAbilityRequirements(cleanedText));
@@ -480,12 +459,29 @@ export class FeatPrerequisites extends RequirementReading {
     if (/[Pp]roficien(?:t|cy) with (?:a )?(?:heavy )?shield/i.test(cleanedText))
       reqs.push(this.featRequirement("Shield Proficiency"));
 
-    reqs.push(...readFamilyFeatRequirements(cleanedText));
+    reqs.push(...this.familyFeatRequirements(cleanedText));
 
     // Detect prerequisite patterns we recognize but can't map to requirement entries
     for (const pattern of UNRESOLVED_PREREQUISITES) {
       const match = cleanedText.match(pattern);
       if (match) this.unresolved.push(match[0]);
     }
+  }
+
+  /** A feat's skill rank requirements: "SkillName N ranks", "Knowledge (any)" any Knowledge skill. */
+  private skillRankRequirements(text: string): RequirementEntry[] {
+    const reqs: RequirementEntry[] = [];
+    const skillRegex = /([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?)\s+(\d+)\s+ranks?/gi;
+    let skillMatch: RegExpExecArray | null;
+    while ((skillMatch = skillRegex.exec(text)) !== null) {
+      const name = skillMatch[1].trim();
+      const ranks = parseInt(skillMatch[2], 10);
+      // Skip false positives
+      if (name.match(/^(Base|Must|Any|Or|And|The|Can|Has|Level)$/i)) continue;
+
+      // "Knowledge (any)" → OR of all Knowledge skills; else the skill, or its base skill for a specialization
+      reqs.push(this.anySkillRequirement(name, ranks) ?? gte(`skills.${toSkillSlug(name)}.rank`, ranks));
+    }
+    return reqs;
   }
 }
