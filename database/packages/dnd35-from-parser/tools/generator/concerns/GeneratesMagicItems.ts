@@ -9,7 +9,7 @@ import type { Constructor } from "@/server/mixins.ts";
 /** Generating a book's magic items: its magic armor, shields and weapons, wondrous items, rings, rods and staffs. */
 export function GeneratesMagicItems<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingMagicItems extends Base {
-    /** A book's magic items' files, a file per kind, and the items' index with them. */
+    /** A book's magic items' files, a file per kind. */
     writeMagicItems(ref: MagicItemReference, book: string) {
       const seeds = Library.book(book).magicItemSeeds(ref);
       for (const { path, list, seeds: kind } of ITEM_FILES) {
@@ -22,7 +22,6 @@ export function GeneratesMagicItems<B extends Constructor<BaseGenerator>>(Base: 
           (file, item) => file.item(item),
         );
       }
-      this.writeItemIndex(book);
 
       this.log(
         `\nDone! Generated ${seeds.magicArmor.length} magic armor, ${seeds.magicShields.length} magic shields, ${seeds.magicWeapons.length} magic weapons`,

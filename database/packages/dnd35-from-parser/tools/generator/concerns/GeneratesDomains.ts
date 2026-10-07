@@ -1,4 +1,3 @@
-import { existsSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
@@ -27,9 +26,6 @@ export function GeneratesDomains<B extends Constructor<BaseGenerator>>(Base: B) 
       if (poolFeats.length > 0) {
         const grouped = [...Map.groupBy(poolFeats, (feat) => feat.aptitudes[0]).values()].flat();
         this.writeList(domainFeatsPath, domainFeats.list, "FeatSeed", grouped, (file, feat) => file.feat(feat));
-      } else if (existsSync(domainFeatsPath)) {
-        unlinkSync(domainFeatsPath);
-        this.log(`Removed: ${domainFeatsPath}`);
       }
     }
   }

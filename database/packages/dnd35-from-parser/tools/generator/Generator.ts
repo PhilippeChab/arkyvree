@@ -1,18 +1,13 @@
-import { existsSync, readFileSync } from "node:fs";
-import { relative } from "node:path";
+import { relative, resolve } from "node:path";
 
 import type { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
 import {
   filterReferenceFiles,
-  getReferencePath,
   listReferenceBooks,
   listReferenceFiles,
   REFERENCE_DIR,
 } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
-import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
+import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import { include } from "@/server/mixins.ts";
 
 import { BaseGenerator } from "./BaseGenerator.ts";
@@ -28,9 +23,9 @@ import { GeneratesSpells } from "./concerns/GeneratesSpells.ts";
 import { GeneratesWizardSchools } from "./concerns/GeneratesWizardSchools.ts";
 
 /**
- * Generates the content package's seed data from the references, into `dir`: a step that writes one kind of file is a
- * concern (`concerns/`), and the steps a reference takes, which rewrite the files other kinds share (the aptitudes, the
- * indexes, the core content an extension copies), are its own.
+ * Generates the content package's seed data from the references, into `dir`, a book at a time (`generateBook`), from
+ * its seeds: a step that writes one kind of file is a concern (`concerns/`), and a book's, made of them all, is its
+ * own.
  */
 export class Generator extends include(
   BaseGenerator,
@@ -45,128 +40,81 @@ export class Generator extends include(
   GeneratesSpells,
   GeneratesWizardSchools,
 ) {
-  /**
-   * A class's files, and what its book's other files take from it: the aptitudes, the core content it copies, the
-   * indexes.
-   */
-  private generateClass(ref: ClassReference, book: string) {
-    this.writeClass(ref, book);
-
-    // Regenerate aptitudes.ts for this book (covers books with no standalone feats file)
-    this.writeAptitudes(book);
-
-    // Regenerate cowFeats.ts for this book (bonus feat pools from bonusFeatLists)
-    this.writeCowFeats(book);
-
-    // Regenerate cowSpells.ts for this book (cross-book spells needing COW)
-    this.writeCowSpells(book);
-
-    // Regenerate aggregate index files
-    this.writeClassIndex(book);
-    this.writeClassFeatIndex(book);
-    this.writeFeatIndex(book);
-
-    this.log(`\nDone! Review the generated files and copy to database/packages/dnd35/ when ready.`);
-  }
-
-  /** A book's domains, and the aptitudes and the feat index their feat pools add to. */
-  private generateDomains(book: string) {
-    this.writeDomains(book);
-
-    // Regenerate aptitudes (domain feat pools contribute aptitude names)
-    this.writeAptitudes(book);
-    this.writeFeatIndex(book);
-
-    this.log(`\nDone!`);
-  }
-
-  /** A feat reference's feats, and the aptitudes and the feat index they add to. */
-  private generateFeats(ref: FeatReference, book: string) {
-    this.writeFeats(ref, book);
-    this.writeAptitudes(book);
-    this.writeFeatIndex(book);
-
-    this.log(`\nDone! Review the generated file and copy to database/packages/dnd35/ when ready.`);
-  }
-
-  /** A spell reference's spells, their index, and every book's copied core spells, which a new spell may change. */
-  private generateSpells(ref: SpellReference, book: string) {
-    this.writeSpells(ref, book);
-    this.writeSpellIndex(book);
-
-    // Regenerate cowSpells.ts for ALL books (new spells in this book may change COW entries elsewhere)
-    for (const otherBook of listReferenceBooks()) this.writeCowSpells(otherBook);
-
-    this.log(`\nDone! Review the generated files and copy to database/packages/dnd35/ when ready.`);
-  }
-
-  /**
-   * Regenerates every reference (of a book, type or name, when given), then each book's domains unless a name picks one
-   * reference. A reference that fails doesn't stop the others: the failures are returned.
-   */
-  generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>): string[] {
-    const refs = filterReferenceFiles(listReferenceFiles(), { bookFilter, typeFilter, nameFilter });
-
+  /** Regenerates each of `books` (`generateBook`): one that fails doesn't stop the others, its failure is returned. */
+  private generateBooks(books: string[]): string[] {
     const failures: string[] = [];
-    const generate = (path: string) => {
+    for (const book of books) {
       try {
-        this.generateReference(path);
+        this.generateBook(book);
       } catch (error) {
-        failures.push(`${relative(REFERENCE_DIR, path)}: ${error instanceof Error ? error.message : error}`);
-      }
-    };
-    // Each book with spells gets its domains file, an empty one when it has no domains reference, and its index
-    for (const ref of refs.filter((r) => r.type !== "domain")) generate(ref.path);
-    if (typeFilter === "domain" || (!typeFilter && !nameFilter)) {
-      for (const book of listReferenceBooks()) {
-        if (!existsSync(getReferencePath(book, "spell")) || (bookFilter && book !== bookFilter)) continue;
-        try {
-          this.generateDomains(book);
-          this.writeBookIndex(book);
-        } catch (error) {
-          failures.push(`${book}/domains.json: ${error instanceof Error ? error.message : error}`);
-        }
+        failures.push(`${book}: ${error instanceof Error ? error.message : error}`);
       }
     }
     return failures;
   }
 
-  /** Regenerates a reference's files, and its book's index. */
-  generateReference(jsonPath: string) {
-    const meta = JSON.parse(readFileSync(jsonPath, "utf-8"))._meta;
-    if (!meta) throw new Error(`Invalid reference file: missing _meta in ${jsonPath}`);
-    const { book } = meta;
+  /**
+   * Regenerates the books the references a filter picks are of (a book, a type of reference or a name, when given):
+   * every book when none is. The books that failed are returned.
+   */
+  generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>): string[] {
+    const refs = filterReferenceFiles(listReferenceFiles(), { bookFilter, typeFilter, nameFilter });
+    return this.generateBooks([...new Set(refs.map((ref) => ref.book))].sort());
+  }
 
-    switch (meta.type) {
-      case "class":
-        this.generateClass(ReferenceLoader.load(jsonPath, "class"), book);
-        break;
-      case "feat":
-        this.generateFeats(ReferenceLoader.load(jsonPath, "feat"), book);
-        break;
-      case "spell":
-        this.generateSpells(ReferenceLoader.load(jsonPath, "spell"), book);
-        break;
-      case "wizardSchool":
-        this.writeWizardSchools(ReferenceLoader.load(jsonPath, "wizardSchool"), book);
-        break;
-      case "domain":
-        this.generateDomains(book);
-        break;
-      case "race":
-        this.writeRaces(ReferenceLoader.load(jsonPath, "race"), book);
-        break;
-      case "item":
-        this.writeItems(ReferenceLoader.load(jsonPath, "item"), book);
-        break;
-      case "magicItem":
-        this.writeMagicItems(ReferenceLoader.load(jsonPath, "magicItem"), book);
-        break;
-      default:
-        throw new Error(
-          `Unknown type: ${meta.type}. Supported: class, feat, spell, wizardSchool, domain, race, item, magicItem`,
-        );
+  /**
+   * A book's files, from its seeds: each of its references' (its classes', its feats', its spells' and its domains' (a
+   * book with spells has a domains file, an empty one when it has no domains reference), its races', its wizard
+   * schools', its items' and its magic items'), and what they make together (its aptitudes, what it copies from the
+   * core rules, its indexes, which list what was written, and its index); then the files its folder held that it no
+   * longer makes are removed. Its spells change what every other book copies: their copied spells are rewritten too.
+   */
+  generateBook(book: string) {
+    const seeds = Library.book(book);
+    const classes = seeds.classReferences();
+    const featRef = seeds.reference("feat");
+    const spellRef = seeds.reference("spell");
+    for (const { ref } of classes) this.writeClass(ref, book);
+    if (featRef) this.writeFeats(featRef, book);
+    if (spellRef) {
+      this.writeSpells(spellRef, book);
+      this.writeDomains(book);
     }
+    const raceRef = seeds.reference("race");
+    if (raceRef) this.writeRaces(raceRef, book);
+    const wizardSchoolRef = seeds.reference("wizardSchool");
+    if (wizardSchoolRef) this.writeWizardSchools(wizardSchoolRef, book);
+    const itemRef = seeds.reference("item");
+    if (itemRef) this.writeItems(itemRef, book);
+    const magicItemRef = seeds.reference("magicItem");
+    if (magicItemRef) this.writeMagicItems(magicItemRef, book);
+
+    // What its classes, feats and domains make together
+    if (classes.length > 0 || featRef || spellRef) {
+      this.writeAptitudes(book);
+      this.writeFeatIndex(book);
+    }
+    this.writeCowFeats(book);
+    this.writeCowSpells(book);
+    this.writeClassIndex(book);
+    this.writeClassFeatIndex(book);
+    this.writeSpellIndex(book);
+    this.writeItemIndex(book);
     this.writeBookIndex(book);
+    this.removeUnwritten(book);
+
+    if (spellRef) for (const other of listReferenceBooks()) if (other !== book) this.writeCowSpells(other);
+    this.log(`\nDone! Review the generated files and copy to database/packages/dnd35/ when ready.`);
+  }
+
+  /**
+   * Regenerates a reference file's book (`generateBook`), from its references: a file outside them (an edited copy)
+   * would be ignored, so it's refused. The book's failure is returned.
+   */
+  generateReference(jsonPath: string): string[] {
+    const ref = listReferenceFiles().find(({ path }) => path === resolve(jsonPath));
+    const dir = relative(process.cwd(), REFERENCE_DIR);
+    if (!ref) throw new Error(`${jsonPath} isn't a reference file of ${dir}/: a book is generated from its own`);
+    return this.generateBooks([ref.book]);
   }
 }

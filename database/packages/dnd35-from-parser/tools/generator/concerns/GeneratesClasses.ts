@@ -1,4 +1,3 @@
-import { rmSync } from "node:fs";
 import { basename, join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
@@ -17,26 +16,20 @@ import type { Constructor } from "@/server/mixins.ts";
 /** Generating a book's classes: each class's file and its feats', and their indexes. */
 export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingClasses extends Base {
-    /** A class's file and its feats' file, or neither for a class left out of the seed. */
+    /** A class's file and its feats' file. */
     writeClass(ref: ClassReference, book: string) {
       const classFile = getClassFile(ref.raw.name);
       const featsFile = getClassFeatsFile(ref.raw.name);
       const classPath = join(this.dir, book, classFile.path);
       const featPath = join(this.dir, book, featsFile.path);
 
-      if (ref.mapping.skip) {
-        // A class left out of the seed: its files go, and the indexes leave it out
-        rmSync(classPath, { force: true });
-        rmSync(featPath, { force: true });
-      } else {
-        const seeds = Library.book(book);
-        const file = new CodeFile();
-        file.classSeed(seeds.classSeed(ref));
-        this.write(classPath, file.code(), getClassReviewNotes(ref));
-        this.writeList(featPath, featsFile.list, "FeatSeed", seeds.classFeatSeeds(ref), (featFile, feat) =>
-          featFile.feat(feat),
-        );
-      }
+      const seeds = Library.book(book);
+      const file = new CodeFile();
+      file.classSeed(seeds.classSeed(ref));
+      this.write(classPath, file.code(), getClassReviewNotes(ref));
+      this.writeList(featPath, featsFile.list, "FeatSeed", seeds.classFeatSeeds(ref), (featFile, feat) =>
+        featFile.feat(feat),
+      );
     }
 
     /** A book's class feats' index (feats/classes/index.ts): each of its classes' feats file, from its references. */

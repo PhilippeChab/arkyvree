@@ -18,10 +18,10 @@ bun run parser:scrape -- magicItem --book dmg
 bun run parser:scrape -- class --url https://dndtools.net/classes/.../barbarian/ --book srd
 
 # Regenerate TypeScript from the references
-bun run parser:generate                      # everything, domains included
+bun run parser:generate                      # every book
 bun run parser:generate srd                  # one book
-bun run parser:generate srd --type class     # one book's classes
-bun run parser:generate -- <path-to-json>    # one reference
+bun run parser:generate --type domain        # the books with domains
+bun run parser:generate -- <path-to-json>    # a reference's book
 # A generation runs in a copy of generated/, formatted (oxfmt) and swapped in only when every reference succeeds:
 # a failed one leaves generated/ as it was. One runs at a time (generated.lock)
 
@@ -62,7 +62,7 @@ Loading a reference (`ReferenceLoader`, `tools/references/ReferenceLoader.ts`) d
 
 `generated/` holds only what the generator writes: hand-written content goes in `database/packages/dnd35/data/`, and what content is written with (its types and builders) in `database/packages/dnd35/content/`.
 
-The generator (`tools/generator/`) is a `Generator`, built as the seeder is: a step that writes one kind of file is a concern (`concerns/`: `GeneratesClasses`, `GeneratesFeats`…) on a `BaseGenerator` (the folder it writes to, what several kinds of files are written with), and the steps a reference takes, which rewrite the files the kinds share (the aptitudes, the indexes, what an extension copies from the core rules), are its own. A file's code is a `CodeFile` (`code/`), built the same way: its core (`BaseCodeFile`) holds its lines and the names they use, which its imports are written from (one table, `IMPORT_TABLE`), and the customization values every seed writes alike (a check, a modifier, a property); each kind of seed is written by a concern (`concerns/`: `WritesClasses`, `WritesFeats`…). Each generated file's path and the list it exports are named once, in `bookLayout.ts`.
+The generator (`tools/generator/`) is a `Generator`, built as the seeder is: a step that writes one kind of file is a concern (`concerns/`: `GeneratesClasses`, `GeneratesFeats`…) on a `BaseGenerator` (the folder it writes to, what several kinds of files are written with), and it generates a book at a time, whole: its files from its references, then what they make together (its aptitudes, what an extension copies from the core rules, its indexes, which list the files it wrote), then the files it no longer makes go. A filter or a reference picks which books regenerate, never part of one, so a book's files always agree. A file's code is a `CodeFile` (`code/`), built the same way: its core (`BaseCodeFile`) holds its lines and the names they use, which its imports are written from (one table, `IMPORT_TABLE`), and the customization values every seed writes alike (a check, a modifier, a property); each kind of seed is written by a concern (`concerns/`: `WritesClasses`, `WritesFeats`…). Each generated file's path and the list it exports are named once, in `bookLayout.ts`.
 
 The seeds (`tools/seeds/`) are a `BookSeeds` per book, which the `Library` gives (`Library.book(name)`), built as the generator is: a kind of seeds is a concern (`concerns/`: `Classes`, `Feats`, `Spells`…), each built once from its reference's builder (`buildSpellSeeds`, `buildRaceSeeds`…; a class's seed and its feats are a `ClassSeeds`, `seeds/classes/`, whose concerns build its features, its own feats, its spellcasting, its level modifiers and its aptitude picks from what both decide alike: its picks split per level, a feature's feat name, the existing feat it grants), on a `BaseBookSeeds` (the book, its references, and what several kinds look up: the feats it already has, the families a prerequisite asks for, the domains its classes pick from, its base items' weights, its spells' names); what's made of several kinds is its own (its aptitudes, what it copies from the core rules). The generator, `parser:validate` and the code writers read a book's seeds from it.
 

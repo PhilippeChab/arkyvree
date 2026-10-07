@@ -70,8 +70,8 @@ database/packages/dnd35-from-parser/
     ├── seeds/            # A book's seeds (BookSeeds, one per book on the Library: a concern per kind, each built once), from each reference's builder (a class's seed and feats: classes/ClassSeeds.ts); what a book copies (copies.ts) and the aptitudes it uses (aptitudes.ts)
     ├── validate/         # What parser:validate reports, and the overrides that change nothing
     └── generator/        # The seeds → generated/
-        ├── BaseGenerator.ts  # A generator's core: the folder it writes to, the writes kinds of files share
-        ├── Generator.ts      # generateAll, generateReference: the steps a reference takes
+        ├── BaseGenerator.ts  # A generator's core: the folder it writes to, the files it wrote, the writes kinds of files share
+        ├── Generator.ts      # generateBook: a book's files, whole; generateAll, generateReference pick the books
         ├── concerns/         # A kind of file per concern: GeneratesClasses, GeneratesFeats…
         ├── bookLayout.ts     # A book's generated tree: each file's path and the list it exports, which the writers and the indexes name
         └── code/             # A file's code, written from its seeds: CodeFile (BaseCodeFile: its lines, its imports, the customization values), a concern per kind of seed (WritesClasses, WritesFeats…)
