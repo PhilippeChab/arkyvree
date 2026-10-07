@@ -1,4 +1,6 @@
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Holders, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import type { TargetPath } from "@/shared/customization/target.ts";
 
 import type PathTraverser from "./PathTraverser.ts";
 
@@ -17,6 +19,10 @@ export interface PathCategory {
   groupDescriptionTemplates?: Record<string, string>;
   /** A path prefix's description (`combat.ac`) */
   pathDescriptions?: Record<string, string>;
+  /** Its target paths a modifier or a requirement may name, for the ruleset's data */
+  generate?(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[];
+  /** Its paths' own segments' labels (`base`, `misc`…), before the ruleset's names */
+  getSegmentLabels?(): Record<string, string>;
   /** Whether a target reads its source itself (an item's own weapon: the place its item is held), not the sheet */
   readsSource?(target: string): boolean;
   /** A target it resolves its own way, or null for the walk from its holder's data */

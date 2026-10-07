@@ -3,17 +3,13 @@ import {
   CARRYING_CAPACITY,
   ENCUMBERED_SPEED,
   ENCUMBRANCE_PENALTIES,
-  LOAD_CATEGORIES,
   type LoadCategory,
   QUADRUPED_SIZE_CARRY_MULTIPLIERS,
   SIZE_CARRY_MULTIPLIERS,
 } from "@/server/rulesets/dnd3.5/constants.ts";
 import type { RaceWithPMR } from "@/server/rulesets/engine/types.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { RACE_QUADRUPED } from "@/shared/dnd3.5/properties/index.ts";
 import type { CharacterInventory, Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
-import { capitalize } from "@/shared/text.ts";
 
 type RawInventoryEntry = CharacterInventory & {
   item: Item & {
@@ -33,43 +29,8 @@ export type EncumbranceData = {
   readonly checkpenalty: number;
 };
 
-const NAVIGATABLE_PATHS = [
-  { path: "carriedweight", description: "Total weight of items (lbs)", type: "number" as const },
-  // Computed from the strength when read: for requirements only. The carried weight is an input, which modifiers change
-  { path: "heavyload", description: "Max carry capacity (lbs)", type: "number" as const, requirementOnly: true },
-  {
-    path: "load",
-    description: "The load carried: light, medium, heavy or overloaded",
-    type: "string" as const,
-    requirementOnly: true,
-    possibleValues: LOAD_CATEGORIES.map((load) => ({ value: load, label: capitalize(load) })),
-  },
-];
-
-const SEGMENT_LABELS: Record<string, string> = {
-  encumbrance: "Encumbrance",
-  carriedweight: "Carried Weight",
-  heavyload: "Heavy Load",
-  load: "Load",
-};
-
 export default class EncumbranceComponent {
   constructor(private readonly characterAbilities: AbilitiesComponent) {}
-
-  static getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(NAVIGATABLE_PATHS, SEGMENT_LABELS);
-  }
-
-  static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
-    return NAVIGATABLE_PATHS.filter((path) => kind === "requirement" || !("requirementOnly" in path)).map((path) => ({
-      path: `combat.encumbrance.${path.path}`,
-      category: "combat",
-      description: path.description,
-      valueType: path.type,
-      operators: path.type === "string" ? ["equal", "not_equal"] : getNumericOperators(kind),
-      ...("possibleValues" in path && { possibleValues: path.possibleValues }),
-    }));
-  }
 
   private raceSize = "Medium";
 

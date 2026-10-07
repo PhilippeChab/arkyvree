@@ -1,5 +1,3 @@
-import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
 import {
   type CharacterLevel,
   type Feat,
@@ -54,38 +52,6 @@ type DetailedCharacterComprehensiveClasses = {
 };
 
 export default class ClassesComponent {
-  static getSegmentLabels(): Record<string, string> {
-    return { level: "Level", bonuscasterlevel: "Bonus Caster Level" };
-  }
-
-  static generateTargetPaths(klasses: Klass[], kind: "modifier" | "requirement"): TargetPath[] {
-    const paths: TargetPath[] = [];
-
-    for (const klass of klasses) {
-      const normalizedClassName = stripSeparators(klass.name);
-
-      paths.push({
-        path: `classes.${normalizedClassName}.level`,
-        category: "classes",
-        description: `Number of ${klass.name} levels taken`,
-        valueType: "number",
-        operators: kind === "modifier" ? ["add", "subtract", "set"] : [...NUMERIC_REQUIREMENT_OPERATORS],
-      });
-
-      if (kind === "modifier") {
-        paths.push({
-          path: `classes.${normalizedClassName}.bonuscasterlevel`,
-          category: "classes",
-          description: `${klass.name} bonus caster levels from prestige classes`,
-          valueType: "number",
-          operators: ["add", "subtract", "set"],
-        });
-      }
-    }
-
-    return paths;
-  }
-
   private readonly detailedCharacterClasses: DetailedCharacterComprehensiveClasses = {};
 
   addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: CharacterLevel): void {

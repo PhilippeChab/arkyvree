@@ -1,11 +1,5 @@
 import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
-import {
-  getNumericOperators,
-  MODIFIER_OPERATORS,
-  NUMERIC_REQUIREMENT_OPERATORS,
-} from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type Character, type Language, type Race } from "@/shared/relations.ts";
 
 type DetailedCharacterComprehensiveIdentity = {
@@ -33,106 +27,11 @@ type DetailedCharacterComprehensiveIdentity = {
   };
 };
 
-const NAVIGATABLE_BACKGROUND_PATHS = [
-  { path: "notes", description: "Public notes", type: "string" as const },
-  { path: "privateNotes", description: "Private notes (GM only)", type: "string" as const },
-];
-
-const NAVIGATABLE_BELIEFS_PATHS = [
-  { path: "deity", description: "Character deity", type: "string" as const },
-  { path: "alignment", description: "e.g., Lawful Good", type: "string" as const },
-];
-
-const NAVIGATABLE_IDENTITY_PATHS = [
-  { path: "name", description: "Character name", type: "string" as const },
-  { path: "description", description: "Physical description", type: "string" as const },
-  { path: "age", description: "Character age", type: "number" as const },
-  { path: "gender", description: "Character gender", type: "string" as const },
-  { path: "height", description: "Character height", type: "string" as const },
-  { path: "weight", description: "Body weight", type: "string" as const },
-  { path: "race.name", description: "Race name", type: "string" as const },
-  { path: "race.size", description: "Size (e.g., Medium, Small)", type: "string" as const },
-];
-
-const NAVIGATABLE_META_PATHS = [
-  { path: "level", description: "Total character level (all classes combined)", type: "number" as const },
-  { path: "xp", description: "Current experience points", type: "number" as const },
-];
-
-const SEGMENT_LABELS: Record<string, string> = {
-  xp: "Experience Points",
-};
-
 export default class IdentityComponent {
   constructor(
     protected readonly characterAbilities: AbilitiesComponent,
     protected readonly characterClasses: ClassesComponent,
   ) {}
-
-  static getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(
-      [
-        ...NAVIGATABLE_IDENTITY_PATHS,
-        ...NAVIGATABLE_BELIEFS_PATHS,
-        ...NAVIGATABLE_BACKGROUND_PATHS,
-        ...NAVIGATABLE_META_PATHS,
-      ],
-      { physiology: "Physiology", beliefs: "Beliefs", background: "Background", meta: "Meta", ...SEGMENT_LABELS },
-    );
-  }
-
-  static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
-    const paths: TargetPath[] = [];
-
-    for (const subPath of NAVIGATABLE_IDENTITY_PATHS) {
-      paths.push({
-        path: `identity.physiology.${subPath.path}`,
-        category: "identity",
-        description: subPath.description,
-        valueType: subPath.type,
-        operators:
-          kind === "modifier"
-            ? subPath.type === "string"
-              ? ["set"]
-              : [...MODIFIER_OPERATORS]
-            : subPath.type === "string"
-              ? ["equal", "not_equal"]
-              : [...NUMERIC_REQUIREMENT_OPERATORS],
-      });
-    }
-
-    for (const subPath of NAVIGATABLE_BELIEFS_PATHS) {
-      paths.push({
-        path: `identity.beliefs.${subPath.path}`,
-        category: "identity",
-        description: subPath.description,
-        valueType: subPath.type,
-        operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
-      });
-    }
-
-    for (const subPath of NAVIGATABLE_BACKGROUND_PATHS) {
-      paths.push({
-        path: `identity.background.${subPath.path}`,
-        category: "identity",
-        description: subPath.description,
-        valueType: subPath.type,
-        operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
-      });
-    }
-
-    for (const subPath of NAVIGATABLE_META_PATHS) {
-      paths.push({
-        path: `identity.meta.${subPath.path}`,
-        category: "identity",
-        description: subPath.description,
-        valueType: subPath.type,
-        operators: getNumericOperators(kind),
-      });
-    }
-
-    return paths;
-  }
 
   protected readonly detailedCharacterIdentity: DetailedCharacterComprehensiveIdentity =
     {} as DetailedCharacterComprehensiveIdentity;

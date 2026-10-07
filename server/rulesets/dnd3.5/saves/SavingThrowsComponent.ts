@@ -1,7 +1,5 @@
 import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { KlassLevelSave, RulesetAbility, RulesetSave } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -15,52 +13,11 @@ type DetailedCharacterComprehensiveSavingThrows = {
   };
 };
 
-const NAVIGATABLE_PATHS = [
-  { path: "base", description: "Base save bonus from class levels", type: "number" as const },
-  { path: "ability", description: "From key ability modifier", type: "number" as const, requirementOnly: true },
-  { path: "misc", description: "From feats, items, and spells", type: "number" as const },
-  { path: "total", description: "Final saving throw bonus", type: "number" as const, requirementOnly: true },
-];
-
 export default class SavingThrowsComponent {
   constructor(
     private readonly characterAbilities: AbilitiesComponent,
     private readonly characterClasses: ClassesComponent,
   ) {}
-
-  static getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(NAVIGATABLE_PATHS);
-  }
-
-  static generateTargetPaths(saves: RulesetSave[], kind: "modifier" | "requirement"): TargetPath[] {
-    const paths: TargetPath[] = [];
-
-    for (const save of saves) {
-      const normalizedSaveName = stripSeparators(save.name);
-
-      for (const subPath of NAVIGATABLE_PATHS) {
-        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
-        paths.push({
-          path: `saves.${normalizedSaveName}.${subPath.path}`,
-          category: "saves",
-          description: subPath.description,
-          valueType: subPath.type,
-          operators: getNumericOperators(kind),
-        });
-      }
-    }
-
-    paths.push({
-      path: "saves.*.misc",
-      category: "saves",
-      description: "Misc bonus applied to every save",
-      groupDescription: kind === "requirement" ? "Any saving throw" : "All saving throws",
-      valueType: "number",
-      operators: getNumericOperators(kind),
-    });
-
-    return paths;
-  }
 
   private readonly detailedCharacterSavingThrows: DetailedCharacterComprehensiveSavingThrows =
     {} as DetailedCharacterComprehensiveSavingThrows;

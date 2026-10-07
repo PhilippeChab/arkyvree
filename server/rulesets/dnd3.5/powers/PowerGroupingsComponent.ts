@@ -1,9 +1,7 @@
 import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import type PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { Property } from "@/shared/relations.ts";
-import { capitalize, stripSeparators } from "@/shared/text.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 type PowerGroup = Record<string, PowerDcsByClass>;
 type PowerGroupingsData = Record<string, PowerGroup>;
@@ -21,52 +19,12 @@ export type PowerDc = {
  */
 export type PowerDcsByClass = Record<string, PowerDc>;
 
-const NAVIGATABLE_POWER_DC_PATHS = [
-  { path: "dc.misc", description: "Other bonuses to spell DC", type: "number" as const },
-  { path: "dc.total", description: "Final DC for this spell", type: "number" as const, requirementOnly: true },
-];
-
 export default class PowerGroupingsComponent {
   constructor(
     private readonly detailedCharacterPowers: PowersComponent,
     private readonly detailedCharacterAbilities: AbilitiesComponent,
     private readonly groupingProperties: readonly string[],
   ) {}
-
-  static getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(NAVIGATABLE_POWER_DC_PATHS, { dc: "DC", groups: "Groups" });
-  }
-
-  /**
-   * The DC paths of these groupings (a school or descriptor: `powers.groups.<grouping>.*.dc.misc`, each of its spells)
-   * or of these spells (`wildcard` false: `powers.<spell>.dc.*.misc`, each class's DC of it).
-   */
-  static generateTargetPaths(
-    powerGroupings: string[],
-    kind: "modifier" | "requirement",
-    wildcard: boolean = true,
-    groupLabel?: string,
-  ): TargetPath[] {
-    const paths: TargetPath[] = [];
-
-    for (const grouping of powerGroupings) {
-      for (const subPath of NAVIGATABLE_POWER_DC_PATHS) {
-        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
-        const prefix = groupLabel ? `${capitalize(grouping)} ${groupLabel}` : capitalize(grouping);
-        const leaf = subPath.path.slice("dc.".length);
-        paths.push({
-          path: wildcard ? `powers.groups.${grouping}.*.dc.${leaf}` : `powers.${grouping}.dc.*.${leaf}`,
-          category: "powers",
-          description: `${kind === "requirement" ? "Any" : "All"} ${prefix} — ${subPath.description}`,
-          ...(groupLabel && { groupDescription: `${capitalize(grouping)} ${groupLabel} spells` }),
-          valueType: subPath.type,
-          operators: getNumericOperators(kind),
-        });
-      }
-    }
-
-    return paths;
-  }
 
   private readonly powerGroupings: PowerGroupingsData = {};
 
