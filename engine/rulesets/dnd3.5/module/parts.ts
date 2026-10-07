@@ -13,7 +13,6 @@ import type {
   ClassesRules,
   ClassLevelsRules,
   FeatsRules,
-  InventoryRules,
   ItemsRules,
   LevelsRules,
   PowersRules,
@@ -43,7 +42,6 @@ export interface ModuleRules {
   classes: ClassesRules;
   classLevels: ClassLevelsRules;
   feats: FeatsRules;
-  inventory: InventoryRules;
   items: ItemsRules;
   levels: LevelsRules;
   powers: PowersRules;

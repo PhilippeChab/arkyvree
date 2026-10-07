@@ -1,6 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
+import { checkEquipping } from "@/engine/index.ts";
+import { readCharacterInput } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -9,8 +11,6 @@ import { getEditableCharacter } from "@/server/services/characters/editableChara
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isHandLocation } from "@/shared/equipment.ts";
 import type { Session } from "@/shared/relations.ts";
-
-import { validateCharges, validateEquipping } from "./validation.ts";
 
 class CharacterInventoryService {
   /** An inventory entry's stored placement and charges: only an equipped item has a location, only a held one a set. */
@@ -30,6 +30,15 @@ class CharacterInventoryService {
       totalCharges: totalCharges ?? null,
       remainingCharges: remainingCharges ?? null,
     };
+  }
+
+  /** An entry's charges: both set or both null, and no more remaining than total. */
+  private validateCharges(totalCharges: number | null, remainingCharges: number | null) {
+    if ((totalCharges === null) !== (remainingCharges === null))
+      throw new BadRequestError("Total charges and remaining charges must both be set or both be null");
+
+    if (totalCharges !== null && remainingCharges !== null && remainingCharges > totalCharges)
+      throw new BadRequestError("Remaining charges cannot exceed total charges");
   }
 
   async addItem(
@@ -63,12 +72,12 @@ class CharacterInventoryService {
         if (!validRulesetIds.has(itemRecord.rulesetId))
           throw new BadRequestError("Item does not belong to the character's ruleset");
 
-        validateCharges(totalCharges, remainingCharges);
+        this.validateCharges(totalCharges, remainingCharges);
 
         // An item already carried takes another entry: a second dagger, held in the other hand
         if (equipped && location) {
-          const entry = { id: null, item: itemRecord };
-          await validateEquipping(tx, characterRecord, entry, location, weaponSet, force, scope);
+          const character = await readCharacterInput(tx, characterRecord);
+          checkEquipping(scope, character, { id: null, item: itemRecord }, location, weaponSet, force);
         }
 
         const rows = await CharacterInventory.create(tx, {
@@ -165,14 +174,14 @@ class CharacterInventoryService {
         const existing = await CharacterInventory.findOne(tx, { characterId, id: entryId });
         if (!existing) throw new NotFoundError("Item not in inventory");
 
-        validateCharges(totalCharges, remainingCharges);
+        this.validateCharges(totalCharges, remainingCharges);
 
         if (equipped && location) {
           const itemRecord = rulesetData.itemsById.get(existing.itemId);
           if (!itemRecord) throw new NotFoundError("Item not found");
 
-          const entry = { id: entryId, item: itemRecord };
-          await validateEquipping(tx, characterRecord, entry, location, weaponSet, force, scope);
+          const character = await readCharacterInput(tx, characterRecord);
+          checkEquipping(scope, character, { id: entryId, item: itemRecord }, location, weaponSet, force);
         }
 
         const rows = await CharacterInventory.update(

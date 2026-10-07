@@ -36,9 +36,9 @@ import type {
 } from "@/shared/relations.ts";
 
 import type DetailedCharacter from "./character/DetailedCharacter.ts";
+import type { Dnd35Characters } from "./character/Dnd35Characters.ts";
 import type { Dnd35LevelUp } from "./levelUp/Dnd35LevelUp.ts";
 import type { ModuleEffects, ModuleRules } from "./module/index.ts";
-import type { Dnd35Characters } from "./response/Dnd35Characters.ts";
 
 /** A projected power row with 3.5 spell-level and save-name fields. */
 type Dnd35ProjectedPower = Power & {

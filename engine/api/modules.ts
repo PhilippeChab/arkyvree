@@ -1,6 +1,10 @@
 import type { RulesetModule } from "@/engine/core/module/index.ts";
+import type { RulesetView } from "@/engine/core/types.ts";
 import { createRulesetModule as createDnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+
+/** An operation's arguments after the view, which picks the ruleset. */
+export type After<F> = F extends (view: RulesetView, ...rest: infer R) => unknown ? R : never;
 
 /**
  * Each base rules' module, built once: a module keeps no state (its rules and effects are fieldless, its factories make

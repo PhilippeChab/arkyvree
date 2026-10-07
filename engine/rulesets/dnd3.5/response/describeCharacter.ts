@@ -36,15 +36,10 @@ function redactNotes<T extends { identity: { background: { privateNotes?: string
   return redactPrivateNotes(entry, notes === "blank" ? "" : undefined);
 }
 
-/** A bonded creature's sheet, from its master's (`master`), as the API answers it: it has no creatures of its own. */
-export function describeBondedCreature(view: RulesetView, creature: CharacterInput, master: CharacterInput) {
-  const built = buildCharacter(view, creature, { master: buildCharacter(view, master) });
-  return { ...buildBondedResponse(creature.record, built), bonded: noBonded() };
-}
-
 /**
- * A player character's sheet, as the API answers it, with its bonded creatures' (`bonded`), each built with it: their
- * private notes as the viewer reads them (`notes`).
+ * A character's sheet, as the API answers it: a player character's with its bonded creatures' (`bonded`), each built
+ * with it, their private notes as the viewer reads them (`notes`); or a bonded creature's, from its master's, which
+ * has no creatures of its own.
  */
 export function describeCharacter(
   view: RulesetView,
@@ -53,6 +48,7 @@ export function describeCharacter(
   notes: PrivateNotes = "show",
 ) {
   const built = buildCharacter(view, character);
+  if (character.master) return { ...buildBondedResponse(character.record, built), bonded: noBonded() };
   const response = buildFullCharacterResponse(character.record, built);
   return { ...redactNotes(response, notes), bonded: describeBonded(view, built, bonded, notes) };
 }

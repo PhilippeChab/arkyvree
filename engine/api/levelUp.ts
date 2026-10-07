@@ -1,9 +1,6 @@
 import type { RulesetView } from "@/engine/core/types.ts";
 
-import { getRulesetModule } from "./modules.ts";
-
-/** An operation's arguments after the view, which picks the ruleset. */
-type After<F> = F extends (view: RulesetView, ...rest: infer R) => unknown ? R : never;
+import { type After, getRulesetModule } from "./modules.ts";
 
 /** The ruleset's level-up: what its module answers. */
 type LevelUp = ReturnType<typeof getRulesetModule>["levelUp"];

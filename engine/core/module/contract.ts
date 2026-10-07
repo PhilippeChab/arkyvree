@@ -25,8 +25,12 @@ import type {
   Ruleset,
 } from "@/shared/relations.ts";
 
-/** A character's row and the rows it's built from, as the server reads them in its ruleset's scope. */
+/**
+ * A character's row and the rows it's built from, as the server reads them in its ruleset's scope: a bonded creature's
+ * with its master's (`master`), whose sheet the creature's derives from.
+ */
 export interface CharacterInput {
+  master?: CharacterInput;
   record: CharacterRecord;
   rows: CharacterRows;
 }

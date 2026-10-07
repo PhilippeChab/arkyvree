@@ -98,7 +98,7 @@ export async function finalizeLevelUp(
 
       const saved = await readCharacterInput(tx, characterRecord);
       if (!force) checkCharacter(scope, saved);
-      const bonded = await readBondedInputs(tx, characterRecord);
+      const bonded = await readBondedInputs(tx, saved);
       await writeBondedCreatures(tx, characterRecord, planBondedCreatures(scope, saved, bonded));
 
       await Activities.create(tx, {
@@ -129,7 +129,7 @@ export async function removeLevel(session: Session, characterId: string) {
 
     await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(tx, characterRecord);
-      const bonded = await readBondedInputs(tx, characterRecord);
+      const bonded = await readBondedInputs(tx, character);
       await writeBondedCreatures(tx, characterRecord, planBondedCreatures(scope, character, bonded));
     });
 
@@ -164,7 +164,7 @@ export async function updateLevel(
 
     return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(tx, characterRecord);
-      const bonded = await readBondedInputs(tx, characterRecord);
+      const bonded = await readBondedInputs(tx, character);
       const edit = planLevelEdit(scope, character, bonded, characterLevelId, {
         abilityId,
         feats,

@@ -19,23 +19,30 @@ import {
 import type { Character } from "@/shared/relations.ts";
 
 /**
- * A master's bonded creatures, each with its rows, read in the master's ruleset's scope: those `visibility` shows (a
- * sheet shows an archived master's, which are archived with it).
+ * A master's bonded creatures, each with its rows and the master's (`master`), read in the master's ruleset's scope:
+ * those `visibility` shows (a sheet shows an archived master's, which are archived with it).
  */
 export async function readBondedInputs(
   database: Db,
-  master: Character,
+  master: CharacterInput,
   visibility: Visibility = Visibility.UnarchivedOnly,
 ): Promise<CharacterInput[]> {
   const inputs: CharacterInput[] = [];
-  for (const creature of await Characters.findMany(database, { parentCharacterId: master.id }, visibility))
-    inputs.push(await readCharacterInput(database, creature));
+  for (const record of await Characters.findMany(database, { parentCharacterId: master.record.id }, visibility))
+    inputs.push({ master, record, rows: await readCharacterRows(database, record) });
   return inputs;
 }
 
-/** A character's row and its rows, read in its ruleset's scope: what the engine builds it from. */
+/**
+ * A character's row and its rows, read in its ruleset's scope: what the engine builds it from. A bonded creature's
+ * comes with its master's, archived too, whose sheet the creature's derives from.
+ */
 export async function readCharacterInput(database: Db, record: Character): Promise<CharacterInput> {
-  return { record, rows: await readCharacterRows(database, record) };
+  const rows = await readCharacterRows(database, record);
+  if (!record.parentCharacterId) return { record, rows };
+  const master = await Characters.findOne(database, { id: record.parentCharacterId }, Visibility.All);
+  if (!master) throw new Error(`Bonded's master not found: ${record.parentCharacterId}`);
+  return { master: await readCharacterInput(database, master), record, rows };
 }
 
 /**
@@ -61,13 +68,4 @@ export async function readCharacterRows(database: Db, character: Character): Pro
   const modifiers = await Modifiers.findMany(database, { sourceIds: [characterId] });
   const requirements = await Requirements.findMany(database, { entityIds: modifiers.map((modifier) => modifier.id) });
   return { player, campaign, abilities, languages, inventory, levels, picks, modifiers, requirements };
-}
-
-/** A bonded creature's master, with its rows, read in the creature's ruleset's scope: archived too. */
-export async function readMasterInput(database: Db, creature: Character): Promise<CharacterInput> {
-  const master = creature.parentCharacterId
-    ? await Characters.findOne(database, { id: creature.parentCharacterId }, Visibility.All)
-    : undefined;
-  if (!master) throw new Error(`Bonded's master not found: ${creature.parentCharacterId}`);
-  return await readCharacterInput(database, master);
 }

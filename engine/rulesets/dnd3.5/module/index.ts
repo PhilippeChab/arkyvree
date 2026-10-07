@@ -17,7 +17,6 @@ export type {
   ClassLevelsRules,
   FeatFields,
   FeatsRules,
-  InventoryRules,
   ItemFields,
   ItemsRules,
   LevelsRules,

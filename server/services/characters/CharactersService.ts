@@ -1,9 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { describeBondedCreature, describeCharacter } from "@/engine/index.ts";
+import { describeCharacter } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import { readBondedInputs, readCharacterInput, readMasterInput } from "@/server/builds/index.ts";
+import { readBondedInputs, readCharacterInput } from "@/server/builds/index.ts";
 import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -169,27 +169,19 @@ class CharactersService extends include(Object, Archives) {
     });
   }
 
-  /** A character's sheet, as the API answers it: a player character's with its bonded creatures', or a creature's. */
+  /**
+   * A character's sheet, as the API answers it: a player character's with its bonded creatures', or a creature's, which
+   * its master's editors read.
+   */
   async getCharacter(session: Session, characterId: string) {
     const record = await Characters.findOne(db, { id: characterId }, Visibility.All);
     if (!record) throw new NotFoundError("Character not found");
+    await getEditableCharacter(db, session, record.parentCharacterId ?? record.id, Visibility.All);
 
-    if (record.kind !== "pc") {
-      if (!record.parentCharacterId) throw new NotFoundError("Character not found");
-      await getEditableCharacter(db, session, record.parentCharacterId, Visibility.All);
-      return await withRulesetScope(db, record.rulesetId, async (scope) =>
-        describeBondedCreature(scope, await readCharacterInput(db, record), await readMasterInput(db, record)),
-      );
-    }
-
-    const characterRecord = await getEditableCharacter(db, session, characterId, Visibility.All);
-    return await withRulesetScope(db, characterRecord.rulesetId, async (scope) =>
-      describeCharacter(
-        scope,
-        await readCharacterInput(db, characterRecord),
-        await readBondedInputs(db, characterRecord, Visibility.All),
-      ),
-    );
+    return await withRulesetScope(db, record.rulesetId, async (scope) => {
+      const character = await readCharacterInput(db, record);
+      return describeCharacter(scope, character, await readBondedInputs(db, character, Visibility.All));
+    });
   }
 
   async getCharacters(

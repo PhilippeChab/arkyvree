@@ -10,15 +10,16 @@ import DetailedCharacter from "./DetailedCharacter.ts";
 
 /**
  * A character, built from the rows the server read (`input`) in its ruleset's `view`, of its row's kind: with a
- * level-up's `projected` levels and picks, and a bonded creature's sheet derived from its `master`'s, which comes built.
+ * level-up's `projected` levels and picks, and a bonded creature's sheet derived from its master's, built from its
+ * input's unless it comes built (`master`: a sheet's, which its creatures share).
  */
 export function buildCharacter(
   view: RulesetView,
-  { record, rows }: CharacterInput,
+  input: CharacterInput,
   { master, projected }: { master?: DetailedCharacter; projected?: Dnd35ProjectedCharacterData } = {},
 ): DetailedCharacter {
-  const character = createCharacter(record, record.kind as CharacterKind);
-  character.build(rows, view, projected, master);
+  const character = createCharacter(input.record, input.record.kind as CharacterKind);
+  character.build(input.rows, view, projected, master ?? (input.master && buildCharacter(view, input.master)));
   return character;
 }
 

@@ -2,7 +2,6 @@ export type { AptitudesRules } from "./aptitudes.ts";
 export type { ClassesRules, ClassFields } from "./classes.ts";
 export type { ClassLevelFields, ClassLevelsRules } from "./classLevels.ts";
 export type { FeatFields, FeatsRules } from "./feats.ts";
-export type { InventoryRules } from "./inventory.ts";
 export type { ItemFields, ItemsRules, ProtectionFields, WeaponFields } from "./items.ts";
 export type { LevelsRules } from "./levels.ts";
 export type { PowerFields, PowersRules } from "./powers.ts";

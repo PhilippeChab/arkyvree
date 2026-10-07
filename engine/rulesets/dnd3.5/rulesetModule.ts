@@ -2,6 +2,7 @@ import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import { Dnd35AptitudesRules } from "./aptitudes/Dnd35AptitudesRules.ts";
 import { createCharacter } from "./character/buildCharacter.ts";
+import { Dnd35Characters } from "./character/Dnd35Characters.ts";
 import { Dnd35ClassesEffects } from "./classes/Dnd35ClassesEffects.ts";
 import { Dnd35ClassesRules } from "./classes/Dnd35ClassesRules.ts";
 import { Dnd35ClassLevelsEffects } from "./classes/Dnd35ClassLevelsEffects.ts";
@@ -10,7 +11,6 @@ import Dnd35PropertyTypes from "./Dnd35PropertyTypes.ts";
 import Dnd35TargetPaths from "./Dnd35TargetPaths.ts";
 import { Dnd35FeatsEffects } from "./feats/Dnd35FeatsEffects.ts";
 import { Dnd35FeatsRules } from "./feats/Dnd35FeatsRules.ts";
-import { Dnd35InventoryRules } from "./items/Dnd35InventoryRules.ts";
 import { Dnd35ItemsEffects } from "./items/Dnd35ItemsEffects.ts";
 import { Dnd35ItemsRules } from "./items/Dnd35ItemsRules.ts";
 import { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
@@ -19,7 +19,6 @@ import { Dnd35PowersEffects } from "./powers/Dnd35PowersEffects.ts";
 import { Dnd35PowersRules } from "./powers/Dnd35PowersRules.ts";
 import { Dnd35RacesEffects } from "./races/Dnd35RacesEffects.ts";
 import { Dnd35RacesRules } from "./races/Dnd35RacesRules.ts";
-import { Dnd35Characters } from "./response/Dnd35Characters.ts";
 import { Dnd35RulesetsEffects } from "./ruleset/Dnd35RulesetsEffects.ts";
 import { Dnd35RulesetsRules } from "./ruleset/Dnd35RulesetsRules.ts";
 import { Dnd35SkillsEffects } from "./skills/Dnd35SkillsEffects.ts";
@@ -37,7 +36,6 @@ export function createRulesetModule(): Dnd35RulesetModule {
       classes: new Dnd35ClassesRules(),
       classLevels: new Dnd35ClassLevelsRules(),
       feats: new Dnd35FeatsRules(),
-      inventory: new Dnd35InventoryRules(),
       items: new Dnd35ItemsRules(),
       levels: new Dnd35LevelsRules(),
       powers: new Dnd35PowersRules(),

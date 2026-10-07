@@ -59,15 +59,11 @@ class CharacterSharingService {
     if (!characterRecord) throw new NotFoundError("Character not found");
 
     const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
-    return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => ({
-      ...describeCharacter(
-        scope,
-        await readCharacterInput(db, characterRecord),
-        await readBondedInputs(db, characterRecord, Visibility.All),
-        "omit",
-      ),
-      portraitUrl,
-    }));
+    return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
+      const character = await readCharacterInput(db, characterRecord);
+      const bonded = await readBondedInputs(db, character, Visibility.All);
+      return { ...describeCharacter(scope, character, bonded, "omit"), portraitUrl };
+    });
   }
 
   async revokeShareToken(session: Session, characterId: string) {
