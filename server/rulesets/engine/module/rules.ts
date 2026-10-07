@@ -177,7 +177,7 @@ export interface SkillsRules {
     skills: T[],
     properties: { entityId: string; type: string; value: string }[],
   ): (T & SkillFields)[];
-  /** The fields as a skill keeps them, which `SkillsEffects.syncProperties` stores. */
+  /** The fields as a skill keeps them, which `SkillsEffects.properties` gives to store. */
   normalizeFields(fields: SkillFields): SkillFields;
   readProperties(properties: { type: string; value: string }[]): SkillFields;
 }

@@ -11,6 +11,7 @@ import { KlassLevelFeats, KlassLevels, KlassLevelSaves, Properties } from "@/ser
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { writeProperties, writeRequirement } from "@/server/services/rulesets/effectWrites.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import type { KlassLevel, KlassLevelFeat, Modifier, Property, Session } from "@/shared/relations.ts";
 
@@ -125,7 +126,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           });
           const klassLevel = rows[0];
 
-          await effects.classLevels.syncProperties(tx, klassLevel.id, { bab, skills });
+          await writeProperties(tx, effects.classLevels.properties(klassLevel.id, { bab, skills }));
 
           if (feats && feats.length > 0) {
             for (const feat of feats) {
@@ -149,7 +150,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
             );
           }
 
-          await effects.classLevels.requirePreviousLevel(tx, klassLevel, klass.name);
+          await writeRequirement(tx, effects.classLevels.previousLevelRequirement(klassLevel, klass.name));
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -316,10 +317,13 @@ class ClassLevelsService extends include(Object, ListsSpells) {
                 : await Properties.findMany(tx, { entityIds: [resolvedLevelId], entityType: "klass_levels" });
             const currentValues = rules.classLevels.readProperties(currentProps);
 
-            await effects.classLevels.syncProperties(tx, resolvedLevelId, {
-              bab: bab ?? currentValues.bab,
-              skills: skills ?? currentValues.skills,
-            });
+            await writeProperties(
+              tx,
+              effects.classLevels.properties(resolvedLevelId, {
+                bab: bab ?? currentValues.bab,
+                skills: skills ?? currentValues.skills,
+              }),
+            );
           }
 
           if (feats !== undefined) {

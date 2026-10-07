@@ -16,6 +16,7 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
+import { writeGeneratedFeats, writeProperties } from "@/server/services/rulesets/effectWrites.ts";
 import type { Session } from "@/shared/relations.ts";
 
 interface PowerBody {
@@ -92,11 +93,11 @@ class PowersService {
     const properties = await Properties.findMany(tx, { entityIds: [powerId], entityType: "powers" });
     const oldGroupingValue = rules.powers.extractGroupingValue(rules.powers.readProperties(properties));
 
-    await effects.powers.syncProperties(tx, powerId, body);
+    await writeProperties(tx, effects.powers.properties(powerId, body));
 
     const newGroupingValue = rules.powers.extractGroupingValue(body);
     if (newGroupingValue && newGroupingValue !== oldGroupingValue)
-      await effects.powers.generateFeats(tx, scope, newGroupingValue);
+      await writeGeneratedFeats(tx, scope, effects.feats, effects.powers.generatedFeats(newGroupingValue));
   }
 
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
@@ -137,9 +138,12 @@ class PowersService {
             });
           }
 
-          await effects.powers.syncProperties(tx, power.id, body);
+          await writeProperties(tx, effects.powers.properties(power.id, body));
           const groupingValue = rules.powers.extractGroupingValue(body);
-          if (groupingValue) await effects.powers.generateFeats(tx, { ruleset, rulesetData }, groupingValue);
+          if (groupingValue) {
+            const scope = { ruleset, rulesetData };
+            await writeGeneratedFeats(tx, scope, effects.feats, effects.powers.generatedFeats(groupingValue));
+          }
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,

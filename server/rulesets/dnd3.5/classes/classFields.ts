@@ -6,7 +6,7 @@ import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5
 export const CLASS_FIELD_PROPERTY_TYPES = [KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE];
 
 /**
- * A class's fields, read off the rows of its properties: each from the first row of its type (`syncProperties` stores
+ * A class's fields, read off the rows of its properties: each from the first row of its type (the effects' `properties` write
  * one), and a caster type only as one of the two the engine casts by.
  */
 export function readClassFields(properties: { type: string; value: string }[]): ClassFields {

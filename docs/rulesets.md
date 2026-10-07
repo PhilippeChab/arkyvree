@@ -548,9 +548,9 @@ The engine's own types name no ruleset (`arkyvree/layers`): its `DetailedCharact
 What a ruleset answers the services, and what it does in their transactions, are its module's `rules` and `effects`: interfaces in `server/rulesets/engine/module/` (`rules.ts`, `effects.ts`), implemented per area in the ruleset's domain folders (`dnd3.5/levels/Dnd35LevelsRules.ts`, `dnd3.5/skills/Dnd35SkillsEffects.ts`, …).
 
 - **A rule** reads no database: a predicate, a constant, or a reading of rows the service already has (`rules.levels.isAbilityIncreaseLevel`, `rules.classLevels.enrichWithSpellsPerDay`, `rules.inventory.validateWeaponHands`).
-- **An effect** writes in the service's transaction (`effects.skills.syncProperties`, `effects.powers.syncProperties`). One that reads the ruleset takes the caller's scope (`RulesetScope`: the ruleset and its view, `withRulesetScope`'s), and runs in its copy-on-write context: `effects.skills.generateFeats(tx, scope, name)`.
+- **An effect** says what the ruleset writes, and reads nothing: an entity's properties (`effects.skills.properties`), a requirement, the feats an entity brings. The service writes it in its transaction (`server/services/rulesets/effectWrites.ts`: `writeProperties`, `writeRequirement`, `writeGeneratedFeats`, `removeGeneratedFeat`), which reads what a write depends on: whether a grouping's feats are there already, whether a character picked a feat it removes.
 
-Each method starts with the verb of what it does, the same in every area:
+Each rule starts with the verb of what it does, and each effect is named for the write it returns, the same in every area:
 
 | Side | Verb | What it does | Example |
 |---|---|---|---|
@@ -562,10 +562,10 @@ Each method starts with the verb of what it does, the same in every area:
 | Rules | `extract…` | reads a value out of a request's fields | `powers.extractGroupingValue` |
 | Rules | `normalize…` | gives fields the shape they're stored in | `skills.normalizeFields` |
 | Rules | `validate…` | throws | `inventory.validateWeaponHands` |
-| Effects | `syncProperties` | stores an entity's fields as its properties, in place of those it stored before | `classes`, `classLevels`, `feats`, `items`, `powers`, `races`, `rulesets`, `skills` |
-| Effects | `generateFeats` | makes the feats an entity brings, or its grouping shares (see [customization](customization.md#auto-generated-customization)) | `skills`, `powers` |
-| Effects | `deleteFeats` | removes the feats that are an entity's own | `skills` |
-| Effects | `require…` | writes what an entity requires | `classLevels.requirePreviousLevel` |
+| Effects | `properties` | an entity's fields, as the properties stored in place of those it stored before (`PropertiesWrite`) | `classes`, `classLevels`, `feats`, `items`, `powers`, `races`, `rulesets`, `skills` |
+| Effects | `generatedFeats` | the feats an entity brings, or its grouping shares (`GeneratedFeatsWrite`; see [customization](customization.md#auto-generated-customization)) | `skills`, `powers` |
+| Effects | `removedFeat` | the feat that's an entity's own, removed with it (`GeneratedFeatRemoval`) | `skills` |
+| Effects | `…Requirement` | what an entity requires (`RequirementWrite`) | `classLevels.previousLevelRequirement` |
 
 ```ts
 // server/rulesets/engine/module/rules.ts  (engine interface)

@@ -5,6 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { Dnd35PowersEffects } from "@/server/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts";
 import { Dnd35PowersRules } from "@/server/rulesets/dnd3.5/powers/Dnd35PowersRules.ts";
+import { writeProperties } from "@/server/services/rulesets/effectWrites.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -27,17 +28,17 @@ describe("A power's effects", () => {
     const rules = new Dnd35PowersRules();
     const fields = { components: ["S", "V"], descriptors: ["Fire"], school: "Evocation", target: "One creature" };
 
-    await effects.syncProperties(db, power.id, fields);
+    await writeProperties(db, effects.properties(power.id, fields));
     expect(rules.readProperties(await readPower(power.id))).toEqual(fields);
 
-    await effects.syncProperties(db, power.id, { components: [], descriptors: [], school: "Illusion" });
+    await writeProperties(db, effects.properties(power.id, { components: [], descriptors: [], school: "Illusion" }));
     expect(rules.readProperties(await readPower(power.id))).toEqual({
       components: [],
       descriptors: [],
       school: "Illusion",
     });
 
-    await effects.syncProperties(db, power.id, { duration: "1 round" });
+    await writeProperties(db, effects.properties(power.id, { duration: "1 round" }));
     expect((await readPower(power.id)).map((property) => property.type)).toEqual(["SOMETHING_ELSE"]);
   });
 });

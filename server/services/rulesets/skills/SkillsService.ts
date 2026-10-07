@@ -9,6 +9,7 @@ import { Skills } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { removeGeneratedFeat, writeGeneratedFeats, writeProperties } from "@/server/services/rulesets/effectWrites.ts";
 import type { Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -44,8 +45,13 @@ class SkillsService {
 
           if (tombstoneAncestorId) await edit.repointTombstone(tx, "skills", tombstoneAncestorId, skill.id);
 
-          await effects.skills.syncProperties(tx, skill.id, fields);
-          await effects.skills.generateFeats(tx, { ruleset, rulesetData }, body.name);
+          await writeProperties(tx, effects.skills.properties(skill.id, fields));
+          await writeGeneratedFeats(
+            tx,
+            { ruleset, rulesetData },
+            effects.feats,
+            effects.skills.generatedFeats(body.name),
+          );
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -77,7 +83,7 @@ class SkillsService {
           const targetId = await edit.cowToDelete(tx, "skills", skill);
 
           const { effects } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-          await effects.skills.deleteFeats(tx, { ruleset, rulesetData }, skill.name);
+          await removeGeneratedFeat(tx, { ruleset, rulesetData }, effects.skills.removedFeat(skill.name));
 
           // FK CASCADE on klass_skills.skill_id wipes those join rows.
           // The database deletes its customizations with it.
@@ -178,11 +184,12 @@ class SkillsService {
 
           const updatedSkill = rows[0];
 
-          await effects.skills.syncProperties(tx, targetId, fields);
+          await writeProperties(tx, effects.skills.properties(targetId, fields));
 
           if (skill.name !== body.name) {
-            await effects.skills.deleteFeats(tx, { ruleset, rulesetData }, skill.name);
-            await effects.skills.generateFeats(tx, { ruleset, rulesetData }, body.name);
+            const scope = { ruleset, rulesetData };
+            await removeGeneratedFeat(tx, scope, effects.skills.removedFeat(skill.name));
+            await writeGeneratedFeats(tx, scope, effects.feats, effects.skills.generatedFeats(body.name));
           }
 
           await createActivityWithNotifications(tx, {

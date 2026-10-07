@@ -6,6 +6,7 @@ import { Properties } from "@/server/repositories/index.ts";
 import { Dnd35FeatsEffects } from "@/server/rulesets/dnd3.5/feats/Dnd35FeatsEffects.ts";
 import { Dnd35FeatsRules } from "@/server/rulesets/dnd3.5/feats/Dnd35FeatsRules.ts";
 import { NO_FEAT_FIELDS } from "@/server/rulesets/dnd3.5/feats/featFields.ts";
+import { writeProperties } from "@/server/services/rulesets/effectWrites.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -28,10 +29,10 @@ describe("A feat's effects", () => {
     const rules = new Dnd35FeatsRules();
     const fields = { ...NO_FEAT_FIELDS, families: ["Fighter Bonus", "Weapon Focus"], weaponFinesse: true };
 
-    await effects.syncProperties(db, feat.id, fields);
+    await writeProperties(db, effects.properties(feat.id, fields));
     expect(rules.readProperties(await readFeat(feat.id))).toEqual(fields);
 
-    await effects.syncProperties(db, feat.id, { ...NO_FEAT_FIELDS, prohibitedSchools: ["Evocation"] });
+    await writeProperties(db, effects.properties(feat.id, { ...NO_FEAT_FIELDS, prohibitedSchools: ["Evocation"] }));
     const properties = await readFeat(feat.id);
     expect(rules.readProperties(properties)).toEqual({ ...NO_FEAT_FIELDS, prohibitedSchools: ["Evocation"] });
     expect(properties.map((property) => property.type).toSorted()).toEqual([
