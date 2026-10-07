@@ -34,7 +34,7 @@ import {
   buildAbilityScore,
   readCachedRows,
   readKlassProperties,
-  readRulesetFields,
+  readRulesetLists,
   readRulesetProperties,
 } from "./rulesetReadings.ts";
 
@@ -162,7 +162,7 @@ export default class DetailedCharacterDataLoader {
       ruleset,
       player,
       campaign,
-      ...readRulesetFields(rulesetData),
+      ...readRulesetLists(rulesetData),
       ...readRulesetProperties(rulesetData, (id) => cowData.resolve(id)),
       characterAbilityScores: resolve(shared.characterAbilityRecords).map((ca) => buildAbilityScore(ca, abilityLookup)),
       race: parts.race,

@@ -114,6 +114,21 @@ export interface LevelsRules {
   isAbilityIncreaseLevel(totalLevel: number): boolean;
 }
 
+/** What a ruleset answers the services without the database, one set of rules per area. */
+export interface ModuleRules {
+  aptitudes: AptitudesRules;
+  classes: ClassesRules;
+  classLevels: ClassLevelsRules;
+  feats: FeatsRules;
+  inventory: InventoryRules;
+  items: ItemsRules;
+  levels: LevelsRules;
+  powers: PowersRules;
+  races: RacesRules;
+  rulesets: RulesetsRules;
+  skills: SkillsRules;
+}
+
 /** A power's fields its properties hold: a spell's school, components, range… */
 export interface PowerFields {
   areaOfEffect?: string;
@@ -145,18 +160,12 @@ export interface RacesRules {
   readProperties(properties: { type: string; value: string }[]): RaceFields;
 }
 
-/** What a ruleset answers the services without the database, one set of rules per area. */
-export interface RulesetRules {
-  aptitudes: AptitudesRules;
-  classes: ClassesRules;
-  classLevels: ClassLevelsRules;
-  feats: FeatsRules;
-  inventory: InventoryRules;
-  items: ItemsRules;
-  levels: LevelsRules;
-  powers: PowersRules;
-  races: RacesRules;
-  skills: SkillsRules;
+/** A ruleset's own fields its properties hold: the ability its characters' skill points come from. */
+export type RulesetFields = { skillPointAbilityId: string | null };
+
+/** The rules a ruleset follows about itself. */
+export interface RulesetsRules {
+  readProperties(properties: { type: string; value: string }[]): RulesetFields;
 }
 
 /** A skill's fields its properties hold: whether armor weighs on it, how many times over, and untrained use. */
