@@ -2,9 +2,10 @@ import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
 import type { Dnd35LevelUpProjector as Dnd35LevelUpProjectorInterface } from "@/server/rulesets/dnd3.5/types.ts";
+import type { ProjectedCharacterLevel } from "@/server/rulesets/engine/types.ts";
 import { KLASS_LEVEL_SKILL_POINTS, SPELL_SCHOOL, WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
-import type { CharacterLevel, KlassLevel, Requirement } from "@/shared/relations.ts";
+import type { KlassLevel, Requirement } from "@/shared/relations.ts";
 
 import type DetailedCharacter from "./DetailedCharacter.ts";
 
@@ -67,7 +68,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
 
   async evaluateClassAvailability(
     candidates: { klassName: string; klassLevel: KlassLevel; requirementGroups: Requirement[][] }[],
-    projectedCharacterLevel: CharacterLevel,
+    projectedCharacterLevel: ProjectedCharacterLevel,
   ): Promise<Map<string, boolean>> {
     const results = new Map<string, boolean>();
     if (candidates.length === 0) return results;

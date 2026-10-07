@@ -58,10 +58,8 @@ export function buildFeats(
   // Apply feat modifiers in character-level order so later selections win
   // for `set` targets (e.g. bonded.familiar.race). SQL joins don't preserve
   // pick order, and an edited earlier level is appended in projectedData.
-  const levelCreatedAt = new Map(allCharacterLevels.map((level) => [level.id, Date.parse(level.createdAt)]));
-  allFeats.sort(
-    (a, b) => (levelCreatedAt.get(a.characterLevelId) ?? 0) - (levelCreatedAt.get(b.characterLevelId) ?? 0),
-  );
+  const levelPosition = new Map(allCharacterLevels.map((level) => [level.id, level.position]));
+  allFeats.sort((a, b) => (levelPosition.get(a.characterLevelId) ?? 0) - (levelPosition.get(b.characterLevelId) ?? 0));
   return { allFeats, klassLevelFeatCountsByAptitudeId };
 }
 
@@ -129,14 +127,21 @@ export function resolveLevels(
   projectedData: Dnd35ProjectedCharacterData | undefined,
   resolve: Resolve,
 ) {
-  const resolvedCharacterLevels = resolve(rawCharacterLevels);
+  const resolvedCharacterLevels = resolve(rawCharacterLevels).toSorted((a, b) => a.position - b.position);
   const excludeIds = projectedData?.excludeCharacterLevelIds ? new Set(projectedData.excludeCharacterLevelIds) : null;
   const characterLevels = excludeIds
     ? resolvedCharacterLevels.filter((l) => !excludeIds.has(l.id))
     : resolvedCharacterLevels;
-  const allCharacterLevels = projectedData?.characterLevels
-    ? [...characterLevels, ...projectedData.characterLevels]
-    : characterLevels;
+  // A new projected level goes after every saved one, an edited level's stand-in where the edited level was
+  let nextPosition = (resolvedCharacterLevels.at(-1)?.position ?? 0) + 1;
+  const projectedLevels: CharacterLevel[] = (projectedData?.characterLevels ?? []).map((level) => ({
+    ...level,
+    position: level.position ?? nextPosition++,
+  }));
+  const allCharacterLevels =
+    projectedLevels.length > 0
+      ? [...characterLevels, ...projectedLevels].toSorted((a, b) => a.position - b.position)
+      : characterLevels;
   return {
     characterLevels,
     allCharacterLevels,

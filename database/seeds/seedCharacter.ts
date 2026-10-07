@@ -13,13 +13,12 @@ import {
   languagesInCharacter,
   levelFeatsInCharacter,
   levelPowersInCharacter,
-  levelsInCharacter,
   levelSkillsInCharacter,
 } from "@/drizzle/schema.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Characters } from "@/server/repositories/index.ts";
+import { CharacterLevels, Characters } from "@/server/repositories/index.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { reconcileAllBondedKinds } from "@/server/services/characters/levels/index.ts";
@@ -100,10 +99,11 @@ export async function addClassLevels(
       .from(klassLevelsInRules)
       .where(and(eq(klassLevelsInRules.klassId, klassId), eq(klassLevelsInRules.level, levels[i])));
 
-    const [charLevel] = await db
-      .insert(levelsInCharacter)
-      .values({ characterId, klassLevelId: klassLevel.id, hp: hpPerLevel[i] })
-      .returning({ id: levelsInCharacter.id });
+    const [charLevel] = await CharacterLevels.create(db, {
+      characterId,
+      klassLevelId: klassLevel.id,
+      hp: hpPerLevel[i],
+    });
 
     levelIds.push(charLevel.id);
   }

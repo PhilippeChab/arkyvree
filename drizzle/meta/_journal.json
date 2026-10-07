@@ -526,6 +526,13 @@
       "when": 1791317415037,
       "tag": "0074_snapshot-content-hash",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1791352114450,
+      "tag": "0075_level-position",
+      "breakpoints": true
     }
   ]
 }

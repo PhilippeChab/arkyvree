@@ -35,7 +35,7 @@ import {
   SORCERER_1,
   WIZARD_1,
 } from "@/tests/support/levelFixtures.ts";
-import { addOneLevel } from "@/tests/support/levels.ts";
+import { addOneLevel, findKlassLevel } from "@/tests/support/levels.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -128,11 +128,15 @@ describe("Bonded creatures", () => {
     expect(issues.filter((issue) => issue.message.includes("combat.nosuchvalue.misc"))).toHaveLength(1);
   });
 
-  test("a companion loses a level with each of its druid's, and goes with the level that picked it", async () => {
-    const { masterId, bonded } = await createDruidWithCompanion(3);
-    const companionLevels = async () => (await CharacterLevels.findMany(db, { characterId: bonded.id })).length;
+  test("a companion loses a level with each of its druid's, its last, and goes with the level that picked it", async () => {
+    const { ctx, masterId, bonded } = await createDruidWithCompanion(3);
+    const companionLevels = async () =>
+      (await CharacterLevels.findMany(db, { characterId: bonded.id })).map((level) => level.klassLevelId);
+    const companionClassLevel = async (level: number) =>
+      (await findKlassLevel(ctx.klassMap.animalcompanion["Animal Companion"], level))!.id;
     await CharacterLevelsService.removeLevel(owner, masterId);
-    expect(await companionLevels()).toBe(2);
+    // Its third level goes, though the test's one transaction made all three at one creation time
+    expect(await companionLevels()).toEqual([await companionClassLevel(1), await companionClassLevel(2)]);
     await CharacterLevelsService.removeLevel(owner, masterId);
     await CharacterLevelsService.removeLevel(owner, masterId);
     expect(await Characters.findOne(db, { parentCharacterId: masterId, kind: "animalcompanion" })).toBeUndefined();

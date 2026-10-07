@@ -1421,9 +1421,13 @@ export const levelsInCharacter = character.table(
     klassLevelId: uuid("klass_level_id").notNull(),
     hp: integer().notNull(),
     abilityId: uuid("ability_id"),
+    position: integer().notNull(),
   },
   (table) => [
     index("character_levels_character_id").using("btree", table.characterId.asc().nullsLast()),
+    uniqueIndex("character_levels_character_id_position")
+      .using("btree", table.characterId.asc().nullsLast(), table.position.asc().nullsLast())
+      .where(sql`(deleted_at IS NULL)`),
     index("character_levels_klass_level_id").using("btree", table.klassLevelId.asc().nullsLast()),
     foreignKey({
       columns: [table.characterId],
@@ -1442,6 +1446,7 @@ export const levelsInCharacter = character.table(
     }).onDelete("set null"),
     unique("levels_character_id_klass_level_id_key").on(table.characterId, table.klassLevelId),
     check("levels_hp_check", sql`hp > 0`),
+    check("levels_position_check", sql`"position" > 0`),
   ],
 );
 

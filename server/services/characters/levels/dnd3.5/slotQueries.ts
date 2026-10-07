@@ -119,8 +119,8 @@ async function powerSlots(
 
 /**
  * The projected level of class level `klassLevelId`, and the projection it goes in. An edited level's replacement
- * keeps its creation time, so the first character level stays the first (its x4 skill points, its feats); its id is
- * fresh, so the data loader doesn't count the stored level's granted feats twice.
+ * keeps its position, so the first character level stays the first (its x4 skill points, its feats); its id is fresh,
+ * so the data loader doesn't count the stored level's granted feats twice.
  */
 async function projectLevel(characterId: string, klassLevelId: string, projection: LevelProjection) {
   const { editedLevelId, abilityId, pendingLevelKlassLevelIds, pendingLevelAbilityIds } = projection;
@@ -132,7 +132,7 @@ async function projectLevel(characterId: string, klassLevelId: string, projectio
     const levels = await CharacterLevels.findMany(db, { characterId });
     const editedLevel = levels.find((l) => l.id === editedLevelId);
     if (!editedLevel) throw new NotFoundError("Character level not found");
-    level = { ...level, createdAt: editedLevel.createdAt };
+    level = { ...level, position: editedLevel.position };
   }
   const data: Dnd35ProjectedCharacterData = {
     ...(editedLevelId && { excludeCharacterLevelIds: [editedLevelId] }),

@@ -155,7 +155,7 @@ export default class SkillsComponent {
   getSkillPointBases(): { pointsPerLevel: number[]; bonusPerLevel: number } {
     const levels = Object.values(this.classes.getClasses())
       .flatMap((klass) => klass.levels)
-      .sort((a, b) => (a.characterLevel.createdAt < b.characterLevel.createdAt ? -1 : 1));
+      .sort((a, b) => a.characterLevel.position - b.characterLevel.position);
     return {
       pointsPerLevel: levels.map((level) =>
         this.getLevelPointsPerLevel(this.skillPointKlassLevelProperties.get(level.klassLevel.id)?.skills ?? 0),

@@ -156,7 +156,7 @@ export interface LevelUpProjector {
    *  a projected character state (including in-flight batch levels). */
   evaluateClassAvailability(
     candidates: { klassName: string; klassLevel: KlassLevel; requirementGroups: Requirement[][] }[],
-    projectedCharacterLevel: CharacterLevel,
+    projectedCharacterLevel: ProjectedCharacterLevel,
   ): Promise<Map<string, boolean>>;
 }
 
@@ -221,10 +221,16 @@ export interface PreloadedRulesetData {
  */
 export interface ProjectedCharacterData {
   excludeCharacterLevelIds?: string[];
-  characterLevels?: CharacterLevel[];
+  characterLevels?: ProjectedCharacterLevel[];
   feats?: ProjectedFeat[];
   givenFeats?: ProjectedFeat[];
 }
+
+/**
+ * A level a projection adds, as a saved one is but for its position: an edited level's stand-in takes the edited
+ * level's, and a new level has none, the loader placing it after the saved levels in the order given.
+ */
+export type ProjectedCharacterLevel = Omit<CharacterLevel, "position"> & { position?: number };
 
 export interface PropertyTypesProvider {
   getStaticPropertyTypes(entityType?: PropertyEntityType): Record<string, string>;

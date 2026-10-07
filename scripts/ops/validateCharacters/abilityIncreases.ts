@@ -26,17 +26,17 @@ export async function checkAbilityIncreases(characters: Character[]) {
     .innerJoin(klassLevelsInRules, eq(klassLevelsInRules.id, levelsInCharacter.klassLevelId))
     .innerJoin(klassesInRules, eq(klassesInRules.id, klassLevelsInRules.klassId))
     .where(isNull(levelsInCharacter.deletedAt))
-    .orderBy(asc(levelsInCharacter.createdAt));
+    .orderBy(asc(levelsInCharacter.position));
 
   for (const char of characters) {
     if (char.kind !== "pc") continue;
     const { rules } = await moduleOf(char.rulesetId);
-    // A level's position, by creation, is what the ruleset's rule reads (0 for the first)
-    for (const [position, level] of levels.filter((l) => l.characterId === char.id).entries()) {
-      const due = rules.levels.isAbilityIncreaseLevel(position);
+    // A level's index in the order the character took them is what the ruleset's rule reads (0 for the first)
+    for (const [index, level] of levels.filter((l) => l.characterId === char.id).entries()) {
+      const due = rules.levels.isAbilityIncreaseLevel(index);
       if (due === (level.abilityId !== null)) continue;
       issues++;
-      const which = `level ${position + 1} (${level.klass} ${level.klassLevel})`;
+      const which = `level ${index + 1} (${level.klass} ${level.klassLevel})`;
       console.error(`    ${char.name}: ${which} ${due ? "misses its" : "has an unexpected"} ability increase`);
     }
   }

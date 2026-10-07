@@ -19,7 +19,7 @@ import type {
   Dnd35ProjectedCharacterData,
   Dnd35RulesetModule,
 } from "@/server/rulesets/dnd3.5/index.ts";
-import type { ProjectedCharacterData } from "@/server/rulesets/engine/types.ts";
+import type { ProjectedCharacterData, ProjectedCharacterLevel } from "@/server/rulesets/engine/types.ts";
 import type { Character, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 export type FeatPick = { featId: string; aptitudeId: string };
@@ -63,7 +63,12 @@ export function buildProjectedAutoGrantedFeats<T extends { id: string }>(
     }));
 }
 
-export function buildProjectedCharacterLevel(characterId: string, klassLevelId: string, abilityId?: string | null) {
+/** A new level of class level `klassLevelId`, which the loader places after the character's saved levels. */
+export function buildProjectedCharacterLevel(
+  characterId: string,
+  klassLevelId: string,
+  abilityId?: string | null,
+): ProjectedCharacterLevel {
   return {
     id: crypto.randomUUID(),
     characterId,
@@ -210,12 +215,12 @@ export function buildProjectedSkillsFromAllocations(
     .filter((s): s is NonNullable<typeof s> => s !== null);
 }
 
-/** Returns IDs of the given level and all subsequent levels (by creation order). */
+/** Returns IDs of the given level and all subsequent levels (in the order the character took them). */
 export function getLevelIdsFromOnward(
-  characterLevels: { id: string; createdAt: string }[],
+  characterLevels: { id: string; position: number }[],
   characterLevelId: string,
 ): string[] {
-  const sorted = [...characterLevels].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const sorted = characterLevels.toSorted((a, b) => a.position - b.position);
   const index = sorted.findIndex((l) => l.id === characterLevelId);
   if (index === -1) return [];
   return sorted.slice(index).map((l) => l.id);

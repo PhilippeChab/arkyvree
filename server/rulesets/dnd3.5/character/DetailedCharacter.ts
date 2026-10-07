@@ -4,8 +4,8 @@ import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRul
 import DetailedCharacterDataLoader from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
 import ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
-import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
-import type { Character, CharacterLevel, KlassLevel, Requirement } from "@/shared/relations.ts";
+import type { DetailedCharacterInterface, ProjectedCharacterLevel } from "@/server/rulesets/engine/types.ts";
+import type { Character, KlassLevel, Requirement } from "@/shared/relations.ts";
 
 import CharacterState, { type DataLoader } from "./CharacterState.ts";
 import { buildComponents, type Dnd35Components } from "./components.ts";
@@ -44,10 +44,12 @@ export default class DetailedCharacter
   evaluateWithProjectedLevel(
     klassName: string,
     klassLevel: KlassLevel,
-    characterLevel: CharacterLevel,
+    characterLevel: ProjectedCharacterLevel,
     requirementGroups: Requirement[][],
   ): boolean {
-    this.components.classes.addProjectedLevel(klassName, klassLevel, characterLevel);
+    // A level a class would add goes after the character's last
+    const position = characterLevel.position ?? (this.characterLevels.at(-1)?.position ?? 0) + 1;
+    this.components.classes.addProjectedLevel(klassName, klassLevel, { ...characterLevel, position });
     const result = this.areRequirementsMet(requirementGroups);
     this.components.classes.removeProjectedLevel(klassName);
     return result;
