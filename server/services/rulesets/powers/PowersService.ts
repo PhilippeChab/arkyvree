@@ -88,13 +88,9 @@ class PowersService {
     body: PowerBody,
   ) {
     const { effects, rules } = rulesetModule;
-    // Read before the sync, which replaces the property that holds it
-    const existingProps = await Properties.findMany(tx, {
-      entityIds: [powerId],
-      entityType: "powers",
-      type: rules.powers.primaryGroupingType,
-    });
-    const oldGroupingValue = existingProps.length > 0 ? existingProps[0].value : null;
+    // Read before the sync, which replaces the properties that hold it
+    const properties = await Properties.findMany(tx, { entityIds: [powerId], entityType: "powers" });
+    const oldGroupingValue = rules.powers.extractGroupingValue(rules.powers.readProperties(properties));
 
     await effects.powers.syncProperties(tx, powerId, body);
 

@@ -17,7 +17,7 @@ import SavingThrowsComponent from "@/server/rulesets/dnd3.5/saves/SavingThrowsCo
 import SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
 import SpellcastingComponent from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingComponent.ts";
 import type ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
-import { getStaticPropertyValues, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
 
 /** The parts a 3.5 character is built from, by the key its target paths reach each by. */
 export type Dnd35Components = {
@@ -54,7 +54,7 @@ export function buildComponents(
   const feats = new FeatsComponent();
   const featGroupings = new FeatGroupingsComponent(feats);
   const powers = new PowersComponent(getStaticPropertyValues);
-  const powerGroupings = new PowerGroupingsComponent(powers, abilities, [SPELL_SCHOOL, SPELL_DESCRIPTOR]);
+  const powerGroupings = new PowerGroupingsComponent(powers, abilities);
   const savingThrows = new SavingThrowsComponent(abilities, classes);
   const identity = new IdentityComponent(abilities, classes);
   const aptitudes = new AptitudesComponent(identity, classes, countGeneralFeats);

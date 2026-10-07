@@ -427,8 +427,9 @@ server/
 │       ├── classes/                       (ClassesComponent, ClassesPaths; classFields and classLevelFields: a class's
 │       │                                  and a level's fields off their properties; Dnd35ClassesRules,
 │       │                                  Dnd35ClassesEffects, Dnd35ClassLevelsRules, Dnd35ClassLevelsEffects)
-│       ├── powers/                        (PowersComponent, PowerGroupingsComponent, PowersPaths, Dnd35PowersRules,
-│       │                                  Dnd35PowersEffects and its spellGenerator)
+│       ├── powers/                        (PowersComponent, PowerGroupingsComponent, PowersPaths, powerFields: a
+│       │                                  power's fields off its properties; Dnd35PowersRules, Dnd35PowersEffects
+│       │                                  and its spellGenerator)
 │       ├── races/                         (raceFields: a race's fields off its properties; Dnd35RacesRules,
 │       │                                  Dnd35RacesEffects)
 │       ├── skills/                        (SkillsComponent: the 3.5 rank system, SkillsPaths, skillFields: a skill's

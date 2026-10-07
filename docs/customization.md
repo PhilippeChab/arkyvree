@@ -155,7 +155,7 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 ## Auto-Generated Customization
 
-Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from their domain's effects (`server/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts` with `powers/spellGenerator.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`database/packages/dnd35/content/items/weapons.ts`, `armor.ts`). They're an item's fields: `ItemsRules.readProperties` reads them (`items/itemFields.ts`, which the combat components and the inventory's rules read with too), and `ItemsEffects.syncProperties` stores them. An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
+Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from their domain's effects (`server/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts` with `powers/powerFields.ts` and `powers/spellGenerator.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`database/packages/dnd35/content/items/weapons.ts`, `armor.ts`). They're an item's fields: `ItemsRules.readProperties` reads them (`items/itemFields.ts`, which the combat components and the inventory's rules read with too), and `ItemsEffects.syncProperties` stores them. An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
 
 Every area's effects take one shape:
 - `syncProperties(tx, id, fields)` stores the fields of the entity's form as its properties, in place of those it stored before. Its other properties stay.
@@ -287,7 +287,7 @@ Properties the engine reads off a race (`combat/InitiativeAndSpeed.ts`, `combat/
 
 ### Spells / Powers
 
-Properties auto-generated from spell form fields in `PowersEffects.syncProperties()` (`powers/spellGenerator.ts`):
+Properties auto-generated from spell form fields in `PowersEffects.syncProperties()`. They're a power's fields: `PowersRules.readProperties` reads them (`readPowerFields` in `powers/powerFields.ts`, which the power groupings read a spell's school and descriptors with too), and `toPowerProperties` builds their rows:
 
 | Property Type | Description |
 |---|---|
