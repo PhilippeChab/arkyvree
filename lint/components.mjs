@@ -1,5 +1,5 @@
 /**
- * The client's shared components, each the one way to write its pattern (AGENTS.md's Frontend Architecture):
+ * The client's shared components, each the one way to write its pattern (docs/frontend.md):
  *
  * - `dialog-footers`: a dialog's footer is a `DialogFooter` (its way out, then its action or its own steps), never
  *   `DialogActions` written by hand.

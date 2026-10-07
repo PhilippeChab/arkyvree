@@ -2,10 +2,9 @@ import { Box, IconButton, Menu, Skeleton, Stack, Typography } from "@mui/materia
 import { type ComponentProps, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
+import { ActionMenuItem, PageError, PageTransition } from "@/client/src/components/common/index.ts";
 import { ArrowBackIcon, DeleteIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
 import { useAnchorMenu, useIsMobile } from "@/client/src/hooks/index.ts";
-import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface EntityDetailLayoutProps {
   /** Momentarily nowhere sensible to go back to. */
@@ -60,76 +59,71 @@ export function EntityDetailLayout({
   }
 
   return (
-    // The page's blocks: its header, then what the page holds (a details card, its tabs, a tab's panel)
-    <Stack
-      spacing={4}
-      sx={{
-        ...PAGE_SX,
-        animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} both`,
-        [PREFERS_REDUCED_MOTION]: { animation: "none" },
-      }}
-    >
-      <Stack
-        direction="row"
-        sx={{ alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
-      >
-        <IconButton
-          aria-label="Back"
-          component={Link}
-          to={backTo}
-          disabled={backDisabled}
-          size={isMobile ? "medium" : "large"}
-          sx={{
-            position: "absolute",
-            left: 0,
-            "&:hover": { bgcolor: "action.hover" },
-          }}
+    <PageTransition>
+      {/* The page's blocks: its header, then what the page holds (a details card, its tabs, a tab's panel) */}
+      <Stack spacing={4} sx={PAGE_SX}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
         >
-          <ArrowBackIcon />
-        </IconButton>
-        <Stack spacing={0.5} sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, sm: 8 } }}>
-          <Typography component="h1" sx={{ fontWeight: 600, typography: { xs: "h5", md: "h4" } }}>
-            {entityName}
-          </Typography>
-          <Typography component="div" variant="body2" sx={{ color: "text.secondary" }}>
-            {subtitle || `${rulesetName} Ruleset`}
-          </Typography>
+          <IconButton
+            aria-label="Back"
+            component={Link}
+            to={backTo}
+            disabled={backDisabled}
+            size={isMobile ? "medium" : "large"}
+            sx={{
+              position: "absolute",
+              left: 0,
+              "&:hover": { bgcolor: "action.hover" },
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Stack spacing={0.5} sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, sm: 8 } }}>
+            <Typography component="h1" sx={{ fontWeight: 600, typography: { xs: "h5", md: "h4" } }}>
+              {entityName}
+            </Typography>
+            <Typography component="div" variant="body2" sx={{ color: "text.secondary" }}>
+              {subtitle || `${rulesetName} Ruleset`}
+            </Typography>
+          </Stack>
+          {canDelete && onDelete && (
+            <>
+              <IconButton
+                aria-label="More Actions"
+                size={isMobile ? "medium" : "large"}
+                onClick={menu.openMenu}
+                sx={{
+                  position: "absolute",
+                  right: 0,
+                  "&:hover": { bgcolor: "action.hover" },
+                }}
+              >
+                <MoreVertIcon />
+              </IconButton>
+              <Menu
+                anchorEl={menu.anchorEl}
+                // The menu button can unmount and come back (e.g. while a copy loads): only
+                // anchor to one still on the page.
+                open={!!menu.anchorEl?.isConnected}
+                onClose={menu.closeMenu}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+              >
+                <ActionMenuItem
+                  icon={DeleteIcon}
+                  label="Delete"
+                  intent="destructive"
+                  onClick={menu.closeMenuAnd(onDelete)}
+                />
+              </Menu>
+            </>
+          )}
         </Stack>
-        {canDelete && onDelete && (
-          <>
-            <IconButton
-              aria-label="More Actions"
-              size={isMobile ? "medium" : "large"}
-              onClick={menu.openMenu}
-              sx={{
-                position: "absolute",
-                right: 0,
-                "&:hover": { bgcolor: "action.hover" },
-              }}
-            >
-              <MoreVertIcon />
-            </IconButton>
-            <Menu
-              anchorEl={menu.anchorEl}
-              // The menu button can unmount and come back (e.g. while a copy loads): only
-              // anchor to one still on the page.
-              open={!!menu.anchorEl?.isConnected}
-              onClose={menu.closeMenu}
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-              transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-              <ActionMenuItem
-                icon={DeleteIcon}
-                label="Delete"
-                intent="destructive"
-                onClick={menu.closeMenuAnd(onDelete)}
-              />
-            </Menu>
-          </>
-        )}
+        {children}
       </Stack>
-      {children}
-    </Stack>
+    </PageTransition>
   );
 }
 

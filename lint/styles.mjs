@@ -1,5 +1,5 @@
 /**
- * How the client writes its styles (AGENTS.md's Frontend Architecture), as rules. Every value a style takes is the
+ * How the client writes its styles (docs/frontend.md), as rules. Every value a style takes is the
  * theme's (`client/src/theme/`, where they're written out); everywhere else a style names one.
  *
  * - `sx-styles`: a style is written with `sx`: never `styled()`, no stylesheet but the fonts `main.tsx` loads (the

@@ -1,5 +1,5 @@
 /**
- * The client's conventions (AGENTS.md's Frontend Architecture), as rules:
+ * The client's conventions (docs/frontend.md), as rules:
  *
  * - `accessible-icon-buttons`: an `IconButton` is named by its `aria-label` (or `aria-labelledby`), written out (a
  *   spread doesn't count), whether or not a `Tooltip` shows its name.
