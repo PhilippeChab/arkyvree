@@ -193,7 +193,7 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
     );
   }
 
-  readCurrentValues(properties: { type: string; value: string }[]): { bab: number; skills: number } {
+  readProperties(properties: { type: string; value: string }[]): { bab: number; skills: number } {
     let bab = 0;
     let skills = 0;
     for (const prop of properties) {

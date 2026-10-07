@@ -5,9 +5,9 @@ import { stripSeparators } from "@/shared/text.ts";
 
 import { JOINS_CLASS_LIST } from "./AptitudesPaths.ts";
 
-type AptitudesById = Map<string, DetailedCharacterComprehensiveAptitudes[string]>;
+type AptitudesById = Map<string, AptitudesData[string]>;
 
-type DetailedCharacterComprehensiveAptitudes = {
+type AptitudesData = {
   [key: string]: {
     id: string;
     name: string;
@@ -32,8 +32,8 @@ export const ALLOWED_ALL = -1;
 
 export default class AptitudesComponent {
   constructor(
-    private readonly characterIdentity: IdentityComponent,
-    private readonly characterClasses: ClassesComponent,
+    private readonly identity: IdentityComponent,
+    private readonly classes: ClassesComponent,
     /** Largest spell/power level a leveled aptitude enumerates (inclusive).
      *  Required — each ruleset must pass its own value (e.g.
      *  `Dnd35LevelsRules.MAX_SPELL_LEVEL`). No default so a universal file
@@ -43,7 +43,7 @@ export default class AptitudesComponent {
     private readonly countGeneralFeats: (totalLevel: number) => number,
   ) {}
 
-  private readonly detailedCharacterComprehensiveAptitudes: DetailedCharacterComprehensiveAptitudes = {};
+  private readonly aptitudes: AptitudesData = {};
 
   // Track which aptitude keys are leveled (spell aptitudes)
   private readonly leveledAptitudeKeys = new Set<string>();
@@ -69,8 +69,8 @@ export default class AptitudesComponent {
       }
     }
 
-    const level = this.characterIdentity.getIdentity().meta.level;
-    this.detailedCharacterComprehensiveAptitudes["general"].allowed += this.countGeneralFeats(level);
+    const level = this.identity.getIdentity().meta.level;
+    this.aptitudes["general"].allowed += this.countGeneralFeats(level);
   }
 
   /** Sets what the character spent on each aptitude: flat, or per spell level for a leveled one. */
@@ -104,7 +104,7 @@ export default class AptitudesComponent {
   private buildEntries(aptitudes: Aptitude[], leveledAptitudeIds: Set<string>) {
     for (const aptitude of aptitudes) {
       const key = stripSeparators(aptitude.name);
-      this.detailedCharacterComprehensiveAptitudes[key] = {
+      this.aptitudes[key] = {
         id: aptitude.id,
         name: aptitude.name,
         description: aptitude.description || "",
@@ -116,7 +116,7 @@ export default class AptitudesComponent {
 
       if (leveledAptitudeIds.has(aptitude.id)) {
         this.leveledAptitudeKeys.add(key);
-        const aptitudeObj = this.detailedCharacterComprehensiveAptitudes[key] as Record<string, unknown>;
+        const aptitudeObj = this.aptitudes[key] as Record<string, unknown>;
         for (let level = 0; level <= this.maxSpellLevel; level++) {
           aptitudeObj[String(level)] = this.newSpellLevel();
         }
@@ -130,7 +130,7 @@ export default class AptitudesComponent {
     const spentByAptitudeId: Record<string, number> = {};
     const spentByAptitudeIdAndLevel: Record<string, Record<number, number>> = {};
 
-    for (const klass of Object.values(this.characterClasses.getClasses())) {
+    for (const klass of Object.values(this.classes.getClasses())) {
       for (const level of klass.levels) {
         for (const feat of level.feats) {
           spentByAptitudeId[feat.aptitudeId] = (spentByAptitudeId[feat.aptitudeId] || 0) + 1;
@@ -190,7 +190,7 @@ export default class AptitudesComponent {
       string,
       { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }
     > = {};
-    for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
+    for (const [key, aptitude] of Object.entries(this.aptitudes)) {
       if (this.leveledAptitudeKeys.has(key)) continue;
       pools[aptitude.id] = {
         id: aptitude.id,
@@ -233,7 +233,7 @@ export default class AptitudesComponent {
       }
     > = {};
 
-    for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
+    for (const [key, aptitude] of Object.entries(this.aptitudes)) {
       if (this.leveledAptitudeKeys.has(key)) {
         const aptitudeObj = aptitude as Record<string, unknown>;
         const levels: Record<string, { allowed: number; spent: number; available: number }> = {};
@@ -274,12 +274,12 @@ export default class AptitudesComponent {
   }
 
   getAptitudes() {
-    return this.detailedCharacterComprehensiveAptitudes;
+    return this.aptitudes;
   }
 
   /** Returns IDs of all non-leveled aptitudes. */
   getNonLeveledAptitudeIds(): string[] {
-    return Object.entries(this.detailedCharacterComprehensiveAptitudes)
+    return Object.entries(this.aptitudes)
       .filter(([key]) => !this.leveledAptitudeKeys.has(key))
       .map(([, apt]) => apt.id);
   }
@@ -292,7 +292,7 @@ export default class AptitudesComponent {
   ) {
     this.buildEntries(aptitudes, leveledAptitudeIds);
     const aptitudeById: AptitudesById = new Map(
-      Object.values(this.detailedCharacterComprehensiveAptitudes).map((aptitude) => [aptitude.id, aptitude]),
+      Object.values(this.aptitudes).map((aptitude) => [aptitude.id, aptitude]),
     );
     this.applyAllowances(aptitudeById, klassLevelFeatCountsByAptitudeId, klassLevelPowerCountsByAptitudeId);
     this.applySpent(aptitudeById, this.countSpent());
@@ -304,7 +304,7 @@ export default class AptitudesComponent {
   }
 
   updateAvailables() {
-    for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
+    for (const [key, aptitude] of Object.entries(this.aptitudes)) {
       if (this.leveledAptitudeKeys.has(key)) {
         // Update per-level availables for spell aptitudes
         const aptitudeObj = aptitude as Record<string, unknown>;

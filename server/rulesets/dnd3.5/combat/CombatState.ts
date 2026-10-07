@@ -9,7 +9,7 @@ import type SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponen
 
 export type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
 
-export type DetailedCharacterComprehensiveCombat = {
+export type CombatData = {
   ac: {
     base: number;
     armor: number;
@@ -178,8 +178,8 @@ export const WIELDED_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => (
 /** What a character's combat sheet holds, which its concerns (armor class, hit points, attacks…) compute. */
 export default abstract class CombatState {
   constructor(
-    protected readonly characterAbilities: AbilitiesComponent,
-    protected readonly characterClasses: ClassesComponent,
+    protected readonly abilities: AbilitiesComponent,
+    protected readonly classes: ClassesComponent,
   ) {}
 
   /**
@@ -187,7 +187,7 @@ export default abstract class CombatState {
    * placeholders here, which the concerns replace when the character initializes; the encumbrance is the encumbrance's
    * own object, set with its source.
    */
-  protected readonly detailedCharacterCombat: DetailedCharacterComprehensiveCombat = {
+  protected readonly combat: CombatData = {
     ac: {
       base: CONSTANTS.DEFAULT_AC_BASE,
       armor: 0,

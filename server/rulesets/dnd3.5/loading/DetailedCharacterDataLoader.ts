@@ -21,14 +21,14 @@ import { collectClassListIds, collectFeatListIds } from "@/server/rulesets/dnd3.
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import type { SkillFlags } from "@/server/rulesets/engine/module/index.ts";
 import type {
-  FeatWithPMR,
+  CustomizedFeat,
+  CustomizedKlassLevel,
+  CustomizedPower,
+  CustomizedRace,
   InventoryEntry,
-  KlassLevelWithPMR,
   LoadedCharacterData,
-  PowerWithPMR,
   PreloadedCharacterData,
   PreloadedRulesetData,
-  RaceWithPMR,
 } from "@/server/rulesets/engine/types.ts";
 import {
   KLASS_BONUS_SPELL_ABILITY_ID,
@@ -118,12 +118,12 @@ export default class DetailedCharacterDataLoader {
   private collectModifiers(
     parts: {
       characterSourcedModifiers: Modifier[];
-      race: RaceWithPMR;
+      race: CustomizedRace;
       inventory: InventoryEntry[];
-      klassLevels: KlassLevelWithPMR[];
+      klassLevels: CustomizedKlassLevel[];
       klassEntityIds: string[];
-      feats: FeatWithPMR[];
-      powers: PowerWithPMR[];
+      feats: CustomizedFeat[];
+      powers: CustomizedPower[];
     },
     rulesetData: RulesetData,
     extraRequirements: Requirement[],
@@ -299,14 +299,14 @@ export default class DetailedCharacterDataLoader {
     allFeats: ReturnType<DetailedCharacterDataLoader["composeFeats"]>["allFeats"],
     virtuallyPossessedFeatIds: string[],
     rulesetData: RulesetData,
-  ): FeatWithPMR[] {
-    const realFeatsWithPMR: FeatWithPMR[] = allFeats.map((feat) => ({
+  ): CustomizedFeat[] {
+    const realFeatsWithPMR: CustomizedFeat[] = allFeats.map((feat) => ({
       ...feat,
       properties: rulesetData.propertiesByEntity.get(feat.id) ?? [],
       modifiers: rulesetData.modifiersBySource.get(feat.id) ?? [],
       requirements: rulesetData.requirementsByEntity.get(feat.id) ?? [],
     }));
-    const virtualFeatsWithPMR: FeatWithPMR[] = [];
+    const virtualFeatsWithPMR: CustomizedFeat[] = [];
     for (const featId of virtuallyPossessedFeatIds) {
       const featRow = rulesetData.featsById.get(featId);
       if (!featRow) continue;
@@ -370,7 +370,7 @@ export default class DetailedCharacterDataLoader {
 
   /** Klass level properties/modifiers/requirements, and each level's bab and skill points. */
   private klassLevelsWithPMR(klassLevelsRaw: KlassLevel[], rulesetData: RulesetData) {
-    const klassLevels: KlassLevelWithPMR[] = klassLevelsRaw
+    const klassLevels: CustomizedKlassLevel[] = klassLevelsRaw
       .map((level) => ({
         ...level,
         properties: rulesetData.propertiesByEntity.get(level.id) ?? [],
@@ -446,14 +446,14 @@ export default class DetailedCharacterDataLoader {
     allPowers: ReturnType<DetailedCharacterDataLoader["composePowers"]>["allPowers"],
     virtuallyPossessedPowers: { powerId: string; aptitudeId: string }[],
     rulesetData: RulesetData,
-  ): PowerWithPMR[] {
-    const realPowersWithPMR: PowerWithPMR[] = allPowers.map((power) => ({
+  ): CustomizedPower[] {
+    const realPowersWithPMR: CustomizedPower[] = allPowers.map((power) => ({
       ...power,
       properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
       modifiers: rulesetData.modifiersBySource.get(power.id) ?? [],
       requirements: rulesetData.requirementsByEntity.get(power.id) ?? [],
     }));
-    const virtualPowersWithPMR: PowerWithPMR[] = [];
+    const virtualPowersWithPMR: CustomizedPower[] = [];
     for (const { powerId, aptitudeId } of virtuallyPossessedPowers) {
       const powerRow = rulesetData.powersById.get(powerId);
       if (!powerRow) continue;
@@ -477,7 +477,7 @@ export default class DetailedCharacterDataLoader {
   }
 
   /** The race with its properties, modifiers and requirements. */
-  private raceWithPMR(race: Race, rulesetData: RulesetData): RaceWithPMR {
+  private raceWithPMR(race: Race, rulesetData: RulesetData): CustomizedRace {
     return {
       ...race,
       properties: rulesetData.propertiesByEntity.get(race.id) ?? [],

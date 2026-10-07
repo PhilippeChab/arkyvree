@@ -15,7 +15,7 @@ const NAVIGATABLE_PATHS = [
 
 /** The abilities' target paths: each ability's score and modifier. */
 export default class AbilitiesPaths implements PathCategory<Dnd35Components> {
-  static generateTargetPaths(abilities: RulesetAbility[], kind: "modifier" | "requirement"): TargetPath[] {
+  static generateAbilityPaths(abilities: RulesetAbility[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const ability of abilities) {
@@ -56,7 +56,7 @@ export default class AbilitiesPaths implements PathCategory<Dnd35Components> {
   readonly groupDescriptionTemplates = { abilities: "{name} ability score and modifier" };
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return AbilitiesPaths.generateTargetPaths(rulesetData.abilities, kind);
+    return AbilitiesPaths.generateAbilityPaths(rulesetData.abilities, kind);
   }
 
   getSegmentLabels(): Record<string, string> {

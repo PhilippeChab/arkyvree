@@ -7,7 +7,7 @@ import { BONDED_KINDS } from "@/shared/dnd3.5/bondedKinds.ts";
 
 /** The bonded creature's target paths: its kind's race. */
 export default class BondedPaths implements PathCategory<Dnd35Components> {
-  static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
+  static generateBondPaths(kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
     for (const b of BONDED_KINDS) {
       paths.push({
@@ -37,7 +37,7 @@ export default class BondedPaths implements PathCategory<Dnd35Components> {
   readonly component = { key: "bonded", getter: "getBonds" } as const;
 
   generate(_rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return BondedPaths.generateTargetPaths(kind);
+    return BondedPaths.generateBondPaths(kind);
   }
 
   getSegmentLabels(): Record<string, string> {

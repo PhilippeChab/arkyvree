@@ -22,20 +22,20 @@
 
 import { BONDED_KINDS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 
+type BondsData = {
+  [K in BondedKind]: DetailedCharacterBondedSlot;
+};
+
 type DetailedCharacterBondedSlot = {
   race: string;
   level: number;
 };
 
-type DetailedCharacterComprehensiveBonds = {
-  [K in BondedKind]: DetailedCharacterBondedSlot;
-};
-
 export default class BondsComponent {
-  protected readonly bonds: DetailedCharacterComprehensiveBonds = BONDED_KINDS.reduce((acc, b) => {
+  protected readonly bonds: BondsData = BONDED_KINDS.reduce((acc, b) => {
     acc[b.slug] = { race: "", level: 0 };
     return acc;
-  }, {} as DetailedCharacterComprehensiveBonds);
+  }, {} as BondsData);
 
   /** Effective level for a given bonded slot. */
   getBondedLevel(slug: BondedKind): number {
@@ -48,7 +48,7 @@ export default class BondsComponent {
     return value && value.length > 0 ? value : null;
   }
 
-  getBonds(): DetailedCharacterComprehensiveBonds {
+  getBonds(): BondsData {
     return this.bonds;
   }
 }

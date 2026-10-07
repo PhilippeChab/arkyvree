@@ -2,7 +2,7 @@ import type { ClassesRules } from "@/server/rulesets/engine/module/index.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 
 export class Dnd35ClassesRules implements ClassesRules {
-  readClassProperties(properties: { id: string; type: string; value: string }[]) {
+  readProperties(properties: { id: string; type: string; value: string }[]) {
     const bonusSpellProperty = properties.find((p) => p.type === KLASS_BONUS_SPELL_ABILITY_ID);
     const casterTypeProperty = properties.find((p) => p.type === KLASS_CASTER_TYPE);
 

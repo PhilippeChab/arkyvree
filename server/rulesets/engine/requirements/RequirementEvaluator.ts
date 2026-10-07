@@ -8,7 +8,7 @@ import type { Components, TargetPathsTraverser, TraversePathResult } from "@/ser
 import RequirementTree, { getParentLevel, type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
-type DetailedCharacterComprehensiveRequirements = {
+type RequirementResults = {
   requirements: Requirement[][];
   invalidRequirements: { warning: string; requirement: Requirement }[];
   unmetRequirementGroups: Requirement[][];
@@ -18,7 +18,7 @@ type DetailedCharacterComprehensiveRequirements = {
 export default class RequirementEvaluator {
   constructor(private readonly targetPaths: TargetPathsTraverser) {}
 
-  private readonly detailedCharacterRequirements: DetailedCharacterComprehensiveRequirements = {
+  private readonly results: RequirementResults = {
     requirements: [],
     invalidRequirements: [],
     unmetRequirementGroups: [],
@@ -143,7 +143,7 @@ export default class RequirementEvaluator {
 
         for (const result of results) {
           if (result.error) {
-            this.detailedCharacterRequirements.invalidRequirements.push({
+            this.results.invalidRequirements.push({
               warning: result.error,
               requirement,
             });
@@ -167,7 +167,7 @@ export default class RequirementEvaluator {
     const tree = RequirementTree.fromRows(evaluated);
     // A row under a condition, which groups nothing, is left out
     for (const requirement of tree.detached) {
-      this.detailedCharacterRequirements.invalidRequirements.push({
+      this.results.invalidRequirements.push({
         warning: `Condition node at level ${getParentLevel(requirement.level)} cannot have children. Child level ${requirement.level} discarded.`,
         requirement,
       });
@@ -177,9 +177,9 @@ export default class RequirementEvaluator {
     const isGroupFulfilled = tree.roots.every((node) => this.evaluateNode(node, fulfilled));
 
     if (isGroupFulfilled) {
-      this.detailedCharacterRequirements.fulfilledRequirementGroups.push(requirements);
+      this.results.fulfilledRequirementGroups.push(requirements);
     } else {
-      this.detailedCharacterRequirements.unmetRequirementGroups.push(requirements);
+      this.results.unmetRequirementGroups.push(requirements);
     }
   }
 
@@ -219,7 +219,7 @@ export default class RequirementEvaluator {
 
   /** Records a requirement the engine couldn't evaluate, with why. */
   private warn(requirement: Requirement, warning: string) {
-    this.detailedCharacterRequirements.invalidRequirements.push({ warning, requirement });
+    this.results.invalidRequirements.push({ warning, requirement });
   }
 
   /** Evaluates the groups, each with the item it's of (`itemOf`), which a weapon's own paths (`weapon.wielded`) read. */
@@ -234,7 +234,7 @@ export default class RequirementEvaluator {
   }
 
   getRequirements() {
-    return this.detailedCharacterRequirements;
+    return this.results;
   }
 
   /**

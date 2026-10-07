@@ -5,13 +5,13 @@ import type ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierE
 import type { SkillFlags } from "@/server/rulesets/engine/module/index.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import type {
-  FeatWithPMR,
+  CustomizedFeat,
+  CustomizedKlassLevel,
+  CustomizedPower,
+  CustomizedRace,
   InventoryEntry,
-  KlassLevelWithPMR,
-  PowerWithPMR,
   PreloadedCharacterData,
   PreloadedRulesetData,
-  RaceWithPMR,
   SkillWithRank,
   TargetPathsTraverser,
 } from "@/server/rulesets/engine/types.ts";
@@ -106,7 +106,7 @@ export default abstract class CharacterState {
   protected rulesetKlasses: Klass[] = [];
 
   // Character data
-  protected race: RaceWithPMR = {} as RaceWithPMR;
+  protected race: CustomizedRace = {} as CustomizedRace;
 
   protected languages: Language[] = [];
 
@@ -116,7 +116,7 @@ export default abstract class CharacterState {
 
   protected characterLevels: CharacterLevel[] = [];
 
-  protected klassLevels: KlassLevelWithPMR[] = [];
+  protected klassLevels: CustomizedKlassLevel[] = [];
 
   protected klassSkills: KlassSkill[] = [];
 
@@ -124,11 +124,11 @@ export default abstract class CharacterState {
 
   protected klasses: Klass[] = [];
 
-  protected feats: FeatWithPMR[] = [];
+  protected feats: CustomizedFeat[] = [];
 
   protected skills: SkillWithRank[] = [];
 
-  protected powers: PowerWithPMR[] = [];
+  protected powers: CustomizedPower[] = [];
 
   // Derived data
   protected klassLevelFeatCountsByAptitudeId: Record<string, number> = {};
@@ -206,9 +206,9 @@ export default abstract class CharacterState {
   // / `rulesetKlasses` being immutable after `build()` returns. If any
   // future code mutates those post-build, invalidate this field first.
   protected diagnosticsIndex?: {
-    featsById: Map<string, FeatWithPMR>;
-    powersById: Map<string, PowerWithPMR>;
-    klassLevelsById: Map<string, KlassLevelWithPMR>;
+    featsById: Map<string, CustomizedFeat>;
+    powersById: Map<string, CustomizedPower>;
+    klassLevelsById: Map<string, CustomizedKlassLevel>;
     rulesetKlassesById: Map<string, Klass>;
     inventoryByItemId: Map<string, InventoryEntry>;
     modifierOwner: Map<string, { name: string; type: string }>;

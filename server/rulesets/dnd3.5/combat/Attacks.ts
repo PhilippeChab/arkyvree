@@ -125,7 +125,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * when Weapon Finesse makes that better. A composite bow drawn with a Strength bonus below its rating takes −2.
      */
     private attackModifier({ attack, finesse, strengthRating, ratingRequired }: WeaponAbilities): number {
-      const abilities = this.characterAbilities;
+      const abilities = this.abilities;
       let modifier = abilities.getAbilityModifier(attack);
       if (finesse) {
         modifier = Math.max(modifier, abilities.getAbilityModifier("Dexterity") + this.shieldCheckPenalty());
@@ -138,15 +138,15 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
 
     /** The weapon set, created if missing, with the slots the weapon displaces emptied. */
     private clearSlots(setKey: string, slot: "Main Hand" | "Off Hand" | "Two Handed") {
-      if (!this.detailedCharacterCombat.weaponsets[setKey]) {
-        this.detailedCharacterCombat.weaponsets[setKey] = { mainhand: null, offhand: null, twohanded: null };
+      if (!this.combat.weaponsets[setKey]) {
+        this.combat.weaponsets[setKey] = { mainhand: null, offhand: null, twohanded: null };
       }
       // Two-handed weapons displace main-hand and off-hand (e.g. unarmed strike default)
       if (slot === "Two Handed") {
-        this.detailedCharacterCombat.weaponsets[setKey].mainhand = null;
-        this.detailedCharacterCombat.weaponsets[setKey].offhand = null;
+        this.combat.weaponsets[setKey].mainhand = null;
+        this.combat.weaponsets[setKey].offhand = null;
       } else {
-        this.detailedCharacterCombat.weaponsets[setKey].twohanded = null;
+        this.combat.weaponsets[setKey].twohanded = null;
       }
     }
 
@@ -155,7 +155,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * and a tower shield's bulk.
      */
     private gearPenalty(): number {
-      const { armors, shields } = this.detailedCharacterCombat;
+      const { armors, shields } = this.combat;
       const gear = new Set([...Object.values(armors), ...Object.values(shields)]);
       const unproficient = [...gear].reduce((penalty, item) => penalty + (item.proficient ? 0 : item.checkpenalty), 0);
       return unproficient + (this.towerShield ? CONSTANTS.TOWER_SHIELD_PENALTY : 0);
@@ -171,13 +171,13 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
       }, 0);
 
-      this.detailedCharacterCombat.bab = baseAttackBonusFromClasses;
+      this.combat.bab = baseAttackBonusFromClasses;
     }
 
     /** The grapple: misc is an input; the base attack bonus's, Strength's and the size's parts and the total are read. */
     protected initializeGrapple(): void {
-      const combat = this.detailedCharacterCombat;
-      const strength = () => this.characterAbilities.getAbilityModifier("Strength");
+      const combat = this.combat;
+      const strength = () => this.abilities.getAbilityModifier("Strength");
       const size = () => SIZE_GRAPPLE_MOD[this.raceSize] ?? 0;
       combat.grapple = {
         get bab() {
@@ -201,7 +201,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * (`repeats`), the extra ones `combat.naturalattacks.extraattacks` counts, each at −5.
      */
     private naturalAttacks(repeats: boolean): number[] {
-      const { bab, naturalattacks } = this.detailedCharacterCombat;
+      const { bab, naturalattacks } = this.combat;
       const extra = repeats ? Math.max(0, naturalattacks.extraattacks) : 0;
       return [bab, ...Array.from({ length: extra }, () => bab - CONSTANTS.ATTACK_STEP)];
     }
@@ -213,8 +213,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      */
     private offEndAttack(weapon: WeaponSlot, setKey: string): WeaponSlot["offend"] {
       const otherDice = this.doubleWeapons.get(weapon);
-      if (!otherDice || this.detailedCharacterCombat.weaponsets[setKey]?.twohanded !== weapon) return null;
-      const { twoweapon } = this.detailedCharacterCombat;
+      if (!otherDice || this.combat.weaponsets[setKey]?.twohanded !== weapon) return null;
+      const { twoweapon } = this.combat;
       const first = weapon.tohit.total[0] + twoweapon.offhandpenalty + CONSTANTS.LIGHT_OFF_HAND_BONUS;
       const total = Array.from(
         { length: Math.max(1, twoweapon.offhandattacks) },
@@ -229,7 +229,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * proficient with, another's costing every attack already (`gearPenalty`).
      */
     private shieldCheckPenalty(): number {
-      const shields = new Set(Object.values(this.detailedCharacterCombat.shields));
+      const shields = new Set(Object.values(this.combat.shields));
       return [...shields].reduce((penalty, shield) => penalty + (shield.proficient ? shield.checkpenalty : 0), 0);
     }
 
@@ -238,7 +238,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * its rating (a bow's). A weapon whose WEAPON_STRENGTH_DAMAGE is "None" (a crossbow) adds none.
      */
     private strengthDamage(multiplier: number | null, strengthRating: number | null): number {
-      const strength = this.characterAbilities.getAbilityModifier("Strength");
+      const strength = this.abilities.getAbilityModifier("Strength");
       // The SRD halves or raises a Strength bonus by the hand, never a penalty
       if (multiplier !== null) return strength < 0 && multiplier > 0 ? strength : Math.floor(strength * multiplier);
       if (strengthRating !== null) return strength < 0 ? strength : Math.min(strength, strengthRating);
@@ -247,11 +247,11 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
 
     /** A melee weapon's thrown attack: Dexterity to hit, as every ranged attack, with the weapon's own bonuses. */
     private thrownAttack(weapon: WeaponSlot): NonNullable<WeaponSlot["thrown"]> {
-      const dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
+      const dexterity = this.abilities.getAbilityModifier("Dexterity");
       const { tohit } = weapon;
-      const throwing = this.detailedCharacterCombat.throwing.tohit;
+      const throwing = this.combat.throwing.tohit;
       const bonuses = dexterity + tohit.magic + tohit.misc + tohit.size + tohit.gearpenalty + throwing;
-      return { dexterity, total: iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + bonuses) };
+      return { dexterity, total: iterativeAttacks(this.combat.bab).map((base) => base + bonuses) };
     }
 
     /**
@@ -260,8 +260,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * attack step, all with the hand's two-weapon penalty, which a light off-hand weapon lessens.
      */
     private twoWeaponAttacks(weapon: WeaponSlot, setKey: string): WeaponSlot["twoweapon"] {
-      const { mainhand, offhand, twohanded } = this.detailedCharacterCombat.weaponsets[setKey] ?? {};
-      const { twoweapon } = this.detailedCharacterCombat;
+      const { mainhand, offhand, twohanded } = this.combat.weaponsets[setKey] ?? {};
+      const { twoweapon } = this.combat;
       // A double weapon in two hands fights as two weapons, its other end a light off-hand one (`offEndAttack`)
       if (weapon === twohanded && this.doubleWeapons.has(weapon)) {
         const penalty = twoweapon.mainhandpenalty + CONSTANTS.LIGHT_OFF_HAND_BONUS;
@@ -358,10 +358,9 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         // What only some weapons take: a secondary natural attack's penalty, and a thrown weapon's or a sling's bonus (a
         // ranged weapon Strength adds to by the hand, not a bow or a crossbow)
         kindBonus: () =>
-          (natural?.kind === "secondary" ? this.detailedCharacterCombat.naturalattacks.secondarypenalty : 0) +
-          (ranged && strengthDamage === "Slot" ? this.detailedCharacterCombat.throwing.tohit : 0),
-        attacks: () =>
-          natural ? this.naturalAttacks(natural.repeats) : iterativeAttacks(this.detailedCharacterCombat.bab),
+          (natural?.kind === "secondary" ? this.combat.naturalattacks.secondarypenalty : 0) +
+          (ranged && strengthDamage === "Slot" ? this.combat.throwing.tohit : 0),
+        attacks: () => (natural ? this.naturalAttacks(natural.repeats) : iterativeAttacks(this.combat.bab)),
         thrown: (weapon: WeaponSlot) => (!ranged && weapon.range > 0 ? this.thrownAttack(weapon) : null),
         twoWeapon: (weapon: WeaponSlot) => this.twoWeaponAttacks(weapon, setKey),
         offEnd: (weapon: WeaponSlot) => this.offEndAttack(weapon, setKey),
@@ -420,7 +419,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       this.weaponAbilities.set(weapon, abilities);
       const otherDice = property(WEAPON_DOUBLE_DAMAGE)?.value;
       if (otherDice) this.doubleWeapons.set(weapon, otherDice);
-      this.detailedCharacterCombat.weaponsets[setKey][slotKey] = weapon;
+      this.combat.weaponsets[setKey][slotKey] = weapon;
       return weapon;
     }
 
@@ -435,7 +434,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * it isn't proficient with, whose check penalty every attack takes.
      */
     applyProficiencyPenalties(unproficient: { id: string; itemId: string }[]) {
-      const { weaponsets, armors, shields } = this.detailedCharacterCombat;
+      const { weaponsets, armors, shields } = this.combat;
       const entryIds = new Set(unproficient.map((entry) => entry.id));
       const itemIds = new Set(unproficient.map((entry) => entry.itemId));
       for (const weaponSet of Object.values(weaponsets)) {
@@ -456,7 +455,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     applyWeaponFinesse(hasFinesse: boolean): void {
       if (!hasFinesse) return;
 
-      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
+      for (const weaponSet of Object.values(this.combat.weaponsets)) {
         for (const slotKey of WEAPON_SET_SLOTS) {
           const weapon = weaponSet[slotKey];
           if (!weapon?.finessable) continue;
@@ -475,7 +474,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     setNaturalAttacks(
       attacks: { name: string; damage: string; type: string; count?: number; secondary?: true; misc?: number }[],
     ): void {
-      const combat = this.detailedCharacterCombat;
+      const combat = this.combat;
       combat.weaponsets = {};
       const count = attacks.reduce((sum, attack) => sum + (attack.count ?? 1), 0);
       combat.naturalattacks = { ...combat.naturalattacks, count };

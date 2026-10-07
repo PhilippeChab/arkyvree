@@ -2,7 +2,7 @@ import { CONSTANTS } from "@/server/rulesets/dnd3.5/constants.ts";
 import { type CharacterLevel } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-type DetailedCharacterComprehensiveAbilities = {
+type AbilitiesData = {
   [key: string]: {
     base: number;
     level: number; // Bonus from levels
@@ -13,8 +13,7 @@ type DetailedCharacterComprehensiveAbilities = {
 };
 
 export default class AbilitiesComponent {
-  private readonly detailedCharacterAbilities: DetailedCharacterComprehensiveAbilities =
-    {} as DetailedCharacterComprehensiveAbilities;
+  private readonly abilities: AbilitiesData = {} as AbilitiesData;
 
   // Map abilityId -> normalized ability name for level-up lookups
   private readonly abilityIdToName: Map<string, string> = new Map();
@@ -24,7 +23,7 @@ export default class AbilitiesComponent {
   }
 
   getAbilities() {
-    return this.detailedCharacterAbilities;
+    return this.abilities;
   }
 
   getAbilitiesWithIds() {
@@ -41,7 +40,7 @@ export default class AbilitiesComponent {
     > = {};
 
     for (const [abilityId, normalizedName] of this.abilityIdToName.entries()) {
-      const ability = this.detailedCharacterAbilities[normalizedName];
+      const ability = this.abilities[normalizedName];
       if (ability) {
         result[normalizedName] = { abilityId, ...ability };
       }
@@ -51,17 +50,17 @@ export default class AbilitiesComponent {
   }
 
   getAbility(abilityName: string) {
-    return this.detailedCharacterAbilities[stripSeparators(abilityName)];
+    return this.abilities[stripSeparators(abilityName)];
   }
 
   getAbilityModifier(abilityName: string) {
-    return this.detailedCharacterAbilities[stripSeparators(abilityName)]?.modifier ?? 0;
+    return this.abilities[stripSeparators(abilityName)]?.modifier ?? 0;
   }
 
   // Skill-point budgets count only innate score (base + level-up bumps), not
   // misc bonuses from feats/items/spells.
   getAbilityModifierExcludingMisc(abilityName: string) {
-    const ability = this.detailedCharacterAbilities[stripSeparators(abilityName)];
+    const ability = this.abilities[stripSeparators(abilityName)];
     if (!ability) return 0;
     return this.computeModifier(ability.base + ability.level);
   }
@@ -74,7 +73,7 @@ export default class AbilitiesComponent {
 
       const computeModifier = (total: number) => this.computeModifier(total);
       // The total and the modifier are computed from the parts when read, so they follow every change to them
-      this.detailedCharacterAbilities[normalizedName] = {
+      this.abilities[normalizedName] = {
         base: score,
         level: 0,
         misc: 0,
@@ -91,8 +90,8 @@ export default class AbilitiesComponent {
     for (const level of levels) {
       if (level.abilityId) {
         const normalizedName = this.abilityIdToName.get(level.abilityId);
-        if (normalizedName && this.detailedCharacterAbilities[normalizedName]) {
-          this.detailedCharacterAbilities[normalizedName].level += 1;
+        if (normalizedName && this.abilities[normalizedName]) {
+          this.abilities[normalizedName].level += 1;
         }
       }
     }

@@ -74,7 +74,7 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
     return `aptitudes.${list}.${level}.`;
   }
 
-  static generateTargetPaths(
+  static generateAptitudePaths(
     aptitudes: Aptitude[],
     kind: "modifier" | "requirement",
     leveledAptitudeIds: Set<string>,
@@ -146,7 +146,7 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
   }
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return AptitudesPaths.generateTargetPaths(
+    return AptitudesPaths.generateAptitudePaths(
       rulesetData.aptitudes,
       kind,
       this.leveledAptitudeIds(rulesetData),

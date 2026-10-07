@@ -4,7 +4,7 @@ import type { ItemLocation } from "@/shared/enums.ts";
 /** The rules a class follows. */
 export interface ClassesRules {
   /** Extract spellcasting-related property values from raw class properties. */
-  readClassProperties(properties: { id: string; type: string; value: string }[]): {
+  readProperties(properties: { id: string; type: string; value: string }[]): {
     bonusSpellAbilityId: string | null;
     bonusSpellPropertyId: string | null;
     casterTypeValue: string | null;
@@ -18,7 +18,7 @@ export interface ClassLevelsRules {
     levels: T[],
     properties: { entityId: string; type: string; value: string }[],
   ): (T & { bab: number; skills: number })[];
-  readCurrentValues(properties: { type: string; value: string }[]): { bab: number; skills: number };
+  readProperties(properties: { type: string; value: string }[]): { bab: number; skills: number };
   /**
    * The spell lists a class's levels give slots in, by their aptitudes' ids: the one named for the class first, then
    * the others by level; none when they give none.

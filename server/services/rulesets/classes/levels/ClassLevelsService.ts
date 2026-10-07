@@ -311,7 +311,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
             resolvedLevelId === level.id
               ? (rulesetData.propertiesByEntity.get(resolvedLevelId) ?? [])
               : await Properties.findMany(tx, { entityIds: [resolvedLevelId], entityType: "klass_levels" });
-          const currentValues = rules.classLevels.readCurrentValues(currentProps);
+          const currentValues = rules.classLevels.readProperties(currentProps);
 
           await effects.classLevels.syncProperties(tx, resolvedLevelId, {
             bab: bab ?? currentValues.bab,

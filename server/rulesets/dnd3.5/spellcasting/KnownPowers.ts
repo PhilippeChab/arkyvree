@@ -3,7 +3,7 @@ import type { Constructor } from "@/server/mixins.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import { JOIN_TARGET, listOpenedBy } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
-import type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR } from "@/server/rulesets/engine/types.ts";
+import type { CustomizedFeat, CustomizedKlassLevel, CustomizedPower } from "@/server/rulesets/engine/types.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, Power, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -16,7 +16,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
      * the class level's class, or the class a bonus caster level advances.
      */
     private aptitudeClassNames() {
-      const appliedModifiers = this.characterModifiers.getModifiers().appliedModifiers;
+      const appliedModifiers = this.modifierEvaluator.getModifiers().appliedModifiers;
       const aptitudeIdToClassName = new Map<string, string>();
       const classes = this.classes.getClasses();
       const aptitudes = this.aptitudes.getAptitudes();
@@ -92,7 +92,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
      * cleric's domain spells on the cleric's). A joining list's power no such list knows stays on its own list, where it
      * knows the level itself (a domain a fighter picks through a prestige class, its slots its own).
      */
-    private newKnownPowers(powers: PowerWithPMR[], aptitudeIdToClassName: Map<string, string>): PowerWithPMR[] {
+    private newKnownPowers(powers: CustomizedPower[], aptitudeIdToClassName: Map<string, string>): CustomizedPower[] {
       const classes = this.classes.getClasses();
       const aptitudes = this.aptitudes.getAptitudes();
       const aptitudeKeyById = new Map(Object.entries(aptitudes).map(([key, aptitude]) => [aptitude.id, key]));
@@ -100,12 +100,12 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
 
       // Deduplicate: exclude powers already present on the character
       const existingPowerIds = new Set(powers.map((p) => p.id));
-      const newPowers: PowerWithPMR[] = [];
+      const newPowers: CustomizedPower[] = [];
       const give = (power: (typeof this.allAptitudePowers)[number], className: string, aptitudeId: string) => {
         const klassData = classes[className];
         if (!klassData || klassData.levels.length === 0) return;
         const firstLevel = klassData.levels[0];
-        const enrichedPower: PowerWithPMR = {
+        const enrichedPower: CustomizedPower = {
           ...power,
           aptitudeId,
           klassLevelId: firstLevel.klassLevel.id,
@@ -147,20 +147,17 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
 
     /** Adds the new powers to the character: known in its spell map, and grouped with their DC ability. */
     private registerKnownPowers(
-      newPowers: PowerWithPMR[],
-      klassLevels: KlassLevelWithPMR[],
+      newPowers: CustomizedPower[],
+      klassLevels: CustomizedKlassLevel[],
       rulesetAptitudes: Aptitude[],
       klassBonusSpellAbilityMap: Map<string, string>,
     ) {
-      this.characterPowers.addPowerEntries(newPowers);
+      this.powers.addPowerEntries(newPowers);
       for (const power of newPowers) {
         // Mark as known in spell map
         const apt = rulesetAptitudes.find((a) => a.id === power.aptitudeId);
         if (apt) {
-          const entry = this.characterPowers.getSpellEntry(
-            stripSeparators(power.name),
-            toSpellPossessionSlug(apt.name),
-          );
+          const entry = this.powers.getSpellEntry(stripSeparators(power.name), toSpellPossessionSlug(apt.name));
           if (entry) entry.known = true;
         }
 
@@ -172,7 +169,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         const aptitudeSlug = apt ? toSpellPossessionSlug(apt.name) : power.aptitudeId;
         this.powerGroupings.registerPower({ ...power, abilityDcName, aptitudeSlug }, power.properties);
       }
-      this.characterPowers.injectGroupings(this.powerGroupings.getPowerGroupings());
+      this.powers.injectGroupings(this.powerGroupings.getPowerGroupings());
     }
 
     /**
@@ -180,7 +177,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
      * to its class's list) with the feat's name: a cleric's domain spells "Fire Domain", a specialist wizard's school
      * spells "Evocation Specialist". A tag shows on that list and on the lists of the class whose level gave the feat.
      */
-    buildSpellTags(feats: FeatWithPMR[], featListIds: Set<string>) {
+    buildSpellTags(feats: CustomizedFeat[], featListIds: Set<string>) {
       const aptitudes = this.aptitudes.getAptitudes();
       const classNameByKlassLevelId = this.classNameByKlassLevelId();
       const tagsByAptitudeId = new Map<string, string[]>();
@@ -214,8 +211,8 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
     }
 
     enrichAllKnownPowers(
-      powers: PowerWithPMR[],
-      klassLevels: KlassLevelWithPMR[],
+      powers: CustomizedPower[],
+      klassLevels: CustomizedKlassLevel[],
       rulesetAptitudes: Aptitude[],
       klassBonusSpellAbilityMap: Map<string, string>,
     ) {
@@ -226,7 +223,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       }
     }
 
-    fetchAptitudePowerData(rulesetData: RulesetData, powers: PowerWithPMR[]) {
+    fetchAptitudePowerData(rulesetData: RulesetData, powers: CustomizedPower[]) {
       const { perAptitudeLevels, unleveledAptitudeIds } = this.knownAptitudeLevels();
       if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
 

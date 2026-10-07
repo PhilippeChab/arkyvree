@@ -21,8 +21,8 @@ export type PowerDcsByClass = Record<string, PowerDc>;
 
 export default class PowerGroupingsComponent {
   constructor(
-    private readonly detailedCharacterPowers: PowersComponent,
-    private readonly detailedCharacterAbilities: AbilitiesComponent,
+    private readonly powers: PowersComponent,
+    private readonly abilities: AbilitiesComponent,
     private readonly groupingProperties: readonly string[],
   ) {}
 
@@ -42,7 +42,7 @@ export default class PowerGroupingsComponent {
   ): PowerDc | null {
     if (power.powerLevel == null || power.abilityDcName == null) return null;
 
-    const abilities = this.detailedCharacterAbilities;
+    const abilities = this.abilities;
     const abilityName = power.abilityDcName;
 
     // The casting ability's modifier and the total are computed when read, so a raised ability raises the DC
@@ -67,7 +67,7 @@ export default class PowerGroupingsComponent {
       (group[normalizedPowerName] ??= {})[power.aptitudeSlug] = dc;
     }
 
-    const powerEntry = this.detailedCharacterPowers.getPower(power.name);
+    const powerEntry = this.powers.getPower(power.name);
     if (powerEntry) (powerEntry.dc ??= {})[power.aptitudeSlug] = dc;
 
     return dc;

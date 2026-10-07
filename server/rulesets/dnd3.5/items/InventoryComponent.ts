@@ -12,7 +12,7 @@ import {
   type Requirement,
 } from "@/shared/relations.ts";
 
-type DetailedCharacterComprehensiveInventory = Record<string, InventorySlotData> & {
+type InventoryData = Record<string, InventorySlotData> & {
   weaponsets: WeaponSetInventory;
 };
 
@@ -39,15 +39,15 @@ type WeaponSetInventory = Record<
 
 export default class InventoryComponent {
   constructor(
-    private readonly characterCombat: CombatComponent,
-    private readonly characterWeapons: WeaponsComponent,
-    private readonly characterArmors: ArmorsComponent,
-    private readonly characterShields: ShieldsComponent,
+    private readonly combat: CombatComponent,
+    private readonly weapons: WeaponsComponent,
+    private readonly armors: ArmorsComponent,
+    private readonly shields: ShieldsComponent,
   ) {}
 
-  private readonly detailedCharacterInventory: DetailedCharacterComprehensiveInventory = {
+  private readonly inventory: InventoryData = {
     weaponsets: {},
-  } as DetailedCharacterComprehensiveInventory;
+  } as InventoryData;
 
   private rawItems: RawInventoryEntry[] = [];
 
@@ -56,7 +56,7 @@ export default class InventoryComponent {
   }
 
   getInventory() {
-    return this.detailedCharacterInventory;
+    return this.inventory;
   }
 
   initialize(inventory: RawInventoryEntry[]) {
@@ -90,19 +90,19 @@ export default class InventoryComponent {
         const setKey = String(setIndex);
         const slotKey = slot as "mainhand" | "offhand" | "twohanded";
 
-        if (!this.detailedCharacterInventory.weaponsets[setKey]) {
-          this.detailedCharacterInventory.weaponsets[setKey] = {
+        if (!this.inventory.weaponsets[setKey]) {
+          this.inventory.weaponsets[setKey] = {
             mainhand: null,
             offhand: null,
             twohanded: null,
           };
         }
 
-        this.detailedCharacterInventory.weaponsets[setKey][slotKey] = {
+        this.inventory.weaponsets[setKey][slotKey] = {
           properties: propertiesMap,
         };
 
-        this.characterCombat.addWeapon(
+        this.combat.addWeapon(
           setIndex,
           entry.location as "Main Hand" | "Off Hand" | "Two Handed",
           entry.item,
@@ -110,22 +110,22 @@ export default class InventoryComponent {
           { itemId: entry.item.id, entryId: entry.id },
         );
 
-        this.characterWeapons.registerWeapon(setIndex, entry.location as string, entry.item, entry.item.properties);
+        this.weapons.registerWeapon(setIndex, entry.location as string, entry.item, entry.item.properties);
       } else if (isArmor) {
-        this.characterArmors.registerArmor(entry.item, entry.item.properties);
+        this.armors.registerArmor(entry.item, entry.item.properties);
       } else if (isShield) {
-        this.characterShields.registerShield(entry.item, entry.item.properties);
+        this.shields.registerShield(entry.item, entry.item.properties);
       } else {
         // Non-combat equipment goes into flat equipment slots
-        this.detailedCharacterInventory[slot] = {
+        this.inventory[slot] = {
           properties: propertiesMap,
         };
       }
     }
 
-    const set0Mainhand = this.characterCombat.getCombat().weaponsets["0"]?.mainhand;
+    const set0Mainhand = this.combat.getCombat().weaponsets["0"]?.mainhand;
     if (set0Mainhand?.name === UNARMED_STRIKE && set0Mainhand.itemId === null) {
-      this.characterWeapons.registerWeapon(0, "Main Hand", { name: UNARMED_STRIKE });
+      this.weapons.registerWeapon(0, "Main Hand", { name: UNARMED_STRIKE });
     }
   }
 }

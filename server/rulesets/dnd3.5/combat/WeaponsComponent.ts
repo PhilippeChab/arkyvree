@@ -13,7 +13,7 @@ type WeaponGroup = Record<string, NonNullable<WeaponSet[keyof WeaponSet]>>;
 type WeaponsData = Record<string, WeaponGroup>;
 
 export default class WeaponsComponent {
-  constructor(private readonly characterCombat: CombatComponent) {}
+  constructor(private readonly combat: CombatComponent) {}
 
   private readonly weapons: WeaponsData = {};
 
@@ -26,7 +26,7 @@ export default class WeaponsComponent {
     if (!slotKey) return;
 
     const setKey = String(setIndex);
-    const weaponRef = this.characterCombat.getCombat().weaponsets[setKey]?.[slotKey];
+    const weaponRef = this.combat.getCombat().weaponsets[setKey]?.[slotKey];
     if (!weaponRef) return;
 
     const weaponKey = `${setKey}_${slotKey}`;

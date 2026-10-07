@@ -10,7 +10,7 @@ export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
      * hit point (SRD). A bonded creature's hit dice are its average, so its modifier adds once per hit die.
      */
     private constitutionHitPoints(): number {
-      const constitutionModifier = this.characterAbilities.getAbilityModifier("Constitution");
+      const constitutionModifier = this.abilities.getAbilityModifier("Constitution");
       if (this.hitDiceOverride !== null) return constitutionModifier * this.hitDiceOverride;
       return this.hitDieRolls.reduce((acc, roll) => acc + Math.max(constitutionModifier, 1 - roll), 0);
     }
@@ -22,7 +22,7 @@ export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
     protected initializeHitPoints(levels: CharacterLevel[]): void {
       const constitution = () => this.constitutionHitPoints();
       this.hitDieRolls = levels.map((level) => level.hp);
-      this.detailedCharacterCombat.hp = {
+      this.combat.hp = {
         base: this.hitDieRolls.reduce((acc, roll) => acc + roll, 0),
         get constitution() {
           return constitution();

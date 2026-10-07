@@ -26,7 +26,7 @@ type ShieldSlot = {
 const SHIELD_GROUPING_PROPERTIES = [SHIELD_TYPE] as const;
 
 export default class ShieldsComponent {
-  constructor(private readonly characterCombat: CombatComponent) {}
+  constructor(private readonly combat: CombatComponent) {}
 
   private readonly shields: ShieldsData = {};
 
@@ -76,7 +76,7 @@ export default class ShieldsComponent {
       this.shields[grouping] = shieldSlot;
     }
 
-    this.characterCombat.addShield(properties);
+    this.combat.addShield(properties);
   }
 }
 

@@ -16,7 +16,7 @@ import type {
 } from "@/server/rulesets/engine/types.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
-type DetailedCharacterComprehensiveModifiers = {
+type ModifierResults = {
   modifiers: Modifier[];
   skippedModifiers: { warning: string; modifier: Modifier }[];
   unappliedModifiers: Modifier[];
@@ -62,7 +62,7 @@ export default class ModifierEvaluator {
     return true;
   }
 
-  private readonly detailedCharacterModifiers: DetailedCharacterComprehensiveModifiers = {
+  private readonly results: ModifierResults = {
     modifiers: [],
     appliedModifiers: [],
     unappliedModifiers: [],
@@ -88,7 +88,7 @@ export default class ModifierEvaluator {
     // subtypes (e.g. skills.craftarmorsmithing.misc) show their actual target
     // instead of repeating the base slug
     const appliedTarget = result.resolvedPath ?? modifier.target;
-    this.detailedCharacterModifiers.appliedModifiers.push(
+    this.results.appliedModifiers.push(
       appliedTarget !== modifier.target ? { ...modifier, target: appliedTarget } : modifier,
     );
 
@@ -147,7 +147,7 @@ export default class ModifierEvaluator {
 
   private filterByRequirements(modifier: Modifier, blockedKeys: Set<string>): boolean {
     if (blockedKeys.has(`${modifier.sourceId}:${modifier.sourceType}`) || blockedKeys.has(`${modifier.id}:modifiers`)) {
-      this.detailedCharacterModifiers.unappliedModifiers.push(modifier);
+      this.results.unappliedModifiers.push(modifier);
       return false;
     }
     return true;
@@ -195,13 +195,13 @@ export default class ModifierEvaluator {
     const expression = extractTemplateExpression(template);
     if (!expression) return null;
     return evaluateTemplateExpression(expression, components, this.targetPaths, (warning) => {
-      this.detailedCharacterModifiers.skippedModifiers.push({ warning, modifier });
+      this.results.skippedModifiers.push({ warning, modifier });
     });
   }
 
   /** Records a modifier the engine skipped, with why: it isn't applied. */
   private skip(modifier: Modifier, warning: string): false {
-    this.detailedCharacterModifiers.skippedModifiers.push({ warning, modifier });
+    this.results.skippedModifiers.push({ warning, modifier });
     return false;
   }
 
@@ -229,7 +229,7 @@ export default class ModifierEvaluator {
 
         if (conflictIdx >= 0) {
           chained.add(modifier.id);
-          this.detailedCharacterModifiers.skippedModifiers.push({
+          this.results.skippedModifiers.push({
             warning: `Template modifier references "${refPath}" which is written to by another template modifier targeting "${templateModifiers[conflictIdx].target}" — result is order-dependent`,
             modifier,
           });
@@ -246,12 +246,12 @@ export default class ModifierEvaluator {
       this.targetPaths.traversePathInit(target, components, { sourceId }),
     );
     if (results.length === 0) {
-      this.detailedCharacterModifiers.inactiveModifiers.push(modifier);
+      this.results.inactiveModifiers.push(modifier);
       return;
     }
     for (const result of results) {
       if (result.error) {
-        this.detailedCharacterModifiers.skippedModifiers.push({
+        this.results.skippedModifiers.push({
           warning: result.error,
           modifier,
         });
@@ -288,6 +288,6 @@ export default class ModifierEvaluator {
   }
 
   getModifiers() {
-    return this.detailedCharacterModifiers;
+    return this.results;
   }
 }

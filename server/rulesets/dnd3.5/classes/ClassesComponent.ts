@@ -12,7 +12,7 @@ import {
 } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-type DetailedCharacterComprehensiveClasses = {
+type ClassesData = {
   [key: string]: {
     klass: Klass;
     klassSkills: KlassSkill[];
@@ -52,10 +52,10 @@ type DetailedCharacterComprehensiveClasses = {
 };
 
 export default class ClassesComponent {
-  private readonly detailedCharacterClasses: DetailedCharacterComprehensiveClasses = {};
+  private readonly classes: ClassesData = {};
 
   addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: CharacterLevel): void {
-    const entry = this.detailedCharacterClasses[klassName];
+    const entry = this.classes[klassName];
     if (!entry) return;
 
     entry.levels.push({
@@ -69,11 +69,11 @@ export default class ClassesComponent {
   }
 
   getCharacterClasses() {
-    return Object.fromEntries(Object.entries(this.detailedCharacterClasses).filter(([, klass]) => klass.level > 0));
+    return Object.fromEntries(Object.entries(this.classes).filter(([, klass]) => klass.level > 0));
   }
 
   getClasses() {
-    return this.detailedCharacterClasses;
+    return this.classes;
   }
 
   initialize(
@@ -151,8 +151,8 @@ export default class ClassesComponent {
       }
 
       const klassName = stripSeparators(klass.name);
-      if (!this.detailedCharacterClasses[klassName]) {
-        this.detailedCharacterClasses[klassName] = {
+      if (!this.classes[klassName]) {
+        this.classes[klassName] = {
           klass,
           klassSkills: klassSkillsByKlassId.get(klass.id) ?? [],
           levels: [],
@@ -161,7 +161,7 @@ export default class ClassesComponent {
         };
       }
 
-      this.detailedCharacterClasses[klassName].levels.push({
+      this.classes[klassName].levels.push({
         klassLevel,
         characterLevel,
         feats: featsByCharacterLevelId.get(characterLevel.id) ?? [],
@@ -170,7 +170,7 @@ export default class ClassesComponent {
       });
     }
 
-    for (const klass of Object.values(this.detailedCharacterClasses)) {
+    for (const klass of Object.values(this.classes)) {
       klass.levels.sort((a, b) => a.klassLevel.level - b.klassLevel.level);
       klass.level = klass.levels.length;
     }
@@ -179,8 +179,8 @@ export default class ClassesComponent {
     if (rulesetKlasses) {
       for (const klass of rulesetKlasses) {
         const klassName = stripSeparators(klass.name);
-        if (!this.detailedCharacterClasses[klassName]) {
-          this.detailedCharacterClasses[klassName] = {
+        if (!this.classes[klassName]) {
+          this.classes[klassName] = {
             klass,
             klassSkills: [],
             levels: [],
@@ -193,7 +193,7 @@ export default class ClassesComponent {
   }
 
   removeProjectedLevel(klassName: string): void {
-    const entry = this.detailedCharacterClasses[klassName];
+    const entry = this.classes[klassName];
     if (!entry || entry.levels.length === 0) return;
 
     entry.levels.pop();

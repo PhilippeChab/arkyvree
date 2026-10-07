@@ -1,11 +1,11 @@
 import type { Feat } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-type DetailedCharacterComprehensiveFeats = {
+type FeatGroupEntry = Record<string, FeatEntry>;
+
+type FeatsData = {
   [key: string]: FeatEntry | FeatGroupEntry;
 };
-
-type FeatGroupEntry = Record<string, FeatEntry>;
 
 export type FeatEntry = {
   name: string;
@@ -19,16 +19,16 @@ function isFeatEntry(entry: FeatEntry | FeatGroupEntry | undefined): entry is Fe
 }
 
 export default class FeatsComponent {
-  private readonly detailedCharacterFeats: DetailedCharacterComprehensiveFeats = {};
+  private readonly feats: FeatsData = {};
 
   /** The feat of that name: none for a family's name, whose group no feat shares. */
   getFeat(featName: string): FeatEntry | undefined {
-    const entry = this.detailedCharacterFeats[stripSeparators(featName)];
+    const entry = this.feats[stripSeparators(featName)];
     return isFeatEntry(entry) ? entry : undefined;
   }
 
   getFeats() {
-    return this.detailedCharacterFeats;
+    return this.feats;
   }
 
   initialize(rulesetFeats: Feat[], possessedFeats: Feat[]) {
@@ -42,7 +42,7 @@ export default class FeatsComponent {
       const normalizedName = stripSeparators(feat.name);
       const count = possessedCounts.get(normalizedName) ?? 0;
 
-      this.detailedCharacterFeats[normalizedName] = {
+      this.feats[normalizedName] = {
         name: feat.name,
         possessed: count > 0,
         count,
@@ -57,9 +57,9 @@ export default class FeatsComponent {
    */
   injectGroupings(groupings: Record<string, Record<string, FeatEntry>>) {
     for (const [key, group] of Object.entries(groupings)) {
-      const feat = this.detailedCharacterFeats[key];
+      const feat = this.feats[key];
       if (!feat) {
-        this.detailedCharacterFeats[key] = group;
+        this.feats[key] = group;
         continue;
       }
       for (const [variant, member] of Object.entries(group)) {
