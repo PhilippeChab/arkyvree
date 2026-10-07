@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, rmSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
@@ -32,32 +32,11 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
       }
     }
 
-    /** Regenerate feats/classes/index.ts for a book from all generated class feat .ts files. */
+    /** A book's class feats' index (feats/classes/index.ts): each of its classes' feats file, from its references. */
     writeClassFeatIndex(book: string) {
-      const classFeatDir = join(this.dir, book, "feats", "classes");
-      let tsFiles: string[];
-      try {
-        tsFiles = readdirSync(classFeatDir)
-          .filter((f) => f.endsWith(".ts") && f !== "index.ts")
-          .sort();
-      } catch {
-        return; // no class feat files for this book
-      }
-
-      if (tsFiles.length === 0) return;
-
-      type FeatEntry = { slug: string; constName: string };
-      const entries: FeatEntry[] = [];
-
-      for (const file of tsFiles) {
-        const slug = file.replace(".ts", "");
-        const content = readFileSync(join(classFeatDir, file), "utf-8");
-        const match = content.match(/export const (\w+_FEATS)/);
-        if (match) {
-          entries.push({ slug, constName: match[1] });
-        }
-      }
-
+      const entries = ReferenceLoader.loadClasses(book)
+        .map(({ ref }) => ({ slug: toCamelCase(ref.raw.name), constName: `${toConstName(ref.raw.name)}_FEATS` }))
+        .sort((a, b) => (a.slug < b.slug ? -1 : 1));
       if (entries.length === 0) return;
 
       const file = new CodeFile();
@@ -71,36 +50,21 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
         `export const ALL_CLASS_FEATS: FeatSeed[] = [...Map.groupBy(_allClassFeats, (f) => f.name).values()].map(([f]) => f);`,
         ``,
       );
-      this.write(join(classFeatDir, "index.ts"), file.code());
+      this.write(join(this.dir, book, "feats", "classes", "index.ts"), file.code());
     }
 
-    /** Regenerate classes/index.ts for a book from class reference JSONs. */
+    /** A book's classes' index (classes/index.ts): each of its classes' file, from its references, by reference. */
     writeClassIndex(book: string) {
-      const classes = ReferenceLoader.loadClasses(book).sort((a, b) => (a.file < b.file ? -1 : 1));
-      if (classes.length === 0) return; // no classes for this book
+      const classes = ReferenceLoader.loadClasses(book).filter(({ ref }) => ref.raw?.name);
+      if (classes.length === 0) return;
 
-      type ClassEntry = { slug: string; constName: string; isBase: boolean };
-      const entries: ClassEntry[] = [];
-
-      for (const { ref } of classes) {
-        if (!ref.raw?.name) continue;
-        const slug = toCamelCase(ref.raw.name);
-        const levels = ref.detected?.levels ?? 0;
-        entries.push({
-          slug,
-          constName: toConstName(ref.raw.name),
-          isBase: levels === 20,
-        });
-      }
-
-      const names = (list: ClassEntry[]) => list.map((e) => `  ${e.constName},`);
-      const baseEntries = entries.filter((e) => e.isBase);
-      const prestigeEntries = entries.filter((e) => !e.isBase);
       const file = new CodeFile();
-      for (const e of entries) file.gather(`./${e.slug}.ts`, [e.constName]);
-      file.list("ALL_CLASSES", "ClassSeed", names(entries));
-      if (baseEntries.length > 0) file.list("ALL_BASE_CLASSES", "ClassSeed", names(baseEntries));
-      if (prestigeEntries.length > 0) file.list("ALL_PRESTIGE_CLASSES", "ClassSeed", names(prestigeEntries));
+      for (const { ref } of classes) file.gather(`./${toCamelCase(ref.raw.name)}.ts`, [toConstName(ref.raw.name)]);
+      file.list(
+        "ALL_CLASSES",
+        "ClassSeed",
+        classes.map(({ ref }) => `  ${toConstName(ref.raw.name)},`),
+      );
       this.write(join(this.dir, book, "classes", "index.ts"), file.code());
     }
   }

@@ -14,20 +14,6 @@ import { ROGUE } from "./rogue.ts";
 import { SORCERER } from "./sorcerer.ts";
 import { WIZARD } from "./wizard.ts";
 
-export const ALL_BASE_CLASSES: ClassSeed[] = [
-  BARBARIAN,
-  BARD,
-  CLERIC,
-  DRUID,
-  FIGHTER,
-  MONK,
-  PALADIN,
-  RANGER,
-  ROGUE,
-  SORCERER,
-  WIZARD,
-];
-
 export const ALL_CLASSES: ClassSeed[] = [
   BARBARIAN,
   BARD,
