@@ -11,7 +11,8 @@ import IdentityPaths from "@/server/rulesets/dnd3.5/identity/IdentityPaths.ts";
 import SavesPaths from "@/server/rulesets/dnd3.5/saves/SavesPaths.ts";
 import SkillsPaths from "@/server/rulesets/dnd3.5/skills/SkillsPaths.ts";
 
-import { ABILITY_NAMES, SAVE_NAMES } from "./vocabulary.ts";
+import { ABILITY_NAMES } from "@/database/packages/dnd35-from-parser/tools/vocabulary/abilities.ts";
+import { SAVE_NAMES } from "@/database/packages/dnd35-from-parser/tools/vocabulary/saves.ts";
 
 const stubAbilities = ABILITY_NAMES.map((name) => ({ name })) as Parameters<
   typeof AbilitiesPaths.generateAbilityPaths

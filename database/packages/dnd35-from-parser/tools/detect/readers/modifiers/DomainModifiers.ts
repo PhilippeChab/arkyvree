@@ -1,13 +1,10 @@
-import { SKILL_SLUGS } from "@/database/packages/dnd35-from-parser/tools/detect/vocabulary.ts";
+import { KNOWLEDGE_SKILLS, SKILL_SLUGS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/skills.ts";
 import { setFlag } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { ModifierReading } from "./ModifierReading.ts";
-
-/** Every Knowledge skill, which "Add all Knowledge skills" names. */
-const ALL_KNOWLEDGE_SKILLS = SKILL_NAMES.filter((n) => n.startsWith("Knowledge"));
 
 /**
  * Skill names → slugs, as a domain names them: by name, or without its parentheses ("Knowledge (nature)" and
@@ -30,7 +27,7 @@ export class DomainModifiers extends ModifierReading<Modifier> {
 
     // Pattern: "Add all Knowledge skills to your list of cleric class skills"
     if (/add all knowledge skills/i.test(description)) {
-      for (const name of ALL_KNOWLEDGE_SKILLS) {
+      for (const name of KNOWLEDGE_SKILLS) {
         const slug = stripSeparators(name);
         this.modifiers.push(setFlag(`skills.${slug}.innate`));
       }

@@ -3,7 +3,7 @@
  * (`FEAT_FAMILIES`), "Weapon Focus (any thrown weapon)" one a feat's options make.
  */
 
-import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
+import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/numbers.ts";
 import { eq, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";

@@ -1,9 +1,7 @@
-import {
-  ABILITY_ABBREVIATIONS,
-  RACE_SIZE_PATH,
-  SAVE_SLUGS,
-  toSkillSlug,
-} from "@/database/packages/dnd35-from-parser/tools/detect/vocabulary.ts";
+import { ABILITY_ABBREVIATIONS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/abilities.ts";
+import { RACE_SIZE_PATH } from "@/database/packages/dnd35-from-parser/tools/vocabulary/races.ts";
+import { SAVE_SLUGS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/saves.ts";
+import { toSkillSlug } from "@/database/packages/dnd35-from-parser/tools/vocabulary/skills.ts";
 import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
