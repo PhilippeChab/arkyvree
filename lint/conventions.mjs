@@ -421,10 +421,14 @@ function createEngineSync(context) {
     AwaitExpression(node) {
       context.report({ node, message });
     },
+    ForOfStatement(node) {
+      if (node.await) context.report({ node, message });
+    },
     FunctionDeclaration: checkAsync,
     FunctionExpression: checkAsync,
-    TSTypeReference(node) {
-      if (node.typeName.type === "Identifier" && node.typeName.name === "Promise") context.report({ node, message });
+    // A `Promise` type, or the value: `new Promise(…)`, `Promise.all(…)`
+    Identifier(node) {
+      if (node.name === "Promise") context.report({ node, message });
     },
   };
 }

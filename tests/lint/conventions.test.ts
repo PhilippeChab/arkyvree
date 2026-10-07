@@ -252,6 +252,9 @@ describe("conventions", () => {
           "engine/rulesets/d.ts": "export function d(): Promise<number> {\n  return f();\n}\n",
           "engine/rulesets/e.ts": "export const e = await f();\n",
           "engine/rulesets/f.ts": "export function f(x: number) {\n  return [x].map((y) => y + 1);\n}\n",
+          "engine/rulesets/g.ts": "export const g = () => Promise.resolve(1);\n",
+          "engine/rulesets/h.ts": "export const h = new Promise(() => {});\n",
+          "engine/rulesets/i.ts": "export const i = [];\nfor await (const x of y) i.push(x);\n",
           "server/g.ts": "export async function g() {\n  await f();\n}\n",
         },
         ["engine-sync"],
@@ -262,6 +265,9 @@ describe("conventions", () => {
       "engine-sync engine/rulesets/c.ts",
       "engine-sync engine/rulesets/d.ts",
       "engine-sync engine/rulesets/e.ts",
+      "engine-sync engine/rulesets/g.ts",
+      "engine-sync engine/rulesets/h.ts",
+      "engine-sync engine/rulesets/i.ts",
     ]);
   });
 
