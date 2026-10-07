@@ -5,7 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { Exports, Modifiers, Notifications, Requirements } from "@/server/repositories/index.ts";
 import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import { buildCharacterSheet } from "@/server/sheets/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { silentJobHelpers } from "@/tests/support/jobs.ts";
 import { findSeededCharacter } from "@/tests/support/seed.ts";
@@ -73,8 +73,7 @@ describe("generatePdf", () => {
     for (let i = 0; i < 16; i++)
       await requirement((await modifier("skills.climb.misc")).id, "skills.climb.total", "40");
 
-    const module = await RulesetFactory.fromRulesetId(character.rulesetId);
-    const { detailedCharacter } = await module.createDetailedCharacterWithSheet(character, "pc");
+    const { detailedCharacter } = await buildCharacterSheet(character, "pc");
     if (!(detailedCharacter instanceof Dnd35DetailedCharacter)) throw new Error("Not a D&D 3.5 character");
     const { inactiveModifiers, skippedModifiers } = detailedCharacter.modifierEvaluator.getModifiers();
     const { invalidRequirements, unmetRequirementGroups } = detailedCharacter.requirementEvaluator.getRequirements();

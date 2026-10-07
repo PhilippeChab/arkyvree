@@ -1,7 +1,6 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
-import type DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { buildVirtualEntities } from "@/server/rulesets/dnd3.5/response/buildCharacterResponse.ts";
+import { buildVirtualEntities, type Dnd35DetailedCharacter } from "@/server/rulesets/dnd3.5/index.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import {
   ENTITY_PROPERTY_TYPES,
@@ -45,7 +44,7 @@ const SPELL_PROPERTY_ORDER = Object.keys(ENTITY_PROPERTY_TYPES.powers ?? {});
 
 const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
 
-function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
+function SpellsPage({ detailedCharacter }: { detailedCharacter: Dnd35DetailedCharacter }) {
   const identity = detailedCharacter.components.identity;
   const classes = detailedCharacter.components.classes;
   const powers = detailedCharacter.components.powers;

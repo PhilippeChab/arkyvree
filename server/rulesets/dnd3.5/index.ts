@@ -5,7 +5,12 @@ export { getBondedRaceStats } from "./bonded/bondedRaceData.ts";
 export type { default as Dnd35DetailedCharacterBonded } from "./bonded/DetailedCharacterBonded.ts";
 export type { default as Dnd35DetailedCharacter } from "./character/DetailedCharacter.ts";
 export { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
-export { buildBondedMap, buildBondedResponse, buildFullCharacterResponse } from "./response/buildCharacterResponse.ts";
+export {
+  buildBondedMap,
+  buildBondedResponse,
+  buildFullCharacterResponse,
+  buildVirtualEntities,
+} from "./response/buildCharacterResponse.ts";
 export { redactPrivateNotes } from "./response/redactPrivateNotes.ts";
 export { createRulesetModule } from "./rulesetModule.ts";
 export { isSkillSubtypeOf } from "./skills/SkillsComponent.ts";

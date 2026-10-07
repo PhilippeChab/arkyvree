@@ -1,5 +1,3 @@
-import type { FC } from "react";
-
 import type {
   Components,
   LevelUpProjector,
@@ -35,19 +33,6 @@ export interface DetailedCharacterInterface {
   validate(): ValidationResult;
 }
 
-/** A built character and the sheet that renders it, typed by the module that made them. */
-export type DetailedCharacterWithSheet<
-  Character extends DetailedCharacterInterface = DetailedCharacterInterface,
-  Kind extends string = string,
-> = {
-  CharacterSheetComponent: FC<{
-    detailedCharacter: Character;
-    kind?: Kind;
-    portraitUrl?: string | null;
-  }>;
-  detailedCharacter: Character;
-};
-
 /**
  * A base rules' module, typed by what it builds: its characters, its level-up projector and the kinds of character it
  * knows (`RulesetFactory` hands out each module's own type).
@@ -58,10 +43,6 @@ export interface RulesetModule<
   Kind extends string = string,
 > {
   createDetailedCharacter(record: CharacterRecord, kind?: Kind): Character;
-  createDetailedCharacterWithSheet(
-    record: CharacterRecord,
-    kind?: Kind,
-  ): Promise<DetailedCharacterWithSheet<Character, Kind>>;
   createLevelUpProjector(character: Character): Projector;
   createPropertyTypes(): PropertyTypesProvider;
   createTargetPaths(): TargetPathsInterface;

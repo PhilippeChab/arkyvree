@@ -1,6 +1,6 @@
 import { Image, Page, Text, View } from "@react-pdf/renderer";
 
-import type DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
+import { type Dnd35DetailedCharacter } from "@/server/rulesets/dnd3.5/index.ts";
 import { buildAttackRows, describeWeaponSlot } from "@/shared/dnd3.5/weaponAttacks.ts";
 
 import { formatModifier } from "./format.ts";
@@ -22,7 +22,7 @@ function InfoPage({
   detailedCharacter,
   portraitUrl,
 }: {
-  detailedCharacter: DetailedCharacter;
+  detailedCharacter: Dnd35DetailedCharacter;
   portraitUrl?: string | null;
 }) {
   const ruleset = detailedCharacter.getRuleset();

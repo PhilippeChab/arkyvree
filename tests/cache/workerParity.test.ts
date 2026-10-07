@@ -6,7 +6,7 @@ import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
 import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/response/buildCharacterResponse.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import { buildCharacterSheet } from "@/server/sheets/index.ts";
 import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/support/levelFixtures.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 
@@ -29,13 +29,12 @@ test("worker familiar HP matches web after customizing an inherited master feat"
   await Modifiers.update(db, { value: "7" }, { id: modifier.id });
   RulesetCache.invalidate(fork.id);
   const familiar = (await Characters.findOne(db, { id: familiarId }))!;
-  const module = await RulesetFactory.fromRulesetId(fork.id);
   MemoryCache.setEnabled(true);
-  const web = await module.createDetailedCharacterWithSheet(familiar, "familiar");
+  const web = await buildCharacterSheet(familiar, "familiar");
   const webResponse = await buildFullCharacterResponse(familiar, web.detailedCharacter);
   RulesetCache.invalidateAll();
   MemoryCache.setEnabled(false);
-  const worker = await module.createDetailedCharacterWithSheet(familiar, "familiar");
+  const worker = await buildCharacterSheet(familiar, "familiar");
   const workerResponse = await buildFullCharacterResponse(familiar, worker.detailedCharacter);
   // Master: 4 hit die + 7 Toughness (an elf's Constitution 12 is 10); familiar gets half, rounded down.
   expect(webResponse.combat.hp.total).toBe(5);

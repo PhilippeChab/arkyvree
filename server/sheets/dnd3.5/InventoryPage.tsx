@@ -1,12 +1,12 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
-import type DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
+import { type Dnd35DetailedCharacter } from "@/server/rulesets/dnd3.5/index.ts";
 import { capitalize } from "@/shared/text.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-function InventoryPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
+function InventoryPage({ detailedCharacter }: { detailedCharacter: Dnd35DetailedCharacter }) {
   const identity = detailedCharacter.components.identity;
   const combat = detailedCharacter.components.combat;
   const inventory = detailedCharacter.components.inventory;

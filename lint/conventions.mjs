@@ -105,6 +105,7 @@ const TEST_MIRRORS = [
   ["tests/cache/", "server/cache/"],
   ["tests/engine/", "engine/"],
   ["tests/rulesets/", "server/rulesets/"],
+  ["tests/sheets/", "server/sheets/"],
   ["tests/middlewares/", "server/middlewares/"],
   ["tests/emails/", "server/emails/"],
   ["tests/shared/", "shared/"],

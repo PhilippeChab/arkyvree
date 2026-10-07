@@ -34,6 +34,7 @@ const ABOVE_REPOSITORIES = [
   "server/cow/",
   "server/services/",
   "server/rulesets/",
+  "server/sheets/",
   "server/jobs/",
   "server/middlewares/",
   "server/routers/",
@@ -57,6 +58,7 @@ const LAYERS = [
     deny: [
       "server/cow/",
       "server/rulesets/",
+      "server/sheets/",
       "server/services/",
       "server/jobs/",
       "server/middlewares/",
@@ -65,9 +67,21 @@ const LAYERS = [
   },
   {
     layer: "server/cow/",
-    deny: ["server/rulesets/", "server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
+    deny: [
+      "server/rulesets/",
+      "server/sheets/",
+      "server/services/",
+      "server/jobs/",
+      "server/middlewares/",
+      "server/routers/",
+    ],
   },
-  { layer: "server/rulesets/", deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"] },
+  {
+    layer: "server/rulesets/",
+    deny: ["server/sheets/", "server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
+  },
+  // A sheet prints the character a ruleset's module builds: above the rulesets, below what renders it
+  { layer: "server/sheets/", deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"] },
   // The engine is the machinery every ruleset runs on: the rulesets build on it, and it names none of them
   { layer: "server/rulesets/engine/", deny: ["server/rulesets/"], allow: ["server/rulesets/engine/"] },
   { layer: "server/services/", deny: ["server/jobs/", "server/middlewares/", "server/routers/"] },

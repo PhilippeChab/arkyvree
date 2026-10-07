@@ -1,6 +1,6 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
-import type DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
+import { type Dnd35DetailedCharacter } from "@/server/rulesets/dnd3.5/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
@@ -37,7 +37,7 @@ function DiagnosticCounts({ counts }: { counts: { color: string; label: string }
   );
 }
 
-function DiagnosticsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
+function DiagnosticsPage({ detailedCharacter }: { detailedCharacter: Dnd35DetailedCharacter }) {
   const identity = detailedCharacter.components.identity;
   const requirements = detailedCharacter.requirementEvaluator;
   const identityData = identity.getIdentity();

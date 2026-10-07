@@ -1,8 +1,7 @@
 import { Document } from "@react-pdf/renderer";
 
 import { isProduction } from "@/server/environment.ts";
-import type DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import type { CharacterKind } from "@/server/rulesets/dnd3.5/types.ts";
+import { type CharacterKind, type Dnd35DetailedCharacter } from "@/server/rulesets/dnd3.5/index.ts";
 
 import DiagnosticsPage from "./DiagnosticsPage.tsx";
 import FeatsPage from "./FeatsPage.tsx";
@@ -16,7 +15,7 @@ function DetailedCharacterSheet({
   kind = "pc",
   portraitUrl,
 }: {
-  detailedCharacter: DetailedCharacter;
+  detailedCharacter: Dnd35DetailedCharacter;
   kind?: CharacterKind;
   portraitUrl?: string | null;
 }) {

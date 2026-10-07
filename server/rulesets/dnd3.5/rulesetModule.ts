@@ -25,7 +25,6 @@ import { Dnd35RacesEffects } from "./races/Dnd35RacesEffects.ts";
 import { Dnd35RacesRules } from "./races/Dnd35RacesRules.ts";
 import { Dnd35RulesetsEffects } from "./ruleset/Dnd35RulesetsEffects.ts";
 import { Dnd35RulesetsRules } from "./ruleset/Dnd35RulesetsRules.ts";
-import Dnd35DetailedCharacterSheet from "./sheet/DetailedCharacterSheet.tsx";
 import { Dnd35SkillsEffects } from "./skills/Dnd35SkillsEffects.ts";
 import { Dnd35SkillsRules } from "./skills/Dnd35SkillsRules.ts";
 import type { CharacterKind, Dnd35RulesetModule } from "./types.ts";
@@ -81,15 +80,6 @@ export function createRulesetModule(): Dnd35RulesetModule {
 
     createLevelUpProjector(character) {
       return new Dnd35LevelUpProjector(character);
-    },
-
-    async createDetailedCharacterWithSheet(record: CharacterRecord, kind: CharacterKind = "pc") {
-      const detailedCharacter = createBonded(record, kind) ?? new Dnd35DetailedCharacter(record);
-      await detailedCharacter.build();
-      return {
-        detailedCharacter,
-        CharacterSheetComponent: Dnd35DetailedCharacterSheet,
-      };
     },
 
     createTargetPaths() {
