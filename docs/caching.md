@@ -501,7 +501,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve
 - `server/repositories/concerns/ResolvesCopies.ts` — `idMatches()` predicate for cowContext-aware composite-key WHERE clauses
-- `server/rulesets/dnd3.5/character/AbstractDetailedCharacter.ts` — `build()` wraps in `withRulesetScope` and hands preloaded ruleset data to the data loader
+- `server/rulesets/dnd3.5/character/concerns/Builds.ts` — `build()` wraps in `withRulesetScope` and hands preloaded ruleset data to the data loader
 - `server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts` — requires `PreloadedRulesetData`; never fetches ruleset-level state itself
 - `server/timing.ts` — hit/miss counters surfaced in request logs
 - `tests/cache/rulesetCache/RulesetCache.test.ts` — compose + invalidation + pinning semantics + COW-fork auto-resolve

@@ -413,7 +413,8 @@ server/
 │       ├── rulesetModule.ts               (RulesetModule impl)
 │       ├── types.ts                       (Dnd35ProjectedCharacterData, Dnd35LevelUpProjector)
 │       ├── Dnd35TargetPaths.ts            (the categories' order and the ruleset's names' labels)
-│       ├── character/                     (AbstractDetailedCharacter, DetailedCharacter, Dnd35LevelUpProjector)
+│       ├── character/                     (CharacterState, its concerns: Builds, Validates, PossessesVirtually;
+│       │                                  DetailedCharacter, which wires them; components.ts; Dnd35LevelUpProjector)
 │       ├── loading/                       (DetailedCharacterDataLoader)
 │       ├── response/                      (buildCharacterResponse: the 3.5 API response shape)
 │       ├── abilities/ aptitudes/ classes/ feats/ identity/ powers/ saves/
@@ -584,7 +585,7 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 ### How to add a new ruleset
 
 1. **Define the module**: `server/rulesets/<ruleset>/index.ts` implementing `RulesetModule`. Provide `rules` and `effects` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `seedTemplateItems`, etc.
-2. **Subclass `AbstractDetailedCharacter`** in `server/rulesets/<ruleset>/DetailedCharacter.ts`. Instantiate its components (`AbilitiesComponent`, `ClassesComponent`, …), the ruleset's own (`<Ruleset>SkillsComponent`, etc.).
+2. **Write its character** in `server/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`buildComponents`), and `DetailedCharacter`, which includes the concerns. 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).
 3. **Extend the types** in `server/rulesets/<ruleset>/types.ts`:
    - `<Ruleset>ProjectedCharacterData extends ProjectedCharacterData` (add skill/power shapes if your ruleset has ranked skills or leveled spells).
    - `<Ruleset>LevelUpProjector extends LevelUpProjector` (add any per-level-up operations your ruleset needs beyond `evaluateClassAvailability`).
@@ -630,7 +631,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
 | `server/rulesets/engine/types.ts` | Universal types (`ProjectedCharacterData`, `LevelUpProjector`, `RulesetModule`, …) |
 | `server/rulesets/dnd3.5/types.ts` | 3.5 type extensions (`Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`) |
-| `server/rulesets/dnd3.5/character/AbstractDetailedCharacter.ts` | The character's base class; `DetailedCharacter` extends it |
+| `server/rulesets/dnd3.5/character/` | The 3.5 character: its state (`CharacterState`), its concerns (`Builds`, `Validates`, `PossessesVirtually`), its components (`components.ts`), and `DetailedCharacter`, which wires them |
 | `server/rulesets/engine/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the rules and effects a ruleset gives the services (`module/`) (`hooks/`) |
 | `server/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its components by domain (`abilities/`, `skills/`, `combat/`…), each with its rules and effects, `TargetPaths`, `response/buildCharacterResponse` |
 | `server/rulesets/dnd3.5/character/DetailedCharacter.ts` | Character builder — reads sibling requirements and modifiers already merged into `rulesetData` by the compose step |
