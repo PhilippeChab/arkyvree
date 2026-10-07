@@ -1,5 +1,4 @@
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
-import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -10,16 +9,16 @@ export function WritesRaces<B extends Constructor<BaseCodeFile>>(Base: B) {
     race(race: RaceSeed): string[] {
       return [
         `  {`,
-        `    name: ${quote(race.name)},`,
-        `    description: ${quote(race.description)},`,
-        `    size: ${quote(race.size)},`,
+        `    name: ${this.quote(race.name)},`,
+        `    description: ${this.quote(race.description)},`,
+        `    size: ${this.quote(race.size)},`,
         `    baseSpeed: ${race.baseSpeed},`,
-        ...listField(
+        ...this.listField(
           "modifiers",
           (race.modifiers ?? []).map((m) => this.plainModifier(m)),
           "    ",
         ),
-        ...listField(
+        ...this.listField(
           "properties",
           (race.properties ?? []).map((p) => this.property(p)),
           "    ",

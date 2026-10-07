@@ -1,10 +1,5 @@
-import { getFeatTypeList, getTemplateList } from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
+import BookLayout from "@/database/packages/dnd35-from-parser/tools/generator/BookLayout.ts";
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
-import {
-  escapeTemplate,
-  listField,
-  quote,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import {
   FeatSeeds,
   type TemplateFamily,
@@ -40,7 +35,9 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
     private featRequirement(featName: string, perItem: boolean, variable: string): string {
       this.uses.add("eq");
       this.uses.add("feat");
-      return perItem ? `eq(feat(\`${escapeTemplate(featName)}: \${${variable}}\`))` : `eq(feat(${quote(featName)}))`;
+      return perItem
+        ? `eq(feat(\`${this.escapeTemplate(featName)}: \${${variable}}\`))`
+        : `eq(feat(${this.quote(featName)}))`;
     }
 
     /** The slug of the feat a `feats.<slug>.possessed` check names. */
@@ -85,11 +82,13 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
     ): void {
       this.uses.add(options);
       this.declare("FeatSeed");
-      this.lines.push(`export const ${getTemplateList(familyName)}: FeatSeed[] = ${options}.map((${variable}) => ({`);
-      this.lines.push(`  name: \`${escapeTemplate(familyName)}: \${${variable}}\`,`);
+      this.lines.push(
+        `export const ${BookLayout.templateList(familyName)}: FeatSeed[] = ${options}.map((${variable}) => ({`,
+      );
+      this.lines.push(`  name: \`${this.escapeTemplate(familyName)}: \${${variable}}\`,`);
       this.lines.push(`  description: \`${description}\`,`);
       this.lines.push(`  generated: true,`);
-      this.lines.push(`  aptitudes: [${aptitudes.map(quote).join(", ")}],`);
+      this.lines.push(`  aptitudes: [${aptitudes.map((name) => this.quote(name)).join(", ")}],`);
     }
 
     /** A template's description, each mention of the chosen item made the item (`variable`). */
@@ -97,7 +96,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
       const ITEM = "\u0000";
       return expandTemplateDescription(normalizeDescription(description), type, ITEM)
         .split(ITEM)
-        .map(escapeTemplate)
+        .map((text) => this.escapeTemplate(text))
         .join(`\${${variable}}`);
     }
 
@@ -143,12 +142,12 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
      */
     private writeTemplateModifiers(modifiers: ModifierSeed[], retarget: (target: string) => string): void {
       this.lines.push(
-        ...listField(
+        ...this.listField(
           "modifiers",
           modifiers.map((m) => {
             if (m.requirements?.length)
               throw new Error(`${m.target}: a template feat's modifier can't have requirements`);
-            const target = retarget(escapeTemplate(m.target));
+            const target = retarget(this.escapeTemplate(m.target));
             if (target.includes("${stripSeparators(")) this.uses.add("stripSeparators");
             return this.modifier(m, 2, `\`${target}\``);
           }),
@@ -193,23 +192,23 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
     feat(feat: FeatSeed): string[] {
       return [
         `  {`,
-        `    name: ${quote(feat.name)},`,
-        `    description: ${quote(feat.description)},`,
+        `    name: ${this.quote(feat.name)},`,
+        `    description: ${this.quote(feat.description)},`,
         ...(feat.stackable ? [`    stackable: true,`] : []),
         ...(feat.selectable === false ? [`    selectable: false,`] : []),
         ...(feat.generated ? [`    generated: true,`] : []),
-        `    aptitudes: [${feat.aptitudes.map(quote).join(", ")}],`,
-        ...listField(
+        `    aptitudes: [${feat.aptitudes.map((name) => this.quote(name)).join(", ")}],`,
+        ...this.listField(
           "requirements",
           (feat.requirements ?? []).map((req) => this.requirement(req, 3)),
           "    ",
         ),
-        ...listField(
+        ...this.listField(
           "modifiers",
           (feat.modifiers ?? []).map((m) => this.modifier(m)),
           "    ",
         ),
-        ...listField(
+        ...this.listField(
           "properties",
           (feat.properties ?? []).map((p) => this.property(p)),
           "    ",
@@ -219,14 +218,14 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
     }
 
     /**
-     * A feats file's lists (what a feat reference makes, `FeatSeeds`): a list per feat type, each feat's
-     * checks of a family its own (`FeatSeeds.familyChecks`), and a template family's feats made per item; `families` the
-     * families a feat can require.
+     * A feats file's lists (what a feat reference makes, `FeatSeeds`): a list per feat type, each feat's checks of a
+     * family its own (`FeatSeeds.familyChecks`), and a template family's feats made per item; `families` the families a
+     * feat can require.
      */
     featsFile(seeds: FeatSeeds, families: Set<string>): void {
       for (const [type, feats] of seeds.byType()) {
         this.list(
-          getFeatTypeList(type),
+          BookLayout.featTypeList(type),
           "FeatSeed",
           feats.flatMap((feat) =>
             this.feat({ ...feat, requirements: FeatSeeds.familyChecks(feat.requirements ?? [], families) }),

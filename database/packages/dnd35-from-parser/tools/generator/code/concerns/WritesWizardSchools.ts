@@ -1,5 +1,4 @@
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
-import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -10,8 +9,8 @@ export function WritesWizardSchools<B extends Constructor<BaseCodeFile>>(Base: B
     wizardSchool(school: WizardSchoolSeed): string[] {
       return [
         `  {`,
-        `    name: ${quote(school.name)},`,
-        `    description: ${quote(school.description)},`,
+        `    name: ${this.quote(school.name)},`,
+        `    description: ${this.quote(school.description)},`,
         `    prohibitedSchoolCount: ${school.prohibitedSchoolCount},`,
         `  },`,
       ];

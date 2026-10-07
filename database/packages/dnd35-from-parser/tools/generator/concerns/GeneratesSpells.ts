@@ -1,56 +1,26 @@
-import { basename, join } from "node:path";
-
-import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import {
-  BOOK_FILES,
-  getSpellFile,
-  SPELL_LEVELS,
-} from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
-import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
+import { type BaseBookGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseBookGenerator.ts";
+import BookLayout from "@/database/packages/dnd35-from-parser/tools/generator/BookLayout.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
-/** Generating a book's spells: a file per spell level, and their index. */
-export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
+/** Generating a book's spells: a file per spell level. */
+export function GeneratesSpells<B extends Constructor<BaseBookGenerator>>(Base: B) {
   abstract class GeneratingSpells extends Base {
-    /** A book's spells' index (spells/index.ts): each spell level file the generator wrote, its spells at its level. */
-    writeSpellIndex(book: string) {
-      // The spell level files the generator wrote (cantrips.ts, level1.ts…), by level
-      const levelFiles = SPELL_LEVELS.map((level) => ({ level, ...getSpellFile(level) })).filter(({ path }) =>
-        this.wrote(book, path),
-      );
-      if (levelFiles.length === 0) return;
-
-      const file = new CodeFile();
-      for (const { path, list } of levelFiles) file.gather(`./${basename(path)}`, [list]);
-      file.list(
-        BOOK_FILES.spells.list,
-        "SpellSeed",
-        levelFiles.map(({ level, list }) => `  ...${list}.map((p) => ({ ...p, level: ${level} })),`),
-      );
-      this.write(join(this.dir, book, BOOK_FILES.spells.path), file.code());
-    }
-
     /** A spell reference's files, one per spell level with spells. */
-    writeSpells(ref: SpellReference, book: string) {
-      const spells = Library.book(book).spells(ref).seeds();
+    writeSpells(ref: SpellReference) {
+      const spells = this.seeds.spells(ref).seeds();
       this.log(`Built ${spells.length} spell seeds`);
 
       // A spell above 9th level would have no file: the app has no epic spells
-      const beyond = spells.find((spell) => !SPELL_LEVELS.includes(spell.level));
+      const beyond = spells.find((spell) => !BookLayout.spellLevels.includes(spell.level));
       if (beyond) throw new Error(`${beyond.name}: level ${beyond.level}, where a spell's is 0 to 9`);
 
       // A file per spell level, its spells without their level (its file's)
       const byLevel = Map.groupBy(spells, (spell) => spell.level);
-      for (const level of SPELL_LEVELS) {
-        const { path, list } = getSpellFile(level);
+      for (const level of BookLayout.spellLevels) {
+        const { path, list } = BookLayout.spellFile(level);
         const levelSpells = byLevel.get(level);
-        if (levelSpells) {
-          this.writeList(join(this.dir, book, path), list, "PowerSeed", levelSpells, (file, spell) =>
-            file.spell(spell),
-          );
-        }
+        if (levelSpells) this.writeList(path, list, "PowerSeed", levelSpells, (file, spell) => file.spell(spell));
       }
     }
   }

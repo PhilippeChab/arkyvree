@@ -1,32 +1,53 @@
 import { dirname, join } from "node:path";
 
-import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import { ITEM_FILES, ITEMS_INDEX } from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
-import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
+import { type BaseBookGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseBookGenerator.ts";
+import BookLayout from "@/database/packages/dnd35-from-parser/tools/generator/BookLayout.ts";
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
+import type { MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
+import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
-/** Generating a book's mundane items: its weapons, armor, shields and goods. */
-export function GeneratesItems<B extends Constructor<BaseGenerator>>(Base: B) {
-  abstract class GeneratingItems extends Base {
-    /** A book's mundane items' files, a file per kind. */
-    writeItems(ref: ItemReference, book: string) {
-      const seeds = Library.book(book).items(ref).seeds();
-      for (const { path, list, seeds: kind } of ITEM_FILES) {
-        if (!(kind in seeds)) continue;
-        this.writeList(
-          join(this.dir, book, dirname(ITEMS_INDEX), path),
-          list,
-          "ItemSeed",
-          seeds[kind as keyof typeof seeds],
-          (file, item) => file.item(item),
-        );
-      }
+/** A book's item seeds, by the kind each of its item files holds. */
+type ItemSeedsByKind = Partial<Record<(typeof BookLayout.itemFiles)[number]["seeds"], ItemSeed[]>>;
 
+/**
+ * Generating a book's items, a file per kind: its mundane items' (weapons, armor, shields and goods) and its magic
+ * items' (magic armor, shields and weapons, wondrous items, rings, rods and staffs).
+ */
+export function GeneratesItems<B extends Constructor<BaseBookGenerator>>(Base: B) {
+  abstract class GeneratingItems extends Base {
+    /** The book's item files of each kind `seeds` holds. */
+    protected writeItemFiles(seeds: ItemSeedsByKind) {
+      for (const { path, list, seeds: kind } of BookLayout.itemFiles) {
+        const items = seeds[kind];
+        if (items) {
+          this.writeList(join(dirname(BookLayout.itemsIndex), path), list, "ItemSeed", items, (file, item) =>
+            file.item(item),
+          );
+        }
+      }
+    }
+
+    /** The book's mundane items' files, a file per kind. */
+    writeItems(ref: ItemReference) {
+      const seeds = this.seeds.items(ref).seeds();
+      this.writeItemFiles(seeds);
       this.log(
         `\nDone! Generated ${seeds.simpleWeapons.length} simple, ${seeds.martialWeapons.length} martial, ${seeds.exoticWeapons.length} exotic weapons`,
       );
       this.log(`  ${seeds.armor.length} armor, ${seeds.shields.length} shields, ${seeds.goods.length} goods`);
+    }
+
+    /** The book's magic items' files, a file per kind. */
+    writeMagicItems(ref: MagicItemReference) {
+      const seeds = this.seeds.magicItems(ref).seeds();
+      this.writeItemFiles(seeds);
+      this.log(
+        `\nDone! Generated ${seeds.magicArmor.length} magic armor, ${seeds.magicShields.length} magic shields, ${seeds.magicWeapons.length} magic weapons`,
+      );
+      this.log(
+        `  ${seeds.wondrousItems.length} wondrous items, ${seeds.rings.length} rings, ${seeds.rods.length} rods, ${seeds.staffs.length} staffs`,
+      );
     }
   }
   return GeneratingItems;

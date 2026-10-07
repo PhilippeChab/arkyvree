@@ -1,5 +1,4 @@
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
-import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -10,15 +9,15 @@ export function WritesDomains<B extends Constructor<BaseCodeFile>>(Base: B) {
     domain(domain: DomainSeed): string[] {
       return [
         `  {`,
-        `    name: ${quote(domain.name)},`,
-        `    description: ${quote(domain.description)},`,
-        ...listField(
+        `    name: ${this.quote(domain.name)},`,
+        `    description: ${this.quote(domain.description)},`,
+        ...this.listField(
           "modifiers",
           (domain.modifiers ?? []).map((m) => this.plainModifier(m)),
           "    ",
         ),
         `    spells: [`,
-        ...domain.spells.map((spell) => `      { name: ${quote(spell.name)}, level: ${spell.level} },`),
+        ...domain.spells.map((spell) => `      { name: ${this.quote(spell.name)}, level: ${spell.level} },`),
         `    ],`,
         `  },`,
       ];
