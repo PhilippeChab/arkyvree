@@ -1,5 +1,5 @@
 /**
- * How the client tells the user what happens, one way (AGENTS.md's Frontend Architecture):
+ * How the client tells the user what happens, one way (docs/frontend.md):
  *
  * - `dialog-mounts`: a dialog stays mounted, its `open` showing it, so it fades out as it closes; a dialog about a
  *   record opens through `useDialogState`, which keeps the record while it fades, and one that keeps state of its own

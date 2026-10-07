@@ -7,7 +7,7 @@ import {
   CharacterHeader,
   CharacterSheetBody,
 } from "@/client/src/components/characters/index.ts";
-import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
+import { ActionMenuItem, PageError, PageTransition } from "@/client/src/components/common/index.ts";
 import { DownloadIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useAnchorMenu, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
@@ -54,36 +54,38 @@ export default function CampaignCharacterPage() {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 2 }}>
-      <Stack spacing={4}>
-        <CharacterHeader
-          name={data.identity?.physiology?.name ?? ""}
-          rulesetName={data.rulesetName}
-          backTo={`/campaigns/${campaignId}`}
-          onMenuOpen={data.canDownloadPdf && !data.deletedAt ? menu.openMenu : undefined}
-        />
-        <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
-          {data.canEdit && (
-            <ActionMenuItem
-              icon={EditIcon}
-              label="Edit Character"
-              onClick={menu.closeMenuAnd(() => navigate(`/characters/${characterId}`))}
-            />
-          )}
-          <ActionMenuItem
-            icon={DownloadIcon}
-            label="Download PDF"
-            onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
+    <PageTransition>
+      <Container maxWidth="xl" sx={{ py: 2 }}>
+        <Stack spacing={4}>
+          <CharacterHeader
+            name={data.identity?.physiology?.name ?? ""}
+            rulesetName={data.rulesetName}
+            backTo={`/campaigns/${campaignId}`}
+            onMenuOpen={data.canDownloadPdf && !data.deletedAt ? menu.openMenu : undefined}
           />
-        </Menu>
-        <CharacterSheetBody
-          character={data}
-          characterId={characterId}
-          readOnly
-          partial={data.isPartial}
-          equipmentMode="readonly"
-        />
-      </Stack>
-    </Container>
+          <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
+            {data.canEdit && (
+              <ActionMenuItem
+                icon={EditIcon}
+                label="Edit Character"
+                onClick={menu.closeMenuAnd(() => navigate(`/characters/${characterId}`))}
+              />
+            )}
+            <ActionMenuItem
+              icon={DownloadIcon}
+              label="Download PDF"
+              onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
+            />
+          </Menu>
+          <CharacterSheetBody
+            character={data}
+            characterId={characterId}
+            readOnly
+            partial={data.isPartial}
+            equipmentMode="readonly"
+          />
+        </Stack>
+      </Container>
+    </PageTransition>
   );
 }

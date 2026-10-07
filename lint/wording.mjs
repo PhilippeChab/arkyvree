@@ -1,5 +1,5 @@
 /**
- * What the client says, said one way (AGENTS.md's Frontend Architecture):
+ * What the client says, said one way (docs/frontend.md):
  *
  * - `label-case`: a label is in Title Case ("Mark All as Read"): a button's, a menu item's, a field's, a dialog's
  *   title and its actions, a tooltip that names an icon button, and any element's `aria-label`.
