@@ -3,15 +3,13 @@
 import { eqStr, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-const APT = "Monk Class Feature";
-
 export const MONK_FEATS: FeatSeed[] = [
   {
     name: "AC Bonus (Monk)",
     description:
       "Through rigorous training in defensive movement, a monk develops an instinctive ability to evade attacks, even those she cannot see coming. While wearing no armor and carrying no more than a light load, the monk adds her Wisdom bonus (if any) to her Armor Class. Furthermore, at 5th level she gains a +1 bonus to AC that increases by 1 for every five additional monk levels (+2 at 10th, +3 at 15th, and +4 at 20th level). These AC bonuses remain effective against touch attacks and even when the monk is caught flat-footed. However, she loses all of these bonuses if she becomes immobilized or helpless, dons any armor, uses a shield, or carries a medium or heavy load.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
     modifiers: [
       {
         target: "combat.ac.misc",
@@ -31,14 +29,14 @@ export const MONK_FEATS: FeatSeed[] = [
     description:
       "At 12th level, a monk gains the ability to step magically between locations, functioning as the spell dimension door, usable once per day. Her effective caster level for this ability equals one-half her monk level (rounded down).",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Bonus Feat 1st (Monk)",
     description:
       "At 1st level, a monk chooses one bonus feat from either Improved Grapple or Stunning Fist. At 2nd level, she selects from either Combat Reflexes or Deflect Arrows. At 6th level, she picks from either Improved Disarm or Improved Trip. The monk does not need to satisfy any of the normal prerequisites for these feats.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
     modifiers: [{ target: "aptitudes.monkbonusfeat1st.allowed", operator: "add", value: "1", valueType: "number" }],
   },
   {
@@ -46,46 +44,46 @@ export const MONK_FEATS: FeatSeed[] = [
     description:
       "At 1st level, a monk chooses one bonus feat from either Improved Grapple or Stunning Fist. At 2nd level, she selects from either Combat Reflexes or Deflect Arrows. At 6th level, she picks from either Improved Disarm or Improved Trip. The monk does not need to satisfy any of the normal prerequisites for these feats.",
     selectable: false,
-    aptitudes: [APT],
-    modifiers: [{ target: "aptitudes.monkbonusfeat2nd.allowed", operator: "add", value: "1", valueType: "number" }],
+    aptitudes: ["Monk Class Feature"],
     requirements: [gte("classes.monk.level", 2)],
+    modifiers: [{ target: "aptitudes.monkbonusfeat2nd.allowed", operator: "add", value: "1", valueType: "number" }],
   },
   {
     name: "Bonus Feat 6th (Monk)",
     description:
       "At 1st level, a monk chooses one bonus feat from either Improved Grapple or Stunning Fist. At 2nd level, she selects from either Combat Reflexes or Deflect Arrows. At 6th level, she picks from either Improved Disarm or Improved Trip. The monk does not need to satisfy any of the normal prerequisites for these feats.",
     selectable: false,
-    aptitudes: [APT],
-    modifiers: [{ target: "aptitudes.monkbonusfeat6th.allowed", operator: "add", value: "1", valueType: "number" }],
+    aptitudes: ["Monk Class Feature"],
     requirements: [gte("classes.monk.level", 6)],
+    modifiers: [{ target: "aptitudes.monkbonusfeat6th.allowed", operator: "add", value: "1", valueType: "number" }],
   },
   {
     name: "Diamond Body (Monk)",
     description:
       "Upon reaching 11th level, a monk has achieved such complete control over her metabolism that she becomes immune to all forms of poison.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Diamond Soul (Monk)",
     description:
       "At 13th level, a monk develops spell resistance equal to her current monk level + 10. Any spellcaster attempting to affect her with a spell must succeed on a caster level check meeting or exceeding the monk's spell resistance.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Empty Body (Monk)",
     description:
       "At 19th level, a monk can shift into an ethereal state for a total of 1 round per monk level each day, replicating the effects of the etherealness spell. She can split this duration across multiple uses in a single day, so long as the combined rounds spent ethereal do not exceed her monk level.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Evasion (Monk)",
     description:
       "Starting at 2nd level, a monk can evade even supernatural and extraordinary attacks through sheer agility. When she succeeds on a Reflex saving throw against an effect that normally deals half damage on a successful save (such as a red dragon's fiery breath or a fireball spell), she takes no damage whatsoever. This ability functions only when the monk wears light armor or no armor. A monk who is helpless (for instance, unconscious or paralyzed) cannot benefit from evasion.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
     properties: [{ type: "FEAT_FAMILY", value: "Evasion" }],
   },
   {
@@ -93,23 +91,28 @@ export const MONK_FEATS: FeatSeed[] = [
     description:
       "Beginning at 3rd level, a monk receives an enhancement bonus to her base land speed as indicated in the class table. Wearing any armor (including light armor) or carrying a medium or heavy load negates this bonus speed.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Flurry of Blows (Monk)",
     description:
       "While unarmored, a monk can trade precision for volume of attacks by unleashing a rapid barrage of strikes. This grants one additional attack per round at her highest base attack bonus, but every attack that round (including the extra one) suffers a -2 penalty. The adjusted attack bonuses appear in the Flurry of Blows Attack Bonus column of the class table. Because this penalty persists for the full round, it also applies to any attacks of opportunity the monk takes before her next turn. At 5th level the penalty decreases to -1, and at 9th level it vanishes entirely. Executing a flurry of blows requires a full attack action. During a flurry, the monk may only use unarmed strikes or special monk weapons (kama, nunchaku, quarterstaff, sai, shuriken, and siangham), and she can freely mix unarmed strikes with monk weapon attacks in any combination she chooses. When wielding weapons during a flurry of blows, the monk uses her Strength bonus (not 1-1/2 times or 1/2 times her Strength bonus) for damage on all hits, regardless of whether she holds the weapon in one or both hands. No weapon other than a special monk weapon may be employed as part of a flurry. The quarterstaff is treated as two separate weapons (one for each end) for flurry of blows purposes. Despite requiring two hands, a monk can still alternate between quarterstaff strikes and unarmed strikes within a single flurry, provided she has sufficient attacks to do so. However, she cannot wield any additional weapon simultaneously with a quarterstaff. At 11th level, the flurry of blows ability advances further: in addition to the single extra attack normally granted, the monk gains a second extra attack at her full base attack bonus.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
     properties: [{ type: "FEAT_FAMILY", value: "Flurry of Blows" }],
   },
-  { name: "Greater Flurry (Monk)", description: "", selectable: false, aptitudes: [APT] },
+  {
+    name: "Greater Flurry (Monk)",
+    description: "",
+    selectable: false,
+    aptitudes: ["Monk Class Feature"],
+  },
   {
     name: "Improved Evasion (Monk)",
     description:
       "At 9th level, a monk's evasion ability becomes even more effective. She continues to take no damage when she succeeds on a Reflex save against effects like dragon breath or a fireball spell, and now she takes only half damage even on a failed save. A helpless monk (such as one who is unconscious or paralyzed) does not benefit from improved evasion.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Ki Strike (Monk)",
@@ -117,28 +120,28 @@ export const MONK_FEATS: FeatSeed[] = [
       "Starting at 4th level, a monk channels ki energy through her unarmed attacks. Her strikes count as magic weapons for the purpose of overcoming damage reduction. This ability grows stronger as she advances: at 10th level, her unarmed attacks are additionally treated as lawful weapons for bypassing damage reduction, and at 16th level they are treated as adamantine weapons for overcoming damage reduction and bypassing hardness.",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Perfect Self (Monk)",
     description:
       "At 20th level, a monk's relentless self-refinement and near-supernatural abilities transform her into a magical being. She is henceforth considered an outsider (extraplanar creature) rather than a humanoid for all spell and magical effect interactions - for example, charm person no longer works on her. She also gains damage reduction 10/magic, meaning she ignores the first 10 points of damage from any nonmagical weapon strike or natural attack from a creature lacking equivalent damage reduction. Despite her outsider status, the monk can still be raised or resurrected as though she were still a member of her original creature type.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Purity of Body (Monk)",
     description:
       "At 5th level, a monk achieves sufficient mastery over her body's natural defenses to become immune to all diseases, with the exception of supernatural and magical diseases (such as mummy rot and lycanthropy).",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Quivering Palm (Monk)",
     description:
       "Upon reaching 15th level, a monk learns to transmit lethal vibrations into a living target's body through a single strike. This ability is usable once per week and must be declared before the attack roll is made. It has no effect on constructs, oozes, plants, undead, incorporeal creatures, or creatures immune to critical hits. If the attack lands and deals damage, the quivering palm takes hold. The monk may then choose to trigger the lethal vibrations at any point within a number of days equal to her monk level, simply by willing the target to die (a free action). The target must succeed on a Fortitude saving throw (DC 10 + 1/2 the monk's level + the monk's Wisdom modifier) or perish. A successful save neutralizes that particular quivering palm, though the target remains vulnerable to future uses of the ability.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Slow Fall (Monk)",
@@ -146,34 +149,34 @@ export const MONK_FEATS: FeatSeed[] = [
       "From 4th level onward, a monk who is within arm's reach of a wall can use it to control her descent. Initially, she treats any fall as though it were 20 feet shorter for the purpose of calculating fall damage. This damage reduction improves as she gains monk levels, until at 20th level she can fall any distance without taking harm as long as a wall is within reach.",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Still Mind (Monk)",
     description:
       "From 3rd level onward, a monk's disciplined meditation and mental conditioning grant her a +2 bonus on saving throws against enchantment spells and effects, reflecting her strengthened resistance to mind-influencing attacks.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Timeless Body (Monk)",
     description:
       "At 17th level, a monk ceases to suffer ability score penalties from aging and becomes immune to magical aging effects. Any aging penalties already accrued remain, however. She continues to gain aging bonuses normally and still dies of old age when her natural lifespan expires.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Tongue of the Sun and Moon (Monk)",
     description: "At 17th level, a monk gains the capacity to communicate verbally with any living creature.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
   {
     name: "Weapon and Armor Proficiency (Monk)",
     description:
       "Monks have proficiency with a limited selection of common and specialized weapons associated with their training traditions. Their proficient weapons include the club, crossbow (light or heavy), dagger, handaxe, javelin, kama, nunchaku, quarterstaff, sai, shuriken, siangham, and sling. Monks lack proficiency with all armor and shields - indeed, much of their unique capabilities depend on unrestricted movement. While wearing armor, wielding a shield, or bearing a medium or heavy load, a monk forfeits her AC bonus, fast movement, and flurry of blows capabilities.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
     modifiers: [
       {
         target: "feats.simpleweaponproficiencylightcrossbow.possessed",
@@ -241,6 +244,6 @@ export const MONK_FEATS: FeatSeed[] = [
     description:
       "Beginning at 7th level, a monk can mend her own injuries through focused will. Each day she can restore a total number of hit points equal to twice her current monk level, and she may divide this healing across multiple uses throughout the day.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Monk Class Feature"],
   },
 ];

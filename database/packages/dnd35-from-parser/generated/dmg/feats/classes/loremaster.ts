@@ -2,8 +2,6 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-const APT = "Loremaster Class Feature";
-
 export const LOREMASTER_FEATS: FeatSeed[] = [
   {
     name: "Bonus Language (Loremaster)",
@@ -11,21 +9,21 @@ export const LOREMASTER_FEATS: FeatSeed[] = [
       "Through their dedicated scholarly efforts, loremasters pick up new languages to broaden their access to written knowledge. At 4th and 8th level, a loremaster may learn any single new language of her choice.",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
   },
   {
     name: "Greater Lore (Loremaster)",
     description:
       "Beginning at 6th level, a loremaster gains the power to analyze and comprehend magical items, producing an effect equivalent to the identify spell.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
   },
   {
     name: "Lore (Loremaster)",
     description:
       "Loremasters are collectors of knowledge. Starting at 2nd level, a loremaster gains the ability to recall legends and obscure information on a variety of subjects, functioning similarly to a bard's bardic knowledge ability. She adds her loremaster level and her Intelligence modifier to the lore check.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
   },
   {
     name: "Secret (Loremaster)",
@@ -33,7 +31,7 @@ export const LOREMASTER_FEATS: FeatSeed[] = [
       "Through extensive research, loremasters uncover a wide range of useful knowledge and hidden insights. At 1st level and at every other level thereafter (3rd, 5th, 7th, and 9th), the loremaster selects one secret. Her level combined with her Intelligence modifier determines the total number of secrets available to her. The same secret cannot be selected more than once.",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
     modifiers: [{ target: "aptitudes.loremastersecret.allowed", operator: "add", value: "1", valueType: "number" }],
   },
   {
@@ -41,14 +39,14 @@ export const LOREMASTER_FEATS: FeatSeed[] = [
     description: "Any single feat",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
   },
   {
     name: "Secret: Dodge Trick (Loremaster)",
     description: "+1 dodge bonus to AC",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
     modifiers: [{ target: "combat.ac.dodge", operator: "add", value: "1", valueType: "number" }],
   },
   {
@@ -56,28 +54,28 @@ export const LOREMASTER_FEATS: FeatSeed[] = [
     description: "4 ranks in a skill in which the character currently has no ranks",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
   },
   {
     name: "Secret: More Newfound Arcana (Loremaster)",
     description: "1 bonus 2nd-level spell",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
   },
   {
     name: "Secret: Newfound Arcana (Loremaster)",
     description: "1 bonus 1st-level spell",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
   },
   {
     name: "Secret: Secret Health (Loremaster)",
     description: "+3 hit points",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
     modifiers: [{ target: "combat.hp.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
@@ -85,7 +83,7 @@ export const LOREMASTER_FEATS: FeatSeed[] = [
     description: "+2 bonus on Reflex saves",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
     modifiers: [{ target: "saves.reflex.misc", operator: "add", value: "2", valueType: "number" }],
   },
   {
@@ -93,7 +91,7 @@ export const LOREMASTER_FEATS: FeatSeed[] = [
     description: "+2 bonus on Will saves",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
     modifiers: [{ target: "saves.will.misc", operator: "add", value: "2", valueType: "number" }],
   },
   {
@@ -101,14 +99,14 @@ export const LOREMASTER_FEATS: FeatSeed[] = [
     description: "+1 bonus on attack rolls",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
   },
   {
     name: "Secret: the Lore of True Stamina (Loremaster)",
     description: "+2 bonus on Fortitude saves",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
     modifiers: [{ target: "saves.fortitude.misc", operator: "add", value: "2", valueType: "number" }],
   },
   {
@@ -116,19 +114,19 @@ export const LOREMASTER_FEATS: FeatSeed[] = [
     description:
       "The loremaster continues to develop her spellcasting alongside her scholarly pursuits. Each time she gains a loremaster level, she receives new spells per day (and spells known, if relevant) as though she had also advanced one level in a spellcasting class she belonged to before entering this prestige class. However, she does not receive any other class benefits that the prior class would have granted, such as improved undead turning, bonus metamagic feats, or item creation feats. In effect, the loremaster level stacks with her previous spellcasting class level for the purpose of determining spells per day, spells known, and caster level.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
   },
   {
     name: "True Lore (Loremaster)",
     description:
       "Upon reaching 10th level, a loremaster can draw upon her vast knowledge once per day to produce an effect identical to either a legend lore spell or an analyze dweomer spell.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
   },
   {
     name: "Weapon and Armor Proficiency (Loremaster)",
     description: "A loremaster does not gain proficiency with any weapons or armor upon taking this class.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Loremaster Class Feature"],
   },
 ];

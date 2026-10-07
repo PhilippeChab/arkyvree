@@ -3,8 +3,6 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-const APT = "Wizard Class Feature";
-
 export const WIZARD_FEATS: FeatSeed[] = [
   {
     name: "Bonus Feat (Wizard)",
@@ -12,7 +10,7 @@ export const WIZARD_FEATS: FeatSeed[] = [
       "At 5th, 10th, 15th, and 20th level, a wizard receives an additional bonus feat. Each time, she may select a metamagic feat, an item creation feat, or Spell Mastery. All prerequisites for the chosen feat must still be satisfied, including any caster level requirements. These bonus feats are granted on top of the standard feat every character earns at every third level. When selecting her regular feats (as opposed to these class bonus feats), the wizard is not restricted to metamagic feats, item creation feats, or Spell Mastery.",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Wizard Class Feature"],
     modifiers: [{ target: "aptitudes.wizardbonusfeat.allowed", operator: "add", value: "1", valueType: "number" }],
   },
   {
@@ -20,20 +18,20 @@ export const WIZARD_FEATS: FeatSeed[] = [
     description:
       "Each day, a wizard must review her spellbook to prepare spells. No spell can be prepared unless it appears in her spellbook, with the sole exception of read magic, which every wizard can prepare from memory alone. At 1st level, a wizard's spellbook contains every 0-level wizard spell along with three 1st-level spells of the player's choosing. For each point of Intelligence bonus she possesses, one additional 1st-level spell of the player's choice is also included. Upon gaining each new wizard level, she adds two new spells to her spellbook, chosen from any spell level or levels she is now capable of casting. For instance, a wizard reaching 5th level gains access to 3rd-level spells and could add two 3rd-level spells, or one 2nd-level and one 3rd-level spell, or any other combination of two spells from 1st through 3rd level. A wizard may also copy spells from other wizards' spellbooks into her own at any time.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Wizard Class Feature"],
   },
   {
     name: "Spells (Wizard)",
     description:
       "Wizards employ arcane magic of the same variety used by sorcerers and bards, selecting from the sorcerer/wizard spell list. Unlike spontaneous casters, a wizard must select and prepare her spells in advance. Learning, preparing, or casting any spell requires an Intelligence score of at least 10 + the spell's level (Intelligence 10 for 0-level spells, Intelligence 11 for 1st-level spells, and so on). The saving throw DC against a wizard's spell equals 10 + the spell's level + her Intelligence modifier. As with other spellcasting classes, a wizard has a limited number of spell slots at each level per day, as shown in the class table. A high Intelligence score grants her additional bonus spell slots. In contrast to bards and sorcerers, there is no cap on the number of spells a wizard can learn. She must decide which spells to prepare each day after a full night's rest and 1 hour of studying her spellbook.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Wizard Class Feature"],
   },
   {
     name: "Summon Familiar (Wizard)",
     description: "",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Wizard Class Feature"],
     modifiers: [
       { target: "aptitudes.familiarbond.allowed", operator: "add", value: "1", valueType: "number" },
       { target: "bonded.familiar.level", operator: "add", value: "{{ [classes.wizard.level] }}", valueType: "number" },
@@ -45,7 +43,7 @@ export const WIZARD_FEATS: FeatSeed[] = [
     description:
       "Wizards have training with clubs, daggers, heavy crossbows, light crossbows, and quarterstaves. They lack proficiency with all forms of armor and shields. Wearing any armor hampers a wizard's ability to perform the precise movements required for spellcasting, potentially causing spells with somatic components to fail.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Wizard Class Feature"],
     modifiers: [
       {
         target: "feats.simpleweaponproficiencyheavycrossbow.possessed",
@@ -75,7 +73,7 @@ export const WIZARD_FEATS: FeatSeed[] = [
       "Your effective wizard caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in wizard.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
-    modifiers: [{ target: "classes.wizard.bonuscasterlevel", operator: "add", value: "1", valueType: "number" }],
     requirements: [gte("classes.wizard.level", 1)],
+    modifiers: [{ target: "classes.wizard.bonuscasterlevel", operator: "add", value: "1", valueType: "number" }],
   },
 ];

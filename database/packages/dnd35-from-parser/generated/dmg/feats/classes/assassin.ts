@@ -3,46 +3,50 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-const APT = "Assassin Class Feature";
-
 export const ASSASSIN_FEATS: FeatSeed[] = [
   {
     name: "Death Attack (Assassin)",
     description:
       "After observing a target for 3 consecutive rounds, if the assassin then lands a damaging melee sneak attack, the blow can potentially kill or paralyze the victim (the assassin chooses which effect to attempt). During the observation period, the assassin may take other actions provided their focus remains on the target and the target neither detects nor identifies the assassin as a threat. A victim who fails a Fortitude saving throw (DC 10 + assassin class level + assassin's Int modifier) against the lethal effect dies instantly. If the save fails against the paralysis effect, the victim becomes helpless and unable to act for 1d6 rounds + 1 round per assassin class level. On a successful save, the attack deals normal sneak attack damage only. The strike must be made within 3 rounds after finishing the observation period. If the attempt fails (the target succeeds on its save) or if the assassin does not attack within 3 rounds of completing the study, another full 3 rounds of observation are needed before a new death attack can be attempted.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Assassin Class Feature"],
   },
   {
     name: "Hide in Plain Sight (Assassin)",
     description:
       "Upon reaching 8th level, an assassin gains the ability to use the Hide skill while being directly observed. The only requirement is being within 10 feet of any area of shadow; with that condition met, the assassin can conceal themselves in the open without any object to hide behind. The assassin's own shadow does not count for this purpose.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Assassin Class Feature"],
   },
   {
     name: "Improved Uncanny Dodge (Assassin)",
     description:
       "At 5th level, an assassin becomes immune to flanking, responding to attackers on all sides as effectively as to a single opponent. This prevents rogues from using flanking to deliver sneak attacks against the assassin. However, a rogue whose level exceeds the assassin's by four or more can still flank (and sneak attack) the assassin. When a character has uncanny dodge from multiple classes, the levels from all such classes stack for the purpose of calculating the minimum rogue level needed to flank them.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Assassin Class Feature"],
   },
   {
     name: "Poison Use (Assassin)",
     description:
       "Assassins receive specialized training in handling poisons and never accidentally expose themselves to their own toxins when coating a weapon.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Assassin Class Feature"],
     properties: [{ type: "FEAT_FAMILY", value: "Poison Use" }],
   },
-  { name: "Save Against Poison (Assassin)", description: "", stackable: true, selectable: false, aptitudes: [APT] },
+  {
+    name: "Save Against Poison (Assassin)",
+    description: "",
+    stackable: true,
+    selectable: false,
+    aptitudes: ["Assassin Class Feature"],
+  },
   {
     name: "Sneak Attack (Assassin)",
     description:
       "This functions identically to the rogue's sneak attack ability. The bonus damage increases by +1d6 at every odd class level (1st, 3rd, 5th, 7th, and 9th). If the assassin has sneak attack damage from another source (such as rogue levels), the damage bonuses stack.",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Assassin Class Feature"],
     properties: [{ type: "FEAT_FAMILY", value: "Sneak Attack" }],
   },
   {
@@ -50,14 +54,14 @@ export const ASSASSIN_FEATS: FeatSeed[] = [
     description:
       "From 1st level onward, an assassin can cast a limited number of arcane spells. Casting a spell requires an Intelligence score of at least 10 + the spell's level; an assassin whose Intelligence is 10 or lower cannot cast these spells at all. Bonus spells and saving throw DCs are based on Intelligence (DC = 10 + spell level + Intelligence modifier). At a given spell level where the assassin receives 0 spells per day (such as 1st-level spells at 1st class level), only bonus spells from a high Intelligence score are available. The assassin's spellcasting works like a bard's. Starting at 6th level, and again at every even-numbered level thereafter (8th and 10th), the assassin may exchange one known spell for a different spell of the same level. The replacement spell must be at least two levels lower than the highest-level assassin spell the character can cast. For example, at 6th level the assassin could swap a single 1st-level spell (two levels below the maximum of 3rd) for another 1st-level spell. At 8th and 10th level, a 1st-level or 2nd-level spell could be exchanged (since 4th-level assassin spells are now accessible). Only one spell can be swapped per level, and the decision must be made at the same time new spells known are gained.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Assassin Class Feature"],
   },
   {
     name: "Uncanny Dodge (Assassin)",
     description:
       "Beginning at 2nd level, an assassin develops an instinctive awareness of danger that operates faster than normal perception. The assassin keeps their Dexterity bonus to AC (if any) even when caught flat-footed or targeted by an unseen attacker. (Being immobilized still causes the loss of any Dexterity bonus to AC.) A character who gains this ability from more than one class automatically upgrades to improved uncanny dodge.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Assassin Class Feature"],
     modifiers: [{ target: "combat.ac.uncannydodge", operator: "set", value: "true", valueType: "boolean" }],
   },
   {
@@ -65,7 +69,7 @@ export const ASSASSIN_FEATS: FeatSeed[] = [
     description:
       "An assassin is trained with weapons suited to covert operations and surprise attacks. They are proficient with crossbows (hand, light, and heavy), daggers (all varieties), darts, rapiers, saps, shortbows (including composite), and short swords. They are also proficient with light armor but have no shield proficiency.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Assassin Class Feature"],
     modifiers: [
       {
         target: "feats.exoticweaponproficiencyhandcrossbow.possessed",
@@ -127,7 +131,7 @@ export const ASSASSIN_FEATS: FeatSeed[] = [
       "Your effective assassin caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in assassin.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
-    modifiers: [{ target: "classes.assassin.bonuscasterlevel", operator: "add", value: "1", valueType: "number" }],
     requirements: [gte("classes.assassin.level", 1)],
+    modifiers: [{ target: "classes.assassin.bonuscasterlevel", operator: "add", value: "1", valueType: "number" }],
   },
 ];

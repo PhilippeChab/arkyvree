@@ -2,8 +2,6 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-const APT = "Fighter Class Feature";
-
 export const FIGHTER_FEATS: FeatSeed[] = [
   {
     name: "Bonus Feat (Fighter)",
@@ -11,7 +9,7 @@ export const FIGHTER_FEATS: FeatSeed[] = [
       "Starting at 1st level, a fighter receives an extra combat-related feat on top of the standard feat every 1st-level character earns and any bonus feat from being human. The fighter continues to gain an additional bonus feat at 2nd level and at every even-numbered fighter level after that (4th, 6th, 8th, 10th, 12th, 14th, 16th, 18th, and 20th). These bonus feats must be selected from those designated as fighter bonus feats. All normal prerequisites still apply, including any required ability scores and minimum base attack bonus. These extra feats are separate from and in addition to the feats every character receives through normal level advancement. When selecting these bonus feats, a fighter is not restricted solely to the fighter bonus feat list.",
     stackable: true,
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Fighter Class Feature"],
     modifiers: [{ target: "aptitudes.fighterbonusfeat.allowed", operator: "add", value: "1", valueType: "number" }],
   },
   {
@@ -19,7 +17,7 @@ export const FIGHTER_FEATS: FeatSeed[] = [
     description:
       "Fighters are trained in the use of all simple and martial weapons. They are also proficient with every type of armor - light, medium, and heavy - as well as all shields, including tower shields.",
     selectable: false,
-    aptitudes: [APT],
+    aptitudes: ["Fighter Class Feature"],
     modifiers: [
       { target: "feats.simpleweaponproficiency.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.martialweaponproficiency.possessed", operator: "set", value: "true", valueType: "boolean" },
