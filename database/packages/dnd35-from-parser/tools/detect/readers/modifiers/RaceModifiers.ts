@@ -1,6 +1,6 @@
+import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import { ABILITY_SLUGS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/abilities.ts";
 import { SAVE_SLUGS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/saves.ts";
-import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 

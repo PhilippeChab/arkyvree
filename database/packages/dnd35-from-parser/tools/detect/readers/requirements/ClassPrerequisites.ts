@@ -1,11 +1,11 @@
+import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
+import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import {
   RACE_NAME_PATH,
   RACE_NAMES,
   RACE_SIZE_PATH,
 } from "@/database/packages/dnd35-from-parser/tools/vocabulary/races.ts";
 import { SKILL_SLUGS, toSkillSlug } from "@/database/packages/dnd35-from-parser/tools/vocabulary/skills.ts";
-import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
-import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { domainFeat } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
