@@ -30,9 +30,10 @@ class PropertyTypesService {
   }
 
   /**
-   * Get property type completions for autocomplete. Engine types come from the
-   * per-baseRules provider; custom types come from `rulesetData` (composed
-   * across the ruleset chain with COW resolution). Pagination is in-memory.
+   * Get property type completions for autocomplete. The ruleset's own types
+   * come from the engine (`getPropertyTypes`); custom types come from
+   * `rulesetData` (composed across the ruleset chain with COW resolution).
+   * Pagination is in-memory.
    */
   async getCompletions(
     rulesetId: string,
@@ -135,9 +136,9 @@ class PropertyTypesService {
   }
 
   /**
-   * Get value completions for a given property type. Engine values come from
-   * the per-baseRules provider; custom values come from `rulesetData`
-   * (composed across the ruleset chain). Pagination is in-memory.
+   * Get value completions for a given property type. The ruleset's own values
+   * come from the engine (`getPropertyValues`); custom values come from
+   * `rulesetData` (composed across the ruleset chain). Pagination is in-memory.
    */
   async getValueCompletions(
     rulesetId: string,

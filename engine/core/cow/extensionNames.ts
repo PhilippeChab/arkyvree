@@ -2,10 +2,13 @@ import RulesError from "@/engine/core/RulesError.ts";
 
 import { NAME_FALLBACK_ENTITY_TYPES } from "./sources.ts";
 
+/** The types whose entities pair by name in a view, whoever holds them: their names never clash on a subscribe. */
+export const NAME_PAIRED_ENTITY_TYPES: readonly string[] = ["aptitudes"];
+
 /**
  * Refuses subscribing a ruleset (`hostId`) to new extensions (`newExtensionIds`) that would surface two entities of a
  * name in its view, from the native names of the host's and its extensions' entities, the subscribed ones' and the new
- * ones' (`names`). Aptitudes pair by name in the view, whoever has them.
+ * ones' (`names`), but those of the types that pair by name (`NAME_PAIRED_ENTITY_TYPES`), which it needs none of.
  */
 export function checkExtensionNames(
   hostId: string,
@@ -14,7 +17,7 @@ export function checkExtensionNames(
 ) {
   const ownersByType = new Map<string, Map<string, Set<string>>>();
   for (const r of names) {
-    if (r.entityType === "aptitudes") continue;
+    if (NAME_PAIRED_ENTITY_TYPES.includes(r.entityType)) continue;
     let byName = ownersByType.get(r.entityType);
     if (!byName) {
       byName = new Map<string, Set<string>>();

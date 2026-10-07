@@ -75,8 +75,8 @@ export interface DetailedCharacterInterface {
 }
 
 /**
- * A base rules' module. Its parts are its own, each typed by the module (`Dnd35RulesetModule`), which `getRulesetModule`
- * hands out as it is: what it answers of its characters (`characters`), of its entities (`entities`), of their
+ * A base rules' module. Its parts are its own, each typed by the module's own type, which `getRulesetModule` hands out
+ * as it is: what it answers of its characters (`characters`), of its entities (`entities`), of their
  * level-ups (`levelUp`) and to its content's seeders and codegen (`content`); its paths and property types, and the
  * order its view keeps an entity's properties in.
  */

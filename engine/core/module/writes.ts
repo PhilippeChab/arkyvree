@@ -1,9 +1,9 @@
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
- * A feat a ruleset makes with an entity (a skill's Skill Focus) or for a grouping its entities share (a school's Spell
- * Focus): generated, in the pool `aptitudeSlug` names, with the properties its fields are kept in, its modifiers and
- * its requirements. None is made when the ruleset has no such pool.
+ * A feat a ruleset makes with an entity, or for a value its entities share (one of their properties'): generated, in
+ * the pool `aptitudeSlug` names, with the properties its fields are kept in, its modifiers and its requirements. None
+ * is made when the ruleset has no such pool.
  */
 interface GeneratedFeat {
   aptitudeSlug: string;

@@ -52,6 +52,7 @@ export {
   type CowData,
   getCowReads,
   getPairedKlassIds,
+  NAME_PAIRED_ENTITY_TYPES,
   type RulesetSources,
 } from "./core/cow/index.ts";
 export type {

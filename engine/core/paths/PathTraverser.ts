@@ -96,9 +96,8 @@ export default class PathTraverser {
       return this.traverseWildcard(component, next, rest, currentValue, lastKey, maxDepth, pathParts);
 
     const formattedKey = stripSeparators(next);
-    // Only a skill's name also reaches its subtypes, the skills its name starts ("craft" → "craftarmorsmithing").
-    // Anywhere else, a name another starts is another entry: a feat's ("dodge" isn't "dodgebonusswashbuckler",
-    // "light" isn't "lightningreflexes"), checked by its family's group if it has one (`feats.weaponfocus.*`)
+    // Only an entry of a category with subtypes (`subtypeCategories`) also reaches them by its name: the entries its
+    // name starts. Anywhere else, a name another starts is another entry, checked by its family's group if it has one
     const reachesSubtypes = rest.length > 0 && this.subtypeCategories.has(pathParts[0]);
     if (!formattedKey) return PathTraverser.failed(component, formattedKey, `Element not found: ${next}`);
     // A path that steps past a value (`abilities.strength.total.x`) fails whole, wildcard branches and all:

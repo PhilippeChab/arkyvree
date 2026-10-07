@@ -2,6 +2,6 @@
 
 export { default as CowData } from "./CowData.ts";
 export { default as CowDataBuilder } from "./CowDataBuilder.ts";
-export { checkExtensionNames } from "./extensionNames.ts";
+export { checkExtensionNames, NAME_PAIRED_ENTITY_TYPES } from "./extensionNames.ts";
 export { buildSourceChain, getCowReads, getPairedKlassIds } from "./sources.ts";
 export type { CowRows, RulesetSources } from "./sources.ts";

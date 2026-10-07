@@ -84,7 +84,7 @@ function getCategoryCompletions(
 
 /**
  * Every leaf path that matches `search`, by its path or a segment's label, ignoring the drill prefix: the path browser's
- * search-first mode, so users can type "wizard known" and find paths across the whole tree without drilling.
+ * search-first mode, so users can type words of a path's labels and find it across the whole tree without drilling.
  */
 function getFlatCompletions(
   allPaths: TargetPath[],
