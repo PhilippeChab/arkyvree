@@ -1,12 +1,12 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
-import type DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
+import { type Dnd35DetailedCharacter } from "@/server/rulesets/dnd3.5/index.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { formatModifier } from "./format.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-function SkillsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
+function SkillsPage({ detailedCharacter }: { detailedCharacter: Dnd35DetailedCharacter }) {
   const identity = detailedCharacter.components.identity;
   const skills = detailedCharacter.components.skills;
   const identityData = identity.getIdentity();

@@ -8,6 +8,7 @@ import type { CharacterKind } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { loadBondedByKind } from "@/server/services/characters/bonded.ts";
+import { buildCharacterSheet } from "@/server/sheets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterSharingService {
@@ -16,9 +17,7 @@ class CharacterSharingService {
 
     if (!characterRecord) throw new NotFoundError("Character not found");
 
-    const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
-    const { detailedCharacter, CharacterSheetComponent } =
-      await rulesetModule.createDetailedCharacterWithSheet(characterRecord);
+    const { detailedCharacter, CharacterSheetComponent } = await buildCharacterSheet(characterRecord);
 
     const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
 

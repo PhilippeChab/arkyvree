@@ -4,9 +4,9 @@ import type { JobHelpers } from "graphile-worker";
 import { withTransaction } from "@/server/database/index.ts";
 import { Exports, Notifications } from "@/server/repositories/index.ts";
 import type { CharacterKind } from "@/server/rulesets/dnd3.5/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { findExportableCharacter, getCharacterPdfTargetTable } from "@/server/services/characters/index.ts";
+import { buildCharacterSheet } from "@/server/sheets/index.ts";
 import { publishWsEvent } from "@/server/websockets/index.ts";
 
 interface GeneratePdfPayload {
@@ -51,12 +51,8 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
       return;
     }
 
-    const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
     const kind = characterRecord.kind as CharacterKind;
-    const { detailedCharacter, CharacterSheetComponent } = await rulesetModule.createDetailedCharacterWithSheet(
-      characterRecord,
-      kind,
-    );
+    const { detailedCharacter, CharacterSheetComponent } = await buildCharacterSheet(characterRecord, kind);
 
     const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
 

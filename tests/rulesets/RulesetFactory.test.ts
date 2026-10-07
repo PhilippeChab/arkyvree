@@ -18,7 +18,6 @@ describe("RulesetFactory", () => {
     expect(module.rules).toBeDefined();
     expect(module.effects).toBeDefined();
     expect(module.createDetailedCharacter).toBeFunction();
-    expect(module.createDetailedCharacterWithSheet).toBeFunction();
     expect(module.createTargetPaths).toBeFunction();
     expect(module.createPropertyTypes).toBeFunction();
   });
