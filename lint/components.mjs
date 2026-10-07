@@ -14,7 +14,8 @@
  * - `option-tooltips`: the level-up wizard's option tooltip (a description, or the tree of what it asks) is an
  *   `OptionTooltip`.
  * - `anchor-menus`: a menu that opens from what was clicked keeps its anchor through `useAnchorMenu`.
- * - `select-fields`: a select bound to a form's field is a `SelectField`.
+ * - `select-fields`: a select bound to a form's field is a `SelectField`; a custom input its owner binds (handed the
+ *   field's ref) keeps its own select.
  * - `form-validation`: a form is `noValidate`, so its rules check its fields and say why, never the browser; a bound
  *   field that asks the browser to check it (`required`, `type="email"`) has `rules`, and one with native bounds
  *   (`htmlInput: { min, max }`, which its stepper keeps) checks them with `wholeNumberRules`.
@@ -399,9 +400,12 @@ function createSelectFields(context) {
     JSXElement(node) {
       const name = elementName(node);
       if (!hasAttribute(node, "select") || (name !== "TextField" && name !== "FormTextField")) return;
+      // A form's field's own ref (`field.ref`); a ref the component is handed is a custom input's, its owner binding it
+      const ref = attributeValue(attribute(node, "inputRef"));
+      const fieldRef = ref?.type === "MemberExpression" && !ref.computed && ref.property.name === "ref";
       const bound =
         name === "FormTextField" ||
-        hasAttribute(node, "inputRef") ||
+        fieldRef ||
         node.openingElement.attributes.some((a) => a.type === "JSXSpreadAttribute");
       if (!bound) return;
       context.report({ node: node.openingElement, message: "A select bound to a form's field is a `SelectField`." });

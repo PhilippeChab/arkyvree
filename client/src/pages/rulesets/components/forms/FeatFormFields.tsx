@@ -38,6 +38,7 @@ export function FeatFormFields({ form, rulesetId, knownAptitudes = [], generated
         render={({ field }) => (
           <AptitudesAutocomplete
             rulesetId={rulesetId}
+            inputRef={field.ref}
             value={aptitudes.resolve(field.value ?? [])}
             onChange={(selected) => {
               aptitudes.remember(selected);

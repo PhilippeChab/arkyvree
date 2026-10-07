@@ -1,6 +1,7 @@
 import { useController, type UseFormReturn } from "react-hook-form";
 
 import { ConditionFields } from "./ConditionFields.tsx";
+import { CONDITION_OPERATOR_RULES, CONDITION_TARGET_RULES, MODIFIER_VALUE_RULES } from "./conditionRules.ts";
 
 interface ModifierFormProps {
   /** Filters target-path completions to those allowed for this entity type. */
@@ -17,9 +18,9 @@ export interface ModifierFormData {
 }
 
 export function ModifierForm({ form, rulesetId, entityType, mode }: ModifierFormProps) {
-  const target = useController({ control: form.control, name: "target" });
-  const operator = useController({ control: form.control, name: "operator" });
-  const value = useController({ control: form.control, name: "value" });
+  const target = useController({ control: form.control, name: "target", rules: CONDITION_TARGET_RULES });
+  const operator = useController({ control: form.control, name: "operator", rules: CONDITION_OPERATOR_RULES });
+  const value = useController({ control: form.control, name: "value", rules: MODIFIER_VALUE_RULES });
   return (
     <ConditionFields
       kind="modifier"

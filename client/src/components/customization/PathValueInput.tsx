@@ -1,4 +1,5 @@
 import { MenuItem, TextField } from "@mui/material";
+import { type Ref } from "react";
 
 import type { PathValueType } from "@/shared/customization/target.ts";
 
@@ -9,6 +10,8 @@ interface PathValueInputProps {
   error?: boolean;
   fullWidth?: boolean;
   helperText?: string;
+  /** Its form field's `ref`, so a failed submit focuses it. */
+  inputRef?: Ref<HTMLInputElement>;
   label?: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -30,6 +33,7 @@ export function PathValueInput({
   helperText,
   fullWidth = true,
   disabled = false,
+  inputRef,
 }: PathValueInputProps) {
   const options = pathChoices(valueType, possibleValues);
 
@@ -46,6 +50,7 @@ export function PathValueInput({
       helperText={helperText}
       fullWidth={fullWidth}
       disabled={disabled}
+      inputRef={inputRef}
     >
       {options?.map((option) => (
         <MenuItem key={option.value} value={option.value}>

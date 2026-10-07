@@ -1,4 +1,5 @@
 import { TextField } from "@mui/material";
+import { type Ref } from "react";
 
 import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
 import { propertyValueCompletionsQuery } from "./customizationQueries.ts";
@@ -8,6 +9,8 @@ interface PropertyValueInputProps {
   error?: boolean;
   fullWidth?: boolean;
   helperText?: string;
+  /** Its form field's `ref`, so a failed submit focuses it. */
+  inputRef?: Ref<HTMLInputElement>;
   label?: string;
   multiline?: boolean;
   onChange: (value: string) => void;

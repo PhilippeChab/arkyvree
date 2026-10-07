@@ -104,12 +104,12 @@ export function ModifiersSection({
         ),
       );
     },
-    updateFn: async (modifierId: string, data: ModifierFormData) => {
+    updateFn: async (modifierId: string, data: ModifierFormData, updatedAt: string | undefined) => {
       return tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers[":modifierId"].$put({
             param: { ...entityParam, modifierId },
-            json: data,
+            json: { ...data, updatedAt },
           }),
         ),
       );
@@ -275,7 +275,10 @@ export function ModifiersSection({
         onClose={() => setEditDialogOpen(false)}
         title="Edit Modifier"
         form={editForm}
-        onSubmit={(data) => selectedModifier && updateMutation.mutate({ id: selectedModifier.id, data })}
+        onSubmit={(data) =>
+          selectedModifier &&
+          updateMutation.mutate({ id: selectedModifier.id, data, updatedAt: selectedModifier.updatedAt })
+        }
         isLoading={updateMutation.isPending}
         maxWidth="md"
       >

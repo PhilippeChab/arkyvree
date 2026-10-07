@@ -25,6 +25,8 @@ interface TemplateExpressionInputProps {
  * literal/template toggle; we just expose the insertion primitives.
  */
 export interface TemplateExpressionInputRef {
+  /** Focus the expression's input (a failed submit's). */
+  focus: () => void;
   /** Insert raw text at the current cursor position. */
   insertText: (text: string) => void;
   /** Wrap the current selection with `${prefix}selection${suffix}`. If no
@@ -71,6 +73,7 @@ export function TemplateExpressionInput({
   };
 
   useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
     insertText: (text: string) => {
       const { start, end } = getSelection();
       const before = value.slice(0, start);

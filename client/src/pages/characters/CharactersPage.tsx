@@ -1,6 +1,6 @@
 import { Button, Chip, Container, Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -22,7 +22,13 @@ import {
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
 import { ArchiveIcon, GroupIcon, ShieldIcon } from "@/client/src/components/icons/index.ts";
-import { useAttachments, useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
+import {
+  useAttachments,
+  useDialogState,
+  useListParams,
+  usePageTitle,
+  useStaggerAnimation,
+} from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { characterDetailQuery, type CharacterListFilters, characterListQuery } from "@/client/src/lib/queries.ts";
@@ -44,7 +50,8 @@ export default function CharactersPage() {
   usePageTitle("Characters");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  // Mounted as it opens: the create dialog keeps its form, its pickers and its roll method
+  const createDialog = useDialogState();
   const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
     ["name", "createdAt", "updatedAt"],
     { orderBy: "createdAt", orderDir: "desc" },
@@ -71,7 +78,9 @@ export default function CharactersPage() {
 
   const prefetchCharacter = (id: string) => void queryClient.prefetchQuery(characterDetailQuery(id));
 
-  const createButton = (label: string) => <PageActionButton label={label} onClick={() => setCreateModalOpen(true)} />;
+  const createButton = (label: string) => (
+    <PageActionButton label={label} onClick={() => createDialog.openWith(true)} />
+  );
 
   const viewActiveButton = (
     <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
@@ -178,7 +187,13 @@ export default function CharactersPage() {
             />
           )}
         </Stack>
-        <CreateCharacterDialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
+        {createDialog.target && (
+          <CreateCharacterDialog
+            open={createDialog.open}
+            onClose={createDialog.close}
+            onExited={createDialog.onExited}
+          />
+        )}
       </Container>
     </PageTransition>
   );

@@ -7,6 +7,7 @@ import { requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 import { ConditionFields } from "./ConditionFields.tsx";
+import { CONDITION_OPERATOR_RULES, CONDITION_TARGET_RULES, REQUIREMENT_VALUE_RULES } from "./conditionRules.ts";
 
 type RequirementConditionFieldsProps = Pick<RequirementFormProps, "form" | "rulesetId" | "mode">;
 
@@ -32,9 +33,9 @@ const CHAINING_OPERATORS = [
 
 /** A condition's fields, bound while the requirement is a condition (a chaining node drops them). */
 function RequirementConditionFields({ form, rulesetId, mode }: RequirementConditionFieldsProps) {
-  const target = useController({ control: form.control, name: "target" });
-  const operator = useController({ control: form.control, name: "operator" });
-  const value = useController({ control: form.control, name: "value" });
+  const target = useController({ control: form.control, name: "target", rules: CONDITION_TARGET_RULES });
+  const operator = useController({ control: form.control, name: "operator", rules: CONDITION_OPERATOR_RULES });
+  const value = useController({ control: form.control, name: "value", rules: REQUIREMENT_VALUE_RULES });
   return <ConditionFields kind="requirement" rulesetId={rulesetId} mode={mode} fields={{ target, operator, value }} />;
 }
 

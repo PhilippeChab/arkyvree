@@ -1,3 +1,5 @@
+import { type Ref } from "react";
+
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 
 import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
@@ -9,6 +11,8 @@ interface PropertyTypeInputProps {
   error?: boolean;
   fullWidth?: boolean;
   helperText?: string;
+  /** Its form field's `ref`, so a failed submit focuses it. */
+  inputRef?: Ref<HTMLInputElement>;
   label?: string;
   onChange: (value: string) => void;
   placeholder?: string;

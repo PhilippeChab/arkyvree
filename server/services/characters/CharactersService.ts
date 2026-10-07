@@ -357,17 +357,17 @@ class CharactersService extends include(Object, Archives) {
     session: Session,
     characterId: string,
     updateData: {
-      age?: number;
+      age?: number | null;
       alignment?: Alignment;
       deity?: string;
       description?: string;
       gender?: Gender;
-      height?: string;
+      height?: string | null;
       languageIds?: string[];
       name?: string;
       notes?: string;
       updatedAt?: string;
-      weight?: string;
+      weight?: string | null;
       xp?: number;
     },
   ) {

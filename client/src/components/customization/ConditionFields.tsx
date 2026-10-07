@@ -1,9 +1,10 @@
 import { FormControlLabel, Stack, Switch, Tooltip } from "@mui/material";
 import { useRef, useState } from "react";
-import type { FieldError } from "react-hook-form";
+import type { FieldError, RefCallBack } from "react-hook-form";
 
 import { Crossfade } from "@/client/src/components/common/index.ts";
 import { HelpOutlinedIcon } from "@/client/src/components/icons/index.ts";
+import { isValuelessOperator } from "@/shared/customization/operators.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 
 import { OperatorSelect } from "./OperatorSelect.tsx";
@@ -14,9 +15,9 @@ import { TemplateExpressionInput, type TemplateExpressionInputRef } from "./Temp
 import { TemplateExpressionToolbar } from "./TemplateExpressionToolbar.tsx";
 import { useTargetPath } from "./useTargetPath.ts";
 
-/** A form's field, as `useController` binds it: its value, its change and its error. */
+/** A form's field, as `useController` binds it: its value, its change, its `ref` (focused on a failed submit), its error. */
 interface BoundField {
-  field: { onChange: (value: string) => void; value: string | undefined };
+  field: { onChange: (value: string) => void; ref: RefCallBack; value: string | undefined };
   fieldState: { error?: FieldError };
 }
 
@@ -115,6 +116,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
         }}
         error={!!errors.target}
         helperText={errors.target?.message}
+        inputRef={fields.target.field.ref}
         label={kind === "modifier" ? "Modifier Path" : "Target"}
       />
       <OperatorSelect
@@ -128,6 +130,8 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
             handleLiteralChange(setChoices[0].value);
         }}
         error={!!errors.operator}
+        helperText={errors.operator?.message}
+        inputRef={fields.operator.field.ref}
         operators={pathInfo?.operators || []}
       />
       <Stack
@@ -169,9 +173,11 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
             possibleValues={
               values.operator === "set" && pathInfo?.setValues ? pathInfo.setValues : pathInfo?.possibleValues
             }
-            required
+            required={kind === "modifier" || !isValuelessOperator(values.operator)}
             // Crossfade keeps it mounted under the template input: disabled, it can't be focused or block the submit.
             disabled={templateMode}
+            // A failed submit focuses the editor shown: this literal, or the template's expression
+            inputRef={templateMode ? undefined : fields.value.field.ref}
             error={!!errors.value}
             helperText={errors.value?.message}
             placeholder={
@@ -189,7 +195,10 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
         }
         second={
           <TemplateExpressionInput
-            ref={expressionInputRef}
+            ref={(handle) => {
+              expressionInputRef.current = handle;
+              if (templateMode) fields.value.field.ref(handle);
+            }}
             value={templateExpression}
             onChange={handleExpressionChange}
             rulesetId={rulesetId}

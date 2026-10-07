@@ -243,7 +243,7 @@ export function InviteLandingPage({
                     })
                   }
                   onReject={() => rejectMutation.mutate()}
-                  disabled={isAnswering}
+                  pending={acceptMutation.isPending ? "accept" : rejectMutation.isPending ? "reject" : null}
                 />
               </Stack>
             </Stack>

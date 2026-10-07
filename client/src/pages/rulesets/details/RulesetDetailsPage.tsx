@@ -508,7 +508,8 @@ export default function RulesetDetailsPage() {
           onClose={() => setEditDialogOpen(false)}
           form={editForm}
           onSubmit={(data) => {
-            if (selectedRuleset) updateMutation.mutate({ id: selectedRuleset.id, data });
+            if (selectedRuleset)
+              updateMutation.mutate({ id: selectedRuleset.id, data, updatedAt: selectedRuleset.updatedAt });
           }}
           isLoading={updateMutation.isPending}
           isPublic={selectedRuleset ? !selectedRuleset.private : false}

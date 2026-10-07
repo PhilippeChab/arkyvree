@@ -24,8 +24,15 @@ export const REQUIREMENT_OPERATORS = [
   "is_empty",
   "not_empty",
 ] as const;
+/** The requirement operators that check their target alone: they compare it to no value. */
+export const VALUELESS_REQUIREMENT_OPERATORS = ["is_empty", "not_empty"] as const;
 
 /** The operators a numeric target path offers a modifier, or a requirement. */
 export function getNumericOperators(kind: "modifier" | "requirement"): string[] {
   return kind === "modifier" ? [...MODIFIER_OPERATORS] : [...NUMERIC_REQUIREMENT_OPERATORS];
+}
+
+/** Whether a requirement's operator checks its target alone, with no value to compare it to. */
+export function isValuelessOperator(operator: string | undefined) {
+  return VALUELESS_REQUIREMENT_OPERATORS.some((valueless) => valueless === operator);
 }

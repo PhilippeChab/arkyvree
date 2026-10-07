@@ -30,7 +30,8 @@ interface RulesetSectionConfig<
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   rulesetId: string;
   sectionName: string;
-  updateFn?: (id: string, data: TFormData) => Promise<TUpdated>;
+  /** Saves a row's edit, `updatedAt` its stale-edit token: the row's, as its edit dialog opened on it. */
+  updateFn?: (id: string, data: TFormData, updatedAt: string | undefined) => Promise<TUpdated>;
 }
 
 /** Where a section's rows are cached, which its saves refresh */
@@ -109,8 +110,8 @@ export function useRulesetSection<
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { data: TFormData; id: string }) =>
-      updateFn ? updateFn(id, data) : Promise.reject(new Error(`${label} can't be updated here`)),
+    mutationFn: ({ id, data, updatedAt }: { data: TFormData; id: string; updatedAt?: string }) =>
+      updateFn ? updateFn(id, data, updatedAt) : Promise.reject(new Error(`${label} can't be updated here`)),
     onSuccess: (data) => {
       snackbar.success(`${label} updated`);
       invalidateOnMutation();

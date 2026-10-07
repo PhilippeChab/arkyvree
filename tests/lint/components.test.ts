@@ -110,6 +110,8 @@ describe("component rules", () => {
           "client/src/spread.tsx": "export const s = <TextField {...field} select />;\n",
           "client/src/bound.tsx": 'export const b = <FormTextField control={c} name="hd" select />;\n',
           "client/src/free.tsx": "export const f = <TextField select value={v} onChange={set} />;\n",
+          "client/src/custom.tsx":
+            "export const c = <TextField select inputRef={inputRef} value={value} onChange={onChange} />;\n",
           "client/src/field.tsx":
             'export const g = <SelectField control={c} name="hd" label="Hit Die" options={o} />;\n',
         },

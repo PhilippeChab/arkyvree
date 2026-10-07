@@ -1,6 +1,6 @@
 import { Chip, Stack, Typography } from "@mui/material";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
-import { Controller } from "react-hook-form";
+import { Controller, type UseFormReturn } from "react-hook-form";
 
 import {
   CreateDialog,
@@ -42,6 +42,12 @@ interface PropertiesSectionProps {
 
 type Property = PropertiesArray[number];
 
+interface PropertyFieldsProps {
+  entityType: CustomizableEntityType;
+  form: UseFormReturn<PropertyFormData>;
+  rulesetId: string;
+}
+
 type PropertyFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"]["$post"]
 >["json"];
@@ -54,6 +60,54 @@ const PROPERTIES_COLUMNS = [
   { key: "value", label: "Value", width: "40%" },
   { key: "description", label: "Description", width: "40%" },
 ];
+
+/** Its create and edit dialogs' height: room for a completion list under the type and the value. */
+const PROPERTY_DIALOG_HEIGHT = "60vh";
+
+/** A property's fields, its create dialog's and its edit dialog's alike. */
+function PropertyFields({ form, rulesetId, entityType }: PropertyFieldsProps) {
+  return (
+    <>
+      <Controller
+        control={form.control}
+        name="type"
+        render={({ field }) => (
+          <PropertyTypeInput
+            value={field.value || ""}
+            onChange={field.onChange}
+            inputRef={field.ref}
+            rulesetId={rulesetId}
+            entityType={entityType}
+            label="Type"
+            placeholder="e.g., tag, category, note"
+            fullWidth
+          />
+        )}
+      />
+      <Controller
+        control={form.control}
+        name="value"
+        rules={requiredRules("Value is required")}
+        render={({ field, fieldState }) => (
+          <PropertyValueInput
+            value={field.value || ""}
+            onChange={field.onChange}
+            inputRef={field.ref}
+            rulesetId={rulesetId}
+            propertyType={form.watch("type") || ""}
+            label="Value"
+            required
+            fullWidth
+            placeholder="Enter the property value…"
+            error={!!fieldState.error}
+            helperText={fieldState.error?.message}
+          />
+        )}
+      />
+      <DescriptionField control={form.control} name="description" placeholder="Enter the property description…" />
+    </>
+  );
+}
 
 export function PropertiesSection({
   ruleset,
@@ -102,12 +156,12 @@ export function PropertiesSection({
         ),
       );
     },
-    updateFn: async (propertyId: string, data: PropertyFormData) => {
+    updateFn: async (propertyId: string, data: PropertyFormData, updatedAt: string | undefined) => {
       return tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":propertyId"].$put({
             param: { ...entityParam, propertyId },
-            json: data,
+            json: { ...data, updatedAt },
           }),
         ),
       );
@@ -182,46 +236,8 @@ export function PropertiesSection({
         />
       </Stack>
 
-      <CreateDialog {...createDialogProps} title="Create New Property" fixedHeight="40vh">
-        <Controller
-          control={createForm.control}
-          name="type"
-          render={({ field }) => (
-            <PropertyTypeInput
-              value={field.value || ""}
-              onChange={field.onChange}
-              rulesetId={ruleset.id}
-              entityType={entityType}
-              label="Type"
-              placeholder="e.g., tag, category, note"
-              fullWidth
-            />
-          )}
-        />
-        <Controller
-          control={createForm.control}
-          name="value"
-          rules={requiredRules("Value is required")}
-          render={({ field, fieldState }) => (
-            <PropertyValueInput
-              value={field.value || ""}
-              onChange={field.onChange}
-              rulesetId={ruleset.id}
-              propertyType={createForm.watch("type") || ""}
-              label="Value"
-              required
-              fullWidth
-              placeholder="Enter the property value…"
-              error={!!fieldState.error}
-              helperText={fieldState.error?.message}
-            />
-          )}
-        />
-        <DescriptionField
-          control={createForm.control}
-          name="description"
-          placeholder="Enter the property description…"
-        />
+      <CreateDialog {...createDialogProps} title="Create New Property" fixedHeight={PROPERTY_DIALOG_HEIGHT}>
+        <PropertyFields form={createForm} rulesetId={ruleset.id} entityType={entityType} />
       </CreateDialog>
 
       <EditDialog
@@ -229,45 +245,14 @@ export function PropertiesSection({
         onClose={() => setEditDialogOpen(false)}
         title="Edit Property"
         form={editForm}
-        onSubmit={(data) => selectedProperty && updateMutation.mutate({ id: selectedProperty.id, data })}
+        onSubmit={(data) =>
+          selectedProperty &&
+          updateMutation.mutate({ id: selectedProperty.id, data, updatedAt: selectedProperty.updatedAt })
+        }
         isLoading={updateMutation.isPending}
-        fixedHeight="60vh"
+        fixedHeight={PROPERTY_DIALOG_HEIGHT}
       >
-        <Controller
-          control={editForm.control}
-          name="type"
-          render={({ field }) => (
-            <PropertyTypeInput
-              value={field.value || ""}
-              onChange={field.onChange}
-              rulesetId={ruleset.id}
-              entityType={entityType}
-              label="Type"
-              placeholder="e.g., tag, category, note"
-              fullWidth
-            />
-          )}
-        />
-        <Controller
-          control={editForm.control}
-          name="value"
-          rules={requiredRules("Value is required")}
-          render={({ field, fieldState }) => (
-            <PropertyValueInput
-              value={field.value || ""}
-              onChange={field.onChange}
-              rulesetId={ruleset.id}
-              propertyType={editForm.watch("type") || ""}
-              label="Value"
-              required
-              fullWidth
-              placeholder="Enter the property value…"
-              error={!!fieldState.error}
-              helperText={fieldState.error?.message}
-            />
-          )}
-        />
-        <DescriptionField control={editForm.control} name="description" placeholder="Enter the property description…" />
+        <PropertyFields form={editForm} rulesetId={ruleset.id} entityType={entityType} />
       </EditDialog>
 
       <DeleteDialog

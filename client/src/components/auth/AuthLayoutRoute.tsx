@@ -2,8 +2,9 @@ import { Alert, alpha, Box, Card, CardContent, Link as MuiLink, Stack, Typograph
 import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-import { LinkButton, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
-import { useAuthRequests, useIsMobile, useSearchParam, useStartDemo } from "@/client/src/hooks/index.ts";
+import { DiceSpinner, LinkButton, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { useAuthRequests, useIsMobile, useSearchParam } from "@/client/src/hooks/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -20,7 +21,8 @@ interface AuthPageProps {
 }
 
 function AuthFooterLinks() {
-  const { start, isPending } = useStartDemo();
+  const snackbar = useSnackbar();
+  const { startDemo, pending } = useAuthRequests();
   // The demo is for newcomers, so only sign-up offers it.
   const showDemo = useLocation().pathname === "/sign-up";
   return (
@@ -39,12 +41,16 @@ function AuthFooterLinks() {
       {showDemo && (
         <>
           <LinkButton
-            onClick={() => start()}
-            disabled={isPending}
+            onClick={() =>
+              startDemo.mutate(undefined, { onError: (error) => snackbar.error(error, "Failed to start demo") })
+            }
+            disabled={pending}
             variant="body2"
             sx={{ color: "text.secondary", background: "none", border: 0, cursor: "pointer", p: 0 }}
           >
-            {isPending ? "Starting…" : "Try the demo"}
+            <DiceSpinner size="small" loading={startDemo.isPending}>
+              Try the Demo
+            </DiceSpinner>
           </LinkButton>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             |

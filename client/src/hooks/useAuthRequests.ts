@@ -35,8 +35,8 @@ export function checkSession(queryClient: QueryClient): Promise<void> {
 }
 
 /**
- * The auth requests, each a mutation the store follows: sign in (with a password or Google), sign up, verify an email,
- * resend its code, ask for and make a password reset, sign out. They share one mutation key, so `pending` says whether
+ * The auth requests, each a mutation the store follows: sign in (with a password or Google), start a demo, sign up,
+ * verify an email, resend its code, ask for and make a password reset, sign out. They share one mutation key, so `pending` says whether
  * any is in flight, whichever page sent it, and the query client leaves their 401s to them (a wrong password, a session
  * already gone). A page shows a request's error through its `onError`. Where the user goes once the store changes is
  * the routes' to say, never the page's (React Router applies a navigation in a transition, which the store's render
@@ -66,6 +66,13 @@ export function useAuthRequests() {
   const signInWithGoogle = useMutation({
     mutationKey,
     mutationFn: (idToken: string) => parseResponse(rpc.auth.google.$post({ json: { idToken } })),
+    onSuccess: signedIn,
+  });
+
+  // A demo account, signed in as any user is: the auth routes send it on, to the dashboard by default
+  const startDemo = useMutation({
+    mutationKey,
+    mutationFn: () => parseResponse(rpc.api.demo.start.$post()),
     onSuccess: signedIn,
   });
 
@@ -113,6 +120,7 @@ export function useAuthRequests() {
     pending,
     signIn,
     signInWithGoogle,
+    startDemo,
     signUp,
     verifyEmail,
     resendVerification,

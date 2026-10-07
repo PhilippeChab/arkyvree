@@ -13,6 +13,8 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 interface DeleteAccountDialogProps {
   hasPassword: boolean;
   onClose: () => void;
+  /** It has faded out: its opener lets it go, so the next opening starts clean. */
+  onExited: () => void;
   open: boolean;
 }
 
@@ -21,20 +23,15 @@ interface DeleteAccountFormData {
   password: string;
 }
 
-export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccountDialogProps) {
+/** Asks for the password (or "DELETE" without one), then deletes the account; mounted while it's open. */
+export function DeleteAccountDialog({ open, onClose, onExited, hasPassword }: DeleteAccountDialogProps) {
   const snackbar = useSnackbar();
   const [error, setError] = useState<string | null>(null);
 
   const form = useFormWith<DeleteAccountFormData>({ password: "", confirmText: "" });
-  const { control, handleSubmit, watch, reset } = form;
+  const { control, handleSubmit, watch } = form;
   const password = watch("password");
   const confirmText = watch("confirmText");
-
-  const handleClose = () => {
-    reset();
-    setError(null);
-    onClose();
-  };
 
   const deleteMutation = useMutation({
     mutationFn: async (password: string | undefined) => {
@@ -63,7 +60,14 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
   const isConfirmed = hasPassword ? !!password : confirmText === "DELETE";
 
   return (
-    <FormDialog open={open} onClose={handleClose} form={form} isLoading={deleteMutation.isPending} maxWidth="xs">
+    <FormDialog
+      open={open}
+      onClose={onClose}
+      form={form}
+      isLoading={deleteMutation.isPending}
+      maxWidth="xs"
+      slotProps={{ transition: { onExited } }}
+    >
       <DialogTitle>Delete Account</DialogTitle>
       <form onSubmit={handleSubmit(handleDelete)} noValidate>
         {/* Deeper at the bottom, under the field */}
@@ -74,9 +78,12 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
               and account data will be removed.
             </Typography>
 
-            <AnimatedAlert in={!!error} severity="error" gutter={2}>
-              {error}
-            </AnimatedAlert>
+            {/* In a spaced column, which spaces an alert even closed: mounted only while it shows */}
+            {error && (
+              <AnimatedAlert in severity="error">
+                {error}
+              </AnimatedAlert>
+            )}
 
             {hasPassword ? (
               <FormTextField
@@ -101,7 +108,7 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
           </Stack>
         </DialogContent>
         <DialogFooter
-          onCancel={handleClose}
+          onCancel={onClose}
           pending={deleteMutation.isPending}
           action={{ label: "Delete Account", color: "error", disabled: !isConfirmed }}
         />

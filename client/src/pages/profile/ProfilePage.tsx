@@ -1,7 +1,7 @@
 import { Alert, Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
 
 import { GoogleSignInButton } from "@/client/src/components/auth/index.ts";
 import {
@@ -79,7 +79,7 @@ export default function ProfilePage() {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const verifyDialog = useDialogState<string>();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const deleteDialog = useDialogState();
 
   const { data: userData, isLoading, error: userError } = useQuery(currentUserQuery());
 
@@ -363,25 +363,32 @@ export default function ProfilePage() {
                 <Typography variant="body2">
                   Permanently delete your account and all associated data. This action cannot be undone.
                 </Typography>
-                <Button variant="contained" color="error" onClick={() => setDeleteDialogOpen(true)}>
+                <Button variant="contained" color="error" onClick={() => deleteDialog.openWith(true)}>
                   Delete Account
                 </Button>
               </Stack>
             </ProfileCard>
           </Stack>
 
-          <EmailChangeVerificationDialog
-            open={verifyDialog.open}
-            onClose={verifyDialog.close}
-            pendingEmail={verifyDialog.target ?? ""}
-          />
+          {/* Each dialog keeps its form and its errors: mounted as it opens, let go once it has faded */}
+          {verifyDialog.target !== null && (
+            <EmailChangeVerificationDialog
+              open={verifyDialog.open}
+              onClose={verifyDialog.close}
+              onExited={verifyDialog.onExited}
+              pendingEmail={verifyDialog.target}
+            />
+          )}
         </Stack>
 
-        <DeleteAccountDialog
-          open={deleteDialogOpen}
-          onClose={() => setDeleteDialogOpen(false)}
-          hasPassword={hasPassword}
-        />
+        {deleteDialog.target && (
+          <DeleteAccountDialog
+            open={deleteDialog.open}
+            onClose={deleteDialog.close}
+            onExited={deleteDialog.onExited}
+            hasPassword={hasPassword}
+          />
+        )}
       </Container>
     </PageTransition>
   );

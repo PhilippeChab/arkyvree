@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { useLatest } from "@/client/src/hooks/index.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 
 interface UseWebSocketOptions {
   enabled: boolean;
@@ -79,8 +80,9 @@ export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptio
           return;
         }
         try {
-          const data = JSON.parse(event.data);
-          if (data.type) onMessageRef.current(data);
+          // A message is an object with its type; anything else is ignored
+          const data: unknown = JSON.parse(event.data);
+          if (isRecord(data) && typeof data.type === "string") onMessageRef.current({ ...data, type: data.type });
         } catch {
           // Ignore malformed messages
         }

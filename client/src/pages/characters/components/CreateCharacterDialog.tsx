@@ -75,6 +75,8 @@ interface AbilityScoresSectionProps {
 
 interface CreateCharacterDialogProps {
   onClose: () => void;
+  /** It has faded out: its opener lets it go, so the next opening starts clean. */
+  onExited: () => void;
   open: boolean;
 }
 
@@ -335,7 +337,11 @@ function StandardArrayScores({ abilities, abilityValues, onChange }: StandardArr
   );
 }
 
-export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogProps) {
+/**
+ * A new character: its ruleset, race and details, and its ability scores by the roll method picked. Mounted while it's
+ * open, its form, its pickers and its roll method start clean at each opening.
+ */
+export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharacterDialogProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
@@ -357,7 +363,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
     description: "",
     notes: "",
   });
-  const { control, reset, watch, setValue } = form;
+  const { control, watch, setValue } = form;
 
   const selectedRulesetId = watch("rulesetId");
   const selectedAlignment = watch("alignment");
@@ -493,7 +499,6 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists });
-      reset();
       onClose();
       navigate(`/characters/${data.id}`, { state: { openLevelUp: true } });
     },
@@ -524,6 +529,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
       onSubmit={handleCreate}
       isLoading={createCharacterMutation.isPending}
       maxWidth="md"
+      onExited={onExited}
     >
       <BaseRulesetAlert ruleset={selectedRuleset} />
       {/* Basic Info */}

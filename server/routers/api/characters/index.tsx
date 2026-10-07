@@ -189,10 +189,11 @@ export default new Hono()
       "json",
       z.object({
         name: z.string().min(1).max(255).optional(),
-        age: z.number().optional(),
+        // An age, a height or a weight is cleared with null
+        age: z.number().int().min(1).nullable().optional(),
         gender: z.enum(["Male", "Female", "Other"]).optional(),
-        height: z.string().optional(),
-        weight: z.string().optional(),
+        height: z.string().nullable().optional(),
+        weight: z.string().nullable().optional(),
         deity: z.string().optional(),
         xp: z.number().optional(),
         alignment: z

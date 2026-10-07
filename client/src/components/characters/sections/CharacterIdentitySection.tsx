@@ -23,7 +23,8 @@ import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "
 import type { CharacterData } from "./characterData.ts";
 
 interface CharacterIdentityFormData {
-  age: string;
+  /** NaN while it is empty: a number field's value. */
+  age: number;
   alignment: Alignment | "";
   deity: string;
   description: string;
@@ -59,7 +60,7 @@ function toIdentityForm({ identity }: CharacterIdentitySectionProps["character"]
     race: identity?.physiology?.race?.name || "",
     alignment: oneOf(identity?.beliefs?.alignment, ALIGNMENT_OPTIONS) ?? "",
     experience: identity?.meta?.xp || 0,
-    age: String(identity?.physiology?.age || ""),
+    age: identity?.physiology?.age ?? Number.NaN,
     gender: oneOf(identity?.physiology?.gender, GENDER_OPTIONS) ?? "",
     height: String(identity?.physiology?.height || ""),
     weight: String(identity?.physiology?.weight || ""),
@@ -85,7 +86,7 @@ export function CharacterIdentitySection({
     race: "",
     alignment: "",
     experience: 0,
-    age: "",
+    age: Number.NaN,
     gender: "",
     height: "",
     weight: "",
@@ -103,10 +104,11 @@ export function CharacterIdentitySection({
         rpc.api.characters[":id"]["$put"]({
           param: { id: characterId },
           json: {
-            age: Number(formData.age) || undefined,
+            // An emptied age, height or weight is cleared
+            age: Number.isFinite(formData.age) ? formData.age : null,
             gender: formData.gender || undefined,
-            height: formData.height || undefined,
-            weight: formData.weight || undefined,
+            height: formData.height || null,
+            weight: formData.weight || null,
             deity: formData.deity,
             xp: formData.experience,
             alignment: formData.alignment || undefined,
@@ -244,6 +246,8 @@ export function CharacterIdentitySection({
               <FormTextField
                 control={form.control}
                 name="age"
+                rules={wholeNumberRules(1)}
+                number
                 label="Age"
                 size="small"
                 variant="outlined"

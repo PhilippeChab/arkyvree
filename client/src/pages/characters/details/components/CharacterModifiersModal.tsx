@@ -38,7 +38,7 @@ import {
 } from "@/client/src/components/customization/index.ts";
 import { ContentCopyIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormWith } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { characterModifiersQuery } from "@/client/src/pages/characters/characterQueries.ts";
@@ -62,9 +62,9 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   const queryClient = useQueryClient();
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [selectedModifier, setSelectedModifier] = useState<Modifier | null>(null);
+  // The modifier an edit or a delete is about, kept while its dialog fades out
+  const editDialog = useDialogState<Modifier>();
+  const deleteDialog = useDialogState<Modifier>();
 
   const createForm = useFormWith<ModifierFormData>(EMPTY_MODIFIER);
   const editForm = useFormWith<ModifierFormData>(EMPTY_MODIFIER);
@@ -105,8 +105,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
     },
     onSuccess: () => {
       snackbar.success("Modifier updated");
-      setEditOpen(false);
-      setSelectedModifier(null);
+      editDialog.close();
       invalidate();
     },
     onError: (error) => snackbar.error(error, "Failed to update modifier"),
@@ -122,17 +121,15 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
     },
     onSuccess: () => {
       snackbar.success("Modifier deleted");
-      setDeleteOpen(false);
-      setSelectedModifier(null);
+      deleteDialog.close();
       invalidate();
     },
     onError: (error) => snackbar.error(error, "Failed to delete modifier"),
   });
 
   const handleEdit = (modifier: Modifier) => {
-    setSelectedModifier(modifier);
     editForm.reset({ target: modifier.target, value: modifier.value, operator: modifier.operator });
-    setEditOpen(true);
+    editDialog.openWith(modifier);
   };
 
   // The create dialog keeps its values while it fades out, and starts afresh when opened.
@@ -153,10 +150,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
     setCreateOpen(true);
   };
 
-  const handleDelete = (modifier: Modifier) => {
-    setSelectedModifier(modifier);
-    setDeleteOpen(true);
-  };
+  const handleDelete = (modifier: Modifier) => deleteDialog.openWith(modifier);
 
   return (
     <>
@@ -281,26 +275,23 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         <ModifierForm form={createForm} rulesetId={rulesetId} entityType="characters" mode="create" />
       </CreateDialog>
       <EditDialog
-        open={editOpen}
-        onClose={() => {
-          setEditOpen(false);
-          setSelectedModifier(null);
-        }}
+        open={editDialog.open}
+        onClose={editDialog.close}
         title="Edit Modifier"
         form={editForm}
-        onSubmit={(data) => selectedModifier && updateMutation.mutate({ id: selectedModifier.id, data })}
+        onSubmit={(data) =>
+          editDialog.target &&
+          updateMutation.mutate({ id: editDialog.target.id, data, updatedAt: editDialog.target.updatedAt })
+        }
         isLoading={updateMutation.isPending}
         maxWidth="md"
       >
         <ModifierForm form={editForm} rulesetId={rulesetId} entityType="characters" mode="edit" />
       </EditDialog>
       <DeleteDialog
-        open={deleteOpen}
-        onClose={() => {
-          setDeleteOpen(false);
-          setSelectedModifier(null);
-        }}
-        onConfirm={() => selectedModifier && deleteMutation.mutate(selectedModifier.id)}
+        open={deleteDialog.open}
+        onClose={deleteDialog.close}
+        onConfirm={() => deleteDialog.target && deleteMutation.mutate(deleteDialog.target.id)}
         title="Delete Modifier"
         message="Are you sure you want to delete this modifier? This action cannot be undone."
         isLoading={deleteMutation.isPending}

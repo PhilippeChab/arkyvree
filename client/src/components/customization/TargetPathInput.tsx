@@ -1,4 +1,5 @@
 import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
+import { type Ref } from "react";
 
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
@@ -13,6 +14,8 @@ interface TargetPathInputProps {
   error?: boolean;
   fullWidth?: boolean;
   helperText?: string;
+  /** Its form field's `ref`, so a failed submit focuses its search. */
+  inputRef?: Ref<HTMLInputElement>;
   kind: TargetPathKind;
   label?: string;
   /** The new path, and what it takes when it's a complete one picked from the list. */
@@ -34,6 +37,7 @@ export function TargetPathInput({
   helperText,
   disabled = false,
   fullWidth = true,
+  inputRef,
 }: TargetPathInputProps) {
   const { target, error: targetError, pick } = useTargetPath(rulesetId, kind, entityType, value);
   // What the path takes didn't load: the field says so, under what its form says
@@ -65,6 +69,7 @@ export function TargetPathInput({
           segments={segments}
           isComplete={target !== null}
           disabled={disabled}
+          inputRef={inputRef}
           onChange={(path, picked) => {
             if (picked) pick(picked);
             onChange(path, picked);

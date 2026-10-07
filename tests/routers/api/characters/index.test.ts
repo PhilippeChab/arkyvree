@@ -38,6 +38,14 @@ describe("characters", () => {
     expect(await expectOk(character.$put({ param: { id: created.id }, json: update }))).toMatchObject(update);
   });
 
+  test("clears a character's age, height and weight with null, and refuses an age below 1", async () => {
+    const { id } = await postCharacter({ age: 30, height: "180", weight: "80" });
+    const cleared = await expectOk(character.$put({ param: { id }, json: { age: null, height: null, weight: null } }));
+    expect(cleared).toMatchObject({ age: null, height: null, weight: null });
+    await expectStatus(character.$put({ param: { id }, json: { age: 0 } }), 400);
+    await expectStatus(character.$put({ param: { id }, json: { age: 2.5 } }), 400);
+  });
+
   test("lists the races a new character can pick", async () => {
     const ctx = await getSeedCtx();
     const races = await expectOk(

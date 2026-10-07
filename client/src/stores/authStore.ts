@@ -2,8 +2,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { AUTH_STORAGE_KEY } from "@/shared/auth.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 
-import type { AuthUser } from "./authUser.ts";
+import { type AuthUser, readAuthUser } from "./authUser.ts";
 
 /** Who is signed in, and the emails waiting for a code. The requests that change it are `useAuthRequests`'. */
 interface AuthState {
@@ -49,6 +50,13 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      // Only a user storage holds as one is taken back, signed in if it says so: anything else is signed out, and
+      // checkSession asks the server
+      merge: (persisted, current) => {
+        const user = isRecord(persisted) ? readAuthUser(persisted.user) : null;
+        const isAuthenticated = !!user && isRecord(persisted) && persisted.isAuthenticated === true;
+        return { ...current, user, isAuthenticated };
+      },
     },
   ),
 );

@@ -6,7 +6,7 @@ import {
   type QueryKey,
   type UseInfiniteQueryOptions,
 } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { type Ref, useMemo } from "react";
 
 import { DiceSpinner, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
@@ -31,6 +31,8 @@ interface CompletionAutocompleteProps<
   error?: boolean;
   fullWidth?: boolean;
   helperText?: string;
+  /** Its form field's `ref`, so a failed submit focuses it. */
+  inputRef?: Ref<HTMLInputElement>;
   label: string;
   loadingText: string;
   multiline?: boolean;
@@ -60,6 +62,7 @@ export function CompletionAutocomplete<
   onChange,
   query,
   enabled,
+  inputRef,
   label,
   placeholder,
   loadingText,
@@ -145,6 +148,7 @@ export function CompletionAutocomplete<
       renderInput={(params) => (
         <TextField
           {...params}
+          inputRef={inputRef}
           label={label}
           required={required}
           error={error}
