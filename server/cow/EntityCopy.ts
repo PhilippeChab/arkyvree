@@ -30,8 +30,8 @@ import { ENTITY_REPOS, type EntityWithId } from "./entityRepositories.ts";
  * same row: a modifier's requirements may differ).
  */
 export interface CopiedEntity {
-  entity: EntityWithId;
   copiedIds: ReadonlyMap<string, string>;
+  entity: EntityWithId;
 }
 
 /**
@@ -62,16 +62,16 @@ export default class EntityCopy {
     return { entity, copiedIds: copy.copiedIds };
   }
 
-  private readonly entityType: RulesetEntityType;
+  private readonly copiedIds = new Map<string, string>();
 
   private readonly entityId: string;
+
+  private readonly entityType: RulesetEntityType;
 
   /** The ruleset the copy is made in, and where its inherited entities come from. */
   private readonly ruleset: RulesetSources;
 
   private readonly sourceType: string | undefined;
-
-  private readonly copiedIds = new Map<string, string>();
 
   /** Copies the entity into the target ruleset, or returns the copy it already has: the newly created child entity. */
   private async copy(tx: Db): Promise<EntityWithId> {

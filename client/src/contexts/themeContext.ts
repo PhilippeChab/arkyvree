@@ -3,8 +3,8 @@
 import { createContext } from "react";
 
 interface ThemeContextType {
-  themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
+  themeMode: ThemeMode;
 }
 
 export type ThemeMode = "light" | "dark" | "system";

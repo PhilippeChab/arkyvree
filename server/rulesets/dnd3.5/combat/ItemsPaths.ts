@@ -49,10 +49,6 @@ const SHIELD_LABELS: Record<string, string> = {
 
 /** The equipped items' target paths: items.weapons / items.armors / items.shields, a grouping's items. */
 export default class ItemsPaths implements PathCategory<Dnd35Components> {
-  static generateWeaponPaths(weaponGroupings: string[], kind: "modifier" | "requirement"): TargetPath[] {
-    return weaponGroupings.flatMap((grouping) => buildWeaponPaths(`items.weapons.${grouping}`, "items", kind));
-  }
-
   static generateArmorPaths(armorGroupings: string[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
@@ -91,9 +87,9 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  readonly name = "items";
-
-  readonly label = "Items";
+  static generateWeaponPaths(weaponGroupings: string[], kind: "modifier" | "requirement"): TargetPath[] {
+    return weaponGroupings.flatMap((grouping) => buildWeaponPaths(`items.weapons.${grouping}`, "items", kind));
+  }
 
   readonly description = "Equipped weapon, armor, and shield stats";
 
@@ -102,6 +98,10 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
     "items.armors": "{name} armor stats",
     "items.shields": "{name} shield stats",
   };
+
+  readonly label = "Items";
+
+  readonly name = "items";
 
   readonly pathDescriptions = {
     "items.weapons": "Per-weapon attack, damage, critical, and how it's wielded",

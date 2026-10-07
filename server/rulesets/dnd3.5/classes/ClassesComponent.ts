@@ -14,38 +14,38 @@ import { stripSeparators } from "@/shared/text.ts";
 
 type ClassesData = {
   [key: string]: {
+    bonuscasterlevel: number;
     klass: Klass;
     klassSkills: KlassSkill[];
     level: number;
-    bonuscasterlevel: number;
     levels: {
+      characterLevel: CharacterLevel;
+      feats: (Feat & {
+        aptitudeId: string;
+        characterLevelId: string;
+        klassLevelId: string;
+        modifiers: Modifier[];
+        properties: Property[];
+        requirements: Requirement[];
+      })[];
       klassLevel: KlassLevel & {
         modifiers: Modifier[];
         properties: Property[];
         requirements: Requirement[];
       };
-      characterLevel: CharacterLevel;
-      feats: (Feat & {
-        klassLevelId: string;
-        characterLevelId: string;
-        aptitudeId: string;
-        modifiers: Modifier[];
-        properties: Property[];
-        requirements: Requirement[];
-      })[];
-      skills: (Skill & {
-        klassLevelId: string;
-        characterLevelId: string;
-        rank: number;
-      })[];
       powers: (Power & {
-        klassLevelId: string;
-        characterLevelId: string;
         aptitudeId: string;
+        characterLevelId: string;
         free?: boolean;
-        saveName: string | null;
+        klassLevelId: string;
         powerLevel: number | null;
         properties: Property[];
+        saveName: string | null;
+      })[];
+      skills: (Skill & {
+        characterLevelId: string;
+        klassLevelId: string;
+        rank: number;
       })[];
     }[];
   };
@@ -86,26 +86,26 @@ export default class ClassesComponent {
     })[],
     characterLevels: CharacterLevel[],
     feats: (Feat & {
-      klassLevelId: string;
-      characterLevelId: string;
       aptitudeId: string;
+      characterLevelId: string;
+      klassLevelId: string;
       modifiers: Modifier[];
       properties: Property[];
       requirements: Requirement[];
     })[],
     skills: (Skill & {
-      klassLevelId: string;
       characterLevelId: string;
+      klassLevelId: string;
       rank: number;
     })[],
     powers: (Power & {
-      klassLevelId: string;
-      characterLevelId: string;
       aptitudeId: string;
+      characterLevelId: string;
       free?: boolean;
-      saveName: string | null;
+      klassLevelId: string;
       powerLevel: number | null;
       properties: Property[];
+      saveName: string | null;
     })[],
     rulesetKlasses?: Klass[],
   ) {

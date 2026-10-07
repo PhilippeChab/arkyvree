@@ -10,11 +10,11 @@ import { byName, useAptitudeLookup } from "./useAptitudeLookup.ts";
 
 interface FeatFormFieldsProps {
   form: UseFormReturn<FeatFormData>;
-  rulesetId: string;
-  /** Aptitudes the form may already hold (the feat's own), so they show by name. */
-  knownAptitudes?: Aptitude[];
   /** A generated feat's name names its option (`Weapon Focus: Longsword`): it can't be changed. */
   generated?: boolean;
+  /** Aptitudes the form may already hold (the feat's own), so they show by name. */
+  knownAptitudes?: Aptitude[];
+  rulesetId: string;
 }
 
 export type FeatFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["feats"]["$post"]>["json"];

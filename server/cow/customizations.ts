@@ -4,10 +4,10 @@ import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 /** An entity's customizations: its modifiers, with their requirements apart, its properties and its requirements. */
 export interface EntityCustomizations {
+  modifierRequirements: Requirement[];
   modifiers: Modifier[];
   properties: Property[];
   requirements: Requirement[];
-  modifierRequirements: Requirement[];
 }
 
 /** Each entity's customizations, by its id: the rows grouped by the entity they belong to, a modifier's by its source. */

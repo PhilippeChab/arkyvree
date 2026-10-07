@@ -9,10 +9,10 @@ export {
 } from "./rateLimit.ts";
 export { requestLogger } from "./requestLogger.ts";
 export {
-  default as sessionMiddleware,
-  SESSION_COOKIE_NAME,
   deleteSessionCookie,
   getSessionCookie,
+  SESSION_COOKIE_NAME,
+  default as sessionMiddleware,
   setSessionCookie,
 } from "./session.ts";
 export type { SessionContext } from "./session.ts";

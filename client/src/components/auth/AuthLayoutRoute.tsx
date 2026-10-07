@@ -11,12 +11,12 @@ import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src
 
 interface AuthPageProps {
   children: ReactNode;
-  title: string;
-  subtitle?: ReactNode;
   /** The last request's failure, shown above the form. */
   error?: string | null;
   /** A confirmation shown above the form ("A new code has been sent"). */
   notice?: string | null;
+  subtitle?: ReactNode;
+  title: string;
 }
 
 function AuthFooterLinks() {

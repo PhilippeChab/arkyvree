@@ -20,7 +20,7 @@ describe("MemoryCache", () => {
   });
 
   test("stores complex objects", () => {
-    const cache = new MemoryCache<{ items: number[]; flag: boolean }>();
+    const cache = new MemoryCache<{ flag: boolean; items: number[] }>();
     const data = { items: [1, 2, 3], flag: true };
     cache.set("obj", data);
     expect(cache.get("obj")).toBe(data); // same reference

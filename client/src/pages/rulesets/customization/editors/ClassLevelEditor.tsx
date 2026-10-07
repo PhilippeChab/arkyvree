@@ -21,8 +21,8 @@ import type { EditorProps } from "./types.ts";
 import { useEditorSave } from "./useEditorSave.ts";
 
 interface ClassLevelForm {
-  saves: LevelSave[];
   feats: LevelFeat[];
+  saves: LevelSave[];
 }
 
 type LevelFeatRow = ClassLevel["feats"][number];

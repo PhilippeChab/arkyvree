@@ -23,22 +23,22 @@ import { useToggleSet } from "@/client/src/hooks/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 interface DiagnosticsGroupProps {
-  label: string;
-  count: number;
   children: ReactNode;
+  count: number;
+  label: string;
 }
 
 interface DiagnosticsSectionProps {
-  validation: CharacterDetail["validation"];
-  requirements: CharacterDetail["requirements"];
   modifiers: CharacterDetail["modifiers"];
+  requirements: CharacterDetail["requirements"];
+  validation: CharacterDetail["validation"];
 }
 
 interface GroupedRuleTableProps {
-  label: string;
   count: number;
-  lastColumn: string;
   groups: RuleGroup[];
+  label: string;
+  lastColumn: string;
 }
 
 interface HeaderRowProps {
@@ -53,8 +53,8 @@ interface InvalidRequirementTableProps {
 type Modifier = DiagnosticsSectionProps["modifiers"]["appliedModifiers"][number];
 
 interface ModifierTableProps {
-  modifiers: Modifier[];
   label: string;
+  modifiers: Modifier[];
 }
 
 type RequirementGroup = DiagnosticsSectionProps["requirements"]["unmetRequirementGroups"][number];
@@ -72,8 +72,8 @@ interface RuleCellsRowProps {
 
 interface RuleGroup {
   key: string;
-  source: string;
   rules: RuleCells[];
+  source: string;
 }
 
 interface SkippedModifierTableProps {

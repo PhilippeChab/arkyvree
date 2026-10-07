@@ -27,7 +27,7 @@ import { FONT_SIZE, styles } from "./styles.ts";
  * Short labels so each spell's property row fits on a single line. A legend is rendered once at the top of the spells
  * section.
  */
-const SPELL_PROPERTY_ABBR: Record<string, { short: string; full: string }> = {
+const SPELL_PROPERTY_ABBR: Record<string, { full: string; short: string }> = {
   [SPELL_SUBSCHOOL]: { short: "SS", full: "Subschool" },
   [SPELL_DESCRIPTOR]: { short: "Desc", full: "Descriptor" },
   [SPELL_COMPONENT]: { short: "Comp", full: "Components" },

@@ -27,12 +27,12 @@ import {
 
 /** What a level-up step projects: a new level after the levels planned before it, or an edit of one of the character's. */
 type LevelProjection = {
-  /** The level edited, which the projected level replaces. */
-  editedLevelId?: string;
   /** The projected level's ability increase. */
   abilityId?: string;
-  pendingLevelKlassLevelIds?: string[];
+  /** The level edited, which the projected level replaces. */
+  editedLevelId?: string;
   pendingLevelAbilityIds?: (string | undefined)[];
+  pendingLevelKlassLevelIds?: string[];
 };
 
 /** A projected character's spell pools, without the non-leveled aptitudes no spell belongs to (feat pools). */

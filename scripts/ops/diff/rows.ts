@@ -3,15 +3,15 @@
  * anew.
  */
 
-type FieldChange = { bk: string; targetId: string; field: string; ref: unknown; tgt: unknown };
+type FieldChange = { bk: string; field: string; ref: unknown; targetId: string; tgt: unknown };
 
 /** A row by its business key (a name, or what a link joins), with its id in the target and its compared fields. */
 export type IdentifiedRow = { bk: string; id: string; row: Record<string, unknown> };
 
 export type TableDiff = {
+  fieldChanges: FieldChange[];
   onlyInRef: string[];
   onlyInTgt: string[];
-  fieldChanges: FieldChange[];
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

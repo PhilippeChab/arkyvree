@@ -5,10 +5,10 @@ import { basename, join } from "node:path";
 
 import type { ReferenceType } from "./resolve.ts";
 
-type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string } };
+type RefMeta = { _meta: { book: string; sourceUrl?: string; type: ReferenceType } };
 
 /** A reference file: where it is, and the type, page and book its `_meta` names. */
-export type ReferenceFile = { path: string; type: ReferenceType; url?: string; book: string };
+export type ReferenceFile = { book: string; path: string; type: ReferenceType; url?: string };
 
 /** The core rules' book, which every other book's references build on. */
 export const CORE_BOOK = "srd";
@@ -33,7 +33,7 @@ export const REFERENCE_FILE_NAMES: { [T in Exclude<ReferenceType, "class">]: str
  */
 export function filterReferenceFiles(
   refs: ReferenceFile[],
-  { bookFilter, typeFilter, nameFilter }: { bookFilter?: string; typeFilter?: string; nameFilter?: string },
+  { bookFilter, typeFilter, nameFilter }: { bookFilter?: string; nameFilter?: string; typeFilter?: string },
 ): ReferenceFile[] {
   return refs.filter(
     (ref) =>

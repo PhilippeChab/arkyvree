@@ -17,11 +17,11 @@ class SkillsService {
     session: Session,
     rulesetId: string,
     body: {
-      name: string;
-      description?: string | null;
-      primaryAbilityId: string;
-      impactedByWeight: boolean;
       checkPenaltyMultiplier: number;
+      description?: string | null;
+      impactedByWeight: boolean;
+      name: string;
+      primaryAbilityId: string;
       usableWithoutTraining: boolean;
     },
   ) {
@@ -113,9 +113,9 @@ class SkillsService {
     rulesetId: string,
     where: {
       childOnly?: boolean;
-      search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {
@@ -144,13 +144,13 @@ class SkillsService {
     rulesetId: string,
     skillId: string,
     body: {
-      name: string;
-      description?: string | null;
-      primaryAbilityId: string;
-      impactedByWeight: boolean;
       checkPenaltyMultiplier: number;
-      usableWithoutTraining: boolean;
+      description?: string | null;
+      impactedByWeight: boolean;
+      name: string;
+      primaryAbilityId: string;
       updatedAt?: string;
+      usableWithoutTraining: boolean;
     },
   ) {
     const result = await withTransaction(async (tx) => {

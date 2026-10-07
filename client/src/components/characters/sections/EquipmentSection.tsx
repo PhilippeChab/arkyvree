@@ -46,10 +46,10 @@ import { shownWeaponSet } from "./weaponSets.ts";
 
 interface EquipmentSectionProps {
   characterId: string;
-  rulesetId: string;
+  encumbrance?: EncumbranceData;
   isArchived: boolean;
   isCustomRuleset?: boolean;
-  encumbrance?: EncumbranceData;
+  rulesetId: string;
 }
 type InventoryEntry = InventoryItems[number];
 
@@ -57,9 +57,9 @@ type InventoryItems = InferResponseType<RPC["api"]["characters"]["inventory"][":
 
 /** An item's placement, from its details: its columns and properties' profile (slot, weapon, charges). */
 function placementOf(detail: {
-  type?: string | null;
-  slot?: string | null;
   properties?: Parameters<typeof placementProfile>[1];
+  slot?: string | null;
+  type?: string | null;
 }) {
   const columns: ItemColumns = { type: detail.type ?? null, slot: detail.slot ?? "Other" };
   return { columns, profile: placementProfile(columns, detail.properties ?? []) };
@@ -175,8 +175,8 @@ export function EquipmentSection({
       data,
       force = false,
     }: {
-      entryId: string;
       data: InventoryFormData;
+      entryId: string;
       force?: boolean;
     }) => {
       return parseResponse(

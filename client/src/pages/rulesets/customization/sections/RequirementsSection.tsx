@@ -44,12 +44,12 @@ type RequirementsArray = InferResponseType<
 >;
 
 interface RequirementsSectionProps {
-  ruleset: RulesetDetail;
-  entityType: CustomizationOwnerType;
-  entityId: string;
   data?: Requirement[];
-  queryKeysToInvalidate?: readonly (readonly unknown[])[];
+  entityId: string;
+  entityType: CustomizationOwnerType;
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
+  queryKeysToInvalidate?: readonly (readonly unknown[])[];
+  ruleset: RulesetDetail;
 }
 
 /** A requirement in the tree the section shows, with the requirements it groups. */

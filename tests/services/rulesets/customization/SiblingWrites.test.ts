@@ -38,7 +38,7 @@ async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 
     rulesetId: host.ancestorRulesetIds[0],
     name: entityType === "feats" ? "Toughness" : "Magic Missile",
   }))!;
-  const extensions: Array<{ extension: Awaited<ReturnType<typeof createSeededTestRuleset>>; copy: { id: string } }> =
+  const extensions: Array<{ copy: { id: string }; extension: Awaited<ReturnType<typeof createSeededTestRuleset>> }> =
     [];
   for (let index = 0; index < extensionCount; index++) {
     const extension = await createSeededTestRuleset(session.userId);

@@ -9,9 +9,9 @@ class NotificationsService {
   async getNotifications(
     session: Session,
     where: {
-      unreadOnly?: boolean;
-      search?: string;
       orderDir?: "asc" | "desc";
+      search?: string;
+      unreadOnly?: boolean;
     },
     pagination: { limit: number; page: number },
   ) {

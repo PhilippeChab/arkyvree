@@ -11,26 +11,26 @@ import { toSpellPossessionSlug } from "./spells.ts";
 
 /** A spell a modifier gives without a pick. */
 interface GivenSpell {
-  id: string;
-  name: string;
   aptitudeId: string;
-  level: number;
-  saveName: string | null;
-  saveEffect: string | null;
   dc: number | null;
   description: string | null;
+  id: string;
+  level: number;
+  name: string;
   properties: Record<string, string>;
+  saveEffect: string | null;
+  saveName: string | null;
 }
 
 /** A spell a class level picked or granted. */
 interface LevelSpell {
+  aptitudeId: string;
+  description?: string | null;
   id: string;
   name: string;
-  aptitudeId: string;
   powerLevel?: number | null;
-  saveName?: string | null;
   saveEffect?: string | null;
-  description?: string | null;
+  saveName?: string | null;
 }
 
 export interface AptitudeSpells {
@@ -41,43 +41,43 @@ export interface AptitudeSpells {
 export interface SpellGroup {
   aptitudeName: string;
   level: number;
-  uses: number | null;
   spells: SpellRow[];
+  uses: number | null;
 }
 
 export interface SpellRow {
-  id: string;
-  name: string;
-  school: string;
-  save: string;
   dc: number | null;
   description: string;
+  id: string;
+  name: string;
   properties: Record<string, string>;
+  save: string;
+  school: string;
   tags?: SpellRowTag[];
 }
 
 /** A tag a spell row shows. */
 export interface SpellRowTag {
-  name: string;
   joinsClassList: boolean;
+  name: string;
 }
 
 /** What the groups read of a character: its classes' levels, its computed powers, its aptitudes and spell tags. */
 export interface SpellSheet {
+  aptitudes?: Record<string, { id: string; name: string }>;
   classes: Record<string, { levels?: { klassLevel?: { level: number } | null; powers?: LevelSpell[] }[] }>;
   powers?: Record<
     string,
     {
-      properties?: Record<string, string>;
       // Its DC as each class casts it, by the class's aptitude slug
       dc?: Record<string, { total: number }> | null;
       power?: { description?: string | null };
+      properties?: Record<string, string>;
     }
   >;
-  virtualPowers?: GivenSpell[];
-  aptitudes?: Record<string, { id: string; name: string }>;
-  spellTags?: Record<string, string[]>;
   spellTagLists?: Record<string, SpellTagLists>;
+  spellTags?: Record<string, string[]>;
+  virtualPowers?: GivenSpell[];
 }
 
 /**

@@ -79,7 +79,7 @@ function names(rows: { name: string }[]) {
   return rows.map((r) => r.name);
 }
 
-function pool(pools: Record<string, { name: string; allowed: number; available: number }>, name: string) {
+function pool(pools: Record<string, { allowed: number; available: number; name: string }>, name: string) {
   return Object.values(pools).find((p) => p.name === name);
 }
 

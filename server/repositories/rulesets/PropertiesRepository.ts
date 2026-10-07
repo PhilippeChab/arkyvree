@@ -56,7 +56,7 @@ class PropertiesRepository extends CustomizationRepository<typeof propertiesInCu
     });
   }
 
-  async findOne(db: Db, where: { id: string } | { id: string; entityId: string; entityType: string }) {
+  async findOne(db: Db, where: { id: string } | { entityId: string; entityType: string; id: string }) {
     return await db.query.propertiesInCustomization.findFirst({
       where: this.branchWhere(
         [eq(this.table.id, where.id)],

@@ -54,7 +54,7 @@ abstract class LevelPicksRepository<T extends LevelPickTable> extends LevelPicks
     db: Db,
     column: PgColumn,
     picked: PickedTable,
-    where: { hostRulesetId: string; extensionRulesetId: string; shadowIds: string[] },
+    where: { extensionRulesetId: string; hostRulesetId: string; shadowIds: string[] },
   ) {
     const pickedCondition =
       where.shadowIds.length > 0

@@ -39,47 +39,47 @@
  */
 
 type BondedRaceAbilities = {
-  strength: number;
-  dexterity: number;
-  constitution: number;
-  intelligence: number;
-  wisdom: number;
   charisma: number;
+  constitution: number;
+  dexterity: number;
+  intelligence: number;
+  strength: number;
+  wisdom: number;
 };
 
 type NaturalAttack = {
-  name: string;
-  damage: string;
-  type: string;
   count?: number;
-  /** A secondary attack (the stat block's lower one): −5 to attack (−2 with Multiattack) and half the Strength bonus. */
-  secondary?: true;
+  damage: string;
   /** What the stat block's feats add to its attack: a wolf's Weapon Focus (bite), which the ruleset has no feat for. */
   misc?: number;
+  name: string;
+  /** A secondary attack (the stat block's lower one): −5 to attack (−2 with Multiattack) and half the Strength bonus. */
+  secondary?: true;
+  type: string;
 };
 
 export type BondedRaceStatBlock = {
-  baseHD: number;
-  baseNaturalArmor: number;
   /** SRD-listed ability scores — applied as the bonded character's base. */
   abilities: BondedRaceAbilities;
-  naturalAttacks: NaturalAttack[];
   /**
    * Feats the animal has at its base HD, per the SRD MM stat block: those its hit dice give it, which its advancement
    * counts (a feat the ruleset doesn't have, a wolf's Weapon Focus (bite), counts too; its bonus is on the attack).
    */
   baseFeats?: string[];
-  /** The stat block's bonus feats (its "B" ones: Weapon Finesse, Track), which its advancement doesn't count. */
-  bonusFeats?: string[];
-  /** Feats appended in order as total HD crosses 4, 7, 10, 13, 16, 19. */
-  featPriority?: string[];
-  /** SRD-listed skill totals at base HD (the post-mods bonus on the stat block). */
-  baseSkillTotals?: Record<string, number>;
+  baseHD: number;
+  baseNaturalArmor: number;
   /**
    * The ranks within those totals, where the data has them (each familiar's race): a familiar's master's ranks replace
    * them where they're better. The rest of a total is its ability, size, racial bonuses and feats.
    */
   baseSkillRanks?: Record<string, number>;
+  /** SRD-listed skill totals at base HD (the post-mods bonus on the stat block). */
+  baseSkillTotals?: Record<string, number>;
+  /** The stat block's bonus feats (its "B" ones: Weapon Finesse, Track), which its advancement doesn't count. */
+  bonusFeats?: string[];
+  /** Feats appended in order as total HD crosses 4, 7, 10, 13, 16, 19. */
+  featPriority?: string[];
+  naturalAttacks: NaturalAttack[];
   /** Order to distribute extra skill total bumps as total HD grows past baseHD. */
   skillPriority?: string[];
 };

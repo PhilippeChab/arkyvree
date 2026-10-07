@@ -43,9 +43,9 @@ function generated(ref: ClassReference): string | Error {
  *   `noSpells` itself then, and an alignment where the page gives one.
  */
 export function checkClassOverrides(stored: StoredReference<"class">): {
-  refusal?: string;
-  redundant: string[];
   ignored: string[];
+  redundant: string[];
+  refusal?: string;
 } {
   const overrides = stored.overrides ?? {};
   const resolve = (rest: ClassOverrides) =>

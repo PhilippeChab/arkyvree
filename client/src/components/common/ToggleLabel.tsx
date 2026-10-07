@@ -5,11 +5,11 @@ import { CLICKABLE_SX, toggleProps } from "./clickable.ts";
 import { ExpandArrow } from "./ExpandArrow.tsx";
 
 interface ToggleLabelProps {
-  open: boolean;
-  onToggle: () => void;
+  children: ReactNode;
   /** Given when what it shows holds a link (a feat's name): the arrow alone is the button, and this names it. */
   label?: string;
-  children: ReactNode;
+  onToggle: () => void;
+  open: boolean;
 }
 
 /**

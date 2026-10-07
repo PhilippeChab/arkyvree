@@ -29,7 +29,7 @@ async function complete(
     limit = 50,
     page = 1,
     flat = false,
-  }: { search?: string; limit?: number; page?: number; flat?: boolean } = {},
+  }: { flat?: boolean; limit?: number; page?: number; search?: string } = {},
 ) {
   const { rulesetId } = await getSeedCtx();
   return await TargetPathsService.getCompletions(

@@ -11,14 +11,14 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface DeleteAccountDialogProps {
-  open: boolean;
-  onClose: () => void;
   hasPassword: boolean;
+  onClose: () => void;
+  open: boolean;
 }
 
 interface DeleteAccountFormData {
-  password: string;
   confirmText: string;
+  password: string;
 }
 
 export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccountDialogProps) {

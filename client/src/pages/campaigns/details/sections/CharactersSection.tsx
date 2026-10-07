@@ -58,20 +58,20 @@ type CampaignCharacter = CampaignCharactersPaginated["items"][number];
 type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
 
 interface CharacterCardProps {
-  character: CampaignCharacter;
-  campaignId: string;
-  isArchived: boolean;
   animationIndex: number;
   animationOffset: number;
+  campaignId: string;
+  character: CampaignCharacter;
+  isArchived: boolean;
   portraitUrl: string | null;
 }
 interface CharactersSectionProps {
   campaign: CampaignDetail;
 }
 interface LinkCharacterDialogProps {
-  open: boolean;
-  onClose: () => void;
   campaignId: string;
+  onClose: () => void;
+  open: boolean;
 }
 
 type UnlinkedCharacter = InferResponseType<

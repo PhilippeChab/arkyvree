@@ -51,8 +51,41 @@ export class RulesetSeeder extends include(
   SeedsRaces,
   SeedsWizardSchools,
 ) {
+  /** Creates a published system ruleset, the core rules or an extension of `baseId`, and returns its id. */
+  private static async createSystemRuleset(db: Db, ruleset: { description: string; name: string }, baseId?: string) {
+    const baseRules: BaseRules = "Dungeons & Dragons: 3.5";
+    const [{ id }] = await db
+      .insert(rulesetsInRules)
+      .values({
+        ...ruleset,
+        status: "Published",
+        baseRules,
+        system: true,
+        ...(baseId
+          ? { kind: "extension" as const, rulesetId: baseId, ancestorRulesetIds: [baseId] }
+          : { kind: "ruleset" as const }),
+      })
+      .returning({ id: rulesetsInRules.id });
+    if (baseId) await db.insert(rulesetExtensionsInRules).values({ rulesetId: baseId, extensionId: id });
+    return id;
+  }
+
+  /** A seeder of the ruleset, naming none of its rows: what a step needs no names for (items) or names as it goes. */
+  static forRuleset(db: Db, rulesetId: string) {
+    return new RulesetSeeder(db, {
+      rulesetId,
+      abilityMap: {},
+      saveMap: {},
+      skillMap: {},
+      aptMap: {},
+      featMap: {},
+      powerMap: {},
+      inheritedPowerMap: {},
+    });
+  }
+
   /** A seeder of a new core ruleset, published and of the system, whose rows it names as it seeds them. */
-  static async createCore(db: Db, ruleset: { name: string; description: string }) {
+  static async createCore(db: Db, ruleset: { description: string; name: string }) {
     return RulesetSeeder.forRuleset(db, await RulesetSeeder.createSystemRuleset(db, ruleset));
   }
 
@@ -61,7 +94,7 @@ export class RulesetSeeder extends include(
    * that leave the base's as they are, and has no powers of its own yet, its base's (and those its base inherits) being
    * the ones it copies before changing them (`inheritedPowerMap`).
    */
-  static async createExtension(db: Db, ruleset: { name: string; description: string }, base?: SeedContext) {
+  static async createExtension(db: Db, ruleset: { description: string; name: string }, base?: SeedContext) {
     const from = base ?? (await RulesetSeeder.loadContext(db, await RulesetSeeder.findCoreRulesetId(db, ruleset.name)));
     const { powerMap, inheritedPowerMap, ...names } = structuredClone(from);
     return new RulesetSeeder(db, {
@@ -80,20 +113,6 @@ export class RulesetSeeder extends include(
       .where(eq(rulesetsInRules.name, DND35_RULESET_NAME));
     if (!core) throw new Error(`${neededBy} needs ${DND35_RULESET_NAME}, which isn't seeded`);
     return core.id;
-  }
-
-  /** A seeder of the ruleset, naming none of its rows: what a step needs no names for (items) or names as it goes. */
-  static forRuleset(db: Db, rulesetId: string) {
-    return new RulesetSeeder(db, {
-      rulesetId,
-      abilityMap: {},
-      saveMap: {},
-      skillMap: {},
-      aptMap: {},
-      featMap: {},
-      powerMap: {},
-      inheritedPowerMap: {},
-    });
   }
 
   /** The context of a seeded ruleset: the ids of its unarchived rows. */
@@ -124,25 +143,6 @@ export class RulesetSeeder extends include(
       powerMap: await names(powersInRules),
       inheritedPowerMap: {},
     };
-  }
-
-  /** Creates a published system ruleset, the core rules or an extension of `baseId`, and returns its id. */
-  private static async createSystemRuleset(db: Db, ruleset: { name: string; description: string }, baseId?: string) {
-    const baseRules: BaseRules = "Dungeons & Dragons: 3.5";
-    const [{ id }] = await db
-      .insert(rulesetsInRules)
-      .values({
-        ...ruleset,
-        status: "Published",
-        baseRules,
-        system: true,
-        ...(baseId
-          ? { kind: "extension" as const, rulesetId: baseId, ancestorRulesetIds: [baseId] }
-          : { kind: "ruleset" as const }),
-      })
-      .returning({ id: rulesetsInRules.id });
-    if (baseId) await db.insert(rulesetExtensionsInRules).values({ rulesetId: baseId, extensionId: id });
-    return id;
   }
 
   /** Seeds a kind of bonded creature: its aptitudes, feats, races and class. */

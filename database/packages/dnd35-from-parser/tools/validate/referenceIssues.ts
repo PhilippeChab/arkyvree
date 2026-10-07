@@ -11,9 +11,9 @@ import { checkClassOverrides } from "./checkOverrides.ts";
 
 type DetectedEntry = {
   errors?: string[];
+  unresolvedAptitudePicks?: string[];
   unresolvedModifiers?: string[];
   unresolvedPrereqs?: string[];
-  unresolvedAptitudePicks?: string[];
 };
 
 type Found = { kind: Issue["kind"]; text: string };
@@ -22,8 +22,8 @@ type Review = ReturnType<typeof reviewOf>;
 
 export type Issue = {
   book: string;
+  entityName?: string;
   file: string;
-  label: string;
   kind:
     | "error"
     | "modifier"
@@ -37,8 +37,8 @@ export type Issue = {
     | "ignored override"
     | "generator refuses the class"
     | "not seedable";
+  label: string;
   text: string;
-  entityName?: string;
 };
 
 /** A detection's kinds of issue, each with the issue it's reported as. */
@@ -74,7 +74,7 @@ export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>)
   for (const ref of refs) {
     const at = { book: ref.book, file: ref.path };
     /** Reports the issues the review list doesn't cover, and marks the entries that cover the others used. */
-    const unreviewed = (review: Review, found: Found[], where: { label: string; entityName?: string }) => {
+    const unreviewed = (review: Review, found: Found[], where: { entityName?: string; label: string }) => {
       for (const { kind, text } of found) {
         if (review.has(text)) review.use(text);
         else issues.push({ ...at, ...where, kind, text });

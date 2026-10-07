@@ -4,9 +4,9 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 
 /** A record's attachment slot: its record and its name. */
 export interface AttachmentSlot {
-  recordType: string;
-  recordId: string | undefined;
   name: string;
+  recordId: string | undefined;
+  recordType: string;
 }
 
 /** Refetches the slot's attachment once it changed. */

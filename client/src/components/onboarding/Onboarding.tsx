@@ -28,26 +28,26 @@ import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src
 
 interface OnboardingPopperProps {
   anchorEl: HTMLElement;
-  onClose: () => void;
   children: ReactNode;
+  onClose: () => void;
 }
 
 interface OnboardingProps {
-  open: boolean;
-  onClose: () => void;
   activeStep: number;
-  onStepChange: (step: number) => void;
   anchorEl: HTMLElement | null;
   isMobile: boolean;
+  onClose: () => void;
+  onStepChange: (step: number) => void;
+  open: boolean;
 }
 
 interface OnboardingStep {
+  description: string;
   icon: SvgIconComponent | null;
   logo?: boolean;
-  title: string;
-  description: string;
-  tooltip?: string;
   mode: "dialog" | "popper";
+  title: string;
+  tooltip?: string;
 }
 
 const SIDEBAR_TRANSITION_MS = 380;

@@ -3,12 +3,12 @@ import { Alert, Button, type SxProps, type Theme } from "@mui/material";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 
 interface LoadErrorProps {
-  /** What failed to load, as the message names it ("Characters", "Feats"). */
-  what: string;
   error: unknown;
   /** Loads it again: a Retry button. */
   onRetry?: () => void;
   sx?: SxProps<Theme>;
+  /** What failed to load, as the message names it ("Characters", "Feats"). */
+  what: string;
 }
 
 /** A list, a section or a step that couldn't load what it shows, said as `loadFailureMessage` says it. */

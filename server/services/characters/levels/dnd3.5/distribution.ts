@@ -22,9 +22,9 @@ import type { Modifier, Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 interface DistributedLevel {
-  skills: Record<string, number>;
   feats: Record<string, string[]>;
   powers: Record<string, string[]>;
+  skills: Record<string, number>;
 }
 type FeatSlots = Record<string, number[]>;
 
@@ -37,13 +37,13 @@ interface SlotDeltas {
 }
 
 export interface PerLevelDistributionData {
-  perLevelSkillPoints: number[];
+  baseCharacterLevel: number;
   perLevelClassSkillIds: string[][];
   perLevelFeatSlots: FeatSlots;
   perLevelPowerSlots: PowerSlots;
-  baseCharacterLevel: number;
+  perLevelSkillPoints: number[];
   /** Map of skillId → { isClassSkill, currentRank } for existing character skills */
-  skillContexts: Map<string, { isClassSkill: boolean; currentRank: number }>;
+  skillContexts: Map<string, { currentRank: number; isClassSkill: boolean }>;
 }
 
 /** The slots an all-known spell level counts as: every spell of its level. */
@@ -305,7 +305,7 @@ export function buildSkillContexts(
   classSkillIds: Set<string>,
 ) {
   const characterSkills = levelUpProjector.getCharacterSkills();
-  const contexts = new Map<string, { isClassSkill: boolean; currentRank: number }>();
+  const contexts = new Map<string, { currentRank: number; isClassSkill: boolean }>();
   for (const skill of skills) {
     const skillData = characterSkills[stripSeparators(skill.name)] as { innate?: boolean; rank?: number } | undefined;
     contexts.set(skill.id, {
@@ -338,7 +338,7 @@ export function computePerLevelAptitudeSlots(
   powerPoolIds: string[],
   baseCharacterLevel: number,
   // The character's aptitudes as its sheet has them: a pool's counts, and a power pool's spell levels by number
-  baselineAptitudes: Record<string, { id: string; allowed: number; spent: number } & Record<string, unknown>>,
+  baselineAptitudes: Record<string, { allowed: number; id: string; spent: number } & Record<string, unknown>>,
 ): {
   perLevelFeatSlots: FeatSlots;
   perLevelPowerSlots: PowerSlots;

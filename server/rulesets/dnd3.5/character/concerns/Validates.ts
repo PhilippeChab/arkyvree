@@ -17,7 +17,7 @@ import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Klass, Modifier, Requirement } from "@/shared/relations.ts";
 
 /** An aptitude pool's (or one of its spell levels') slots. */
-type AptitudeSlots = { allowed: number; spent: number; available: number };
+type AptitudeSlots = { allowed: number; available: number; spent: number };
 
 const OPERATOR_SYMBOLS: Record<string, string> = {
   equal: "=",
@@ -206,8 +206,8 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
       warning,
       requirement,
     }: {
-      warning: string;
       requirement: Requirement;
+      warning: string;
     }): RequirementIssue {
       const entityName = this.resolveEntityName(requirement.entityId, requirement.entityType);
       return {

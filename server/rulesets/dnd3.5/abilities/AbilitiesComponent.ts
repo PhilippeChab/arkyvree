@@ -7,8 +7,8 @@ type AbilitiesData = {
     base: number;
     level: number; // Bonus from levels
     misc: number;
-    readonly total: number;
     readonly modifier: number;
+    readonly total: number;
   };
 };
 
@@ -34,8 +34,8 @@ export default class AbilitiesComponent {
         base: number;
         level: number;
         misc: number;
-        total: number;
         modifier: number;
+        total: number;
       }
     > = {};
 

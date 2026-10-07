@@ -28,7 +28,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const [confirmRefresh, setConfirmRefresh] = useState(false);
 
   const handleMessage = useCallback(
-    (data: { type: string; [key: string]: unknown }) => {
+    (data: { [key: string]: unknown; type: string }) => {
       if (data.type === "app:version") {
         if (typeof data.version !== "string") return;
         const { version } = data;

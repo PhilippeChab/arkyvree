@@ -9,7 +9,7 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
     super(starredRulesetsInAccount);
   }
 
-  async archive(db: Db, where: { userId: string; rulesetId: string } | { userId: string }) {
+  async archive(db: Db, where: { rulesetId: string; userId: string } | { userId: string }) {
     return await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
@@ -47,7 +47,7 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
     });
   }
 
-  async findOne(db: Db, where: { userId: string; rulesetId: string }) {
+  async findOne(db: Db, where: { rulesetId: string; userId: string }) {
     return await db.query.starredRulesetsInAccount.findFirst({
       where: and(
         eq(this.table.userId, where.userId),
@@ -58,7 +58,7 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
   }
 
   /** Stars the ruleset, or restores an archived star. */
-  async upsert(db: Db, values: { userId: string; rulesetId: string }) {
+  async upsert(db: Db, values: { rulesetId: string; userId: string }) {
     return await db
       .insert(this.table)
       .values(values)

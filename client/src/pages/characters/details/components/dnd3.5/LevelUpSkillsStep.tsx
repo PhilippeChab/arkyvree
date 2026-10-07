@@ -25,14 +25,14 @@ import type { SkillsData } from "./levelUp/index.ts";
 import type { LevelUpSkillsStepProps } from "./levelUpFactory.ts";
 
 interface SkillAllocationRowProps {
-  skill: SkillsData["skills"][number];
-  totalCharacterLevel: number;
-  pointsAllocated: number;
-  onAllocate: (skillId: string, rawPoints: number) => void;
-  indented: boolean;
   hidden: boolean;
+  indented: boolean;
+  onAllocate: (skillId: string, rawPoints: number) => void;
   perLevelClassSkillIds?: string[][];
   perLevelSkillPoints?: number[];
+  pointsAllocated: number;
+  skill: SkillsData["skills"][number];
+  totalCharacterLevel: number;
 }
 
 /** The narrow number columns' headers. */

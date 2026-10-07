@@ -6,14 +6,14 @@ import type {
 
 /** A feat: the aptitudes it's taken in, what it takes, and what it gives. */
 export type FeatSeed = {
-  name: string;
+  aptitudes: string[];
   description: string;
-  stackable?: boolean;
-  selectable?: boolean;
   /** One of a family's feats, made for each of its options (`Weapon Focus: Longsword`): its name names it */
   generated?: boolean;
-  aptitudes: string[];
   modifiers?: ModifierSeed[];
-  requirements?: RequirementEntry[];
+  name: string;
   properties?: Property[];
+  requirements?: RequirementEntry[];
+  selectable?: boolean;
+  stackable?: boolean;
 };

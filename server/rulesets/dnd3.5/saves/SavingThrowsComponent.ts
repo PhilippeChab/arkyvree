@@ -5,10 +5,10 @@ import { stripSeparators } from "@/shared/text.ts";
 
 type SavingThrowsData = {
   [key: string]: {
-    name: string;
-    base: number;
     readonly ability: number;
+    base: number;
     misc: number;
+    name: string;
     readonly total: number;
   };
 };

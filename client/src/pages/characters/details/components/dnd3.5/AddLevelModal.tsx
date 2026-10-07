@@ -15,12 +15,12 @@ import {
 import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 
 interface AddLevelModalProps {
-  open: boolean;
+  baseRules: BaseRules;
+  characterId: string;
   onClose: () => void;
   /** It has faded out: its owner unmounts it. */
   onExited: () => void;
-  characterId: string;
-  baseRules: BaseRules;
+  open: boolean;
 }
 
 export function AddLevelModal({ open, onClose, onExited, characterId, baseRules }: AddLevelModalProps) {

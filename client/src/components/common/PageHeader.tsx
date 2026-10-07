@@ -2,10 +2,10 @@ import { alpha, Paper, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
 interface PageHeaderProps {
-  title: string;
-  subtitle: ReactNode;
   /** Primary page action, e.g. a Create button. Stacks under the text on mobile. */
   action?: ReactNode;
+  subtitle: ReactNode;
+  title: string;
   /**
    * `hero`: solid brand gradient, for account and activity pages.
    * `tinted`: light wash, for the content lists (rulesets, characters, campaigns).

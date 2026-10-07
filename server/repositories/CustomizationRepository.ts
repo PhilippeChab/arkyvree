@@ -37,7 +37,7 @@ abstract class CustomizationRepository<T extends CustomizationTable> extends Cus
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(db: Db, values: Partial<InferInsertModel<T>>, where: { id: string; expectedUpdatedAt?: string }) {
+  async update(db: Db, values: Partial<InferInsertModel<T>>, where: { expectedUpdatedAt?: string; id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })

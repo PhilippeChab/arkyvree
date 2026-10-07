@@ -20,7 +20,7 @@ interface EquippedEntry {
  * - `sameHand`: `entry` is already in that hand in the same set.
  */
 type SlotConflict<T extends EquippedEntry> =
-  | { reason: Exclude<SlotConflictReason, "fingers">; entry: T }
+  | { entry: T; reason: Exclude<SlotConflictReason, "fingers"> }
   | { reason: "fingers" };
 
 export type HandLocation = (typeof HAND_LOCATIONS)[number];

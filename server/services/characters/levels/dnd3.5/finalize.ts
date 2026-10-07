@@ -162,7 +162,7 @@ async function insertPlannedLevels(
   rulesetModule: Dnd35RulesetModule,
   rulesetData: RulesetData,
   characterId: string,
-  levels: { hp: number; abilityId: string | null }[],
+  levels: { abilityId: string | null; hp: number }[],
   klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
   distributedLevels: ReturnType<typeof distributePoolSelections>,
   baseExistingLevels: Awaited<ReturnType<typeof CharacterLevels.findMany>>,
@@ -345,10 +345,10 @@ export async function finalizeLevelUp(
   session: Session,
   characterId: string,
   levels: Array<{
+    abilityId: string | null;
+    hp: number;
     klassId: string;
     level: number;
-    hp: number;
-    abilityId: string | null;
   }>,
   skills: Record<string, number>,
   feats: Record<string, string[]>,

@@ -260,7 +260,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       }
 
       const allPowerIdSet = new Set<string>([...powers.map((p) => p.id), ...aptitudePowerIds]);
-      const powerAptitudeLinks: { powerId: string; aptitudeId: string }[] = [];
+      const powerAptitudeLinks: { aptitudeId: string; powerId: string }[] = [];
       for (const id of allPowerIdSet) {
         const p = rulesetData.powersById.get(id);
         if (!p) continue;

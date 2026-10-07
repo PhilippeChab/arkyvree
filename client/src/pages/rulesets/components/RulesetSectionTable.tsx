@@ -30,34 +30,34 @@ import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 import { TABLE_CONTAINER_LOADING_SX, TABLE_CONTAINER_SX, TABLE_SX } from "./tableStyles.ts";
 
 interface Column {
+  hideOnMobile?: boolean;
   key: string;
   label: string;
   width: string;
-  hideOnMobile?: boolean;
 }
 
 interface RulesetSectionTableProps<T extends { id: string }> {
+  canDelete?: boolean;
+  canEdit?: boolean;
+  columns: Column[];
   data?: T[];
-  isLoading: boolean;
+  emptyDescription?: string;
+  emptyIcon?: ElementType;
+  emptyTitle?: string;
   /** Its query's failure, shown while there are no rows to keep (a failed refetch keeps them). */
   error?: unknown;
-  /** What it lists, as a failure names it ("Races"). */
-  what: string;
-  columns: Column[];
-  canEdit?: boolean;
-  canDelete?: boolean;
-  onEdit?: (item: T) => void;
+  isLoading: boolean;
+  onCreateVariants?: (item: T) => void;
   onDelete?: (itemId: string) => void;
   onDuplicate?: (item: T) => void;
-  onCreateVariants?: (item: T) => void;
+  onEdit?: (item: T) => void;
   onRowClick?: (item: T) => void;
   onRowMouseEnter?: (item: T) => void;
   renderCell: (item: T, columnKey: string) => ReactNode;
-  emptyIcon?: ElementType;
-  emptyTitle?: string;
-  emptyDescription?: string;
   /** The section's search, so an empty result reads as no matches rather than an empty section. */
   search?: string;
+  /** What it lists, as a failure names it ("Races"). */
+  what: string;
 }
 
 export function RulesetSectionTable<T extends { id: string }>({

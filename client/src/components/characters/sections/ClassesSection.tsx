@@ -21,11 +21,11 @@ import { SheetSection } from "./SheetSection.tsx";
 
 interface ClassesSectionProps {
   classes: SheetClasses;
-  rulesetId?: string;
-  onEditLevel?: (editingLevel: EditingLevel) => void;
   onAddLevel?: () => void;
+  onEditLevel?: (editingLevel: EditingLevel) => void;
   onRemoveLevel?: () => void;
   readOnly?: boolean;
+  rulesetId?: string;
 }
 
 type SheetClasses = NonNullable<CharacterData["classes"]>;

@@ -33,155 +33,155 @@ import { LevelUpSkillsStep } from "./LevelUpSkillsStep.tsx";
 import { LevelUpSpellsStep } from "./LevelUpSpellsStep.tsx";
 
 interface AddAttributeState {
-  attributeData: AttributesData | undefined;
-  isLoadingAttributes: boolean;
-  attributesError: Error | null;
   abilityIncreaseLevels: number[];
   abilityIncreases: Record<number, string | null>;
+  attributeData: AttributesData | undefined;
+  attributesError: Error | null;
   handleAbilityIncreaseChange: (index: number, abilityId: string) => void;
+  isLoadingAttributes: boolean;
   levelDetails: Pick<PreviewLevelDetail, "klassName" | "level">[];
 }
 
 interface AddClassPlanState {
   classPlan: (SelectedKlass | null)[];
-  slotKeys: number[];
-  handleClassChange: (index: number, klass: SelectedKlass | null) => void;
   handleAddLevel: () => void;
+  handleClassChange: (index: number, klass: SelectedKlass | null) => void;
   handleQuickAddLevel: (klass: SelectedKlass) => void;
   handleRemoveLevel: (index: number) => void;
+  slotKeys: number[];
 }
 
 interface AddHpState {
-  hpLevels: Array<{ className: string; hd: number; nextLevel: number }>;
-  hpValues: (number | null)[];
   handleHpChange: (index: number, value: number | null) => void;
+  handleHpMaxAll: () => void;
   handleHpRoll: (index: number) => void;
   handleHpRollAll: () => void;
-  handleHpMaxAll: () => void;
+  hpLevels: Array<{ className: string; hd: number; nextLevel: number }>;
+  hpValues: (number | null)[];
 }
 
 interface AddReviewState extends LevelReviewState {
-  classPlan: (SelectedKlass | null)[];
-  hpValues: (number | null)[];
   abilityIncreases: Record<number, string | null>;
   attributeData: AttributesData | undefined;
+  classPlan: (SelectedKlass | null)[];
+  hpValues: (number | null)[];
 }
 
 /** The feat picker state a level wizard hands the Feats step. */
 interface FeatPickerState {
-  featData: FeatsData | null | undefined;
-  isLoadingFeats: boolean;
-  featsError: Error | null;
   adjustedFeatPools: Record<string, AptitudePool>;
-  selectedFeats: Record<string, SelectedFeat[]>;
-  selectedAptitude: string | null;
-  setSelectedAptitude: (aptitude: string | null) => void;
-  groupedFeats: GroupedFeatRow[];
-  isLoadingAvailableFeats: boolean;
+  allSelectedFeatPickString?: string;
   /** Why the feats to pick didn't load. */
   availableFeatsError: unknown;
-  isFetchingNextFeatsPage: boolean;
-  expandedFeatFamilies: ReadonlySet<string>;
-  toggleFeatFamily: (family: string) => void;
-  allSelectedFeatPickString?: string;
-  featSearch: string;
-  setFeatSearch: (search: string) => void;
-  handleFeatsScroll: (event: UIEvent<HTMLElement>) => void;
   /** The picks' form: the feats field, which the step changes from `selectedFeats`. */
   control: Control<LevelUpFormData>;
+  expandedFeatFamilies: ReadonlySet<string>;
+  featData: FeatsData | null | undefined;
+  featSearch: string;
+  featsError: Error | null;
+  groupedFeats: GroupedFeatRow[];
+  handleFeatsScroll: (event: UIEvent<HTMLElement>) => void;
+  isFetchingNextFeatsPage: boolean;
+  isLoadingAvailableFeats: boolean;
+  isLoadingFeats: boolean;
+  selectedAptitude: string | null;
+  selectedFeats: Record<string, SelectedFeat[]>;
+  setFeatSearch: (search: string) => void;
+  setSelectedAptitude: (aptitude: string | null) => void;
+  toggleFeatFamily: (family: string) => void;
 }
 
 interface LevelUpAttributeState {
   attributeData: AttributesData | undefined;
-  isLoadingAttributes: boolean;
   attributesError: Error | null;
   /** The picks' form: the attribute field. */
   control: Control<LevelUpFormData>;
+  isLoadingAttributes: boolean;
 }
 
 interface LevelUpHpState {
-  selectedClass: SelectedKlass | null;
   /** The picks' form: the HP field. */
   control: Control<LevelUpFormData>;
+  hpDisplayValue: number | null;
   hpRolling: boolean;
   hpSettled: boolean;
-  hpDisplayValue: number | null;
+  selectedClass: SelectedKlass | null;
   triggerHpRoll: (hd: number) => void;
 }
 
 interface LevelUpReviewState extends LevelReviewState {
+  attributeData: AttributesData | undefined;
+  selectedAttribute: string | null;
   selectedClass: SelectedKlass | null;
   selectedHP: number | null;
-  selectedAttribute: string | null;
-  attributeData: AttributesData | undefined;
 }
 
 /** The spell picker state a level wizard hands the Spells step. */
 interface PowerPickerState {
-  powerData: PowersData | null | undefined;
+  availablePowers: AvailablePower[];
+  /** Why the spells to pick didn't load. */
+  availablePowersError: unknown;
+  /** The picks' form: the spells field, which the step changes from `selectedPowers`. */
+  control: Control<LevelUpFormData>;
+  handlePowersScroll: (event: UIEvent<HTMLElement>) => void;
+  isFetchingNextPowersPage: boolean;
+  isLoadingAvailablePowers: boolean;
   isLoadingPowers: boolean;
+  powerData: PowersData | null | undefined;
+  powerSearch: string;
   powersError: Error | null;
-  selectedPowers: LevelUpFormData["selectedPowers"];
   selectedFeats: LevelUpFormData["selectedFeats"];
   selectedPowerAptitude: string | null;
   selectedPowerLevel: number | null;
+  selectedPowers: LevelUpFormData["selectedPowers"];
+  setPowerSearch: (search: string) => void;
   setSelectedPowerAptitude: (aptitude: string | null) => void;
   setSelectedPowerLevel: (level: number | null) => void;
-  availablePowers: AvailablePower[];
-  isLoadingAvailablePowers: boolean;
-  /** Why the spells to pick didn't load. */
-  availablePowersError: unknown;
-  isFetchingNextPowersPage: boolean;
-  powerSearch: string;
-  /** The picks' form: the spells field, which the step changes from `selectedPowers`. */
-  control: Control<LevelUpFormData>;
-  setPowerSearch: (search: string) => void;
-  handlePowersScroll: (event: UIEvent<HTMLElement>) => void;
 }
 
 interface SectionMap {
-  LevelUpHpStep: ComponentType<LevelUpHpStepProps>;
-  LevelUpAttributeStep: ComponentType<LevelUpAttributeStepProps>;
-  LevelUpSkillsStep: ComponentType<LevelUpSkillsStepProps>;
-  LevelUpFeatsStep: ComponentType<LevelUpFeatsStepProps>;
-  LevelUpPowersStep: ComponentType<LevelUpPowersStepProps>;
-  LevelUpReviewStep: ComponentType<LevelUpReviewStepProps>;
+  AddAttributeStep: ComponentType<AddAttributeStepProps>;
   AddClassPlanStep: ComponentType<AddClassPlanStepProps>;
   AddHpStep: ComponentType<AddHpStepProps>;
-  AddAttributeStep: ComponentType<AddAttributeStepProps>;
   AddReviewStep: ComponentType<AddReviewStepProps>;
+  LevelUpAttributeStep: ComponentType<LevelUpAttributeStepProps>;
+  LevelUpFeatsStep: ComponentType<LevelUpFeatsStepProps>;
+  LevelUpHpStep: ComponentType<LevelUpHpStepProps>;
+  LevelUpPowersStep: ComponentType<LevelUpPowersStepProps>;
+  LevelUpReviewStep: ComponentType<LevelUpReviewStepProps>;
+  LevelUpSkillsStep: ComponentType<LevelUpSkillsStepProps>;
 }
 
 interface SkillPickerState {
-  skillData: SkillsData | null | undefined;
-  isLoadingSkills: boolean;
-  skillsError: Error | null;
-  /** The points as they fit the slots */
-  skillPointAllocations: Record<string, number>;
   /** The picks' form: the skill points field, which the step changes from `skillPointAllocations`. */
   control: Control<LevelUpFormData>;
+  isLoadingSkills: boolean;
   /** Several levels at once (Add Level): each level's class skills and points. */
   perLevelClassSkillIds?: string[][];
   perLevelSkillPoints?: number[];
+  skillData: SkillsData | null | undefined;
+  /** The points as they fit the slots */
+  skillPointAllocations: Record<string, number>;
+  skillsError: Error | null;
 }
 
 export interface AddAttributeStepProps {
-  wizard: AddAttributeState;
   baseRules: BaseRules;
+  wizard: AddAttributeState;
 }
 
 export interface AddClassPlanStepProps {
-  wizard: AddClassPlanState;
   /** Search-filtered list for the Autocomplete dropdown. */
   availableKlasses: AvailableKlass[];
-  /** Unfiltered snapshot for the quick-add button row so searching doesn't
-   *  drop the character's existing classes from the "+ X" row. */
-  quickAddKlasses: AvailableKlass[];
+  handleKlassListScroll: (event: UIEvent<HTMLElement>) => void;
   isLoadingKlasses: boolean;
   /** Why the classes didn't load, said where they'd show. */
   klassesError: unknown;
-  handleKlassListScroll: (event: UIEvent<HTMLElement>) => void;
+  /** Unfiltered snapshot for the quick-add button row so searching doesn't
+   *  drop the character's existing classes from the "+ X" row. */
+  quickAddKlasses: AvailableKlass[];
   setKlassSearch: (search: string) => void;
+  wizard: AddClassPlanState;
 }
 
 export interface AddHpStepProps {
@@ -194,28 +194,28 @@ export interface AddReviewStepProps {
 
 /** The skills, feats and spells picked, as every level review lists them. */
 export interface LevelReviewState {
-  skillPointAllocations: Record<string, number>;
-  skillData: SkillsData | null | undefined;
-  selectedFeats: LevelUpFormData["selectedFeats"];
   featData: FeatsData | null | undefined;
-  selectedPowers: LevelUpFormData["selectedPowers"];
   powerData: PowersData | null | undefined;
+  selectedFeats: LevelUpFormData["selectedFeats"];
+  selectedPowers: LevelUpFormData["selectedPowers"];
+  skillData: SkillsData | null | undefined;
+  skillPointAllocations: Record<string, number>;
 }
 
 export interface LevelUpAttributeStepProps {
-  wizard: LevelUpAttributeState;
   baseRules: BaseRules;
+  wizard: LevelUpAttributeState;
 }
 
 export interface LevelUpFeatsStepProps {
-  wizard: FeatPickerState;
   characterId: string;
+  editingLevelId?: string;
   /** The class and level the next pick lands on, for the feat detail's prerequisites. */
   klassId: string;
   klassLevel: number;
-  editingLevelId?: string;
-  pendingLevelKlassLevelIds?: string;
   pendingLevelFeatPicks?: string;
+  pendingLevelKlassLevelIds?: string;
+  wizard: FeatPickerState;
 }
 
 export interface LevelUpHpStepProps {

@@ -14,11 +14,11 @@ import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 
 /** A suggestion of the customization completion endpoints. */
 interface Completion {
-  value: string;
-  label: string;
+  detail?: string | null;
   /** Where it comes from: the engine's own or the ruleset's. */
   kind: string;
-  detail?: string | null;
+  label: string;
+  value: string;
 }
 
 interface CompletionAutocompleteProps<
@@ -26,22 +26,22 @@ interface CompletionAutocompleteProps<
   TKey extends QueryKey,
   TData extends InfiniteData<TPage, unknown>,
 > {
-  value: string;
+  disabled?: boolean;
+  enabled: boolean;
+  error?: boolean;
+  fullWidth?: boolean;
+  helperText?: string;
+  label: string;
+  loadingText: string;
+  multiline?: boolean;
+  noOptionsText: string;
   onChange: (value: string) => void;
+  placeholder: string;
   /** The completions for what's typed, a page at a time: a factory of `customizationQueries.ts`. */
   query: (search: string) => UseInfiniteQueryOptions<TPage, DefaultError, TData, TKey, number>;
-  enabled: boolean;
-  label: string;
-  placeholder: string;
-  loadingText: string;
-  noOptionsText: string;
   required?: boolean;
-  error?: boolean;
-  helperText?: string;
-  disabled?: boolean;
-  fullWidth?: boolean;
-  multiline?: boolean;
   rows?: number;
+  value: string;
 }
 
 /** A page of the customization completion endpoints. */

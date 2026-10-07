@@ -28,7 +28,7 @@ class CharacterAbilitiesRepository extends include(
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof characterAbilitiesInCharacter>>,
-    where: { characterId: string; abilityId: string },
+    where: { abilityId: string; characterId: string },
   ) {
     return await db
       .update(this.table)

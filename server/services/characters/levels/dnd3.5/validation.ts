@@ -165,15 +165,15 @@ export function checkSelections(
 export async function validateAndFetchLevelSelections(
   tx: Db,
   params: {
+    abilityId: string | null;
+    feats: Record<string, string[]>;
+    hp: number;
     klass: { hd: number };
     klassLevel: { id: string };
     otherLevels: { id: string; klassLevelId: string }[];
-    hp: number;
-    abilityId: string | null;
-    skills: Record<string, number>;
-    feats: Record<string, string[]>;
     powers: Record<string, string[]>;
     rulesetData: RulesetData;
+    skills: Record<string, number>;
   },
 ) {
   const { klass, klassLevel, otherLevels, hp, abilityId, skills, feats, powers, rulesetData } = params;

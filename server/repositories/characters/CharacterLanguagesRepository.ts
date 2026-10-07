@@ -30,7 +30,7 @@ class CharacterLanguagesRepository extends include(
   // Archived characters count: one can be restored, and its picks must still resolve.
   private async existsLanguagePickFromExtension(
     db: Db,
-    where: { hostRulesetId: string; extensionRulesetId: string; shadowLanguageIds: string[] },
+    where: { extensionRulesetId: string; hostRulesetId: string; shadowLanguageIds: string[] },
   ) {
     const langCondition =
       where.shadowLanguageIds.length > 0
@@ -76,7 +76,7 @@ class CharacterLanguagesRepository extends include(
     db: Db,
     where:
       | { languageId: string; rulesetId: string }
-      | { hostRulesetId: string; extensionRulesetId: string; shadowLanguageIds: string[] },
+      | { extensionRulesetId: string; hostRulesetId: string; shadowLanguageIds: string[] },
   ): Promise<boolean> {
     if ("languageId" in where) return await this.existsLanguagePick(db, where);
     return await this.existsLanguagePickFromExtension(db, where);

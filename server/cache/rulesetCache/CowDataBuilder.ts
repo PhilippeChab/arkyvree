@@ -4,7 +4,7 @@ import { Aptitudes, EntitySnapshots, KlassLevels, RulesetEntities } from "@/serv
 type SnapshotsByRuleset = Map<string, Awaited<ReturnType<typeof EntitySnapshots.findMany>>>;
 
 /** A ruleset's id and where its inherited entities come from. */
-export type RulesetSources = { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] };
+export type RulesetSources = { ancestorRulesetIds: string[]; extensionRulesetIds: string[]; id: string };
 
 /**
  * Tables that participate in the name-based sibling fallback. Limited to feats and powers because those are the entity
@@ -28,9 +28,9 @@ function rankNamesakes<T extends { id: string; rulesetId: string }>(
   rows: T[],
   keyOf: (row: T) => string,
   chain: string[],
-): { winner: T; losers: T[] }[] {
+): { losers: T[]; winner: T }[] {
   const chainIndex = new Map(chain.map((id, i) => [id, i]));
-  const ranked: { winner: T; losers: T[] }[] = [];
+  const ranked: { losers: T[]; winner: T }[] = [];
   for (const group of Map.groupBy(rows, keyOf).values()) {
     if (group.length <= 1) continue;
     const [winner, ...losers] = group.sort(
@@ -45,7 +45,7 @@ function rankNamesakes<T extends { id: string; rulesetId: string }>(
  * Build the combined source chain for COW lookups:
  * extensions first (their new entities are visible), then ancestors.
  */
-export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ancestorRulesetIds: string[] }): string[] {
+export function buildSourceChain(ruleset: { ancestorRulesetIds: string[]; extensionRulesetIds: string[] }): string[] {
   return [...ruleset.extensionRulesetIds, ...ruleset.ancestorRulesetIds];
 }
 
@@ -92,20 +92,20 @@ export default class CowDataBuilder {
     });
   }
 
-  private readonly rulesetId: string;
-
-  private readonly sourceChain: string[];
+  /** Every stale id to the id that stands for it: the overrides and the sibling losers. */
+  private readonly aliases = new Map<string, string>();
 
   private readonly extensionRulesetIds: string[];
 
   /** True overrides: compose skips each source, with its customizations. */
   private readonly overrides = new Map<string, string>();
 
-  /** Every stale id to the id that stands for it: the overrides and the sibling losers. */
-  private readonly aliases = new Map<string, string>();
+  private readonly rulesetId: string;
 
   /** Each winner to its sibling losers, whose customizations merge into it. */
   private readonly siblings = new Map<string, string[]>();
+
+  private readonly sourceChain: string[];
 
   /** Appends: a winner's earlier losers (the snapshot pass's, the aptitudes') stay. */
   private addSiblings(winnerId: string, loserIds: string[]) {

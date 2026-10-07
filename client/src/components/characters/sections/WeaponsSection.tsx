@@ -38,7 +38,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
         // The last set keeps the space under it
         <Stack spacing={2} sx={{ pb: 2 }}>
           {setEntries.map(([setIndex, set]) => {
-            const weapons: { weapon: WeaponSlot; slot: string }[] = [];
+            const weapons: { slot: string; weapon: WeaponSlot }[] = [];
             for (const slotKey of ["mainhand", "offhand", "twohanded"] as const) {
               const weapon = set?.[slotKey];
               if (weapon) weapons.push({ weapon, slot: describeWeaponSlot(weapon, slotKey) });

@@ -14,19 +14,19 @@ import { getPublicUrl } from "./records.ts";
 type AttachableConfig = {
   isOwner: OwnershipChecker;
   isReader: OwnershipChecker;
-  policy: UploadPolicy;
   names: readonly string[];
+  policy: UploadPolicy;
 };
 type OwnershipChecker = (session: Session, recordId: string) => Promise<boolean>;
 interface SignedTokenPayload {
   blobId: string;
-  recordType: string;
-  recordId: string;
-  name: string;
   iat: number;
+  name: string;
+  recordId: string;
+  recordType: string;
 }
 
-type UploadPolicy = { maxBytes: number; contentTypes: string[] };
+type UploadPolicy = { contentTypes: string[]; maxBytes: number };
 
 const imagePolicy: UploadPolicy = {
   maxBytes: MAX_UPLOAD_BYTES,
@@ -101,7 +101,7 @@ class AttachmentsService {
 
   private isUniqueViolation(err: unknown): boolean {
     if (typeof err !== "object" || err === null) return false;
-    const e = err as { code?: string; cause?: { code?: string } };
+    const e = err as { cause?: { code?: string }; code?: string };
     return e.code === "23505" || e.cause?.code === "23505";
   }
 
@@ -232,12 +232,12 @@ class AttachmentsService {
   async createDirectUpload(
     session: Session,
     params: {
-      recordType: string;
-      recordId: string;
-      name: string;
-      filename: string;
-      contentType: string;
       byteSize: number;
+      contentType: string;
+      filename: string;
+      name: string;
+      recordId: string;
+      recordType: string;
     },
   ) {
     await this.assertCanAttach(session, params.recordType, params.recordId);
@@ -292,7 +292,7 @@ class AttachmentsService {
     return { id: result.id };
   }
 
-  async getAttachment(session: Session, params: { recordType: string; recordId: string; name: string }) {
+  async getAttachment(session: Session, params: { name: string; recordId: string; recordType: string }) {
     await this.assertCanRead(session, params.recordType, params.recordId);
     const row = await Attachments.findOneWithBlob(db, {
       recordType: params.recordType,

@@ -76,7 +76,7 @@ class CampaignInvitesService {
   async getInvites(
     session: Session,
     campaignId: string,
-    where: { search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: { limit: number; page: number },
   ) {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);

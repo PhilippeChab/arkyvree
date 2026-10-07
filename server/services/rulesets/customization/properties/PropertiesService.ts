@@ -36,9 +36,9 @@ class PropertiesService {
     entityType: string,
     entityId: string,
     body: {
-      value: string;
-      type: string;
       description?: string;
+      type: string;
+      value: string;
     },
   ) {
     const result = await withTransaction(async (tx) => {
@@ -140,10 +140,10 @@ class PropertiesService {
     entityId: string,
     propertyId: string,
     body: {
-      value: string;
-      type: string;
       description?: string;
+      type: string;
       updatedAt?: string;
+      value: string;
     },
   ) {
     const result = await withTransaction(async (tx) => {

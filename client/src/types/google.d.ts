@@ -1,19 +1,19 @@
 interface GoogleAccountsId {
-  initialize: (config: GoogleIdConfiguration) => void;
-  renderButton: (parent: HTMLElement, config: GoogleButtonConfiguration) => void;
-  prompt: () => void;
   disableAutoSelect: () => void;
+  initialize: (config: GoogleIdConfiguration) => void;
+  prompt: () => void;
+  renderButton: (parent: HTMLElement, config: GoogleButtonConfiguration) => void;
 }
 
 interface GoogleButtonConfiguration {
-  type?: "standard" | "icon";
-  theme?: "outline" | "filled_blue" | "filled_black";
+  locale?: string;
+  logo_alignment?: "left" | "center";
+  shape?: "rectangular" | "pill" | "circle" | "square";
   size?: "large" | "medium" | "small";
   text?: "signin_with" | "signup_with" | "continue_with" | "signin";
-  shape?: "rectangular" | "pill" | "circle" | "square";
-  logo_alignment?: "left" | "center";
+  theme?: "outline" | "filled_blue" | "filled_black";
+  type?: "standard" | "icon";
   width?: number;
-  locale?: string;
 }
 
 interface GoogleCredentialResponse {
@@ -22,10 +22,10 @@ interface GoogleCredentialResponse {
 }
 
 interface GoogleIdConfiguration {
-  client_id: string;
-  callback: (response: GoogleCredentialResponse) => void;
   auto_select?: boolean;
+  callback: (response: GoogleCredentialResponse) => void;
   cancel_on_tap_outside?: boolean;
+  client_id: string;
 }
 
 interface Window {

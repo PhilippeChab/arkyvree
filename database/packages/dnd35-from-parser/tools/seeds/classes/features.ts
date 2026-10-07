@@ -28,8 +28,8 @@ export function buildClassFeatures(
   ref: ClassReference,
   perLevelPicks: ReturnType<typeof getClassAptitudePicks>["perLevel"],
 ): {
-  classFeatures: [number, string][];
   autoFreeFeats: [number, string, string][];
+  classFeatures: [number, string][];
 } {
   const features: [number, string][] = [];
   const autoFreeFeats: [number, string, string][] = [];

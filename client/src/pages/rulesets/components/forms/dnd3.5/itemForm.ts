@@ -7,8 +7,8 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 export type ItemFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["items"]["$post"]>["json"];
 
 export type ItemFormInternal = Omit<ItemFormData, "weight" | "costGp"> & {
-  weight?: string;
   costGp?: string;
+  weight?: string;
 };
 
 /** The item types that can be based on a template. */

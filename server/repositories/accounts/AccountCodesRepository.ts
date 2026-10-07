@@ -21,7 +21,7 @@ class AccountCodesRepository extends BaseRepository<
       .returning();
   }
 
-  async create(db: Db, values: { userId: string; code: string; expiresAt: string }) {
+  async create(db: Db, values: { code: string; expiresAt: string; userId: string }) {
     return await db.insert(this.table).values(values).returning();
   }
 

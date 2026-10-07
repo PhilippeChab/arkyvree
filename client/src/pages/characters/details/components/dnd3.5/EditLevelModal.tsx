@@ -17,13 +17,13 @@ import {
 import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 
 interface EditLevelModalProps {
-  open: boolean;
+  baseRules: BaseRules;
+  characterId: string;
+  editingLevel: EditingLevel;
   onClose: () => void;
   /** It has faded out: its owner unmounts it. */
   onExited: () => void;
-  characterId: string;
-  baseRules: BaseRules;
-  editingLevel: EditingLevel;
+  open: boolean;
 }
 
 export function EditLevelModal({ open, onClose, onExited, characterId, baseRules, editingLevel }: EditLevelModalProps) {

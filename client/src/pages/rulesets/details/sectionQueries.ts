@@ -22,8 +22,8 @@ interface EntityFilters extends ListFilters {
 }
 
 interface ListFilters {
-  search: string;
   childOnly: boolean;
+  search: string;
 }
 
 interface PowerFilters extends AptitudeFilters {

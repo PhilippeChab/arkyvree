@@ -47,7 +47,7 @@ function splitPools(aptitudesInstance: AptitudesComponent, rulesetData: RulesetD
 
   const featPools: Record<
     string,
-    { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }
+    { allowed: number; available: number; id: string; name: string; shared: boolean; spent: number }
   > = {};
   let featsToSelect = 0;
   let powersToSelect = 0;

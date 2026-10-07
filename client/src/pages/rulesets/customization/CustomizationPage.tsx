@@ -43,15 +43,15 @@ import { type CustomizationEntity, customizationEntityQuery } from "./entityQuer
 import { ModifiersSection, PropertiesSection, RequirementsSection } from "./sections/index.ts";
 
 interface CustomizationViewProps {
-  rulesetId: string;
-  entityId: string;
-  section: TabSection;
-  tabs: SectionTab<TabSection>[];
-  ruleset: RulesetDetail;
-  data: CustomizationEntity;
   canEdit: boolean;
+  data: CustomizationEntity;
+  entityId: string;
   /** Still showing the entity a copy was made from, while the copy loads. */
   locked: boolean;
+  ruleset: RulesetDetail;
+  rulesetId: string;
+  section: TabSection;
+  tabs: SectionTab<TabSection>[];
 }
 
 type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
@@ -247,10 +247,10 @@ function describe(
   data: CustomizationEntity,
   rulesetId: string,
 ): {
-  title: string;
+  backPath?: string;
   pageTitle: string;
   subtitle?: ReactNode;
-  backPath?: string;
+  title: string;
 } {
   switch (data.type) {
     case "modifiers": {
@@ -347,9 +347,9 @@ export default function CustomizationPage() {
     entityId = "",
     section,
   } = useParams<{
-    id: string;
-    entityType: string;
     entityId: string;
+    entityType: string;
+    id: string;
     section?: string;
   }>();
   const location = useLocation();

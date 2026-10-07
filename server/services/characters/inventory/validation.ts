@@ -60,7 +60,7 @@ async function validateEquipmentSlot(
 async function validateItemRequirements(
   tx: Db,
   characterRecord: CharacterRecord,
-  item: { id: string; type: string | null; sourceItemId: string | null },
+  item: { id: string; sourceItemId: string | null; type: string | null },
   scope: RulesetScope,
 ) {
   const { ruleset, rulesetData } = scope;
@@ -91,7 +91,7 @@ async function validateItemRequirements(
 async function validateWeaponInOneHand(
   tx: Db,
   characterRecord: CharacterRecord,
-  item: { id: string; type: string | null; sourceItemId: string | null },
+  item: { id: string; sourceItemId: string | null; type: string | null },
   location: ItemLocation,
   scope: RulesetScope,
 ) {
@@ -134,7 +134,7 @@ export function validateCharges(totalCharges: number | null, remainingCharges: n
 export async function validateEquipping(
   tx: Db,
   characterRecord: CharacterRecord,
-  entry: { id: string | null; item: { id: string; type: string | null; sourceItemId: string | null } },
+  entry: { id: string | null; item: { id: string; sourceItemId: string | null; type: string | null } },
   location: ItemLocation,
   weaponSet: number | null,
   force: boolean,

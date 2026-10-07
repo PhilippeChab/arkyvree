@@ -83,7 +83,7 @@ function formatDamageTotal(damage: WeaponSlot["damage"]): string {
 function handTraits(
   slot: "Main Hand" | "Off Hand" | "Two Handed",
   property: (type: string) => WeaponProperty | undefined,
-): { light: boolean; share: number; penalty: number } {
+): { light: boolean; penalty: number; share: number } {
   const light = (SIZE_ORDER[property(WEAPON_SIZE)?.value ?? ""] ?? Infinity) < SIZE_ORDER.Medium;
   const share =
     slot === "Two Handed" && light ? SLOT_STRENGTH_MULTIPLIERS["Main Hand"] : SLOT_STRENGTH_MULTIPLIERS[slot];
@@ -327,7 +327,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       slot: "Main Hand" | "Off Hand" | "Two Handed",
       item: Pick<Item, "name">,
       properties: WeaponProperty[],
-      held: { itemId: string; entryId: string } | null = null,
+      held: { entryId: string; itemId: string } | null = null,
       natural: { kind: NaturalAttackKind; repeats: boolean } | null = null,
     ): WeaponSlot | null {
       const property = (type: string) => properties.find((p) => p.type === type);
@@ -465,7 +465,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * it's the creature's only attack, a secondary one half. The first primary is the one an extra attack repeats.
      */
     setNaturalAttacks(
-      attacks: { name: string; damage: string; type: string; count?: number; secondary?: true; misc?: number }[],
+      attacks: { count?: number; damage: string; misc?: number; name: string; secondary?: true; type: string }[],
     ): void {
       const combat = this.combat;
       combat.weaponsets = {};

@@ -40,23 +40,23 @@ import type { LevelUpFeatsStepProps } from "./levelUpFactory.ts";
 import { OptionTooltip } from "./OptionTooltip.tsx";
 
 interface AutoGrantedFeatsProps {
-  feats: FeatsData["autoGrantedFeats"];
   defaultCollapsed: boolean;
+  feats: FeatsData["autoGrantedFeats"];
 }
 
 interface FeatFamilyExpansionProps {
-  characterId: string;
+  allSelectedFeatPickString?: string;
   aptitudeId: string;
+  characterId: string;
+  editingLevelId?: string;
+  family: string;
   klassId: string;
   klassLevel: number;
-  family: string;
-  editingLevelId?: string;
-  allSelectedFeatPickString?: string;
-  pendingLevelKlassLevelIds?: string;
+  onSelectedFeatsChange: (value: Record<string, SelectedFeat[]>) => void;
   pendingLevelFeatPicks?: string;
+  pendingLevelKlassLevelIds?: string;
   selectedAptitude: string;
   selectedFeats: Record<string, SelectedFeat[]>;
-  onSelectedFeatsChange: (value: Record<string, SelectedFeat[]>) => void;
 }
 
 function AutoGrantedFeats({ feats, defaultCollapsed }: AutoGrantedFeatsProps) {

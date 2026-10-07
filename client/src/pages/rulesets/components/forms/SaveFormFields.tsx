@@ -9,10 +9,10 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 type Ability = RulesetAbility;
 
 interface SaveFormFieldsProps {
-  form: UseFormReturn<SaveFormData>;
   abilities: Ability[];
   /** Why the abilities didn't load. */
   abilitiesError: unknown;
+  form: UseFormReturn<SaveFormData>;
 }
 
 export type SaveFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["saves"]["$post"]>["json"];

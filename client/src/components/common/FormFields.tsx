@@ -33,8 +33,8 @@ interface BoundFieldProps<T extends FieldValues> {
 }
 
 interface DescriptionFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
-  rows?: number;
   placeholder?: string;
+  rows?: number;
 }
 
 interface EmailFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
@@ -49,13 +49,13 @@ type FormTextFieldProps<T extends FieldValues> = BoundFieldProps<T> &
   };
 
 interface NameFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
-  label?: string;
   helperText?: string;
+  label?: string;
 }
 
 interface PasswordFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
-  label: string;
   autoComplete: "current-password" | "new-password";
+  label: string;
 }
 
 /** What a preset takes besides the form's field. */
@@ -66,29 +66,29 @@ interface PresetFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
 
 interface SelectFieldProps<T extends FieldValues> {
   control: Control<T>;
-  name: FieldPath<T>;
-  label: string;
-  /** The choices; a plain string is both value and label. */
-  options: readonly SelectOption[];
-  rules?: ControllerProps<T>["rules"];
+  disabled?: boolean;
   /** A first choice for no value ("None"); picking it stores `emptyValue`. */
   emptyLabel?: string;
   /** What the first choice stores: null by default, or the empty value the field keeps (`""`). */
   emptyValue?: string | null;
-  /** What follows from a pick, in the same event: the fields that depended on the old value reset. */
-  onChange?: (value: SelectValue | null) => void;
   /** Shown under it while its value has no error. */
   helperText?: ReactNode;
+  label: string;
   /** Why its options didn't load: said under it. */
   loadError?: unknown;
-  disabled?: boolean;
-  size?: "small" | "medium";
-  sx?: SxProps<Theme>;
+  name: FieldPath<T>;
+  /** What follows from a pick, in the same event: the fields that depended on the old value reset. */
+  onChange?: (value: SelectValue | null) => void;
   /** Loads more options as the open menu nears its end (see `createListboxScrollHandler`). */
   onMenuScroll?: UIEventHandler<HTMLElement>;
+  /** The choices; a plain string is both value and label. */
+  options: readonly SelectOption[];
+  rules?: ControllerProps<T>["rules"];
+  size?: "small" | "medium";
+  sx?: SxProps<Theme>;
 }
 
-type SelectOption = string | { value: SelectValue; label: ReactNode; disabled?: boolean };
+type SelectOption = string | { disabled?: boolean; label: ReactNode; value: SelectValue };
 
 /** What a select's choice holds: a word, or a number (a hit die) */
 type SelectValue = string | number;

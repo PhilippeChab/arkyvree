@@ -122,7 +122,7 @@ function parseVariantPrices(metadataText: string): { price: string; variant: str
  */
 function readItemBlock($: cheerio.CheerioAPI, heading: CheerioEl) {
   const descParts: string[] = [];
-  const charges: { spell: string; charges: number }[] = [];
+  const charges: { charges: number; spell: string }[] = [];
   let metadataText = "";
 
   const section = findSectionElements(heading, ["h3", "h4", "h5"]);

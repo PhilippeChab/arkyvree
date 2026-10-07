@@ -45,15 +45,15 @@ export default class AbilitiesPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  readonly name = "abilities";
-
-  readonly label = "Abilities";
+  readonly component = { key: "abilities", getter: "getAbilities" } as const;
 
   readonly description = "Ability scores and modifiers";
 
-  readonly component = { key: "abilities", getter: "getAbilities" } as const;
-
   readonly groupDescriptionTemplates = { abilities: "{name} ability score and modifier" };
+
+  readonly label = "Abilities";
+
+  readonly name = "abilities";
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
     return AbilitiesPaths.generateAbilityPaths(rulesetData.abilities, kind);

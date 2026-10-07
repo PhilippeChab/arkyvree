@@ -1,15 +1,15 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
 export interface TimingStore {
-  dbTimeMs: number;
-  queryCount: number;
   activeQueries: number;
-  dbWallStart: number;
-  slowQueries: { sql: string; durationMs: number }[];
   cacheHits: number;
   cacheMisses: number;
+  dbTimeMs: number;
+  dbWallStart: number;
   dedupHits: number;
   dedupMisses: number;
+  queryCount: number;
+  slowQueries: { durationMs: number; sql: string }[];
 }
 
 export const timingStorage = new AsyncLocalStorage<TimingStore>();

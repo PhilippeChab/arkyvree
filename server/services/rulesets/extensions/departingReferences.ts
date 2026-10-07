@@ -71,7 +71,7 @@ async function findLostReferences(tx: Db, rulesetId: string, extensionId: string
 /** Repoints the fork's feats' links: to the kept list, or out when the feat links to it already. */
 async function repointFeatLinks(
   tx: Db,
-  links: { featId: string; aptitudeId: string }[],
+  links: { aptitudeId: string; featId: string }[],
   keptOf: (id: string) => string,
 ) {
   const featIds = [...new Set(links.map((link) => link.featId))];
@@ -92,7 +92,7 @@ async function repointFeatLinks(
 /** Repoints the fork's spells' links: to the kept list, or out when the spell links to it already. */
 async function repointPowerLinks(
   tx: Db,
-  links: { powerId: string; aptitudeId: string }[],
+  links: { aptitudeId: string; powerId: string }[],
   keptOf: (id: string) => string,
 ) {
   const powerIds = [...new Set(links.map((link) => link.powerId))];

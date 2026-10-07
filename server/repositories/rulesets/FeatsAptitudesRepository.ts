@@ -19,7 +19,7 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { featId: string; aptitudeId?: string } | { aptitudeId: string }) {
+  async delete(db: Db, where: { aptitudeId?: string; featId: string } | { aptitudeId: string }) {
     return await db
       .delete(this.table)
       .where(
@@ -43,7 +43,7 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
   /** Links of feats, or a ruleset's feats' links to lists (`aptitudeIds`). */
   async findMany(
     db: Db,
-    where: { featIds: string[] } | { featId: string } | { rulesetId: string; aptitudeIds: string[] },
+    where: { featIds: string[] } | { featId: string } | { aptitudeIds: string[]; rulesetId: string },
   ) {
     if ("featIds" in where && where.featIds.length === 0) return [];
     if ("aptitudeIds" in where && where.aptitudeIds.length === 0) return [];
@@ -70,7 +70,7 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
   }
 
   /** Repoints a feat's link to another list. */
-  async update(db: Db, values: { aptitudeId: string }, where: { featId: string; aptitudeId: string }) {
+  async update(db: Db, values: { aptitudeId: string }, where: { aptitudeId: string; featId: string }) {
     return await db
       .update(this.table)
       .set(values)

@@ -13,11 +13,6 @@ export default class ClassesPaths implements PathCategory<Dnd35Components> {
     return `classes.${stripSeparators(className)}.bonuscasterlevel`;
   }
 
-  /** A class's level (`classes.<slug>.level`), by the class's name. */
-  static level(className: string): string {
-    return `classes.${stripSeparators(className)}.level`;
-  }
-
   static generateClassPaths(klasses: Klass[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
@@ -46,15 +41,20 @@ export default class ClassesPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  readonly name = "classes";
-
-  readonly label = "Classes";
-
-  readonly description = "Class levels and bonus caster levels";
+  /** A class's level (`classes.<slug>.level`), by the class's name. */
+  static level(className: string): string {
+    return `classes.${stripSeparators(className)}.level`;
+  }
 
   readonly component = { key: "classes", getter: "getClasses" } as const;
 
+  readonly description = "Class levels and bonus caster levels";
+
   readonly groupDescriptionTemplates = { classes: "{name} class level and caster level" };
+
+  readonly label = "Classes";
+
+  readonly name = "classes";
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
     return ClassesPaths.generateClassPaths(rulesetData.klasses, kind);

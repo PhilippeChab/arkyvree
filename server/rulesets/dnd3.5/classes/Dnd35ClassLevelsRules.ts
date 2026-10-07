@@ -9,7 +9,7 @@ import { stripSeparators } from "@/shared/text.ts";
 export class Dnd35ClassLevelsRules implements ClassLevelsRules {
   enrichWithFeatPools<T extends { id: string; level: number }>(
     levels: T[],
-    modifiers: { sourceId: string; target: string; value: string; operator: string }[],
+    modifiers: { operator: string; sourceId: string; target: string; value: string }[],
     aptitudes: { name: string }[],
   ): (T & { featPools: Record<string, number> })[] {
     // Build slug → display name map from aptitudes
@@ -81,10 +81,10 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
 
   enrichWithSpellsKnown<T extends { id: string; level: number }>(
     levels: T[],
-    modifiers: { sourceId: string; target: string; value: string; operator: string }[],
+    modifiers: { operator: string; sourceId: string; target: string; value: string }[],
   ): (T & { spellsKnown: Record<number, number | "All"> })[] {
     // Build a map of levelId → { [spellLevel]: { delta, operator } }[]
-    const deltasByLevelId = new Map<string, { spellLevel: number; delta: number; operator: string }[]>();
+    const deltasByLevelId = new Map<string, { delta: number; operator: string; spellLevel: number }[]>();
     for (const mod of modifiers) {
       const target = parseAptitudeSpellLevel(mod.target);
       const value = parseLiteralValue(mod.value, "number");
@@ -124,7 +124,7 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
 
   enrichWithSpellsPerDay<T extends { id: string; level: number }>(
     levels: T[],
-    modifiers: { sourceId: string; target: string; value: string; operator: string }[],
+    modifiers: { operator: string; sourceId: string; target: string; value: string }[],
   ): (T & { spellsPerDay: Record<number, number> })[] {
     // Build a map of levelId → { [spellLevel]: delta }
     const deltasByLevelId = new Map<string, Record<number, number>>();

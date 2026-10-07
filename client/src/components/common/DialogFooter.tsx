@@ -5,23 +5,23 @@ import { DiceSpinner } from "./DiceSpinner.tsx";
 
 /** A dialog's action: its words, and a form's submit unless it has a click of its own. */
 interface DialogAction {
+  color?: ButtonProps["color"];
+  disabled?: boolean;
+  icon?: ReactNode;
   label: ReactNode;
   onClick?: () => void;
-  color?: ButtonProps["color"];
-  icon?: ReactNode;
-  disabled?: boolean;
 }
 
 interface DialogFooterProps {
-  /** The way out: Cancel, or Close (`cancelLabel`) when the dialog only shows something. */
-  onCancel: () => void;
-  cancelLabel?: string;
   /** The dialog's action, last. */
   action?: DialogAction;
-  /** A request in flight: the way out waits for it, and the action shows it running. */
-  pending?: boolean;
+  cancelLabel?: string;
   /** Steps of the dialog's own (a wizard's Back and Next), after the way out, at the far end. */
   children?: ReactNode;
+  /** The way out: Cancel, or Close (`cancelLabel`) when the dialog only shows something. */
+  onCancel: () => void;
+  /** A request in flight: the way out waits for it, and the action shows it running. */
+  pending?: boolean;
   sx?: SxProps<Theme>;
 }
 

@@ -1,7 +1,7 @@
 import { SKILL_MAP } from "./targets.ts";
 
 /** A skill bonus a text gives: its skill's slug, or none when the name isn't a skill (`name`), and where it was read. */
-export type SkillBonus = { value: string; name: string; slug: string | undefined; index: number };
+export type SkillBonus = { index: number; name: string; slug: string | undefined; value: string };
 
 /** A skill's name: capitalized words, a parenthesis allowed ("Knowledge (architecture and engineering)", "Sleight of Hand"). */
 const NAME = String.raw`[A-Z][\w'-]*(?:\s+(?:\([^)]*\)|of|the|[A-Z][\w'-]*))*`;

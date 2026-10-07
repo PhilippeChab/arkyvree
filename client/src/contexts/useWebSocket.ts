@@ -9,8 +9,8 @@ interface UseWebSocketOptions {
 }
 
 interface WsMessage {
-  type: string;
   [key: string]: unknown;
+  type: string;
 }
 
 const PING_INTERVAL_MS = 30000;

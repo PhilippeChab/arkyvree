@@ -19,12 +19,12 @@ import { findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/sup
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 type Placement = {
-  quantity?: number;
-  equipped?: boolean;
-  location?: ItemLocation | null;
-  weaponSet?: number | null;
   charges?: [number | null, number | null];
+  equipped?: boolean;
   force?: boolean;
+  location?: ItemLocation | null;
+  quantity?: number;
+  weaponSet?: number | null;
 };
 
 /** What the test's items weigh and cost, unless a test says otherwise. */

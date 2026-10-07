@@ -3,8 +3,8 @@ import { Hono } from "hono";
 import PageTemplates, { APP_URL } from "./PageTemplates.ts";
 
 interface RouteMeta {
-  title: string;
   description: string;
+  title: string;
 }
 
 const DEFAULT_DESCRIPTION =

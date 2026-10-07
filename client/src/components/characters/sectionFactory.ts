@@ -26,8 +26,8 @@ type CombatAndSavesSectionProps = Dnd35CombatAndSavesSectionProps;
 type PowersSectionProps = Dnd35PowersSectionProps;
 interface SectionMap {
   AbilityScoresSection: ComponentType<AbilityScoresSectionProps>;
-  CombatAndSavesSection: ComponentType<CombatAndSavesSectionProps>;
   BondedSection: ComponentType<Dnd35BondedSectionProps>;
+  CombatAndSavesSection: ComponentType<CombatAndSavesSectionProps>;
   PowersSection: ComponentType<PowersSectionProps>;
   SkillsSection: ComponentType<SkillsSectionProps>;
 }

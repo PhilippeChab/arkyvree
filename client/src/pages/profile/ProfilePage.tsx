@@ -41,14 +41,14 @@ interface PasswordFormData {
 }
 
 interface ProfileCardProps {
-  title: string;
   children: ReactNode;
   danger?: boolean;
+  title: string;
 }
 
 interface ProfileFormData {
-  username: string;
   emailAddress: string;
+  username: string;
 }
 
 function ProfileCard({ title, children, danger = false }: ProfileCardProps) {

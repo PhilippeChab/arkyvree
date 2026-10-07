@@ -51,7 +51,7 @@ function parseAbilityValue(text: string): number {
   return parseInt(match[1], 10);
 }
 
-function parseFeatureText(text: string): { name: string; description: string } {
+function parseFeatureText(text: string): { description: string; name: string } {
   // Split on first colon if the prefix is a reasonable name length
   const colonIdx = text.indexOf(":");
   if (colonIdx > 0 && colonIdx < 80) {

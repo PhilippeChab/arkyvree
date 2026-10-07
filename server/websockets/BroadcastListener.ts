@@ -13,15 +13,15 @@ const HEARTBEAT_TIMEOUT_MS = 10_000;
  * (`Connections`). It reconnects when its connection drops or stops answering its heartbeat, backing off up to 30s.
  */
 class BroadcastListener {
+  private attempt = 0;
+
   private client: PgClient | null = null;
-
-  private stopping = false;
-
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
-  private attempt = 0;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private stopping = false;
 
   private clearHeartbeat() {
     if (this.heartbeatTimer) {
@@ -84,7 +84,7 @@ class BroadcastListener {
     client.on("notification", (msg) => {
       if (msg.channel !== BROADCAST_CHANNEL || !msg.payload) return;
       try {
-        const { userId, event } = JSON.parse(msg.payload) as { userId: string; event: WsEvent };
+        const { userId, event } = JSON.parse(msg.payload) as { event: WsEvent; userId: string };
         Connections.send(userId, event);
       } catch (err) {
         console.error("[ws] Failed to parse broadcast payload:", err);

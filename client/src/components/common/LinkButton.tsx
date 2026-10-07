@@ -3,10 +3,10 @@ import type { ReactNode } from "react";
 
 interface LinkButtonProps {
   children: ReactNode;
-  onClick: () => void;
   disabled?: boolean;
-  variant?: LinkProps["variant"];
+  onClick: () => void;
   sx?: LinkProps["sx"];
+  variant?: LinkProps["variant"];
 }
 
 /** An action written as a link (Resend, Try the demo): a button, underlined on hover. */

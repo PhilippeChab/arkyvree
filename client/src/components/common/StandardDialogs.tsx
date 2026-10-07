@@ -9,17 +9,17 @@ import { Modal } from "./Modal.tsx";
 type DeleteDialogProps = Omit<ConfirmDialogProps, "confirmColor">;
 
 interface FormActionDialogProps<T extends FieldValues = FieldValues> {
-  open: boolean;
-  onClose: () => void;
-  title: ReactNode;
-  form: UseFormReturn<T>;
-  onSubmit: (data: T) => void;
-  isLoading: boolean;
   children: ReactNode;
-  maxWidth?: DialogProps["maxWidth"];
   fixedHeight?: boolean | string;
-  submitLabel: string;
+  form: UseFormReturn<T>;
+  isLoading: boolean;
+  maxWidth?: DialogProps["maxWidth"];
+  onClose: () => void;
+  onSubmit: (data: T) => void;
+  open: boolean;
   submitIcon?: ReactNode;
+  submitLabel: string;
+  title: ReactNode;
 }
 
 type StandardFormDialogProps<T extends FieldValues> = Omit<FormActionDialogProps<T>, "submitLabel"> & {
@@ -27,19 +27,19 @@ type StandardFormDialogProps<T extends FieldValues> = Omit<FormActionDialogProps
 };
 
 export interface ConfirmDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading: boolean;
-  title: string;
-  message: ReactNode;
   /** Extra content below the message, e.g. an option the confirm depends on. */
   children?: ReactNode;
-  confirmLabel?: string;
   /** Intent of the confirm button — see docs/ui-buttons.md. */
   confirmColor?: "primary" | "error" | "warning" | "success";
   confirmIcon?: ReactNode;
+  confirmLabel?: string;
+  isLoading: boolean;
   maxWidth?: DialogProps["maxWidth"];
+  message: ReactNode;
+  onClose: () => void;
+  onConfirm: () => void;
+  open: boolean;
+  title: string;
 }
 
 function FormActionDialog<T extends FieldValues = FieldValues>({

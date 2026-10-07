@@ -3,9 +3,9 @@ import { Alert, type AlertProps, Box, Collapse } from "@mui/material";
 import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface AnimatedAlertProps extends AlertProps {
-  in: boolean;
   /** The space under the alert, in the theme's units, which opens and closes with it. */
   gutter?: number;
+  in: boolean;
 }
 
 export function AnimatedAlert({ in: show, gutter = 0, sx, ...alertProps }: AnimatedAlertProps) {

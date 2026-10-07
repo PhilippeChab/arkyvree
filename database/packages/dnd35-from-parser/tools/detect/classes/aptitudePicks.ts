@@ -76,7 +76,7 @@ function isFavoredEnemyOpenPick(featureName: string, desc: string): boolean {
 
 export function detectAptitudePicks(
   raw: ClassReference["raw"],
-  featureOccurrences: { name: string; levels: number[] }[],
+  featureOccurrences: { levels: number[]; name: string }[],
 ): {
   aptitudePicks?: AptitudePick[];
   unresolvedAptitudePicks?: string[];
@@ -153,7 +153,7 @@ export function detectAptitudePicks(
 /** Locked-creature-type favored-enemy features — re-routed to the shared variant. */
 export function detectLockedFavoredEnemies(
   raw: ClassReference["raw"],
-  featureOccurrences: { name: string; levels: number[] }[],
+  featureOccurrences: { levels: number[]; name: string }[],
 ): { lockedFavoredEnemies?: ClassReference["detected"]["lockedFavoredEnemies"] } {
   const FE_TEMPLATE = /\+2\s+(?:bonus\s+on\s+)?Bluff,\s*Listen,\s*Sense Motive,\s*Spot,?\s*and\s*Survival\s+checks/i;
   const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf.description);

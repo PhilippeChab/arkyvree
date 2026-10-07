@@ -35,12 +35,12 @@ class RequirementsService {
     entityType: string,
     entityId: string,
     body: {
+      chainingOperator?: string;
       level: string;
+      operator?: string;
       target?: string;
       value?: string;
       valueType?: string;
-      operator?: string;
-      chainingOperator?: string;
     },
   ) {
     const result = await withTransaction(async (tx) => {
@@ -186,13 +186,13 @@ class RequirementsService {
     entityId: string,
     requirementId: string,
     body: {
+      chainingOperator?: string;
       level: string;
+      operator?: string;
       target?: string;
+      updatedAt?: string;
       value?: string;
       valueType?: string;
-      operator?: string;
-      chainingOperator?: string;
-      updatedAt?: string;
     },
   ) {
     const result = await withTransaction(async (tx) => {

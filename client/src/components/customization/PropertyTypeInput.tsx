@@ -4,17 +4,17 @@ import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
 import { propertyTypeCompletionsQuery } from "./customizationQueries.ts";
 
 interface PropertyTypeInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  rulesetId: string;
-  entityType?: PropertyEntityType;
-  label?: string;
-  required?: boolean;
-  error?: boolean;
-  helperText?: string;
   disabled?: boolean;
+  entityType?: PropertyEntityType;
+  error?: boolean;
   fullWidth?: boolean;
+  helperText?: string;
+  label?: string;
+  onChange: (value: string) => void;
   placeholder?: string;
+  required?: boolean;
+  rulesetId: string;
+  value: string;
 }
 
 export function PropertyTypeInput({

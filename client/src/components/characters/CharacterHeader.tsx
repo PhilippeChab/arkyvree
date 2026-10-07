@@ -11,13 +11,13 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 interface CharacterHeaderProps {
-  name: string;
-  rulesetName?: string | null;
   /** Where Back goes; a shared sheet's viewer has nowhere to go back to */
   backTo?: string;
+  name: string;
   onMenuOpen?: (event: MouseEvent<HTMLElement>) => void;
   /** Given when the viewer can rename the character: clicking its name edits it */
   rename?: CharacterRename;
+  rulesetName?: string | null;
 }
 
 interface CharacterNameEditorProps extends CharacterRename {
@@ -28,9 +28,9 @@ interface CharacterNameEditorProps extends CharacterRename {
 /** The character an editor renames in place, and the version the rename is made against */
 interface CharacterRename {
   characterId: string;
-  updatedAt: string;
   /** A bonded creature's master, whose sheet lists it by name */
   parentCharacterId?: string | null;
+  updatedAt: string;
 }
 
 /** The name's field while it's renamed: Enter or leaving the field saves, Escape cancels. */

@@ -34,7 +34,7 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
       .returning();
   }
 
-  async create(db: Db, values: { email: string; userId?: string; playerId: string }) {
+  async create(db: Db, values: { email: string; playerId: string; userId?: string }) {
     return await db
       .insert(this.table)
       .values({ email: values.email, userId: values.userId, playerId: values.playerId })
@@ -79,7 +79,7 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
     where:
       | { id: string }
       | { playerId: string; status: string }
-      | { userId: string; playerIds: string[]; status: string }
+      | { playerIds: string[]; status: string; userId: string }
       | { email: string; playerIds: string[]; status: string },
   ) {
     if ("playerIds" in where && where.playerIds.length === 0) return undefined;
@@ -121,7 +121,7 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
 
   async findPage(
     db: Db,
-    where: { campaignId: string; search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: { campaignId: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "createdAt", orderDir = "desc" } = where;

@@ -78,11 +78,11 @@ export default class WeaponPaths implements PathCategory<Dnd35Components> {
     return buildWeaponPaths("weapon", "weapon", kind);
   }
 
-  readonly name = "weapon";
+  readonly description = "On an item: its own weapon's to-hit, damage, and how it's wielded, wherever it's held";
 
   readonly label = "Weapon";
 
-  readonly description = "On an item: its own weapon's to-hit, damage, and how it's wielded, wherever it's held";
+  readonly name = "weapon";
 
   readonly pathDescriptions = {
     "weapon.tohit": "Attack roll bonuses of the item's own weapon",
@@ -131,7 +131,7 @@ export default class WeaponPaths implements PathCategory<Dnd35Components> {
     for (const weaponSet of Object.values(combat.weaponsets)) {
       for (const [, weapon] of Object.entries(weaponSet as Record<string, unknown>)) {
         // Its item's (a modifier's source), or its entry's (a proficiency read of the entry holding it)
-        const held = weapon as { itemId?: string | null; entryId?: string | null } | null;
+        const held = weapon as { entryId?: string | null; itemId?: string | null } | null;
         if (held && typeof held === "object" && (held.itemId === sourceId || held.entryId === sourceId))
           results.push(...traverser.traverse(weaponsComponent, rest, weapon, rest[0], 0, ["weapon"]));
       }

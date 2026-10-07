@@ -45,9 +45,9 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { extractTemplatePath } from "@/shared/customization/templateExpression.ts";
 
 interface CharacterModifiersModalProps {
-  open: boolean;
-  onClose: () => void;
   characterId: string;
+  onClose: () => void;
+  open: boolean;
   rulesetId: string;
 }
 
@@ -96,7 +96,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data, updatedAt }: { id: string; data: ModifierFormData; updatedAt?: string }) => {
+    mutationFn: async ({ id, data, updatedAt }: { data: ModifierFormData; id: string; updatedAt?: string }) => {
       return parseResponse(
         rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$put({
           param: { characterId, modifierId: id },

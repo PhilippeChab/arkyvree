@@ -6,12 +6,12 @@ import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 interface AbilityScoreBoxProps {
   ability: string;
-  score: number;
-  modifier: number;
   abilityData?: CharacterDetail["abilities"][string];
+  compact?: boolean;
+  modifier: number;
   onBaseChange?: (abilityId: string, value: number) => void;
   readOnly?: boolean;
-  compact?: boolean;
+  score: number;
 }
 
 export function AbilityScoreBox({

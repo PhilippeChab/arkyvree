@@ -3,9 +3,9 @@ import { useQueries } from "@tanstack/react-query";
 import { attachmentSlotQuery } from "@/client/src/lib/queries.ts";
 
 interface UseAttachmentsParams {
-  recordType: string;
   name: string;
   recordIds: string[];
+  recordType: string;
 }
 
 /**

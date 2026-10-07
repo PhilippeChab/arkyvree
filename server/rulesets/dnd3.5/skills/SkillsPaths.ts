@@ -35,22 +35,6 @@ const NAVIGATABLE_PATHS = [
 
 /** The skills' target paths: each skill's ranks and modifiers (a skill's name reaching its subtypes), and the budget. */
 export default class SkillsPaths implements PathCategory<Dnd35Components> {
-  /** A skill's misc bonus (`skills.<slug>.misc`), by the skill's name. */
-  static misc(skillName: string): string {
-    return `skills.${stripSeparators(skillName)}.misc`;
-  }
-
-  /** The skill families no skill of their own names, by their slug: "knowledge" for the Knowledge skills. */
-  static getFamilyLabels(skills: Pick<Skill, "name">[]): Record<string, string> {
-    const names = new Set(skills.map((skill) => skill.name));
-    const labels: Record<string, string> = {};
-    for (const skill of skills) {
-      const family = skill.name.match(/^(.+?) \(/)?.[1];
-      if (family && !names.has(family)) labels[stripSeparators(family)] = family;
-    }
-    return labels;
-  }
-
   /**
    * Each skill's paths, and a family's that no skill of its own names: `skills.knowledge.rank` reaches every Knowledge
    * skill, as the engine reads it (any of them for a requirement, all for a modifier).
@@ -111,17 +95,33 @@ export default class SkillsPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  readonly name = "skills";
+  /** The skill families no skill of their own names, by their slug: "knowledge" for the Knowledge skills. */
+  static getFamilyLabels(skills: Pick<Skill, "name">[]): Record<string, string> {
+    const names = new Set(skills.map((skill) => skill.name));
+    const labels: Record<string, string> = {};
+    for (const skill of skills) {
+      const family = skill.name.match(/^(.+?) \(/)?.[1];
+      if (family && !names.has(family)) labels[stripSeparators(family)] = family;
+    }
+    return labels;
+  }
 
-  readonly label = "Skills";
-
-  readonly description = "Skill ranks and modifiers";
+  /** A skill's misc bonus (`skills.<slug>.misc`), by the skill's name. */
+  static misc(skillName: string): string {
+    return `skills.${stripSeparators(skillName)}.misc`;
+  }
 
   readonly component = { key: "skills", getter: "getSkills" } as const;
+
+  readonly description = "Skill ranks and modifiers";
 
   readonly expandsSubtypes = true;
 
   readonly groupDescriptionTemplates = { skills: "{name} skill rank and modifiers" };
+
+  readonly label = "Skills";
+
+  readonly name = "skills";
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
     return SkillsPaths.generateSkillPaths(rulesetData.skills, kind);

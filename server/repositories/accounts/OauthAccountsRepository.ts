@@ -22,7 +22,7 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
       .returning();
   }
 
-  async create(db: Db, values: { userId: string; provider: string; providerAccountId: string }) {
+  async create(db: Db, values: { provider: string; providerAccountId: string; userId: string }) {
     return await db.insert(this.table).values(values).returning();
   }
 
@@ -34,7 +34,7 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
 
   async findOne(
     db: Db,
-    where: { id: string } | { provider: string; providerAccountId: string } | { userId: string; provider: string },
+    where: { id: string } | { provider: string; providerAccountId: string } | { provider: string; userId: string },
   ) {
     return await db.query.oauthAccountsInAccount.findFirst({
       where: this.branchWhere(

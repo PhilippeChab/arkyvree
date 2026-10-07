@@ -28,13 +28,13 @@ type Save = RulesetSave;
 
 interface SpellFormFieldsProps {
   form: UseFormReturn<SpellFormData>;
+  hideProperties?: boolean;
+  /** Aptitudes the form may already hold (the spell's own), so they show by name. */
+  knownAptitudes?: Aptitude[];
   rulesetId: string;
   saves: Save[];
   /** Why the saves didn't load. */
   savesError: unknown;
-  hideProperties?: boolean;
-  /** Aptitudes the form may already hold (the spell's own), so they show by name. */
-  knownAptitudes?: Aptitude[];
 }
 
 interface SpellPropertyFieldsProps {
@@ -43,8 +43,8 @@ interface SpellPropertyFieldsProps {
 
 interface TagsFieldProps {
   form: UseFormReturn<SpellFormData>;
-  name: "descriptors" | "components";
   label: string;
+  name: "descriptors" | "components";
   options: readonly string[];
 }
 

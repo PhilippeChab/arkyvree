@@ -34,8 +34,8 @@ interface CollapsibleLevelProps {
 }
 
 interface SpellRowItemProps {
-  spell: SpellRow;
   rulesetId?: string;
+  spell: SpellRow;
 }
 
 function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {

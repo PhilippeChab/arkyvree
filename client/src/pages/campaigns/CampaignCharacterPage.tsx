@@ -16,7 +16,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { campaignCharacterQuery } from "./campaignQueries.ts";
 
 export default function CampaignCharacterPage() {
-  const { id: campaignId = "", characterId = "" } = useParams<{ id: string; characterId: string }>();
+  const { id: campaignId = "", characterId = "" } = useParams<{ characterId: string; id: string }>();
   const navigate = useNavigate();
   const menu = useAnchorMenu();
 

@@ -28,7 +28,7 @@ export function Variants<B extends Constructor>(Base: B) {
       session: Session,
       rulesetId: string,
       sourceItemId: string,
-      variants: Array<{ name: string; description?: string | null }>,
+      variants: Array<{ description?: string | null; name: string }>,
     ) {
       if (variants.length === 0) throw new UnprocessableEntityError("At least one variant is required");
 

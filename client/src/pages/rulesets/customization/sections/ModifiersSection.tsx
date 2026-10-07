@@ -38,12 +38,12 @@ type ModifiersArray = InferResponseType<
 >;
 
 interface ModifiersSectionProps {
-  ruleset: RulesetDetail;
-  entityType: CustomizableEntityType;
-  entityId: string;
   data?: Modifier[];
-  queryKeysToInvalidate?: readonly (readonly unknown[])[];
+  entityId: string;
+  entityType: CustomizableEntityType;
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
+  queryKeysToInvalidate?: readonly (readonly unknown[])[];
+  ruleset: RulesetDetail;
 }
 
 const MODIFIERS_COLUMNS = [
@@ -160,7 +160,7 @@ export function ModifiersSection({
   const snackbar = useSnackbar();
 
   const duplicateMutation = useMutation({
-    mutationFn: async ({ sourceId, data }: { sourceId: string; data: ModifierFormData }) => {
+    mutationFn: async ({ sourceId, data }: { data: ModifierFormData; sourceId: string }) => {
       return tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers[":modifierId"].duplicate.$post({

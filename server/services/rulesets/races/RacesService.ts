@@ -16,10 +16,10 @@ class RacesService {
     session: Session,
     rulesetId: string,
     body: {
-      name: string;
-      description?: string | null;
-      size: SizeType;
       baseSpeed: number;
+      description?: string | null;
+      name: string;
+      size: SizeType;
     },
   ) {
     const result = await withTransaction(async (tx) => {
@@ -103,9 +103,9 @@ class RacesService {
     where: {
       childOnly?: boolean;
       kind?: string;
-      search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {
@@ -120,10 +120,10 @@ class RacesService {
     rulesetId: string,
     raceId: string,
     body: {
-      name: string;
-      description?: string | null;
-      size: SizeType;
       baseSpeed: number;
+      description?: string | null;
+      name: string;
+      size: SizeType;
       updatedAt?: string;
     },
   ) {

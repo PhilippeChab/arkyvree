@@ -247,7 +247,7 @@ describe("The content comparison (diff-prod)", () => {
       const unseen: string[] = [];
       for (const column of columns) {
         const scope = SCOPES[table];
-        const [target] = await query<{ ctid: string; ruleset_id: string; row: Record<string, unknown> }>(
+        const [target] = await query<{ ctid: string; row: Record<string, unknown>; ruleset_id: string }>(
           `select t.ctid::text as ctid, ${scope.ruleset} as ruleset_id, to_jsonb(t) as row
              from ${scope.from} order by (t."${column.name}" is null), t.created_at desc limit 1`,
         );

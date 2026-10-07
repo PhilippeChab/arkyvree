@@ -17,9 +17,9 @@ interface SectionMap {
 
 /** What the ruleset page passes every section tab. */
 export interface RulesetSectionProps {
-  ruleset: RulesetDetail;
   childOnly: boolean;
   onChildOnlyChange: (childOnly: boolean) => void;
+  ruleset: RulesetDetail;
 }
 
 const RULESET_SECTIONS: Record<BaseRules, SectionMap> = {

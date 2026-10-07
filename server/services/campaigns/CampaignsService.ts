@@ -41,8 +41,8 @@ class CampaignsService {
   async createCampaign(
     session: Session,
     body: {
-      name: string;
       description?: string;
+      name: string;
       rulesetId: string;
     },
   ) {
@@ -93,10 +93,10 @@ class CampaignsService {
   async getCampaigns(
     session: Session,
     where: {
-      visibility?: keyof typeof visibilityMap;
-      search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
+      visibility?: keyof typeof visibilityMap;
     },
     pagination: { limit: number; page: number },
   ) {
@@ -159,8 +159,8 @@ class CampaignsService {
     session: Session,
     id: string,
     body: {
-      name?: string;
       description?: string;
+      name?: string;
     },
   ) {
     return await withTransaction(async (tx) => {

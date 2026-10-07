@@ -23,9 +23,9 @@ type Token =
 export type TemplateNode =
   | { type: "number"; value: number }
   | { type: "path"; value: string }
-  | { type: "call"; name: string; args: TemplateNode[] }
-  | { type: "binop"; op: "+" | "-" | "*" | "/"; left: TemplateNode; right: TemplateNode }
-  | { type: "unary"; op: "-"; arg: TemplateNode };
+  | { args: TemplateNode[]; name: string; type: "call" }
+  | { left: TemplateNode; op: "+" | "-" | "*" | "/"; right: TemplateNode; type: "binop" }
+  | { arg: TemplateNode; op: "-"; type: "unary" };
 
 /** The functions a template calls, each on numbers. */
 export const TEMPLATE_FUNCTIONS: Record<string, (...args: number[]) => number> = {

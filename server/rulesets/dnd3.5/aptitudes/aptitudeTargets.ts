@@ -38,7 +38,7 @@ export function parseAptitudePool(target: string): string | undefined {
 /** A list's spell level a target is (`aptitudes.<list>.<level>.allowed` or `.uses`): the list's slug, the level, the field. */
 export function parseAptitudeSpellLevel(
   target: string,
-): { list: string; level: number; field: "allowed" | "uses" } | undefined {
+): { field: "allowed" | "uses"; level: number; list: string } | undefined {
   const match = SPELL_LEVEL_TARGET.exec(target);
   if (!match) return undefined;
   return { list: match[1], level: Number(match[2]), field: match[3] === "uses" ? "uses" : "allowed" };

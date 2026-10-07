@@ -66,19 +66,19 @@ class CharactersService extends include(Object, Archives) {
   async createCharacter(
     session: Session,
     characterData: {
-      rulesetId: string;
-      raceId: string;
-      name: string;
-      xp: number;
-      alignment: Alignment;
       abilities: Record<string, number>;
       age?: number;
-      gender: Gender;
-      height?: string;
-      weight?: string;
+      alignment: Alignment;
       deity?: string;
       description?: string;
+      gender: Gender;
+      height?: string;
+      name: string;
       notes?: string;
+      raceId: string;
+      rulesetId: string;
+      weight?: string;
+      xp: number;
     },
   ) {
     return await withTransaction(async (tx) => {
@@ -259,11 +259,11 @@ class CharactersService extends include(Object, Archives) {
   async getCharacters(
     session: Session,
     where: {
-      visibility?: keyof typeof visibilityMap;
-      search?: string;
+      accessRole?: "owner" | "contributor";
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
-      accessRole?: "owner" | "contributor";
+      search?: string;
+      visibility?: keyof typeof visibilityMap;
     },
     pagination: { limit: number; page: number },
   ) {
@@ -357,18 +357,18 @@ class CharactersService extends include(Object, Archives) {
     session: Session,
     characterId: string,
     updateData: {
-      name?: string;
       age?: number;
+      alignment?: Alignment;
+      deity?: string;
+      description?: string;
       gender?: Gender;
       height?: string;
-      weight?: string;
-      deity?: string;
-      xp?: number;
-      alignment?: Alignment;
-      description?: string;
-      notes?: string;
       languageIds?: string[];
+      name?: string;
+      notes?: string;
       updatedAt?: string;
+      weight?: string;
+      xp?: number;
     },
   ) {
     return await withTransaction(async (tx) => {

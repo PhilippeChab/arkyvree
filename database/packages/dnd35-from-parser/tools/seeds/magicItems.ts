@@ -22,10 +22,10 @@ export type MagicItemSeedSets = {
   magicArmor: ItemSeed[];
   magicShields: ItemSeed[];
   magicWeapons: ItemSeed[];
-  wondrousItems: ItemSeed[];
   rings: ItemSeed[];
   rods: ItemSeed[];
   staffs: ItemSeed[];
+  wondrousItems: ItemSeed[];
 };
 
 /** The specific armor and shields, whose text gives what they change of their base's. */

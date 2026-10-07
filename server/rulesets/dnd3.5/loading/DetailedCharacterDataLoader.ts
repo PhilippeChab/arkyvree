@@ -40,11 +40,11 @@ import {
 
 /** D&D 3.5-specific extension of LoadedCharacterData with spellcasting and skill properties. */
 export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
-  skillPointAbilityId: string | null;
-  skillProperties: Map<string, SkillFlags>;
-  klassLevelProperties: Map<string, { bab: number; skills: number }>;
   klassBonusSpellAbilityMap: Map<string, string>;
   klassCasterTypeMap: Map<string, "Arcane" | "Divine">;
+  klassLevelProperties: Map<string, { bab: number; skills: number }>;
+  skillPointAbilityId: string | null;
+  skillProperties: Map<string, SkillFlags>;
 }
 
 /** Resolves stored ids through the override map, when there is one. */
@@ -52,16 +52,16 @@ export type Resolve = <T extends Record<string, unknown>>(rows: T[]) => T[];
 
 /** Internal bag of rounds 1-3 DB results shared across projected/baseline builds. */
 export interface SharedCharacterData {
-  ruleset: Ruleset;
-  player: Player | undefined;
   campaign: Campaign | undefined;
-  cowData: CowData;
-  rulesetData: RulesetData;
   characterAbilityRecords: Awaited<ReturnType<typeof CharacterAbilities.findMany>>;
-  race: Race;
   characterLanguages: Awaited<ReturnType<typeof CharacterLanguages.findMany>>;
+  cowData: CowData;
   inventory: Awaited<ReturnType<typeof CharacterInventoryRepository.findMany>>;
+  player: Player | undefined;
+  race: Race;
   rawCharacterLevels: CharacterLevel[];
+  ruleset: Ruleset;
+  rulesetData: RulesetData;
 }
 
 export default class DetailedCharacterDataLoader {

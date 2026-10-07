@@ -102,11 +102,11 @@ class ClassLevelsService extends include(Object, ListsSpells) {
     rulesetId: string,
     classId: string,
     body: {
-      level: number;
       bab: number;
+      feats?: Array<{ aptitudeId: string; featId: string; free?: boolean }>;
+      level: number;
+      saves?: Array<{ base: number; saveId: string }>;
       skills: number;
-      saves?: Array<{ saveId: string; base: number }>;
-      feats?: Array<{ featId: string; aptitudeId: string; free?: boolean }>;
     },
   ) {
     const result = await withTransaction(async (tx) => {
@@ -284,9 +284,9 @@ class ClassLevelsService extends include(Object, ListsSpells) {
     levelId: string,
     body: {
       bab?: number;
+      feats?: Array<{ aptitudeId: string; featId: string; free?: boolean }>;
+      saves?: Array<{ base: number; saveId: string }>;
       skills?: number;
-      saves?: Array<{ saveId: string; base: number }>;
-      feats?: Array<{ featId: string; aptitudeId: string; free?: boolean }>;
     },
   ) {
     const result = await withTransaction(async (tx) => {

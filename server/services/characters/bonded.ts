@@ -5,7 +5,7 @@ import type { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character } from "@/shared/relations.ts";
 
-export type BondedEntry = { record: Character; detailed: DetailedCharacterInterface };
+export type BondedEntry = { detailed: DetailedCharacterInterface; record: Character };
 
 export async function loadBondedByKind(
   rulesetModule: Awaited<ReturnType<typeof RulesetFactory.fromRulesetId>>,

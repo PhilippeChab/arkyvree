@@ -4,8 +4,8 @@ import type { RefObject } from "react";
 import type { TemplateExpressionInputRef } from "./TemplateExpressionInput.tsx";
 
 interface TemplateExpressionToolbarProps {
-  inputRef: RefObject<TemplateExpressionInputRef | null>;
   disabled?: boolean;
+  inputRef: RefObject<TemplateExpressionInputRef | null>;
 }
 
 const FUNCTIONS = ["floor", "ceil", "min", "max", "abs"];

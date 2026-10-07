@@ -22,7 +22,7 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
       }
 
       // Match cantrips.ts and level*.ts (the standard spell level files)
-      const levelFiles: { file: string; level: number; constName: string }[] = [];
+      const levelFiles: { constName: string; file: string; level: number }[] = [];
 
       if (allFiles.includes("cantrips.ts")) levelFiles.push({ file: "cantrips.ts", level: 0, constName: "CANTRIPS" });
 

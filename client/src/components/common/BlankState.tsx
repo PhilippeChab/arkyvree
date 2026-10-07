@@ -5,12 +5,12 @@ import { SearchOffIcon } from "@/client/src/components/icons/index.ts";
 import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface BlankStateProps {
+  action?: ReactNode;
+  description?: string;
   /** Icon component, sized and tinted here so every empty state looks alike. */
   icon?: ElementType;
-  title: string;
-  description?: string;
-  action?: ReactNode;
   sx?: SxProps<Theme>;
+  title: string;
 }
 
 interface NoMatchesStateProps {

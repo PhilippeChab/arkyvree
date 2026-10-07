@@ -12,13 +12,13 @@ import { getEnvironmentName, readEnv } from "./environment.ts";
 
 /** OpenTelemetry's metrics and logs, pushed to Better Stack: its providers, kept to drain them on shutdown. */
 class Telemetry {
-  private initialized = false;
+  private hostMetrics: HostMetrics | null = null;
 
-  private meterProvider: MeterProvider | null = null;
+  private initialized = false;
 
   private loggerProvider: LoggerProvider | null = null;
 
-  private hostMetrics: HostMetrics | null = null;
+  private meterProvider: MeterProvider | null = null;
 
   /**
    * Initializes OTLP metrics + logs push to Better Stack via OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_AUTH_TOKEN. No-op if

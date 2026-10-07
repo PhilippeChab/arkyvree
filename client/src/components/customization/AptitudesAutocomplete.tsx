@@ -6,21 +6,21 @@ import { type rpc } from "@/client/src/services/rpc.ts";
 import { useAptitudeOptions } from "./useAptitudeOptions.ts";
 
 interface AptitudeAutocompleteProps {
-  rulesetId: string;
-  value: Aptitude | null;
-  onChange: (aptitude: Aptitude | null) => void;
   disabled?: boolean;
   label?: string;
-  size?: "small" | "medium";
+  onChange: (aptitude: Aptitude | null) => void;
+  rulesetId: string;
   scope?: "feats" | "spells";
+  size?: "small" | "medium";
+  value: Aptitude | null;
 }
 
 interface AptitudesAutocompleteProps {
-  rulesetId: string;
-  value: Aptitude[];
-  onChange: (aptitudes: Aptitude[]) => void;
   disabled?: boolean;
+  onChange: (aptitudes: Aptitude[]) => void;
+  rulesetId: string;
   scope?: "feats" | "spells";
+  value: Aptitude[];
 }
 
 type AptitudesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"], 200>;

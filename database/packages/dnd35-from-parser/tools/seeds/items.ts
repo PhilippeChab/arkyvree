@@ -21,12 +21,12 @@ import {
 import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 
 export type ItemSeedSets = {
-  simpleWeapons: ItemSeed[];
-  martialWeapons: ItemSeed[];
-  exoticWeapons: ItemSeed[];
   armor: ItemSeed[];
-  shields: ItemSeed[];
+  exoticWeapons: ItemSeed[];
   goods: ItemSeed[];
+  martialWeapons: ItemSeed[];
+  shields: ItemSeed[];
+  simpleWeapons: ItemSeed[];
 };
 
 /**

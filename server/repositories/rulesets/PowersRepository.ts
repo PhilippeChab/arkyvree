@@ -86,7 +86,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
   /** A picker's page of these spells (a list's, as the ruleset composes it), by name. */
   async findOptionPage(
     db: Db,
-    where: { ids: string[]; excludePowerIds?: string[]; search?: string },
+    where: { excludePowerIds?: string[]; ids: string[]; search?: string },
     pagination: { limit: number; page: number },
   ) {
     const { ids, excludePowerIds, search } = where;

@@ -54,10 +54,10 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
   async findPage(
     db: Db,
     where: {
-      recipientId: string;
-      unreadOnly?: boolean;
-      search?: string;
       orderDir?: "asc" | "desc";
+      recipientId: string;
+      search?: string;
+      unreadOnly?: boolean;
     },
     pagination: { limit: number; page: number },
   ) {
@@ -92,7 +92,7 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
     where:
       | { id: string; recipientId: string }
       | { recipientId: string; targetId: string }
-      | { recipientId: string; excludeTypes?: string[] },
+      | { excludeTypes?: string[]; recipientId: string },
   ) {
     return await db
       .update(this.table)

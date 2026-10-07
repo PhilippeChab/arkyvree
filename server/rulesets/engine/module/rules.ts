@@ -16,18 +16,30 @@ export interface ClassesRules {
   readProperties(properties: { id: string; type: string; value: string }[]): {
     bonusSpellAbilityId: string | null;
     bonusSpellPropertyId: string | null;
-    casterTypeValue: string | null;
     casterTypePropertyId: string | null;
+    casterTypeValue: string | null;
   };
 }
 
 /** The rules a class level follows: its base attack and skill points, and the spells and feat pools its table shows. */
 export interface ClassLevelsRules {
+  enrichWithFeatPools<T extends { id: string; level: number }>(
+    levels: T[],
+    modifiers: { operator: string; sourceId: string; target: string; value: string }[],
+    aptitudes: { name: string }[],
+  ): (T & { featPools: Record<string, number> })[];
   enrichWithProperties<T extends { id: string }>(
     levels: T[],
     properties: { entityId: string; type: string; value: string }[],
   ): (T & { bab: number; skills: number })[];
-  readProperties(properties: { type: string; value: string }[]): { bab: number; skills: number };
+  enrichWithSpellsKnown<T extends { id: string; level: number }>(
+    levels: T[],
+    modifiers: { operator: string; sourceId: string; target: string; value: string }[],
+  ): (T & { spellsKnown: Record<number, number | "All"> })[];
+  enrichWithSpellsPerDay<T extends { id: string; level: number }>(
+    levels: T[],
+    modifiers: { operator: string; sourceId: string; target: string; value: string }[],
+  ): (T & { spellsPerDay: Record<number, number> })[];
   /**
    * The spell lists a class's levels give slots in, by their aptitudes' ids: the one named for the class first, then
    * the others by level; none when they give none.
@@ -36,19 +48,7 @@ export interface ClassLevelsRules {
     rulesetData: Pick<RulesetData, "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
     klassId: string,
   ): string[];
-  enrichWithSpellsPerDay<T extends { id: string; level: number }>(
-    levels: T[],
-    modifiers: { sourceId: string; target: string; value: string; operator: string }[],
-  ): (T & { spellsPerDay: Record<number, number> })[];
-  enrichWithSpellsKnown<T extends { id: string; level: number }>(
-    levels: T[],
-    modifiers: { sourceId: string; target: string; value: string; operator: string }[],
-  ): (T & { spellsKnown: Record<number, number | "All"> })[];
-  enrichWithFeatPools<T extends { id: string; level: number }>(
-    levels: T[],
-    modifiers: { sourceId: string; target: string; value: string; operator: string }[],
-    aptitudes: { name: string }[],
-  ): (T & { featPools: Record<string, number> })[];
+  readProperties(properties: { type: string; value: string }[]): { bab: number; skills: number };
 }
 
 /** The rules a character's inventory follows. */
@@ -74,24 +74,24 @@ export interface LevelsRules {
 
 /** A power's fields its form sends, which its generated properties hold. */
 export interface PowerBody {
-  school?: string;
-  subschool?: string;
-  descriptors?: string[];
-  castingTime?: string;
-  rangeType?: string;
-  target?: string;
   areaOfEffect?: string;
-  duration?: string;
-  spellResistance?: string;
+  castingTime?: string;
   components?: string[];
+  descriptors?: string[];
+  duration?: string;
+  rangeType?: string;
+  school?: string;
+  spellResistance?: string;
+  subschool?: string;
+  target?: string;
 }
 
 /** The rules a power follows: how it's grouped (a spell's school), and which of its properties are generated. */
 export interface PowersRules {
-  readonly primaryGroupingType: string;
+  extractGroupingValue(body: PowerBody): string | null;
   /** The property types `PowersEffects.generateProperties` writes: a save replaces these and keeps any others. */
   readonly generatedPropertyTypes: readonly string[];
-  extractGroupingValue(body: PowerBody): string | null;
+  readonly primaryGroupingType: string;
 }
 
 /** What a ruleset answers the services without the database, one set of rules per area. */
@@ -107,7 +107,7 @@ export interface RulesetRules {
 }
 
 /** A skill's flags, kept as its properties: whether armor weighs on it, how many times over, and untrained use. */
-export type SkillFlags = { impactedByWeight: boolean; checkPenaltyMultiplier: number; usableWithoutTraining: boolean };
+export type SkillFlags = { checkPenaltyMultiplier: number; impactedByWeight: boolean; usableWithoutTraining: boolean };
 
 /** The rules a skill follows. */
 export interface SkillsRules {

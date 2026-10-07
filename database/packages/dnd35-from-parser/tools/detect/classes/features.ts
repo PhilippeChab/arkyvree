@@ -43,7 +43,7 @@ export function buildFeatureMap<T>(
 
 export function detectFeatureOccurrences(
   progression: ClassReference["raw"]["progression"],
-): { name: string; levels: number[] }[] {
+): { levels: number[]; name: string }[] {
   const map = new Map<string, number[]>();
 
   for (const row of progression) {
@@ -104,9 +104,9 @@ export function isScalingFeature(normalizedName: string, progression: ClassRefer
 
 /** Merges "1st Foo" / "2nd Foo" occurrences into one entry with combined levels. */
 export function mergeOrdinalVariants(
-  featureOccurrences: { name: string; levels: number[] }[],
-): { name: string; levels: number[] }[] {
-  const map = new Map<string, { name: string; levels: Set<number> }>();
+  featureOccurrences: { levels: number[]; name: string }[],
+): { levels: number[]; name: string }[] {
+  const map = new Map<string, { levels: Set<number>; name: string }>();
   for (const occ of featureOccurrences) {
     const base = stripOrdinalPrefix(occ.name);
     const key = base.toLowerCase();
@@ -154,10 +154,10 @@ export function normalizeFeatureName(name: string): string {
 
 export function parsePoolSubOptions(
   description: string,
-): { intro: string; options: { name: string; description: string; stackable?: true }[] } | undefined {
+): { intro: string; options: { description: string; name: string; stackable?: true }[] } | undefined {
   // Match "Name (Ex/Su/Sp):" or "Name:" where Name is title-cased words (may include hyphens, apostrophes)
   const pattern = /(?:^|\.\s+)([A-Z][A-Za-z'-]+(?:\s+[A-Za-z'-]+)*)\s*(?:\((?:Ex|Su|Sp)\)\s*)?:\s*/g;
-  const matches: { name: string; index: number; matchLength: number }[] = [];
+  const matches: { index: number; matchLength: number; name: string }[] = [];
 
   let m;
   while ((m = pattern.exec(description)) !== null)
@@ -172,7 +172,7 @@ export function parsePoolSubOptions(
     .replace(/\.\s*$/, "")
     .trim();
 
-  const options: { name: string; description: string; stackable?: true }[] = [];
+  const options: { description: string; name: string; stackable?: true }[] = [];
   for (let i = 0; i < matches.length; i++) {
     const start = matches[i].index + matches[i].matchLength;
     const end = i + 1 < matches.length ? matches[i + 1].index : description.length;

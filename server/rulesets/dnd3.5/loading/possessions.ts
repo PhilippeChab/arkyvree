@@ -34,8 +34,8 @@ export function resolvePossessedPowers(
   powerIdsBySlug: Map<string, string[]>,
   powersById: Map<string, PowerWithAptitudes>,
   aptitudeIdBySpellSlug: Map<string, string>,
-): { powerId: string; aptitudeId: string }[] {
-  const results: { powerId: string; aptitudeId: string }[] = [];
+): { aptitudeId: string; powerId: string }[] {
+  const results: { aptitudeId: string; powerId: string }[] = [];
   for (const mod of modifiers) {
     if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
     const known = PowersPaths.parseKnown(mod.target);

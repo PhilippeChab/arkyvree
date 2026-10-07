@@ -29,18 +29,18 @@ type RequirementRow = typeof requirementsInCustomization.$inferInsert;
  * powers adds them, so the steps after can name them.
  */
 export type SeedContext = {
-  rulesetId: string;
   abilityMap: Ids;
-  saveMap: Ids;
-  skillMap: Ids;
   /** Its aptitudes and its base ruleset's. */
   aptMap: Ids;
   /** Its feats and its base ruleset's, its own under a name they share. */
   featMap: Ids;
-  /** Its own powers. */
-  powerMap: Ids;
   /** Its base ruleset's powers, which it copies before adding them to a spell list (`cowPower`). */
   inheritedPowerMap: Ids;
+  /** Its own powers. */
+  powerMap: Ids;
+  rulesetId: string;
+  saveMap: Ids;
+  skillMap: Ids;
 };
 
 /**
@@ -158,7 +158,7 @@ export class BaseSeeder {
    * Modifiers with their sources: the ones without requirements in one insert, and each one with requirements alone,
    * its requirements as rows of it.
    */
-  protected async insertModifiers(sourceType: string, modifiers: { sourceId: string; modifier: ModifierSeed }[]) {
+  protected async insertModifiers(sourceType: string, modifiers: { modifier: ModifierSeed; sourceId: string }[]) {
     const plain = modifiers.filter(({ modifier }) => !modifier.requirements?.length);
     await this.insertAll(
       modifiersInCustomization,

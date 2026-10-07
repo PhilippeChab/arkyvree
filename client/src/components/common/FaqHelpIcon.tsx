@@ -5,8 +5,8 @@ import { HelpOutlineIcon } from "@/client/src/components/icons/index.ts";
 import { faqTooltip } from "./faqTooltip.tsx";
 
 interface FaqHelpIconProps {
-  text: string;
   size?: number;
+  text: string;
 }
 
 export function FaqHelpIcon({ text, size = 16 }: FaqHelpIconProps) {

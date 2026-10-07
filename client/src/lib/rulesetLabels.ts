@@ -1,6 +1,6 @@
 interface Words {
-  one: string;
   many: string;
+  one: string;
 }
 
 /** The engine's word for each entity type, which a ruleset can rename. */

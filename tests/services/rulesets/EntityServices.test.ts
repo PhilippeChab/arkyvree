@@ -31,9 +31,10 @@ type Refs = { abilityId: string; featAptitudeId: string; powerAptitudeId: string
 type Row = { id: string; name: string; rulesetId: string; updatedAt: string };
 
 type Service = {
-  list: (rulesetId: string, search?: string) => Promise<Page>;
-  get: (rulesetId: string, id: string) => Promise<{ id: string; name: string }>;
   create: (session: Session, rulesetId: string, name: string, refs: Refs) => Promise<Row>;
+  get: (rulesetId: string, id: string) => Promise<{ id: string; name: string }>;
+  list: (rulesetId: string, search?: string) => Promise<Page>;
+  remove: (session: Session, rulesetId: string, id: string) => Promise<unknown>;
   /** `updatedAt` is the stale-edit token: the version of the entity the edit started from. */
   update: (
     session: Session,
@@ -43,7 +44,6 @@ type Service = {
     refs: Refs,
     updatedAt?: string,
   ) => Promise<Row>;
-  remove: (session: Session, rulesetId: string, id: string) => Promise<unknown>;
 };
 
 const firstPage = { limit: 100, page: 1 };

@@ -19,8 +19,8 @@ class CharacterLevelFeatsRepository extends LevelPicksRepository<typeof levelFea
     where:
       | { featId: string; rulesetId: string }
       | { aptitudeId: string; rulesetId: string }
-      | { hostRulesetId: string; extensionRulesetId: string; shadowFeatIds: string[] }
-      | { hostRulesetId: string; extensionRulesetId: string; shadowAptitudeIds: string[] },
+      | { extensionRulesetId: string; hostRulesetId: string; shadowFeatIds: string[] }
+      | { extensionRulesetId: string; hostRulesetId: string; shadowAptitudeIds: string[] },
   ): Promise<boolean> {
     const { table } = this;
     if ("featId" in where)

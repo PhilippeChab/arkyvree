@@ -23,29 +23,29 @@ import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "
 import type { CharacterData } from "./characterData.ts";
 
 interface CharacterIdentityFormData {
-  race: string;
-  alignment: Alignment | "";
-  experience: number;
   age: string;
-  gender: Gender | "";
-  height: string;
-  weight: string;
+  alignment: Alignment | "";
   deity: string;
   description: string;
-  notes: string;
+  experience: number;
+  gender: Gender | "";
+  height: string;
   languageIds: string[];
+  notes: string;
+  race: string;
+  weight: string;
 }
 
 interface CharacterIdentitySectionProps {
+  character: CharacterData;
   characterId: string;
-  rulesetId?: string;
-  readOnly?: boolean;
+  partial?: boolean;
   /** The portrait can't be changed; defaults to `readOnly`. */
   portraitReadOnly?: boolean;
-  partial?: boolean;
   /** Pre-resolved portrait URL for unauthenticated views (shared character page). */
   portraitUrl?: string | null;
-  character: CharacterData;
+  readOnly?: boolean;
+  rulesetId?: string;
 }
 
 /** A language as the picker shows it: the character's, or one the ruleset offers. */

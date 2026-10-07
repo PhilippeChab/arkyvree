@@ -32,11 +32,11 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
       for (const power of this.rulesetPowers) powerById.set(power.id, power);
 
       const results: {
-        power: PowerWithAptitudes;
         aptitudeId: string;
-        level: number;
-        properties: Property[];
         dc: number | null;
+        level: number;
+        power: PowerWithAptitudes;
+        properties: Property[];
         saveName: string | null;
       }[] = [];
       for (const virtual of this.powers) {

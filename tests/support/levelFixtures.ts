@@ -17,18 +17,18 @@ type CharacterValues = Omit<Parameters<typeof createCharacter>[2], "name" | "xp"
 
 /** A level's picks by name, with its hit points and ability increase. */
 export type LevelPlan = {
-  hp: number;
   ability?: string;
-  skills?: Record<string, number>;
   feats?: Record<string, string[]>;
+  hp: number;
   powers?: Record<string, string[]>;
+  skills?: Record<string, number>;
 };
 
 /** A level's picks, by id: skill ranks, and feats and powers by the aptitude they're picked through. */
 export type Picks = {
-  skills: Record<string, number>;
   feats: Record<string, string[]>;
   powers: Record<string, string[]>;
+  skills: Record<string, number>;
 };
 
 /** A human druid's first level, with a wolf for animal companion. */
@@ -308,7 +308,7 @@ export async function createSeedCharacter(
     xp = 0,
     abilities = {},
     ...values
-  }: Partial<Omit<CharacterValues, "abilities">> & { xp?: number; abilities?: Record<string, number> } = {},
+  }: Partial<Omit<CharacterValues, "abilities">> & { abilities?: Record<string, number>; xp?: number } = {},
 ) {
   const base = BUILDS[build];
   return await createCharacter(db, ctx, {

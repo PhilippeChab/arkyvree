@@ -15,10 +15,10 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 type Ability = RulesetAbility;
 
 interface SkillFormFieldsProps {
-  form: UseFormReturn<SkillFormData>;
   abilities: Ability[];
   /** Why the abilities didn't load. */
   abilitiesError: unknown;
+  form: UseFormReturn<SkillFormData>;
 }
 
 export type SkillFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"];

@@ -28,13 +28,13 @@ export default class BondedPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  readonly name = "bonded";
-
-  readonly label = "Bonded";
+  readonly component = { key: "bonded", getter: "getBonds" } as const;
 
   readonly description = "Familiar, animal companion, or mount race";
 
-  readonly component = { key: "bonded", getter: "getBonds" } as const;
+  readonly label = "Bonded";
+
+  readonly name = "bonded";
 
   generate(_rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
     return BondedPaths.generateBondPaths(kind);

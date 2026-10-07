@@ -34,10 +34,10 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
   async create(
     db: Db,
     values: {
-      rulesetId: string;
       email: string;
-      role: ContributorRole;
       invitedBy: string;
+      role: ContributorRole;
+      rulesetId: string;
       userId?: string;
     },
   ) {
@@ -65,7 +65,7 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
 
   async findManyWithRuleset(
     db: Db,
-    where: { userId: string; status: ContributorStatus },
+    where: { status: ContributorStatus; userId: string },
     pagination: { limit: number } = { limit: 100 },
   ) {
     return await db.query.contributorsInRules.findMany({
@@ -88,8 +88,8 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
     db: Db,
     where:
       | { id: string }
-      | { rulesetId: string; userId: string; status: ContributorStatus }
-      | { rulesetId: string; email: string; status: ContributorStatus },
+      | { rulesetId: string; status: ContributorStatus; userId: string }
+      | { email: string; rulesetId: string; status: ContributorStatus },
   ) {
     return await db.query.contributorsInRules.findFirst({
       where: this.branchWhere(
@@ -126,7 +126,7 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
 
   async findPage(
     db: Db,
-    where: { rulesetId: string; search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; rulesetId: string; search?: string },
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "createdAt", orderDir = "desc" } = where;
@@ -172,7 +172,7 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
   }
 
   /** The user's role on the ruleset, when they're an active contributor: what the ruleset's policy grants by. */
-  async findRole(db: Db, where: { userId: string; rulesetId: string }): Promise<ContributorRole | undefined> {
+  async findRole(db: Db, where: { rulesetId: string; userId: string }): Promise<ContributorRole | undefined> {
     const contributor = await db.query.contributorsInRules.findFirst({
       where: this.where([
         eq(this.table.userId, where.userId),

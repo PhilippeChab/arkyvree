@@ -4,8 +4,8 @@ import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 
 /** What a resend reports back: the mutation's callbacks. */
 interface ResendCallbacks {
-  onSuccess: () => void;
   onError: (error: unknown) => void;
+  onSuccess: () => void;
 }
 
 /**

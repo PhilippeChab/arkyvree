@@ -44,10 +44,10 @@ function parseBonusFeatList(description: string): string[] | undefined {
 /** Parse per-level bonus feat choices from description like:
  *  "At 1st level... select either X or Y. At 2nd level... select either A or B."
  *  Returns an array of { level, feats } entries, or undefined if no per-level pattern found. */
-function parsePerLevelBonusFeatList(description: string): { level: number; feats: string[] }[] | undefined {
+function parsePerLevelBonusFeatList(description: string): { feats: string[]; level: number }[] | undefined {
   // Match "At Xth level" followed by feat choices, capturing up to the next period
   const pattern = /At (\d+)(?:st|nd|rd|th) level[^.]*?(?:select|choose)\s+(?:either\s+)?(.+?)\./gi;
-  const results: { level: number; feats: string[] }[] = [];
+  const results: { feats: string[]; level: number }[] = [];
 
   let m;
   while ((m = pattern.exec(description)) !== null) {
@@ -67,7 +67,7 @@ function parsePerLevelBonusFeatList(description: string): { level: number; feats
 
 export function detectBonusFeatLists(
   raw: ClassReference["raw"],
-  featureOccurrences: { name: string; levels: number[] }[],
+  featureOccurrences: { levels: number[]; name: string }[],
 ): { bonusFeatLists?: BonusFeatList[] } {
   const lists: BonusFeatList[] = [];
 

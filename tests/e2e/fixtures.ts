@@ -17,7 +17,7 @@ import { createUser, type E2EUser } from "./support/users.ts";
  */
 export const test = base.extend<
   { page: Page; user: E2EUser },
-  { ownerUser: E2EUser; inviteeUser: E2EUser; seedUser: typeof TEST_USERS.seedUser }
+  { inviteeUser: E2EUser; ownerUser: E2EUser; seedUser: typeof TEST_USERS.seedUser }
 >({
   // The client code each test's page runs, when the run records coverage
   page: async ({ page }, provide) => {

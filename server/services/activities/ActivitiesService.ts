@@ -30,7 +30,7 @@ import type { Session } from "@/shared/relations.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
-type ActivityUrl = string | null | { noAccess: true; entityType: "ruleset" | "character" };
+type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAccess: true };
 
 class ActivitiesService {
   /**
@@ -40,7 +40,7 @@ class ActivitiesService {
    */
   private contributorUrl(
     session: Session,
-    contributor: { userId: string | null; status: string },
+    contributor: { status: string; userId: string | null },
     entityType: "ruleset" | "character",
     inviteUrl: string,
     entityUrl: string,
@@ -115,11 +115,11 @@ class ActivitiesService {
   async getActivities(
     session: Session,
     where: {
+      orderBy?: "createdAt" | "type";
+      orderDir?: "asc" | "desc";
       search?: string;
       targetTable?: string;
       type?: string;
-      orderBy?: "createdAt" | "type";
-      orderDir?: "asc" | "desc";
     },
     pagination: { limit: number; page: number },
   ) {

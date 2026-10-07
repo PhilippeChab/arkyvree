@@ -13,17 +13,17 @@ import { useIsMobile } from "@/client/src/hooks/index.ts";
 import type { LevelWizard } from "./levelUp/index.ts";
 
 interface LevelWizardDialogProps {
-  open: boolean;
-  /** It has faded out (`useDialogState`'s `onExited`): its owner unmounts it. */
-  onExited: () => void;
-  title: string;
-  wizard: WizardControls;
-  stepLabels: readonly string[];
+  /** The current step. */
+  children: ReactNode;
   /** The last step's button ("Finish"). */
   finishLabel: string;
   isSaving: boolean;
-  /** The current step. */
-  children: ReactNode;
+  /** It has faded out (`useDialogState`'s `onExited`): its owner unmounts it. */
+  onExited: () => void;
+  open: boolean;
+  stepLabels: readonly string[];
+  title: string;
+  wizard: WizardControls;
 }
 
 /** The part of a level wizard the dialog drives: steps, cancel, validation and navigation. */

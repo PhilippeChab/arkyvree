@@ -18,17 +18,35 @@ const NAVIGATABLE_POWER_DC_PATHS = [
 
 /** The spells' target paths: each spell's DC, possession and properties. */
 export default class PowersPaths implements PathCategory<Dnd35Components> {
-  /** Whether a target is a spell's (`powers.…`): a spell's modifiers apply after the others. */
-  static isPowerTarget(target: string): boolean {
-    return target.startsWith("powers.");
-  }
+  /**
+   * The DC paths of these groupings (a school or descriptor: `powers.groups.<grouping>.*.dc.misc`, each of its spells)
+   * or of these spells (`wildcard` false: `powers.<spell>.dc.*.misc`, each class's DC of it).
+   */
+  static generateGroupingPaths(
+    powerGroupings: string[],
+    kind: "modifier" | "requirement",
+    wildcard: boolean = true,
+    groupLabel?: string,
+  ): TargetPath[] {
+    const paths: TargetPath[] = [];
 
-  /** The spell and list a target makes known (`powers.<spell>.<list>.known`), or undefined for another target. */
-  static parseKnown(target: string): { spell: string; list: string } | undefined {
-    const parts = target.split(".");
-    return parts.length === 4 && parts[0] === "powers" && parts[3] === "known"
-      ? { spell: parts[1], list: parts[2] }
-      : undefined;
+    for (const grouping of powerGroupings) {
+      for (const subPath of NAVIGATABLE_POWER_DC_PATHS) {
+        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
+        const prefix = groupLabel ? `${capitalize(grouping)} ${groupLabel}` : capitalize(grouping);
+        const leaf = subPath.path.slice("dc.".length);
+        paths.push({
+          path: wildcard ? `powers.groups.${grouping}.*.dc.${leaf}` : `powers.${grouping}.dc.*.${leaf}`,
+          category: "powers",
+          description: `${kind === "requirement" ? "Any" : "All"} ${prefix} — ${subPath.description}`,
+          ...(groupLabel && { groupDescription: `${capitalize(grouping)} ${groupLabel} spells` }),
+          valueType: subPath.type,
+          operators: getNumericOperators(kind),
+        });
+      }
+    }
+
+    return paths;
   }
 
   static generatePowerPaths(
@@ -89,46 +107,28 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  /**
-   * The DC paths of these groupings (a school or descriptor: `powers.groups.<grouping>.*.dc.misc`, each of its spells)
-   * or of these spells (`wildcard` false: `powers.<spell>.dc.*.misc`, each class's DC of it).
-   */
-  static generateGroupingPaths(
-    powerGroupings: string[],
-    kind: "modifier" | "requirement",
-    wildcard: boolean = true,
-    groupLabel?: string,
-  ): TargetPath[] {
-    const paths: TargetPath[] = [];
-
-    for (const grouping of powerGroupings) {
-      for (const subPath of NAVIGATABLE_POWER_DC_PATHS) {
-        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
-        const prefix = groupLabel ? `${capitalize(grouping)} ${groupLabel}` : capitalize(grouping);
-        const leaf = subPath.path.slice("dc.".length);
-        paths.push({
-          path: wildcard ? `powers.groups.${grouping}.*.dc.${leaf}` : `powers.${grouping}.dc.*.${leaf}`,
-          category: "powers",
-          description: `${kind === "requirement" ? "Any" : "All"} ${prefix} — ${subPath.description}`,
-          ...(groupLabel && { groupDescription: `${capitalize(grouping)} ${groupLabel} spells` }),
-          valueType: subPath.type,
-          operators: getNumericOperators(kind),
-        });
-      }
-    }
-
-    return paths;
+  /** Whether a target is a spell's (`powers.…`): a spell's modifiers apply after the others. */
+  static isPowerTarget(target: string): boolean {
+    return target.startsWith("powers.");
   }
 
-  readonly name = "powers";
-
-  readonly label = "Spells";
-
-  readonly description = "Spell DC, possession, and properties";
+  /** The spell and list a target makes known (`powers.<spell>.<list>.known`), or undefined for another target. */
+  static parseKnown(target: string): { list: string; spell: string } | undefined {
+    const parts = target.split(".");
+    return parts.length === 4 && parts[0] === "powers" && parts[3] === "known"
+      ? { spell: parts[1], list: parts[2] }
+      : undefined;
+  }
 
   readonly component = { key: "powers", getter: "getPowers" } as const;
 
+  readonly description = "Spell DC, possession, and properties";
+
   readonly groupDescriptionTemplates = { powers: "{name} spell DC and properties" };
+
+  readonly label = "Spells";
+
+  readonly name = "powers";
 
   /** Each spell a list has at a level, by its slug: its own DC paths. */
   private leveledPowerNames(powers: RulesetData["powers"]) {

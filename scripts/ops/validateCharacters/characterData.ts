@@ -5,13 +5,13 @@ import { ACTIVE_CHARACTERS, ACTIVE_LEVELS, type Character, query } from "./queri
 /** Prints how many rows the active characters hold, by kind. */
 export async function printCharacterData(characters: Character[]) {
   const [counts] = await query<{
-    levels: string;
-    feats: string;
-    skills: string;
-    powers: string;
     abilities: string;
-    languages: string;
+    feats: string;
     inventory: string;
+    languages: string;
+    levels: string;
+    powers: string;
+    skills: string;
   }>(sql`SELECT
        (SELECT count(*) FROM character.levels WHERE character_id IN ${ACTIVE_CHARACTERS} AND deleted_at IS NULL)::text AS levels,
        (SELECT count(*) FROM character.level_feats WHERE character_level_id IN ${ACTIVE_LEVELS} AND deleted_at IS NULL)::text AS feats,

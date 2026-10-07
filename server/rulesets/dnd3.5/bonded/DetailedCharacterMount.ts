@@ -10,9 +10,9 @@ import DetailedCharacterAdvancingBonded from "./DetailedCharacterAdvancingBonded
  */
 type MountRow = {
   bonusHD: number;
+  int: number;
   natural: number;
   str: number;
-  int: number;
 };
 
 function bracketAt(paladinLevel: number): MountRow | null {

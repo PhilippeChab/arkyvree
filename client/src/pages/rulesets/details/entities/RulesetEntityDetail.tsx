@@ -28,41 +28,41 @@ type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues,
   RulesetEntityDetailProps<TEntity, TForm, TKey>,
   "rulesetId" | "entityId" | "section" | "label" | "query"
 > & {
+  chips: ReactNode;
   editing: EntityEditing<TEntity, TForm>;
   entity: TEntity;
-  chips: ReactNode;
 };
 
 interface EntityBase {
+  description?: string | null;
   id: string;
   name: string;
-  description?: string | null;
   updatedAt: string;
 }
 
 interface EntityEditing<TEntity, TForm extends FieldValues> {
   /** The form before its entity's values fill it in */
   empty: TForm & DefaultValues<TForm>;
+  remove: () => Promise<unknown>;
+  renderFields: (form: UseFormReturn<TForm>) => ReactNode;
   toFormValues: (entity: TEntity) => TForm;
   /** Saves the form; resolves to the saved entity, whose id changes when a fork copies an inherited one. */
   update: (data: TForm, updatedAt: string | undefined) => Promise<TEntity>;
-  remove: () => Promise<unknown>;
-  renderFields: (form: UseFormReturn<TForm>) => ReactNode;
 }
 
 interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> {
-  rulesetId: string;
+  /** Omitted for entities that can't be edited (abilities). */
+  editing?: EntityEditing<TEntity, TForm>;
   entityId: string;
-  /** Ruleset tab and URL segment, e.g. "languages". */
-  section: string;
   /** Singular display name, e.g. "Language". */
   label: string;
   /** The entity's detail query by id, from `entityDetailQueries.ts`: the page reads it, and a save seeds the copy's. */
   query: (entityId: string) => UseQueryOptions<TEntity, Error, TEntity, TKey>;
-  /** Omitted for entities that can't be edited (abilities). */
-  editing?: EntityEditing<TEntity, TForm>;
   /** Facts shown next to the title in the read-only view. */
   renderChips?: (entity: TEntity) => ReactNode;
+  rulesetId: string;
+  /** Ruleset tab and URL segment, e.g. "languages". */
+  section: string;
 }
 
 /** An editor's details: the entity's form, following the entity, which saves it. */

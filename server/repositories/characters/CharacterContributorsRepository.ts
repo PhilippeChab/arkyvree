@@ -38,8 +38,8 @@ class CharacterContributorsRepository extends include(
     values: {
       characterId: string;
       email: string;
-      role: ContributorRole;
       invitedBy: string;
+      role: ContributorRole;
       userId?: string;
     },
   ) {
@@ -57,7 +57,7 @@ class CharacterContributorsRepository extends include(
 
   async findManyWithCharacter(
     db: Db,
-    where: { userId: string; status: ContributorStatus },
+    where: { status: ContributorStatus; userId: string },
     pagination: { limit: number } = { limit: 100 },
   ) {
     return await db.query.contributorsInCharacter.findMany({
@@ -80,7 +80,7 @@ class CharacterContributorsRepository extends include(
     db: Db,
     where:
       | { id: string }
-      | { characterId: string; userId: string; status: ContributorStatus }
+      | { characterId: string; status: ContributorStatus; userId: string }
       | { characterId: string; email: string; status: ContributorStatus },
   ) {
     return await db.query.contributorsInCharacter.findFirst({
@@ -118,7 +118,7 @@ class CharacterContributorsRepository extends include(
 
   async findPage(
     db: Db,
-    where: { characterId: string; search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: { characterId: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "createdAt", orderDir = "desc" } = where;
@@ -164,7 +164,7 @@ class CharacterContributorsRepository extends include(
   }
 
   /** The user's role on the character, when they're an active contributor. */
-  async findRole(db: Db, where: { userId: string; characterId: string }): Promise<ContributorRole | undefined> {
+  async findRole(db: Db, where: { characterId: string; userId: string }): Promise<ContributorRole | undefined> {
     const contributor = await db.query.contributorsInCharacter.findFirst({
       where: this.where([
         eq(this.table.userId, where.userId),

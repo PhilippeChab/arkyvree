@@ -61,18 +61,18 @@ type GroupedFeatRow = GroupedPaginated["items"][number];
 
 type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
 interface GroupedRowProps {
-  row: GroupedFeatRow;
-  rulesetId: string;
   childOnly: boolean;
   /** Set on a row that groups several variants. */
   family: string | null;
   isExpanded: boolean;
-  rowIndex: number;
+  onRowClick: (feat: Pick<Feat, "id">) => void;
+  onRowMouseEnter: (feat: Pick<Feat, "id">) => void;
   onToggleFamily: (family: string) => void;
   onVariantClick: (feat: Feat) => void;
   onVariantMouseEnter: (feat: Feat) => void;
-  onRowClick: (feat: Pick<Feat, "id">) => void;
-  onRowMouseEnter: (feat: Pick<Feat, "id">) => void;
+  row: GroupedFeatRow;
+  rowIndex: number;
+  rulesetId: string;
 }
 
 const FEATS_COLUMNS = [

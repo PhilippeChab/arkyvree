@@ -32,7 +32,7 @@ function conditional(text: string) {
 }
 
 /** The modifiers seeded with the entity named `name` of `seeds`, each as "target +value". */
-function seededModifiers(seeds: { name: string; modifiers?: { target: string; value: string }[] }[], name: string) {
+function seededModifiers(seeds: { modifiers?: { target: string; value: string }[]; name: string }[], name: string) {
   const seed = seeds.find((entry) => entry.name === name);
   if (!seed) throw new Error(`${name} isn't seeded`);
   return (seed.modifiers ?? []).map(({ target, value }) => `${target} +${value}`).sort();

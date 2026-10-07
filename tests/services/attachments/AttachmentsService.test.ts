@@ -23,7 +23,7 @@ function signTestToken(payload: Record<string, unknown>): string {
 
 function uploadParams(
   userId: string,
-  overrides?: Partial<{ name: string; filename: string; contentType: string; byteSize: number }>,
+  overrides?: Partial<{ byteSize: number; contentType: string; filename: string; name: string }>,
 ) {
   return {
     recordType: "User",
@@ -36,8 +36,8 @@ function uploadParams(
 }
 
 describe("AttachmentsService", () => {
-  let presignCalls: Array<{ key: string; contentType: string }>;
-  let stats: Map<string, { size: number; etag: string } | null>;
+  let presignCalls: Array<{ contentType: string; key: string }>;
+  let stats: Map<string, { etag: string; size: number } | null>;
   let deletedKeys: string[];
   let deleteShouldFail: boolean;
 

@@ -16,14 +16,14 @@ import type CombatComponent from "./CombatComponent.ts";
 type ArmorsData = Record<string, ArmorSlot>;
 
 type ArmorSlot = {
-  name: string;
-  itemId: string;
-  /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
-  proficient: boolean;
   ac: { bonus: number; misc: number; readonly total: number };
   checkpenalty: number;
-  spellfailure: number;
+  itemId: string;
   maxdex: number;
+  name: string;
+  /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
+  proficient: boolean;
+  spellfailure: number;
 };
 
 const ARMOR_GROUPING_PROPERTIES = [ARMOR_TYPE] as const;

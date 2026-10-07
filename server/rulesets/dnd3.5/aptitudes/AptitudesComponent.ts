@@ -11,23 +11,23 @@ type AptitudesById = Map<string, AptitudesData[string]>;
 
 type AptitudesData = {
   [key: string]: {
-    id: string;
-    name: string;
-    description: string;
-    uses: number;
     allowed: number;
-    spent: number;
     available: number;
+    description: string;
+    id: string;
     /** A spell list's: whether its spells join the list of the class whose level gave it. */
     joinsclasslist?: boolean;
+    name: string;
+    spent: number;
+    uses: number;
   };
 };
 
 export type AptitudeLevelData = {
-  uses: number;
   allowed: number;
-  spent: number;
   available: number;
+  spent: number;
+  uses: number;
 };
 
 export const ALLOWED_ALL = -1;
@@ -40,16 +40,16 @@ export default class AptitudesComponent {
     private readonly countGeneralFeats: (totalLevel: number) => number,
   ) {}
 
-  private readonly aptitudes: AptitudesData = {};
+  /** The spell levels whose spells are all known: a state of the level, not a count it holds (`newSpellLevel`). */
+  private readonly allKnownLevels = new WeakSet<AptitudeLevelData>();
 
-  /** The general feats the character's level gives, when its ruleset has no aptitude for them to count toward. */
-  private unplacedGeneralFeats = 0;
+  private readonly aptitudes: AptitudesData = {};
 
   // Track which aptitude keys are leveled (spell aptitudes)
   private readonly leveledAptitudeKeys = new Set<string>();
 
-  /** The spell levels whose spells are all known: a state of the level, not a count it holds (`newSpellLevel`). */
-  private readonly allKnownLevels = new WeakSet<AptitudeLevelData>();
+  /** The general feats the character's level gives, when its ruleset has no aptitude for them to count toward. */
+  private unplacedGeneralFeats = 0;
 
   /**
    * What each aptitude allows: the feats and the (non-free) powers the class levels grant through it, and the general
@@ -181,11 +181,11 @@ export default class AptitudesComponent {
    */
   extractFeatPools(): Record<
     string,
-    { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }
+    { allowed: number; available: number; id: string; name: string; shared: boolean; spent: number }
   > {
     const pools: Record<
       string,
-      { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }
+      { allowed: number; available: number; id: string; name: string; shared: boolean; spent: number }
     > = {};
     for (const [key, aptitude] of Object.entries(this.aptitudes)) {
       if (this.leveledAptitudeKeys.has(key)) continue;
@@ -208,32 +208,32 @@ export default class AptitudesComponent {
   extractPowerPools(): Record<
     string,
     {
-      id: string;
-      name: string;
       allowed: number;
-      spent: number;
       available: number;
+      id: string;
       leveled?: boolean;
-      levels?: Record<string, { allowed: number; spent: number; available: number }>;
+      levels?: Record<string, { allowed: number; available: number; spent: number }>;
+      name: string;
+      spent: number;
     }
   > {
     const pools: Record<
       string,
       {
-        id: string;
-        name: string;
         allowed: number;
-        spent: number;
         available: number;
+        id: string;
         leveled?: boolean;
-        levels?: Record<string, { allowed: number; spent: number; available: number }>;
+        levels?: Record<string, { allowed: number; available: number; spent: number }>;
+        name: string;
+        spent: number;
       }
     > = {};
 
     for (const [key, aptitude] of Object.entries(this.aptitudes)) {
       if (this.leveledAptitudeKeys.has(key)) {
         const aptitudeObj = aptitude as Record<string, unknown>;
-        const levels: Record<string, { allowed: number; spent: number; available: number }> = {};
+        const levels: Record<string, { allowed: number; available: number; spent: number }> = {};
         let totalAvailable = 0;
 
         for (let spellLevel = 0; spellLevel <= MAX_SPELL_LEVEL; spellLevel++) {

@@ -12,10 +12,10 @@ type RequirementConditionFieldsProps = Pick<RequirementFormProps, "form" | "rule
 
 interface RequirementFormProps {
   form: UseFormReturn<RequirementFormData>;
-  type: RequirementType;
+  mode: "create" | "edit";
   onTypeChange: (type: RequirementType) => void;
   rulesetId: string;
-  mode: "create" | "edit";
+  type: RequirementType;
 }
 
 export type RequirementFormData = InferRequestType<

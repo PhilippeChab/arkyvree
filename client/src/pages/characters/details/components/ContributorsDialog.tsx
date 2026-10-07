@@ -26,11 +26,11 @@ import { rpc } from "@/client/src/services/rpc.ts";
 type Contributor = InferResponseType<(typeof rpc.api.characters)[":id"]["contributors"]["$get"], 200>["items"][number];
 
 interface ContributorsDialogProps {
-  open: boolean;
-  onClose: () => void;
   characterId: string;
-  isOwner: boolean;
   isArchived: boolean;
+  isOwner: boolean;
+  onClose: () => void;
+  open: boolean;
 }
 
 export function ContributorsDialog({ open, onClose, characterId, isOwner, isArchived }: ContributorsDialogProps) {

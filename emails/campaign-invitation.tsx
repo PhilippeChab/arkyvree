@@ -4,10 +4,10 @@ import { EmailLayout } from "./EmailLayout.tsx";
 import { APP_URL, styles } from "./emailStyles.ts";
 
 interface CampaignInvitationEmailProps {
-  inviteeName?: string;
-  inviterName?: string;
   campaignName?: string;
+  inviteeName?: string;
   inviteId: string;
+  inviterName?: string;
 }
 
 export function CampaignInvitationEmail({

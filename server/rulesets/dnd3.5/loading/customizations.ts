@@ -24,12 +24,12 @@ import type { buildFeats, buildPowers } from "./picks.ts";
 export function collectModifiers(
   parts: {
     characterSourcedModifiers: Modifier[];
-    race: CustomizedRace;
-    inventory: InventoryEntry[];
-    klassLevels: CustomizedKlassLevel[];
-    klassEntityIds: string[];
     feats: CustomizedFeat[];
+    inventory: InventoryEntry[];
+    klassEntityIds: string[];
+    klassLevels: CustomizedKlassLevel[];
     powers: CustomizedPower[];
+    race: CustomizedRace;
   },
   rulesetData: RulesetData,
   extraRequirements: Requirement[],
@@ -164,7 +164,7 @@ export function toCustomizedKlassLevels(klassLevelsRaw: KlassLevel[], rulesetDat
 /** Power properties/modifiers/requirements. Compose step pre-merges siblings. */
 export function toCustomizedPowers(
   allPowers: ReturnType<typeof buildPowers>["allPowers"],
-  virtuallyPossessedPowers: { powerId: string; aptitudeId: string }[],
+  virtuallyPossessedPowers: { aptitudeId: string; powerId: string }[],
   rulesetData: RulesetData,
 ): CustomizedPower[] {
   const realPowers: CustomizedPower[] = allPowers.map((power) => ({

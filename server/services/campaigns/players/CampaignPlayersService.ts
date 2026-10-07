@@ -19,11 +19,11 @@ import type { CampaignRole } from "@/shared/enums.ts";
 import type { Invite, Player, Session } from "@/shared/relations.ts";
 
 type InviteEmailData = {
-  invite: Invite;
   campaignName: string;
+  email: string;
+  invite: Invite;
   inviteeName: string;
   inviterName: string;
-  email: string;
 };
 
 class CampaignPlayersService {
@@ -162,7 +162,7 @@ class CampaignPlayersService {
   async getPlayers(
     session: Session,
     campaignId: string,
-    where: { search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: { limit: number; page: number },
   ) {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);

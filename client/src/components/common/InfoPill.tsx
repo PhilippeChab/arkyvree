@@ -2,9 +2,9 @@ import { alpha, Stack, type Theme, Tooltip, Typography } from "@mui/material";
 import type { ElementType, ReactNode } from "react";
 
 interface InfoPillProps {
+  color?: PillColor;
   icon: ElementType;
   label: ReactNode;
-  color?: PillColor;
   tooltip?: ReactNode;
 }
 

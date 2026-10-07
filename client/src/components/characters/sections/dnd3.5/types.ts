@@ -25,13 +25,13 @@ export interface Dnd35CombatAndSavesSectionProps {
 }
 
 export interface Dnd35PowersSectionProps {
+  aptitudes?: CharacterDetail["aptitudes"];
   classes: CharacterDetail["classes"];
   powers?: CharacterDetail["powers"];
-  virtualPowers?: CharacterDetail["virtualPowers"];
-  aptitudes?: CharacterDetail["aptitudes"];
-  spellTags?: CharacterDetail["spellTags"];
-  spellTagLists?: CharacterDetail["spellTagLists"];
   rulesetId?: string;
+  spellTagLists?: CharacterDetail["spellTagLists"];
+  spellTags?: CharacterDetail["spellTags"];
+  virtualPowers?: CharacterDetail["virtualPowers"];
 }
 
 export interface Dnd35SkillsSectionProps {

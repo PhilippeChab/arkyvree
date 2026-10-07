@@ -12,29 +12,29 @@ interface BaseRulesetAlertProps {
 }
 
 interface PickableRuleset {
+  /** The heading it's listed under ("My Drafts", "Published"…). */
+  group: string;
   id: string;
   name: string;
   /** Null for a base ruleset. */
   userId: string | null;
-  /** The heading it's listed under ("My Drafts", "Published"…). */
-  group: string;
 }
 
 interface RulesetPickerProps<R extends PickableRuleset> {
-  rulesets: R[];
-  value: R | null;
-  onChange: (ruleset: R | null) => void;
-  /** The typed search; the list is filtered on the server. */
-  onSearch: (search: string) => void;
-  /** Loads the next page as the list nears its end (see `createListboxScrollHandler`). */
-  onScroll: UIEventHandler<HTMLElement>;
-  loading?: boolean;
-  /** Why the rulesets didn't load, said where they'd show. */
-  loadError?: unknown;
   disabled?: boolean;
   error?: FieldError;
   /** The Controller's `field.ref`, so a failed submit focuses the input. */
   inputRef?: Ref<HTMLInputElement>;
+  /** Why the rulesets didn't load, said where they'd show. */
+  loadError?: unknown;
+  loading?: boolean;
+  onChange: (ruleset: R | null) => void;
+  /** Loads the next page as the list nears its end (see `createListboxScrollHandler`). */
+  onScroll: UIEventHandler<HTMLElement>;
+  /** The typed search; the list is filtered on the server. */
+  onSearch: (search: string) => void;
+  rulesets: R[];
+  value: R | null;
 }
 
 /** The warning shown once a base ruleset is picked: it can't be edited until forked. */

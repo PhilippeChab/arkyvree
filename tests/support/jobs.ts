@@ -10,7 +10,7 @@ export const silentJobHelpers = {
 
 /** The jobs queued whose payload's `key` is `value`: their task, queue and payload. */
 export async function queuedJobs(key: string, value: string) {
-  const jobs = await db.execute<{ task: string; queue: string | null; payload: Record<string, unknown> }>(sql`
+  const jobs = await db.execute<{ payload: Record<string, unknown>; queue: string | null; task: string }>(sql`
     SELECT t.identifier AS task, q.queue_name AS queue, j.payload
     FROM graphile_worker._private_jobs j
     JOIN graphile_worker._private_tasks t ON t.id = j.task_id

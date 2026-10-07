@@ -3,7 +3,7 @@
 import { FAVORED_ENEMY_FAMILY } from "@/database/packages/dnd35/data/feats/favoredEnemy.ts";
 import { CLASS_FEATURE_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 
-const CLASS_FEAT_FAMILIES: { pattern: RegExp; family: string }[] = [
+const CLASS_FEAT_FAMILIES: { family: string; pattern: RegExp }[] = [
   { pattern: /^(?:Turn or Rebuke Undead|Turn Undead|Rebuke Undead)\b/i, family: "Turn or Rebuke Undead" },
   { pattern: /^Wild Shape\b/i, family: "Wild Shape" },
   // "Grace (Duelist)", not "Grace of the Dark"; "Rage (Barbarian)", not "Rage +1 Use/day"

@@ -6,14 +6,14 @@ import { stripSeparators } from "@/shared/text.ts";
 import type { PowerDc, PowerDcsByClass } from "./PowerGroupingsComponent.ts";
 
 type PowerEntry = {
+  /** Its DC as each of the character's classes casts it, by the class's aptitude slug. */
+  dc?: PowerDcsByClass;
   power: Power;
   /**
    * Each property type's values, in its options' order: a list, which a requirement's `contains` asks one of and a
    * modifier adds a value to or takes one from. A sheet lists them joined (`getFlatPowers`).
    */
   properties: Record<string, string[]>;
-  /** Its DC as each of the character's classes casts it, by the class's aptitude slug. */
-  dc?: PowerDcsByClass;
 };
 
 /** A grouping's spells, each with its DC as each class casts it */
@@ -76,7 +76,7 @@ export default class PowersComponent {
 
   /** `featListIds`: the lists a feat brings (a domain's, a specialist's school), whose spells it gives, never known. */
   initialize(
-    powers: (Power & { properties: Property[]; aptitudeId: string; powerLevel: number | null })[],
+    powers: (Power & { aptitudeId: string; powerLevel: number | null; properties: Property[] })[],
     rulesetPowers: PowerWithAptitudes[],
     rulesetAptitudes: Aptitude[],
     featListIds: Set<string>,

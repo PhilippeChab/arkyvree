@@ -5,11 +5,11 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 type DemoUrgency = "normal" | "warning" | "critical" | "expired";
 
 export interface DemoTimeRemaining {
-  isDemo: boolean;
   expiresAt: string | null;
-  msRemaining: number;
   hours: number;
+  isDemo: boolean;
   minutes: number;
+  msRemaining: number;
   seconds: number;
   urgency: DemoUrgency;
 }

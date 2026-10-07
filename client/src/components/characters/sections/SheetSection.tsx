@@ -2,10 +2,10 @@ import { Box, Paper, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
 interface SheetSectionProps {
-  title: string;
   /** Controls shown beside the title, e.g. an Add button. */
   action?: ReactNode;
   children: ReactNode;
+  title: string;
 }
 
 /** Titled panel of the character sheet. */

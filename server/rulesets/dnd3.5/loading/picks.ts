@@ -91,7 +91,7 @@ export function buildPowers(
   allCharacterLevels: CharacterLevel[],
   resolve: Resolve,
 ) {
-  const withLevel = <T extends { id: string; aptitudeId: string }>(power: T) => ({
+  const withLevel = <T extends { aptitudeId: string; id: string }>(power: T) => ({
     ...power,
     powerLevel:
       rulesetData.powersById.get(power.id)?.powersAptitudesInRules.find((link) => link.aptitudeId === power.aptitudeId)

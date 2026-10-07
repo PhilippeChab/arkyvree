@@ -5,28 +5,7 @@ import type { DetectedModifiers, NamedText, Overrides, ScrapedMeta } from "./ref
 export type RaceReference = {
   _meta: ScrapedMeta<"race">;
 
-  raw: {
-    name: string;
-    description: string;
-    size: string;
-    baseSpeed: number;
-    abilityAdjustments: { ability: string; value: number }[];
-    favoredClass?: string;
-    features: NamedText[];
-  }[];
-
   detected: Record<string, DetectedModifiers>;
-
-  overrides?: Overrides<{
-    name?: string;
-    description?: string;
-    size?: string;
-    baseSpeed?: number;
-    modifiers?: Modifier[];
-    /** Properties the engine reads off the race (the dwarf's speed in armor). */
-    properties?: Property[];
-    skip?: boolean;
-  }>;
 
   mapping: Record<
     string,
@@ -35,4 +14,25 @@ export type RaceReference = {
       modifiers?: Modifier[];
     }
   >;
+
+  overrides?: Overrides<{
+    baseSpeed?: number;
+    description?: string;
+    modifiers?: Modifier[];
+    name?: string;
+    /** Properties the engine reads off the race (the dwarf's speed in armor). */
+    properties?: Property[];
+    size?: string;
+    skip?: boolean;
+  }>;
+
+  raw: {
+    abilityAdjustments: { ability: string; value: number }[];
+    baseSpeed: number;
+    description: string;
+    favoredClass?: string;
+    features: NamedText[];
+    name: string;
+    size: string;
+  }[];
 };

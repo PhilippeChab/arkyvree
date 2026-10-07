@@ -6,9 +6,9 @@ import { isProduction } from "@/server/environment.ts";
 import { createEmailTransports } from "./emailTransports.ts";
 
 type SendEmailPayload = {
-  to: string[];
   from: string;
   subject: string;
+  to: string[];
 } & EmailJobPayload;
 
 const { resend, smtpTransport } = createEmailTransports();

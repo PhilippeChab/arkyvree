@@ -30,7 +30,7 @@ function asFamilyRow<T extends object>(row: T) {
   return {
     ...row,
     eligible: true as boolean,
-    aptitudeModifiers: [] as { aptitudeId: string; value: number; operator: string }[],
+    aptitudeModifiers: [] as { aptitudeId: string; operator: string; value: number }[],
     requirementTree: undefined as string | undefined,
   };
 }
@@ -134,14 +134,14 @@ async function withFeatPicker<R>(
   aptitudeId: string,
   klassId: string,
   level: number,
-  picks: { selectedFeatPicks?: FeatPick[]; pendingLevelFeatPicks?: FeatPick[] },
+  picks: { pendingLevelFeatPicks?: FeatPick[]; selectedFeatPicks?: FeatPick[] },
   excludeCharacterLevelId: string | undefined,
   pendingLevelKlassLevelIds: string[] | undefined,
   pendingLevelAbilityIds: (string | undefined)[] | undefined,
   run: (
     detailedCharacter: DetailedCharacterInterface,
     rulesetData: RulesetData,
-    filters: { ids: string[]; excludeFeatIds: string[] },
+    filters: { excludeFeatIds: string[]; ids: string[] },
   ) => Promise<R>,
 ): Promise<R> {
   const characterRecord = await getEditableCharacter(db, session, characterId);
@@ -168,7 +168,7 @@ async function withFeatPicker<R>(
 
 /** Resolves aptitude-targeting modifiers (aptitudes.<slug>.allowed) for feats, grouped by feat ID. */
 export function resolveAptitudeModifiers(featIds: string[], rulesetData: RulesetData) {
-  const result = new Map<string, { aptitudeId: string; value: number; operator: string }[]>();
+  const result = new Map<string, { aptitudeId: string; operator: string; value: number }[]>();
   if (featIds.length === 0) return result;
 
   for (const featId of featIds) {
@@ -200,7 +200,7 @@ export async function getAvailableFeats(
   aptitudeId: string,
   klassId: string,
   level: number,
-  where: { search?: string; family?: string; selectedFeatPicks?: FeatPick[]; pendingLevelFeatPicks?: FeatPick[] },
+  where: { family?: string; pendingLevelFeatPicks?: FeatPick[]; search?: string; selectedFeatPicks?: FeatPick[] },
   pagination: { limit: number; page: number },
   excludeCharacterLevelId?: string,
   pendingLevelKlassLevelIds?: string[],
@@ -244,7 +244,7 @@ export async function getAvailableFeatsGrouped(
   aptitudeId: string,
   klassId: string,
   level: number,
-  where: { search?: string; selectedFeatPicks?: FeatPick[]; pendingLevelFeatPicks?: FeatPick[] },
+  where: { pendingLevelFeatPicks?: FeatPick[]; search?: string; selectedFeatPicks?: FeatPick[] },
   pagination: { limit: number; page: number },
   excludeCharacterLevelId?: string,
   pendingLevelKlassLevelIds?: string[],

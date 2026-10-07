@@ -11,7 +11,7 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
     super(sessionsInAccount);
   }
 
-  async archive(db: Db, where: { id: string } | { userId: string; exceptId?: string }) {
+  async archive(db: Db, where: { id: string } | { exceptId?: string; userId: string }) {
     return await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
@@ -24,7 +24,7 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
       .returning();
   }
 
-  async create(db: Db, values: { userId: string; expiresAt?: string }) {
+  async create(db: Db, values: { expiresAt?: string; userId: string }) {
     const expiresAt = values.expiresAt ?? new Date(Date.now() + SESSION_TTL_MS).toISOString();
     return await db.insert(this.table).values({ userId: values.userId, expiresAt }).returning();
   }

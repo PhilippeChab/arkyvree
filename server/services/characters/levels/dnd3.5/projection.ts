@@ -22,7 +22,7 @@ import type {
 import type { ProjectedCharacterData, ProjectedCharacterLevel } from "@/server/rulesets/engine/types.ts";
 import type { Character, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
-export type FeatPick = { featId: string; aptitudeId: string };
+export type FeatPick = { aptitudeId: string; featId: string };
 
 /** Builds projected character levels from pending batch level data (klass level IDs + optional ability IDs). */
 export function buildPendingCharacterLevels(
@@ -39,10 +39,10 @@ export function buildPendingCharacterLevels(
 /** Builds projected auto-granted feats for character projection, filtering out user-picked feats. */
 export function buildProjectedAutoGrantedFeats<T extends { id: string }>(
   autoGrantedRecords: Array<{
-    id: string;
-    free: boolean;
-    featsInRule: T;
     aptitudeId: string;
+    featsInRule: T;
+    free: boolean;
+    id: string;
   }>,
   klassLevelId: string,
   characterLevelId: string,
@@ -87,8 +87,8 @@ export function buildProjectedFeatsFromPicks(
   projectedCharacterLevelId: string,
   rulesetData: RulesetData,
 ): {
-  projectedFeats: NonNullable<ProjectedCharacterData["feats"]>;
   nonStackableFeatIds: string[];
+  projectedFeats: NonNullable<ProjectedCharacterData["feats"]>;
 } {
   if (selectedFeatPicks.length === 0) return { projectedFeats: [], nonStackableFeatIds: [] };
 
@@ -128,9 +128,9 @@ export function buildProjectedFeatsFromPicks(
 /** Maps auto-granted feat records to projected givenFeats format for character building. */
 export function buildProjectedGivenFeats<T extends { id: string }>(
   autoGrantedRecords: Array<{
-    id: string;
-    featsInRule: T;
     aptitudeId: string;
+    featsInRule: T;
+    id: string;
     klassLevelId: string;
   }>,
   characterLevelId: string,
@@ -154,13 +154,13 @@ export function buildProjectedSelections<S extends { id: string }, F extends { i
   characterLevelId: string,
   skills: Record<string, number>,
   v: {
-    fetchedSkills: S[];
+    featCustomizations: Awaited<ReturnType<typeof loadFeatCustomizations>>;
+    featToAptitude: Map<string, string>;
     fetchedFeats: F[];
     fetchedPowers: P[];
-    featToAptitude: Map<string, string>;
-    powerToAptitude: Map<string, string>;
+    fetchedSkills: S[];
     powerLevelMap: Map<string, number>;
-    featCustomizations: Awaited<ReturnType<typeof loadFeatCustomizations>>;
+    powerToAptitude: Map<string, string>;
   },
 ) {
   return {
@@ -192,7 +192,7 @@ export function buildProjectedSelections<S extends { id: string }, F extends { i
 
 /** Builds projected skill records from skill ID + rank allocations for requirement evaluation. */
 export function buildProjectedSkillsFromAllocations(
-  allocations: { skillId: string; rank: number }[],
+  allocations: { rank: number; skillId: string }[],
   klassLevelId: string,
   characterLevelId: string,
   rulesetData: RulesetData,
@@ -254,7 +254,7 @@ export function loadFeatCustomizations(rulesetData: RulesetData, featIds: string
  */
 export function projectPlannedLevels(
   characterId: string,
-  plannedLevels: { klassLevel: { id: string }; abilityId: string | null }[],
+  plannedLevels: { abilityId: string | null; klassLevel: { id: string } }[],
   rulesetData: RulesetData,
 ) {
   const projectedCharacterLevels = plannedLevels.map(({ klassLevel, abilityId }) =>

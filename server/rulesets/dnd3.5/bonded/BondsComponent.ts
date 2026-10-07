@@ -27,8 +27,8 @@ type BondsData = {
 };
 
 type DetailedCharacterBondedSlot = {
-  race: string;
   level: number;
+  race: string;
 };
 
 export default class BondsComponent {

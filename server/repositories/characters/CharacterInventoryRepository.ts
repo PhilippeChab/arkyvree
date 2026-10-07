@@ -32,7 +32,7 @@ class CharacterInventoryRepository extends include(
   // Archived characters count: one can be restored, and its picks must still resolve.
   private async existsItemPickFromExtension(
     db: Db,
-    where: { hostRulesetId: string; extensionRulesetId: string; shadowItemIds: string[] },
+    where: { extensionRulesetId: string; hostRulesetId: string; shadowItemIds: string[] },
   ) {
     const itemCondition =
       where.shadowItemIds.length > 0
@@ -73,7 +73,7 @@ class CharacterInventoryRepository extends include(
     db: Db,
     where:
       | { itemId: string; rulesetId: string }
-      | { hostRulesetId: string; extensionRulesetId: string; shadowItemIds: string[] },
+      | { extensionRulesetId: string; hostRulesetId: string; shadowItemIds: string[] },
   ): Promise<boolean> {
     if ("itemId" in where) return await this.existsItemPick(db, where);
     return await this.existsItemPickFromExtension(db, where);
@@ -98,7 +98,7 @@ class CharacterInventoryRepository extends include(
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof inventoryInCharacter>>,
-    where: { characterId: string; id: string; expectedUpdatedAt?: string },
+    where: { characterId: string; expectedUpdatedAt?: string; id: string },
   ) {
     return await db
       .update(this.table)

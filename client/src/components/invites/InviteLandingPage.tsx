@@ -15,41 +15,41 @@ import { inviteQuery } from "./inviteQueries.ts";
 
 /** What the landing page needs to know about an invite, whatever its kind. */
 interface InviteDetails {
-  status: string;
-  entityName: string | undefined;
   entityId: string | null | undefined;
+  entityName: string | undefined;
+  invitedAt?: string;
   isArchived: boolean;
   /** Contributor role offered by the invite. */
   role?: string;
-  invitedAt?: string;
+  status: string;
 }
 
 interface InviteLandingPageProps {
-  pageTitle: string;
+  /** Status an accepted invite ends in ("Accepted" for campaigns, "Active" for contributors). */
+  acceptedStatus: string;
+  acceptFn: () => Promise<unknown>;
+  description: string;
   /** "Campaign", "Ruleset", "Character". */
   entityLabel: string;
   entityPath: (entityId: string) => string;
-  /** Where accepting lands when the invite doesn't name its entity. */
-  listPath: string;
   icon: ElementType;
-  queryKey: readonly unknown[];
-  inviteFn: () => Promise<InviteDetails>;
-  acceptFn: () => Promise<unknown>;
-  rejectFn: () => Promise<unknown>;
-  /** Status an accepted invite ends in ("Accepted" for campaigns, "Active" for contributors). */
-  acceptedStatus: string;
-  /** Completes "invitation to …": "join", "contribute to". */
-  joinVerb: string;
-  description: string;
   /** Lists that gain the entity once the invite is accepted. */
   invalidateOnAccept: readonly unknown[];
+  inviteFn: () => Promise<InviteDetails>;
+  /** Completes "invitation to …": "join", "contribute to". */
+  joinVerb: string;
+  /** Where accepting lands when the invite doesn't name its entity. */
+  listPath: string;
+  pageTitle: string;
+  queryKey: readonly unknown[];
+  rejectFn: () => Promise<unknown>;
 }
 
 interface InviteStateCardProps {
+  action: ReactNode;
+  children: ReactNode;
   icon: ReactNode;
   title: string;
-  children: ReactNode;
-  action: ReactNode;
 }
 
 function InviteStateCard({ icon, title, children, action }: InviteStateCardProps) {

@@ -19,7 +19,7 @@ function createFork(seedId: string) {
   return createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });
 }
 
-async function composeFork(fork: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] }) {
+async function composeFork(fork: { ancestorRulesetIds: string[]; extensionRulesetIds: string[]; id: string }) {
   return RulesetCache.getData(fork);
 }
 

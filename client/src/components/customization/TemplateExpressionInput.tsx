@@ -7,16 +7,16 @@ import { useAnchorMenu } from "@/client/src/hooks/index.ts";
 import { TargetPathInput } from "./TargetPathInput.tsx";
 
 interface TemplateExpressionInputProps {
-  /** Inner expression (without the surrounding `{{ }}`). */
-  value: string;
-  /** Called with the new inner expression whenever the user edits. */
-  onChange: (expression: string) => void;
-  rulesetId: string;
   disabled?: boolean;
   error?: boolean;
   helperText?: string;
+  /** Called with the new inner expression whenever the user edits. */
+  onChange: (expression: string) => void;
   /** The insertion API the parent's operator toolbar calls */
   ref?: Ref<TemplateExpressionInputRef>;
+  rulesetId: string;
+  /** Inner expression (without the surrounding `{{ }}`). */
+  value: string;
 }
 
 /**
@@ -48,7 +48,7 @@ export function TemplateExpressionInput({
   ref,
 }: TemplateExpressionInputProps) {
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
-  const cursorRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
+  const cursorRef = useRef<{ end: number; start: number }>({ start: 0, end: 0 });
   const picker = useAnchorMenu();
   const [pickerPath, setPickerPath] = useState("");
 

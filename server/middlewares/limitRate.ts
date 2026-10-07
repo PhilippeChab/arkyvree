@@ -33,7 +33,7 @@ async function emailKey(c: Parameters<KeyGenerator>[0]): Promise<string> {
  * `TooManyRequestsError`. Off in the tests, whose requests share an IP.
  */
 export function limitRate(
-  { windowMs, limit, per = "ip" }: { windowMs: number; limit: number; per?: "ip" | "email" },
+  { windowMs, limit, per = "ip" }: { limit: number; per?: "ip" | "email"; windowMs: number },
   enabled = !isTest(),
 ) {
   if (!enabled) return noop;

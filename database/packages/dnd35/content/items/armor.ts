@@ -2,19 +2,19 @@
 
 type ArmorCategory = "Light" | "Medium" | "Heavy";
 interface ArmorDefinition {
-  armorType: ArmorCategory;
   acBonus: number;
-  maxDex: number;
+  armorType: ArmorCategory;
   checkPenalty: number;
+  maxDex: number;
   spellFailure: number;
 }
 
 type ShieldCategory = "Light" | "Heavy" | "Tower";
 
 interface ShieldDefinition {
-  shieldType: ShieldCategory;
   acBonus: number;
   checkPenalty: number;
+  shieldType: ShieldCategory;
   spellFailure: number;
 }
 

@@ -9,19 +9,19 @@ import { MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
 import { featKey, type LevelFeat, levelFeatLabel, type LevelSave, saveBaseError } from "./classLevelForm.ts";
 
 interface ClassLevelFieldsProps {
+  /** Labels for feats the options may not list (e.g. from a parent ruleset), by `featId-aptitudeId`. */
+  featLabels?: Map<string, string>;
+  feats: LevelFeat[];
+  onFeatsChange: (feats: LevelFeat[]) => void;
+  onSavesChange: (saves: LevelSave[]) => void;
   rulesetId: string;
   /** The ruleset's saves, each a base field; its owner reads them, for what it sends. */
   rulesetSaves: RulesetSave[] | undefined;
+  saves: LevelSave[];
   /** Why they didn't load. */
   savesError: unknown;
-  saves: LevelSave[];
-  onSavesChange: (saves: LevelSave[]) => void;
-  feats: LevelFeat[];
-  onFeatsChange: (feats: LevelFeat[]) => void;
   /** Whether the form refused the saves: each base out of bounds says why. */
   savesInvalid?: boolean;
-  /** Labels for feats the options may not list (e.g. from a parent ruleset), by `featId-aptitudeId`. */
-  featLabels?: Map<string, string>;
 }
 
 interface FeatOption extends LevelFeat {

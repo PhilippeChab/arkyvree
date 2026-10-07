@@ -25,9 +25,9 @@ class FeatsService {
     session: Session,
     rulesetId: string,
     body: {
-      name: string;
-      description?: string | null;
       aptitudeIds: string[];
+      description?: string | null;
+      name: string;
     },
   ) {
     const result = await withTransaction(async (tx) => {
@@ -126,7 +126,7 @@ class FeatsService {
 
   async getFeatGroups(
     rulesetId: string,
-    where: { childOnly?: boolean; aptitudeId?: string; search?: string },
+    where: { aptitudeId?: string; childOnly?: boolean; search?: string },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -140,12 +140,12 @@ class FeatsService {
   async getFeats(
     rulesetId: string,
     where: {
-      childOnly?: boolean;
       aptitudeId?: string;
+      childOnly?: boolean;
       family?: string;
-      search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {
@@ -174,9 +174,9 @@ class FeatsService {
     rulesetId: string,
     featId: string,
     body: {
-      name: string;
-      description?: string | null;
       aptitudeIds?: string[];
+      description?: string | null;
+      name: string;
       updatedAt?: string;
     },
   ) {

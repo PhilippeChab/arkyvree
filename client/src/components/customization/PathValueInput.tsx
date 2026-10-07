@@ -5,17 +5,17 @@ import type { PathValueType } from "@/shared/customization/target.ts";
 import { pathChoices } from "./pathValues.ts";
 
 interface PathValueInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  valueType?: PathValueType;
-  possibleValues?: { value: string; label: string }[];
-  label?: string;
-  placeholder?: string;
-  required?: boolean;
-  error?: boolean;
-  helperText?: string;
-  fullWidth?: boolean;
   disabled?: boolean;
+  error?: boolean;
+  fullWidth?: boolean;
+  helperText?: string;
+  label?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  possibleValues?: { label: string; value: string }[];
+  required?: boolean;
+  value: string;
+  valueType?: PathValueType;
 }
 
 export function PathValueInput({

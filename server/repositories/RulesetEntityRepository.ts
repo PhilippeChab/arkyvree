@@ -59,7 +59,7 @@ abstract class RulesetEntityRepository<T extends RulesetEntityTable> extends Rul
     return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
-  async update(db: Db, values: Partial<InferInsertModel<T>>, where: { id: string; expectedUpdatedAt?: string }) {
+  async update(db: Db, values: Partial<InferInsertModel<T>>, where: { expectedUpdatedAt?: string; id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })

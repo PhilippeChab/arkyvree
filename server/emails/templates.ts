@@ -12,7 +12,7 @@ import { WelcomeEmail } from "@/emails/welcome.tsx";
 type PropsFor<K extends TemplateName> = Parameters<(typeof TEMPLATES)[K]>[0];
 
 export type EmailJobPayload = {
-  [K in TemplateName]: { template: K; props: PropsFor<K> };
+  [K in TemplateName]: { props: PropsFor<K>; template: K };
 }[TemplateName];
 
 export type TemplateName = keyof typeof TEMPLATES;

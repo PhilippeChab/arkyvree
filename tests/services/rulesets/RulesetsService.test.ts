@@ -59,7 +59,7 @@ const firstPage = { limit: 100, page: 1 };
 function fork(
   session: Session,
   parent: { id: string },
-  values: { name?: string; description?: string; private?: boolean } = {},
+  values: { description?: string; name?: string; private?: boolean } = {},
 ) {
   return RulesetsService.forkRuleset(session, parent.id, { name: `Fork ${uniqueId()}`, private: false, ...values });
 }

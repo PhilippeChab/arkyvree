@@ -19,7 +19,7 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     return await db.insert(this.table).values(values).returning();
   }
 
-  async delete(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
+  async delete(db: Db, where: { rulesetId: string; sourceEntityId: string }) {
     return await db
       .delete(this.table)
       .where(and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)));
@@ -30,7 +30,7 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     where:
       | { rulesetId: string }
       | { rulesetIds: string[] }
-      | { rulesetId: string; entityType: string }
+      | { entityType: string; rulesetId: string }
       | { rulesetId: string; sourceEntityIds: string[] },
   ) {
     if ("rulesetIds" in where && where.rulesetIds.length === 0) return [];
@@ -50,7 +50,7 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     });
   }
 
-  async findOne(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
+  async findOne(db: Db, where: { rulesetId: string; sourceEntityId: string }) {
     return await db.query.entitySnapshotsInRules.findFirst({
       where: and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)),
     });

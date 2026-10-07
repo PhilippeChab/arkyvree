@@ -21,15 +21,15 @@ import type { Session } from "@/shared/relations.ts";
 import { Variants } from "./concerns/Variants.ts";
 
 interface ItemBody {
-  name: string;
-  description?: string | null;
-  weight?: number;
   costGp?: number;
-  type?: string | null;
+  description?: string | null;
+  isTemplate?: boolean;
+  name: string;
   slot?: ItemLocation;
   sourceItemId?: string;
-  isTemplate?: boolean;
+  type?: string | null;
   updatedAt?: string;
+  weight?: number;
 }
 
 class ItemsService extends include(Object, Variants) {
@@ -168,9 +168,9 @@ class ItemsService extends include(Object, Variants) {
     where: {
       childOnly?: boolean;
       isTemplate?: boolean;
-      search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {

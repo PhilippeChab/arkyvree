@@ -3,16 +3,16 @@ import type { FieldValues, SubmitHandler, UseFormReturn } from "react-hook-form"
 
 interface FormSyncOptions {
   /**
+   * The record this one was copied from, when a copy-on-write moved the page
+   * to the copy: a form still holding it carries its edits over to `key`.
+   */
+  adoptKey?: string;
+  /**
    * The record the form edits, from the URL: opening another record resets
    * the form, edits included. Not the fetched id, which a copy-on-write can
    * change under the same page.
    */
   key?: string;
-  /**
-   * The record this one was copied from, when a copy-on-write moved the page
-   * to the copy: a form still holding it carries its edits over to `key`.
-   */
-  adoptKey?: string;
   /** The record's `updatedAt`, used as the stale-edit token. */
   updatedAt?: string;
 }

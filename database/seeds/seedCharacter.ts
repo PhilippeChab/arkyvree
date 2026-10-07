@@ -36,11 +36,11 @@ type Picks<K extends string> = { levelIndex: number } & Record<K, string>;
  * it rolled) and its picks at each (`levelIndex` counts all its levels), and its inventory.
  */
 export type CharacterSeed = Omit<CharacterData, "rulesetId"> & {
-  classes: { klass: string; hp: number[] }[];
-  skills: { levelIndex: number; skillName: string; rank: number }[];
+  classes: { hp: number[]; klass: string }[];
   feats: (Picks<"featName"> & { aptitude: string })[];
-  powers?: (Picks<"powerName"> & { aptitude: string })[];
   inventory: Parameters<typeof addInventory>[3];
+  powers?: (Picks<"powerName"> & { aptitude: string })[];
+  skills: { levelIndex: number; rank: number; skillName: string }[];
 };
 
 async function addInventory(
@@ -48,10 +48,10 @@ async function addInventory(
   ctx: SeedContext,
   characterId: string,
   items: {
-    name: string;
-    quantity: number;
     equipped?: boolean;
     location?: ItemLocation;
+    name: string;
+    quantity: number;
     weaponSet?: number;
   }[],
 ) {
@@ -115,7 +115,7 @@ export async function addFeats(
   db: Db,
   ctx: SeedContext,
   charLevelIds: string[],
-  feats: { levelIndex: number; featName: string; aptitude: string }[],
+  feats: { aptitude: string; featName: string; levelIndex: number }[],
 ) {
   if (feats.length === 0) return;
   await db.insert(levelFeatsInCharacter).values(
@@ -131,7 +131,7 @@ export async function addPowers(
   db: Db,
   ctx: SeedContext,
   charLevelIds: string[],
-  powers: { levelIndex: number; powerName: string; aptitude: string }[],
+  powers: { aptitude: string; levelIndex: number; powerName: string }[],
 ) {
   if (powers.length === 0) return;
   await db.insert(levelPowersInCharacter).values(
@@ -147,7 +147,7 @@ export async function addSkills(
   db: Db,
   ctx: SeedContext,
   charLevelIds: string[],
-  skills: { levelIndex: number; skillName: string; rank: number }[],
+  skills: { levelIndex: number; rank: number; skillName: string }[],
 ) {
   for (const s of skills) {
     await db.insert(levelSkillsInCharacter).values({
@@ -162,19 +162,19 @@ export async function createCharacter(
   db: Db,
   ctx: SeedContext,
   data: {
-    raceName: string;
-    name: string;
-    xp: number;
-    alignment: Alignment;
+    abilities: Record<string, number>;
     age: number;
+    alignment: Alignment;
+    description: string;
     gender: Gender;
     height: string;
-    weight: string;
-    description: string;
-    abilities: Record<string, number>;
     languages: string[];
+    name: string;
+    raceName: string;
     /** Override the ruleset (e.g., to place the character in a fork that subscribes to an extension). Defaults to seed. */
     rulesetId?: string;
+    weight: string;
+    xp: number;
   },
 ) {
   const [character] = await db

@@ -15,8 +15,8 @@ class LanguagesService {
     session: Session,
     rulesetId: string,
     body: {
-      name: string;
       description?: string | null;
+      name: string;
       type: string;
     },
   ) {
@@ -94,9 +94,9 @@ class LanguagesService {
     rulesetId: string,
     where: {
       childOnly?: boolean;
-      search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {
@@ -111,8 +111,8 @@ class LanguagesService {
     rulesetId: string,
     languageId: string,
     body: {
-      name: string;
       description?: string | null;
+      name: string;
       type: string;
       updatedAt?: string;
     },

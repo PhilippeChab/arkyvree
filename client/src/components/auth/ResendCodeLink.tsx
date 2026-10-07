@@ -3,8 +3,8 @@ import { Typography } from "@mui/material";
 import { LinkButton } from "@/client/src/components/common/index.ts";
 
 interface ResendCodeLinkProps {
-  onResend: () => void;
   disabled: boolean;
+  onResend: () => void;
 }
 
 /** "Didn't receive the code? Resend" under a verification code form. */

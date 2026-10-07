@@ -5,8 +5,8 @@ import { useAuthRequests, useGoogleSignIn } from "@/client/src/hooks/index.ts";
 import { GoogleSignInButton } from "./GoogleSignInButton.tsx";
 
 interface GoogleSignInSectionProps {
-  label?: string;
   disabled?: boolean;
+  label?: string;
   onError: (error: unknown) => void;
 }
 

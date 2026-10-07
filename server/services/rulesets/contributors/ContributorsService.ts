@@ -70,9 +70,9 @@ class ContributorsService {
     session: Session,
     rulesetId: string,
     where: {
-      search?: string;
       orderBy?: "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
+      search?: string;
     },
     pagination: { limit: number; page: number },
   ) {

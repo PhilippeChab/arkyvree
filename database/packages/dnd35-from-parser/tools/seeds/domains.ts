@@ -101,7 +101,7 @@ function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | s
 }
 
 /** A book's domains as it prints them (`reference/<book>/domains.json`; none for a book without), and their feat pools' feats. */
-export function buildBookDomainSeeds(book: string): { seeds: DomainSeed[]; poolFeats: FeatSeed[] } {
+export function buildBookDomainSeeds(book: string): { poolFeats: FeatSeed[]; seeds: DomainSeed[] } {
   const ref = ReferenceLoader.find(book, "domain");
   if (!ref) return { seeds: [], poolFeats: [] };
   return { seeds: domainSeeds(ref), poolFeats: buildDomainFeatPoolSeeds(ref) };

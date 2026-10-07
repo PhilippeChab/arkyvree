@@ -9,7 +9,7 @@ import { uniqueId } from "@/tests/support/seed.ts";
 import { describeRequirement } from "./seededRows.ts";
 
 /** A modifier as a line: "target operator value valueType". */
-function describeModifier(m: { target: string; operator: string; value: string; valueType: string }) {
+function describeModifier(m: { operator: string; target: string; value: string; valueType: string }) {
   return `${m.target} ${m.operator} ${m.value} ${m.valueType}`;
 }
 

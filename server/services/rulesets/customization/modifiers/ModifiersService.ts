@@ -38,7 +38,7 @@ class ModifiersService {
     rulesetId: string,
     entityType: string,
     entityId: string,
-    body: { target: string; value: string; operator: string },
+    body: { operator: string; target: string; value: string },
     sourceModifierId?: string,
   ) {
     const result = await withTransaction(async (tx) => {
@@ -106,7 +106,7 @@ class ModifiersService {
     rulesetId: string,
     entityType: string,
     entityId: string,
-    body: { target: string; value: string; operator: string },
+    body: { operator: string; target: string; value: string },
   ) {
     return await this.addEntityModifier(session, rulesetId, entityType, entityId, body);
   }
@@ -165,7 +165,7 @@ class ModifiersService {
     entityType: string,
     entityId: string,
     sourceModifierId: string,
-    body: { target: string; value: string; operator: string },
+    body: { operator: string; target: string; value: string },
   ) {
     return await this.addEntityModifier(session, rulesetId, entityType, entityId, body, sourceModifierId);
   }
@@ -223,10 +223,10 @@ class ModifiersService {
     entityId: string,
     modifierId: string,
     body: {
-      target: string;
-      value: string;
       operator: string;
+      target: string;
       updatedAt?: string;
+      value: string;
     },
   ) {
     const result = await withTransaction(async (tx) => {

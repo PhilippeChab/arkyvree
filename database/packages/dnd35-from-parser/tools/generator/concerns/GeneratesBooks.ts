@@ -11,7 +11,7 @@ export function GeneratesBooks<B extends Constructor<BaseGenerator>>(Base: B) {
     /** Regenerate index.ts for a book: its content, as its package seeds it (the core rules' with what they add). */
     writeBookIndex(book: string) {
       const dir = join(this.dir, book);
-      const parts: { key: string; file: string; name: string }[] = [
+      const parts: { file: string; key: string; name: string }[] = [
         { key: "aptitudes", file: "aptitudes.ts", name: "ALL_APTITUDES" },
         { key: "standaloneFeats", file: "feats/index.ts", name: "ALL_STANDALONE_FEATS" },
         { key: "classFeats", file: "feats/classes/index.ts", name: "ALL_CLASS_FEATS" },

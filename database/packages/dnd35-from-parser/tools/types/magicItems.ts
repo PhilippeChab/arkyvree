@@ -5,11 +5,11 @@ import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 /** A magic item's fields an override sets. */
 type MagicItemFields = ItemFields & {
-  slot?: string;
   baseItem?: string | null;
   modifiers?: Modifier[];
   /** Properties the item adds to those the generator gives it (a composite bow's Strength rating). */
   properties?: Property[];
+  slot?: string;
   /**
    * A specific armor others are made from, as its base armor is: elven chain, whose proficiency is its own (light), not
    * its base's. Its properties are its base armor's, its own over them.
@@ -29,30 +29,30 @@ export type MagicItemCategory =
 export type MagicItemReference = {
   _meta: Omit<ScrapedMeta<"magicItem">, "sourceUrl"> & { sourceUrls: Record<string, string> };
 
-  raw: {
-    name: string;
-    category: MagicItemCategory;
-    description: string;
-    metadataText: string;
-    spellCharges?: { spell: string; charges: number }[];
-  }[];
-
   detected: Record<
     string,
     {
-      category: MagicItemCategory;
       aura?: string;
-      casterLevel?: number;
-      costGp: string;
-      weight: string;
-      itemType: string;
-      slot: string;
-      variant?: string;
       baseItem?: string;
+      casterLevel?: number;
+      category: MagicItemCategory;
+      costGp: string;
+      itemType: string;
       modifiers?: Modifier[];
+      slot: string;
       unresolvedModifiers?: string[];
+      variant?: string;
+      weight: string;
     }
   >;
 
   overrides?: Overrides<MagicItemFields & { aura?: string; casterLevel?: number }>;
+
+  raw: {
+    category: MagicItemCategory;
+    description: string;
+    metadataText: string;
+    name: string;
+    spellCharges?: { charges: number; spell: string }[];
+  }[];
 };

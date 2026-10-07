@@ -20,6 +20,8 @@ import {
 } from "./dnd3.5/slotQueries.ts";
 
 class CharacterLevelsService {
+  readonly finalizeLevelUp = finalizeLevelUp;
+
   readonly getAttributeSlots = getAttributeSlots;
 
   readonly getAvailableFeats = getAvailableFeats;
@@ -44,11 +46,9 @@ class CharacterLevelsService {
 
   readonly getSkillSlots = getSkillSlots;
 
-  readonly updateLevel = updateLevel;
-
   readonly removeLevel = removeLevel;
 
-  readonly finalizeLevelUp = finalizeLevelUp;
+  readonly updateLevel = updateLevel;
 }
 
 export default new CharacterLevelsService();

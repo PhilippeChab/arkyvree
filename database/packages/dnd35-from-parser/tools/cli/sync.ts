@@ -28,7 +28,7 @@ const SCRAPER = join(import.meta.dirname!, "scrape.ts");
  * Constructs dndtools.net URLs from book + type + name, regardless of
  * what the stored sourceUrl says (it may point to the old dead site).
  */
-function buildScrapeArgs(ref: { path: string; type: string; url?: string; book: string }): string[] | null {
+function buildScrapeArgs(ref: { book: string; path: string; type: string; url?: string }): string[] | null {
   const name = basename(ref.path, ".json");
 
   // wizardSchool has no parser — skip

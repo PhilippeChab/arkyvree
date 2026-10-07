@@ -4,20 +4,20 @@ import { type ElementType, useMemo } from "react";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 
 interface ClassLevelCountsTableProps<L extends { id: string; level: number }> {
-  /** What it counts, as a failure names it ("Feat Pools"); its tab names it on the page. */
-  title: string;
-  levels: L[] | undefined;
-  isLoading: boolean;
-  /** Its query's failure. */
-  error: unknown;
-  /** The column keys a class level has counts for: its feat pools, or its spell levels. */
-  keysOf: (level: L) => string[];
-  countOf: (level: L, key: string) => number | "All" | undefined;
   compareKeys?: (a: string, b: string) => number;
-  labelOf?: (key: string) => string;
+  countOf: (level: L, key: string) => number | "All" | undefined;
+  emptyDescription: string;
   emptyIcon: ElementType;
   emptyTitle: string;
-  emptyDescription: string;
+  /** Its query's failure. */
+  error: unknown;
+  isLoading: boolean;
+  /** The column keys a class level has counts for: its feat pools, or its spell levels. */
+  keysOf: (level: L) => string[];
+  labelOf?: (key: string) => string;
+  levels: L[] | undefined;
+  /** What it counts, as a failure names it ("Feat Pools"); its tab names it on the page. */
+  title: string;
 }
 
 /** A class's counts per level, one column per key any of its levels has. */

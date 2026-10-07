@@ -8,14 +8,14 @@ import type { Modifier, ModifierEffect, ModifierSeed } from "@/database/packages
  * `Modifier`), the invalid paths and the text it couldn't parse.
  */
 export type ModifierDetection<M extends ModifierEffect = ModifierSeed> = {
-  modifiers: M[];
   errors: string[];
+  modifiers: M[];
   unresolvedModifiers: string[];
 };
 
 /** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override. */
 export function buildModifierMapping<
-  E extends { name: string; description: string },
+  E extends { description: string; name: string },
   O extends { description?: string; modifiers?: Modifier[] },
   X extends object,
 >(
@@ -57,7 +57,7 @@ export function detectModifiersOf<E extends { name: string }>(
 export function validateModifiers<M extends ModifierEffect>(
   modifiers: M[],
   isValid: (target: string) => boolean,
-): { validated: M[]; errors: string[] } {
+): { errors: string[]; validated: M[] } {
   const validated: M[] = [];
   const errors: string[] = [];
   for (const m of modifiers) {

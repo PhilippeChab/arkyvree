@@ -62,16 +62,6 @@ export const JOINS_CLASS_LIST = {
 
 /** The aptitudes' target paths: each aptitude's uses and slots. */
 export default class AptitudesPaths implements PathCategory<Dnd35Components> {
-  /** Whether a target is an aptitude's (`aptitudes.…`). */
-  static isAptitudeTarget(target: string): boolean {
-    return target.startsWith("aptitudes.");
-  }
-
-  /** The start of a list's spell level's paths (`aptitudes.<list>.<level>.`): its uses and slots. */
-  static spellLevelPrefix(list: string, level: number): string {
-    return `aptitudes.${list}.${level}.`;
-  }
-
   static generateAptitudePaths(
     aptitudes: Aptitude[],
     kind: "modifier" | "requirement",
@@ -125,11 +115,21 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  readonly name = "aptitudes";
-  readonly label = "Aptitudes";
-  readonly description = "Uses and selection slots";
+  /** Whether a target is an aptitude's (`aptitudes.…`). */
+  static isAptitudeTarget(target: string): boolean {
+    return target.startsWith("aptitudes.");
+  }
+
+  /** The start of a list's spell level's paths (`aptitudes.<list>.<level>.`): its uses and slots. */
+  static spellLevelPrefix(list: string, level: number): string {
+    return `aptitudes.${list}.${level}.`;
+  }
+
   readonly component = { key: "aptitudes", getter: "getAptitudes" } as const;
+  readonly description = "Uses and selection slots";
   readonly groupDescriptionTemplates = { aptitudes: "{name} uses and slots" };
+  readonly label = "Aptitudes";
+  readonly name = "aptitudes";
 
   /** The leveled aptitudes: those with spells at a level, and those a class gives slots in before they have any. */
   private leveledAptitudeIds(rulesetData: RulesetData) {

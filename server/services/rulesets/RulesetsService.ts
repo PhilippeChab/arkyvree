@@ -24,7 +24,7 @@ import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
 
 class RulesetsService extends include(Object, Archives, Publishes, Stars) {
-  async forkRuleset(session: Session, id: string, body: { name: string; description?: string; private: boolean }) {
+  async forkRuleset(session: Session, id: string, body: { description?: string; name: string; private: boolean }) {
     const result = await withTransaction(async (tx) => {
       // 1. Verify source ruleset exists and is published
       const ruleset = await Rulesets.findOne(tx, { id });
@@ -127,6 +127,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   async getRulesets(
     session: Session,
     where: {
+      orderBy?: "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
       scope?:
         | "base"
         | "forked"
@@ -142,8 +144,6 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
         | "systems"
         | "contributedTo";
       search?: string;
-      orderBy?: "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
     },
     pagination: { limit: number; page: number },
   ) {
@@ -181,7 +181,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   async updateRuleset(
     session: Session,
     id: string,
-    body: { name: string; description: string; private?: boolean; kind?: RulesetKind; updatedAt?: string },
+    body: { description: string; kind?: RulesetKind; name: string; private?: boolean; updatedAt?: string },
   ) {
     const result = await withTransaction(async (tx) => {
       // First verify the ruleset exists

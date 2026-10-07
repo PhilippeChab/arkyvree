@@ -5,10 +5,10 @@ import { join } from "node:path";
 import { sanitizeHtml } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 
 interface HttpOptions {
-  /** Disable disk cache (default: false) */
-  noCache?: boolean;
   /** Delay between requests in ms (default: 200) */
   delay?: number;
+  /** Disable disk cache (default: false) */
+  noCache?: boolean;
 }
 
 const CACHE_DIR = join(import.meta.dirname!, ".cache");

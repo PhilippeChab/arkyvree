@@ -4,14 +4,14 @@ import type { ReactElement } from "react";
 import { truncate } from "@/client/src/lib/truncate.ts";
 
 interface OptionTooltipProps {
+  children: ReactElement;
   description?: string | null;
-  /** What the option asks that the character lacks: shown instead of its description, as a tree. */
-  requirementTree?: string | null;
-  /** The longest a description shows, cut with "…" (a picked chip's). */
-  maxLength?: number;
   /** A description's width, beyond the tooltip's own (a class plan's options). */
   descriptionWidth?: number;
-  children: ReactElement;
+  /** The longest a description shows, cut with "…" (a picked chip's). */
+  maxLength?: number;
+  /** What the option asks that the character lacks: shown instead of its description, as a tree. */
+  requirementTree?: string | null;
 }
 
 /** A requirement tree, line by line, as the engine lays it out. */

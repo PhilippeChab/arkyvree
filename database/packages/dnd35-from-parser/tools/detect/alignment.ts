@@ -19,7 +19,7 @@ const ALIGNMENT_PATH = "identity.beliefs.alignment";
 
 /** The alignments a prerequisite's "Any …" names, by what it starts with, in the order they're checked. */
 // oxfmt-ignore
-const ANY_ALIGNMENTS: { prefixes: string[]; alignments: string[] }[] = [
+const ANY_ALIGNMENTS: { alignments: string[]; prefixes: string[] }[] = [
   { prefixes: ["any evil"], alignments: ["Lawful Evil", "Neutral Evil", "Chaotic Evil"] },
   { prefixes: ["any good"], alignments: ["Lawful Good", "Neutral Good", "Chaotic Good"] },
   { prefixes: ["any lawful"], alignments: ["Lawful Good", "Lawful Neutral", "Lawful Evil"] },

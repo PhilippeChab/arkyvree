@@ -2,10 +2,10 @@ import { Box, Button } from "@mui/material";
 import { type RefObject } from "react";
 
 interface GoogleSignInButtonProps {
-  overlayRef: RefObject<HTMLDivElement | null>;
   disabled?: boolean;
-  label?: string;
   fullWidth?: boolean;
+  label?: string;
+  overlayRef: RefObject<HTMLDivElement | null>;
 }
 
 /** Google's mark, as Google draws it. */

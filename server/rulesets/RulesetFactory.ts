@@ -27,15 +27,15 @@ export class RulesetFactory {
     return MODULES[baseRules];
   }
 
+  static getSupportedRulesets(): string[] {
+    return baseRules.enumValues;
+  }
+
   static async fromRulesetId(rulesetId: string) {
     const ruleset = await Rulesets.findOne(db, { id: rulesetId });
 
     if (!ruleset) throw new NotFoundError("Ruleset not found");
 
     return this.fromBaseRules(ruleset.baseRules);
-  }
-
-  static getSupportedRulesets(): string[] {
-    return baseRules.enumValues;
   }
 }

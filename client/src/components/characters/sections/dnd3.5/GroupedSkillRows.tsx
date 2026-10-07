@@ -8,25 +8,25 @@ import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION } from "@/client/src/t
 import { groupSkills } from "./skillGroups.ts";
 
 interface GroupedSkillRowsProps<S> {
-  skills: readonly S[];
   /** The table's column count, which a group's header row spans. */
   columns: number;
   /** The skill's keyed row, usually a `SkillRow`. */
   renderSkill: (skill: S, placement: SkillPlacement) => ReactNode;
+  skills: readonly S[];
 }
 
 /** Where a skill's row sits: under its group's header, and hidden while that group is collapsed. */
 interface SkillPlacement {
-  indented: boolean;
   hidden: boolean;
+  indented: boolean;
 }
 
 interface SkillRowProps extends SkillPlacement {
+  /** The row's other cells. */
+  children: ReactNode;
   name: string;
   /** Wraps the shown name, e.g. in a description tooltip. */
   renderName?: (label: string) => ReactNode;
-  /** The row's other cells. */
-  children: ReactNode;
 }
 
 const FADE_IN_SX = {

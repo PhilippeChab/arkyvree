@@ -14,7 +14,7 @@ export default async function seed(db: Db) {
   // testuser1..testuser3 keep their long-standing UUIDs because backend
   // integration tests reference them as session/user identifiers. The e2e
   // run's journeys create users of their own (tests/e2e/fixtures.ts).
-  const seeded: Array<{ id: string; email: string; username: string; sessionId: string }> = [
+  const seeded: Array<{ email: string; id: string; sessionId: string; username: string }> = [
     {
       id: SEED_USER_ID,
       email: "localuser@example.com",

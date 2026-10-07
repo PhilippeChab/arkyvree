@@ -1,9 +1,9 @@
 export { AbilityScoresSection } from "./AbilityScoresSection.tsx";
-export { CombatAndSavesSection } from "./CombatAndSavesSection.tsx";
 export { BondedSection } from "./BondedSection.tsx";
+export { CombatAndSavesSection } from "./CombatAndSavesSection.tsx";
+export { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
 export { SkillsSection } from "./SkillsSection.tsx";
 export { SpellsSection } from "./SpellsSection.tsx";
-export { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
 export type {
   Dnd35AbilityScoresSectionProps,
   Dnd35BondedSectionProps,

@@ -25,14 +25,14 @@ import { DURATION, EASING, fadeInUpSx, PREFERS_REDUCED_MOTION, transitionOf } fr
 import { RecentNotificationsCard } from "./components/index.ts";
 
 interface StatCardProps {
-  icon: ElementType;
-  count: number;
-  label: string;
-  tagline: string;
-  onClick: () => void;
+  animationIndex: number;
   /** Gradient start and end, from the theme palette. */
   colors: (theme: Theme) => [string, string];
-  animationIndex: number;
+  count: number;
+  icon: ElementType;
+  label: string;
+  onClick: () => void;
+  tagline: string;
 }
 
 function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animationIndex }: StatCardProps) {

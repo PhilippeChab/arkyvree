@@ -17,16 +17,16 @@ import { itemTemplatesQuery } from "./itemFormQueries.ts";
 
 interface ItemFormFieldsProps {
   form: UseFormReturn<ItemFormInternal>;
-  rulesetId: string;
   /** Keeps the type, slot and template as they are (a duplicate copies them from its source). */
   lockType?: boolean;
+  rulesetId: string;
 }
 
 interface TemplateSelectorProps {
+  disabled?: boolean;
   form: UseFormReturn<ItemFormInternal>;
   rulesetId: string;
   type: TemplateType;
-  disabled?: boolean;
 }
 
 /** A cost or a weight: a decimal number, or empty. */
