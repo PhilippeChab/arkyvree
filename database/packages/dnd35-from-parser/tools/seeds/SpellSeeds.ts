@@ -5,7 +5,6 @@ import type { InheritedSpellList } from "@/database/packages/dnd35-from-parser/t
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 
-import type { BaseBookSeeds } from "./BaseBookSeeds.ts";
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
 /** A spell of a reference, as scraped. */
@@ -19,44 +18,6 @@ type RawSpell = SpellReference["raw"][number];
  * book's copies.
  */
 export class SpellSeeds extends ReferenceSeeds<SpellReference> {
-  constructor(ref: SpellReference, book: BaseBookSeeds) {
-    super(ref, book);
-    this.seeds = this.build();
-  }
-
-  /** Its seeds, sorted by level, then name. */
-  readonly seeds: SpellSeed[];
-
-  /** Its seeds, sorted by level, then name. */
-  private build(): SpellSeed[] {
-    const othersInherited = this.book.othersInheritedLists();
-    const classSpellLists = this.book.classSpellLists();
-    const spells: SpellSeed[] = [];
-
-    for (const entry of this.ref.raw) {
-      const { aptitudes, aptitudeLevels, minLevel } = this.levels(entry, othersInherited, classSpellLists);
-      const { properties, savingThrow } = this.ref.detected[entry.name];
-      // Only include aptitudeLevels when not all aptitudes share the same level
-      const hasVaryingLevels = Object.values(aptitudeLevels).some((l) => l !== minLevel);
-      const seed: SpellSeed = {
-        name: entry.name,
-        description: normalizeDescription(this.ref.mapping[entry.name].description),
-        aptitudes: [...aptitudes].sort(),
-        ...(hasVaryingLevels ? { aptitudeLevels } : {}),
-        savingThrow,
-        properties,
-        level: minLevel,
-      };
-
-      spells.push(seed);
-    }
-
-    // Sort by level, then name
-    spells.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
-
-    return spells;
-  }
-
   /**
    * A spell's aptitudes (its classes' spell lists, by the name its level line gives each, `classSpellLists`, and the
    * lists other books' classes inherit, `othersInherited`), its level on each, and its lowest level: on a list it's on,
@@ -94,5 +55,37 @@ export class SpellSeeds extends ReferenceSeeds<SpellReference> {
 
     if (minLevel === 99) minLevel = 0;
     return { aptitudes, aptitudeLevels, minLevel };
+  }
+
+  /** Its seeds, sorted by level, then name. */
+  seeds(): SpellSeed[] {
+    return this.memo("seeds", () => {
+      const othersInherited = this.book.othersInheritedLists();
+      const classSpellLists = this.book.classSpellLists();
+      const spells: SpellSeed[] = [];
+
+      for (const entry of this.ref.raw) {
+        const { aptitudes, aptitudeLevels, minLevel } = this.levels(entry, othersInherited, classSpellLists);
+        const { properties, savingThrow } = this.ref.detected[entry.name];
+        // Only include aptitudeLevels when not all aptitudes share the same level
+        const hasVaryingLevels = Object.values(aptitudeLevels).some((l) => l !== minLevel);
+        const seed: SpellSeed = {
+          name: entry.name,
+          description: normalizeDescription(this.ref.mapping[entry.name].description),
+          aptitudes: [...aptitudes].sort(),
+          ...(hasVaryingLevels ? { aptitudeLevels } : {}),
+          savingThrow,
+          properties,
+          level: minLevel,
+        };
+
+        spells.push(seed);
+      }
+
+      // Sort by level, then name
+      spells.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
+
+      return spells;
+    });
   }
 }

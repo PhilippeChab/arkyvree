@@ -5,7 +5,6 @@ import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/c
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import type { BaseBookSeeds } from "./BaseBookSeeds.ts";
 import { GrantText } from "./GrantText.ts";
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
@@ -51,55 +50,6 @@ const PROFICIENT_FAMILIES = new Set(["Improved Critical", "Weapon Focus"]);
  * item of a family the generated code makes), but those its mapping skips (an epic feat, unless an override keeps it).
  */
 export class FeatSeeds extends ReferenceSeeds<FeatReference> {
-  constructor(ref: FeatReference, book: BaseBookSeeds) {
-    super(ref, book);
-    const kept: FeatEntry[] = [];
-    for (const entry of ref.raw) {
-      const mapped = ref.mapping[entry.name];
-      if (!mapped || mapped.skip) continue;
-      kept.push({ entry, mapped });
-    }
-
-    const byType = new Map<string, FeatSeed[]>();
-    const templates: TemplateFamily[] = [];
-    for (const { entry, mapped } of kept) {
-      if (mapped.template) {
-        const { type, familyName } = mapped.template;
-        templates.push({
-          type,
-          familyName,
-          aptitudes: mapped.aptitudes ?? [],
-          requirements: mapped.requirements ?? [],
-          featNameMap: mapped.featNameMap ?? {},
-          modifiers: mapped.modifiers ?? [],
-          description: mapped.description ?? entry.benefit,
-          options: OWN_WEAPONS[familyName] ?? FAMILY_OPTIONS[type],
-          proficient: PROFICIENT_FAMILIES.has(familyName),
-        });
-        continue;
-      }
-      const name = normalizeName(entry.name);
-      const feats = byType.get(entry.featType) ?? [];
-      byType.set(entry.featType, feats);
-      feats.push({
-        name,
-        description: normalizeDescription(mapped.description ?? entry.benefit),
-        ...(mapped.stackable ? { stackable: true } : {}),
-        ...(mapped.selectable === false ? { selectable: false } : {}),
-        aptitudes: mapped.aptitudes ?? [],
-        requirements: mapped.requirements ?? [],
-        modifiers: [
-          ...(mapped.modifiers ?? []),
-          ...new GrantText(name, mapped.description ?? entry.benefit ?? "").companionModifiers(),
-        ],
-        properties: mapped.properties ?? [],
-      });
-    }
-    this.byType = byType;
-    this.templates = templates;
-    this.templateNames = new Set(kept.filter(({ mapped }) => mapped.template).map(({ entry }) => entry.name));
-  }
-
   /**
    * `requirements`, each check of a family by its own name (Daring Warrior's "Weapon Specialization"), which no feat
    * has, made a check of any of its feats. A count of a family by its name (a prestige class's "Sneak attack +2d6") is
@@ -114,13 +64,16 @@ export class FeatSeeds extends ReferenceSeeds<FeatReference> {
     };
     return requirements.map(anyOf);
   }
-  /** Its feats, by feat type. */
-  readonly byType: Map<string, FeatSeed[]>;
-  /** The names of its template families' feats. */
-  readonly templateNames: Set<string>;
 
-  /** Its template families. */
-  readonly templates: TemplateFamily[];
+  /** Its feats and template families, as scraped and as mapped: but those its mapping skips. */
+  private kept(): FeatEntry[] {
+    return this.memo("kept", () =>
+      this.ref.raw.flatMap((entry) => {
+        const mapped = this.ref.mapping[entry.name];
+        return !mapped || mapped.skip ? [] : [{ entry, mapped }];
+      }),
+    );
+  }
 
   /**
    * Its feats as the aptitude list reads them (names, aptitudes, modifiers): a template family once, as its feats share
@@ -128,8 +81,66 @@ export class FeatSeeds extends ReferenceSeeds<FeatReference> {
    */
   aptitudeSources(): Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] {
     return [
-      ...[...this.byType.values()].flat(),
-      ...this.templates.map(({ familyName, aptitudes, modifiers }) => ({ name: familyName, aptitudes, modifiers })),
+      ...[...this.byType().values()].flat(),
+      ...this.templates().map(({ familyName, aptitudes, modifiers }) => ({ name: familyName, aptitudes, modifiers })),
     ];
+  }
+
+  /** Its feats, by feat type. */
+  byType(): Map<string, FeatSeed[]> {
+    return this.memo("byType", () => {
+      const byType = new Map<string, FeatSeed[]>();
+      for (const { entry, mapped } of this.kept()) {
+        if (mapped.template) continue;
+        const name = normalizeName(entry.name);
+        const feats = byType.get(entry.featType) ?? [];
+        byType.set(entry.featType, feats);
+        feats.push({
+          name,
+          description: normalizeDescription(mapped.description ?? entry.benefit),
+          ...(mapped.stackable ? { stackable: true } : {}),
+          ...(mapped.selectable === false ? { selectable: false } : {}),
+          aptitudes: mapped.aptitudes ?? [],
+          requirements: mapped.requirements ?? [],
+          modifiers: [
+            ...(mapped.modifiers ?? []),
+            ...new GrantText(name, mapped.description ?? entry.benefit ?? "").companionModifiers(),
+          ],
+          properties: mapped.properties ?? [],
+        });
+      }
+      return byType;
+    });
+  }
+
+  /** The names of its template families' feats. */
+  templateNames(): Set<string> {
+    return this.memo(
+      "templateNames",
+      () => new Set(this.kept().flatMap(({ entry, mapped }) => (mapped.template ? [entry.name] : []))),
+    );
+  }
+
+  /** Its template families. */
+  templates(): TemplateFamily[] {
+    return this.memo("templates", () =>
+      this.kept().flatMap(({ entry, mapped }) => {
+        if (!mapped.template) return [];
+        const { type, familyName } = mapped.template;
+        return [
+          {
+            type,
+            familyName,
+            aptitudes: mapped.aptitudes ?? [],
+            requirements: mapped.requirements ?? [],
+            featNameMap: mapped.featNameMap ?? {},
+            modifiers: mapped.modifiers ?? [],
+            description: mapped.description ?? entry.benefit,
+            options: OWN_WEAPONS[familyName] ?? FAMILY_OPTIONS[type],
+            proficient: PROFICIENT_FAMILIES.has(familyName),
+          },
+        ];
+      }),
+    );
   }
 }

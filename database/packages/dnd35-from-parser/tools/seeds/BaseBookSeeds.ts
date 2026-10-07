@@ -18,7 +18,6 @@ import { findFamilyFeat } from "@/database/packages/dnd35-from-parser/tools/voca
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
-import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type { BookSeeds } from "./BookSeeds.ts";
@@ -27,8 +26,10 @@ import { DomainSeeds } from "./DomainSeeds.ts";
 import { FeatSeeds } from "./FeatSeeds.ts";
 import { ItemSeeds } from "./ItemSeeds.ts";
 import { MagicItemSeeds } from "./MagicItemSeeds.ts";
+import { Memos } from "./Memos.ts";
 import { RaceSeeds } from "./RaceSeeds.ts";
 import { SpellSeeds } from "./SpellSeeds.ts";
+import { WizardSchoolSeeds } from "./WizardSchoolSeeds.ts";
 
 /** What a book's seeds read of the other books' (the `Library`): their seeds, and every book's class spell lists. */
 export type Shelf = {
@@ -51,9 +52,9 @@ export class BaseBookSeeds {
   }
 
   /** What's built of the book, by what it is. */
-  private readonly memos = new Map<string, unknown>();
+  private readonly memos = new Memos();
   /** What's built of each of its references (or a reference made of one, a test's), by what it is. */
-  private readonly memosOf = new WeakMap<object, Map<string, unknown>>();
+  private readonly memosOf = new WeakMap<object, Memos>();
   /** The library: the other books. */
   protected readonly shelf: Shelf;
   /** The book. */
@@ -74,25 +75,23 @@ export class BaseBookSeeds {
 
   /** What `build` builds, once: the same each time `key` asks for it. */
   protected memo<T>(key: string, build: () => T): T {
-    if (!this.memos.has(key)) this.memos.set(key, build());
-    return this.memos.get(key) as T;
+    return this.memos.of(key, build);
   }
 
   /** What `build` builds of `of` (a reference), once: the same each time `key` asks for it of `of`. */
   protected memoOf<T>(of: object, key: string, build: () => T): T {
     let memos = this.memosOf.get(of);
     if (!memos) {
-      memos = new Map();
+      memos = new Memos();
       this.memosOf.set(of, memos);
     }
-    if (!memos.has(key)) memos.set(key, build());
-    return memos.get(key) as T;
+    return memos.of(key, build);
   }
 
   /** The template families of the book's feats: none for a book without feats. */
   private templateFamilies(): Set<string> {
     const ref = this.reference("feat");
-    return ref ? this.feats(ref).templateNames : new Set<string>();
+    return ref ? this.feats(ref).templateNames() : new Set<string>();
   }
 
   /** The weight of each weapon, armor and shield the book's items seed, by name: what an item made from one weighs. */
@@ -209,7 +208,7 @@ export class BaseBookSeeds {
   pickableDomains(): DomainSeed[] {
     const domains = (seeds: BaseBookSeeds) => {
       const ref = seeds.reference("domain");
-      return ref ? seeds.domains(ref).seeds : [];
+      return ref ? seeds.domains(ref).seeds() : [];
     };
     return [...domains(this.shelf.book(CORE_BOOK)), ...(this.book === CORE_BOOK ? [] : domains(this))];
   }
@@ -250,15 +249,8 @@ export class BaseBookSeeds {
     return this.memoOf(ref, "spells", () => new SpellSeeds(ref, this));
   }
 
-  /** A wizard school reference's seeds (the book's own, by default): none for a book without one. */
-  wizardSchoolSeeds(ref: WizardSchoolReference | undefined = this.reference("wizardSchool")): WizardSchoolSeed[] {
-    if (!ref) return [];
-    return this.memoOf(ref, "wizardSchools", () =>
-      ref.raw.map((entry) => ({
-        name: entry.name,
-        description: ref.mapping[entry.name].description,
-        prohibitedSchoolCount: entry.prohibitedSchoolCount,
-      })),
-    );
+  /** A wizard school reference's seeds. */
+  wizardSchools(ref: WizardSchoolReference): WizardSchoolSeeds {
+    return this.memoOf(ref, "wizardSchools", () => new WizardSchoolSeeds(ref, this));
   }
 }

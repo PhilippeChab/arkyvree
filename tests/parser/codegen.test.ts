@@ -284,10 +284,10 @@ describe("A generated class", () => {
   });
 
   test("reads its table's columns into level modifiers: a number's rise, a text where it changes", () => {
-    const monk = structuredClone(classRef("srd", "monk"));
-    const modifiers = (column: string) =>
-      (Library.book(monk._meta.book).classes(monk).seed().modifiers ?? [])
-        .filter(({ target }) => target === monk.mapping.columns?.[column]?.target)
+    const monk = classRef("srd", "monk");
+    const modifiers = (column: string, ref = monk) =>
+      (Library.book(ref._meta.book).classes(ref).seed().modifiers ?? [])
+        .filter(({ target }) => target === ref.mapping.columns?.[column]?.target)
         .map(({ level, value, operator }) => `${level} ${operator} ${value}`);
     // "+0 ft." … "+60 ft."; "+0" … "+4"; "1d6" … "2d10"
     expect(modifiers("Unarmored Speed Bonus")).toEqual([
@@ -314,12 +314,14 @@ describe("A generated class", () => {
       )?.requirements,
     ).toEqual(monk.mapping.columns?.["Unarmored Speed Bonus"]?.requirements);
     // A blank cell keeps the value above it, and a typographic minus is a minus
-    monk.raw.progression[5].columns!["AC Bonus"] = "";
-    monk.raw.progression[6].columns!["AC Bonus"] = "\u22121";
-    expect(modifiers("AC Bonus").slice(0, 4)).toEqual(["5 add 1", "7 add -2", "8 add 2", "10 add 1"]);
+    const edited = structuredClone(monk);
+    edited.raw.progression[5].columns!["AC Bonus"] = "";
+    edited.raw.progression[6].columns!["AC Bonus"] = "\u22121";
+    expect(modifiers("AC Bonus", edited).slice(0, 4)).toEqual(["5 add 1", "7 add -2", "8 add 2", "10 add 1"]);
     // A column its table doesn't have
-    monk.mapping.columns = { "Ki Points": { target: "combat.ac.misc", operator: "add" } };
-    expect(() => Library.book(monk._meta.book).classes(monk).seed()).toThrow(
+    const unknownColumn = structuredClone(monk);
+    unknownColumn.mapping.columns = { "Ki Points": { target: "combat.ac.misc", operator: "add" } };
+    expect(() => Library.book(unknownColumn._meta.book).classes(unknownColumn).seed()).toThrow(
       'Monk: its table has no "Ki Points" column',
     );
   });

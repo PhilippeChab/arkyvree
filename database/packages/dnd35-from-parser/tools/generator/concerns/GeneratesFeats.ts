@@ -40,14 +40,14 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
       const featFiles = [
         {
           path: BOOK_FILES.domainFeats.path,
-          lists: domainRef && seeds.domains(domainRef).poolFeats.length > 0 ? [BOOK_FILES.domainFeats.list] : [],
+          lists: domainRef && seeds.domains(domainRef).poolFeats().length > 0 ? [BOOK_FILES.domainFeats.list] : [],
         },
         {
           path: FEATS_FILE,
           lists: feats
             ? [
-                ...[...feats.byType.keys()].map(getFeatTypeList),
-                ...feats.templates.map(({ familyName }) => getTemplateList(familyName)),
+                ...[...feats.byType().keys()].map(getFeatTypeList),
+                ...feats.templates().map(({ familyName }) => getTemplateList(familyName)),
               ]
             : [],
         },

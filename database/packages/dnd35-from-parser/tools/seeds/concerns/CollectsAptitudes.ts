@@ -19,11 +19,14 @@ export function CollectsAptitudes<B extends Constructor<BaseBookSeeds>>(Base: B)
       return this.memo("aptitudes", () => {
         const names = new Set<string>();
 
+        const schoolRef = this.reference("wizardSchool");
+        const schools = schoolRef ? this.wizardSchools(schoolRef).seeds() : [];
+
         // Collect all feats: standalone feats + class feature feats from reference JSONs
         const featRef = this.reference("feat");
         const allFeats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] = [
           ...(featRef ? this.feats(featRef).aptitudeSources() : []),
-          ...(this.book === CORE_BOOK ? buildCoreFeats(this.wizardSchoolSeeds()) : []),
+          ...(this.book === CORE_BOOK ? buildCoreFeats(schools) : []),
         ];
         for (const { ref } of this.classReferences()) {
           allFeats.push(...this.classes(ref).feats());
@@ -56,18 +59,18 @@ export function CollectsAptitudes<B extends Constructor<BaseBookSeeds>>(Base: B)
         // Domain aptitudes: the book's domains, and their feat pools'
         const domainRef = this.reference("domain");
         const domains = domainRef ? this.domains(domainRef) : undefined;
-        if (domains && domains.seeds.length > 0) names.add(CLERIC_DOMAIN);
-        for (const feat of domains?.poolFeats ?? []) for (const apt of feat.aptitudes) names.add(apt);
+        if (domains && domains.seeds().length > 0) names.add(CLERIC_DOMAIN);
+        for (const feat of domains?.poolFeats() ?? []) for (const apt of feat.aptitudes) names.add(apt);
 
         // Wizard school aptitudes
-        for (const school of this.wizardSchoolSeeds()) names.add(specialistSpells(school.name));
+        for (const school of schools) names.add(specialistSpells(school.name));
 
         // For extension books: collect aptitudes referenced by this book's spells
         // so we can keep sibling spell list aptitudes (each extension creates its own copy).
         const spellAptitudes = new Set<string>();
         const spellRef = this.reference("spell");
         if (this.book !== CORE_BOOK && spellRef)
-          for (const spell of this.spells(spellRef).seeds) for (const apt of spell.aptitudes) spellAptitudes.add(apt);
+          for (const spell of this.spells(spellRef).seeds()) for (const apt of spell.aptitudes) spellAptitudes.add(apt);
 
         // Exclude aptitudes created by other books (class features + spell lists).
         // For sibling extension spell lists, keep them if this book's spells reference them.

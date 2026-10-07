@@ -25,18 +25,20 @@ export class RaceSeeds extends ReferenceSeeds<RaceReference> {
 
   /** Its seeds: a size the seed doesn't accept throws. */
   seeds(): RaceSeed[] {
-    return this.seeded().map(({ entry, size }) => {
-      const mapping = this.ref.mapping[entry.name];
+    return this.memo("seeds", () =>
+      this.seeded().map(({ entry, size }) => {
+        const mapping = this.ref.mapping[entry.name];
 
-      return {
-        name: mapping.name,
-        description: mapping.description ?? entry.description,
-        size: this.checkedValue(size),
-        baseSpeed: mapping.baseSpeed,
-        ...(mapping.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
-        ...(mapping.properties?.length ? { properties: mapping.properties } : {}),
-      };
-    });
+        return {
+          name: mapping.name,
+          description: mapping.description ?? entry.description,
+          size: this.checkedValue(size),
+          baseSpeed: mapping.baseSpeed,
+          ...(mapping.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
+          ...(mapping.properties?.length ? { properties: mapping.properties } : {}),
+        };
+      }),
+    );
   }
 
   /** The races a race reference's mapping skips (its overrides), which the seed leaves out. */

@@ -23,9 +23,6 @@ import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts"
 import type { Constructor } from "@/server/mixins.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
-/** What a feat reference makes: its feats by feat type, and its template families. */
-type ReferenceFeats = Pick<FeatSeeds, "byType" | "templates">;
-
 /**
  * Writing a feat, and a template family's feats made per item (weapon, skill, school…). What a template's code uses
  * (weapon lists, skill names…) is imported from where the content defines it (`IMPORT_TABLE`).
@@ -226,8 +223,8 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
      * checks of a family its own (`FeatSeeds.familyChecks`), and a template family's feats made per item; `families` the
      * families a feat can require.
      */
-    featsFile({ byType, templates }: Pick<ReferenceFeats, "byType" | "templates">, families: Set<string>): void {
-      for (const [type, feats] of byType) {
+    featsFile(seeds: FeatSeeds, families: Set<string>): void {
+      for (const [type, feats] of seeds.byType()) {
         this.list(
           getFeatTypeList(type),
           "FeatSeed",
@@ -236,7 +233,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
           ),
         );
       }
-      for (const family of templates) this.featTemplate(family, families);
+      for (const family of seeds.templates()) this.featTemplate(family, families);
     }
 
     /**

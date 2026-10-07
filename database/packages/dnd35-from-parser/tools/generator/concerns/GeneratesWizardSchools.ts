@@ -11,7 +11,7 @@ export function GeneratesWizardSchools<B extends Constructor<BaseGenerator>>(Bas
   abstract class GeneratingWizardSchools extends Base {
     /** A book's wizard schools file (wizardSchools.ts). */
     writeWizardSchools(ref: WizardSchoolReference, book: string) {
-      const seeds = Library.book(book).wizardSchoolSeeds(ref);
+      const seeds = Library.book(book).wizardSchools(ref).seeds();
       this.log(`Built ${seeds.length} wizard school seeds`);
 
       const { path, list } = BOOK_FILES.wizardSchools;

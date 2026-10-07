@@ -11,7 +11,7 @@ export function GeneratesItems<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingItems extends Base {
     /** A book's mundane items' files, a file per kind. */
     writeItems(ref: ItemReference, book: string) {
-      const { seeds } = Library.book(book).items(ref);
+      const seeds = Library.book(book).items(ref).seeds();
       for (const { path, list, seeds: kind } of ITEM_FILES) {
         if (!(kind in seeds)) continue;
         this.writeList(

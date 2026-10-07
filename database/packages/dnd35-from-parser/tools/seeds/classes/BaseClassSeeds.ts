@@ -1,5 +1,6 @@
 import type { BaseBookSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/BaseBookSeeds.ts";
 import { GrantText } from "@/database/packages/dnd35-from-parser/tools/seeds/GrantText.ts";
+import { ReferenceSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/ReferenceSeeds.ts";
 import { stripClassSuffix } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import {
   type AptitudePick,
@@ -108,23 +109,14 @@ function expandPerLevelAptitudePicks(
  * has, the families and the domains it can name), and what its seed and its feats decide alike, once: its aptitude
  * picks split per level, the feat a feature is, and the existing feat a feature grants instead.
  */
-export class BaseClassSeeds {
+export class BaseClassSeeds extends ReferenceSeeds<ClassReference> {
   constructor(ref: ClassReference, book: BaseBookSeeds) {
-    this.ref = ref;
-    this.book = book;
+    super(ref, book);
     this.classSlug = stripSeparators(ref.raw.name);
   }
 
-  /** The existing feat each feature grants, by its name and description. */
-  private readonly existingFeats = new Map<string, string | undefined>();
-  /** Its book's seeds. */
-  readonly book: BaseBookSeeds;
   /** The class's slug, as its paths name it (`classes.wujen.level`). */
   readonly classSlug: string;
-  /** The class's reference. */
-  readonly ref: ClassReference;
-  /** Its aptitude picks, once split. */
-  private split?: ClassAptitudePicks;
 
   /** Having `level` levels in the class. */
   protected classLevelRequirement(level: number): RequirementEntry[] {
@@ -136,23 +128,20 @@ export class BaseClassSeeds {
    * feat (with or without the class's suffix), or one its description says it gains as a bonus feat.
    */
   protected existingFeatGranted(name: string, description: string | undefined): string | undefined {
-    const key = `${name}\n${description ?? ""}`;
-    if (!this.existingFeats.has(key)) {
+    return this.memo(`existingFeatGranted\n${name}\n${description ?? ""}`, () => {
       const baseName = stripClassSuffix(name, this.ref.raw.name);
       const { book } = this;
-      this.existingFeats.set(
-        key,
+      return (
         (baseName && book.findExistingFeat(baseName)) ||
-          book.findExistingFeat(name) ||
-          (description
-            ? new GrantText(name, description)
-                .grantedFeatNames()
-                .map((n) => book.findExistingFeat(n))
-                .find(Boolean)
-            : undefined),
+        book.findExistingFeat(name) ||
+        (description
+          ? new GrantText(name, description)
+              .grantedFeatNames()
+              .map((n) => book.findExistingFeat(n))
+              .find(Boolean)
+          : undefined)
       );
-    }
-    return this.existingFeats.get(key);
+    });
   }
 
   /** The feat a feature is, by its mapping's key: its seed name, else its key, with its aptitude when it has one. */
@@ -162,7 +151,8 @@ export class BaseClassSeeds {
 
   /** The class's aptitude picks, its mapping's split per level (`expandAptitudePicks`). */
   protected picks(): ClassAptitudePicks {
-    this.split ??= expandAptitudePicks(this.ref.mapping.aptitudePicks, this.ref.mapping.bonusFeatLists);
-    return this.split;
+    return this.memo("picks", () =>
+      expandAptitudePicks(this.ref.mapping.aptitudePicks, this.ref.mapping.bonusFeatLists),
+    );
   }
 }

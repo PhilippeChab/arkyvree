@@ -64,62 +64,64 @@ export class MagicItemSeeds extends ReferenceSeeds<MagicItemReference> {
 
   /** Its seeds, by kind: a slot or a category the seed doesn't accept throws. */
   seeds(): MagicItemSeedSets {
-    const baseWeights = this.book.baseItemWeights();
-    const magicArmor: ItemSeed[] = [];
-    const magicShields: ItemSeed[] = [];
-    const magicWeapons: ItemSeed[] = [];
-    const wondrousItems: ItemSeed[] = [];
-    const rings: ItemSeed[] = [];
-    const rods: ItemSeed[] = [];
-    const staffs: ItemSeed[] = [];
+    return this.memo("seeds", () => {
+      const baseWeights = this.book.baseItemWeights();
+      const magicArmor: ItemSeed[] = [];
+      const magicShields: ItemSeed[] = [];
+      const magicWeapons: ItemSeed[] = [];
+      const wondrousItems: ItemSeed[] = [];
+      const rings: ItemSeed[] = [];
+      const rods: ItemSeed[] = [];
+      const staffs: ItemSeed[] = [];
 
-    const categoryBuckets: Record<MagicItemCategory, ItemSeed[]> = {
-      specificArmor: magicArmor,
-      specificShield: magicShields,
-      specificWeapon: magicWeapons,
-      wondrousItem: wondrousItems,
-      ring: rings,
-      rod: rods,
-      staff: staffs,
-    };
+      const categoryBuckets: Record<MagicItemCategory, ItemSeed[]> = {
+        specificArmor: magicArmor,
+        specificShield: magicShields,
+        specificWeapon: magicWeapons,
+        wondrousItem: wondrousItems,
+        ring: rings,
+        rod: rods,
+        staff: staffs,
+      };
 
-    for (const { name, det, item, slot } of this.seeded()) {
-      const sourceItem = item.baseItem;
-      // Its mapping's weight (its override's or its text's), else its base item's, else none ("0", as detected)
-      const weight = item.weight ?? (sourceItem && baseWeights[sourceItem]) ?? det.weight;
+      for (const { name, det, item, slot } of this.seeded()) {
+        const sourceItem = item.baseItem;
+        // Its mapping's weight (its override's or its text's), else its base item's, else none ("0", as detected)
+        const weight = item.weight ?? (sourceItem && baseWeights[sourceItem]) ?? det.weight;
 
-      const bucket = categoryBuckets[det.category];
-      if (!bucket) throw new Error(`${name}: the seed has no magic items of the category "${det.category}"`);
+        const bucket = categoryBuckets[det.category];
+        if (!bucket) throw new Error(`${name}: the seed has no magic items of the category "${det.category}"`);
 
-      const categoryWord = CATEGORY_PREFIX[det.category];
-      let itemName = name;
-      if (categoryWord) {
-        // Normalize plural category in name: "Metamagic Rods" → "Metamagic Rod"
-        itemName = itemName
-          .replace(/\bRods\b/g, "Rod")
-          .replace(/\bRings\b/g, "Ring")
-          .replace(/\bStaffs\b/g, "Staff");
-        if (!new RegExp(`\\b${categoryWord}\\b`, "i").test(itemName)) itemName = `${categoryWord} of ${itemName}`;
+        const categoryWord = CATEGORY_PREFIX[det.category];
+        let itemName = name;
+        if (categoryWord) {
+          // Normalize plural category in name: "Metamagic Rods" → "Metamagic Rod"
+          itemName = itemName
+            .replace(/\bRods\b/g, "Rod")
+            .replace(/\bRings\b/g, "Ring")
+            .replace(/\bStaffs\b/g, "Staff");
+          if (!new RegExp(`\\b${categoryWord}\\b`, "i").test(itemName)) itemName = `${categoryWord} of ${itemName}`;
+        }
+
+        // A template is made from nothing: its base armor's properties are its own, under those it changes
+        if (item.template && (det.category !== "specificArmor" || !sourceItem))
+          throw new Error(`${name}: only a specific armor made from a base armor can be a template`);
+
+        bucket.push({
+          name: itemName,
+          description: item.description,
+          weight,
+          costGp: item.costGp,
+          type: det.itemType,
+          slot: slot && this.checkedValue(slot),
+          ...(item.template && sourceItem
+            ? templateOf(withOwnProperties(armorProperties(sourceItem), item.properties))
+            : { properties: item.properties, ...(sourceItem ? { sourceItem } : {}) }),
+          ...(item.modifiers.length ? { modifiers: item.modifiers } : {}),
+        });
       }
 
-      // A template is made from nothing: its base armor's properties are its own, under those it changes
-      if (item.template && (det.category !== "specificArmor" || !sourceItem))
-        throw new Error(`${name}: only a specific armor made from a base armor can be a template`);
-
-      bucket.push({
-        name: itemName,
-        description: item.description,
-        weight,
-        costGp: item.costGp,
-        type: det.itemType,
-        slot: slot && this.checkedValue(slot),
-        ...(item.template && sourceItem
-          ? templateOf(withOwnProperties(armorProperties(sourceItem), item.properties))
-          : { properties: item.properties, ...(sourceItem ? { sourceItem } : {}) }),
-        ...(item.modifiers.length ? { modifiers: item.modifiers } : {}),
-      });
-    }
-
-    return { magicArmor, magicShields, magicWeapons, wondrousItems, rings, rods, staffs };
+      return { magicArmor, magicShields, magicWeapons, wondrousItems, rings, rods, staffs };
+    });
   }
 }
