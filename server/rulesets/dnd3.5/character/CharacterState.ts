@@ -38,7 +38,7 @@ import type {
 
 /**
  * Data loader interface that ruleset implementations must provide.
- * Handles DB fetching of character-level data + PMR distribution. Ruleset-
+ * Handles DB fetching of character-level data + each entity's customizations. Ruleset-
  * level data (`ruleset`, `cowData`, `rulesetData`) is always supplied by the
  * caller via `withRulesetScope` — the loader never fetches it itself.
  */
