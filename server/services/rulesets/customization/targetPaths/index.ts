@@ -1,2 +1,2 @@
 export { default as TargetPathsService } from "./TargetPathsService.ts";
-export { getTargetPathsWithLabels, resolvePathValueType } from "./targetPaths.ts";
+export { findTemplateValueError, getTargetPathsWithLabels, resolvePathValueType } from "./targetPaths.ts";

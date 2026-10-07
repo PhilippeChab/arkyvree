@@ -4,7 +4,7 @@ import type { FieldError } from "react-hook-form";
 
 import { Crossfade } from "@/client/src/components/common/index.ts";
 import { HelpOutlinedIcon } from "@/client/src/components/icons/index.ts";
-import { extractTemplateExpression, isTemplateValue } from "@/client/src/lib/templateValues.ts";
+import { extractTemplateExpression, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 
 import { OperatorSelect } from "./OperatorSelect.tsx";
 import { PathValueInput } from "./PathValueInput.tsx";

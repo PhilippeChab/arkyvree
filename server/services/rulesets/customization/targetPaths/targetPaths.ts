@@ -3,7 +3,6 @@ import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
-import { isTemplateValue } from "@/server/rulesets/engine/paths/templateExpression.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type {
   PathCompletion,
@@ -12,6 +11,11 @@ import type {
   TargetPath,
   TargetPathKind,
 } from "@/shared/customization/target.ts";
+import {
+  extractTemplateExpression,
+  findTemplateError,
+  isTemplateValue,
+} from "@/shared/customization/templateExpression.ts";
 
 /** Why a modifier's or requirement's operator and value don't suit the path, or null when they do. */
 function valueMismatch(pathDef: TargetPath, operator: string | undefined, value: string | undefined): string | null {
@@ -31,6 +35,21 @@ function valueMismatch(pathDef: TargetPath, operator: string | undefined, value:
     return `${path} takes ${pathDef.minValue} or more`;
 
   return null;
+}
+
+/**
+ * What's wrong with a template value for a value of `valueType`, or null: checked as the sheet will evaluate it, against
+ * the paths a template of the ruleset reads (the "template" listing).
+ */
+export async function findTemplateValueError(
+  rulesetId: string,
+  value: string,
+  valueType: string,
+): Promise<string | null> {
+  const expression = extractTemplateExpression(value);
+  if (expression === null) return `Invalid template ${JSON.stringify(value)}`;
+  const { paths } = await getTargetPathsWithLabels(rulesetId, "template");
+  return findTemplateError(expression, new Map(paths.map((path) => [path.path, path.valueType])), valueType);
 }
 
 /**
@@ -89,6 +108,10 @@ export async function resolvePathValueType(
 
   const mismatch = valueMismatch(pathDef, operator, value);
   if (mismatch) throw new BadRequestError(mismatch);
+  if (value !== undefined && isTemplateValue(value)) {
+    const templateError = await findTemplateValueError(rulesetId, value, pathDef.valueType);
+    if (templateError) throw new BadRequestError(templateError);
+  }
   return pathDef.valueType;
 }
 

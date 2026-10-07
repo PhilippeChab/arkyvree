@@ -12,7 +12,6 @@ import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   customizationSection,
@@ -22,6 +21,7 @@ import { customizationEntityQuery } from "@/client/src/pages/rulesets/customizat
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
+import { extractTemplatePath } from "@/shared/customization/templateExpression.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { SectionAddButton } from "./SectionAddButton.tsx";

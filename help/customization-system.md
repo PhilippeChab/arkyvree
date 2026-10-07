@@ -103,7 +103,7 @@ The character engine computes the **base, permanent character sheet**. Condition
 
 The system has no concept of "currently active" — only "permanent". Modeling conditional bonuses as flat modifiers silently inflates the sheet.
 
-Two advanced patterns: **wildcards** (target `saves.*.misc` to apply to all three saves at once) and **references** (use `{{ abilities.charisma.modifier }}` instead of a literal value to read another stat at evaluation time, used by Divine Grace). A reference's path picker lists the values it can read: one each, totals and modifiers included. See [How do wildcard patterns work?](#how-do-wildcard-patterns-work)
+Two advanced patterns: **wildcards** (target `saves.*.misc` to apply to all three saves at once) and **references** (use `{{ abilities.charisma.modifier }}` instead of a literal value to read another stat at evaluation time, used by Divine Grace). A reference's path picker lists the values it can read: one each, totals and modifiers included. Saving checks a reference the way the sheet will read it, and says what's wrong: a path it can't read, a function it doesn't know, or a text value in arithmetic. See [How do wildcard patterns work?](#how-do-wildcard-patterns-work)
 
 ## How do these three work together?
 

@@ -1,7 +1,11 @@
 import { expect, test } from "bun:test";
 
 import * as RULESET_NAMES from "@/database/packages/dnd35/names.ts";
-import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import {
+  findTemplateValueError,
+  getTargetPathsWithLabels,
+} from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 
 import { seededRows } from "./seededRows.ts";
 
@@ -25,3 +29,20 @@ test.each(["modifier", "requirement"] as const)(
     expect([...new Set(misfits)]).toEqual([]);
   },
 );
+
+// A seeded template never goes through the save check: one the sheet can't evaluate would fail on every character
+test("Every seeded template reads what a template of its ruleset can, as its value's type", async () => {
+  const errors: string[] = [];
+  let templates = 0;
+  for (const name of Object.values(RULESET_NAMES)) {
+    const rows = await seededRows(name);
+    for (const { target, value, valueType } of [...rows.modifiers, ...rows.requirements]) {
+      if (!value || !valueType || !isTemplateValue(value)) continue;
+      templates++;
+      const error = await findTemplateValueError(rows.rulesetId, value, valueType);
+      if (error) errors.push(`${name}: ${target} = ${value}: ${error}`);
+    }
+  }
+  expect(templates).toBeGreaterThan(0);
+  expect(errors).toEqual([]);
+});

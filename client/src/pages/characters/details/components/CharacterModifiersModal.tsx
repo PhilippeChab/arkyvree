@@ -47,9 +47,9 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
 import { characterModifiersQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { extractTemplatePath } from "@/shared/customization/templateExpression.ts";
 
 interface CharacterModifiersModalProps {
   open: boolean;
