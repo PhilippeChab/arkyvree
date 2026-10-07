@@ -2,6 +2,7 @@ import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/Abilitie
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import { readPowerFields } from "./powerFields.ts";
 import type PowersComponent from "./PowersComponent.ts";
 
 type PowerGroup = Record<string, PowerDcsByClass>;
@@ -24,7 +25,6 @@ export default class PowerGroupingsComponent {
   constructor(
     private readonly powers: PowersComponent,
     private readonly abilities: AbilitiesComponent,
-    private readonly groupingProperties: readonly string[],
   ) {}
 
   private readonly powerGroupings: PowerGroupingsData = {};
@@ -60,9 +60,10 @@ export default class PowerGroupingsComponent {
     };
 
     const normalizedPowerName = stripSeparators(power.name);
-    for (const prop of properties) {
-      if (!this.groupingProperties.includes(prop.type)) continue;
-      const grouping = stripSeparators(prop.value);
+    // A spell is grouped under its school and each of its descriptors
+    const { descriptors = [], school } = readPowerFields(properties);
+    for (const value of school === undefined ? descriptors : [school, ...descriptors]) {
+      const grouping = stripSeparators(value);
       if (!grouping) continue;
       const group = (this.powerGroupings[grouping] ??= {});
       (group[normalizedPowerName] ??= {})[power.aptitudeSlug] = dc;

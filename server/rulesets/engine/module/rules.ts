@@ -131,8 +131,7 @@ export interface PowerFields {
 /** The rules a power follows: how it's grouped (a spell's school). */
 export interface PowersRules {
   extractGroupingValue(fields: PowerFields): string | null;
-  /** The property type that holds a power's grouping. */
-  readonly primaryGroupingType: string;
+  readProperties(properties: { type: string; value: string }[]): PowerFields;
 }
 
 /** An armor's or a shield's own fields: its AC bonus, the proficiency it takes and its type. */
