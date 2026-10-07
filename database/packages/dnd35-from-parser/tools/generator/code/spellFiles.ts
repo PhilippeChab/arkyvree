@@ -6,7 +6,7 @@ import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.t
 
 function generateLevelFile(constName: string, spells: SpellSeed[]): string {
   const lines: string[] = [];
-  lines.push(`import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";`);
+  lines.push(`import type { PowerSeed } from "@/database/packages/dnd35/content/spells/types.ts";`);
   lines.push(``);
   lines.push(`export const ${constName}: PowerSeed[] = [`);
 
