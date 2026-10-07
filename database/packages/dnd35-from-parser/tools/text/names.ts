@@ -20,6 +20,9 @@ const LOWERCASE_WORDS = new Set([
   "vs",
 ]);
 
+/** An ordinal before a feature's name: "1st Favored Enemy". */
+const ORDINAL_PREFIX = /^\d+(st|nd|rd|th)\s+/i;
+
 /** A name in title case, its small words (a, an, and…) aside, a parenthesized word capitalized too ("(Planar)"). */
 export function capitalizeTitle(s: string): string {
   return s
@@ -45,6 +48,11 @@ export function findWithPluralVariants<V>(map: Map<string, V>, name: string): V 
   return undefined;
 }
 
+/** A class feature's name without its ability type ("Rage (Ex)" → "Rage"). */
+export function getFeatureBaseName(name: string): string {
+  return name.replace(/\s*\((Ex|Su|Sp)\)\s*$/, "").trim();
+}
+
 export function getPluralVariants(name: string): string[] {
   const n = name.toLowerCase();
   return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
@@ -63,6 +71,47 @@ export function isPluralVariantOf(variant: string, name: string): boolean {
 }
 
 /**
+ * Whether an occurrence (lowercased) is a variant of the feature `name` (lowercased): its name with a suffix ("Bear
+ * Form (Black)", "Remove Disease 1/Week"), or an ordinal before it ("1st Favored Enemy").
+ */
+export function isVariantOf(occurrence: string, name: string): boolean {
+  if (occurrence.startsWith(name + " ") || occurrence.startsWith(name + "(")) return true;
+  return ORDINAL_PREFIX.test(occurrence) && stripOrdinalPrefix(occurrence) === name;
+}
+
+/** A feature's name as the table writes it, without its numbers ("Sneak attack +1d6" → "Sneak Attack"), title-cased. */
+export function normalizeFeatureName(name: string): string {
+  return (
+    name
+      // Replace replacement characters with spaces (encoding artifacts)
+      .replace(/\uFFFD/g, " ")
+      // Strip leading "+N " prefix (e.g. "+1 save against poison" → "Save Against Poison")
+      .replace(/^\+\d+\s+/, "")
+      // Strip "+Nd6" suffixes (e.g. "Sneak attack +1d6" → "Sneak Attack")
+      .replace(/\s*\+\d+d\d+$/i, "")
+      // Strip "+N" suffixes (e.g. "Enhance arrow +1" → "Enhance Arrow")
+      .replace(/\s*\+\d+$/, "")
+      // Strip "(Nd8)" etc. (e.g. "Breath weapon (2d8)")
+      .replace(/\s*\(\d+d\d+\)$/i, "")
+      // Strip "(+N)" suffixes (e.g. "Natural armor increase (+1)")
+      .replace(/\s*\(\+\d+\)$/, "")
+      // Strip "(Stat +N)" suffixes (e.g. "Ability boost (Con +2)")
+      .replace(/\s*\([A-Z][a-z]+ \+\d+\)$/, "")
+      // Strip "N/day" with or without parens
+      .replace(/\s*\(?\d+\/day\)?$/i, "")
+      // Strip "N ft." suffixes (e.g. "Shadow jump 20 ft.")
+      .replace(/\s*\d+\s*ft\.?$/i, "")
+      // Strip trailing ordinals (e.g. "2nd")
+      .replace(/\s*\d+(st|nd|rd|th)$/i, "")
+      // Strip "N/–" damage reduction values (e.g. "Damage reduction 3/–")
+      .replace(/\s*\d+\/[–-]$/, "")
+      .trim()
+      // Title-case each word for consistent naming (but not after apostrophes)
+      .replace(/(?<!['''])\b\w/g, (c) => c.toUpperCase())
+  );
+}
+
+/**
  * Capitalize the first letter of each word inside parentheses.
  * e.g. "Armor Proficiency (heavy)" → "Armor Proficiency (Heavy)"
  */
@@ -78,6 +127,11 @@ export function stripClassSuffix(name: string, className: string): string | unde
   const suffix = ` (${className})`;
   if (name.endsWith(suffix)) return name.slice(0, -suffix.length);
   return undefined;
+}
+
+/** A feature's name without its ordinal ("1st Favored Enemy" → "Favored Enemy"). */
+export function stripOrdinalPrefix(name: string): string {
+  return name.replace(ORDINAL_PREFIX, "");
 }
 
 export function toCamelCase(name: string): string {

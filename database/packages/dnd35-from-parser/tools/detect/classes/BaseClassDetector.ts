@@ -3,7 +3,7 @@ import { findWithPluralVariants } from "@/database/packages/dnd35-from-parser/to
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { readFeatureOccurrences } from "./featureNames.ts";
+import { ClassTable } from "./ClassTable.ts";
 
 /** A class feature, as its page gives it. */
 export type ClassFeature = ClassReference["raw"]["classFeatures"][number];
@@ -40,7 +40,8 @@ export abstract class BaseClassDetector extends BaseDetector<ClassReference> {
     super(stored);
     this.raw = withAlignment(stored);
     this.classSlug = stripSeparators(this.raw.name);
-    this.featureOccurrences = readFeatureOccurrences(this.raw.progression);
+    this.table = new ClassTable(this.raw);
+    this.featureOccurrences = this.table.featureOccurrences();
     this.features = featuresByName(this.raw.classFeatures);
   }
 
@@ -52,6 +53,8 @@ export abstract class BaseClassDetector extends BaseDetector<ClassReference> {
   readonly featureOccurrences: ClassReference["detected"]["featureOccurrences"];
   /** What the class's page gives, its alignment filled in from its overrides. */
   readonly raw: ClassReference["raw"];
+  /** The class's table, read. */
+  readonly table: ClassTable;
 
   /** The class feature a name means: its own, or its plural or singular ("Bonus Feat" for "Bonus Feats"). */
   findFeature(name: string): ClassFeature | undefined {

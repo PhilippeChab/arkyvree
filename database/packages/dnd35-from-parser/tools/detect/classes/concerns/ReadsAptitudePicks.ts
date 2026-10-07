@@ -1,23 +1,9 @@
 import type { BaseClassDetector } from "@/database/packages/dnd35-from-parser/tools/detect/classes/BaseClassDetector.ts";
-import {
-  isScalingFeature,
-  mergeOrdinalVariants,
-} from "@/database/packages/dnd35-from-parser/tools/detect/classes/featureNames.ts";
-import {
-  CHOICE_PATTERN,
-  readTreatedAsHavingFeats,
-} from "@/database/packages/dnd35-from-parser/tools/detect/classes/featureText.ts";
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
-import { type AptitudePick, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
+import { FeatureText } from "@/database/packages/dnd35-from-parser/tools/detect/classes/FeatureText.ts";
+import { stripOrdinalPrefix } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
+import { type AptitudePick } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
-
-type CreatureType = (typeof CREATURE_TYPES)[number];
-
-/** A favored enemy feature's text: "+2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks". */
-const FAVORED_ENEMY_TEXT =
-  /\+2\s+(?:bonus\s+on\s+)?Bluff,\s*Listen,\s*Sense Motive,\s*Spot,?\s*and\s*Survival\s+checks/i;
 
 /** Description patterns that indicate gameplay/tactical choices, not character-build picks.
  *  These filter AFTER CHOICE_PATTERN matches — if any match, the feature is skipped.
@@ -57,38 +43,41 @@ function detectExistingAptitudeReference(desc: string): string | null {
   return null;
 }
 
-/** The creature type a text names, a subtype ("Humanoid (Elf)" for elves) before a type. */
-function findCreatureType(text: string): CreatureType | null {
-  if (!text) return null;
-  const tries: { keyword: string; variant: CreatureType }[] = [];
-  for (const t of CREATURE_TYPES) {
-    const m = t.match(/^(.+?)\s*\(([^)]+)\)$/);
-    if (m) tries.push({ keyword: m[2], variant: t });
-  }
-  for (const t of CREATURE_TYPES) if (!/\(/.test(t)) tries.push({ keyword: t, variant: t });
-
-  for (const { keyword, variant } of tries)
-    if (new RegExp(`\\b${RegExp.escape(keyword)}s?\\b`, "i").test(text)) return variant;
-
-  return null;
-}
-
 /** Open creature-type pick — selection language near "favored enemy" / "type of creature". */
 function isFavoredEnemyOpenPick(featureName: string, desc: string): boolean {
   if (!/favored enemy/i.test(featureName) && !/favored enemy/i.test(desc)) return false;
   return /(?:select|choose|designate|pick)s?\s+[^.]*?(?:type of creature|favored enemy)/i.test(desc);
 }
 
+/** Merges "1st Foo" / "2nd Foo" occurrences into one entry with combined levels. */
+function mergeOrdinalVariants(
+  featureOccurrences: { levels: number[]; name: string }[],
+): { levels: number[]; name: string }[] {
+  const map = new Map<string, { levels: Set<number>; name: string }>();
+  for (const occ of featureOccurrences) {
+    const base = stripOrdinalPrefix(occ.name);
+    const key = base.toLowerCase();
+    const existing = map.get(key);
+    if (existing) {
+      for (const l of occ.levels) existing.levels.add(l);
+      if (existing.name !== base && /^\d/.test(existing.name)) existing.name = base;
+    } else {
+      map.set(key, { name: base, levels: new Set(occ.levels) });
+    }
+  }
+  return Array.from(map.values()).map(({ name, levels }) => ({ name, levels: [...levels].sort((a, b) => a - b) }));
+}
+
 /** Reading a class's aptitude picks: the features where its player picks from a pool. */
-export function AptitudePicks<B extends Constructor<BaseClassDetector>>(Base: B) {
-  abstract class WithAptitudePicks extends Base {
+export function ReadsAptitudePicks<B extends Constructor<BaseClassDetector>>(Base: B) {
+  abstract class ReadingAptitudePicks extends Base {
     /**
      * The features where the class's player picks from a pool, each an aptitude pick at its levels: an existing
      * aptitude's list it names (fighter bonus feats), favored enemies, or its own ("<class><feature>"); and those that
      * read as a pick but give no aptitude.
      */
     protected aptitudePicks(): { aptitudePicks?: AptitudePick[]; unresolvedAptitudePicks?: string[] } {
-      const { classSlug, raw } = this;
+      const { classSlug } = this;
       const picks: AptitudePick[] = [];
       const unresolved: string[] = [];
 
@@ -112,7 +101,8 @@ export function AptitudePicks<B extends Constructor<BaseClassDetector>>(Base: B)
           continue;
         }
 
-        if (!CHOICE_PATTERN.test(desc)) continue;
+        const text = new FeatureText(desc);
+        if (!text.offersChoice()) continue;
 
         // Filter out features that match CHOICE_PATTERN but aren't character-build picks.
         // This covers scaling abilities, named feat grants, passive combat features, and
@@ -123,11 +113,11 @@ export function AptitudePicks<B extends Constructor<BaseClassDetector>>(Base: B)
         if (NON_PICK_DESCRIPTION.some((pattern) => pattern.test(desc))) continue;
 
         // Detect scaling bonuses from raw progression (e.g. "Dodge bonus +1", "+2", "+3")
-        if (isScalingFeature(occ.name, raw.progression)) continue;
+        if (this.table.isScaling(occ.name)) continue;
 
         // Single-occurrence: check for "treated as having" pattern (ranger combat style)
         if (occ.levels.length < 2) {
-          const treatedFeats = readTreatedAsHavingFeats(desc);
+          const treatedFeats = text.treatedAsHavingFeats();
           if (treatedFeats) {
             const featureSlug = stripSeparators(occ.name);
             picks.push({ levels: occ.levels, target: `aptitudes.${classSlug}${featureSlug}.allowed` });
@@ -153,28 +143,6 @@ export function AptitudePicks<B extends Constructor<BaseClassDetector>>(Base: B)
         ...(unresolved.length > 0 ? { unresolvedAptitudePicks: unresolved } : {}),
       };
     }
-
-    /** The favored enemy features locked to a creature type (a gnome giant-slayer's): re-routed to the shared variant. */
-    protected lockedFavoredEnemies(): { lockedFavoredEnemies?: ClassReference["detected"]["lockedFavoredEnemies"] } {
-      const results: NonNullable<ClassReference["detected"]["lockedFavoredEnemies"]> = [];
-
-      for (const occ of this.featureOccurrences) {
-        const desc = this.findFeature(occ.name)?.description;
-        if (!desc) continue;
-        const normalized = normalizeWs(desc);
-
-        if (!FAVORED_ENEMY_TEXT.test(normalized)) continue;
-
-        const nameMatch = occ.name.match(/\(([^)]+)\)/);
-        let lockedType = nameMatch ? findCreatureType(nameMatch[1]) : null;
-        if (!lockedType) lockedType = findCreatureType(normalized);
-        if (!lockedType) continue;
-
-        results.push({ featureName: occ.name, levels: occ.levels, creatureType: lockedType });
-      }
-
-      return results.length > 0 ? { lockedFavoredEnemies: results } : {};
-    }
   }
-  return WithAptitudePicks;
+  return ReadingAptitudePicks;
 }
