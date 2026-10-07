@@ -8,14 +8,14 @@
 
 import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
+import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import {
-  ALLOWED_ALL,
-  Dnd35LevelsRules,
-  type Dnd35LevelUpProjector,
   parseAptitudeAllowed,
   parseAptitudePool,
   parseAptitudeSpellLevel,
-} from "@/engine/rulesets/dnd3.5/index.ts";
+} from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
+import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
+import type { Dnd35LevelUpProjector } from "@/engine/rulesets/dnd3.5/types.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Modifier, Skill } from "@/shared/relations.ts";

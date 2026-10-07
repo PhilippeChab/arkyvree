@@ -5,7 +5,15 @@
  */
 
 import { type RulesetData } from "@/engine/core/view/index.ts";
-import type { AptitudesComponent, Dnd35LevelUpProjector, Dnd35RulesetModule } from "@/engine/rulesets/dnd3.5/index.ts";
+import {
+  type AptitudesComponent,
+  computePerLevelAptitudeSlots,
+  type Dnd35LevelUpProjector,
+  type Dnd35RulesetModule,
+  getPlannedClassSkills,
+  getPlannedKlassLevels,
+  projectPlannedLevels,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter, readCharacterRows } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -14,9 +22,7 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { getPlannedClassSkills, getPlannedKlassLevels } from "./classes.ts";
-import { computePerLevelAptitudeSlots } from "./distribution.ts";
-import { buildBaselineAptitudes, projectPlannedLevels } from "./projection.ts";
+import { buildBaselineAptitudes } from "./baseline.ts";
 
 type PowerPools = ReturnType<AptitudesComponent["extractPowerPools"]>;
 

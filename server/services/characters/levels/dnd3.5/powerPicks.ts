@@ -2,25 +2,24 @@
  * Powers and spells a level-up can pick for an aptitude pool.
  */
 
-import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/index.ts";
+import { getListPowerIds } from "@/engine/core/view/index.ts";
+import {
+  annotateRequirements,
+  buildPendingCharacterLevels,
+  buildProjectedCharacterLevel,
+  buildProjectedFeatsFromPicks,
+  type Dnd35ProjectedCharacterData,
+  type FeatPick,
+  getKlassLevel,
+  getLevelIdsFromOnward,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Powers } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
-import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import type { Session } from "@/shared/relations.ts";
-
-import { getKlassLevel } from "./classes.ts";
-import {
-  buildPendingCharacterLevels,
-  buildProjectedCharacterLevel,
-  buildProjectedFeatsFromPicks,
-  type FeatPick,
-  getLevelIdsFromOnward,
-} from "./projection.ts";
-import { annotateRequirements } from "./validation.ts";
 
 export async function getAvailablePowers(
   session: Session,

@@ -1,6 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { featsInRules } from "@/drizzle/schema.ts";
+import { getListFeatIds } from "@/engine/core/view/index.ts";
 import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
@@ -8,7 +9,6 @@ import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/e
 import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { getListFeatIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {

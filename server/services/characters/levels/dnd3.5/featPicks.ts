@@ -4,28 +4,27 @@
 
 import type { DetailedCharacterInterface } from "@/engine/core/module/index.ts";
 import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
-import { type RulesetData } from "@/engine/core/view/index.ts";
-import { type Dnd35ProjectedCharacterData, parseAptitudePool } from "@/engine/rulesets/dnd3.5/index.ts";
+import { getListFeatIds, type RulesetData } from "@/engine/core/view/index.ts";
+import {
+  annotateRequirements,
+  buildPendingCharacterLevels,
+  buildProjectedCharacterLevel,
+  buildProjectedFeatsFromPicks,
+  buildProjectedGivenFeats,
+  type Dnd35ProjectedCharacterData,
+  type FeatPick,
+  getKlassLevel,
+  getLevelIdsFromOnward,
+  loadFeatCustomizations,
+  parseAptitudePool,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Feats } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
-import { getListFeatIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import type { Character, Session } from "@/shared/relations.ts";
-
-import { getKlassLevel } from "./classes.ts";
-import {
-  buildPendingCharacterLevels,
-  buildProjectedCharacterLevel,
-  buildProjectedFeatsFromPicks,
-  buildProjectedGivenFeats,
-  type FeatPick,
-  getLevelIdsFromOnward,
-  loadFeatCustomizations,
-} from "./projection.ts";
-import { annotateRequirements } from "./validation.ts";
 
 /** A row of a feat's variants, which the picker opens into them: each variant says whether it's eligible. */
 function asFamilyRow<T extends object>(row: T) {

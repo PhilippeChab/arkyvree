@@ -8,7 +8,17 @@
  */
 
 import { type RulesetData } from "@/engine/core/view/index.ts";
-import type { AptitudesComponent, Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/index.ts";
+import {
+  type AptitudesComponent,
+  buildPendingCharacterLevels,
+  buildProjectedCharacterLevel,
+  buildProjectedGivenFeats,
+  type Dnd35ProjectedCharacterData,
+  getClassSkillIds,
+  getKlassLevel,
+  getLevelIdsFromOnward,
+  loadFeatCustomizations,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -17,15 +27,6 @@ import { CharacterLevels } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
-
-import { getClassSkillIds, getKlassLevel } from "./classes.ts";
-import {
-  buildPendingCharacterLevels,
-  buildProjectedCharacterLevel,
-  buildProjectedGivenFeats,
-  getLevelIdsFromOnward,
-  loadFeatCustomizations,
-} from "./projection.ts";
 
 /** What a level-up step projects: a new level after the levels planned before it, or an edit of one of the character's. */
 type LevelProjection = {

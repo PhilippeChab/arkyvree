@@ -2,6 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
 import type { RulesetModule } from "@/engine/core/module/index.ts";
+import { getListPowerIds } from "@/engine/core/view/index.ts";
 import {
   findScopedEntity,
   RulesetCache,
@@ -15,7 +16,6 @@ import { FeatsAptitudes, Powers, PowersAptitudes, Properties } from "@/server/re
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import { writeGeneratedFeats, writeProperties } from "@/server/services/rulesets/effectWrites.ts";
 import type { Session } from "@/shared/relations.ts";
 
