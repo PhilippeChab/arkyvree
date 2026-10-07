@@ -105,7 +105,7 @@ export function ClassesSection({
                   borderRadius: 1,
                 }}
               >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />}>
                   <Typography sx={{ fontWeight: 500 }}>
                     {classLink ? (
                       <>

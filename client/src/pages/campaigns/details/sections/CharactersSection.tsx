@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
-import { type SyntheticEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -193,31 +193,16 @@ function CharacterCard({
               }
               size="small"
               variant="outlined"
-              onClick={
-                canEditVisibility
-                  ? (e) => {
-                      e.stopPropagation();
-                      menu.openMenu(e);
-                    }
-                  : undefined
-              }
+              onClick={canEditVisibility ? menu.openMenu : undefined}
               sx={{ fontWeight: 500, fontSize: "0.7rem", cursor: canEditVisibility ? "pointer" : undefined }}
             />
             {canEditVisibility && (
-              <Menu
-                anchorEl={menu.anchorEl}
-                open={menu.open}
-                onClose={(e: SyntheticEvent) => {
-                  e.stopPropagation?.();
-                  menu.closeMenu();
-                }}
-              >
+              <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
                 {VISIBILITY_OPTIONS.map((option) => (
                   <MenuItem
                     key={option}
                     selected={option === character.visibility}
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       menu.closeMenu();
                       if (option !== character.visibility) updateVisibility(option);
                     }}
@@ -418,10 +403,6 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <Typography component="h2" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-          Characters
-        </Typography>
-
         <SearchBar
           {...searchTextProps}
           searchPlaceholder="Search characters…"

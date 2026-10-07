@@ -24,14 +24,16 @@ import {
   clickableProps,
   CreateDialog,
   DiceSpinner,
+  ExpandArrow,
   LoadError,
   LoadMoreButton,
   NoMatchesState,
   SearchBar,
   SectionContent,
+  toggleProps,
 } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
-import { ExpandLessIcon, ExpandMoreIcon, FeatsIcon } from "@/client/src/components/icons/index.ts";
+import { FeatsIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText, useToggleSet } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -107,13 +109,12 @@ function GroupedRow({
       <>
         <TableRow
           hover
-          {...clickableProps(() => onToggleFamily(family))}
-          aria-expanded={isExpanded}
+          {...toggleProps(isExpanded, () => onToggleFamily(family), "row")}
           sx={{ ...CLICKABLE_SX, ...fadeInUpSx(rowIndex) }}
         >
           <TableCell>
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+              <ExpandArrow open={isExpanded} />
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {row.displayName}
               </Typography>
@@ -164,10 +165,7 @@ function GroupedRow({
             <TableCell colSpan={2} sx={{ pl: 6 }}>
               <Button
                 size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  variantQuery.fetchNextPage();
-                }}
+                onClick={() => variantQuery.fetchNextPage()}
                 disabled={variantQuery.isFetchingNextPage}
               >
                 <DiceSpinner size="small" loading={variantQuery.isFetchingNextPage}>

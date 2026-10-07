@@ -1,9 +1,8 @@
-import { Box, Collapse, IconButton, Link as MuiLink, Stack, Typography } from "@mui/material";
+import { Box, Collapse, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { type ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { BlankState, CLICKABLE_SX, clickableProps } from "@/client/src/components/common/index.ts";
-import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
+import { BlankState, ToggleLabel } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 import { SheetSection } from "./SheetSection.tsx";
@@ -37,25 +36,18 @@ function FeatRow({ name, label, description, extra }: FeatRowProps) {
     // Without details, the bar runs a little past the description
     <Stack spacing={1} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2, pb: hasExtra ? 0 : 1 }}>
       <Box>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
-          <Typography
-            component="h3"
-            sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}
-          >
-            {name}
-          </Typography>
-          {hasExtra && (
-            <IconButton
-              size="small"
-              onClick={() => setOpen((p) => !p)}
-              sx={{ p: 0 }}
-              aria-label={`${label} Details`}
-              aria-expanded={open}
-            >
-              {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-            </IconButton>
+        <Typography
+          component="h3"
+          sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}
+        >
+          {hasExtra ? (
+            <ToggleLabel open={open} onToggle={() => setOpen((p) => !p)} label={`${label} Details`}>
+              {name}
+            </ToggleLabel>
+          ) : (
+            name
           )}
-        </Stack>
+        </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           {description || "—"}
         </Typography>
@@ -75,18 +67,11 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
 
   return (
     <Stack spacing={2}>
-      <Stack
-        direction="row"
-        {...clickableProps(() => setOpen((prev) => !prev))}
-        sx={[CLICKABLE_SX, { alignItems: "center", justifyContent: "space-between" }]}
-      >
-        <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
+      <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
+        <ToggleLabel open={open} onToggle={() => setOpen((prev) => !prev)}>
           Granted ({feats.length})
-        </Typography>
-        <IconButton size="small" sx={{ p: 0 }} aria-label="Granted Feats" aria-expanded={open}>
-          {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-        </IconButton>
-      </Stack>
+        </ToggleLabel>
+      </Typography>
       {/* Mounted while closed: the space above it stays, as the list opens and closes within it */}
       <Collapse in={open} timeout="auto">
         <Stack spacing={3}>

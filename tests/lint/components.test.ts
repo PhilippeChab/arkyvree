@@ -177,4 +177,30 @@ describe("component rules", () => {
       "toggle-states client/src/toggle.tsx",
     ]);
   });
+
+  test("a toggle leads with one arrow", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/less.tsx": "export const l = <ExpandLessIcon />;\n",
+          "client/src/more.tsx": "export const m = <ExpandMoreIcon />;\n",
+          "client/src/accordion.tsx":
+            'export const a = <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />} />;\n',
+          "client/src/arrow.tsx": "export const r = <ExpandArrow open={open} />;\n",
+          "client/src/button.tsx":
+            "export const b = <IconButton onClick={toggle}><ExpandArrow open={open} /></IconButton>;\n",
+          "client/src/clickable.tsx":
+            "export const c = <TableRow {...clickableProps(toggle)} aria-expanded={open} />;\n",
+          "client/src/row.tsx": 'export const t = <TableRow {...toggleProps(open, toggle, "row")} />;\n',
+          "client/src/components/common/ExpandArrow.tsx": "export const e = <ExpandMoreIcon />;\n",
+        },
+        ["expand-arrows"],
+      ),
+    ).toEqual([
+      "expand-arrows client/src/button.tsx",
+      "expand-arrows client/src/clickable.tsx",
+      "expand-arrows client/src/less.tsx",
+      "expand-arrows client/src/more.tsx",
+    ]);
+  });
 });

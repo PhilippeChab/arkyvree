@@ -1,6 +1,6 @@
 import { Autocomplete, Box, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 
-import { BlankState, LoadError, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { BlankState, ListToolbar, LoadError, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { CloseIcon } from "@/client/src/components/icons/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { truncate } from "@/client/src/lib/truncate.ts";
@@ -35,15 +35,8 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
 
   return (
     <Stack spacing={2}>
-      <Stack
-        direction="row"
-        spacing={2}
-        sx={{ flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start" }}
-      >
-        <Typography variant="h6" component="h2">
-          Class Skills
-        </Typography>
-        {canEdit && (
+      {canEdit && (
+        <ListToolbar>
           <Box sx={{ minWidth: { xs: "100%", sm: 300 } }}>
             <Autocomplete
               options={unassignedSkills}
@@ -89,8 +82,8 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
               }}
             />
           </Box>
-        )}
-      </Stack>
+        </ListToolbar>
+      )}
       {isLoading ? (
         <Stack spacing={1}>
           {[...Array(3)].map((_, index) => (

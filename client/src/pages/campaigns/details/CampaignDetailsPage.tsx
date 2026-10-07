@@ -135,7 +135,7 @@ export default function CampaignDetailsPage() {
         <PageError
           message={loadFailureMessage("Campaign", error)}
           backLabel="Back to Campaigns"
-          onBack={() => navigate("/campaigns")}
+          backTo={"/campaigns"}
         />
       </Container>
     );
@@ -147,7 +147,7 @@ export default function CampaignDetailsPage() {
         <Stack spacing={4}>
           <DetailPageHeader
             title={`⚔️ ${campaign.name}`}
-            onBack={() => navigate("/campaigns")}
+            backTo={"/campaigns"}
             onMenuOpen={canEdit ? menu.openMenu : undefined}
             chips={
               <>

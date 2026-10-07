@@ -201,10 +201,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                             <IconButton
                               aria-label="Edit"
                               size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEdit(item);
-                              }}
+                              onClick={() => onEdit(item)}
                               sx={{ color: "primary.main" }}
                             >
                               <EditIcon fontSize="small" />
@@ -213,14 +210,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                         )}
                         {canEdit && onDuplicate && (
                           <Tooltip title="Duplicate">
-                            <IconButton
-                              aria-label="Duplicate"
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDuplicate(item);
-                              }}
-                            >
+                            <IconButton aria-label="Duplicate" size="small" onClick={() => onDuplicate(item)}>
                               <ContentCopyIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -230,10 +220,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                             <IconButton
                               aria-label="Create Variants"
                               size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onCreateVariants(item);
-                              }}
+                              onClick={() => onCreateVariants(item)}
                             >
                               <LibraryAddIcon fontSize="small" />
                             </IconButton>
@@ -244,10 +231,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                             <IconButton
                               aria-label="Delete"
                               size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDelete(item.id);
-                              }}
+                              onClick={() => onDelete(item.id)}
                               sx={{ color: "error.main" }}
                             >
                               <DeleteIcon fontSize="small" />

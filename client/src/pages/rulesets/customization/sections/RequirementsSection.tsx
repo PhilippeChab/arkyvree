@@ -10,6 +10,7 @@ import {
   DeleteDialog,
   DiceSpinner,
   EditDialog,
+  ExpandArrow,
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import {
@@ -19,14 +20,7 @@ import {
   type RequirementType,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
-import {
-  AddIcon,
-  ChevronRightIcon,
-  DeleteIcon,
-  EditIcon,
-  ExpandMoreIcon,
-  RequirementsIcon,
-} from "@/client/src/components/icons/index.ts";
+import { AddIcon, DeleteIcon, EditIcon, RequirementsIcon } from "@/client/src/components/icons/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
@@ -402,8 +396,8 @@ export function RequirementsSection({
           ) : (
             <SimpleTreeView
               slots={{
-                collapseIcon: ExpandMoreIcon,
-                expandIcon: ChevronRightIcon,
+                collapseIcon: () => <ExpandArrow open />,
+                expandIcon: () => <ExpandArrow open={false} />,
               }}
               sx={{ flexGrow: 1, maxWidth: "100%", overflowY: "auto" }}
               expandedItems={expandedItems}

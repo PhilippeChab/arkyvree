@@ -1,5 +1,6 @@
 import { Box, IconButton, Menu, Skeleton, Stack, Typography } from "@mui/material";
 import { type ComponentProps, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 
 import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
 import { ArrowBackIcon, DeleteIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
@@ -11,7 +12,8 @@ interface EntityDetailLayoutProps {
   rulesetName?: string;
   /** Replaces "<ruleset> Ruleset" under the title. */
   subtitle?: ReactNode;
-  onBack: () => void;
+  /** Where Back goes: a link */
+  backTo: string;
   /** Momentarily nowhere sensible to go back to. */
   backDisabled?: boolean;
   canDelete: boolean;
@@ -29,7 +31,7 @@ export function EntityDetailLayout({
   entityName,
   rulesetName,
   subtitle,
-  onBack,
+  backTo,
   backDisabled,
   canDelete,
   onDelete,
@@ -73,7 +75,8 @@ export function EntityDetailLayout({
       >
         <IconButton
           aria-label="Back"
-          onClick={onBack}
+          component={Link}
+          to={backTo}
           disabled={backDisabled}
           size={isMobile ? "medium" : "large"}
           sx={{

@@ -141,39 +141,6 @@ export default function DashboardPage() {
               },
             }}
           >
-            {/* Corner filigree top-left */}
-            <Box
-              sx={{
-                display: { xs: "none", sm: "block" },
-                position: "absolute",
-                top: 16,
-                left: 16,
-                width: 40,
-                height: 40,
-                borderTop: 2,
-                borderLeft: 2,
-                borderColor: (theme) => alpha(theme.palette.common.white, 0.3),
-                borderRadius: 0.5,
-                pointerEvents: "none",
-              }}
-            />
-            {/* Corner filigree bottom-right */}
-            <Box
-              sx={{
-                display: { xs: "none", sm: "block" },
-                position: "absolute",
-                bottom: 16,
-                right: 16,
-                width: 40,
-                height: 40,
-                borderBottom: 2,
-                borderRight: 2,
-                borderColor: (theme) => alpha(theme.palette.common.white, 0.3),
-                borderRadius: 0.5,
-                pointerEvents: "none",
-              }}
-            />
-
             <Stack spacing={2}>
               <Stack direction="row" spacing={2} sx={{ alignItems: "center", position: "relative" }}>
                 {/* Icon with radial glow */}

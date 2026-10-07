@@ -1,19 +1,10 @@
-import {
-  Box,
-  IconButton,
-  InputAdornment,
-  Menu,
-  MenuItem,
-  Paper,
-  Stack,
-  TextField,
-  Toolbar,
-  Tooltip,
-} from "@mui/material";
+import { IconButton, InputAdornment, Menu, MenuItem, TextField, Tooltip } from "@mui/material";
 import { type ReactNode } from "react";
 
 import { FilterIcon, SearchIcon, SortIcon } from "@/client/src/components/icons/index.ts";
 import { useAnchorMenu } from "@/client/src/hooks/index.ts";
+
+import { ListToolbar } from "./ListToolbar.tsx";
 
 interface SearchBarProps<TFilter extends string = string, TSort extends string = string> {
   searchValue: string;
@@ -72,30 +63,9 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
   };
 
   return (
-    <Paper elevation={0} sx={{ border: 1, borderColor: "divider", borderRadius: 2 }}>
-      <Toolbar sx={{ px: 2, py: 1 }}>
-        <Stack direction="row" sx={{ alignItems: "center", flexGrow: 1, flexWrap: "wrap", columnGap: 3, rowGap: 1 }}>
-          <TextField
-            size="small"
-            placeholder={searchPlaceholder}
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" color="action" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{ width: { xs: "100%", sm: 300 } }}
-          />
-
-          {filters}
-
-          <Box sx={{ flexGrow: 1 }} />
-
+    <ListToolbar
+      actions={
+        <>
           {actions}
 
           {filterOptions && filterOptions.length > 0 && (
@@ -139,8 +109,27 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
               </Menu>
             </>
           )}
-        </Stack>
-      </Toolbar>
-    </Paper>
+        </>
+      }
+    >
+      <TextField
+        size="small"
+        placeholder={searchPlaceholder}
+        value={searchValue}
+        onChange={(e) => onSearchChange(e.target.value)}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" color="action" />
+              </InputAdornment>
+            ),
+          },
+        }}
+        sx={{ width: { xs: "100%", sm: 300 } }}
+      />
+
+      {filters}
+    </ListToolbar>
   );
 }
