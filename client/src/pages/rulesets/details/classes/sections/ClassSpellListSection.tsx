@@ -1,11 +1,10 @@
 import { Box, MenuItem, Stack, TextField } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
-import { useState } from "react";
 
 import { LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
 import { SpellListIcon } from "@/client/src/components/icons/index.ts";
-import { useDebouncedValue } from "@/client/src/hooks/index.ts";
+import { useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   DescriptionCell,
@@ -16,7 +15,7 @@ import {
   classSpellListsQuery,
   spellListSpellsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-import { useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useOpenEntity, useSpellLevelFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { type rpc } from "@/client/src/services/rpc.ts";
 
 import type { ClassSectionProps } from "./types.ts";
@@ -30,10 +29,10 @@ const COLUMNS = [
 
 export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
-  const [selectedLevel, setSelectedLevel] = useState<number>(0);
-  const [chosenListId, setChosenListId] = useState<string>();
-  const [searchText, setSearchText] = useState("");
-  const search = useDebouncedValue(searchText);
+  const { level, setLevel } = useSpellLevelFilter(false);
+  const selectedLevel = level === "" ? 0 : level;
+  const { value: chosenListId, setValue: setChosenListId } = useSearchParam("list");
+  const { search, searchBarProps } = useSearchText();
 
   const {
     data: lists = [],
@@ -74,8 +73,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
   return (
     <Stack spacing={3}>
       <SearchBar
-        searchValue={searchText}
-        onSearchChange={setSearchText}
+        {...searchBarProps}
         searchPlaceholder="Search spells…"
         filters={
           <>
@@ -97,7 +95,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
                 </TextField>
               </Box>
             )}
-            <SpellLevelFilter value={selectedLevel} onChange={(level) => setSelectedLevel(Number(level))} />
+            <SpellLevelFilter value={selectedLevel} onChange={setLevel} />
           </>
         }
       />

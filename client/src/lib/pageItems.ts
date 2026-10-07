@@ -8,6 +8,11 @@ export function itemsBeforeLastPage<T>(data: { pages: { items: T[] }[] } | undef
   return (data?.pages ?? []).slice(0, -1).reduce((sum, page) => sum + page.items.length, 0);
 }
 
+/** The page after a list's last loaded one, an infinite query's `getNextPageParam`: none after its last page. */
+export function nextPage(lastPage: { nextPage?: number }) {
+  return lastPage.nextPage;
+}
+
 /** The items of every page an infinite query has loaded, in order. */
 export function pageItems<T>(data: { pages: { items: T[] }[] } | undefined): T[] {
   return data?.pages.flatMap((page) => page.items) ?? [];

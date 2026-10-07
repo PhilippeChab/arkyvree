@@ -28,6 +28,7 @@ import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
 
+import { spellLevelName } from "./spellLevels.ts";
 import type { Dnd35PowersSectionProps } from "./types.ts";
 
 interface CollapsibleClassProps {
@@ -70,7 +71,7 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
 
 function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
   const [open, setOpen] = useState(false);
-  const label = group.level === 0 ? "Cantrips" : `Level ${group.level}`;
+  const label = spellLevelName(group.level);
 
   return (
     // The last level, closed, keeps the space its title has to its spells

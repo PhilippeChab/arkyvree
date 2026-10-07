@@ -10,6 +10,6 @@ export type RulesetAbility = InferResponseType<
 >["items"][number];
 
 /** Every ability of a ruleset, for pickers and lookups. */
-export function useRulesetAbilities(rulesetId: string | undefined) {
-  return useQuery(rulesetAbilitiesQuery(rulesetId));
+export function useRulesetAbilities(rulesetId: string | undefined, enabled = true) {
+  return useQuery({ ...rulesetAbilitiesQuery(rulesetId), enabled });
 }

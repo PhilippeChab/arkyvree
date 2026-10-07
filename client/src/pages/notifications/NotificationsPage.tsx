@@ -1,6 +1,5 @@
 import {
   alpha,
-  Box,
   Button,
   Container,
   Stack,
@@ -12,7 +11,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
 import {
   BlankState,
@@ -21,21 +19,18 @@ import {
   CREATED_SORTS,
   DiceSpinner,
   type FilterOption,
-  LoadError,
-  LoadMoreButton,
-  NoMatchesState,
+  ListPageResults,
   PageHeader,
-  PageLoader,
   PageTransition,
   SearchBar,
   TableFrame,
 } from "@/client/src/components/common/index.ts";
 import { CircleIcon, NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
-import { useListParams, useNotificationActions, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useListPageQuery, useListParams, useNotificationActions, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { notificationListQuery } from "@/client/src/lib/queries.ts";
 
 const FILTER_OPTIONS: FilterOption<"unread">[] = [
@@ -51,14 +46,9 @@ export default function NotificationsPage() {
     orderDir: "desc",
   });
 
-  const unreadOnly = searchParams.get("filter") === "unread";
+  const unreadOnly = oneOf(searchParams.get("filter"), ["unread"]) === "unread";
 
-  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    ...notificationListQuery({ search, orderDir, unreadOnly }),
-    placeholderData: keepPreviousData,
-  });
-
-  const notifications = pageItems(data);
+  const notifications = useListPageQuery(notificationListQuery({ search, orderDir, unreadOnly }));
 
   return (
     <PageTransition>
@@ -102,100 +92,86 @@ export default function NotificationsPage() {
               sortField="createdAt"
             />
 
-            {isLoading ? (
-              <PageLoader />
-            ) : error && notifications.length === 0 ? (
-              <LoadError what="Notifications" error={error} />
-            ) : notifications.length > 0 ? (
-              // With nothing more to load, the page ends three units below the table, as the table's margin left it
-              <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>
-                <TableFrame>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Notification</TableCell>
-                        <TableCell>When</TableCell>
-                        <TableCell>Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {notifications.map((notification) => {
-                        const isUnread = !notification.readAt;
-                        const openable = actions.isOpenable(notification);
-
-                        return (
-                          <TableRow
-                            key={notification.id}
-                            {...(openable && clickableProps(() => actions.open(notification)))}
-                            sx={[
-                              openable && { "&:hover": { bgcolor: "action.hover" } },
-                              openable && CLICKABLE_SX,
-                              isUnread && { bgcolor: "action.selected" },
-                            ]}
-                          >
-                            <TableCell>
-                              <Tooltip
-                                describeChild
-                                title={formatActivityDetails(notification.data) ?? ""}
-                                arrow
-                                enterDelay={300}
-                                slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
-                              >
-                                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                                  {isUnread && (
-                                    <CircleIcon
-                                      titleAccess="Unread"
-                                      sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }}
-                                    />
-                                  )}
-                                  <Typography variant="body2">
-                                    {formatNotificationMessage(notification.type, notification.data)}
-                                  </Typography>
-                                </Stack>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                                {formatRelativeTime(notification.createdAt)}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              {actions.isActionable(notification) && (
-                                <InviteActionButtons
-                                  onAccept={() => actions.accept(notification)}
-                                  onReject={() => actions.reject(notification)}
-                                  pending={actions.answering(notification)}
-                                />
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </TableFrame>
-
-                <LoadMoreButton
-                  size="large"
-                  hasNextPage={hasNextPage}
-                  isFetchingNextPage={isFetchingNextPage}
-                  onClick={() => fetchNextPage()}
-                />
-              </Stack>
-            ) : search ? (
+            <ListPageResults
+              list={notifications}
+              what="Notifications"
+              search={search}
               // An empty page's state sits a unit lower than its table, as its margin placed it
-              <Box sx={{ pt: 1 }}>
-                <NoMatchesState search={search} />
-              </Box>
-            ) : (
-              <Box sx={{ pt: 1 }}>
+              emptySx={{ pt: 1 }}
+              empty={
                 <BlankState
                   icon={NotificationsIcon}
                   title={unreadOnly ? "No unread notifications" : "No notifications yet"}
                   description="Notifications from your campaigns and collaborators will appear here."
                 />
-              </Box>
-            )}
+              }
+            >
+              <TableFrame>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Notification</TableCell>
+                      <TableCell>When</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {notifications.items.map((notification) => {
+                      const isUnread = !notification.readAt;
+                      const openable = actions.isOpenable(notification);
+
+                      return (
+                        <TableRow
+                          key={notification.id}
+                          {...(openable && clickableProps(() => actions.open(notification)))}
+                          sx={[
+                            openable && { "&:hover": { bgcolor: "action.hover" } },
+                            openable && CLICKABLE_SX,
+                            isUnread && { bgcolor: "action.selected" },
+                          ]}
+                        >
+                          <TableCell>
+                            <Tooltip
+                              describeChild
+                              title={formatActivityDetails(notification.data) ?? ""}
+                              arrow
+                              enterDelay={300}
+                              slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
+                            >
+                              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                                {isUnread && (
+                                  <CircleIcon
+                                    titleAccess="Unread"
+                                    sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }}
+                                  />
+                                )}
+                                <Typography variant="body2">
+                                  {formatNotificationMessage(notification.type, notification.data)}
+                                </Typography>
+                              </Stack>
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                              {formatRelativeTime(notification.createdAt)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            {actions.isActionable(notification) && (
+                              <InviteActionButtons
+                                onAccept={() => actions.accept(notification)}
+                                onReject={() => actions.reject(notification)}
+                                pending={actions.answering(notification)}
+                              />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableFrame>
+            </ListPageResults>
           </Stack>
         </Stack>
       </Container>

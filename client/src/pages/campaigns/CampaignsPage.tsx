@@ -1,5 +1,5 @@
 import { Button, Container, Stack } from "@mui/material";
-import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -9,23 +9,19 @@ import {
   InfoPill,
   ListCard,
   ListCardGrid,
-  LoadError,
-  LoadMoreButton,
+  ListPageResults,
   NAME_SORTS,
-  NoMatchesState,
   PageActionButton,
   PageHeader,
-  PageLoader,
   PageTransition,
   SearchBar,
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
 import { ArchiveIcon, AutoStoriesIcon, CampaignIcon, GroupIcon } from "@/client/src/components/icons/index.ts";
-import { useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
+import { useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { campaignDetailQuery, type CampaignListFilters, campaignListQuery } from "@/client/src/lib/queries.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
@@ -56,15 +52,7 @@ export default function CampaignsPage() {
 
   const { createDialog, createForm, createMutation, handleCreate, confirmCreate } = useCampaignOperations();
 
-  const listQuery = campaignListQuery({ view, search, orderBy, orderDir });
-  const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
-
-  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    ...listQuery,
-    placeholderData: keepPreviousData,
-  });
-
-  const campaigns = pageItems(data);
+  const campaigns = useListPageQuery(campaignListQuery({ view, search, orderBy, orderDir }));
 
   // Warm the detail page and its tabs while the pointer is on a card.
   const prefetchCampaign = (id: string) => {
@@ -94,83 +82,73 @@ export default function CampaignsPage() {
             sortOptions={CAMPAIGN_SORT_OPTIONS}
           />
 
-          {isLoading ? (
-            <PageLoader />
-          ) : error && campaigns.length === 0 ? (
-            <LoadError what="Campaigns" error={error} />
-          ) : campaigns.length > 0 ? (
-            <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>
-              <ListCardGrid>
-                {campaigns.map((campaign, index) => {
-                  const players = formatCount(campaign.currentPlayers, "player");
-                  return (
-                    <ListCard
-                      key={campaign.id}
-                      isArchived={view === "archived"}
-                      animationIndex={index}
-                      animationOffset={offset}
-                      onClick={() => navigate(`/campaigns/${campaign.id}`)}
-                      onMouseEnter={() => prefetchCampaign(campaign.id)}
-                      onFocus={() => prefetchCampaign(campaign.id)}
-                      avatarTone="secondary"
-                      title={campaign.name}
-                      description={campaign.description}
-                      pills={
-                        <>
-                          <InfoPill
-                            icon={GroupIcon}
-                            label={players}
-                            color="info"
-                            tooltip={`${players} in this campaign`}
-                          />
-                          <InfoPill
-                            icon={AutoStoriesIcon}
-                            label={campaign.rulesetName}
-                            color="secondary"
-                            tooltip={campaign.rulesetName}
-                          />
-                        </>
-                      }
-                    />
-                  );
-                })}
-              </ListCardGrid>
-              <LoadMoreButton
-                size="large"
-                label="Load More Campaigns"
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                onClick={() => {
-                  updateOffset(campaigns.length);
-                  fetchNextPage();
-                }}
-              />
-            </Stack>
-          ) : search ? (
-            <NoMatchesState search={search} />
-          ) : view === "archived" ? (
-            <BlankState
-              icon={ArchiveIcon}
-              title="No archived campaigns"
-              description="Campaigns you archive will appear here. You can restore them at any time."
-              action={
-                <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
-                  View Active Campaigns
-                </Button>
-              }
-            />
-          ) : (
-            <BlankState
-              icon={CampaignIcon}
-              title="No campaigns yet"
-              description={
-                isDemo
-                  ? "Sign up to create campaigns and run multiplayer sessions."
-                  : "Create your first campaign to start organizing your adventures"
-              }
-              action={!isDemo && createButton("Create Your First Campaign")}
-            />
-          )}
+          <ListPageResults
+            list={campaigns}
+            what="Campaigns"
+            search={search}
+            loadMoreLabel="Load More Campaigns"
+            empty={
+              view === "archived" ? (
+                <BlankState
+                  icon={ArchiveIcon}
+                  title="No archived campaigns"
+                  description="Campaigns you archive will appear here. You can restore them at any time."
+                  action={
+                    <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
+                      View Active Campaigns
+                    </Button>
+                  }
+                />
+              ) : (
+                <BlankState
+                  icon={CampaignIcon}
+                  title="No campaigns yet"
+                  description={
+                    isDemo
+                      ? "Sign up to create campaigns and run multiplayer sessions."
+                      : "Create your first campaign to start organizing your adventures"
+                  }
+                  action={!isDemo && createButton("Create Your First Campaign")}
+                />
+              )
+            }
+          >
+            <ListCardGrid>
+              {campaigns.items.map((campaign, index) => {
+                const players = formatCount(campaign.currentPlayers, "player");
+                return (
+                  <ListCard
+                    key={campaign.id}
+                    isArchived={view === "archived"}
+                    animationIndex={index}
+                    animationOffset={campaigns.offset}
+                    onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                    onMouseEnter={() => prefetchCampaign(campaign.id)}
+                    onFocus={() => prefetchCampaign(campaign.id)}
+                    avatarTone="secondary"
+                    title={campaign.name}
+                    description={campaign.description}
+                    pills={
+                      <>
+                        <InfoPill
+                          icon={GroupIcon}
+                          label={players}
+                          color="info"
+                          tooltip={`${players} in this campaign`}
+                        />
+                        <InfoPill
+                          icon={AutoStoriesIcon}
+                          label={campaign.rulesetName}
+                          color="secondary"
+                          tooltip={campaign.rulesetName}
+                        />
+                      </>
+                    }
+                  />
+                );
+              })}
+            </ListCardGrid>
+          </ListPageResults>
         </Stack>
 
         {createDialog.target && (

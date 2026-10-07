@@ -3,9 +3,10 @@
  * cache the same response.
  */
 
-import { queryOptions } from "@tanstack/react-query";
+import { type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
+import { type Aptitude } from "@/client/src/components/customization/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -18,10 +19,13 @@ export function abilityQuery(rulesetId: string, abilityId: string) {
   });
 }
 
-export function aptitudeQuery(rulesetId: string, aptitudeId: string) {
+/** An aptitude; skipped without one (a list's aptitude filter, unset). */
+export function aptitudeQuery(rulesetId: string, aptitudeId: string | undefined) {
   return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.entity(rulesetId, "aptitudes", aptitudeId),
-    queryFn: () => parseResponse(rulesetApi.aptitudes[":aptitudeId"].$get({ param: { id: rulesetId, aptitudeId } })),
+    queryKey: QUERY_KEYS.rulesets.entity(rulesetId, "aptitudes", aptitudeId ?? ""),
+    queryFn: aptitudeId
+      ? () => parseResponse(rulesetApi.aptitudes[":aptitudeId"].$get({ param: { id: rulesetId, aptitudeId } }))
+      : skipToken,
   });
 }
 
@@ -44,6 +48,11 @@ export function saveQuery(rulesetId: string, saveId: string) {
     queryKey: QUERY_KEYS.rulesets.entity(rulesetId, "saves", saveId),
     queryFn: () => parseResponse(rulesetApi.saves[":saveId"].$get({ param: { id: rulesetId, saveId } })),
   });
+}
+
+/** An aptitude a list's picker picked, cached as its own read would be, so the filter shows it before any refetch. */
+export function seedAptitude(queryClient: QueryClient, rulesetId: string, aptitude: Aptitude) {
+  queryClient.setQueryData(aptitudeQuery(rulesetId, aptitude.id).queryKey, aptitude);
 }
 
 export function skillQuery(rulesetId: string, skillId: string) {

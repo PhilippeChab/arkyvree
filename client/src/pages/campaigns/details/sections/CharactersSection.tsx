@@ -11,11 +11,12 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { CharacterBuildChips } from "@/client/src/components/characters/index.ts";
 import {
   AddButton,
   BlankState,
@@ -23,6 +24,7 @@ import {
   DiceSpinner,
   faqTooltip,
   ListCard,
+  ListCardGrid,
   LoadError,
   LoadMoreButton,
   Modal,
@@ -35,16 +37,15 @@ import { CharacterIcon, VisibilityIcon } from "@/client/src/components/icons/ind
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
   useAnchorMenu,
-  useAttachments,
+  useCharacterPortraits,
   useDebouncedValue,
   useDialogState,
   useListboxQuery,
+  useListPageQuery,
   useSearchText,
-  useStaggerAnimation,
 } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { campaignCharacterQuery, unlinkedCharactersQuery } from "@/client/src/pages/campaigns/campaignQueries.ts";
@@ -173,24 +174,7 @@ function CharacterCard({
           )}
         </>
       }
-      pills={
-        <>
-          <Chip
-            label={character.race}
-            size="small"
-            variant="outlined"
-            sx={{ borderColor: "secondary.main", color: "secondary.main", fontWeight: 500 }}
-          />
-          {character.levels.map((level, index) => (
-            <Chip
-              key={index}
-              label={`${level.klass} ${level.level}`}
-              size="small"
-              sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 500 }}
-            />
-          ))}
-        </>
-      }
+      pills={<CharacterBuildChips race={character.race} levels={character.levels} />}
     />
   );
 }
@@ -321,27 +305,9 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   // Search state with debounce
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("characterSearch");
 
-  const listQuery = campaignCharactersQuery(campaign.id, searchQuery);
-  const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
-
-  const {
-    data,
-    isLoading: charactersLoading,
-    error: charactersError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({ ...listQuery, placeholderData: keepPreviousData });
-
-  const characters = useMemo(() => pageItems(data), [data]);
-  const charactersLoadFailed = !!charactersError && !data;
-
-  const characterIds = useMemo(() => characters.map((c) => c.id), [characters]);
-  const { data: portraitsByCharacterId } = useAttachments({
-    recordType: "Character",
-    name: "portrait",
-    recordIds: characterIds,
-  });
+  const characters = useListPageQuery(campaignCharactersQuery(campaign.id, searchQuery));
+  const charactersLoadFailed = !!characters.error && characters.items.length === 0;
+  const portraitsByCharacterId = useCharacterPortraits(characters.items);
 
   return (
     <SectionContent>
@@ -355,54 +321,41 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
         />
 
         {/* Loading State */}
-        {charactersLoading && <DiceSpinner sx={{ py: 4 }} />}
+        {characters.isLoading && <DiceSpinner sx={{ py: 4 }} />}
 
         {/* Error State: only while nothing has loaded, a failed refetch keeping the grid */}
         {charactersLoadFailed && (
           // The room below the error, at the end of the tab
           <Box sx={{ pb: 3 }}>
-            <LoadError what="Characters" error={charactersError} />
+            <LoadError what="Characters" error={characters.error} />
           </Box>
         )}
 
         {/* Characters Grid */}
-        {!charactersLoading &&
+        {!characters.isLoading &&
           !charactersLoadFailed &&
-          (characters.length > 0 ? (
+          (characters.items.length > 0 ? (
             // With nothing more to load, the tab ends three units below the grid, as the grid's margin left it
-            <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "1fr",
-                    md: "repeat(2, 1fr)",
-                    lg: "repeat(3, 1fr)",
-                  },
-                  gap: 3,
-                }}
-              >
-                {characters.map((character, index) => (
+            <Stack spacing={3} sx={{ pb: characters.hasNextPage ? 0 : 3 }}>
+              <ListCardGrid>
+                {characters.items.map((character, index) => (
                   <CharacterCard
                     key={character.id}
                     character={character}
                     campaignId={campaign.id}
                     isArchived={!!campaign.deletedAt}
                     animationIndex={index}
-                    animationOffset={offset}
-                    portraitUrl={portraitsByCharacterId?.get(character.id) ?? null}
+                    animationOffset={characters.offset}
+                    portraitUrl={portraitsByCharacterId.get(character.id) ?? null}
                   />
                 ))}
-              </Box>
+              </ListCardGrid>
               <LoadMoreButton
                 size="large"
                 label="Load More Characters"
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                onClick={() => {
-                  updateOffset(characters.length);
-                  fetchNextPage();
-                }}
+                hasNextPage={characters.hasNextPage}
+                isFetchingNextPage={characters.isFetchingNextPage}
+                onClick={characters.loadMore}
               />
             </Stack>
           ) : searchQuery ? (

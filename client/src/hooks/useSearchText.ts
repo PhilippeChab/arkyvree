@@ -23,7 +23,7 @@ export function useSearchText(key = "search") {
   const search = useDebouncedValue(text);
   const onSearchChange = (next: string) => {
     setText(next);
-    setUrlText(next);
+    setUrlText(next, { replace: true });
   };
   return { search, searchBarProps: { searchValue: text, onSearchChange } };
 }

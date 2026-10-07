@@ -3,6 +3,7 @@ import { type InferResponseType } from "hono/client";
 import { type Ref } from "react";
 import type { FieldError } from "react-hook-form";
 
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type rpc } from "@/client/src/services/rpc.ts";
 
 import { useAptitudeOptions } from "./useAptitudeOptions.ts";
@@ -10,6 +11,8 @@ import { useAptitudeOptions } from "./useAptitudeOptions.ts";
 interface AptitudeAutocompleteProps {
   disabled?: boolean;
   label?: string;
+  /** The picked aptitude's failure to load, said under the field. */
+  loadError?: unknown;
   onChange: (aptitude: Aptitude | null) => void;
   rulesetId: string;
   scope?: "feats" | "spells";
@@ -38,6 +41,7 @@ export function AptitudeAutocomplete({
   onChange,
   disabled,
   label = "Aptitude",
+  loadError,
   size,
   scope,
 }: AptitudeAutocompleteProps) {
@@ -55,7 +59,14 @@ export function AptitudeAutocomplete({
       onChange={(_, newValue) => onChange(newValue)}
       disabled={disabled}
       size={size}
-      renderInput={(params) => <TextField {...params} label={label} />}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label={label}
+          error={!!loadError}
+          helperText={loadError ? loadFailureMessage(label, loadError) : undefined}
+        />
+      )}
     />
   );
 }

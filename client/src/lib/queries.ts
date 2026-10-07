@@ -10,6 +10,7 @@ import { type InferRequestType, type InferResponseType, parseResponse } from "ho
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { FOREVER } from "./durations.ts";
+import { nextPage } from "./pageItems.ts";
 import { QUERY_KEYS } from "./queryKeys.ts";
 
 type ActivityListParams = InferRequestType<typeof rpc.api.activities.$get>["query"];
@@ -75,7 +76,7 @@ export function activityListQuery(filters: ActivityListFilters) {
         }),
       ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 
@@ -122,7 +123,7 @@ export function campaignListQuery(filters: CampaignListFilters) {
         }),
       ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 
@@ -152,7 +153,7 @@ export function characterListQuery(filters: CharacterListFilters) {
         }),
       ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 
@@ -207,7 +208,7 @@ export function notificationListQuery(filters: NotificationListFilters) {
         }),
       ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 
@@ -269,7 +270,7 @@ export function rulesetFeatsQuery(rulesetId: string, search: string) {
         }),
       ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 
@@ -308,7 +309,7 @@ export function rulesetListQuery(filters: RulesetListFilters) {
         }),
       ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 
@@ -328,7 +329,7 @@ export function rulesetPickerQuery(scope: RulesetListParams["scope"], search: st
         }),
       ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 

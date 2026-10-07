@@ -7,8 +7,8 @@
  *   "Please"; an error's fallback names what failed ("Failed to remove item").
  * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
  *   "This action cannot be undone."
- * - `typography-marks`: an ellipsis is "…" and a dash between words "—", never "..." or " - "; a text cut short is
- *   `truncate(text, length)`.
+ * - `typography-marks`: an ellipsis is "…" and a dash between words "—", never "..." or " - ", a template's
+ *   interpolations reading as words (`${pool} - ${level}`); a text cut short is `truncate(text, length)`.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -138,8 +138,9 @@ function createToastWording(context) {
 
 function createTypographyMarks(context) {
   if (!inClient(context)) return {};
-  const check = (node, text) => {
-    if (!/\.\.\.(?![\w$({[])|(?<=[A-Za-z0-9]) - (?=[A-Za-z])/.test(text)) return;
+  // `words` is the text with what stands for a word in it, a template's interpolations
+  const check = (node, text, words = text) => {
+    if (!/\.\.\.(?![\w$({[])/.test(text) && !/(?<=[A-Za-z0-9]) - (?=[A-Za-z])/.test(words)) return;
     context.report({ node, message: 'An ellipsis is "…" and a dash between words "—": never "..." or " - ".' });
   };
   return {
@@ -149,10 +150,10 @@ function createTypographyMarks(context) {
     Literal(node) {
       if (typeof node.value === "string" && node.parent.type !== "ImportDeclaration") check(node, node.value);
     },
-    TemplateElement(node) {
-      check(node, node.value.cooked ?? "");
-    },
     TemplateLiteral(node) {
+      const quasis = node.quasis.map((quasi) => quasi.value.cooked ?? "");
+      // Its text breaks at an interpolation, which reads as a word: `${pool} - ${level}` is a dash between words
+      check(node, quasis.join("\n"), quasis.join("x"));
       if (repoPath(context.filename) === "client/src/lib/truncate.ts") return;
       const cut = node.expressions.some(
         (expression, index) =>

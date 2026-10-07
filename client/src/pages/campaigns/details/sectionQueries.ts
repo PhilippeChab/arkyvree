@@ -6,24 +6,27 @@
 import { infiniteQueryOptions, type QueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
+import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 export type CampaignSection = "characters" | "players";
 
-function nextPage(lastPage: { nextPage?: number }) {
-  return lastPage.nextPage;
+/** A tab's request: its page, ten rows at a time, and its search. */
+function listQuery(pageParam: number, search: string) {
+  return { page: pageParam.toString(), limit: "10", search: search || undefined };
+}
+
+function sectionKey(campaignId: string, section: CampaignSection, search: string) {
+  return [...QUERY_KEYS.campaigns.section(campaignId, section), search] as const;
 }
 
 export function campaignCharactersQuery(campaignId: string, search: string) {
   return infiniteQueryOptions({
-    queryKey: [...QUERY_KEYS.campaigns.section(campaignId, "characters"), search],
+    queryKey: sectionKey(campaignId, "characters", search),
     queryFn: ({ pageParam }) =>
       parseResponse(
-        rpc.api.campaigns[":id"].characters.$get({
-          param: { id: campaignId },
-          query: { page: pageParam.toString(), limit: "10", search: search || undefined },
-        }),
+        rpc.api.campaigns[":id"].characters.$get({ param: { id: campaignId }, query: listQuery(pageParam, search) }),
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
@@ -32,13 +35,10 @@ export function campaignCharactersQuery(campaignId: string, search: string) {
 
 export function campaignPlayersQuery(campaignId: string, search: string) {
   return infiniteQueryOptions({
-    queryKey: [...QUERY_KEYS.campaigns.section(campaignId, "players"), search],
+    queryKey: sectionKey(campaignId, "players", search),
     queryFn: ({ pageParam }) =>
       parseResponse(
-        rpc.api.campaigns[":id"].players.$get({
-          param: { id: campaignId },
-          query: { page: pageParam.toString(), limit: "10", search: search || undefined },
-        }),
+        rpc.api.campaigns[":id"].players.$get({ param: { id: campaignId }, query: listQuery(pageParam, search) }),
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,

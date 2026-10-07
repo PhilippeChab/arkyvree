@@ -1,6 +1,7 @@
 import { Chip, List, ListItemButton, ListItemText, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
+import { spellLevelName } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
 import {
   BlankNote,
   ChoiceChip,
@@ -116,12 +117,12 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                             (p) => p.powerLevel === Number(level),
                           ).length;
                           const isSelected = selectedPowerAptitude === pool.id && selectedPowerLevel === Number(level);
-                          const levelLabel = level === "0" ? "Cantrips" : `Level ${level}`;
+                          const levelLabel = spellLevelName(Number(level));
 
                           return (
                             <ChoiceChip
                               key={`${pool.id}-${level}`}
-                              label={`${pool.name} - ${levelLabel} ${powersInLevel}/${levelAvailable}`}
+                              label={`${pool.name} — ${levelLabel} ${powersInLevel}/${levelAvailable}`}
                               selected={isSelected}
                               onClick={() => openPool(pool.id, Number(level))}
                             />
@@ -171,16 +172,15 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
               ? getLevelPoolAvailable(currentPool, String(selectedPowerLevel))
               : getPowerPoolAvailable(currentPool);
 
-          const levelLabel =
-            selectedPowerLevel != null ? (selectedPowerLevel === 0 ? "Cantrip" : `Level ${selectedPowerLevel}`) : "";
+          const levelLabel = selectedPowerLevel != null ? spellLevelName(selectedPowerLevel) : "";
 
           return (
             <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
               {/* Selected Spells (always reserve space) */}
               <Stack spacing={1} sx={{ flexShrink: 0 }}>
                 <SubsectionTitle component="h4">
-                  Selected {currentPool?.name}
-                  {levelLabel ? ` ${levelLabel}` : ""} Spells ({levelPowers.length}/{poolAvailable}):
+                  Selected {currentPool?.name} Spells{levelLabel ? ` — ${levelLabel}` : ""} ({levelPowers.length}/
+                  {poolAvailable}):
                 </SubsectionTitle>
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                   {levelPowers.length > 0
@@ -204,7 +204,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
               {levelPowers.length < poolAvailable && (
                 <Stack spacing={1} sx={{ flex: 1, minHeight: 0 }}>
                   <TextField
-                    label={`Search ${currentPool?.name}${levelLabel ? ` ${levelLabel}` : ""} Spells`}
+                    label={`Search ${currentPool?.name} Spells${levelLabel ? ` — ${levelLabel}` : ""}`}
                     placeholder="Search spells…"
                     value={powerSearch}
                     onChange={(e) => setPowerSearch(e.target.value)}

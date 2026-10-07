@@ -60,6 +60,7 @@ import { useAnchorMenu, usePageTitle, useSearchParam } from "@/client/src/hooks/
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
@@ -169,7 +170,8 @@ export default function RulesetDetailsPage() {
   const isExtension = !!ruleset && ruleset.kind === "extension";
   const [overridesDialogOpen, setOverridesDialogOpen] = useState(false);
   const { value: childOnlyParam, setValue: setChildOnlyParam } = useSearchParam("childOnly");
-  const childOnly = childOnlyParam ? childOnlyParam === "true" : isExtension;
+  const childOnlyChoice = oneOf(childOnlyParam, ["true", "false"]);
+  const childOnly = childOnlyChoice ? childOnlyChoice === "true" : isExtension;
   const setChildOnly = (value: boolean) => setChildOnlyParam(value ? "true" : "false");
   const menu = useAnchorMenu();
   const extensionsMenu = useAnchorMenu();
