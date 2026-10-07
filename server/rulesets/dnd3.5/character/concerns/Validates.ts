@@ -13,6 +13,7 @@ import type {
   ValidationResult,
 } from "@/server/rulesets/engine/types.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
+import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Klass, Modifier, Requirement } from "@/shared/relations.ts";
 
 /** An aptitude pool's (or one of its spell levels') slots. */
@@ -54,7 +55,7 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
       for (const [key, aptitude] of Object.entries(aptitudes)) {
         if (this.components.aptitudes.isLeveledAptitude(key)) {
           const aptitudeObj = aptitude as Record<string, unknown>;
-          for (let level = 0; level <= this.components.aptitudes.maxSpellLevel; level++) {
+          for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
             const levelData = aptitudeObj[String(level)] as AptitudeSlots | undefined;
             if (levelData) slotIssue(`${aptitude.name} (level ${level})`, levelData);
           }

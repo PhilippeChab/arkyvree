@@ -6,6 +6,7 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { classParams } from "@/server/routers/api/rulesets/classes/validation.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
+import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
 
 const classLevelParams = idParam.extend({ classLevelId: z.string().uuid() });
 const levelFeats = z
@@ -51,7 +52,7 @@ export default new Hono<SessionContext>()
     validate(
       "json",
       z.object({
-        level: z.number().int().min(1).max(20),
+        level: z.number().int().min(1).max(MAX_CLASS_LEVEL),
         bab: z.number().int().min(0),
         skills: z.number().int().min(1),
         saves: levelSaves,

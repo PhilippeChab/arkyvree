@@ -5,12 +5,13 @@ import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 
 /** The aptitudes a power is linked to, each at its spell level. */
 const aptitudeLinks = z.array(
   z.object({
     id: z.string().uuid(),
-    level: z.number().int().min(0).max(9).optional(),
+    level: z.number().int().min(0).max(MAX_SPELL_LEVEL).optional(),
   }),
 );
 
@@ -53,7 +54,7 @@ export default new Hono<SessionContext>()
         search: z.string().optional(),
         childOnly: z.coerce.boolean().optional(),
         aptitudeId: z.string().uuid().optional(),
-        level: z.coerce.number().min(0).max(9).optional(),
+        level: z.coerce.number().min(0).max(MAX_SPELL_LEVEL).optional(),
         orderBy: entityOrderBy,
         orderDir: orderDirAsc,
       }),

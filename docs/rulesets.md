@@ -540,14 +540,13 @@ export interface LevelsRules {
 
 // server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts  (3.5 impl)
 export class Dnd35LevelsRules implements LevelsRules {
-  static readonly MAX_SPELL_LEVEL = 9;
   isAbilityIncreaseLevel(totalLevel: number): boolean {
     return (totalLevel + 1) % 4 === 0;
   }
 }
 ```
 
-A component takes a value its rules hold rather than hard-coding it: `AptitudesComponent` takes `maxSpellLevel` as a constructor param, which `buildComponents` passes from `Dnd35LevelsRules.MAX_SPELL_LEVEL`.
+A bound the client and the API check too is a constant of the ruleset's shared vocabulary, which every side reads instead of writing the number: `MAX_SPELL_LEVEL` (`shared/dnd3.5/spells.ts`) for the aptitudes' spell levels, the spellcasting, the spell routes and the spell forms, and `MAX_CLASS_LEVEL` (`shared/dnd3.5/classes.ts`) for the class-level routes and forms and the bonus caster levels.
 
 Rules are for **small predicates and constants**. More complex operations (bound to the detailed character, returning rich data, potentially mutating internal state) belong on the ruleset's level-up projector (`Dnd35LevelUpProjector`) or on its character (a concern of `DetailedCharacter`) instead.
 
@@ -615,7 +614,7 @@ The engine is the machinery every ruleset runs on: the evaluators, the path walk
 
 If the services need a per-ruleset value or answer:
 - Add a method or `readonly` field to an existing rules interface (`LevelsRules`, `ClassesRules`, …), which each ruleset implements.
-- A class that needs it takes it as a **constructor param**, with no default, so no file carries another ruleset's constant: the ruleset passes its own (`buildComponents` passes `MAX_SPELL_LEVEL`).
+- A value the client and the API need too lives in the ruleset's `shared/<ruleset>/` (`MAX_SPELL_LEVEL`), never in a file another ruleset would read.
 
 If you need a per-ruleset behavior too complex for a small rule (takes the detailed character, returns rich data, reads several components), don't bend the rules pattern: make it a method of the ruleset's level-up projector or a concern of its character. Its services get them by the module's own type (`Dnd35RulesetModule`), with no cast.
 
@@ -624,7 +623,7 @@ If you need a per-ruleset behavior too complex for a small rule (takes the detai
 An audit on 2026-04-16 identified real leaks and some false alarms. It predates the engine's restructure, which moved every component under `dnd3.5/`: the components it calls generic are 3.5's, and generic in that a second ruleset could take them as they are.
 
 **Fixed:**
-- `MAX_SPELL_LEVEL = 9` was hardcoded in the aptitudes component (`dnd3.5/aptitudes/AptitudesComponent.ts`) — now an injected param.
+- `MAX_SPELL_LEVEL = 9` was hardcoded in the aptitudes component (`dnd3.5/aptitudes/AptitudesComponent.ts`) — now one constant in `shared/dnd3.5/spells.ts`, which the spellcasting, the routes and the client read too.
 - `buildCharacterResponse.ts` lived in `routers/api/` with a cast to `Dnd35DetailedCharacter` — moved to `server/rulesets/dnd3.5/response/buildCharacterResponse.ts`.
 - `server/routers/api/characters/levels/` had 3.5-shaped query params (`powerLevel`, `excludeSchools`) — moved under `dnd3.5/`.
 
