@@ -24,10 +24,28 @@ export type TemplateFamily = {
   featNameMap: Record<string, string>;
   modifiers: ModifierSeed[];
   description: string;
+  /** The content's list its feats are made over, as the generated code names it (`ALL_WEAPONS`, `SKILL_NAMES`…). */
+  options: string;
+  /** Its feats require proficiency with their weapon (`proficiencyRequirements`). */
+  proficient: boolean;
 };
 
 /** The kind of item a template family makes a feat for. */
 export type TemplateType = NonNullable<FeatReference["mapping"][string]["template"]>["type"];
+
+/** The content's list a template family of each type is made over, as the generated code names it. */
+const FAMILY_OPTIONS: Record<TemplateType, string> = {
+  crossbow: "CROSSBOW_WEAPONS",
+  school: "MAGIC_SCHOOLS",
+  skill: "SKILL_NAMES",
+  weapon: "ALL_WEAPONS",
+};
+
+/** The weapon families made over their own weapons, not every weapon: a proficiency's. */
+const OWN_WEAPONS: Record<string, string> = { "Exotic Weapon Proficiency": "EXOTIC_WEAPONS" };
+
+/** The weapon families whose feats require proficiency with their weapon (SRD: "Proficiency with weapon"). */
+const PROFICIENT_FAMILIES = new Set(["Improved Critical", "Weapon Focus"]);
 
 /**
  * What a feat reference makes: its feats by feat type, and its template families. An epic feat is left out unless an
@@ -56,6 +74,8 @@ export function buildReferenceFeats(ref: FeatReference) {
         featNameMap: { ...(detected?.featNameMap ?? {}), ...(mapped.featNameMap ?? {}) },
         modifiers: mapped.modifiers ?? [],
         description: mapped.description ?? entry.benefit,
+        options: OWN_WEAPONS[familyName] ?? FAMILY_OPTIONS[type],
+        proficient: PROFICIENT_FAMILIES.has(familyName),
       });
       continue;
     }

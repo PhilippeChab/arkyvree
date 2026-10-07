@@ -15,7 +15,6 @@ import {
   expandTemplateDescription,
   normalizeDescription,
 } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
-import { feat, neq } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   ModifierSeed,
   RequirementCondition,
@@ -40,16 +39,6 @@ const IMPORTS: ImportTable = [
   ["@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts", ["WIZARD_SCHOOLS"]],
 ];
 
-/** A single martial weapon's proficiency feat is for a character without them all. */
-const NOT_MARTIAL_PROFICIENT = neq(feat("Martial Weapon Proficiency"));
-
-/** Weapon proficiency families expand over their own weapons, the others over every weapon. */
-const WEAPON_LISTS: Record<string, string> = {
-  "Simple Weapon Proficiency": "SIMPLE_WEAPONS",
-  "Martial Weapon Proficiency": "MARTIAL_WEAPONS",
-  "Exotic Weapon Proficiency": "EXOTIC_WEAPONS",
-};
-
 /**
  * A feats file: its feats' lists, a template family's feats made per item (weapon, skill, school…), and the core
  * rules' system feats. What its code uses (weapon lists, skill names…) is imported from where the content defines it.
@@ -67,14 +56,14 @@ export class FeatsFile extends CodeFile {
   }
 
   private emitCrossbowTemplate(family: TemplateFamily): void {
-    this.openTemplate(family, "CROSSBOW_WEAPONS", "w", this.templateDescription(family, "w"));
+    this.openTemplate(family, "w", this.templateDescription(family, "w"));
     this.emitTemplateModifiers(family.modifiers, (target) => this.weaponTarget(target));
     this.closeTemplate(family.familyName);
   }
 
   private emitSchoolTemplate(family: TemplateFamily, families: Set<string>): void {
     const { modifiers } = family;
-    this.openTemplate(family, "MAGIC_SCHOOLS", "s", this.templateDescription(family, "s"));
+    this.openTemplate(family, "s", this.templateDescription(family, "s"));
     this.emitTemplateRequirements(this.itemRequirementLines(family, family.requirements, "s", families));
 
     // Use the explicit modifiers from the reference JSON. Re-write any
@@ -89,7 +78,7 @@ export class FeatsFile extends CodeFile {
 
   /** A feat per skill: its description and modifiers name the skill (`{skill}`, `skills.skill.…`). */
   private emitSkillTemplate(family: TemplateFamily, families: Set<string>): void {
-    this.openTemplate(family, "SKILL_NAMES", "s", this.templateDescription(family, "s"));
+    this.openTemplate(family, "s", this.templateDescription(family, "s"));
     this.emitTemplateRequirements(this.itemRequirementLines(family, family.requirements, "s", families));
     this.emitTemplateModifiers(family.modifiers, (target) =>
       target.replace(/skills\.[^.]+/, "skills.${stripSeparators(s)}"),
@@ -124,21 +113,16 @@ export class FeatsFile extends CodeFile {
   }
 
   private emitWeaponTemplate(family: TemplateFamily, families: Set<string>): void {
-    const { familyName, requirements, modifiers } = family;
-    this.openTemplate(family, WEAPON_LISTS[familyName] ?? "ALL_WEAPONS", "w", this.templateDescription(family, "w"));
+    const { familyName, requirements, modifiers, proficient } = family;
+    this.openTemplate(family, "w", this.templateDescription(family, "w"));
 
     const reqLines: string[] = [];
-    // Add proficiency requirement for combat feats that need it
-    if (familyName === "Improved Critical" || familyName === "Weapon Focus") {
+    if (proficient) {
       this.uses.add("proficiencyRequirements");
       reqLines.push(`    ...proficiencyRequirements(w),`);
     }
     const bab = requirements.find((r) => !("chainingOperator" in r) && r.target === "combat.bab");
     if (bab) reqLines.push(`    ${this.requirement(bab, 2)},`);
-    // Martial Weapon Proficiency: individual feats require NOT having the blanket proficiency
-    if (familyName === "Martial Weapon Proficiency") {
-      reqLines.push(`    ${this.requirement(NOT_MARTIAL_PROFICIENT, 2)},`);
-    }
     // Then the others: a family's feat for the same weapon (Weapon Specialization requires Weapon Focus in it)
     reqLines.push(
       ...this.itemRequirementLines(
@@ -195,15 +179,14 @@ export class FeatsFile extends CodeFile {
     return lines;
   }
 
-  /** Starts a template: its feats over `list`, named and described after each item (`variable`). */
+  /** Starts a template: its feats over its options, named and described after each item (`variable`). */
   private openTemplate(
-    { constName, familyName, aptitudes }: TemplateFamily,
-    list: string,
+    { constName, familyName, aptitudes, options }: TemplateFamily,
     variable: string,
     description: string,
   ): void {
-    this.uses.add(list);
-    this.lines.push(`export const ${constName}: FeatSeed[] = ${list}.map((${variable}) => ({`);
+    this.uses.add(options);
+    this.lines.push(`export const ${constName}: FeatSeed[] = ${options}.map((${variable}) => ({`);
     this.lines.push(`  name: \`${escapeTemplate(familyName)}: \${${variable}}\`,`);
     this.lines.push(`  description: \`${description}\`,`);
     this.lines.push(`  generated: true,`);
