@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { type SeedContext } from "@/database/seeds/seedContext.ts";
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import {
   CharacterLevelFeats,
   CharacterLevelPowers,
@@ -341,7 +341,7 @@ describe("finalizing several levels at once", () => {
       General: ["Power Attack", "Great Fortitude"],
       "Fighter Bonus Feat": ["Improved Initiative", "Dodge"],
     };
-    const refusals: [string | RegExp | typeof BadRequestError, () => Promise<unknown>][] = [
+    const refusals: [string | RegExp, () => Promise<unknown>][] = [
       // A level other than the first is checked too.
       [
         "HP must be between 1 and 10",
@@ -387,8 +387,9 @@ describe("finalizing several levels at once", () => {
             feats: { General: ["Power Attack"], "Fighter Bonus Feat": ["Improved Initiative", "Dodge"] },
           }),
       ],
+      // Refused for its skills: the third General feat, which no level has a slot for, is dropped (#476)
       [
-        BadRequestError,
+        "12 unspent skill point(s) (4/16)",
         async () =>
           finalizeBatch(ctx, await createSeedCharacter(ctx), fighterLevels(1), {
             skills: { Climb: 16 },

@@ -8,6 +8,7 @@ export type { default as Dnd35DetailedCharacter } from "./character/DetailedChar
 export { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
 export { getClassSkillIds, getKlassLevel, getPlannedKlassLevels, getSavedKlassLevel } from "./levelUp/classes.ts";
 export { buildPowerLevelLookup } from "./levelUp/distribution.ts";
+export { checkEditedLevelIssues, projectEditedLevel, projectLevelContribution } from "./levelUp/edit.ts";
 export { buildLevelUpPreview, distributePlannedPicks } from "./levelUp/plan.ts";
 export type { PlannedLevels } from "./levelUp/plan.ts";
 export {
@@ -26,6 +27,7 @@ export type { FeatPick } from "./levelUp/projection.ts";
 export {
   annotateRequirements,
   checkAbilityIncrease,
+  checkIssues,
   checkLevelSelections,
   checkNotTaken,
   checkSelections,

@@ -15,7 +15,7 @@ import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharac
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
-import { BadRequestError, toJson } from "@/server/errors/index.ts";
+import { toJson } from "@/server/errors/index.ts";
 import {
   Aptitudes,
   CharacterLevelFeats,
@@ -94,13 +94,15 @@ function skillRanks(ctx: Awaited<ReturnType<typeof getSeedCtx>>, ranks: Record<s
   return picks(ctx, { skills: ranks }).skills;
 }
 
-/** The status the API answers a call's refusal with: the server's error, or a ruleset's refusal (`RulesError`). */
-async function answeredStatus(call: () => Promise<unknown>) {
+/** What the API answers a call's refusal with, its envelope and status: the server's error, or a ruleset's refusal. */
+async function answerTo(call: () => Promise<unknown>) {
   const error = await call().then(
     () => undefined,
     (thrown: Error) => thrown,
   );
-  return error && toJson(error)[1];
+  if (!error) throw new Error("The call wasn't refused");
+  const [body, status] = toJson(error);
+  return { body, status };
 }
 
 /**
@@ -300,7 +302,7 @@ describe("LevelsService", () => {
       () => CharacterLevelsService.removeLevel(session, character.id),
     ];
     // One at a time: the test's transaction has a single connection.
-    for (const call of notFound) expect(await answeredStatus(call)).toBe(404);
+    for (const call of notFound) expect((await answerTo(call)).status).toBe(404);
   });
 
   describe("classes a character can take", () => {
@@ -1378,22 +1380,24 @@ describe("LevelsService", () => {
       const { user, session, character, klass, featAptitude } = await setupRuleset({ fork: true });
       const unrelated = await setupRuleset();
       expect(
-        await answeredStatus(() => addOneLevel(session, character.id, unrelated.klass.id, 1, 8, null, {}, {}, {})),
+        (await answerTo(() => addOneLevel(session, character.id, unrelated.klass.id, 1, 8, null, {}, {}, {}))).status,
       ).toBe(400);
       expect(
-        await answeredStatus(() =>
-          addOneLevel(
-            session,
-            character.id,
-            klass.id,
-            1,
-            8,
-            null,
-            {},
-            { [featAptitude.id]: [unrelated.feats["Power Attack"].id] },
-            {},
-          ),
-        ),
+        (
+          await answerTo(() =>
+            addOneLevel(
+              session,
+              character.id,
+              klass.id,
+              1,
+              8,
+              null,
+              {},
+              { [featAptitude.id]: [unrelated.feats["Power Attack"].id] },
+              {},
+            ),
+          )
+        ).status,
       ).toBe(400);
       void user;
     });
@@ -1405,7 +1409,7 @@ describe("LevelsService", () => {
         ...FIGHTER_LEVELS[0],
         feats: { General: ["Dodge", "Great Fortitude"], "Fighter Bonus Feat": ["Improved Initiative"] },
       };
-      await expect(
+      const refused = await answerTo(async () =>
         levelUp(
           session,
           ctx,
@@ -1414,7 +1418,15 @@ describe("LevelsService", () => {
           1,
           plan,
         ),
-      ).rejects.toThrow(BadRequestError);
+      );
+      // Its issues come with it: what the character fails
+      expect(refused).toMatchObject({
+        status: 400,
+        body: {
+          error: "BadRequestError",
+          issues: [expect.objectContaining({ message: expect.stringMatching(/dodge/i) })],
+        },
+      });
 
       const characterId = await createSeedCharacter(ctx, "fighter", { abilities: { Dexterity: 8 } });
       const level = await levelUp(session, ctx, characterId, "Fighter", 1, plan, true);
@@ -1606,7 +1618,7 @@ describe("LevelsService", () => {
           { levelIndex: 1, featName: "Cleave", aptitude: "General" },
         ],
       );
-      await expect(
+      const refused = await answerTo(() =>
         CharacterLevelsService.updateLevel(
           session,
           characterId,
@@ -1618,9 +1630,8 @@ describe("LevelsService", () => {
           {},
           false,
         ),
-      ).rejects.toThrow(
-        expect.objectContaining({ constructor: BadRequestError, message: expect.stringMatching(/cleave/i) }),
       );
+      expect(refused).toMatchObject({ status: 400, body: { message: expect.stringMatching(/cleave/i) } });
     });
 
     test("keeps the familiar a feat of the edited level brings", async () => {

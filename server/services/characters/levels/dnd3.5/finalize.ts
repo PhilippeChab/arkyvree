@@ -11,21 +11,19 @@ import { getTableName } from "drizzle-orm";
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import {
-  buildProjectedAutoGrantedFeats,
-  buildProjectedCharacterLevel,
-  buildProjectedGivenFeats,
-  buildProjectedSelections,
   checkAbilityIncrease,
+  checkEditedLevelIssues,
+  checkIssues,
   checkSelections,
   distributePlannedPicks,
-  type Dnd35ProjectedCharacterData,
   type Dnd35RulesetModule,
-  getLevelIdsFromOnward,
   getPlannedKlassLevels,
   getSavedKlassLevel,
+  projectEditedLevel,
+  projectLevelContribution,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
-import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -38,59 +36,11 @@ import {
 } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
-import type { Character, CharacterLevel, Session } from "@/shared/relations.ts";
+import type { Session } from "@/shared/relations.ts";
 
 import { reconcileAllBondedKinds } from "./bondedReconcile.ts";
 import { buildPlannedLevels } from "./plannedLevels.ts";
 import { validateAndFetchLevelSelections } from "./validation.ts";
-
-type LevelSelections = Awaited<ReturnType<typeof validateAndFetchLevelSelections>>;
-
-/** The edited level's projection: the level with its new HP, ability and selections, in place of its saved row. */
-function projectEdit(
-  characterId: string,
-  characterLevel: CharacterLevel,
-  klassLevelId: string,
-  hp: number,
-  abilityId: string | null,
-  skills: Record<string, number>,
-  validationResult: LevelSelections,
-): Dnd35ProjectedCharacterData {
-  const { fetchedFeats, featCustomizations, autoGrantedRecords } = validationResult;
-
-  // A fresh id keeps the projected level apart from the edited row it
-  // replaces. The loader drops that row (`excludeCharacterLevelIds`) and
-  // fetches granted feats for the saved levels only, so the projected
-  // level's come from `givenFeats` alone.
-  const projectedLevelId = crypto.randomUUID();
-
-  const autoGrantedFeats = buildProjectedAutoGrantedFeats(
-    autoGrantedRecords,
-    klassLevelId,
-    projectedLevelId,
-    new Set(fetchedFeats.map((f) => f.id)),
-    featCustomizations,
-  );
-
-  return {
-    excludeCharacterLevelIds: [characterLevel.id],
-    characterLevels: [
-      {
-        id: projectedLevelId,
-        characterId,
-        klassLevelId,
-        hp,
-        abilityId: abilityId || null,
-        createdAt: characterLevel.createdAt,
-        updatedAt: new Date().toISOString(),
-        deletedAt: null,
-        position: characterLevel.position,
-      },
-    ],
-    ...buildProjectedSelections(klassLevelId, projectedLevelId, skills, validationResult),
-    givenFeats: autoGrantedFeats,
-  };
-}
 
 /** Deletes a character level's skills, feats and powers. */
 async function deleteLevelChildren(tx: Db, characterLevelId: string) {
@@ -199,64 +149,6 @@ async function lockEditableCharacter(tx: Db, session: Session, characterId: stri
   return characterRecord;
 }
 
-/**
- * The aptitude pools the edited level contributes to: those the character allows more of with the level than before
- * it. Both builds leave out the level and every later one, so only what THIS level grants counts.
- */
-async function ownedPoolNames(
-  tx: Db,
-  rulesetModule: Dnd35RulesetModule,
-  scope: RulesetScope,
-  characterRecord: Character,
-  existingLevels: { id: string; position: number }[],
-  characterLevelId: string,
-  klassLevelId: string,
-  skills: Record<string, number>,
-  validationResult: LevelSelections,
-) {
-  const { featCustomizations, autoGrantedRecords } = validationResult;
-  const onwardIds = getLevelIdsFromOnward(existingLevels, characterLevelId);
-  const baselineData: Dnd35ProjectedCharacterData = {
-    excludeCharacterLevelIds: onwardIds,
-  };
-  const baselineCharacter = await buildCharacter(rulesetModule, characterRecord, {
-    database: tx,
-    projected: baselineData,
-    scope,
-  });
-  const baselineApts = baselineCharacter.components.aptitudes.getAptitudes();
-  const baselineAllowed = new Map<string, number>();
-  for (const apt of Object.values(baselineApts)) baselineAllowed.set(apt.name, apt.allowed);
-
-  // Mirror the primary projection's shape exactly: auto-grants via
-  // `givenFeats` and the user's submitted feats/skills/powers via
-  // `buildProjectedSelections`. Any entity attached to this level —
-  // auto-granted or user-picked — can carry an
-  // `aptitudes.<x>.allowed += N` modifier (Bonus Feat (Fighter)
-  // auto-grants Fighter Bonus Feat, Wizard specialization picks grant
-  // Prohibited School, War Domain grants War Domain Weapon, etc.).
-  // If withLevelData misses any of them the affected pool stays out of
-  // ownedPoolNames and real under-pick issues get filtered out.
-  const projectedLevelForFilter = buildProjectedCharacterLevel(characterRecord.id, klassLevelId);
-  const withLevelData: Dnd35ProjectedCharacterData = {
-    excludeCharacterLevelIds: onwardIds,
-    characterLevels: [projectedLevelForFilter],
-    givenFeats: buildProjectedGivenFeats(autoGrantedRecords, projectedLevelForFilter.id, featCustomizations),
-    ...buildProjectedSelections(klassLevelId, projectedLevelForFilter.id, skills, validationResult),
-  };
-  const withLevelCharacter = await buildCharacter(rulesetModule, characterRecord, {
-    database: tx,
-    projected: withLevelData,
-    scope,
-  });
-  const withLevelApts = withLevelCharacter.components.aptitudes.getAptitudes();
-  const owned = new Set<string>();
-  for (const apt of Object.values(withLevelApts))
-    if (apt.allowed > (baselineAllowed.get(apt.name) ?? 0)) owned.add(apt.name);
-
-  return owned;
-}
-
 /** Commits one or more levels at once. Distributes pooled selections (skills, feats, powers) across levels, then validates and inserts each sequentially within a single transaction. */
 export async function finalizeLevelUp(
   session: Session,
@@ -323,10 +215,7 @@ export async function finalizeLevelUp(
 
       const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { database: tx, scope });
 
-      if (!force) {
-        const { valid, issues } = detailedCharacter.validate();
-        if (!valid) throw new BadRequestError(issues.map((iss) => iss.message).join("; "), { issues });
-      }
+      if (!force) checkIssues(detailedCharacter.validate().issues);
 
       await reconcileAllBondedKinds(tx, characterRecord, detailedCharacter, rulesetData);
 
@@ -415,30 +304,35 @@ export async function updateLevel(
         rulesetData,
       });
 
+      const builds = { database: tx, scope };
       const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, {
-        database: tx,
-        projected: projectEdit(characterId, characterLevel, klassLevel.id, hp, abilityId, skills, validationResult),
-        scope,
+        ...builds,
+        projected: projectEditedLevel(
+          characterId,
+          characterLevel,
+          klassLevel.id,
+          hp,
+          abilityId,
+          skills,
+          validationResult,
+        ),
       });
       const { valid, issues } = detailedCharacter.validate();
       if (!valid && !force) {
-        // Keep all non-aptitude issues, and only aptitude issues for pools this level owns
-        const owned = await ownedPoolNames(
-          tx,
-          rulesetModule,
-          scope,
-          characterRecord,
+        // The issues of the pools the level adds to: built without the level and every later one, then with it alone
+        const { before, withLevel } = projectLevelContribution(
+          characterId,
           existingLevels,
           characterLevelId,
           klassLevel.id,
           skills,
           validationResult,
         );
-        const relevantIssues = issues.filter(
-          (issue) => issue.category !== "aptitudes" || [...owned].some((name) => issue.message.startsWith(name)),
+        checkEditedLevelIssues(
+          issues,
+          await buildCharacter(rulesetModule, characterRecord, { ...builds, projected: before }),
+          await buildCharacter(rulesetModule, characterRecord, { ...builds, projected: withLevel }),
         );
-        if (relevantIssues.length > 0)
-          throw new BadRequestError(relevantIssues.map((i) => i.message).join("; "), { issues: relevantIssues });
       }
 
       await deleteLevelChildren(tx, characterLevelId);

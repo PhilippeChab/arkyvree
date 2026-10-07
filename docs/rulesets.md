@@ -456,7 +456,8 @@ engine/rulesets/
     │                                      properties; Dnd35InventoryRules, Dnd35ItemsRules, Dnd35ItemsEffects)
     ├── levelUp/                           (the level-up's rules: planned class levels, slots and their distribution,
     │                                      projections, a level's selections checked; plan: the preview, and a save's
-    │                                      picks spread over its levels)
+    │                                      picks spread over its levels; edit: an edited level's projection, and the
+    │                                      issues it answers for)
     ├── levels/                            (Dnd35LevelsRules)
     └── bonded/                            (the bonded creatures' characters, BondsComponent, BondedPaths; bondedPlans:
                                            what a master's creatures become as the master's levels change)
