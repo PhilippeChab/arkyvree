@@ -403,9 +403,9 @@ engine/
 ├── core/                                  ← machinery, no game vocabulary
 │   ├── types.ts                           ← universal types (ProjectedCharacterData, LevelUpProjector, LoadedCharacterData, …)
 │   ├── module/                            ← the module's contract
-│   │   ├── contract.ts                    (RulesetModule, DetailedCharacterInterface, CharacterRows)
-│   │   ├── rules.ts                       (LevelsRules, ClassLevelsRules, …: what a ruleset answers the services)
-│   │   └── effects.ts                     (SkillsEffects, PowersEffects, …: what a ruleset writes, as writes)
+│   │   ├── contract.ts                    (RulesetModule, DetailedCharacterInterface, CharacterRows, ModuleRules, ModuleEffects)
+│   │   ├── rules/                         (a file per area, levels.ts: LevelsRules, …: what a ruleset answers the services)
+│   │   └── effects/                       (a file per area, skills.ts: SkillsEffects, …: what a ruleset writes; writes.ts: the writes)
 │   ├── view/                              (RulesetData, RulesetComposition, the sibling merge)
 │   ├── cow/                               (CowData)
 │   ├── modifiers/ModifierEvaluator.ts
@@ -549,7 +549,7 @@ The engine's own types name no ruleset (`arkyvree/layers`): its `DetailedCharact
 
 ### Rules and effects
 
-What a ruleset answers the services, and what it does in their transactions, are its module's `rules` and `effects`: interfaces in `engine/core/module/` (`rules.ts`, `effects.ts`), implemented per area in the ruleset's domain folders (`dnd3.5/levels/Dnd35LevelsRules.ts`, `dnd3.5/skills/Dnd35SkillsEffects.ts`, …).
+What a ruleset answers the services, and what it does in their transactions, are its module's `rules` and `effects`: interfaces in `engine/core/module/` (`rules/` and `effects/`, a file per area, and `effects/writes.ts`, the writes an effect returns), implemented per area in the ruleset's domain folders (`dnd3.5/levels/Dnd35LevelsRules.ts`, `dnd3.5/skills/Dnd35SkillsEffects.ts`, …).
 
 - **A rule** reads no database: a predicate, a constant, or a reading of rows the service already has (`rules.levels.isAbilityIncreaseLevel`, `rules.classLevels.enrichWithSpellsPerDay`, `rules.inventory.validateWeaponHands`).
 - **An effect** says what the ruleset writes, and reads nothing: an entity's properties (`effects.skills.properties`), a requirement, the feats an entity brings. The service writes it in its transaction (`server/services/rulesets/effectWrites.ts`: `writeProperties`, `writeRequirement`, `writeGeneratedFeats`, `removeGeneratedFeat`), which reads what a write depends on: whether a grouping's feats are there already, whether a character picked a feat it removes.
@@ -572,7 +572,7 @@ Each rule starts with the verb of what it does, and each effect is named for the
 | Effects | `…Requirement` | what an entity requires (`RequirementWrite`) | `classLevels.previousLevelRequirement` |
 
 ```ts
-// engine/core/module/rules.ts  (engine interface)
+// engine/core/module/rules/levels.ts  (engine interface)
 export interface LevelsRules {
   isAbilityIncreaseLevel(totalLevel: number): boolean;
 }
@@ -687,7 +687,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 | `server/services/rulesets/*/` | Entity services (feats, powers, classes, etc.) using the COW pattern |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
 | `engine/core/types.ts` | The universal types (`ProjectedCharacterData`, `LevelUpProjector`, `LoadedCharacterData`, the paths' `TargetPathsInterface`, …) |
-| `engine/core/module/` | The module's contract (`contract.ts`: `RulesetModule`, `DetailedCharacterInterface`, `CharacterRows`), and the rules and effects a ruleset gives the services (`rules.ts`, `effects.ts`) |
+| `engine/core/module/` | The module's contract (`contract.ts`: `RulesetModule`, `DetailedCharacterInterface`, `CharacterRows`, `ModuleRules`, `ModuleEffects`), and the rules and effects a ruleset gives the services (`rules/`, `effects/`: a file per area) |
 | `engine/rulesets/dnd3.5/types.ts` | 3.5's types (`Dnd35RulesetModule`, `CharacterKind`, `Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`) |
 | `engine/rulesets/dnd3.5/character/` | The 3.5 character: its state (`CharacterState`), its concerns (`Builds`, `Validates`, `PossessesVirtually`), its components (`components.ts`), and `DetailedCharacter`, which wires them |
 | `engine/core/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the ruleset view (`view/`), copy-on-write's state (`cow/`) |

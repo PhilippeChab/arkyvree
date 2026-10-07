@@ -1,4 +1,10 @@
-export type { CharacterRows, DetailedCharacterInterface, RulesetModule } from "./contract.ts";
+export type {
+  CharacterRows,
+  DetailedCharacterInterface,
+  ModuleEffects,
+  ModuleRules,
+  RulesetModule,
+} from "./contract.ts";
 export type {
   ClassesEffects,
   ClassLevelsEffects,
@@ -7,14 +13,13 @@ export type {
   GeneratedFeatRemoval,
   GeneratedFeatsWrite,
   ItemsEffects,
-  ModuleEffects,
   PowersEffects,
   PropertiesWrite,
   RacesEffects,
   RequirementWrite,
   RulesetsEffects,
   SkillsEffects,
-} from "./effects.ts";
+} from "./effects/index.ts";
 export type {
   AptitudesRules,
   ClassesRules,
@@ -27,7 +32,6 @@ export type {
   ItemFields,
   ItemsRules,
   LevelsRules,
-  ModuleRules,
   PowerFields,
   PowersRules,
   ProtectionFields,
@@ -38,4 +42,4 @@ export type {
   SkillFields,
   SkillsRules,
   WeaponFields,
-} from "./rules.ts";
+} from "./rules/index.ts";
