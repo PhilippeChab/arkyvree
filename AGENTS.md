@@ -20,7 +20,7 @@
 
 - Strict typing enabled
 - PascalCase for components/classes, camelCase for functions, 'use' prefix for hooks
-- A module that declares a class and exports it, or its shared instance (`export default new X()`), is named after the class (`arkyvree/class-file-names`): `FeatsService.ts`, `Telemetry.ts`, `ReferenceLoader.ts`, `Dnd35LevelsHooks.ts`. A module of several classes is named for what groups them (`server/errors/`), and a router's `new Hono()` is another module's class
+- A module that declares a class and exports it, or its shared instance (`export default new X()`), is named after the class (`arkyvree/class-file-names`): `FeatsService.ts`, `Telemetry.ts`, `ReferenceLoader.ts`, `Dnd35LevelsRules.ts`. A module of several classes is named for what groups them (`server/errors/`), and a router's `new Hono()` is another module's class
 - Use `@/` path alias for cross-directory imports, never `../` (`arkyvree/no-parent-imports`: `bun run lint --fix` rewrites one)
 - The server reads its environment through `server/environment.ts`, which lists every variable it reads and what for: `readEnv("APP_URL")`, `isProduction()`, `isTest()`, `isDevelopment()` (`NODE_ENV=development` explicitly: it unmasks errors, so it's never assumed; "not production" is `!isProduction()`). Never `process.env` or `Bun.env` elsewhere in the server or `shared/` (`arkyvree/environment`); a default stays with the code that reads the variable
 - Make sure typescript passes before finishing a task - use tsgo
