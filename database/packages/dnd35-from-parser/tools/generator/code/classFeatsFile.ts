@@ -6,7 +6,10 @@ import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools
 import { CodeFile } from "./CodeFile.ts";
 import { toConstName } from "./literals.ts";
 
-/** A class's feats file: its own feats (`buildClassFeatSeeds`), and the domains it picks from (`buildClassDomainPickFeats`). */
+/**
+ * A class's feats file: its own feats, the one advancing its spellcasting, and the domains it picks from
+ * (`ClassSeeds.feats`).
+ */
 export function generateClassFeatSeeds(ref: ClassReference): string {
   const file = new CodeFile();
   file.list(

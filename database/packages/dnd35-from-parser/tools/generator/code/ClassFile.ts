@@ -4,7 +4,7 @@ import { CodeFile } from "./CodeFile.ts";
 import { formatStringArray, listField, quote, toConstName } from "./literals.ts";
 
 /**
- * A class's file (classes/<slug>.ts): its seed (`buildClassSeed`) written field by field, and the requirement builders
+ * A class's file (classes/<slug>.ts): its seed (`ClassSeeds.seed`) written field by field, and the requirement builders
  * its checks are written with, which its imports are written from.
  */
 export class ClassFile extends CodeFile {

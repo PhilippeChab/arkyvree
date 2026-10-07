@@ -13,6 +13,13 @@ export function getPluralVariants(name: string): string[] {
   return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
 }
 
+/** Insert an ordinal suffix before the parenthetical class suffix in a feat name. */
+export function insertOrdinalInName(name: string, ordinal: string): string {
+  const match = name.match(/^(.+?)(\s*\(.+\))$/);
+  if (match) return `${match[1]} ${ordinal}${match[2]}`;
+  return `${name} ${ordinal}`;
+}
+
 /** Whether `variant` is one of `name`'s forms, singular or plural ("Bonus Feats" of "bonus feat"). */
 export function isPluralVariantOf(variant: string, name: string): boolean {
   return getPluralVariants(name).includes(variant.toLowerCase());

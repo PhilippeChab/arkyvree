@@ -67,7 +67,7 @@ database/packages/dnd35-from-parser/
     │   ├── vocabulary.ts     # The names the books give abilities, saves, skills and races, as slugs and paths
     │   └── readers/          # What a phrase says, in any kind of reference: requirements/ (FeatPrerequisites, ClassPrerequisites), modifiers/ (BonusText, a reading per kind of text), items/ (cost, weight, stats, base item)
     ├── text/             # The scraped text: sanitized, normalized, entry names
-    ├── seeds/            # A book's seeds (BookSeeds, one per book on the Library: a concern per kind, each built once), from each reference's builder (a class's: classes/classSeed.ts); what a book copies (copies.ts) and the aptitudes it uses (aptitudes.ts)
+    ├── seeds/            # A book's seeds (BookSeeds, one per book on the Library: a concern per kind, each built once), from each reference's builder (a class's seed and feats: classes/ClassSeeds.ts); what a book copies (copies.ts) and the aptitudes it uses (aptitudes.ts)
     ├── validate/         # What parser:validate reports, and the overrides that change nothing
     └── generator/        # The seeds → generated/
         ├── BaseGenerator.ts  # A generator's core: the folder it writes to, the writes kinds of files share
