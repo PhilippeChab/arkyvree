@@ -16,11 +16,11 @@ import {
   levelSkillsInCharacter,
 } from "@/drizzle/schema.ts";
 import { planBondedCreatures } from "@/engine/index.ts";
-import { readBondedInputs, readCharacterInput } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { CharacterLevels, Characters } from "@/server/repositories/index.ts";
+import { readBondedInputs, readCharacterInput } from "@/server/services/characters/index.ts";
 import { writeBondedCreatures } from "@/server/services/characters/levels/index.ts";
 import { type Alignment, type Gender, type ItemLocation } from "@/shared/enums.ts";
 

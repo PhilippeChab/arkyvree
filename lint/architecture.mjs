@@ -2,8 +2,7 @@
  * The architecture, as rules: what each layer may import, where queries are built, and how a folder is entered.
  *
  * - `layers`: a layer imports only what's below it (database < repositories < cache < copy-on-write's writes <
- *   the modules' registry < builds < sheets < services < jobs < routers; the middlewares sit on the repositories,
- *   beside the services). The engine, the root `engine/`, imports nothing of the server, the database or the client:
+ *   services < jobs < routers; the middlewares sit on the repositories, beside the services). The engine, the root `engine/`, imports nothing of the server, the database or the client:
  *   its machinery (`engine/core/`) sits below the rulesets that run on it (`engine/rulesets/`), and `lib/`, what it
  *   shares with the server, imports nothing of the app. The cache
  *   holds copy-on-write's read side (the view a ruleset's reads see), `cow/` its write side. The server reads the
@@ -35,9 +34,6 @@ const ABOVE_REPOSITORIES = [
   "server/cache/",
   "server/cow/",
   "server/services/",
-  "server/rulesets/",
-  "server/builds/",
-  "server/sheets/",
   "server/jobs/",
   "server/middlewares/",
   "server/routers/",
@@ -58,47 +54,12 @@ const LAYERS = [
   { layer: "server/repositories/", deny: ABOVE_REPOSITORIES },
   {
     layer: "server/cache/",
-    deny: [
-      "server/cow/",
-      "server/rulesets/",
-      "server/builds/",
-      "server/sheets/",
-      "server/services/",
-      "server/jobs/",
-      "server/middlewares/",
-      "server/routers/",
-    ],
+    deny: ["server/cow/", "server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
   },
   {
     layer: "server/cow/",
-    deny: [
-      "server/rulesets/",
-      "server/builds/",
-      "server/sheets/",
-      "server/services/",
-      "server/jobs/",
-      "server/middlewares/",
-      "server/routers/",
-    ],
+    deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
   },
-  {
-    layer: "server/rulesets/",
-    deny: [
-      "server/builds/",
-      "server/sheets/",
-      "server/services/",
-      "server/jobs/",
-      "server/middlewares/",
-      "server/routers/",
-    ],
-  },
-  // The server's side of a character's build: what the module builds it from, read and given
-  {
-    layer: "server/builds/",
-    deny: ["server/sheets/", "server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
-  },
-  // A sheet prints the character a ruleset's module builds: above the rulesets, below what renders it
-  { layer: "server/sheets/", deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"] },
   { layer: "server/services/", deny: ["server/jobs/", "server/middlewares/", "server/routers/"] },
   { layer: "server/jobs/", deny: ["server/middlewares/", "server/routers/"] },
   { layer: "server/middlewares/", deny: ["server/services/", "server/jobs/", "server/routers/"] },

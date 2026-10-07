@@ -1,12 +1,13 @@
 import { afterEach, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import DetailedCharacterFamiliar from "@/engine/rulesets/dnd3.5/bonded/DetailedCharacterFamiliar.ts";
 import { buildFullCharacterResponse } from "@/engine/rulesets/dnd3.5/response/buildCharacterResponse.ts";
 import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
-import { buildCharacterSheet } from "@/server/sheets/index.ts";
+import { buildAs } from "@/tests/support/characters.ts";
 import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/support/levelFixtures.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 
@@ -30,12 +31,10 @@ test("worker familiar HP matches web after customizing an inherited master feat"
   RulesetCache.invalidate(fork.id);
   const familiar = (await Characters.findOne(db, { id: familiarId }))!;
   MemoryCache.setEnabled(true);
-  const web = await buildCharacterSheet(familiar, "familiar");
-  const webResponse = await buildFullCharacterResponse(familiar, web.detailedCharacter);
+  const webResponse = buildFullCharacterResponse(familiar, await buildAs(DetailedCharacterFamiliar, familiar));
   RulesetCache.invalidateAll();
   MemoryCache.setEnabled(false);
-  const worker = await buildCharacterSheet(familiar, "familiar");
-  const workerResponse = await buildFullCharacterResponse(familiar, worker.detailedCharacter);
+  const workerResponse = buildFullCharacterResponse(familiar, await buildAs(DetailedCharacterFamiliar, familiar));
   // Master: 4 hit die + 7 Toughness (an elf's Constitution 12 is 10); familiar gets half, rounded down.
   expect(webResponse.combat.hp.total).toBe(5);
   expect(workerResponse.combat.hp).toEqual(webResponse.combat.hp);

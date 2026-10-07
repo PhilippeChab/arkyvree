@@ -1,6 +1,6 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
-import { type Dnd35DetailedCharacter } from "@/engine/rulesets/dnd3.5/index.ts";
+import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";

@@ -16,11 +16,7 @@ export default new Hono()
   // Generate PDF for shared character (public, no auth)
   .get("/characters/:shareToken/pdf", validate("param", shareTokenParam), async (c) => {
     const { shareToken } = c.req.valid("param");
-    const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } =
-      await CharacterSharingService.generateSharedPdf(shareToken);
-    const pdfBlob = await pdf(
-      <CharacterSheetComponent detailedCharacter={detailedCharacter} portraitUrl={portraitUrl} kind={kind} />,
-    ).toBlob();
+    const pdfBlob = await pdf(await CharacterSharingService.generateSharedPdf(shareToken)).toBlob();
 
     return new Response(await pdfBlob.arrayBuffer(), {
       headers: {

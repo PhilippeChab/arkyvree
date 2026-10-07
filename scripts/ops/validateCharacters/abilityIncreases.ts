@@ -1,7 +1,7 @@
 import { getAttributeSlots } from "@/engine/index.ts";
-import { readCharacterInput } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
+import { readCharacterInput } from "@/server/services/characters/index.ts";
 
 import type { Character } from "./queries.ts";
 

@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { isValidElement, type ReactNode } from "react";
 
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import InfoPage from "@/server/sheets/dnd3.5/InfoPage.tsx";
+import InfoPage from "@/engine/rulesets/dnd3.5/sheet/InfoPage.tsx";
 import { buildAs } from "@/tests/support/characters.ts";
 import { findSeededCharacter } from "@/tests/support/seed.ts";
 

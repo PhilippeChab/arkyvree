@@ -3,10 +3,9 @@ import { describe, expect, test } from "bun:test";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
-import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
+import { generatePdfTask } from "@/server/jobs/generatePdf.ts";
 import { Exports, Modifiers, Notifications, Requirements } from "@/server/repositories/index.ts";
-import { buildCharacterSheet } from "@/server/sheets/index.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
+import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
 import { silentJobHelpers } from "@/tests/support/jobs.ts";
 import { findSeededCharacter } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
@@ -73,8 +72,7 @@ describe("generatePdf", () => {
     for (let i = 0; i < 16; i++)
       await requirement((await modifier("skills.climb.misc")).id, "skills.climb.total", "40");
 
-    const { detailedCharacter } = await buildCharacterSheet(character, "pc");
-    if (!(detailedCharacter instanceof Dnd35DetailedCharacter)) throw new Error("Not a D&D 3.5 character");
+    const detailedCharacter = await buildAs(Dnd35DetailedCharacter, character);
     const { inactiveModifiers, skippedModifiers } = detailedCharacter.modifierEvaluator.getModifiers();
     const { invalidRequirements, unmetRequirementGroups } = detailedCharacter.requirementEvaluator.getRequirements();
     expect(inactiveModifiers.map((m) => m.target)).toEqual(["weapon.tohit.misc"]);

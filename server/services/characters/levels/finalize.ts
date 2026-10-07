@@ -8,7 +8,6 @@ import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { checkCharacter, planBondedCreatures, planLevelEdit, planLevelUp } from "@/engine/index.ts";
-import { readBondedInputs, readCharacterInput } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -20,6 +19,7 @@ import {
   CharacterLevelSkills,
   Characters,
 } from "@/server/repositories/index.ts";
+import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 

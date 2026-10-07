@@ -8,7 +8,7 @@ import { Pool } from "pg";
 
 import { readEnv } from "@/server/environment.ts";
 
-import { generatePdfTask } from "./generatePdf.tsx";
+import { generatePdfTask } from "./generatePdf.ts";
 import { runCleanupTask } from "./runCleanup.ts";
 import { sendEmailTask } from "./sendEmail.ts";
 import { sweepPendingBlobsTask } from "./sweepPendingBlobs.ts";

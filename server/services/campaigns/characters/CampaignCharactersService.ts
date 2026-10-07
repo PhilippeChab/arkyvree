@@ -2,7 +2,6 @@ import { getTableName } from "drizzle-orm";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { describeCharacter, describePartialCharacter } from "@/engine/index.ts";
-import { readBondedInputs, readCharacterInput } from "@/server/builds/index.ts";
 import { withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
@@ -20,6 +19,8 @@ import {
   enqueueCharacterPdf,
   findExportableCharacter,
   getClassLevelsByCharacter,
+  readBondedInputs,
+  readCharacterInput,
 } from "@/server/services/characters/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";

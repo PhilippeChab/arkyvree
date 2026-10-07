@@ -3,10 +3,10 @@
  */
 
 import { openClassPicker } from "@/engine/index.ts";
-import { readCharacterInput } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Klasses } from "@/server/repositories/index.ts";
+import { readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 

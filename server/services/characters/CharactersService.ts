@@ -3,7 +3,6 @@ import { getTableName } from "drizzle-orm";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import { describeCharacter, openRacePicker } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import { readBondedInputs, readCharacterInput } from "@/server/builds/index.ts";
 import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -23,6 +22,7 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Alignment, Gender } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { readBondedInputs, readCharacterInput } from "./characterInputs.ts";
 import { getClassLevelsByCharacter } from "./classLevels.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { findEditableCharacterOrBonded, getEditableCharacter } from "./editableCharacter.ts";

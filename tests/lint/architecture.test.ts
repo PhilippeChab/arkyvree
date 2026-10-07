@@ -47,14 +47,12 @@ describe("architecture rules", () => {
         "server/services/s.ts": 'import r from "@/server/routers/r.ts";\nexport const x = r;\n',
         "server/cache/c.ts": 'import { w } from "@/server/cow/index.ts";\nexport const c = w;\n',
         "server/cow/w.ts": 'import { s } from "@/server/services/s.ts";\nexport const w = s;\n',
-        "server/rulesets/e.ts": 'import { w } from "@/server/cow/index.ts";\nexport const e = w;\n',
         // The engine's machinery names no ruleset, not even for a type; a ruleset builds on the machinery and lib/
         "engine/core/module/m.ts": 'import type { C } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type M = C;\n',
         "engine/rulesets/dnd3.5/r.ts": 'import type { M } from "@/engine/core/module/m.ts";\nexport type R = M;\n',
         "engine/rulesets/dnd3.5/i.ts": 'import { include } from "@/lib/mixins.ts";\nexport const i = include;\n',
         // lib/ imports nothing of the app
-        "lib/l.ts":
-          'import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";\nexport const l = RulesetFactory;\n',
+        "lib/l.ts": 'import { x } from "@/server/services/s.ts";\nexport const l = x;\n',
         "shared/s.ts": 'import type { T } from "@/drizzle/schema.ts";\nexport type S = T;\n',
         // The engine reads nothing itself: neither the server nor the database, and the schema for its types alone
         "engine/core/view/v.ts": 'import { db } from "@/server/database/index.ts";\nexport const v = db;\n',
@@ -73,7 +71,7 @@ describe("architecture rules", () => {
           'import { b } from "@/database/packages/dnd35/content/b.ts";\nexport const a = b;\n',
         "database/packages/dnd35/content/d.ts":
           'import { D } from "@/database/packages/dnd35/data/core.ts";\nexport const d = D;\n',
-        "database/packages/dnd35/content/s.ts": 'import { S } from "@/server/rulesets/s.ts";\nexport const s = S;\n',
+        "database/packages/dnd35/content/s.ts": 'import { x } from "@/server/services/s.ts";\nexport const s = x;\n',
       }),
     ).toEqual([
       "layers client/src/v.ts",

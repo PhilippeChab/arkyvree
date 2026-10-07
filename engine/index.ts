@@ -4,7 +4,13 @@
  * caller hands it: nothing outside the engine imports anything else of it.
  */
 
-export { checkEquipping, describeCharacter, describePartialCharacter, openRacePicker } from "./api/characters.ts";
+export {
+  checkEquipping,
+  describeCharacter,
+  describeCharacterSheet,
+  describePartialCharacter,
+  openRacePicker,
+} from "./api/characters.ts";
 export {
   checkAptitudeEdit,
   describeClass,

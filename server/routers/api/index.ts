@@ -9,7 +9,7 @@ import demo from "./demo/index.ts";
 import exports from "./exports/index.ts";
 import notifications from "./notifications/index.ts";
 import rulesets from "./rulesets/index.ts";
-import shared from "./shared/index.tsx";
+import shared from "./shared/index.ts";
 
 export default new Hono()
   // Mount API routes with proper chaining for type safety

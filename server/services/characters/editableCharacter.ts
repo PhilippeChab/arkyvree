@@ -1,10 +1,11 @@
 import type { CharacterInput } from "@/engine/index.ts";
-import { readCharacterInput } from "@/server/builds/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
+
+import { readCharacterInput } from "./characterInputs.ts";
 
 export async function findEditableCharacterOrBonded(tx: Db, characterId: string, userId: string) {
   const pc = await Characters.findOne(tx, { id: characterId, editorId: userId });

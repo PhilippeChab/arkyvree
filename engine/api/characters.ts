@@ -26,6 +26,11 @@ export function describeCharacter(view: RulesetView, ...args: After<Characters["
   return charactersOf(view).describeCharacter(view, ...args);
 }
 
+/** A character's printed sheet, from its rows: the PDF document the server renders. */
+export function describeCharacterSheet(view: RulesetView, ...args: After<Characters["describeCharacterSheet"]>) {
+  return charactersOf(view).describeCharacterSheet(view, ...args);
+}
+
 /** What a campaign member who sees a character only partly reads of it: who it is, and its identity. */
 export function describePartialCharacter(view: RulesetView, ...args: After<Characters["describePartialCharacter"]>) {
   return charactersOf(view).describePartialCharacter(view, ...args);

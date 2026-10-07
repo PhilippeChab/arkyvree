@@ -1,12 +1,17 @@
 import { pdf } from "@react-pdf/renderer";
 import type { JobHelpers } from "graphile-worker";
 
-import type { CharacterKind } from "@/engine/rulesets/dnd3.5/index.ts";
-import { withTransaction } from "@/server/database/index.ts";
+import { describeCharacterSheet } from "@/engine/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
+import { isProduction } from "@/server/environment.ts";
 import { Exports, Notifications } from "@/server/repositories/index.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
-import { findExportableCharacter, getCharacterPdfTargetTable } from "@/server/services/characters/index.ts";
-import { buildCharacterSheet } from "@/server/sheets/index.ts";
+import {
+  findExportableCharacter,
+  getCharacterPdfTargetTable,
+  readCharacterInput,
+} from "@/server/services/characters/index.ts";
 import { publishWsEvent } from "@/server/websockets/index.ts";
 
 interface GeneratePdfPayload {
@@ -51,14 +56,15 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
       return;
     }
 
-    const kind = characterRecord.kind as CharacterKind;
-    const { detailedCharacter, CharacterSheetComponent } = await buildCharacterSheet(characterRecord, kind);
-
     const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
+    const sheet = await withRulesetScope(db, characterRecord.rulesetId, async (scope) =>
+      describeCharacterSheet(scope, await readCharacterInput(db, characterRecord), {
+        diagnostics: !isProduction(),
+        portraitUrl,
+      }),
+    );
 
-    const pdfBlob = await pdf(
-      <CharacterSheetComponent detailedCharacter={detailedCharacter} kind={kind} portraitUrl={portraitUrl} />,
-    ).toBlob();
+    const pdfBlob = await pdf(sheet).toBlob();
 
     const arrayBuffer = await pdfBlob.arrayBuffer();
     if (arrayBuffer.byteLength > MAX_PDF_SIZE_BYTES) {

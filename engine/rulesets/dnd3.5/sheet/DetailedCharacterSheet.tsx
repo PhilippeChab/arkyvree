@@ -1,7 +1,7 @@
 import { Document } from "@react-pdf/renderer";
 
-import { type CharacterKind, type Dnd35DetailedCharacter } from "@/engine/rulesets/dnd3.5/index.ts";
-import { isProduction } from "@/server/environment.ts";
+import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
+import type { CharacterKind } from "@/engine/rulesets/dnd3.5/types.ts";
 
 import DiagnosticsPage from "./DiagnosticsPage.tsx";
 import FeatsPage from "./FeatsPage.tsx";
@@ -10,12 +10,15 @@ import InventoryPage from "./InventoryPage.tsx";
 import SkillsPage from "./SkillsPage.tsx";
 import SpellsPage from "./SpellsPage.tsx";
 
+/** A character's printed sheet: its pages, a bonded creature's without its inventory, and its diagnostics when asked. */
 function DetailedCharacterSheet({
   detailedCharacter,
+  diagnostics,
   kind = "pc",
   portraitUrl,
 }: {
   detailedCharacter: Dnd35DetailedCharacter;
+  diagnostics: boolean;
   kind?: CharacterKind;
   portraitUrl?: string | null;
 }) {
@@ -28,8 +31,7 @@ function DetailedCharacterSheet({
       <FeatsPage detailedCharacter={detailedCharacter} />
       <SpellsPage detailedCharacter={detailedCharacter} />
       {!isBonded && <InventoryPage detailedCharacter={detailedCharacter} />}
-      {/* Dev only */}
-      {!isProduction() && <DiagnosticsPage detailedCharacter={detailedCharacter} />}
+      {diagnostics && <DiagnosticsPage detailedCharacter={detailedCharacter} />}
     </Document>
   );
 }

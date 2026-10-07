@@ -2,11 +2,11 @@ import { getTableName } from "drizzle-orm";
 
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { checkEquipping } from "@/engine/index.ts";
-import { readCharacterInput } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, CharacterInventory, Items, Visibility } from "@/server/repositories/index.ts";
+import { readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isHandLocation } from "@/shared/equipment.ts";
