@@ -22,6 +22,7 @@ import {
   SPELL_SUBSCHOOL,
   SPELL_TARGET,
 } from "@/shared/dnd3.5/properties/index.ts";
+import { SPELL_SUBSCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { capitalize } from "@/shared/text.ts";
 
 /** A spell of a reference, as scraped. */
@@ -42,24 +43,7 @@ const COMPOUND_COMPONENT_MAP: Record<string, string> = {
   "F/DF": "Focus/Divine Focus",
 };
 
-const SUBSCHOOL_CANON: Record<string, string> = Object.fromEntries(
-  [
-    "Calling",
-    "Charm",
-    "Compulsion",
-    "Creation",
-    "Figment",
-    "Glamer",
-    "Healing",
-    "Pattern",
-    "Phantasm",
-    "Polymorph",
-    "Scrying",
-    "Shadow",
-    "Summoning",
-    "Teleportation",
-  ].map((s) => [s.toLowerCase(), s]),
-);
+const SUBSCHOOL_CANON: Record<string, string> = Object.fromEntries(SPELL_SUBSCHOOLS.map((s) => [s.toLowerCase(), s]));
 
 function expandComponents(components: string[]): string[] {
   const result: string[] = [];
