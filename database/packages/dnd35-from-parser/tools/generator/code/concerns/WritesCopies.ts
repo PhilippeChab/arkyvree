@@ -10,6 +10,7 @@ export function WritesCopies<B extends Constructor<BaseCodeFile>>(Base: B) {
     cowFeat({ feat, aptitudes }: CowFeatEntry): string {
       return `  { feat: ${quote(feat)}, requirements: [], aptitudes: [${aptitudes.map(quote).join(", ")}] },`;
     }
+
     /** A spell a book copies from the core rules written as code, a list's item. */
     cowSpell({ spell, aptitudes }: CowSpellEntry): string {
       const lists = aptitudes.map(({ aptitude, level }) => `{ aptitude: ${quote(aptitude)}, level: ${level} }`);

@@ -47,6 +47,10 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
       const spells = Library.book(book).spellSeeds(ref);
       this.log(`Built ${spells.length} spell seeds`);
 
+      // A spell above 9th level would have no file: the app has no epic spells
+      const beyond = spells.find((spell) => !SPELL_LEVELS.includes(spell.level));
+      if (beyond) throw new Error(`${beyond.name}: level ${beyond.level}, where a spell's is 0 to 9`);
+
       // A file per spell level, its spells without their level (its file's), the levels without spells' removed
       const byLevel = Map.groupBy(spells, (spell) => spell.level);
       for (const level of SPELL_LEVELS) {

@@ -78,6 +78,7 @@ export function WritesItems<B extends Constructor<BaseCodeFile>>(Base: B) {
       }
       return values.length === 0 ? "[]" : `[\n${values.map((value) => `      ${write(value)},`).join("\n")}\n    ]`;
     }
+
     /**
      * An item written as code, a list's item. Its requirements and its properties are written with the builder that
      * gives them for its name (`simple("Club")`, `weaponProperties("Club")`, a proficiency), when one does.

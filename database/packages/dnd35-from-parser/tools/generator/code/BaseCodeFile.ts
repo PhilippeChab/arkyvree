@@ -51,13 +51,13 @@ const DECLARED_TYPES = {
 export class BaseCodeFile {
   /** The content types the file declares its values with. */
   private readonly declared = new Set<DeclaredType>();
-
   /** The names the file imports from the generated files beside it, by module. */
   private readonly gathered = new Map<string, string[]>();
-
+  /** The file's code, a line at a time, which its imports are written above (`code`). */
   readonly lines: string[] = [];
-
+  /** The names the file's code uses (a builder, a vocabulary's), which its imports are written from (`IMPORT_TABLE`). */
   readonly uses = new Set<string>();
+
   /** A check written with its builder: `builder(target, value)`. */
   private builderCall(
     { target, value }: RequirementCondition,
@@ -66,6 +66,7 @@ export class BaseCodeFile {
     if (takes === "nothing") return `${name}(${quote(target)})`;
     return `${name}(${quote(target)}, ${takes === "number" ? Number(value) : quote(value)})`;
   }
+
   /**
    * The builder the generated code writes `check` with: one that builds that very check from its target and value. A
    * check none builds (another operator, a value that isn't a number's own writing) is written as an object.
@@ -81,18 +82,22 @@ export class BaseCodeFile {
       );
     });
   }
+
   /** The file's code: the imports of what its lines declare, use and gather, then its lines. */
   code(): string {
     return [...this.imports(), "", ...this.lines].join("\n");
   }
+
   /** The file declares a value with the content type `type`, which it imports. */
   declare(type: DeclaredType): void {
     this.declared.add(type);
   }
+
   /** The file gathers `names` from `module`, a generated file beside it (an index's lists). */
   gather(module: string, names: string[]): void {
     this.gathered.set(module, [...(this.gathered.get(module) ?? []), ...names]);
   }
+
   /**
    * The file's imports: the content types it declares values with, the names its code uses (from its table, a name
    * the table doesn't list throws), and the lists it gathers.
@@ -105,11 +110,13 @@ export class BaseCodeFile {
       ...[...this.gathered].map(([module, names]) => formatImport(names, module)),
     ];
   }
+
   /** An exported list of `type` (a content type, or text), `items` its lines. */
   list(constName: string, type: DeclaredType | "string", items: string[]): void {
     if (type !== "string") this.declare(type);
     this.lines.push(`export const ${constName}: ${type}[] = [`, ...items, `];`, ``);
   }
+
   /**
    * A modifier written as code, at `indentLevel`, with its requirements (a feat's, a class level's). `target` is its
    * target as code (a template's names each item).
@@ -117,6 +124,7 @@ export class BaseCodeFile {
   modifier(mod: ModifierSeed, indentLevel = 3, target = quote(mod.target)): string {
     return `{ ${this.modifierFields(mod, indentLevel, target).join(", ")} }`;
   }
+
   /** A modifier's fields written as code: its target (as code, `target`), operator, value, type and requirements. */
   modifierFields(
     mod: ModifierEffect & Pick<ModifierSeed, "requirements">,
@@ -132,6 +140,7 @@ export class BaseCodeFile {
       ...(requirements.length > 0 ? [`requirements: [${requirements.join(", ")}]`] : []),
     ];
   }
+
   /**
    * A modifier without requirements written as code: a domain's, a race's or an item's. Only a feat's and a class
    * level's have requirements: one on another refuses the seed.
@@ -140,10 +149,12 @@ export class BaseCodeFile {
     if ("requirements" in mod) throw new Error(`${mod.target}: only a feat's modifier has requirements`);
     return this.modifier(mod);
   }
+
   /** A property written as code. */
   property({ type, value }: Property): string {
     return `{ type: ${quote(type)}, value: ${quote(value)} }`;
   }
+
   /** `req` written as code, at `indentLevel`: the builders it's written with are names the file uses. */
   requirement(req: RequirementEntry, indentLevel = 2): string {
     if ("chainingOperator" in req) {
