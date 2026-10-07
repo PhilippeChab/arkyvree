@@ -1,11 +1,11 @@
 import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import type { DetailedCharacterInterface } from "@/engine/core/module/index.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import type { ProjectedCharacterLevel } from "@/engine/core/types.ts";
 import TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import { readFeatFields } from "@/engine/rulesets/dnd3.5/feats/featFields.ts";
 import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import DetailedCharacterDataLoader from "@/engine/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
+import type { ProjectedCharacterLevel } from "@/engine/rulesets/dnd3.5/types.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character, KlassLevel, Requirement } from "@/shared/relations.ts";
 

@@ -415,6 +415,37 @@ describe("finalizing several levels at once", () => {
     }
     await expect(finalizeBatch(ctx, NIL_UUID, fighterLevels(1), {})).rejects.toThrow(NotFoundError);
   });
+
+  test("refuses a class level the batch takes twice: the second sees the first", async () => {
+    const ctx = await getSeedCtx();
+    const firstTwo = {
+      General: ["Power Attack", "Great Fortitude"],
+      "Fighter Bonus Feat": ["Improved Initiative", "Dodge"],
+    };
+    const twice = finalizeBatch(
+      ctx,
+      await createSeedCharacter(ctx, "fighter", { xp: 1000 }),
+      [
+        ["Fighter", 1, 10],
+        ["Fighter", 1, 10],
+      ],
+      { skills: { Climb: 16 }, feats: FIGHTER_LEVELS[0].feats },
+    );
+    await expect(twice).rejects.toMatchObject({
+      message: "Level 2: This level has already been finalized",
+      refusal: "invalid",
+    });
+    const thirdRepeatsSecond = finalizeBatch(
+      ctx,
+      await createSeedCharacter(ctx, "fighter", { xp: 3000 }),
+      [...fighterLevels(2), ["Fighter", 2, 6]],
+      { skills: { Climb: 20 }, feats: firstTwo },
+    );
+    await expect(thirdRepeatsSecond).rejects.toMatchObject({
+      message: "Level 3: This level has already been finalized",
+      refusal: "invalid",
+    });
+  });
 });
 
 describe("previewing a level-up", () => {

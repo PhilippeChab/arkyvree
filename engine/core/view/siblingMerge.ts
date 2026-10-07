@@ -17,6 +17,14 @@ type ModifierKey = Pick<Modifier, "target" | "value" | "operator" | "valueType">
 
 type PropertyKey = Pick<Property, "type" | "value">;
 
+/** An entity's customizations: its modifiers, with their requirements apart, its properties and its requirements. */
+export interface EntityCustomizations {
+  modifierRequirements: Requirement[];
+  modifiers: Modifier[];
+  properties: Property[];
+  requirements: Requirement[];
+}
+
 /** A top-level condition's identity: two with the same one are the same condition. */
 function conditionKey(requirement: Requirement): string {
   return `${requirement.target}|${requirement.operator}|${requirement.value}`;
@@ -60,6 +68,38 @@ export function mergeSiblingAptitudeLinks<T extends { aptitudeId: string }>(
   resolve: (id: string) => string,
 ): T[] {
   return takeNewRows(own, siblings, (link) => resolve(link.aptitudeId));
+}
+
+/**
+ * What a copy of a sibling winner takes of its siblings' customizations (`siblings`, in the order its `CowData` pairs
+ * them) beside its own (`own`, which the copy holds): their modifiers, each with its requirements, their properties and
+ * their requirements, merged as the view merges them, a requirement onto the copy (`targetEntityId`).
+ */
+export function mergeSiblingCustomizations(
+  own: EntityCustomizations,
+  siblings: EntityCustomizations[],
+  targetEntityId: string,
+): EntityCustomizations {
+  const modifiers = mergeSiblingModifiers(
+    own.modifiers,
+    siblings.map((customizations) => customizations.modifiers),
+  );
+  const modifierIds = new Set(modifiers.map((modifier) => modifier.id));
+  return {
+    modifiers,
+    modifierRequirements: siblings
+      .flatMap((customizations) => customizations.modifierRequirements)
+      .filter((requirement) => modifierIds.has(requirement.entityId)),
+    properties: mergeSiblingProperties(
+      own.properties,
+      siblings.map((customizations) => customizations.properties),
+    ),
+    requirements: mergeSiblingRequirements(
+      own.requirements,
+      siblings.map((customizations) => customizations.requirements),
+      targetEntityId,
+    ),
+  };
 }
 
 /**

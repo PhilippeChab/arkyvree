@@ -10,7 +10,7 @@ dndtools.net HTML → Scraper → reference JSON (raw + overrides) → Generator
                                          Human corrections
 ```
 
-Most content is generated from scraped SRD pages. A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. See [Reference files](#reference-files) and `database/packages/dnd35-from-parser/README.md` for the scraper and generator.
+Most content is generated from scraped SRD pages. A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. See [Reference files](#reference-files) and `codegen/dnd3.5/README.md` for the scraper and generator.
 
 ## Package types
 
@@ -28,33 +28,36 @@ database/packages/
 ├── registry.ts           # The packages, in the order they're applied
 └── dnd35/
     ├── index.ts          # The core rules package
-    ├── names.ts          # Ruleset display names
     ├── extensions/       # One file per extension package
-    ├── content/          # What the data is written with: a folder per kind of content, its types, its builders and the tables they read
-    │   ├── customization/    # Requirement, modifier and property types; eq(), gte(), or(), feat(), bonus()…
-    │   ├── items/            # ItemSeed; the weapon, armor and shield tables, their properties and proficiencies (simple(), martial()…)
-    │   ├── classes/          # ClassSeed
-    │   ├── feats/, spells/, races/, domains/   # FeatSeed; PowerSeed, SpellSeed; RaceSeed; DomainSeed
-    │   ├── wizardSchools/    # WizardSchoolSeed
-    │   ├── bonds/            # BondContent; "a Cat", "an Owl" for the bonds' descriptions
-    │   ├── abilities/, saves/, skills/, languages/   # The core rules' own: AbilitySeed, SaveSeed…
-    │   └── rulesets/         # CoreContent, BookContent: what a ruleset is seeded with
-    ├── data/             # The hand-written data
-    │   ├── core.ts           # The core ruleset, its abilities, saves, skills, languages, and CORE: all it's seeded with
-    │   ├── skills.ts, creatureTypes.ts, templateItems.ts
-    │   ├── bonds/            # Familiars, animal companions, special mounts
-    │   └── feats/            # The feats no reference lists: the core's (coreFeats.ts: the wizard's schools, the weapon feats, favored enemy), Complete Divine's deity's weapon
     └── seed/             # What writes it to the database
         ├── BaseSeeder.ts     # A seeder's core: its database, its context (SeedContext), the rows and inserts every step shares
         ├── RulesetSeeder.ts  # createCore, createExtension; seedCore, seedBook: the steps made of steps
         ├── concerns/         # A step per kind of row: SeedsFeats, SeedsClasses, CopiesOnWrite…
         └── spellTable.ts     # A spellcaster's table: the class level each of its spell levels opens at
 
-database/packages/dnd35-from-parser/
+content/dnd3.5/
+├── baseRules.ts          # DND35_BASE_RULES: the base rules the content is written for, which the seeders ask the engine by
+├── names.ts              # Ruleset display names
+├── builders/             # What the data is written with: a folder per kind of content, its types, its builders and the tables they read
+│   ├── customization/    # Requirement, modifier and property types; eq(), gte(), or(), feat(), bonus()…
+│   ├── items/            # ItemSeed; the weapon, armor and shield tables, their properties and proficiencies (simple(), martial()…)
+│   ├── classes/          # ClassSeed
+│   ├── feats/, spells/, races/, domains/   # FeatSeed; PowerSeed, SpellSeed; RaceSeed; DomainSeed
+│   ├── wizardSchools/    # WizardSchoolSeed
+│   ├── bonds/            # BondContent; "a Cat", "an Owl" for the bonds' descriptions
+│   ├── abilities/, saves/, skills/, languages/   # The core rules' own: AbilitySeed, SaveSeed…
+│   └── rulesets/         # CoreContent, BookContent: what a ruleset is seeded with
+├── data/                 # The hand-written data
+│   ├── core.ts           # The core ruleset, its abilities, saves, skills, languages, and CORE: all it's seeded with
+│   ├── skills.ts, creatureTypes.ts, templateItems.ts
+│   ├── bonds/            # Familiars, animal companions, special mounts
+│   └── feats/            # The feats no reference lists: the core's (coreFeats.ts: the wizard's schools, the weapon feats, favored enemy), Complete Divine's deity's weapon
+└── generated/            # Written by the generator only, one folder per book
+    ├── srd/              #   The core rules
+    └── dmg/, complete-warrior/, …   # Each extension book; every book has an index.ts exporting BOOK
+
+codegen/dnd3.5/
 ├── reference/            # Scraped JSON (raw + overrides)
-├── generated/            # Written by the generator only, one folder per book
-│   ├── srd/              #   The core rules
-│   └── dmg/, complete-warrior/, …   # Each extension book; every book has an index.ts exporting BOOK
 └── tools/                # Scraper, generator, validate, overrides
     ├── cli/              # The commands (parser:scrape, generate, sync, overrides, validate), each reading its line through CommandLine
     ├── types/            # A reference's types, a module per kind of reference
@@ -69,7 +72,7 @@ database/packages/dnd35-from-parser/
     ├── vocabulary/       # The names the books give abilities, saves, skills, races and numbers, their slugs and paths, a feat family's options, and the core rules' book: a module per subject
     ├── seeds/            # A book's seeds (BookSeeds, one per book on the Library), a class per kind built once per reference (FeatSeeds, SpellSeeds…; a class's: classes/ClassSeeds.ts); what a book copies and the aptitudes it uses, its concerns
     ├── validate/         # What parser:validate reports: a reference's issues (ReferenceIssues, its ReviewList), what a class's overrides change (ClassOverridesCheck)
-    └── generator/        # The seeds → generated/
+    └── generator/        # The seeds → content/dnd3.5/generated/
         ├── Generator.ts      # Picks the books (generateAll, generateReference) and generates each whole, a BookGenerator each
         ├── GeneratedFolder.ts  # The folder a generation writes: a run in a copy that replaces it whole (generateAtomically), the files it wrote
         ├── BookGenerator.ts  # A book's files, from its seeds (BaseBookGenerator: the book, its seeds, the writes kinds of files share)
@@ -79,11 +82,11 @@ database/packages/dnd35-from-parser/
         └── code/             # A file's code, written from its seeds: CodeFile (BaseCodeFile: its lines, its imports, how a value is written, the customization values), a concern per kind of seed (WritesClasses, WritesFeats…) and WritesIndexes
 ```
 
-`content/` and `data/` never touch the database: the generated data, the parser and the seeds import them. `generated/` holds only what the generator writes; hand-written content goes in `data/`, what content is written with in `content/`, which imports none of them (`arkyvree/layers`): a table a builder reads (the weapons, the armor) is content.
+`content/dnd3.5/` is data: it never touches the database, and imports none of what reads or writes it (`arkyvree/layers`). The seeders and the codegen import it; the engine and the server read none of it, and the content reaches the server through the database, which the packages seed. `generated/` holds only what the generator writes; hand-written content goes in `data/`, what content is written with in `builders/`, which imports neither: a table a builder reads (the weapons, the armor) is a builder's.
 
 ## How seeds work
 
-A `RulesetSeeder` seeds a ruleset step by step: a step that writes one kind of row is a concern (`seed/concerns/`), and the steps made of others (`seedCore`, `seedBook`, `seedBond`, `seedDomains`) are the class's own. It holds a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. It holds no content: the core rules' package creates the core ruleset and seeds it with `CORE` (`data/core.ts`):
+A `RulesetSeeder` seeds a ruleset step by step: a step that writes one kind of row is a concern (`seed/concerns/`), and the steps made of others (`seedCore`, `seedBook`, `seedBond`, `seedDomains`) are the class's own. It holds a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. It holds no content: the core rules' package creates the core ruleset and seeds it with `CORE` (`content/dnd3.5/data/core.ts`):
 
 ```ts
 seeds: [
@@ -95,6 +98,8 @@ seeds: [
 ```
 
 The dev seeds (`database/seeds`) and the tests load the same context for the seeded ruleset (`RulesetSeeder.loadContext`).
+
+The fields the rules keep in an entity's properties (a class's, a level's, a skill's, the ruleset's own) are seeded as the engine keeps them (`toEntityProperties`, by `DND35_BASE_RULES`), from the fields the content gives.
 
 An extension is a package file that seeds its book:
 
@@ -112,12 +117,12 @@ const dnd35Dmg: ContentPackage = {
 };
 ```
 
-`BOOK` (`generated/<book>/index.ts`) is the book's content as the generator wrote it. `RulesetSeeder.createExtension` creates the extension ruleset with the core's context; `seedBook` adds the aptitudes the core lacks, seeds the feats, spells, domains (whose spell levels open at the core cleric's) and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are added to `BOOK` in its package file (Complete Divine adds `DEITYS_WEAPON_FEATS`), and so are the core rules' to the SRD's `BOOK` in `data/core.ts` (its hand-written feats, `buildCoreFeats`, its rules and its bonded creatures): no generated file wraps hand-written content.
+`BOOK` (`content/dnd3.5/generated/<book>/index.ts`) is the book's content as the generator wrote it. `RulesetSeeder.createExtension` creates the extension ruleset with the core's context; `seedBook` adds the aptitudes the core lacks, seeds the feats, spells, domains (whose spell levels open at the core cleric's) and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are added to `BOOK` in its package file (Complete Divine adds `DEITYS_WEAPON_FEATS`), and so are the core rules' to the SRD's `BOOK` in `data/core.ts` (its hand-written feats, `buildCoreFeats`, its rules and its bonded creatures): no generated file wraps hand-written content.
 
 ### Adding an extension
 
-1. Add the book to the scraper (its slug in `tools/scraper/BaseScraper.ts`), scrape it, and generate it (`bun run parser:generate <book>`).
-2. Add its display name to `names.ts` and a package file under `extensions/` with `seedsVersion: 1`.
+1. Add the book to the scraper (its slug in `codegen/dnd3.5/tools/scraper/BaseScraper.ts`), scrape it, and generate it (`bun run parser:generate <book>`).
+2. Add its display name to `content/dnd3.5/names.ts` and a package file under `database/packages/dnd35/extensions/` with `seedsVersion: 1`.
 3. Register it in `registry.ts`, after the core rules.
 
 ## Versioning & updates
@@ -149,7 +154,7 @@ Once every database has an update (production, staging and any other shared data
 
 ## Reference files
 
-A reference file (`reference/<book>/…json`) has three parts:
+A reference file (`codegen/dnd3.5/reference/<book>/…json`) has three parts:
 
 - **`_meta`** — its type, book and source.
 - **`raw`** — what the scraper read. Re-scraping replaces it.
@@ -166,7 +171,7 @@ What the generator reads is derived from the two each time a reference is loaded
 
 ## COW-ing core entities into extensions
 
-When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `seed/concerns/CopiesOnWrite.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes (`tools/seeds/concerns/Copies.ts`, a concern of `BookSeeds`).
+When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes (`codegen/dnd3.5/tools/seeds/concerns/Copies.ts`, a concern of `BookSeeds`).
 
 ### Aptitude ownership rules
 
@@ -195,10 +200,10 @@ bun db:packages    # Apply all registered packages
 
 ### Do
 
-- Use the scraper and generator for new content; hand-write only what no page provides, in `data/`
+- Use the scraper and generator for new content; hand-write only what no page provides, in `content/dnd3.5/data/`
 - Correct scraped content in `overrides`, the only hand-edited part of a reference file
 - Make update functions idempotent (upserts, guard clauses) so retries are safe
-- Use display name constants from `names.ts` to query rulesets
+- Use display name constants from `content/dnd3.5/names.ts` to query rulesets
 - Always add modifiers and requirements when the source material defines them
 
 ### Do not
@@ -208,4 +213,4 @@ bun db:packages    # Apply all registered packages
 - Never add requirements to existing feats/class features without careful consideration — it can retroactively invalidate characters
 - Never remove or reorder an update some database doesn't have yet, and never skip a version in `updates`
 - Never hardcode entity IDs — always look them up by name
-- Never edit `generated/` by hand — regenerate it
+- Never edit `content/dnd3.5/generated/` by hand — regenerate it

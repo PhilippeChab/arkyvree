@@ -6,9 +6,4 @@
 export { getListFeatIds, getListPowerIds } from "./listMembers.ts";
 export { default as RulesetComposition, type RulesetRawData } from "./RulesetComposition.ts";
 export { default as RulesetData } from "./RulesetData.ts";
-export {
-  mergeSiblingAptitudeLinks,
-  mergeSiblingModifiers,
-  mergeSiblingProperties,
-  mergeSiblingRequirements,
-} from "./siblingMerge.ts";
+export { type EntityCustomizations, mergeSiblingAptitudeLinks, mergeSiblingCustomizations } from "./siblingMerge.ts";

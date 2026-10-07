@@ -1,7 +1,6 @@
-import type { LevelsRules } from "@/engine/core/module/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-export class Dnd35LevelsRules implements LevelsRules {
+export class Dnd35LevelsRules {
   /** The aptitude the general feats count toward, by its name, which a ruleset keeps (`Dnd35AptitudesRules`). */
   static readonly GENERAL_FEATS_APTITUDE = "General";
   /** Its slug: what the engine, the target paths (`aptitudes.general.*`) and the effects know it by. */
@@ -15,7 +14,12 @@ export class Dnd35LevelsRules implements LevelsRules {
     return totalLevel === 0 ? 0 : Math.floor(totalLevel / 3) + 1;
   }
 
-  isAbilityIncreaseLevel(totalLevel: number): boolean {
+  /** Whether the level after `totalLevel` levels takes an ability increase: every fourth. */
+  static isAbilityIncreaseLevel(totalLevel: number): boolean {
     return (totalLevel + 1) % 4 === 0;
+  }
+
+  isAbilityIncreaseLevel(totalLevel: number): boolean {
+    return Dnd35LevelsRules.isAbilityIncreaseLevel(totalLevel);
   }
 }

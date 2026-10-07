@@ -1,6 +1,6 @@
 /** A spellcaster's table of slots (by class level, then spell level): the class level it opens each spell level at. */
 
-import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
+import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 /** A class that casts spells: its table of slots. */
 export type SpellcastingClass = ClassSeed & { spells: NonNullable<ClassSeed["spells"]> };

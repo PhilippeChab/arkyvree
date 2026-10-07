@@ -1,8 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
-import { buildCharacter } from "@/server/builds/index.ts";
-import { withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
+import { describeCharacter, describePartialCharacter } from "@/engine/index.ts";
+import { withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -15,12 +15,12 @@ import {
   Players,
   Visibility,
 } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import {
   enqueueCharacterPdf,
   findExportableCharacter,
   getClassLevelsByCharacter,
-  loadBondedByKind,
+  readBondedInputs,
+  readCharacterInput,
 } from "@/server/services/characters/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -78,22 +78,24 @@ class CampaignCharactersService {
 
     const isPartial = this.isPartial(link.visibility, { canEdit, isGM, isOwner });
 
-    const rulesetModule = await RulesetFactory.fromRulesetId(character.rulesetId);
-    const detailedCharacter = await buildCharacter(rulesetModule, character);
-
-    const bondedByKind = isPartial ? {} : await loadBondedByKind(rulesetModule, character.id);
-
-    return {
+    const viewer = {
       visibility: link.visibility as VisibilityType,
       isOwner,
       canEdit,
       canDownloadPdf: canEdit || isGM,
       isPartial,
-      canViewPrivateNotes: isGM || canEdit,
-      character,
-      detailedCharacter,
-      bondedByKind,
     };
+    return await withRulesetScope(db, character.rulesetId, async (scope) => {
+      const input = await readCharacterInput(db, character);
+      if (isPartial) return { ...viewer, ...describePartialCharacter(scope, input) };
+      const described = describeCharacter(
+        scope,
+        input,
+        await readBondedInputs(db, input, Visibility.All),
+        isGM || canEdit ? "show" : "blank",
+      );
+      return { ...viewer, ...described, shareToken: canEdit ? described.shareToken : null };
+    });
   }
 
   async getCharacters(

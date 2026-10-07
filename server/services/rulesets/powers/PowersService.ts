@@ -1,56 +1,26 @@
 import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
-import type { RulesetModule } from "@/engine/core/module/index.ts";
-import { getListPowerIds } from "@/engine/core/view/index.ts";
-import {
-  findScopedEntity,
-  RulesetCache,
-  type RulesetScope,
-  withRulesetScope,
-} from "@/server/cache/rulesetCache/index.ts";
+import { getListPowerIds, planPowerSave } from "@/engine/index.ts";
+import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { FeatsAptitudes, Powers, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { writeGeneratedFeats, writeProperties } from "@/server/services/rulesets/effectWrites.ts";
+import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import type { Session } from "@/shared/relations.ts";
 
-interface PowerBody {
+/** A power's body: its row's columns, its aptitude links, and the fields its ruleset's rules keep (`planPowerSave`). */
+type PowerBody = Parameters<typeof planPowerSave>[1] & {
   aptitudes?: { id: string; level?: number }[];
-  areaOfEffect?: string;
-  castingTime?: string;
-  components?: string[];
   description?: string | null;
-  descriptors?: string[];
-  duration?: string;
   name: string;
-  rangeType?: string;
   saveEffect?: string | null;
   saveId?: string | null;
-  school?: string;
-  spellResistance?: string;
-  subschool?: string;
-  target?: string;
   updatedAt?: string;
-}
-
-/** The spell fields a power's generated properties come from. */
-const SPELL_FIELDS = [
-  "school",
-  "subschool",
-  "descriptors",
-  "castingTime",
-  "rangeType",
-  "target",
-  "areaOfEffect",
-  "duration",
-  "spellResistance",
-  "components",
-] as const satisfies (keyof PowerBody)[];
+};
 
 class PowersService {
   /** Throws when one of the aptitudes is already used for feats: a spell can't be linked to it. */
@@ -80,30 +50,11 @@ class PowersService {
     }
   }
 
-  /** Stores a power's fields as its properties, and brings its grouping's feats when its grouping (the school) changes. */
-  private async syncSpellProperties(
-    tx: Db,
-    rulesetModule: Pick<RulesetModule, "effects" | "rules">,
-    scope: RulesetScope,
-    powerId: string,
-    body: PowerBody,
-  ) {
-    const { effects, rules } = rulesetModule;
-    // Read before the sync, which replaces the properties that hold it
-    const properties = await Properties.findMany(tx, { entityIds: [powerId], entityType: "powers" });
-    const oldGroupingValue = rules.powers.extractGroupingValue(rules.powers.readProperties(properties));
-
-    await writeProperties(tx, effects.powers.properties(powerId, body));
-
-    const newGroupingValue = rules.powers.extractGroupingValue(body);
-    if (newGroupingValue && newGroupingValue !== oldGroupingValue)
-      await writeGeneratedFeats(tx, scope, effects.feats, effects.powers.generatedFeats(newGroupingValue));
-  }
-
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -116,8 +67,6 @@ class PowersService {
             tx,
             body.aptitudes.map((a) => a.id),
           );
-
-          const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
 
           const rows = await Powers.create(tx, {
             name: body.name,
@@ -138,12 +87,8 @@ class PowersService {
             });
           }
 
-          await writeProperties(tx, effects.powers.properties(power.id, body));
-          const groupingValue = rules.powers.extractGroupingValue(body);
-          if (groupingValue) {
-            const scope = { ruleset, rulesetData };
-            await writeGeneratedFeats(tx, scope, effects.feats, effects.powers.generatedFeats(groupingValue));
-          }
+          const writes = planPowerSave(scope, body);
+          await writeEntityWrites(tx, scope, { entityId: power.id, entityType: "powers" }, writes);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -245,7 +190,8 @@ class PowersService {
   async updatePower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           const { sourceChain } = rulesetData.cow;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
@@ -255,8 +201,6 @@ class PowersService {
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "powers", power);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
-
-          const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
 
           const rows = await Powers.update(
             tx,
@@ -274,8 +218,10 @@ class PowersService {
 
           if (body.aptitudes !== undefined) await this.replaceAptitudes(tx, targetId, body.aptitudes);
 
-          if (SPELL_FIELDS.some((field) => body[field] !== undefined))
-            await this.syncSpellProperties(tx, rulesetModule, { ruleset, rulesetData }, targetId, body);
+          // The properties it kept, read before the save replaces those that keep its fields
+          const properties = await Properties.findMany(tx, { entityIds: [targetId], entityType: "powers" });
+          const writes = planPowerSave(scope, body, { properties });
+          await writeEntityWrites(tx, scope, { entityId: targetId, entityType: "powers" }, writes);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,

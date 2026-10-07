@@ -30,13 +30,13 @@ describe("module-state", () => {
             "import DependentCache from './DependentCache.ts';\nconst cache = new DependentCache<number>() as DependentCache<number>;\nexport function drop(id: string) {\n  cache.invalidate(id);\n}\n",
           "server/nonNull.ts":
             "const state: { a?: { n: number } } = {};\nexport function set() {\n  state.a!.n = 1;\n}\n",
-          "database/packages/dnd35-from-parser/tools/cache.ts":
+          "codegen/dnd3.5/tools/cache.ts":
             "const byBook = new Map<string, number>();\nexport function remember(book: string) {\n  byBook.set(book, 1);\n}\n",
         },
         ["module-state"],
       ),
     ).toEqual([
-      "module-state database/packages/dnd35-from-parser/tools/cache.ts",
+      "module-state codegen/dnd3.5/tools/cache.ts",
       "module-state server/assigned.ts",
       "module-state server/cast.ts",
       "module-state server/castInstance.ts",

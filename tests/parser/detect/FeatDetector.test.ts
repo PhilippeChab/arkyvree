@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { FeatDetector } from "@/database/packages/dnd35-from-parser/tools/detect/FeatDetector.ts";
-import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
-import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import { FeatDetector } from "@/codegen/dnd3.5/tools/detect/FeatDetector.ts";
+import References from "@/codegen/dnd3.5/tools/references/References.ts";
+import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
+import { eq, eqStr, feat, gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
 
 function featDetectedOf(name: string, prerequisiteText: string) {
   return featsDetected([{ name, featType: "general", prerequisiteText, benefit: "", special: "" }])[name];

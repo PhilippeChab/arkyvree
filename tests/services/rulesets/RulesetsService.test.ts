@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { eq, type InferInsertModel } from "drizzle-orm";
 
-import { DND35_COMPLETE_WARRIOR_NAME } from "@/database/packages/dnd35/names.ts";
+import { DND35_COMPLETE_WARRIOR_NAME } from "@/content/dnd3.5/names.ts";
 import {
   featsAptitudesInRules,
   featsInRules,

@@ -128,14 +128,14 @@ describe("function-names", () => {
           "client/src/lib/initialOf.ts": "export const initialOf = (name: string) => name[0];\n",
           "server/sheet/page.tsx": "export function pageTitle() {}\nexport function Page() {}\n",
           "server/listed.ts": "function scaled() {}\nconst build = () => 1;\nexport { scaled, build as buildIt };\n",
-          "database/packages/dnd35-from-parser/tools/slugs.ts":
+          "codegen/dnd3.5/tools/slugs.ts":
             "export function skillSlug() {}\nexport function detectBab() {}\nexport function quote() {}\n",
-          "database/packages/dnd35/content/customization/requirements.ts": "export function gte() {}\n",
+          "content/dnd3.5/builders/customization/requirements.ts": "export function gte() {}\n",
         },
         ["function-names"],
       ),
     ).toEqual([
-      "function-names database/packages/dnd35-from-parser/tools/slugs.ts",
+      "function-names codegen/dnd3.5/tools/slugs.ts",
       "function-names server/byOrder.ts",
       "function-names server/listed.ts",
       "function-names server/middlewares/wrapped.ts",

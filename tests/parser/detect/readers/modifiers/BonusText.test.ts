@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { BonusText } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/BonusText.ts";
+import { BonusText } from "@/codegen/dnd3.5/tools/detect/readers/modifiers/BonusText.ts";
 
 /** The skill bonuses a text gives, each as "slug +value", or "?name" for a name that isn't a skill. */
 function bonuses(text: string) {

@@ -1,7 +1,8 @@
-import type { AbilitySeed } from "@/database/packages/dnd35/content/abilities/types.ts";
-import type { LanguageSeed } from "@/database/packages/dnd35/content/languages/types.ts";
-import type { SaveSeed } from "@/database/packages/dnd35/content/saves/types.ts";
-import type { SkillSeed } from "@/database/packages/dnd35/content/skills/types.ts";
+import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
+import type { AbilitySeed } from "@/content/dnd3.5/builders/abilities/types.ts";
+import type { LanguageSeed } from "@/content/dnd3.5/builders/languages/types.ts";
+import type { SaveSeed } from "@/content/dnd3.5/builders/saves/types.ts";
+import type { SkillSeed } from "@/content/dnd3.5/builders/skills/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   abilitiesInRules,
@@ -10,8 +11,7 @@ import {
   savesInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
-import { toRulesetProperties } from "@/engine/rulesets/dnd3.5/ruleset/rulesetFields.ts";
-import { toSkillProperties } from "@/engine/rulesets/dnd3.5/skills/skillFields.ts";
+import { toEntityProperties } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding a base ruleset's own rules: its abilities, saves, skills and languages. */
@@ -28,9 +28,15 @@ export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
             .returning({ id: abilitiesInRules.id, name: abilitiesInRules.name }),
         ),
       );
-      await this.db
-        .insert(propertiesInCustomization)
-        .values(toRulesetProperties(this.ctx.rulesetId, { skillPointAbilityId: this.ctx.abilityMap["Intelligence"] }));
+      await this.db.insert(propertiesInCustomization).values(
+        this.propertyRows(
+          this.ctx.rulesetId,
+          "rulesets",
+          toEntityProperties(DND35_BASE_RULES, "rulesets", {
+            skillPointAbilityId: this.ctx.abilityMap["Intelligence"],
+          }),
+        ),
+      );
     }
 
     /** The languages. */
@@ -81,11 +87,15 @@ export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
       await this.insertAll(
         propertiesInCustomization,
         skills.flatMap(({ name, impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining }) =>
-          toSkillProperties(this.ctx.skillMap[name], {
-            impactedByWeight: impactedByWeight ?? false,
-            checkPenaltyMultiplier: checkPenaltyMultiplier ?? 1,
-            usableWithoutTraining: usableWithoutTraining ?? false,
-          }),
+          this.propertyRows(
+            this.ctx.skillMap[name],
+            "skills",
+            toEntityProperties(DND35_BASE_RULES, "skills", {
+              impactedByWeight: impactedByWeight ?? false,
+              checkPenaltyMultiplier: checkPenaltyMultiplier ?? 1,
+              usableWithoutTraining: usableWithoutTraining ?? false,
+            }),
+          ),
         ),
       );
     }

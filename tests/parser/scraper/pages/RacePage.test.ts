@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { RacePage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/RacePage.ts";
+import { RacePage } from "@/codegen/dnd3.5/tools/scraper/pages/RacePage.ts";
 import { fixture, scraped, stored } from "@/tests/support/scrapedPages.ts";
 
 /** A page of these headings, then a benefit. */

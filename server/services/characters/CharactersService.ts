@@ -1,9 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import type { CharacterKind } from "@/engine/rulesets/dnd3.5/index.ts";
+import { describeCharacter, openRacePicker } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import { buildCharacter } from "@/server/builds/index.ts";
 import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -19,13 +18,11 @@ import {
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Alignment, Gender } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { type BondedEntry, loadBondedByKind } from "./bonded.ts";
+import { readBondedInputs, readCharacterInput } from "./characterInputs.ts";
 import { getClassLevelsByCharacter } from "./classLevels.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { findEditableCharacterOrBonded, getEditableCharacter } from "./editableCharacter.ts";
@@ -153,8 +150,8 @@ class CharactersService extends include(Object, Archives) {
     where: { search?: string },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { sourceChain } = scope.rulesetData.cow;
 
       // Races.findPage's output has its FK fields auto-resolved by
       // the Proxy since cowContext is active. No manual `CowData.resolveRows` pass.
@@ -165,43 +162,24 @@ class CharactersService extends include(Object, Archives) {
       );
 
       // The requirements come from the composed view, which merges siblings' into the winner's
-      const rules = RulesetFactory.fromBaseRules(ruleset.baseRules).rules.races;
-      const items = rules.enrichWithEligibility(result.items, rulesetData.requirementsByEntity, formData);
+      const items = openRacePicker(scope, formData).annotate(result.items);
       return { items, page: result.page, nextPage: result.nextPage };
     });
   }
 
+  /**
+   * A character's sheet, as the API answers it: a player character's with its bonded creatures', or a creature's, which
+   * its master's editors read.
+   */
   async getCharacter(session: Session, characterId: string) {
     const record = await Characters.findOne(db, { id: characterId }, Visibility.All);
     if (!record) throw new NotFoundError("Character not found");
+    await getEditableCharacter(db, session, record.parentCharacterId ?? record.id, Visibility.All);
 
-    if (record.kind !== "pc") {
-      if (!record.parentCharacterId) throw new NotFoundError("Character not found");
-
-      await getEditableCharacter(db, session, record.parentCharacterId, Visibility.All);
-
-      const rulesetModule = await RulesetFactory.fromRulesetId(record.rulesetId);
-      const detailedBonded = await buildCharacter(rulesetModule, record, { kind: record.kind as CharacterKind });
-
-      return {
-        character: record,
-        detailedCharacter: detailedBonded,
-        bondedByKind: {} as Partial<Record<BondedKind, BondedEntry>>,
-      };
-    }
-
-    const characterRecord = await getEditableCharacter(db, session, characterId, Visibility.All);
-
-    const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
-    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord);
-
-    const bondedByKind = await loadBondedByKind(rulesetModule, characterId);
-
-    return {
-      character: characterRecord,
-      detailedCharacter,
-      bondedByKind,
-    };
+    return await withRulesetScope(db, record.rulesetId, async (scope) => {
+      const character = await readCharacterInput(db, record);
+      return describeCharacter(scope, character, await readBondedInputs(db, character, Visibility.All));
+    });
   }
 
   async getCharacters(

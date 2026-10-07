@@ -1,6 +1,6 @@
 import type { Components, TargetPathsInterface, TraversePathResult } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
+import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 
 import type { PathCategory } from "./PathCategory.ts";
 import PathTraverser from "./PathTraverser.ts";
@@ -60,6 +60,10 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     return Object.fromEntries(this.categories.map(({ name, description }) => [name, description]));
   }
 
+  getEntityNamingCategories(): string[] {
+    return this.categories.filter((category) => category.namesEntities).map(({ name }) => name);
+  }
+
   getGroupDescriptionTemplates(): Record<string, string> {
     return Object.assign({}, ...this.categories.map(({ groupDescriptionTemplates }) => groupDescriptionTemplates));
   }
@@ -73,10 +77,7 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
    * requirement's that read one value from the sheet: no wildcard, no path that reaches several values or a list
    * (`readsMany`), and none that reads its source (an item's own weapon), which a template has none of.
    */
-  getTargetPathsAndLabels(
-    rulesetData: RulesetData,
-    kind: TargetPathKind,
-  ): { paths: TargetPath[]; segmentLabels: Record<string, string> } {
+  getTargetPathsAndLabels(rulesetData: RulesetData, kind: TargetPathKind): TargetPathCatalog {
     if (kind === "template") {
       const { paths, segmentLabels } = this.getTargetPathsAndLabels(rulesetData, "requirement");
       return {

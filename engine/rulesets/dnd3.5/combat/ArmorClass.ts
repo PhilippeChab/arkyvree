@@ -1,5 +1,5 @@
-import type { ItemFields } from "@/engine/core/module/index.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD } from "@/engine/rulesets/dnd3.5/constants.ts";
+import type { ItemFields } from "@/engine/rulesets/dnd3.5/items/itemFields.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 import type { ArmorsData } from "./ArmorsComponent.ts";

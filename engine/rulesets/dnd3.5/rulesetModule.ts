@@ -1,86 +1,24 @@
-import type { Character as CharacterRecord } from "@/shared/relations.ts";
+import { sortProperties } from "@/shared/dnd3.5/properties/index.ts";
+import type { Property } from "@/shared/relations.ts";
 
-import { Dnd35AptitudesRules } from "./aptitudes/Dnd35AptitudesRules.ts";
-import Dnd35DetailedCharacterAnimalCompanion from "./bonded/DetailedCharacterAnimalCompanion.ts";
-import type Dnd35DetailedCharacterBonded from "./bonded/DetailedCharacterBonded.ts";
-import Dnd35DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.ts";
-import Dnd35DetailedCharacterMount from "./bonded/DetailedCharacterMount.ts";
-import Dnd35DetailedCharacter from "./character/DetailedCharacter.ts";
-import Dnd35LevelUpProjector from "./character/Dnd35LevelUpProjector.ts";
-import { Dnd35ClassesEffects } from "./classes/Dnd35ClassesEffects.ts";
-import { Dnd35ClassesRules } from "./classes/Dnd35ClassesRules.ts";
-import { Dnd35ClassLevelsEffects } from "./classes/Dnd35ClassLevelsEffects.ts";
-import { Dnd35ClassLevelsRules } from "./classes/Dnd35ClassLevelsRules.ts";
+import { Dnd35Characters } from "./character/Dnd35Characters.ts";
+import { Dnd35Content } from "./content/Dnd35Content.ts";
+import { Dnd35Entities } from "./Dnd35Entities.ts";
 import Dnd35PropertyTypes from "./Dnd35PropertyTypes.ts";
 import Dnd35TargetPaths from "./Dnd35TargetPaths.ts";
-import { Dnd35FeatsEffects } from "./feats/Dnd35FeatsEffects.ts";
-import { Dnd35FeatsRules } from "./feats/Dnd35FeatsRules.ts";
-import { Dnd35InventoryRules } from "./items/Dnd35InventoryRules.ts";
-import { Dnd35ItemsEffects } from "./items/Dnd35ItemsEffects.ts";
-import { Dnd35ItemsRules } from "./items/Dnd35ItemsRules.ts";
-import { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
-import { Dnd35PowersEffects } from "./powers/Dnd35PowersEffects.ts";
-import { Dnd35PowersRules } from "./powers/Dnd35PowersRules.ts";
-import { Dnd35RacesEffects } from "./races/Dnd35RacesEffects.ts";
-import { Dnd35RacesRules } from "./races/Dnd35RacesRules.ts";
-import { Dnd35RulesetsEffects } from "./ruleset/Dnd35RulesetsEffects.ts";
-import { Dnd35RulesetsRules } from "./ruleset/Dnd35RulesetsRules.ts";
-import { Dnd35SkillsEffects } from "./skills/Dnd35SkillsEffects.ts";
-import { Dnd35SkillsRules } from "./skills/Dnd35SkillsRules.ts";
-import type { CharacterKind, Dnd35RulesetModule } from "./types.ts";
-
-function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35DetailedCharacterBonded | null {
-  switch (kind) {
-    case "familiar":
-      return new Dnd35DetailedCharacterFamiliar(record);
-    case "animalcompanion":
-      return new Dnd35DetailedCharacterAnimalCompanion(record);
-    case "mount":
-      return new Dnd35DetailedCharacterMount(record);
-    default:
-      return null;
-  }
-}
+import { Dnd35LevelUp } from "./levelUp/Dnd35LevelUp.ts";
+import type { Dnd35RulesetModule } from "./types.ts";
 
 /**
- * The 3.5 rules as a ruleset module: what they answer the services and do in their transactions, characters, sheets
- * and level-ups, paths and properties.
+ * The 3.5 rules as a ruleset module: its characters and their sheets, its entities, its level-ups, paths and
+ * properties.
  */
 export function createRulesetModule(): Dnd35RulesetModule {
   return {
-    rules: {
-      aptitudes: new Dnd35AptitudesRules(),
-      classes: new Dnd35ClassesRules(),
-      classLevels: new Dnd35ClassLevelsRules(),
-      feats: new Dnd35FeatsRules(),
-      inventory: new Dnd35InventoryRules(),
-      items: new Dnd35ItemsRules(),
-      levels: new Dnd35LevelsRules(),
-      powers: new Dnd35PowersRules(),
-      races: new Dnd35RacesRules(),
-      rulesets: new Dnd35RulesetsRules(),
-      skills: new Dnd35SkillsRules(),
-    },
-    effects: {
-      classes: new Dnd35ClassesEffects(),
-      classLevels: new Dnd35ClassLevelsEffects(),
-      feats: new Dnd35FeatsEffects(),
-      items: new Dnd35ItemsEffects(),
-      powers: new Dnd35PowersEffects(),
-      races: new Dnd35RacesEffects(),
-      rulesets: new Dnd35RulesetsEffects(),
-      skills: new Dnd35SkillsEffects(),
-    },
-
-    createDetailedCharacter(record: CharacterRecord, kind: CharacterKind = "pc") {
-      const bonded = createBonded(record, kind);
-      if (bonded) return bonded;
-      return new Dnd35DetailedCharacter(record);
-    },
-
-    createLevelUpProjector(character) {
-      return new Dnd35LevelUpProjector(character);
-    },
+    characters: new Dnd35Characters(),
+    content: new Dnd35Content(),
+    entities: new Dnd35Entities(),
+    levelUp: new Dnd35LevelUp(),
 
     createTargetPaths() {
       return new Dnd35TargetPaths();
@@ -88,6 +26,10 @@ export function createRulesetModule(): Dnd35RulesetModule {
 
     createPropertyTypes() {
       return new Dnd35PropertyTypes();
+    },
+
+    orderProperties(properties: Property[]) {
+      return sortProperties(properties);
     },
   };
 }

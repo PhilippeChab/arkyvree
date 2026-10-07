@@ -1,18 +1,18 @@
 import type ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
-import { type CharacterRows, type SkillFields } from "@/engine/core/module/index.ts";
+import { type CharacterRows } from "@/engine/core/module/index.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import type {
-  CustomizedFeat,
-  CustomizedKlassLevel,
-  CustomizedPower,
-  CustomizedRace,
-  InventoryEntry,
-  RulesetView,
-  SkillWithRank,
-  TargetPathsTraverser,
-} from "@/engine/core/types.ts";
+import type { RulesetView, TargetPathsTraverser } from "@/engine/core/types.ts";
 import type { Dnd35LoadedCharacterData } from "@/engine/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
-import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
+import type { SkillFields } from "@/engine/rulesets/dnd3.5/skills/skillFields.ts";
+import {
+  type CustomizedFeat,
+  type CustomizedKlassLevel,
+  type CustomizedPower,
+  type CustomizedRace,
+  type Dnd35ProjectedCharacterData,
+  type InventoryEntry,
+  type SkillWithRank,
+} from "@/engine/rulesets/dnd3.5/types.ts";
 import type {
   Aptitude,
   Campaign,

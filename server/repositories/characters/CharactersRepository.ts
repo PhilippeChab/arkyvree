@@ -160,10 +160,21 @@ class CharactersRepository extends include(
     return rows.map((r) => r.id);
   }
 
-  async findMany(db: Db, where: { ids: string[] }) {
-    if (where.ids.length === 0) return [];
+  /** Characters by id, or a master's bonded creatures (`parentCharacterId`). */
+  async findMany(
+    db: Db,
+    where: { ids: string[] } | { parentCharacterId: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    if ("ids" in where && where.ids.length === 0) return [];
     return await db.query.charactersInCharacter.findMany({
-      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
+      where: this.branchWhere(
+        [
+          "ids" in where && inArray(this.table.id, where.ids),
+          "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
+        ],
+        [this.visibility(visibility)],
+      ),
     });
   }
 
@@ -177,7 +188,7 @@ class CharactersRepository extends include(
       | { id: string }
       | { id: string; userId: string }
       | { shareToken: string }
-      | { kind: "familiar" | "animalcompanion" | "mount"; parentCharacterId: string }
+      | { kind: string; parentCharacterId: string }
       | { editorId: string; id: string },
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {

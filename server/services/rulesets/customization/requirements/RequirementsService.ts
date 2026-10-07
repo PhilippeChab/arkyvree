@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import { type RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";

@@ -1,15 +1,19 @@
-import { type CowData } from "@/engine/core/cow/index.ts";
-import { RulesetComposition, type RulesetData, type RulesetRawData } from "@/engine/core/view/index.ts";
+import {
+  buildRulesetView,
+  buildSourceChain,
+  type CowData,
+  type RulesetData,
+  type RulesetRawData,
+  type RulesetSources,
+} from "@/engine/index.ts";
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { db, withCowContext } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
-import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
-import { sortProperties } from "@/shared/dnd3.5/properties/index.ts";
+import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
-import CowDataBuilder, { buildSourceChain, type RulesetSources } from "./CowDataBuilder.ts";
+import { readCowData } from "./cowData.ts";
 import { fetchRulesetRawData } from "./rawData.ts";
-
-type TargetPathsAndLabels = { paths: TargetPath[]; segmentLabels: Record<string, string> };
 
 /** A ruleset's own rows' key: a campaign's are its own. */
 function getRawDataKey(rulesetId: string, campaignId?: string): string {
@@ -28,7 +32,7 @@ class RulesetCache {
 
   private readonly rawData = new DependentCache<RulesetRawData>();
 
-  private readonly targetPaths = new DependentCache<TargetPathsAndLabels>();
+  private readonly targetPaths = new DependentCache<TargetPathCatalog>();
 
   /** Drops what a change to a ruleset can touch: its copy-on-write data, its rows and its target paths. */
   invalidate(rulesetId: string): void {
@@ -63,18 +67,18 @@ class RulesetCache {
   async getCowData(ruleset: RulesetSources): Promise<CowData> {
     const dependencies = [ruleset.id, ...buildSourceChain(ruleset)];
     return this.cowData.getOrFetch(JSON.stringify(dependencies), dependencies, async () => ({
-      data: await CowDataBuilder.build(db, ruleset),
+      data: await readCowData(db, ruleset),
     }));
   }
 
   /** A ruleset's view: its own rows and its source chain's, composed by its copy-on-write data. */
-  async getData(ruleset: RulesetSources, campaignId?: string): Promise<RulesetData> {
+  async getData(ruleset: RulesetSources & { baseRules: BaseRules }, campaignId?: string): Promise<RulesetData> {
     const cowData = await this.getCowData(ruleset);
     const chain = await Promise.all([
       this.getRawData(ruleset.id, campaignId),
       ...cowData.sourceChain.map((id) => this.getRawData(id)),
     ]);
-    return new RulesetComposition(chain, cowData, sortProperties).build();
+    return buildRulesetView(ruleset, chain, cowData);
   }
 
   /** A ruleset's own rows (a campaign's, with one), none of its ancestors': pinned when it's a system ruleset. */
@@ -88,9 +92,9 @@ class RulesetCache {
   async getTargetPaths(
     rulesetId: string,
     kind: TargetPathKind,
-    fetcher: () => Promise<TargetPathsAndLabels>,
+    fetcher: () => Promise<TargetPathCatalog>,
     sourceChain: readonly string[] = [],
-  ): Promise<TargetPathsAndLabels> {
+  ): Promise<TargetPathCatalog> {
     // Old subscription metadata must not populate the key for the new chain.
     const key = JSON.stringify([rulesetId, kind, ...sourceChain]);
     return this.targetPaths.getOrFetch(key, [rulesetId, ...sourceChain], async () => ({ data: await fetcher() }));

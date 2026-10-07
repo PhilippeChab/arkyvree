@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { GeneratedFolder } from "@/database/packages/dnd35-from-parser/tools/generator/GeneratedFolder.ts";
+import { GeneratedFolder } from "@/codegen/dnd3.5/tools/generator/GeneratedFolder.ts";
 import { code, filesOf } from "@/tests/support/generatedFiles.ts";
 
 describe("A generation", () => {

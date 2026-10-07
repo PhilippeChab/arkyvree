@@ -10,7 +10,7 @@ import type { Modifier, PowerWithAptitudes } from "@/shared/relations.ts";
  * Scans modifiers for "set feats.<slug>.possessed = true" targets and returns
  * the IDs of the possessed feats that aren't already in the character's feat list.
  */
-export function resolvePossessedFeatIds(
+function resolvePossessedFeatIds(
   modifiers: Modifier[],
   existingFeatIds: Set<string>,
   featIdBySlug: Map<string, string>,
@@ -29,7 +29,7 @@ export function resolvePossessedFeatIds(
   return ids;
 }
 
-export function resolvePossessedPowers(
+function resolvePossessedPowers(
   modifiers: Modifier[],
   existingPowerIds: Set<string>,
   powerIdsBySlug: Map<string, string[]>,

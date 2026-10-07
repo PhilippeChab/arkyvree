@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { modifiersInCustomization, powersAptitudesInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Abilities, Aptitudes, Feats, Items, Powers, Races, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
@@ -93,13 +93,13 @@ describe("ModifiersService", () => {
   test("refuses an unknown target", async () => {
     const { session, rulesetId, feat } = await setup();
     const invalid = { ...strengthBonus, target: "invalid.path.that.does.not.exist" };
-    await expect(ModifiersService.createModifier(session, rulesetId, "feats", feat.id, invalid)).rejects.toThrow(
-      BadRequestError,
-    );
+    await expect(ModifiersService.createModifier(session, rulesetId, "feats", feat.id, invalid)).rejects.toMatchObject({
+      refusal: "invalid",
+    });
     const created = await ModifiersService.createModifier(session, rulesetId, "feats", feat.id, strengthBonus);
     await expect(
       ModifiersService.updateModifier(session, rulesetId, "feats", feat.id, created.id, invalid),
-    ).rejects.toThrow(BadRequestError);
+    ).rejects.toMatchObject({ refusal: "invalid" });
   });
 
   test("refuses a missing ruleset, entity or modifier, another entity's modifier and another user", async () => {

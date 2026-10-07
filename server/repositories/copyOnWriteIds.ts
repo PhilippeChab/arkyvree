@@ -6,7 +6,7 @@
  * repositories: a cycle at load.
  */
 
-import { type CowData } from "@/engine/core/cow/index.ts";
+import type { CowData } from "@/engine/index.ts";
 import { getCowContext } from "@/server/database/index.ts";
 
 /** The scope's copy-on-write data, when it resolves any id. */

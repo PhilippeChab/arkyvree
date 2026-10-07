@@ -1,4 +1,4 @@
-import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
+import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { powersAptitudesInRules, powersInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";

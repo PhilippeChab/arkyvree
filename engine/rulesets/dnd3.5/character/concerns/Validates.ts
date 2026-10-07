@@ -1,16 +1,14 @@
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
+import type { RequirementIssue, ValidationIssue, ValidationResult } from "@/engine/core/types.ts";
+import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
+import type CharacterState from "@/engine/rulesets/dnd3.5/character/CharacterState.ts";
+import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import type {
   CustomizedFeat,
   CustomizedKlassLevel,
   CustomizedPower,
   InventoryEntry,
-  RequirementIssue,
-  ValidationIssue,
-  ValidationResult,
-} from "@/engine/core/types.ts";
-import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
-import type CharacterState from "@/engine/rulesets/dnd3.5/character/CharacterState.ts";
-import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
+} from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";

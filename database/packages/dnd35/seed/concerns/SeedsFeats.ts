@@ -1,4 +1,4 @@
-import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
+import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   featsAptitudesInRules,

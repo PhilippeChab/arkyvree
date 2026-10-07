@@ -9,8 +9,8 @@ OGL 1.0a, including the licensed SRD material used in the bundled game packages.
 It is not a blanket designation of every scraped or generated entry as open content.
 The relevant upstream grant, exclusions, and copyright notices determine coverage.
 
-Game data is stored under `database/packages/dnd35/` and
-`database/packages/dnd35-from-parser/`.
+Game data is stored under `content/dnd3.5/`, and the pages it is generated
+from under `codegen/dnd3.5/reference/`.
 
 ## Software and other material
 

@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { ENTITY_FIELDS, RULESET_LIMITS } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { classParams } from "@/server/routers/api/rulesets/classes/validation.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
-import { MAX_CLASS_LEVEL, MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
 
 const classLevelParams = idParam.extend({ classLevelId: z.string().uuid() });
 const levelFeats = z
@@ -15,7 +15,7 @@ const levelFeats = z
 const levelParams = classParams.extend({ levelId: z.string().uuid() });
 /** A class level's saves (each its base bonus) and granted feats, its create's and its update's. */
 const levelSaves = z
-  .array(z.object({ saveId: z.string().uuid(), base: z.number().int().min(0).max(MAX_SAVE_BASE) }))
+  .array(z.object({ saveId: z.string().uuid(), base: z.number().int().min(0).max(RULESET_LIMITS.saveBase) }))
   .optional();
 
 export default new Hono<SessionContext>()
@@ -53,9 +53,8 @@ export default new Hono<SessionContext>()
     validate(
       "json",
       z.object({
-        level: z.number().int().min(1).max(MAX_CLASS_LEVEL),
-        bab: z.number().int().min(0),
-        skills: z.number().int().min(1),
+        level: z.number().int().min(1).max(RULESET_LIMITS.classLevel),
+        ...ENTITY_FIELDS.klassLevels,
         saves: levelSaves,
         feats: levelFeats,
       }),
@@ -72,8 +71,7 @@ export default new Hono<SessionContext>()
     validate(
       "json",
       z.object({
-        bab: z.number().int().min(0).optional(),
-        skills: z.number().int().min(1).optional(),
+        ...z.object(ENTITY_FIELDS.klassLevels).partial().shape,
         saves: levelSaves,
         feats: levelFeats,
       }),

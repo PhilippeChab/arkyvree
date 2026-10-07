@@ -37,6 +37,7 @@ class RulesetEntitiesRepository {
    */
   async findNativeNames(db: Db, where: { entityTypes: RulesetEntityType[]; rulesetIds: string[] }) {
     if (where.rulesetIds.length === 0) return [];
+    if (where.entityTypes.length === 0) return [];
     const subqueries = where.entityTypes.map((entityType) => {
       const table = ENTITY_TABLES[entityType];
       return db

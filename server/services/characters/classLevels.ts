@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/index.ts";
 
 /**
  * Each character's classes, each at the highest level the character has in it: what a character card shows. Names come

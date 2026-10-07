@@ -1,7 +1,8 @@
-import type { BabType, ClassSeed, SaveType } from "@/database/packages/dnd35/content/classes/types.ts";
-import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
-import { gt } from "@/database/packages/dnd35/content/customization/requirements.ts";
-import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
+import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
+import type { BabType, ClassSeed, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
+import { bonus } from "@/content/dnd3.5/builders/customization/modifiers.ts";
+import { gt } from "@/content/dnd3.5/builders/customization/requirements.ts";
+import type { ModifierSeed, RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { getSpellLevelOpenings } from "@/database/packages/dnd35/seed/spellTable.ts";
 import {
@@ -13,8 +14,7 @@ import {
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import { toClassProperties } from "@/engine/rulesets/dnd3.5/classes/classFields.ts";
-import { toClassLevelProperties } from "@/engine/rulesets/dnd3.5/classes/classLevelFields.ts";
+import { toEntityProperties } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -157,9 +157,17 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
     private async insertProperties(def: ClassSeed, klassId: string, levels: Levels) {
       const bonusSpellAbilityId = (def.bonusSpellAbility && this.ctx.abilityMap[def.bonusSpellAbility]) || null;
       await this.insertAll(propertiesInCustomization, [
-        ...toClassProperties(klassId, { bonusSpellAbilityId, casterType: def.casterType ?? null }),
+        ...this.propertyRows(
+          klassId,
+          "klasses",
+          toEntityProperties(DND35_BASE_RULES, "klasses", { bonusSpellAbilityId, casterType: def.casterType ?? null }),
+        ),
         ...levels.flatMap(({ id, level }) =>
-          toClassLevelProperties(id, { bab: BAB[def.bab](level), skills: def.skillPoints }),
+          this.propertyRows(
+            id,
+            "klass_levels",
+            toEntityProperties(DND35_BASE_RULES, "klassLevels", { bab: BAB[def.bab](level), skills: def.skillPoints }),
+          ),
         ),
       ]);
     }

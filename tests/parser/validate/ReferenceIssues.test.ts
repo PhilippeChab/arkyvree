@@ -3,8 +3,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import { ReferenceIssues } from "@/database/packages/dnd35-from-parser/tools/validate/ReferenceIssues.ts";
+import References from "@/codegen/dnd3.5/tools/references/References.ts";
+import { ReferenceIssues } from "@/codegen/dnd3.5/tools/validate/ReferenceIssues.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 const folders: string[] = [];

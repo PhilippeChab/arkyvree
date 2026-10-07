@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { ENTITY_FIELDS } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
@@ -44,9 +45,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         primaryAbilityId: z.string().uuid(),
-        impactedByWeight: z.boolean(),
-        checkPenaltyMultiplier: z.number().int().min(1),
-        usableWithoutTraining: z.boolean(),
+        ...ENTITY_FIELDS.skills,
       }),
     ),
     async (c) => {
@@ -67,9 +66,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         primaryAbilityId: z.string().uuid(),
-        impactedByWeight: z.boolean(),
-        checkPenaltyMultiplier: z.number().int().min(1),
-        usableWithoutTraining: z.boolean(),
+        ...ENTITY_FIELDS.skills,
         updatedAt: z.string().optional(),
       }),
     ),

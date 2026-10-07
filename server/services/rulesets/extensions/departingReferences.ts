@@ -7,7 +7,8 @@
  * class's skill or granted feat…).
  */
 
-import { buildSourceChain, CowDataBuilder, type RulesetSources } from "@/server/cache/rulesetCache/index.ts";
+import { buildSourceChain, type RulesetSources } from "@/engine/index.ts";
+import { readCowData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
@@ -41,7 +42,7 @@ async function findDepartingLists(tx: Db, extensionId: string, copies: Copies) {
 /** The lists the fork keeps once the book is gone, by name: the ones its view will show. */
 async function findKeptLists(tx: Db, ruleset: RulesetSources, extensionId: string, departing: Map<string, string>) {
   const remaining = { ...ruleset, extensionRulesetIds: ruleset.extensionRulesetIds.filter((id) => id !== extensionId) };
-  const cow = await CowDataBuilder.build(tx, remaining);
+  const cow = await readCowData(tx, remaining);
   const lists = await Aptitudes.findMany(tx, { rulesetIds: [ruleset.id, ...buildSourceChain(remaining)] });
   const kept = lists.filter((list) => !cow.isHidden(list.id) && !departing.has(list.id));
   return new Map(kept.map((list) => [list.name, list.id]));

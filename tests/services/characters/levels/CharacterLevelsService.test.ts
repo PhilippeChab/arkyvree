@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, test } from "bun:test";
 
-import { DND35_DMG_NAME } from "@/database/packages/dnd35/names.ts";
+import { DND35_DMG_NAME } from "@/content/dnd3.5/names.ts";
 import { addClassLevels, addFeats, addPowers, addSkills } from "@/database/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import {
@@ -36,7 +36,6 @@ import {
   Requirements,
   Skills,
 } from "@/server/repositories/index.ts";
-import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
@@ -44,7 +43,7 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { FEAT_FAMILY, KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
+import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows, measure, runWhileLocked } from "@/tests/support/database.ts";
 import {
   addFighterLevels,
@@ -648,7 +647,10 @@ describe("LevelsService", () => {
       });
       await addCharacterLevel(character.id, klassLevels[0].id);
       const held = async () => {
-        const { detailedCharacter } = await CharactersService.getCharacter(session, character.id);
+        const detailedCharacter = await buildAs(
+          DetailedCharacter,
+          (await Characters.findOne(db, { id: character.id }))!,
+        );
         return detailedCharacter.getHeldNonStackableFeatIds();
       };
       expect(await held()).toEqual([feats["Power Attack"].id]);
@@ -1663,8 +1665,7 @@ describe("LevelsService", () => {
         { levelIndex: 2, skillName: "Spot", rank: 2 },
       ]);
 
-      const { detailedCharacter: detailed } = await CharactersService.getCharacter(session, characterId);
-      if (!(detailed instanceof DetailedCharacter)) throw new Error("Not a D&D 3.5 character");
+      const detailed = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: characterId }))!);
       expect(detailed.components.skills.getSkillBudget()).toMatchObject({
         total: 18,
         spent: 18,

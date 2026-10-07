@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { ListingPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/ListingPage.ts";
+import { ListingPage } from "@/codegen/dnd3.5/tools/scraper/pages/ListingPage.ts";
 
 describe("A listing page's entries", () => {
   test("are the first link of each row leading into its section", () => {

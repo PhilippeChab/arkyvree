@@ -15,7 +15,7 @@ const NAVIGATABLE_PATHS = [
 
 /** The saving throws' target paths: each save's components. */
 export default class SavesPaths implements PathCategory<Dnd35Components> {
-  static generateSavePaths(saves: RulesetSave[], kind: "modifier" | "requirement"): TargetPath[] {
+  static generateSavePaths(saves: Pick<RulesetSave, "name">[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const save of saves) {

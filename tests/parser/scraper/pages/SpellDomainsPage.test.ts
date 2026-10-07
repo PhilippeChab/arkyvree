@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { SpellDomainsPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/SpellDomainsPage.ts";
+import { SpellDomainsPage } from "@/codegen/dnd3.5/tools/scraper/pages/SpellDomainsPage.ts";
 import { fixture } from "@/tests/support/scrapedPages.ts";
 
 describe("A spell's page of domain levels", () => {

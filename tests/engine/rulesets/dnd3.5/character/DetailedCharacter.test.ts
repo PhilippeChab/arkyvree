@@ -8,7 +8,7 @@ import {
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_DMG_NAME,
   DND35_RULESET_NAME,
-} from "@/database/packages/dnd35/names.ts";
+} from "@/content/dnd3.5/names.ts";
 import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import { addClassLevels, addFeats, addPowers, addSkills, createCharacter } from "@/database/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";

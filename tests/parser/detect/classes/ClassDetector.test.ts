@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 
-import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import { eq, feat, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import References from "@/codegen/dnd3.5/tools/references/References.ts";
+import { eq, feat, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
 
 function anyOf(family: string, options: string[]) {
   return or(...options.map((o) => eq(feat(`${family}: ${o}`))));

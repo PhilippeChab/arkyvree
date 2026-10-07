@@ -260,7 +260,8 @@ describe("CampaignCharactersService", () => {
         await link(user.id, campaign.id, character.id, visibility);
         const result = await CampaignCharactersService.getCharacter(makeSession(user.id), campaign.id, character.id);
         expect(result).toMatchObject({ visibility, canEdit: true, isPartial: false });
-        expect(result.detailedCharacter).toBeDefined();
+        // The full sheet: its build, not only who it is
+        expect(Object.keys(result.combat)).not.toHaveLength(0);
       }
     });
 
@@ -277,12 +278,12 @@ describe("CampaignCharactersService", () => {
       const { character } = await joinWithCharacter(campaign.id, "Partial");
       const partial = await get(character.id);
       expect(partial).toMatchObject({ visibility: "Partial", isOwner: false, canEdit: false, isPartial: true });
-      expect(partial.character).toMatchObject({
+      expect(partial).toMatchObject({
         name: character.name,
-        gender: character.gender,
-        age: character.age,
-        height: character.height,
-        weight: character.weight,
+        identity: {
+          physiology: { gender: character.gender, height: character.height, weight: character.weight },
+        },
+        abilities: {},
       });
 
       const privateOne = await joinWithCharacter(campaign.id, "Private");

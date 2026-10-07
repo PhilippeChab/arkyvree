@@ -2,8 +2,13 @@ import { expect, test } from "bun:test";
 
 import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 
-import { ALL_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
-import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains.ts";
+import { ANIMAL_COMPANIONS } from "@/content/dnd3.5/data/bonds/animalCompanions.ts";
+import { FAMILIARS } from "@/content/dnd3.5/data/bonds/familiars.ts";
+import { SPECIAL_MOUNTS } from "@/content/dnd3.5/data/bonds/mounts.ts";
+import { CORE } from "@/content/dnd3.5/data/core.ts";
+import { TEMPLATE_ITEMS } from "@/content/dnd3.5/data/templateItems.ts";
+import { ALL_CLASSES } from "@/content/dnd3.5/generated/srd/classes/index.ts";
+import { ALL_DOMAINS } from "@/content/dnd3.5/generated/srd/domains.ts";
 import {
   GOODS,
   MAGIC_ARMOR,
@@ -13,15 +18,10 @@ import {
   RODS,
   STAFFS,
   WONDROUS_ITEMS,
-} from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
-import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races.ts";
-import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/spells/index.ts";
-import { ANIMAL_COMPANIONS } from "@/database/packages/dnd35/data/bonds/animalCompanions.ts";
-import { FAMILIARS } from "@/database/packages/dnd35/data/bonds/familiars.ts";
-import { SPECIAL_MOUNTS } from "@/database/packages/dnd35/data/bonds/mounts.ts";
-import { CORE } from "@/database/packages/dnd35/data/core.ts";
-import { TEMPLATE_ITEMS } from "@/database/packages/dnd35/data/templateItems.ts";
-import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
+} from "@/content/dnd3.5/generated/srd/items/index.ts";
+import { ALL_RACES } from "@/content/dnd3.5/generated/srd/races.ts";
+import { ALL_SPELLS } from "@/content/dnd3.5/generated/srd/spells/index.ts";
+import { DND35_RULESET_NAME } from "@/content/dnd3.5/names.ts";
 import { registry } from "@/database/packages/registry.ts";
 import {
   entitySnapshotsInRules,

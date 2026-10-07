@@ -24,11 +24,11 @@ describe("A class level's fields", () => {
     ).toBe(1);
   });
 
-  test("are stored as both rows, which read back as the fields", () => {
-    const rows = toClassLevelProperties("level-id", { bab: 2, skills: 4 });
+  test("are kept in both properties, which read back as the fields", () => {
+    const rows = toClassLevelProperties({ bab: 2, skills: 4 });
     expect(rows).toEqual([
-      { entityId: "level-id", entityType: "klass_levels", type: KLASS_LEVEL_BAB, value: "2" },
-      { entityId: "level-id", entityType: "klass_levels", type: KLASS_LEVEL_SKILL_POINTS, value: "4" },
+      { type: KLASS_LEVEL_BAB, value: "2" },
+      { type: KLASS_LEVEL_SKILL_POINTS, value: "4" },
     ]);
     expect(readClassLevelFields(rows)).toEqual({ bab: 2, skills: 4 });
   });

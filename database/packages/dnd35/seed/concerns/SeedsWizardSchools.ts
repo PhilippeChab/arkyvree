@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
-import { classSpells, specialistSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
-import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
+import { classSpells, specialistSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
+import type { WizardSchoolSeed } from "@/content/dnd3.5/builders/wizardSchools/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import type { SpellcastingClass } from "@/database/packages/dnd35/seed/spellTable.ts";
 import { powersAptitudesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";

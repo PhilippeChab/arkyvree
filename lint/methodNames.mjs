@@ -12,11 +12,12 @@
  *
  * Private and protected methods are the class's own business: any name.
  *
- * `function-names`: an exported function of the server, `shared/` or `database/` (declared, held by a const, or listed
+ * `function-names`: an exported function of the server, the engine, `shared/`, `database/`, `content/` or `codegen/`
+ * (declared, held by a const, or listed
  * in an `export { f }`) starts with a verb too (`FUNCTION_VERBS`), or is one of the shapes the code writes: a context
  * it runs a callback in (`withTransaction`), an event's handler (`onCacheHit`), a conversion (`toSafeUser`) or a
  * constructor (`newTimingStore`). A PascalCase one (a concern, a class's factory) is a type's name; a module's own
- * functions name themselves. A content package's builders (`database/packages/<package>/content/`) are the vocabulary
+ * functions name themselves. A ruleset's content builders (`content/<ruleset>/builders/`) are the vocabulary
  * its data is written in (`eq(feat("Dodge"))`, `simple("Club")`), named for what they build.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
@@ -96,9 +97,9 @@ const VOCABULARIES = [
 
 function createFunctionNames(context) {
   const file = repoPath(context.filename);
-  if (!/^(server|engine|shared|database)\//.test(file) || !/\.tsx?$/.test(file)) return {};
+  if (!/^(server|engine|shared|database|content|codegen)\//.test(file) || !/\.tsx?$/.test(file)) return {};
   // A content package's builders are its data's vocabulary: `eq(feat("Dodge"))`, `simple("Club")`
-  if (/^database\/packages\/[^/]+\/content\//.test(file)) return {};
+  if (/^content\/[^/]+\/builders\//.test(file)) return {};
   const report = (id) => {
     if (/^[A-Z]/.test(id.name)) return;
     if (FUNCTION_VERBS.some((verb) => startsWithVerb(id.name, verb))) return;

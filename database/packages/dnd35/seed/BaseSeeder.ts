@@ -1,13 +1,13 @@
 import type { PgTable } from "drizzle-orm/pg-core";
 
-import { bonus, setFlag, setNum } from "@/database/packages/dnd35/content/customization/modifiers.ts";
-import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import { bonus, setFlag, setNum } from "@/content/dnd3.5/builders/customization/modifiers.ts";
+import { gte } from "@/content/dnd3.5/builders/customization/requirements.ts";
 import type {
   Modifier,
   ModifierSeed,
   Property,
   RequirementEntry,
-} from "@/database/packages/dnd35/content/customization/types.ts";
+} from "@/content/dnd3.5/builders/customization/types.ts";
 import {
   modifiersInCustomization,
   type propertiesInCustomization,

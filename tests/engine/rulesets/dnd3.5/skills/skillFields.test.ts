@@ -52,8 +52,7 @@ describe("A skill's fields", () => {
     expect(rowsBySkill.size).toBeGreaterThan(20);
 
     const mismatches = [...rowsBySkill].filter(
-      ([skillId, stored]) =>
-        multiset(toSkillProperties(skillId, readSkillFields(stored))).join("|") !== multiset(stored).join("|"),
+      ([, stored]) => multiset(toSkillProperties(readSkillFields(stored))).join("|") !== multiset(stored).join("|"),
     );
     expect(mismatches).toEqual([]);
   });

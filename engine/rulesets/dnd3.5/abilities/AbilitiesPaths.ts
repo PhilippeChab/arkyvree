@@ -15,7 +15,10 @@ const NAVIGATABLE_PATHS = [
 
 /** The abilities' target paths: each ability's score and modifier. */
 export default class AbilitiesPaths implements PathCategory<Dnd35Components> {
-  static generateAbilityPaths(abilities: RulesetAbility[], kind: "modifier" | "requirement"): TargetPath[] {
+  static generateAbilityPaths(
+    abilities: Pick<RulesetAbility, "name">[],
+    kind: "modifier" | "requirement",
+  ): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const ability of abilities) {

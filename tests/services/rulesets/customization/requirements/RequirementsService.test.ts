@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { BadRequestError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Races, Requirements } from "@/server/repositories/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
@@ -87,9 +87,9 @@ describe("RequirementsService", () => {
     test("refuses an unknown target path", async () => {
       const { session, rulesetId, feat } = await setup();
       const body = { ...babAtLeast5, target: "invalid.path.that.does.not.exist" };
-      await expect(RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, body)).rejects.toThrow(
-        BadRequestError,
-      );
+      await expect(
+        RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, body),
+      ).rejects.toMatchObject({ refusal: "invalid" });
     });
 
     test("refuses a missing ruleset or entity, and another user", async () => {
@@ -145,7 +145,7 @@ describe("RequirementsService", () => {
       const invalid = { ...babAtLeast5, target: "invalid.path.does.not.exist" };
       await expect(
         RequirementsService.updateRequirement(session, rulesetId, "feats", feat.id, created.id, invalid),
-      ).rejects.toThrow(BadRequestError);
+      ).rejects.toMatchObject({ refusal: "invalid" });
     });
 
     test("refuses a missing ruleset or requirement, another entity's requirement and another user", async () => {

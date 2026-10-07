@@ -70,10 +70,7 @@ function typeOf(data: RulesetData, id: string): RulesetEntityType | undefined {
  * Copies each winner into the ruleset, in a transaction rolled back, and compares the copy's customizations in the view
  * with the winner's before it was copied: the winners compared, and the mismatches, by winner and kind.
  */
-async function compareCopies(
-  ruleset: { ancestorRulesetIds: string[]; extensionRulesetIds: string[]; id: string },
-  winnerIds: string[],
-) {
+async function compareCopies(ruleset: Parameters<typeof RulesetCache.getData>[0], winnerIds: string[]) {
   const before = await RulesetCache.getData(ruleset);
   const mismatches: string[] = [];
   let compared = 0;

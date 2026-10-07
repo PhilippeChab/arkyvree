@@ -1,9 +1,10 @@
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { buildCharacter } from "@/server/builds/index.ts";
+import { describeCharacter } from "@/engine/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
+import { readCharacterInput } from "@/server/services/characters/index.ts";
 
 import type { Character } from "./queries.ts";
-import { moduleOf } from "./rulesetModules.ts";
 
 /** Phase 4: every character builds and validates. Returns the integrity issues found. */
 export async function checkBuilds(characters: Character[]) {
@@ -17,11 +18,13 @@ export async function checkBuilds(characters: Character[]) {
   );
 
   for (const char of characters) {
-    if (char.kind !== "pc") continue;
+    // A bonded creature's sheet is its master's
+    if (char.parentCharacterId) continue;
     try {
       const ruleset = rulesetNames.get(char.rulesetId);
-      const detailed = await buildCharacter(await moduleOf(char.rulesetId), char);
-      const validation = detailed.validate();
+      const { validation } = await withRulesetScope(db, char.rulesetId, async (scope) =>
+        describeCharacter(scope, await readCharacterInput(db, char), []),
+      );
 
       if (!validation.valid) {
         const integrityIssues = validation.issues.filter((i) => i.category === "integrity");

@@ -1,11 +1,12 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import { CLERIC_DOMAIN, domainFeat, domainSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
-import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.ts";
-import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
-import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
-import type { BookContent, CoreContent } from "@/database/packages/dnd35/content/rulesets/types.ts";
-import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
+import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
+import { CLERIC_DOMAIN, domainFeat, domainSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
+import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
+import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
+import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
+import { DND35_RULESET_NAME } from "@/content/dnd3.5/names.ts";
 import {
   abilitiesInRules,
   aptitudesInRules,
@@ -19,7 +20,6 @@ import {
 } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { BaseSeeder, type SeedContext } from "./BaseSeeder.ts";
@@ -53,13 +53,12 @@ export class RulesetSeeder extends include(
 ) {
   /** Creates a published system ruleset, the core rules or an extension of `baseId`, and returns its id. */
   private static async createSystemRuleset(db: Db, ruleset: { description: string; name: string }, baseId?: string) {
-    const baseRules: BaseRules = "Dungeons & Dragons: 3.5";
     const [{ id }] = await db
       .insert(rulesetsInRules)
       .values({
         ...ruleset,
         status: "Published",
-        baseRules,
+        baseRules: DND35_BASE_RULES,
         system: true,
         ...(baseId
           ? { kind: "extension" as const, rulesetId: baseId, ancestorRulesetIds: [baseId] }

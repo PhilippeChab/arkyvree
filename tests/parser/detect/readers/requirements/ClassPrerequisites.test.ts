@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { ClassPrerequisites } from "@/database/packages/dnd35-from-parser/tools/detect/readers/requirements/ClassPrerequisites.ts";
-import { gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
+import { ClassPrerequisites } from "@/codegen/dnd3.5/tools/detect/readers/requirements/ClassPrerequisites.ts";
+import { gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
+import { SKILL_NAMES } from "@/content/dnd3.5/data/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** The requirements of a class whose prerequisites ask for `ranks` in a skill named `name`. */

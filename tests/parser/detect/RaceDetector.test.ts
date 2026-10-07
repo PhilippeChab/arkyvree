@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { RaceDetector } from "@/database/packages/dnd35-from-parser/tools/detect/RaceDetector.ts";
-import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
+import { RaceDetector } from "@/codegen/dnd3.5/tools/detect/RaceDetector.ts";
+import type { RaceReference } from "@/codegen/dnd3.5/tools/types/races.ts";
 
 function add(target: string, value: number) {
   return {

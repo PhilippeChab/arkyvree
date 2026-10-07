@@ -1,13 +1,13 @@
 import { getTableName } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
+import { planItemSave } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { copyEntityCustomizationsToMany, fetchEntityCustomizations, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Items } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -76,8 +76,7 @@ export function Variants<B extends Constructor>(Base: B) {
 
             const source = findScopedEntity(rulesetData.itemsById, sourceItemId, rulesetId, sourceChain, "Source item");
 
-            const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-            const slot = rules.items.resolveSlot(source.type, source.slot);
+            const { slot } = planItemSave({ ruleset, rulesetData }, source).columns;
 
             // Batched pre-validation: one query for local conflicts, one for
             // ancestor conflicts, then the shared visibility / tombstone check

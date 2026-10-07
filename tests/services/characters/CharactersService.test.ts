@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { and, eq } from "drizzle-orm";
+import { isValidElement } from "react";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
@@ -154,10 +155,10 @@ describe("CharactersService", () => {
     test("reads it built, changes only the fields sent, and refuses an edit from a stale copy", async () => {
       const { session } = await createTestUser();
       const created = await createCharacterAs(session, { deity: "Old Deity" });
-      expect(await CharactersService.getCharacter(session, created.id)).toMatchObject({
-        character: { id: created.id },
-        detailedCharacter: expect.anything(),
-      });
+      const sheet = await CharactersService.getCharacter(session, created.id);
+      expect(sheet).toMatchObject({ id: created.id, name: created.name });
+      // Built: its combat, not only who it is
+      expect(Object.keys(sheet.combat)).not.toHaveLength(0);
 
       const changes = {
         age: 35,
@@ -427,14 +428,11 @@ describe("CharactersService", () => {
       const { session } = await createTestUser();
       const character = await createCharacterAs(session);
       const first = (await CharacterSharingService.generateShareToken(session, character.id)).shareToken!;
-      expect(await CharacterSharingService.getSharedCharacter(first)).toMatchObject({
-        character: { id: character.id },
-        detailedCharacter: expect.anything(),
-      });
-      expect(await CharacterSharingService.generateSharedPdf(first)).toMatchObject({
-        detailedCharacter: expect.anything(),
-        CharacterSheetComponent: expect.anything(),
-      });
+      const shared = await CharacterSharingService.getSharedCharacter(first);
+      expect(shared).toMatchObject({ id: character.id, name: character.name });
+      expect(Object.keys(shared.combat)).not.toHaveLength(0);
+      // The printed sheet: the document the route renders
+      expect(isValidElement(await CharacterSharingService.generateSharedPdf(first))).toBe(true);
 
       const second = (await CharacterSharingService.generateShareToken(session, character.id)).shareToken!;
       expect(second).not.toBe(first);

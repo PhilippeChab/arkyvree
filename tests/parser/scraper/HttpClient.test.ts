@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { HttpClient } from "@/database/packages/dnd35-from-parser/tools/scraper/HttpClient.ts";
+import { HttpClient } from "@/codegen/dnd3.5/tools/scraper/HttpClient.ts";
 
 /** When a local server received each request `fetch` makes of it. */
 async function requestTimes(fetch: (url: string) => Promise<unknown>) {

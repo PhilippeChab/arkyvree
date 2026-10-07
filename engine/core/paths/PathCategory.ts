@@ -5,7 +5,7 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 import type PathTraverser from "./PathTraverser.ts";
 
 /** A component of `C`, by its key, and the getter that hands its data to a path: both checked against `C`. */
-export type ComponentSpec<C> = { [K in keyof C & string]: { getter: GetterOf<C[K]>; key: K } }[keyof C & string];
+type ComponentSpec<C> = { [K in keyof C & string]: { getter: GetterOf<C[K]>; key: K } }[keyof C & string];
 
 /** The names of `T`'s methods a path can call without arguments: the getters its data comes from. */
 export type GetterOf<T> = { [M in keyof T]-?: T[M] extends () => unknown ? M : never }[keyof T] & string;
@@ -30,6 +30,11 @@ export interface PathCategory<C = Components> {
   label: string;
   /** A path's first element */
   name: string;
+  /**
+   * Whether its paths name an entity under their group (`items.weapons.<item>.…`): a path's description and its group's
+   * template skip the entity's segment
+   */
+  namesEntities?: true;
   /** A path prefix's description (`combat.ac`) */
   pathDescriptions?: Record<string, string>;
   /** Whether a target reads its source itself (an item's own weapon: the place its item is held), not the sheet */

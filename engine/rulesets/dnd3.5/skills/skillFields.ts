@@ -1,10 +1,12 @@
-import type { SkillFields } from "@/engine/core/module/index.ts";
-import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
+import type { PropertyValue } from "@/engine/core/module/index.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
 } from "@/shared/dnd3.5/properties/index.ts";
+
+/** A skill's fields its properties hold: whether armor weighs on it, how many times over, and untrained use. */
+export type SkillFields = { checkPenaltyMultiplier: number; impactedByWeight: boolean; usableWithoutTraining: boolean };
 
 /** A skill's fields when it has none of their properties: armor doesn't weigh on it, and it needs training. */
 export const NO_SKILL_FIELDS: SkillFields = {
@@ -41,16 +43,11 @@ export function readSkillFields(properties: { type: string; value: string }[]): 
 }
 
 /**
- * A skill's fields as the rows of its properties, what its effects and the seeds store: a row per flag that's true,
- * and the multiplier unless it's 1.
+ * A skill's fields as the properties that keep them, what a save and the seeds store: one per flag that's true, and the
+ * multiplier unless it's 1.
  */
-export function toSkillProperties(skillId: string, fields: SkillFields): PropertyRecord[] {
-  const property = (type: string, value: string): PropertyRecord => ({
-    entityId: skillId,
-    entityType: "skills",
-    type,
-    value,
-  });
+export function toSkillProperties(fields: SkillFields): PropertyValue[] {
+  const property = (type: string, value: string): PropertyValue => ({ type, value });
   return [
     ...(fields.impactedByWeight ? [property(SKILL_IMPACTED_BY_WEIGHT, "true")] : []),
     // A skill takes the penalty once unless it says otherwise.

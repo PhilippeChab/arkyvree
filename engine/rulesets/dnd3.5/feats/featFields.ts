@@ -1,5 +1,4 @@
-import type { FeatFields } from "@/engine/core/module/index.ts";
-import type { PropertyRecord } from "@/engine/rulesets/dnd3.5/types.ts";
+import type { PropertyValue } from "@/engine/core/module/index.ts";
 import {
   FEAT_FAMILY,
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
@@ -7,13 +6,16 @@ import {
   WIZARD_PROHIBITED_SCHOOL,
 } from "@/shared/dnd3.5/properties/index.ts";
 
-/** The property types a feat's fields are stored as. */
-export const FEAT_FIELD_PROPERTY_TYPES = [
-  FEAT_FAMILY,
-  FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
-  FEAT_WEAPON_FINESSE,
-  WIZARD_PROHIBITED_SCHOOL,
-];
+/**
+ * A feat's fields its properties hold: the families it's in, the weapon rules it changes, and the spell schools it
+ * forbids (a specialist wizard's).
+ */
+export type FeatFields = {
+  families: string[];
+  oversizedTwoWeaponFighting: boolean;
+  prohibitedSchools: string[];
+  weaponFinesse: boolean;
+};
 
 /** The fields of a feat with none of its properties: in no family, changing no rule. */
 export const NO_FEAT_FIELDS: FeatFields = {
@@ -39,14 +41,9 @@ export function readFeatFields(properties: { type: string; value: string }[]): F
   return fields;
 }
 
-/** A feat's fields as the rows of its properties: one per family and prohibited school, one per rule it changes. */
-export function toFeatProperties(featId: string, fields: FeatFields): PropertyRecord[] {
-  const property = (type: string, value: string): PropertyRecord => ({
-    entityId: featId,
-    entityType: "feats",
-    type,
-    value,
-  });
+/** A feat's fields as the properties that keep them: one per family and prohibited school, one per rule it changes. */
+export function toFeatProperties(fields: FeatFields): PropertyValue[] {
+  const property = (type: string, value: string): PropertyValue => ({ type, value });
   return [
     ...fields.families.map((family) => property(FEAT_FAMILY, family)),
     ...(fields.oversizedTwoWeaponFighting ? [property(FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, "true")] : []),

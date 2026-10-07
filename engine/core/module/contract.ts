@@ -7,7 +7,6 @@ import type {
 } from "@/drizzle/schema.ts";
 import type {
   Components,
-  LevelUpProjector,
   PropertyTypesProvider,
   RequirementIssue,
   RulesetView,
@@ -22,36 +21,23 @@ import type {
   Item,
   Modifier,
   Player,
+  Property,
   Requirement,
   Ruleset,
 } from "@/shared/relations.ts";
 
-import type {
-  ClassesEffects,
-  ClassLevelsEffects,
-  FeatsEffects,
-  ItemsEffects,
-  PowersEffects,
-  RacesEffects,
-  RulesetsEffects,
-  SkillsEffects,
-} from "./effects/index.ts";
-import type {
-  AptitudesRules,
-  ClassesRules,
-  ClassLevelsRules,
-  FeatsRules,
-  InventoryRules,
-  ItemsRules,
-  LevelsRules,
-  PowersRules,
-  RacesRules,
-  RulesetsRules,
-  SkillsRules,
-} from "./rules/index.ts";
+/**
+ * A character's row and the rows it's built from, as the server reads them in its ruleset's scope: a bonded creature's
+ * with its master's (`master`), whose sheet the creature's derives from.
+ */
+export interface CharacterInput {
+  master?: CharacterInput;
+  record: CharacterRecord;
+  rows: CharacterRows;
+}
 
 /**
- * A character's own rows, which the server reads (`server/builds/`) and its module builds the character from: its seat
+ * A character's own rows, which the server reads (`readCharacterInput`) and its module builds the character from: its seat
  * in a campaign, its ability scores, languages, inventory and levels, every saved level's picks (the links, whose
  * entities are the view's), and the modifiers set on the character itself, with their requirements. Read in its
  * ruleset's scope, their references are the view's ids.
@@ -76,68 +62,35 @@ export interface DetailedCharacterInterface {
   areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean;
   /**
    * Builds the character from its rows (`rows`), in its ruleset's `view`, with a level-up's `projectedData`: a bonded
-   * creature's `master` built first. A build reads nothing: the server reads what it's given (`buildCharacter`).
+   * creature's `master` built first. A build reads nothing: it's given the rows the server read.
    */
   build(rows: CharacterRows, view: RulesetView, projectedData?: unknown, master?: DetailedCharacterInterface): void;
   readonly components: Components;
   formatRequirements(requirements: Requirement[]): string;
   getCampaign(): Campaign | undefined;
-  /** The feats the character holds that don't stack: picked, granted, planned or from its modifiers. */
-  getHeldNonStackableFeatIds(): string[];
-  /** The powers the character knows in a pool: picked, granted, planned or from its modifiers. */
-  getKnownPowerIds(aptitudeId: string): string[];
   getPlayer(): Player | undefined;
   getRuleset(): Ruleset | undefined;
   getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[];
-  getVirtuallyPossessedPowerIds(): string[];
   validate(): ValidationResult;
 }
 
 /**
- * What a ruleset writes, one set of effects per area: each says what to write, and the service writes it in its
- * transaction (`server/services/rulesets/effectWrites.ts`).
+ * A base rules' module. Its parts are its own, each typed by the module's own type, which `getRulesetModule` hands out
+ * as it is: what it answers of its characters (`characters`), of its entities (`entities`), of their
+ * level-ups (`levelUp`) and to its content's seeders and codegen (`content`); its paths and property types, and the
+ * order its view keeps an entity's properties in.
  */
-export interface ModuleEffects {
-  classes: ClassesEffects;
-  classLevels: ClassLevelsEffects;
-  feats: FeatsEffects;
-  items: ItemsEffects;
-  powers: PowersEffects;
-  races: RacesEffects;
-  rulesets: RulesetsEffects;
-  skills: SkillsEffects;
-}
-
-/** What a ruleset answers the services without the database, one set of rules per area. */
-export interface ModuleRules {
-  aptitudes: AptitudesRules;
-  classes: ClassesRules;
-  classLevels: ClassLevelsRules;
-  feats: FeatsRules;
-  inventory: InventoryRules;
-  items: ItemsRules;
-  levels: LevelsRules;
-  powers: PowersRules;
-  races: RacesRules;
-  rulesets: RulesetsRules;
-  skills: SkillsRules;
-}
-
-/**
- * A base rules' module, typed by what it builds: its characters, its level-up projector and the kinds of character it
- * knows (`RulesetFactory` hands out each module's own type).
- */
-export interface RulesetModule<
-  Character extends DetailedCharacterInterface = DetailedCharacterInterface,
-  Projector extends LevelUpProjector = LevelUpProjector,
-  Kind extends string = string,
-> {
-  createDetailedCharacter(record: CharacterRecord, kind?: Kind): Character;
-  createLevelUpProjector(character: Character): Projector;
+export interface RulesetModule {
+  /** What the ruleset answers of its characters, from the rows the server reads: their sheets, an item equipped */
+  characters: object;
+  /** What the ruleset answers its content's seeders and codegen: the paths a book can target, its fields' properties */
+  content: object;
   createPropertyTypes(): PropertyTypesProvider;
   createTargetPaths(): TargetPathsInterface;
-  /** What the ruleset does in a service's transaction */
-  effects: ModuleEffects;
-  /** What the ruleset answers the services, without the database */
-  rules: ModuleRules;
+  /** What the ruleset answers of its entities: their fields, and what saving one writes */
+  entities: object;
+  /** What the ruleset answers a character's level-up, from the rows the server reads */
+  levelUp: object;
+  /** An entity's properties in the order its rules list them, which its view keeps them in */
+  orderProperties(properties: Property[]): Property[];
 }

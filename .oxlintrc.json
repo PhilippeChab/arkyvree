@@ -60,8 +60,10 @@
     "arkyvree/method-names": "error",
     // An exported function of the server or shared/ starts with a verb (lint/methodNames.mjs).
     "arkyvree/function-names": "error",
-    // The architecture (lint/architecture.mjs): what each layer imports, where queries are built, folder indexes.
+    // The architecture (lint/architecture.mjs): what each layer imports, the engine's one entry, where queries are built,
+    // folder indexes.
     "arkyvree/layers": "error",
+    "arkyvree/engine-front-door": "error",
     "arkyvree/queries-in-repositories": "error",
     "arkyvree/folder-index": "error",
     "arkyvree/re-exports": "error",
@@ -282,9 +284,9 @@
         "react/only-export-components": ["error", { "allowConstantExport": true }]
       }
     },
-    // Server/scripts/tests/database: allow console
+    // Server/scripts/tests/database/codegen: allow console
     {
-      "files": ["server/**/*.{ts,tsx}", "scripts/**/*.ts", "tests/**/*.ts", "database/**/*.ts"],
+      "files": ["server/**/*.{ts,tsx}", "scripts/**/*.ts", "tests/**/*.ts", "database/**/*.ts", "codegen/**/*.ts"],
       "rules": {
         "no-console": "off"
       }

@@ -2,11 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { and, eq, inArray } from "drizzle-orm";
 
-import {
-  DND35_COMPLETE_DIVINE_NAME,
-  DND35_COMPLETE_WARRIOR_NAME,
-  DND35_RULESET_NAME,
-} from "@/database/packages/dnd35/names.ts";
+import { DND35_COMPLETE_DIVINE_NAME, DND35_COMPLETE_WARRIOR_NAME, DND35_RULESET_NAME } from "@/content/dnd3.5/names.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import {
   aptitudesInRules,

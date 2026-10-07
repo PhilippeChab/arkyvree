@@ -1,4 +1,3 @@
-import type { SkillFields } from "@/engine/core/module/index.ts";
 import type { ValidationIssue } from "@/engine/core/types.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/classes/ClassesComponent.ts";
@@ -8,6 +7,8 @@ import { SIZE_HIDE_MOD } from "@/engine/rulesets/dnd3.5/constants.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import type { SkillFields } from "./skillFields.ts";
 
 type SkillsData = {
   [key: string]: {

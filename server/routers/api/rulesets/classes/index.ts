@@ -1,16 +1,14 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { ENTITY_FIELDS } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
-import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 
 import classLevels from "./levels/index.ts";
 import classSkills from "./skills/index.ts";
 import { classParams } from "./validation.ts";
-
-const hitDie = z.literal(HIT_DIE_VALUES, { error: () => `Hit die must be one of: ${HIT_DIE_VALUES.join(", ")}` });
 
 export default new Hono<SessionContext>()
   .route("/", classLevels)
@@ -54,7 +52,7 @@ export default new Hono<SessionContext>()
           .string()
           .optional()
           .transform((v) => v || null),
-        hd: hitDie.optional(),
+        ...ENTITY_FIELDS.klasses,
       }),
     ),
     async (c) => {
@@ -74,7 +72,7 @@ export default new Hono<SessionContext>()
           .string()
           .optional()
           .transform((v) => v || null),
-        hd: hitDie.optional(),
+        ...ENTITY_FIELDS.klasses,
         updatedAt: z.string().optional(),
       }),
     ),

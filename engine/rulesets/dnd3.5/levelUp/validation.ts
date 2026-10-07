@@ -12,6 +12,7 @@ import type { DetailedCharacterInterface } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ValidationIssue } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
+import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 
 import { loadFeatCustomizations } from "./projection.ts";
 
@@ -106,10 +107,11 @@ export function annotateRequirements<T extends { id: string }>(
 }
 
 /**
- * Throws when a level takes an ability increase it doesn't have, or skips the one it has. `label` names the level in
- * the message ("Level 2: ").
+ * Throws when the level after `totalLevel` levels takes an ability increase it doesn't have, or skips the one it has.
+ * `label` names the level in the message ("Level 2: ").
  */
-export function checkAbilityIncrease(isAbilityIncreaseLevel: boolean, abilityId: string | null, label = "") {
+export function checkAbilityIncrease(totalLevel: number, abilityId: string | null, label = "") {
+  const isAbilityIncreaseLevel = Dnd35LevelsRules.isAbilityIncreaseLevel(totalLevel);
   if (abilityId && !isAbilityIncreaseLevel)
     throw new RulesError("invalid", `${label}Ability increase is not available at this level`);
 
@@ -181,7 +183,7 @@ export function checkLevelSelections(params: {
 export function checkNotTaken(
   feats: FeatRecord[],
   pickedFeatIds: string[],
-  otherLevels: { id: string; klassLevelId: string }[],
+  otherLevels: { klassLevelId: string }[],
   autoGrantedRecords: { featsInRule: { id: string } }[],
   rulesetData: RulesetData,
 ) {

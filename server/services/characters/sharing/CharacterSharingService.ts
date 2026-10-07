@@ -1,15 +1,14 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import type { CharacterKind } from "@/engine/rulesets/dnd3.5/index.ts";
-import { buildCharacter } from "@/server/builds/index.ts";
+import { describeCharacter, describeCharacterSheet } from "@/engine/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
+import { isProduction } from "@/server/environment.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Activities, Characters } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import { Activities, Characters, Visibility } from "@/server/repositories/index.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
-import { loadBondedByKind } from "@/server/services/characters/bonded.ts";
-import { buildCharacterSheet } from "@/server/sheets/index.ts";
+import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterSharingService {
@@ -18,16 +17,13 @@ class CharacterSharingService {
 
     if (!characterRecord) throw new NotFoundError("Character not found");
 
-    const { detailedCharacter, CharacterSheetComponent } = await buildCharacterSheet(characterRecord);
-
     const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
-
-    return {
-      detailedCharacter,
-      CharacterSheetComponent,
-      portraitUrl,
-      kind: characterRecord.kind as CharacterKind,
-    };
+    return await withRulesetScope(db, characterRecord.rulesetId, async (scope) =>
+      describeCharacterSheet(scope, await readCharacterInput(db, characterRecord), {
+        diagnostics: !isProduction(),
+        portraitUrl,
+      }),
+    );
   }
 
   async generateShareToken(session: Session, characterId: string) {
@@ -58,18 +54,12 @@ class CharacterSharingService {
 
     if (!characterRecord) throw new NotFoundError("Character not found");
 
-    const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
-    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord);
-
-    const bondedByKind = await loadBondedByKind(rulesetModule, characterRecord.id);
     const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
-
-    return {
-      character: characterRecord,
-      detailedCharacter,
-      bondedByKind,
-      portraitUrl,
-    };
+    return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
+      const character = await readCharacterInput(db, characterRecord);
+      const bonded = await readBondedInputs(db, character, Visibility.All);
+      return { ...describeCharacter(scope, character, bonded, "omit"), portraitUrl };
+    });
   }
 
   async revokeShareToken(session: Session, characterId: string) {

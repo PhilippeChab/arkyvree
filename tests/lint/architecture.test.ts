@@ -11,6 +11,22 @@ function lint(files: Record<string, string>, from = ".") {
 setDefaultTimeout(30_000);
 
 describe("architecture rules", () => {
+  test("code outside engine/ enters it through engine/index.ts; the engine and a test reach any of its modules", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/a.ts": 'import { x } from "@/engine/index.ts";\nexport const a = x;\n',
+          "server/b.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const b = x;\n',
+          "database/c.ts": 'import X from "@/engine/rulesets/dnd3.5/skills/SkillsPaths.ts";\nexport const c = X;\n',
+          "codegen/d.ts": 'import type { T } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type D = T;\n',
+          "engine/core/e.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const e = x;\n',
+          "tests/f.test.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const f = x;\n',
+        },
+        ["engine-front-door"],
+      ),
+    ).toEqual(["engine-front-door codegen/d.ts", "engine-front-door database/c.ts", "engine-front-door server/b.ts"]);
+  });
+
   test("an index that re-exports only re-exports; any other module exports what it declares", async () => {
     expect(
       await lintRepo(
@@ -47,14 +63,12 @@ describe("architecture rules", () => {
         "server/services/s.ts": 'import r from "@/server/routers/r.ts";\nexport const x = r;\n',
         "server/cache/c.ts": 'import { w } from "@/server/cow/index.ts";\nexport const c = w;\n',
         "server/cow/w.ts": 'import { s } from "@/server/services/s.ts";\nexport const w = s;\n',
-        "server/rulesets/e.ts": 'import { w } from "@/server/cow/index.ts";\nexport const e = w;\n',
         // The engine's machinery names no ruleset, not even for a type; a ruleset builds on the machinery and lib/
         "engine/core/module/m.ts": 'import type { C } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type M = C;\n',
         "engine/rulesets/dnd3.5/r.ts": 'import type { M } from "@/engine/core/module/m.ts";\nexport type R = M;\n',
         "engine/rulesets/dnd3.5/i.ts": 'import { include } from "@/lib/mixins.ts";\nexport const i = include;\n',
         // lib/ imports nothing of the app
-        "lib/l.ts":
-          'import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";\nexport const l = RulesetFactory;\n',
+        "lib/l.ts": 'import { x } from "@/server/services/s.ts";\nexport const l = x;\n',
         "shared/s.ts": 'import type { T } from "@/drizzle/schema.ts";\nexport type S = T;\n',
         // The engine reads nothing itself: neither the server nor the database, and the schema for its types alone
         "engine/core/view/v.ts": 'import { db } from "@/server/database/index.ts";\nexport const v = db;\n',
@@ -69,17 +83,15 @@ describe("architecture rules", () => {
         "client/src/c.ts": 'import type { App } from "@/server/routers/application.ts";\nexport type C = App;\n',
         "client/src/v.ts": 'import { app } from "@/server/routers/application.ts";\nexport const v = app;\n',
         // A content package's vocabulary reads neither its data nor the server
-        "database/packages/dnd35/content/a.ts":
-          'import { b } from "@/database/packages/dnd35/content/b.ts";\nexport const a = b;\n',
-        "database/packages/dnd35/content/d.ts":
-          'import { D } from "@/database/packages/dnd35/data/core.ts";\nexport const d = D;\n',
-        "database/packages/dnd35/content/s.ts": 'import { S } from "@/server/rulesets/s.ts";\nexport const s = S;\n',
+        "content/dnd3.5/builders/a.ts": 'import { b } from "@/content/dnd3.5/builders/b.ts";\nexport const a = b;\n',
+        "content/dnd3.5/builders/d.ts": 'import { D } from "@/content/dnd3.5/data/core.ts";\nexport const d = D;\n',
+        "content/dnd3.5/builders/s.ts": 'import { x } from "@/server/services/s.ts";\nexport const s = x;\n',
       }),
     ).toEqual([
       "layers client/src/v.ts",
       "layers client/src/w.ts",
-      "layers database/packages/dnd35/content/d.ts",
-      "layers database/packages/dnd35/content/s.ts",
+      "layers content/dnd3.5/builders/d.ts",
+      "layers content/dnd3.5/builders/s.ts",
       "layers engine/core/module/m.ts",
       "layers engine/core/view/r.ts",
       "layers engine/core/view/v.ts",
@@ -152,8 +164,7 @@ describe("architecture rules", () => {
         "server/middlewares/m.ts": 'import { R } from "@/server/repositories/R.ts";\nexport const m = R;\n',
         "server/rulesets/seed.ts":
           'import { items } from "@/database/packages/dnd35/seed/items.ts";\nexport const s = items;\n',
-        "server/rulesets/data.ts":
-          'import { CORE } from "@/database/packages/dnd35/data/core.ts";\nexport const d = CORE;\n',
+        "server/rulesets/data.ts": 'import { CORE } from "@/content/dnd3.5/data/core.ts";\nexport const d = CORE;\n',
         "server/services/s.ts": 'import { SEED } from "@/database/seeds/users.ts";\nexport const s = SEED;\n',
       }),
     ).toEqual([

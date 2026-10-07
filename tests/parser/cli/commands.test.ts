@@ -4,7 +4,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const CLI_DIR = join(import.meta.dirname, "../../../database/packages/dnd35-from-parser/tools/cli");
+const CLI_DIR = join(import.meta.dirname, "../../../codegen/dnd3.5/tools/cli");
 const ROOT = join(import.meta.dirname, "../../..");
 
 describe("The parser's commands", () => {

@@ -28,21 +28,21 @@ describe("A feat's fields", () => {
     });
   });
 
-  test("are stored as a row per family, school and rule, which read back as the fields", () => {
+  test("are kept in a property per family, school and rule, which read back as the fields", () => {
     const fields = {
       families: ["Spell Focus"],
       oversizedTwoWeaponFighting: true,
       prohibitedSchools: ["Evocation", "Necromancy"],
       weaponFinesse: false,
     };
-    const rows = toFeatProperties("feat-id", fields);
-    expect(rows.map((row) => [row.entityType, row.type, row.value])).toEqual([
-      ["feats", FEAT_FAMILY, "Spell Focus"],
-      ["feats", FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, "true"],
-      ["feats", WIZARD_PROHIBITED_SCHOOL, "Evocation"],
-      ["feats", WIZARD_PROHIBITED_SCHOOL, "Necromancy"],
+    const rows = toFeatProperties(fields);
+    expect(rows.map((row) => [row.type, row.value])).toEqual([
+      [FEAT_FAMILY, "Spell Focus"],
+      [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, "true"],
+      [WIZARD_PROHIBITED_SCHOOL, "Evocation"],
+      [WIZARD_PROHIBITED_SCHOOL, "Necromancy"],
     ]);
     expect(readFeatFields(rows)).toEqual(fields);
-    expect(toFeatProperties("feat-id", NO_FEAT_FIELDS)).toEqual([]);
+    expect(toFeatProperties(NO_FEAT_FIELDS)).toEqual([]);
   });
 });

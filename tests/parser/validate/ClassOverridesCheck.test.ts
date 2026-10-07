@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 
-import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import type { StoredReference } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
-import { ClassOverridesCheck } from "@/database/packages/dnd35-from-parser/tools/validate/ClassOverridesCheck.ts";
+import References from "@/codegen/dnd3.5/tools/references/References.ts";
+import type { StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
+import { ClassOverridesCheck } from "@/codegen/dnd3.5/tools/validate/ClassOverridesCheck.ts";
 
-const REFERENCE = join(import.meta.dirname, "../../../database/packages/dnd35-from-parser/reference");
+const REFERENCE = join(import.meta.dirname, "../../../codegen/dnd3.5/reference");
 
 /** A committed class reference, with its overrides changed by `change`. */
 function classReference(

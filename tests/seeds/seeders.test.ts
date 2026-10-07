@@ -2,12 +2,12 @@ import { describe, expect, test } from "bun:test";
 
 import { eq, inArray } from "drizzle-orm";
 
-import { ALL_CLASSES as SRD_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
-import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
-import * as r from "@/database/packages/dnd35/content/customization/requirements.ts";
-import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
-import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
-import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
+import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import * as r from "@/content/dnd3.5/builders/customization/requirements.ts";
+import type { ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
+import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
+import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
+import { ALL_CLASSES as SRD_CLASSES } from "@/content/dnd3.5/generated/srd/classes/index.ts";
 import type { SeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { findSpellcastingClass } from "@/database/packages/dnd35/seed/spellTable.ts";
 import {

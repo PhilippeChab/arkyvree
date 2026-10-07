@@ -1,4 +1,4 @@
-import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
+import { DND35_RULESET_NAME } from "@/content/dnd3.5/names.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";

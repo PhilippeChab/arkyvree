@@ -8,7 +8,7 @@ import {
   DND35_COMPLETE_DIVINE_NAME,
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_DMG_NAME,
-} from "@/database/packages/dnd35/names.ts";
+} from "@/content/dnd3.5/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { getListPowerIds } from "@/engine/core/view/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
@@ -374,9 +374,9 @@ describe("subscribing to an extension", () => {
       const extension = await createExtension(user.id);
       await Feats.create(db, { name: "Clash", rulesetId: extension.id });
       await Feats.create(db, { name: "Clash", rulesetId: draft.id });
-      await expect(RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id])).rejects.toThrow(
-        ConflictError,
-      );
+      await expect(
+        RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]),
+      ).rejects.toMatchObject({ refusal: "conflict" });
 
       // Only feats and powers merge; two races of one name would show twice.
       const [raceA, raceB] = [await createExtension(), await createExtension()];
@@ -384,7 +384,7 @@ describe("subscribing to an extension", () => {
         await Races.create(db, { name: "Tiefling", rulesetId: id, size: "Medium", baseSpeed: 30 });
       await expect(
         RulesetExtensionsService.subscribeExtension(session, draft.id, [raceA.id, raceB.id]),
-      ).rejects.toThrow(ConflictError);
+      ).rejects.toMatchObject({ refusal: "conflict" });
     });
 
     test("accepts same-named feats and aptitudes across extensions, an extension's copy of a base feat, and an old clash not involving the new extension", async () => {

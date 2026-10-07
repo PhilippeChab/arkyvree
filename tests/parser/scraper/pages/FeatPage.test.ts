@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { FeatPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/FeatPage.ts";
+import { FeatPage } from "@/codegen/dnd3.5/tools/scraper/pages/FeatPage.ts";
 import { fixture, scraped, stored } from "@/tests/support/scrapedPages.ts";
 
 describe("A feat's page", () => {

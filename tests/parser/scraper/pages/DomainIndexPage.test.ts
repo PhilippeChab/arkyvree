@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { DomainIndexPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/DomainIndexPage.ts";
+import { DomainIndexPage } from "@/codegen/dnd3.5/tools/scraper/pages/DomainIndexPage.ts";
 import { fixture } from "@/tests/support/scrapedPages.ts";
 
 describe("A page of the domain index", () => {

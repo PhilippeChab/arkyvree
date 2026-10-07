@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { MagicItemText } from "@/database/packages/dnd35-from-parser/tools/detect/readers/items/MagicItemText.ts";
+import { MagicItemText } from "@/codegen/dnd3.5/tools/detect/readers/items/MagicItemText.ts";
 
 /** What a specific armor's or shield's text gives of its stats. */
 function armorStats(text: string) {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { DndToolsPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/DndToolsPage.ts";
+import { DndToolsPage } from "@/codegen/dnd3.5/tools/scraper/pages/DndToolsPage.ts";
 
 /** A page of these headings, then a benefit. */
 function page(...headings: string[]) {

@@ -1,5 +1,5 @@
 import type { GeneratedFeatsWrite } from "@/engine/core/module/index.ts";
-import { NO_FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/feats/featFields.ts";
+import { NO_FEAT_FIELDS, toFeatProperties } from "@/engine/rulesets/dnd3.5/feats/featFields.ts";
 import FeatsPaths from "@/engine/rulesets/dnd3.5/feats/FeatsPaths.ts";
 import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -23,7 +23,7 @@ export function buildSpellFocusFeats(schoolName: string): GeneratedFeatsWrite {
         name: `Spell Focus: ${schoolName}`,
         description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${schoolName}.`,
         aptitudeSlug: Dnd35LevelsRules.GENERAL_FEATS_APTITUDE_SLUG,
-        fields: { ...NO_FEAT_FIELDS, families: ["Spell Focus"] },
+        properties: toFeatProperties({ ...NO_FEAT_FIELDS, families: ["Spell Focus"] }),
         modifiers: [dcBonus],
         requirements: [],
       },
@@ -31,7 +31,7 @@ export function buildSpellFocusFeats(schoolName: string): GeneratedFeatsWrite {
         name: `Greater Spell Focus: ${schoolName}`,
         description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${schoolName}. This bonus stacks with Spell Focus.`,
         aptitudeSlug: Dnd35LevelsRules.GENERAL_FEATS_APTITUDE_SLUG,
-        fields: { ...NO_FEAT_FIELDS, families: ["Greater Spell Focus"] },
+        properties: toFeatProperties({ ...NO_FEAT_FIELDS, families: ["Greater Spell Focus"] }),
         modifiers: [dcBonus],
         requirements: [
           {

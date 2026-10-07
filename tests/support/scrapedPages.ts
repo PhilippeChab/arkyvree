@@ -6,9 +6,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
-import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
+import References from "@/codegen/dnd3.5/tools/references/References.ts";
+import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
+import type { ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
 /** A saved page's HTML. */
 export function fixture(name: string): string {

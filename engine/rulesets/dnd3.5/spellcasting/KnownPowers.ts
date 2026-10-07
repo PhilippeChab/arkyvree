@@ -1,7 +1,7 @@
-import type { CustomizedFeat, CustomizedKlassLevel, CustomizedPower } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import { parseAptitudeJoin, parseAptitudeList } from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
+import type { CustomizedFeat, CustomizedKlassLevel, CustomizedPower } from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { MAX_SPELL_LEVEL, toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, Power, Property } from "@/shared/relations.ts";

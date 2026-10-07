@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { DomainPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/DomainPage.ts";
+import { DomainPage } from "@/codegen/dnd3.5/tools/scraper/pages/DomainPage.ts";
 import { fixture, named, stored } from "@/tests/support/scrapedPages.ts";
 
 describe("A domain version's page", () => {

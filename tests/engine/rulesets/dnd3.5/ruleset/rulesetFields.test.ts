@@ -23,10 +23,10 @@ describe("A ruleset's own fields", () => {
     ).toEqual({ skillPointAbilityId: "intelligence" });
   });
 
-  test("are stored as a row per field with a value", () => {
-    expect(toRulesetProperties("ruleset", { skillPointAbilityId: null })).toEqual([]);
-    expect(toRulesetProperties("ruleset", { skillPointAbilityId: "intelligence" })).toEqual([
-      { entityId: "ruleset", entityType: "rulesets", type: RULESET_SKILL_POINT_ABILITY_ID, value: "intelligence" },
+  test("are kept in a property per field with a value", () => {
+    expect(toRulesetProperties({ skillPointAbilityId: null })).toEqual([]);
+    expect(toRulesetProperties({ skillPointAbilityId: "intelligence" })).toEqual([
+      { type: RULESET_SKILL_POINT_ABILITY_ID, value: "intelligence" },
     ]);
   });
 
@@ -37,11 +37,9 @@ describe("A ruleset's own fields", () => {
       .where(eq(propertiesInCustomization.entityType, "rulesets"));
     expect(rows.every((row) => RULESET_FIELD_PROPERTY_TYPES.includes(row.type))).toBe(true);
     expect(rows.length).toBeGreaterThan(0);
-    for (const [rulesetId, stored] of Map.groupBy(rows, (row) => row.entityId)) {
-      const rebuilt = toRulesetProperties(rulesetId, readRulesetFields(stored));
-      expect(rebuilt.map(({ type, value }) => ({ type, value }))).toEqual(
-        stored.map(({ type, value }) => ({ type, value })),
-      );
+    for (const stored of Map.groupBy(rows, (row) => row.entityId).values()) {
+      const rebuilt = toRulesetProperties(readRulesetFields(stored));
+      expect(rebuilt).toEqual(stored.map(({ type, value }) => ({ type, value })));
     }
   });
 });

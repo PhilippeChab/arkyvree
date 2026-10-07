@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { ALL_CLASSES as DMG_CLASSES } from "@/database/packages/dnd35-from-parser/generated/dmg/classes/index.ts";
-import { ALL_CLASSES as SRD_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
+import { ALL_CLASSES as DMG_CLASSES } from "@/content/dnd3.5/generated/dmg/classes/index.ts";
+import { ALL_CLASSES as SRD_CLASSES } from "@/content/dnd3.5/generated/srd/classes/index.ts";
 import { findSpellcastingClass, getClassSpellLevels } from "@/database/packages/dnd35/seed/spellTable.ts";
 
 /** The class level each of a class's spell levels opens at. */
