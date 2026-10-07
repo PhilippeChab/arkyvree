@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { generateSpellFiles } from "@/database/packages/dnd35-from-parser/tools/generator/code/spellFiles.ts";
-import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/spells.ts";
+import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -45,7 +45,7 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
 
     /** A spell reference's files, one per spell level, the stale ones removed. */
     writeSpells(ref: SpellReference, book: string) {
-      const { spells } = buildSpellSeeds(ref, book);
+      const spells = Library.book(book).spellSeeds(ref);
       this.log(`Built ${spells.length} spell seeds`);
 
       // Generate .ts files per level

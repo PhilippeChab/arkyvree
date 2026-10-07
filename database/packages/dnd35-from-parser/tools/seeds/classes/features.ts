@@ -1,7 +1,7 @@
 /** A class's features by level, and the existing feats a feature grants instead of being a feat of its own. */
 
 import { readGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/grants.ts";
-import ExistingFeats from "@/database/packages/dnd35-from-parser/tools/seeds/ExistingFeats.ts";
+import type { BaseBookSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/BaseBookSeeds.ts";
 import {
   getPluralVariants,
   isPluralVariantOf,
@@ -27,6 +27,7 @@ function findMappedName(rawName: string, features: ClassReference["mapping"]["fe
 export function buildClassFeatures(
   ref: ClassReference,
   perLevelPicks: ReturnType<typeof getClassAptitudePicks>["perLevel"],
+  book: BaseBookSeeds,
 ): {
   autoFreeFeats: [number, string, string][];
   classFeatures: [number, string][];
@@ -62,7 +63,7 @@ export function buildClassFeatures(
     const mappedName = feature?.seedName ?? findMappedName(occ.name, features_);
     const name = mappedName ?? poolParentNames.get(occ.name.toLowerCase()) ?? occ.name;
 
-    const freeFeatName = findExistingFeatGranted(ref, name, feature?.description);
+    const freeFeatName = findExistingFeatGranted(ref, name, feature?.description, book);
     if (freeFeatName && mapping.classFeatureAptitude) {
       for (const level of occ.levels) autoFreeFeats.push([level, freeFeatName, mapping.classFeatureAptitude]);
     } else {
@@ -84,7 +85,7 @@ export function buildClassFeatures(
     if (feat.skip || feat.level == null || coveredKeys.has(key.toLowerCase())) continue;
     if (feat.aptitude && feat.aptitude !== mapping.classFeatureAptitude) continue;
     const name = feat.seedName ?? key;
-    const freeFeatName = findExistingFeatGranted(ref, name, feat.description);
+    const freeFeatName = findExistingFeatGranted(ref, name, feat.description, book);
     if (freeFeatName && mapping.classFeatureAptitude)
       autoFreeFeats.push([feat.level, freeFeatName, mapping.classFeatureAptitude]);
     else features.push([feat.level, name]);
@@ -122,18 +123,22 @@ export function buildPoolParentNameMap(
 }
 
 /**
- * The existing feat a class's feature named `name` grants instead of being a feat of its own: that feat (with or without
- * the class's suffix), or one its description says it gains as a bonus feat.
+ * The existing feat a class's feature named `name` grants instead of being a feat of its own, of those its book has
+ * (`book`): that feat (with or without the class's suffix), or one its description says it gains as a bonus feat.
  */
-export function findExistingFeatGranted(ref: ClassReference, name: string, description: string | undefined) {
-  const book = ref._meta.book;
+export function findExistingFeatGranted(
+  ref: ClassReference,
+  name: string,
+  description: string | undefined,
+  book: BaseBookSeeds,
+) {
   const baseName = stripClassSuffix(name, ref.raw.name);
   return (
-    (baseName && ExistingFeats.find(book, baseName)) ||
-    ExistingFeats.find(book, name) ||
+    (baseName && book.findExistingFeat(baseName)) ||
+    book.findExistingFeat(name) ||
     (description
       ? readGrantedFeatNames(description)
-          .map((n) => ExistingFeats.find(book, n))
+          .map((n) => book.findExistingFeat(n))
           .find(Boolean)
       : undefined)
   );

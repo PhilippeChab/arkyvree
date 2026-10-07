@@ -7,7 +7,7 @@ import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import { buildClassSeed } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/classSeed.ts";
+import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { getClassReviewNotes } from "@/database/packages/dnd35-from-parser/tools/validate/classReview.ts";
@@ -27,7 +27,7 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
         rmSync(classPath, { force: true });
         rmSync(featPath, { force: true });
       } else {
-        this.write(classPath, new ClassFile(buildClassSeed(ref)).classCode(), getClassReviewNotes(ref));
+        this.write(classPath, new ClassFile(Library.book(book).classSeed(ref)).classCode(), getClassReviewNotes(ref));
         this.write(featPath, generateClassFeatSeeds(ref));
       }
     }

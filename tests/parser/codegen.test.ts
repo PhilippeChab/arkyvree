@@ -13,9 +13,9 @@ import {
 import { escapeTemplate, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import { buildClassSeed } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/classSeed.ts";
 import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/featSeeds.ts";
 import { buildClassModifiers } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/modifiers.ts";
+import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
@@ -36,7 +36,7 @@ function check(operator: string, valueType: string, value: string): RequirementC
 
 /** A class reference's generated ClassSeed file. */
 function classCode(ref: ClassReference) {
-  return new ClassFile(buildClassSeed(ref)).classCode();
+  return new ClassFile(Library.book(ref._meta.book).classSeed(ref)).classCode();
 }
 
 function classRef(book: string, slug: string) {
@@ -348,7 +348,7 @@ describe("A generated class", () => {
     ] as const) {
       const ref = classRef(book, slug);
       expect(classCode(ref)).toContain(granted);
-      expect(buildClassFeatSeeds(ref).map((f) => f.name)).not.toContain(feature);
+      expect(buildClassFeatSeeds(ref, Library.book(ref._meta.book)).map((f) => f.name)).not.toContain(feature);
     }
   });
 });

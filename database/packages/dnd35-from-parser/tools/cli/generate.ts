@@ -1,10 +1,10 @@
 /**
  * Generates the content package's seed data from the references: every book's (a book, `--type` to narrow), or one
- * reference file's (into `--book`'s folder, when given), into generated/ as a whole or not at all.
+ * reference file's, into generated/ as a whole or not at all.
  *
  * Usage:
  *   bun run parser:generate [<book>] [--type <type>]
- *   bun run parser:generate <reference>.json [--book <book>]
+ *   bun run parser:generate <reference>.json
  */
 
 import { join } from "node:path";
@@ -19,11 +19,15 @@ const GENERATED_DIR = join(import.meta.dirname!, "../../generated");
 
 function main() {
   const args = process.argv.slice(2);
+  // A reference's book is its own: an option after it (the old `--book`) would be ignored, so it's refused
+  if (args[0]?.endsWith(".json") && args.length > 1) {
+    console.error(`parser:generate <reference>.json takes nothing after the reference: ${args.slice(1).join(" ")}`);
+    process.exit(1);
+  }
   const generate = (dir: string) => {
     if (!args[0]?.endsWith(".json")) return new Generator(dir, true).generateAll(parseCliArgs());
-    const bookIdx = args.indexOf("--book");
     try {
-      new Generator(dir, false).generateReference(args[0], bookIdx >= 0 ? args[bookIdx + 1] : undefined);
+      new Generator(dir, false).generateReference(args[0]);
       return [];
     } catch (error) {
       return [error instanceof Error ? error.message : String(error)];
