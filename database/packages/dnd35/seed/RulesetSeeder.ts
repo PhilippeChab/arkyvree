@@ -1,6 +1,8 @@
 import { and, eq, isNull } from "drizzle-orm";
 
+import { CLERIC_DOMAIN, domainFeat, domainSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
 import type { BookContent, CoreContent } from "@/database/packages/dnd35/content/rulesets/types.ts";
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
@@ -14,6 +16,7 @@ import { SeedsItems } from "@/database/packages/dnd35/seed/concerns/SeedsItems.t
 import { SeedsPowers } from "@/database/packages/dnd35/seed/concerns/SeedsPowers.ts";
 import { SeedsRaces } from "@/database/packages/dnd35/seed/concerns/SeedsRaces.ts";
 import { SeedsWizardSchools } from "@/database/packages/dnd35/seed/concerns/SeedsWizardSchools.ts";
+import { findSpellcastingClass, type SpellcastingClass } from "@/database/packages/dnd35/seed/spellTable.ts";
 import {
   abilitiesInRules,
   aptitudesInRules,
@@ -152,16 +155,16 @@ export class RulesetSeeder extends include(
   /**
    * Seeds an extension's book. Its content names the core's rows as a fork does: it adds only the aptitudes the core
    * lacks, and copies the core feats and spells it changes. Its domains open their spell levels at the core cleric's
-   * (`clericSpellLevels`).
+   * (of `coreClasses`).
    */
-  async seedBook(book: BookContent, clericSpellLevels: Record<number, number>) {
+  async seedBook(book: BookContent, coreClasses: ClassSeed[]) {
     await this.seedAptitudes(book.aptitudes.filter((name) => !this.ctx.aptMap[name]));
     await this.seedFeats(book.standaloneFeats);
     await this.seedFeats(book.classFeats);
     await this.cowFeatsIntoExtension(book.cowFeats);
     await this.seedPowers(book.spells);
     await this.cowSpellsIntoExtension(book.cowSpells);
-    await this.seedDomains(book.domains, clericSpellLevels);
+    await this.seedDomains(book.domains, findSpellcastingClass(coreClasses, "Cleric"));
     for (const klass of book.classes) await this.seedClass(klass);
   }
 
@@ -186,35 +189,34 @@ export class RulesetSeeder extends include(
     );
 
     await this.seedPowers(core.spells);
-    await this.seedWizardSchools(core.wizardSchools, core.wizardSpellLevels);
-    await this.seedDomains(core.domains, core.clericSpellLevels);
+    await this.seedWizardSchools(core.wizardSchools, findSpellcastingClass(core.classes, "Wizard"));
+    await this.seedDomains(core.domains, findSpellcastingClass(core.classes, "Cleric"));
     for (const bond of core.bonds) await this.seedBond(bond);
   }
 
   /**
    * Seeds cleric domains: each a feat taken in Cleric Domain that gives its spell list ("X Domain Spells") a slot at
-   * each spell level, once the cleric casts that level (`clericSpellLevels`), and joins it to the cleric's list, plus
+   * each spell level, once the cleric casts that level (`cleric`'s table), and joins it to the cleric's list, plus
    * the domain's own modifiers.
    */
-  async seedDomains(domains: DomainSeed[], clericSpellLevels: Record<number, number>) {
+  async seedDomains(domains: DomainSeed[], cleric: SpellcastingClass) {
     if (domains.length === 0) return;
 
-    await this.seedAptitudes(domains.map((d) => `${d.name} Domain Spells`));
+    await this.seedAptitudes(domains.map((d) => domainSpells(d.name)));
     await this.seedFeats(
-      domains.map((d) => ({ name: `${d.name} Domain`, description: d.description, aptitudes: ["Cleric Domain"] })),
+      domains.map((d) => ({ name: domainFeat(d.name), description: d.description, aptitudes: [CLERIC_DOMAIN] })),
     );
     await this.insertGatedSpellSlots(
       domains.flatMap((d) => {
-        const featId = this.ctx.featMap[`${d.name} Domain`];
-        const list = `${stripSeparators(d.name)}domainspells`;
+        const featId = this.ctx.featMap[domainFeat(d.name)];
+        const list = stripSeparators(domainSpells(d.name));
         return [
           ...this.spellListSlots(featId, "feats", list),
           this.joinsClassList(featId, "feats", list),
           ...this.modifierRows(featId, "feats", d.modifiers),
         ];
       }),
-      "classes.cleric.level",
-      clericSpellLevels,
+      cleric,
     );
 
     const links = [];
@@ -222,10 +224,10 @@ export class RulesetSeeder extends include(
       for (const spell of d.spells) {
         const powerId = await this.ownPower(spell.name);
         if (!powerId) {
-          console.warn(`[domain seed] Domain spell not found in DB: "${spell.name}" (${d.name} Domain)`);
+          console.warn(`[domain seed] Domain spell not found in DB: "${spell.name}" (${domainFeat(d.name)})`);
           continue;
         }
-        links.push({ powerId, aptitudeId: this.ctx.aptMap[`${d.name} Domain Spells`], level: spell.level });
+        links.push({ powerId, aptitudeId: this.ctx.aptMap[domainSpells(d.name)], level: spell.level });
       }
     }
     await this.insertAll(

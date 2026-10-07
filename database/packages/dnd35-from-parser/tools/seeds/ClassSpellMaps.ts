@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 
 import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 
 /** The spell lists by class name, built from every book's class references the first time they're asked for. */
 class ClassSpellMaps {
@@ -39,7 +40,7 @@ class ClassSpellMaps {
         // Discover casting classes
         for (const { ref } of ReferenceLoader.loadClasses(book)) {
           if (ref.mapping?.spells && ref.raw?.name) {
-            const aptName = `${ref.raw.name} Spells`;
+            const aptName = classSpells(ref.raw.name);
             classMap[ref.raw.name] = aptName;
             classMap[ref.raw.name.toLowerCase()] = aptName;
           }

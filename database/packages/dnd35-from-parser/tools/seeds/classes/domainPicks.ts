@@ -4,6 +4,7 @@ import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/reference
 import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/spellSlots.ts";
 import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/domains.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { domainSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import { setFlag } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -26,7 +27,7 @@ export function buildClassDomainPickFeats(ref: ClassReference): FeatSeed[] {
       description: `The ${name} domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.`,
       selectable: true,
       aptitudes: [pool],
-      modifiers: [setFlag(`aptitudes.${stripSeparators(name)}domainspells.joinsclasslist`)],
+      modifiers: [setFlag(`aptitudes.${stripSeparators(domainSpells(name))}.joinsclasslist`)],
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }

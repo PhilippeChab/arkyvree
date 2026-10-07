@@ -10,6 +10,7 @@ import {
   getInheritedLevel,
   getInheritedLists,
 } from "@/database/packages/dnd35-from-parser/tools/seeds/inheritedLists.ts";
+import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";
 
 /** The spells a book's inherited lists add (`additions`), each at its level there, into `entries`. */
@@ -79,7 +80,7 @@ export function buildCowSpells(book: string): CowSpellEntry[] {
   // Build map: className → aptitude name for classes that have spell lists
   const classToApt = new Map<string, string>();
   for (const { ref } of classes) {
-    if (getClassSpells(ref) && ref.raw?.name) classToApt.set(ref.raw.name, `${ref.raw.name} Spells`);
+    if (getClassSpells(ref) && ref.raw?.name) classToApt.set(ref.raw.name, classSpells(ref.raw.name));
   }
   // The lists classes draw on (`inheritsFrom`), each its class's aptitude
   const bookInheritedLists = getInheritedLists(book);

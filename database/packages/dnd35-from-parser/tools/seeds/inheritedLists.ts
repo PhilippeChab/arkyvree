@@ -4,6 +4,7 @@ import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referen
 import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/spellSlots.ts";
 import { type InheritedSpellList } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
+import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 
 /**
  * A spell's level on a list a class draws on (`inheritsFrom`): on the first of its classes' lists that has it, when
@@ -29,7 +30,7 @@ export function getInheritedLists(book: string): { aptitude: string; list: Inher
   for (const { ref } of ReferenceLoader.loadClasses(book)) {
     const spells = getClassSpells(ref);
     if (!spells || !ref.raw?.name || ref.overrides?.skip) continue;
-    if (spells.inheritsFrom) lists.push({ aptitude: `${ref.raw.name} Spells`, list: spells.inheritsFrom });
+    if (spells.inheritsFrom) lists.push({ aptitude: classSpells(ref.raw.name), list: spells.inheritsFrom });
     for (const list of spells.lists ?? []) lists.push({ aptitude: list.name, list: list.inheritsFrom });
   }
   return lists;

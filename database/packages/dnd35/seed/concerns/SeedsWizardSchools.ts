@@ -1,7 +1,9 @@
 import { and, eq } from "drizzle-orm";
 
+import { classSpells, specialistSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
+import type { SpellcastingClass } from "@/database/packages/dnd35/seed/spellTable.ts";
 import { powersAptitudesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
@@ -14,7 +16,7 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
      * Gives each school's specialist feat a slot at each spell level of its spell list ("X Specialist Spells"), once
      * the wizard casts that level, and lists there the seeded wizard spells of the school, at their wizard level.
      */
-    async seedWizardSchools(schools: WizardSchoolSeed[], wizardSpellLevels: Record<number, number>) {
+    async seedWizardSchools(schools: WizardSchoolSeed[], wizard: SpellcastingClass) {
       await this.insertGatedSpellSlots(
         schools
           .filter((s) => this.ctx.featMap[`${s.name} Specialist`])
@@ -22,14 +24,13 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
             this.spellListSlots(
               this.ctx.featMap[`${s.name} Specialist`],
               "feats",
-              `${stripSeparators(s.name)}specialistspells`,
+              stripSeparators(specialistSpells(s.name)),
             ),
           ),
-        "classes.wizard.level",
-        wizardSpellLevels,
+        wizard,
       );
 
-      const wizardSpells = this.ctx.aptMap["Wizard Spells"];
+      const wizardSpells = this.ctx.aptMap[classSpells("Wizard")];
       if (!wizardSpells) return;
       const spells = await this.db
         .select({
@@ -50,7 +51,7 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
       await this.insertAll(
         powersAptitudesInRules,
         spells.flatMap(({ powerId, level, school }) => {
-          const aptitudeId = this.ctx.aptMap[`${school} Specialist Spells`];
+          const aptitudeId = this.ctx.aptMap[specialistSpells(school)];
           if (school === "Universal" || !aptitudeId || level === null) return [];
           return [{ powerId, aptitudeId, level }];
         }),

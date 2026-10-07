@@ -33,7 +33,7 @@ database/packages/
     ├── content/          # What the data is written with: a folder per kind of content, its types, its builders and the tables they read
     │   ├── customization/    # Requirement, modifier and property types; eq(), gte(), or(), feat(), bonus()…
     │   ├── items/            # ItemSeed; the weapon, armor and shield tables, their properties and proficiencies (simple(), martial()…)
-    │   ├── classes/          # ClassSeed; the class level each of a class's spell levels opens at
+    │   ├── classes/          # ClassSeed
     │   ├── feats/, spells/, races/, domains/   # FeatSeed; PowerSeed, SpellSeed; RaceSeed; DomainSeed
     │   ├── wizardSchools/    # WizardSchoolSeed
     │   ├── bonds/            # BondContent; "a Cat", "an Owl" for the bonds' descriptions
@@ -48,6 +48,7 @@ database/packages/
         ├── BaseSeeder.ts     # A seeder's core: its database, its context (SeedContext), the rows and inserts every step shares
         ├── RulesetSeeder.ts  # createCore, createExtension; seedCore, seedBook: the steps made of steps
         ├── concerns/         # A step per kind of row: SeedsFeats, SeedsClasses, CopiesOnWrite…
+        └── spellTable.ts     # A spellcaster's table: the class level each of its spell levels opens at
 
 database/packages/dnd35-from-parser/
 ├── reference/            # Scraped JSON (raw + overrides)
@@ -100,7 +101,7 @@ const dnd35Dmg: ContentPackage = {
   seeds: [
     async (db) => {
       const seeder = await RulesetSeeder.createExtension(db, { name: DND35_DMG_NAME, description: "…" });
-      await seeder.seedBook(BOOK, CORE.clericSpellLevels);
+      await seeder.seedBook(BOOK, CORE.classes);
     },
   ],
 };
@@ -130,7 +131,7 @@ const dnd35Dmg: ContentPackage = {
   seeds: [
     async (db) => {
       const seeder = await RulesetSeeder.createExtension(db, { name: DND35_DMG_NAME, description: "…" });
-      await seeder.seedBook(BOOK, CORE.clericSpellLevels);
+      await seeder.seedBook(BOOK, CORE.classes);
     },
   ],
   updates: {
