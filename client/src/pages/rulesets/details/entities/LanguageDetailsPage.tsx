@@ -1,7 +1,7 @@
-import { Chip } from "@mui/material";
 import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
+import { ValueChip } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_LANGUAGE,
   type LanguageFormData,
@@ -35,9 +35,7 @@ export default function LanguageDetailsPage() {
         removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <LanguageFormFields form={form} />,
       }}
-      renderChips={(language) =>
-        language.type && <Chip label={language.type} color="secondary" sx={{ fontWeight: 600 }} />
-      }
+      renderChips={(language) => language.type && <ValueChip label={language.type} />}
     />
   );
 }

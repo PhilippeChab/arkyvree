@@ -1,8 +1,8 @@
-import { Alert, alpha, Box, Card, CardContent, Link as MuiLink, Stack, Typography } from "@mui/material";
+import { Alert, alpha, Box, Link as MuiLink, Paper, Stack, Typography } from "@mui/material";
 import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-import { DiceSpinner, LinkButton, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LinkButton, PageLoader, PageTransition, Panel } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAuthRequests, useIsMobile, useSearchParam } from "@/client/src/hooks/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
@@ -286,12 +286,12 @@ export function AuthLayoutRoute() {
   if (isMobile) {
     return (
       <Stack spacing={2} sx={{ minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}>
-        <Card sx={{ width: "100%", maxWidth: 450, mx: "auto", overflow: "hidden" }}>
+        <Paper sx={{ width: "100%", maxWidth: 450, mx: "auto", overflow: "hidden" }}>
           <MobileBranding />
           <Suspense fallback={<PageLoader />}>
             <Outlet />
           </Suspense>
-        </Card>
+        </Paper>
         <AuthFooterLinks />
       </Stack>
     );
@@ -313,36 +313,38 @@ export function AuthLayoutRoute() {
 
 /** The frame each auth page puts its content in: its title, subtitle, error and notice. */
 export function AuthPage({ children, title, subtitle, error, notice }: AuthPageProps) {
+  const isMobile = useIsMobile();
+  const page = (
+    <Stack
+      sx={{
+        animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} both`,
+        [PREFERS_REDUCED_MOTION]: { animation: "none" },
+      }}
+    >
+      <Typography sx={{ typography: { xs: "h5", sm: "h4" }, textAlign: "center" }} component="h1" gutterBottom>
+        {title}
+      </Typography>
+
+      <Stack spacing={3}>
+        {subtitle && (
+          <Typography variant="body2" sx={{ textAlign: "center" }}>
+            {subtitle}
+          </Typography>
+        )}
+
+        <Stack spacing={2}>
+          {error && <Alert severity="error">{error}</Alert>}
+          {notice && <Alert severity="success">{notice}</Alert>}
+          <Box>{children}</Box>
+        </Stack>
+      </Stack>
+    </Stack>
+  );
+
   return (
     <PageTransition sx={{ width: "100%", maxWidth: 450 }}>
-      <Card sx={{ width: "100%" }}>
-        <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-          <Stack
-            sx={{
-              animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} both`,
-              [PREFERS_REDUCED_MOTION]: { animation: "none" },
-            }}
-          >
-            <Typography sx={{ typography: { xs: "h5", sm: "h4" }, textAlign: "center" }} component="h1" gutterBottom>
-              {title}
-            </Typography>
-
-            <Stack spacing={3}>
-              {subtitle && (
-                <Typography variant="body2" sx={{ textAlign: "center" }}>
-                  {subtitle}
-                </Typography>
-              )}
-
-              <Stack spacing={2}>
-                {error && <Alert severity="error">{error}</Alert>}
-                {notice && <Alert severity="success">{notice}</Alert>}
-                <Box>{children}</Box>
-              </Stack>
-            </Stack>
-          </Stack>
-        </CardContent>
-      </Card>
+      {/* On a phone the layout's panel frames the page, under the brand: no panel in a panel */}
+      {isMobile ? <Box sx={{ p: { xs: 2, sm: 4 } }}>{page}</Box> : <Panel>{page}</Panel>}
     </PageTransition>
   );
 }

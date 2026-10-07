@@ -1,17 +1,25 @@
-import { Chip, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CreateDialog, DeleteDialog, EditDialog, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  AddButton,
+  CreateDialog,
+  DeleteDialog,
+  EditDialog,
+  ListToolbar,
+  SectionContent,
+  ValueChip,
+} from "@/client/src/components/common/index.ts";
 import {
   EMPTY_MODIFIER,
   ModifierForm,
   type ModifierFormData,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
-import { TuneIcon } from "@/client/src/components/icons/index.ts";
+import { ModifiersIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
@@ -29,7 +37,6 @@ import type { CustomizableEntityType } from "@/shared/customization/entities.ts"
 import { extractTemplatePath } from "@/shared/customization/templateExpression.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
 type Modifier = ModifiersArray[number];
@@ -199,11 +206,10 @@ export function ModifiersSection({
       }
       case "operator":
         return (
-          <Chip
+          <ValueChip
             label={MODIFIER_OPERATOR_LABELS[modifier.operator] || modifier.operator}
-            size="small"
+
             color="secondary"
-            variant="outlined"
           />
         );
       case "createdAt":
@@ -219,8 +225,8 @@ export function ModifiersSection({
 
   return (
     <SectionContent>
-      <Stack spacing={2}>
-        {canEdit && <SectionAddButton label="Add Modifier" onClick={handleAddModifier} />}
+      <Stack spacing={3}>
+        {canEdit && <ListToolbar actions={<AddButton label="Add Modifier" onClick={handleAddModifier} />} />}
 
         <RulesetSectionTable
           what="Modifiers"
@@ -236,7 +242,7 @@ export function ModifiersSection({
           onRowClick={handleRowClick}
           onRowMouseEnter={handleRowMouseEnter}
           renderCell={renderCell}
-          emptyIcon={TuneIcon}
+          emptyIcon={ModifiersIcon}
           emptyTitle="No modifiers"
           emptyDescription="No modifiers defined for this entity."
         />

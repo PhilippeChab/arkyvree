@@ -1,4 +1,4 @@
-import { Button, IconButton, Stack, Tooltip } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 import { useState } from "react";
@@ -9,8 +9,10 @@ import {
   ConfirmDialog,
   DiceSpinner,
   EditDialog,
+  ListToolbar,
   LoadError,
   LoadMoreButton,
+  RowAction,
   SelectField,
 } from "@/client/src/components/common/index.ts";
 import {
@@ -141,22 +143,26 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   const canLeave = !isOwner && !!ruleset.contributorRole;
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={3}>
       {(canLeave || canInvite) && (
-        <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
-          {canLeave && (
-            <Button
-              variant="outlined"
-              color="warning"
-              size="small"
-              startIcon={<LeaveIcon />}
-              onClick={() => setLeaveDialogOpen(true)}
-            >
-              Leave
-            </Button>
-          )}
-          {canInvite && <AddButton label="Invite" onClick={handleInvite} />}
-        </Stack>
+        <ListToolbar
+          actions={
+            <>
+              {canLeave && (
+                <Button
+                  variant="contained"
+                  color="warning"
+                  size="small"
+                  startIcon={<LeaveIcon />}
+                  onClick={() => setLeaveDialogOpen(true)}
+                >
+                  Leave
+                </Button>
+              )}
+              {canInvite && <AddButton label="Invite" onClick={handleInvite} />}
+            </>
+          }
+        />
       )}
       {contributors.length === 0 && !owner ? (
         <BlankState
@@ -183,30 +189,22 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
                     return (
                       <>
                         {canEditRoles && outranks && contributor.status === "Active" && (
-                          <Tooltip title="Edit Role">
-                            <IconButton
-                              aria-label="Edit Role"
-                              size="small"
-                              onClick={() => {
-                                roleForm.reset({ role: contributor.role });
-                                roleDialog.openWith(contributor.id);
-                              }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          <RowAction
+                            icon={EditIcon}
+                            label="Edit Role"
+                            onClick={() => {
+                              roleForm.reset({ role: contributor.role });
+                              roleDialog.openWith(contributor.id);
+                            }}
+                          />
                         )}
                         {outranks && (
-                          <Tooltip title="Remove">
-                            <IconButton
-                              aria-label="Remove"
-                              size="small"
-                              color="error"
-                              onClick={() => removeDialog.openWith(contributor)}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          <RowAction
+                            icon={DeleteIcon}
+                            label="Remove"
+                            intent="destructive"
+                            onClick={() => removeDialog.openWith(contributor)}
+                          />
                         )}
                       </>
                     );
@@ -239,7 +237,6 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
           roleDialog.target && updateRoleMutation.mutate({ contributorId: roleDialog.target, role })
         }
         isLoading={updateRoleMutation.isPending}
-        maxWidth="xs"
       >
         <SelectField control={roleForm.control} name="role" label="Role" options={assignableRoles} />
       </EditDialog>
@@ -259,7 +256,6 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
         message="Are you sure you want to leave this ruleset? You will lose access unless re-invited."
         confirmLabel="Leave"
         confirmColor="warning"
-        maxWidth="xs"
       />
     </Stack>
   );

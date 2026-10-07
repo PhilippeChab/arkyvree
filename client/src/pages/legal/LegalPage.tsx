@@ -1,6 +1,6 @@
-import { Container, Paper, Stack, Typography } from "@mui/material";
+import { Container, Stack, Typography } from "@mui/material";
 
-import { DiceSpinner, LoadError, PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, PageHeader, PageTransition, Panel } from "@/client/src/components/common/index.ts";
 import { useOglLicense, usePageTitle } from "@/client/src/hooks/index.ts";
 
 export default function LegalPage() {
@@ -9,11 +9,11 @@ export default function LegalPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="md" sx={{ py: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="md">
         <Stack spacing={4}>
           <PageHeader title="Legal" subtitle="Open Game License v1.0a, covering the SRD content used in Arkyvree." />
 
-          <Paper sx={{ p: { xs: 2, sm: 4 } }}>
+          <Panel>
             {error && text === undefined ? (
               <LoadError what="License text" error={error} onRetry={() => void refetch()} />
             ) : text === undefined ? (
@@ -33,7 +33,7 @@ export default function LegalPage() {
                 {text}
               </Typography>
             )}
-          </Paper>
+          </Panel>
         </Stack>
       </Container>
     </PageTransition>

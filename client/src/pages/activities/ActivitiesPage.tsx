@@ -1,15 +1,4 @@
-import {
-  Chip,
-  Container,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Container, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 
 import {
   BlankState,
@@ -22,8 +11,10 @@ import {
   SearchBar,
   type SortOption,
   TableFrame,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { HistoryIcon } from "@/client/src/components/icons/index.ts";
+import { ActivityDetails } from "@/client/src/components/notifications/index.ts";
 import {
   isNavigableTarget,
   useListPageQuery,
@@ -31,7 +22,7 @@ import {
   useOpenActivityTarget,
   usePageTitle,
 } from "@/client/src/hooks/index.ts";
-import { formatActivityDetails, formatActivityType } from "@/client/src/lib/activityFormatters.ts";
+import { formatActivityType } from "@/client/src/lib/activityFormatters.ts";
 import { formatDateTime } from "@/client/src/lib/formatDate.ts";
 import { activityListQuery } from "@/client/src/lib/queries.ts";
 
@@ -55,7 +46,7 @@ export default function ActivitiesPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="lg">
         <Stack spacing={4}>
           <PageHeader title="Activity" subtitle="View your activity history and track actions" />
           <Stack spacing={3}>
@@ -69,7 +60,6 @@ export default function ActivitiesPage() {
               list={activities}
               what="Activity logs"
               search={search}
-              loadMoreLabel="Load More Activities"
               // An empty page's state sits a unit lower than its table, as its margin placed it
               emptySx={{ pt: 1 }}
               empty={
@@ -99,19 +89,10 @@ export default function ActivitiesPage() {
                           sx={[{ "&:hover": { bgcolor: "action.hover" } }, isNavigable && CLICKABLE_SX]}
                         >
                           <TableCell>
-                            <Tooltip
-                              describeChild
-                              title={formatActivityDetails(activity.data) ?? ""}
-                              arrow
-                              enterDelay={300}
-                              slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
-                            >
-                              <Chip
-                                label={formatActivityType(activity.type, activity.data)}
-                                size="small"
-                                sx={{ fontWeight: 500 }}
-                              />
-                            </Tooltip>
+                            <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}>
+                              <ValueChip color="default" label={formatActivityType(activity.type, activity.data)} />
+                              <ActivityDetails data={activity.data} />
+                            </Stack>
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" sx={{ color: "text.secondary" }}>

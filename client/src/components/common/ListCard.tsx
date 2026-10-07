@@ -4,6 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { lineClampSx } from "@/client/src/theme/text.ts";
 import { getInitial } from "@/shared/text.ts";
 
+import { NO_DESCRIPTION } from "./EmptyValue.tsx";
 import { StyledCard } from "./StyledCard.tsx";
 
 interface ListCardGridProps {
@@ -92,7 +93,7 @@ export function ListCard({
             minHeight: "6.4em",
           }}
         >
-          {description || "No description provided."}
+          {description || NO_DESCRIPTION}
         </Typography>
       </Box>
     </StyledCard>

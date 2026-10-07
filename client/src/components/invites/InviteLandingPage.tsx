@@ -1,11 +1,19 @@
-import { Avatar, Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Button, Container, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { LoadError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
+import {
+  PageError,
+  PageLoader,
+  PageTransition,
+  Panel,
+  RoleChip,
+  StatusChip,
+} from "@/client/src/components/common/index.ts";
 import { CheckIcon } from "@/client/src/components/icons/index.ts";
 import { useAnswerInvite, usePageTitle } from "@/client/src/hooks/index.ts";
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import type { InviteKind } from "@/client/src/lib/invites.ts";
 
@@ -49,27 +57,28 @@ interface InviteStateCardProps {
   title: string;
 }
 
+/** An invite's column: its card stands alone, centred, deeper under the app bar than a page's content */
+const COLUMN_SX = { py: { xs: 4, sm: 8 } } as const;
+
 function InviteStateCard({ icon, title, children, action }: InviteStateCardProps) {
   return (
-    <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
-      <Card>
-        <CardContent sx={{ textAlign: "center", py: { xs: 3, sm: 6 } }}>
-          <Stack spacing={2}>
-            <Box>{icon}</Box>
-            <Stack spacing={3}>
-              <Box>
-                <Typography variant="h5" component="h1" gutterBottom>
-                  {title}
-                </Typography>
-                <Typography variant="body1" sx={{ color: "text.secondary" }}>
-                  {children}
-                </Typography>
-              </Box>
-              {action && <Box>{action}</Box>}
-            </Stack>
+    <Container maxWidth="sm" sx={COLUMN_SX}>
+      <Panel sx={{ textAlign: "center" }}>
+        <Stack spacing={2}>
+          <Box>{icon}</Box>
+          <Stack spacing={3}>
+            <Box>
+              <Typography variant="h5" component="h1" gutterBottom>
+                {title}
+              </Typography>
+              <Typography variant="body1" sx={{ color: "text.secondary" }}>
+                {children}
+              </Typography>
+            </Box>
+            {action && <Box>{action}</Box>}
           </Stack>
-        </CardContent>
-      </Card>
+        </Stack>
+      </Panel>
     </Container>
   );
 }
@@ -117,7 +126,7 @@ export function InviteLandingPage({
 
   if (isLoading) {
     return (
-      <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
+      <Container maxWidth="sm" sx={COLUMN_SX}>
         <PageLoader />
       </Container>
     );
@@ -125,8 +134,12 @@ export function InviteLandingPage({
 
   if (error && !invite) {
     return (
-      <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
-        <LoadError what="Invitation" error={error} />
+      <Container maxWidth="sm" sx={COLUMN_SX}>
+        <PageError
+          message={loadFailureMessage("Invitation", error)}
+          backLabel="Back to Dashboard"
+          backTo="/dashboard"
+        />
       </Container>
     );
   }
@@ -171,7 +184,7 @@ export function InviteLandingPage({
   if (!isAnswering && invite.status !== "Pending") {
     return (
       <InviteStateCard
-        icon={<Chip label={invite.status} color={invite.status === "Rejected" ? "error" : "default"} size="medium" />}
+        icon={<StatusChip label={invite.status} color={invite.status === "Rejected" ? "error" : "default"} />}
         title={`Invitation ${invite.status}`}
         action={goToDashboard}
       >
@@ -182,53 +195,51 @@ export function InviteLandingPage({
 
   return (
     <PageTransition>
-      <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
-        <Card>
-          <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-            <Stack spacing={3}>
-              <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                <Avatar sx={{ width: 56, height: 56 }}>
-                  <Icon />
-                </Avatar>
-                <Stack>
-                  <Stack spacing={0.5}>
-                    <Typography variant="h5" component="h1">
-                      {name}
-                    </Typography>
-                    {invite.role && (
-                      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                          Invited as
-                        </Typography>
-                        <Chip label={invite.role} size="small" variant="outlined" />
-                      </Stack>
-                    )}
-                  </Stack>
-                  {invite.invitedAt && (
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      Invited on {formatDate(invite.invitedAt)}
-                    </Typography>
+      <Container maxWidth="sm" sx={COLUMN_SX}>
+        <Panel>
+          <Stack spacing={3}>
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Avatar sx={{ width: 56, height: 56 }}>
+                <Icon />
+              </Avatar>
+              <Stack>
+                <Stack spacing={0.5}>
+                  <Typography variant="h5" component="h1">
+                    {name}
+                  </Typography>
+                  {invite.role && (
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                        Invited as
+                      </Typography>
+                      <RoleChip label={invite.role} />
+                    </Stack>
                   )}
                 </Stack>
-              </Stack>
-
-              <Stack spacing={4}>
-                <Typography variant="body1">{description}</Typography>
-
-                <InviteActionButtons
-                  prominent
-                  onAccept={() =>
-                    acceptMutation.mutate(answer, {
-                      onSuccess: () => navigate(entityId ? entityPath(entityId) : listPath),
-                    })
-                  }
-                  onReject={() => rejectMutation.mutate(answer, { onSuccess: () => navigate("/dashboard") })}
-                  pending={acceptMutation.isPending ? "accept" : rejectMutation.isPending ? "reject" : null}
-                />
+                {invite.invitedAt && (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    Invited on {formatDate(invite.invitedAt)}
+                  </Typography>
+                )}
               </Stack>
             </Stack>
-          </CardContent>
-        </Card>
+
+            <Stack spacing={4}>
+              <Typography variant="body1">{description}</Typography>
+
+              <InviteActionButtons
+                prominent
+                onAccept={() =>
+                  acceptMutation.mutate(answer, {
+                    onSuccess: () => navigate(entityId ? entityPath(entityId) : listPath),
+                  })
+                }
+                onReject={() => rejectMutation.mutate(answer, { onSuccess: () => navigate("/dashboard") })}
+                pending={acceptMutation.isPending ? "accept" : rejectMutation.isPending ? "reject" : null}
+              />
+            </Stack>
+          </Stack>
+        </Panel>
       </Container>
     </PageTransition>
   );

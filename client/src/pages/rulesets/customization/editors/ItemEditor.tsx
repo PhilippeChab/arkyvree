@@ -1,6 +1,6 @@
-import { Chip } from "@mui/material";
 import { parseResponse } from "hono/client";
 
+import { ValueChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -54,10 +54,10 @@ export function ItemEditor({
       description={item.description}
       chips={
         <>
-          {item.type && <Chip label={item.type} size="small" color="secondary" sx={{ fontWeight: 600 }} />}
-          {item.slot && <Chip label={item.slot} size="small" color="info" variant="outlined" />}
-          {cost && <Chip label={cost} size="small" variant="outlined" />}
-          {weight && <Chip label={weight} size="small" variant="outlined" />}
+          {item.type && <ValueChip label={item.type} />}
+          {item.slot && <ValueChip label={item.slot} color="info" />}
+          {cost && <ValueChip label={cost} color="default" />}
+          {weight && <ValueChip label={weight} color="default" />}
         </>
       }
       edit={

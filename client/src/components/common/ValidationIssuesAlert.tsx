@@ -41,7 +41,7 @@ export function ValidationIssuesAlert({
         onProceed && (
           <Button
             size="small"
-            variant="outlined"
+            variant="contained"
             color="warning"
             onClick={onProceed}
             disabled={pending}

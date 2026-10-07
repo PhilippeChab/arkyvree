@@ -18,7 +18,7 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
-import { ArchiveIcon, AutoStoriesIcon, CampaignIcon, GroupIcon } from "@/client/src/components/icons/index.ts";
+import { ArchiveIcon, CampaignIcon, PlayersIcon, RulesetIcon } from "@/client/src/components/icons/index.ts";
 import { useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
@@ -64,7 +64,7 @@ export default function CampaignsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <Stack spacing={4}>
           <PageHeader
             variant="tinted"
@@ -73,82 +73,83 @@ export default function CampaignsPage() {
             action={!isDemo && createButton("Create New Campaign")}
           />
 
-          <SearchBar
-            {...searchBarProps}
-            searchPlaceholder="Search campaigns…"
-            filterOptions={CAMPAIGN_FILTER_OPTIONS}
-            filterValue={view}
-            onFilterChange={(value) => updateSearchParams({ view: value })}
-            sortOptions={CAMPAIGN_SORT_OPTIONS}
-          />
+          <Stack spacing={3}>
+            <SearchBar
+              {...searchBarProps}
+              searchPlaceholder="Search campaigns…"
+              filterOptions={CAMPAIGN_FILTER_OPTIONS}
+              filterValue={view}
+              onFilterChange={(value) => updateSearchParams({ view: value })}
+              sortOptions={CAMPAIGN_SORT_OPTIONS}
+            />
 
-          <ListPageResults
-            list={campaigns}
-            what="Campaigns"
-            search={search}
-            loadMoreLabel="Load More Campaigns"
-            empty={
-              view === "archived" ? (
-                <BlankState
-                  icon={ArchiveIcon}
-                  title="No archived campaigns"
-                  description="Campaigns you archive will appear here. You can restore them at any time."
-                  action={
-                    <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
-                      View Active Campaigns
-                    </Button>
-                  }
-                />
-              ) : (
-                <BlankState
-                  icon={CampaignIcon}
-                  title="No campaigns yet"
-                  description={
-                    isDemo
-                      ? "Sign up to create campaigns and run multiplayer sessions."
-                      : "Create your first campaign to start organizing your adventures"
-                  }
-                  action={!isDemo && createButton("Create Your First Campaign")}
-                />
-              )
-            }
-          >
-            <ListCardGrid>
-              {campaigns.items.map((campaign, index) => {
-                const players = formatCount(campaign.currentPlayers, "player");
-                return (
-                  <ListCard
-                    key={campaign.id}
-                    isArchived={view === "archived"}
-                    animationIndex={index}
-                    animationOffset={campaigns.offset}
-                    onClick={() => navigate(`/campaigns/${campaign.id}`)}
-                    onMouseEnter={() => prefetchCampaign(campaign.id)}
-                    onFocus={() => prefetchCampaign(campaign.id)}
-                    avatarTone="secondary"
-                    title={campaign.name}
-                    description={campaign.description}
-                    pills={
-                      <>
-                        <InfoPill
-                          icon={GroupIcon}
-                          label={players}
-                          color="info"
-                          tooltip={`${players} in this campaign`}
-                        />
-                        <InfoPill
-                          icon={AutoStoriesIcon}
-                          label={campaign.rulesetName}
-                          color="secondary"
-                          tooltip={campaign.rulesetName}
-                        />
-                      </>
+            <ListPageResults
+              list={campaigns}
+              what="Campaigns"
+              search={search}
+              empty={
+                view === "archived" ? (
+                  <BlankState
+                    icon={ArchiveIcon}
+                    title="No archived campaigns"
+                    description="Campaigns you archive will appear here. You can restore them at any time."
+                    action={
+                      <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
+                        View Active Campaigns
+                      </Button>
                     }
                   />
-                );
-              })}
-            </ListCardGrid>
-          </ListPageResults>
+                ) : (
+                  <BlankState
+                    icon={CampaignIcon}
+                    title="No campaigns yet"
+                    description={
+                      isDemo
+                        ? "Sign up to create campaigns and run multiplayer sessions."
+                        : "Create your first campaign to start organizing your adventures"
+                    }
+                    action={!isDemo && createButton("Create Your First Campaign")}
+                  />
+                )
+              }
+            >
+              <ListCardGrid>
+                {campaigns.items.map((campaign, index) => {
+                  const players = formatCount(campaign.currentPlayers, "player");
+                  return (
+                    <ListCard
+                      key={campaign.id}
+                      isArchived={view === "archived"}
+                      animationIndex={index}
+                      animationOffset={campaigns.offset}
+                      onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                      onMouseEnter={() => prefetchCampaign(campaign.id)}
+                      onFocus={() => prefetchCampaign(campaign.id)}
+                      avatarTone="secondary"
+                      title={campaign.name}
+                      description={campaign.description}
+                      pills={
+                        <>
+                          <InfoPill
+                            icon={PlayersIcon}
+                            label={players}
+                            color="info"
+                            tooltip={`${players} in this campaign`}
+                          />
+                          <InfoPill
+                            icon={RulesetIcon}
+                            label={campaign.rulesetName}
+                            color="secondary"
+                            tooltip={campaign.rulesetName}
+                          />
+                        </>
+                      }
+                    />
+                  );
+                })}
+              </ListCardGrid>
+            </ListPageResults>
+          </Stack>
         </Stack>
 
         {createDialog.target && (

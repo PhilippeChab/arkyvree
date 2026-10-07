@@ -6,20 +6,30 @@
  *   record state of its own, and one that keeps state of its own mounts with that record (`{dialog.target && …}`) and
  *   lets it go once faded.
  * - `menus`: a menu lists its items alone (a panel that opens from a button is a `Popover`), and an action in it is an
- *   `ActionMenuItem`; a `MenuItem` is one of several to choose, marked `selected`.
+ *   `ActionMenuItem`, one line each; a `MenuItem` is one of several to choose, marked `selected`. A menu is sized by
+ *   its items and opens where MUI puts it (no width, no anchor of its own), and its delete is "Delete Permanently".
  * - `pending-buttons`: a button that starts a request shows it running: its label in a `DiceSpinner`, disabled the
  *   while.
- * - `page-errors`: a page that couldn't load says why in `loadFailureMessage`'s words.
+ * - `page-errors`: a page that couldn't load shows a `PageError`, never an alert of its own: it says why in
+ *   `loadFailureMessage`'s words, and its way back is named for where it goes ("Back to Ruleset").
+ * - `pickers`: a picker whose options load says so in its open list (`loading`: "Loading…"), never with a spinner in
+ *   its field.
  * - `query-errors`: what reads a query shows its failure too: it reads `error` with its `data` (a listbox's `items`).
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-import { calleeName, elementName, hasAttribute, inClient, parentElement } from "./jsx.mjs";
+import { calleeName, childElements, elementName, hasAttribute, inClient, parentElement } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
 /** What a `Menu` holds: its items, and the dividers between them */
 const MENU_CHILDREN = new Set(["ActionMenuItem", "Divider", "MenuItem"]);
+
+/** What would size or place a `Menu` of its own: its items size it, MUI places it under what opened it */
+const MENU_PLACEMENTS = ["PaperProps", "anchorOrigin", "slotProps", "sx", "transformOrigin"];
+
+/** What a page shows when it couldn't load: its `PageError`, or an entity page's, in its column */
+const PAGE_ERRORS = new Set(["EntityPageError", "PageError"]);
 
 /**
  * The hooks that read a query: TanStack's, and the app's that hand on its result (`items` for a listbox's). An image's
@@ -44,23 +54,6 @@ function attribute(element, name) {
 /** What a JSX attribute holds: its expression, or its string. */
 function attributeValue(found) {
   return found?.value?.type === "JSXExpressionContainer" ? found.value.expression : found?.value;
-}
-
-/** The elements a JSX element holds: its own, those of its fragments, and those its conditions show. */
-function childElements(node) {
-  return node.children.flatMap((child) => {
-    if (child.type === "JSXElement") return [child];
-    if (child.type === "JSXFragment") return childElements(child);
-    if (child.type !== "JSXExpressionContainer") return [];
-    const { expression } = child;
-    const branches =
-      expression.type === "LogicalExpression"
-        ? [expression.right]
-        : expression.type === "ConditionalExpression"
-          ? [expression.consequent, expression.alternate]
-          : [expression];
-    return branches.filter((branch) => branch.type === "JSXElement");
-  });
 }
 
 /** The condition a JSX element shows on, when it sits on one: `cond && <X />`, `cond ? <X /> : …`. */
@@ -159,6 +152,19 @@ function createMenus(context) {
           message: "A menu lists its items alone: a panel that opens from a button is a `Popover`.",
         });
       }
+      if (name === "Menu" && MENU_PLACEMENTS.some((placement) => hasAttribute(node, placement))) {
+        context.report({
+          node: node.openingElement,
+          message: "A menu is sized by its items and opens where MUI puts it: no width, no anchor of its own.",
+        });
+      }
+      const label = attributeValue(attribute(node, "label"));
+      if (name === "ActionMenuItem" && label?.type === "Literal" && label.value === "Delete") {
+        context.report({
+          node: node.openingElement,
+          message: "A menu's delete says it can't be undone, as Archive can: \"Delete Permanently\".",
+        });
+      }
       if (name !== "MenuItem" || hasAttribute(node, "selected")) return;
       for (let p = parentElement(node); p; p = parentElement(p)) {
         if (elementName(p) !== "Menu") continue;
@@ -178,13 +184,35 @@ function createPageErrors(context) {
   if (!inClient(context)) return {};
   return {
     JSXAttribute(node) {
-      if (node.name.name !== "message" || elementName(node.parent.parent) !== "PageError") return;
+      const element = elementName(node.parent.parent);
+      // Its way back names where it goes: "Back to Ruleset", never a bare "Back"
+      if (node.name.name === "backLabel" && PAGE_ERRORS.has(element)) {
+        const label = attributeValue(node);
+        if (label?.type !== "Literal" || label.value.startsWith("Back to ")) return;
+        context.report({
+          node,
+          message: 'A page error\'s way back is named for where it goes: `backLabel="Back to Ruleset"`.',
+        });
+        return;
+      }
+      if (node.name.name !== "message" || element !== "PageError") return;
       if (worded(attributeValue(node))) return;
       context.report({
         node,
         message:
           "A page that couldn't load says why in `loadFailureMessage`'s words (`loadFailureMessage(\"Campaign\", " +
           "error)`): not found, no access, or failed.",
+      });
+    },
+    JSXElement(node) {
+      // What a page shows in its place: a strip of its own leaves no way out
+      const name = elementName(node);
+      if ((name !== "LoadError" && name !== "Alert") || elementName(parentElement(node) ?? node) !== "Container")
+        return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "A page that couldn't load shows a `PageError` (its reason and its way back), never an alert of its own.",
       });
     },
   };
@@ -207,6 +235,35 @@ function createPendingButtons(context) {
         message:
           'A button that starts a request shows it running: its label in `<DiceSpinner size="small" loading={…}>`, ' +
           "disabled the while.",
+      });
+    },
+  };
+}
+
+function createPickers(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXElement(node) {
+      const name = elementName(node);
+      if (name === "DiceSpinner" && inPickerField(node)) {
+        context.report({
+          node: node.openingElement,
+          message:
+            'A picker says it\'s loading in its open list (its `loading`: "Loading…"), never with a spinner in its field.',
+        });
+        return;
+      }
+      if (name !== "Autocomplete") return;
+      // Options a query loads: it says why there are none (`emptyOptionsText`), and that they're coming
+      const noOptions = attributeValue(attribute(node, "noOptionsText"));
+      const loads = noOptions?.type === "CallExpression" && calleeName(noOptions) === "emptyOptionsText";
+      const spreads = node.openingElement.attributes.some((a) => a.type === "JSXSpreadAttribute");
+      if (!loads || spreads || hasAttribute(node, "loading")) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "A picker whose options load says so in its open list: its `loading`, beside its `noOptionsText`, which " +
+          "would say there are none.",
       });
     },
   };
@@ -248,6 +305,15 @@ function holdsSpinner(element) {
   );
 }
 
+/** Whether a node sits in a picker's field: an `Autocomplete`'s `renderInput`, or an input's adornment. */
+function inPickerField(node) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (p.type === "JSXAttribute" && p.name.name === "renderInput") return true;
+    if (p.type === "Property" && ["endAdornment", "startAdornment"].includes(p.key?.name)) return true;
+  }
+  return false;
+}
+
 /** Whether an expression is `null` or `undefined`. */
 function isNull(node) {
   return (node.type === "Literal" && node.value === null) || (node.type === "Identifier" && node.name === "undefined");
@@ -271,5 +337,6 @@ export default {
   menus: { meta: { type: "suggestion" }, create: createMenus },
   "page-errors": { meta: { type: "suggestion" }, create: createPageErrors },
   "pending-buttons": { meta: { type: "suggestion" }, create: createPendingButtons },
+  pickers: { meta: { type: "suggestion" }, create: createPickers },
   "query-errors": { meta: { type: "suggestion" }, create: createQueryErrors },
 };

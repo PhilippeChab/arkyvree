@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { type ReactNode, useState } from "react";
@@ -9,9 +9,15 @@ import {
   DiceSpinner,
   HelpLabel,
   type SectionTab,
+  SectionTabPanel,
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
-import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
+import {
+  MODIFIERS_HELP,
+  PROPERTIES_HELP,
+  REQUIREMENTS_HELP,
+  TargetPathBreadcrumbs,
+} from "@/client/src/components/customization/index.ts";
 import { ModifiersIcon, PropertiesIcon, RequirementsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
@@ -23,7 +29,8 @@ import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
+import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import {
   buildCustomizationPath,
@@ -67,32 +74,17 @@ const TABS: SectionTab<TabSection>[] = [
   {
     key: "properties",
     icon: PropertiesIcon,
-    label: (
-      <HelpLabel
-        label="Properties"
-        help="Properties are additional attributes that can be applied to entities, providing extra characteristics or metadata."
-      />
-    ),
+    label: <HelpLabel label="Properties" help={PROPERTIES_HELP} />,
   },
   {
     key: "modifiers",
     icon: ModifiersIcon,
-    label: (
-      <HelpLabel
-        label="Modifiers"
-        help="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc."
-      />
-    ),
+    label: <HelpLabel label="Modifiers" help={MODIFIERS_HELP} />,
   },
   {
     key: "requirements",
     icon: RequirementsIcon,
-    label: (
-      <HelpLabel
-        label="Requirements"
-        help="Requirements are conditions that entities must meet to be usable/available. Examples include character level requirements, feat prerequisites, etc."
-      />
-    ),
+    label: <HelpLabel label="Requirements" help={REQUIREMENTS_HELP} />,
   },
 ];
 
@@ -215,7 +207,7 @@ function CustomizationView({
           aria-label="Customization Tabs"
         />
 
-        <Box role="tabpanel" sx={{ py: 3 }}>
+        <SectionTabPanel>
           {/* The source's customizations don't belong to the copy: wait for it. */}
           {locked ? (
             <DiceSpinner sx={{ py: 4 }} />
@@ -231,7 +223,7 @@ function CustomizationView({
               queryKeysToInvalidate={klassLevelsKey ? [entityKey, klassLevelsKey] : [entityKey]}
             />
           )}
-        </Box>
+        </SectionTabPanel>
       </Stack>
 
       <DeleteDialog

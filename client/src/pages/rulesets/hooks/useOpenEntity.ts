@@ -1,24 +1,7 @@
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { isRecord } from "@/shared/isRecord.ts";
-
-/** The router state a ruleset entity's page is opened with. */
-interface EntityPageState {
-  /** Set when a copy-on-write moved the page from this entity to its copy. */
-  copiedFrom?: string;
-  /** The list to go back to. */
-  from?: string;
-}
-
-/** Reads an entity page's router state; anything else in it is ignored. */
-export function entityPageState(state: unknown): EntityPageState {
-  if (!isRecord(state)) return {};
-  return {
-    ...(typeof state.from === "string" && { from: state.from }),
-    ...(typeof state.copiedFrom === "string" && { copiedFrom: state.copiedFrom }),
-  };
-}
+import type { EntityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 
 /** Opens a ruleset entity's page ("feats/:id/customization"), with the current list as its Back. */
 export function useOpenEntity(rulesetId: string) {

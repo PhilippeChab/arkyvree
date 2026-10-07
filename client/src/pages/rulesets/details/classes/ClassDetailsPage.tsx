@@ -1,18 +1,27 @@
-import { Box, Chip, MenuItem, Stack, TextField } from "@mui/material";
+import { MenuItem, Stack, TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { DeleteDialog, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
+import {
+  DeleteDialog,
+  HelpLabel,
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  ValueChip,
+} from "@/client/src/components/common/index.ts";
+import { MODIFIERS_HELP, PROPERTIES_HELP, REQUIREMENTS_HELP } from "@/client/src/components/customization/index.ts";
 import {
   FeatPoolsIcon,
   ModifiersIcon,
+  PowersIcon,
   PropertiesIcon,
   RequirementsIcon,
   SkillsIcon,
-  SpellListIcon,
   SpellsIcon,
+  SpellUsesIcon,
   TrendingUpIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -35,7 +44,8 @@ import {
 import { propertiesQuery } from "@/client/src/pages/rulesets/customization/customizationQueries.ts";
 import { useCopyFollow } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
+import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
@@ -72,11 +82,11 @@ const TABS: SectionTab<ClassSection>[] = [
   { key: "skills", label: "Skills", icon: SkillsIcon },
   { key: "feat-pools", label: "Feat Pools", icon: FeatPoolsIcon },
   { key: "spells-known", label: "Spells Known", icon: SpellsIcon },
-  { key: "spells", label: "Spell Uses", icon: SpellsIcon },
-  { key: "spell-list", label: "Spells", icon: SpellListIcon },
-  { key: "properties", label: "Properties", icon: PropertiesIcon },
-  { key: "modifiers", label: "Modifiers", icon: ModifiersIcon },
-  { key: "requirements", label: "Requirements", icon: RequirementsIcon },
+  { key: "spells", label: "Spell Uses", icon: SpellUsesIcon },
+  { key: "spell-list", label: "Spells", icon: PowersIcon },
+  { key: "properties", label: <HelpLabel label="Properties" help={PROPERTIES_HELP} />, icon: PropertiesIcon },
+  { key: "modifiers", label: <HelpLabel label="Modifiers" help={MODIFIERS_HELP} />, icon: ModifiersIcon },
+  { key: "requirements", label: <HelpLabel label="Requirements" help={REQUIREMENTS_HELP} />, icon: RequirementsIcon },
 ];
 
 function isClassSection(section: string | undefined): section is ClassSection {
@@ -105,7 +115,7 @@ export default function ClassDetailsPage() {
     id: string;
     section?: string;
   }>();
-  const backUrl = entityPageState(location.state).from ?? `/rulesets/${rulesetId}/classes`;
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/classes`);
   const currentTab: ClassSection = isClassSection(section) ? section : "levels";
   // The bonus spell and caster type selects write the class's properties: a copy they make is followed, as its
   // Properties tab's saves are
@@ -172,7 +182,7 @@ export default function ClassDetailsPage() {
     onSuccess: () => {
       invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, "classes")]);
       snackbar.success("Class deleted");
-      navigate(backUrl);
+      navigate(back.to);
       // Gone, with its tabs: don't let Back render them from the cache
       queryClient.removeQueries({ queryKey: classDetailQuery(rulesetId, classId).queryKey });
     },
@@ -223,8 +233,8 @@ export default function ClassDetailsPage() {
     return (
       <EntityPageError
         message={!ruleset ? loadFailureMessage("Ruleset", rulesetError) : loadFailureMessage("Class", classError)}
-        backLabel="Back"
-        backTo={backUrl}
+        backLabel={back.label}
+        backTo={back.to}
       />
     );
   }
@@ -237,7 +247,7 @@ export default function ClassDetailsPage() {
       <EntityDetailLayout
         entityName={classData?.name}
         rulesetName={ruleset?.name}
-        backTo={backUrl}
+        backTo={back.to}
         canDelete={canEdit}
         onDelete={() => setDeleteDialogOpen(true)}
         isLoading={isLoading}
@@ -249,12 +259,10 @@ export default function ClassDetailsPage() {
               description={classData.description}
               chips={
                 <>
-                  <Chip label={`Hit Die: d${classData.hd || 8}`} color="secondary" sx={{ fontWeight: 600 }} />
-                  {bonusSpellAbility && (
-                    <Chip label={`Bonus Spells: ${bonusSpellAbility.name}`} color="info" variant="outlined" />
-                  )}
+                  <ValueChip label={`Hit Die: d${classData.hd || 8}`} />
+                  {bonusSpellAbility && <ValueChip label={`Bonus Spells: ${bonusSpellAbility.name}`} color="info" />}
                   {classData.casterTypeValue && (
-                    <Chip label={`Caster Type: ${classData.casterTypeValue}`} color="info" variant="outlined" />
+                    <ValueChip label={`Caster Type: ${classData.casterTypeValue}`} color="info" />
                   )}
                 </>
               }
@@ -318,9 +326,9 @@ export default function ClassDetailsPage() {
                 aria-label="Class Details Tabs"
               />
 
-              <Box role="tabpanel">
+              <SectionTabPanel>
                 <Section rulesetId={rulesetId} classId={classId} className={classData.name} ruleset={ruleset} />
-              </Box>
+              </SectionTabPanel>
             </Stack>
           </>
         )}

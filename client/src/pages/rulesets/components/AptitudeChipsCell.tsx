@@ -1,6 +1,6 @@
-import { Chip, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
-import { EmptyValue } from "@/client/src/components/common/index.ts";
+import { EmptyValue, ValueChip } from "@/client/src/components/common/index.ts";
 
 interface AptitudeChipsCellProps {
   links: AptitudeLink[] | null | undefined;
@@ -24,13 +24,7 @@ export function AptitudeChipsCell({ links }: AptitudeChipsCellProps) {
   return (
     <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
       {links.toSorted(byListName).map((link) => (
-        <Chip
-          key={link.aptitudeId}
-          label={link.aptitudesInRule?.name || "Unknown"}
-          size="small"
-          color="primary"
-          variant="outlined"
-        />
+        <ValueChip key={link.aptitudeId} label={link.aptitudesInRule?.name || "Unknown"} />
       ))}
     </Stack>
   );

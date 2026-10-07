@@ -1,14 +1,12 @@
 import {
   Autocomplete,
   Box,
-  Chip,
   DialogContent,
   DialogTitle,
   Menu,
   MenuItem,
   Stack,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +20,7 @@ import {
   BlankState,
   DialogFooter,
   DiceSpinner,
-  faqTooltip,
+  HelpLabel,
   ListCard,
   ListCardGrid,
   LoadError,
@@ -32,6 +30,7 @@ import {
   ScrollSafeListbox,
   SearchBar,
   SectionContent,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { CharacterIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -143,17 +142,16 @@ function CharacterCard({
       description={character.description}
       action={
         <>
-          <Chip
+          <ValueChip
+            color="default"
             label={
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                 <span>{character.visibility}</span>
                 <VisibilityIcon sx={{ fontSize: 14 }} />
               </Stack>
             }
-            size="small"
-            variant="outlined"
+
             onClick={canEditVisibility ? menu.openMenu : undefined}
-            sx={{ fontWeight: 500, fontSize: "0.7rem", cursor: canEditVisibility ? "pointer" : undefined }}
           />
           {canEditVisibility && (
             <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
@@ -225,7 +223,7 @@ function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharac
     <Modal open={open} onClose={onClose} slotProps={{ transition: { onExited } }}>
       <DialogTitle>Link Character to Campaign</DialogTitle>
       <DialogContent>
-        <Stack spacing={3} sx={{ pt: 2 }}>
+        <Stack spacing={3} sx={{ pt: 1 }}>
           <Autocomplete
             options={unlinkedCharacters}
             getOptionLabel={(option) => option.name}
@@ -258,7 +256,12 @@ function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharac
             <TextField
               select
               fullWidth
-              label="Visibility"
+              label={
+                <HelpLabel
+                  label="Visibility"
+                  help="Controls how much of your character sheet other campaign members can see."
+                />
+              }
               value={visibility}
               onChange={(e) => setVisibility(oneOf(e.target.value, VISIBILITY_OPTIONS, visibility))}
             >
@@ -273,18 +276,6 @@ function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharac
                 </MenuItem>
               ))}
             </TextField>
-            <Tooltip
-              describeChild
-              title={faqTooltip("Controls how much of your character sheet other campaign members can see.")}
-              arrow
-            >
-              <Typography
-                variant="caption"
-                sx={{ color: "text.secondary", cursor: "help", alignSelf: "flex-end", fontSize: "0.7rem" }}
-              >
-                What's this?
-              </Typography>
-            </Tooltip>
           </Stack>
         </Stack>
       </DialogContent>
@@ -334,7 +325,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
           !charactersLoadFailed &&
           (characters.items.length > 0 ? (
             // With nothing more to load, the tab ends three units below the grid, as the grid's margin left it
-            <Stack spacing={3} sx={{ pb: characters.hasNextPage ? 0 : 3 }}>
+            <Stack spacing={2} sx={{ pb: characters.hasNextPage ? 0 : 3 }}>
               <ListCardGrid>
                 {characters.items.map((character, index) => (
                   <CharacterCard
@@ -350,7 +341,6 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
               </ListCardGrid>
               <LoadMoreButton
                 size="large"
-                label="Load More Characters"
                 hasNextPage={characters.hasNextPage}
                 isFetchingNextPage={characters.isFetchingNextPage}
                 onClick={characters.loadMore}

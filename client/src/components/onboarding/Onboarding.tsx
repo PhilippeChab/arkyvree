@@ -8,18 +8,16 @@ import {
   Paper,
   Popper,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import type { Instance } from "@popperjs/core";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import { Modal } from "@/client/src/components/common/index.ts";
+import { HelpLabel, Modal } from "@/client/src/components/common/index.ts";
 import {
-  FaqIcon,
+  CampaignIcon,
+  CharacterIcon,
   HelpIcon,
-  MapIcon,
-  PersonIcon,
   RulesetIcon,
   type SvgIconComponent,
 } from "@/client/src/components/icons/index.ts";
@@ -70,19 +68,19 @@ const STEPS: OnboardingStep[] = [
     mode: "popper",
   },
   {
-    icon: PersonIcon,
+    icon: CharacterIcon,
     title: "Characters",
     description: "Create characters using any ruleset — build sheets with stats, feats, equipment, and more.",
     mode: "popper",
   },
   {
-    icon: MapIcon,
+    icon: CampaignIcon,
     title: "Campaigns",
     description: "Organize your games — create campaigns, invite players, and manage characters together.",
     mode: "popper",
   },
   {
-    icon: FaqIcon,
+    icon: HelpIcon,
     title: "Learn More",
     description: "Want to dive deeper? The {faq} covers rulesets, forking, the customization system, and more.",
     mode: "dialog",
@@ -284,24 +282,9 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
           </Typography>
 
           {step.tooltip && (
-            <Tooltip describeChild title={step.tooltip} arrow placement="top">
-              <Stack
-                direction="row"
-                spacing={0.5}
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  color: "gold.main",
-                  cursor: "help",
-                  fontSize: "0.85rem",
-                }}
-              >
-                <HelpIcon sx={{ fontSize: 18 }} />
-                <Typography variant="caption" sx={{ color: "inherit", fontWeight: 500 }}>
-                  Forking & Extensions
-                </Typography>
-              </Stack>
-            </Tooltip>
+            <Typography variant="caption" sx={{ color: "gold.main", fontWeight: 500 }}>
+              <HelpLabel label="Forking & Extensions" help={step.tooltip} />
+            </Typography>
           )}
         </Stack>
       </Stack>

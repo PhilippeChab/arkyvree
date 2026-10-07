@@ -5,8 +5,6 @@ import { Link } from "react-router-dom";
 import { DiceSpinner } from "./DiceSpinner.tsx";
 
 interface ActionMenuItemProps {
-  /** A second line under the label ("Create your own editable copy"). */
-  description?: string;
   /** An outside page it opens, in a new tab (the help center). */
   href?: string;
   icon: ElementType;
@@ -29,11 +27,10 @@ const INTENT_COLORS = {
   positive: "success.main",
 } as const;
 
-/** An item of a page's action menu: icon, label, and the intent's color. */
+/** An item of a page's action menu: its icon, its label on one line, and its intent's color. */
 export function ActionMenuItem({
   icon: Icon,
   label,
-  description,
   intent = "default",
   onClick,
   href,
@@ -51,7 +48,7 @@ export function ActionMenuItem({
       <ListItemIcon sx={{ color: color && "inherit" }}>
         {pending ? <DiceSpinner size="small" /> : <Icon fontSize="small" />}
       </ListItemIcon>
-      <ListItemText primary={label} secondary={description} />
+      <ListItemText primary={label} />
     </MenuItem>
   );
 }

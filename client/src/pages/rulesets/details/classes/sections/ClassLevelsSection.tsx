@@ -1,8 +1,8 @@
-import { Chip, Stack, Tooltip, Typography } from "@mui/material";
+import { Stack, Tooltip, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
-import { AddButton, EmptyValue, ListToolbar, LoadError } from "@/client/src/components/common/index.ts";
+import { AddButton, EmptyValue, ListToolbar, LoadError, ValueChip } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
@@ -74,7 +74,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
 
     switch (columnKey) {
       case "level":
-        return <Chip label={level.level} size="small" color="primary" />;
+        return <ValueChip label={level.level} color="primary" />;
       case "bab":
         return <Typography variant="body2">{formatSigned(level.bab)}</Typography>;
       case "skills":
@@ -91,12 +91,11 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
                     describeChild
                     key={feat.id}
                     title={feat.description || ""}
-                    arrow
                     placement="top"
                     enterDelay={300}
                     slotProps={{ tooltip: { sx: { maxWidth: 400 } } }}
                   >
-                    <Chip label={label} size="small" variant="outlined" sx={{ fontSize: "0.75rem" }} />
+                    <ValueChip color="default" label={label} />
                   </Tooltip>
                 );
               })
@@ -111,7 +110,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   };
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={3}>
       {canEdit && <ListToolbar actions={<AddButton label="Add Level" onClick={handleCreate} />} />}
 
       {!!savesError && !rulesetSaves && <LoadError what="Saves" error={savesError} />}

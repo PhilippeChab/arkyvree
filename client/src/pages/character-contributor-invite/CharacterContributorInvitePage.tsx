@@ -1,7 +1,7 @@
 import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
-import { ContributorIcon } from "@/client/src/components/icons/index.ts";
+import { ContributorsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteLandingPage } from "@/client/src/components/invites/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -15,7 +15,7 @@ export default function CharacterContributorInvitePage() {
       entityLabel="Character"
       entityPath={(id) => `/characters/${id}`}
       listPath="/characters"
-      icon={ContributorIcon}
+      icon={ContributorsIcon}
       kind="characterContributor"
       inviteId={contributorId}
       inviteFn={async () => {

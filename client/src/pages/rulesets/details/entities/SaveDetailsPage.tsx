@@ -1,8 +1,7 @@
-import { Chip } from "@mui/material";
 import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
-import { LoadError } from "@/client/src/components/common/index.ts";
+import { LoadError, ValueChip } from "@/client/src/components/common/index.ts";
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { EMPTY_SAVE, type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -34,10 +33,10 @@ export default function SaveDetailsPage() {
         removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <SaveFormFields form={form} abilities={abilities} abilitiesError={abilitiesError} />,
       }}
+      notice={!!abilitiesError && abilities.length === 0 && <LoadError what="Abilities" error={abilitiesError} />}
       renderChips={(save) => {
-        if (abilitiesError && abilities.length === 0) return <LoadError what="Abilities" error={abilitiesError} />;
         const linkedAbilityName = abilities.find((a) => a.id === save.abilityId)?.name;
-        return linkedAbilityName && <Chip label={linkedAbilityName} color="secondary" sx={{ fontWeight: 600 }} />;
+        return linkedAbilityName && <ValueChip label={linkedAbilityName} />;
       }}
     />
   );

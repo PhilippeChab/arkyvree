@@ -1,8 +1,8 @@
-import { Autocomplete, Box, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { useMemo } from "react";
 
-import { AddButton, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { CloseIcon } from "@/client/src/components/icons/index.ts";
+import { AddButton, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
+import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 
 import type { AvailableKlass } from "./levelUp/index.ts";
@@ -93,17 +93,10 @@ export function AddClassPlanStep({
       {levels.map((selectedKlass, index) =>
         selectedKlass ? (
           <Stack key={slotKeys[index]} direction="row" sx={{ height: 56, alignItems: "center" }}>
-            <Chip
+            <ValueChip
+              color="default"
               label={`${selectedKlass.name} — Level ${selectedKlass.nextLevel}`}
               onDelete={() => onRemoveLevel(index)}
-              size="medium"
-              sx={{
-                height: 46,
-                fontSize: "1rem",
-                width: "100%",
-                "& .MuiChip-label": { flex: 1, textAlign: "center" },
-                "& .MuiChip-deleteIcon": { position: "absolute", right: 8 },
-              }}
             />
           </Stack>
         ) : (
@@ -158,7 +151,7 @@ export function AddClassPlanStep({
               }}
             />
             <IconButton size="small" aria-label={`Remove Level ${index + 1}`} onClick={() => onRemoveLevel(index)}>
-              <CloseIcon fontSize="small" />
+              <DeleteIcon fontSize="small" />
             </IconButton>
           </Stack>
         ),

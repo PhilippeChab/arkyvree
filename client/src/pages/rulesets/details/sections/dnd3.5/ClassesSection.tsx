@@ -1,9 +1,15 @@
-import { Chip, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback } from "react";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  CreateDialog,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+  ValueChip,
+} from "@/client/src/components/common/index.ts";
 import { ClassesIcon } from "@/client/src/components/icons/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
@@ -82,7 +88,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
           </Typography>
         );
       case "hitDie":
-        return <Chip label={formatHitDie(klass.hd || 8)} size="small" color="secondary" variant="outlined" />;
+        return <ValueChip label={formatHitDie(klass.hd || 8)} />;
       case "description":
         return <DescriptionCell text={klass.description} />;
       default:
@@ -129,7 +135,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
         </Stack>
       </Stack>
 
-      <CreateDialog {...createDialogProps} title="Create New Class" maxWidth="xs">
+      <CreateDialog {...createDialogProps} title="Create New Class">
         <ClassFormFields form={createForm} />
       </CreateDialog>
     </SectionContent>

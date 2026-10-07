@@ -1,4 +1,4 @@
-import { Chip, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback } from "react";
@@ -9,6 +9,8 @@ import {
   LoadMoreButton,
   SearchBar,
   SectionContent,
+  StatusChip,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { SkillsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
@@ -82,11 +84,11 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
         return skill.name;
       case "ability": {
         const abilityName = rulesetAbilities.find((a) => a.id === skill.primaryAbilityId)?.name ?? "Unknown";
-        return <Chip label={abilityName} size="small" color="primary" variant="outlined" />;
+        return <ValueChip label={abilityName} />;
       }
       case "trainedOnly":
         return skill.usableWithoutTraining === false ? (
-          <Chip label="Yes" size="small" color="warning" />
+          <StatusChip label="Yes" color="warning" />
         ) : (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             No

@@ -1,8 +1,8 @@
-import { Box, DialogContent, DialogTitle, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, DialogContent, DialogContentText, DialogTitle, IconButton, Stack, Tooltip } from "@mui/material";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
 import { AddButton, DialogFooter, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
-import { CloseIcon } from "@/client/src/components/icons/index.ts";
+import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
 
@@ -50,17 +50,16 @@ export function BulkVariantsDialog({
       onClose={onClose}
       form={form}
       isLoading={isLoading}
-      maxWidth="md"
       slotProps={{ paper: { sx: { maxHeight: "85vh" } } }}
     >
       <form onSubmit={form.handleSubmit(submit)} noValidate>
         <DialogTitle>Create Variants of {baseItemName}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            <DialogContentText>
               Each variant copies the base item's cost, weight, type, and slot. You'll be able to customize them
               individually after.
-            </Typography>
+            </DialogContentText>
             <Stack spacing={3}>
               {fields.map((field, index) => (
                 <Stack key={field.id} direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
@@ -91,7 +90,7 @@ export function BulkVariantsDialog({
                         onClick={() => remove(index)}
                         disabled={fields.length === 1 || isLoading}
                       >
-                        <CloseIcon fontSize="small" />
+                        <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Box>
                   </Tooltip>

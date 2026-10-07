@@ -1,7 +1,7 @@
-import { Box, Container, Paper, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, Container, Skeleton, Stack, Typography } from "@mui/material";
 import { type ReactNode } from "react";
 
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, Panel } from "@/client/src/components/common/index.ts";
 import {
   ANIMATIONS,
   DURATION,
@@ -18,9 +18,9 @@ interface SectionProps {
 
 function Section({ index, children }: SectionProps) {
   return (
-    <Stack component={Paper} spacing={2} sx={[{ p: { xs: 2, sm: 3 } }, fadeInUpSx(index)]}>
+    <Panel spacing={2} sx={fadeInUpSx(index)}>
       {children}
-    </Stack>
+    </Panel>
   );
 }
 
@@ -29,7 +29,6 @@ export function CharacterDetailSkeleton() {
     <Container
       maxWidth="xl"
       sx={{
-        py: 2,
         animation: `${fadeIn} ${DURATION.slow}ms ${EASING.standard}`,
         [PREFERS_REDUCED_MOTION]: { animation: "none" },
       }}

@@ -390,6 +390,12 @@ export function createAppTheme(darkMode: boolean): Theme {
             },
           },
         },
+        MuiContainer: {
+          styleOverrides: {
+            // A page's column: it starts 32px under the app bar, on a phone too, and ends as far above the page's end
+            root: { paddingTop: 32, paddingBottom: 32 },
+          },
+        },
         MuiDrawer: {
           styleOverrides: {
             paper: {

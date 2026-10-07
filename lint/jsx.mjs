@@ -10,6 +10,25 @@ export function calleeName(node) {
   return null;
 }
 
+/** The elements a JSX element holds: its own, those of its fragments, and those its conditions show. */
+export function childElements(node) {
+  return node.children.flatMap((child) => {
+    if (child.type === "JSXElement") return [child];
+    if (child.type === "JSXFragment") return childElements(child);
+    if (child.type !== "JSXExpressionContainer") return [];
+    const { expression } = child;
+    const branches =
+      expression.type === "LogicalExpression"
+        ? [expression.right]
+        : expression.type === "ConditionalExpression"
+          ? [expression.consequent, expression.alternate]
+          : [expression];
+    return branches
+      .map((branch) => (branch.type === "ParenthesizedExpression" ? branch.expression : branch))
+      .filter((branch) => branch.type === "JSXElement");
+  });
+}
+
 /** A JSX element's name: `IconButton`, `Dialog`; null for a member (`step.icon`) or a namespaced one. */
 export function elementName(node) {
   return node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;

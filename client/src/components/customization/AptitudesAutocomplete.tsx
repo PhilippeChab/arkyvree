@@ -1,8 +1,9 @@
-import { Autocomplete, Chip, TextField } from "@mui/material";
+import { Autocomplete, TextField } from "@mui/material";
 import { type InferResponseType } from "hono/client";
 import { type Ref } from "react";
 import type { FieldError } from "react-hook-form";
 
+import { ValueChip } from "@/client/src/components/common/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type rpc } from "@/client/src/services/rpc.ts";
 
@@ -97,7 +98,7 @@ export function AptitudesAutocomplete({
       renderValue={(tagValue, getItemProps) =>
         tagValue.map((option, index) => {
           const { key, ...chipProps } = getItemProps({ index });
-          return <Chip key={key} label={option.name} size="small" {...chipProps} />;
+          return <ValueChip color="default" key={key} label={option.name} {...chipProps} />;
         })
       }
       renderInput={(params) => (

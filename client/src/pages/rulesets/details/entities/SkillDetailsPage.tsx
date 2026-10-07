@@ -1,8 +1,7 @@
-import { Chip } from "@mui/material";
 import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
-import { LoadError } from "@/client/src/components/common/index.ts";
+import { LoadError, StatusChip, ValueChip } from "@/client/src/components/common/index.ts";
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import {
   EMPTY_SKILL,
@@ -41,22 +40,21 @@ export default function SkillDetailsPage() {
         removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <SkillFormFields form={form} abilities={abilities} abilitiesError={abilitiesError} />,
       }}
+      notice={!!abilitiesError && abilities.length === 0 && <LoadError what="Abilities" error={abilitiesError} />}
       renderChips={(skill) => {
         const primaryAbilityName = abilities.find((a) => a.id === skill.primaryAbilityId)?.name;
         return (
           <>
-            {!!abilitiesError && abilities.length === 0 && <LoadError what="Abilities" error={abilitiesError} />}
-            {primaryAbilityName && <Chip label={primaryAbilityName} color="secondary" sx={{ fontWeight: 600 }} />}
-            {!skill.usableWithoutTraining && <Chip label="Trained Only" color="warning" />}
+            {primaryAbilityName && <ValueChip label={primaryAbilityName} />}
+            {!skill.usableWithoutTraining && <StatusChip label="Trained Only" color="warning" />}
             {skill.impactedByWeight && (
-              <Chip
+              <ValueChip
                 label={
                   skill.checkPenaltyMultiplier > 1
                     ? `Weight Penalty ×${skill.checkPenaltyMultiplier}`
                     : "Weight Penalty"
                 }
                 color="info"
-                variant="outlined"
               />
             )}
           </>

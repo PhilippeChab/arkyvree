@@ -1,21 +1,9 @@
-import {
-  Box,
-  Chip,
-  IconButton,
-  List,
-  ListItemButton,
-  ListItemText,
-  Skeleton,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { IconButton, List, ListItemButton, ListItemText, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { type Ref, useMemo, useState } from "react";
 
-import { BlankNote, DiceSpinner, LoadError, NextPageSpinner } from "@/client/src/components/common/index.ts";
-import { ChevronRightIcon, ClearIcon, FilterListIcon, PublicIcon } from "@/client/src/components/icons/index.ts";
+import { BlankNote, LoadError, NextPageSpinner, ValueChip } from "@/client/src/components/common/index.ts";
+import { ChevronRightIcon, ClearIcon, FilterIcon, PublicIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { firstPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -145,13 +133,11 @@ export function TargetPathBrowser({
         {breadcrumbSegments.map((segment, index) => (
           <Stack key={index} direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
             {index > 0 && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
-            <Chip
+            <ValueChip
               label={segmentLabels[segment] || formatSegment(segment)}
-              size="small"
-              variant="filled"
+
               color={isComplete ? "success" : "info"}
               onClick={disabled ? undefined : () => handleBreadcrumbClick(index)}
-              sx={{ cursor: disabled ? "default" : "pointer" }}
             />
           </Stack>
         ))}
@@ -163,12 +149,12 @@ export function TargetPathBrowser({
             </IconButton>
           </Stack>
         )}
-        {breadcrumbSegments.length === 0 && <Skeleton variant="rounded" width={100} height={24} />}
+        {breadcrumbSegments.length === 0 && <BlankNote>No path picked yet</BlankNote>}
       </Stack>
       {/* Search + List */}
       {!disabled && (
         <>
-          <Stack direction="row" spacing={0.5} sx={{ position: "relative", alignItems: "center" }}>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
             <TextField
               size="small"
               placeholder="Search…"
@@ -184,7 +170,6 @@ export function TargetPathBrowser({
                   ? "Searching everywhere — click to limit to this level"
                   : "Searching this level only — click to search everywhere"
               }
-              arrow
             >
               <IconButton
                 size="small"
@@ -193,16 +178,9 @@ export function TargetPathBrowser({
                 aria-label="Search Everywhere"
                 aria-pressed={searchEverywhere}
               >
-                {searchEverywhere ? <PublicIcon fontSize="small" /> : <FilterListIcon fontSize="small" />}
+                {searchEverywhere ? <PublicIcon fontSize="small" /> : <FilterIcon fontSize="small" />}
               </IconButton>
             </Tooltip>
-            {isLoading && (
-              <Box
-                sx={{ position: "absolute", top: "50%", left: "calc(50% - 24px)", transform: "translate(-50%, -50%)" }}
-              >
-                <DiceSpinner size="small" />
-              </Box>
-            )}
           </Stack>
           <List
             dense
@@ -229,14 +207,7 @@ export function TargetPathBrowser({
                       .join(" › ")
                   : null;
               return (
-                <Tooltip
-                  describeChild
-                  title={option.detail}
-                  placement="right"
-                  enterDelay={400}
-                  arrow
-                  key={option.insertText}
-                >
+                <Tooltip describeChild title={option.detail} placement="right" enterDelay={400} key={option.insertText}>
                   <ListItemButton selected={isSelected} onClick={() => handleNavigate(option)}>
                     <ListItemText
                       primary={
@@ -258,6 +229,7 @@ export function TargetPathBrowser({
                 </Tooltip>
               );
             })}
+            {isLoading && completions.length === 0 && <BlankNote sx={{ px: 2, py: 1 }}>Loading…</BlankNote>}
             {!!error && completions.length === 0 && <LoadError what="Paths" error={error} />}
             {!error && completions.length === 0 && !isLoading && (
               <BlankNote sx={{ px: 2, py: 1 }}>No results</BlankNote>

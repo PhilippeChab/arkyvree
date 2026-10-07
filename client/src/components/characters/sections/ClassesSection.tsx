@@ -1,19 +1,18 @@
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Chip,
-  IconButton,
-  Link as MuiLink,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import { type MouseEvent } from "react";
+import { Collapse, IconButton, Link as MuiLink, Stack, Tooltip, Typography } from "@mui/material";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { BlankNote } from "@/client/src/components/common/index.ts";
-import { AddIcon, EditIcon, ExpandMoreIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
+import {
+  BlankNote,
+  ROW_ACTIONS_HOVER_SX,
+  RowAction,
+  RowActions,
+  SubsectionTitle,
+  ToggleLabel,
+  ValueChip,
+} from "@/client/src/components/common/index.ts";
+import { AddIcon, EditIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
 
 import type { CharacterData } from "./characterData.ts";
@@ -28,7 +27,84 @@ interface ClassesSectionProps {
   rulesetId?: string;
 }
 
+interface ClassGroupProps {
+  /** Its class's page, which its name links to */
+  classLink?: string;
+  klass: NonNullable<SheetClass["klass"]>;
+  /** Its levels, which the sheet carries in full */
+  levels: NonNullable<SheetClass["levels"]>;
+  onEditLevel: (editingLevel: EditingLevel) => void;
+  readOnly?: boolean;
+}
+
+type SheetClass = CharacterDetail["classes"][string];
+
 type SheetClasses = NonNullable<CharacterData["classes"]>;
+
+/** A class's levels under its heading, led by its arrow as every group the sheet opens and closes. */
+function ClassGroup({ klass, levels, classLink, onEditLevel, readOnly }: ClassGroupProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Stack spacing={1} sx={{ width: "100%" }}>
+      <SubsectionTitle>
+        {classLink ? (
+          // Its name links to its class: the arrow alone is the toggle
+          <ToggleLabel open={open} onToggle={() => setOpen((prev) => !prev)} label={`${klass.name} Levels`}>
+            <MuiLink component={Link} to={classLink} target="_blank" underline="hover">
+              {klass.name}
+            </MuiLink>{" "}
+            — Level {levels.length}
+          </ToggleLabel>
+        ) : (
+          <ToggleLabel open={open} onToggle={() => setOpen((prev) => !prev)}>
+            {klass.name} — Level {levels.length}
+          </ToggleLabel>
+        )}
+      </SubsectionTitle>
+      <Collapse in={open} timeout="auto" unmountOnExit>
+        <Stack>
+          {levels.map((lvl) => (
+            <Stack
+              key={lvl.characterLevel.id}
+              direction="row"
+              sx={{
+                alignItems: "center",
+                justifyContent: "space-between",
+                py: 0.5,
+                px: 1,
+                borderRadius: 1,
+                "&:hover": { bgcolor: "action.hover" },
+                ...ROW_ACTIONS_HOVER_SX,
+              }}
+            >
+              <Typography variant="body2">
+                Level {lvl.klassLevel.level} — HP: +{lvl.characterLevel.hp}
+              </Typography>
+              {!readOnly && (
+                <RowActions>
+                  <RowAction
+                    icon={EditIcon}
+                    label={`Edit ${klass.name} Level ${lvl.klassLevel.level}`}
+                    onClick={() =>
+                      onEditLevel({
+                        characterLevelId: lvl.characterLevel.id,
+                        klassId: klass.id,
+                        klassName: klass.name,
+                        level: lvl.klassLevel.level,
+                        hd: klass.hd,
+                      })
+                    }
+                  />
+                </RowActions>
+              )}
+            </Stack>
+          ))}
+        </Stack>
+      </Collapse>
+    </Stack>
+  );
+}
 
 export function ClassesSection({
   classes,
@@ -71,7 +147,8 @@ export function ClassesSection({
             // Levels can only be edited on a class the sheet carries in full.
             if (!klass || levels.length === 0 || !onEditLevel) {
               return (
-                <Chip
+                <ValueChip
+                  color="default"
                   key={className}
                   label={
                     classLink ? (
@@ -82,89 +159,19 @@ export function ClassesSection({
                       `${className} ${currentLevel}`
                     )
                   }
-                  variant="outlined"
-                  sx={{
-                    fontSize: "0.875rem",
-                    height: "auto",
-                    "& .MuiChip-label": { px: 2, py: 1 },
-                  }}
                 />
               );
             }
 
             return (
-              <Accordion
+              <ClassGroup
                 key={className}
-                disableGutters
-                sx={{
-                  width: "100%",
-                  boxShadow: "none",
-                  "&::before": { display: "none" },
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                }}
-              >
-                <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />}>
-                  <Typography sx={{ fontWeight: 500 }}>
-                    {classLink ? (
-                      <>
-                        <MuiLink
-                          component={Link}
-                          to={classLink}
-                          target="_blank"
-                          underline="hover"
-                          onClick={(e: MouseEvent) => e.stopPropagation()}
-                        >
-                          {className}
-                        </MuiLink>{" "}
-                        — Level {currentLevel}
-                      </>
-                    ) : (
-                      <>
-                        {className} — Level {currentLevel}
-                      </>
-                    )}
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails sx={{ pt: 0 }}>
-                  {levels.map((lvl) => (
-                    <Stack
-                      key={lvl.characterLevel.id}
-                      direction="row"
-                      sx={{
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        py: 0.5,
-                        px: 1,
-                        borderRadius: 1,
-                        "&:hover": { bgcolor: "action.hover" },
-                      }}
-                    >
-                      <Typography variant="body2">
-                        Level {lvl.klassLevel.level} — HP: +{lvl.characterLevel.hp}
-                      </Typography>
-                      {!readOnly && (
-                        <IconButton
-                          size="small"
-                          onClick={() =>
-                            onEditLevel({
-                              characterLevelId: lvl.characterLevel.id,
-                              klassId: klass.id,
-                              klassName: klass.name,
-                              level: lvl.klassLevel.level,
-                              hd: klass.hd,
-                            })
-                          }
-                          aria-label={`Edit ${className} Level ${lvl.klassLevel.level}`}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      )}
-                    </Stack>
-                  ))}
-                </AccordionDetails>
-              </Accordion>
+                klass={klass}
+                levels={levels}
+                classLink={classLink}
+                onEditLevel={onEditLevel}
+                readOnly={readOnly}
+              />
             );
           })}
         </Stack>

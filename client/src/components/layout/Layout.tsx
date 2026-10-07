@@ -14,6 +14,7 @@ import {
   Menu,
   Stack,
   Toolbar,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -24,18 +25,18 @@ import { Link, useLocation } from "react-router-dom";
 import { ActionMenuItem } from "@/client/src/components/common/index.ts";
 import {
   AccountCircleIcon,
-  BookIcon,
+  CampaignIcon,
   ChangelogIcon,
+  CharacterIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   DashboardIcon,
-  FaqIcon,
+  HelpIcon,
   HistoryIcon,
   LogoutIcon,
-  MapIcon,
   MenuIcon,
   NotificationsIcon,
-  PersonIcon,
+  RulesetIcon,
   SettingsIcon,
   SupportIcon,
 } from "@/client/src/components/icons/index.ts";
@@ -94,21 +95,21 @@ const SIDEBAR_ITEMS = [
   {
     id: "rulesets" as const,
     label: "Rulesets",
-    icon: <BookIcon />,
+    icon: <RulesetIcon />,
     description: "Browse available rulesets",
     path: "/rulesets",
   },
   {
     id: "characters" as const,
     label: "Characters",
-    icon: <PersonIcon />,
+    icon: <CharacterIcon />,
     description: "View your characters",
     path: "/characters",
   },
   {
     id: "campaigns" as const,
     label: "Campaigns",
-    icon: <MapIcon />,
+    icon: <CampaignIcon />,
     description: "Manage your campaigns",
     path: "/campaigns",
   },
@@ -122,7 +123,7 @@ const SIDEBAR_ITEMS = [
   {
     id: "faq" as const,
     label: "Help",
-    icon: <FaqIcon />,
+    icon: <HelpIcon />,
     description: "Help center",
     path: EXTERNAL_LINKS.help,
     external: true,
@@ -264,11 +265,13 @@ export function Layout() {
             {!isDemo && <FeedbackButton />}
             {!isDemo && <NotificationBell />}
             {!isDemo && (
-              <IconButton size="large" onClick={menu.openMenu} color="inherit" aria-label="Account Menu">
-                <Avatar src={avatarAttachment?.url ?? undefined} sx={{ width: 32, height: 32 }}>
-                  <AccountCircleIcon />
-                </Avatar>
-              </IconButton>
+              <Tooltip title="Account Menu">
+                <IconButton size="large" onClick={menu.openMenu} color="inherit" aria-label="Account Menu">
+                  <Avatar src={avatarAttachment?.url ?? undefined} sx={{ width: 32, height: 32 }}>
+                    <AccountCircleIcon />
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
             )}
           </Stack>
 

@@ -1,14 +1,17 @@
-import { Chip, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 import { Controller, type UseFormReturn } from "react-hook-form";
 
 import {
+  AddButton,
   CreateDialog,
   DeleteDialog,
   DescriptionField,
   EditDialog,
   EmptyValue,
+  ListToolbar,
   SectionContent,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { PropertyTypeInput, PropertyValueInput } from "@/client/src/components/customization/index.ts";
 import { ListAltIcon } from "@/client/src/components/icons/index.ts";
@@ -24,7 +27,6 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
 type PropertiesArray = InferResponseType<
@@ -189,11 +191,7 @@ export function PropertiesSection({
           </Typography>
         );
       case "type":
-        return property.type ? (
-          <Chip label={property.type} size="small" color="primary" variant="outlined" />
-        ) : (
-          <EmptyValue />
-        );
+        return property.type ? <ValueChip label={property.type} /> : <EmptyValue />;
       case "description":
         return (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -207,8 +205,8 @@ export function PropertiesSection({
 
   return (
     <SectionContent>
-      <Stack spacing={2}>
-        {canEdit && <SectionAddButton label="Add Property" onClick={handleCreate} />}
+      <Stack spacing={3}>
+        {canEdit && <ListToolbar actions={<AddButton label="Add Property" onClick={handleCreate} />} />}
 
         <RulesetSectionTable
           what="Properties"

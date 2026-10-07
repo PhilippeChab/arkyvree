@@ -164,7 +164,7 @@ Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `t
 
 - A `Typography` sized as a heading declares its element (`arkyvree/headings`): `component="h3"` renders `<h3>`, matched by `getByRole('heading')`, and `component="p"` a paragraph, which text-based selectors find.
 - Scope dialog selectors to the open MUI dialog with `[role="dialog"][aria-modal="true"]` or by accessible name: `page.getByRole('dialog', { name: 'Fork Ruleset' })`.
-- `<ListItemText primary="Fork" secondary="Create your own editable copy" />` produces an accessible name combining both lines. Use `name: /^Fork\b/`, not `name: /^Fork$/`.
+- A page's action menu item (`ActionMenuItem`) is one line, its accessible name its label: `menuitem` named `/^Fork$/`, `/^Delete Permanently$/`. A list option with a second line (`<ListItemText primary secondary />`, a picker's) is named by both lines: match its first with `/^Name\b/`.
 - Filter and sort options live inside popup `<Menu>` components; click the "Filter"/"Sort" tooltip IconButton first, then the `MenuItem`.
 - Submit-button labels go by dialog wrapper: `CreateDialog` → "Create", `EditDialog` → "Update", `DeleteDialog` → "Delete"; a dialog whose action is its own names it (Fork Ruleset, Archive Campaign, Send Invite). A create dialog's title is "Create New …" (but "Add Player", "Add Modifier", "Add Item to Inventory", "Create Requirement", "Fork Ruleset"), an edit dialog's "Edit …". Check the actual component before writing the assertion.
 

@@ -1,6 +1,5 @@
 import {
   Box,
-  Chip,
   Collapse,
   DialogContent,
   DialogTitle,
@@ -19,13 +18,15 @@ import { Link } from "react-router-dom";
 
 import {
   BlankNote,
+  CountChip,
   DialogFooter,
   DiceSpinner,
   LoadError,
   Modal,
+  StatusChip,
   SubsectionTitle,
 } from "@/client/src/components/common/index.ts";
-import { CompareArrowsIcon, RestoreIcon } from "@/client/src/components/icons/index.ts";
+import { RestoreIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
@@ -102,12 +103,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
 
   return (
     <Modal open={open} onClose={onClose}>
-      <DialogTitle>
-        <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <CompareArrowsIcon />
-          Local Changes
-        </Stack>
-      </DialogTitle>
+      <DialogTitle>Local Changes</DialogTitle>
       <DialogContent sx={{ maxHeight: "60vh" }}>
         {isLoading && <DiceSpinner sx={{ py: 4 }} />}
         {!!error && !changes && <LoadError what="Local changes" error={error} />}
@@ -120,7 +116,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
               <Paper key={entityType} variant="outlined" sx={{ overflow: "hidden" }}>
                 <Stack direction="row" spacing={1} sx={{ px: 2, py: 1, bgcolor: "action.hover", alignItems: "center" }}>
                   <SubsectionTitle>{entityTypeLabel(entityType, baseRules, true)}</SubsectionTitle>
-                  <Chip label={items.length} size="small" sx={{ height: 20, fontSize: "0.75rem" }} />
+                  <CountChip label={items.length} />
                 </Stack>
                 <List dense disablePadding>
                   {items.map((change) => {
@@ -132,13 +128,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                     const rowContent = (
                       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                         <ListItemText primary={change.name} sx={{ my: 0, flexGrow: 0 }} />
-                        <Chip
-                          label={change.status}
-                          size="small"
-                          color={chipColor}
-                          variant="outlined"
-                          sx={{ height: 20, fontSize: "0.7rem", flexShrink: 0 }}
-                        />
+                        <StatusChip label={change.status} color={chipColor} />
                       </Stack>
                     );
                     return (

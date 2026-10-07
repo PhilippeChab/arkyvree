@@ -5,11 +5,14 @@ import { Link } from "react-router-dom";
 import { ArrowBackIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 
+import { NO_DESCRIPTION } from "./EmptyValue.tsx";
+
 interface DetailPageHeaderProps {
   /** Where Back goes, a link; without it (a shared sheet's viewer has nowhere to go back to), its corner stays empty */
   backTo?: string;
   children?: ReactNode;
   chips?: ReactNode;
+  /** What it is, in its owner's words: said to be missing when it has none (`NO_DESCRIPTION`) */
   description: ReactNode;
   /** Opens the page's action menu; the button is hidden when omitted. */
   onMenuOpen?: (event: MouseEvent<HTMLElement>) => void;
@@ -23,6 +26,12 @@ interface DetailPageHeaderProps {
 
 interface SectionContentProps {
   children: ReactNode;
+}
+
+interface SectionTabPanelProps {
+  children: ReactNode;
+  /** A tab the page keeps mounted while another shows */
+  hidden?: boolean;
 }
 
 interface SectionTabsProps<K extends string> {
@@ -90,8 +99,9 @@ export function DetailPageHeader({
                 {chips}
               </Stack>
             )}
-            <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>
-              {description}
+            {/* A block: a customization page's lays out a target path and its value */}
+            <Typography component="div" variant="body1" sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>
+              {description || NO_DESCRIPTION}
             </Typography>
           </Stack>
           {children}
@@ -104,6 +114,15 @@ export function DetailPageHeader({
 /** A detail page tab's content: the page's centered column, up to 1200px. */
 export function SectionContent({ children }: SectionContentProps) {
   return <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto" }}>{children}</Box>;
+}
+
+/** A record page's tab panel: its tab's content, 56px under the tabs (the page's 32px, then its own 24px) and above its end. */
+export function SectionTabPanel({ children, hidden }: SectionTabPanelProps) {
+  return (
+    <Box role="tabpanel" hidden={hidden} sx={{ py: 3 }}>
+      {children}
+    </Box>
+  );
 }
 
 /** Scrollable pill tabs switching the sections of a detail page. */

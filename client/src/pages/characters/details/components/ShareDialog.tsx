@@ -1,6 +1,7 @@
 import {
   Button,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   IconButton,
   InputAdornment,
@@ -13,7 +14,7 @@ import { parseResponse } from "hono/client";
 import { useState } from "react";
 
 import { ConfirmDialog, DialogFooter, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
-import { CopyIcon, LinkOffIcon, RefreshIcon } from "@/client/src/components/icons/index.ts";
+import { CopyIcon, RefreshIcon, RevokeIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -85,10 +86,10 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
           <Stack spacing={2} sx={{ pt: 1 }}>
             {shareUrl ? (
               <>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                <DialogContentText>
                   Anyone with this link can view this character sheet and download the PDF. Private notes are not
                   included.
-                </Typography>
+                </DialogContentText>
                 <TextField
                   value={shareUrl}
                   fullWidth
@@ -119,10 +120,10 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
                     </DiceSpinner>
                   </Button>
                   <Button
-                    variant="outlined"
+                    variant="contained"
                     size="small"
                     color="error"
-                    startIcon={<LinkOffIcon />}
+                    startIcon={<RevokeIcon />}
                     onClick={() => setConfirmRevoke(true)}
                     disabled={isLoading}
                   >

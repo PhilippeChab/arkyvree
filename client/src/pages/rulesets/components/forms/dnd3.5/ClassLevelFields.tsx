@@ -1,7 +1,7 @@
-import { Autocomplete, Box, Chip, TextField } from "@mui/material";
+import { Autocomplete, Box, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
 
-import { LoadError, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { LoadError, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
 import { type RulesetSave, useDebouncedValue, useRulesetFeats } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { readNumberInput } from "@/client/src/lib/validation.ts";
@@ -145,10 +145,11 @@ export function ClassLevelFields({
         )}
         renderValue={(value, getItemProps) =>
           value.map((option, index) => (
-            <Chip
+            <ValueChip
+              color="default"
               {...getItemProps({ index })}
               key={featKey(option)}
-              variant="outlined"
+
               label={option.label}
               onDelete={() => setFeats(selectedFeats.filter((_, i) => i !== index))}
             />

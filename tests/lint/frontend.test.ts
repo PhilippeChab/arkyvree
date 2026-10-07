@@ -1,6 +1,6 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
 
-import { lintRepo } from "./lintRepo.ts";
+import { lines, lintRepo } from "./lintRepo.ts";
 
 // Each test runs oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);
@@ -39,6 +39,81 @@ describe("frontend rules", () => {
       "dialog-conventions client/src/c.tsx",
       "dialog-conventions client/src/d.tsx",
       "dialog-conventions client/src/f.tsx",
+    ]);
+  });
+
+  test("a dialog is sm or md, its title its words, its lead line a DialogContentText 8px under it", async () => {
+    const icons = 'import { GroupIcon } from "@/client/src/components/icons/index.ts";\n';
+    expect(
+      await lintRepo(
+        {
+          "client/src/narrow.tsx": 'export const n = <CreateDialog title="Create New Class" maxWidth="xs" />;\n',
+          "client/src/modal.tsx": 'export const m = <Modal open maxWidth="xs" />;\n',
+          "client/src/wide.tsx": 'export const w = <CreateDialog title="Create New Spell" maxWidth="md" />;\n',
+          "client/src/container.tsx": 'export const c = <Container maxWidth="xs" />;\n',
+          "client/src/icon.tsx": `${icons}export const i = <DialogTitle><Stack><GroupIcon /> Contributors</Stack></DialogTitle>;\n`,
+          "client/src/help.tsx": "export const h = <DialogTitle><FaqHelpIcon text={help} /></DialogTitle>;\n",
+          "client/src/lead.tsx": lines(
+            "export const l = (",
+            "  <DialogContent>",
+            '    <Stack direction="row">',
+            '      <Typography variant="body2">Contributors can edit this character.</Typography>',
+            "    </Stack>",
+            "  </DialogContent>",
+            ");",
+          ),
+          "client/src/text.tsx": lines(
+            "export const t = (",
+            "  <DialogContent>",
+            "    <Stack spacing={3} sx={{ pt: 1 }}>",
+            "      <DialogContentText>We sent a code.</DialogContentText>",
+            "      <Typography>Then this.</Typography>",
+            "    </Stack>",
+            "  </DialogContent>",
+            ");",
+          ),
+          "client/src/gap.tsx": lines(
+            "export const g = (",
+            "  <DialogContent>",
+            "    <Stack spacing={3} sx={{ pt: 2 }}>",
+            "      <TextField />",
+            "    </Stack>",
+            "  </DialogContent>",
+            ");",
+          ),
+          "client/src/foot.tsx": "export const f = <DialogContent sx={{ pb: 3.5 }}><TextField /></DialogContent>;\n",
+          "client/src/reset.tsx": "export const r = <DialogContent sx={{ p: 0 }}>{step}</DialogContent>;\n",
+          "client/src/apart.tsx": lines(
+            "export const a = (",
+            "  <FormDialog>",
+            "    <DialogTitle>Delete Account</DialogTitle>",
+            "    <form noValidate>",
+            "      <DialogContent />",
+            "    </form>",
+            "  </FormDialog>",
+            ");",
+          ),
+          "client/src/inside.tsx": lines(
+            "export const i = (",
+            "  <FormDialog>",
+            "    <form noValidate>",
+            "      <DialogTitle>Delete Account</DialogTitle>",
+            "      <DialogContent />",
+            "    </form>",
+            "  </FormDialog>",
+            ");",
+          ),
+        },
+        ["dialog-conventions"],
+      ),
+    ).toEqual([
+      "dialog-conventions client/src/apart.tsx",
+      "dialog-conventions client/src/foot.tsx",
+      "dialog-conventions client/src/gap.tsx",
+      "dialog-conventions client/src/icon.tsx",
+      "dialog-conventions client/src/lead.tsx",
+      "dialog-conventions client/src/modal.tsx",
+      "dialog-conventions client/src/narrow.tsx",
     ]);
   });
 
@@ -225,6 +300,20 @@ describe("frontend rules", () => {
     ).toEqual(["load-errors client/src/worded.tsx", "load-errors client/src/written.tsx"]);
   });
 
+  test("a card's chips row holds chips alone: what failed to load is its notice", async () => {
+    const failed = '<LoadError what="Abilities" error={error} />';
+    expect(
+      await lintRepo(
+        {
+          "client/src/chips.tsx": `export const c = <EntityDetailsCard title="Skill Details" chips={${failed}} />;\n`,
+          "client/src/render.tsx": `export const r = <RulesetEntityDetail renderChips={() => ${failed}} />;\n`,
+          "client/src/notice.tsx": `export const n = <EntityDetailsCard title="Skill Details" notice={${failed}} />;\n`,
+        },
+        ["load-errors"],
+      ),
+    ).toEqual(["load-errors client/src/chips.tsx", "load-errors client/src/render.tsx"]);
+  });
+
   test("a component destructures its props in its signature, typed by one named type", async () => {
     expect(
       await lintRepo(
@@ -286,6 +375,20 @@ describe("frontend rules", () => {
         ["icons"],
       ),
     ).toEqual(["icons client/src/barrel.tsx", "icons client/src/path.tsx"]);
+  });
+
+  test("a glyph goes by one name in components/icons, one meaning per glyph", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/components/icons/index.ts":
+            'export { Group as ContributorsIcon, Groups as PlayersIcon, Group as SharedIcon } from "@mui/icons-material";\n',
+          "client/src/components/icons/other.ts":
+            'export { Face as RacesIcon, Face as PeoplesIcon } from "@mui/icons-material";\n',
+        },
+        ["icons"],
+      ),
+    ).toEqual(["icons client/src/components/icons/index.ts"]);
   });
 
   test("what shows on a condition only is cond && <X />; a chain of alternatives ends in null", async () => {
@@ -562,5 +665,17 @@ describe("frontend rules", () => {
         ["tooltips"],
       ),
     ).toEqual(["tooltips client/src/bare.tsx", "tooltips client/src/named.tsx"]);
+  });
+
+  test("a Tooltip has no arrow", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/arrow.tsx": 'export const a = <Tooltip title="Edit" arrow><span /></Tooltip>;\n',
+          "client/src/plain.tsx": 'export const p = <Tooltip title="Edit" placement="right"><span /></Tooltip>;\n',
+        },
+        ["tooltips"],
+      ),
+    ).toEqual(["tooltips client/src/arrow.tsx"]);
   });
 });

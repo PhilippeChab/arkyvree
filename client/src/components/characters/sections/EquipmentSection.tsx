@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Button, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
@@ -11,9 +11,9 @@ import {
   BlankNote,
   CreateDialog,
   DeleteDialog,
-  DiceSpinner,
   EditDialog,
   LoadError,
+  RowAction,
   ScrollSafeListbox,
   ValidationIssuesAlert,
 } from "@/client/src/components/common/index.ts";
@@ -285,9 +285,7 @@ export function EquipmentSection({
                 Create Item
               </Button>
             )}
-            <Button variant="contained" size="small" onClick={handleAddItem}>
-              Add Item
-            </Button>
+            <AddButton label="Add Item" size="small" onClick={handleAddItem} />
           </Stack>
         )
       }
@@ -307,19 +305,15 @@ export function EquipmentSection({
             isArchived
               ? undefined
               : (entry) => (
-                  <Stack direction="row" spacing={0} sx={{ justifyContent: "center" }}>
-                    <IconButton size="small" aria-label={`Edit ${entry.name}`} onClick={() => handleEditItem(entry)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      aria-label={`Remove ${entry.name}`}
+                  <>
+                    <RowAction icon={EditIcon} label={`Edit ${entry.name}`} onClick={() => handleEditItem(entry)} />
+                    <RowAction
+                      icon={DeleteIcon}
+                      label={`Remove ${entry.name}`}
+                      intent="destructive"
                       onClick={() => handleDeleteItem(entry.id)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Stack>
+                    />
+                  </>
                 )
           }
         />
@@ -390,19 +384,6 @@ export function EquipmentSection({
                   label="Search Item"
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
-                  slotProps={{
-                    ...params.slotProps,
-
-                    input: {
-                      ...params.slotProps.input,
-                      endAdornment: (
-                        <>
-                          {isLoadingSearch && <DiceSpinner size="small" />}
-                          {params.slotProps.input.endAdornment}
-                        </>
-                      ),
-                    },
-                  }}
                 />
               )}
               renderOption={(props, option) => (

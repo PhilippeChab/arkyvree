@@ -7,12 +7,14 @@ The frontend uses MUI Buttons + MenuItems for actions. Color and variant carry *
 | Intent | Examples | Button | MenuItem |
 |---|---|---|---|
 | **Default action** | Create, Update, Save, Submit, Invite, Generate Link, Subscribe, Link Character | `variant="contained"` (default color) | n/a |
-| **Destructive** | Delete, Remove, Reject, Unsubscribe, Unlink, Delete Account | `variant="contained" color="error"` | `sx={{ color: "error.main" }}` |
-| **Caution** (reversible self-action) | Archive, Leave (ruleset/character/campaign) | `variant="contained" color="warning"` | `sx={{ color: "warning.main" }}` |
+| **Destructive** | Delete, Remove, Reject, Unsubscribe, Unlink, Revoke Link, Delete Account | `variant="contained" color="error"` | `sx={{ color: "error.main" }}` |
+| **Caution** (reversible self-action) | Archive, Leave (ruleset/character/campaign), Proceed Anyway | `variant="contained" color="warning"` | `sx={{ color: "warning.main" }}` |
 | **Positive** | Publish, Accept, Unarchive, Restore | `variant="contained" color="success"` | `sx={{ color: "success.main" }}` |
 | **Cancel / Close / Dismiss** | Cancel, Close, Dismiss (in dialogs) | `variant="outlined" color="inherit"` | n/a |
 
-Page action menus use `ActionMenuItem` (`components/common`), whose `intent` (`destructive` / `caution` / `positive`) applies the MenuItem column.
+Page action menus use `ActionMenuItem` (`components/common`), whose `intent` (`destructive` / `caution` / `positive`) applies the MenuItem column, and a row's actions `RowAction`, whose `intent` (`destructive` / `caution`) colors its icon: grey otherwise, Edit included.
+
+`arkyvree/button-intents` holds the Button column: a `Button` colored `error`, `warning` or `success` is `variant="contained"`, wherever it stands (a dialog, a panel's row, an alert).
 
 Apply the matrix even when the destructive action fires directly with no confirm dialog (e.g. inline Reject buttons in notification surfaces and invite cards) — the visual treatment is what tells the user the click is consequential.
 
@@ -33,7 +35,7 @@ For confirmations, `ConfirmDialog` takes the intent directly: `confirmColor="war
 - **Accept + Reject (invites, notifications):** both `variant="contained"`, Accept = `success`, Reject = `error`. Visually equal-weight because both choices are equally consequential and there's no confirm.
 - **Primary + Cancel (form dialogs):** primary = contained gold, Cancel = outlined inherit. Hierarchy is clear.
 - **Archive + Hard-delete (3-dot menus on archived rows):** Archive is replaced by Unarchive (`success.main`) and Hard-delete (`error.main`) sits below it. See `CharacterDetailsPage.tsx` and `CampaignDetailsPage.tsx`.
-- **Self-action vs admin-action on the same surface:** When one row IconButton or dialog handles both "leave on my own behalf" and "remove someone else", branch the color (and the dialog copy) on `isSelfRemoval`. Self → warning + "Leave …"; other → error + "Remove …". See `PlayersSection.tsx` row IconButton and `RemovePlayerDialog` in `CampaignDialogs.tsx`.
+- **Self-action vs admin-action on the same surface:** When one row IconButton or dialog handles both "leave on my own behalf" and "remove someone else", branch the color (and the dialog copy) on `isSelfRemoval`. Self → warning + "Leave …"; other → error + "Remove …". See `PlayersSection.tsx`'s row `RowAction` and `RemovePlayerDialog` in `CampaignDialogs.tsx`.
 
 ## Anti-patterns
 

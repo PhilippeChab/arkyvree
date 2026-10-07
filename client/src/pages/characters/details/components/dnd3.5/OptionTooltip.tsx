@@ -14,6 +14,12 @@ interface OptionTooltipProps {
   requirementTree?: string | null;
 }
 
+/**
+ * Where it goes when the option's right has no room for it: its left, else under or over it, where the viewport keeps
+ * it whole (an option as wide as the wizard leaves neither side room).
+ */
+const POPPER_MODIFIERS = [{ name: "flip", options: { fallbackPlacements: ["left", "bottom", "top"] } }];
+
 /** A requirement tree, line by line, as the engine lays it out. */
 const TREE_SX = { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" } as const;
 
@@ -33,8 +39,8 @@ export function OptionTooltip({
       title={requirementTree || shown}
       placement="right"
       enterDelay={300}
-      arrow
       slotProps={{
+        popper: { modifiers: POPPER_MODIFIERS },
         tooltip: {
           sx: [!!requirementTree && TREE_SX, !requirementTree && !!descriptionWidth && { maxWidth: descriptionWidth }],
         },

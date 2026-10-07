@@ -1,4 +1,4 @@
-import { Box, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
+import { Box, DialogContent, DialogContentText, DialogTitle, Stack, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
@@ -76,17 +76,15 @@ export function EmailChangeVerificationDialog({
       onClose={onClose}
       form={form}
       isLoading={verifyMutation.isPending}
-      maxWidth="xs"
       slotProps={{ transition: { onExited } }}
     >
-      <DialogTitle>Verify New Email</DialogTitle>
       <form onSubmit={form.handleSubmit(handleVerify)} noValidate>
-        {/* Deeper at the bottom, under the resend link */}
-        <DialogContent sx={{ pb: 3.5 }}>
-          <Stack spacing={2}>
-            <Typography variant="body2">
+        <DialogTitle>Verify New Email</DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ pt: 1 }}>
+            <DialogContentText>
               We sent an 8-digit code to <strong>{pendingEmail}</strong>
-            </Typography>
+            </DialogContentText>
 
             <Box>
               <AnimatedAlert in={!!error} severity="error" gutter={2}>

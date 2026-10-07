@@ -59,7 +59,7 @@ test.describe("A fork's entities", () => {
       // The address changes before the page does: its actions menu is the ruleset's until then
       await expect(page.getByText(`${label} Details`)).toBeVisible();
 
-      await openActionsMenu(page, /^Delete$/);
+      await openActionsMenu(page, /^Delete Permanently$/);
       const deleted = apiResponse(page, "DELETE", new RegExp(`/api/rulesets/${forkId}/${section}/[a-f0-9-]+`));
       await page
         .getByRole("dialog", { name: `Delete ${label}` })

@@ -1,4 +1,4 @@
-import { Box, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
 import { DiceSpinner, SubsectionTitle } from "@/client/src/components/common/index.ts";
@@ -28,13 +28,9 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
           >
             <CasinoIcon />
           </IconButton>
-          <Chip
-            label="MAX"
-            size="small"
-            variant="outlined"
-            onClick={() => field.onChange(selectedClass.hd)}
-            disabled={hpRolling}
-          />
+          <Button size="small" onClick={() => field.onChange(selectedClass.hd)} disabled={hpRolling}>
+            Max
+          </Button>
         </Stack>
         <Typography variant="body2" sx={{ color: "text.secondary" }} gutterBottom>
           Enter HP gain (1 to {selectedClass.hd}). Average: {Math.ceil(selectedClass.hd / 2)}, Maximum:{" "}

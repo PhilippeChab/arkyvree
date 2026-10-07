@@ -1,7 +1,14 @@
-import { Chip, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { EmptyValue, ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX, TableFrame } from "@/client/src/components/common/index.ts";
+import {
+  EmptyValue,
+  RoleChip,
+  ROW_ACTIONS_HOVER_SX,
+  RowActions,
+  StatusChip,
+  TableFrame,
+} from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 interface ContributorRow {
@@ -15,7 +22,7 @@ interface ContributorRow {
 interface ContributorsTableProps<T extends ContributorRow> {
   contributors: T[];
   owner: { emailAddress: string; username?: string | null } | null;
-  /** Row buttons; when omitted there is no Actions column. */
+  /** A row's `RowAction`s; when omitted there is no Actions column. */
   renderActions?: (contributor: T) => ReactNode;
   /** Show the Role column (rulesets have roles, characters don't). */
   showRoles?: boolean;
@@ -86,15 +93,11 @@ export function ContributorsTable<T extends ContributorRow>({
               {!isMobile && <TableCell>{owner.emailAddress}</TableCell>}
               {showRoles && (
                 <TableCell>
-                  <Chip label="Owner" size="small" color="primary" variant="filled" />
+                  <RoleChip label="Owner" color="primary" />
                 </TableCell>
               )}
               <TableCell>
-                {showRoles ? (
-                  <Chip label="Active" size="small" color="success" variant="filled" />
-                ) : (
-                  <Chip label="Owner" size="small" color="primary" variant="filled" />
-                )}
+                {showRoles ? <StatusChip label="Active" color="success" /> : <RoleChip label="Owner" color="primary" />}
               </TableCell>
               {renderActions && <TableCell align="right" />}
             </TableRow>
@@ -105,34 +108,15 @@ export function ContributorsTable<T extends ContributorRow>({
               {!isMobile && <TableCell>{contributor.email}</TableCell>}
               {showRoles && (
                 <TableCell>
-                  {contributor.role && (
-                    <Chip
-                      label={contributor.role}
-                      size="small"
-                      color={roleColor(contributor.role)}
-                      variant="outlined"
-                    />
-                  )}
+                  {contributor.role && <RoleChip label={contributor.role} color={roleColor(contributor.role)} />}
                 </TableCell>
               )}
               <TableCell>
-                <Chip
-                  label={contributor.status}
-                  size="small"
-                  color={contributorStatusColor(contributor.status)}
-                  variant="filled"
-                />
+                <StatusChip label={contributor.status} color={contributorStatusColor(contributor.status)} />
               </TableCell>
               {renderActions && (
                 <TableCell align="right">
-                  <Stack
-                    className="row-actions"
-                    direction="row"
-                    spacing={0.5}
-                    sx={{ justifyContent: "flex-end", ...ROW_ACTIONS_SX }}
-                  >
-                    {renderActions(contributor)}
-                  </Stack>
+                  <RowActions>{renderActions(contributor)}</RowActions>
                 </TableCell>
               )}
             </TableRow>

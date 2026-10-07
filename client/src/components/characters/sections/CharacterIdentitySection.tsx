@@ -1,10 +1,18 @@
-import { Autocomplete, Box, Button, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Stack, TextField, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useMemo } from "react";
 import { useController } from "react-hook-form";
 
-import { AttachmentField, DiceSpinner, FormTextField, SelectField } from "@/client/src/components/common/index.ts";
+import {
+  AttachmentField,
+  BlankNote,
+  FormTextField,
+  Panel,
+  SaveButton,
+  SelectField,
+  ValueChip,
+} from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
   type RulesetLanguage,
@@ -132,7 +140,11 @@ export function CharacterIdentitySection({
 
   // Staged via the form like every other field — selections only persist
   // when the user clicks Save, matching the rest of the identity section.
-  const { data: availableLanguages, error: languagesError } = useRulesetLanguages(rulesetId, !readOnly);
+  const {
+    data: availableLanguages,
+    error: languagesError,
+    isLoading: languagesLoading,
+  } = useRulesetLanguages(rulesetId, !readOnly);
 
   const { field: languageIds } = useController({ control: form.control, name: "languageIds" });
   const selectedLanguageIds = languageIds.value;
@@ -161,7 +173,7 @@ export function CharacterIdentitySection({
     : undefined;
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+    <Panel>
       <Stack
         component="form"
         noValidate
@@ -183,7 +195,8 @@ export function CharacterIdentitySection({
             url={portraitUrl}
           />
 
-          <Stack spacing={2} sx={{ flex: 1, width: "100%", minWidth: 0 }}>
+          {/* Its fields' lines, 24px apart as the fields in a line are */}
+          <Stack spacing={3} sx={{ flex: 1, width: "100%", minWidth: 0 }}>
             {/* Line 1: Race, Alignment, Experience, Deity */}
             <Box
               sx={{
@@ -193,13 +206,7 @@ export function CharacterIdentitySection({
               }}
             >
               <FormTextField control={form.control} name="race" label="Race" size="small" variant="outlined" disabled />
-              {partial ? (
-                <>
-                  <Skeleton variant="rounded" height={40} />
-                  <Skeleton variant="rounded" height={40} />
-                  <Skeleton variant="rounded" height={40} />
-                </>
-              ) : (
+              {!partial && (
                 <>
                   <SelectField
                     control={form.control}
@@ -296,7 +303,7 @@ export function CharacterIdentitySection({
                         None
                       </Typography>
                     ) : (
-                      selectedLanguages.map((lang) => <Chip key={lang.id} label={lang.name} size="small" />)
+                      selectedLanguages.map((lang) => <ValueChip color="default" key={lang.id} label={lang.name} />)
                     )}
                   </Stack>
                 ) : (
@@ -304,6 +311,7 @@ export function CharacterIdentitySection({
                     multiple
                     size="small"
                     options={availableLanguages ?? []}
+                    loading={languagesLoading}
                     noOptionsText={emptyOptionsText("Languages", languagesError)}
                     getOptionLabel={(option) => option.name}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -312,7 +320,7 @@ export function CharacterIdentitySection({
                     onBlur={languageIds.onBlur}
                     renderValue={(value, getItemProps) =>
                       value.map((option, index) => (
-                        <Chip {...getItemProps({ index })} key={option.id} label={option.name} size="small" />
+                        <ValueChip color="default" {...getItemProps({ index })} key={option.id} label={option.name} />
                       ))
                     }
                     renderInput={(params) => <TextField {...params} label="Languages" variant="outlined" />}
@@ -323,10 +331,7 @@ export function CharacterIdentitySection({
 
             {/* Line 3: Description and Notes */}
             {partial ? (
-              <Stack spacing={2}>
-                <Skeleton variant="rounded" height={80} />
-                <Skeleton variant="rounded" height={100} />
-              </Stack>
+              <BlankNote>The rest of this character's identity is private</BlankNote>
             ) : (
               <>
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3 }}>
@@ -363,16 +368,8 @@ export function CharacterIdentitySection({
           </Stack>
         </Stack>
         {/* The panel's Save, at its end as an inline editor's */}
-        {!readOnly && (
-          <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
-            <Button type="submit" variant="contained" disabled={!isDirty || saveIdentity.isPending}>
-              <DiceSpinner size="small" loading={saveIdentity.isPending}>
-                Save
-              </DiceSpinner>
-            </Button>
-          </Stack>
-        )}
+        {!readOnly && <SaveButton canSave={isDirty} pending={saveIdentity.isPending} />}
       </Stack>
-    </Paper>
+    </Panel>
   );
 }

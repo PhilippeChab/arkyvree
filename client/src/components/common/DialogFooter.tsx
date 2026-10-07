@@ -16,7 +16,10 @@ interface DialogFooterProps {
   /** The dialog's action, last. */
   action?: DialogAction;
   cancelLabel?: string;
-  /** Steps of the dialog's own (a wizard's Back and Next), after the way out, at the far end. */
+  /**
+   * Steps of the dialog's own (a wizard's Back), at the far end before its action. Given, even as nothing, they set the
+   * way out apart at the start; the action is always `action`, the one contained button.
+   */
   children?: ReactNode;
   /** The way out: Cancel, or Close (`cancelLabel`) when the dialog only shows something. */
   onCancel: () => void;
@@ -39,7 +42,7 @@ export function DialogFooter({
       <Button onClick={onCancel} disabled={pending} variant="outlined" color="inherit">
         {cancelLabel}
       </Button>
-      {children && <Box sx={{ flexGrow: 1 }} />}
+      {children !== undefined && <Box sx={{ flexGrow: 1 }} />}
       {children}
       {action && (
         <Button

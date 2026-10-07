@@ -1,34 +1,22 @@
-import {
-  alpha,
-  Button,
-  Container,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Container, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 
 import {
   BlankState,
   CLICKABLE_SX,
   clickableProps,
   CREATED_SORTS,
-  DiceSpinner,
   type FilterOption,
   ListPageResults,
+  PageActionButton,
   PageHeader,
   PageTransition,
   SearchBar,
   TableFrame,
 } from "@/client/src/components/common/index.ts";
-import { CircleIcon, NotificationsIcon } from "@/client/src/components/icons/index.ts";
+import { CheckIcon, NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
+import { NotificationMessage, UNREAD_NOTIFICATION_SX } from "@/client/src/components/notifications/index.ts";
 import { useListPageQuery, useListParams, useNotificationActions, usePageTitle } from "@/client/src/hooks/index.ts";
-import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { notificationListQuery } from "@/client/src/lib/queries.ts";
@@ -52,33 +40,18 @@ export default function NotificationsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="lg">
         <Stack spacing={4}>
           <PageHeader
             title="Notifications"
             subtitle="Updates from your campaigns and rulesets"
             action={
-              <Button
-                variant="outlined"
-                size="large"
+              <PageActionButton
+                icon={<CheckIcon />}
+                label="Mark All as Read"
                 onClick={() => actions.markAllRead.mutate()}
-                disabled={actions.markAllRead.isPending}
-                sx={{
-                  color: "common.white",
-                  borderColor: (theme) => alpha(theme.palette.common.white, 0.5),
-                  "&:hover": {
-                    borderColor: "common.white",
-                    bgcolor: (theme) => alpha(theme.palette.common.white, 0.1),
-                  },
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: 2,
-                }}
-              >
-                <DiceSpinner size="small" loading={actions.markAllRead.isPending}>
-                  Mark All as Read
-                </DiceSpinner>
-              </Button>
+                pending={actions.markAllRead.isPending}
+              />
             }
           />
           <Stack spacing={3}>
@@ -127,29 +100,11 @@ export default function NotificationsPage() {
                           sx={[
                             openable && { "&:hover": { bgcolor: "action.hover" } },
                             openable && CLICKABLE_SX,
-                            isUnread && { bgcolor: "action.selected" },
+                            isUnread && UNREAD_NOTIFICATION_SX,
                           ]}
                         >
                           <TableCell>
-                            <Tooltip
-                              describeChild
-                              title={formatActivityDetails(notification.data) ?? ""}
-                              arrow
-                              enterDelay={300}
-                              slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
-                            >
-                              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                                {isUnread && (
-                                  <CircleIcon
-                                    titleAccess="Unread"
-                                    sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }}
-                                  />
-                                )}
-                                <Typography variant="body2">
-                                  {formatNotificationMessage(notification.type, notification.data)}
-                                </Typography>
-                              </Stack>
-                            </Tooltip>
+                            <NotificationMessage notification={notification} unread={isUnread} />
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" sx={{ color: "text.secondary" }}>

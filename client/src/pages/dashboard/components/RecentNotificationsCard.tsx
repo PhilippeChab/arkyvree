@@ -1,4 +1,4 @@
-import { Button, Paper, Stack, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
@@ -9,11 +9,12 @@ import {
   clickableProps,
   DiceSpinner,
   LoadError,
+  Panel,
 } from "@/client/src/components/common/index.ts";
 import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
+import { NotificationMessage, UNREAD_NOTIFICATION_SX } from "@/client/src/components/notifications/index.ts";
 import { useNotificationActions } from "@/client/src/hooks/index.ts";
-import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { recentNotificationsQuery } from "@/client/src/lib/queries.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
@@ -26,7 +27,7 @@ export function RecentNotificationsCard() {
   const items = notifications?.items ?? [];
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 4 }, borderRadius: 3 }}>
+    <Panel>
       <Stack spacing={3}>
         <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
           <CardTitle>Notifications</CardTitle>
@@ -47,7 +48,6 @@ export function RecentNotificationsCard() {
             {items.map((notification, index) => {
               const actionable = actions.isActionable(notification);
               const openable = actions.isOpenable(notification);
-              const details = formatActivityDetails(notification.data);
               return (
                 <Stack
                   key={notification.id}
@@ -55,32 +55,15 @@ export function RecentNotificationsCard() {
                   spacing={2}
                   {...(openable && clickableProps(() => actions.open(notification)))}
                   sx={[
-                    {
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      p: 2,
-                      borderRadius: 2,
-                      bgcolor: notification.readAt ? "transparent" : "action.hover",
-                    },
+                    { justifyContent: "space-between", alignItems: "center", p: 2, borderRadius: 2 },
+                    !notification.readAt && UNREAD_NOTIFICATION_SX,
                     openable && CLICKABLE_SX,
-                    openable && { "&:hover": { bgcolor: "action.selected" } },
+                    openable && { "&:hover": { bgcolor: "action.hover" } },
                     fadeInUpSx(index),
                   ]}
                 >
                   <Stack spacing={1} sx={{ minWidth: 0, flex: 1 }}>
-                    <Stack spacing={0.5}>
-                      <Typography variant="body2" sx={{ fontWeight: notification.readAt ? 400 : 600 }}>
-                        {formatNotificationMessage(notification.type, notification.data)}
-                      </Typography>
-                      {details && (
-                        <Typography
-                          variant="caption"
-                          sx={{ color: "text.secondary", display: "block", whiteSpace: "pre-line" }}
-                        >
-                          {details}
-                        </Typography>
-                      )}
-                    </Stack>
+                    <NotificationMessage notification={notification} unread={!notification.readAt} />
                     {actionable && (
                       <InviteActionButtons
                         onAccept={() => actions.accept(notification)}
@@ -98,6 +81,6 @@ export function RecentNotificationsCard() {
           </Stack>
         )}
       </Stack>
-    </Paper>
+    </Panel>
   );
 }

@@ -116,7 +116,7 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
         </Stack>
       </Stack>
 
-      <CreateDialog {...createDialogProps} title="Create New Mechanic" maxWidth="md">
+      <CreateDialog {...createDialogProps} title="Create New Mechanic">
         <MechanicFormFields form={createForm} />
       </CreateDialog>
     </SectionContent>

@@ -105,7 +105,7 @@ test.describe("Level up", () => {
   ] as const) {
     test(`edits and removes a ${klass} level`, async ({ page }) => {
       await addLevels(page, [[klass, 1]]);
-      await page.getByRole("button", { name: new RegExp(`${klass}.*Level 1`, "i") }).click();
+      await page.getByRole("button", { name: `${klass} Levels` }).click();
       await expect(page.getByText(`Level 1 — HP: +${maxHp}`)).toBeVisible({ timeout: 10_000 });
 
       await page.getByRole("button", { name: `Edit ${klass} Level 1` }).click();
@@ -118,8 +118,7 @@ test.describe("Level up", () => {
       await expect(page.getByText(`Level 1 — HP: +${maxHp}`)).toHaveCount(0, { timeout: 10_000 });
       // The level may have folded away with the refresh.
       const edit = page.getByText(`Level 1 — HP: +${hp}`);
-      if (!(await edit.isVisible()))
-        await page.getByRole("button", { name: new RegExp(`${klass}.*Level 1`, "i") }).click();
+      if (!(await edit.isVisible())) await page.getByRole("button", { name: `${klass} Levels` }).click();
       await expect(edit).toBeVisible({ timeout: 10_000 });
 
       await openActionsMenu(page, /^Remove Level/);

@@ -52,7 +52,7 @@ describe("feedback rules", () => {
       await lintRepo(
         {
           "client/src/action.tsx":
-            'export const a = <Menu open><ActionMenuItem icon={DeleteIcon} label="Delete" onClick={go} /></Menu>;\n',
+            'export const a = <Menu open><ActionMenuItem icon={DeleteIcon} label="Delete Permanently" onClick={go} /></Menu>;\n',
           "client/src/raw.tsx": "export const r = <Menu open><MenuItem onClick={go}>Delete</MenuItem></Menu>;\n",
           "client/src/choice.tsx":
             "export const c = <Menu open><MenuItem selected={on} onClick={go}>Name</MenuItem></Menu>;\n",
@@ -61,6 +61,23 @@ describe("feedback rules", () => {
         ["menus"],
       ),
     ).toEqual(["menus client/src/panel.tsx", "menus client/src/raw.tsx"]);
+  });
+
+  test("a menu is sized by its items, opens where MUI puts it, and its delete is Delete Permanently", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/plain.tsx": "export const p = <Menu anchorEl={a} open onClose={close}><Divider /></Menu>;\n",
+          "client/src/wide.tsx":
+            "export const w = <Menu open slotProps={{ paper: { sx: { minWidth: 200 } } }}><Divider /></Menu>;\n",
+          "client/src/anchored.tsx":
+            'export const a = <Menu open anchorOrigin={{ vertical: "bottom", horizontal: "right" }}><Divider /></Menu>;\n',
+          "client/src/delete.tsx":
+            'export const d = <ActionMenuItem icon={DeleteIcon} label="Delete" onClick={go} />;\n',
+        },
+        ["menus"],
+      ),
+    ).toEqual(["menus client/src/anchored.tsx", "menus client/src/delete.tsx", "menus client/src/wide.tsx"]);
   });
 
   test("a button that starts a request shows it running", async () => {
@@ -88,6 +105,58 @@ describe("feedback rules", () => {
         ["page-errors"],
       ),
     ).toEqual(["page-errors client/src/written.tsx"]);
+  });
+
+  test("a page that couldn't load shows a PageError, its way back named for where it goes", async () => {
+    const message = 'message={loadFailureMessage("Skill", error)}';
+    expect(
+      await lintRepo(
+        {
+          "client/src/bare.tsx": `export const b = <EntityPageError ${message} backLabel="Back" backTo={to} />;\n`,
+          "client/src/named.tsx": `export const n = <PageError ${message} backLabel="Back to Ruleset" backTo={to} />;\n`,
+          "client/src/derived.tsx": `export const d = <EntityPageError ${message} backLabel={back.label} backTo={to} />;\n`,
+          "client/src/strip.tsx":
+            'export const s = <Container maxWidth="xl"><LoadError what="Dashboard" error={error} /></Container>;\n',
+          "client/src/alert.tsx":
+            'export const a = <Container maxWidth="xl"><Alert severity="error">Invalid address</Alert></Container>;\n',
+          "client/src/section.tsx": 'export const t = <Stack><LoadError what="Feats" error={error} /></Stack>;\n',
+        },
+        ["page-errors"],
+      ),
+    ).toEqual([
+      "page-errors client/src/alert.tsx",
+      "page-errors client/src/bare.tsx",
+      "page-errors client/src/strip.tsx",
+    ]);
+  });
+
+  test("a picker says it's loading in its open list", async () => {
+    const field = "renderInput={(params) => <TextField {...params} />}";
+    expect(
+      await lintRepo(
+        {
+          "client/src/dice.tsx": [
+            "export const d = (",
+            "  <Autocomplete",
+            "    loading={loading}",
+            "    renderInput={(params) => (",
+            "      <TextField",
+            "        {...params}",
+            '        slotProps={{ input: { endAdornment: loading && <DiceSpinner size="small" /> } }}',
+            "      />",
+            "    )}",
+            "  />",
+            ");",
+            "",
+          ].join("\n"),
+          "client/src/silent.tsx": `export const s = <Autocomplete noOptionsText={emptyOptionsText("Languages", error)} ${field} />;\n`,
+          "client/src/loads.tsx": `export const l = <Autocomplete loading={loading} noOptionsText={emptyOptionsText("Items", error)} ${field} />;\n`,
+          "client/src/spread.tsx": `export const p = <Autocomplete {...props} noOptionsText={emptyOptionsText("Aptitudes", error)} ${field} />;\n`,
+          "client/src/fixed.tsx": `export const f = <Autocomplete options={TAGS} ${field} />;\n`,
+        },
+        ["pickers"],
+      ),
+    ).toEqual(["pickers client/src/dice.tsx", "pickers client/src/silent.tsx"]);
   });
 
   test("what reads a query reads its error too", async () => {

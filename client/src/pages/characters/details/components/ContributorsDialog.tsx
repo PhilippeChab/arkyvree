@@ -1,4 +1,4 @@
-import { Button, DialogContent, DialogTitle, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Button, DialogContent, DialogContentText, DialogTitle, Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useState } from "react";
@@ -13,6 +13,7 @@ import {
   LoadError,
   LoadMoreButton,
   Modal,
+  RowAction,
 } from "@/client/src/components/common/index.ts";
 import {
   ContributorsTable,
@@ -112,14 +113,12 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
         <DialogContent dividers>
           <Stack spacing={2}>
             <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Contributors can edit this character and download its PDF.
-              </Typography>
+              <DialogContentText>Contributors can edit this character and download its PDF.</DialogContentText>
               {canInvite ? (
                 <AddButton label="Invite" onClick={handleInvite} />
               ) : !isOwner ? (
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   color="warning"
                   size="small"
                   startIcon={<LeaveIcon />}
@@ -148,16 +147,12 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                     renderActions={
                       isOwner
                         ? (contributor) => (
-                            <Tooltip title="Remove">
-                              <IconButton
-                                aria-label="Remove"
-                                size="small"
-                                color="error"
-                                onClick={() => removeDialog.openWith(contributor)}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
+                            <RowAction
+                              icon={DeleteIcon}
+                              label="Remove"
+                              intent="destructive"
+                              onClick={() => removeDialog.openWith(contributor)}
+                            />
                           )
                         : undefined
                     }
@@ -200,7 +195,6 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
         message="Are you sure you want to stop contributing to this character? You will lose edit access unless re-invited."
         confirmLabel="Leave"
         confirmColor="warning"
-        maxWidth="xs"
       />
     </>
   );

@@ -199,12 +199,12 @@ describe("style rules", () => {
     ]);
   });
 
-  test("a margin only aligns, resets or bleeds", async () => {
+  test("a margin only aligns or resets", async () => {
     expect(
       await lintRepo(
         {
-          "client/src/aligns.tsx":
-            'export const a = <Box sx={{ mx: "auto", mt: 0, ml: { xs: 0, sm: "auto" }, mb: -2 }} />;\n',
+          "client/src/aligns.tsx": 'export const a = <Box sx={{ mx: "auto", mt: 0, ml: { xs: 0, sm: "auto" } }} />;\n',
+          "client/src/bleeds.tsx": "export const b = <TableContainer sx={{ mx: { xs: -2, sm: 0 } }} />;\n",
           "client/src/gap.tsx": "export const g = <Box sx={{ mb: 2 }} />;\n",
           "client/src/longhand.tsx": "export const l = <Box sx={{ marginTop: 1 }} />;\n",
           "client/src/written.tsx": 'export const w = <Box sx={{ m: "0 auto" }} />;\n',
@@ -215,6 +215,7 @@ describe("style rules", () => {
         ["spacing"],
       ),
     ).toEqual([
+      "spacing client/src/bleeds.tsx",
       "spacing client/src/constant.ts",
       "spacing client/src/field.tsx",
       "spacing client/src/gap.tsx",

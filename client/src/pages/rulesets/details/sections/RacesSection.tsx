@@ -1,9 +1,15 @@
-import { Chip, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback } from "react";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  CreateDialog,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+  ValueChip,
+} from "@/client/src/components/common/index.ts";
 import { RacesIcon } from "@/client/src/components/icons/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_RACE, type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
@@ -69,7 +75,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       case "name":
         return race.name;
       case "size":
-        return <Chip label={race.size} size="small" color="primary" variant="outlined" />;
+        return <ValueChip label={race.size} />;
       case "speed":
         return <Typography variant="body2">{race.baseSpeed} ft</Typography>;
       case "description":

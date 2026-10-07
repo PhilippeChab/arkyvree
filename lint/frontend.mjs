@@ -5,6 +5,9 @@
  *   spread doesn't count), whether or not a `Tooltip` shows its name.
  * - `dialog-conventions`: a `Dialog` goes full screen on a phone (`fullScreen={isMobile}`), and a form is never in a
  *   `Modal`, which skips the guard that keeps a dirty form open (`FormDialog`, `CreateDialog` and `EditDialog` have it).
+ *   A dialog is `sm`, its wrappers' default (`md` for a form of many fields), never `xs`; its title is its words, no
+ *   icon; its lead line is a `DialogContentText`, as a confirmation's; its content keeps the theme's padding, and its
+ *   first block sits 8px under the title (`pt: 1`), as a create dialog's fields, the title right above it (in its form).
  * - `query-keys`: every query key comes from `lib/queryKeys.ts`: a key written as an array starts by spreading one
  *   (`[...QUERY_KEYS.rulesets.section(id, "feats"), search]`).
  * - `client-apis`: a mutation runs with `.mutate()` and its callbacks, never `.mutateAsync()`, and a loader is a
@@ -26,7 +29,8 @@
  *   (`useRulesetSection`'s `createFn`, an editor's `saveFn`, a `const exportFn` handed to `usePdfExport`, a module's
  *   `function deleteEntityFn`); a queries module's (`…Queries.ts`) helpers are its queries'.
  * - `load-errors`: a list, a section or a step that failed to load says so with `LoadError` (`components/common`), in
- *   `loadFailureMessage`'s words: an error `Alert` never writes its own "Failed to load…".
+ *   `loadFailureMessage`'s words: an error `Alert` never writes its own "Failed to load…". A card's chips row holds
+ *   chips alone: what failed to load is its `notice`, above its body.
  * - `component-props`: a component destructures its props in its signature, typed by one named type: its own
  *   (`interface CardProps`, `type CardProps = Omit<…>`) or one its family shares (`RulesetSectionProps`), never written
  *   in place (an object type, an intersection, `Omit<…>`, `Pick<…>`, `ComponentProps<…>`).
@@ -56,12 +60,12 @@
  *   `window.open`; the URL's search params are read through the shared hooks; React Router's `Link` is `Link`, MUI's
  *   `MuiLink`.
  * - `clickable-elements`: an element that opens or expands on click spreads `clickableProps` (and `CLICKABLE_SX`).
- * - `tooltips`: a `Tooltip` around a control that can be disabled wraps it in a `<span>`; one on a control its own
- *   text names takes `describeChild`.
+ * - `tooltips`: a `Tooltip` has no arrow; one around a control that can be disabled wraps it in a `<span>`; one on a
+ *   control its own text names takes `describeChild`.
  * - `form-fields`: a number field is `FormTextField number`, without a `type`; a field's rules are named
  *   (`lib/validation.ts`), never written in place.
  * - `icons`: an icon comes from `components/icons`, where every icon the app shows is named, never from
- *   `@mui/icons-material`.
+ *   `@mui/icons-material`; there, a glyph goes by one name, one meaning per glyph.
  * - `react-imports`: React's types and functions are named imports (`import { type ReactNode, StrictMode } from
  *   "react"`), never read through a `React.` namespace or a default `React` import; a component takes its `ref` as a
  *   prop, never through `forwardRef`.
@@ -82,6 +86,9 @@ const COMPONENT_WRAPPERS = new Set(["forwardRef", "memo"]);
 
 /** A date's own formatters, which a date never goes through outside `lib/formatDate.ts` */
 const DATE_FORMATTERS = new Set(["toLocaleDateString", "toLocaleTimeString"]);
+
+/** The padding a dialog's content keeps: the theme's, under its title and above its footer */
+const DIALOG_PADDINGS = new Set(["p", "padding", "pb", "paddingBottom", "pt", "paddingTop", "py"]);
 
 /** The hooks whose callback is an effect. */
 const EFFECTS = new Set(["useEffect", "useLayoutEffect"]);
@@ -104,6 +111,9 @@ const IN_PLACE_TYPES = new Set([
 
 /** `Intl`'s date formatters */
 const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
+
+/** The boxes a dialog's content lays its blocks in, its lead line or its first field first */
+const LAYOUT_ELEMENTS = new Set(["Box", "Stack"]);
 
 /** A mutation's callbacks, where its writes to the cache go */
 const MUTATION_CALLBACKS = new Set(["onError", "onMutate", "onSettled", "onSuccess"]);
@@ -171,6 +181,38 @@ function caughtError(name) {
     return false;
   }
   return false;
+}
+
+/**
+ * A dialog's content: it keeps the theme's padding (an inner one resets it, `p: 0`), its first block sits 8px under the
+ * title (`pt: 1`), and its lead line, the first text it says, is a `DialogContentText`.
+ */
+function checkDialogContent(content, context) {
+  for (const property of sxProperties(content)) {
+    if (!DIALOG_PADDINGS.has(propertyName(property))) continue;
+    if (property.value.type === "Literal" && property.value.value === 0) continue;
+    context.report({
+      node: property,
+      message: "A dialog's content keeps the theme's padding: its first block takes `pt: 1`, its foot nothing deeper.",
+    });
+  }
+  let first = firstElement(content);
+  if (first && LAYOUT_ELEMENTS.has(elementName(first))) {
+    const top = sxProperties(first).find((property) => propertyName(property) === "pt");
+    if (top && !(top.value.type === "Literal" && top.value.value === 1)) {
+      context.report({
+        node: top,
+        message: "A dialog's first block sits 8px under its title (`pt: 1`), as a create dialog's fields do.",
+      });
+    }
+  }
+  while (first && LAYOUT_ELEMENTS.has(elementName(first))) first = firstElement(first);
+  if (first && elementName(first) === "Typography") {
+    context.report({
+      node: first.openingElement,
+      message: "A dialog's lead line is a `DialogContentText`, as a confirmation's: body1, grey.",
+    });
+  }
 }
 
 function createAccessibleIconButtons(context) {
@@ -527,30 +569,37 @@ function createDateFormats(context) {
 
 function createDialogConventions(context) {
   if (!inClient(context)) return {};
+  // The icons the file imports, which a dialog's title never shows
+  const icons = new Set();
+  const report = (node, message) => context.report({ node, message });
   return {
+    ImportDeclaration(node) {
+      if (node.source.value !== "@/client/src/components/icons/index.ts") return;
+      for (const specifier of node.specifiers) icons.add(specifier.local.name);
+    },
     JSXElement(node) {
       const name = elementName(node);
-      if (name === "Dialog" && !hasAttribute(node, "fullScreen")) {
-        context.report({
-          node: node.openingElement,
-          message: "A `Dialog` goes full screen on a phone: `fullScreen={isMobile}`.",
-        });
-      }
-      // component="form", or component={"form"}
-      const valueOf = (a) => (a.value?.type === "JSXExpressionContainer" ? a.value.expression.value : a.value?.value);
-      const isForm =
-        name === "form" ||
-        node.openingElement.attributes.some(
-          (a) => a.type === "JSXAttribute" && a.name.name === "component" && valueOf(a) === "form",
+      if (name === "Dialog" && !hasAttribute(node, "fullScreen"))
+        report(node.openingElement, "A `Dialog` goes full screen on a phone: `fullScreen={isMobile}`.");
+      const width = jsxAttribute(node, "maxWidth");
+      if (/Dialog$|^Modal$/.test(name ?? "") && width?.value?.type === "Literal" && width.value.value === "xs")
+        report(width, "A dialog is `sm`, its wrappers' default (`md` for a form of many fields): never `xs`.");
+      if (icons.has(name) && inDialogTitle(node))
+        report(node.openingElement, "A dialog's title is its words: no icon in a `DialogTitle`.");
+      if (name === "DialogContent") checkDialogContent(node, context);
+      if (name === "DialogTitle" && isForm(nextElement(node))) {
+        report(
+          node.openingElement,
+          "A dialog's title sits right above its content, in its form: the theme's gap holds.",
         );
-      if (!isForm) return;
+      }
+      if (!isForm(node)) return;
       for (let p = parentElement(node); p; p = parentElement(p)) {
         if (elementName(p) === "Modal") {
-          context.report({
-            node: node.openingElement,
-            message:
-              "A form goes in a `FormDialog` (or `CreateDialog` / `EditDialog`), never a `Modal`: it would close and lose a dirty form.",
-          });
+          report(
+            node.openingElement,
+            "A form goes in a `FormDialog` (or `CreateDialog` / `EditDialog`), never a `Modal`: it would close and lose a dirty form.",
+          );
           return;
         }
       }
@@ -725,7 +774,26 @@ function createHookFiles(context) {
 }
 
 function createIcons(context) {
-  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/components/icons/")) return {};
+  if (!inClient(context)) return {};
+  if (repoPath(context.filename) === "client/src/components/icons/index.ts") {
+    return {
+      // One meaning per glyph: a glyph goes by one name, the meaning it has wherever it shows
+      ExportNamedDeclaration(node) {
+        const seen = new Set();
+        for (const specifier of node.specifiers) {
+          const glyph = specifier.local.name ?? specifier.local.value;
+          if (seen.has(glyph)) {
+            context.report({
+              node: specifier,
+              message: `One glyph, one meaning: \`${glyph}\` is named once, for what it means wherever it shows.`,
+            });
+          }
+          seen.add(glyph);
+        }
+      },
+    };
+  }
+  if (repoPath(context.filename).startsWith("client/src/components/icons/")) return {};
   return {
     ImportDeclaration(node) {
       if (!node.source.value.startsWith("@mui/icons-material")) return;
@@ -760,6 +828,15 @@ function createLoadErrors(context) {
   if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/LoadError.tsx") return {};
   return {
     JSXElement(node) {
+      if (elementName(node) === "LoadError" && inChips(node)) {
+        context.report({
+          node: node.openingElement,
+          message:
+            "A card's chips row holds chips alone: what failed to load is stated above its body, its `notice` " +
+            "(`EntityDetailsCard`'s).",
+        });
+        return;
+      }
       if (elementName(node) !== "Alert") return;
       const severity = node.openingElement.attributes.find(
         (a) => a.type === "JSXAttribute" && a.name.name === "severity",
@@ -981,6 +1058,8 @@ function createTooltips(context) {
   return {
     JSXElement(node) {
       if (elementName(node) !== "Tooltip") return;
+      if (hasAttribute(node, "arrow"))
+        context.report({ node: node.openingElement, message: "A `Tooltip` has no arrow." });
       const child = node.children.find((c) => c.type === "JSXElement");
       if (!child) return;
       if (hasAttribute(child, "disabled")) {
@@ -1003,6 +1082,17 @@ function createTooltips(context) {
   };
 }
 
+/** An element's first child element, text and expressions aside; null when it has none. */
+function firstElement(node) {
+  const first = node.children.find(
+    (child) =>
+      child.type === "JSXElement" ||
+      (child.type === "JSXExpressionContainer" && child.expression.type !== "JSXEmptyExpression") ||
+      (child.type === "JSXText" && child.value.trim()),
+  );
+  return first?.type === "JSXElement" ? first : null;
+}
+
 /** Whether `enabled` tests a value the query needs (`!!id`, `Boolean(id)`, `id !== undefined`) */
 function gatesOnValue(node) {
   if (
@@ -1022,6 +1112,19 @@ function gatesOnValue(node) {
   }
   if (node.type === "LogicalExpression" && node.operator === "&&")
     return gatesOnValue(node.left) || gatesOnValue(node.right);
+  return false;
+}
+
+/** Whether `node` is among a card's chips: what its `chips` (or `renderChips`) attribute holds or returns. */
+function inChips(node) {
+  for (let p = node.parent; p; p = p.parent)
+    if (p.type === "JSXAttribute" && ["chips", "renderChips"].includes(p.name.name)) return true;
+  return false;
+}
+
+/** Whether `node` sits in a dialog's title, a `DialogTitle`. */
+function inDialogTitle(node) {
+  for (let p = parentElement(node); p; p = parentElement(p)) if (elementName(p) === "DialogTitle") return true;
   return false;
 }
 
@@ -1075,9 +1178,26 @@ function inQueryFunction(node) {
   return false;
 }
 
+/** Whether `node` is a form: a `form`, or an element rendered as one (`component="form"`, `component={"form"}`). */
+function isForm(node) {
+  if (!node) return false;
+  const valueOf = (a) => (a.value?.type === "JSXExpressionContainer" ? a.value.expression.value : a.value?.value);
+  return (
+    elementName(node) === "form" ||
+    node.openingElement.attributes.some(
+      (a) => a.type === "JSXAttribute" && a.name.name === "component" && valueOf(a) === "form",
+    )
+  );
+}
+
 /** Whether the linted file is a queries module (`…Queries.ts`, `lib/queries.ts`), whose every request a query makes. */
 function isQueriesModule(context) {
   return /(^|\/)(queries|\w+Queries)\.ts$/.test(repoPath(context.filename));
+}
+
+/** The attribute `name` of a JSX element, when it has one. */
+function jsxAttribute(element, name) {
+  return element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
 }
 
 /** The function a component declares under `name`, in a block around `node`: `const handleX = () => {…}`. */
@@ -1114,6 +1234,14 @@ function namesOne(node, names) {
   );
 }
 
+/** The element right after `node` among its siblings, text aside; null when it ends them. */
+function nextElement(node) {
+  const siblings = node.parent?.children ?? [];
+  const after = siblings.slice(siblings.indexOf(node) + 1);
+  const next = after.find((child) => child.type !== "JSXText" || child.value.trim());
+  return next?.type === "JSXElement" ? next : null;
+}
+
 /** Whether a click handler only navigates: `() => navigate("/x")`, not back (`navigate(-1)`) */
 function onlyNavigates(handler, from = handler) {
   // A handler the component declares (`const handleProfile = () => {…}`), read where it's declared
@@ -1138,6 +1266,12 @@ function onlyNavigates(handler, from = handler) {
   );
 }
 
+/** The name a style property goes by, written as a name or a string; null for a computed one. */
+function propertyName(property) {
+  if (property.type !== "Property" || property.computed) return null;
+  return property.key.type === "Identifier" ? property.key.name : property.key.value;
+}
+
 /** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */
 function readsWatch(node) {
   if (!node || typeof node !== "object") return false;
@@ -1158,6 +1292,14 @@ function requestMethod(callee) {
   if (callee.type !== "MemberExpression") return null;
   const name = callee.computed ? callee.property.value : callee.property.name;
   return REQUEST_METHODS.has(name) ? name : null;
+}
+
+/** The properties an element's `sx` sets at its top, written as an object or an array of them. */
+function sxProperties(element) {
+  const sx = jsxAttribute(element, "sx");
+  const value = sx?.value?.type === "JSXExpressionContainer" ? sx.value.expression : null;
+  const objects = value?.type === "ArrayExpression" ? value.elements : [value];
+  return objects.flatMap((object) => (object?.type === "ObjectExpression" ? object.properties : []));
 }
 
 /** Whether a `setValue` call writes a form's field: react-hook-form's takes its path first, a state setter its value alone. */

@@ -1,7 +1,7 @@
 import { AppBar, Button, Toolbar, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 
-import { DashboardIcon, SignUpIcon } from "@/client/src/components/icons/index.ts";
+import { DashboardIcon, PersonAddIcon } from "@/client/src/components/icons/index.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 import { AppBrand, AppMain } from "./AppMain.tsx";
@@ -34,7 +34,7 @@ export function PublicLayout() {
               Dashboard
             </Button>
           ) : (
-            <Button color="inherit" startIcon={<SignUpIcon />} component={Link} to="/sign-up">
+            <Button color="inherit" startIcon={<PersonAddIcon />} component={Link} to="/sign-up">
               Sign Up
             </Button>
           )}

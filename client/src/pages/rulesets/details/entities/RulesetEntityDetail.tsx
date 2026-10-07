@@ -16,7 +16,8 @@ import {
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
+import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
   RulesetEntityDetailProps<TEntity, TForm, TKey>,
@@ -54,6 +55,8 @@ interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends Fie
   entityId: string;
   /** Singular display name, e.g. "Language". */
   label: string;
+  /** What failed to load for the read-only view, stated above its description */
+  notice?: ReactNode;
   /** The entity's detail query by id, from `entityDetailQueries.ts`: the page reads it, and a save seeds the copy's. */
   query: (entityId: string) => UseQueryOptions<TEntity, Error, TEntity, TKey>;
   /** Facts shown next to the title in the read-only view. */
@@ -135,13 +138,14 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   label,
   query,
   editing,
+  notice,
   renderChips,
 }: RulesetEntityDetailProps<TEntity, TForm, TKey>) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const backUrl = entityPageState(location.state).from ?? `/rulesets/${rulesetId}/${section}`;
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
@@ -157,7 +161,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
     onSuccess: () => {
       invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, section)]);
       snackbar.success(`${label} deleted`);
-      navigate(backUrl);
+      navigate(back.to);
       // Gone: don't let Back render it from the cache
       queryClient.removeQueries({ queryKey: query(entityId).queryKey });
     },
@@ -168,8 +172,8 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
     return (
       <EntityPageError
         message={!ruleset ? loadFailureMessage("Ruleset", rulesetError) : loadFailureMessage(label, entityError)}
-        backLabel="Back"
-        backTo={backUrl}
+        backLabel={back.label}
+        backTo={back.to}
       />
     );
   }
@@ -179,7 +183,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
       <EntityDetailLayout
         entityName={entity?.name}
         rulesetName={ruleset?.name}
-        backTo={backUrl}
+        backTo={back.to}
         canDelete={canEdit}
         onDelete={() => setDeleteDialogOpen(true)}
         isLoading={isRulesetLoading || isEntityLoading}
@@ -200,6 +204,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
             <EntityDetailsCard
               title={`${label} Details`}
               chips={renderChips?.(entity)}
+              notice={notice}
               description={entity.description}
             />
           ))}

@@ -1,4 +1,4 @@
-import { Alert, Box, Chip, Container, Menu, Stack, Typography } from "@mui/material";
+import { Alert, Container, Menu, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
@@ -7,18 +7,21 @@ import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom"
 import {
   ActionMenuItem,
   ConfirmDialog,
+  CountChip,
   DeleteDialog,
   DetailPageHeader,
   PageError,
   PageLoader,
   PageTransition,
   type SectionTab,
+  SectionTabPanel,
   SectionTabs,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import {
   ArchiveIcon,
-  CharactersIcon,
-  DeleteForeverIcon,
+  CharacterIcon,
+  DeleteIcon,
   EditIcon,
   PlayersIcon,
   UnarchiveIcon,
@@ -44,7 +47,7 @@ const SECTION_COMPONENTS = {
 } as const;
 
 const TABS: SectionTab<TabSection>[] = [
-  { key: "characters", label: "Characters", icon: CharactersIcon },
+  { key: "characters", label: "Characters", icon: CharacterIcon },
   { key: "players", label: "Players", icon: PlayersIcon },
 ];
 
@@ -125,7 +128,7 @@ export default function CampaignDetailsPage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <PageLoader />
       </Container>
     );
@@ -134,7 +137,7 @@ export default function CampaignDetailsPage() {
   // A passing refetch failure keeps the loaded page; a deleted campaign or a removed member leaves it.
   if (!campaign || accessLost(error)) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <PageError
           message={loadFailureMessage("Campaign", error)}
           backLabel="Back to Campaigns"
@@ -146,7 +149,7 @@ export default function CampaignDetailsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl">
         <Stack spacing={4}>
           <DetailPageHeader
             title={`⚔️ ${campaign.name}`}
@@ -154,11 +157,11 @@ export default function CampaignDetailsPage() {
             onMenuOpen={canEdit ? menu.openMenu : undefined}
             chips={
               <>
-                <Chip label={formatCount(campaign.currentPlayers, "player")} color="primary" sx={{ fontWeight: 600 }} />
-                <Chip label={campaign.rulesetName} color="secondary" sx={{ fontWeight: 600 }} />
+                <CountChip label={formatCount(campaign.currentPlayers, "player")} />
+                <ValueChip label={campaign.rulesetName} />
               </>
             }
-            description={campaign.description || "Manage your campaign players, characters, and invitations"}
+            description={campaign.description}
           />
 
           {/* An archived campaign's notice, above its tabs */}
@@ -185,19 +188,14 @@ export default function CampaignDetailsPage() {
           {TABS.map(({ key }) => {
             const Section = SECTION_COMPONENTS[key];
             return (
-              <Box key={key} role="tabpanel" hidden={key !== currentTab} sx={{ py: 3 }}>
+              <SectionTabPanel key={key} hidden={key !== currentTab}>
                 <Section campaign={campaign} />
-              </Box>
+              </SectionTabPanel>
             );
           })}
         </Stack>
 
-        <Menu
-          anchorEl={menu.anchorEl}
-          open={menu.open}
-          onClose={menu.closeMenu}
-          slotProps={{ paper: { sx: { minWidth: 200 } } }}
-        >
+        <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
           {campaign.deletedAt
             ? [
                 <ActionMenuItem
@@ -209,7 +207,7 @@ export default function CampaignDetailsPage() {
                 />,
                 <ActionMenuItem
                   key="hard-delete"
-                  icon={DeleteForeverIcon}
+                  icon={DeleteIcon}
                   label="Delete Permanently"
                   intent="destructive"
                   onClick={menu.closeMenuAnd(() => setHardDeleteDialogOpen(true))}

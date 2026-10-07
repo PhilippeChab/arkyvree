@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, Container, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { type ReactNode } from "react";
@@ -15,7 +15,10 @@ import {
   PageHeader,
   PageLoader,
   PageTransition,
+  Panel,
   PasswordField,
+  SaveButton,
+  StatusChip,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormSync, useFormWith, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
@@ -55,14 +58,10 @@ interface ProfileFormData {
 
 function ProfileCard({ title, children, danger = false }: ProfileCardProps) {
   return (
-    <Card sx={[danger && { border: 1, borderColor: "error.main" }]}>
-      <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-        <Stack spacing={danger ? 1 : 3}>
-          <CardTitle danger={danger}>{title}</CardTitle>
-          <Box>{children}</Box>
-        </Stack>
-      </CardContent>
-    </Card>
+    <Panel spacing={danger ? 1 : 3} sx={[danger && { border: 1, borderColor: "error.main" }]}>
+      <CardTitle danger={danger}>{title}</CardTitle>
+      <Box>{children}</Box>
+    </Panel>
   );
 }
 
@@ -179,7 +178,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="lg">
         <PageLoader />
       </Container>
     );
@@ -188,7 +187,7 @@ export default function ProfilePage() {
   // A failed background refetch keeps the loaded profile (and any edits in progress) on screen.
   if (!userData) {
     return (
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="lg">
         <PageError message={loadFailureMessage("Profile", userError)} />
       </Container>
     );
@@ -197,7 +196,7 @@ export default function ProfilePage() {
   return (
     <PageTransition>
       {/* Deeper at the bottom, under the last card */}
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, pb: { xs: 5, sm: 7 } }}>
+      <Container maxWidth="lg" sx={{ pb: { xs: 5, sm: 7 } }}>
         <Stack spacing={4}>
           <PageHeader title="Profile" subtitle="Manage your account information and security settings" />
 
@@ -264,11 +263,7 @@ export default function ProfilePage() {
                       label="Email Address"
                     />
 
-                    <Button type="submit" variant="contained" color="primary" disabled={profileMutation.isPending}>
-                      <DiceSpinner size="small" loading={profileMutation.isPending}>
-                        Save
-                      </DiceSpinner>
-                    </Button>
+                    <SaveButton canSave={profileForm.formState.isDirty} pending={profileMutation.isPending} />
                   </Stack>
                 </Box>
               </Stack>
@@ -286,7 +281,7 @@ export default function ProfilePage() {
                 >
                   <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                     <Typography variant="body1">Google</Typography>
-                    {isGoogleLinked && <Chip label="Linked" size="small" color="success" />}
+                    {isGoogleLinked && <StatusChip label="Linked" color="success" />}
                   </Stack>
                   <Box sx={{ width: { xs: "100%", sm: 200 } }}>
                     {isGoogleLinked ? (
@@ -348,11 +343,11 @@ export default function ProfilePage() {
                   autoComplete="new-password"
                 />
 
-                <Button type="submit" variant="contained" color="primary" disabled={passwordMutation.isPending}>
-                  <DiceSpinner size="small" loading={passwordMutation.isPending}>
-                    {hasPassword ? "Update Password" : "Set Password"}
-                  </DiceSpinner>
-                </Button>
+                <SaveButton
+                  canSave={passwordForm.formState.isDirty}
+                  label={hasPassword ? "Update Password" : "Set Password"}
+                  pending={passwordMutation.isPending}
+                />
               </Stack>
             </ProfileCard>
 
