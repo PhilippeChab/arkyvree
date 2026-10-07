@@ -455,7 +455,8 @@ engine/rulesets/
     ├── items/                             (InventoryComponent, the slots, itemFields: an item's fields off its
     │                                      properties; Dnd35InventoryRules, Dnd35ItemsRules, Dnd35ItemsEffects)
     ├── levelUp/                           (the level-up's rules: planned class levels, slots and their distribution,
-    │                                      projections, a level's selections checked)
+    │                                      projections, a level's selections checked; plan: the preview, and a save's
+    │                                      picks spread over its levels)
     ├── levels/                            (Dnd35LevelsRules)
     └── bonded/                            (the bonded creatures' characters, BondsComponent, BondedPaths; bondedPlans:
                                            what a master's creatures become as the master's levels change)
@@ -477,7 +478,7 @@ server/
 │   │           ├── slotQueries.ts
 │   │           ├── preview.ts
 │   │           ├── finalize.ts
-│   │           ├── baseline.ts
+│   │           ├── plannedLevels.ts       (a level-up's planned levels built, which the module plans from)
 │   │           └── validation.ts
 │   └── rulesets/                          ← entity CRUD for feats/powers/aptitudes/…
 └── routers/
