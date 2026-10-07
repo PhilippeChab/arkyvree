@@ -37,6 +37,7 @@ import {
 import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -56,7 +57,12 @@ import {
   WIZARD_1,
 } from "@/tests/support/levelFixtures.ts";
 import { addCharacterLevel, addOneLevel, findKlassLevel } from "@/tests/support/levels.ts";
-import { createSeededTestRuleset, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import {
+  createSeededTestRuleset,
+  createSeededTestRulesetWithExtensions,
+  createTestRuleset,
+  invalidateSeededRuleset,
+} from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
@@ -1129,6 +1135,27 @@ describe("LevelsService", () => {
         page,
       );
       expect(names(items)).toEqual(["Uncanny Dodge"]);
+    });
+
+    test("leave out a spell the character knows under the copy of another book the ruleset merged", async () => {
+      // Two books' copies of a spell merge into the one the list shows: a level that picked the other knows it
+      const ctx = await getSeedCtx();
+      const fork = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
+      const wizardSpells = ctx.aptMap["Wizard Spells"];
+      const merged = await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
+        const listed = new Set(getListPowerIds(rulesetData, { aptitudeId: wizardSpells, level: 1 }));
+        const loserId = [...rulesetData.cow.siblingIds].find(
+          (id) => rulesetData.cow.resolve(id) !== id && listed.has(rulesetData.cow.resolve(id)),
+        )!;
+        return { loserId, name: rulesetData.powersById.get(loserId)!.name };
+      });
+      const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
+      const [characterLevelId] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
+      await CharacterLevelPowers.createMany(db, [
+        { characterLevelId, powerId: merged.loserId, aptitudeId: wizardSpells },
+      ]);
+
+      expect(await spellNames(characterId, 2)).not.toContain(merged.name);
     });
 
     test("offer every spell of a class's list, extensions' copies included", async () => {
