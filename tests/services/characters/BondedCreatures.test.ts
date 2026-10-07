@@ -413,6 +413,38 @@ describe("Stat blocks", () => {
     expect(initiative(dog)).toBe(before);
   });
 
+  test("count a stat-block feat's skill bonus once, though a modifier grants the creature the feat as well", async () => {
+    // A druid 12's dog: its Listen and Spot count its Alertness, which its own modifier grants it again
+    const { bonded } = await createDruidWithCompanion(12, "Dog Animal Companion");
+    const awareness = (dog: DetailedCharacter) => {
+      const { listen, spot } = dog.components.skills.getSkills();
+      return [listen.total, spot.total];
+    };
+    const before = awareness(await build(new DetailedCharacterAnimalCompanion(bonded)));
+    await Modifiers.create(db, {
+      sourceId: bonded.id,
+      sourceType: "characters",
+      target: "feats.alertness.possessed",
+      operator: "set",
+      value: "true",
+      valueType: "boolean",
+    });
+    expect(awareness(await build(new DetailedCharacterAnimalCompanion(bonded)))).toEqual(before);
+  });
+
+  test("give a stat-block feat's skill bonus as the ruleset has it, in place of the SRD's the total counts", async () => {
+    const { ctx, bonded } = await createDruidWithCompanion(12, "Dog Animal Companion");
+    const listen = async () =>
+      (await build(new DetailedCharacterAnimalCompanion(bonded))).components.skills.getSkills().listen.total;
+    const before = await listen();
+    const alertness = await Modifiers.findMany(db, { sourceIds: [ctx.featMap["Alertness"]] });
+    const onListen = alertness.find((modifier) => modifier.target === "skills.listen.misc")!;
+    await Modifiers.update(db, { value: "3" }, { id: onListen.id });
+    invalidateSeededRuleset(ctx.rulesetId);
+    // The SRD's +2 comes out of the printed total, the ruleset's +3 goes in
+    expect(await listen()).toBe(before + 1);
+  });
+
   test("replace the creature's weapons with its natural attacks: no item group reaches a weapon it no longer has", async () => {
     const cat = await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded));
     expect(cat.components.combat.getCombat().weaponsets["0"]?.mainhand?.name).not.toBe("Unarmed Strike");
