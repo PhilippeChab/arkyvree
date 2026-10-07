@@ -6,7 +6,7 @@ import { toVirtualFeat } from "@/server/rulesets/dnd3.5/loading/customizations.t
 import type { ValidationIssue } from "@/server/rulesets/engine/types.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
-import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
+import { type BondedRaceStatBlock, getBondedRaceStats, STAT_BLOCK_FEAT_SKILL_BONUSES } from "./bondedRaceData.ts";
 
 export default abstract class DetailedCharacterBonded extends Dnd35DetailedCharacter {
   protected cachedTotalHD: number | null = null;
@@ -38,18 +38,26 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
 
   protected abstract applyMasterDerivation(parentCharacterId: string, rulesetData: RulesetData): Promise<void>;
 
+  /** The stat block's skills, then its feats, which add their bonuses to the totals set without them. */
   protected applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: RulesetData): void {
-    this.applyGrantedFeats([...(raceStats.bonusFeats ?? []), ...(raceStats.baseFeats ?? [])], rulesetData);
-    this.applySkillTotals(raceStats.baseSkillTotals ?? {}, raceStats.baseSkillRanks ?? {});
+    const featNames = [...(raceStats.bonusFeats ?? []), ...(raceStats.baseFeats ?? [])];
+    this.applySkillTotals(raceStats.baseSkillTotals ?? {}, raceStats.baseSkillRanks ?? {}, featNames);
+    this.applyGrantedFeats(featNames, rulesetData);
   }
 
   /**
-   * The stat block's skills, at its totals, with the ranks within them: an item's or a feat's modifier adds on top, and
-   * so does a raised ability.
+   * The stat block's skills, at its totals less what its feats add there (`STAT_BLOCK_FEAT_SKILL_BONUSES`), with the
+   * ranks within them: each of those feats adds its bonus back as the ruleset has it, once, from whichever source
+   * gives the creature the feat. An item's or another feat's modifier adds on top, and so does a raised ability.
    */
-  protected applySkillTotals(totals: Record<string, number>, ranks: Record<string, number> = {}): void {
-    for (const [skillName, total] of Object.entries(totals))
-      this.components.skills.setStatBlockTotal(skillName, total, ranks[skillName] ?? 0);
+  protected applySkillTotals(totals: Record<string, number>, ranks: Record<string, number>, featNames: string[]): void {
+    for (const [skillName, total] of Object.entries(totals)) {
+      const featBonus = featNames.reduce(
+        (sum, featName) => sum + (STAT_BLOCK_FEAT_SKILL_BONUSES[featName]?.[skillName] ?? 0),
+        0,
+      );
+      this.components.skills.setStatBlockTotal(skillName, total, ranks[skillName] ?? 0, featBonus);
+    }
   }
 
   /**

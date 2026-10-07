@@ -297,17 +297,18 @@ export default class SkillsComponent {
 
   /**
    * A bonded creature's skill as its stat block lists it: its `ranks` (a familiar's, which its master's may better),
-   * and the total less those, the ability's base modifier and the size, as misc. The ability's part stays live: a
-   * raised ability (a companion's advancement, an item) raises the total.
+   * and the total less those, the ability's base modifier, the size and what the stat block's feats add (`featBonus`,
+   * which those feats add back), as misc. The ability's part stays live: a raised ability (a companion's advancement,
+   * an item) raises the total.
    */
-  setStatBlockTotal(skillName: string, total: number, ranks = 0): void {
+  setStatBlockTotal(skillName: string, total: number, ranks = 0, featBonus = 0): void {
     const slug = stripSeparators(skillName);
     const skill = this.skills[slug];
     if (!skill) return;
     const abilityName = this.abilityNameBySkill.get(slug);
     const ability = abilityName ? this.abilities.getAbilityModifierExcludingMisc(abilityName) : 0;
     skill.rank = ranks;
-    skill.misc = total - ability - skill.size - ranks;
+    skill.misc = total - ability - skill.size - ranks - featBonus;
     skill.trained = total > 0;
   }
 

@@ -21,7 +21,10 @@
  * beside the ability's base modifier and the size
  * (`SkillsComponent.setStatBlockTotal`), so a raised ability raises the
  * total. A race's modifiers add on top: a racial bonus the total counts isn't
- * one of them.
+ * one of them. The stat block's own feats come out of the total
+ * (`STAT_BLOCK_FEAT_SKILL_BONUSES`, the SRD's bonuses it was computed with),
+ * and each adds its bonus back as the ruleset has it, once, from whichever
+ * source gives the creature the feat.
  *
  * Per-HD scaling:
  *   - Feat count at total HD N = 1 + floor((N-1)/3), the stat block's bonus
@@ -370,6 +373,16 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseSkillTotals: { Listen: 5, Spot: 5 },
     skillPriority: ["Listen", "Spot"],
   },
+};
+
+/**
+ * What the SRD's feats a stat block lists add to its skills, by feat, then skill: what its printed totals count. A
+ * creature's totals are set without them (`DetailedCharacterBonded.applySkillTotals`).
+ */
+export const STAT_BLOCK_FEAT_SKILL_BONUSES: Record<string, Record<string, number>> = {
+  Agile: { Balance: 2, "Escape Artist": 2 },
+  Alertness: { Listen: 2, Spot: 2 },
+  Stealthy: { Hide: 2, "Move Silently": 2 },
 };
 
 export function getBondedRaceStats(raceName: string | undefined | null): BondedRaceStatBlock | null {
