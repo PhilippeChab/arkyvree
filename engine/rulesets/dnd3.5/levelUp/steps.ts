@@ -101,7 +101,7 @@ export function projectAttributeStep(
   const excludeIds = excludeCharacterLevelId ? getLevelIdsFromOnward(levels, excludeCharacterLevelId) : [];
   // The levels before this one: the level added or edited is the next
   const totalLevel = levels.length - excludeIds.length + (pendingLevelCount ?? 0);
-  if (!new Dnd35LevelsRules().isAbilityIncreaseLevel(totalLevel)) return undefined;
+  if (!Dnd35LevelsRules.isAbilityIncreaseLevel(totalLevel)) return undefined;
   return excludeIds.length > 0 ? { projected: { excludeCharacterLevelIds: excludeIds } } : {};
 }
 

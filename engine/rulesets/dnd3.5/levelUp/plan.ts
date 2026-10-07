@@ -16,15 +16,15 @@ import type { projectPlannedLevels } from "./projection.ts";
 
 /**
  * A level-up's planned levels, built: the character with them (`character`, built with `projectPlannedLevels`'s
- * projection), its aptitudes as saved, without them (`baseline`), what their class levels grant, and how many levels
- * the character has before them.
+ * projection), the character as saved, without them (`saved`), what their class levels grant, and how many levels it
+ * has before them.
  */
 export interface PlannedLevels {
   autoGrantedRecords: ReturnType<typeof projectPlannedLevels>["allAutoGrantedFeatRecords"];
-  baseline: Parameters<typeof computePerLevelAptitudeSlots>[6];
   character: Dnd35DetailedCharacter;
   existingLevelCount: number;
   klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>;
+  saved: Dnd35DetailedCharacter;
 }
 
 /** What a save distributes its pooled picks over the planned levels by: each level's points, class skills and slots. */
@@ -45,9 +45,8 @@ function buildDistributionData(planned: PlannedLevels, rulesetData: RulesetData)
 
 /** The planned levels (by index) that take an ability increase, after the character's `existingCount` levels. */
 function getAbilityIncreaseLevels(existingCount: number, plannedCount: number) {
-  const rules = new Dnd35LevelsRules();
   const levels: number[] = [];
-  for (let i = 0; i < plannedCount; i++) if (rules.isAbilityIncreaseLevel(existingCount + i)) levels.push(i);
+  for (let i = 0; i < plannedCount; i++) if (Dnd35LevelsRules.isAbilityIncreaseLevel(existingCount + i)) levels.push(i);
   return levels;
 }
 
@@ -63,7 +62,7 @@ function getAutoGrantedPowers(rulesetData: RulesetData, klassLevelIds: string[])
  * level's skill points, class skills and pool slots, and the projector the skills are read through.
  */
 function planLevelUp(planned: PlannedLevels, rulesetData: RulesetData) {
-  const { autoGrantedRecords, baseline, character, existingLevelCount, klassLevelEntries } = planned;
+  const { autoGrantedRecords, character, existingLevelCount, klassLevelEntries, saved } = planned;
   const projector = new Dnd35LevelUpProjector(character);
   const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
   const pools = character.components.aptitudes.getLevelUpPools(rulesetData);
@@ -74,7 +73,7 @@ function planLevelUp(planned: PlannedLevels, rulesetData: RulesetData) {
     Object.keys(pools.featPools),
     Object.keys(pools.powerPools),
     existingLevelCount,
-    baseline,
+    saved.components.aptitudes.getAptitudes(),
   );
   return {
     ...slots,

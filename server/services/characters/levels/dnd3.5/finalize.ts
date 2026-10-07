@@ -16,7 +16,6 @@ import {
   checkIssues,
   checkSelections,
   distributePlannedPicks,
-  type Dnd35RulesetModule,
   getPlannedKlassLevels,
   getSavedKlassLevel,
   projectEditedLevel,
@@ -78,7 +77,6 @@ async function insertLevelChildren(
  */
 async function insertPlannedLevels(
   tx: Db,
-  rulesetModule: Dnd35RulesetModule,
   rulesetData: RulesetData,
   characterId: string,
   levels: { abilityId: string | null; hp: number }[],
@@ -102,11 +100,7 @@ async function insertPlannedLevels(
 
     // Validate ability increase timing using base count + plan offset
     const totalLevelCount = baseExistingLevels.length + i;
-    checkAbilityIncrease(
-      rulesetModule.rules.levels.isAbilityIncreaseLevel(totalLevelCount),
-      abilityId,
-      `Level ${i + 1}: `,
-    );
+    checkAbilityIncrease(totalLevelCount, abilityId, `Level ${i + 1}: `);
 
     // baseExistingLevels (from before the loop) + levels we've inserted so
     // far in this iteration covers what a fresh findMany would return,
@@ -204,7 +198,6 @@ export async function finalizeLevelUp(
       // Phase 2: Per-level validation and insertion
       const createdLevels = await insertPlannedLevels(
         tx,
-        rulesetModule,
         rulesetData,
         characterId,
         levels,
@@ -291,7 +284,7 @@ export async function updateLevel(
       // The levels in the order the character took them: the edited level's index is its total level less one
       const existingLevels = await CharacterLevels.findMany(tx, { characterId });
       const levelIndex = existingLevels.findIndex((l) => l.id === characterLevelId);
-      checkAbilityIncrease(rulesetModule.rules.levels.isAbilityIncreaseLevel(levelIndex), abilityId);
+      checkAbilityIncrease(levelIndex, abilityId);
       const validationResult = await validateAndFetchLevelSelections(tx, {
         klass,
         klassLevel,

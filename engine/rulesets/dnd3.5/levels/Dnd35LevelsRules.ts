@@ -15,7 +15,12 @@ export class Dnd35LevelsRules implements LevelsRules {
     return totalLevel === 0 ? 0 : Math.floor(totalLevel / 3) + 1;
   }
 
-  isAbilityIncreaseLevel(totalLevel: number): boolean {
+  /** Whether the level after `totalLevel` levels takes an ability increase: every fourth. */
+  static isAbilityIncreaseLevel(totalLevel: number): boolean {
     return (totalLevel + 1) % 4 === 0;
+  }
+
+  isAbilityIncreaseLevel(totalLevel: number): boolean {
+    return Dnd35LevelsRules.isAbilityIncreaseLevel(totalLevel);
   }
 }

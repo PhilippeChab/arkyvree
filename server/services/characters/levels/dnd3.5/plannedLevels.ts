@@ -10,8 +10,7 @@ import type { Db } from "@/server/database/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /**
- * A level-up's planned levels, built from the character's rows: the character with them, and its aptitudes as saved,
- * without them, which the engine plans the level-up from (`buildLevelUpPreview`, `distributePlannedPicks`).
+ * A level-up's planned levels, built from the character's rows: the character with them, and as saved, without them, which the engine plans the level-up from (`buildLevelUpPreview`, `distributePlannedPicks`).
  */
 export async function buildPlannedLevels(
   database: Db,
@@ -29,11 +28,5 @@ export async function buildPlannedLevels(
   const rows = await readCharacterRows(database, characterRecord);
   const character = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, rows, scope });
   const saved = await buildCharacter(rulesetModule, characterRecord, { rows, scope });
-  return {
-    autoGrantedRecords: allAutoGrantedFeatRecords,
-    baseline: saved.components.aptitudes.getAptitudes(),
-    character,
-    existingLevelCount,
-    klassLevelEntries,
-  };
+  return { autoGrantedRecords: allAutoGrantedFeatRecords, character, existingLevelCount, klassLevelEntries, saved };
 }
