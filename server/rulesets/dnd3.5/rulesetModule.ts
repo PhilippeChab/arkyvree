@@ -8,6 +8,7 @@ import Dnd35DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.t
 import Dnd35DetailedCharacterMount from "./bonded/DetailedCharacterMount.ts";
 import Dnd35DetailedCharacter from "./character/DetailedCharacter.ts";
 import Dnd35LevelUpProjector from "./character/Dnd35LevelUpProjector.ts";
+import { Dnd35ClassesEffects } from "./classes/Dnd35ClassesEffects.ts";
 import { Dnd35ClassesRules } from "./classes/Dnd35ClassesRules.ts";
 import { Dnd35ClassLevelsEffects } from "./classes/Dnd35ClassLevelsEffects.ts";
 import { Dnd35ClassLevelsRules } from "./classes/Dnd35ClassLevelsRules.ts";
@@ -57,6 +58,7 @@ export function createRulesetModule(): Dnd35RulesetModule {
       skills: new Dnd35SkillsRules(),
     },
     effects: {
+      classes: new Dnd35ClassesEffects(),
       classLevels: new Dnd35ClassLevelsEffects(),
       powers: new Dnd35PowersEffects(),
       races: new Dnd35RacesEffects(),
