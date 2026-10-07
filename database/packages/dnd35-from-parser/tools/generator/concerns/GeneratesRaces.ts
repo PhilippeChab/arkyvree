@@ -1,7 +1,7 @@
 import { join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
+import { BOOK_FILES } from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -14,13 +14,8 @@ export function GeneratesRaces<B extends Constructor<BaseGenerator>>(Base: B) {
       const seeds = Library.book(book).raceSeeds(ref);
       this.log(`Built ${seeds.length} race seeds`);
 
-      const file = new CodeFile();
-      file.list(
-        "ALL_RACES",
-        "RaceSeed",
-        seeds.flatMap((race) => file.race(race)),
-      );
-      this.write(join(this.dir, book, "races.ts"), file.code());
+      const { path, list } = BOOK_FILES.races;
+      this.writeList(join(this.dir, book, path), list, "RaceSeed", seeds, (file, race) => file.race(race));
 
       this.log(`\nDone!`);
     }

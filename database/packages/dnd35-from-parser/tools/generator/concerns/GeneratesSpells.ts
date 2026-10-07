@@ -1,9 +1,13 @@
-import { readdirSync, unlinkSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, rmSync } from "node:fs";
+import { basename, dirname, join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import {
+  BOOK_FILES,
+  getSpellFile,
+  SPELL_LEVELS,
+} from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { generateSpellFiles } from "@/database/packages/dnd35-from-parser/tools/generator/code/spellFiles.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -13,7 +17,7 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingSpells extends Base {
     /** Regenerate spells/index.ts for a book from existing level .ts files. */
     writeSpellIndex(book: string) {
-      const spellDir = join(this.dir, book, "spells");
+      const spellDir = dirname(join(this.dir, book, BOOK_FILES.spells.path));
       let allFiles: string[];
       try {
         allFiles = readdirSync(spellDir);
@@ -21,26 +25,21 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
         return; // no spells for this book
       }
 
-      // Match cantrips.ts and level*.ts (the standard spell level files)
-      const levelFiles: { constName: string; file: string; level: number }[] = [];
-
-      if (allFiles.includes("cantrips.ts")) levelFiles.push({ file: "cantrips.ts", level: 0, constName: "CANTRIPS" });
-
-      for (let i = 1; i <= 9; i++) {
-        const fname = `level${i}.ts`;
-        if (allFiles.includes(fname)) levelFiles.push({ file: fname, level: i, constName: `LEVEL_${i}_SPELLS` });
-      }
+      // The spell level files it has (cantrips.ts, level1.ts…), by level
+      const levelFiles = SPELL_LEVELS.map((level) => ({ level, ...getSpellFile(level) })).filter(({ path }) =>
+        allFiles.includes(basename(path)),
+      );
 
       if (levelFiles.length === 0) return;
 
       const file = new CodeFile();
-      for (const { file: name, constName } of levelFiles) file.gather(`./${name}`, [constName]);
+      for (const { path, list } of levelFiles) file.gather(`./${basename(path)}`, [list]);
       file.list(
-        "ALL_SPELLS",
+        BOOK_FILES.spells.list,
         "SpellSeed",
-        levelFiles.map((lf) => `  ...${lf.constName}.map((p) => ({ ...p, level: ${lf.level} })),`),
+        levelFiles.map(({ level, list }) => `  ...${list}.map((p) => ({ ...p, level: ${level} })),`),
       );
-      this.write(join(spellDir, "index.ts"), file.code());
+      this.write(join(this.dir, book, BOOK_FILES.spells.path), file.code());
     }
 
     /** A spell reference's files, one per spell level, the stale ones removed. */
@@ -48,25 +47,18 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
       const spells = Library.book(book).spellSeeds(ref);
       this.log(`Built ${spells.length} spell seeds`);
 
-      // Generate .ts files per level
-      const files = generateSpellFiles(spells);
-      const spellDir = join(this.dir, book, "spells");
-
-      // Remove stale level files that won't be regenerated (e.g. cantrips.ts when no level-0 spells)
-      const LEVEL_FILES = ["cantrips.ts", ...Array.from({ length: 9 }, (_, i) => `level${i + 1}.ts`)];
-      for (const f of LEVEL_FILES) {
-        if (!files.has(f)) {
-          try {
-            unlinkSync(join(spellDir, f));
-          } catch {
-            // doesn't exist
-          }
+      // A file per spell level, its spells without their level (its file's), the levels without spells' removed
+      const byLevel = Map.groupBy(spells, (spell) => spell.level);
+      for (const level of SPELL_LEVELS) {
+        const { path, list } = getSpellFile(level);
+        const levelSpells = byLevel.get(level);
+        if (levelSpells) {
+          this.writeList(join(this.dir, book, path), list, "PowerSeed", levelSpells, (file, spell) =>
+            file.spell(spell),
+          );
+        } else {
+          rmSync(join(this.dir, book, path), { force: true });
         }
-      }
-
-      for (const [filename, code] of files) {
-        const filePath = join(spellDir, filename);
-        this.write(filePath, code);
       }
     }
   }

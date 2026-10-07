@@ -1,9 +1,13 @@
-import { join } from "node:path";
+import { basename, join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import {
+  BOOK_FILES,
+  FEATS_FILE,
+  getFeatTypeList,
+  getTemplateList,
+} from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { generateFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
-import { getFeatsFileLists } from "@/database/packages/dnd35-from-parser/tools/generator/code/FeatsFile.ts";
 import { compareNames } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
@@ -16,45 +20,57 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingFeats extends Base {
     /** A book's aptitudes.ts: the aptitudes its seeds use (`BookSeeds.aptitudes`). */
     writeAptitudes(book: string) {
-      const aptitudes = Library.book(book).aptitudes();
-
-      const file = new CodeFile();
-      file.list(
-        "ALL_APTITUDES",
+      const { path, list } = BOOK_FILES.aptitudes;
+      this.writeList(
+        join(this.dir, book, path),
+        list,
         "string",
-        aptitudes.map((aptitude) => `  ${quote(aptitude)},`),
+        Library.book(book).aptitudes(),
+        (_, aptitude) => `  ${quote(aptitude)},`,
       );
-      this.write(join(this.dir, book, "aptitudes.ts"), file.code());
     }
 
     /** A book's standalone feats' index (feats/index.ts): every list of its feats files, from its references. */
     writeFeatIndex(book: string) {
       const featRef = ReferenceLoader.find(book, "feat");
       // Each feats file's lists, by file, as the generator writes them: the domains' feat pools', the reference's
+      const seeds = Library.book(book);
+      const feats = featRef && seeds.featSeeds(featRef);
       const featFiles = [
         {
-          file: "domainFeats.ts",
-          lists: Library.book(book).domainSeeds().poolFeats.length > 0 ? ["DOMAIN_POOL_FEATS"] : [],
+          path: BOOK_FILES.domainFeats.path,
+          lists: seeds.domainSeeds().poolFeats.length > 0 ? [BOOK_FILES.domainFeats.list] : [],
         },
-        { file: "feats.ts", lists: featRef ? getFeatsFileLists(featRef) : [] },
+        {
+          path: FEATS_FILE,
+          lists: feats
+            ? [
+                ...[...feats.byType.keys()].map(getFeatTypeList),
+                ...feats.templates.map(({ familyName }) => getTemplateList(familyName)),
+              ]
+            : [],
+        },
       ].filter(({ lists }) => lists.length > 0);
       // A book with classes has a feats folder, its standalone feats none or not
       if (featFiles.length === 0 && ReferenceLoader.loadClasses(book).length === 0) return;
 
       const file = new CodeFile();
       const standalone: string[] = [];
-      for (const { file: name, lists } of featFiles) {
+      for (const { path, lists } of featFiles) {
         const sorted = lists.sort(compareNames);
-        file.gather(`./${name}`, sorted);
+        file.gather(`./${basename(path)}`, sorted);
         standalone.push(...sorted.map((list) => `  ...${list},`));
       }
-      file.list("ALL_STANDALONE_FEATS", "FeatSeed", standalone);
-      this.write(join(this.dir, book, "feats", "index.ts"), file.code());
+      file.list(BOOK_FILES.standaloneFeats.list, "FeatSeed", standalone);
+      this.write(join(this.dir, book, BOOK_FILES.standaloneFeats.path), file.code());
     }
 
-    /** A feat reference's feats file (feats/feats.ts). */
+    /** A feat reference's feats file (feats/feats.ts): its lists (`CodeFile.featsFile`). */
     writeFeats(ref: FeatReference, book: string) {
-      this.write(join(this.dir, book, "feats", "feats.ts"), generateFeatSeeds(ref));
+      const seeds = Library.book(book);
+      const file = new CodeFile();
+      file.featsFile(seeds.featSeeds(ref), seeds.requirableFamilies());
+      this.write(join(this.dir, book, FEATS_FILE), file.code());
     }
   }
   return GeneratingFeats;

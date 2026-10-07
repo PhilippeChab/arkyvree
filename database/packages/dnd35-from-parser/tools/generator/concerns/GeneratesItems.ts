@@ -1,6 +1,7 @@
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import { ITEM_FILES, ITEMS_INDEX } from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -11,14 +12,17 @@ export function GeneratesItems<B extends Constructor<BaseGenerator>>(Base: B) {
     /** A book's mundane items' files, a file per kind, and their index. */
     writeItems(ref: ItemReference, book: string) {
       const seeds = Library.book(book).itemSeeds(ref);
-      const outDir = join(this.dir, book, "items");
-      this.writeItemFile(join(outDir, "simpleWeapons.ts"), "SIMPLE_WEAPONS", seeds.simpleWeapons);
-      this.writeItemFile(join(outDir, "martialWeapons.ts"), "MARTIAL_WEAPONS", seeds.martialWeapons);
-      this.writeItemFile(join(outDir, "exoticWeapons.ts"), "EXOTIC_WEAPONS", seeds.exoticWeapons);
-      this.writeItemFile(join(outDir, "armor.ts"), "ARMOR", seeds.armor);
-      this.writeItemFile(join(outDir, "shields.ts"), "SHIELDS", seeds.shields);
-      this.writeItemFile(join(outDir, "goods.ts"), "GOODS", seeds.goods);
-      this.writeItemIndex(outDir);
+      for (const { path, list, seeds: kind } of ITEM_FILES) {
+        if (!(kind in seeds)) continue;
+        this.writeList(
+          join(this.dir, book, dirname(ITEMS_INDEX), path),
+          list,
+          "ItemSeed",
+          seeds[kind as keyof typeof seeds],
+          (file, item) => file.item(item),
+        );
+      }
+      this.writeItemIndex(book);
 
       this.log(
         `\nDone! Generated ${seeds.simpleWeapons.length} simple, ${seeds.martialWeapons.length} martial, ${seeds.exoticWeapons.length} exotic weapons`,

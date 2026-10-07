@@ -73,7 +73,8 @@ database/packages/dnd35-from-parser/
         ├── BaseGenerator.ts  # A generator's core: the folder it writes to, the writes kinds of files share
         ├── Generator.ts      # generateAll, generateReference: the steps a reference takes
         ├── concerns/         # A kind of file per concern: GeneratesClasses, GeneratesFeats…
-        └── code/             # A file's code, written from its seeds: CodeFile (its lines, the names they use), FeatsFile, ClassFile
+        ├── bookLayout.ts     # A book's generated tree: each file's path and the list it exports, which the writers and the indexes name
+        └── code/             # A file's code, written from its seeds: CodeFile (BaseCodeFile: its lines, its imports, the customization values), a concern per kind of seed (WritesClasses, WritesFeats…)
 ```
 
 `content/` and `data/` never touch the database: the generated data, the parser and the seeds import them. `generated/` holds only what the generator writes; hand-written content goes in `data/`, what content is written with in `content/`, which imports none of them (`arkyvree/layers`): a table a builder reads (the weapons, the armor) is content.
