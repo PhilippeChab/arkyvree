@@ -1,5 +1,5 @@
-import { type RulesetData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { type Db, db } from "@/server/database/index.ts";
+import { type RulesetData, type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type Db, db, withCowContext } from "@/server/database/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import type CharacterState from "@/server/rulesets/dnd3.5/character/CharacterState.ts";
 import FeatsPaths from "@/server/rulesets/dnd3.5/feats/FeatsPaths.ts";
@@ -221,8 +221,8 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
     }
 
     protected postRequirementProcessing(): void {
-      // A weapon's proficiency is its base item's requirements (`DetailedCharacterDataLoader`), apart from its others,
-      // read of the entry holding it: a bastard sword's in the hands it's in, each of an item's entries alone
+      // A weapon's proficiency is its base item's requirements (the loader's `toCustomizedInventory`), apart from its
+      // others, read of the entry holding it: a bastard sword's in the hands it's in, each of an item's entries alone
       const unproficient = this.inventory
         .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency], { sourceId: inv.id }))
         .map((inv) => ({ id: inv.id, itemId: inv.item.id }));
@@ -251,6 +251,18 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
           }
         }
       }
+    }
+
+    /**
+     * Runs `fn` in the scope the caller holds, when it's the character's ruleset's: its copy-on-write context and its
+     * view, without reading the ruleset or composing its view again. Without one, `fn` runs in a scope of its own.
+     */
+    private async inScope<T>(database: Db, scope: RulesetScope | undefined, fn: (scope: RulesetScope) => Promise<T>) {
+      if (scope?.ruleset.id !== this.character.rulesetId) {
+        return await withRulesetScope(database, this.character.rulesetId, fn);
+      }
+      const { ruleset, rulesetData } = scope;
+      return await withCowContext(rulesetData.cow, () => fn({ ruleset, rulesetData }));
     }
 
     protected async postModifierProcessing(rulesetData: RulesetData): Promise<void> {
@@ -297,52 +309,50 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       );
     }
 
-    async build(database: Db = db, projectedData?: unknown, preloaded?: PreloadedCharacterData | PreloadedRulesetData) {
+    async build(database: Db = db, projectedData?: unknown, scope?: RulesetScope | PreloadedCharacterData) {
       const dataLoader = this.createDataLoader();
 
-      // withRulesetScope activates the cowContext, loads ruleset + cowData +
-      // rulesetData, and hands them back. The data loader requires preloaded
-      // ruleset-level data — never fetches on its own. Projection mode's
-      // caller-supplied `preloaded` with `_shared` still takes precedence.
-      return await withRulesetScope(database, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
+      // The scope activates the cowContext and hands the ruleset and its view to every step. The data loader requires
+      // them — never fetches on its own — and takes the shared rows of a `preload()` when it's given one.
+      return await this.inScope(database, scope, async ({ ruleset, rulesetData }) => {
         const preloadedForLoad: PreloadedCharacterData | PreloadedRulesetData =
-          preloaded && "_shared" in preloaded ? preloaded : { ruleset, cowData: rulesetData.cow, rulesetData };
+          scope && "_shared" in scope ? scope : { ruleset, cowData: rulesetData.cow, rulesetData };
         // 1. Load data
         const data = await dataLoader.load(database, projectedData, preloadedForLoad);
         this.applyLoadedData(data);
 
-        // 2. Normalize (subclass — initializes all sub-systems)
+        // 2. Normalize: each component's initialize, from the loaded data
         this.normalizeData();
 
-        // 3. Pre-apply possession modifiers (universal)
+        // 3. Pre-apply possession modifiers: the feats and spells they grant, before anything reads them
         this.preApplyPossessionModifiers();
 
-        // 4. Build components (subclass — includes ruleset-specific components)
+        // 4. The components the evaluators walk
         this.builtComponents = this.components;
 
-        // 5. Pre-requirement processing (subclass — e.g. the spellcasting component, a bonded creature's stat block)
+        // 5. Pre-requirement processing (the spellcasting component, a bonded creature's master and stat block)
         await this.preRequirementProcessing(rulesetData);
 
-        // 6. Post-requirement processing (subclass — e.g. proficiency penalties, which check requirements of their own)
+        // 6. Post-requirement processing (proficiency penalties, which check requirements of their own)
         this.postRequirementProcessing();
 
-        // 7. Non-power modifiers, and the requirements that gate them (universal)
+        // 7. Non-power modifiers, and the requirements that gate them
         const powerModifiers = this.modifiers.filter((m) => PowersPaths.isPowerTarget(m.target));
         const otherModifiers = this.modifiers.filter((m) => !PowersPaths.isPowerTarget(m.target));
         this.applyModifiersInRounds(otherModifiers);
 
-        // 8. Ruleset-specific post-modifier processing (subclass)
+        // 8. Post-modifier processing: the spellcasting (bonus caster levels, bonus spells, known spells)
         await this.postModifierProcessing(rulesetData);
 
-        // 9. Evaluate power modifiers (universal)
+        // 9. Power modifiers, gated by the final requirement evaluation
         this.modifierEvaluator.evaluateModifiers(this.builtComponents, powerModifiers, this.requirementEvaluator);
       });
     }
 
-    async preload(): Promise<PreloadedCharacterData> {
+    async preload(database: Db = db, scope?: RulesetScope): Promise<PreloadedCharacterData> {
       const dataLoader = this.createDataLoader();
-      return await withRulesetScope(db, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
-        const shared = await dataLoader.loadSharedData(db, { ruleset, cowData: rulesetData.cow, rulesetData });
+      return await this.inScope(database, scope, async ({ ruleset, rulesetData }) => {
+        const shared = await dataLoader.loadSharedData(database, { ruleset, cowData: rulesetData.cow, rulesetData });
         return {
           ruleset,
           cowData: shared.cowData,

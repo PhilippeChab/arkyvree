@@ -1,6 +1,6 @@
 import type { FC } from "react";
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData, RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { CowData, Db } from "@/server/database/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
@@ -100,12 +100,13 @@ export type CustomizedRace = Race & {
 };
 
 export interface DetailedCharacterInterface {
-  preload(): Promise<PreloadedCharacterData>;
-  build(
-    database?: Db,
-    projectedData?: unknown,
-    preloaded?: PreloadedCharacterData | PreloadedRulesetData,
-  ): Promise<void>;
+  /** The character's rows its builds share, read through `database`, in `scope` when it's the character's ruleset's. */
+  preload(database?: Db, scope?: RulesetScope): Promise<PreloadedCharacterData>;
+  /**
+   * Builds the character, in `scope` when it's the character's ruleset's (the one its caller holds, or a `preload()`'s,
+   * whose shared rows it reads too): no build reads the ruleset or composes its view again.
+   */
+  build(database?: Db, projectedData?: unknown, scope?: RulesetScope | PreloadedCharacterData): Promise<void>;
   validate(): ValidationResult;
   formatRequirements(requirements: Requirement[]): string;
   areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean;

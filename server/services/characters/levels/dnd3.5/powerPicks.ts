@@ -40,7 +40,8 @@ export async function getAvailablePowers(
 ) {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
-  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+  return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
+    const { ruleset, rulesetData } = scope;
     const klassLevel = getKlassLevel(rulesetData, klassId, level);
 
     // Fetch auto-granted powers for the current klass level so they are part of the
@@ -85,7 +86,7 @@ export async function getAvailablePowers(
 
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData);
+    await detailedCharacter.build(undefined, projectedData, scope);
 
     // Get character's existing powers to exclude already-taken ones
     // When editing, exclude the edited level and all subsequent levels from the "already taken" set

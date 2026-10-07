@@ -110,7 +110,8 @@ export async function getLevelUpPreview(
 ) {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
-  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+  return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
+    const { ruleset, rulesetData } = scope;
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const klassLevelEntries = getPlannedKlassLevels(
       rulesetData,
@@ -123,7 +124,7 @@ export async function getLevelUpPreview(
     );
 
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData);
+    await detailedCharacter.build(undefined, projectedData, scope);
     const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
     const { featPools, powerPools, featsToSelect, powersToSelect } = splitPools(
       detailedCharacter.components.aptitudes,
@@ -144,7 +145,7 @@ export async function getLevelUpPreview(
 
     // Per-level aptitude slots for auto-assignment
     // Build baseline character (without planned levels) to capture existing spent
-    const baselineApts = await buildBaselineAptitudes(db, rulesetModule, characterRecord, detailedCharacter);
+    const baselineApts = await buildBaselineAptitudes(db, rulesetModule, characterRecord, detailedCharacter, scope);
 
     const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
       rulesetData,

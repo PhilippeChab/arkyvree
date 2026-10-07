@@ -12,7 +12,7 @@
  * - buildBaselineAptitudes — the aptitudes of the character as saved, before planned levels
  */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData, RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type {
   Dnd35DetailedCharacter,
@@ -279,8 +279,9 @@ export async function buildBaselineAptitudes(
   rulesetModule: Dnd35RulesetModule,
   characterRecord: Character,
   projectedCharacter: Dnd35DetailedCharacter,
+  scope: RulesetScope,
 ) {
-  const preloaded = await projectedCharacter.preload();
+  const preloaded = await projectedCharacter.preload(database, scope);
   const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
   await baselineCharacter.build(database, undefined, preloaded);
   return baselineCharacter.components.aptitudes.getAptitudes();
