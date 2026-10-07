@@ -5,7 +5,8 @@
  * - A class's members, in groups: its constructor, its static fields, its static methods, its readonly fields, its other
  *   fields, then its methods, its private and protected ones before its public ones. Each group goes by name, its
  *   methods sync before async; a field goes right below a field its initializer reads, which runs as the class is
- *   built (`this.lines`), and `--fix` never swaps two fields whose initializers run code: it suggests it.
+ *   built (`this.lines`), and `--fix` never moves a field whose initializer runs code against the other fields (what
+ *   it calls may read any of them): it suggests it.
  * - A file's types, constants and functions, in each run of them: by name, within the sections `file-layout` gives
  *   them (its own types, then the ones it exports; the same for its constants; its helpers, then its exports), its
  *   functions sync before async. What a constant reads goes right above it: the file reads it as it loads. A function
@@ -153,9 +154,17 @@ function checkClass(context, body) {
     });
     return;
   }
-  // Two fields whose initializers run code keep their order under `--fix`: it never changes the order code runs in
-  const running = order.filter((member) => member.runs);
-  const safe = running.every((member, i) => i === 0 || member.index > running[i - 1].index);
+  // A field whose initializer runs code keeps its place against the class's other fields (static or not, as it is)
+  // under `--fix`: what it calls (a method, an arrow) may read any of them, which then would or wouldn't be set yet
+  const fields = order.filter((member) => member.field || member.node.type === "StaticBlock");
+  const safe = fields.every((member, i) =>
+    fields
+      .slice(i + 1)
+      .every(
+        (later) =>
+          !(member.runs || later.runs) || isStatic(member.node) !== isStatic(later.node) || member.index < later.index,
+      ),
+  );
   // Each keeps the spacing of the place it takes
   const gaps = members.map((member, i) => text.slice(i === 0 ? headEnd : members[i - 1].end, member.start));
   reportOrder(
@@ -171,7 +180,8 @@ function checkClass(context, body) {
       "its initializer reads, methods sync before async." +
       (safe
         ? ""
-        : " Two fields' initializers run code, which `--fix` never reorders: move them, or `--fix-suggestions` does."),
+        : " A field's initializer runs code, which `--fix` never moves against the other fields: move it, or " +
+          "`--fix-suggestions` does, once nothing it calls reads a field the move changes."),
     safe,
   );
 }
@@ -448,6 +458,11 @@ function isRoute(call) {
     call.arguments[0]?.type === "Literal" &&
     typeof call.arguments[0].value === "string"
   );
+}
+
+/** A static block is static, though its node has no `static` flag */
+function isStatic(member) {
+  return member.type === "StaticBlock" || Boolean(member.static);
 }
 
 function isUse(call) {
