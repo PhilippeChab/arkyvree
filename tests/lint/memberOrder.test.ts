@@ -277,7 +277,7 @@ describe("member order", () => {
       config,
       JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/member-order": "error" } }),
     );
-    // Each moved by name would run before the field it reads through a method, an arrow or a static method
+    // Each moved by name would run before the field it reads through a method, an arrow, a static method or a block
     const sources = {
       "ThroughMethod.ts": [
         "class ThroughMethod {",
@@ -294,6 +294,19 @@ describe("member order", () => {
         "  private b = 1;",
         "  private make = () => this.b * 2;",
         "  private a = this.make();",
+        "}",
+        "",
+      ],
+      "StaticBlock.ts": [
+        "class Block {",
+        "  static z = 1;",
+        "  static {",
+        "    Block.init();",
+        "  }",
+        "  static a = 2;",
+        "  static init() {",
+        "    return Block.z + Block.a;",
+        "  }",
         "}",
         "",
       ],

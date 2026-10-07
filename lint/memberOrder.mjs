@@ -162,9 +162,7 @@ function checkClass(context, body) {
       .slice(i + 1)
       .every(
         (later) =>
-          !(member.runs || later.runs) ||
-          Boolean(member.node.static) !== Boolean(later.node.static) ||
-          member.index < later.index,
+          !(member.runs || later.runs) || isStatic(member.node) !== isStatic(later.node) || member.index < later.index,
       ),
   );
   // Each keeps the spacing of the place it takes
@@ -460,6 +458,11 @@ function isRoute(call) {
     call.arguments[0]?.type === "Literal" &&
     typeof call.arguments[0].value === "string"
   );
+}
+
+/** A static block is static, though its node has no `static` flag */
+function isStatic(member) {
+  return member.type === "StaticBlock" || Boolean(member.static);
 }
 
 function isUse(call) {
