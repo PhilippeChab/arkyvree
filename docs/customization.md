@@ -285,6 +285,10 @@ Properties the engine reads off a race (`combat/InitiativeAndSpeed.ts`, `combat/
 - `RACE_SPEED_IGNORES_ENCUMBRANCE` — the race keeps its speed in medium or heavy armor and under a medium or heavy load. The dwarf has it, through the parser's override (`reference/srd/races.json`).
 - `RACE_QUADRUPED` — the race walks on four legs, so it carries more for its size: ×¼ Fine to ×24 Colossal (×1½ Medium, ×3 Large) instead of a biped's ×⅛ to ×16. The four-legged familiars, animal companions and special mounts have it (`data/bonds/raceProperties.ts`); birds, bats and snakes don't.
 
+### Rulesets
+
+A ruleset's own property, `RULESET_SKILL_POINT_ABILITY_ID`: the ability its characters' skill points come from, Intelligence in the seeds. It's the ruleset's field: `RulesetsRules.readProperties` reads it (`ruleset/rulesetFields.ts`, which the character's loader reads with too, over the rows of the ruleset's chain), and `RulesetsEffects.syncProperties` stores it. A fork copies its source's rows as they are.
+
 ### Spells / Powers
 
 Properties auto-generated from spell form fields in `PowersEffects.syncProperties()`. They're a power's fields: `PowersRules.readProperties` reads them (`readPowerFields` in `powers/powerFields.ts`, which the power groupings read a spell's school and descriptors with too), and `toPowerProperties` builds their rows:

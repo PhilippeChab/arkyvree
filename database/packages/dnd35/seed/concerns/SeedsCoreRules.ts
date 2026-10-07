@@ -11,8 +11,8 @@ import {
   skillsInRules,
 } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/server/mixins.ts";
+import { toRulesetProperties } from "@/server/rulesets/dnd3.5/ruleset/rulesetFields.ts";
 import { toSkillProperties } from "@/server/rulesets/dnd3.5/skills/skillFields.ts";
-import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 
 /** Seeding a base ruleset's own rules: its abilities, saves, skills and languages. */
 export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
@@ -28,12 +28,9 @@ export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
             .returning({ id: abilitiesInRules.id, name: abilitiesInRules.name }),
         ),
       );
-      await this.db.insert(propertiesInCustomization).values({
-        entityId: this.ctx.rulesetId,
-        entityType: "rulesets",
-        type: RULESET_SKILL_POINT_ABILITY_ID,
-        value: this.ctx.abilityMap["Intelligence"],
-      });
+      await this.db
+        .insert(propertiesInCustomization)
+        .values(toRulesetProperties(this.ctx.rulesetId, { skillPointAbilityId: this.ctx.abilityMap["Intelligence"] }));
     }
 
     /** The languages. */

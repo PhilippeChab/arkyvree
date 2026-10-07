@@ -30,7 +30,7 @@ import type {
   Skill,
 } from "@/shared/relations.ts";
 
-import type { RulesetEffects, RulesetRules } from "./module/index.ts";
+import type { ModuleEffects, ModuleRules } from "./module/index.ts";
 
 type ProjectedFeat = Feat & {
   aptitudeId: string;
@@ -263,9 +263,9 @@ export interface RulesetModule<
   createPropertyTypes(): PropertyTypesProvider;
   createTargetPaths(): TargetPathsInterface;
   /** What the ruleset does in a service's transaction */
-  effects: RulesetEffects;
+  effects: ModuleEffects;
   /** What the ruleset answers the services, without the database */
-  rules: RulesetRules;
+  rules: ModuleRules;
   seedTemplateItems(tx: Db, rulesetId: string): Promise<void>;
 }
 

@@ -8,6 +8,7 @@ import type {
   ItemFields,
   PowerFields,
   RaceFields,
+  RulesetFields,
   SkillFields,
 } from "./rules.ts";
 
@@ -41,6 +42,18 @@ export interface ItemsEffects {
   syncProperties(tx: Db, itemId: string, fields: ItemFields): Promise<void>;
 }
 
+/** What a ruleset does in a service's transaction, one set of effects per area. */
+export interface ModuleEffects {
+  classes: ClassesEffects;
+  classLevels: ClassLevelsEffects;
+  feats: FeatsEffects;
+  items: ItemsEffects;
+  powers: PowersEffects;
+  races: RacesEffects;
+  rulesets: RulesetsEffects;
+  skills: SkillsEffects;
+}
+
 /** What a ruleset writes when a power is saved: its fields, and the feats of its grouping. */
 export interface PowersEffects {
   /**
@@ -58,15 +71,10 @@ export interface RacesEffects {
   syncProperties(tx: Db, raceId: string, fields: RaceFields): Promise<void>;
 }
 
-/** What a ruleset does in a service's transaction, one set of effects per area. */
-export interface RulesetEffects {
-  classes: ClassesEffects;
-  classLevels: ClassLevelsEffects;
-  feats: FeatsEffects;
-  items: ItemsEffects;
-  powers: PowersEffects;
-  races: RacesEffects;
-  skills: SkillsEffects;
+/** What a ruleset writes when its own fields are saved. */
+export interface RulesetsEffects {
+  /** Stores the ruleset's own fields as its properties, in place of those it stored before. */
+  syncProperties(tx: Db, rulesetId: string, fields: RulesetFields): Promise<void>;
 }
 
 /** What a ruleset writes when a skill is saved or deleted: its fields, and the feat that's the skill's own. */

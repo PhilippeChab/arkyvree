@@ -2,9 +2,9 @@
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { readClassFields } from "@/server/rulesets/dnd3.5/classes/classFields.ts";
+import { readRulesetFields } from "@/server/rulesets/dnd3.5/ruleset/rulesetFields.ts";
 import { readSkillFields } from "@/server/rulesets/dnd3.5/skills/skillFields.ts";
 import { collectClassListIds, collectFeatListIds } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
-import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 
 import type { SharedCharacterData } from "./DetailedCharacterDataLoader.ts";
 
@@ -53,7 +53,7 @@ export function readKlassProperties(
 }
 
 /** The ruleset's own lists, as the loaded data carries them. */
-export function readRulesetFields(rulesetData: RulesetData) {
+export function readRulesetLists(rulesetData: RulesetData) {
   return {
     rulesetAbilities: rulesetData.abilities,
     rulesetSaves: rulesetData.saves,
@@ -78,12 +78,9 @@ export function readRulesetProperties(rulesetData: RulesetData, resolveId: (id: 
   );
   const skillFields = new Map([...propertiesBySkillId].map(([skillId, rows]) => [skillId, readSkillFields(rows)]));
 
-  // The skill-point-ability property is attached to whichever ruleset in the
-  // source chain declares it (usually the base), so look across every
-  // "rulesets"-scoped row rather than just the fork's own ID.
-  const skillPointAbilityProp = (rulesetData.propertiesByEntityType.get("rulesets") ?? []).find(
-    (p) => p.type === RULESET_SKILL_POINT_ABILITY_ID,
-  );
-  const skillPointAbilityId = skillPointAbilityProp?.value ? resolveId(skillPointAbilityProp.value) : null;
+  // The skill-point ability is a field of whichever ruleset in the source chain declares it (usually the base), so read
+  // every "rulesets"-scoped row rather than just the fork's own
+  const { skillPointAbilityId: storedId } = readRulesetFields(rulesetData.propertiesByEntityType.get("rulesets") ?? []);
+  const skillPointAbilityId = storedId ? resolveId(storedId) : null;
   return { skillFields, skillPointAbilityId };
 }
