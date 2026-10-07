@@ -1,16 +1,23 @@
 import { describe, expect, test } from "bun:test";
 
-import { ALL_FEATS as ADVENTURER_FEATS } from "@/database/packages/dnd35-from-parser/generated/complete-adventurer/feats/index.ts";
-import { ALL_FEATS as ARCANE_FEATS } from "@/database/packages/dnd35-from-parser/generated/complete-arcane/feats/index.ts";
-import { ALL_FEATS as DIVINE_FEATS } from "@/database/packages/dnd35-from-parser/generated/complete-divine/feats/index.ts";
-import { ALL_FEATS as SCOUNDREL_FEATS } from "@/database/packages/dnd35-from-parser/generated/complete-scoundrel/feats/index.ts";
-import { ALL_FEATS as WARRIOR_FEATS } from "@/database/packages/dnd35-from-parser/generated/complete-warrior/feats/index.ts";
+import { BOOK as ADVENTURER } from "@/database/packages/dnd35-from-parser/generated/complete-adventurer/index.ts";
+import { BOOK as ARCANE } from "@/database/packages/dnd35-from-parser/generated/complete-arcane/index.ts";
+import { BOOK as DIVINE } from "@/database/packages/dnd35-from-parser/generated/complete-divine/index.ts";
+import { BOOK as SCOUNDREL } from "@/database/packages/dnd35-from-parser/generated/complete-scoundrel/index.ts";
+import { BOOK as WARRIOR } from "@/database/packages/dnd35-from-parser/generated/complete-warrior/index.ts";
 import { RODS, WONDROUS_ITEMS } from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
 import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races.ts";
 import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/detect/armorStats.ts";
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/detect/conditional.ts";
 import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/detect/skillBonuses.ts";
 import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/detect/weaponStats.ts";
+
+/** Each book's feats, its standalone ones and its classes'. */
+const ADVENTURER_FEATS = [...ADVENTURER.standaloneFeats, ...ADVENTURER.classFeats];
+const ARCANE_FEATS = [...ARCANE.standaloneFeats, ...ARCANE.classFeats];
+const DIVINE_FEATS = [...DIVINE.standaloneFeats, ...DIVINE.classFeats];
+const SCOUNDREL_FEATS = [...SCOUNDREL.standaloneFeats, ...SCOUNDREL.classFeats];
+const WARRIOR_FEATS = [...WARRIOR.standaloneFeats, ...WARRIOR.classFeats];
 
 /** The skill bonuses a text gives, each as "slug +value", or "?name" for a name that isn't a skill. */
 function bonuses(text: string) {

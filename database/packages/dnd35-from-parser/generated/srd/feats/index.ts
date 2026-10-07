@@ -2,7 +2,6 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-import { ALL_CLASS_FEATS } from "./classes/index.ts";
 import { DOMAIN_POOL_FEATS } from "./domainFeats.ts";
 import {
   EXOTIC_WEAPON_PROFICIENCY_FEATS,
@@ -21,26 +20,6 @@ import {
   WEAPON_FOCUS_FEATS,
   WEAPON_SPECIALIZATION_FEATS,
 } from "./feats.ts";
-
-export const ALL_FEATS: FeatSeed[] = [
-  ...DOMAIN_POOL_FEATS,
-  ...EXOTIC_WEAPON_PROFICIENCY_FEATS,
-  ...FIGHTER_FEATS,
-  ...GENERAL_FEATS,
-  ...GREATER_SPELL_FOCUS_FEATS,
-  ...GREATER_WEAPON_FOCUS_FEATS,
-  ...GREATER_WEAPON_SPECIALIZATION_FEATS,
-  ...IMPROVED_CRITICAL_FEATS,
-  ...ITEM_CREATION_FEATS,
-  ...METAMAGIC_FEATS,
-  ...RAPID_RELOAD_FEATS,
-  ...SKILL_FOCUS_FEATS,
-  ...SPECIAL_FEATS,
-  ...SPELL_FOCUS_FEATS,
-  ...WEAPON_FOCUS_FEATS,
-  ...WEAPON_SPECIALIZATION_FEATS,
-  ...ALL_CLASS_FEATS,
-];
 
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...DOMAIN_POOL_FEATS,

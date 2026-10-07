@@ -9,11 +9,16 @@ import {
   quote,
   toConstName,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import type { TemplateFamily, TemplateType } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
+import {
+  buildReferenceFeats,
+  type TemplateFamily,
+  type TemplateType,
+} from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
 import {
   expandTemplateDescription,
   normalizeDescription,
 } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
+import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type {
   ModifierSeed,
   RequirementCondition,
@@ -181,7 +186,7 @@ export class FeatsFile extends CodeFile {
   ): void {
     this.uses.add(options);
     this.declare("FeatSeed");
-    this.lines.push(`export const ${toConstName(familyName)}_FEATS: FeatSeed[] = ${options}.map((${variable}) => ({`);
+    this.lines.push(`export const ${getTemplateListName(familyName)}: FeatSeed[] = ${options}.map((${variable}) => ({`);
     this.lines.push(`  name: \`${escapeTemplate(familyName)}: \${${variable}}\`,`);
     this.lines.push(`  description: \`${description}\`,`);
     this.lines.push(`  generated: true,`);
@@ -218,4 +223,23 @@ export class FeatsFile extends CodeFile {
         return type satisfies never;
     }
   }
+}
+
+/** The lists a feat reference's feats file declares (`generateFeatSeeds`): a feat type's each, a template family's each. */
+export function getFeatsFileLists(ref: FeatReference): string[] {
+  const { byType, templates } = buildReferenceFeats(ref);
+  return [
+    ...[...byType.keys()].map(getFeatTypeListName),
+    ...templates.map(({ familyName }) => getTemplateListName(familyName)),
+  ];
+}
+
+/** The name of a feat type's list in a feats file (`GENERAL_FEATS`). */
+export function getFeatTypeListName(type: string): string {
+  return `${type.toUpperCase().replace(/\s+/g, "_")}_FEATS`;
+}
+
+/** The name of a template family's list in a feats file (`WEAPON_FOCUS_FEATS`). */
+export function getTemplateListName(familyName: string): string {
+  return `${toConstName(familyName)}_FEATS`;
 }

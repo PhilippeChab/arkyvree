@@ -2,7 +2,6 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-import { ALL_CLASS_FEATS } from "./classes/index.ts";
 import {
   DIVINE_FEATS,
   EPIC_FEATS,
@@ -12,17 +11,6 @@ import {
   METAMAGIC_FEATS,
   WILD_FEATS,
 } from "./feats.ts";
-
-export const ALL_FEATS: FeatSeed[] = [
-  ...DIVINE_FEATS,
-  ...EPIC_FEATS,
-  ...FAITH_FEATS,
-  ...GENERAL_FEATS,
-  ...ITEM_CREATION_FEATS,
-  ...METAMAGIC_FEATS,
-  ...WILD_FEATS,
-  ...ALL_CLASS_FEATS,
-];
 
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...DIVINE_FEATS,
