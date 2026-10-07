@@ -8,8 +8,7 @@ import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
-import type { AptitudesComponent, Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
-import type { RulesetModule } from "@/server/rulesets/engine/types.ts";
+import type { AptitudesComponent, Dnd35LevelUpProjector, Dnd35RulesetModule } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -21,7 +20,7 @@ import { buildBaselineAptitudes, projectPlannedLevels } from "./projection.ts";
 type PowerPools = ReturnType<AptitudesComponent["extractPowerPools"]>;
 
 /** The planned levels (by index) that take an ability increase, after the character's `existingCount` levels. */
-function abilityIncreaseLevels(rulesetModule: RulesetModule, existingCount: number, plannedCount: number) {
+function abilityIncreaseLevels(rulesetModule: Dnd35RulesetModule, existingCount: number, plannedCount: number) {
   const levels: number[] = [];
   for (let i = 0; i < plannedCount; i++) {
     if (rulesetModule.rules.levels.isAbilityIncreaseLevel(existingCount + i)) {
@@ -125,7 +124,7 @@ export async function getLevelUpPreview(
 
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
     await detailedCharacter.build(undefined, projectedData);
-    const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter) as Dnd35LevelUpProjector;
+    const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
     const { featPools, powerPools, featsToSelect, powersToSelect } = splitPools(
       detailedCharacter.components.aptitudes,
       rulesetData,

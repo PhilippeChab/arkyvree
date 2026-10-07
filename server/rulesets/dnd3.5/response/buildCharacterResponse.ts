@@ -3,7 +3,6 @@ import type { InferSelectModel } from "drizzle-orm";
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type Dnd35DetailedCharacterBonded from "@/server/rulesets/dnd3.5/bonded/DetailedCharacterBonded.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
@@ -89,14 +88,12 @@ export function buildBondedResponse(
 
 export function buildFullCharacterResponse(
   character: InferSelectModel<typeof charactersInCharacter>,
-  detailedCharacter: DetailedCharacterInterface,
+  detailedCharacter: Dnd35DetailedCharacter,
 ) {
-  // Cast once — the response builder is the centralized dnd3.5 presentation layer
-  const dc = detailedCharacter as Dnd35DetailedCharacter;
   const ruleset = detailedCharacter.getRuleset();
   const validation = detailedCharacter.validate();
-  const requirements = enrichedRequirementsOf(dc);
-  const modifiers = enrichedModifiersOf(dc);
+  const requirements = enrichedRequirementsOf(detailedCharacter);
+  const modifiers = enrichedModifiersOf(detailedCharacter);
 
   return {
     id: character.id,
@@ -113,19 +110,19 @@ export function buildFullCharacterResponse(
     updatedAt: character.updatedAt,
     shareToken: character.shareToken ?? null,
     identity: detailedCharacter.components.identity.getIdentity(),
-    skillBudget: dc.components.skills.getSkillBudget(),
+    skillBudget: detailedCharacter.components.skills.getSkillBudget(),
     abilities: detailedCharacter.components.abilities.getAbilitiesWithIds(),
-    combat: dc.components.combat.getCombat(),
-    savingThrows: dc.components.savingThrows.getSavingThrows(),
-    classes: dc.components.classes.getCharacterClasses(),
-    inventory: dc.components.inventory.getInventory(),
-    equipment: equipmentOf(dc),
-    skills: dc.components.skills.getSkills(),
-    powers: dc.components.powers.getFlatPowers(),
-    ...buildVirtualEntities(dc),
+    combat: detailedCharacter.components.combat.getCombat(),
+    savingThrows: detailedCharacter.components.savingThrows.getSavingThrows(),
+    classes: detailedCharacter.components.classes.getCharacterClasses(),
+    inventory: detailedCharacter.components.inventory.getInventory(),
+    equipment: equipmentOf(detailedCharacter),
+    skills: detailedCharacter.components.skills.getSkills(),
+    powers: detailedCharacter.components.powers.getFlatPowers(),
+    ...buildVirtualEntities(detailedCharacter),
     aptitudes: detailedCharacter.components.aptitudes.getAptitudes(),
-    spellTags: dc.getSpellTags(),
-    spellTagLists: dc.getSpellTagLists(),
+    spellTags: detailedCharacter.getSpellTags(),
+    spellTagLists: detailedCharacter.getSpellTagLists(),
     requirements,
     modifiers,
     validation,

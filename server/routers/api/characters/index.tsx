@@ -8,7 +8,12 @@ import { z } from "zod";
 
 import { denyDemoUser, exportRateLimit, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { characterIdParam, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
-import { buildBondedMap, buildBondedResponse, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/index.ts";
+import {
+  buildBondedMap,
+  buildBondedResponse,
+  buildFullCharacterResponse,
+  type Dnd35DetailedCharacterBonded,
+} from "@/server/rulesets/dnd3.5/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 
 import contributors from "./contributors/index.ts";
@@ -112,7 +117,9 @@ export default new Hono()
     );
 
     if (character.kind !== "pc") {
-      const response = buildBondedResponse(character, detailedCharacter as Parameters<typeof buildBondedResponse>[1]);
+      // The module builds a bonded creature for its kind; a kind it doesn't know gets a plain character, which this
+      // reads the same way (an `instanceof` would send that one down the full sheet instead)
+      const response = buildBondedResponse(character, detailedCharacter as Dnd35DetailedCharacterBonded);
       return c.json({ ...response, bonded: {} as Record<string, ReturnType<typeof buildBondedResponse>> }, 200);
     }
 

@@ -2,7 +2,6 @@ import type { FC } from "react";
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { CowData, Db } from "@/server/database/index.ts";
-import type { Dnd35Components, ValidationResult } from "@/server/rulesets/dnd3.5/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import type {
@@ -42,8 +41,6 @@ type ProjectedFeat = Feat & {
   properties: Property[];
   requirements: Requirement[];
 };
-
-export type CharacterKind = (typeof CHARACTER_KINDS_DND35)[number];
 
 /**
  * A character component (abilities, skills, combat, etc.): a class instance whose getters the target paths call
@@ -116,16 +113,20 @@ export interface DetailedCharacterInterface {
   getRuleset(): Ruleset | undefined;
   getPlayer(): Player | undefined;
   getCampaign(): Campaign | undefined;
-  readonly components: Dnd35Components;
+  readonly components: Components;
   getVirtuallyPossessedFeatIds(): string[];
   getVirtuallyPossessedPowerIds(): string[];
 }
 
-export type DetailedCharacterWithSheet = {
-  detailedCharacter: DetailedCharacterInterface;
+/** A built character and the sheet that renders it, typed by the module that made them. */
+export type DetailedCharacterWithSheet<
+  Character extends DetailedCharacterInterface = DetailedCharacterInterface,
+  Kind extends string = string,
+> = {
+  detailedCharacter: Character;
   CharacterSheetComponent: FC<{
-    detailedCharacter: DetailedCharacterInterface;
-    kind?: CharacterKind;
+    detailedCharacter: Character;
+    kind?: Kind;
     portraitUrl?: string | null;
   }>;
 };
@@ -237,15 +238,26 @@ export type RequirementIssue = {
   requirementTree?: string;
 };
 
-export interface RulesetModule {
+/**
+ * A base rules' module, typed by what it builds: its characters, its level-up projector and the kinds of character it
+ * knows (`RulesetFactory` hands out each module's own type).
+ */
+export interface RulesetModule<
+  Character extends DetailedCharacterInterface = DetailedCharacterInterface,
+  Projector extends LevelUpProjector = LevelUpProjector,
+  Kind extends string = string,
+> {
   /** What the ruleset answers the services, without the database */
   rules: RulesetRules;
   /** What the ruleset does in a service's transaction */
   effects: RulesetEffects;
   seedTemplateItems(tx: Db, rulesetId: string): Promise<void>;
-  createDetailedCharacter(record: CharacterRecord, kind?: CharacterKind): DetailedCharacterInterface;
-  createLevelUpProjector(character: DetailedCharacterInterface): LevelUpProjector;
-  createDetailedCharacterWithSheet(record: CharacterRecord, kind?: CharacterKind): Promise<DetailedCharacterWithSheet>;
+  createDetailedCharacter(record: CharacterRecord, kind?: Kind): Character;
+  createLevelUpProjector(character: Character): Projector;
+  createDetailedCharacterWithSheet(
+    record: CharacterRecord,
+    kind?: Kind,
+  ): Promise<DetailedCharacterWithSheet<Character, Kind>>;
   createTargetPaths(): TargetPathsInterface;
   createPropertyTypes(): PropertyTypesProvider;
 }
@@ -281,4 +293,15 @@ export type TraversePathResult = {
   error: string | null;
 };
 
-const CHARACTER_KINDS_DND35 = ["pc", "familiar", "animalcompanion", "mount"] as const;
+export type ValidationIssue = {
+  category: "aptitudes" | "skills" | "requirements" | "modifiers" | "integrity";
+  message: string;
+  entityName?: string;
+  entityType?: string;
+  requirementTree?: string;
+};
+
+export type ValidationResult = {
+  valid: boolean;
+  issues: ValidationIssue[];
+};

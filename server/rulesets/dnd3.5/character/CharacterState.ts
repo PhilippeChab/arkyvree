@@ -51,19 +51,6 @@ export interface DataLoader {
   ): Promise<Dnd35LoadedCharacterData>;
 }
 
-export type ValidationIssue = {
-  category: "aptitudes" | "skills" | "requirements" | "modifiers" | "integrity";
-  message: string;
-  entityName?: string;
-  entityType?: string;
-  requirementTree?: string;
-};
-
-export type ValidationResult = {
-  valid: boolean;
-  issues: ValidationIssue[];
-};
-
 /**
  * A 3.5 character's state: what its build loads and computes, and the components it's made of. Its concerns add the
  * build (`Builds`), the validation (`Validates`) and the spells and feats it has without a pick

@@ -17,8 +17,9 @@ import {
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
+import type { CharacterKind } from "@/server/rulesets/dnd3.5/index.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
-import type { CharacterKind, Components } from "@/server/rulesets/engine/types.ts";
+import type { Components } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getClassLevelsByCharacter } from "@/server/services/characters/classLevels.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
