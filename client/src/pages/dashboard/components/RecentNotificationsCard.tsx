@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import {
-  BlankState,
+  BlankNote,
+  CardTitle,
   CLICKABLE_SX,
   clickableProps,
   DiceSpinner,
@@ -28,9 +29,7 @@ export function RecentNotificationsCard() {
     <Paper sx={{ p: { xs: 2, sm: 4 }, borderRadius: 3 }}>
       <Stack spacing={3}>
         <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
-          <Typography component="h2" sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }}>
-            Notifications
-          </Typography>
+          <CardTitle>Notifications</CardTitle>
           {items.length > 0 && (
             <Button variant="outlined" startIcon={<NotificationsIcon />} component={Link} to="/notifications">
               View All
@@ -42,11 +41,7 @@ export function RecentNotificationsCard() {
         ) : error && items.length === 0 ? (
           <LoadError what="Notifications" error={error} />
         ) : items.length === 0 ? (
-          <BlankState
-            icon={NotificationsIcon}
-            title="No notifications yet"
-            description="Notifications from your campaigns and collaborators will appear here."
-          />
+          <BlankNote>No notifications yet</BlankNote>
         ) : (
           <Stack spacing={1.5}>
             {items.map((notification, index) => {

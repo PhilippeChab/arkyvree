@@ -1,5 +1,7 @@
-import { Box, Paper, Stack, Typography } from "@mui/material";
+import { Box, Paper, Stack } from "@mui/material";
 import type { ReactNode } from "react";
+
+import { CardTitle } from "@/client/src/components/common/index.ts";
 
 interface SheetSectionProps {
   /** Controls shown beside the title, e.g. an Add button. */
@@ -17,9 +19,7 @@ export function SheetSection({ title, action, children }: SheetSectionProps) {
         spacing={1}
         sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}
       >
-        <Typography component="h2" sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "h6", sm: "h5" } }}>
-          {title}
-        </Typography>
+        <CardTitle>{title}</CardTitle>
         {action}
       </Stack>
       <Box>{children}</Box>

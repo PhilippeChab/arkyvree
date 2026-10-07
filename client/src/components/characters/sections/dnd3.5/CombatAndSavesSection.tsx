@@ -1,7 +1,7 @@
 import { Box, Stack, Typography } from "@mui/material";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { BlankState } from "@/client/src/components/common/index.ts";
+import { BlankNote } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { capitalize } from "@/shared/text.ts";
 
@@ -102,7 +102,7 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
               })}
             </Stack>
           ) : (
-            <BlankState title="No saving throws available" />
+            <BlankNote>No saving throws available</BlankNote>
           )}
         </Stack>
       </Stack>

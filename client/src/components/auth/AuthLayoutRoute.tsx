@@ -2,7 +2,7 @@ import { Alert, alpha, Box, Card, CardContent, Link as MuiLink, Stack, Typograph
 import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-import { DiceSpinner, LinkButton, PageTransition } from "@/client/src/components/common/index.ts";
+import { LinkButton, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useIsMobile, useSearchParam, useStartDemo } from "@/client/src/hooks/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
@@ -273,7 +273,7 @@ export function AuthLayoutRoute() {
     signOutDemo(undefined, { onSettled: () => setIsClearingDemo(false) });
   }, [isClearingDemo, signOutDemo]);
 
-  if (isClearingDemo) return <DiceSpinner sx={{ minHeight: "100vh" }} />;
+  if (isClearingDemo) return <PageLoader />;
 
   if (isAuthenticated) return <Navigate to={destination} replace />;
 
@@ -282,7 +282,7 @@ export function AuthLayoutRoute() {
       <Stack spacing={2} sx={{ minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}>
         <Card sx={{ width: "100%", maxWidth: 450, mx: "auto", overflow: "hidden" }}>
           <MobileBranding />
-          <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
+          <Suspense fallback={<PageLoader />}>
             <Outlet />
           </Suspense>
         </Card>
@@ -296,7 +296,7 @@ export function AuthLayoutRoute() {
       <DesktopBranding />
 
       <Stack spacing={2} sx={{ flex: 1, alignItems: "center", justifyContent: "center", px: 4 }}>
-        <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
+        <Suspense fallback={<PageLoader />}>
           <Outlet />
         </Suspense>
         <AuthFooterLinks />

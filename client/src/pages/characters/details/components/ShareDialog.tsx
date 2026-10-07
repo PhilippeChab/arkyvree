@@ -12,7 +12,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
 
-import { DialogFooter, DiceSpinner, InlineConfirm, Modal } from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, DialogFooter, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
 import { CopyIcon, LinkOffIcon, RefreshIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -80,83 +80,85 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
   const isLoading = generateMutation.isPending || revokeMutation.isPending;
 
   return (
-    <Modal open={open} onClose={() => !isLoading && onClose()}>
-      <DialogTitle>Share Character Sheet</DialogTitle>
-      <DialogContent>
-        <InlineConfirm
-          open={confirmRevoke}
-          cancelLabel="Keep Link"
-          confirmLabel="Revoke"
-          onCancel={() => setConfirmRevoke(false)}
-          onConfirm={() => revokeMutation.mutate()}
-          pending={revokeMutation.isPending}
-        >
-          Revoke this link? Anyone who has it loses access.
-        </InlineConfirm>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          {shareUrl ? (
-            <>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Anyone with this link can view this character sheet and download the PDF. Private notes are not
-                included.
-              </Typography>
-              <TextField
-                value={shareUrl}
-                fullWidth
-                size="small"
-                slotProps={{
-                  input: {
-                    readOnly: true,
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={handleCopy} edge="end" size="small" aria-label="Copy Link">
-                          <CopyIcon fontSize="small" />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              <Stack direction="row" spacing={1}>
-                <Button
-                  variant="outlined"
+    <>
+      <Modal open={open} onClose={() => !isLoading && onClose()}>
+        <DialogTitle>Share Character Sheet</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            {shareUrl ? (
+              <>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  Anyone with this link can view this character sheet and download the PDF. Private notes are not
+                  included.
+                </Typography>
+                <TextField
+                  value={shareUrl}
+                  fullWidth
                   size="small"
-                  startIcon={<RefreshIcon />}
-                  onClick={() => generateMutation.mutate()}
-                  disabled={isLoading}
-                >
+                  slotProps={{
+                    input: {
+                      readOnly: true,
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={handleCopy} edge="end" size="small" aria-label="Copy Link">
+                            <CopyIcon fontSize="small" />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<RefreshIcon />}
+                    onClick={() => generateMutation.mutate()}
+                    disabled={isLoading}
+                  >
+                    <DiceSpinner size="small" loading={generateMutation.isPending}>
+                      Regenerate
+                    </DiceSpinner>
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    color="error"
+                    startIcon={<LinkOffIcon />}
+                    onClick={() => setConfirmRevoke(true)}
+                    disabled={isLoading}
+                  >
+                    Revoke Link
+                  </Button>
+                </Stack>
+              </>
+            ) : (
+              <>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  Generate a public link to share this character sheet. Anyone with the link will be able to view the
+                  sheet and download the PDF. Private notes will not be visible.
+                </Typography>
+                <Button variant="contained" onClick={() => generateMutation.mutate()} disabled={isLoading}>
                   <DiceSpinner size="small" loading={generateMutation.isPending}>
-                    Regenerate
+                    Generate Link
                   </DiceSpinner>
                 </Button>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  color="error"
-                  startIcon={<LinkOffIcon />}
-                  onClick={() => setConfirmRevoke(true)}
-                  disabled={isLoading}
-                >
-                  Revoke Link
-                </Button>
-              </Stack>
-            </>
-          ) : (
-            <>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Generate a public link to share this character sheet. Anyone with the link will be able to view the
-                sheet and download the PDF. Private notes will not be visible.
-              </Typography>
-              <Button variant="contained" onClick={() => generateMutation.mutate()} disabled={isLoading}>
-                <DiceSpinner size="small" loading={generateMutation.isPending}>
-                  Generate Link
-                </DiceSpinner>
-              </Button>
-            </>
-          )}
-        </Stack>
-      </DialogContent>
-      <DialogFooter onCancel={onClose} cancelLabel="Close" pending={isLoading} />
-    </Modal>
+              </>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogFooter onCancel={onClose} cancelLabel="Close" pending={isLoading} />
+      </Modal>
+      <ConfirmDialog
+        open={confirmRevoke}
+        onClose={() => setConfirmRevoke(false)}
+        onConfirm={() => revokeMutation.mutate()}
+        isLoading={revokeMutation.isPending}
+        title="Revoke Link"
+        message="Are you sure you want to revoke this link? Anyone who has it loses access to the sheet."
+        confirmLabel="Revoke Link"
+        confirmColor="error"
+      />
+    </>
   );
 }

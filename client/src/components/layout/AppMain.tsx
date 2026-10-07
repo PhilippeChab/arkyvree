@@ -2,7 +2,7 @@ import { Box, type CSSObject, Stack } from "@mui/material";
 import { type ReactNode, Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { PageLoader } from "@/client/src/components/common/index.ts";
 
 import { Footer } from "./Footer.tsx";
 
@@ -91,7 +91,7 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
       <Stack spacing={2} sx={{ flex: 1, width: "100%", alignItems: "center" }}>
         {/* No side padding here: every page brings its own gutter (Container or padded Box). */}
         <Box sx={{ width: "100%", maxWidth: "1200px", flex: 1 }}>
-          <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
+          <Suspense fallback={<PageLoader />}>
             <Outlet />
           </Suspense>
         </Box>

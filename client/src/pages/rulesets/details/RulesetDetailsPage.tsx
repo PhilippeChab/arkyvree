@@ -21,11 +21,11 @@ import {
   ActionMenuItem,
   DetailPageHeader,
   DialogFooter,
-  DiceSpinner,
   HelpLabel,
   LoadError,
   Modal,
   PageError,
+  PageLoader,
   PageTransition,
   type SectionTab,
   SectionTabs,
@@ -241,7 +241,7 @@ export default function RulesetDetailsPage() {
   if (isLoading) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <DiceSpinner sx={{ minHeight: 400 }} />
+        <PageLoader />
       </Container>
     );
   }

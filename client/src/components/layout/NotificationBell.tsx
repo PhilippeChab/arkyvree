@@ -15,7 +15,7 @@ import type { InferResponseType } from "hono/client";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import { BlankNote, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
 import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useAnchorMenu, useNotificationActions } from "@/client/src/hooks/index.ts";
@@ -108,11 +108,7 @@ export function NotificationBell() {
               <LoadError what="Notifications" error={error} />
             </Box>
           ) : notifications.length === 0 ? (
-            <Box sx={{ px: 2, py: 1.5 }}>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                No unread notifications
-              </Typography>
-            </Box>
+            <BlankNote sx={{ px: 2, py: 1.5 }}>No unread notifications</BlankNote>
           ) : (
             <>
               <Stack direction="row" sx={{ px: 2, py: 1, justifyContent: "space-between", alignItems: "center" }}>

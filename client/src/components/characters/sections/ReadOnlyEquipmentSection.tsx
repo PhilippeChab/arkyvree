@@ -1,4 +1,4 @@
-import { BlankState } from "@/client/src/components/common/index.ts";
+import { BlankNote } from "@/client/src/components/common/index.ts";
 
 import type { EncumbranceData, EquipmentRow } from "./equipment.ts";
 import { EquipmentTable } from "./EquipmentTable.tsx";
@@ -15,7 +15,7 @@ export function ReadOnlyEquipmentSection({ equipment, encumbrance }: ReadOnlyEqu
       {equipment.length > 0 ? (
         <EquipmentTable rows={equipment} encumbrance={encumbrance} />
       ) : (
-        <BlankState title="No equipment" />
+        <BlankNote>No equipment</BlankNote>
       )}
     </SheetSection>
   );

@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { BlankState } from "@/client/src/components/common/index.ts";
+import { BlankNote } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { buildAttackRows, describeWeaponSlot } from "@/shared/dnd3.5/weaponAttacks.ts";
@@ -62,22 +62,12 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
                     </colgroup>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 600 }}>Weapon</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 600 }}>
-                          Attack Bonus
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 600 }}>
-                          Damage
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 600 }}>
-                          Critical
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 600 }}>
-                          Range
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 600 }}>
-                          Type
-                        </TableCell>
+                        <TableCell>Weapon</TableCell>
+                        <TableCell align="center">Attack Bonus</TableCell>
+                        <TableCell align="center">Damage</TableCell>
+                        <TableCell align="center">Critical</TableCell>
+                        <TableCell align="center">Range</TableCell>
+                        <TableCell align="center">Type</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -126,7 +116,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
           })}
         </Stack>
       ) : (
-        <BlankState title="No weapons equipped" />
+        <BlankNote>No weapons equipped</BlankNote>
       )}
     </SheetSection>
   );

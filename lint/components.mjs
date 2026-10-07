@@ -4,9 +4,9 @@
  * - `dialog-footers`: a dialog's footer is a `DialogFooter` (its way out, then its action or its own steps), never
  *   `DialogActions` written by hand.
  * - `add-buttons`: a button that adds something is an `AddButton`, never a `Button` given the add icon.
- * - `inline-confirms`: a dialog asking before it loses something asks at its top, an `InlineConfirm` (its way out, then
- *   its action); a save's rules warnings are a `ValidationIssuesAlert`. No other alert carries actions, and no
- *   "Are you sure" is written by hand.
+ * - `confirm-dialogs`: a confirmation is a `ConfirmDialog` (`DeleteDialog`), over a page or over a dialog alike; a
+ *   save's rules warnings are a `ValidationIssuesAlert`. No other alert carries actions, and no "Are you sure" is
+ *   written by hand.
  * - `link-buttons`: an action written as a link is a `LinkButton`, never a `MuiLink component="button"`.
  * - `choice-chips`: a chip that is one of several to choose (its look switched by a selection) is a `ChoiceChip`.
  * - `next-page-spinners`: the spinner at the foot of a list that loads its next page as it scrolls is a
@@ -23,12 +23,23 @@
  *   No other expand icon, and no arrow-only button but a `ToggleLabel`'s.
  * - `toggle-states`: a button that flips between two states keeps one label, naming what it turns on, and says which
  *   state it's in: `aria-pressed`, or `aria-expanded` when it shows or hides something.
+ * - `table-frames`: a table on a page or in a dialog is framed by a `TableFrame` (a table in a panel stands bare), and
+ *   the theme draws its header: no cell of it sets its tint, weight or color, nor bolds its label.
+ * - `card-titles`: a card's or a panel's title (an `h2` sized from `h6` up) is a `CardTitle`.
+ * - `blank-notes`: an empty list's line ("No local changes") is a `BlankNote` in a panel, a dialog, a menu or the level
+ *   wizard, and a page's or a tab's is a `BlankState`, its icon and its line required: never a `Typography` or an
+ *   `Alert` of its own.
+ * - `page-loaders`: a page's first load is a `PageLoader` (the character sheet draws its skeleton); a spinner never
+ *   takes a height or the large size, and a section's takes its block's spacing.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
 import { elementName, hasAttribute, inClient, parentElement } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
+
+/** What a table's header leaves to the theme, which tints it and sets its labels' weight and color. */
+const HEADER_STYLE_KEYS = new Set(["backgroundColor", "bgcolor", "color", "fontWeight"]);
 
 /** The pairs of words whose labels name a state and its opposite, A to Z within each; `Un…` pairs aside. */
 const OPPOSITES = new Set(["Close Open", "Collapse Expand", "Hide Show"]);
@@ -71,6 +82,37 @@ function createAnchorMenus(context) {
   };
 }
 
+function createBlankNotes(context) {
+  if (!inClient(context) || inFile(context, "client/src/components/common/BlankState.tsx")) return {};
+  return {
+    JSXText(node) {
+      if (!/^\s*No\s+\w/.test(node.value) || !["Alert", "Typography"].includes(elementName(parentElement(node))))
+        return;
+      context.report({
+        node,
+        message:
+          "An empty list says so with a `BlankNote` (a panel's, a dialog's, a menu's, the level wizard's) or a " +
+          "`BlankState` (a page's or a tab's).",
+      });
+    },
+  };
+}
+
+function createCardTitles(context) {
+  if (!inClient(context) || inFile(context, "client/src/components/common/CardTitle.tsx")) return {};
+  return {
+    JSXElement(node) {
+      const component = attributeValue(attribute(node, "component"));
+      if (elementName(node) !== "Typography" || component?.type !== "Literal" || component.value !== "h2") return;
+      const sized = styleProperties(attributeValue(attribute(node, "sx")), node).some(
+        (property) => propertyKey(property) === "typography" && property.value.type === "ObjectExpression",
+      );
+      if (sized)
+        context.report({ node: node.openingElement, message: "A card's or a panel's title is a `CardTitle`." });
+    },
+  };
+}
+
 function createChoiceChips(context) {
   if (!inClient(context) || inFile(context, "client/src/components/common/ChoiceChip.tsx")) return {};
   return {
@@ -80,6 +122,29 @@ function createChoiceChips(context) {
       context.report({
         node: node.openingElement,
         message: "A chip that is one of several to choose, its look switched by a selection, is a `ChoiceChip`.",
+      });
+    },
+  };
+}
+
+function createConfirmDialogs(context) {
+  if (!inClient(context) || inFile(context, "client/src/components/common/ValidationIssuesAlert.tsx")) return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "AnimatedAlert" || !hasAttribute(node, "action")) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "A confirmation is a `ConfirmDialog`, over a dialog too, and a save's rules warnings a " +
+          "`ValidationIssuesAlert`: no other alert carries actions.",
+      });
+    },
+    JSXText(node) {
+      if (!/\bAre you sure\b/i.test(node.value) || inConfirmation(node)) return;
+      context.report({
+        node,
+        message:
+          "A confirmation is a `ConfirmDialog` (`DeleteDialog`), over a page or a dialog: never written by hand.",
       });
     },
   };
@@ -185,34 +250,6 @@ function createFormValidation(context) {
   };
 }
 
-function createInlineConfirms(context) {
-  const file = repoPath(context.filename);
-  const owners = [
-    "client/src/components/common/InlineConfirm.tsx",
-    "client/src/components/common/ValidationIssuesAlert.tsx",
-  ];
-  if (!inClient(context) || owners.includes(file)) return {};
-  return {
-    JSXElement(node) {
-      if (elementName(node) !== "AnimatedAlert" || !hasAttribute(node, "action")) return;
-      context.report({
-        node: node.openingElement,
-        message:
-          "A dialog asks before a loss with an `InlineConfirm`, and shows a save's rules warnings with a " +
-          "`ValidationIssuesAlert`: no other alert carries actions.",
-      });
-    },
-    JSXText(node) {
-      if (!/\bAre you sure\b/i.test(node.value) || inConfirmation(node)) return;
-      context.report({
-        node,
-        message:
-          "A confirmation is an `InlineConfirm` inside a dialog, a `ConfirmDialog` over a page: never written by hand.",
-      });
-    },
-  };
-}
-
 function createLinkButtons(context) {
   if (!inClient(context) || inFile(context, "client/src/components/common/LinkButton.tsx")) return {};
   return {
@@ -257,6 +294,31 @@ function createOptionTooltips(context) {
   };
 }
 
+function createPageLoaders(context) {
+  if (!inClient(context)) return {};
+  const ownLoader = inFile(context, "client/src/components/common/PageLoader.tsx");
+  const skeleton = inFile(context, "client/src/components/characters/CharacterDetailSkeleton.tsx");
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "DiceSpinner") return;
+      const size = attributeValue(attribute(node, "size"));
+      const properties = styleProperties(attributeValue(attribute(node, "sx")), node);
+      const large = size?.type === "Literal" && size.value === "large" && !skeleton;
+      const tall = properties.some((property) => propertyKey(property) === "minHeight");
+      const pageSpacing =
+        !ownLoader &&
+        properties.some((property) => propertyKey(property) === "py" && property.value.type === "ObjectExpression");
+      if (!large && !tall && !pageSpacing) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "A page's first load is a `PageLoader` (the character sheet draws its skeleton); a section's spinner takes " +
+          "its block's spacing (`py`), never a height or the large size.",
+      });
+    },
+  };
+}
+
 function createSelectFields(context) {
   if (!inClient(context) || inFile(context, "client/src/components/common/FormFields.tsx")) return {};
   return {
@@ -269,6 +331,34 @@ function createSelectFields(context) {
         node.openingElement.attributes.some((a) => a.type === "JSXSpreadAttribute");
       if (!bound) return;
       context.report({ node: node.openingElement, message: "A select bound to a form's field is a `SelectField`." });
+    },
+  };
+}
+
+function createTableFrames(context) {
+  if (!inClient(context)) return {};
+  const ownFrame = inFile(context, "client/src/components/common/TableFrame.tsx");
+  return {
+    JSXElement(node) {
+      const name = elementName(node);
+      if (name === "TableContainer" && hasAttribute(node, "component") && !ownFrame) {
+        context.report({
+          node: node.openingElement,
+          message: "A table on a page or in a dialog is framed by a `TableFrame`; a table in a panel stands bare.",
+        });
+        return;
+      }
+      if (!inTableHead(node)) return;
+      const bold = name === "strong" || name === "b";
+      const styled = styleProperties(attributeValue(attribute(node, "sx")), node).some((property) =>
+        HEADER_STYLE_KEYS.has(propertyKey(property)),
+      );
+      if (!bold && !styled) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "The theme draws a table's header (its tint, its labels' weight and color): its cells set only their size.",
+      });
     },
   };
 }
@@ -300,6 +390,19 @@ function createToggleStates(context) {
   };
 }
 
+/** The value the file's top declares for `name` (`const X = …`, exported or not), found from `node`, any node of it. */
+function declaredValue(name, node) {
+  let program = node;
+  while (program.parent) program = program.parent;
+  for (const statement of program.body) {
+    const declaration = statement.type === "ExportNamedDeclaration" ? statement.declaration : statement;
+    if (declaration?.type !== "VariableDeclaration") continue;
+    const found = declaration.declarations.find((d) => d.id.type === "Identifier" && d.id.name === name);
+    if (found) return found.init;
+  }
+  return null;
+}
+
 /** The first word of a label written as a string or a template: `"Star ruleset"`'s `Star`. */
 function firstWord(node) {
   const text =
@@ -317,12 +420,11 @@ function flips(label) {
   );
 }
 
-/** Whether a text is a confirmation's own: a `ConfirmDialog`'s (`DeleteDialog`'s) `message`, an `InlineConfirm`'s question. */
+/** Whether a text is a confirmation's own: a `ConfirmDialog`'s (`DeleteDialog`'s) `message`. */
 function inConfirmation(node) {
   for (let p = node.parent; p; p = p.parent) {
     if (p.type === "JSXAttribute" && p.name.name === "message") return true;
-    if (p.type === "JSXElement" && ["ConfirmDialog", "DeleteDialog", "InlineConfirm"].includes(elementName(p)))
-      return true;
+    if (p.type === "JSXElement" && ["ConfirmDialog", "DeleteDialog"].includes(elementName(p))) return true;
   }
   return false;
 }
@@ -332,11 +434,40 @@ function inFile(context, file) {
   return repoPath(context.filename) === file;
 }
 
+/** Whether `node` sits in a table's header, a `TableHead`. */
+function inTableHead(node) {
+  for (let p = parentElement(node); p; p = parentElement(p)) if (elementName(p) === "TableHead") return true;
+  return false;
+}
+
 /** Whether two words name a state and its opposite: `Star` and `Unstar`, `Expand` and `Collapse`. */
 function opposite(a, b) {
   if (!a || !b) return false;
   const pair = [a, b].sort().join(" ");
   return OPPOSITES.has(pair) || a === `Un${b.toLowerCase()}` || b === `Un${a.toLowerCase()}`;
+}
+
+/** The name a style property goes by, written as a name or a string; null for a computed one. */
+function propertyKey(property) {
+  if (property.type !== "Property" || property.computed) return null;
+  if (property.key.type === "Identifier") return property.key.name;
+  return typeof property.key.value === "string" ? property.key.value : null;
+}
+
+/**
+ * The properties a style sets at its top: an object's, an array's (a condition's `cond && {…}` too), a spread's, and a
+ * constant's the file declares (`COLUMN_HEADER_SX`), found from `node`, any node of the file.
+ */
+function styleProperties(expression, node) {
+  if (!expression) return [];
+  if (expression.type === "TSAsExpression") return styleProperties(expression.expression, node);
+  if (expression.type === "LogicalExpression") return styleProperties(expression.right, node);
+  if (expression.type === "ConditionalExpression")
+    return [...styleProperties(expression.consequent, node), ...styleProperties(expression.alternate, node)];
+  if (expression.type === "ArrayExpression") return expression.elements.flatMap((e) => styleProperties(e, node));
+  if (expression.type === "Identifier") return styleProperties(declaredValue(expression.name, node), node);
+  if (expression.type !== "ObjectExpression") return [];
+  return expression.properties.flatMap((p) => (p.type === "SpreadElement" ? styleProperties(p.argument, node) : [p]));
 }
 
 export default {
@@ -346,7 +477,11 @@ export default {
   "dialog-footers": { meta: { type: "suggestion" }, create: createDialogFooters },
   "expand-arrows": { meta: { type: "suggestion" }, create: createExpandArrows },
   "form-validation": { meta: { type: "suggestion" }, create: createFormValidation },
-  "inline-confirms": { meta: { type: "suggestion" }, create: createInlineConfirms },
+  "blank-notes": { meta: { type: "suggestion" }, create: createBlankNotes },
+  "card-titles": { meta: { type: "suggestion" }, create: createCardTitles },
+  "confirm-dialogs": { meta: { type: "suggestion" }, create: createConfirmDialogs },
+  "page-loaders": { meta: { type: "suggestion" }, create: createPageLoaders },
+  "table-frames": { meta: { type: "suggestion" }, create: createTableFrames },
   "link-buttons": { meta: { type: "suggestion" }, create: createLinkButtons },
   "next-page-spinners": { meta: { type: "suggestion" }, create: createNextPageSpinners },
   "option-tooltips": { meta: { type: "suggestion" }, create: createOptionTooltips },

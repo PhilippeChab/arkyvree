@@ -29,7 +29,6 @@ interface EquipmentTableProps<T extends EquipmentTableRow> {
 
 type EquipmentTableRow = Omit<EquipmentRow, "type" | "updatedAt">;
 
-const HEADER_SX = { fontWeight: 600 };
 /** Slots and figures stay on one line; the table scrolls on narrow screens. */
 const NO_WRAP_SX = { whiteSpace: "nowrap" };
 
@@ -46,25 +45,13 @@ export function EquipmentTable<T extends EquipmentTableRow>({
         <Table size="small" sx={{ minWidth: 640 }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={HEADER_SX}>Item</TableCell>
-              <TableCell align="center" sx={HEADER_SX}>
-                Slot
-              </TableCell>
-              <TableCell align="center" sx={HEADER_SX}>
-                Quantity
-              </TableCell>
-              <TableCell align="center" sx={HEADER_SX}>
-                Weight
-              </TableCell>
-              <TableCell align="center" sx={HEADER_SX}>
-                Value
-              </TableCell>
-              <TableCell sx={HEADER_SX}>Description</TableCell>
-              {renderActions && (
-                <TableCell align="center" sx={HEADER_SX}>
-                  Actions
-                </TableCell>
-              )}
+              <TableCell>Item</TableCell>
+              <TableCell align="center">Slot</TableCell>
+              <TableCell align="center">Quantity</TableCell>
+              <TableCell align="center">Weight</TableCell>
+              <TableCell align="center">Value</TableCell>
+              <TableCell>Description</TableCell>
+              {renderActions && <TableCell align="center">Actions</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>

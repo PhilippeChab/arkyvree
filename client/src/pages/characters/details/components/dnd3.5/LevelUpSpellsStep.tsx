@@ -1,23 +1,12 @@
-import {
-  Alert,
-  Box,
-  Chip,
-  List,
-  ListItemButton,
-  ListItemText,
-  Skeleton,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Chip, List, ListItemButton, ListItemText, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
 import {
+  BlankNote,
   ChoiceChip,
   DiceSpinner,
   LoadError,
   NextPageSpinner,
-  NoMatchesState,
 } from "@/client/src/components/common/index.ts";
 
 import { type PowerAptitudePool, withoutPick } from "./levelUp/index.ts";
@@ -75,7 +64,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   );
 
   if (totalPowersToSelect === 0 && autoGrantedFree.length === 0 && autoGrantedNonFree.length === 0)
-    return <Alert severity="info">No spells to select at this level.</Alert>;
+    return <BlankNote>No spells to select at this level.</BlankNote>;
 
   return (
     <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
@@ -232,7 +221,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                   ) : availablePowersError && availablePowers.length === 0 ? (
                     <LoadError what="Spells" error={availablePowersError} />
                   ) : pickablePowers.length === 0 && powerSearch ? (
-                    <NoMatchesState search={powerSearch} />
+                    <BlankNote>Nothing matches "{powerSearch}". Try another search.</BlankNote>
                   ) : (
                     <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }} onScroll={handlePowersScroll}>
                       {pickablePowers.map((power) => (

@@ -1,5 +1,4 @@
 import {
-  Alert,
   Box,
   Button,
   Chip,
@@ -17,12 +16,12 @@ import { useState } from "react";
 import { useController } from "react-hook-form";
 
 import {
+  BlankNote,
   ChoiceChip,
   DiceSpinner,
   ExpandArrow,
   LoadError,
   NextPageSpinner,
-  NoMatchesState,
   ToggleLabel,
 } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
@@ -213,7 +212,7 @@ export function LevelUpFeatsStep({
   const hasSelectableFeats = aptitudePools.some((pool) => pool.available > 0);
 
   if (!hasSelectableFeats && featData.autoGrantedFeats.length === 0)
-    return <Alert severity="info">No feats to select at this level.</Alert>;
+    return <BlankNote>No feats to select at this level.</BlankNote>;
 
   return (
     <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
@@ -304,7 +303,7 @@ export function LevelUpFeatsStep({
                   ) : availableFeatsError && groupedFeats.length === 0 ? (
                     <LoadError what="Feats" error={availableFeatsError} />
                   ) : groupedFeats.length === 0 && featSearch ? (
-                    <NoMatchesState search={featSearch} />
+                    <BlankNote>Nothing matches "{featSearch}". Try another search.</BlankNote>
                   ) : (
                     <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }} onScroll={handleFeatsScroll}>
                       {groupedFeats.map((row) => {

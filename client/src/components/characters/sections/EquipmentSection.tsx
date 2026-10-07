@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import {
   AddButton,
   AnimatedAlert,
-  BlankState,
+  BlankNote,
   CreateDialog,
   DeleteDialog,
   DiceSpinner,
@@ -313,11 +313,10 @@ export function EquipmentSection({
           }
         />
       ) : (
-        <BlankState
-          title="No equipment"
-          description="Add items to this character's inventory."
-          action={!isArchived ? <AddButton label="Add Item" onClick={handleAddItem} /> : undefined}
-        />
+        <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+          <BlankNote>No equipment</BlankNote>
+          {!isArchived && <AddButton label="Add Item" onClick={handleAddItem} />}
+        </Stack>
       )}
       {/* Add Item Dialog */}
       <CreateDialog

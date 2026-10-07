@@ -92,12 +92,10 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
             </colgroup>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>School</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Save</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600 }}>
-                  DC
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>School</TableCell>
+                <TableCell>Save</TableCell>
+                <TableCell align="center">DC</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

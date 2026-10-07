@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import {
   BlankState,
   CREATED_SORTS,
-  DiceSpinner,
   type FilterOption,
   InfoPill,
   ListCard,
@@ -14,6 +13,7 @@ import {
   LoadMoreButton,
   NoMatchesState,
   PageHeader,
+  PageLoader,
   PageTransition,
   SearchBar,
   type SortOption,
@@ -86,7 +86,7 @@ function RulesetList({ filters }: RulesetListProps) {
 
   const rulesets = pageItems(data);
 
-  if (isLoading) return <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />;
+  if (isLoading) return <PageLoader />;
 
   if (error) return <LoadError what="Rulesets" error={error} />;
 

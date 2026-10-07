@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { Fragment, type ReactNode, useMemo } from "react";
 
-import { CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
+import { CardTitle, CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
 import { ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
@@ -81,9 +81,8 @@ interface SkippedModifierTableProps {
 }
 
 const ACCORDION_SX = { boxShadow: "none", "&:before": { display: "none" } } as const;
-const TABLE_CELL_SX = { py: 0.5, px: 1, fontSize: "0.8rem" } as const;
-const HEADER_CELL_SX = { ...TABLE_CELL_SX, fontWeight: 600 } as const;
 const SUMMARY_SX = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
+const TABLE_CELL_SX = { py: 0.5, px: 1, fontSize: "0.8rem" } as const;
 
 /** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
 function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
@@ -112,11 +111,11 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
     <DiagnosticsGroup label={label} count={count}>
       <TableHead>
         <TableRow>
-          <TableCell sx={HEADER_CELL_SX} width={28} />
-          <TableCell sx={HEADER_CELL_SX}>Source</TableCell>
-          <TableCell sx={HEADER_CELL_SX}>Target</TableCell>
+          <TableCell sx={TABLE_CELL_SX} width={28} />
+          <TableCell sx={TABLE_CELL_SX}>Source</TableCell>
+          <TableCell sx={TABLE_CELL_SX}>Target</TableCell>
           {["Operator", "Value", lastColumn].map((column) => (
-            <TableCell key={column} sx={HEADER_CELL_SX} align="center">
+            <TableCell key={column} sx={TABLE_CELL_SX} align="center">
               {column}
             </TableCell>
           ))}
@@ -174,7 +173,7 @@ function HeaderRow({ labels }: HeaderRowProps) {
     <TableHead>
       <TableRow>
         {labels.map((label) => (
-          <TableCell key={label} sx={HEADER_CELL_SX}>
+          <TableCell key={label} sx={TABLE_CELL_SX}>
             {label}
           </TableCell>
         ))}
@@ -274,9 +273,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
       <Accordion defaultExpanded={false} disableGutters sx={ACCORDION_SX}>
         <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />} sx={SUMMARY_SX}>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <Typography variant="h6" component="h2">
-              Diagnostics
-            </Typography>
+            <CardTitle>Diagnostics</CardTitle>
             <Chip
               label={validation.valid ? "Valid" : "Invalid"}
               color={validation.valid ? "success" : "error"}

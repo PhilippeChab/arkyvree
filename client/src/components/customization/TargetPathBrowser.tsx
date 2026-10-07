@@ -14,7 +14,7 @@ import {
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { DiceSpinner, LoadError, NextPageSpinner } from "@/client/src/components/common/index.ts";
+import { BlankNote, DiceSpinner, LoadError, NextPageSpinner } from "@/client/src/components/common/index.ts";
 import { ChevronRightIcon, ClearIcon, FilterListIcon, PublicIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
@@ -258,9 +258,7 @@ export function TargetPathBrowser({
             })}
             {!!error && completions.length === 0 && <LoadError what="Paths" error={error} />}
             {!error && completions.length === 0 && !isLoading && (
-              <Typography variant="body2" sx={{ color: "text.secondary", px: 2, py: 1 }}>
-                No results
-              </Typography>
+              <BlankNote sx={{ px: 2, py: 1 }}>No results</BlankNote>
             )}
             <NextPageSpinner loading={isFetchingNextPage} />
           </List>

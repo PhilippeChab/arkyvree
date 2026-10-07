@@ -18,7 +18,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { type InferResponseType, parseResponse } from "hono/client";
 import { Link } from "react-router-dom";
 
-import { DialogFooter, DiceSpinner, LoadError, Modal } from "@/client/src/components/common/index.ts";
+import { BlankNote, DialogFooter, DiceSpinner, LoadError, Modal } from "@/client/src/components/common/index.ts";
 import { CompareArrowsIcon, RestoreIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -107,9 +107,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
         {isLoading && <DiceSpinner sx={{ py: 4 }} />}
         {!!error && !changes && <LoadError what="Local changes" error={error} />}
         <Collapse in={!isLoading && !!changes && changes.length === 0} timeout={DURATION.normal} unmountOnExit>
-          <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>
-            No local changes
-          </Typography>
+          <BlankNote sx={{ py: 2 }}>No local changes</BlankNote>
         </Collapse>
         <Collapse in={!isLoading && !!changes && changes.length > 0} timeout={DURATION.moderate} unmountOnExit>
           <Stack spacing={2} sx={{ pt: 1 }}>

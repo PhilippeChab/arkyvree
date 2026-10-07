@@ -4,11 +4,18 @@ import type { ElementType, ReactNode } from "react";
 import { SearchOffIcon } from "@/client/src/components/icons/index.ts";
 import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
+interface BlankNoteProps {
+  /** What isn't there: "No local changes". */
+  children: ReactNode;
+  sx?: SxProps<Theme>;
+}
+
 interface BlankStateProps {
   action?: ReactNode;
-  description?: string;
+  /** What the list holds once it has something, or how to add it. */
+  description: string;
   /** Icon component, sized and tinted here so every empty state looks alike. */
-  icon?: ElementType;
+  icon: ElementType;
   sx?: SxProps<Theme>;
   title: string;
 }
@@ -16,6 +23,18 @@ interface BlankStateProps {
 interface NoMatchesStateProps {
   search: string;
   sx?: SxProps<Theme>;
+}
+
+/**
+ * An empty list inside a panel, a dialog, a menu or the level wizard, said in one line. A page's or a tab's list says it
+ * with a `BlankState`.
+ */
+export function BlankNote({ children, sx }: BlankNoteProps) {
+  return (
+    <Typography variant="body2" sx={[{ color: "text.secondary" }, ...(Array.isArray(sx) ? sx : [sx])]}>
+      {children}
+    </Typography>
+  );
 }
 
 export function BlankState({ icon: Icon, title, description, action, sx }: BlankStateProps) {
@@ -39,11 +58,9 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
     >
-      {Icon && (
-        <Box sx={{ filter: (theme) => theme.dropShadows.blankStateIcon }}>
-          <Icon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", opacity: 0.5 }} />
-        </Box>
-      )}
+      <Box sx={{ filter: (theme) => theme.dropShadows.blankStateIcon }}>
+        <Icon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", opacity: 0.5 }} />
+      </Box>
       <Stack spacing={3}>
         <Box>
           <Typography variant="h6" component="p" gutterBottom sx={{ color: "text.secondary" }}>

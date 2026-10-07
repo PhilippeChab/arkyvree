@@ -1,7 +1,7 @@
 import { Card, CardContent, Container, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { type ReactNode } from "react";
 
-import { PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
+import { CardTitle, PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
 import { DarkModeIcon, LightModeIcon, SettingsBrightnessIcon } from "@/client/src/components/icons/index.ts";
 import { type ThemeMode } from "@/client/src/contexts/themeContext.ts";
 import { useThemeMode } from "@/client/src/contexts/useThemeMode.ts";
@@ -26,9 +26,7 @@ export default function SettingsPage() {
           <Card>
             <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
               <Stack spacing={1}>
-                <Typography component="h2" sx={{ fontWeight: 700, typography: { xs: "h6", sm: "h5" } }}>
-                  Theme
-                </Typography>
+                <CardTitle>Theme</CardTitle>
                 <Stack spacing={3} sx={{ alignItems: "flex-start" }}>
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     Choose how Arkyvree looks to you. Select a single theme, or sync with your system settings.

@@ -1,7 +1,8 @@
-import { Chip, Stack, Typography } from "@mui/material";
+import { Chip, Stack } from "@mui/material";
 import { parseResponse } from "hono/client";
 import { useController } from "react-hook-form";
 
+import { BlankNote } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
@@ -102,9 +103,7 @@ export function ClassLevelEditor({
             ))}
           </Stack>
         ) : (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            No feats at this level.
-          </Typography>
+          <BlankNote>No feats at this level.</BlankNote>
         )
       }
       edit={
