@@ -2,7 +2,6 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-import { ALL_CLASS_FEATS } from "./classes/index.ts";
 import {
   AMBUSH_FEATS,
   BARDIC_FEATS,
@@ -13,18 +12,6 @@ import {
   LUCK_FEATS,
   SKILL_TRICK_FEATS,
 } from "./feats.ts";
-
-export const ALL_FEATS: FeatSeed[] = [
-  ...AMBUSH_FEATS,
-  ...BARDIC_FEATS,
-  ...DISEMBOWELING_STRIKE_FEATS,
-  ...FIGHTER_FEATS,
-  ...GENERAL_FEATS,
-  ...HEAD_SHOT_FEATS,
-  ...LUCK_FEATS,
-  ...SKILL_TRICK_FEATS,
-  ...ALL_CLASS_FEATS,
-];
 
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...AMBUSH_FEATS,

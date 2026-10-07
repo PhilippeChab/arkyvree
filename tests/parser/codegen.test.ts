@@ -1,16 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 
-import { favoredEnemy } from "@/database/packages/dnd35-from-parser/generated/srd/feats/favoredEnemy.ts";
-import {
-  SPELL_WEAPON_FOCUS_FEATS,
-  WEAPON_PROFICIENCY_FEATS,
-  WIZARD_SCHOOL_FEATS,
-} from "@/database/packages/dnd35-from-parser/generated/srd/feats/feats.ts";
+import { ALL_APTITUDES } from "@/database/packages/dnd35-from-parser/generated/srd/aptitudes.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizardSchools.ts";
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { buildCoreSystemFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
 import { generateFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
 import {
   formatImports,
@@ -29,6 +23,7 @@ import type {
   RequirementCondition,
   RequirementEntry,
 } from "@/database/packages/dnd35/content/customization/types.ts";
+import { buildCoreFeats } from "@/database/packages/dnd35/data/feats/coreFeats.ts";
 
 function check(operator: string, valueType: string, value: string): RequirementCondition {
   return {
@@ -186,10 +181,10 @@ describe("Generated strings", () => {
 });
 
 describe("The generated feats", () => {
-  test("hold the system feats the aptitude list reads", () => {
-    expect([...WIZARD_SCHOOL_FEATS, ...WEAPON_PROFICIENCY_FEATS, ...SPELL_WEAPON_FOCUS_FEATS, ...favoredEnemy]).toEqual(
-      buildCoreSystemFeats(WIZARD_SCHOOLS),
-    );
+  test("list in the core rules' aptitudes those of the core rules' hand-written feats", () => {
+    const aptitudes = buildCoreFeats(WIZARD_SCHOOLS).flatMap((feat) => feat.aptitudes);
+    expect(aptitudes.length).toBeGreaterThan(0);
+    expect(ALL_APTITUDES).toEqual(expect.arrayContaining(aptitudes));
   });
 
   test("refuse a template family's modifier with requirements, whose targets can't follow the item", () => {

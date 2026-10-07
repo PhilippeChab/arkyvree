@@ -4,7 +4,6 @@ import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 
 import { ALL_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
 import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains.ts";
-import { ALL_FEATS } from "@/database/packages/dnd35-from-parser/generated/srd/feats/index.ts";
 import {
   GOODS,
   MAGIC_ARMOR,
@@ -20,6 +19,7 @@ import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/
 import { ANIMAL_COMPANIONS } from "@/database/packages/dnd35/data/bonds/animalCompanions.ts";
 import { FAMILIARS } from "@/database/packages/dnd35/data/bonds/familiars.ts";
 import { SPECIAL_MOUNTS } from "@/database/packages/dnd35/data/bonds/mounts.ts";
+import { CORE } from "@/database/packages/dnd35/data/core.ts";
 import { TEMPLATE_ITEMS } from "@/database/packages/dnd35/data/templateItems.ts";
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 import { registry } from "@/database/packages/registry.ts";
@@ -86,7 +86,7 @@ test("Every content package seeds into a database without them, its extensions e
   const corePowers = await own(powersInRules);
   expect(sortedNames(coreFeats)).toEqual(
     [
-      ...ALL_FEATS.map((feat) => feat.name),
+      ...CORE.feats.map((feat) => feat.name),
       ...ALL_DOMAINS.map((domain) => `${domain.name} Domain`),
       ...BONDS.flatMap((bond) => bond.feats.map((feat) => feat.name)),
     ].sort(),

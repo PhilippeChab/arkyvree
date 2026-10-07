@@ -35,7 +35,7 @@ database/packages/
     │   ├── items/            # ItemSeed; the weapon, armor and shield tables, their properties and proficiencies (simple(), martial()…)
     │   ├── classes/          # ClassSeed; the class level each of a class's spell levels opens at
     │   ├── feats/, spells/, races/, domains/   # FeatSeed; PowerSeed, SpellSeed; RaceSeed; DomainSeed
-    │   ├── wizardSchools/    # WizardSchoolSeed; the wizard's school feats
+    │   ├── wizardSchools/    # WizardSchoolSeed
     │   ├── bonds/            # BondContent; "a Cat", "an Owl" for the bonds' descriptions
     │   ├── abilities/, saves/, skills/, languages/   # The core rules' own: AbilitySeed, SaveSeed…
     │   └── rulesets/         # CoreContent, BookContent: what a ruleset is seeded with
@@ -43,7 +43,7 @@ database/packages/
     │   ├── core.ts           # The core ruleset, its abilities, saves, skills, languages, and CORE: all it's seeded with
     │   ├── skills.ts, creatureTypes.ts, templateItems.ts
     │   ├── bonds/            # Familiars, animal companions, special mounts
-    │   └── feats/            # Favored enemy, deity's weapon, the weapon feats
+    │   └── feats/            # The feats no reference lists: the core's (coreFeats.ts: the wizard's schools, the weapon feats, favored enemy), Complete Divine's deity's weapon
     └── seed/             # What writes it to the database
         ├── BaseSeeder.ts     # A seeder's core: its database, its context (SeedContext), the rows and inserts every step shares
         ├── RulesetSeeder.ts  # createCore, createExtension; seedCore, seedBook: the steps made of steps
@@ -53,7 +53,7 @@ database/packages/dnd35-from-parser/
 ├── reference/            # Scraped JSON (raw + overrides)
 ├── generated/            # Written by the generator only, one folder per book
 │   ├── srd/              #   The core rules
-│   └── dmg/, complete-warrior/, …   # Each extension book, with an index.ts exporting BOOK
+│   └── dmg/, complete-warrior/, …   # Each extension book; every book has an index.ts exporting BOOK
 └── tools/                # Scraper, generator, validate, overrides
     ├── cli/              # The commands (parser:scrape, generate, sync, overrides, validate) and their arguments
     ├── types/            # A reference's types, a module per kind of reference
@@ -106,7 +106,7 @@ const dnd35Dmg: ContentPackage = {
 };
 ```
 
-`BOOK` (`generated/<book>/index.ts`) is the book's content as the generator wrote it. `RulesetSeeder.createExtension` creates the extension ruleset with the core's context; `seedBook` adds the aptitudes the core lacks, seeds the feats, spells, domains (whose spell levels open at the core cleric's) and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are added to `BOOK` in its package file (Complete Divine adds `DEITYS_WEAPON_FEATS`).
+`BOOK` (`generated/<book>/index.ts`) is the book's content as the generator wrote it. `RulesetSeeder.createExtension` creates the extension ruleset with the core's context; `seedBook` adds the aptitudes the core lacks, seeds the feats, spells, domains (whose spell levels open at the core cleric's) and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are added to `BOOK` in its package file (Complete Divine adds `DEITYS_WEAPON_FEATS`), and so are the core rules' to the SRD's `BOOK` in `data/core.ts` (its hand-written feats, `buildCoreFeats`, its rules and its bonded creatures): no generated file wraps hand-written content.
 
 ### Adding an extension
 

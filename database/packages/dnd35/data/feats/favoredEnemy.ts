@@ -21,7 +21,7 @@ const favoredEnemySpecializationUmbrella: FeatSeed = {
 export const FAVORED_ENEMY_FAMILY = "Favored Enemy";
 
 /** A favored enemy feat per creature type, its specialization per type, and the ranger's pick of one. */
-export const favoredEnemyFeats: FeatSeed[] = [
+export const FAVORED_ENEMY_FEATS: FeatSeed[] = [
   // A favored enemy feat per creature type
   ...CREATURE_TYPES.map((t) => ({
     name: `Favored Enemy: ${t}`,

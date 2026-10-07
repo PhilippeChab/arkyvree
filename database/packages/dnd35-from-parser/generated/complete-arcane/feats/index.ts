@@ -2,7 +2,6 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-import { ALL_CLASS_FEATS } from "./classes/index.ts";
 import {
   ARCANE_DEFENSE_FEATS,
   DRACONIC_FEATS,
@@ -11,16 +10,6 @@ import {
   ITEM_CREATION_FEATS,
   METAMAGIC_FEATS,
 } from "./feats.ts";
-
-export const ALL_FEATS: FeatSeed[] = [
-  ...ARCANE_DEFENSE_FEATS,
-  ...DRACONIC_FEATS,
-  ...GENERAL_FEATS,
-  ...HERITAGE_FEATS,
-  ...ITEM_CREATION_FEATS,
-  ...METAMAGIC_FEATS,
-  ...ALL_CLASS_FEATS,
-];
 
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...ARCANE_DEFENSE_FEATS,

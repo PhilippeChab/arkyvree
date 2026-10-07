@@ -1,5 +1,4 @@
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { CORE_SYSTEM_FEATS } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
 import {
   type ImportTable,
   REQUIREMENT_IMPORTS,
@@ -10,11 +9,16 @@ import {
   quote,
   toConstName,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import type { TemplateFamily, TemplateType } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
+import {
+  buildReferenceFeats,
+  type TemplateFamily,
+  type TemplateType,
+} from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
 import {
   expandTemplateDescription,
   normalizeDescription,
 } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
+import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type {
   ModifierSeed,
   RequirementCondition,
@@ -30,18 +34,13 @@ const IMPORTS: ImportTable = [
     ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS"],
   ],
   ["@/database/packages/dnd35/content/items/proficiencies.ts", ["proficiencyRequirements"]],
-  ["@/database/packages/dnd35/data/feats/weapons.ts", ["spellWeaponFocusFeats", "weaponProficiencyFeats"]],
   ["@/database/packages/dnd35/data/skills.ts", ["SKILL_NAMES"]],
   ["@/shared/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
   ["@/shared/text.ts", ["stripSeparators"]],
-  ["@/database/packages/dnd35/content/wizardSchools/schoolFeats.ts", ["wizardSchoolFeats"]],
-  ["@/database/packages/dnd35/data/feats/favoredEnemy.ts", ["favoredEnemyFeats"]],
-  ["@/database/packages/dnd35-from-parser/generated/srd/wizardSchools.ts", ["WIZARD_SCHOOLS"]],
 ];
 
 /**
- * A feats file: its feats' lists, a template family's feats made per item (weapon, skill, school…), and the core
- * rules' system feats. What its code uses (weapon lists, skill names…) is imported from where the content defines it.
+ * A feats file: its feats' lists, and a template family's feats made per item (weapon, skill, school…). What its code uses (weapon lists, skill names…) is imported from where the content defines it.
  */
 export class FeatsFile extends CodeFile {
   constructor() {
@@ -187,7 +186,7 @@ export class FeatsFile extends CodeFile {
   ): void {
     this.uses.add(options);
     this.declare("FeatSeed");
-    this.lines.push(`export const ${toConstName(familyName)}_FEATS: FeatSeed[] = ${options}.map((${variable}) => ({`);
+    this.lines.push(`export const ${getTemplateListName(familyName)}: FeatSeed[] = ${options}.map((${variable}) => ({`);
     this.lines.push(`  name: \`${escapeTemplate(familyName)}: \${${variable}}\`,`);
     this.lines.push(`  description: \`${description}\`,`);
     this.lines.push(`  generated: true,`);
@@ -208,17 +207,6 @@ export class FeatsFile extends CodeFile {
     return target.replace(/^weapon\./, "items.weapons.${stripSeparators(w)}.");
   }
 
-  /** The system feats of the core rules' feat file `fileName`. */
-  emitSystemFeats(fileName: string): void {
-    this.declare("FeatSeed");
-    for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
-      this.lines.push(`/** A system feat list (\`buildCoreSystemFeats\`): no reference lists it. */`);
-      this.lines.push(`export const ${name}: FeatSeed[] = ${code};`);
-      for (const used of uses) this.uses.add(used);
-    }
-    this.lines.push("");
-  }
-
   /** Writes a template family's feats, by its type. */
   emitTemplate(family: TemplateFamily, families: Set<string>) {
     const type: TemplateType = family.type;
@@ -235,4 +223,23 @@ export class FeatsFile extends CodeFile {
         return type satisfies never;
     }
   }
+}
+
+/** The lists a feat reference's feats file declares (`generateFeatSeeds`): a feat type's each, a template family's each. */
+export function getFeatsFileLists(ref: FeatReference): string[] {
+  const { byType, templates } = buildReferenceFeats(ref);
+  return [
+    ...[...byType.keys()].map(getFeatTypeListName),
+    ...templates.map(({ familyName }) => getTemplateListName(familyName)),
+  ];
+}
+
+/** The name of a feat type's list in a feats file (`GENERAL_FEATS`). */
+export function getFeatTypeListName(type: string): string {
+  return `${type.toUpperCase().replace(/\s+/g, "_")}_FEATS`;
+}
+
+/** The name of a template family's list in a feats file (`WEAPON_FOCUS_FEATS`). */
+export function getTemplateListName(familyName: string): string {
+  return `${toConstName(familyName)}_FEATS`;
 }
