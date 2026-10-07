@@ -9,20 +9,21 @@ export { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
 export { getKlassLevel, getPlannedKlassLevels, getSavedKlassLevel } from "./levelUp/classes.ts";
 export { buildPowerLevelLookup } from "./levelUp/distribution.ts";
 export { checkEditedLevelIssues, projectEditedLevel, projectLevelContribution } from "./levelUp/edit.ts";
+export {
+  annotateFeatGroups,
+  annotateFeatOptions,
+  buildClassOptions,
+  buildLevelSelections,
+  getClassPick,
+  getFeatPickFilters,
+  getPowerPickFilters,
+  projectFeatPick,
+  projectPendingPicks,
+  projectPowerPick,
+} from "./levelUp/picks.ts";
 export { buildLevelUpPreview, distributePlannedPicks } from "./levelUp/plan.ts";
 export type { PlannedLevels } from "./levelUp/plan.ts";
-export {
-  buildPendingCharacterLevels,
-  buildProjectedAutoGrantedFeats,
-  buildProjectedCharacterLevel,
-  buildProjectedFeatsFromPicks,
-  buildProjectedGivenFeats,
-  buildProjectedSelections,
-  buildProjectedSkillsFromAllocations,
-  getLevelIdsFromOnward,
-  loadFeatCustomizations,
-  projectPlannedLevels,
-} from "./levelUp/projection.ts";
+export { projectPlannedLevels } from "./levelUp/projection.ts";
 export type { FeatPick } from "./levelUp/projection.ts";
 export {
   buildFeatSlots,

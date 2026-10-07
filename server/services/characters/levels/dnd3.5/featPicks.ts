@@ -2,90 +2,27 @@
  * Feats a level-up can pick: those available for an aptitude pool, flat or grouped by feat family.
  */
 
-import type { DetailedCharacterInterface } from "@/engine/core/module/index.ts";
-import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
-import { getListFeatIds, type RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import {
-  annotateRequirements,
-  buildPendingCharacterLevels,
-  buildProjectedCharacterLevel,
-  buildProjectedFeatsFromPicks,
-  buildProjectedGivenFeats,
-  type Dnd35ProjectedCharacterData,
+  annotateFeatGroups,
+  annotateFeatOptions,
+  type Dnd35DetailedCharacter,
   type FeatPick,
+  getFeatPickFilters,
   getKlassLevel,
-  getLevelIdsFromOnward,
-  loadFeatCustomizations,
-  parseAptitudePool,
+  projectFeatPick,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
-import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Feats } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
-import type { Character, Session } from "@/shared/relations.ts";
-
-/** A row of a feat's variants, which the picker opens into them: each variant says whether it's eligible. */
-function asFamilyRow<T extends object>(row: T) {
-  return {
-    ...row,
-    eligible: true as boolean,
-    aptitudeModifiers: [] as { aptitudeId: string; operator: string; value: number }[],
-    requirementTree: undefined as string | undefined,
-  };
-}
-
-/**
- * The character a feat pick is made for, and the feats it can't pick again. The projection has the levels planned
- * before this one, then this class level, the feats picked so far and every feat those class levels grant: granted
- * feats count for requirements (a weapon proficiency for Weapon Focus) and aren't offered. Editing a level leaves out
- * it and the levels after it.
- */
-async function projectFeatPick(
-  characterRecord: Character,
-  scope: RulesetScope,
-  klassLevelId: string,
-  featPicks: FeatPick[],
-  excludeCharacterLevelId?: string,
-  pendingLevelKlassLevelIds?: string[],
-  pendingLevelAbilityIds?: (string | undefined)[],
-) {
-  const { ruleset, rulesetData } = scope;
-  const characterId = characterRecord.id;
-  const grantingKlassLevelIds = [...new Set([klassLevelId, ...(pendingLevelKlassLevelIds ?? [])])];
-  const grantedRecords = grantingKlassLevelIds.flatMap(
-    (id) => rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(id) ?? [],
-  );
-  const grantedCustomizations = loadFeatCustomizations(
-    rulesetData,
-    grantedRecords.map((rec) => rec.featsInRule.id),
-  );
-
-  const allCharacterLevels = await CharacterLevels.findMany(db, { characterId });
-  const excludeIds = excludeCharacterLevelId ? getLevelIdsFromOnward(allCharacterLevels, excludeCharacterLevelId) : [];
-  const pendingLevels = pendingLevelKlassLevelIds?.length
-    ? buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds, pendingLevelAbilityIds)
-    : [];
-
-  const projectedCharacterLevel = buildProjectedCharacterLevel(characterId, klassLevelId);
-  const projectedFeats = buildProjectedFeatsFromPicks(featPicks, klassLevelId, projectedCharacterLevel.id, rulesetData);
-  const projectedData: Dnd35ProjectedCharacterData = {
-    ...(excludeIds.length > 0 && { excludeCharacterLevelIds: excludeIds }),
-    characterLevels: [...pendingLevels, projectedCharacterLevel],
-    ...(projectedFeats.length > 0 && { feats: projectedFeats }),
-    givenFeats: buildProjectedGivenFeats(grantedRecords, projectedCharacterLevel.id, grantedCustomizations),
-  };
-
-  const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-  const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
-  return { detailedCharacter, excludeFeatIds: detailedCharacter.getHeldNonStackableFeatIds() };
-}
+import type { Session } from "@/shared/relations.ts";
 
 /**
  * Runs a feat picker's query in the character's ruleset. `run` gets the character projected with the level's picks so
- * far (for each feat's eligibility) and the filters every picker shares: the pool's feats as the ruleset composes the
- * list, but those the character can't take again.
+ * far (for each feat's eligibility) and the filters every picker shares (`getFeatPickFilters`).
  */
 async function withFeatPicker<R>(
   session: Session,
@@ -98,59 +35,28 @@ async function withFeatPicker<R>(
   pendingLevelKlassLevelIds: string[] | undefined,
   pendingLevelAbilityIds: (string | undefined)[] | undefined,
   run: (
-    detailedCharacter: DetailedCharacterInterface,
+    detailedCharacter: Dnd35DetailedCharacter,
     rulesetData: RulesetData,
-    filters: { excludeFeatIds: string[]; ids: string[] },
+    filters: ReturnType<typeof getFeatPickFilters>,
   ) => Promise<R>,
 ): Promise<R> {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
-    const { rulesetData } = scope;
+    const { ruleset, rulesetData } = scope;
     const klassLevel = getKlassLevel(rulesetData, klassId, level);
-
-    const { detailedCharacter, excludeFeatIds } = await projectFeatPick(
-      characterRecord,
-      scope,
+    const levels = await CharacterLevels.findMany(db, { characterId });
+    const projected = projectFeatPick(
+      characterId,
       klassLevel.id,
       [...(picks.pendingLevelFeatPicks ?? []), ...(picks.selectedFeatPicks ?? [])],
-      excludeCharacterLevelId,
-      pendingLevelKlassLevelIds,
-      pendingLevelAbilityIds,
+      { excludeCharacterLevelId, levels, pendingLevelAbilityIds, pendingLevelKlassLevelIds },
+      rulesetData,
     );
-    return await run(detailedCharacter, rulesetData, {
-      ids: getListFeatIds(rulesetData, aptitudeId),
-      excludeFeatIds,
-    });
+    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected, scope });
+    return await run(detailedCharacter, rulesetData, getFeatPickFilters(detailedCharacter, aptitudeId, rulesetData));
   });
-}
-
-/** Resolves aptitude-targeting modifiers (aptitudes.<slug>.allowed) for feats, grouped by feat ID. */
-export function resolveAptitudeModifiers(featIds: string[], rulesetData: RulesetData) {
-  const result = new Map<string, { aptitudeId: string; operator: string; value: number }[]>();
-  if (featIds.length === 0) return result;
-
-  for (const featId of featIds) {
-    const mods = rulesetData.modifiersBySource.get(featId);
-    if (!mods) continue;
-    for (const mod of mods) {
-      if (mod.sourceType !== "feats") continue;
-      const pool = parseAptitudePool(mod.target);
-      if (pool === undefined) continue;
-      const resolvedAptitudeId = rulesetData.aptitudeIdBySlug.get(pool);
-      const value = parseLiteralValue(mod.value, "number");
-      if (!resolvedAptitudeId || typeof value !== "number") continue;
-
-      let group = result.get(mod.sourceId);
-      if (!group) {
-        group = [];
-        result.set(mod.sourceId, group);
-      }
-      group.push({ aptitudeId: resolvedAptitudeId, value, operator: mod.operator });
-    }
-  }
-
-  return result;
 }
 
 export async function getAvailableFeats(
@@ -181,18 +87,8 @@ export async function getAvailableFeats(
         { ...filters, family: where.family, search: where.search },
         pagination,
       );
-
-      const items = annotateRequirements(detailedCharacter, result.items, rulesetData);
-      const aptitudeModByFeat = resolveAptitudeModifiers(
-        items.map((f) => f.id),
-        rulesetData,
-      );
-      const itemsWithModifiers = items.map((item) => ({
-        ...item,
-        aptitudeModifiers: aptitudeModByFeat.get(item.id) ?? [],
-      }));
-
-      return { items: itemsWithModifiers, page: result.page, nextPage: result.nextPage };
+      const items = annotateFeatOptions(detailedCharacter, result.items, rulesetData);
+      return { items, page: result.page, nextPage: result.nextPage };
     },
   );
 }
@@ -221,39 +117,7 @@ export async function getAvailableFeatsGrouped(
     pendingLevelAbilityIds,
     async (detailedCharacter, rulesetData, filters) => {
       const result = await Feats.findOptionGroupPage(db, { ...filters, search: where.search }, pagination);
-
-      // Annotate single-feat rows with eligibility + aptitude modifiers
-      const singleRows = result.items.filter((r) => r.variantCount === 1);
-      if (singleRows.length === 0) {
-        const items = result.items.map(asFamilyRow);
-        return { items, page: result.page, nextPage: result.nextPage };
-      }
-
-      const singleIds = singleRows.map((r) => ({ id: r.representativeId }));
-      const annotated = annotateRequirements(detailedCharacter, singleIds, rulesetData);
-      const eligibilityMap = new Map(annotated.map((a) => [a.id, a.eligible]));
-      const requirementTreeMap = new Map(
-        annotated.filter((a) => a.requirementTree).map((a) => [a.id, a.requirementTree!]),
-      );
-
-      const aptitudeModByFeat = resolveAptitudeModifiers(
-        singleRows.map((r) => r.representativeId),
-        rulesetData,
-      );
-
-      const items = result.items.map((row) => {
-        if (row.variantCount === 1) {
-          const eligible = eligibilityMap.get(row.representativeId) ?? true;
-          return {
-            ...row,
-            eligible,
-            aptitudeModifiers: aptitudeModByFeat.get(row.representativeId) ?? [],
-            requirementTree: eligible ? undefined : requirementTreeMap.get(row.representativeId),
-          };
-        }
-        return asFamilyRow(row);
-      });
-
+      const items = annotateFeatGroups(detailedCharacter, result.items, rulesetData);
       return { items, page: result.page, nextPage: result.nextPage };
     },
   );
