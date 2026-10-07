@@ -24,7 +24,7 @@ import {
   powersInRules,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Aptitudes,
@@ -77,7 +77,7 @@ import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
-import { insertRows } from "@/tests/support/database.ts";
+import { insertRows, measure } from "@/tests/support/database.ts";
 import { createTestItem } from "@/tests/support/items.ts";
 import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
@@ -453,6 +453,30 @@ describe("DetailedCharacter", () => {
       await expect(
         new DetailedCharacter({ ...character, rulesetId, raceId: NIL_UUID } as Character).build(),
       ).rejects.toThrow("Race not found");
+    });
+
+    test("builds in the scope its caller holds: it reads no ruleset and composes no view, for the same sheet", async () => {
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
+      const own = await build(bjorn);
+      await withRulesetScope(db, bjorn.rulesetId, async (scope) => {
+        const inScope = new DetailedCharacter(bjorn);
+        const built = await measure(() => inScope.build(db, undefined, scope));
+        expect(built.timing.cacheHits + built.timing.cacheMisses).toBe(0);
+        expect(buildFullCharacterResponse(bjorn, inScope)).toEqual(buildFullCharacterResponse(bjorn, own));
+        const preloaded = await measure(() => inScope.preload(db, scope));
+        expect(preloaded.timing.cacheHits + preloaded.timing.cacheMisses).toBe(0);
+      });
+    });
+
+    test("builds in a scope of its own when the one it's handed is another ruleset's", async () => {
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
+      const ownScope = await measure(() => withRulesetScope(db, bjorn.rulesetId, async () => {}));
+      await withRulesetScope(db, (await findSeededRuleset(DND35_DMG_NAME)).id, async (otherScope) => {
+        const detailed = new DetailedCharacter(bjorn);
+        const { timing } = await measure(() => detailed.build(db, undefined, otherScope));
+        expect(timing.cacheHits + timing.cacheMisses).toBe(ownScope.timing.cacheHits + ownScope.timing.cacheMisses);
+        expect(detailed.getRuleset()?.id).toBe(bjorn.rulesetId);
+      });
     });
 
     test("reads a seeded character's identity, abilities and ruleset", async () => {

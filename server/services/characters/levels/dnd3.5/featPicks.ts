@@ -2,7 +2,7 @@
  * Feats a level-up can pick: those available for an aptitude pool, flat or grouped by feat family.
  */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData, RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Feats } from "@/server/repositories/index.ts";
@@ -12,7 +12,7 @@ import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import { getListFeatIds } from "@/server/services/rulesets/aptitudes/index.ts";
-import type { Character, Ruleset, Session } from "@/shared/relations.ts";
+import type { Character, Session } from "@/shared/relations.ts";
 
 import { getKlassLevel } from "./classes.ts";
 import {
@@ -69,14 +69,14 @@ async function getExcludeNonStackableFeatIds(
  */
 async function projectFeatPick(
   characterRecord: Character,
-  ruleset: Ruleset,
-  rulesetData: RulesetData,
+  scope: RulesetScope,
   klassLevelId: string,
   featPicks: FeatPick[],
   excludeCharacterLevelId?: string,
   pendingLevelKlassLevelIds?: string[],
   pendingLevelAbilityIds?: (string | undefined)[],
 ) {
+  const { ruleset, rulesetData } = scope;
   const characterId = characterRecord.id;
   const grantingKlassLevelIds = [...new Set([klassLevelId, ...(pendingLevelKlassLevelIds ?? [])])];
   const grantedRecords = grantingKlassLevelIds.flatMap(
@@ -109,7 +109,7 @@ async function projectFeatPick(
 
   const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
   const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await detailedCharacter.build(undefined, projectedData);
+  await detailedCharacter.build(undefined, projectedData, scope);
 
   const excludeFeatIds = await getExcludeNonStackableFeatIds(
     db,
@@ -145,13 +145,13 @@ async function withFeatPicker<R>(
 ): Promise<R> {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
-  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+  return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
+    const { rulesetData } = scope;
     const klassLevel = getKlassLevel(rulesetData, klassId, level);
 
     const { detailedCharacter, excludeFeatIds } = await projectFeatPick(
       characterRecord,
-      ruleset,
-      rulesetData,
+      scope,
       klassLevel.id,
       [...(picks.pendingLevelFeatPicks ?? []), ...(picks.selectedFeatPicks ?? [])],
       excludeCharacterLevelId,

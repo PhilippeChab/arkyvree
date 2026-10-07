@@ -56,8 +56,8 @@ class RulesetCache {
   /**
    * A ruleset's copy-on-write data: its source chain, its overrides and sibling pairs. Keyed by the ruleset and its
    * ordered source chain: a request holding old ruleset metadata must not cache its old subscription chain under the
-   * key readers of the newly committed chain use. Built from stored ids through the shared `db`, never through a
-   * caller's scope (notably during nested master/companion character builds) or transaction.
+   * key readers of the newly committed chain use. Built from stored ids through the shared `db`, never through the
+   * copy-on-write context of a scope it's read in, or a transaction.
    */
   async getCowData(ruleset: RulesetSources): Promise<CowData> {
     const dependencies = [ruleset.id, ...buildSourceChain(ruleset)];

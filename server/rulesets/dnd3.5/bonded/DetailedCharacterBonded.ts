@@ -62,11 +62,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
         throw new Error(`Bonded's master not found: ${parentCharacterId}`);
       }
       const composed = new Dnd35DetailedCharacter(masterRecord);
-      await composed.build(db, undefined, {
-        ruleset: this.ruleset!,
-        cowData: rulesetData.cow,
-        rulesetData,
-      });
+      await composed.build(db, undefined, { ruleset: this.ruleset!, rulesetData });
       return composed;
     });
   }

@@ -7,7 +7,6 @@ import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Klasses } from "@/server/repositories/index.ts";
 import type { Dnd35DetailedCharacter, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
-import type { PreloadedRulesetData } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Klass, KlassLevel, Requirement, Session } from "@/shared/relations.ts";
@@ -117,7 +116,8 @@ export async function getAvailableKlasses(
 ) {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
-  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+  return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
+    const { ruleset, rulesetData } = scope;
     const { sourceChain } = rulesetData.cow;
 
     const klassPage = await Klasses.findPage(
@@ -164,8 +164,6 @@ export async function getAvailableKlasses(
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
       detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
 
-      // Preload COW + ruleset data to avoid redundant fetches inside build()
-      const preloaded: PreloadedRulesetData = { ruleset, cowData: rulesetData.cow, rulesetData };
       const projectedData = pendingProjection(
         characterId,
         pendingLevels,
@@ -174,7 +172,7 @@ export async function getAvailableKlasses(
         pendingFeatPicks,
         pendingSkillAllocations,
       );
-      await detailedCharacter.build(undefined, projectedData, preloaded);
+      await detailedCharacter.build(undefined, projectedData, scope);
 
       const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
       const evaluated = withRequirements.map((k) => ({

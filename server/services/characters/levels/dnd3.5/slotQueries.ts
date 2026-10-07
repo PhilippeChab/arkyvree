@@ -55,7 +55,8 @@ async function featSlots(
 ) {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
-  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+  return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
+    const { ruleset, rulesetData } = scope;
     const klassLevel = getKlassLevel(rulesetData, klassId, level);
     const autoGrantedRecords = rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [];
     const autoGrantedCustomizations = loadFeatCustomizations(
@@ -71,7 +72,7 @@ async function featSlots(
 
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData);
+    await detailedCharacter.build(undefined, projectedData, scope);
 
     const aptitudePools = detailedCharacter.components.aptitudes.extractFeatPools();
     let featsToSelect = 0;
@@ -98,13 +99,14 @@ async function powerSlots(
 ) {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
-  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+  return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
+    const { ruleset, rulesetData } = scope;
     const klassLevel = getKlassLevel(rulesetData, klassId, level);
     const { data: projectedData } = await projectLevel(characterId, klassLevel.id, projection);
 
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData);
+    await detailedCharacter.build(undefined, projectedData, scope);
 
     const aptitudePools = spellPools(detailedCharacter.components.aptitudes, rulesetData);
     const powersToSelect = Object.values(aptitudePools).reduce((total, pool) => total + pool.available, 0);
@@ -226,7 +228,8 @@ export async function getSkillSlots(
 ) {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
-  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+  return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
+    const { ruleset, rulesetData } = scope;
     const klassLevel = getKlassLevel(rulesetData, klassId, level);
     const { data: projectedData } = await projectLevel(characterId, klassLevel.id, {
       editedLevelId: excludeCharacterLevelId,
@@ -237,7 +240,7 @@ export async function getSkillSlots(
 
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData);
+    await detailedCharacter.build(undefined, projectedData, scope);
 
     const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
     const skillsBreakdown = levelUpProjector.getSkillBudget();

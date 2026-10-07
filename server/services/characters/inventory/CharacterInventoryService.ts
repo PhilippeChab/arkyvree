@@ -47,7 +47,8 @@ class CharacterInventoryService {
     return await withTransaction(async (tx) => {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
-      return await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+      return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
+        const { rulesetData } = scope;
         // Items.findOne is used here (rather than rulesetData.itemsById) because
         // this method needs to distinguish "item doesn't exist" from "item
         // exists but belongs to an unrelated ruleset" — the cache only knows
@@ -70,7 +71,7 @@ class CharacterInventoryService {
         // An item already carried takes another entry: a second dagger, held in the other hand
         if (equipped && location) {
           const entry = { id: null, item: itemRecord };
-          await validateEquipping(tx, characterRecord, entry, location, weaponSet, force, ruleset, rulesetData);
+          await validateEquipping(tx, characterRecord, entry, location, weaponSet, force, scope);
         }
 
         const rows = await CharacterInventory.create(tx, {
@@ -169,7 +170,8 @@ class CharacterInventoryService {
     return await withTransaction(async (tx) => {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
-      return await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+      return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
+        const { rulesetData } = scope;
         const existing = await CharacterInventory.findOne(tx, { characterId, id: entryId });
         if (!existing) {
           throw new NotFoundError("Item not in inventory");
@@ -183,7 +185,7 @@ class CharacterInventoryService {
             throw new NotFoundError("Item not found");
           }
           const entry = { id: entryId, item: itemRecord };
-          await validateEquipping(tx, characterRecord, entry, location, weaponSet, force, ruleset, rulesetData);
+          await validateEquipping(tx, characterRecord, entry, location, weaponSet, force, scope);
         }
 
         const rows = await CharacterInventory.update(

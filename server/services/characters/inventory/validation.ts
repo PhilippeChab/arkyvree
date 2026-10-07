@@ -6,7 +6,7 @@
  * - validateCharges / validateEquipping — what adding or updating an inventory entry checks
  */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData, RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterInventory } from "@/server/repositories/index.ts";
@@ -62,9 +62,9 @@ async function validateItemRequirements(
   tx: Db,
   characterRecord: CharacterRecord,
   item: { id: string; type: string | null; sourceItemId: string | null },
-  ruleset: Ruleset,
-  rulesetData: RulesetData,
+  scope: RulesetScope,
 ) {
+  const { ruleset, rulesetData } = scope;
   // Weapons are exempt — non-proficiency applies a -4 penalty instead of blocking equip
   if (item.type === "Weapon") return;
 
@@ -76,7 +76,7 @@ async function validateItemRequirements(
 
   const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
   const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await detailedCharacter.build(tx);
+  await detailedCharacter.build(tx, undefined, scope);
 
   // Two entities' requirements, each its own group: their levels each start at "1"
   const issues = detailedCharacter.getUnmetRequirementIssues([templateRequirements, ownRequirements]);
@@ -95,21 +95,21 @@ async function validateWeaponInOneHand(
   characterRecord: CharacterRecord,
   item: { id: string; type: string | null; sourceItemId: string | null },
   location: ItemLocation,
-  ruleset: Ruleset,
-  rulesetData: RulesetData,
+  scope: RulesetScope,
 ) {
+  const { ruleset, rulesetData } = scope;
   if (item.type !== "Weapon" || !isHandLocation(location) || location === "Two Handed") return;
   const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
   if (!rulesetModule.rules.inventory.isUnwieldyInOneHand(rulesetData, item.id)) return;
 
-  // Its proficiency: its template's requirements, or its own when it's a template (`DetailedCharacterDataLoader`)
+  // Its proficiency: its template's requirements, or its own when it's a template (`toCustomizedInventory`)
   const isTemplate = rulesetData.itemsById.get(item.id)?.isTemplate ?? false;
   const proficiencyOf = isTemplate ? item.id : item.sourceItemId;
   const proficiency = proficiencyOf ? (rulesetData.requirementsByEntity.get(proficiencyOf) ?? []) : [];
   if (proficiency.length === 0) return;
 
   const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await detailedCharacter.build(tx);
+  await detailedCharacter.build(tx, undefined, scope);
   if (!detailedCharacter.areRequirementsMet([proficiency], { sourceId: null })) {
     // An issue, as an unmet requirement is: the form shows it, and can equip it anyway (`force`)
     const message = "This weapon is too large to use in one hand without its proficiency";
@@ -141,15 +141,15 @@ export async function validateEquipping(
   location: ItemLocation,
   weaponSet: number | null,
   force: boolean,
-  ruleset: Ruleset,
-  rulesetData: RulesetData,
+  scope: RulesetScope,
 ) {
+  const { ruleset, rulesetData } = scope;
   if (isHandLocation(location) && weaponSet === null) {
     throw new BadRequestError("A weapon set is required when equipping to a hand slot");
   }
   const { item } = entry;
   await validateEquipmentSlot(tx, characterRecord.id, entry, location, weaponSet, ruleset, rulesetData);
   if (force) return;
-  await validateItemRequirements(tx, characterRecord, item, ruleset, rulesetData);
-  await validateWeaponInOneHand(tx, characterRecord, item, location, ruleset, rulesetData);
+  await validateItemRequirements(tx, characterRecord, item, scope);
+  await validateWeaponInOneHand(tx, characterRecord, item, location, scope);
 }

@@ -13,6 +13,7 @@ import {
   powersInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -44,7 +45,7 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { FEAT_FAMILY, KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows } from "@/tests/support/database.ts";
+import { insertRows, measure } from "@/tests/support/database.ts";
 import {
   addFighterLevels,
   createSeedCharacter,
@@ -1547,6 +1548,40 @@ describe("LevelsService", () => {
       expect(
         detailed.validate().issues.filter((i) => i.category === "skills" && /skill point/.test(i.message)),
       ).toEqual([]);
+    });
+  });
+
+  describe("the ruleset's view", () => {
+    test("each flow composes it once, and builds the character in it", async () => {
+      const { session, character, klass } = await setupRuleset();
+      const scope = await measure(() => withRulesetScope(db, character.rulesetId, async () => {}));
+      const once = scope.timing.cacheHits + scope.timing.cacheMisses;
+      const flows: [string, () => Promise<unknown>][] = [
+        [
+          "preview",
+          () =>
+            CharacterLevelsService.getLevelUpPreview(session, character.id, [{ klassId: klass.id, level: 1 }], [null]),
+        ],
+        ["classes", () => CharacterLevelsService.getAvailableKlasses(session, character.id, {}, page)],
+        ["feat slots", () => CharacterLevelsService.getFeatSlots(session, character.id, klass.id, 1)],
+        ["skill slots", () => CharacterLevelsService.getSkillSlots(session, character.id, klass.id, 1)],
+        ["finalize", () => addOneLevel(session, character.id, klass.id, 1, 8, null, {}, {}, {}, true)],
+        ["remove", () => CharacterLevelsService.removeLevel(session, character.id)],
+      ];
+      for (const [flow, run] of flows) {
+        const { timing } = await measure(run);
+        expect({ flow, composed: timing.cacheHits + timing.cacheMisses }).toEqual({ flow, composed: once });
+      }
+    });
+
+    test("an edited level's builds compose it once", async () => {
+      const { session, character, klass } = await setupRuleset();
+      const level = await addOneLevel(session, character.id, klass.id, 1, 8, null, {}, {}, {}, true);
+      const scope = await measure(() => withRulesetScope(db, character.rulesetId, async () => {}));
+      const { timing } = await measure(() =>
+        CharacterLevelsService.updateLevel(session, character.id, level.id, 6, null, {}, {}, {}, true),
+      );
+      expect(timing.cacheHits + timing.cacheMisses).toBe(scope.timing.cacheHits + scope.timing.cacheMisses);
     });
   });
 

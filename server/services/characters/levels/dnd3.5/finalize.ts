@@ -9,7 +9,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData, RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
@@ -25,7 +25,6 @@ import type {
   Dnd35ProjectedCharacterData,
   Dnd35RulesetModule,
 } from "@/server/rulesets/dnd3.5/index.ts";
-import type { PreloadedRulesetData } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Character, Session } from "@/shared/relations.ts";
@@ -243,10 +242,11 @@ async function levelDistributionData(
   tx: Db,
   rulesetModule: Dnd35RulesetModule,
   characterRecord: Character,
-  rulesetData: RulesetData,
+  scope: RulesetScope,
   klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
   baseLevelCount: number,
 ): Promise<PerLevelDistributionData> {
+  const { rulesetData } = scope;
   const { projectedData, allAutoGrantedFeatRecords } = projectPlannedLevels(
     characterRecord.id,
     klassLevelEntries,
@@ -255,12 +255,12 @@ async function levelDistributionData(
 
   // Build full character with all planned levels to get aptitude pools
   const fullCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await fullCharacter.build(tx, projectedData);
+  await fullCharacter.build(tx, projectedData, scope);
   const levelUpProjector = rulesetModule.createLevelUpProjector(fullCharacter);
   const { featPoolIds, powerPoolIds } = poolIds(fullCharacter.components.aptitudes, rulesetData);
 
   // Compute per-level feat/power slots from modifier data directly
-  const baselineApts = await buildBaselineAptitudes(tx, rulesetModule, characterRecord, fullCharacter);
+  const baselineApts = await buildBaselineAptitudes(tx, rulesetModule, characterRecord, fullCharacter, scope);
   const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
   const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
     rulesetData,
@@ -299,6 +299,7 @@ async function levelDistributionData(
 async function ownedPoolNames(
   tx: Db,
   rulesetModule: Dnd35RulesetModule,
+  scope: RulesetScope,
   characterRecord: Character,
   existingLevels: { id: string; createdAt: string }[],
   characterLevelId: string,
@@ -312,7 +313,7 @@ async function ownedPoolNames(
     excludeCharacterLevelIds: onwardIds,
   };
   const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await baselineCharacter.build(tx, baselineData);
+  await baselineCharacter.build(tx, baselineData, scope);
   const baselineApts = baselineCharacter.components.aptitudes.getAptitudes();
   const baselineAllowed = new Map<string, number>();
   for (const apt of Object.values(baselineApts)) {
@@ -336,7 +337,7 @@ async function ownedPoolNames(
     ...buildProjectedSelections(klassLevelId, projectedLevelForFilter.id, skills, validationResult),
   };
   const withLevelCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  await withLevelCharacter.build(tx, withLevelData);
+  await withLevelCharacter.build(tx, withLevelData, scope);
   const withLevelApts = withLevelCharacter.components.aptitudes.getAptitudes();
   const owned = new Set<string>();
   for (const apt of Object.values(withLevelApts)) {
@@ -365,13 +366,12 @@ export async function finalizeLevelUp(
   return await withTransaction(async (tx) => {
     const characterRecord = await getEditableCharacter(tx, session, characterId);
 
-    return await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+    return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
+      const { ruleset, rulesetData } = scope;
       const { sourceChain } = rulesetData.cow;
       const rulesetIds = new Set([characterRecord.rulesetId, ...sourceChain]);
 
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-
-      const preloadedRuleset: PreloadedRulesetData = { ruleset, cowData: rulesetData.cow, rulesetData };
 
       // Phase 1: Compute per-level distribution from pool selections
       // Resolve all klasses/klassLevels upfront — all reads from the composed
@@ -394,7 +394,7 @@ export async function finalizeLevelUp(
         tx,
         rulesetModule,
         characterRecord,
-        rulesetData,
+        scope,
         klassLevelEntries,
         baseExistingLevels.length,
       );
@@ -420,7 +420,7 @@ export async function finalizeLevelUp(
       );
 
       const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-      await detailedCharacter.build(tx, undefined, preloadedRuleset);
+      await detailedCharacter.build(tx, undefined, scope);
 
       if (!force) {
         const { valid, issues } = detailedCharacter.validate();
@@ -459,15 +459,11 @@ export async function removeLevel(session: Session, characterId: string) {
     await deleteLevelChildren(tx, lastLevel.id);
     await CharacterLevels.delete(tx, { id: lastLevel.id });
 
-    await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
-      const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
+      const rulesetModule = RulesetFactory.fromBaseRules(scope.ruleset.baseRules);
       const reconcileCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-      await reconcileCharacter.build(tx, undefined, {
-        ruleset,
-        cowData: rulesetData.cow,
-        rulesetData,
-      });
-      await reconcileAllBondedKinds(tx, characterRecord, reconcileCharacter, rulesetData);
+      await reconcileCharacter.build(tx, undefined, scope);
+      await reconcileAllBondedKinds(tx, characterRecord, reconcileCharacter, scope.rulesetData);
     });
 
     await Activities.create(tx, {
@@ -496,7 +492,8 @@ export async function updateLevel(
   return await withTransaction(async (tx) => {
     const characterRecord = await getEditableCharacter(tx, session, characterId);
 
-    return await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+    return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
+      const { ruleset, rulesetData } = scope;
       const characterLevel = await CharacterLevels.findOne(tx, {
         id: characterLevelId,
       });
@@ -529,6 +526,7 @@ export async function updateLevel(
       await detailedCharacter.build(
         tx,
         projectEdit(characterId, characterLevel, klassLevel.id, hp, abilityId, skills, validationResult),
+        scope,
       );
       const { valid, issues } = detailedCharacter.validate();
       if (!valid && !force) {
@@ -536,6 +534,7 @@ export async function updateLevel(
         const owned = await ownedPoolNames(
           tx,
           rulesetModule,
+          scope,
           characterRecord,
           existingLevels,
           characterLevelId,
