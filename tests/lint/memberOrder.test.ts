@@ -270,6 +270,52 @@ describe("member order", () => {
     );
   });
 
+  test("suggests, never fixes, moving a field whose initializer calls what reads another field", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
+    const config = path.join(dir, ".oxlintrc.json");
+    fs.writeFileSync(
+      config,
+      JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/member-order": "error" } }),
+    );
+    // Each moved by name would run before the field it reads through a method, an arrow or a static method
+    const sources = {
+      "ThroughMethod.ts": [
+        "class ThroughMethod {",
+        "  private b = 1;",
+        "  private a = this.double();",
+        "  private double() {",
+        "    return this.b * 2;",
+        "  }",
+        "}",
+        "",
+      ],
+      "ThroughArrow.ts": [
+        "class ThroughArrow {",
+        "  private b = 1;",
+        "  private make = () => this.b * 2;",
+        "  private a = this.make();",
+        "}",
+        "",
+      ],
+      "Statics.ts": [
+        "class Statics {",
+        "  static b = 1;",
+        "  static a = Statics.double();",
+        "  static double() {",
+        "    return Statics.b * 2;",
+        "  }",
+        "}",
+        "",
+      ],
+    };
+    for (const [file, lines] of Object.entries(sources)) fs.writeFileSync(path.join(dir, file), lines.join("\n"));
+    const { stdout } = await runOxlint(["-c", config, "--fix", dir]);
+    await runOxlint(["-c", config, "--fix", dir]);
+    for (const [file, lines] of Object.entries(sources))
+      expect(fs.readFileSync(path.join(dir, file), "utf8")).toBe(lines.join("\n"));
+    expect(stdout).toContain("A field's initializer runs code");
+  });
+
   test("puts a type's members, an enum's and an index's re-exports in order with oxlint --fix, comments and all", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
     const config = path.join(dir, ".oxlintrc.json");
@@ -361,7 +407,7 @@ describe("member order", () => {
     fs.writeFileSync(cache, source);
     const { stdout } = await runOxlint(["-c", config, "--fix", dir]);
     expect(fs.readFileSync(cache, "utf8")).toBe(source);
-    expect(stdout).toContain("Two fields' initializers run code");
+    expect(stdout).toContain("A field's initializer runs code");
     await runOxlint(["-c", config, "--fix", "--fix-suggestions", dir]);
     expect(fs.readFileSync(cache, "utf8")).toBe(
       ["class Cache {", "  readonly aa = new Map();", "", "  readonly zz = new Map();", "}", ""].join("\n"),
