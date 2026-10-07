@@ -3,7 +3,7 @@ import { db, memoizeRequest } from "@/server/database/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
 import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { toVirtualFeat } from "@/server/rulesets/dnd3.5/loading/customizations.ts";
-import type { ValidationIssue, ValidationResult } from "@/server/rulesets/engine/types.ts";
+import type { ValidationIssue } from "@/server/rulesets/engine/types.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
@@ -60,6 +60,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     return 0;
   }
 
+  /** None: a stat block's skills are its totals, which no skill points buy. */
   protected override getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
     return { budget: [], ranks: [] };
   }
@@ -97,25 +98,5 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     if (this.cachedTotalHD !== null) this.components.combat.setHitDiceOverride(this.cachedTotalHD);
 
     await super.preRequirementProcessing(rulesetData);
-  }
-
-  override validate(): ValidationResult {
-    const issues: ValidationIssue[] = [];
-    const aptitudes = this.components.aptitudes.getAptitudes();
-    for (const [, aptitude] of Object.entries(aptitudes)) {
-      if (aptitude.allowed === -1) continue;
-      if (aptitude.available > 0) {
-        issues.push({
-          category: "aptitudes",
-          message: `${aptitude.name}: ${aptitude.available} unspent slot(s) (${aptitude.spent}/${aptitude.allowed})`,
-        });
-      } else if (aptitude.available < 0) {
-        issues.push({
-          category: "aptitudes",
-          message: `${aptitude.name}: overspent by ${Math.abs(aptitude.available)} (${aptitude.spent}/${aptitude.allowed})`,
-        });
-      }
-    }
-    return { valid: issues.length === 0, issues };
   }
 }

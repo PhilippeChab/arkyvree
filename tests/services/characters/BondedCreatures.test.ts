@@ -111,6 +111,23 @@ describe("Bonded creatures", () => {
     expect(detailed.validate().issues).toEqual([]);
   });
 
+  test("reports what any character reports: a race's modifier on a path that doesn't resolve", async () => {
+    const { ctx, bonded } = await createWizardWithFamiliar("Cat Familiar");
+    await Modifiers.create(db, {
+      sourceId: ctx.raceMap.familiar["Cat"],
+      sourceType: "races",
+      target: "combat.nosuchvalue.misc",
+      operator: "add",
+      value: "1",
+      valueType: "number",
+    });
+    invalidateSeededRuleset(ctx.rulesetId);
+    const cat = await build(new DetailedCharacterFamiliar(bonded));
+    const { valid, issues } = cat.validate();
+    expect(valid).toBe(false);
+    expect(issues.filter((issue) => issue.message.includes("combat.nosuchvalue.misc"))).toHaveLength(1);
+  });
+
   test("a companion loses a level with each of its druid's, and goes with the level that picked it", async () => {
     const { masterId, bonded } = await createDruidWithCompanion(3);
     const companionLevels = async () => (await CharacterLevels.findMany(db, { characterId: bonded.id })).length;
