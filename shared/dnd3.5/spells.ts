@@ -69,6 +69,7 @@ export const SPELL_SUBSCHOOLS = [
   "Healing",
   "Pattern",
   "Phantasm",
+  "Polymorph",
   "Scrying",
   "Shadow",
   "Summoning",
