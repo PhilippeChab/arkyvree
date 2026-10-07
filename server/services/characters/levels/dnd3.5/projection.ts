@@ -12,12 +12,12 @@
  * - buildBaselineAptitudes — the aptitudes of the character as saved, before planned levels
  */
 
+import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { ProjectedCharacterData, ProjectedCharacterLevel } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { Dnd35ProjectedCharacterData, Dnd35RulesetModule } from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import type { Dnd35ProjectedCharacterData, Dnd35RulesetModule } from "@/server/rulesets/dnd3.5/index.ts";
-import type { CharacterRows } from "@/server/rulesets/engine/types.ts";
 import type { Character, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 export type FeatPick = { aptitudeId: string; featId: string };

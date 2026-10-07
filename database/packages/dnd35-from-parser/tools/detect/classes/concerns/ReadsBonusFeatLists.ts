@@ -2,7 +2,7 @@ import type { BaseClassDetector } from "@/database/packages/dnd35-from-parser/to
 import { FeatureText } from "@/database/packages/dnd35-from-parser/tools/detect/classes/FeatureText.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type BonusFeatList } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** A level as an aptitude's name gives it: "1st", "2nd", "3rd", "4th"… */
 function ordinal(level: number): string {

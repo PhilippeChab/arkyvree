@@ -2,7 +2,7 @@ import type { BaseRequirementReading } from "@/database/packages/dnd35-from-pars
 import { gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** Reading what a prerequisite asks of a skill a family of skills names: ranks in any of them. */

@@ -2,7 +2,7 @@ import { ClassFeatures } from "@/database/packages/dnd35-from-parser/tools/scrap
 import { type DndToolsPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/DndToolsPage.ts";
 import { Page } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/Page.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Reading a class's features: its page's Class Features section (`ClassFeatures`). */
 export function ReadsFeatures<B extends Constructor<DndToolsPage>>(Base: B) {

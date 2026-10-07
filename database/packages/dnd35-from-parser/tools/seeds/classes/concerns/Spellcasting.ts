@@ -3,7 +3,7 @@ import { classSpells, domainSpells } from "@/database/packages/dnd35/content/apt
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 import { bonus, setFlag } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /**

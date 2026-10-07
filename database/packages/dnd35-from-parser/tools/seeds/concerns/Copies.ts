@@ -9,7 +9,7 @@ import type { InheritedSpellList } from "@/database/packages/dnd35-from-parser/t
 import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/vocabulary/books.ts";
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** The spells a book's inherited lists add (`additions`), each at its level there, into `entries`. */
 function addListAdditions(

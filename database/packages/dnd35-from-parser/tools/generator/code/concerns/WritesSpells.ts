@@ -1,6 +1,6 @@
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
 import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Writing a spell. */
 export function WritesSpells<B extends Constructor<BaseCodeFile>>(Base: B) {

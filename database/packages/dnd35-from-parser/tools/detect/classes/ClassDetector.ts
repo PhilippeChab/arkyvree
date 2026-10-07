@@ -1,7 +1,7 @@
 import { type Resolved } from "@/database/packages/dnd35-from-parser/tools/detect/BaseDetector.ts";
 import { ClassPrerequisites } from "@/database/packages/dnd35-from-parser/tools/detect/readers/requirements/ClassPrerequisites.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import { include } from "@/server/mixins.ts";
+import { include } from "@/lib/mixins.ts";
 
 import { BaseClassDetector } from "./BaseClassDetector.ts";
 import { ClassMapping } from "./ClassMapping.ts";

@@ -20,7 +20,7 @@ import {
 } from "@/database/packages/dnd35/content/items/properties.ts";
 import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 import { getWeaponDefinition } from "@/database/packages/dnd35/content/items/weapons.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /**
  * A builder an item's field is written with: what it gives an item of a name (`of`, none when it gives it nothing),

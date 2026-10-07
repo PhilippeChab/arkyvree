@@ -1,6 +1,6 @@
 import { type Column, ilike, or, sql, type SQL, type Table } from "drizzle-orm";
 
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** Text search over a list's columns, and the order that puts the best matches first. */

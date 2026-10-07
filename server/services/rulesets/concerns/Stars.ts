@@ -1,6 +1,6 @@
+import type { Constructor } from "@/lib/mixins.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import type { Constructor } from "@/server/mixins.ts";
 import { Rulesets, StarredRulesets } from "@/server/repositories/index.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 

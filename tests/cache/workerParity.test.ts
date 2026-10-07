@@ -1,11 +1,11 @@
 import { afterEach, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { buildFullCharacterResponse } from "@/engine/rulesets/dnd3.5/response/buildCharacterResponse.ts";
 import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
-import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/response/buildCharacterResponse.ts";
 import { buildCharacterSheet } from "@/server/sheets/index.ts";
 import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/support/levelFixtures.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";

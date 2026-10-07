@@ -2,7 +2,7 @@ import type { BaseClassDetector } from "@/database/packages/dnd35-from-parser/to
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 type CreatureType = (typeof CREATURE_TYPES)[number];
 

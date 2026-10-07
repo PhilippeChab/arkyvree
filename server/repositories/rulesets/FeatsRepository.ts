@@ -1,8 +1,8 @@
 import { and, count, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { featsInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
+import { include } from "@/lib/mixins.ts";
 import type { Db } from "@/server/database/index.ts";
-import { include } from "@/server/mixins.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";

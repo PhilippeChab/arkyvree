@@ -1,4 +1,4 @@
-import { include } from "@/server/mixins.ts";
+import { include } from "@/lib/mixins.ts";
 
 import { BaseRequirementReading } from "./BaseRequirementReading.ts";
 import { ReadsAlignment } from "./concerns/ReadsAlignment.ts";

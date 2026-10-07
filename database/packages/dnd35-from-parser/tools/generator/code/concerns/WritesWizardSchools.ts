@@ -1,6 +1,6 @@
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
 import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Writing a wizard school. */
 export function WritesWizardSchools<B extends Constructor<BaseCodeFile>>(Base: B) {

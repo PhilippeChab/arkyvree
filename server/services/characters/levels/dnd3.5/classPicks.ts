@@ -3,11 +3,11 @@
  */
 
 import { type RulesetData } from "@/engine/core/view/index.ts";
+import type { Dnd35DetailedCharacter, Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Klasses } from "@/server/repositories/index.ts";
-import type { Dnd35DetailedCharacter, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Klass, KlassLevel, Requirement, Session } from "@/shared/relations.ts";

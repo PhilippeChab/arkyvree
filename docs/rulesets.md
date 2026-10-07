@@ -396,68 +396,72 @@ A working mental model: if a hypothetical 5e or PF2e ruleset were to be added to
 
 ### Directory layout
 
-The engine is moving out of the server into the root `engine/`, which computes over the data it's given and reads nothing itself. What has moved:
+The engine is the root `engine/`, which computes over the data it's given and reads nothing itself:
 
 ```
 engine/
-└── core/                                  ← machinery, no game vocabulary
-    ├── types.ts                           ← universal types (ProjectedCharacterData, LevelUpProjector, LoadedCharacterData, …)
-    ├── view/                              (RulesetData, RulesetComposition, the sibling merge)
-    ├── cow/                               (CowData)
-    ├── modifiers/ModifierEvaluator.ts
-    ├── requirements/RequirementEvaluator.ts
-    └── paths/                             (PathTraverser, CategoryPaths, PathCategory, readComponent, templateExpression, …)
+├── core/                                  ← machinery, no game vocabulary
+│   ├── types.ts                           ← universal types (ProjectedCharacterData, LevelUpProjector, LoadedCharacterData, …)
+│   ├── module/                            ← the module's contract
+│   │   ├── contract.ts                    (RulesetModule, DetailedCharacterInterface, CharacterRows)
+│   │   ├── rules.ts                       (LevelsRules, ClassLevelsRules, …: what a ruleset answers the services)
+│   │   └── effects.ts                     (SkillsEffects, PowersEffects, …: what a ruleset writes, as writes)
+│   ├── view/                              (RulesetData, RulesetComposition, the sibling merge)
+│   ├── cow/                               (CowData)
+│   ├── modifiers/ModifierEvaluator.ts
+│   ├── requirements/RequirementEvaluator.ts
+│   └── paths/                             (PathTraverser, CategoryPaths, PathCategory, readComponent, templateExpression, …)
+└── rulesets/                              ← the rulesets that run on it (below)
 ```
 
-What's still in the server: the module's contract, whose signatures take the database's handle until its reads and writes move out, and the 3.5 ruleset.
+The rulesets that run on it:
+
+```
+engine/rulesets/
+└── dnd3.5/                                ← 3.5-specific implementation
+    ├── index.ts                           (the module's entry: createRulesetModule, the response builders)
+    ├── rulesetModule.ts                   (createRulesetModule: the 3.5 module, a Dnd35RulesetModule)
+    ├── types.ts                           (Dnd35RulesetModule, CharacterKind, Dnd35ProjectedCharacterData, Dnd35LevelUpProjector)
+    ├── Dnd35TargetPaths.ts                (the categories' order and the ruleset's names' labels)
+    ├── Dnd35PropertyTypes.ts              (the property types and values it serves: shared/dnd3.5/properties/)
+    ├── constants.ts                       (the 3.5 tables the components read: sizes, carrying capacity, encumbrance)
+    ├── character/                         (CharacterState, its concerns: Builds, Validates, PossessesVirtually;
+    │                                      DetailedCharacter, which wires them; components.ts; Dnd35LevelUpProjector)
+    ├── loading/                           (DetailedCharacterDataLoader, and its steps: customizations, picks,
+    │                                      possessions, rulesetReadings)
+    ├── response/                          (buildCharacterResponse: the 3.5 API response shape)
+    ├── abilities/ aptitudes/ feats/ identity/ saves/
+    │                                      (each domain's component and its paths' category: AbilitiesComponent,
+    │                                      AbilitiesPaths, …; aptitudes/ also holds Dnd35AptitudesRules, feats/
+    │                                      FeatGroupingsComponent, featFields, Dnd35FeatsRules, Dnd35FeatsEffects)
+    ├── classes/                           (ClassesComponent, ClassesPaths; classFields and classLevelFields: a class's
+    │                                      and a level's fields off their properties; Dnd35ClassesRules,
+    │                                      Dnd35ClassesEffects, Dnd35ClassLevelsRules, Dnd35ClassLevelsEffects)
+    ├── powers/                            (PowersComponent, PowerGroupingsComponent, PowersPaths, powerFields: a
+    │                                      power's fields off its properties; Dnd35PowersRules, Dnd35PowersEffects
+    │                                      and its spellGenerator)
+    ├── races/                             (raceFields: a race's fields off its properties; Dnd35RacesRules,
+    │                                      Dnd35RacesEffects)
+    ├── ruleset/                           (rulesetFields: the ruleset's own fields off its properties;
+    │                                      Dnd35RulesetsRules, Dnd35RulesetsEffects)
+    ├── skills/                            (SkillsComponent: the 3.5 rank system, SkillsPaths, skillFields: a skill's
+    │                                      fields off its properties; Dnd35SkillsRules, Dnd35SkillsEffects)
+    ├── combat/                            (CombatComponent on CombatState, which includes ArmorClass, HitPoints, Attacks,
+    │                                      InitiativeAndSpeed; ArmorsComponent, ShieldsComponent, WeaponsComponent,
+    │                                      EncumbranceComponent; the combat, items.* and weapon.* path categories:
+    │                                      CombatPaths, ItemsPaths, WeaponPaths)
+    ├── spellcasting/                      (SpellcastingComponent on SpellcastingState, which includes BonusCasterLevels,
+    │                                      KnownPowers; SpellcastingPaths)
+    ├── items/                             (InventoryComponent, the slots, itemFields: an item's fields off its
+    │                                      properties; Dnd35InventoryRules, Dnd35ItemsRules, Dnd35ItemsEffects)
+    ├── levels/                            (Dnd35LevelsRules)
+    └── bonded/                            (the bonded creatures' characters, BondsComponent, BondedPaths)
+```
+
+In the server: the registry that hands the modules out (`server/rulesets/RulesetFactory.ts`), the builds (`server/builds/`), and what writes the effects' writes (`server/services/rulesets/effectWrites.ts`).
 
 ```
 server/
-├── rulesets/
-│   ├── RulesetFactory.ts                  ← ruleset module loader
-│   ├── engine/                            ← the module's contract
-│   │   ├── types.ts                       (RulesetModule, DetailedCharacterInterface)
-│   │   └── module/                        ← the rules and effects a ruleset gives the services
-│   │       ├── rules.ts                   (LevelsRules, ClassLevelsRules, …)
-│   │       └── effects.ts                 (SkillsEffects, PowersEffects, …)
-│   └── dnd3.5/                            ← 3.5-specific implementation
-│       ├── index.ts                       (the module's entry: createRulesetModule, the response builders)
-│       ├── rulesetModule.ts               (createRulesetModule: the 3.5 module, a Dnd35RulesetModule)
-│       ├── types.ts                       (Dnd35RulesetModule, CharacterKind, Dnd35ProjectedCharacterData, Dnd35LevelUpProjector)
-│       ├── Dnd35TargetPaths.ts            (the categories' order and the ruleset's names' labels)
-│       ├── Dnd35PropertyTypes.ts          (the property types and values it serves: shared/dnd3.5/properties/)
-│       ├── constants.ts                   (the 3.5 tables the components read: sizes, carrying capacity, encumbrance)
-│       ├── character/                     (CharacterState, its concerns: Builds, Validates, PossessesVirtually;
-│       │                                  DetailedCharacter, which wires them; components.ts; Dnd35LevelUpProjector)
-│       ├── loading/                       (DetailedCharacterDataLoader, and its steps: customizations, picks,
-│       │                                  possessions, rulesetReadings)
-│       ├── response/                      (buildCharacterResponse: the 3.5 API response shape)
-│       ├── abilities/ aptitudes/ feats/ identity/ saves/
-│       │                                  (each domain's component and its paths' category: AbilitiesComponent,
-│       │                                  AbilitiesPaths, …; aptitudes/ also holds Dnd35AptitudesRules, feats/
-│       │                                  FeatGroupingsComponent, featFields, Dnd35FeatsRules, Dnd35FeatsEffects)
-│       ├── classes/                       (ClassesComponent, ClassesPaths; classFields and classLevelFields: a class's
-│       │                                  and a level's fields off their properties; Dnd35ClassesRules,
-│       │                                  Dnd35ClassesEffects, Dnd35ClassLevelsRules, Dnd35ClassLevelsEffects)
-│       ├── powers/                        (PowersComponent, PowerGroupingsComponent, PowersPaths, powerFields: a
-│       │                                  power's fields off its properties; Dnd35PowersRules, Dnd35PowersEffects
-│       │                                  and its spellGenerator)
-│       ├── races/                         (raceFields: a race's fields off its properties; Dnd35RacesRules,
-│       │                                  Dnd35RacesEffects)
-│       ├── ruleset/                       (rulesetFields: the ruleset's own fields off its properties;
-│       │                                  Dnd35RulesetsRules, Dnd35RulesetsEffects)
-│       ├── skills/                        (SkillsComponent: the 3.5 rank system, SkillsPaths, skillFields: a skill's
-│       │                                  fields off its properties; Dnd35SkillsRules, Dnd35SkillsEffects)
-│       ├── combat/                        (CombatComponent on CombatState, which includes ArmorClass, HitPoints, Attacks,
-│       │                                  InitiativeAndSpeed; ArmorsComponent, ShieldsComponent, WeaponsComponent,
-│       │                                  EncumbranceComponent; the combat, items.* and weapon.* path categories:
-│       │                                  CombatPaths, ItemsPaths, WeaponPaths)
-│       ├── spellcasting/                  (SpellcastingComponent on SpellcastingState, which includes BonusCasterLevels,
-│       │                                  KnownPowers; SpellcastingPaths)
-│       ├── items/                         (InventoryComponent, the slots, itemFields: an item's fields off its
-│       │                                  properties; Dnd35InventoryRules, Dnd35ItemsRules, Dnd35ItemsEffects)
-│       ├── levels/                        (Dnd35LevelsRules)
-│       └── bonded/                        (the bonded creatures' characters, BondsComponent, BondedPaths)
 ├── services/
 │   ├── characters/
 │   │   ├── inventory/CharacterInventoryService.ts   ← universal
@@ -498,7 +502,7 @@ server/
 - Uses 3.5 concepts in types/signatures: `rank`, `powerLevel` as spell level 0–9, `saveName` as Fortitude/Reflex/Will, class-skill distinctions, wizard prohibited schools, BAB progression.
 - References named classes/spells/feats/mechanics: "Wizard Spells", "Fighter Bonus Feat", "Power Attack", "specialization school".
 - Computes a 3.5-shaped result: `{ total, available, spent, perlevel }` skill budget, a `computeSkillPointsPerLevel` on the projector, etc.
-- Imports from `@/server/rulesets/dnd3.5/*` or casts to a `Dnd35*` type.
+- Imports from `@/engine/rulesets/dnd3.5/*` or casts to a `Dnd35*` type.
 
 ### The type split pattern
 
@@ -519,7 +523,7 @@ export interface LevelUpProjector {
 ```
 
 ```ts
-// server/rulesets/dnd3.5/types.ts  (extends the universal shape)
+// engine/rulesets/dnd3.5/types.ts  (extends the universal shape)
 export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
   skills?: Dnd35ProjectedSkill[];   // adds `rank: number`
   powers?: Dnd35ProjectedPower[];   // adds `powerLevel`, `saveName`
@@ -545,7 +549,7 @@ The engine's own types name no ruleset (`arkyvree/layers`): its `DetailedCharact
 
 ### Rules and effects
 
-What a ruleset answers the services, and what it does in their transactions, are its module's `rules` and `effects`: interfaces in `server/rulesets/engine/module/` (`rules.ts`, `effects.ts`), implemented per area in the ruleset's domain folders (`dnd3.5/levels/Dnd35LevelsRules.ts`, `dnd3.5/skills/Dnd35SkillsEffects.ts`, …).
+What a ruleset answers the services, and what it does in their transactions, are its module's `rules` and `effects`: interfaces in `engine/core/module/` (`rules.ts`, `effects.ts`), implemented per area in the ruleset's domain folders (`dnd3.5/levels/Dnd35LevelsRules.ts`, `dnd3.5/skills/Dnd35SkillsEffects.ts`, …).
 
 - **A rule** reads no database: a predicate, a constant, or a reading of rows the service already has (`rules.levels.isAbilityIncreaseLevel`, `rules.classLevels.enrichWithSpellsPerDay`, `rules.inventory.validateWeaponHands`).
 - **An effect** says what the ruleset writes, and reads nothing: an entity's properties (`effects.skills.properties`), a requirement, the feats an entity brings. The service writes it in its transaction (`server/services/rulesets/effectWrites.ts`: `writeProperties`, `writeRequirement`, `writeGeneratedFeats`, `removeGeneratedFeat`), which reads what a write depends on: whether a grouping's feats are there already, whether a character picked a feat it removes.
@@ -568,12 +572,12 @@ Each rule starts with the verb of what it does, and each effect is named for the
 | Effects | `…Requirement` | what an entity requires (`RequirementWrite`) | `classLevels.previousLevelRequirement` |
 
 ```ts
-// server/rulesets/engine/module/rules.ts  (engine interface)
+// engine/core/module/rules.ts  (engine interface)
 export interface LevelsRules {
   isAbilityIncreaseLevel(totalLevel: number): boolean;
 }
 
-// server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts  (3.5 impl)
+// engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts  (3.5 impl)
 export class Dnd35LevelsRules implements LevelsRules {
   isAbilityIncreaseLevel(totalLevel: number): boolean {
     return (totalLevel + 1) % 4 === 0;
@@ -635,10 +639,10 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 
 The server builds a character through `buildCharacter` (`server/builds/`), with the module the character's ruleset gives: `buildCharacter(module, record, { kind, projected, scope, database })`, the character typed by its module's. The printed sheet isn't the module's: `server/sheets/` holds each base rules' sheet (`server/sheets/dnd3.5/`), which renders the character the module builds, and `buildCharacterSheet` builds a character with its ruleset's sheet. A new ruleset adds its sheet there.
 
-1. **Define the module**: `server/rulesets/<ruleset>/rulesetModule.ts`, whose factory returns a `RulesetModule` of its own character, projector and kinds (`Dnd35RulesetModule`). Provide `rules` and `effects` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `createTargetPaths` and `createPropertyTypes`. A new ruleset's template items come with its base, which its content package seeds: a fork reads them through its chain.
-2. **Write its character** in `server/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`buildComponents`), and `DetailedCharacter`, which includes the concerns. 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).
+1. **Define the module**: `engine/rulesets/<ruleset>/rulesetModule.ts`, whose factory returns a `RulesetModule` of its own character, projector and kinds (`Dnd35RulesetModule`). Provide `rules` and `effects` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `createTargetPaths` and `createPropertyTypes`. A new ruleset's template items come with its base, which its content package seeds: a fork reads them through its chain.
+2. **Write its character** in `engine/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`buildComponents`), and `DetailedCharacter`, which includes the concerns. 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).
 3. **Write its target paths**: a `CategoryPaths` subclass (`Dnd35TargetPaths`) over its categories, one `PathCategory` per domain (`AbilitiesPaths`, `CombatPaths`, …), which `createTargetPaths` returns and the evaluators walk; and its property types (`Dnd35PropertyTypes`), which `createPropertyTypes` returns. See [target-paths.md](./target-paths.md).
-4. **Extend the types** in `server/rulesets/<ruleset>/types.ts`:
+4. **Extend the types** in `engine/rulesets/<ruleset>/types.ts`:
    - `<Ruleset>ProjectedCharacterData extends ProjectedCharacterData` (add skill/power shapes if your ruleset has ranked skills or leveled spells).
    - `<Ruleset>LevelUpProjector extends LevelUpProjector` (add any per-level-up operations your ruleset needs beyond `evaluateClassAvailability`).
 5. **Mirror the service + router layout** at `server/services/characters/levels/<ruleset>/` and `server/routers/api/characters/levels/<ruleset>/` if your ruleset's level-up flow differs in shape.
@@ -661,7 +665,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 
 **Fixed:**
 - `MAX_SPELL_LEVEL = 9` was hardcoded in the aptitudes component (`dnd3.5/aptitudes/AptitudesComponent.ts`) — now one constant in `shared/dnd3.5/spells.ts`, which the spellcasting, the routes and the client read too.
-- `buildCharacterResponse.ts` lived in `routers/api/` with a cast to `Dnd35DetailedCharacter` — moved to `server/rulesets/dnd3.5/response/buildCharacterResponse.ts`.
+- `buildCharacterResponse.ts` lived in `routers/api/` with a cast to `Dnd35DetailedCharacter` — moved to `engine/rulesets/dnd3.5/response/buildCharacterResponse.ts`.
 - `server/routers/api/characters/levels/` had 3.5-shaped query params (`powerLevel`, `excludeSchools`) — moved under `dnd3.5/`.
 
 **Not leaks (confirmed generic):**
@@ -683,13 +687,13 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 | `server/services/rulesets/*/` | Entity services (feats, powers, classes, etc.) using the COW pattern |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
 | `engine/core/types.ts` | The universal types (`ProjectedCharacterData`, `LevelUpProjector`, `LoadedCharacterData`, the paths' `TargetPathsInterface`, …) |
-| `server/rulesets/engine/types.ts` | The module's contract (`RulesetModule`, `DetailedCharacterInterface`), until its signatures stop taking the database's handle |
-| `server/rulesets/dnd3.5/types.ts` | 3.5's types (`Dnd35RulesetModule`, `CharacterKind`, `Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`) |
-| `server/rulesets/dnd3.5/character/` | The 3.5 character: its state (`CharacterState`), its concerns (`Builds`, `Validates`, `PossessesVirtually`), its components (`components.ts`), and `DetailedCharacter`, which wires them |
+| `engine/core/module/` | The module's contract (`contract.ts`: `RulesetModule`, `DetailedCharacterInterface`, `CharacterRows`), and the rules and effects a ruleset gives the services (`rules.ts`, `effects.ts`) |
+| `engine/rulesets/dnd3.5/types.ts` | 3.5's types (`Dnd35RulesetModule`, `CharacterKind`, `Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`) |
+| `engine/rulesets/dnd3.5/character/` | The 3.5 character: its state (`CharacterState`), its concerns (`Builds`, `Validates`, `PossessesVirtually`), its components (`components.ts`), and `DetailedCharacter`, which wires them |
 | `engine/core/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the ruleset view (`view/`), copy-on-write's state (`cow/`) |
-| `server/rulesets/engine/` | The rules and effects a ruleset gives the services (`module/`), the module's contract (`types.ts`) |
-| `server/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its loader (`loading/`), its components and path categories by domain (`abilities/`, `skills/`, `combat/`…), with the rules and effects of the areas that have them (`aptitudes/`, `classes/`, `items/`, `levels/`, `powers/`, `skills/`), `Dnd35TargetPaths`, `response/buildCharacterResponse` |
-| `server/rulesets/dnd3.5/character/concerns/Builds.ts` | The build: the loader (`loading/`) gives each entity the modifiers and requirements the compose step merged into `rulesetData`, then the components, the possession pre-pass and the modifier rounds run |
+| `server/rulesets/RulesetFactory.ts` | The registry of the engine's modules, by base rules, and a ruleset's base rules |
+| `engine/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its loader (`loading/`), its components and path categories by domain (`abilities/`, `skills/`, `combat/`…), with the rules and effects of the areas that have them (`aptitudes/`, `classes/`, `items/`, `levels/`, `powers/`, `skills/`), `Dnd35TargetPaths`, `response/buildCharacterResponse` |
+| `engine/rulesets/dnd3.5/character/concerns/Builds.ts` | The build: the loader (`loading/`) gives each entity the modifiers and requirements the compose step merged into `rulesetData`, then the components, the possession pre-pass and the modifier rounds run |
 | `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts` | Seed-time COW: copies the core feats and spells an extension changes |
 | `tests/services/rulesets/Extensions.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |
 | `tests/services/rulesets/Sibling*.test.ts`, `tests/services/rulesets/customization/Sibling*.test.ts`, `tests/cache/aptitudeDedup.test.ts` | Siblings: what the composed view shows, edits and customization writes on a sibling-merged entity, aptitude deduplication |

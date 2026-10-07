@@ -1,6 +1,6 @@
 import type { BaseClassSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/BaseClassSeeds.ts";
 import { type AptitudePick } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** A class's aptitude picks, as its seed lists them. */
 export function AptitudePicks<B extends Constructor<BaseClassSeeds>>(Base: B) {

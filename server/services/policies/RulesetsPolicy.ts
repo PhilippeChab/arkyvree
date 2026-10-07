@@ -1,6 +1,6 @@
+import { include } from "@/lib/mixins.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { include } from "@/server/mixins.ts";
 import { Contributors, Players } from "@/server/repositories/index.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 

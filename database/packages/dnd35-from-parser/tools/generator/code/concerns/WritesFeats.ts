@@ -15,7 +15,7 @@ import type {
   RequirementEntry,
 } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
 /**

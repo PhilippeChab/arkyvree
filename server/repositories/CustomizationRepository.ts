@@ -5,8 +5,8 @@ import type {
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
+import { include } from "@/lib/mixins.ts";
 import type { Db } from "@/server/database/index.ts";
-import { include } from "@/server/mixins.ts";
 
 import BaseRepository from "./BaseRepository.ts";
 import { ChecksExistence } from "./concerns/ChecksExistence.ts";

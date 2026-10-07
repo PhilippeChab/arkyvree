@@ -1,6 +1,6 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
-import { buildVirtualEntities, type Dnd35DetailedCharacter } from "@/server/rulesets/dnd3.5/index.ts";
+import { buildVirtualEntities, type Dnd35DetailedCharacter } from "@/engine/rulesets/dnd3.5/index.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import {
   ENTITY_PROPERTY_TYPES,

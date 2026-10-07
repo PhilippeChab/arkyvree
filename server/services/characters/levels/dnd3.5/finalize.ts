@@ -10,6 +10,11 @@ import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
+import type {
+  AptitudesComponent,
+  Dnd35ProjectedCharacterData,
+  Dnd35RulesetModule,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter, readCharacterRows } from "@/server/builds/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
@@ -22,11 +27,6 @@ import {
   CharacterLevelSkills,
   Characters,
 } from "@/server/repositories/index.ts";
-import type {
-  AptitudesComponent,
-  Dnd35ProjectedCharacterData,
-  Dnd35RulesetModule,
-} from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Character, CharacterLevel, Session } from "@/shared/relations.ts";

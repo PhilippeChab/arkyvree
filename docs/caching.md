@@ -503,7 +503,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve
 - `server/repositories/concerns/ResolvesCopies.ts` — `idMatches()` predicate for cowContext-aware composite-key WHERE clauses
 - `server/builds/buildCharacter.ts` — `buildCharacter` runs a build in the character's ruleset's scope (the caller's, or `withRulesetScope`), reads its rows there (`readCharacterRows`) and builds a bonded creature's master first
-- `server/rulesets/dnd3.5/character/concerns/Builds.ts` — `build(rows, view, projected, master)` reads nothing: the data loader assembles the character's data from the rows and the view
+- `engine/rulesets/dnd3.5/character/concerns/Builds.ts` — `build(rows, view, projected, master)` reads nothing: the data loader assembles the character's data from the rows and the view
 - `server/timing.ts` — hit/miss counters surfaced in request logs
 - `tests/cache/rulesetCache/RulesetCache.test.ts` — compose + invalidation + pinning semantics + COW-fork auto-resolve
 - `tests/cache/joinMaps.test.ts` — accessor-map parity with replaced repo queries

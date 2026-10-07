@@ -4,7 +4,7 @@ import type { AnyNode } from "domhandler";
 import { type DndToolsPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/DndToolsPage.ts";
 import { Page } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/Page.ts";
 import { capitalizeTitle } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Reading what a class's page says of the class first: its name, description, hit die, skill points and alignment. */
 export function ReadsSummary<B extends Constructor<DndToolsPage>>(Base: B) {

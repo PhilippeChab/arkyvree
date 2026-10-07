@@ -3,11 +3,12 @@ import { getTableName } from "drizzle-orm";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { Components } from "@/engine/core/types.ts";
+import type { CharacterKind } from "@/engine/rulesets/dnd3.5/index.ts";
+import { include } from "@/lib/mixins.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { include } from "@/server/mixins.ts";
 import {
   Activities,
   Campaigns,
@@ -20,7 +21,6 @@ import {
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
-import type { CharacterKind } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";

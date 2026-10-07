@@ -2,7 +2,7 @@ import { type BaseBookGenerator } from "@/database/packages/dnd35-from-parser/to
 import BookLayout from "@/database/packages/dnd35-from-parser/tools/generator/BookLayout.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Generating a book's feats and the aptitudes its seeds use. */
 export function GeneratesFeats<B extends Constructor<BaseBookGenerator>>(Base: B) {

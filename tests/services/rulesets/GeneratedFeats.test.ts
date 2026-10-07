@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { addClassLevels } from "@/database/seeds/seedCharacter.ts";
+import { Dnd35SkillsEffects } from "@/engine/rulesets/dnd3.5/skills/Dnd35SkillsEffects.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -16,7 +17,6 @@ import {
   Rulesets,
   Skills,
 } from "@/server/repositories/index.ts";
-import { Dnd35SkillsEffects } from "@/server/rulesets/dnd3.5/skills/Dnd35SkillsEffects.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { removeGeneratedFeat } from "@/server/services/rulesets/effectWrites.ts";

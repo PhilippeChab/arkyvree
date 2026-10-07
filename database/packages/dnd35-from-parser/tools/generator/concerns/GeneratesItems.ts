@@ -5,7 +5,7 @@ import BookLayout from "@/database/packages/dnd35-from-parser/tools/generator/Bo
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
 import type { MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
 import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** A book's item seeds, by the kind each of its item files holds. */
 type ItemSeedsByKind = Partial<Record<(typeof BookLayout.itemFiles)[number]["seeds"], ItemSeed[]>>;

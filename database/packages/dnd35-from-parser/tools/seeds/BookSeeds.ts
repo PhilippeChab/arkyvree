@@ -1,4 +1,4 @@
-import { include } from "@/server/mixins.ts";
+import { include } from "@/lib/mixins.ts";
 
 import { BaseBookSeeds } from "./BaseBookSeeds.ts";
 import { CollectsAptitudes } from "./concerns/CollectsAptitudes.ts";

@@ -6,7 +6,7 @@ import {
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding feats. */
 export function SeedsFeats<B extends Constructor<BaseSeeder>>(Base: B) {

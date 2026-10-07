@@ -1,8 +1,8 @@
 import { and, eq, getTableColumns, ilike, inArray, type InferInsertModel, isNull, or } from "drizzle-orm";
 
 import { invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
+import { include } from "@/lib/mixins.ts";
 import type { Db } from "@/server/database/index.ts";
-import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 

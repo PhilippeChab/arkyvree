@@ -1,7 +1,7 @@
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import { include } from "@/server/mixins.ts";
+import { include } from "@/lib/mixins.ts";
 
 import { BaseClassSeeds } from "./BaseClassSeeds.ts";
 import { AptitudePicks } from "./concerns/AptitudePicks.ts";

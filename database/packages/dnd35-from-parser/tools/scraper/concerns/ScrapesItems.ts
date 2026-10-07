@@ -2,7 +2,7 @@ import References from "@/database/packages/dnd35-from-parser/tools/references/R
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import { EquipmentPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/EquipmentPage.ts";
 import { type ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** The SRD's equipment pages (d20srd.org): static pages, not a book's. */
 const D20SRD_URLS = {

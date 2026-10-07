@@ -15,7 +15,7 @@ import {
   parseAptitudeAllowed,
   parseAptitudePool,
   parseAptitudeSpellLevel,
-} from "@/server/rulesets/dnd3.5/index.ts";
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Modifier, Skill } from "@/shared/relations.ts";

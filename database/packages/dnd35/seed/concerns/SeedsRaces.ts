@@ -1,7 +1,7 @@
 import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { modifiersInCustomization, propertiesInCustomization, racesInRules } from "@/drizzle/schema.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding races. */
 export function SeedsRaces<B extends Constructor<BaseSeeder>>(Base: B) {

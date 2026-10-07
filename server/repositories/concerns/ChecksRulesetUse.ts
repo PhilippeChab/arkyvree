@@ -1,7 +1,7 @@
 import { and, type Column, eq, or, sql, type SQL, type Table } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** What an entity's in-use checks count: the characters on its ruleset, or on a ruleset built on it. */

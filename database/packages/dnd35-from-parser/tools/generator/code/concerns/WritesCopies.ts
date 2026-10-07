@@ -1,6 +1,6 @@
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** Writing what a book copies from the core rules: a feat, a spell. */
 export function WritesCopies<B extends Constructor<BaseCodeFile>>(Base: B) {

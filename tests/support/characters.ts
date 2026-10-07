@@ -2,11 +2,11 @@ import type { InferInsertModel } from "drizzle-orm";
 import type { InferRequestType } from "hono/client";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
+import type { DetailedCharacterInterface } from "@/engine/core/module/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
-import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 

@@ -2,8 +2,10 @@
  * The architecture, as rules: what each layer may import, where queries are built, and how a folder is entered.
  *
  * - `layers`: a layer imports only what's below it (database < repositories < cache < copy-on-write's writes <
- *   the engine < services < jobs < routers; the middlewares sit on the repositories, beside the services). Within the
- *   engine, its machinery (`rulesets/engine/`) sits below the rulesets that run on it (`rulesets/dnd3.5/`). The cache
+ *   the modules' registry < builds < sheets < services < jobs < routers; the middlewares sit on the repositories,
+ *   beside the services). The engine, the root `engine/`, imports nothing of the server, the database or the client:
+ *   its machinery (`engine/core/`) sits below the rulesets that run on it (`engine/rulesets/`), and `lib/`, what it
+ *   shares with the server, imports nothing of the app. The cache
  *   holds copy-on-write's read side (the view a ruleset's reads see), `cow/` its write side. The server reads the
  *   content packages, never the seeders. A content package's `content/` (the types and builders its data is written
  *   with, and the tables they read) imports nothing of its data, its seeder, its extensions, the parser or the server.
@@ -97,8 +99,6 @@ const LAYERS = [
   },
   // A sheet prints the character a ruleset's module builds: above the rulesets, below what renders it
   { layer: "server/sheets/", deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"] },
-  // The engine is the machinery every ruleset runs on: the rulesets build on it, and it names none of them
-  { layer: "server/rulesets/engine/", deny: ["server/rulesets/"], allow: ["server/rulesets/engine/"] },
   { layer: "server/services/", deny: ["server/jobs/", "server/middlewares/", "server/routers/"] },
   { layer: "server/jobs/", deny: ["server/middlewares/", "server/routers/"] },
   { layer: "server/middlewares/", deny: ["server/services/", "server/jobs/", "server/routers/"] },
@@ -119,6 +119,8 @@ const LAYERS = [
   { layer: "engine/", deny: ["server/", "database/", "client/", "drizzle/"], types: ["drizzle/"] },
   // Its core is what every ruleset runs on: it names none of them
   { layer: "engine/core/", deny: ["engine/rulesets/"] },
+  // What the server and the engine share (the mixins): it imports nothing of the app
+  { layer: "lib/", deny: ["server/", "engine/", "database/", "client/", "shared/", "drizzle/"] },
   { layer: "shared/", deny: ["server/", "engine/", "client/", "database/", "drizzle/"], types: ["drizzle/"] },
   {
     layer: "client/",

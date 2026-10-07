@@ -2,7 +2,7 @@ import { type DndToolsPage } from "@/database/packages/dnd35-from-parser/tools/s
 import { Page } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/Page.ts";
 import { capitalizeTitle } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { KNOWLEDGE_SKILLS } from "@/database/packages/dnd35-from-parser/tools/vocabulary/skills.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** A Knowledge skill by its subspecialty, lowercased ("the planes" → "Knowledge (The Planes)"). */
 const KNOWLEDGE_SUBSPECIALTIES: Record<string, string> = Object.fromEntries(

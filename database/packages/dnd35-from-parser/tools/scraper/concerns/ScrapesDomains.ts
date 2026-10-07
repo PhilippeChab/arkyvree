@@ -4,7 +4,7 @@ import { DomainIndexPage } from "@/database/packages/dnd35-from-parser/tools/scr
 import { DomainPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/DomainPage.ts";
 import { SpellDomainsPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/SpellDomainsPage.ts";
 import type { DomainVersionSpell } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
-import type { Constructor } from "@/server/mixins.ts";
+import type { Constructor } from "@/lib/mixins.ts";
 
 /** dndtools' domains as its copy at dnd.arkalseif.info keeps them: a page per book's version (`DomainPage`). */
 const DOMAIN_SITE = "https://dnd.arkalseif.info/spells";

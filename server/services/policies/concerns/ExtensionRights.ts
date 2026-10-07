@@ -1,5 +1,5 @@
+import type { Constructor } from "@/lib/mixins.ts";
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import type { Constructor } from "@/server/mixins.ts";
 import type RulesetRoles from "@/server/services/policies/RulesetRoles.ts";
 
 /** Who may subscribe a ruleset to an extension, and unsubscribe it. */

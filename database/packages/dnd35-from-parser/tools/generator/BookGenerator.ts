@@ -1,4 +1,4 @@
-import { include } from "@/server/mixins.ts";
+import { include } from "@/lib/mixins.ts";
 
 import { BaseBookGenerator } from "./BaseBookGenerator.ts";
 import { GeneratesClasses } from "./concerns/GeneratesClasses.ts";

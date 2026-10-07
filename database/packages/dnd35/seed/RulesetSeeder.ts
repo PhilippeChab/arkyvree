@@ -17,8 +17,8 @@ import {
   savesInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
+import { include } from "@/lib/mixins.ts";
 import type { Db } from "@/server/database/index.ts";
-import { include } from "@/server/mixins.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
