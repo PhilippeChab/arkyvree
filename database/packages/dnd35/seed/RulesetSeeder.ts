@@ -1,11 +1,11 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import { CLERIC_DOMAIN, domainFeat, domainSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
-import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.ts";
-import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
-import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
-import type { BookContent, CoreContent } from "@/database/packages/dnd35/content/rulesets/types.ts";
-import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
+import { CLERIC_DOMAIN, domainFeat, domainSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
+import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
+import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
+import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
+import { DND35_RULESET_NAME } from "@/content/dnd3.5/names.ts";
 import {
   abilitiesInRules,
   aptitudesInRules,

@@ -1,20 +1,20 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 
-import { ALL_APTITUDES } from "@/database/packages/dnd35-from-parser/generated/srd/aptitudes.ts";
-import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizardSchools.ts";
-import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
-import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
-import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import { CodeFile } from "@/codegen/dnd3.5/tools/generator/code/CodeFile.ts";
+import References from "@/codegen/dnd3.5/tools/references/References.ts";
+import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
+import type { ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
+import { and, eq, eqNum, eqStr, feat, gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
 import type {
   Modifier,
   RequirementCondition,
   RequirementEntry,
-} from "@/database/packages/dnd35/content/customization/types.ts";
-import { buildCoreFeats } from "@/database/packages/dnd35/data/feats/coreFeats.ts";
+} from "@/content/dnd3.5/builders/customization/types.ts";
+import { buildCoreFeats } from "@/content/dnd3.5/data/feats/coreFeats.ts";
+import { ALL_APTITUDES } from "@/content/dnd3.5/generated/srd/aptitudes.ts";
+import { WIZARD_SCHOOLS } from "@/content/dnd3.5/generated/srd/wizardSchools.ts";
 
 function check(operator: string, valueType: string, value: string): RequirementCondition {
   return {
@@ -90,7 +90,7 @@ describe("A generated requirement check", () => {
     file.requirement(and(or(eq(feat("Dodge")), gte("combat.bab", 4)), check("not_equal", "number", "13")));
     expect([...file.uses].sort()).toEqual(["and", "eq", "gte", "or"]);
     expect(file.imports()).toEqual([
-      `import { and, eq, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";`,
+      `import { and, eq, gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";`,
     ]);
     expect(new CodeFile().imports()).toEqual([]);
   });

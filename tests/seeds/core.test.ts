@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains.ts";
-import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
+import { CREATURE_TYPES } from "@/content/dnd3.5/data/creatureTypes.ts";
+import { ALL_DOMAINS } from "@/content/dnd3.5/generated/srd/domains.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

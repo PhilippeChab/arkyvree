@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { SpellPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/SpellPage.ts";
+import { SpellPage } from "@/codegen/dnd3.5/tools/scraper/pages/SpellPage.ts";
 import { fixture, scraped, stored, urlOf } from "@/tests/support/scrapedPages.ts";
 
 describe("A spell's page", () => {

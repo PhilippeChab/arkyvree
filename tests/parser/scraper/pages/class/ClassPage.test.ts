@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { ClassPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/class/ClassPage.ts";
+import { ClassPage } from "@/codegen/dnd3.5/tools/scraper/pages/class/ClassPage.ts";
 import { fixture, scraped, stored, urlOf } from "@/tests/support/scrapedPages.ts";
 
 describe("A class's page", () => {

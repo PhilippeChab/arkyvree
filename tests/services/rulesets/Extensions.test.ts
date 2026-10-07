@@ -8,7 +8,7 @@ import {
   DND35_COMPLETE_DIVINE_NAME,
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_DMG_NAME,
-} from "@/database/packages/dnd35/names.ts";
+} from "@/content/dnd3.5/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { getListPowerIds } from "@/engine/core/view/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";

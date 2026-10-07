@@ -282,9 +282,9 @@
         "react/only-export-components": ["error", { "allowConstantExport": true }]
       }
     },
-    // Server/scripts/tests/database: allow console
+    // Server/scripts/tests/database/codegen: allow console
     {
-      "files": ["server/**/*.{ts,tsx}", "scripts/**/*.ts", "tests/**/*.ts", "database/**/*.ts"],
+      "files": ["server/**/*.{ts,tsx}", "scripts/**/*.ts", "tests/**/*.ts", "database/**/*.ts", "codegen/**/*.ts"],
       "rules": {
         "no-console": "off"
       }

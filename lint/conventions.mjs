@@ -98,6 +98,7 @@ const RUNTIME_FREE_TREES = [
   ["shared/", "`shared/` runs in the client too"],
   ["engine/", "`engine/` computes over the data it's given"],
   ["lib/", "`lib/` is what the engine shares with the server"],
+  ["content/", "`content/` is data"],
 ];
 
 /** Each test area and the source tree it mirrors. */
@@ -113,7 +114,7 @@ const TEST_MIRRORS = [
   ["tests/client/", "client/src/"],
   ["tests/lint/", "lint/"],
   ["tests/scripts/", "scripts/"],
-  ["tests/parser/", "database/packages/dnd35-from-parser/tools/"],
+  ["tests/parser/", "codegen/dnd3.5/tools/"],
 ];
 
 const WRITE_VERBS = [...METHOD_VERBS.write, ...METHOD_VERBS.lock];

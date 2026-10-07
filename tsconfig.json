@@ -49,7 +49,10 @@
     "tests/**/*",
     "emails/**/*",
     "database/**/*",
-    "engine/**/*"
+    "engine/**/*",
+    "content/**/*",
+    "codegen/**/*",
+    "lib/**/*"
   ],
   "exclude": ["node_modules", "dist"]
 }

@@ -5,8 +5,8 @@
 
 import { and, eq, like } from "drizzle-orm";
 
-import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
-import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";
+import { gte } from "@/content/dnd3.5/builders/customization/requirements.ts";
+import type { CowFeatEntry, CowSpellEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   aptitudesInRules,

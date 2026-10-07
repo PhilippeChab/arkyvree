@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import * as RULESET_NAMES from "@/database/packages/dnd35/names.ts";
+import * as RULESET_NAMES from "@/content/dnd3.5/names.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";

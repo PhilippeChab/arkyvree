@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 
-import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
-import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
+import References from "@/codegen/dnd3.5/tools/references/References.ts";
+import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
+import type { ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 /** A magic item reference's seeds, as its book makes them. */

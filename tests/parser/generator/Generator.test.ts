@@ -3,12 +3,12 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { GeneratedFolder } from "@/database/packages/dnd35-from-parser/tools/generator/GeneratedFolder.ts";
-import { Generator } from "@/database/packages/dnd35-from-parser/tools/generator/Generator.ts";
-import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
+import { GeneratedFolder } from "@/codegen/dnd3.5/tools/generator/GeneratedFolder.ts";
+import { Generator } from "@/codegen/dnd3.5/tools/generator/Generator.ts";
+import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { code, filesOf } from "@/tests/support/generatedFiles.ts";
 
-const GENERATED = join(import.meta.dirname, "../../../database/packages/dnd35-from-parser/generated");
+const GENERATED = join(import.meta.dirname, "../../../content/dnd3.5/generated");
 
 /** That `folder` holds the committed generated files, each as it's committed. */
 function expectCommitted(folder: string) {

@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { BOOK as ADVENTURER } from "@/database/packages/dnd35-from-parser/generated/complete-adventurer/index.ts";
-import { BOOK as ARCANE } from "@/database/packages/dnd35-from-parser/generated/complete-arcane/index.ts";
-import { BOOK as DIVINE } from "@/database/packages/dnd35-from-parser/generated/complete-divine/index.ts";
-import { BOOK as SCOUNDREL } from "@/database/packages/dnd35-from-parser/generated/complete-scoundrel/index.ts";
-import { BOOK as WARRIOR } from "@/database/packages/dnd35-from-parser/generated/complete-warrior/index.ts";
-import { RODS, WONDROUS_ITEMS } from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
-import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races.ts";
+import { BOOK as ADVENTURER } from "@/content/dnd3.5/generated/complete-adventurer/index.ts";
+import { BOOK as ARCANE } from "@/content/dnd3.5/generated/complete-arcane/index.ts";
+import { BOOK as DIVINE } from "@/content/dnd3.5/generated/complete-divine/index.ts";
+import { BOOK as SCOUNDREL } from "@/content/dnd3.5/generated/complete-scoundrel/index.ts";
+import { BOOK as WARRIOR } from "@/content/dnd3.5/generated/complete-warrior/index.ts";
+import { RODS, WONDROUS_ITEMS } from "@/content/dnd3.5/generated/srd/items/index.ts";
+import { ALL_RACES } from "@/content/dnd3.5/generated/srd/races.ts";
 
 /** Each book's feats, its standalone ones and its classes'. */
 const ADVENTURER_FEATS = [...ADVENTURER.standaloneFeats, ...ADVENTURER.classFeats];

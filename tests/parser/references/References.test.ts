@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
-import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import type { ReferenceType, StoredReference } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
+import References from "@/codegen/dnd3.5/tools/references/References.ts";
+import type { ReferenceType, StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
 /** A committed reference of `type` as stored. */
 function stored<T extends ReferenceType>(file: string, type: T) {

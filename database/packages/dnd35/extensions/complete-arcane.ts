@@ -1,6 +1,6 @@
-import { BOOK } from "@/database/packages/dnd35-from-parser/generated/complete-arcane/index.ts";
-import { CORE } from "@/database/packages/dnd35/data/core.ts";
-import { DND35_COMPLETE_ARCANE_NAME } from "@/database/packages/dnd35/names.ts";
+import { CORE } from "@/content/dnd3.5/data/core.ts";
+import { BOOK } from "@/content/dnd3.5/generated/complete-arcane/index.ts";
+import { DND35_COMPLETE_ARCANE_NAME } from "@/content/dnd3.5/names.ts";
 import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import type { ContentPackage } from "@/database/packages/types.ts";
 

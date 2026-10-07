@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, test } from "bun:test";
 
-import { DND35_DMG_NAME } from "@/database/packages/dnd35/names.ts";
+import { DND35_DMG_NAME } from "@/content/dnd3.5/names.ts";
 import { addClassLevels, addFeats, addPowers, addSkills } from "@/database/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import {

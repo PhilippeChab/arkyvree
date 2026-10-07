@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { CommandLine } from "@/database/packages/dnd35-from-parser/tools/cli/CommandLine.ts";
+import { CommandLine } from "@/codegen/dnd3.5/tools/cli/CommandLine.ts";
 
 describe("A parser command's line", () => {
   test("name a book and a reference, and filter by type and key", () => {

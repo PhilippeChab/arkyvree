@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { MagicItemPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/MagicItemPage.ts";
+import { MagicItemPage } from "@/codegen/dnd3.5/tools/scraper/pages/MagicItemPage.ts";
 import { fixture, named, scraped, stored } from "@/tests/support/scrapedPages.ts";
 
 describe("A page of the SRD's magic items", () => {

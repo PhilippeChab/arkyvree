@@ -37,7 +37,7 @@ human and automated contributors. In particular:
 - Update the relevant documentation when behavior or setup changes.
 
 For game data, follow [Content Packages](./docs/packages.md) and the
-[parser guide](./database/packages/dnd35-from-parser/README.md). Do not manually
+[parser guide](./codegen/dnd3.5/README.md). Do not manually
 edit generated files or rewrite old migrations to fix deployed data. Use the
 documented mapping and package-update workflow.
 

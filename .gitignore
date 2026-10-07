@@ -51,12 +51,12 @@ migrate-bin
 /.playwright-mcp/
 
 # Scraper cache
-database/packages/dnd35-from-parser/tools/scraper/.cache/
+codegen/dnd3.5/tools/scraper/.cache/
 
 # The parser's generation in progress (generated/'s copy, swapped in when it succeeds, and its lock)
-database/packages/dnd35-from-parser/generated.next/
-database/packages/dnd35-from-parser/generated.previous/
-database/packages/dnd35-from-parser/generated.lock
+content/dnd3.5/generated.next/
+content/dnd3.5/generated.previous/
+content/dnd3.5/generated.lock
 
 # Dumps
 *.pgdump

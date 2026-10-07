@@ -47,10 +47,10 @@ Requirements use a dotted level numbering system for hierarchy:
 
 ### Requirement Builder Helpers
 
-Seed data is written with nested `or()` / `and()` builders from `database/packages/dnd35/content/customization/requirements.ts`:
+Seed data is written with nested `or()` / `and()` builders from `content/dnd3.5/builders/customization/requirements.ts`:
 
 ```ts
-import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import { and, eq, feat, gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
 
 // Simple AND (all root-level entries are AND'd together):
 requirements: [
@@ -112,7 +112,7 @@ requirements: [gte("feats.luck.count", 2)]
 Available families: `FEAT_FAMILIES` in `shared/dnd3.5/feats.ts`, the `FEAT_FAMILY` values the customization offers and the seeded rules use (`tests/seeds/feats.test.ts` keeps the two the same):
 - Template families: `weaponfocus`, `greaterweaponfocus`, `weaponspecialization`, `greaterweaponspecialization`, `improvedcritical`, `powercritical`, `disembowelingstrike`, `headshot`, `greaterresiliency`, `martialweaponproficiency`, `exoticweaponproficiency`, `rapidreload`, `spellfocus`, `greaterspellfocus`, `arcanedefense`, `skillfocus`
 - Feat type families, each named like its type: `metamagic`, `itemcreation`, `luck`, and Complete Arcane's `draconic` feats, by their "Draconic …" name
-- Class feature families: `turnorrebukeundead`, `wildshape`, `favoredenemy`, and the features each class seeds as its own feat, "Sneak Attack (Rogue)" (`CLASS_FEATURE_FAMILIES`, which `CLASS_FEAT_FAMILIES` in `dnd35-from-parser/tools/vocabulary/classFeatFamilies.ts` matches): `animalcompanion`, `bardicmusic`, `evasion`, `flurryofblows`, `grace`, `inspirecourage`, `kipower`, `layonhands`, `poisonuse`, `rage`, `skirmish`, `smiteevil`, `sneakattack`, `suddenstrike`, `summonfamiliar`, `trapfinding`
+- Class feature families: `turnorrebukeundead`, `wildshape`, `favoredenemy`, and the features each class seeds as its own feat, "Sneak Attack (Rogue)" (`CLASS_FEATURE_FAMILIES`, which `CLASS_FEAT_FAMILIES` in `codegen/dnd3.5/tools/vocabulary/classFeatFamilies.ts` matches): `animalcompanion`, `bardicmusic`, `evasion`, `flurryofblows`, `grace`, `inspirecourage`, `kipower`, `layonhands`, `poisonuse`, `rage`, `skirmish`, `smiteevil`, `sneakattack`, `suddenstrike`, `summonfamiliar`, `trapfinding`
 
 Grouping paths are generated from the families (`FeatsPaths`' `generateFamilyPaths`: `FEAT_FAMILIES` plus the ruleset's `FEAT_FAMILY` property values) — no manual path registration needed. `FeatGroupingsComponent` holds each family's feats, which those paths read on the sheet. The parser's generator writes a check of a family by its own name ("Weapon Specialization") as a check of any of its feats (`resolveFamilyChecks`), and a count of it ("Sneak attack +2d6") as the family's count.
 
@@ -155,7 +155,7 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 ## Auto-Generated Customization
 
-Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from their domain's effects (`engine/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts` with `powers/powerFields.ts` and `powers/spellGenerator.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`database/packages/dnd35/content/items/weapons.ts`, `armor.ts`). They're an item's fields: `ItemsRules.readProperties` reads them (`items/itemFields.ts`, which the combat components and the inventory's rules read with too), and `ItemsEffects.properties` says how they're stored. An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
+Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from their domain's effects (`engine/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts` with `powers/powerFields.ts` and `powers/spellGenerator.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`content/dnd3.5/builders/items/weapons.ts`, `armor.ts`). They're an item's fields: `ItemsRules.readProperties` reads them (`items/itemFields.ts`, which the combat components and the inventory's rules read with too), and `ItemsEffects.properties` says how they're stored. An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
 
 Every area's effects take one shape: each says what to write, and the service writes it (`server/services/rulesets/effectWrites.ts`).
 - `properties(id, fields)` gives the fields of the entity's form as its properties, in place of those it stored before (`writeProperties`). Its other properties stay.
@@ -364,7 +364,7 @@ The character engine computes the **base, permanent character sheet** — no tem
 
 ### Proficiency requirements on weapon feats:
 
-A simple or martial weapon's proficiency is its group's or its own (an OR group); an exotic weapon's is its own, as for the weapon items above. `simple`, `martial` and `exotic` in `database/packages/dnd35/content/items/proficiencies.ts` build them, and `proficiencyRequirements(weapon)` picks the weapon's.
+A simple or martial weapon's proficiency is its group's or its own (an OR group); an exotic weapon's is its own, as for the weapon items above. `simple`, `martial` and `exotic` in `content/dnd3.5/builders/items/proficiencies.ts` build them, and `proficiencyRequirements(weapon)` picks the weapon's.
 
 ### Item creation feats require caster level (approximated as character level):
 

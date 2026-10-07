@@ -2,13 +2,15 @@
  * The architecture, as rules: what each layer may import, where queries are built, and how a folder is entered.
  *
  * - `layers`: a layer imports only what's below it (database < repositories < cache < copy-on-write's writes <
- *   services < jobs < routers; the middlewares sit on the repositories, beside the services). The engine, the root `engine/`, imports nothing of the server, the database or the client:
- *   its machinery (`engine/core/`) sits below the rulesets that run on it (`engine/rulesets/`), and `lib/`, what it
- *   shares with the server, imports nothing of the app. The cache
- *   holds copy-on-write's read side (the view a ruleset's reads see), `cow/` its write side. The server reads the
- *   content packages, never the seeders. A content package's `content/` (the types and builders its data is written
- *   with, and the tables they read) imports nothing of its data, its seeder, its extensions, the parser or the server.
- *   `shared/` imports nothing app-specific (the schema's types only), and the client takes only types from the server.
+ *   services < jobs < routers; the middlewares sit on the repositories, beside the services). The engine, the root
+ *   `engine/`, imports nothing of the server, the database, the content, the codegen or the client: its machinery
+ *   (`engine/core/`) sits below the rulesets that run on it (`engine/rulesets/`), and `lib/`, what it shares with the
+ *   server, imports nothing of the app. The cache holds copy-on-write's read side (the view a ruleset's reads see),
+ *   `cow/` its write side. A ruleset's content (`content/<ruleset>/`: its builders, its data and what the codegen
+ *   generates) is data, which imports none of what reads or writes it; its builders (the types and builders its data is
+ *   written with) import nothing of its data. The codegen (`codegen/`) isn't the server's, and stores nothing; the
+ *   server reads none of `database/`, `content/` and `codegen/`. `shared/` imports nothing app-specific (the schema's
+ *   types only), and the client takes only types from the server.
  * - `queries-in-repositories`: a query is built in `server/repositories/` or `server/database/` (what talks to Postgres
  *   itself: the job queue, a channel's notifications, its health), nowhere else in the server. A transaction's handle
  *   is named `tx`, the name it knows a query by.
@@ -63,21 +65,21 @@ const LAYERS = [
   { layer: "server/services/", deny: ["server/jobs/", "server/middlewares/", "server/routers/"] },
   { layer: "server/jobs/", deny: ["server/middlewares/", "server/routers/"] },
   { layer: "server/middlewares/", deny: ["server/services/", "server/jobs/", "server/routers/"] },
-  // The server reads nothing of database/: what its packages hold reaches it through the database, which they seed
-  { layer: "server/", deny: ["database/"] },
-  // What a content package's data is written with: below its data, its seeder and what generates it
-  {
-    layer: "database/packages/dnd35/content/",
-    deny: [
-      "database/packages/dnd35/data/",
-      "database/packages/dnd35/seed/",
-      "database/packages/dnd35/extensions/",
-      "database/packages/dnd35-from-parser/",
-      "server/",
-    ],
-  },
+  // The server reads nothing of database/, content/ or codegen/: the content reaches it through the database, which
+  // the packages seed
+  { layer: "server/", deny: ["database/", "content/", "codegen/"] },
+  // A ruleset's content is data, which the seeders write and the codegen generates: it imports none of them
+  { layer: "content/", deny: ["server/", "database/", "codegen/", "engine/", "client/", "lib/", "drizzle/"] },
+  // What a ruleset's content is written with: below its data and what the codegen generates of it
+  { layer: "content/dnd3.5/builders/", deny: ["content/dnd3.5/data/", "content/dnd3.5/generated/"] },
+  // The codegen reads the books and writes content: it stores nothing, and it isn't the server's
+  { layer: "codegen/", deny: ["server/", "database/", "client/"] },
   // The engine computes over the data it's given: it reads nothing itself, so it imports none of what stores data
-  { layer: "engine/", deny: ["server/", "database/", "client/", "drizzle/"], types: ["drizzle/"] },
+  {
+    layer: "engine/",
+    deny: ["server/", "database/", "content/", "codegen/", "client/", "drizzle/"],
+    types: ["drizzle/"],
+  },
   // Its core is what every ruleset runs on: it names none of them
   { layer: "engine/core/", deny: ["engine/rulesets/"] },
   // What the server and the engine share (the mixins): it imports nothing of the app

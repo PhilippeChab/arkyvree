@@ -10,7 +10,7 @@ dndtools.net HTML → Scraper → reference JSON (raw + overrides) → Generator
                                          Human corrections
 ```
 
-Most content is generated from scraped SRD pages. A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. See [Reference files](#reference-files) and `database/packages/dnd35-from-parser/README.md` for the scraper and generator.
+Most content is generated from scraped SRD pages. A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. See [Reference files](#reference-files) and `codegen/dnd3.5/README.md` for the scraper and generator.
 
 ## Package types
 

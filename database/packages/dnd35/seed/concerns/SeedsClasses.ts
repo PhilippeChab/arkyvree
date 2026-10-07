@@ -1,7 +1,7 @@
-import type { BabType, ClassSeed, SaveType } from "@/database/packages/dnd35/content/classes/types.ts";
-import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
-import { gt } from "@/database/packages/dnd35/content/customization/requirements.ts";
-import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
+import type { BabType, ClassSeed, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
+import { bonus } from "@/content/dnd3.5/builders/customization/modifiers.ts";
+import { gt } from "@/content/dnd3.5/builders/customization/requirements.ts";
+import type { ModifierSeed, RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { getSpellLevelOpenings } from "@/database/packages/dnd35/seed/spellTable.ts";
 import {

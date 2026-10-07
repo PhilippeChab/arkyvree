@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import * as RULESET_NAMES from "@/database/packages/dnd35/names.ts";
+import * as RULESET_NAMES from "@/content/dnd3.5/names.ts";
 import { findTemplateValueError } from "@/engine/core/paths/pathChecks.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";

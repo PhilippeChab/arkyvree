@@ -1,5 +1,6 @@
 /**
- * `module-state`: state lives in a class. What a module of the server, `shared/` or `database/` keeps between calls is
+ * `module-state`: state lives in a class. What a module of the server, the engine, `shared/`, `database/`, `content/` or
+ * `codegen/` keeps between calls is
  * the field of a class whose methods change it, and the class's shared instance is the module's export (`export
  * default new X()`): never a top-level `let`, nor a top-level binding the module changes (a member assigned or deleted,
  * `++`, a container's `set` / `add` / `push`…), nor an instance the module keeps to itself (`const cache = new
@@ -83,7 +84,7 @@ function changedBinding(node) {
 }
 
 function createModuleState(context) {
-  if (!/^(server|engine|shared|database)\//.test(repoPath(context.filename))) return {};
+  if (!/^(server|engine|shared|database|content|codegen)\//.test(repoPath(context.filename))) return {};
   const advice =
     "State lives in a class: a field of the class whose methods change it, its shared instance the module's export.";
   return {

@@ -67,17 +67,15 @@ describe("architecture rules", () => {
         "client/src/c.ts": 'import type { App } from "@/server/routers/application.ts";\nexport type C = App;\n',
         "client/src/v.ts": 'import { app } from "@/server/routers/application.ts";\nexport const v = app;\n',
         // A content package's vocabulary reads neither its data nor the server
-        "database/packages/dnd35/content/a.ts":
-          'import { b } from "@/database/packages/dnd35/content/b.ts";\nexport const a = b;\n',
-        "database/packages/dnd35/content/d.ts":
-          'import { D } from "@/database/packages/dnd35/data/core.ts";\nexport const d = D;\n',
-        "database/packages/dnd35/content/s.ts": 'import { x } from "@/server/services/s.ts";\nexport const s = x;\n',
+        "content/dnd3.5/builders/a.ts": 'import { b } from "@/content/dnd3.5/builders/b.ts";\nexport const a = b;\n',
+        "content/dnd3.5/builders/d.ts": 'import { D } from "@/content/dnd3.5/data/core.ts";\nexport const d = D;\n',
+        "content/dnd3.5/builders/s.ts": 'import { x } from "@/server/services/s.ts";\nexport const s = x;\n',
       }),
     ).toEqual([
       "layers client/src/v.ts",
       "layers client/src/w.ts",
-      "layers database/packages/dnd35/content/d.ts",
-      "layers database/packages/dnd35/content/s.ts",
+      "layers content/dnd3.5/builders/d.ts",
+      "layers content/dnd3.5/builders/s.ts",
       "layers engine/core/module/m.ts",
       "layers engine/core/view/r.ts",
       "layers engine/core/view/v.ts",
@@ -150,8 +148,7 @@ describe("architecture rules", () => {
         "server/middlewares/m.ts": 'import { R } from "@/server/repositories/R.ts";\nexport const m = R;\n',
         "server/rulesets/seed.ts":
           'import { items } from "@/database/packages/dnd35/seed/items.ts";\nexport const s = items;\n',
-        "server/rulesets/data.ts":
-          'import { CORE } from "@/database/packages/dnd35/data/core.ts";\nexport const d = CORE;\n',
+        "server/rulesets/data.ts": 'import { CORE } from "@/content/dnd3.5/data/core.ts";\nexport const d = CORE;\n',
         "server/services/s.ts": 'import { SEED } from "@/database/seeds/users.ts";\nexport const s = SEED;\n',
       }),
     ).toEqual([

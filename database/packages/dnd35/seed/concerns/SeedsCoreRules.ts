@@ -1,7 +1,7 @@
-import type { AbilitySeed } from "@/database/packages/dnd35/content/abilities/types.ts";
-import type { LanguageSeed } from "@/database/packages/dnd35/content/languages/types.ts";
-import type { SaveSeed } from "@/database/packages/dnd35/content/saves/types.ts";
-import type { SkillSeed } from "@/database/packages/dnd35/content/skills/types.ts";
+import type { AbilitySeed } from "@/content/dnd3.5/builders/abilities/types.ts";
+import type { LanguageSeed } from "@/content/dnd3.5/builders/languages/types.ts";
+import type { SaveSeed } from "@/content/dnd3.5/builders/saves/types.ts";
+import type { SkillSeed } from "@/content/dnd3.5/builders/skills/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   abilitiesInRules,

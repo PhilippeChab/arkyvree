@@ -1,0 +1,28 @@
+import type { BaseRequirementReading } from "@/codegen/dnd3.5/tools/detect/readers/requirements/BaseRequirementReading.ts";
+import { gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
+import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import { SKILL_NAMES } from "@/content/dnd3.5/data/skills.ts";
+import type { Constructor } from "@/lib/mixins.ts";
+import { stripSeparators } from "@/shared/text.ts";
+
+/** Reading what a prerequisite asks of a skill a family of skills names: ranks in any of them. */
+export function ReadsSkills<B extends Constructor<BaseRequirementReading>>(Base: B) {
+  abstract class ReadingSkills extends Base {
+    /**
+     * `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill.
+     */
+    protected anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
+      if (!/\(any\)/i.test(name)) return undefined;
+      const baseName = name
+        .replace(/\s*\(any\)/i, "")
+        .trim()
+        .toLowerCase();
+      const checks = SKILL_NAMES.filter((s) => s.toLowerCase().startsWith(baseName)).map((s) =>
+        gte(`skills.${stripSeparators(s)}.rank`, ranks),
+      );
+      if (checks.length <= 1) return checks[0];
+      return or(...checks);
+    }
+  }
+  return ReadingSkills;
+}

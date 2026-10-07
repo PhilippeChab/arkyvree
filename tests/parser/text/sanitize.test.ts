@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/text/json.ts";
-import { sanitizeHtml, sanitizeText } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
+import { sortKeysDeep } from "@/codegen/dnd3.5/tools/text/json.ts";
+import { sanitizeHtml, sanitizeText } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 
 describe("Scraped HTML", () => {
   test("loses its scripts", () => {

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import * as cheerio from "cheerio";
 
-import { Page } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/Page.ts";
+import { Page } from "@/codegen/dnd3.5/tools/scraper/pages/Page.ts";
 
 describe("A section", () => {
   test("is what follows its heading, up to the next heading", () => {
