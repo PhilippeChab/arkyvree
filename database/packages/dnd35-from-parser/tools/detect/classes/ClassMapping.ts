@@ -7,7 +7,7 @@ import { type NamedText } from "@/database/packages/dnd35-from-parser/tools/type
 import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import type { BaseClassDetector } from "./BaseClassDetector.ts";
+import type { BaseClassDetector, ClassFeature } from "./BaseClassDetector.ts";
 import { getFeatureBaseName, isVariantOf, normalizeFeatureName } from "./featureNames.ts";
 import { CHOICE_PATTERN, readPoolSubOptions } from "./featureText.ts";
 
@@ -48,9 +48,9 @@ export class ClassMapping {
    * Abilities"). The feat owns the modifier; aptitudePicks that duplicate these are stripped when the class's seed is built.
    */
   private addAptitudePickModifiers() {
-    const { raw, detected } = this;
+    const { detected } = this;
     if (!detected.aptitudePicks) return;
-    const classSlug = stripSeparators(raw.name);
+    const { classSlug } = this.detector;
     for (const pick of detected.aptitudePicks) {
       const slugMatch = pick.target.match(/^aptitudes\.(.+)\.allowed$/);
       if (!slugMatch) continue;
@@ -91,7 +91,7 @@ export class ClassMapping {
    * A feature, at the level its occurrences in the progression first give it (its variants' too: "Bear Form
    * (Black)", "1st Favored Enemy"), stackable when it occurs more than once, with the modifiers its text gives.
    */
-  private addFeature(cf: ClassReference["raw"]["classFeatures"][number], baseName: string) {
+  private addFeature(cf: ClassFeature, baseName: string) {
     const { raw, detected } = this;
     // Find occurrences for this feature
     const baseNameLower = baseName.toLowerCase();
@@ -152,7 +152,7 @@ export class ClassMapping {
    * handles it at runtime), and its sub-options, each a selectable feature of its aptitude: its description's, or
    * else the separate features (or table rows) that follow it.
    */
-  private addPoolFeature(cf: ClassReference["raw"]["classFeatures"][number], baseName: string) {
+  private addPoolFeature(cf: ClassFeature, baseName: string) {
     const { raw, detected } = this;
     const normalizedDesc = normalizeWs(cf.description);
     const baseSlug = stripSeparators(baseName);
@@ -470,7 +470,7 @@ export class ClassMapping {
     // Auto-populate spells from detected data
     if (detected.spellsPerDay) {
       // The aptitude "<Class> Spells" as a path names it
-      const slug = stripSeparators(raw.name) + "spells";
+      const slug = `${this.detector.classSlug}spells`;
       mapping.spells = {
         slug,
         ...(!raw.hasCantrips ? { noCantrips: true } : {}),

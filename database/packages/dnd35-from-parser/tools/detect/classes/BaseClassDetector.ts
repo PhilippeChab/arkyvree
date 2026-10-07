@@ -5,7 +5,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import { readFeatureOccurrences } from "./featureNames.ts";
 
 /** A class feature, as its page gives it. */
-type ClassFeature = ClassReference["raw"]["classFeatures"][number];
+export type ClassFeature = ClassReference["raw"]["classFeatures"][number];
 
 /** D&D type suffixes embedded in raw class feature names, e.g. "Tattoo (Su or Sp)" */
 const TYPE_SUFFIX = /\s*\((?:Ex|Su|Sp|Su or Sp)\)$/i;

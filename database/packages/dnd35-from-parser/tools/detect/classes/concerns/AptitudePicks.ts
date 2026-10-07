@@ -32,7 +32,7 @@ const NON_PICK_DESCRIPTION: RegExp[] = [
 ];
 
 /** Features that match CHOICE_PATTERN but aren't character-build picks.
- *  Add new entries here instead of scattering regex blocks in detectAptitudePicks. */
+ *  Add new entries here instead of scattering regex blocks in aptitudePicks(). */
 const NON_PICK_FEATURES: RegExp[] = [
   // Scaling abilities that increase in power, not choices
   /sneak attack|rage|wild shape|summon|damage reduction|save|trap sense|uncanny dodge|flurry|bonus language/i,
