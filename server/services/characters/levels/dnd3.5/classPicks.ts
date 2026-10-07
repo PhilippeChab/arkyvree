@@ -3,6 +3,7 @@
  */
 
 import { type RulesetData } from "@/engine/core/view/index.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Klasses } from "@/server/repositories/index.ts";
@@ -156,8 +157,6 @@ export async function getAvailableKlasses(
     let detailedCharacter: Dnd35DetailedCharacter | undefined;
     if (withRequirements.length > 0) {
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-      detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-
       const projectedData = pendingProjection(
         characterId,
         pendingLevels,
@@ -166,7 +165,7 @@ export async function getAvailableKlasses(
         pendingFeatPicks,
         pendingSkillAllocations,
       );
-      await detailedCharacter.build(undefined, projectedData, scope);
+      detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
 
       const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
       const evaluated = withRequirements.map((k) => ({

@@ -2,6 +2,7 @@
  * Powers and spells a level-up can pick for an aptitude pool.
  */
 
+import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Powers } from "@/server/repositories/index.ts";
@@ -84,8 +85,7 @@ export async function getAvailablePowers(
     };
 
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData, scope);
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
 
     // The powers the character knows in this pool aren't offered again: when editing, the projection left out the
     // edited level and the levels after it

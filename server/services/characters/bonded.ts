@@ -1,3 +1,4 @@
+import { buildCharacter } from "@/server/builds/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
@@ -22,8 +23,7 @@ export async function loadBondedByKind(
       Visibility.All,
     );
     if (!record) continue;
-    const detailed = rulesetModule.createDetailedCharacter(record, kind);
-    await detailed.build();
+    const detailed = await buildCharacter(rulesetModule, record, { kind });
     out[kind] = { record, detailed };
   }
   return out;
