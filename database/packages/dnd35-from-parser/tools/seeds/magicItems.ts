@@ -1,8 +1,8 @@
 /** A magic item reference's seeds: its ItemSeed[], by category. */
 
-import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/detect/armorStats.ts";
-import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/detect/magicItems.ts";
-import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/detect/weaponStats.ts";
+import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/detect/readers/items/armorStats.ts";
+import { readBaseItem } from "@/database/packages/dnd35-from-parser/tools/detect/readers/items/baseItems.ts";
+import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/detect/readers/items/weaponStats.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import {
   type MagicItemCategory,
@@ -89,7 +89,7 @@ export function buildMagicItemSeeds(
     const baseItemRaw =
       ovr?.baseItem !== undefined
         ? ovr.baseItem
-        : (det.baseItem ?? detectBaseItem(name, rawEntry?.description ?? "", det.category));
+        : (det.baseItem ?? readBaseItem(name, rawEntry?.description ?? "", det.category));
     const sourceItem = baseItemRaw ?? undefined;
 
     const description = normalizeDescription(ovr?.description ?? rawEntry?.description ?? "");

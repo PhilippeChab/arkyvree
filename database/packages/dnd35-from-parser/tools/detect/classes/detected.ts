@@ -1,11 +1,11 @@
 /** A class reference's detected section. */
 
+import { ClassPrerequisites } from "@/database/packages/dnd35-from-parser/tools/detect/readers/requirements/ClassPrerequisites.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 import { detectAptitudePicks, detectLockedFavoredEnemies } from "./aptitudePicks.ts";
 import { detectBonusFeatLists } from "./bonusFeatLists.ts";
 import { detectFeatureOccurrences } from "./features.ts";
-import { parseRequirements } from "./prerequisites.ts";
 import {
   detectBab,
   detectCasterAdvancement,
@@ -21,7 +21,7 @@ import {
 export function buildDetected(raw: ClassReference["raw"]): ClassReference["detected"] {
   const levels = raw.progression.length;
   const featureOccurrences = detectFeatureOccurrences(raw.progression);
-  const { requirements, featNameMap, errors, unresolvedPrereqs } = parseRequirements(raw.prerequisites.parsed);
+  const { requirements, errors, unresolved } = new ClassPrerequisites(raw.prerequisites.parsed);
 
   const spellsPerDay = detectSpellsPerDay(raw.progression);
   const spellsKnown = detectSpellsKnown(raw);
@@ -35,7 +35,6 @@ export function buildDetected(raw: ClassReference["raw"]): ClassReference["detec
     saves: detectSaves(raw.progression),
     casterLevelAdvancement: detectCasterAdvancement(raw.progression),
     requirements,
-    featNameMap,
     featureOccurrences,
     ...detectAptitudePicks(raw, featureOccurrences),
     ...detectBonusFeatLists(raw, featureOccurrences),
@@ -45,6 +44,6 @@ export function buildDetected(raw: ClassReference["raw"]): ClassReference["detec
     ...(hasOwnSpells ? { hasOwnSpells } : {}),
     ...(hasOwnSpells ? detectCasterType(raw) : {}),
     ...(errors.length > 0 ? { errors } : {}),
-    ...(unresolvedPrereqs.length > 0 ? { unresolvedPrereqs } : {}),
+    ...(unresolved.length > 0 ? { unresolvedPrereqs: unresolved } : {}),
   };
 }

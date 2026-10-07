@@ -30,7 +30,7 @@ const COMPANION_GRANT_PATTERNS: {
  * pattern matches. Detection lets us avoid maintaining a hardcoded
  * per-feat override list — the SRD prose IS the spec.
  */
-function detectBondedLevelFormula(description: string, classSlug: string): string {
+function bondedLevelFormula(description: string, classSlug: string): string {
   const base = `[classes.${classSlug}.level]`;
 
   // "half ... level" (Ranger)
@@ -66,16 +66,16 @@ function detectBondedLevelFormula(description: string, classSlug: string): strin
  * independently adds to the same `bonded.<kind>.level` accumulator.
  *
  * The bonded-level formula is auto-detected from the SRD description via
- * `detectBondedLevelFormula`. Defaults to 1:1 when no pattern matches.
+ * `bondedLevelFormula`. Defaults to 1:1 when no pattern matches.
  */
-export function buildCompanionGrantModifiers(featName: string, description: string = ""): ModifierSeed[] {
+export function readCompanionGrantModifiers(featName: string, description: string = ""): ModifierSeed[] {
   const modifiers: ModifierSeed[] = [];
   for (const { pattern, aptitudeSlug, bondedKind } of COMPANION_GRANT_PATTERNS) {
     const match = featName.match(pattern);
     if (!match) continue;
     const className = match[1];
     const classSlug = className.toLowerCase().replace(/\s+/g, "");
-    const formula = detectBondedLevelFormula(description, classSlug);
+    const formula = bondedLevelFormula(description, classSlug);
 
     modifiers.push(
       bonus(`aptitudes.${aptitudeSlug}.allowed`, 1),
@@ -85,17 +85,9 @@ export function buildCompanionGrantModifiers(featName: string, description: stri
   return modifiers;
 }
 
-/**
- * Uncanny dodge, a class feature of many classes (Barbarian, Rogue, Assassin…): the character keeps its Dexterity
- * bonus to AC, and its dodge bonuses, when flat-footed. Improved uncanny dodge is flanking, no part of AC.
- */
-export function buildUncannyDodgeModifiers(featName: string): ModifierSeed[] {
-  return /^Uncanny Dodge\b/.test(featName) ? [setFlag("combat.ac.uncannydodge")] : [];
-}
-
 /** Extract feat names from "gains/receives X as a [bonus] feat" patterns.
  *  Only matches definite grants, not choices ("may select") or parameterized refs. */
-export function extractGrantedFeatNames(desc: string): string[] {
+export function readGrantedFeatNames(desc: string): string[] {
   const pattern = /(?:gains?|receives?|gets?)\s+(?:the\s+)?(.+?)\s+as a (?:bonus )?feat\b/gi;
   const names: string[] = [];
   let m;
@@ -110,4 +102,12 @@ export function extractGrantedFeatNames(desc: string): string[] {
     if (featName) names.push(featName);
   }
   return names;
+}
+
+/**
+ * Uncanny dodge, a class feature of many classes (Barbarian, Rogue, Assassin…): the character keeps its Dexterity
+ * bonus to AC, and its dodge bonuses, when flat-footed. Improved uncanny dodge is flanking, no part of AC.
+ */
+export function readUncannyDodgeModifiers(featName: string): ModifierSeed[] {
+  return /^Uncanny Dodge\b/.test(featName) ? [setFlag("combat.ac.uncannydodge")] : [];
 }

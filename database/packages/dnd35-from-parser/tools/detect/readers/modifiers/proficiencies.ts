@@ -1,4 +1,4 @@
-/** Detects the weapon and armor proficiencies a class grants. */
+/** The weapon and armor proficiencies a class's "Weapon and Armor Proficiency" feature grants. */
 
 import { grantFeat } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
@@ -69,7 +69,8 @@ function detectSpecificWeapons(desc: string): string[] {
   return slugs;
 }
 
-export function detectWAPModifiers(desc: string): ModifierSeed[] {
+/** The proficiency feats a class's proficiency text grants, as modifiers that grant them. */
+export function readProficiencyModifiers(desc: string): ModifierSeed[] {
   const mods: ModifierSeed[] = [];
   const d = desc.toLowerCase();
 

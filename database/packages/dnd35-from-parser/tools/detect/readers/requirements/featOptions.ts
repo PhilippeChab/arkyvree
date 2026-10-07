@@ -43,7 +43,7 @@ export function findWeapon(text: string) {
  * tell it (Punching Dagger, Necromancy for "Necro."), else as written. "Composite version of either" is the
  * composite of each option before it.
  */
-export function parseFamilyOptions(family: string, optionsText: string): string[] {
+export function readFamilyOptions(family: string, optionsText: string): string[] {
   const names = OPTIONS_OF.find((options) => options.family.test(family))?.names ?? [];
   const options: string[] = [];
   for (const option of optionsText.split(/,\s*(?:or\s+)?|\s+or\s+/).map((o) => o.trim())) {

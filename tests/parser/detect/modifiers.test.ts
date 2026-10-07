@@ -13,8 +13,8 @@ describe("Detected modifiers", () => {
   test("are each entry's, with its errors and unresolved text only when it has some", () => {
     const detected = detectModifiersOf([{ name: "Strong" }, { name: "Garbled" }], ({ name }) =>
       name === "Strong"
-        ? { modifiers: [STRENGTH], errors: [], unresolvedModifiers: [] }
-        : { modifiers: [], errors: ["invalid path: x"], unresolvedModifiers: ["+2 on something"] },
+        ? { modifiers: [STRENGTH], errors: [], unresolved: [] }
+        : { modifiers: [], errors: ["invalid path: x"], unresolved: ["+2 on something"] },
     );
     expect(detected).toEqual({
       Strong: { modifiers: [STRENGTH] },

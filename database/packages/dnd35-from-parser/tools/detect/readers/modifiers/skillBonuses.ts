@@ -1,4 +1,4 @@
-import { SKILL_MAP } from "./targets.ts";
+import { SKILL_SLUGS } from "@/database/packages/dnd35-from-parser/tools/detect/vocabulary.ts";
 
 /** A skill bonus a text gives: its skill's slug, or none when the name isn't a skill (`name`), and where it was read. */
 export type SkillBonus = { index: number; name: string; slug: string | undefined; value: string };
@@ -52,7 +52,7 @@ export function readSkillBonuses(text: string, conditional: (match: RegExpExecAr
     for (const name of splitSkillList(match[3])) {
       const lower = name.toLowerCase();
       if (lower === "initiative") continue;
-      bonuses.push({ value: match[1], name, slug: SKILL_MAP[lower], index: match.index });
+      bonuses.push({ value: match[1], name, slug: SKILL_SLUGS[lower], index: match.index });
     }
   }
   return bonuses;

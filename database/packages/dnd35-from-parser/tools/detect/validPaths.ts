@@ -11,8 +11,8 @@ import IdentityPaths from "@/server/rulesets/dnd3.5/identity/IdentityPaths.ts";
 import SavesPaths from "@/server/rulesets/dnd3.5/saves/SavesPaths.ts";
 import SkillsPaths from "@/server/rulesets/dnd3.5/skills/SkillsPaths.ts";
 
-const ABILITY_NAMES = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
-const SAVE_NAMES = ["Fortitude", "Reflex", "Will"];
+import { ABILITY_NAMES, SAVE_NAMES } from "./vocabulary.ts";
+
 const stubAbilities = ABILITY_NAMES.map((name) => ({ name })) as Parameters<
   typeof AbilitiesPaths.generateAbilityPaths
 >[0];

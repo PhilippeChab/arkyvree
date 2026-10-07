@@ -1,6 +1,6 @@
 /** A class's features by level, and the existing feats a feature grants instead of being a feat of its own. */
 
-import { extractGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/detect/grants.ts";
+import { readGrantedFeatNames } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/grants.ts";
 import ExistingFeats from "@/database/packages/dnd35-from-parser/tools/seeds/ExistingFeats.ts";
 import {
   getPluralVariants,
@@ -132,7 +132,7 @@ export function findExistingFeatGranted(ref: ClassReference, name: string, descr
     (baseName && ExistingFeats.find(book, baseName)) ||
     ExistingFeats.find(book, name) ||
     (description
-      ? extractGrantedFeatNames(description)
+      ? readGrantedFeatNames(description)
           .map((n) => ExistingFeats.find(book, n))
           .find(Boolean)
       : undefined)
