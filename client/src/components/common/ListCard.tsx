@@ -11,6 +11,8 @@ interface ListCardGridProps {
 }
 
 interface ListCardProps extends Omit<ComponentProps<typeof StyledCard>, "children" | "title"> {
+  /** A control at the end of the title's row, as wide as it needs: the campaign card's visibility. */
+  action?: ReactNode;
   /** Defaults to the title's initial. */
   avatar?: ReactNode;
   avatarSrc?: string;
@@ -25,6 +27,7 @@ interface ListCardProps extends Omit<ComponentProps<typeof StyledCard>, "childre
 
 /** Card of the ruleset, character and campaign grids. */
 export function ListCard({
+  action,
   avatar,
   avatarTone = "primary",
   avatarSrc,
@@ -71,6 +74,7 @@ export function ListCard({
           >
             {title}
           </Typography>
+          {action}
         </Stack>
         {pills && (
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>

@@ -225,8 +225,7 @@ test.describe("Characters", () => {
     await signIn(page, ownerUser.email, ownerUser.password);
     await createCharacter(page, `Modifier Hero ${Date.now()}`);
     await openActionsMenu(page, /^Manage Modifiers$/);
-    // The manager's title isn't a dialog title: find it by its text.
-    const manager = page.locator('[role="dialog"][aria-modal="true"]').filter({ hasText: "Manage Modifiers" });
+    const manager = page.getByRole("dialog", { name: "Manage Modifiers" });
     await expect(manager.getByText("No modifiers")).toBeVisible();
 
     await manager.getByRole("button", { name: /^Add$/ }).click();
