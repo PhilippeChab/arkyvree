@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const ACOLYTE_OF_THE_SKIN_FEATS: FeatSeed[] = [
+export const ACOLYTE_OF_THE_SKIN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Cold Resistant (Acolyte of the Skin)",
     description: "Beginning at 6th level, an acolyte has resistance to cold 10.",

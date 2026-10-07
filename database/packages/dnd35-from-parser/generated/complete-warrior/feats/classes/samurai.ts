@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SAMURAI_FEATS: FeatSeed[] = [
+export const SAMURAI_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Daisho Proficiency (Samurai)",
     description:

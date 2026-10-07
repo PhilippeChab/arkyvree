@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MASTER_THROWER_FEATS: FeatSeed[] = [
+export const MASTER_THROWER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Critical Throw (Master Thrower)",
     description:

@@ -9,7 +9,7 @@ import type { Constructor } from "@/server/mixins.ts";
 /** Generating a book's races. */
 export function GeneratesRaces<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingRaces extends Base {
-    /** A book's races file (races/data.ts). */
+    /** A book's races file (races.ts). */
     writeRaces(ref: RaceReference, book: string) {
       const seeds = buildRaceSeeds(ref);
       this.log(`Built ${seeds.length} race seeds`);
@@ -20,7 +20,7 @@ export function GeneratesRaces<B extends Constructor<BaseGenerator>>(Base: B) {
         "RaceSeed",
         seeds.flatMap((race) => file.race(race)),
       );
-      this.write(join(this.dir, book, "races", "data.ts"), file.code());
+      this.write(join(this.dir, book, "races.ts"), file.code());
 
       this.log(`\nDone!`);
     }

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const EYE_OF_GRUUMSH_FEATS: FeatSeed[] = [
+export const EYE_OF_GRUUMSH_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Blinding Spittle (Eye of Gruumsh)",
     description:

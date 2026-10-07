@@ -10,7 +10,7 @@ import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools
 export function generateClassFeatSeeds(ref: ClassReference): string {
   const file = new CodeFile();
   file.list(
-    `${toConstName(ref.raw.name)}_FEATS`,
+    `${toConstName(ref.raw.name)}_CLASS_FEATS`,
     "FeatSeed",
     [...buildClassFeatSeeds(ref), ...buildClassDomainPickFeats(ref)].flatMap((feat) => file.feat(feat)),
   );

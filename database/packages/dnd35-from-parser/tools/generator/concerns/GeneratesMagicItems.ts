@@ -56,10 +56,10 @@ export function GeneratesMagicItems<B extends Constructor<BaseGenerator>>(Base: 
       const outDir = join(this.dir, book, "items");
 
       const files: [string, string, MagicItemSeeds][] = [
-        ["magic-armor.ts", "MAGIC_ARMOR", seeds.magicArmor],
-        ["magic-shields.ts", "MAGIC_SHIELDS", seeds.magicShields],
-        ["magic-weapons.ts", "MAGIC_WEAPONS", seeds.magicWeapons],
-        ["wondrous-items.ts", "WONDROUS_ITEMS", seeds.wondrousItems],
+        ["magicArmor.ts", "MAGIC_ARMOR", seeds.magicArmor],
+        ["magicShields.ts", "MAGIC_SHIELDS", seeds.magicShields],
+        ["magicWeapons.ts", "MAGIC_WEAPONS", seeds.magicWeapons],
+        ["wondrousItems.ts", "WONDROUS_ITEMS", seeds.wondrousItems],
         ["rings.ts", "RINGS", seeds.rings],
         ["rods.ts", "RODS", seeds.rods],
         ["staffs.ts", "STAFFS", seeds.staffs],

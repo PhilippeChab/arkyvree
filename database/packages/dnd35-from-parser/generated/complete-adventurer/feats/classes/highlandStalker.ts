@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const HIGHLAND_STALKER_FEATS: FeatSeed[] = [
+export const HIGHLAND_STALKER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Camouflage (Highland Stalker)",
     description: "Beginning at 7th level, a highland stalker can use the Hide skill in any sort of natural terrain.",

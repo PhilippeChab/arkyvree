@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const DARKWOOD_STALKER_FEATS: FeatSeed[] = [
+export const DARKWOOD_STALKER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Ancient Foe (Darkwood Stalker)",
     description:

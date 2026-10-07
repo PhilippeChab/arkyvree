@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const STORMLORD_FEATS: FeatSeed[] = [
+export const STORMLORD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Elemental Conflagration (Stormlord)",
     description: "",

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const CONTEMPLATIVE_FEATS: FeatSeed[] = [
+export const CONTEMPLATIVE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Divine Body (Contemplative)",
     description: "Starting at 5th level, the contemplative gains total immunity to all types of poison.",

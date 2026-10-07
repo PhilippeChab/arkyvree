@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const BLOODHOUND_FEATS: FeatSeed[] = [
+export const BLOODHOUND_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bring 'em Back Alive (Bloodhound)",
     description:

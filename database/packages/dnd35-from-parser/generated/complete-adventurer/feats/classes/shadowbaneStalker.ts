@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SHADOWBANE_STALKER_FEATS: FeatSeed[] = [
+export const SHADOWBANE_STALKER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Detect Evil (Shadowbane Stalker)",
     description: "A shadowbane stalker can use detect evil at will. See the spell of the Player's Handbook.",

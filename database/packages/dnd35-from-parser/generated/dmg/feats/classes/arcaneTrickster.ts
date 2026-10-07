@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const ARCANE_TRICKSTER_FEATS: FeatSeed[] = [
+export const ARCANE_TRICKSTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Impromptu Sneak Attack (Arcane Trickster)",
     description:

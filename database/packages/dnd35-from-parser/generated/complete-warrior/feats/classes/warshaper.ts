@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const WARSHAPER_FEATS: FeatSeed[] = [
+export const WARSHAPER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Flashmorph/multimorph (Warshaper)",
     description:

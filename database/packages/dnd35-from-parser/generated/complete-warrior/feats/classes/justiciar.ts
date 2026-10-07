@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const JUSTICIAR_FEATS: FeatSeed[] = [
+export const JUSTICIAR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bring 'em Back Alive (Justiciar)",
     description:

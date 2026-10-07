@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SPELLSWORD_FEATS: FeatSeed[] = [
+export const SPELLSWORD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bonus Feat (Spellsword)",
     description:

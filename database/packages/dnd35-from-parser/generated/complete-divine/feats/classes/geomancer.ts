@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const GEOMANCER_FEATS: FeatSeed[] = [
+export const GEOMANCER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Drift 1 (Geomancer)",
     description:

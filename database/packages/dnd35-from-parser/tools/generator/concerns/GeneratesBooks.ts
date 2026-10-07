@@ -18,7 +18,7 @@ export function GeneratesBooks<B extends Constructor<BaseGenerator>>(Base: B) {
         { key: "cowFeats", file: "cowFeats.ts", name: "COW_FEATS" },
         { key: "spells", file: "spells/index.ts", name: "ALL_SPELLS" },
         { key: "cowSpells", file: "cowSpells.ts", name: "COW_SPELLS" },
-        { key: "domains", file: "domains/data.ts", name: "ALL_DOMAINS" },
+        { key: "domains", file: "domains.ts", name: "ALL_DOMAINS" },
         { key: "classes", file: "classes/index.ts", name: "ALL_CLASSES" },
       ];
       const present = parts.filter((part) => existsSync(join(dir, part.file)));

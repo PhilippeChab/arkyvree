@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const RADIANT_SERVANT_OF_PELOR_FEATS: FeatSeed[] = [
+export const RADIANT_SERVANT_OF_PELOR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Aura of Warding (Radiant Servant of Pelor)",
     description:

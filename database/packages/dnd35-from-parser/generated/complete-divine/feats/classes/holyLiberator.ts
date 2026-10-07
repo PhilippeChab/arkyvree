@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const HOLY_LIBERATOR_FEATS: FeatSeed[] = [
+export const HOLY_LIBERATOR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Aura of Good (Holy Liberator)",
     description:

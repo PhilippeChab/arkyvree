@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const CLOAKED_DANCER_FEATS: FeatSeed[] = [
+export const CLOAKED_DANCER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Enchanting Dance (Beguiling Dance) (Cloaked Dancer)",
     description:

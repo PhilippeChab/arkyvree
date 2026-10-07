@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MOUNTEBANK_FEATS: FeatSeed[] = [
+export const MOUNTEBANK_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Alter Ego (Mountebank)",
     description:

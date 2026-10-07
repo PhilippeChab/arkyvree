@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const TATTOOED_MONK_FEATS: FeatSeed[] = [
+export const TATTOOED_MONK_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Arrowroot (Tattooed Monk Tattoo)",
     description:

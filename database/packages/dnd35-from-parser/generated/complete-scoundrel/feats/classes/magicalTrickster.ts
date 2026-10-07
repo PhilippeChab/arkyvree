@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MAGICAL_TRICKSTER_FEATS: FeatSeed[] = [
+export const MAGICAL_TRICKSTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bonus Metamagic Feat (Magical Trickster)",
     description: "At 2nd level, you gain a bonus metamagic feat for which you meet the prerequisite.",

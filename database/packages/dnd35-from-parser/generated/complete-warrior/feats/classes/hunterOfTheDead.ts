@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const HUNTER_OF_THE_DEAD_FEATS: FeatSeed[] = [
+export const HUNTER_OF_THE_DEAD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Detect Undead (Hunter of the Dead)",
     description:

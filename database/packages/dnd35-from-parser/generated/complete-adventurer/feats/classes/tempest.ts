@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const TEMPEST_FEATS: FeatSeed[] = [
+export const TEMPEST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Ambidexterity (Tempest)",
     description:

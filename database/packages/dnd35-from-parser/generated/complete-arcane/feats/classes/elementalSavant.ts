@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const ELEMENTAL_SAVANT_FEATS: FeatSeed[] = [
+export const ELEMENTAL_SAVANT_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Darkvision (Elemental Savant)",
     description: "At 6th level, an elemental savant gains darkvision out to 60 feet.",

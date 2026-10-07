@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const ENTROPOMANCER_FEATS: FeatSeed[] = [
+export const ENTROPOMANCER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Control Sphere (Entropomancer)",
     description:

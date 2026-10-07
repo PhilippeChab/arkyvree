@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MALCONVOKER_FEATS: FeatSeed[] = [
+export const MALCONVOKER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Deceitful Bargaining (Malconvoker)",
     description:

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MAESTER_FEATS: FeatSeed[] = [
+export const MAESTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bonus Feat (Maester)",
     description:

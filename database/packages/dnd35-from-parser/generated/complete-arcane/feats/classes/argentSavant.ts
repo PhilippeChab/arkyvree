@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const ARGENT_SAVANT_FEATS: FeatSeed[] = [
+export const ARGENT_SAVANT_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Ablate Force (Argent Savant)",
     description:

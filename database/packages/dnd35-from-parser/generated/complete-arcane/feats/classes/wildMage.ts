@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const WILD_MAGE_FEATS: FeatSeed[] = [
+export const WILD_MAGE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Chaotic Mind (Wild Mage)",
     description:

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const ALIENIST_FEATS: FeatSeed[] = [
+export const ALIENIST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Alien Blessing (Alienist)",
     description:

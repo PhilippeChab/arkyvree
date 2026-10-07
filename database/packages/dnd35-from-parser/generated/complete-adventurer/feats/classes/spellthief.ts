@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SPELLTHIEF_FEATS: FeatSeed[] = [
+export const SPELLTHIEF_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Absorb Spell (Spellthief)",
     description:

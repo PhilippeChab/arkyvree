@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const DRAGON_DISCIPLE_FEATS: FeatSeed[] = [
+export const DRAGON_DISCIPLE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Ability Boost (Dragon Disciple)",
     description:

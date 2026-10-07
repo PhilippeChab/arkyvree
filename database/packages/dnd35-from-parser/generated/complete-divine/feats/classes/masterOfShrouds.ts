@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MASTER_OF_SHROUDS_FEATS: FeatSeed[] = [
+export const MASTER_OF_SHROUDS_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Spells per Day/Spells Known (Master of Shrouds)",
     description:

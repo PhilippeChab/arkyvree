@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SPELLWARP_SNIPER_FEATS: FeatSeed[] = [
+export const SPELLWARP_SNIPER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Ray Mastery (Spellwarp Sniper)",
     description:

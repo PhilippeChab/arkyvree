@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const KNIGHT_OF_THE_CHALICE_FEATS: FeatSeed[] = [
+export const KNIGHT_OF_THE_CHALICE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Censure Demons (Knight of the Chalice)",
     description:

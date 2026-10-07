@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const HORIZON_WALKER_FEATS: FeatSeed[] = [
+export const HORIZON_WALKER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Planar Terrain Mastery (Horizon Walker)",
     description:

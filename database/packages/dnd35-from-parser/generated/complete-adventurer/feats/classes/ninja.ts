@@ -3,7 +3,7 @@
 import { eqStr } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const NINJA_FEATS: FeatSeed[] = [
+export const NINJA_CLASS_FEATS: FeatSeed[] = [
   {
     name: "AC Bonus (Ninja)",
     description:

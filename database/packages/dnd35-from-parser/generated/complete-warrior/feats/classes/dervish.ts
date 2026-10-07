@@ -3,7 +3,7 @@
 import { eqStr } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const DERVISH_FEATS: FeatSeed[] = [
+export const DERVISH_CLASS_FEATS: FeatSeed[] = [
   {
     name: "A Thousand Cuts (Dervish)",
     description:

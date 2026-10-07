@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SACRED_EXORCIST_FEATS: FeatSeed[] = [
+export const SACRED_EXORCIST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Chosen Foe (Sacred Exorcist)",
     description:

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const THIEF_ACROBAT_FEATS: FeatSeed[] = [
+export const THIEF_ACROBAT_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Acrobatic Charge (Thief-acrobat)",
     description:

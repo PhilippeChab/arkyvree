@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const DIVINE_ORACLE_FEATS: FeatSeed[] = [
+export const DIVINE_ORACLE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Divination Enhancement (Divine Oracle)",
     description:

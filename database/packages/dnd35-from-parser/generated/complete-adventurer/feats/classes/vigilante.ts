@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const VIGILANTE_FEATS: FeatSeed[] = [
+export const VIGILANTE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Detect Evil (Vigilante)",
     description: "A vigilante can use detect evil at will. See the spell of the Player's Handbook.",

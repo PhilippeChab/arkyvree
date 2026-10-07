@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const BLOOD_MAGUS_FEATS: FeatSeed[] = [
+export const BLOOD_MAGUS_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Awaken Blood (Blood Magus)",
     description:

@@ -3,7 +3,7 @@
 import { eq } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const ANIMAL_LORD_FEATS: FeatSeed[] = [
+export const ANIMAL_LORD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Animal Bond (Animal Lord)",
     description:

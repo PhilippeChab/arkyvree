@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const FOCHLUCAN_LYRIST_FEATS: FeatSeed[] = [
+export const FOCHLUCAN_LYRIST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bardic Knowledge (Fochlucan Lyrist)",
     description:

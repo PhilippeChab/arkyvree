@@ -5,7 +5,7 @@
 
 import { ALL_APTITUDES } from "@/database/packages/dnd35-from-parser/generated/srd/aptitudes.ts";
 import { ALL_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
-import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains/data.ts";
+import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains.ts";
 import { ALL_FEATS } from "@/database/packages/dnd35-from-parser/generated/srd/feats/index.ts";
 import {
   GOODS,
@@ -17,9 +17,9 @@ import {
   STAFFS,
   WONDROUS_ITEMS,
 } from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
-import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races/data.ts";
+import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races.ts";
 import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/spells/index.ts";
-import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
+import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizardSchools.ts";
 import type { AbilitySeed } from "@/database/packages/dnd35/content/abilities/types.ts";
 import { spellLevelsOf } from "@/database/packages/dnd35/content/classes/spellLevels.ts";
 import type { LanguageSeed } from "@/database/packages/dnd35/content/languages/types.ts";

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const OLLAM_FEATS: FeatSeed[] = [
+export const OLLAM_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Inspire Competence (Ollam)",
     description:

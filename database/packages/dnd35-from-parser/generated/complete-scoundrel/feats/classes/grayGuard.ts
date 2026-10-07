@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const GRAY_GUARD_FEATS: FeatSeed[] = [
+export const GRAY_GUARD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Debilitating Touch (Gray Guard)",
     description:

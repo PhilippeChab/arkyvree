@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const DARK_HUNTER_FEATS: FeatSeed[] = [
+export const DARK_HUNTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Death Attack (Dark Hunter)",
     description:

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const BLACK_FLAME_ZEALOT_FEATS: FeatSeed[] = [
+export const BLACK_FLAME_ZEALOT_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Death Attack (Black Flame Zealot)",
     description:

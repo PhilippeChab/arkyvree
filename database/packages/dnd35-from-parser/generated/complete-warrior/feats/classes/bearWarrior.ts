@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const BEAR_WARRIOR_FEATS: FeatSeed[] = [
+export const BEAR_WARRIOR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bear Form (Bear Warrior)",
     description:

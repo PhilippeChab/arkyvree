@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const RAGE_MAGE_FEATS: FeatSeed[] = [
+export const RAGE_MAGE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Overcome Spell Failure (Rage Mage)",
     description:

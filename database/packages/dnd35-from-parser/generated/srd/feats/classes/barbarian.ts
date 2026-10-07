@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const BARBARIAN_FEATS: FeatSeed[] = [
+export const BARBARIAN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Damage Reduction (Barbarian)",
     description:

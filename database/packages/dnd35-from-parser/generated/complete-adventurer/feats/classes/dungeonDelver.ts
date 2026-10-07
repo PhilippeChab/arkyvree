@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const DUNGEON_DELVER_FEATS: FeatSeed[] = [
+export const DUNGEON_DELVER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Augury (Dungeon Delver)",
     description:

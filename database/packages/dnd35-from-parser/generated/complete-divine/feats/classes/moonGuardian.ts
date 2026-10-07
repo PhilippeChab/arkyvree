@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MOON_GUARDIAN_FEATS: FeatSeed[] = [
+export const MOON_GUARDIAN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Instantaneous Change (Moon Guardian)",
     description:

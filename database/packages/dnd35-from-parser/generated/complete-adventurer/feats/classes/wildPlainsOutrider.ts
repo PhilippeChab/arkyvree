@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const WILD_PLAINS_OUTRIDER_FEATS: FeatSeed[] = [
+export const WILD_PLAINS_OUTRIDER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Animal Companion/special Mount (Wild Plains Outrider)",
     description:

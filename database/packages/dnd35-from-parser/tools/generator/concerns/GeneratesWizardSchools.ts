@@ -9,7 +9,7 @@ import type { Constructor } from "@/server/mixins.ts";
 /** Generating a book's wizard schools. */
 export function GeneratesWizardSchools<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingWizardSchools extends Base {
-    /** A book's wizard schools file (wizard-schools/data.ts). */
+    /** A book's wizard schools file (wizardSchools.ts). */
     writeWizardSchools(ref: WizardSchoolReference, book: string) {
       const seeds = buildWizardSchoolSeeds(ref);
       this.log(`Built ${seeds.length} wizard school seeds`);
@@ -20,7 +20,7 @@ export function GeneratesWizardSchools<B extends Constructor<BaseGenerator>>(Bas
         "WizardSchoolSeed",
         seeds.flatMap((school) => file.wizardSchool(school)),
       );
-      this.write(join(this.dir, book, "wizard-schools", "data.ts"), file.code());
+      this.write(join(this.dir, book, "wizardSchools.ts"), file.code());
 
       this.log(`\nDone!`);
     }

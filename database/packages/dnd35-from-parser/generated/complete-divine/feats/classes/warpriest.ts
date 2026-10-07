@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const WARPRIEST_FEATS: FeatSeed[] = [
+export const WARPRIEST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Fear Aura (Warpriest)",
     description:

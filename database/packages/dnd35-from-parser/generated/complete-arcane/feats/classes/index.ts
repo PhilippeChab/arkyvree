@@ -2,51 +2,51 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-import { ACOLYTE_OF_THE_SKIN_FEATS } from "./acolyteOfTheSkin.ts";
-import { ALIENIST_FEATS } from "./alienist.ts";
-import { ARGENT_SAVANT_FEATS } from "./argentSavant.ts";
-import { BLOOD_MAGUS_FEATS } from "./bloodMagus.ts";
-import { EFFIGY_MASTER_FEATS } from "./effigyMaster.ts";
-import { ELEMENTAL_SAVANT_FEATS } from "./elementalSavant.ts";
-import { ENLIGHTENED_FIST_FEATS } from "./enlightenedFist.ts";
-import { FATESPINNER_FEATS } from "./fatespinner.ts";
-import { GEOMETER_FEATS } from "./geometer.ts";
-import { GREEN_STAR_ADEPT_FEATS } from "./greenStarAdept.ts";
-import { INITIATE_OF_THE_SEVENFOLD_VEIL_FEATS } from "./initiateOfTheSevenfoldVeil.ts";
-import { MAGE_OF_THE_ARCANE_ORDER_FEATS } from "./mageOfTheArcaneOrder.ts";
-import { MASTER_TRANSMOGRIFIST_FEATS } from "./masterTransmogrifist.ts";
-import { MINDBENDER_FEATS } from "./mindbender.ts";
-import { SEEKER_OF_THE_SONG_FEATS } from "./seekerOfTheSong.ts";
-import { SUBLIME_CHORD_FEATS } from "./sublimeChord.ts";
-import { SUEL_ARCANAMACH_FEATS } from "./suelArcanamach.ts";
-import { WARLOCK_FEATS } from "./warlock.ts";
-import { WARMAGE_FEATS } from "./warmage.ts";
-import { WAYFARER_GUIDE_FEATS } from "./wayfarerGuide.ts";
-import { WILD_MAGE_FEATS } from "./wildMage.ts";
-import { WU_JEN_FEATS } from "./wuJen.ts";
+import { ACOLYTE_OF_THE_SKIN_CLASS_FEATS } from "./acolyteOfTheSkin.ts";
+import { ALIENIST_CLASS_FEATS } from "./alienist.ts";
+import { ARGENT_SAVANT_CLASS_FEATS } from "./argentSavant.ts";
+import { BLOOD_MAGUS_CLASS_FEATS } from "./bloodMagus.ts";
+import { EFFIGY_MASTER_CLASS_FEATS } from "./effigyMaster.ts";
+import { ELEMENTAL_SAVANT_CLASS_FEATS } from "./elementalSavant.ts";
+import { ENLIGHTENED_FIST_CLASS_FEATS } from "./enlightenedFist.ts";
+import { FATESPINNER_CLASS_FEATS } from "./fatespinner.ts";
+import { GEOMETER_CLASS_FEATS } from "./geometer.ts";
+import { GREEN_STAR_ADEPT_CLASS_FEATS } from "./greenStarAdept.ts";
+import { INITIATE_OF_THE_SEVENFOLD_VEIL_CLASS_FEATS } from "./initiateOfTheSevenfoldVeil.ts";
+import { MAGE_OF_THE_ARCANE_ORDER_CLASS_FEATS } from "./mageOfTheArcaneOrder.ts";
+import { MASTER_TRANSMOGRIFIST_CLASS_FEATS } from "./masterTransmogrifist.ts";
+import { MINDBENDER_CLASS_FEATS } from "./mindbender.ts";
+import { SEEKER_OF_THE_SONG_CLASS_FEATS } from "./seekerOfTheSong.ts";
+import { SUBLIME_CHORD_CLASS_FEATS } from "./sublimeChord.ts";
+import { SUEL_ARCANAMACH_CLASS_FEATS } from "./suelArcanamach.ts";
+import { WARLOCK_CLASS_FEATS } from "./warlock.ts";
+import { WARMAGE_CLASS_FEATS } from "./warmage.ts";
+import { WAYFARER_GUIDE_CLASS_FEATS } from "./wayfarerGuide.ts";
+import { WILD_MAGE_CLASS_FEATS } from "./wildMage.ts";
+import { WU_JEN_CLASS_FEATS } from "./wuJen.ts";
 
 const _allClassFeats: FeatSeed[] = [
-  ...ACOLYTE_OF_THE_SKIN_FEATS,
-  ...ALIENIST_FEATS,
-  ...ARGENT_SAVANT_FEATS,
-  ...BLOOD_MAGUS_FEATS,
-  ...EFFIGY_MASTER_FEATS,
-  ...ELEMENTAL_SAVANT_FEATS,
-  ...ENLIGHTENED_FIST_FEATS,
-  ...FATESPINNER_FEATS,
-  ...GEOMETER_FEATS,
-  ...GREEN_STAR_ADEPT_FEATS,
-  ...INITIATE_OF_THE_SEVENFOLD_VEIL_FEATS,
-  ...MAGE_OF_THE_ARCANE_ORDER_FEATS,
-  ...MASTER_TRANSMOGRIFIST_FEATS,
-  ...MINDBENDER_FEATS,
-  ...SEEKER_OF_THE_SONG_FEATS,
-  ...SUBLIME_CHORD_FEATS,
-  ...SUEL_ARCANAMACH_FEATS,
-  ...WARLOCK_FEATS,
-  ...WARMAGE_FEATS,
-  ...WAYFARER_GUIDE_FEATS,
-  ...WILD_MAGE_FEATS,
-  ...WU_JEN_FEATS,
+  ...ACOLYTE_OF_THE_SKIN_CLASS_FEATS,
+  ...ALIENIST_CLASS_FEATS,
+  ...ARGENT_SAVANT_CLASS_FEATS,
+  ...BLOOD_MAGUS_CLASS_FEATS,
+  ...EFFIGY_MASTER_CLASS_FEATS,
+  ...ELEMENTAL_SAVANT_CLASS_FEATS,
+  ...ENLIGHTENED_FIST_CLASS_FEATS,
+  ...FATESPINNER_CLASS_FEATS,
+  ...GEOMETER_CLASS_FEATS,
+  ...GREEN_STAR_ADEPT_CLASS_FEATS,
+  ...INITIATE_OF_THE_SEVENFOLD_VEIL_CLASS_FEATS,
+  ...MAGE_OF_THE_ARCANE_ORDER_CLASS_FEATS,
+  ...MASTER_TRANSMOGRIFIST_CLASS_FEATS,
+  ...MINDBENDER_CLASS_FEATS,
+  ...SEEKER_OF_THE_SONG_CLASS_FEATS,
+  ...SUBLIME_CHORD_CLASS_FEATS,
+  ...SUEL_ARCANAMACH_CLASS_FEATS,
+  ...WARLOCK_CLASS_FEATS,
+  ...WARMAGE_CLASS_FEATS,
+  ...WAYFARER_GUIDE_CLASS_FEATS,
+  ...WILD_MAGE_CLASS_FEATS,
+  ...WU_JEN_CLASS_FEATS,
 ];
 export const ALL_CLASS_FEATS: FeatSeed[] = [...Map.groupBy(_allClassFeats, (f) => f.name).values()].map(([f]) => f);

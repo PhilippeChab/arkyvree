@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const NIGHTSONG_INFILTRATOR_FEATS: FeatSeed[] = [
+export const NIGHTSONG_INFILTRATOR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Break Away (Nightsong Infiltrator)",
     description:

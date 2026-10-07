@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const UR_PRIEST_FEATS: FeatSeed[] = [
+export const UR_PRIEST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Divine Spell Resistance 15 (Ur-priest)",
     description:

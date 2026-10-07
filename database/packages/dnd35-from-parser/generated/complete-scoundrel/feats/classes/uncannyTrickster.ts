@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const UNCANNY_TRICKSTER_FEATS: FeatSeed[] = [
+export const UNCANNY_TRICKSTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bonus Trick (Uncanny Trickster)",
     description:

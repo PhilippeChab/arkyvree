@@ -2,33 +2,33 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-import { AVENGING_EXECUTIONER_FEATS } from "./avengingExecutioner.ts";
-import { BATTLE_TRICKSTER_FEATS } from "./battleTrickster.ts";
-import { CLOAKED_DANCER_FEATS } from "./cloakedDancer.ts";
-import { COMBAT_TRAPSMITH_FEATS } from "./combatTrapsmith.ts";
-import { FORTUNES_FRIEND_FEATS } from "./fortunesFriend.ts";
-import { GRAY_GUARD_FEATS } from "./grayGuard.ts";
-import { MAGICAL_TRICKSTER_FEATS } from "./magicalTrickster.ts";
-import { MALCONVOKER_FEATS } from "./malconvoker.ts";
-import { MASTER_OF_MASKS_FEATS } from "./masterOfMasks.ts";
-import { MOUNTEBANK_FEATS } from "./mountebank.ts";
-import { PSIBOND_AGENT_FEATS } from "./psibondAgent.ts";
-import { SPELLWARP_SNIPER_FEATS } from "./spellwarpSniper.ts";
-import { UNCANNY_TRICKSTER_FEATS } from "./uncannyTrickster.ts";
+import { AVENGING_EXECUTIONER_CLASS_FEATS } from "./avengingExecutioner.ts";
+import { BATTLE_TRICKSTER_CLASS_FEATS } from "./battleTrickster.ts";
+import { CLOAKED_DANCER_CLASS_FEATS } from "./cloakedDancer.ts";
+import { COMBAT_TRAPSMITH_CLASS_FEATS } from "./combatTrapsmith.ts";
+import { FORTUNES_FRIEND_CLASS_FEATS } from "./fortunesFriend.ts";
+import { GRAY_GUARD_CLASS_FEATS } from "./grayGuard.ts";
+import { MAGICAL_TRICKSTER_CLASS_FEATS } from "./magicalTrickster.ts";
+import { MALCONVOKER_CLASS_FEATS } from "./malconvoker.ts";
+import { MASTER_OF_MASKS_CLASS_FEATS } from "./masterOfMasks.ts";
+import { MOUNTEBANK_CLASS_FEATS } from "./mountebank.ts";
+import { PSIBOND_AGENT_CLASS_FEATS } from "./psibondAgent.ts";
+import { SPELLWARP_SNIPER_CLASS_FEATS } from "./spellwarpSniper.ts";
+import { UNCANNY_TRICKSTER_CLASS_FEATS } from "./uncannyTrickster.ts";
 
 const _allClassFeats: FeatSeed[] = [
-  ...AVENGING_EXECUTIONER_FEATS,
-  ...BATTLE_TRICKSTER_FEATS,
-  ...CLOAKED_DANCER_FEATS,
-  ...COMBAT_TRAPSMITH_FEATS,
-  ...FORTUNES_FRIEND_FEATS,
-  ...GRAY_GUARD_FEATS,
-  ...MAGICAL_TRICKSTER_FEATS,
-  ...MALCONVOKER_FEATS,
-  ...MASTER_OF_MASKS_FEATS,
-  ...MOUNTEBANK_FEATS,
-  ...PSIBOND_AGENT_FEATS,
-  ...SPELLWARP_SNIPER_FEATS,
-  ...UNCANNY_TRICKSTER_FEATS,
+  ...AVENGING_EXECUTIONER_CLASS_FEATS,
+  ...BATTLE_TRICKSTER_CLASS_FEATS,
+  ...CLOAKED_DANCER_CLASS_FEATS,
+  ...COMBAT_TRAPSMITH_CLASS_FEATS,
+  ...FORTUNES_FRIEND_CLASS_FEATS,
+  ...GRAY_GUARD_CLASS_FEATS,
+  ...MAGICAL_TRICKSTER_CLASS_FEATS,
+  ...MALCONVOKER_CLASS_FEATS,
+  ...MASTER_OF_MASKS_CLASS_FEATS,
+  ...MOUNTEBANK_CLASS_FEATS,
+  ...PSIBOND_AGENT_CLASS_FEATS,
+  ...SPELLWARP_SNIPER_CLASS_FEATS,
+  ...UNCANNY_TRICKSTER_CLASS_FEATS,
 ];
 export const ALL_CLASS_FEATS: FeatSeed[] = [...Map.groupBy(_allClassFeats, (f) => f.name).values()].map(([f]) => f);

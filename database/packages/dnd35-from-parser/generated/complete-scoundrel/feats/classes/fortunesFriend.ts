@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const FORTUNES_FRIEND_FEATS: FeatSeed[] = [
+export const FORTUNES_FRIEND_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bonus Luck Feat (Fortune's Friend)",
     description:

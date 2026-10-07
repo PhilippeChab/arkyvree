@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MINDSPY_FEATS: FeatSeed[] = [
+export const MINDSPY_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Anticipate (Mindspy)",
     description:

@@ -1,7 +1,7 @@
 /** What a feat reference makes: its feats by feat type and its template families, and a feat's checks of a family. */
 
 import { buildCompanionGrantModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/grants.ts";
-import { normalizeName, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
+import { normalizeName } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
@@ -17,7 +17,6 @@ type FeatEntry = {
 /** A template feat's family, which the generated code makes a feat of per item (weapon, skill, school…). */
 export type TemplateFamily = {
   type: TemplateType;
-  constName: string;
   familyName: string;
   aptitudes: string[];
   requirements: RequirementEntry[];
@@ -67,7 +66,6 @@ export function buildReferenceFeats(ref: FeatReference) {
       const { type, familyName } = mapped.template;
       templates.push({
         type,
-        constName: toCamelCase(familyName),
         familyName,
         aptitudes: mapped.aptitudes ?? [],
         requirements: mapped.requirements ?? [],

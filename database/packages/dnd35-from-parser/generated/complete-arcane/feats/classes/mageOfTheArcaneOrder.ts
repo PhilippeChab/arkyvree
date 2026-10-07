@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MAGE_OF_THE_ARCANE_ORDER_FEATS: FeatSeed[] = [
+export const MAGE_OF_THE_ARCANE_ORDER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bonus Language (Mage of the Arcane Order)",
     description:

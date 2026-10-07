@@ -3,7 +3,7 @@
 import { eq, eqStr, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const EXOTIC_WEAPON_MASTER_FEATS: FeatSeed[] = [
+export const EXOTIC_WEAPON_MASTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Close-Quarters Ranged Combat (Exotic Weapon Master Exotic Weapon Stunt)",
     description:

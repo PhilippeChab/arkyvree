@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const ORDER_OF_THE_BOW_INITIATE_FEATS: FeatSeed[] = [
+export const ORDER_OF_THE_BOW_INITIATE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Close Combat Shot (Order of the Bow Initiate)",
     description:

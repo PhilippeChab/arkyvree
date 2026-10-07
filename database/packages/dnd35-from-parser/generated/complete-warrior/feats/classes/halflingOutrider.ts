@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const HALFLING_OUTRIDER_FEATS: FeatSeed[] = [
+export const HALFLING_OUTRIDER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "AC Bonus (Halfling Outrider)",
     description:

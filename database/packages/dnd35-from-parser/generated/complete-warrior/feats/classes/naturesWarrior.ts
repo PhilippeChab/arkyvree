@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const NATURES_WARRIOR_FEATS: FeatSeed[] = [
+export const NATURES_WARRIOR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Armor of the Crocodile (Nature's Warrior Nature's Armament)",
     description:

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SHINING_BLADE_OF_HEIRONEOUS_FEATS: FeatSeed[] = [
+export const SHINING_BLADE_OF_HEIRONEOUS_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Brilliant Blade (Shining Blade of Heironeous)",
     description:

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const AVENGING_EXECUTIONER_FEATS: FeatSeed[] = [
+export const AVENGING_EXECUTIONER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bloody Blade (Avenging Executioner)",
     description:

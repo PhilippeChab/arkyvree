@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const DWARVEN_DEFENDER_FEATS: FeatSeed[] = [
+export const DWARVEN_DEFENDER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "AC Bonus (Dwarven Defender)",
     description:

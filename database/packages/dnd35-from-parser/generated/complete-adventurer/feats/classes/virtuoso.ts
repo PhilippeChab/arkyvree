@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const VIRTUOSO_FEATS: FeatSeed[] = [
+export const VIRTUOSO_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bardic Music (Fascinate) (Virtuoso)",
     description:

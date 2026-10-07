@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const PURPLE_DRAGON_KNIGHT_FEATS: FeatSeed[] = [
+export const PURPLE_DRAGON_KNIGHT_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Fear (Purple Dragon Knight)",
     description:

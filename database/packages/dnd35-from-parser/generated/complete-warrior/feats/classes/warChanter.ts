@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const WAR_CHANTER_FEATS: FeatSeed[] = [
+export const WAR_CHANTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Combine Songs (War Chanter)",
     description:

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const ARCHMAGE_FEATS: FeatSeed[] = [
+export const ARCHMAGE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Arcane Fire (Archmage High Arcana)",
     description:

@@ -3,7 +3,7 @@
 import { eqStr, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MONK_FEATS: FeatSeed[] = [
+export const MONK_CLASS_FEATS: FeatSeed[] = [
   {
     name: "AC Bonus (Monk)",
     description:

@@ -3,7 +3,7 @@
 import { eqNum } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const DUELIST_FEATS: FeatSeed[] = [
+export const DUELIST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Acrobatic Charge (Duelist)",
     description:

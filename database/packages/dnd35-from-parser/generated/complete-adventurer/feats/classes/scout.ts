@@ -3,7 +3,7 @@
 import { eqStr } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SCOUT_FEATS: FeatSeed[] = [
+export const SCOUT_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Battle Fortitude (Scout)",
     description:

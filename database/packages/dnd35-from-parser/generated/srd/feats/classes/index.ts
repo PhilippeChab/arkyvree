@@ -2,29 +2,29 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-import { BARBARIAN_FEATS } from "./barbarian.ts";
-import { BARD_FEATS } from "./bard.ts";
-import { CLERIC_FEATS } from "./cleric.ts";
-import { DRUID_FEATS } from "./druid.ts";
-import { FIGHTER_FEATS } from "./fighter.ts";
-import { MONK_FEATS } from "./monk.ts";
-import { PALADIN_FEATS } from "./paladin.ts";
-import { RANGER_FEATS } from "./ranger.ts";
-import { ROGUE_FEATS } from "./rogue.ts";
-import { SORCERER_FEATS } from "./sorcerer.ts";
-import { WIZARD_FEATS } from "./wizard.ts";
+import { BARBARIAN_CLASS_FEATS } from "./barbarian.ts";
+import { BARD_CLASS_FEATS } from "./bard.ts";
+import { CLERIC_CLASS_FEATS } from "./cleric.ts";
+import { DRUID_CLASS_FEATS } from "./druid.ts";
+import { FIGHTER_CLASS_FEATS } from "./fighter.ts";
+import { MONK_CLASS_FEATS } from "./monk.ts";
+import { PALADIN_CLASS_FEATS } from "./paladin.ts";
+import { RANGER_CLASS_FEATS } from "./ranger.ts";
+import { ROGUE_CLASS_FEATS } from "./rogue.ts";
+import { SORCERER_CLASS_FEATS } from "./sorcerer.ts";
+import { WIZARD_CLASS_FEATS } from "./wizard.ts";
 
 const _allClassFeats: FeatSeed[] = [
-  ...BARBARIAN_FEATS,
-  ...BARD_FEATS,
-  ...CLERIC_FEATS,
-  ...DRUID_FEATS,
-  ...FIGHTER_FEATS,
-  ...MONK_FEATS,
-  ...PALADIN_FEATS,
-  ...RANGER_FEATS,
-  ...ROGUE_FEATS,
-  ...SORCERER_FEATS,
-  ...WIZARD_FEATS,
+  ...BARBARIAN_CLASS_FEATS,
+  ...BARD_CLASS_FEATS,
+  ...CLERIC_CLASS_FEATS,
+  ...DRUID_CLASS_FEATS,
+  ...FIGHTER_CLASS_FEATS,
+  ...MONK_CLASS_FEATS,
+  ...PALADIN_CLASS_FEATS,
+  ...RANGER_CLASS_FEATS,
+  ...ROGUE_CLASS_FEATS,
+  ...SORCERER_CLASS_FEATS,
+  ...WIZARD_CLASS_FEATS,
 ];
 export const ALL_CLASS_FEATS: FeatSeed[] = [...Map.groupBy(_allClassFeats, (f) => f.name).values()].map(([f]) => f);

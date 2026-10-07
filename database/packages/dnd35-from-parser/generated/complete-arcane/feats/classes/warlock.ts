@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const WARLOCK_FEATS: FeatSeed[] = [
+export const WARLOCK_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Damage Reduction 1/cold Iron (Warlock)",
     description:

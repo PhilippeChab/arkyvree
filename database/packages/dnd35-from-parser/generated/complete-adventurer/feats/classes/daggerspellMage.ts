@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const DAGGERSPELL_MAGE_FEATS: FeatSeed[] = [
+export const DAGGERSPELL_MAGE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Arcane Infusion (Daggerspell Mage)",
     description:

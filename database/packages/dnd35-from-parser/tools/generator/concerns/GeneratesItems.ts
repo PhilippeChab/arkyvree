@@ -70,21 +70,16 @@ export function GeneratesItems<B extends Constructor<BaseGenerator>>(Base: B) {
       const seeds = buildItemSeeds(ref);
       const outDir = join(this.dir, book, "items");
 
-      // weapons.ts
-      this.writeWeaponFile(join(outDir, "weapons.ts"), "SIMPLE_WEAPONS", seeds.simpleWeapons, "simple");
-      this.writeWeaponFile(join(outDir, "martial.ts"), "MARTIAL_WEAPONS", seeds.martialWeapons, "martial");
-      this.writeWeaponFile(join(outDir, "exotic.ts"), "EXOTIC_WEAPONS", seeds.exoticWeapons, "exotic");
+      this.writeWeaponFile(join(outDir, "simpleWeapons.ts"), "SIMPLE_WEAPONS", seeds.simpleWeapons, "simple");
+      this.writeWeaponFile(join(outDir, "martialWeapons.ts"), "MARTIAL_WEAPONS", seeds.martialWeapons, "martial");
+      this.writeWeaponFile(join(outDir, "exoticWeapons.ts"), "EXOTIC_WEAPONS", seeds.exoticWeapons, "exotic");
 
-      // armor.ts
       this.writeArmorFile(join(outDir, "armor.ts"), "ARMOR", seeds.armor);
 
-      // shields.ts
       this.writeShieldFile(join(outDir, "shields.ts"), "SHIELDS", seeds.shields);
 
-      // goods.ts
       this.writeGoodsFile(join(outDir, "goods.ts"), "GOODS", seeds.goods);
 
-      // index.ts
       this.writeItemIndex(outDir);
 
       this.log(

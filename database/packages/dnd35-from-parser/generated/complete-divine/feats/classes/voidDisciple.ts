@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const VOID_DISCIPLE_FEATS: FeatSeed[] = [
+export const VOID_DISCIPLE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Altering the Course (Void Disciple)",
     description:

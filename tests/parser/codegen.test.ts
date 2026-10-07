@@ -7,7 +7,7 @@ import {
   WEAPON_PROFICIENCY_FEATS,
   WIZARD_SCHOOL_FEATS,
 } from "@/database/packages/dnd35-from-parser/generated/srd/feats/feats.ts";
-import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
+import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizardSchools.ts";
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { buildCoreSystemFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
@@ -212,7 +212,7 @@ describe("The generated feats", () => {
     greater.requirements = [...(greater.requirements ?? []), eq(feat("Combat Casting")), gte("spellcasting.arcane", 1)];
     greater.featNameMap = { ...greater.featNameMap, combatcasting: "Combat Casting" };
     const generated = generateFeatSeeds(ref);
-    const template = generated.slice(generated.indexOf("export const greaterSpellFocus"));
+    const template = generated.slice(generated.indexOf("export const GREATER_SPELL_FOCUS_FEATS"));
     expect(template).toContain("eq(feat(`Spell Focus: ${s}`)),");
     expect(template).toContain(`eq(feat("Combat Casting")),`);
     expect(template).toContain(`gte("spellcasting.arcane", 1),`);
@@ -234,7 +234,7 @@ describe("The generated feats", () => {
   test("let an extension's family require the core rules' for the same item", () => {
     const ref = ReferenceLoader.load(join(REFERENCE_DIR, "complete-warrior", "feats.json"), "feat");
     const generated = generateFeatSeeds(ref);
-    const template = generated.slice(generated.indexOf("export const powerCritical"));
+    const template = generated.slice(generated.indexOf("export const POWER_CRITICAL_FEATS"));
     expect(template.slice(0, template.indexOf("}));"))).toContain("eq(feat(`Weapon Focus: ${w}`)),");
   });
 

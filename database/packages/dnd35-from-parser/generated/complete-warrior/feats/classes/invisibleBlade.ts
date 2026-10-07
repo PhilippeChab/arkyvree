@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const INVISIBLE_BLADE_FEATS: FeatSeed[] = [
+export const INVISIBLE_BLADE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bleeding Wound (Invisible Blade)",
     description:

@@ -26,8 +26,7 @@ export function GeneratesDomains<B extends Constructor<BaseGenerator>>(Base: B) 
       const { seeds, poolFeats } = buildBookDomainSeeds(book);
       this.log(`Built ${seeds.length} domain seeds`);
 
-      const outDir = join(this.dir, book, "domains");
-      const dataPath = join(outDir, "data.ts");
+      const dataPath = join(this.dir, book, "domains.ts");
 
       // A book without domains has an empty list of them
       const file = new CodeFile();

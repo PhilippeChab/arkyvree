@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const GREEN_STAR_ADEPT_FEATS: FeatSeed[] = [
+export const GREEN_STAR_ADEPT_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Damage Reduction (Green Star Adept)",
     description:

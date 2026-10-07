@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const THAYAN_KNIGHT_FEATS: FeatSeed[] = [
+export const THAYAN_KNIGHT_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Fighter Feat (Thayan Knight)",
     description:

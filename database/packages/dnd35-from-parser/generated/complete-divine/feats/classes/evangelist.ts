@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const EVANGELIST_FEATS: FeatSeed[] = [
+export const EVANGELIST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Fast Talk (Evangelist)",
     description:

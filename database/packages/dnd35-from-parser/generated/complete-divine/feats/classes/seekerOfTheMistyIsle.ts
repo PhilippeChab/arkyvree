@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SEEKER_OF_THE_MISTY_ISLE_FEATS: FeatSeed[] = [
+export const SEEKER_OF_THE_MISTY_ISLE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Arcane Sight (Seeker of the Misty Isle)",
     description:

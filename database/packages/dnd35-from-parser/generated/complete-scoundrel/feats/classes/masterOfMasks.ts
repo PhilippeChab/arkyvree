@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MASTER_OF_MASKS_FEATS: FeatSeed[] = [
+export const MASTER_OF_MASKS_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Hidden Mask (Master of Masks)",
     description:

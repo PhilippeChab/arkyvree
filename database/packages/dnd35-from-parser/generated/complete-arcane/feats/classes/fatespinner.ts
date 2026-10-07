@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const FATESPINNER_FEATS: FeatSeed[] = [
+export const FATESPINNER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Deny Fate (Fatespinner)",
     description:

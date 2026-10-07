@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const BEASTMASTER_FEATS: FeatSeed[] = [
+export const BEASTMASTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Animal Companion (Beastmaster)",
     description:

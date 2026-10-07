@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const KENSAI_FEATS: FeatSeed[] = [
+export const KENSAI_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Instill (Kensai)",
     description:

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const THAUMATURGIST_FEATS: FeatSeed[] = [
+export const THAUMATURGIST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Contingent Conjuration (Thaumaturgist)",
     description:

@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const HULKING_HURLER_FEATS: FeatSeed[] = [
+export const HULKING_HURLER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Area Attack (Hulking Hurler Two-Handed Hurl Trick)",
     description:

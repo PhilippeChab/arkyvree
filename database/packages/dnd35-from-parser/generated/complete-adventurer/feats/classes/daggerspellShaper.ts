@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const DAGGERSPELL_SHAPER_FEATS: FeatSeed[] = [
+export const DAGGERSPELL_SHAPER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Dagger Claws (Daggerspell Shaper)",
     description:

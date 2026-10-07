@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const ENLIGHTENED_FIST_FEATS: FeatSeed[] = [
+export const ENLIGHTENED_FIST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Arcane Fist (Enlightened Fist)",
     description:

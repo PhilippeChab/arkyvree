@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const WU_JEN_FEATS: FeatSeed[] = [
+export const WU_JEN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bonus Feat (Wu Jen)",
     description: "A wu jen begins play with a bonus metamagic feat.",

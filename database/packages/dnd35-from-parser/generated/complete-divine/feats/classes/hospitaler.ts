@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const HOSPITALER_FEATS: FeatSeed[] = [
+export const HOSPITALER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bonus Feat (Hospitaler)",
     description:

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SEEKER_OF_THE_SONG_FEATS: FeatSeed[] = [
+export const SEEKER_OF_THE_SONG_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Combine Songs (Seeker of the Song)",
     description:

@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const DRUID_FEATS: FeatSeed[] = [
+export const DRUID_CLASS_FEATS: FeatSeed[] = [
   {
     name: "A Thousand Faces (Druid)",
     description:

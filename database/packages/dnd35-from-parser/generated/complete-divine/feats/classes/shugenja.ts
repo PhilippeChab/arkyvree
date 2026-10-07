@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SHUGENJA_FEATS: FeatSeed[] = [
+export const SHUGENJA_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Elemental Focus (Shugenja)",
     description: "",

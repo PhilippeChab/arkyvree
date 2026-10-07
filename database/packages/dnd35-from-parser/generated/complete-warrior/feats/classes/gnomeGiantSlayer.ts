@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const GNOME_GIANT_SLAYER_FEATS: FeatSeed[] = [
+export const GNOME_GIANT_SLAYER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Annoying Strike (Gnome Giant-slayer)",
     description:

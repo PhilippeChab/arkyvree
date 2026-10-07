@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const RAVAGER_FEATS: FeatSeed[] = [
+export const RAVAGER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Aura of Fear (Ravager)",
     description:

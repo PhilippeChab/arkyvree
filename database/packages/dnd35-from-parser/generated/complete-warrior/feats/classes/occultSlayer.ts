@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const OCCULT_SLAYER_FEATS: FeatSeed[] = [
+export const OCCULT_SLAYER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Auravision (Occult Slayer)",
     description:

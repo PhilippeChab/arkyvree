@@ -3,7 +3,7 @@
 import { eqStr } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SACRED_FIST_FEATS: FeatSeed[] = [
+export const SACRED_FIST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "AC Bonus (Sacred Fist)",
     description:

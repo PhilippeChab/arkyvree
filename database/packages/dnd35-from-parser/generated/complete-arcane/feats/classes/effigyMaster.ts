@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const EFFIGY_MASTER_FEATS: FeatSeed[] = [
+export const EFFIGY_MASTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Craft Effigy (Effigy Master)",
     description:

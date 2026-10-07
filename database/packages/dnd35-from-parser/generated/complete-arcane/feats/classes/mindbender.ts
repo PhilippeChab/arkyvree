@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MINDBENDER_FEATS: FeatSeed[] = [
+export const MINDBENDER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Dominate (Mindbender)",
     description:

@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SPIRIT_SHAMAN_FEATS: FeatSeed[] = [
+export const SPIRIT_SHAMAN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Blessing of the Spirits (Spirit Shaman)",
     description:

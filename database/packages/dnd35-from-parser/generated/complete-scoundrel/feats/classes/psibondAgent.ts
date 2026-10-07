@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const PSIBOND_AGENT_FEATS: FeatSeed[] = [
+export const PSIBOND_AGENT_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Double Psibond (Psibond Agent)",
     description:

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SHADOWBANE_INQUISITOR_FEATS: FeatSeed[] = [
+export const SHADOWBANE_INQUISITOR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Absolute Conviction (Shadowbane Inquisitor)",
     description:

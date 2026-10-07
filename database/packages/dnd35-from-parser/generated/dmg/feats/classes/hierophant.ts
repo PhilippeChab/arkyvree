@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const HIEROPHANT_FEATS: FeatSeed[] = [
+export const HIEROPHANT_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Blast Infidel (Hierophant Special Ability)",
     description:

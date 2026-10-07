@@ -4,7 +4,7 @@ import { eq, feat, gte, or } from "@/database/packages/dnd35/content/customizati
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 
-export const arcaneDefense: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
+export const ARCANE_DEFENSE_FEATS: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   name: `Arcane Defense: ${s}`,
   description: `You get a +3 bonus on your saving throws against spells from the chosen school.`,
   generated: true,

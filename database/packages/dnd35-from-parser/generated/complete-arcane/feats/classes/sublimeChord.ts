@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SUBLIME_CHORD_FEATS: FeatSeed[] = [
+export const SUBLIME_CHORD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bardic Lore (Sublime Chord)",
     description: "",

@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const MYSTIC_THEURGE_FEATS: FeatSeed[] = [
+export const MYSTIC_THEURGE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Spells per Day (Mystic Theurge)",
     description:

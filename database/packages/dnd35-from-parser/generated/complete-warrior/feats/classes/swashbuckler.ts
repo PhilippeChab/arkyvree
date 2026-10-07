@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SWASHBUCKLER_FEATS: FeatSeed[] = [
+export const SWASHBUCKLER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Acrobatic Charge (Swashbuckler)",
     description:

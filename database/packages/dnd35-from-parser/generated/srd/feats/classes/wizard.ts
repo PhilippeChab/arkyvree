@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const WIZARD_FEATS: FeatSeed[] = [
+export const WIZARD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bonus Feat (Wizard)",
     description:

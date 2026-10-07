@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const NIGHTSONG_ENFORCER_FEATS: FeatSeed[] = [
+export const NIGHTSONG_ENFORCER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Agility Training (Nightsong Enforcer)",
     description:

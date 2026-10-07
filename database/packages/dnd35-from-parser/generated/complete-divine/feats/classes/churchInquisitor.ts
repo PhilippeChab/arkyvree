@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const CHURCH_INQUISITOR_FEATS: FeatSeed[] = [
+export const CHURCH_INQUISITOR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Detect Evil (Church Inquisitor)",
     description: "A church inquisitor gains the ability to use detect evil at will as a spell-like ability.",

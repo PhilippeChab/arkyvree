@@ -35,7 +35,7 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
     /** A book's class feats' index (feats/classes/index.ts): each of its classes' feats file, from its references. */
     writeClassFeatIndex(book: string) {
       const entries = ReferenceLoader.loadClasses(book)
-        .map(({ ref }) => ({ slug: toCamelCase(ref.raw.name), constName: `${toConstName(ref.raw.name)}_FEATS` }))
+        .map(({ ref }) => ({ slug: toCamelCase(ref.raw.name), constName: `${toConstName(ref.raw.name)}_CLASS_FEATS` }))
         .sort((a, b) => (a.slug < b.slug ? -1 : 1));
       if (entries.length === 0) return;
 

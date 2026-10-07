@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const BLADESINGER_FEATS: FeatSeed[] = [
+export const BLADESINGER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bladesong Style (Bladesinger)",
     description:

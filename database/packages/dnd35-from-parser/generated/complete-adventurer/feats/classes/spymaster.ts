@@ -2,7 +2,7 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const SPYMASTER_FEATS: FeatSeed[] = [
+export const SPYMASTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Cover Identity (Spymaster)",
     description:

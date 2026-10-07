@@ -3,7 +3,7 @@
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-export const RANGER_FEATS: FeatSeed[] = [
+export const RANGER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Animal Companion (Ranger)",
     description:
