@@ -351,7 +351,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
         };
       });
     }
-}
+  }
 
   return Building;
 }

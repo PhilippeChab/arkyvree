@@ -319,20 +319,20 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
     }
 
     validate(): ValidationResult {
-      const baseResult = { issues: this.findIssues() };
+      const ruleIssues = this.findIssues();
       const { budget: skillBudgetIssues, ranks: skillRankIssues } = this.getSkillValidationIssues();
 
       // Insert skill issues after aptitude issues to preserve original ordering
-      const aptitudeEndIndex = baseResult.issues.findLastIndex((i) => i.category === "aptitudes") + 1;
+      const aptitudeEndIndex = ruleIssues.findLastIndex((i) => i.category === "aptitudes") + 1;
       const issues = [
-        ...baseResult.issues.slice(0, aptitudeEndIndex),
+        ...ruleIssues.slice(0, aptitudeEndIndex),
         ...skillBudgetIssues,
         ...skillRankIssues,
-        ...baseResult.issues.slice(aptitudeEndIndex),
+        ...ruleIssues.slice(aptitudeEndIndex),
       ];
       return { valid: issues.length === 0, issues };
     }
-}
+  }
 
   return Validating;
 }
