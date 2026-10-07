@@ -1,6 +1,6 @@
 /** What the loader reads of the ruleset's view: its rows, its fields and the 3.5 meaning of its properties. */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { readClassFields } from "@/server/rulesets/dnd3.5/classes/classFields.ts";
 import { readRulesetFields } from "@/server/rulesets/dnd3.5/ruleset/rulesetFields.ts";
 import { readSkillFields } from "@/server/rulesets/dnd3.5/skills/skillFields.ts";

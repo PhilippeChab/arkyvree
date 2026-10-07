@@ -1,6 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { RulesetCache, type RulesetData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetData } from "@/engine/core/view/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {

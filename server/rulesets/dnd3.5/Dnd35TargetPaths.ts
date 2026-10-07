@@ -1,6 +1,6 @@
 /** The paths an entity's modifiers and requirements name, in the 3.5 rules: each category's, and the ruleset's labels. */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import CategoryPaths from "@/server/rulesets/engine/paths/CategoryPaths.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";

@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import type { InventoryRules, WeaponFields } from "@/server/rulesets/engine/module/index.ts";
 

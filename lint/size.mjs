@@ -15,7 +15,7 @@ export const MAX_OWN_LINES = 80;
 
 function createFunctionLength(context) {
   const file = repoPath(context.filename);
-  if (!/^(server|shared|database)\//.test(file) || !file.endsWith(".ts")) return {};
+  if (!/^(server|engine|shared|database)\//.test(file) || !file.endsWith(".ts")) return {};
   const text = context.sourceCode.text;
   const lines = text.split("\n");
   const lineStarts = [0];

@@ -1,15 +1,26 @@
-import type { CowData } from "@/server/database/index.ts";
+import type { CowData } from "@/engine/core/cow/index.ts";
 import type {
   Aptitude,
   FeatWithAptitudes,
+  Item,
   Klass,
+  KlassLevel,
+  KlassLevelFeat,
+  KlassLevelPower,
+  KlassLevelSave,
+  KlassSkill,
+  Language,
+  Mechanic,
   Modifier,
   PowerWithAptitudes,
   Property,
+  Race,
   Requirement,
+  RulesetAbility,
+  RulesetSave,
+  Skill,
 } from "@/shared/relations.ts";
 
-import { type RulesetRawData } from "./rawData.ts";
 import RulesetData, { type RulesetLists } from "./RulesetData.ts";
 import {
   mergeSiblingAptitudeLinks,
@@ -19,20 +30,51 @@ import {
 } from "./siblingMerge.ts";
 import SiblingRows from "./SiblingRows.ts";
 
+/** A ruleset's own rows, none of its sources': what the server fetches for each ruleset of a chain to compose. */
+export interface RulesetRawData {
+  abilities: RulesetAbility[];
+  aptitudes: Aptitude[];
+  feats: FeatWithAptitudes[];
+  items: Item[];
+  klasses: Klass[];
+  klassLevelFeats: KlassLevelFeat[];
+  klassLevelPowers: KlassLevelPower[];
+  klassLevels: KlassLevel[];
+  klassLevelSaves: KlassLevelSave[];
+  klassSkills: KlassSkill[];
+  languages: Language[];
+  leveledAptitudeIds: Set<string>;
+  mechanics: Mechanic[];
+  /** Every modifier whose source is an entity in this ruleset — all sourceTypes. */
+  modifiers: Modifier[];
+  powers: PowerWithAptitudes[];
+  /** Every property row owned by this ruleset — all entityTypes. Consumers filter. */
+  properties: Property[];
+  races: Race[];
+  /** Every requirement row in this ruleset, including those attached to modifiers. */
+  requirements: Requirement[];
+  saves: RulesetSave[];
+  skills: Skill[];
+}
+
 /**
  * A ruleset's view: its own rows and its source chain's (`chain`, the ruleset's first), composed by its copy-on-write
  * data. The copies' and siblings' exclusions apply, a sibling loser's customizations merge into its winner's, references
  * resolve to the winners, and every id-keyed map takes a stored id. Built on every read (`RulesetCache.getData`).
  */
 export default class RulesetComposition {
-  constructor(chain: RulesetRawData[], cow: CowData) {
+  /** `orderProperties`: the ruleset's order of an entity's properties, which its view keeps. */
+  constructor(chain: RulesetRawData[], cow: CowData, orderProperties: (properties: Property[]) => Property[]) {
     this.chain = chain;
     this.cow = cow;
+    this.orderProperties = orderProperties;
   }
 
   private readonly chain: RulesetRawData[];
 
   private readonly cow: CowData;
+
+  private readonly orderProperties: (properties: Property[]) => Property[];
 
   /**
    * Each sibling loser's aptitude links, by the loser, on its winner (`featId` / `powerId`), for the winner's links to
@@ -268,6 +310,6 @@ export default class RulesetComposition {
   }
 
   build(): RulesetData {
-    return new RulesetData(this.composeLists(), this.cow);
+    return new RulesetData(this.composeLists(), this.cow, this.orderProperties);
   }
 }

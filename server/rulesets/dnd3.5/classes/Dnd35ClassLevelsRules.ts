@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { parseAptitudePool, parseAptitudeSpellLevel } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 import { collectClassLists } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { ClassLevelFields, ClassLevelsRules } from "@/server/rulesets/engine/module/index.ts";

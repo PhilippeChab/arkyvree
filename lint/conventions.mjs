@@ -21,8 +21,8 @@
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
  *   drizzle's `asc` / `desc`, and a repository method that reads a page orders it by `this.pageOrder(keys)`, which ends
  *   on a key no two rows share: OFFSET paging repeats or skips rows that tie.
- * - `shared-runtime`: `shared/` runs in the client too, so it uses neither Bun's APIs (`bun`, the `Bun` global) nor
- *   Node's (`node:fs`, `fs`).
+ * - `shared-runtime`: `shared/` runs in the client too, and `engine/` computes over the data it's given, so neither uses
+ *   Bun's APIs (`bun`, the `Bun` global) nor Node's (`node:fs`, `fs`).
  * - `session-param`: a `Session` parameter is named `session` (`_session` when it's unused).
  * - `writes-in-transactions`: a repository write or lock (`methodVerbs.json`'s verbs) outside the repositories takes a
  *   transaction's handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`: a write is atomic with the
@@ -91,12 +91,19 @@ const READ_VERBS = METHOD_VERBS.read;
 
 const ROUTE_METHODS = new Set(["get", "post", "put", "patch", "delete", "route"]);
 
+/** The trees that use neither Bun's APIs nor Node's, and why. */
+const RUNTIME_FREE_TREES = [
+  ["shared/", "`shared/` runs in the client too"],
+  ["engine/", "`engine/` computes over the data it's given"],
+];
+
 /** Each test area and the source tree it mirrors. */
 const TEST_MIRRORS = [
   ["tests/services/", "server/services/"],
   ["tests/routers/", "server/routers/"],
   ["tests/jobs/", "server/jobs/"],
   ["tests/cache/", "server/cache/"],
+  ["tests/engine/", "engine/"],
   ["tests/rulesets/", "server/rulesets/"],
   ["tests/middlewares/", "server/middlewares/"],
   ["tests/emails/", "server/emails/"],
@@ -400,7 +407,7 @@ function createEmptyListReads(context) {
 
 function createEnvironment(context) {
   const file = repoPath(context.filename);
-  if (!/^(server|shared)\//.test(file) || file === "server/environment.ts") return {};
+  if (!/^(server|engine|shared)\//.test(file) || file === "server/environment.ts") return {};
   return {
     MemberExpression(node) {
       const { object, property } = node;
@@ -735,11 +742,13 @@ function createSessionParam(context) {
 }
 
 function createSharedRuntime(context) {
-  if (!repoPath(context.filename).startsWith("shared/")) return {};
+  const file = repoPath(context.filename);
+  const reason = RUNTIME_FREE_TREES.find(([tree]) => file.startsWith(tree))?.[1];
+  if (!reason) return {};
   return {
     ...onImports((node, spec) => {
       if (spec === "bun" || spec.startsWith("bun:") || isBuiltin(spec))
-        context.report({ node, message: `\`shared/\` runs in the client too: it doesn't import \`${spec}\`.` });
+        context.report({ node, message: `${reason}: it doesn't import \`${spec}\`.` });
     }),
     // Bun.file(…) needs no import.
     Identifier(node) {
@@ -747,8 +756,7 @@ function createSharedRuntime(context) {
       const isName =
         (parent?.type === "MemberExpression" && parent.property === node && !parent.computed) ||
         (parent?.type === "Property" && parent.key === node && !parent.computed);
-      if (node.name === "Bun" && !isName)
-        context.report({ node, message: "`shared/` runs in the client too: it doesn't use `Bun`." });
+      if (node.name === "Bun" && !isName) context.report({ node, message: `${reason}: it doesn't use \`Bun\`.` });
     },
   };
 }

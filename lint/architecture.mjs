@@ -45,9 +45,9 @@ const ENTRY_ONLY_RE_EXPORTS =
 const indexCache = new Map();
 /**
  * The trees whose folders are entered through their `index.ts`: the server's, but its routers (a route folder's
- * `index.ts` is its routes, not its folder's entry), and the client's components.
+ * `index.ts` is its routes, not its folder's entry), the engine's, and the client's components.
  */
-const INDEXED_TREES = ["server/", "client/src/components/"];
+const INDEXED_TREES = ["server/", "engine/", "client/src/components/"];
 
 const LAYERS = [
   { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
@@ -86,8 +86,16 @@ const LAYERS = [
       "server/",
     ],
   },
-  { layer: "shared/", deny: ["server/", "client/", "database/", "drizzle/"], types: ["drizzle/"] },
-  { layer: "client/", deny: ["server/", "database/", "drizzle/"], types: ["server/", "drizzle/"] },
+  // The engine computes over the data it's given: it reads nothing itself, so it imports none of what stores data
+  { layer: "engine/", deny: ["server/", "database/", "client/", "drizzle/"], types: ["drizzle/"] },
+  // Its core is what every ruleset runs on: it names none of them
+  { layer: "engine/core/", deny: ["engine/rulesets/"] },
+  { layer: "shared/", deny: ["server/", "engine/", "client/", "database/", "drizzle/"], types: ["drizzle/"] },
+  {
+    layer: "client/",
+    deny: ["server/", "engine/", "database/", "drizzle/"],
+    types: ["server/", "engine/", "drizzle/"],
+  },
 ];
 /** What a module that exports another module's is told. */
 const MODULE_EXPORTS_ITS_OWN =
@@ -105,7 +113,7 @@ function createFolderIndex(context) {
   const file = repoPath(context.filename);
   // The server and the client hold to it. A test may reach a folder's own modules, and the seeders and the parser's
   // tools reach the engine's pure modules without loading the database an index would.
-  if (!/^(server|client)\//.test(file)) return {};
+  if (!/^(server|engine|client)\//.test(file)) return {};
   return onImports((node, spec) => {
     const target = targetOf(file, spec);
     if (!target) return;

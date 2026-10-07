@@ -219,7 +219,7 @@ describe("conventions", () => {
     ]);
   });
 
-  test("shared/ imports neither Bun's APIs nor Node's", async () => {
+  test("shared/ and engine/ import neither Bun's APIs nor Node's", async () => {
     expect(
       await lintRepo(
         {
@@ -229,10 +229,12 @@ describe("conventions", () => {
           "shared/d.ts": 'import path from "path";\nexport const d = path;\n',
           "shared/e.ts": 'export const e = () => Bun.file("x");\n',
           "shared/f.ts": "export const f = { Bun: 1 }.Bun;\n",
+          "engine/core/g.ts": 'import fs from "node:fs";\nexport const g = fs;\n',
         },
         ["shared-runtime"],
       ),
     ).toEqual([
+      "shared-runtime engine/core/g.ts",
       "shared-runtime shared/a.ts",
       "shared-runtime shared/b.ts",
       "shared-runtime shared/d.ts",

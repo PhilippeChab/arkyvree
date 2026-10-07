@@ -1,12 +1,13 @@
+import { type CowData } from "@/engine/core/cow/index.ts";
+import { RulesetComposition, type RulesetData, type RulesetRawData } from "@/engine/core/view/index.ts";
 import DependentCache from "@/server/cache/DependentCache.ts";
-import { type CowData, db, withCowContext } from "@/server/database/index.ts";
+import { db, withCowContext } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
+import { sortProperties } from "@/shared/dnd3.5/properties/index.ts";
 
 import CowDataBuilder, { buildSourceChain, type RulesetSources } from "./CowDataBuilder.ts";
-import { fetchRulesetRawData, type RulesetRawData } from "./rawData.ts";
-import RulesetComposition from "./RulesetComposition.ts";
-import type RulesetData from "./RulesetData.ts";
+import { fetchRulesetRawData } from "./rawData.ts";
 
 type TargetPathsAndLabels = { paths: TargetPath[]; segmentLabels: Record<string, string> };
 
@@ -73,7 +74,7 @@ class RulesetCache {
       this.getRawData(ruleset.id, campaignId),
       ...cowData.sourceChain.map((id) => this.getRawData(id)),
     ]);
-    return new RulesetComposition(chain, cowData).build();
+    return new RulesetComposition(chain, cowData, sortProperties).build();
   }
 
   /** A ruleset's own rows (a campaign's, with one), none of its ancestors': pinned when it's a system ruleset. */

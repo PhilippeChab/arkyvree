@@ -1,12 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import {
-  findScopedEntity,
-  RulesetCache,
-  type RulesetData,
-  withRulesetScope,
-} from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetData } from "@/engine/core/view/index.ts";
+import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";

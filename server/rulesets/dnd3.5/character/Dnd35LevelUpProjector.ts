@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
 import { readClassLevelFields } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";

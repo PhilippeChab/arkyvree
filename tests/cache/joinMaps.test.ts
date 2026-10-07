@@ -11,7 +11,8 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import { type SeedContext } from "@/database/seeds/seedContext.ts";
 import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetData } from "@/engine/core/view/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { PowersAptitudes, Rulesets } from "@/server/repositories/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";

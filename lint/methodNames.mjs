@@ -96,7 +96,7 @@ const VOCABULARIES = [
 
 function createFunctionNames(context) {
   const file = repoPath(context.filename);
-  if (!/^(server|shared|database)\//.test(file) || !/\.tsx?$/.test(file)) return {};
+  if (!/^(server|engine|shared|database)\//.test(file) || !/\.tsx?$/.test(file)) return {};
   // A content package's builders are its data's vocabulary: `eq(feat("Dodge"))`, `simple("Club")`
   if (/^database\/packages\/[^/]+\/content\//.test(file)) return {};
   const report = (id) => {

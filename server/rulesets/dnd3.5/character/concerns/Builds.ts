@@ -1,4 +1,5 @@
-import { type RulesetData, type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetData } from "@/engine/core/view/index.ts";
+import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, db, withCowContext } from "@/server/database/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import type CharacterState from "@/server/rulesets/dnd3.5/character/CharacterState.ts";

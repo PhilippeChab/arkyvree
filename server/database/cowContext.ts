@@ -16,7 +16,7 @@
 
 import { AsyncLocalStorage } from "node:async_hooks";
 
-import type CowData from "./CowData.ts";
+import type { CowData } from "@/engine/core/cow/index.ts";
 
 const storage = new AsyncLocalStorage<CowData | undefined>();
 

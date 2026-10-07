@@ -1,6 +1,6 @@
 /** The character's levels and its picks of skills, feats and powers: saved, granted and projected. */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { Feats, Powers, Skills } from "@/server/repositories/index.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
