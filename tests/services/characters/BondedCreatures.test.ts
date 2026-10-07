@@ -373,6 +373,25 @@ describe("Stat blocks", () => {
     );
   });
 
+  test("leave a stat block's feat the creature already has as it is: counted once, its bonus once", async () => {
+    // A druid 12's dog takes Improved Initiative (+4 initiative) from its priority, and a modifier grants it as well
+    const { bonded } = await createDruidWithCompanion(12, "Dog Animal Companion");
+    const initiative = (dog: DetailedCharacter) => dog.components.combat.getCombat().initiative.total;
+    const before = initiative(await build(new DetailedCharacterAnimalCompanion(bonded)));
+    await Modifiers.create(db, {
+      sourceId: bonded.id,
+      sourceType: "characters",
+      target: "feats.improvedinitiative.possessed",
+      operator: "set",
+      value: "true",
+      valueType: "boolean",
+    });
+    const dog = await build(new DetailedCharacterAnimalCompanion(bonded));
+    expect(dog.components.feats.getFeat("Improved Initiative")).toMatchObject({ possessed: true, count: 1 });
+    expect(dog.getVirtuallyPossessedFeats().filter((feat) => feat.name === "Improved Initiative")).toHaveLength(1);
+    expect(initiative(dog)).toBe(before);
+  });
+
   test("replace the creature's weapons with its natural attacks: no item group reaches a weapon it no longer has", async () => {
     const cat = await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded));
     expect(cat.components.combat.getCombat().weaponsets["0"]?.mainhand?.name).not.toBe("Unarmed Strike");

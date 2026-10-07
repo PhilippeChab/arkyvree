@@ -13,13 +13,15 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
 
   /**
    * The stat block's feats, as any granted feat is: possessed and counted, and listed with the feats the creature has
-   * without a pick (`getVirtuallyPossessedFeats`: its sheet and PDF), their modifiers applied.
+   * without a pick (`getVirtuallyPossessedFeats`: its sheet and PDF), their modifiers applied. A feat the creature
+   * already has, from a modifier that grants it, stays as it is, as a granted feat the character has does.
    */
   protected applyGrantedFeats(featNames: string[], rulesetData: RulesetData): void {
     if (featNames.length === 0) return;
     const featModifiers: Modifier[] = [];
     for (const featName of featNames) {
       const entry = this.components.feats.getFeat(featName);
+      if (entry?.possessed) continue;
       if (entry) {
         entry.possessed = true;
         entry.count += 1;
