@@ -1,10 +1,10 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
-import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import { collectClassListIds } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
+import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -78,7 +78,6 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
     aptitudes: Aptitude[],
     kind: "modifier" | "requirement",
     leveledAptitudeIds: Set<string>,
-    maxSpellLevel: number,
   ): TargetPath[] {
     const paths: TargetPath[] = [];
     const operators = getNumericOperators(kind);
@@ -87,8 +86,8 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
       const normalizedAptitudeName = stripSeparators(aptitude.name);
 
       if (leveledAptitudeIds.has(aptitude.id)) {
-        // Generate per-level paths for leveled aptitudes (0..maxSpellLevel)
-        for (let level = 0; level <= maxSpellLevel; level++) {
+        // Generate per-level paths for leveled aptitudes (0..MAX_SPELL_LEVEL)
+        for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
           for (const subPath of NAVIGATABLE_PATHS) {
             paths.push({
               path: `aptitudes.${normalizedAptitudeName}.${level}.${subPath.path}`,
@@ -146,12 +145,7 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
   }
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return AptitudesPaths.generateAptitudePaths(
-      rulesetData.aptitudes,
-      kind,
-      this.leveledAptitudeIds(rulesetData),
-      Dnd35LevelsRules.MAX_SPELL_LEVEL,
-    );
+    return AptitudesPaths.generateAptitudePaths(rulesetData.aptitudes, kind, this.leveledAptitudeIds(rulesetData));
   }
 
   getSegmentLabels(): Record<string, string> {

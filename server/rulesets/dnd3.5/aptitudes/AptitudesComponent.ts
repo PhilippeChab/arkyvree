@@ -1,6 +1,7 @@
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import type IdentityComponent from "@/server/rulesets/dnd3.5/identity/IdentityComponent.ts";
 import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
+import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import { type Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -35,11 +36,6 @@ export default class AptitudesComponent {
   constructor(
     private readonly identity: IdentityComponent,
     private readonly classes: ClassesComponent,
-    /** Largest spell/power level a leveled aptitude enumerates (inclusive).
-     *  Required — each ruleset must pass its own value (e.g.
-     *  `Dnd35LevelsRules.MAX_SPELL_LEVEL`). No default so a universal file
-     *  never carries a ruleset-specific constant. */
-    readonly maxSpellLevel: number,
     /** The general feats a character has at its total level: the ruleset's rule, which a bonded creature has none of. */
     private readonly countGeneralFeats: (totalLevel: number) => number,
   ) {}
@@ -123,7 +119,7 @@ export default class AptitudesComponent {
       if (leveledAptitudeIds.has(aptitude.id)) {
         this.leveledAptitudeKeys.add(key);
         const aptitudeObj = this.aptitudes[key] as Record<string, unknown>;
-        for (let level = 0; level <= this.maxSpellLevel; level++) {
+        for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
           aptitudeObj[String(level)] = this.newSpellLevel();
         }
         aptitudeObj[JOINS_CLASS_LIST.path] = false;
@@ -245,7 +241,7 @@ export default class AptitudesComponent {
         const levels: Record<string, { allowed: number; spent: number; available: number }> = {};
         let totalAvailable = 0;
 
-        for (let spellLevel = 0; spellLevel <= this.maxSpellLevel; spellLevel++) {
+        for (let spellLevel = 0; spellLevel <= MAX_SPELL_LEVEL; spellLevel++) {
           const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
           if (levelData && levelData.available > 0) {
             levels[String(spellLevel)] = {
@@ -319,7 +315,7 @@ export default class AptitudesComponent {
       if (this.leveledAptitudeKeys.has(key)) {
         // Update per-level availables for spell aptitudes
         const aptitudeObj = aptitude as Record<string, unknown>;
-        for (let level = 0; level <= this.maxSpellLevel; level++) {
+        for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
           const levelData = aptitudeObj[String(level)] as AptitudeLevelData | undefined;
           if (levelData) {
             if (levelData.allowed === ALLOWED_ALL) {

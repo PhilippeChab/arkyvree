@@ -7,6 +7,8 @@ import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/Spellc
 import { SLOT_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import type { Components, CustomizedFeat, CustomizedKlassLevel } from "@/server/rulesets/engine/types.ts";
+import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
+import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
 
 /** A character level's key in the index of the class levels the character took. */
@@ -49,7 +51,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     }
 
     /**
-     * The klass levels each class's bonus caster levels reach past its own level (up to 20), as `klassId:level`, with
+     * The klass levels each class's bonus caster levels reach past its own level (up to `MAX_CLASS_LEVEL`), as `klassId:level`, with
      * the class's name.
      */
     private bonusLevelClassNames() {
@@ -59,7 +61,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         if (bonus <= 0) continue;
 
         const actualLevel = klassData.level;
-        const effectiveLevel = Math.min(actualLevel + bonus, 20);
+        const effectiveLevel = Math.min(actualLevel + bonus, MAX_CLASS_LEVEL);
         for (let level = actualLevel + 1; level <= effectiveLevel; level++) {
           classNameByLevel.set(`${klassData.klass.id}:${level}`, className);
         }
@@ -160,7 +162,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         });
         if (!listLevels || classLists.length === 0) continue;
 
-        for (let level = 1; level <= 9; level++) {
+        for (let level = 1; level <= MAX_SPELL_LEVEL; level++) {
           const listLevel = listLevels[String(level)] as AptitudeLevelData | undefined;
           const classLevels = classLists.flatMap((classList) => {
             const classLevel = classList[String(level)] as AptitudeLevelData | undefined;

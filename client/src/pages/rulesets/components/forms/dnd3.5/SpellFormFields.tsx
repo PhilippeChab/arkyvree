@@ -14,6 +14,7 @@ import {
   SPELL_SCHOOLS,
   SPELL_SUBSCHOOLS,
 } from "@/shared/dnd3.5/spells.ts";
+import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 
 import { spellAptitude, type SpellAptitude, type SpellFormData } from "./spellForm.ts";
 
@@ -216,7 +217,7 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
                   label="Level"
                   type="number"
                   size="small"
-                  slotProps={{ htmlInput: { min: 0, max: 9 } }}
+                  slotProps={{ htmlInput: { min: 0, max: MAX_SPELL_LEVEL } }}
                   value={levelOf(apt.id) ?? ""}
                   onChange={(e) => {
                     const level = e.target.value === "" ? undefined : parseInt(e.target.value);

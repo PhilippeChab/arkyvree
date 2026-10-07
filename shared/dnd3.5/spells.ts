@@ -11,8 +11,11 @@ export const SPELL_SCHOOLS = [
   "Transmutation",
   "Universal",
 ] as const;
+
 /** Schools that get Spell Focus / Greater Spell Focus feats (excludes Universal) */
 export const MAGIC_SCHOOLS = SPELL_SCHOOLS.filter((s) => s !== "Universal");
+/** The highest spell level, from 0: the app has no epic spells. */
+export const MAX_SPELL_LEVEL = 9;
 export const SPELL_COMPONENTS = ["Verbal", "Somatic", "Material", "Focus", "Divine Focus", "XP Cost"] as const;
 export const SPELL_DESCRIPTORS = [
   "Acid",

@@ -1,5 +1,6 @@
 import { include } from "@/server/mixins.ts";
 import { type AptitudeLevelData } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
+import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 import { BonusCasterLevels } from "./BonusCasterLevels.ts";
@@ -24,7 +25,7 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
         if (!aptitude || !this.aptitudes.isLeveledAptitude(aptitudeKey)) continue;
 
         const aptitudeObj = aptitude as Record<string, unknown>;
-        for (let spellLevel = 1; spellLevel <= 9; spellLevel++) {
+        for (let spellLevel = 1; spellLevel <= MAX_SPELL_LEVEL; spellLevel++) {
           const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
           if (!levelData || levelData.allowed === 0) continue;
           if (abilityMod < spellLevel) continue;
@@ -55,7 +56,7 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
 
         const aptitudeObj = aptitude as Record<string, unknown>;
         let maxLevel = 0;
-        for (let spellLevel = 9; spellLevel >= 0; spellLevel--) {
+        for (let spellLevel = MAX_SPELL_LEVEL; spellLevel >= 0; spellLevel--) {
           const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
           if (levelData && levelData.allowed !== 0) {
             maxLevel = spellLevel;

@@ -5,6 +5,7 @@ import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/Spellc
 import { JOIN_TARGET, listOpenedBy } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { CustomizedFeat, CustomizedKlassLevel, CustomizedPower } from "@/server/rulesets/engine/types.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, Power, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -58,7 +59,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         if (this.aptitudes.isLeveledAptitude(key)) {
           const aptitudeObj = aptitude as Record<string, unknown>;
           const levels = new Set<number>();
-          for (let level = 0; level <= 9; level++) {
+          for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
             const levelData = aptitudeObj[String(level)] as { allowed: number } | undefined;
             if (levelData && levelData.allowed === ALLOWED_ALL) {
               levels.add(level);
@@ -77,7 +78,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         if (!aptitude || !this.aptitudes.isLeveledAptitude(list)) continue;
         const levels = perAptitudeLevels.get(aptitude.id) ?? new Set<number>();
         for (const className of classNames) {
-          for (let level = 0; level <= 9; level++) {
+          for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
             if (this.classListKnowing(className, level)) levels.add(level);
           }
         }

@@ -4,6 +4,7 @@ import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/componen
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { allLevelSaves, ClassLevelFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
 
 interface ConfirmActionProps {
   open: boolean;
@@ -48,7 +49,7 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
         type="number"
         fullWidth
         slotProps={{
-          htmlInput: { min: 1, max: 20 },
+          htmlInput: { min: 1, max: MAX_CLASS_LEVEL },
         }}
       />
       <FormTextField
