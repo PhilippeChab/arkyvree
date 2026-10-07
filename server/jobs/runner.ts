@@ -23,22 +23,20 @@ export const taskList = {
   sweepPendingBlobs: sweepPendingBlobsTask,
 };
 
-export const workerLogger = new Logger((scope) => {
-  return (level, message) => {
-    const prefix = scope.label ? `[worker:${scope.label}]` : "[worker]";
-    switch (level) {
-      case "error":
-        console.error(`${prefix} ${message}`);
-        break;
-      case "warning":
-        console.warn(`${prefix} ${message}`);
-        break;
-      case "debug":
-        break;
-      default:
-        console.log(`${prefix} ${message}`);
-    }
-  };
+export const workerLogger = new Logger((scope) => (level, message) => {
+  const prefix = scope.label ? `[worker:${scope.label}]` : "[worker]";
+  switch (level) {
+    case "error":
+      console.error(`${prefix} ${message}`);
+      break;
+    case "warning":
+      console.warn(`${prefix} ${message}`);
+      break;
+    case "debug":
+      break;
+    default:
+      console.log(`${prefix} ${message}`);
+  }
 });
 
 /** The runner's events: a job's errors are logged, a permanent failure and a fatal error reported to Sentry. */

@@ -81,58 +81,59 @@ class CharactersService extends include(Object, Archives) {
       xp: number;
     },
   ) {
-    return await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, characterData.rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canCreateCharacter();
+    return await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, characterData.rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canCreateCharacter();
 
-        const race = findScopedEntity(
-          rulesetData.racesById,
-          characterData.raceId,
-          characterData.rulesetId,
-          rulesetData.cow.sourceChain,
-          "Race",
-        );
-        if (race.kind !== "pc") throw new BadRequestError("Race is not valid for a player character");
-
-        const [newCharacter] = await Characters.create(tx, {
-          userId: session.userId,
-          rulesetId: characterData.rulesetId,
-          raceId: characterData.raceId,
-          name: characterData.name,
-          xp: characterData.xp,
-          alignment: characterData.alignment,
-          age: characterData.age,
-          gender: characterData.gender,
-          height: characterData.height,
-          weight: characterData.weight,
-          deity: characterData.deity,
-          description: characterData.description,
-          notes: characterData.notes,
-        });
-
-        // Create character ability scores from ruleset abilities
-        if (rulesetData.abilities.length > 0) {
-          await CharacterAbilities.createMany(
-            tx,
-            rulesetData.abilities.map((ability) => ({
-              characterId: newCharacter.id,
-              abilityId: ability.id,
-              score: characterData.abilities[ability.id] ?? 10,
-            })),
+          const race = findScopedEntity(
+            rulesetData.racesById,
+            characterData.raceId,
+            characterData.rulesetId,
+            rulesetData.cow.sourceChain,
+            "Race",
           );
-        }
+          if (race.kind !== "pc") throw new BadRequestError("Race is not valid for a player character");
 
-        // Log the activity
-        await Activities.create(tx, {
-          userId: session.userId,
-          targetId: newCharacter.id,
-          targetTable: getTableName(charactersInCharacter),
-          type: "createCharacter",
-        });
+          const [newCharacter] = await Characters.create(tx, {
+            userId: session.userId,
+            rulesetId: characterData.rulesetId,
+            raceId: characterData.raceId,
+            name: characterData.name,
+            xp: characterData.xp,
+            alignment: characterData.alignment,
+            age: characterData.age,
+            gender: characterData.gender,
+            height: characterData.height,
+            weight: characterData.weight,
+            deity: characterData.deity,
+            description: characterData.description,
+            notes: characterData.notes,
+          });
 
-        return newCharacter;
-      });
-    });
+          // Create character ability scores from ruleset abilities
+          if (rulesetData.abilities.length > 0) {
+            await CharacterAbilities.createMany(
+              tx,
+              rulesetData.abilities.map((ability) => ({
+                characterId: newCharacter.id,
+                abilityId: ability.id,
+                score: characterData.abilities[ability.id] ?? 10,
+              })),
+            );
+          }
+
+          // Log the activity
+          await Activities.create(tx, {
+            userId: session.userId,
+            targetId: newCharacter.id,
+            targetTable: getTableName(charactersInCharacter),
+            type: "createCharacter",
+          });
+
+          return newCharacter;
+        }),
+    );
   }
 
   async enqueuePdf(session: Session, characterId: string) {

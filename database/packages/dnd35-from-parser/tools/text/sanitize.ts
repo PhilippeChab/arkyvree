@@ -163,10 +163,10 @@ export function sanitizeText(text: string): string {
       // e.g. "This ability functions." "Improved familiars otherwise use the rules."
       .replace(/[A-Z][^.]*?\b(?:functions?|otherwise use the rules|refer to)\s*\./g, "")
       // Strip sentences that are just "This ability is." or similar after removal of the rest
-      .replace(/\b\w[\w\s]*?\bis\s*\.\s*/g, (match) => {
+      .replace(/\b\w[\w\s]*?\bis\s*\.\s*/g, (match) =>
         // Only strip if the sentence is very short (dangling predicate)
-        return match.length < 30 ? "" : match;
-      })
+        match.length < 30 ? "" : match,
+      )
       .replace(/\s+([.,])/g, "$1") // fix space before punctuation left by removals
       .replace(/,\s*\./g, ".") // fix ",." left by removals
       .replace(/\.\s*\./g, ".") // fix ".." left by removals

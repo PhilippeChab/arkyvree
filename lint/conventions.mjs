@@ -43,6 +43,7 @@
  *   which lists every variable: never `process.env` or `Bun.env` elsewhere in the server or `shared/`.
  * - `test-placement`: a test named after a module sits at that module's mirror (`tests/services/…` ↔
  *   `server/services/…`); a test of a behavior across modules is free in its area.
+ * - `error-names`: an error is named `error`: a `catch`'s binding, and an `onError` callback's first parameter.
  * - `function-declarations`: a file's own function is a `function` declaration (`function verbOf(method) {…}`), never
  *   a variable holding an arrow: an arrow is for a callback. `oxlint --fix` declares one (a typed one's parameters are
  *   typed by hand).
@@ -418,6 +419,22 @@ function createEnvironment(context) {
         node,
         message: `Read the environment through \`@/server/environment.ts\` (\`readEnv\`, \`isProduction\`…), which lists every variable: not \`${object.name}.env\`.`,
       });
+    },
+  };
+}
+
+function createErrorNames(context) {
+  const message = "An error is named `error`: a `catch`'s binding, and an `onError` callback's first parameter.";
+  return {
+    CatchClause(node) {
+      if (node.param?.type === "Identifier" && node.param.name !== "error")
+        context.report({ node: node.param, message });
+    },
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : node.key.value;
+      if (node.computed || key !== "onError" || !/^(Arrow)?Function(Expression)?$/.test(node.value.type)) return;
+      const [first] = node.value.params;
+      if (first?.type === "Identifier" && first.name !== "error") context.report({ node: first, message });
     },
   };
 }
@@ -1122,5 +1139,6 @@ export default {
   "class-file-names": { meta: { type: "suggestion" }, create: createClassFileNames },
   "concern-shape": { meta: { type: "suggestion" }, create: createConcernShape },
   "include-order": { meta: { type: "suggestion", fixable: "code" }, create: createIncludeOrder },
+  "error-names": { meta: { type: "suggestion" }, create: createErrorNames },
   "function-declarations": { meta: { type: "suggestion", fixable: "code" }, create: createFunctionDeclarations },
 };

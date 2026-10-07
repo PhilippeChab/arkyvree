@@ -67,6 +67,10 @@ describe("frontend rules", () => {
           "client/src/d.ts":
             "export const d = () => {\n  const { mutateAsync } = useSave();\n  return mutateAsync;\n};\n",
           "client/src/e.tsx": 'import * as Mui from "@mui/material";\nexport const e = <Mui.CircularProgress />;\n',
+          "client/src/f.ts":
+            "export const f = () => {\n  const { mutate: save } = useMutation({ mutationFn });\n  return save;\n};\n",
+          "client/src/g.ts":
+            "export const g = () => {\n  const saveMutation = useMutation({ mutationFn });\n  return saveMutation.mutate;\n};\n",
         },
         ["client-apis"],
       ),
@@ -75,6 +79,7 @@ describe("frontend rules", () => {
       "client-apis client/src/c.tsx",
       "client-apis client/src/d.ts",
       "client-apis client/src/e.tsx",
+      "client-apis client/src/f.ts",
     ]);
   });
 

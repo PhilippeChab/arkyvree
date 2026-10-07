@@ -50,7 +50,7 @@ function CharacterNameEditor({ characterId, updatedAt, parentCharacterId, name, 
       if (parentCharacterId)
         await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(parentCharacterId) });
     },
-    onError: (err) => snackbar.error(err, "Failed to rename character"),
+    onError: (error) => snackbar.error(error, "Failed to rename character"),
     onSettled: onDone,
   });
   const save = form.handleSubmit(({ name: next }) => {

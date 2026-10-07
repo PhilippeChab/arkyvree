@@ -60,19 +60,21 @@ class KlassesRepository extends RulesetEntityRepository<typeof klassesInRules> {
         ]
       : this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir));
 
-    return await this.withPagination(pagination, async ({ limit, offset }) => {
-      return await db.query.klassesInRules.findMany({
-        where: this.where([
-          rulesetCondition,
-          isNull(this.table.deletedAt),
-          kind !== undefined && eq(this.table.kind, kind),
-          searchConditions,
-        ]),
-        orderBy: this.pageOrder(orderByClause),
-        limit,
-        offset,
-      });
-    });
+    return await this.withPagination(
+      pagination,
+      async ({ limit, offset }) =>
+        await db.query.klassesInRules.findMany({
+          where: this.where([
+            rulesetCondition,
+            isNull(this.table.deletedAt),
+            kind !== undefined && eq(this.table.kind, kind),
+            searchConditions,
+          ]),
+          orderBy: this.pageOrder(orderByClause),
+          limit,
+          offset,
+        }),
+    );
   }
 }
 

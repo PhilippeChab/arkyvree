@@ -17,8 +17,8 @@ import { type PathInfo, toPathInfo } from "./pathValues.ts";
 export function aptitudeOptionsQuery(rulesetId: string, search: string, scope?: "feats" | "spells") {
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "aptitudes", search, scope),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(
+    queryFn: async ({ pageParam }) =>
+      parseResponse(
         rpc.api.rulesets[":id"].aptitudes.$get({
           param: { id: rulesetId },
           query: {
@@ -28,8 +28,7 @@ export function aptitudeOptionsQuery(rulesetId: string, search: string, scope?: 
             scope: scope || undefined,
           },
         }),
-      );
-    },
+      ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
@@ -113,8 +112,8 @@ export function targetCompletionsQuery(
       entityType,
     ),
     queryFn: rulesetId
-      ? async ({ pageParam }) => {
-          return parseResponse(
+      ? async ({ pageParam }) =>
+          parseResponse(
             rpc.api.rulesets[":id"].customization.target.paths.completions.$post({
               param: { id: rulesetId },
               json: {
@@ -128,8 +127,7 @@ export function targetCompletionsQuery(
                 page: pageParam,
               },
             }),
-          );
-        }
+          )
       : skipToken,
     initialPageParam: 1,
     getNextPageParam: nextPage,

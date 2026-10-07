@@ -163,7 +163,7 @@ export default function ClassDetailsPage() {
       invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, "classes")]);
       snackbar.success("Class updated");
     },
-    onError: (err) => snackbar.error(err, "Failed to update class"),
+    onError: (error) => snackbar.error(error, "Failed to update class"),
   });
 
   const deleteMutation = useMutation({
@@ -176,7 +176,7 @@ export default function ClassDetailsPage() {
       // Gone, with its tabs: don't let Back render them from the cache
       queryClient.removeQueries({ queryKey: classDetailQuery(rulesetId, classId).queryKey });
     },
-    onError: (err) => snackbar.error(err, "Failed to delete class"),
+    onError: (error) => snackbar.error(error, "Failed to delete class"),
   });
 
   // Create, update or clear (empty value) the class's single property of a type, as the Properties tab would: tagged
@@ -204,13 +204,13 @@ export default function ClassDetailsPage() {
     mutationFn: (abilityId: string) =>
       setPropertyFn(KLASS_BONUS_SPELL_ABILITY_ID, classData?.bonusSpellPropertyId, abilityId),
     onSuccess: handleClassPropertySaved("Bonus spell ability updated"),
-    onError: (err) => snackbar.error(err, "Failed to update bonus spell ability"),
+    onError: (error) => snackbar.error(error, "Failed to update bonus spell ability"),
   });
 
   const casterTypeMutation = useMutation({
     mutationFn: (casterType: string) => setPropertyFn(KLASS_CASTER_TYPE, classData?.casterTypePropertyId, casterType),
     onSuccess: handleClassPropertySaved("Caster type updated"),
-    onError: (err) => snackbar.error(err, "Failed to update caster type"),
+    onError: (error) => snackbar.error(error, "Failed to update caster type"),
   });
 
   // Normalize the URL to a known tab.

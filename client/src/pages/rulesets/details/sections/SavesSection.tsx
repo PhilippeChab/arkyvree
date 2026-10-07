@@ -41,14 +41,13 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     rulesetId: ruleset.id,
     sectionName: "saves",
     label: "Save",
-    createFn: async (data) => {
-      return parseResponse(
+    createFn: async (data) =>
+      parseResponse(
         rpc.api.rulesets[":id"].saves.$post({
           param: { id: ruleset.id },
           json: data,
         }),
-      );
-    },
+      ),
     onCreateSuccess: (created) => openEntity(`saves/${created.id}`),
   });
 

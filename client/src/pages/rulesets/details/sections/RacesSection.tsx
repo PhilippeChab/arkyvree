@@ -36,14 +36,13 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     sectionName: "races",
     createDefaults: EMPTY_RACE,
     label: "Race",
-    createFn: async (data) => {
-      return parseResponse(
+    createFn: async (data) =>
+      parseResponse(
         rpc.api.rulesets[":id"].races.$post({
           param: { id: ruleset.id },
           json: data,
         }),
-      );
-    },
+      ),
     onCreateSuccess: (created) => openEntity(`races/${created.id}/customization`),
   });
 

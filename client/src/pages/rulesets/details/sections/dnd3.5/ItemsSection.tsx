@@ -60,14 +60,13 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     rulesetId: ruleset.id,
     sectionName: "items",
     label: "Item",
-    createFn: async (data) => {
-      return parseResponse(
+    createFn: async (data) =>
+      parseResponse(
         rpc.api.rulesets[":id"].items.$post({
           param: { id: ruleset.id },
           json: toItemPayload(data),
         }),
-      );
-    },
+      ),
     onCreateSuccess: (created) => openEntity(`items/${created.id}/customization`),
   });
 
@@ -109,42 +108,40 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const bulkForm = useFormWith<BulkVariantsFormValues>({ variants: [] });
 
   const duplicateMutation = useMutation({
-    mutationFn: async ({ sourceId, data }: { data: ItemFormInternal; sourceId: string }) => {
-      return parseResponse(
+    mutationFn: async ({ sourceId, data }: { data: ItemFormInternal; sourceId: string }) =>
+      parseResponse(
         rpc.api.rulesets[":id"].items[":itemId"].duplicate.$post({
           param: { id: ruleset.id, itemId: sourceId },
           json: toItemPayload(data),
         }),
-      );
-    },
+      ),
     onSuccess: (created) => {
       snackbar.success("Item created");
       invalidateRulesetEdit(queryClient, ruleset.id, [QUERY_KEYS.rulesets.section(ruleset.id, "items")]);
       setCreateDialogOpen(false);
       openEntity(`items/${created.id}/customization`);
     },
-    onError: (err: Error) => {
-      snackbar.error(err, "Failed to duplicate item");
+    onError: (error) => {
+      snackbar.error(error, "Failed to duplicate item");
     },
   });
 
   const bulkMutation = useMutation({
-    mutationFn: async ({ itemId, variants }: { itemId: string; variants: VariantRow[] }) => {
-      return parseResponse(
+    mutationFn: async ({ itemId, variants }: { itemId: string; variants: VariantRow[] }) =>
+      parseResponse(
         rpc.api.rulesets[":id"].items[":itemId"].variants.$post({
           param: { id: ruleset.id, itemId },
           json: { variants },
         }),
-      );
-    },
+      ),
     onSuccess: (data) => {
       const count = data.length;
       snackbar.success(`Created ${formatCount(count, "variant")}`);
       bulkDialog.close();
       invalidateRulesetEdit(queryClient, ruleset.id, [QUERY_KEYS.rulesets.section(ruleset.id, "items")]);
     },
-    onError: (err: Error) => {
-      snackbar.error(err, "Failed to create variants");
+    onError: (error) => {
+      snackbar.error(error, "Failed to create variants");
     },
   });
 

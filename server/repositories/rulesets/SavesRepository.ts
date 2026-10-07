@@ -39,14 +39,18 @@ class SavesRepository extends RulesetEntityRepository<typeof savesInRules> {
 
     const rulesetCondition = this.buildRulesetCondition(db, where);
 
-    return await this.withPagination(pagination, async ({ limit, offset }) => {
-      return await db.query.savesInRules.findMany({
-        where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions]),
-        orderBy: this.pageOrder(this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir))),
-        limit,
-        offset,
-      });
-    });
+    return await this.withPagination(
+      pagination,
+      async ({ limit, offset }) =>
+        await db.query.savesInRules.findMany({
+          where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions]),
+          orderBy: this.pageOrder(
+            this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
+          ),
+          limit,
+          offset,
+        }),
+    );
   }
 }
 

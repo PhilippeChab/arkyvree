@@ -115,14 +115,13 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   const playersLoadFailed = !!playersError && !data;
 
   const addMutation = useMutation({
-    mutationFn: async (data: PlayerFormData) => {
-      return parseResponse(
+    mutationFn: async (data: PlayerFormData) =>
+      parseResponse(
         rpc.api.campaigns[":id"].players.$post({
           param: { id: campaign.id },
           json: toPlayerPayload(data),
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Player added");
       invalidateCampaignPlayers(queryClient, campaign.id);
@@ -134,14 +133,13 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   });
 
   const editMutation = useMutation({
-    mutationFn: async ({ playerId, data }: { data: PlayerFormData; playerId: string }) => {
-      return parseResponse(
+    mutationFn: async ({ playerId, data }: { data: PlayerFormData; playerId: string }) =>
+      parseResponse(
         rpc.api.campaigns[":id"].players[":playerId"].$put({
           param: { id: campaign.id, playerId },
           json: toPlayerPayload(data),
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Player updated");
       invalidateCampaignPlayers(queryClient, campaign.id);
@@ -153,13 +151,12 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (playerId: string) => {
-      return parseResponse(
+    mutationFn: async (playerId: string) =>
+      parseResponse(
         rpc.api.campaigns[":id"].players[":playerId"].$delete({
           param: { id: campaign.id, playerId },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       const removedSelf = removeDialog.target?.userId === currentUserId;
       snackbar.success(removedSelf ? "You left the campaign" : "Player removed");
@@ -177,13 +174,12 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   });
 
   const revokeInviteMutation = useMutation({
-    mutationFn: async (inviteId: string) => {
-      return parseResponse(
+    mutationFn: async (inviteId: string) =>
+      parseResponse(
         rpc.api.campaigns.invites[":inviteId"].revoke.$post({
           param: { inviteId },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Invitation revoked");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });

@@ -34,13 +34,12 @@ export function DeleteAccountDialog({ open, onClose, onExited, hasPassword }: De
   const confirmText = watch("confirmText");
 
   const deleteMutation = useMutation({
-    mutationFn: async (password: string | undefined) => {
-      return parseResponse(
+    mutationFn: async (password: string | undefined) =>
+      parseResponse(
         rpc.auth["delete-account"].$post({
           json: { password },
         }),
-      );
-    },
+      ),
     // The private route sends the user to sign in
     onSuccess: () => {
       useAuthStore.getState().clearSession({ byUser: true });

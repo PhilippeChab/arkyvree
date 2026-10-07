@@ -25,74 +25,76 @@ class SkillsService {
       usableWithoutTraining: boolean;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        if (stripSeparators(body.name) === "budget") throw new BadRequestError('"Budget" is a reserved skill name');
+          if (stripSeparators(body.name) === "budget") throw new BadRequestError('"Budget" is a reserved skill name');
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "skills", body.name);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "skills", body.name);
 
-        const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+          const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
 
-        const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, ...skillData } = body;
-        const fields = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
-        const rows = await Skills.create(tx, { ...skillData, rulesetId });
-        const skill = rows[0];
+          const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, ...skillData } = body;
+          const fields = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
+          const rows = await Skills.create(tx, { ...skillData, rulesetId });
+          const skill = rows[0];
 
-        if (tombstoneAncestorId) await edit.repointTombstone(tx, "skills", tombstoneAncestorId, skill.id);
+          if (tombstoneAncestorId) await edit.repointTombstone(tx, "skills", tombstoneAncestorId, skill.id);
 
-        await effects.skills.syncProperties(tx, skill.id, fields);
-        await effects.skills.generateFeats(tx, { ruleset, rulesetData }, body.name);
+          await effects.skills.syncProperties(tx, skill.id, fields);
+          await effects.skills.generateFeats(tx, { ruleset, rulesetData }, body.name);
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: skill.id,
-          targetTable: getTableName(skillsInRules),
-          type: "createSkill",
-          data: { entityName: skill.name },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: skill.id,
+            targetTable: getTableName(skillsInRules),
+            type: "createSkill",
+            data: { entityName: skill.name },
+          });
 
-        return { ...skill, ...rules.skills.normalizeFields(fields) };
-      });
-    });
+          return { ...skill, ...rules.skills.normalizeFields(fields) };
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
 
   async deleteSkill(session: Session, rulesetId: string, skillId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        const inUse = await hasCharacterPicks(tx, "skills", skillId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+          const inUse = await hasCharacterPicks(tx, "skills", skillId, rulesetId);
+          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
+          const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const targetId = await edit.cowToDelete(tx, "skills", skill);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const targetId = await edit.cowToDelete(tx, "skills", skill);
 
-        const { effects } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-        await effects.skills.deleteFeats(tx, { ruleset, rulesetData }, skill.name);
+          const { effects } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+          await effects.skills.deleteFeats(tx, { ruleset, rulesetData }, skill.name);
 
-        // FK CASCADE on klass_skills.skill_id wipes those join rows.
-        // The database deletes its customizations with it.
-        const rows = await Skills.delete(tx, { id: targetId });
-        const deletedSkill = rows[0];
+          // FK CASCADE on klass_skills.skill_id wipes those join rows.
+          // The database deletes its customizations with it.
+          const rows = await Skills.delete(tx, { id: targetId });
+          const deletedSkill = rows[0];
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(skillsInRules),
-          type: "deleteSkill",
-          data: { rulesetId, entityName: skill.name },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId,
+            targetTable: getTableName(skillsInRules),
+            type: "deleteSkill",
+            data: { rulesetId, entityName: skill.name },
+          });
 
-        return deletedSkill;
-      });
-    });
+          return deletedSkill;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
@@ -153,49 +155,50 @@ class SkillsService {
       usableWithoutTraining: boolean;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
+          const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
-        if (stripSeparators(body.name) === "budget") throw new BadRequestError('"Budget" is a reserved skill name');
+          if (stripSeparators(body.name) === "budget") throw new BadRequestError('"Budget" is a reserved skill name');
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { id: targetId, copied } = await edit.cowToEdit(tx, "skills", skill);
-        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { id: targetId, copied } = await edit.cowToEdit(tx, "skills", skill);
+          const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-        const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-        const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, updatedAt: _u, ...skillData } = body;
-        const fields = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
-        const rows = await Skills.update(tx, skillData, { id: targetId, expectedUpdatedAt });
-        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+          const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+          const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, updatedAt: _u, ...skillData } = body;
+          const fields = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
+          const rows = await Skills.update(tx, skillData, { id: targetId, expectedUpdatedAt });
+          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-        const updatedSkill = rows[0];
+          const updatedSkill = rows[0];
 
-        await effects.skills.syncProperties(tx, targetId, fields);
+          await effects.skills.syncProperties(tx, targetId, fields);
 
-        if (skill.name !== body.name) {
-          await effects.skills.deleteFeats(tx, { ruleset, rulesetData }, skill.name);
-          await effects.skills.generateFeats(tx, { ruleset, rulesetData }, body.name);
-        }
+          if (skill.name !== body.name) {
+            await effects.skills.deleteFeats(tx, { ruleset, rulesetData }, skill.name);
+            await effects.skills.generateFeats(tx, { ruleset, rulesetData }, body.name);
+          }
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(skillsInRules),
-          type: "updateSkill",
-          data: {
-            entityName: body.name,
-            changedFields: getChangedFields(skill, body),
-          },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId,
+            targetTable: getTableName(skillsInRules),
+            type: "updateSkill",
+            data: {
+              entityName: body.name,
+              changedFields: getChangedFields(skill, body),
+            },
+          });
 
-        return { ...updatedSkill, ...rules.skills.normalizeFields(fields) };
-      });
-    });
+          return { ...updatedSkill, ...rules.skills.normalizeFields(fields) };
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }

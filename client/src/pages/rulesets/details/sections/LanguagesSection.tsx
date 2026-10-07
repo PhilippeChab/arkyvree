@@ -44,14 +44,13 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     rulesetId: ruleset.id,
     sectionName: "languages",
     label: "Language",
-    createFn: async (data) => {
-      return parseResponse(
+    createFn: async (data) =>
+      parseResponse(
         rpc.api.rulesets[":id"].languages.$post({
           param: { id: ruleset.id },
           json: data,
         }),
-      );
-    },
+      ),
     onCreateSuccess: (created) => openEntity(`languages/${created.id}`),
   });
 

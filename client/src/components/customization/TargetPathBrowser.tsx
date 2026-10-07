@@ -84,9 +84,7 @@ export function TargetPathBrowser({
   });
 
   // Segment labels from the completions response
-  const segmentLabels = useMemo(() => {
-    return firstPage(completionsData)?.segmentLabels ?? {};
-  }, [completionsData]);
+  const segmentLabels = useMemo(() => firstPage(completionsData)?.segmentLabels ?? {}, [completionsData]);
 
   const completions = useMemo(() => {
     const items = pageItems(completionsData);

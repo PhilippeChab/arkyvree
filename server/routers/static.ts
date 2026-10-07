@@ -149,12 +149,12 @@ export default new Hono()
       return c.text("Public asset not found", 404);
     }
   })
-  .get("/robots.txt", (c) => {
-    return c.text(`User-agent: *\nAllow: /\n\nSitemap: ${APP_URL}/sitemap.xml\n`, 200, {
+  .get("/robots.txt", (c) =>
+    c.text(`User-agent: *\nAllow: /\n\nSitemap: ${APP_URL}/sitemap.xml\n`, 200, {
       "Content-Type": "text/plain",
       "Cache-Control": "no-cache",
-    });
-  })
+    }),
+  )
   .get("/sitemap.xml", (c) => {
     // Only list pages Googlebot can actually render. /rulesets and
     // /rulesets/:id sit behind PrivateRoute (auth) and /sign-in duplicates

@@ -87,7 +87,7 @@ The rules are `lint/styles.mjs`'s. Every value a style takes is the theme's, wri
 - A query that can't run yet passes `skipToken` as its `queryFn`, in its factory (not `enabled: !!id`, which `arkyvree/queries` refuses); `enabled` is for plain on/off gates
 - Untyped JSON (activity and notification payloads, stored state) is read through `isRecord` (`shared/isRecord.ts`) guards, not casts
 - What the browser keeps is a store's (`client/src/stores/`: zustand's `persist`, or a module of its own, `themeModeStorage.ts`), never `localStorage` or `sessionStorage` elsewhere (`arkyvree/browser-storage`). The URL's search params are read through the shared hooks (`useSearchParam`, `useListParams`, `useSearchText`, `useUpdateSearchParams`), never `useSearchParams` elsewhere (`arkyvree/navigation`). A date is shown through `lib/formatDate.ts` (`formatDate`, `formatDateTime`, `formatRelativeTime`), in the viewer's language (`arkyvree/date-formats`)
-- Mutations use `.mutate()` with `onSuccess`/`onError` callbacks, not `.mutateAsync()` (`arkyvree/client-apis`)
+- Mutations use `.mutate()` with `onSuccess`/`onError` callbacks, not `.mutateAsync()`, and a mutation is held whole (`const saveMutation = useMutation(…)`, `saveMutation.isPending`), never destructured (`arkyvree/client-apis`)
 
 ## Shared UI building blocks
 

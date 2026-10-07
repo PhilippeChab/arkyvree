@@ -205,29 +205,27 @@ export function SpellFormFields({
       {selectedAptitudes.length > 0 && (
         <Stack spacing={1}>
           <SubsectionTitle>Aptitude Settings</SubsectionTitle>
-          {selectedAptitudes.map((apt) => {
-            return (
-              <Stack key={apt.id} direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0 }}>
-                  {apt.name}
-                </Typography>
-                <TextField
-                  label="Level"
-                  type="number"
-                  size="small"
-                  slotProps={{ htmlInput: { min: 0, max: MAX_SPELL_LEVEL } }}
-                  value={levelOf(apt.id) ?? ""}
-                  error={levelsInvalid && spellLevelError(levelOf(apt.id)) !== undefined}
-                  helperText={levelsInvalid && spellLevelError(levelOf(apt.id))}
-                  onChange={(e) => {
-                    const level = readNumberInput(e.target.value);
-                    setSelected(selected.map((a) => (a.id === apt.id ? spellAptitude(a.id, level) : a)));
-                  }}
-                  sx={{ width: 80 }}
-                />
-              </Stack>
-            );
-          })}
+          {selectedAptitudes.map((apt) => (
+            <Stack key={apt.id} direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0 }}>
+                {apt.name}
+              </Typography>
+              <TextField
+                label="Level"
+                type="number"
+                size="small"
+                slotProps={{ htmlInput: { min: 0, max: MAX_SPELL_LEVEL } }}
+                value={levelOf(apt.id) ?? ""}
+                error={levelsInvalid && spellLevelError(levelOf(apt.id)) !== undefined}
+                helperText={levelsInvalid && spellLevelError(levelOf(apt.id))}
+                onChange={(e) => {
+                  const level = readNumberInput(e.target.value);
+                  setSelected(selected.map((a) => (a.id === apt.id ? spellAptitude(a.id, level) : a)));
+                }}
+                sx={{ width: 80 }}
+              />
+            </Stack>
+          ))}
         </Stack>
       )}
     </>

@@ -90,7 +90,7 @@ export default function CharacterDetailsPage() {
       await invalidateCharacter(queryClient, id);
       setConfirmOpen(false);
     },
-    onError: (err) => snackbar.error(err, "Failed to remove level"),
+    onError: (error) => snackbar.error(error, "Failed to remove level"),
   });
 
   const archiveMutation = useMutation({
@@ -100,7 +100,7 @@ export default function CharacterDetailsPage() {
       void invalidateCharacterListings(queryClient);
       navigate("/characters");
     },
-    onError: (err) => snackbar.error(err, "Failed to archive character"),
+    onError: (error) => snackbar.error(error, "Failed to archive character"),
   });
 
   const unarchiveMutation = useMutation({
@@ -109,7 +109,7 @@ export default function CharacterDetailsPage() {
       snackbar.success("Character unarchived");
       return Promise.all([invalidateCharacter(queryClient, id), invalidateCharacterListings(queryClient)]);
     },
-    onError: (err) => snackbar.error(err, "Failed to unarchive character"),
+    onError: (error) => snackbar.error(error, "Failed to unarchive character"),
   });
 
   const hardDeleteMutation = useMutation({
@@ -121,7 +121,7 @@ export default function CharacterDetailsPage() {
       // Gone: don't let Back render it from the cache
       queryClient.removeQueries({ queryKey: QUERY_KEYS.characters.detail(id) });
     },
-    onError: (err) => snackbar.error(err, "Failed to delete character"),
+    onError: (error) => snackbar.error(error, "Failed to delete character"),
   });
 
   if (isLoading) return <CharacterDetailSkeleton />;

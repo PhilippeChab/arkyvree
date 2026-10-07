@@ -77,17 +77,16 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
   });
 
   const revertMutation = useMutation({
-    mutationFn: async ({ entityType, sourceEntityId }: Pick<RestorableChange, "entityType" | "sourceEntityId">) => {
-      return parseResponse(
+    mutationFn: async ({ entityType, sourceEntityId }: Pick<RestorableChange, "entityType" | "sourceEntityId">) =>
+      parseResponse(
         restoreApi.$post({ param: { id: rulesetId, entityType: getUrlSegment(entityType), entityId: sourceEntityId } }),
-      );
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.detail(rulesetId) });
       snackbar.success("Change reverted");
     },
-    onError: (err) => {
-      snackbar.error(err, "Failed to revert change");
+    onError: (error) => {
+      snackbar.error(error, "Failed to revert change");
     },
   });
 

@@ -107,15 +107,14 @@ function CharacterCard({
   // Warm the sheet while the pointer is on the card.
   const prefetchSheet = () => void queryClient.prefetchQuery(campaignCharacterQuery(campaignId, character.id));
 
-  const { mutate: updateVisibility } = useMutation({
-    mutationFn: async (visibility: Visibility) => {
-      return parseResponse(
+  const visibilityMutation = useMutation({
+    mutationFn: async (visibility: Visibility) =>
+      parseResponse(
         rpc.api.campaigns[":id"].characters[":characterId"].$put({
           param: { id: campaignId, characterId: character.id },
           json: { visibility },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Visibility updated");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaignId, "characters") });
@@ -164,7 +163,7 @@ function CharacterCard({
                   selected={option === character.visibility}
                   onClick={() => {
                     menu.closeMenu();
-                    if (option !== character.visibility) updateVisibility(option);
+                    if (option !== character.visibility) visibilityMutation.mutate(option);
                   }}
                 >
                   {option}
@@ -195,15 +194,14 @@ function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharac
   } = useListboxQuery({ ...unlinkedCharactersQuery(campaignId, debouncedCharacterSearch), enabled: open });
 
   const snackbar = useSnackbar();
-  const { mutate: linkCharacter, isPending: isLinking } = useMutation({
-    mutationFn: async ({ characterId, visibility }: { characterId: string; visibility: Visibility }) => {
-      return parseResponse(
+  const linkMutation = useMutation({
+    mutationFn: async ({ characterId, visibility }: { characterId: string; visibility: Visibility }) =>
+      parseResponse(
         rpc.api.campaigns[":id"].characters.$post({
           param: { id: campaignId },
           json: { characterId, visibility },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       snackbar.success("Character linked");
       queryClient.invalidateQueries({
@@ -220,7 +218,7 @@ function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharac
   });
 
   const handleLinkCharacter = () => {
-    if (selectedCharacter) linkCharacter({ characterId: selectedCharacter.id, visibility });
+    if (selectedCharacter) linkMutation.mutate({ characterId: selectedCharacter.id, visibility });
   };
 
   return (
@@ -240,7 +238,7 @@ function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharac
             filterOptions={(x) => x}
             loading={isLoading}
             noOptionsText={emptyOptionsText("Characters", charactersError)}
-            disabled={isLinking}
+            disabled={linkMutation.isPending}
             renderOption={(props, option) => (
               <li {...props} key={option.id}>
                 {option.name}
@@ -292,7 +290,7 @@ function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharac
       </DialogContent>
       <DialogFooter
         onCancel={onClose}
-        pending={isLinking}
+        pending={linkMutation.isPending}
         action={{ label: "Link Character", onClick: handleLinkCharacter, disabled: !selectedCharacter }}
       />
     </Modal>

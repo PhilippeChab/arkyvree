@@ -44,63 +44,64 @@ class RequirementsService {
       valueType?: string;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const effectiveEntityId = rulesetData.canonicalize(entityId);
-        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+          const effectiveEntityId = rulesetData.canonicalize(entityId);
+          const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
 
-        let requirement;
-        if (body.target) {
-          const inferredValueType = await resolvePathValueType(
-            rulesetId,
-            body.target,
-            "requirement",
-            body.operator,
-            body.value,
-          );
+          let requirement;
+          if (body.target) {
+            const inferredValueType = await resolvePathValueType(
+              rulesetId,
+              body.target,
+              "requirement",
+              body.operator,
+              body.value,
+            );
 
-          const rows = await Requirements.create(tx, {
-            entityId: resolvedEntityId,
-            entityType,
-            level: body.level,
-            target: body.target,
-            value: body.value,
-            valueType: inferredValueType,
-            operator: body.operator,
+            const rows = await Requirements.create(tx, {
+              entityId: resolvedEntityId,
+              entityType,
+              level: body.level,
+              target: body.target,
+              value: body.value,
+              valueType: inferredValueType,
+              operator: body.operator,
+            });
+            requirement = rows[0];
+          } else {
+            const rows = await Requirements.create(tx, {
+              entityId: resolvedEntityId,
+              entityType,
+              level: body.level,
+              chainingOperator: body.chainingOperator,
+            });
+            requirement = rows[0];
+          }
+
+          if (!requirement) throw new InternalError("Failed to create requirement");
+
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: requirement.id,
+            targetTable: getTableName(requirementsInCustomization),
+            type: "createRequirement",
+            data: {
+              entityName,
+              entityType,
+              ...(body.target ? { target: body.target, value: body.value, operator: body.operator } : {}),
+            },
           });
-          requirement = rows[0];
-        } else {
-          const rows = await Requirements.create(tx, {
-            entityId: resolvedEntityId,
-            entityType,
-            level: body.level,
-            chainingOperator: body.chainingOperator,
-          });
-          requirement = rows[0];
-        }
 
-        if (!requirement) throw new InternalError("Failed to create requirement");
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: requirement.id,
-          targetTable: getTableName(requirementsInCustomization),
-          type: "createRequirement",
-          data: {
-            entityName,
-            entityType,
-            ...(body.target ? { target: body.target, value: body.value, operator: body.operator } : {}),
-          },
-        });
-
-        return { ...requirement, resolvedEntityId };
-      });
-    });
+          return { ...requirement, resolvedEntityId };
+        }),
+    );
     RulesetCache.invalidateEntities(rulesetId);
     return result;
   }
@@ -112,49 +113,50 @@ class RequirementsService {
     entityId: string,
     requirementId: string,
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
-        const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+          const effectiveEntityId = rulesetData.canonicalize(entityId);
+          await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
-        const requirement = this.findEntityRequirement(rulesetData, entityType, effectiveEntityId, requirementId);
+          const requirement = this.findEntityRequirement(rulesetData, entityType, effectiveEntityId, requirementId);
 
-        // Before the copy-on-write: the lookup reads the shared db, not tx
-        await checkCustomizedEntity(requirement);
+          // Before the copy-on-write: the lookup reads the shared db, not tx
+          await checkCustomizedEntity(requirement);
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
-          tx,
-          entityType,
-          effectiveEntityId,
-          "requirement",
-          requirementId,
-        );
-
-        const rows = await Requirements.delete(tx, { id: resolvedRequirementId });
-        const deletedRequirement = rows[0];
-
-        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: deletedRequirement.id,
-          targetTable: getTableName(requirementsInCustomization),
-          type: "deleteRequirement",
-          data: {
-            rulesetId,
-            entityName,
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
+            tx,
             entityType,
-            ...(requirement.target
-              ? { target: requirement.target, value: requirement.value, operator: requirement.operator }
-              : {}),
-          },
-        });
+            effectiveEntityId,
+            "requirement",
+            requirementId,
+          );
 
-        return { ...deletedRequirement, resolvedEntityId };
-      });
-    });
+          const rows = await Requirements.delete(tx, { id: resolvedRequirementId });
+          const deletedRequirement = rows[0];
+
+          const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: deletedRequirement.id,
+            targetTable: getTableName(requirementsInCustomization),
+            type: "deleteRequirement",
+            data: {
+              rulesetId,
+              entityName,
+              entityType,
+              ...(requirement.target
+                ? { target: requirement.target, value: requirement.value, operator: requirement.operator }
+                : {}),
+            },
+          });
+
+          return { ...deletedRequirement, resolvedEntityId };
+        }),
+    );
     RulesetCache.invalidateEntities(rulesetId);
     return result;
   }
@@ -196,87 +198,88 @@ class RequirementsService {
       valueType?: string;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+          const effectiveEntityId = rulesetData.canonicalize(entityId);
+          await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
-        const requirement = this.findEntityRequirement(rulesetData, entityType, effectiveEntityId, requirementId);
+          const requirement = this.findEntityRequirement(rulesetData, entityType, effectiveEntityId, requirementId);
 
-        // Before the copy-on-write: the lookup reads the shared db, not tx
-        await checkCustomizedEntity(requirement);
+          // Before the copy-on-write: the lookup reads the shared db, not tx
+          await checkCustomizedEntity(requirement);
 
-        // COW the owning entity if this requirement is inherited
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
-          tx,
-          entityType,
-          effectiveEntityId,
-          "requirement",
-          requirementId,
-        );
-
-        let updatedRequirement;
-        if (body.target) {
-          // An update without a value keeps the stored one, checked against the target's type all the same
-          const value = body.value ?? requirement.value ?? undefined;
-          const inferredValueType = await resolvePathValueType(
-            rulesetId,
-            body.target,
-            "requirement",
-            body.operator ?? requirement.operator ?? undefined,
-            value,
-          );
-          const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
-          const rows = await Requirements.update(
+          // COW the owning entity if this requirement is inherited
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
             tx,
-            {
-              level: body.level,
-              target: body.target,
-              value: body.value,
-              valueType: inferredValueType,
-              operator: body.operator,
-            },
-            { id: resolvedRequirementId, expectedUpdatedAt },
-          );
-          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
-
-          updatedRequirement = rows[0];
-        } else {
-          const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
-          const rows = await Requirements.update(
-            tx,
-            {
-              level: body.level,
-              chainingOperator: body.chainingOperator,
-            },
-            { id: resolvedRequirementId, expectedUpdatedAt },
-          );
-          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
-
-          updatedRequirement = rows[0];
-        }
-
-        if (!updatedRequirement) throw new InternalError("Failed to update requirement");
-
-        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: updatedRequirement.id,
-          targetTable: getTableName(requirementsInCustomization),
-          type: "updateRequirement",
-          data: {
-            entityName,
             entityType,
-            ...(body.target ? { target: body.target, value: body.value, operator: body.operator } : {}),
-          },
-        });
+            effectiveEntityId,
+            "requirement",
+            requirementId,
+          );
 
-        return { ...updatedRequirement, resolvedEntityId };
-      });
-    });
+          let updatedRequirement;
+          if (body.target) {
+            // An update without a value keeps the stored one, checked against the target's type all the same
+            const value = body.value ?? requirement.value ?? undefined;
+            const inferredValueType = await resolvePathValueType(
+              rulesetId,
+              body.target,
+              "requirement",
+              body.operator ?? requirement.operator ?? undefined,
+              value,
+            );
+            const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
+            const rows = await Requirements.update(
+              tx,
+              {
+                level: body.level,
+                target: body.target,
+                value: body.value,
+                valueType: inferredValueType,
+                operator: body.operator,
+              },
+              { id: resolvedRequirementId, expectedUpdatedAt },
+            );
+            if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
+            updatedRequirement = rows[0];
+          } else {
+            const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
+            const rows = await Requirements.update(
+              tx,
+              {
+                level: body.level,
+                chainingOperator: body.chainingOperator,
+              },
+              { id: resolvedRequirementId, expectedUpdatedAt },
+            );
+            if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
+            updatedRequirement = rows[0];
+          }
+
+          if (!updatedRequirement) throw new InternalError("Failed to update requirement");
+
+          const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: updatedRequirement.id,
+            targetTable: getTableName(requirementsInCustomization),
+            type: "updateRequirement",
+            data: {
+              entityName,
+              entityType,
+              ...(body.target ? { target: body.target, value: body.value, operator: body.operator } : {}),
+            },
+          });
+
+          return { ...updatedRequirement, resolvedEntityId };
+        }),
+    );
     RulesetCache.invalidateEntities(rulesetId);
     return result;
   }

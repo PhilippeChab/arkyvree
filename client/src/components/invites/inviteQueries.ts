@@ -12,10 +12,10 @@ export function inviteQuery<T>(kind: InviteKind, inviteId: string, inviteFn: () 
     queryFn: async () => {
       try {
         return await inviteFn();
-      } catch (err) {
+      } catch (error) {
         // Revoked, or addressed to someone else.
-        if (err instanceof ApiError && err.status === 404) return null;
-        throw err;
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
       }
     },
     // Drop the invite once the page closes: it may be answered elsewhere (the

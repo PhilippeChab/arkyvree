@@ -105,7 +105,7 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
       invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, section)]);
       snackbar.success(`${label} updated`);
     },
-    onError: (err) => snackbar.error(err, `Failed to update ${label.toLowerCase()}`),
+    onError: (error) => snackbar.error(error, `Failed to update ${label.toLowerCase()}`),
   });
 
   return (
@@ -161,7 +161,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
       // Gone: don't let Back render it from the cache
       queryClient.removeQueries({ queryKey: query(entityId).queryKey });
     },
-    onError: (err) => snackbar.error(err, `Failed to delete ${label.toLowerCase()}`),
+    onError: (error) => snackbar.error(error, `Failed to delete ${label.toLowerCase()}`),
   });
 
   if (!isRulesetLoading && !isEntityLoading && (!ruleset || !entity)) {

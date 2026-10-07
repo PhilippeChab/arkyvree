@@ -89,35 +89,32 @@ export function ModifiersSection({
     data: externalData,
     query: modifiersQuery(ruleset.id, entityType, entityId),
     queryKeysToInvalidate,
-    createFn: async (data: ModifierFormData) => {
-      return tag(
+    createFn: async (data: ModifierFormData) =>
+      tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers.$post({
             param: entityParam,
             json: data,
           }),
         ),
-      );
-    },
-    updateFn: async (modifierId: string, data: ModifierFormData, updatedAt: string | undefined) => {
-      return tag(
+      ),
+    updateFn: async (modifierId: string, data: ModifierFormData, updatedAt: string | undefined) =>
+      tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers[":modifierId"].$put({
             param: { ...entityParam, modifierId },
             json: { ...data, updatedAt },
           }),
         ),
-      );
-    },
-    deleteFn: async (modifierId: string) => {
-      return tag(
+      ),
+    deleteFn: async (modifierId: string) =>
+      tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers[":modifierId"].$delete({
             param: { ...entityParam, modifierId },
           }),
         ),
-      );
-    },
+      ),
     ...followCopies,
   });
 
@@ -156,16 +153,15 @@ export function ModifiersSection({
   const snackbar = useSnackbar();
 
   const duplicateMutation = useMutation({
-    mutationFn: async ({ sourceId, data }: { data: ModifierFormData; sourceId: string }) => {
-      return tag(
+    mutationFn: async ({ sourceId, data }: { data: ModifierFormData; sourceId: string }) =>
+      tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers[":modifierId"].duplicate.$post({
             param: { ...entityParam, modifierId: sourceId },
             json: data,
           }),
         ),
-      );
-    },
+      ),
     onSuccess: (data) => {
       snackbar.success("Modifier created");
       invalidateRulesetEdit(queryClient, ruleset.id, [
@@ -175,8 +171,8 @@ export function ModifiersSection({
       setCreateDialogOpen(false);
       handleResolvedEntityId(data);
     },
-    onError: (err: Error) => {
-      snackbar.error(err, "Failed to duplicate modifier");
+    onError: (error) => {
+      snackbar.error(error, "Failed to duplicate modifier");
     },
   });
 

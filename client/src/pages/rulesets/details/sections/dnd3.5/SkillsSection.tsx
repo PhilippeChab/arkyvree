@@ -46,14 +46,13 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     sectionName: "skills",
     createDefaults: EMPTY_SKILL,
     label: "Skill",
-    createFn: async (data) => {
-      return parseResponse(
+    createFn: async (data) =>
+      parseResponse(
         rpc.api.rulesets[":id"].skills.$post({
           param: { id: ruleset.id },
           json: data,
         }),
-      );
-    },
+      ),
     onCreateSuccess: (created) => openEntity(`skills/${created.id}`),
   });
 

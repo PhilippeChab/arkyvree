@@ -105,102 +105,104 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       skills: number;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+          const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
-        // Copy an inherited class: the new level row would otherwise belong to the parent ruleset's class.
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
+          // Copy an inherited class: the new level row would otherwise belong to the parent ruleset's class.
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
-        const { effects } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-        const { feats, saves, bab, skills, ...levelData } = body;
-        const rows = await KlassLevels.create(tx, {
-          ...levelData,
-          klassId: targetKlassId,
-        });
-        const klassLevel = rows[0];
+          const { effects } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+          const { feats, saves, bab, skills, ...levelData } = body;
+          const rows = await KlassLevels.create(tx, {
+            ...levelData,
+            klassId: targetKlassId,
+          });
+          const klassLevel = rows[0];
 
-        await effects.classLevels.syncProperties(tx, klassLevel.id, { bab, skills });
+          await effects.classLevels.syncProperties(tx, klassLevel.id, { bab, skills });
 
-        if (feats && feats.length > 0) {
-          for (const feat of feats) {
-            await KlassLevelFeats.create(tx, {
-              klassLevelId: klassLevel.id,
-              featId: feat.featId,
-              aptitudeId: feat.aptitudeId,
-              free: feat.free ?? true,
-            });
+          if (feats && feats.length > 0) {
+            for (const feat of feats) {
+              await KlassLevelFeats.create(tx, {
+                klassLevelId: klassLevel.id,
+                featId: feat.featId,
+                aptitudeId: feat.aptitudeId,
+                free: feat.free ?? true,
+              });
+            }
           }
-        }
 
-        if (saves && saves.length > 0) {
-          await KlassLevelSaves.createMany(
-            tx,
-            saves.map((s) => ({
-              klassLevelId: klassLevel.id,
-              saveId: s.saveId,
-              base: s.base,
-            })),
-          );
-        }
+          if (saves && saves.length > 0) {
+            await KlassLevelSaves.createMany(
+              tx,
+              saves.map((s) => ({
+                klassLevelId: klassLevel.id,
+                saveId: s.saveId,
+                base: s.base,
+              })),
+            );
+          }
 
-        await effects.classLevels.requirePreviousLevel(tx, klassLevel, klass.name);
+          await effects.classLevels.requirePreviousLevel(tx, klassLevel, klass.name);
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: klassLevel.id,
-          targetTable: getTableName(klassLevelsInRules),
-          type: "createKlassLevel",
-          data: { entityName: klass.name, level: klassLevel.level },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: klassLevel.id,
+            targetTable: getTableName(klassLevelsInRules),
+            type: "createKlassLevel",
+            data: { entityName: klass.name, level: klassLevel.level },
+          });
 
-        return { ...klassLevel, bab, skills };
-      });
-    });
+          return { ...klassLevel, bab, skills };
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
 
   async deleteClassLevel(session: Session, rulesetId: string, classId: string, levelId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        const inUse = await hasCharacterPicks(tx, "klass_levels", levelId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+          const inUse = await hasCharacterPicks(tx, "klass_levels", levelId, rulesetId);
+          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+          const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
-        const level = rulesetData.klassLevelsById.get(levelId);
-        if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
+          const level = rulesetData.klassLevelsById.get(levelId);
+          if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
 
-        // COW the parent klass if the level is inherited — without this, hard-delete
-        // would wipe the parent ruleset's row. RulesetEdit.cowOwner on
-        // "klass_levels" duplicates the entire klass into the user's ruleset and
-        // returns the level id in the new copy.
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
+          // COW the parent klass if the level is inherited — without this, hard-delete
+          // would wipe the parent ruleset's row. RulesetEdit.cowOwner on
+          // "klass_levels" duplicates the entire klass into the user's ruleset and
+          // returns the level id in the new copy.
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
 
-        // FK CASCADE on klass_level_feats / klass_level_powers / klass_level_saves
-        // wipes those join rows when the level row is deleted.
-        // The database deletes its customizations with it.
-        const rows = await KlassLevels.delete(tx, { id: resolvedLevelId });
-        const deletedLevel = rows[0];
+          // FK CASCADE on klass_level_feats / klass_level_powers / klass_level_saves
+          // wipes those join rows when the level row is deleted.
+          // The database deletes its customizations with it.
+          const rows = await KlassLevels.delete(tx, { id: resolvedLevelId });
+          const deletedLevel = rows[0];
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: deletedLevel.id,
-          targetTable: getTableName(klassLevelsInRules),
-          type: "deleteKlassLevel",
-          data: { rulesetId, entityName: klass.name, level: deletedLevel.level },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: deletedLevel.id,
+            targetTable: getTableName(klassLevelsInRules),
+            type: "deleteKlassLevel",
+            data: { rulesetId, entityName: klass.name, level: deletedLevel.level },
+          });
 
-        return deletedLevel;
-      });
-    });
+          return deletedLevel;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
@@ -285,87 +287,88 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       skills?: number;
     },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+          const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
-        const level = rulesetData.klassLevelsById.get(levelId);
-        if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
+          const level = rulesetData.klassLevelsById.get(levelId);
+          if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
 
-        // COW the parent klass if inherited so writes don't corrupt the parent.
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
+          // COW the parent klass if inherited so writes don't corrupt the parent.
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
 
-        const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-        const { feats, saves, bab, skills } = body;
+          const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+          const { feats, saves, bab, skills } = body;
 
-        if (bab !== undefined || skills !== undefined) {
-          // When the COW just happened, the new level's properties exist in
-          // the DB but not in rulesetData.propertiesByEntity (composed before
-          // the COW). Read straight from the DB so a partial body doesn't
-          // silently zero the unspecified field.
-          const currentProps =
-            resolvedLevelId === level.id
-              ? (rulesetData.propertiesByEntity.get(resolvedLevelId) ?? [])
-              : await Properties.findMany(tx, { entityIds: [resolvedLevelId], entityType: "klass_levels" });
-          const currentValues = rules.classLevels.readProperties(currentProps);
+          if (bab !== undefined || skills !== undefined) {
+            // When the COW just happened, the new level's properties exist in
+            // the DB but not in rulesetData.propertiesByEntity (composed before
+            // the COW). Read straight from the DB so a partial body doesn't
+            // silently zero the unspecified field.
+            const currentProps =
+              resolvedLevelId === level.id
+                ? (rulesetData.propertiesByEntity.get(resolvedLevelId) ?? [])
+                : await Properties.findMany(tx, { entityIds: [resolvedLevelId], entityType: "klass_levels" });
+            const currentValues = rules.classLevels.readProperties(currentProps);
 
-          await effects.classLevels.syncProperties(tx, resolvedLevelId, {
-            bab: bab ?? currentValues.bab,
-            skills: skills ?? currentValues.skills,
+            await effects.classLevels.syncProperties(tx, resolvedLevelId, {
+              bab: bab ?? currentValues.bab,
+              skills: skills ?? currentValues.skills,
+            });
+          }
+
+          if (feats !== undefined) {
+            await KlassLevelFeats.delete(tx, { klassLevelId: resolvedLevelId });
+
+            if (feats.length > 0) {
+              await KlassLevelFeats.createMany(
+                tx,
+                feats.map((feat) => ({
+                  klassLevelId: resolvedLevelId,
+                  featId: feat.featId,
+                  aptitudeId: feat.aptitudeId,
+                  free: feat.free ?? true,
+                })),
+              );
+            }
+          }
+
+          if (saves !== undefined) {
+            await KlassLevelSaves.delete(tx, { klassLevelId: resolvedLevelId });
+
+            if (saves.length > 0) {
+              await KlassLevelSaves.createMany(
+                tx,
+                saves.map((s) => ({
+                  klassLevelId: resolvedLevelId,
+                  saveId: s.saveId,
+                  base: s.base,
+                })),
+              );
+            }
+          }
+
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: resolvedLevelId,
+            targetTable: getTableName(klassLevelsInRules),
+            type: "updateKlassLevel",
+            data: { entityName: klass.name, level: level.level },
           });
-        }
 
-        if (feats !== undefined) {
-          await KlassLevelFeats.delete(tx, { klassLevelId: resolvedLevelId });
+          const finalProps = await Properties.findMany(tx, {
+            entityIds: [resolvedLevelId],
+            entityType: "klass_levels",
+          });
 
-          if (feats.length > 0) {
-            await KlassLevelFeats.createMany(
-              tx,
-              feats.map((feat) => ({
-                klassLevelId: resolvedLevelId,
-                featId: feat.featId,
-                aptitudeId: feat.aptitudeId,
-                free: feat.free ?? true,
-              })),
-            );
-          }
-        }
-
-        if (saves !== undefined) {
-          await KlassLevelSaves.delete(tx, { klassLevelId: resolvedLevelId });
-
-          if (saves.length > 0) {
-            await KlassLevelSaves.createMany(
-              tx,
-              saves.map((s) => ({
-                klassLevelId: resolvedLevelId,
-                saveId: s.saveId,
-                base: s.base,
-              })),
-            );
-          }
-        }
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: resolvedLevelId,
-          targetTable: getTableName(klassLevelsInRules),
-          type: "updateKlassLevel",
-          data: { entityName: klass.name, level: level.level },
-        });
-
-        const finalProps = await Properties.findMany(tx, {
-          entityIds: [resolvedLevelId],
-          entityType: "klass_levels",
-        });
-
-        return rules.classLevels.enrichWithProperties([{ ...level, id: resolvedLevelId }], finalProps)[0];
-      });
-    });
+          return rules.classLevels.enrichWithProperties([{ ...level, id: resolvedLevelId }], finalProps)[0];
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }

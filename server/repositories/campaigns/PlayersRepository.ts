@@ -95,46 +95,52 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
         )
       : false;
 
-    return await this.withPagination(pagination, async ({ limit, offset }) => {
-      return await db.query.playersInCampaign.findMany({
-        where: this.where([eq(this.table.campaignId, where.campaignId), this.visibility(visibility), searchCondition]),
-        with: {
-          usersInAccount: {
-            columns: {
-              id: true,
-              username: true,
-              emailAddress: true,
-            },
-          },
-          invitesInCampaigns: {
-            columns: {
-              id: true,
-              userId: true,
-              email: true,
-              status: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-
-            with: {
-              usersInAccount: {
-                columns: {
-                  id: true,
-                  username: true,
-                  emailAddress: true,
-                },
+    return await this.withPagination(
+      pagination,
+      async ({ limit, offset }) =>
+        await db.query.playersInCampaign.findMany({
+          where: this.where([
+            eq(this.table.campaignId, where.campaignId),
+            this.visibility(visibility),
+            searchCondition,
+          ]),
+          with: {
+            usersInAccount: {
+              columns: {
+                id: true,
+                username: true,
+                emailAddress: true,
               },
             },
-            where: (invites, { eq }) => and(eq(invites.status, "Pending"), isNull(invites.deletedAt)),
-            orderBy: (invites) => [this.orderBy(invites.createdAt, "desc")],
-            limit: 1, // latest invite
+            invitesInCampaigns: {
+              columns: {
+                id: true,
+                userId: true,
+                email: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+
+              with: {
+                usersInAccount: {
+                  columns: {
+                    id: true,
+                    username: true,
+                    emailAddress: true,
+                  },
+                },
+              },
+              where: (invites, { eq }) => and(eq(invites.status, "Pending"), isNull(invites.deletedAt)),
+              orderBy: (invites) => [this.orderBy(invites.createdAt, "desc")],
+              limit: 1, // latest invite
+            },
           },
-        },
-        orderBy: this.pageOrder(this.orderBy(this.table[orderBy], orderDir)),
-        limit,
-        offset,
-      });
-    });
+          orderBy: this.pageOrder(this.orderBy(this.table[orderBy], orderDir)),
+          limit,
+          offset,
+        }),
+    );
   }
 
   async update(db: Db, values: Partial<InferInsertModel<typeof playersInCampaign>>, where: { id: string }) {

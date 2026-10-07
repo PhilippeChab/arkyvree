@@ -168,7 +168,7 @@ function CustomizationView({
       // Gone: don't let Back render it from the cache.
       queryClient.removeQueries({ queryKey: entityKey });
     },
-    onError: (err) => snackbar.error(err, `Failed to delete ${label.toLowerCase()}`),
+    onError: (error) => snackbar.error(error, `Failed to delete ${label.toLowerCase()}`),
   });
 
   const sectionProps = {

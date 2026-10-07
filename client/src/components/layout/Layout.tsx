@@ -186,15 +186,15 @@ export function Layout() {
   const onboardingHighlightId = isPopoverStep ? STEP_TO_SIDEBAR_ID[onboardingStep] : null;
   const effectiveExpanded = sidebarExpanded || !!isPopoverStep;
 
-  const { mutate: completeOnboarding } = useMutation({
+  const onboardingMutation = useMutation({
     mutationFn: () => parseResponse(rpc.auth["complete-onboarding"].$post()),
   });
 
   const handleOnboardingClose = useCallback(() => {
     setOnboardingOpen(false);
     updateUser({ onboardingCompletedAt: new Date().toISOString() });
-    completeOnboarding();
-  }, [completeOnboarding, updateUser]);
+    onboardingMutation.mutate();
+  }, [onboardingMutation, updateUser]);
 
   const location = useLocation();
   const queryClient = useQueryClient();

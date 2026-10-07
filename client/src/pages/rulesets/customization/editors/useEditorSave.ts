@@ -34,6 +34,6 @@ export function useEditorSave<TForm extends FieldValues, TSaved extends { id: st
       sync.saved(submitted, saved.updatedAt);
       return onSaved(sourceId, saved, savedListKey, `${savedLabel} updated`);
     },
-    onError: (err) => snackbar.error(err, `Failed to update ${label.toLowerCase()}`),
+    onError: (error) => snackbar.error(error, `Failed to update ${label.toLowerCase()}`),
   });
 }

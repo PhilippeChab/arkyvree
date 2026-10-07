@@ -38,56 +38,57 @@ class ItemsService extends include(Object, Variants) {
    * customizations when it isn't a template itself; a template's copies get their properties from the template.
    */
   private async addRulesetItem(session: Session, rulesetId: string, body: ItemBody, duplicatedItemId?: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const source = duplicatedItemId
-          ? findScopedEntity(
-              rulesetData.itemsById,
-              duplicatedItemId,
-              rulesetId,
-              rulesetData.cow.sourceChain,
-              "Source item",
-            )
-          : undefined;
-        if (!source) this.validateTemplateSource(body.isTemplate ?? false, body.sourceItemId);
+          const source = duplicatedItemId
+            ? findScopedEntity(
+                rulesetData.itemsById,
+                duplicatedItemId,
+                rulesetId,
+                rulesetData.cow.sourceChain,
+                "Source item",
+              )
+            : undefined;
+          if (!source) this.validateTemplateSource(body.isTemplate ?? false, body.sourceItemId);
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "items", body.name);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "items", body.name);
 
-        const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-        const rows = await Items.create(tx, {
-          name: body.name,
-          description: body.description,
-          type: body.type,
-          slot: rules.items.resolveSlot(body.type, body.slot),
-          rulesetId,
-          weight: body.weight?.toString(),
-          costGp: body.costGp?.toString(),
-          sourceItemId: source ? this.templateOf(source) : body.sourceItemId,
-          isTemplate: source ? false : (body.isTemplate ?? false),
-        });
-        const item = rows[0];
+          const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+          const rows = await Items.create(tx, {
+            name: body.name,
+            description: body.description,
+            type: body.type,
+            slot: rules.items.resolveSlot(body.type, body.slot),
+            rulesetId,
+            weight: body.weight?.toString(),
+            costGp: body.costGp?.toString(),
+            sourceItemId: source ? this.templateOf(source) : body.sourceItemId,
+            isTemplate: source ? false : (body.isTemplate ?? false),
+          });
+          const item = rows[0];
 
-        if (tombstoneAncestorId) await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
+          if (tombstoneAncestorId) await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
 
-        if (source && !source.isTemplate) {
-          const cust = (await fetchEntityCustomizations(tx, [source.id], "items", "items")).get(source.id);
-          if (cust) await copyEntityCustomizations(tx, item.id, "items", cust);
-        }
+          if (source && !source.isTemplate) {
+            const cust = (await fetchEntityCustomizations(tx, [source.id], "items", "items")).get(source.id);
+            if (cust) await copyEntityCustomizations(tx, item.id, "items", cust);
+          }
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: item.id,
-          targetTable: getTableName(itemsInRules),
-          type: "createItem",
-          data: { entityName: item.name },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId: item.id,
+            targetTable: getTableName(itemsInRules),
+            type: "createItem",
+            data: { entityName: item.name },
+          });
 
-        return item;
-      });
-    });
+          return item;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
@@ -97,40 +98,41 @@ class ItemsService extends include(Object, Variants) {
   }
 
   async deleteItem(session: Session, rulesetId: string, itemId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        const inUse = await hasCharacterPicks(tx, "items", itemId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+          const inUse = await hasCharacterPicks(tx, "items", itemId, rulesetId);
+          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
+          const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
 
-        // If template, check for copies using the resolved ID
-        if (item.isTemplate) {
-          const copies = await Items.findMany(tx, { sourceItemId: item.id });
-          if (copies.length > 0)
-            throw new ConflictError("Cannot delete a template item that has copies referencing it");
-        }
+          // If template, check for copies using the resolved ID
+          if (item.isTemplate) {
+            const copies = await Items.findMany(tx, { sourceItemId: item.id });
+            if (copies.length > 0)
+              throw new ConflictError("Cannot delete a template item that has copies referencing it");
+          }
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const targetId = await edit.cowToDelete(tx, "items", item);
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const targetId = await edit.cowToDelete(tx, "items", item);
 
-        // The database deletes its customizations with it.
-        const rows = await Items.delete(tx, { id: targetId });
-        const deletedItem = rows[0];
+          // The database deletes its customizations with it.
+          const rows = await Items.delete(tx, { id: targetId });
+          const deletedItem = rows[0];
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(itemsInRules),
-          type: "deleteItem",
-          data: { rulesetId, entityName: item.name },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId,
+            targetTable: getTableName(itemsInRules),
+            type: "deleteItem",
+            data: { rulesetId, entityName: item.name },
+          });
 
-        return deletedItem;
-      });
-    });
+          return deletedItem;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }
@@ -186,53 +188,54 @@ class ItemsService extends include(Object, Variants) {
   }
 
   async updateItem(session: Session, rulesetId: string, itemId: string, body: ItemBody) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
+    const result = await withTransaction(
+      async (tx) =>
+        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          const { sourceChain } = rulesetData.cow;
 
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
+          const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
 
-        this.validateTemplateSource(item.isTemplate, body.sourceItemId);
+          this.validateTemplateSource(item.isTemplate, body.sourceItemId);
 
-        const edit = new RulesetEdit(ruleset, rulesetData.cow);
-        const { id: targetId, copied } = await edit.cowToEdit(tx, "items", item);
-        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const { id: targetId, copied } = await edit.cowToEdit(tx, "items", item);
+          const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-        const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
-        const slot = rules.items.resolveSlot(body.type, body.slot);
-        const rows = await Items.update(
-          tx,
-          {
-            name: body.name,
-            description: body.description,
-            type: body.type,
-            slot,
-            weight: body.weight?.toString(),
-            costGp: body.costGp?.toString(),
-            sourceItemId: item.isTemplate ? null : body.sourceItemId,
-          },
-          { id: targetId, expectedUpdatedAt },
-        );
-        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+          const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+          const slot = rules.items.resolveSlot(body.type, body.slot);
+          const rows = await Items.update(
+            tx,
+            {
+              name: body.name,
+              description: body.description,
+              type: body.type,
+              slot,
+              weight: body.weight?.toString(),
+              costGp: body.costGp?.toString(),
+              sourceItemId: item.isTemplate ? null : body.sourceItemId,
+            },
+            { id: targetId, expectedUpdatedAt },
+          );
+          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-        const updatedItem = rows[0];
+          const updatedItem = rows[0];
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(itemsInRules),
-          type: "updateItem",
-          data: {
-            entityName: body.name,
-            changedFields: getChangedFields(item, { ...body, sourceItemId: updatedItem.sourceItemId }),
-          },
-        });
+          await createActivityWithNotifications(tx, {
+            userId: session.userId,
+            targetId,
+            targetTable: getTableName(itemsInRules),
+            type: "updateItem",
+            data: {
+              entityName: body.name,
+              changedFields: getChangedFields(item, { ...body, sourceItemId: updatedItem.sourceItemId }),
+            },
+          });
 
-        return updatedItem;
-      });
-    });
+          return updatedItem;
+        }),
+    );
     RulesetCache.invalidate(rulesetId);
     return result;
   }

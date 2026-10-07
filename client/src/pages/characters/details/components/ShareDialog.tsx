@@ -33,37 +33,35 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
   const shareUrl = shareToken ? `${window.location.origin}/share/${shareToken}` : null;
 
   const generateMutation = useMutation({
-    mutationFn: async () => {
-      return parseResponse(
+    mutationFn: async () =>
+      parseResponse(
         rpc.api.characters[":id"].share.$post({
           param: { id: characterId },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
       snackbar.success("Share link generated");
     },
-    onError: (err) => {
-      snackbar.error(err, "Failed to generate share link");
+    onError: (error) => {
+      snackbar.error(error, "Failed to generate share link");
     },
   });
 
   const revokeMutation = useMutation({
-    mutationFn: async () => {
-      return parseResponse(
+    mutationFn: async () =>
+      parseResponse(
         rpc.api.characters[":id"].share.$delete({
           param: { id: characterId },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
       setConfirmRevoke(false);
       snackbar.success("Share link revoked");
     },
-    onError: (err) => {
-      snackbar.error(err, "Failed to revoke share link");
+    onError: (error) => {
+      snackbar.error(error, "Failed to revoke share link");
     },
   });
 
@@ -72,8 +70,8 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
     try {
       await navigator.clipboard.writeText(shareUrl);
       snackbar.success("Link copied to clipboard");
-    } catch (err) {
-      snackbar.error(err, "Failed to copy link");
+    } catch (error) {
+      snackbar.error(error, "Failed to copy link");
     }
   };
 

@@ -24,14 +24,13 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
   const queryKey = characterDetailQuery(characterId).queryKey;
 
   const updateMutation = useMutation({
-    mutationFn: async ({ abilityId, score }: { abilityId: string; score: number }) => {
-      return parseResponse(
+    mutationFn: async ({ abilityId, score }: { abilityId: string; score: number }) =>
+      parseResponse(
         rpc.api.characters[":id"].abilities.$put({
           param: { id: characterId },
           json: { [abilityId]: score },
         }),
-      );
-    },
+      ),
     onMutate: async ({ abilityId, score }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData(queryKey);

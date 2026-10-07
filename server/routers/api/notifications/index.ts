@@ -34,9 +34,7 @@ export default new Hono()
       );
     },
   )
-  .get("/unread", async (c) => {
-    return c.json(await NotificationsService.getUnreadSummary(c.var.requestSession), 200);
-  })
+  .get("/unread", async (c) => c.json(await NotificationsService.getUnreadSummary(c.var.requestSession), 200))
   .post("/read-all", async (c) => {
     await NotificationsService.markAllRead(c.var.requestSession);
     return c.json({ success: true }, 200);

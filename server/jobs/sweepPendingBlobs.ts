@@ -33,8 +33,8 @@ async function sweepOne(blobId: string, key: string, logger: Logger): Promise<Sw
       await ObjectStorage.get().deleteObject(key);
       await Blobs.delete(tx, { id: blobId });
       return "swept";
-    } catch (err) {
-      logger.warn(`S3 delete failed for ${key}: ${err instanceof Error ? err.message : err}`);
+    } catch (error) {
+      logger.warn(`S3 delete failed for ${key}: ${error instanceof Error ? error.message : error}`);
       return "failed";
     }
   });

@@ -59,9 +59,9 @@ class S3StorageBackend implements StorageBackend {
     try {
       const stats = await Bun.s3.stat(key);
       return { size: stats.size, etag: stats.etag };
-    } catch (err) {
-      if (isNotFound(err)) return null;
-      throw err;
+    } catch (error) {
+      if (isNotFound(error)) return null;
+      throw error;
     }
   }
 }
@@ -76,12 +76,12 @@ class ObjectStorage {
   findPublicUrl(key: string): string | null {
     try {
       return this.get().publicUrl(key);
-    } catch (err) {
+    } catch (error) {
       const now = Date.now();
       if (now - this.publicUrlLastWarnedAt > PUBLIC_URL_WARN_COOLDOWN_MS) {
         this.publicUrlLastWarnedAt = now;
         console.warn(
-          `[attachments] getPublicUrl() returning null — storage not configured: ${err instanceof Error ? err.message : err}`,
+          `[attachments] getPublicUrl() returning null — storage not configured: ${error instanceof Error ? error.message : error}`,
         );
       }
       return null;
