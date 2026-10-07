@@ -156,7 +156,7 @@ describe("A generated requirement check", () => {
     const generated = featsCode(ref);
     expect(generated).toContain(`requirements: [eqNum("abilities.strength.score", 13)]`);
     expect(generated).toMatch(
-      /^import \{[^}]*\beqNum\b[^}]*\} from "@\/database\/packages\/dnd35\/content\/customization\/requirements\.ts";$/m,
+      /^import \{[^}]*\beqNum\b[^}]*\} from "@\/content\/dnd3\.5\/builders\/customization\/requirements\.ts";$/m,
     );
   });
 });

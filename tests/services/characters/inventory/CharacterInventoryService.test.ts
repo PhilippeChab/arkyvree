@@ -337,10 +337,10 @@ describe("InventoryService", () => {
       const equip = (itemId: string, placement: Placement) => add(session, character.id, itemId, placement);
 
       await equip(helm, equipped("Head"));
-      await expect(equip(otherHelm, equipped("Head"))).rejects.toThrow(BadRequestError);
+      await expect(equip(otherHelm, equipped("Head"))).rejects.toMatchObject({ refusal: "invalid" });
 
       await equip(sword, equipped("Main Hand", 0));
-      await expect(equip(greatsword, equipped("Two Handed", 0))).rejects.toThrow(BadRequestError);
+      await expect(equip(greatsword, equipped("Two Handed", 0))).rejects.toMatchObject({ refusal: "invalid" });
       expect(await equip(greatsword, equipped("Two Handed", 1))).toMatchObject({
         location: "Two Handed",
         weaponSet: 1,
@@ -348,7 +348,7 @@ describe("InventoryService", () => {
       await expect(equip(otherGreatsword, equipped("Two Handed", 1))).rejects.toThrow(
         '"Two Handed" is already occupied in this weapon set',
       );
-      await expect(equip(dagger, equipped("Main Hand", 1))).rejects.toThrow(BadRequestError);
+      await expect(equip(dagger, equipped("Main Hand", 1))).rejects.toMatchObject({ refusal: "invalid" });
       expect(await equip(otherGreatsword, equipped("Two Handed", 2))).toMatchObject({ weaponSet: 2 });
       // A weapon doesn't block its own slot.
       expect(
@@ -359,7 +359,7 @@ describe("InventoryService", () => {
       const [first, second, third] = rings;
       await equip(first, equipped("Finger"));
       await equip(second, equipped("Finger"));
-      await expect(equip(third, equipped("Finger"))).rejects.toThrow(BadRequestError);
+      await expect(equip(third, equipped("Finger"))).rejects.toMatchObject({ refusal: "invalid" });
       await expect(update(session, character.id, dagger, equipped("Off Hand", 0))).resolves.toMatchObject({
         location: "Off Hand",
       });
@@ -455,10 +455,10 @@ describe("InventoryService", () => {
       const sword = itemMap["Bastard Sword"];
       // Refused with an issue, which the form shows and can force
       const refusal = await add(session, bjorn.id, sword, equipped("Main Hand", 1)).catch((error: unknown) => error);
-      expect(refusal).toBeInstanceOf(BadRequestError);
-      expect((refusal as BadRequestError).issues).toMatchObject([
-        { category: "requirements", entityName: "Bastard Sword", entityType: "items" },
-      ]);
+      expect(refusal).toMatchObject({
+        refusal: "invalid",
+        issues: [{ category: "requirements", entityName: "Bastard Sword", entityType: "items" }],
+      });
       expect(await add(session, bjorn.id, sword, equipped("Two Handed", 1))).toMatchObject({ location: "Two Handed" });
       await remove(session, bjorn.id, sword);
       expect(await add(session, bjorn.id, sword, { ...equipped("Main Hand", 1), force: true })).toMatchObject({
@@ -490,7 +490,9 @@ describe("InventoryService", () => {
       await strengthAtLeast(variant.id, "30");
       RulesetCache.invalidate(character.rulesetId);
 
-      await expect(add(session, character.id, variant.id, equipped("Torso"))).rejects.toThrow(BadRequestError);
+      await expect(add(session, character.id, variant.id, equipped("Torso"))).rejects.toMatchObject({
+        refusal: "invalid",
+      });
     });
 
     test("refuses an item whose requirements the character doesn't meet, unless forced", async () => {
@@ -507,7 +509,9 @@ describe("InventoryService", () => {
       });
       RulesetCache.invalidate(character.rulesetId);
 
-      await expect(add(session, character.id, armor.id, equipped("Torso"))).rejects.toThrow(BadRequestError);
+      await expect(add(session, character.id, armor.id, equipped("Torso"))).rejects.toMatchObject({
+        refusal: "invalid",
+      });
       expect(await add(session, character.id, armor.id, { ...equipped("Torso"), force: true })).toMatchObject({
         equipped: true,
         location: "Torso",

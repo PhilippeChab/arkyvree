@@ -35,7 +35,6 @@ import type {
   Skill,
 } from "@/shared/relations.ts";
 
-import type DetailedCharacter from "./character/DetailedCharacter.ts";
 import type { Dnd35Characters } from "./character/Dnd35Characters.ts";
 import type { Dnd35Content } from "./content/Dnd35Content.ts";
 import type { Dnd35Entities } from "./Dnd35Entities.ts";
@@ -155,8 +154,8 @@ export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
   skills?: Dnd35ProjectedSkill[];
 }
 
-/** The 3.5 rules' module: its characters and kinds of character, and its parts, by their own types. */
-export interface Dnd35RulesetModule extends RulesetModule<DetailedCharacter, CharacterKind> {
+/** The 3.5 rules' module: its parts, by their own types. */
+export interface Dnd35RulesetModule extends RulesetModule {
   characters: Dnd35Characters;
   content: Dnd35Content;
   entities: Dnd35Entities;

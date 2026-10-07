@@ -261,7 +261,7 @@ describe("CampaignCharactersService", () => {
         const result = await CampaignCharactersService.getCharacter(makeSession(user.id), campaign.id, character.id);
         expect(result).toMatchObject({ visibility, canEdit: true, isPartial: false });
         // The full sheet: its build, not only who it is
-        expect(Object.keys(result.abilities)).not.toHaveLength(0);
+        expect(Object.keys(result.combat)).not.toHaveLength(0);
       }
     });
 

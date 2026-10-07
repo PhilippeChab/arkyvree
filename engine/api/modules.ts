@@ -7,18 +7,16 @@ import type { BaseRules } from "@/shared/enums.ts";
 export type After<F> = F extends (view: RulesetView, ...rest: infer R) => unknown ? R : never;
 
 /**
- * Each base rules' module, built once: a module keeps no state (its rules and effects are fieldless, its factories make
- * a new character or path set on each call). One the database's enum gains has to be written here, or the engine
- * doesn't compile. Each keeps the type its factory gives it, a `RulesetModule` of its own character, projector, kinds,
- * level-up and bonded creatures (`Dnd35RulesetModule`), so the code that reads its parts needs no cast. The table checks
- * every member of the contract but the character's factory, which its factory's return type checks: a module makes its
- * own character, so it can't widen to a `RulesetModule` of any character.
+ * Each base rules' module, built once: a module keeps no state (its parts are fieldless, its factories make new paths
+ * on each call). One the database's enum gains has to be written here, or the engine doesn't compile. Each keeps the
+ * type its factory gives it (`Dnd35RulesetModule`), so the operations that read its parts need no cast, and the table
+ * checks it against the contract.
  */
 const MODULES = {
   "Dungeons & Dragons: 3.5": createDnd35Module(),
-} satisfies Record<BaseRules, Omit<RulesetModule, "createDetailedCharacter">>;
+} satisfies Record<BaseRules, RulesetModule>;
 
-/** A base rules' module: what the server asks of a ruleset's characters and level-ups. */
+/** A base rules' module: what the entry's operations ask of the ruleset they're handed. */
 export function getRulesetModule(baseRules: BaseRules) {
   return MODULES[baseRules];
 }
