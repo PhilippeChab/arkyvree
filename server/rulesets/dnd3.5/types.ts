@@ -11,7 +11,6 @@
 
 import type { LevelUpProjector, ProjectedCharacterData } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Db } from "@/server/database/index.ts";
 import type { RulesetModule } from "@/server/rulesets/engine/types.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Power, Skill } from "@/shared/relations.ts";
@@ -54,17 +53,11 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
   ): (T & { currentRank: number; isClassSkill: boolean; isCurrentClassSkill: boolean })[];
   /** Keyed-by-name 3.5 skill data (rank, innate/class-skill flags). */
   getCharacterSkills(): Record<string, unknown>;
-  /** Wizard specialist-school exclusions + client-supplied prohibited schools.
-   *  Must be called inside a cowContext so stored pre-COW feat ids on the
-   *  repo reads inside come back post-COW. */
-  getExcludedPowerIds(
-    tx: Db,
-    aptitudeId: string,
-    characterLevels: { id: string; klassLevelId: string }[],
-    selectedFeatProperties: { type: string; value: string }[],
-    clientExcludeSchools: string[],
-    rulesetData: RulesetData,
-  ): Promise<string[]>;
+  /**
+   * The wizard spells of the schools the character's feats prohibit, and of those the client names; none for another
+   * pool.
+   */
+  getExcludedPowerIds(aptitudeId: string, clientExcludeSchools: string[], rulesetData: RulesetData): string[];
   /** 3.5 skill-points budget — a 3.5-native concept (skill points per level
    *  × INT mod, doubled at first level), not universal. */
   getSkillBudget(): { available: number; perlevel: number; spent: number; total: number };

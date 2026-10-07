@@ -54,9 +54,7 @@ function pendingProjection(
   const autoGrantedRecords = pendingLevelKlassLevelIds?.length
     ? pendingLevelKlassLevelIds.flatMap((klid) => rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klid) ?? [])
     : [];
-  const { projectedFeats } = pendingFeatPicks?.length
-    ? buildProjectedFeatsFromPicks(pendingFeatPicks, "", "", rulesetData)
-    : { projectedFeats: [] as NonNullable<Dnd35ProjectedCharacterData["feats"]> };
+  const projectedFeats = buildProjectedFeatsFromPicks(pendingFeatPicks ?? [], "", "", rulesetData);
   const projectedSkills = pendingSkillAllocations?.length
     ? buildProjectedSkillsFromAllocations(
         pendingSkillAllocations,

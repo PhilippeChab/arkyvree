@@ -115,7 +115,7 @@ export default class DetailedCharacterDataLoader {
       ...inv,
       itemsInRule: rulesetData.itemsById.get(inv.itemId) ?? inv.itemsInRule,
     }));
-    const picks = await fetchPicks(database, levels.realCharacterLevelIds, levels.characterLevels);
+    const picks = await fetchPicks(database, levels.realCharacterLevelIds);
 
     const { languages, klassLevelsRaw, klassLevelSaves, klasses, klassSkills, klassEntityIds } = readCachedRows(
       shared,
@@ -123,7 +123,7 @@ export default class DetailedCharacterDataLoader {
     );
 
     const { skills, allFeats, klassLevelFeatCountsByAptitudeId, allPowers, klassLevelPowerCountsByAptitudeId } =
-      buildPicks(picks, rulesetData, projectedData, levels.allCharacterLevels, resolve);
+      buildPicks(picks, rulesetData, projectedData, levels, resolve);
     const featIds = allFeats.map((feat) => feat.id);
     const powerIds = allPowers.map((power) => power.id);
 

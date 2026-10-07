@@ -37,10 +37,12 @@ import {
 import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { FEAT_FAMILY, KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows, measure, runWhileLocked } from "@/tests/support/database.ts";
@@ -55,7 +57,12 @@ import {
   WIZARD_1,
 } from "@/tests/support/levelFixtures.ts";
 import { addCharacterLevel, addOneLevel, findKlassLevel } from "@/tests/support/levels.ts";
-import { createSeededTestRuleset, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import {
+  createSeededTestRuleset,
+  createSeededTestRulesetWithExtensions,
+  createTestRuleset,
+  invalidateSeededRuleset,
+} from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
@@ -584,6 +591,61 @@ describe("LevelsService", () => {
       ).rejects.toThrow('Non-stackable feat "Power Attack" is already on this character');
     });
 
+    test("leave out and refuse a feat the character has once the fork copies it", async () => {
+      // Editing an inherited feat in a fork copies it there: the copy stands for the feat a level picked or was granted
+      const { session, ruleset, character, klass, klassLevels, featAptitude, feats } = await setupRuleset({
+        fork: true,
+      });
+      await KlassLevelFeats.create(db, {
+        klassLevelId: klassLevels[0].id,
+        featId: feats["Power Attack"].id,
+        aptitudeId: featAptitude.id,
+        free: true,
+      });
+      await addCharacterLevel(character.id, klassLevels[0].id, {
+        feats: [{ featId: feats["Dodge"].id, aptitudeId: featAptitude.id }],
+      });
+      const copies = [];
+      for (const name of ["Dodge", "Power Attack"])
+        copies.push(await FeatsService.updateFeat(session, ruleset.id, feats[name].id, { name, description: "Ours" }));
+
+      const available = await CharacterLevelsService.getAvailableFeats(
+        session,
+        character.id,
+        featAptitude.id,
+        klass.id,
+        2,
+        {},
+        page,
+      );
+      expect(names(available.items)).toEqual(["Weapon Focus"]);
+      for (const copy of copies) {
+        await expect(
+          addOneLevel(session, character.id, klass.id, 2, 8, null, {}, { [featAptitude.id]: [copy.id] }, {}, true),
+        ).rejects.toThrow(`Non-stackable feat "${copy.name}" is already on this character`);
+      }
+    });
+
+    test("stop granting a feat the fork deletes", async () => {
+      // Deleting an inherited feat in a fork copies it there and deletes the copy: the fork no longer has the feat
+      const { session, ruleset, character, klassLevels, featAptitude, feats } = await setupRuleset({ fork: true });
+      await KlassLevelFeats.create(db, {
+        klassLevelId: klassLevels[0].id,
+        featId: feats["Power Attack"].id,
+        aptitudeId: featAptitude.id,
+        free: true,
+      });
+      await addCharacterLevel(character.id, klassLevels[0].id);
+      const held = async () => {
+        const { detailedCharacter } = await CharactersService.getCharacter(session, character.id);
+        return detailedCharacter.getHeldNonStackableFeatIds();
+      };
+      expect(await held()).toEqual([feats["Power Attack"].id]);
+
+      await FeatsService.deleteFeat(session, ruleset.id, feats["Power Attack"].id);
+      expect(await held()).toEqual([]);
+    });
+
     test("leave out a feat the character has, unless it stacks, and those that can't be picked", async () => {
       const { session: owner, character, klass, klassLevels, featAptitude, feats } = await setupRuleset();
       const [classFeature] = await Feats.create(db, {
@@ -1047,6 +1109,53 @@ describe("LevelsService", () => {
         { name: "Sneak Attack", eligible: true },
         { name: "Uncanny Dodge", eligible: true },
       ]);
+    });
+
+    test("leave out a power the character knows once the fork copies it", async () => {
+      // Editing an inherited power in a fork copies it there: the copy stands for the power a level picked or was granted
+      const { session, ruleset, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset({
+        fork: true,
+      });
+      await insertRows(klassLevelPowersInRules, [
+        { klassLevelId: klassLevels[0].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id },
+      ]);
+      await addCharacterLevel(character.id, klassLevels[0].id, {
+        powers: [{ powerId: powers["Sneak Attack"].id, aptitudeId: powerAptitude.id }],
+      });
+      for (const name of ["Rage", "Sneak Attack"])
+        await PowersService.updatePower(session, ruleset.id, powers[name].id, { name, description: "Ours" });
+
+      const { items } = await CharacterLevelsService.getAvailablePowers(
+        session,
+        character.id,
+        powerAptitude.id,
+        klass.id,
+        2,
+        {},
+        page,
+      );
+      expect(names(items)).toEqual(["Uncanny Dodge"]);
+    });
+
+    test("leave out a spell the character knows under the copy of another book the ruleset merged", async () => {
+      // Two books' copies of a spell merge into the one the list shows: a level that picked the other knows it
+      const ctx = await getSeedCtx();
+      const fork = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
+      const wizardSpells = ctx.aptMap["Wizard Spells"];
+      const merged = await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
+        const listed = new Set(getListPowerIds(rulesetData, { aptitudeId: wizardSpells, level: 1 }));
+        const loserId = [...rulesetData.cow.siblingIds].find(
+          (id) => rulesetData.cow.resolve(id) !== id && listed.has(rulesetData.cow.resolve(id)),
+        )!;
+        return { loserId, name: rulesetData.powersById.get(loserId)!.name };
+      });
+      const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
+      const [characterLevelId] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
+      await CharacterLevelPowers.createMany(db, [
+        { characterLevelId, powerId: merged.loserId, aptitudeId: wizardSpells },
+      ]);
+
+      expect(await spellNames(characterId, 2)).not.toContain(merged.name);
     });
 
     test("offer every spell of a class's list, extensions' copies included", async () => {

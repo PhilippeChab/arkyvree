@@ -1,9 +1,6 @@
 import type { ProjectedCharacterLevel } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import { type Db } from "@/server/database/index.ts";
-import { Feats } from "@/server/repositories/index.ts";
 import { readClassLevelFields } from "@/server/rulesets/dnd3.5/classes/classLevelFields.ts";
-import { readFeatFields } from "@/server/rulesets/dnd3.5/feats/featFields.ts";
 import type { Dnd35LevelUpProjector as Dnd35LevelUpProjectorInterface } from "@/server/rulesets/dnd3.5/types.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
@@ -36,6 +33,25 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
 
   getCharacterSkills(): Record<string, unknown> {
     return this.character.components.skills.getSkills();
+  }
+
+  getExcludedPowerIds(aptitudeId: string, clientExcludeSchools: string[], rulesetData: RulesetData): string[] {
+    const aptitude = rulesetData.aptitudesById.get(aptitudeId);
+    if (aptitude?.name !== "Wizard Spells") return [];
+
+    const prohibitedSchools = new Set<string>(clientExcludeSchools);
+    for (const school of this.character.getProhibitedSchools()) prohibitedSchools.add(school);
+
+    if (prohibitedSchools.size === 0) return [];
+
+    // Look up power IDs by school via the reverse property index — O(k) instead
+    // of O(P) where P is all composed powers.
+    const excludedPowerIds = new Set<string>();
+    for (const school of prohibitedSchools) {
+      const ids = rulesetData.entityIdsByPropertyLookup.get(`powers:${SPELL_SCHOOL}:${school}`) ?? [];
+      for (const id of ids) excludedPowerIds.add(id);
+    }
+    return [...excludedPowerIds];
   }
 
   getSkillBudget() {
@@ -82,47 +98,5 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
 
     identity.meta.level--;
     return results;
-  }
-
-  async getExcludedPowerIds(
-    tx: Db,
-    aptitudeId: string,
-    characterLevels: { id: string; klassLevelId: string }[],
-    selectedFeatProperties: { type: string; value: string }[],
-    clientExcludeSchools: string[],
-    rulesetData: RulesetData,
-  ): Promise<string[]> {
-    const aptitude = rulesetData.aptitudesById.get(aptitudeId);
-    if (aptitude?.name !== "Wizard Spells") return [];
-
-    const prohibitedSchools = new Set<string>(clientExcludeSchools);
-
-    // Called inside withRulesetScope: Feats.findPicks and
-    // Feats.findGrants auto-apply resolveRowOverrides via the repo
-    // Proxy, so feat.id is already post-COW. propertiesByEntity.get also
-    // auto-resolves on the way in.
-    const characterLevelIds = characterLevels.map((level) => level.id);
-    const pickedFeats = await Feats.findPicks(tx, { characterLevelIds });
-    const givenFeats = await Feats.findGrants(tx, { levels: characterLevels });
-    const allFeatIds = [...new Set([...pickedFeats, ...givenFeats].map((f) => f.id))];
-
-    for (const featId of allFeatIds) {
-      for (const school of readFeatFields(rulesetData.propertiesByEntity.get(featId) ?? []).prohibitedSchools)
-        prohibitedSchools.add(school);
-    }
-
-    // Also check selected feats from the current session
-    for (const school of readFeatFields(selectedFeatProperties).prohibitedSchools) prohibitedSchools.add(school);
-
-    if (prohibitedSchools.size === 0) return [];
-
-    // Look up power IDs by school via the reverse property index — O(k) instead
-    // of O(P) where P is all composed powers.
-    const excludedPowerIds = new Set<string>();
-    for (const school of prohibitedSchools) {
-      const ids = rulesetData.entityIdsByPropertyLookup.get(`powers:${SPELL_SCHOOL}:${school}`) ?? [];
-      for (const id of ids) excludedPowerIds.add(id);
-    }
-    return [...excludedPowerIds];
   }
 }

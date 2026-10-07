@@ -2,7 +2,6 @@ import { and, count, eq, getTableColumns, inArray, isNull, sql } from "drizzle-o
 
 import {
   featsInRules,
-  klassLevelFeatsInRules,
   klassLevelsInRules,
   levelFeatsInCharacter,
   levelsInCharacter,
@@ -10,44 +9,17 @@ import {
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
-import { GrantsPerLevel } from "@/server/repositories/concerns/GrantsPerLevel.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
-class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRules>, GrantsPerLevel, ResolvesCopies) {
+class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRules>, ResolvesCopies) {
   constructor() {
     super(featsInRules);
   }
 
   protected readonly entityType = "feats";
-
-  /**
-   * The feats the character levels' class levels grant, each with its level (see `grantedAt`), by name, ties broken to
-   * a fixed order.
-   */
-  async findGrants(db: Db, where: { levels: { id: string; klassLevelId: string }[] }) {
-    if (where.levels.length === 0) return [];
-    const granted = await db
-      .select({
-        ...getTableColumns(featsInRules),
-        klassLevelId: klassLevelFeatsInRules.klassLevelId,
-        aptitudeId: klassLevelFeatsInRules.aptitudeId,
-        free: klassLevelFeatsInRules.free,
-        klassLevelFeatId: sql<string>`${klassLevelFeatsInRules.id}`.as("klass_level_feat_id"),
-      })
-      .from(featsInRules)
-      .innerJoin(klassLevelFeatsInRules, eq(featsInRules.id, klassLevelFeatsInRules.featId))
-      .where(
-        and(
-          inArray(klassLevelFeatsInRules.klassLevelId, [...new Set(where.levels.map((level) => level.klassLevelId))]),
-          isNull(featsInRules.deletedAt),
-        ),
-      )
-      .orderBy(this.orderBy(featsInRules.name), this.orderBy(featsInRules.id), this.orderBy(klassLevelFeatsInRules.id));
-    return this.grantedAt(where.levels, granted);
-  }
 
   async findGroupPage(
     db: Db,

@@ -23,10 +23,13 @@ export interface DetailedCharacterInterface {
   readonly components: Components;
   formatRequirements(requirements: Requirement[]): string;
   getCampaign(): Campaign | undefined;
+  /** The feats the character holds that don't stack: picked, granted, planned or from its modifiers. */
+  getHeldNonStackableFeatIds(): string[];
+  /** The powers the character knows in a pool: picked, granted, planned or from its modifiers. */
+  getKnownPowerIds(aptitudeId: string): string[];
   getPlayer(): Player | undefined;
   getRuleset(): Ruleset | undefined;
   getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[];
-  getVirtuallyPossessedFeatIds(): string[];
   getVirtuallyPossessedPowerIds(): string[];
   /** The character's rows its builds share, read through `database`, in `scope` when it's the character's ruleset's. */
   preload(database?: Db, scope?: RulesetScope): Promise<PreloadedCharacterData>;

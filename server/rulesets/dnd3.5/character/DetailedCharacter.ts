@@ -3,6 +3,7 @@ import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluato
 import type { ProjectedCharacterLevel } from "@/engine/core/types.ts";
 import { include } from "@/server/mixins.ts";
 import TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
+import { readFeatFields } from "@/server/rulesets/dnd3.5/feats/featFields.ts";
 import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import DetailedCharacterDataLoader from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
@@ -54,6 +55,11 @@ export default class DetailedCharacter
     const result = this.areRequirementsMet(requirementGroups);
     this.components.classes.removeProjectedLevel(klassName);
     return result;
+  }
+
+  /** The schools the character's feats prohibit its wizard spells from: picked, granted, planned or from its modifiers. */
+  getProhibitedSchools(): string[] {
+    return this.feats.flatMap((feat) => readFeatFields(feat.properties).prohibitedSchools);
   }
 
   getSpellcasting(): { arcane: number; divine: number } {
