@@ -40,7 +40,7 @@ Inside the scope:
 
 COW ownership resolution needs stored IDs. Inside `cow/`, use `withCowContext(undefined, () => Modifiers.findOne(db, { id }))` for that lookup. This existing infrastructure scope disables remapping for the read and restores the caller's context afterward. SQL stays in the shared repository; ordinary service reads continue to use `withRulesetScope`.
 
-**Callers don't think about COW for lookups.** `rulesetData.featsById.get(id)` works whether `id` is pre-COW or post-COW. Character-scoped repo reads (`CharacterLevels.findMany`, etc.) return rows whose `*Id` fields are already post-COW when they happen inside a scope. The only place you reach past the scope is ruleset management (publish, extensions and reverts in `RulesetsService`) and framework internals (`DetailedCharacterDataLoader` for each entity's customizations, `TargetPathsService` for path generation) — both are covered by `@internal` helpers described below.
+**Callers don't think about COW for lookups.** `rulesetData.featsById.get(id)` works whether `id` is pre-COW or post-COW. Character-scoped repo reads (`CharacterLevels.findMany`, etc.) return rows whose `*Id` fields are already post-COW when they happen inside a scope. The only place you reach past the scope is ruleset management (publish, extensions and reverts in `RulesetsService`) and framework internals (the character loader, which remaps its picks' rows: `CowData.resolveRows`, then `refreshEntityData`; `TargetPathsService` for path generation) — both use the primitives described below.
 
 ```mermaid
 flowchart LR
@@ -154,7 +154,7 @@ From `server/cache/rulesetCache/index.ts`: `RulesetCache`, the class that holds 
 
 ### Framework / copy primitives
 
-Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`, `RulesetChangesService` (reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
+Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`, `RulesetChangesService` (reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
 
 - **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `EntityCopy` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateItem` / `createVariants` and `ModifiersService.duplicateModifier`. `EntityCopy` also copies the entity's relationships and class levels and merges its siblings (its private methods).
 - **Extensions** (`RulesetExtensionsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `EntityCopy` copies an entity on its first edit.

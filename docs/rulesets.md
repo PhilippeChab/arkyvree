@@ -413,19 +413,31 @@ server/
 │       ├── rulesetModule.ts               (createRulesetModule: the 3.5 module, a Dnd35RulesetModule)
 │       ├── types.ts                       (Dnd35RulesetModule, CharacterKind, Dnd35ProjectedCharacterData, Dnd35LevelUpProjector)
 │       ├── Dnd35TargetPaths.ts            (the categories' order and the ruleset's names' labels)
+│       ├── Dnd35PropertyTypes.ts          (the property types and values it serves: shared/dnd3.5/properties/)
+│       ├── constants.ts                   (the 3.5 tables the components read: sizes, carrying capacity, encumbrance)
 │       ├── character/                     (CharacterState, its concerns: Builds, Validates, PossessesVirtually;
 │       │                                  DetailedCharacter, which wires them; components.ts; Dnd35LevelUpProjector)
 │       ├── loading/                       (DetailedCharacterDataLoader, and its steps: customizations, picks,
 │       │                                  possessions, rulesetReadings, refreshEntityData)
 │       ├── response/                      (buildCharacterResponse: the 3.5 API response shape)
-│       ├── abilities/ aptitudes/ classes/ feats/ identity/ powers/ saves/
-│       │                                  (each domain's component, its paths' category, its rules and effects:
-│       │                                  AbilitiesComponent, AbilitiesPaths, …)
-│       ├── skills/                        (SkillsComponent: the 3.5 rank system, Dnd35SkillsRules, Dnd35SkillsEffects)
-│       ├── combat/                        (CombatComponent, which includes ArmorClass, HitPoints, Attacks, InitiativeAndSpeed;
-│       │                                  ArmorsComponent, ShieldsComponent, WeaponsComponent, EncumbranceComponent)
-│       ├── spellcasting/                  (SpellcastingComponent, which includes BonusCasterLevels, KnownPowers)
-│       ├── items/ levels/ bonded/         (InventoryComponent, the items' rules; Dnd35LevelsRules; the bonded creatures)
+│       ├── abilities/ aptitudes/ feats/ identity/ saves/
+│       │                                  (each domain's component and its paths' category: AbilitiesComponent,
+│       │                                  AbilitiesPaths, …; feats/ also holds FeatGroupingsComponent)
+│       ├── classes/                       (ClassesComponent, ClassesPaths, Dnd35ClassesRules, Dnd35ClassLevelsRules,
+│       │                                  Dnd35ClassLevelsEffects)
+│       ├── powers/                        (PowersComponent, PowerGroupingsComponent, PowersPaths, Dnd35PowersRules,
+│       │                                  Dnd35PowersEffects and its spellGenerator)
+│       ├── skills/                        (SkillsComponent: the 3.5 rank system, SkillsPaths, Dnd35SkillsRules,
+│       │                                  Dnd35SkillsEffects)
+│       ├── combat/                        (CombatComponent on CombatState, which includes ArmorClass, HitPoints, Attacks,
+│       │                                  InitiativeAndSpeed; ArmorsComponent, ShieldsComponent, WeaponsComponent,
+│       │                                  EncumbranceComponent; the combat, items.* and weapon.* path categories:
+│       │                                  CombatPaths, ItemsPaths, WeaponPaths)
+│       ├── spellcasting/                  (SpellcastingComponent on SpellcastingState, which includes BonusCasterLevels,
+│       │                                  KnownPowers; SpellcastingPaths)
+│       ├── items/                         (InventoryComponent, the slots, Dnd35InventoryRules, Dnd35ItemsRules, seedTemplateItems)
+│       ├── levels/                        (Dnd35LevelsRules)
+│       ├── bonded/                        (the bonded creatures' characters, BondsComponent, BondedPaths)
 │       └── sheet/                         (the PDF sheet)
 ├── services/
 │   ├── characters/
@@ -435,6 +447,7 @@ server/
 │   │       ├── CharacterLevelsService.ts  ← thin dispatcher; forwards to the ruleset impl
 │   │       └── dnd3.5/                    ← 3.5-only level-up flows
 │   │           ├── classPicks.ts, featPicks.ts, powerPicks.ts, levelSelections.ts
+│   │           ├── bondedReconcile.ts
 │   │           ├── slotQueries.ts
 │   │           ├── preview.ts
 │   │           ├── finalize.ts
@@ -533,9 +546,9 @@ export class Dnd35LevelsRules implements LevelsRules {
 }
 ```
 
-Universal code that needs a per-ruleset value threads it in rather than hardcoding. `AptitudesComponent` takes `maxSpellLevel` as a constructor param; `buildComponents` passes `Dnd35LevelsRules.MAX_SPELL_LEVEL` when it instantiates the aptitudes component.
+A component takes a value its rules hold rather than hard-coding it: `AptitudesComponent` takes `maxSpellLevel` as a constructor param, which `buildComponents` passes from `Dnd35LevelsRules.MAX_SPELL_LEVEL`.
 
-Rules are for **small predicates and constants**. More complex operations (bound to the detailed character, returning rich data, potentially mutating internal state) belong on the ruleset-specific projector or `DetailedCharacter` subclass instead.
+Rules are for **small predicates and constants**. More complex operations (bound to the detailed character, returning rich data, potentially mutating internal state) belong on the ruleset's level-up projector (`Dnd35LevelUpProjector`) or on its character (a concern of `DetailedCharacter`) instead.
 
 ### The service split pattern
 
@@ -551,8 +564,8 @@ class CharacterLevelsService {
 }
 
 // With multiple rulesets (sketch)
-import * as dnd35 from "./levels/dnd3.5/index.ts";
-import * as pf2e from "./levels/pf2e/index.ts";
+import * as dnd35 from "./dnd3.5/classPicks.ts";
+import * as pf2e from "./pf2e/classPicks.ts";
 
 class CharacterLevelsService {
   async getAvailableKlasses(session, characterId, where, pagination) {
@@ -585,27 +598,29 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 
 ### How to add a new ruleset
 
-1. **Define the module**: `server/rulesets/<ruleset>/rulesetModule.ts`, whose factory returns a `RulesetModule` of its own character, projector and kinds (`Dnd35RulesetModule`). Provide `rules` and `effects` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `seedTemplateItems`, etc.
+1. **Define the module**: `server/rulesets/<ruleset>/rulesetModule.ts`, whose factory returns a `RulesetModule` of its own character, projector and kinds (`Dnd35RulesetModule`). Provide `rules` and `effects` (levels, classes, skills, …), `createDetailedCharacter`, `createDetailedCharacterWithSheet`, `createLevelUpProjector`, `createTargetPaths`, `createPropertyTypes` and `seedTemplateItems`.
 2. **Write its character** in `server/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`buildComponents`), and `DetailedCharacter`, which includes the concerns. 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).
-3. **Extend the types** in `server/rulesets/<ruleset>/types.ts`:
+3. **Write its target paths**: a `CategoryPaths` subclass (`Dnd35TargetPaths`) over its categories, one `PathCategory` per domain (`AbilitiesPaths`, `CombatPaths`, …), which `createTargetPaths` returns and the evaluators walk; and its property types (`Dnd35PropertyTypes`), which `createPropertyTypes` returns. See [target-paths.md](./target-paths.md).
+4. **Extend the types** in `server/rulesets/<ruleset>/types.ts`:
    - `<Ruleset>ProjectedCharacterData extends ProjectedCharacterData` (add skill/power shapes if your ruleset has ranked skills or leveled spells).
    - `<Ruleset>LevelUpProjector extends LevelUpProjector` (add any per-level-up operations your ruleset needs beyond `evaluateClassAvailability`).
-4. **Mirror the service + router layout** at `server/services/characters/levels/<ruleset>/` and `server/routers/api/characters/levels/<ruleset>/` if your ruleset's level-up flow differs in shape.
-5. **Add dispatch at `CharacterLevelsService.ts`** and at `server/routers/api/characters/index.tsx` (the `levels` import). Route by ruleset name or ID.
-6. **Register the factory**: add your module to `RulesetFactory`'s `MODULES`, keyed by its base rules: until it is, the server doesn't compile.
+5. **Mirror the service + router layout** at `server/services/characters/levels/<ruleset>/` and `server/routers/api/characters/levels/<ruleset>/` if your ruleset's level-up flow differs in shape.
+6. **Add dispatch at `CharacterLevelsService.ts`** and at `server/routers/api/characters/index.tsx` (the `levels` import). Route by ruleset name or ID.
+7. **Register the factory**: add your module to `RulesetFactory`'s `MODULES`, keyed by its base rules: until it is, the server doesn't compile.
 
 ### How to extend `engine/` without leaking a ruleset
 
-If you need a per-ruleset value in a universal file:
-- Add a method or `readonly` field to an existing rules interface (`LevelsRules`, `ClassesRules`, …).
-- Accept that value as a **constructor param** on the universal class. Default it to the least-surprising value for back-compat. Each ruleset passes its own.
-- Do **not** import from `@/server/rulesets/<ruleset>/*` inside `engine/`. If you feel you have to, the file probably doesn't belong in `engine/`.
+The engine is the machinery every ruleset runs on: the evaluators, the path walk, the module's contract. It imports nothing from a ruleset, not even a type (`arkyvree/layers`). If you feel you have to, the file probably belongs to the ruleset.
 
-If you need a per-ruleset behavior too complex for a small rule (takes the detailed character, returns rich data, touches multiple sub-systems), don't bend the hook pattern — make it a method on the ruleset's `LevelUpProjector` / `DetailedCharacter` subclass and let consumers narrow the type at the call site.
+If the services need a per-ruleset value or answer:
+- Add a method or `readonly` field to an existing rules interface (`LevelsRules`, `ClassesRules`, …), which each ruleset implements.
+- A class that needs it takes it as a **constructor param**, with no default, so no file carries another ruleset's constant: the ruleset passes its own (`buildComponents` passes `MAX_SPELL_LEVEL`).
+
+If you need a per-ruleset behavior too complex for a small rule (takes the detailed character, returns rich data, reads several components), don't bend the rules pattern: make it a method of the ruleset's level-up projector or a concern of its character. Its services get them by the module's own type (`Dnd35RulesetModule`), with no cast.
 
 ### Grey areas and audit findings
 
-An audit on 2026-04-16 identified real leaks and some false alarms:
+An audit on 2026-04-16 identified real leaks and some false alarms. It predates the engine's restructure, which moved every component under `dnd3.5/`: the components it calls generic are 3.5's, and generic in that a second ruleset could take them as they are.
 
 **Fixed:**
 - `MAX_SPELL_LEVEL = 9` was hardcoded in the aptitudes component (`dnd3.5/aptitudes/AptitudesComponent.ts`) — now an injected param.
@@ -630,12 +645,12 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | `server/services/policies/RulesetsPolicy.ts` | Authorization checks for all ruleset operations: the ruleset's own, plus the concerns in `policies/concerns/` (entities, contributors, extensions, creating campaigns and characters), over the roles in `RulesetRoles.ts` |
 | `server/services/rulesets/*/` | Entity services (feats, powers, classes, etc.) using the COW pattern |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
-| `server/rulesets/engine/types.ts` | Universal types (`ProjectedCharacterData`, `LevelUpProjector`, `RulesetModule`, …) |
-| `server/rulesets/dnd3.5/types.ts` | 3.5 type extensions (`Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`) |
+| `server/rulesets/engine/types.ts` | The module's contract and the universal types (`RulesetModule`, `DetailedCharacterInterface`, `ProjectedCharacterData`, `LevelUpProjector`, …) |
+| `server/rulesets/dnd3.5/types.ts` | 3.5's types (`Dnd35RulesetModule`, `CharacterKind`, `Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`) |
 | `server/rulesets/dnd3.5/character/` | The 3.5 character: its state (`CharacterState`), its concerns (`Builds`, `Validates`, `PossessesVirtually`), its components (`components.ts`), and `DetailedCharacter`, which wires them |
-| `server/rulesets/engine/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the rules and effects a ruleset gives the services (`module/`) (`hooks/`) |
-| `server/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its components by domain (`abilities/`, `skills/`, `combat/`…), each with its rules and effects, `TargetPaths`, `response/buildCharacterResponse` |
-| `server/rulesets/dnd3.5/character/DetailedCharacter.ts` | Character builder — reads sibling requirements and modifiers already merged into `rulesetData` by the compose step |
+| `server/rulesets/engine/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the rules and effects a ruleset gives the services (`module/`), the module's contract (`types.ts`) |
+| `server/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its loader (`loading/`), its components and path categories by domain (`abilities/`, `skills/`, `combat/`…), with the rules and effects of the areas that have them (`classes/`, `items/`, `levels/`, `powers/`, `skills/`), `Dnd35TargetPaths`, `response/buildCharacterResponse` |
+| `server/rulesets/dnd3.5/character/concerns/Builds.ts` | The build: the loader (`loading/`) gives each entity the modifiers and requirements the compose step merged into `rulesetData`, then the components, the possession pre-pass and the modifier rounds run |
 | `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts` | Seed-time COW: copies the core feats and spells an extension changes |
 | `tests/services/rulesets/Extensions.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |
 | `tests/services/rulesets/Sibling*.test.ts`, `tests/services/rulesets/customization/Sibling*.test.ts`, `tests/cache/aptitudeDedup.test.ts` | Siblings: what the composed view shows, edits and customization writes on a sibling-merged entity, aptitude deduplication |
