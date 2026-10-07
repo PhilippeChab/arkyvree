@@ -6,7 +6,7 @@ export type { NewBondedCreature } from "./bonded/bondedPlans.ts";
 export type { default as Dnd35DetailedCharacterBonded } from "./bonded/DetailedCharacterBonded.ts";
 export type { default as Dnd35DetailedCharacter } from "./character/DetailedCharacter.ts";
 export { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
-export { getClassSkillIds, getKlassLevel, getPlannedKlassLevels, getSavedKlassLevel } from "./levelUp/classes.ts";
+export { getKlassLevel, getPlannedKlassLevels, getSavedKlassLevel } from "./levelUp/classes.ts";
 export { buildPowerLevelLookup } from "./levelUp/distribution.ts";
 export { checkEditedLevelIssues, projectEditedLevel, projectLevelContribution } from "./levelUp/edit.ts";
 export { buildLevelUpPreview, distributePlannedPicks } from "./levelUp/plan.ts";
@@ -24,6 +24,15 @@ export {
   projectPlannedLevels,
 } from "./levelUp/projection.ts";
 export type { FeatPick } from "./levelUp/projection.ts";
+export {
+  buildFeatSlots,
+  buildPowerSlots,
+  buildSkillSlots,
+  projectAttributeStep,
+  projectFeatStep,
+  projectStepLevel,
+} from "./levelUp/steps.ts";
+export type { StepProjection } from "./levelUp/steps.ts";
 export {
   annotateRequirements,
   checkAbilityIncrease,

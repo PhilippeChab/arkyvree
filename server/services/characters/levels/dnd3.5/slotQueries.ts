@@ -8,14 +8,14 @@
  */
 
 import {
-  buildPendingCharacterLevels,
-  buildProjectedCharacterLevel,
-  buildProjectedGivenFeats,
-  type Dnd35ProjectedCharacterData,
-  getClassSkillIds,
+  buildFeatSlots,
+  buildPowerSlots,
+  buildSkillSlots,
   getKlassLevel,
-  getLevelIdsFromOnward,
-  loadFeatCustomizations,
+  projectAttributeStep,
+  projectFeatStep,
+  projectStepLevel,
+  type StepProjection,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
@@ -26,105 +26,44 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** What a level-up step projects: a new level after the levels planned before it, or an edit of one of the character's. */
-type LevelProjection = {
-  /** The projected level's ability increase. */
-  abilityId?: string;
-  /** The level edited, which the projected level replaces. */
-  editedLevelId?: string;
-  pendingLevelAbilityIds?: (string | undefined)[];
-  pendingLevelKlassLevelIds?: string[];
-};
+/** A step as its route asks for it: the edited level by id, which the step's projection takes with its place. */
+type Step = Omit<StepProjection, "editedLevel"> & { editedLevelId?: string };
 
-/** The feat pools of a projected level: a pool is shared when its aptitude has spells too, and isn't counted then. */
-async function featSlots(
-  session: Session,
-  characterId: string,
-  klassId: string,
-  level: number,
-  projection: LevelProjection,
-) {
+/** The feat pools of a projected level, and the feats its class level grants. */
+async function featSlots(session: Session, characterId: string, klassId: string, level: number, step: Step) {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
     const { ruleset, rulesetData } = scope;
     const klassLevel = getKlassLevel(rulesetData, klassId, level);
-    const autoGrantedRecords = rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [];
-    const autoGrantedCustomizations = loadFeatCustomizations(
-      rulesetData,
-      autoGrantedRecords.map((rec) => rec.featsInRule.id),
-    );
-
-    const { level: projectedLevel, data } = await projectLevel(characterId, klassLevel.id, projection);
-    const projectedData: Dnd35ProjectedCharacterData = {
-      ...data,
-      givenFeats: buildProjectedGivenFeats(autoGrantedRecords, projectedLevel.id, autoGrantedCustomizations),
-    };
-
+    const projected = projectFeatStep(characterId, klassLevel.id, await readStep(characterId, step), rulesetData);
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
-
-    const { featPools: aptitudePools, featsToSelect } =
-      detailedCharacter.components.aptitudes.getLevelUpPools(rulesetData);
-
-    return {
-      featsToSelect,
-      autoGrantedFeats: autoGrantedRecords.map((rec) => rec.featsInRule),
-      aptitudePools,
-    };
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected, scope });
+    return buildFeatSlots(detailedCharacter, klassLevel.id, rulesetData);
   });
 }
 
 /** The spell pools of a projected level, and the powers its class level grants. */
-async function powerSlots(
-  session: Session,
-  characterId: string,
-  klassId: string,
-  level: number,
-  projection: LevelProjection,
-) {
+async function powerSlots(session: Session, characterId: string, klassId: string, level: number, step: Step) {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
     const { ruleset, rulesetData } = scope;
     const klassLevel = getKlassLevel(rulesetData, klassId, level);
-    const { data: projectedData } = await projectLevel(characterId, klassLevel.id, projection);
-
+    const projected = projectStepLevel(characterId, klassLevel.id, await readStep(characterId, step));
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
-
-    const { powerPools: aptitudePools, powersToSelect } =
-      detailedCharacter.components.aptitudes.getLevelUpPools(rulesetData);
-    const autoGrantedPowers = (rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? []).map(
-      (rec) => ({ ...rec.powersInRule, free: rec.free }),
-    );
-
-    return { powersToSelect, autoGrantedPowers, aptitudePools };
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected, scope });
+    return buildPowerSlots(detailedCharacter, klassLevel.id, rulesetData);
   });
 }
 
-/**
- * The projected level of class level `klassLevelId`, and the projection it goes in. An edited level's replacement
- * keeps its position, so the first character level stays the first (its x4 skill points, its feats); its id is fresh,
- * so the data loader doesn't count the stored level's granted feats twice.
- */
-async function projectLevel(characterId: string, klassLevelId: string, projection: LevelProjection) {
-  const { editedLevelId, abilityId, pendingLevelKlassLevelIds, pendingLevelAbilityIds } = projection;
-  const pendingLevels = pendingLevelKlassLevelIds?.length
-    ? buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds, pendingLevelAbilityIds)
-    : [];
-  let level = buildProjectedCharacterLevel(characterId, klassLevelId, abilityId);
-  if (editedLevelId) {
-    const levels = await CharacterLevels.findMany(db, { characterId });
-    const editedLevel = levels.find((l) => l.id === editedLevelId);
-    if (!editedLevel) throw new NotFoundError("Character level not found");
-    level = { ...level, position: editedLevel.position };
-  }
-  const data: Dnd35ProjectedCharacterData = {
-    ...(editedLevelId && { excludeCharacterLevelIds: [editedLevelId] }),
-    characterLevels: [...pendingLevels, level],
-  };
-  return { level, data };
+/** The step's projection, with the edited level's place read: a 404 when the character has no such level. */
+async function readStep(characterId: string, { editedLevelId, ...step }: Step): Promise<StepProjection> {
+  if (!editedLevelId) return step;
+  const levels = await CharacterLevels.findMany(db, { characterId });
+  const editedLevel = levels.find((l) => l.id === editedLevelId);
+  if (!editedLevel) throw new NotFoundError("Character level not found");
+  return { ...step, editedLevel };
 }
 
 export async function getAttributeSlots(
@@ -137,27 +76,11 @@ export async function getAttributeSlots(
 
   const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
   const characterLevels = await CharacterLevels.findMany(db, { characterId });
-  const excludeIds = excludeCharacterLevelId ? getLevelIdsFromOnward(characterLevels, excludeCharacterLevelId) : [];
-  // totalLevel = number of levels before this one (so totalLevel+1 = the level being added/edited)
-  const totalLevel = characterLevels.length - excludeIds.length + (pendingLevelCount ?? 0);
+  const step = projectAttributeStep(characterLevels, excludeCharacterLevelId, pendingLevelCount);
+  if (!step) return { isAvailable: false, attributes: {} };
 
-  if (!rulesetModule.rules.levels.isAbilityIncreaseLevel(totalLevel)) {
-    return {
-      isAvailable: false,
-      attributes: {},
-    };
-  }
-
-  const projectedData: Dnd35ProjectedCharacterData | undefined =
-    excludeIds.length > 0 ? { excludeCharacterLevelIds: excludeIds } : undefined;
-
-  const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData });
-  const abilities = detailedCharacter.components.abilities;
-
-  return {
-    isAvailable: true,
-    attributes: abilities.getAbilitiesWithIds(),
-  };
+  const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: step.projected });
+  return { isAvailable: true, attributes: detailedCharacter.components.abilities.getAbilitiesWithIds() };
 }
 
 export async function getEditFeatSlots(
@@ -215,38 +138,21 @@ export async function getSkillSlots(
   return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
     const { ruleset, rulesetData } = scope;
     const klassLevel = getKlassLevel(rulesetData, klassId, level);
-    const { data: projectedData } = await projectLevel(characterId, klassLevel.id, {
+    const step = await readStep(characterId, {
       editedLevelId: excludeCharacterLevelId,
       abilityId,
       pendingLevelKlassLevelIds,
       pendingLevelAbilityIds,
     });
-
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, scope });
+    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, {
+      projected: projectStepLevel(characterId, klassLevel.id, step),
+      scope,
+    });
 
-    const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
-    const skillsBreakdown = levelUpProjector.getSkillBudget();
-
-    // isClassSkill = class skill for ANY of the character's classes (for max rank).
-    // isCurrentClassSkill = class skill for the class being leveled (for cost).
-    const currentClassSkillIds = getClassSkillIds(
-      rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? [],
-      rulesetData.skills,
-    );
-    const skillsWithClassInfo = levelUpProjector.getCharacterEnrichedSkills(rulesetData.skills, currentClassSkillIds);
-
-    // Total character level after the projected change. Used client-side for
-    // the 3.5 rank cap (`totalCharacterLevel + 3` for class skills,
-    // `(totalCharacterLevel + 3) / 2` for cross-class). An edit replaces
-    // the edited level, so the count stays the total.
+    // An edit replaces the edited level, so the count stays the total
     const characterLevels = await CharacterLevels.findMany(db, { characterId });
     const totalCharacterLevel = characterLevels.length + (excludeCharacterLevelId ? 0 : 1);
-
-    return {
-      skillPointsToSpend: Math.max(1, skillsBreakdown.available),
-      totalCharacterLevel,
-      skills: skillsWithClassInfo,
-    };
+    return buildSkillSlots(detailedCharacter, klassId, totalCharacterLevel, rulesetData);
   });
 }
