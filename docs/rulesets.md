@@ -430,7 +430,7 @@ server/
 │       ├── character/                     (CharacterState, its concerns: Builds, Validates, PossessesVirtually;
 │       │                                  DetailedCharacter, which wires them; components.ts; Dnd35LevelUpProjector)
 │       ├── loading/                       (DetailedCharacterDataLoader, and its steps: customizations, picks,
-│       │                                  possessions, rulesetReadings, refreshEntityData)
+│       │                                  possessions, rulesetReadings)
 │       ├── response/                      (buildCharacterResponse: the 3.5 API response shape)
 │       ├── abilities/ aptitudes/ feats/ identity/ saves/
 │       │                                  (each domain's component and its paths' category: AbilitiesComponent,

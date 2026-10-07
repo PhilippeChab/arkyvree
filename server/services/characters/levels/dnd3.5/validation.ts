@@ -10,7 +10,7 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
-import { Feats } from "@/server/repositories/index.ts";
+import { CharacterLevelFeats } from "@/server/repositories/index.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 
 import { loadFeatCustomizations } from "./projection.ts";
@@ -103,11 +103,11 @@ async function checkNotTaken(
   if (nonStackableSubmitted.length === 0) return;
 
   const otherLevelIds = otherLevels.map((lvl) => lvl.id);
-  // The Set holds the ids the view has, which the submitted feats' are. Inside the caller's withRulesetScope the repo
-  // Proxy maps otherLevels[i].klassLevelId to a copied class level's, whose grants the view keys; a picked feat's row
-  // keeps its stored id, which the view resolves to the fork's copy.
-  const pickedFeats = await Feats.findPicks(tx, { characterLevelIds: otherLevelIds });
-  const existingFeatIds = new Set(pickedFeats.map((f) => rulesetData.cow.resolve(f.id)));
+  // The Set holds the ids the view has, which the submitted feats' are: inside the caller's withRulesetScope the repo
+  // Proxy maps a row's references, a pick's featId and otherLevels[i].klassLevelId, to the ones the view stands for
+  // them (a fork's copy, the winner of books' copies), whose grants the view keys
+  const picks = await CharacterLevelFeats.findMany(tx, { characterLevelIds: otherLevelIds });
+  const existingFeatIds = new Set(picks.map((pick) => pick.featId));
 
   // The feats the other levels' class levels and this one grant, as the view composes them
   const grants = otherLevels.flatMap(

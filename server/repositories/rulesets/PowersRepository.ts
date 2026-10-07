@@ -1,12 +1,6 @@
-import { and, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
-import {
-  klassLevelsInRules,
-  levelPowersInCharacter,
-  levelsInCharacter,
-  powersInRules,
-  savesInRules,
-} from "@/drizzle/schema.ts";
+import { powersInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
@@ -113,33 +107,6 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
           offset,
         }),
     );
-  }
-
-  /** The picks of these character levels, by the picked entity's name, ties broken to a fixed order. */
-  async findPicks(db: Db, where: { characterLevelIds: string[] }) {
-    if (where.characterLevelIds.length === 0) return [];
-    return await db
-      .select({
-        ...getTableColumns(powersInRules),
-        klassLevelId: klassLevelsInRules.id,
-        characterLevelId: levelsInCharacter.id,
-        aptitudeId: levelPowersInCharacter.aptitudeId,
-        saveName: savesInRules.name,
-      })
-      .from(powersInRules)
-      .innerJoin(levelPowersInCharacter, eq(powersInRules.id, levelPowersInCharacter.powerId))
-      .innerJoin(levelsInCharacter, eq(levelPowersInCharacter.characterLevelId, levelsInCharacter.id))
-      .innerJoin(klassLevelsInRules, eq(levelsInCharacter.klassLevelId, klassLevelsInRules.id))
-      .leftJoin(savesInRules, eq(powersInRules.saveId, savesInRules.id))
-      .where(
-        and(inArray(levelPowersInCharacter.characterLevelId, where.characterLevelIds), isNull(powersInRules.deletedAt)),
-      )
-      .orderBy(
-        this.orderBy(powersInRules.name),
-        this.orderBy(powersInRules.id),
-        this.orderBy(levelPowersInCharacter.aptitudeId),
-        this.orderBy(levelsInCharacter.id),
-      );
   }
 }
 
