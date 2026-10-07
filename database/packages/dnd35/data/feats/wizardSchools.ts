@@ -11,7 +11,7 @@ const SPECIALIZATION = "Wizard Specialization";
  * A wizard's choice of school: a specialist feat per school, which allows as many prohibited schools as it names, or
  * the generalist's; then a feat per school to prohibit.
  */
-export function wizardSchoolFeats(schools: WizardSchoolSeed[]): FeatSeed[] {
+export function buildWizardSchoolFeats(schools: WizardSchoolSeed[]): FeatSeed[] {
   const requirements = () => [gte("classes.wizard.level", 1)];
   return [
     ...schools.map((s) => ({

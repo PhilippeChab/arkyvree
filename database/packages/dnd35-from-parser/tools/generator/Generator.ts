@@ -51,7 +51,6 @@ export class Generator extends include(
    */
   private generateClass(ref: ClassReference, book: string) {
     this.writeClass(ref, book);
-    this.writeFavoredEnemyFeats(book);
 
     // Regenerate aptitudes.ts for this book (covers books with no standalone feats file)
     this.writeAptitudes(book);
@@ -84,7 +83,6 @@ export class Generator extends include(
   /** A feat reference's feats, and the aptitudes and the feat index they add to. */
   private generateFeats(ref: FeatReference, book: string) {
     this.writeFeats(ref, book);
-    this.writeFavoredEnemyFeats(book);
     this.writeAptitudes(book);
     this.writeFeatIndex(book);
 

@@ -4,7 +4,6 @@ import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts"
 
 import { ALL_CLASS_FEATS } from "./classes/index.ts";
 import { DOMAIN_POOL_FEATS } from "./domainFeats.ts";
-import { favoredEnemy } from "./favoredEnemy.ts";
 import {
   EXOTIC_WEAPON_PROFICIENCY_FEATS,
   FIGHTER_FEATS,
@@ -19,16 +18,12 @@ import {
   SKILL_FOCUS_FEATS,
   SPECIAL_FEATS,
   SPELL_FOCUS_FEATS,
-  SPELL_WEAPON_FOCUS_FEATS,
   WEAPON_FOCUS_FEATS,
-  WEAPON_PROFICIENCY_FEATS,
   WEAPON_SPECIALIZATION_FEATS,
-  WIZARD_SCHOOL_FEATS,
 } from "./feats.ts";
 
 export const ALL_FEATS: FeatSeed[] = [
   ...DOMAIN_POOL_FEATS,
-  ...favoredEnemy,
   ...EXOTIC_WEAPON_PROFICIENCY_FEATS,
   ...FIGHTER_FEATS,
   ...GENERAL_FEATS,
@@ -42,17 +37,13 @@ export const ALL_FEATS: FeatSeed[] = [
   ...SKILL_FOCUS_FEATS,
   ...SPECIAL_FEATS,
   ...SPELL_FOCUS_FEATS,
-  ...SPELL_WEAPON_FOCUS_FEATS,
   ...WEAPON_FOCUS_FEATS,
-  ...WEAPON_PROFICIENCY_FEATS,
   ...WEAPON_SPECIALIZATION_FEATS,
-  ...WIZARD_SCHOOL_FEATS,
   ...ALL_CLASS_FEATS,
 ];
 
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...DOMAIN_POOL_FEATS,
-  ...favoredEnemy,
   ...EXOTIC_WEAPON_PROFICIENCY_FEATS,
   ...FIGHTER_FEATS,
   ...GENERAL_FEATS,
@@ -66,9 +57,6 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...SKILL_FOCUS_FEATS,
   ...SPECIAL_FEATS,
   ...SPELL_FOCUS_FEATS,
-  ...SPELL_WEAPON_FOCUS_FEATS,
   ...WEAPON_FOCUS_FEATS,
-  ...WEAPON_PROFICIENCY_FEATS,
   ...WEAPON_SPECIALIZATION_FEATS,
-  ...WIZARD_SCHOOL_FEATS,
 ];

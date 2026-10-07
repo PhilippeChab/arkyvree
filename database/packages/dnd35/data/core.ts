@@ -29,6 +29,7 @@ import type { SkillSeed } from "@/database/packages/dnd35/content/skills/types.t
 import { ANIMAL_COMPANIONS } from "@/database/packages/dnd35/data/bonds/animalCompanions.ts";
 import { FAMILIARS } from "@/database/packages/dnd35/data/bonds/familiars.ts";
 import { SPECIAL_MOUNTS } from "@/database/packages/dnd35/data/bonds/mounts.ts";
+import { buildCoreFeats } from "@/database/packages/dnd35/data/feats/coreFeats.ts";
 import { TEMPLATE_ITEMS } from "@/database/packages/dnd35/data/templateItems.ts";
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 
@@ -128,7 +129,7 @@ export const SKILLS: SkillSeed[] = [
   { name: "Use Rope", description: "Tie knots, bind prisoners, and handle rope in many different situations.", ability: "Dexterity", impactedByWeight: false, usableWithoutTraining: true },
 ];
 
-/** All the core rules are seeded with, its items the SRD's goods and magic items. */
+/** All the core rules are seeded with: the SRD's, and its hand-written feats; its items the SRD's goods and magic items. */
 export const CORE: CoreContent = {
   aptitudes: ALL_APTITUDES,
   languages: LANGUAGES,
@@ -136,7 +137,7 @@ export const CORE: CoreContent = {
   abilities: ABILITIES,
   skills: SKILLS,
   saves: SAVES,
-  feats: ALL_FEATS,
+  feats: [...ALL_FEATS, ...buildCoreFeats(WIZARD_SCHOOLS)],
   classes: ALL_CLASSES,
   templateItems: TEMPLATE_ITEMS,
   items: [

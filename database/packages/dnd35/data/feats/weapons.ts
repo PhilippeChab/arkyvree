@@ -9,7 +9,7 @@ import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
  * Weapon Focus for a kind of spell, a choice the Player's Handbook allows (a ray) and Complete Arcane's Ranged Spell
  * and Touch Spell Specialization require: in the Weapon Focus family, without a weapon to give the bonus to.
  */
-export const spellWeaponFocusFeats: FeatSeed[] = ["Ranged Spell", "Touch Spell"].map((spell) => ({
+export const SPELL_WEAPON_FOCUS_FEATS: FeatSeed[] = ["Ranged Spell", "Touch Spell"].map((spell) => ({
   name: `Weapon Focus: ${spell}`,
   description: `You gain a +1 bonus on attack rolls you make with ${spell.toLowerCase()}s.`,
   generated: true,
@@ -24,7 +24,7 @@ export const spellWeaponFocusFeats: FeatSeed[] = ["Ranged Spell", "Touch Spell"]
  * a time (SRD), in the Martial Weapon Proficiency family as an exotic one is in its own: Martial Weapon Proficiency
  * itself, every martial weapon, is a class's.
  */
-export const weaponProficiencyFeats: FeatSeed[] = [
+export const WEAPON_PROFICIENCY_FEATS: FeatSeed[] = [
   ...SIMPLE_WEAPONS.map((w) => ({
     name: `Simple Weapon Proficiency: ${w}`,
     description: `You are proficient with the ${w.toLowerCase()}.`,

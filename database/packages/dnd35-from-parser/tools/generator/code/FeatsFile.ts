@@ -1,5 +1,4 @@
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { CORE_SYSTEM_FEATS } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
 import {
   type ImportTable,
   REQUIREMENT_IMPORTS,
@@ -30,18 +29,13 @@ const IMPORTS: ImportTable = [
     ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS"],
   ],
   ["@/database/packages/dnd35/content/items/proficiencies.ts", ["proficiencyRequirements"]],
-  ["@/database/packages/dnd35/data/feats/weapons.ts", ["spellWeaponFocusFeats", "weaponProficiencyFeats"]],
   ["@/database/packages/dnd35/data/skills.ts", ["SKILL_NAMES"]],
   ["@/shared/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
   ["@/shared/text.ts", ["stripSeparators"]],
-  ["@/database/packages/dnd35/content/wizardSchools/schoolFeats.ts", ["wizardSchoolFeats"]],
-  ["@/database/packages/dnd35/data/feats/favoredEnemy.ts", ["favoredEnemyFeats"]],
-  ["@/database/packages/dnd35-from-parser/generated/srd/wizardSchools.ts", ["WIZARD_SCHOOLS"]],
 ];
 
 /**
- * A feats file: its feats' lists, a template family's feats made per item (weapon, skill, school…), and the core
- * rules' system feats. What its code uses (weapon lists, skill names…) is imported from where the content defines it.
+ * A feats file: its feats' lists, and a template family's feats made per item (weapon, skill, school…). What its code uses (weapon lists, skill names…) is imported from where the content defines it.
  */
 export class FeatsFile extends CodeFile {
   constructor() {
@@ -206,17 +200,6 @@ export class FeatsFile extends CodeFile {
   /** A weapon family's modifier target, made the item's: a weapon.X path becomes items.weapons.<weapon>.X. */
   private weaponTarget(target: string) {
     return target.replace(/^weapon\./, "items.weapons.${stripSeparators(w)}.");
-  }
-
-  /** The system feats of the core rules' feat file `fileName`. */
-  emitSystemFeats(fileName: string): void {
-    this.declare("FeatSeed");
-    for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
-      this.lines.push(`/** A system feat list (\`buildCoreSystemFeats\`): no reference lists it. */`);
-      this.lines.push(`export const ${name}: FeatSeed[] = ${code};`);
-      for (const used of uses) this.uses.add(used);
-    }
-    this.lines.push("");
   }
 
   /** Writes a template family's feats, by its type. */
