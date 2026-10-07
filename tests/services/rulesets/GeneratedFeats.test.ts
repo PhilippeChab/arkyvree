@@ -367,7 +367,7 @@ describe("an inherited skill's Skill Focus", () => {
     const { fork } = await seededForkWithClimb();
     await withRulesetScope(db, fork.id, async ({ ruleset, rulesetData }) => {
       const { timing } = await measure(() =>
-        new Dnd35SkillsEffects().deleteSkillFeat(db, { ruleset, rulesetData }, "No generated feat"),
+        new Dnd35SkillsEffects().deleteFeats(db, { ruleset, rulesetData }, "No generated feat"),
       );
       expect(timing).toMatchObject({ queryCount: 0, cacheHits: 0, cacheMisses: 0 });
     });

@@ -34,7 +34,7 @@ export class Dnd35SkillsEffects implements SkillsEffects {
     ];
   }
 
-  async deleteSkillFeat(tx: Db, scope: RulesetScope, skillName: string): Promise<void> {
+  async deleteFeats(tx: Db, scope: RulesetScope, skillName: string): Promise<void> {
     const { ruleset, rulesetData } = scope;
     const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
     if (!feat) return;
@@ -46,12 +46,12 @@ export class Dnd35SkillsEffects implements SkillsEffects {
     const targetId = await new RulesetEdit(ruleset, rulesetData.cow).cowOwner(tx, "feats", feat.id);
     // Hard-delete: FK CASCADE on feats_aptitudes wipes the aptitude link, and
     // the database deletes the feat's customizations.
-    // Soft-archive would block a future generateSkillFeat with the same name
+    // Soft-archive would block a future generateFeats with the same name
     // (the unique index on feats doesn't filter deleted_at).
     await Feats.delete(tx, { id: targetId });
   }
 
-  async generateSkillFeat(tx: Db, scope: RulesetScope, skillName: string): Promise<void> {
+  async generateFeats(tx: Db, scope: RulesetScope, skillName: string): Promise<void> {
     const rulesetId = scope.ruleset.id;
     const generalAptitudeId = scope.rulesetData.aptitudeIdBySlug.get(Dnd35LevelsRules.GENERAL_FEATS_APTITUDE_SLUG);
     if (!generalAptitudeId) return;
@@ -78,7 +78,7 @@ export class Dnd35SkillsEffects implements SkillsEffects {
     ]);
   }
 
-  async syncProperties(tx: Db, skillId: string, flags: SkillFlags): Promise<SkillFlags> {
+  async syncProperties(tx: Db, skillId: string, flags: SkillFlags): Promise<void> {
     await Properties.delete(tx, {
       entityIds: [skillId],
       entityType: "skills",
@@ -87,7 +87,5 @@ export class Dnd35SkillsEffects implements SkillsEffects {
 
     const records = this.buildProperties(skillId, flags);
     if (records.length > 0) await Properties.createMany(tx, records);
-
-    return normalizeSkillFlags(flags);
   }
 }

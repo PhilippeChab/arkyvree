@@ -157,6 +157,12 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from their domain's effects (`server/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts` with `powers/spellGenerator.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`database/packages/dnd35/content/items/weapons.ts`, `armor.ts`).
 
+Every area's effects take one shape:
+- `syncProperties(tx, id, fields)` stores the fields of the entity's form as its properties, in place of those it stored before. Its other properties stay.
+- `generateFeats(tx, scope, name)` makes the feats the entity brings, and `deleteFeats` removes them, where they're the entity's own.
+- A feat that's one entity's own (a skill's Skill Focus) is made, renamed and deleted with it: a new skill brings its own, even in a fork that deleted the one it inherited.
+- A feat that a grouping's entities share (a school's Spell Focus) is made when the first of them is saved, unless the ruleset or one of its sources has it, even in a fork that deleted the copy it inherited, and none goes with an entity.
+
 ### Weapons (type = "Weapon")
 
 Properties generated from `WEAPON_TYPE_DEFINITIONS` in `content/items/weapons.ts`:
@@ -261,9 +267,9 @@ Properties auto-generated from the skill form's fields in `SkillsEffects.syncPro
 - `SKILL_CHECK_PENALTY_MULTIPLIER` — how many times over a skill armor weighs on takes the penalty (2 on Swim; absent means 1)
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed
 
-Feat auto-generated per skill in `SkillsEffects.generateSkillFeat()`:
+Feat auto-generated per skill in `SkillsEffects.generateFeats()`:
 - `Skill Focus: <name>` — +3 `skills.<stripped>.misc`, linked to General aptitude
-- Deleted on skill delete, regenerated on skill rename
+- Deleted on skill delete (`SkillsEffects.deleteFeats()`, refused while a character picked it), regenerated on skill rename
 
 Generated feat names cannot be edited directly. A feat is generated (`feats.generated`) when a family's feat is made
 for each of its options, its name naming the option (`Weapon Focus: Longsword`): by the seeds (the parser's template
@@ -281,7 +287,7 @@ Properties the engine reads off a race (`combat/InitiativeAndSpeed.ts`, `combat/
 
 ### Spells / Powers
 
-Properties auto-generated from spell form fields in `powers/spellGenerator.ts`:
+Properties auto-generated from spell form fields in `PowersEffects.syncProperties()` (`powers/spellGenerator.ts`):
 
 | Property Type | Description |
 |---|---|
@@ -296,11 +302,11 @@ Properties auto-generated from spell form fields in `powers/spellGenerator.ts`:
 | `SPELL_RESISTANCE` | Whether spell resistance applies (optional) |
 | `SPELL_COMPONENT` | Required components — one property row per value (optional, multi) |
 
-On create: with a school, generates the properties from the form's fields, and the school's Spell Focus feats (idempotent).
-On update: deletes the generated property types (`rules.powers.generatedPropertyTypes`: the spell's fields), then, with a school, regenerates them from the form and creates the feats of a school that's new. The spell's other properties remain, and so do existing school feats.
+On create: with a school, generates the properties from the form's fields, and the school's Spell Focus feats unless they're there (`PowersEffects.generateFeats()`).
+On update: replaces the generated property types (the spell's fields) with the form's, none without a school, and creates the feats of a school that's new. The spell's other properties remain, and so do existing school feats.
 On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 
-Feats auto-generated per unique school in `powers/spellGenerator.generateSpellFocusFeats()`:
+Feats auto-generated per unique school in `PowersEffects.generateFeats()` (`powers/spellGenerator.generateSpellFocusFeats()`):
 - `Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, linked to General aptitude
 - `Greater Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
 - Created idempotently (skipped if already exist for the school)
