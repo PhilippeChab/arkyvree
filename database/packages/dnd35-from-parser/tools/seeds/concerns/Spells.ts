@@ -1,7 +1,7 @@
-import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import { type BaseBookSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/BaseBookSeeds.ts";
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/spells.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/vocabulary/books.ts";
 import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 import type { Constructor } from "@/server/mixins.ts";
 

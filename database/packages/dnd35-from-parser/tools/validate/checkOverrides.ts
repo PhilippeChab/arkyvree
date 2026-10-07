@@ -1,10 +1,10 @@
 import { getClassFeatsFile } from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import { type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
-import { sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
+import { sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/text/json.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import type { StoredReference } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 
 import { getClassReviewNotes } from "./classReview.ts";
 
@@ -56,7 +56,7 @@ export function checkClassOverrides(stored: StoredReference<"class">): {
 } {
   const overrides = stored.overrides ?? {};
   const resolve = (rest: ClassOverrides) =>
-    ReferenceLoader.resolve("class", { _meta: stored._meta, raw: stored.raw, overrides: rest });
+    References.resolve("class", { _meta: stored._meta, raw: stored.raw, overrides: rest });
   const withAll = resolve(overrides);
   const output = generated(withAll);
   if (output instanceof Error) return { refusal: output.message, redundant: [], ignored: [] };

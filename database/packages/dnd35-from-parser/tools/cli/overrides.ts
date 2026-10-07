@@ -11,14 +11,8 @@
 
 import { basename } from "node:path";
 
-import {
-  filterReferenceFiles,
-  listReferenceFiles,
-} from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import {
-  readStoredReference,
-  type StoredReference,
-} from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
+import type { StoredReference } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 
 import { parseCliArgs } from "./args.ts";
 
@@ -75,13 +69,13 @@ function collectEntryOverrides(
 function main() {
   const { bookFilter, typeFilter, nameFilter, keyFilter } = parseCliArgs();
 
-  const refs = filterReferenceFiles(listReferenceFiles(), { bookFilter, typeFilter, nameFilter });
+  const refs = References.files({ bookFilter, typeFilter, nameFilter });
 
   const allEntries: OverrideEntry[] = [];
 
   for (const ref of refs) {
     if (ref.type === "feat") {
-      const { raw, overrides } = readStoredReference(ref.path, "feat");
+      const { raw, overrides } = References.stored(ref.path, "feat");
       allEntries.push(
         ...collectEntryOverrides(
           overrides,
@@ -91,14 +85,14 @@ function main() {
       );
     } else if (ref.type === "domain") {
       allEntries.push(
-        ...collectEntryOverrides(readStoredReference(ref.path, "domain").overrides, {
+        ...collectEntryOverrides(References.stored(ref.path, "domain").overrides, {
           book: ref.book,
           refType: "domain",
           refName: "domains",
         }),
       );
     } else if (ref.type === "class") {
-      allEntries.push(...collectClassOverrides(readStoredReference(ref.path, "class"), ref.book, basename(ref.path)));
+      allEntries.push(...collectClassOverrides(References.stored(ref.path, "class"), ref.book, basename(ref.path)));
     }
   }
 

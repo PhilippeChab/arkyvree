@@ -1,11 +1,10 @@
 import { findUnresolvedItems } from "@/database/packages/dnd35-from-parser/tools/detect/ItemDetector.ts";
-import { type listReferenceFiles } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import { readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import { getSeededMagicItems } from "@/database/packages/dnd35-from-parser/tools/seeds/magicItems.ts";
 import { getSeededRaces, getSkippedRaces } from "@/database/packages/dnd35-from-parser/tools/seeds/races.ts";
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
+import type { ReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 
 import { checkClassOverrides } from "./checkOverrides.ts";
 
@@ -67,8 +66,8 @@ function reviewOf(reviewed: string[] = []) {
   };
 }
 
-/** The issues of the references `refs` (`listReferenceFiles`): what the header lists. */
-export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>): Issue[] {
+/** The issues of the reference files `refs` (`References.files`): what the header lists. */
+export function findReferenceIssues(refs: ReferenceFile[]): Issue[] {
   const issues: Issue[] = [];
 
   for (const ref of refs) {
@@ -100,7 +99,7 @@ export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>)
     const reviewedIssues = (): Review => {
       switch (ref.type) {
         case "class": {
-          const data = ReferenceLoader.load(ref.path, "class");
+          const data = References.load(ref.path, "class");
           const review = reviewOf(data.overrides?.reviewed);
           unreviewed(review, detectedIssues(data.detected), { label: "class", entityName: data.raw.name });
           // What only a column of its table gives (a monk's AC bonus) reaches the class through a modifier reading it
@@ -111,7 +110,7 @@ export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>)
             [...unread].filter((column) => !read.has(column)).map((text) => ({ kind: "unread column" as const, text })),
             { label: "class", entityName: data.raw.name },
           );
-          const { refusal, redundant, ignored } = checkClassOverrides(readStoredReference(ref.path, "class"));
+          const { refusal, redundant, ignored } = checkClassOverrides(References.stored(ref.path, "class"));
           const classIssues: Found[] = [
             ...(refusal ? [{ kind: "generator refuses the class" as const, text: refusal }] : []),
             ...redundant.map((text) => ({ kind: "redundant override" as const, text })),
@@ -123,7 +122,7 @@ export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>)
         }
         case "feat": {
           // The generator skips what the mapping skips: an epic feat, unless an override keeps it, and an override's
-          const data = ReferenceLoader.load(ref.path, "feat");
+          const data = References.load(ref.path, "feat");
           const review = reviewOf(data.overrides?.reviewed);
           entityIssues(
             data.detected,
@@ -133,7 +132,7 @@ export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>)
           return review;
         }
         case "domain": {
-          const data = ReferenceLoader.load(ref.path, "domain");
+          const data = References.load(ref.path, "domain");
           const review = reviewOf(data.overrides?.reviewed);
           entityIssues(data.detected, review);
           for (const { domain, text } of Library.book(data._meta.book).domainSpellIssues(data))
@@ -142,7 +141,7 @@ export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>)
         }
         case "race": {
           // A skipped race isn't seeded: its detections don't matter. A seeded one's size must be one the seed accepts.
-          const data = ReferenceLoader.load(ref.path, "race");
+          const data = References.load(ref.path, "race");
           const review = reviewOf(data.overrides?.reviewed);
           entityIssues(data.detected, review, getSkippedRaces(data));
           for (const { name, size } of getSeededRaces(data)) if (!size.ok) notSeedable(name, size.problem);
@@ -150,7 +149,7 @@ export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>)
         }
         case "item": {
           // An item the generator has no definition of isn't generated, whether its override skips it or not
-          const data = ReferenceLoader.load(ref.path, "item");
+          const data = References.load(ref.path, "item");
           const review = reviewOf(data.overrides?.reviewed);
           const unresolved = findUnresolvedItems(data.detected, (name) => Boolean(data.overrides?.[name]?.skip));
           unreviewed(
@@ -162,7 +161,7 @@ export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>)
         }
         case "magicItem": {
           // A seeded magic item's slot must be one the seed accepts; a skipped one's detections don't matter
-          const data = ReferenceLoader.load(ref.path, "magicItem");
+          const data = References.load(ref.path, "magicItem");
           const review = reviewOf(data.overrides?.reviewed);
           const skipped = Object.keys(data.detected).filter((name) => data.overrides?.[name]?.skip);
           entityIssues(data.detected, review, new Set(skipped));
@@ -172,7 +171,7 @@ export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>)
         case "spell":
         case "wizardSchool":
           // Nothing derived from them, so no loaded reference sanitizes their list: its entries read as the others'
-          return reviewOf(sanitizeJsonValues(readStoredReference(ref.path, ref.type).overrides?.reviewed));
+          return reviewOf(sanitizeJsonValues(References.stored(ref.path, ref.type).overrides?.reviewed));
         default:
           // A type the tools don't read (its _meta.type misspelled): the generator refuses it too
           issues.push({ ...at, label: "reference", kind: "unknown type", text: String(ref.type) });

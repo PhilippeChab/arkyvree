@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 
-import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/vocabulary/books.ts";
 
 import { ITEM_FILES, ITEMS_INDEX } from "./bookLayout.ts";
 import type { DeclaredType } from "./code/BaseCodeFile.ts";
@@ -30,7 +30,7 @@ export class BaseGenerator {
    * The core rules are what extensions copy from.
    */
   protected copiesFromCore(book: string): boolean {
-    return book !== CORE_BOOK && ReferenceLoader.loadClasses(book).length > 0;
+    return book !== CORE_BOOK && References.loadClasses(book).length > 0;
   }
 
   /** Logs what the generator does, unless it's quiet. */

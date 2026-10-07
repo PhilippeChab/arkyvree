@@ -1,6 +1,6 @@
-import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import { HttpClient } from "@/database/packages/dnd35-from-parser/tools/scraper/HttpClient.ts";
 import { Scraper } from "@/database/packages/dnd35-from-parser/tools/scraper/Scraper.ts";
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/vocabulary/books.ts";
 
 function printUsage() {
   console.error("Usage: bun scraper/index.ts <type> [options]");

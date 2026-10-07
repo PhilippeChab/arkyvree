@@ -7,7 +7,7 @@ import {
   getClassFile,
 } from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { getClassReviewNotes } from "@/database/packages/dnd35-from-parser/tools/validate/classReview.ts";
@@ -34,7 +34,7 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
 
     /** A book's class feats' index (feats/classes/index.ts): each of its classes' feats file, from its references. */
     writeClassFeatIndex(book: string) {
-      const entries = ReferenceLoader.loadClasses(book)
+      const entries = References.loadClasses(book)
         .map(({ ref }) => getClassFeatsFile(ref.raw.name))
         .sort((a, b) => (a.path < b.path ? -1 : 1));
       if (entries.length === 0) return;
@@ -55,7 +55,7 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
 
     /** A book's classes' index (classes/index.ts): each of its classes' file, from its references, by reference. */
     writeClassIndex(book: string) {
-      const classes = ReferenceLoader.loadClasses(book).filter(({ ref }) => ref.raw?.name);
+      const classes = References.loadClasses(book).filter(({ ref }) => ref.raw?.name);
       if (classes.length === 0) return;
 
       const file = new CodeFile();

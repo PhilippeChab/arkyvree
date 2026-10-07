@@ -11,10 +11,7 @@ import { basename, join } from "node:path";
 
 import { $ } from "bun";
 
-import {
-  filterReferenceFiles,
-  listReferenceFiles,
-} from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 
 import { parseCliArgs } from "./args.ts";
@@ -82,13 +79,13 @@ function buildScrapeArgs(ref: { book: string; path: string; type: string; url?: 
 async function main() {
   const { bookFilter, typeFilter, nameFilter } = parseCliArgs();
 
-  const allRefs = listReferenceFiles();
+  const allRefs = References.files();
   if (allRefs.length === 0) {
     console.log("No reference files found.");
     return;
   }
 
-  const refs = filterReferenceFiles(allRefs, { bookFilter, typeFilter, nameFilter });
+  const refs = References.files({ bookFilter, typeFilter, nameFilter });
 
   console.log(
     `Found ${refs.length} reference files.${bookFilter || typeFilter || nameFilter ? ` (filtered: book=${bookFilter ?? "*"}, type=${typeFilter ?? "*"}, name=${nameFilter ?? "*"})` : ""}\n`,

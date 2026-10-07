@@ -1,4 +1,4 @@
-import { listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 
 import { BookSeeds } from "./BookSeeds.ts";
@@ -22,7 +22,7 @@ class Library {
 
   /** The books, by name. */
   bookNames(): string[] {
-    return listReferenceBooks();
+    return References.books();
   }
 
   /**

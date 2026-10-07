@@ -1,19 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import {
-  readStoredOverrides,
-  type ReferenceType,
-  type StoredReference,
-} from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
-import {
-  sanitizeJsonValues,
-  sortKeysDeep,
-  stringifyStably,
-} from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
-import { isRecord } from "@/shared/isRecord.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
+import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
+import type { ReferenceType, StoredReference } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 
 import { BASE_URL, getBookSlug } from "./books.ts";
 import type { HttpClient } from "./HttpClient.ts";
@@ -35,11 +22,6 @@ export class BaseScraper {
     return getBookSlug(this.book);
   }
 
-  /** The path of the book's reference file `file` (`feats.json`, `classes/wizard.json`). */
-  protected referencePath(...file: string[]): string {
-    return join(REFERENCE_DIR, this.book, ...file);
-  }
-
   /** Saves a reference as scraped (its `_meta` and `raw`), keeping the overrides its file had. */
   protected saveReference<T extends ReferenceType>(
     outPath: string,
@@ -59,7 +41,7 @@ export class BaseScraper {
     raw: StoredReference<T>["raw"],
   ) {
     const reference = this.scrapedReference(outPath, _meta, raw);
-    const resolved = ReferenceLoader.resolve(_meta.type, reference);
+    const resolved = References.resolve(_meta.type, reference);
     this.writeReference(outPath, reference);
     return resolved;
   }
@@ -70,31 +52,14 @@ export class BaseScraper {
     _meta: StoredReference<T>["_meta"] & { type: T },
     raw: StoredReference<T>["raw"],
   ): StoredReference<T> {
-    const overrides = readStoredOverrides(outPath, _meta.type);
+    const overrides = References.overrides(outPath, _meta.type);
     if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
     return sanitizeJsonValues({ _meta, raw, ...(overrides ? { overrides } : {}) });
   }
 
-  /** Writes a reference, unless all that changed is when it was scraped. */
-  private writeIfChanged(outPath: string, data: StoredReference): void {
-    const newJson = stringifyStably(data);
-    if (existsSync(outPath)) {
-      const oldData = sortKeysDeep(JSON.parse(readFileSync(outPath, "utf-8")));
-      const stripTimestamp = (d: unknown) => {
-        const copy = structuredClone(d);
-        if (isRecord(copy) && isRecord(copy._meta)) delete copy._meta.scrapedAt;
-        return JSON.stringify(copy);
-      };
-      if (stripTimestamp(sortKeysDeep(data)) === stripTimestamp(oldData)) return;
-    }
-    mkdirSync(dirname(outPath), { recursive: true });
-    writeFileSync(outPath, newJson);
-  }
-
-  /** Writes a reference to its file, when it changed. */
+  /** Writes a reference to its file, unless all that changed is when it was scraped. */
   private writeReference(outPath: string, reference: StoredReference) {
-    this.writeIfChanged(outPath, reference);
-    console.log(`Written: ${outPath}`);
+    console.log(`${References.write(outPath, reference) ? "Written" : "Unchanged"}: ${outPath}`);
   }
 
   /** A listing's entries across its pages, with absolute URLs: only `bookSlug`'s, when given. */

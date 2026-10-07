@@ -10,7 +10,7 @@ import {
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { compareNames } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -32,7 +32,7 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
 
     /** A book's standalone feats' index (feats/index.ts): every list of its feats files, from its references. */
     writeFeatIndex(book: string) {
-      const featRef = ReferenceLoader.find(book, "feat");
+      const featRef = References.find(book, "feat");
       // Each feats file's lists, by file, as the generator writes them: the domains' feat pools', the reference's
       const seeds = Library.book(book);
       const feats = featRef && seeds.featSeeds(featRef);
@@ -52,7 +52,7 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
         },
       ].filter(({ lists }) => lists.length > 0);
       // A book with classes has a feats folder, its standalone feats none or not
-      if (featFiles.length === 0 && ReferenceLoader.loadClasses(book).length === 0) return;
+      if (featFiles.length === 0 && References.loadClasses(book).length === 0) return;
 
       const file = new CodeFile();
       const standalone: string[] = [];

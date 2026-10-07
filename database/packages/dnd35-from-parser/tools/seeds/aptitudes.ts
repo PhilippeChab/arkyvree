@@ -1,7 +1,7 @@
 /** Collects the aptitudes a book's seeds use. */
 
-import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/vocabulary/books.ts";
 import { CLERIC_DOMAIN, specialistSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { buildCoreFeats } from "@/database/packages/dnd35/data/feats/coreFeats.ts";
@@ -67,10 +67,10 @@ export function collectAptitudes(book: BookSeeds): string[] {
 
   // Exclude aptitudes created by other books (class features + spell lists).
   // For sibling extension spell lists, keep them if this book's spells reference them.
-  for (const other of listReferenceBooks()) {
+  for (const other of References.books()) {
     if (other === book.book) continue;
     const isSibling = other !== CORE_BOOK && book.book !== CORE_BOOK;
-    for (const { ref } of ReferenceLoader.loadClasses(other)) {
+    for (const { ref } of References.loadClasses(other)) {
       if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
       for (const spellApt of getClassSpellLists(ref)) {
         if (isSibling && spellAptitudes.has(spellApt)) names.add(spellApt);

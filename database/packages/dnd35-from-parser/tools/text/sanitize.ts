@@ -179,21 +179,3 @@ export function sanitizeText(text: string): string {
       .trim()
   );
 }
-
-/** Recursively sort all object keys for deterministic JSON output */
-export function sortKeysDeep(val: unknown): unknown {
-  if (Array.isArray(val)) return val.map(sortKeysDeep);
-  if (isRecord(val)) {
-    return Object.fromEntries(
-      Object.keys(val)
-        .sort()
-        .map((key) => [key, sortKeysDeep(val[key])]),
-    );
-  }
-  return val;
-}
-
-/** JSON.stringify with sorted keys for deterministic output */
-export function stringifyStably(val: unknown): string {
-  return JSON.stringify(sortKeysDeep(val), null, 2) + "\n";
-}

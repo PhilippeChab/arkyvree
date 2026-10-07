@@ -3,9 +3,9 @@
  * the core spells its classes' lists take, each at its level there.
  */
 
-import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import type { InheritedSpellList } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/vocabulary/books.ts";
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";
 
@@ -84,8 +84,8 @@ export function buildCowSpells(book: BookSeeds): CowSpellEntry[] {
   // The spells an inherited list can take: the base book's and this book's
   const inheritable = new Set<string>();
 
-  for (const otherBook of listReferenceBooks()) {
-    const ref = ReferenceLoader.find(otherBook, "spell");
+  for (const otherBook of References.books()) {
+    const ref = References.find(otherBook, "spell");
     if (!ref) continue;
 
     for (const spell of ref.raw) {

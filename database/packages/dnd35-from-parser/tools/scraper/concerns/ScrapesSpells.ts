@@ -1,4 +1,4 @@
-import { REFERENCE_FILE_NAMES } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import { buildListingUrl } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
@@ -46,7 +46,7 @@ export function ScrapesSpells<B extends Constructor<BaseScraper>>(Base: B) {
 
       for (const [school, count] of [...schools.entries()].sort()) console.log(`  ${school}: ${count}`);
 
-      const outPath = this.referencePath(REFERENCE_FILE_NAMES.spell);
+      const outPath = References.path(this.book, "spell");
 
       this.saveReference(
         outPath,

@@ -1,15 +1,12 @@
 /** The parser commands' arguments. */
 
+import type { ReferenceFilters } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
+
 /**
  * A command's filters, from its arguments (`argv`, the command line's by default): `<book> [<name>] [--type <type>]
  * [--key <key>]`.
  */
-export function parseCliArgs(argv = process.argv.slice(2)): {
-  bookFilter?: string;
-  keyFilter?: string;
-  nameFilter?: string;
-  typeFilter?: string;
-} {
+export function parseCliArgs(argv = process.argv.slice(2)): ReferenceFilters & { keyFilter?: string } {
   const args = [...argv];
 
   const typeIdx = args.indexOf("--type");

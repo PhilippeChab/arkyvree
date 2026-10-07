@@ -1,3 +1,4 @@
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import { BASE_URL } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/classPage.ts";
@@ -39,7 +40,7 @@ export function ScrapesClasses<B extends Constructor<BaseScraper>>(Base: B) {
       console.log(`  Features: ${raw.classFeatures.length}`);
 
       const slug = toCamelCase(raw.name);
-      const outPath = this.referencePath("classes", `${slug}.json`);
+      const outPath = References.classPath(this.book, slug);
 
       const { detected } = this.saveResolvedReference(outPath, _meta, raw);
       console.log(`  BAB: ${detected.bab}`);
