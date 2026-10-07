@@ -17,7 +17,7 @@ import {
   levelSkillsInCharacter,
 } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { namesOf } from "@/tests/seeds/freshSeed.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 

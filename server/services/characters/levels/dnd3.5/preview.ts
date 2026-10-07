@@ -8,10 +8,9 @@ import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
-import type { Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
+import type { AptitudesComponent, Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
+import type { RulesetModule } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import type { RulesetModule } from "@/server/rulesets/types.ts";
-import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -19,7 +18,7 @@ import { getPlannedClassSkills, getPlannedKlassLevels } from "./classes.ts";
 import { computePerLevelAptitudeSlots } from "./distribution.ts";
 import { buildBaselineAptitudes, projectPlannedLevels } from "./projection.ts";
 
-type PowerPools = ReturnType<DetailedCharacterAptitudes["extractPowerPools"]>;
+type PowerPools = ReturnType<AptitudesComponent["extractPowerPools"]>;
 
 /** The planned levels (by index) that take an ability increase, after the character's `existingCount` levels. */
 function abilityIncreaseLevels(rulesetModule: RulesetModule, existingCount: number, plannedCount: number) {
@@ -43,7 +42,7 @@ function autoGrantedPowers(rulesetData: RulesetData, klassLevelIds: string[]) {
  * The planned levels' pools and what's left to pick in them: an unleveled pool is a feat pool, and a power pool too
  * when it has powers (shared); a leveled one is a power pool.
  */
-function splitPools(aptitudesInstance: DetailedCharacterAptitudes, rulesetData: RulesetData) {
+function splitPools(aptitudesInstance: AptitudesComponent, rulesetData: RulesetData) {
   const powerPools: PowerPools = aptitudesInstance.extractPowerPools();
   const nonLeveledAptitudeIds = aptitudesInstance.getNonLeveledAptitudeIds();
   const sharedAptitudeIds = new Set(

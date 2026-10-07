@@ -1,7 +1,7 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
-import { buildVirtualEntities } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
-import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import type DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
+import { buildVirtualEntities } from "@/server/rulesets/dnd3.5/response/buildCharacterResponse.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import {
   ENTITY_PROPERTY_TYPES,

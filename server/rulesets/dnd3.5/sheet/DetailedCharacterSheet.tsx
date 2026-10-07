@@ -1,7 +1,7 @@
 import { Document } from "@react-pdf/renderer";
 
 import { isProduction } from "@/server/environment.ts";
-import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import type DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 
 import DiagnosticsPage from "./DiagnosticsPage.tsx";
 import FeatsPage from "./FeatsPage.tsx";

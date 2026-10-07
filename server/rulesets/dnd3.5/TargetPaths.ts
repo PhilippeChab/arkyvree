@@ -1,32 +1,32 @@
 /** Import DetailedCharacter components that generate paths */
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { UNARMED_STRIKE } from "@/server/rulesets/constants.ts";
-import DetailedCharacterArmors from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
-import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
-import DetailedCharacterEncumbrance from "@/server/rulesets/dnd3.5/DetailedCharacterEncumbrance.ts";
-import DetailedCharacterShields from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
-import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
-import DetailedCharacterWeapons, { WEAPON_PATH_ROOTS } from "@/server/rulesets/dnd3.5/DetailedCharacterWeapons.ts";
+import AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
+import AptitudesComponent from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
+import BondsComponent from "@/server/rulesets/dnd3.5/bonded/BondsComponent.ts";
+import ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
+import ArmorsComponent from "@/server/rulesets/dnd3.5/combat/ArmorsComponent.ts";
+import CombatComponent from "@/server/rulesets/dnd3.5/combat/CombatComponent.ts";
+import EncumbranceComponent from "@/server/rulesets/dnd3.5/combat/EncumbranceComponent.ts";
+import ShieldsComponent from "@/server/rulesets/dnd3.5/combat/ShieldsComponent.ts";
+import WeaponsComponent, { WEAPON_PATH_ROOTS } from "@/server/rulesets/dnd3.5/combat/WeaponsComponent.ts";
+import { UNARMED_STRIKE } from "@/server/rulesets/dnd3.5/constants.ts";
+import FeatGroupingsComponent from "@/server/rulesets/dnd3.5/feats/FeatGroupingsComponent.ts";
+import FeatsComponent from "@/server/rulesets/dnd3.5/feats/FeatsComponent.ts";
+import IdentityComponent from "@/server/rulesets/dnd3.5/identity/IdentityComponent.ts";
+import PowerGroupingsComponent from "@/server/rulesets/dnd3.5/powers/PowerGroupingsComponent.ts";
+import PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts";
+import SavingThrowsComponent from "@/server/rulesets/dnd3.5/saves/SavingThrowsComponent.ts";
+import SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
+import { isTraversable } from "@/server/rulesets/engine/paths/isTraversable.ts";
+import { readHolder } from "@/server/rulesets/engine/paths/readHolder.ts";
 import type {
   Holder,
   Holders,
   TargetPathsInterface,
   TargetPathsTraverser,
   TraversePathResult,
-} from "@/server/rulesets/types.ts";
-import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
-import DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
-import DetailedCharacterBonds from "@/server/rulesets/universal/DetailedCharacterBonds.ts";
-import DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
-import DetailedCharacterFeatGroupings from "@/server/rulesets/universal/DetailedCharacterFeatGroupings.ts";
-import DetailedCharacterFeats from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
-import DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
-import DetailedCharacterPowerGroupings from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
-import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
-import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
-import { isTraversable } from "@/server/rulesets/universal/isTraversable.ts";
-import { readHolder } from "@/server/rulesets/universal/readHolder.ts";
+} from "@/server/rulesets/engine/types.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
@@ -43,7 +43,7 @@ import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { Dnd35LevelsHooks } from "./hooks/index.ts";
+import { Dnd35LevelsHooks } from "./levels/LevelsHooks.ts";
 import { collectClassListIds, collectFeatListIds } from "./spellcasting/spellLists.ts";
 
 const CATEGORY_DESCRIPTIONS: Record<string, string> = {
@@ -229,40 +229,40 @@ function generatePaths(rulesetData: RulesetData, kind: "modifier" | "requirement
   const { abilities, saves, skills, feats, aptitudes, klasses } = rulesetData;
   const groupings = collectGroupings(rulesetData);
   const paths: TargetPath[] = [
-    ...DetailedCharacterSkills.generateTargetPaths(skills, kind),
-    ...DetailedCharacterClasses.generateTargetPaths(klasses, kind),
-    ...DetailedCharacterFeats.generateTargetPaths(feats, kind),
-    ...DetailedCharacterFeatGroupings.generateTargetPaths(
+    ...SkillsComponent.generateTargetPaths(skills, kind),
+    ...ClassesComponent.generateTargetPaths(klasses, kind),
+    ...FeatsComponent.generateTargetPaths(feats, kind),
+    ...FeatGroupingsComponent.generateTargetPaths(
       groupings.featGroupings,
       kind,
       groupings.featGroupingLabels,
       new Set(feats.map((feat) => stripSeparators(feat.name))),
     ),
-    ...DetailedCharacterWeapons.generateTargetPaths(groupings.weaponGroupings, kind),
-    ...DetailedCharacterArmors.generateTargetPaths(groupings.armorGroupings, kind),
-    ...DetailedCharacterShields.generateTargetPaths(groupings.shieldGroupings, kind),
-    ...DetailedCharacterPowers.generateTargetPaths(
+    ...WeaponsComponent.generateTargetPaths(groupings.weaponGroupings, kind),
+    ...ArmorsComponent.generateTargetPaths(groupings.armorGroupings, kind),
+    ...ShieldsComponent.generateTargetPaths(groupings.shieldGroupings, kind),
+    ...PowersComponent.generateTargetPaths(
       groupings.powersWithProperties,
       aptitudes,
       collectFeatListIds(rulesetData),
       kind,
     ),
-    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.schoolGroupings, kind, true, "school"),
-    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.descriptorGroupings, kind, true, "descriptor"),
-    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.individualPowerDcNames, kind, false),
-    ...DetailedCharacterAptitudes.generateTargetPaths(
+    ...PowerGroupingsComponent.generateTargetPaths(groupings.schoolGroupings, kind, true, "school"),
+    ...PowerGroupingsComponent.generateTargetPaths(groupings.descriptorGroupings, kind, true, "descriptor"),
+    ...PowerGroupingsComponent.generateTargetPaths(groupings.individualPowerDcNames, kind, false),
+    ...AptitudesComponent.generateTargetPaths(
       aptitudes,
       kind,
       groupings.leveledAptitudeIds,
       Dnd35LevelsHooks.MAX_SPELL_LEVEL,
     ),
-    ...DetailedCharacterCombat.generateTargetPaths(kind),
-    ...DetailedCharacterWeapons.generateItemWeaponPaths(kind),
-    ...DetailedCharacterEncumbrance.generateTargetPaths(kind),
-    ...DetailedCharacterAbilities.generateTargetPaths(abilities, kind),
-    ...DetailedCharacterSavingThrows.generateTargetPaths(saves, kind),
-    ...DetailedCharacterIdentity.generateTargetPaths(kind),
-    ...DetailedCharacterBonds.generateTargetPaths(kind),
+    ...CombatComponent.generateTargetPaths(kind),
+    ...WeaponsComponent.generateItemWeaponPaths(kind),
+    ...EncumbranceComponent.generateTargetPaths(kind),
+    ...AbilitiesComponent.generateTargetPaths(abilities, kind),
+    ...SavingThrowsComponent.generateTargetPaths(saves, kind),
+    ...IdentityComponent.generateTargetPaths(kind),
+    ...BondsComponent.generateTargetPaths(kind),
   ];
 
   if (kind === "requirement") {
@@ -300,22 +300,22 @@ function segmentLabelsOf(rulesetData: RulesetData): Record<string, string> {
   const segmentLabels: Record<string, string> = {
     "*": "All",
     ...CATEGORY_LABELS,
-    ...DetailedCharacterAbilities.getSegmentLabels(),
-    ...DetailedCharacterSavingThrows.getSegmentLabels(),
-    ...DetailedCharacterSkills.getSegmentLabels(),
-    ...DetailedCharacterClasses.getSegmentLabels(),
-    ...DetailedCharacterFeats.getSegmentLabels(),
-    ...DetailedCharacterFeatGroupings.getSegmentLabels(),
-    ...DetailedCharacterPowers.getSegmentLabels(),
-    ...DetailedCharacterPowerGroupings.getSegmentLabels(),
-    ...DetailedCharacterAptitudes.getSegmentLabels(),
-    ...DetailedCharacterCombat.getSegmentLabels(),
-    ...DetailedCharacterEncumbrance.getSegmentLabels(),
-    ...DetailedCharacterWeapons.getSegmentLabels(),
-    ...DetailedCharacterArmors.getSegmentLabels(),
-    ...DetailedCharacterShields.getSegmentLabels(),
-    ...DetailedCharacterIdentity.getSegmentLabels(),
-    ...DetailedCharacterBonds.getSegmentLabels(),
+    ...AbilitiesComponent.getSegmentLabels(),
+    ...SavingThrowsComponent.getSegmentLabels(),
+    ...SkillsComponent.getSegmentLabels(),
+    ...ClassesComponent.getSegmentLabels(),
+    ...FeatsComponent.getSegmentLabels(),
+    ...FeatGroupingsComponent.getSegmentLabels(),
+    ...PowersComponent.getSegmentLabels(),
+    ...PowerGroupingsComponent.getSegmentLabels(),
+    ...AptitudesComponent.getSegmentLabels(),
+    ...CombatComponent.getSegmentLabels(),
+    ...EncumbranceComponent.getSegmentLabels(),
+    ...WeaponsComponent.getSegmentLabels(),
+    ...ArmorsComponent.getSegmentLabels(),
+    ...ShieldsComponent.getSegmentLabels(),
+    ...IdentityComponent.getSegmentLabels(),
+    ...BondsComponent.getSegmentLabels(),
     // D&D 3.5 surfaces power groupings as schools in the path picker.
     groups: "Schools",
   };
@@ -323,7 +323,7 @@ function segmentLabelsOf(rulesetData: RulesetData): Record<string, string> {
   for (const entity of [...abilities, ...saves, ...skills, ...feats, ...items, ...aptitudes, ...klasses, ...powers]) {
     segmentLabels[stripSeparators(entity.name)] = entity.name;
   }
-  Object.assign(segmentLabels, DetailedCharacterSkills.getFamilyLabels(skills), {
+  Object.assign(segmentLabels, SkillsComponent.getFamilyLabels(skills), {
     [stripSeparators(UNARMED_STRIKE)]: UNARMED_STRIKE,
   });
 

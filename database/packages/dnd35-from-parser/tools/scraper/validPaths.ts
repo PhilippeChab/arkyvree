@@ -4,35 +4,33 @@
  */
 
 import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
-import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
-import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
-import DetailedCharacterWeapons from "@/server/rulesets/dnd3.5/DetailedCharacterWeapons.ts";
-import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
-import DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
-import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
+import AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
+import CombatComponent from "@/server/rulesets/dnd3.5/combat/CombatComponent.ts";
+import WeaponsComponent from "@/server/rulesets/dnd3.5/combat/WeaponsComponent.ts";
+import IdentityComponent from "@/server/rulesets/dnd3.5/identity/IdentityComponent.ts";
+import SavingThrowsComponent from "@/server/rulesets/dnd3.5/saves/SavingThrowsComponent.ts";
+import SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
 
 const ABILITY_NAMES = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
 const SAVE_NAMES = ["Fortitude", "Reflex", "Will"];
 const stubAbilities = ABILITY_NAMES.map((name) => ({ name })) as Parameters<
-  typeof DetailedCharacterAbilities.generateTargetPaths
+  typeof AbilitiesComponent.generateTargetPaths
 >[0];
 const stubSaves = SAVE_NAMES.map((name) => ({ name })) as Parameters<
-  typeof DetailedCharacterSavingThrows.generateTargetPaths
+  typeof SavingThrowsComponent.generateTargetPaths
 >[0];
-const stubSkills = SKILL_NAMES.map((name) => ({ name })) as Parameters<
-  typeof DetailedCharacterSkills.generateTargetPaths
->[0];
+const stubSkills = SKILL_NAMES.map((name) => ({ name })) as Parameters<typeof SkillsComponent.generateTargetPaths>[0];
 
 /** Every target path of `kind` the engine knows. */
 export function buildValidPaths(kind: "modifier" | "requirement"): Set<string> {
   return new Set(
     [
-      ...DetailedCharacterAbilities.generateTargetPaths(stubAbilities, kind),
-      ...DetailedCharacterCombat.generateTargetPaths(kind),
-      ...DetailedCharacterWeapons.generateItemWeaponPaths(kind),
-      ...DetailedCharacterSavingThrows.generateTargetPaths(stubSaves, kind),
-      ...DetailedCharacterSkills.generateTargetPaths(stubSkills, kind),
-      ...DetailedCharacterIdentity.generateTargetPaths(kind),
+      ...AbilitiesComponent.generateTargetPaths(stubAbilities, kind),
+      ...CombatComponent.generateTargetPaths(kind),
+      ...WeaponsComponent.generateItemWeaponPaths(kind),
+      ...SavingThrowsComponent.generateTargetPaths(stubSaves, kind),
+      ...SkillsComponent.generateTargetPaths(stubSkills, kind),
+      ...IdentityComponent.generateTargetPaths(kind),
     ].map((tp) => tp.path),
   );
 }

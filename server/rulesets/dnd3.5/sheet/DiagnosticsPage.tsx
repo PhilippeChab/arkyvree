@@ -1,6 +1,6 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
-import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import type DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";

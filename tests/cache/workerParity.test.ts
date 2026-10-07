@@ -5,7 +5,7 @@ import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
-import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
+import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/response/buildCharacterResponse.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/support/levelFixtures.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";

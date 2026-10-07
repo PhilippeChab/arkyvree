@@ -11,7 +11,7 @@ import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
-import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
+import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 
 import { loadFeatCustomizations } from "./projection.ts";
 

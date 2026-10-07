@@ -7,9 +7,8 @@
  */
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { Dnd35LevelsHooks, type Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
-import { ALLOWED_ALL } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
-import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
+import { ALLOWED_ALL, Dnd35LevelsHooks, type Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
+import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Modifier, Skill } from "@/shared/relations.ts";

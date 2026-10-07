@@ -1,6 +1,6 @@
 /**
  * Frontend helpers for the template-expression syntax used in modifier and
- * requirement values. Mirrors `server/rulesets/universal/templateExpression.ts`
+ * requirement values. Mirrors `server/rulesets/engine/paths/templateExpression.ts`
  * just enough to recognize single-path references in the UI's "Reference"
  * mode — complex expressions (arithmetic, function calls) fall back to
  * literal-value editing.

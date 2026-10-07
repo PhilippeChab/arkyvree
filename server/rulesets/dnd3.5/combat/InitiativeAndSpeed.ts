@@ -1,6 +1,6 @@
 import type { Constructor } from "@/server/mixins.ts";
 import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
-import type { RaceWithPMR } from "@/server/rulesets/types.ts";
+import type { RaceWithPMR } from "@/server/rulesets/engine/types.ts";
 import { RACE_SPEED_IGNORES_ENCUMBRANCE } from "@/shared/dnd3.5/properties/index.ts";
 
 /** A character's initiative, and its speed under its armor and load (which a dwarf's ignores). */

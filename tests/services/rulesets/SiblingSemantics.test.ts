@@ -20,9 +20,9 @@ import {
   type RulesetEntityType,
   Rulesets,
 } from "@/server/repositories/index.ts";
+import AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/TargetPaths.ts";
-import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
-import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
+import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -245,7 +245,7 @@ for (const [chainingOperator, reverseOrder] of [
           { ...owner, ...conditionA, target: "abilities.dexterity.total", value: "15", level: "1.2" },
         ]);
     }, reverseOrder);
-    const abilities = new DetailedCharacterAbilities();
+    const abilities = new AbilitiesComponent();
     const rows = await fetchEveryPage((pagination) =>
       Abilities.findPage(db, { rulesetId: host.ancestorRulesetIds[0], ancestorRulesetIds: [] }, pagination),
     );
@@ -254,7 +254,7 @@ for (const [chainingOperator, reverseOrder] of [
       [],
     );
     const evaluate = (groups: Requirement[][]) => {
-      const engine = new DetailedCharacterRequirements(new Dnd35TargetPaths());
+      const engine = new RequirementEvaluator(new Dnd35TargetPaths());
       engine.evaluateRequirements({ abilities }, groups);
       const result = engine.getRequirements();
       expect(result.invalidRequirements).toHaveLength(0);

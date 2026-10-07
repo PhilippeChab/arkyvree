@@ -399,36 +399,32 @@ A working mental model: if a hypothetical 5e or PF2e ruleset were to be added to
 ```
 server/
 ├── rulesets/
-│   ├── AbstractDetailedCharacter.ts       ← universal base class
 │   ├── RulesetFactory.ts                  ← ruleset module loader
-│   ├── types.ts                           ← universal types (ProjectedCharacterData, LevelUpProjector, …)
-│   ├── hooks/                             ← universal hook interfaces
-│   │   ├── LevelsHooks.ts                 (isAbilityIncreaseLevel, maxSpellLevel, …)
-│   │   ├── ClassesHooks.ts
-│   │   └── …
-│   ├── universal/                         ← ruleset-agnostic sub-components
-│   │   ├── DetailedCharacterAbilities.ts
-│   │   ├── DetailedCharacterAptitudes.ts
-│   │   ├── DetailedCharacterClasses.ts
-│   │   ├── DetailedCharacterFeats.ts
-│   │   ├── DetailedCharacterModifiers.ts
-│   │   ├── DetailedCharacterPowers.ts
-│   │   ├── DetailedCharacterRequirements.ts
-│   │   ├── DetailedCharacterSavingThrows.ts
-│   │   └── DetailedCharacterIdentity.ts
+│   ├── engine/                            ← machinery, no game vocabulary
+│   │   ├── types.ts                       ← universal types (ProjectedCharacterData, LevelUpProjector, RulesetModule, …)
+│   │   ├── hooks/                         ← hook interfaces
+│   │   │   ├── LevelsHooks.ts             (isAbilityIncreaseLevel, maxSpellLevel, …)
+│   │   │   ├── ClassesHooks.ts
+│   │   │   └── …
+│   │   ├── modifiers/ModifierEvaluator.ts
+│   │   ├── requirements/RequirementEvaluator.ts
+│   │   └── paths/                         (readHolder, templateExpression, literalValue, isTraversable)
 │   └── dnd3.5/                            ← 3.5-specific implementation
-│       ├── index.ts                       (RulesetModule impl)
+│       ├── index.ts                       (the module's entry: createRulesetModule, the response builders)
+│       ├── rulesetModule.ts               (RulesetModule impl)
 │       ├── types.ts                       (Dnd35ProjectedCharacterData, Dnd35LevelUpProjector)
-│       ├── DetailedCharacter.ts           (extends AbstractDetailedCharacter)
-│       ├── DetailedCharacterDataLoader.ts
-│       ├── DetailedCharacterSkills.ts     (3.5 rank system)
-│       ├── DetailedCharacterCombat.ts     (includes combat/: ArmorClass, HitPoints, Attacks, InitiativeAndSpeed)
-│       ├── DetailedCharacterSpellcasting.ts (includes spellcasting/: BonusCasterLevels, KnownPowers)
-│       ├── LevelUpProjector.ts            (3.5 projector impl)
 │       ├── TargetPaths.ts
-│       ├── buildCharacterResponse.ts      (3.5 API response shape)
-│       ├── properties/                    (SPELL_SCHOOL, KLASS_LEVEL_BAB, …)
-│       └── hooks/                         (Dnd35LevelsHooks, …)
+│       ├── character/                     (AbstractDetailedCharacter, DetailedCharacter, LevelUpProjector)
+│       ├── loading/                       (DetailedCharacterDataLoader)
+│       ├── response/                      (buildCharacterResponse: the 3.5 API response shape)
+│       ├── abilities/ aptitudes/ classes/ feats/ identity/ powers/ saves/
+│       │                                  (each domain's component, and its hooks: AbilitiesComponent, …)
+│       ├── skills/                        (SkillsComponent: the 3.5 rank system, SkillsHooks)
+│       ├── combat/                        (CombatComponent, which includes ArmorClass, HitPoints, Attacks, InitiativeAndSpeed;
+│       │                                  ArmorsComponent, ShieldsComponent, WeaponsComponent, EncumbranceComponent)
+│       ├── spellcasting/                  (SpellcastingComponent, which includes BonusCasterLevels, KnownPowers)
+│       ├── items/ levels/ bonded/         (InventoryComponent, the items' hooks; Dnd35LevelsHooks; the bonded creatures)
+│       └── sheet/                         (the PDF sheet)
 ├── services/
 │   ├── characters/
 │   │   ├── inventory/CharacterInventoryService.ts   ← universal
@@ -453,9 +449,9 @@ server/
                     └── index.ts
 ```
 
-### What goes in `universal/` vs `dnd3.5/`
+### What goes in `engine/` vs `dnd3.5/`
 
-#### Universal (anything of these is a sign the file belongs in `universal/` or is a generic type)
+#### Universal (anything of these is a sign the file belongs in `engine/` or is a generic type)
 
 - Takes a level-based character (abilities/class/levels/feats/powers in the abstract) and operates on it.
 - No hardcoded game values (spell level = 9, class names, save names, skill rank bounds).
@@ -475,7 +471,7 @@ server/
 Universal types keep the narrowest surface that any level-based system could implement. Ruleset-specific types extend the universal ones with ruleset-flavored fields and methods.
 
 ```ts
-// server/rulesets/types.ts  (universal)
+// server/rulesets/engine/types.ts  (universal)
 export interface ProjectedCharacterData {
   excludeCharacterLevelIds?: string[];
   characterLevels?: CharacterLevel[];
@@ -515,16 +511,16 @@ The cast is local to 3.5 code — generic consumers never see 3.5 vocabulary.
 
 ### The hooks pattern
 
-Short per-ruleset predicates / constants live in `server/rulesets/hooks/*` as interfaces, and each ruleset provides an implementation in `dnd3.5/hooks/`:
+Short per-ruleset predicates / constants live in `server/rulesets/engine/hooks/*` as interfaces, and each ruleset provides an implementation in its domain folders (`dnd3.5/levels/`, `dnd3.5/skills/`, …):
 
 ```ts
-// server/rulesets/hooks/LevelsHooks.ts  (universal interface)
+// server/rulesets/engine/hooks/LevelsHooks.ts  (engine interface)
 export interface LevelsHooks {
   isAbilityIncreaseLevel(totalLevel: number): boolean;
   readonly maxSpellLevel: number;
 }
 
-// server/rulesets/dnd3.5/hooks/LevelsHooks.ts  (3.5 impl)
+// server/rulesets/dnd3.5/levels/LevelsHooks.ts  (3.5 impl)
 export class Dnd35LevelsHooks implements LevelsHooks {
   readonly maxSpellLevel = 9;
   isAbilityIncreaseLevel(totalLevel: number): boolean {
@@ -533,7 +529,7 @@ export class Dnd35LevelsHooks implements LevelsHooks {
 }
 ```
 
-Universal code that needs a per-ruleset value threads it in rather than hardcoding. `DetailedCharacterAptitudes` takes `maxSpellLevel` as a constructor param; `Dnd35DetailedCharacter` passes `new Dnd35LevelsHooks().maxSpellLevel` when it instantiates the aptitudes sub-component.
+Universal code that needs a per-ruleset value threads it in rather than hardcoding. `AptitudesComponent` takes `maxSpellLevel` as a constructor param; `Dnd35DetailedCharacter` passes `new Dnd35LevelsHooks().maxSpellLevel` when it instantiates the aptitudes sub-component.
 
 Hooks are for **small predicates and constants**. More complex operations (bound to the detailed character, returning rich data, potentially mutating internal state) belong on the ruleset-specific projector or `DetailedCharacter` subclass instead.
 
@@ -586,7 +582,7 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 ### How to add a new ruleset
 
 1. **Define the module**: `server/rulesets/<ruleset>/index.ts` implementing `RulesetModule`. Provide `hooks` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `seedTemplateItems`, etc.
-2. **Subclass `AbstractDetailedCharacter`** in `server/rulesets/<ruleset>/DetailedCharacter.ts`. Instantiate the universal sub-components (`DetailedCharacterAbilities`, `DetailedCharacterClasses`, …) and any ruleset-specific ones (`<Ruleset>DetailedCharacterSkills`, etc.).
+2. **Subclass `AbstractDetailedCharacter`** in `server/rulesets/<ruleset>/DetailedCharacter.ts`. Instantiate its components (`AbilitiesComponent`, `ClassesComponent`, …), the ruleset's own (`<Ruleset>SkillsComponent`, etc.).
 3. **Extend the types** in `server/rulesets/<ruleset>/types.ts`:
    - `<Ruleset>ProjectedCharacterData extends ProjectedCharacterData` (add skill/power shapes if your ruleset has ranked skills or leveled spells).
    - `<Ruleset>LevelUpProjector extends LevelUpProjector` (add any per-level-up operations your ruleset needs beyond `evaluateClassAvailability`).
@@ -594,12 +590,12 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 5. **Add dispatch at `CharacterLevelsService.ts`** and at `server/routers/api/characters/index.tsx` (the `levels` import). Route by ruleset name or ID.
 6. **Register the factory**: add your module to `RulesetFactory`'s `MODULES`, keyed by its base rules: until it is, the server doesn't compile.
 
-### How to extend `universal/` without leaking a ruleset
+### How to extend `engine/` without leaking a ruleset
 
 If you need a per-ruleset value in a universal file:
 - Add a method or `readonly` field to an existing hook interface (`LevelsHooks`, `ClassesHooks`, …).
 - Accept that value as a **constructor param** on the universal class. Default it to the least-surprising value for back-compat. Each ruleset passes its own.
-- Do **not** import from `@/server/rulesets/<ruleset>/*` inside `universal/`. If you feel you have to, the file probably doesn't belong in `universal/`.
+- Do **not** import from `@/server/rulesets/<ruleset>/*` inside `engine/`. If you feel you have to, the file probably doesn't belong in `engine/`.
 
 If you need a per-ruleset behavior too complex for a small hook (takes the detailed character, returns rich data, touches multiple sub-systems), don't bend the hook pattern — make it a method on the ruleset's `LevelUpProjector` / `DetailedCharacter` subclass and let consumers narrow the type at the call site.
 
@@ -608,15 +604,15 @@ If you need a per-ruleset behavior too complex for a small hook (takes the detai
 An audit on 2026-04-16 identified real leaks and some false alarms:
 
 **Fixed:**
-- `MAX_SPELL_LEVEL = 9` was hardcoded in `universal/DetailedCharacterAptitudes.ts` — now an injected param.
-- `buildCharacterResponse.ts` lived in `routers/api/` with a cast to `Dnd35DetailedCharacter` — moved to `server/rulesets/dnd3.5/buildCharacterResponse.ts`.
+- `MAX_SPELL_LEVEL = 9` was hardcoded in the aptitudes component (`dnd3.5/aptitudes/AptitudesComponent.ts`) — now an injected param.
+- `buildCharacterResponse.ts` lived in `routers/api/` with a cast to `Dnd35DetailedCharacter` — moved to `server/rulesets/dnd3.5/response/buildCharacterResponse.ts`.
 - `server/routers/api/characters/levels/` had 3.5-shaped query params (`powerLevel`, `excludeSchools`) — moved under `dnd3.5/`.
 
 **Not leaks (confirmed generic):**
 - `SkillWithRank.rank: number`, `PowerWithPMR.powerLevel: number | null`, `PowerWithPMR.saveName: string | null` — neutral primitive fields with 3.5-flavored seeded content but no schema constraint forcing 3.5 semantics.
 - Aptitudes, saves, requirements/modifiers/properties tables — generic primitives; see "What's intentionally generic" above.
-- `DetailedCharacterSavingThrows` in `universal/` — iterates generic save data, no 3.5 hardcoding.
-- Alignment path in `DetailedCharacterIdentity` — "alignment" is a fantasy-RPG convention, string field value is content-level.
+- `SavingThrowsComponent` (`dnd3.5/saves/`) — iterates generic save data, no 3.5 hardcoding.
+- Alignment path in `IdentityComponent` — "alignment" is a fantasy-RPG convention, string field value is content-level.
 
 ## Key Files
 
@@ -630,13 +626,12 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | `server/services/policies/RulesetsPolicy.ts` | Authorization checks for all ruleset operations: the ruleset's own, plus the concerns in `policies/concerns/` (entities, contributors, extensions, creating campaigns and characters), over the roles in `RulesetRoles.ts` |
 | `server/services/rulesets/*/` | Entity services (feats, powers, classes, etc.) using the COW pattern |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
-| `server/rulesets/types.ts` | Universal types (`ProjectedCharacterData`, `LevelUpProjector`, `RulesetModule`, …) |
+| `server/rulesets/engine/types.ts` | Universal types (`ProjectedCharacterData`, `LevelUpProjector`, `RulesetModule`, …) |
 | `server/rulesets/dnd3.5/types.ts` | 3.5 type extensions (`Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`) |
-| `server/rulesets/AbstractDetailedCharacter.ts` | Universal base class; ruleset subclasses extend it |
-| `server/rulesets/universal/*.ts` | Ruleset-agnostic sub-components (abilities, classes, feats, requirements, …) |
-| `server/rulesets/hooks/*.ts` | Universal hook interfaces (`LevelsHooks`, `ClassesHooks`, …) |
-| `server/rulesets/dnd3.5/*.ts` | 3.5 implementation (DetailedCharacter, LevelUpProjector, TargetPaths, hooks, properties, buildCharacterResponse) |
-| `server/rulesets/dnd3.5/DetailedCharacter.ts` | Character builder — reads sibling requirements and modifiers already merged into `rulesetData` by the compose step |
+| `server/rulesets/dnd3.5/character/AbstractDetailedCharacter.ts` | The character's base class; `DetailedCharacter` extends it |
+| `server/rulesets/engine/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the hook interfaces (`hooks/`) |
+| `server/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its components by domain (`abilities/`, `skills/`, `combat/`…), each with its hooks, `TargetPaths`, `response/buildCharacterResponse` |
+| `server/rulesets/dnd3.5/character/DetailedCharacter.ts` | Character builder — reads sibling requirements and modifiers already merged into `rulesetData` by the compose step |
 | `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts` | Seed-time COW: copies the core feats and spells an extension changes |
 | `tests/services/rulesets/Extensions.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |
 | `tests/services/rulesets/Sibling*.test.ts`, `tests/services/rulesets/customization/Sibling*.test.ts`, `tests/cache/aptitudeDedup.test.ts` | Siblings: what the composed view shows, edits and customization writes on a sibling-merged entity, aptitude deduplication |

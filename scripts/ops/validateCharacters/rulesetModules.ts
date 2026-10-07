@@ -1,5 +1,5 @@
+import type { RulesetModule } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import type { RulesetModule } from "@/server/rulesets/types.ts";
 
 /** Each ruleset's module, built once. */
 const modules = new Map<string, Promise<RulesetModule>>();

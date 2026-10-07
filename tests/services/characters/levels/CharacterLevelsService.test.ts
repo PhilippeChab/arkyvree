@@ -35,7 +35,7 @@ import {
   Requirements,
   Skills,
 } from "@/server/repositories/index.ts";
-import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
