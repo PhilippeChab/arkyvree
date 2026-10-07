@@ -102,7 +102,13 @@ function getStatusChip(status: RulesetDetail["status"]) {
         variant="filled"
         sx={
           status === "Archived"
-            ? { fontWeight: 600, bgcolor: "grey.400", color: "grey.700", "& .MuiChip-icon": { color: "grey.600" } }
+            ? {
+                fontWeight: 600,
+                // Muted greys, darker on the dark theme
+                bgcolor: (theme) => (theme.palette.mode === "dark" ? "grey.800" : "grey.400"),
+                color: (theme) => (theme.palette.mode === "dark" ? "grey.400" : "grey.700"),
+                "& .MuiChip-icon": { color: (theme) => (theme.palette.mode === "dark" ? "grey.500" : "grey.600") },
+              }
             : { fontWeight: 600 }
         }
       />

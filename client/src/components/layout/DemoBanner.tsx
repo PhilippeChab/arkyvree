@@ -1,16 +1,13 @@
 import { alpha, Button, Stack, Typography } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { ScienceIcon } from "@/client/src/components/icons/index.ts";
 import { useDemoTimeRemaining } from "@/client/src/hooks/index.ts";
 
 export function DemoBanner() {
-  const navigate = useNavigate();
   const { isDemo, urgency, hours, minutes, seconds } = useDemoTimeRemaining();
 
   if (!isDemo) return null;
-
-  const goToSignUp = () => navigate("/sign-up");
 
   const label =
     urgency === "expired"
@@ -51,7 +48,8 @@ export function DemoBanner() {
         </Stack>
         <Button
           size="small"
-          onClick={goToSignUp}
+          component={Link}
+          to="/sign-up"
           sx={{
             py: 0,
             px: 1.5,

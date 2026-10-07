@@ -4,6 +4,7 @@ import { useController } from "react-hook-form";
 
 import { BlankNote } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/index.ts";
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   allLevelSaves,
@@ -92,7 +93,12 @@ export function ClassLevelEditor({
       chips={level.saves.map(
         (save) =>
           saveName(save.saveId) && (
-            <Chip key={save.saveId} label={`${saveName(save.saveId)}: +${save.base}`} size="small" variant="outlined" />
+            <Chip
+              key={save.saveId}
+              label={`${saveName(save.saveId)}: ${formatSigned(save.base)}`}
+              size="small"
+              variant="outlined"
+            />
           ),
       )}
       readOnlyBody={

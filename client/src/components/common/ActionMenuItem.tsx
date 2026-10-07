@@ -1,5 +1,6 @@
 import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import type { ElementType } from "react";
+import { Link } from "react-router-dom";
 
 interface ActionMenuItemProps {
   /** A second line under the label ("Create your own editable copy"). */
@@ -9,7 +10,10 @@ interface ActionMenuItemProps {
   icon: ElementType;
   intent?: Intent;
   label: string;
+  /** Its click: closing its menu, and the action when it has no `href` or `to`. */
   onClick: () => void;
+  /** A page of the app it opens: a link, as everything that only navigates is. */
+  to?: string;
 }
 
 /** What an action does, shown by its color (see docs/ui-buttons.md). */
@@ -29,9 +33,14 @@ export function ActionMenuItem({
   intent = "default",
   onClick,
   href,
+  to,
 }: ActionMenuItemProps) {
   const color = intent === "default" ? undefined : INTENT_COLORS[intent];
-  const link = href ? { component: "a" as const, href, target: "_blank", rel: "noopener noreferrer" } : {};
+  const link = href
+    ? { component: "a" as const, href, target: "_blank", rel: "noopener noreferrer" }
+    : to
+      ? { component: Link, to }
+      : {};
   return (
     <MenuItem {...link} onClick={onClick} sx={{ color }}>
       <ListItemIcon sx={{ color: color && "inherit" }}>

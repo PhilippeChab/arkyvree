@@ -1038,6 +1038,20 @@ function inQueryFunction(node) {
   return false;
 }
 
+/** The function a component declares under `name`, in a block around `node`: `const handleX = () => {…}`. */
+function localFunction(name, node) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (p.type !== "BlockStatement" && p.type !== "Program") continue;
+    for (const statement of p.body) {
+      if (statement.type === "FunctionDeclaration" && statement.id?.name === name) return statement;
+      if (statement.type !== "VariableDeclaration") continue;
+      const found = statement.declarations.find((d) => d.id.type === "Identifier" && d.id.name === name);
+      if (found) return found.init;
+    }
+  }
+  return null;
+}
+
 /** Whether `node` names one of `names`. */
 function namesOne(node, names) {
   if (!node || typeof node !== "object") return false;
@@ -1049,16 +1063,27 @@ function namesOne(node, names) {
 }
 
 /** Whether a click handler only navigates: `() => navigate("/x")`, not back (`navigate(-1)`) */
-function onlyNavigates(handler) {
-  if (handler?.type !== "ArrowFunctionExpression" || handler.params.length > 0) return false;
-  let call = handler.body;
-  if (call.type === "BlockStatement") {
-    if (call.body.length !== 1 || call.body[0].type !== "ExpressionStatement") return false;
-    call = call.body[0].expression;
+function onlyNavigates(handler, from = handler) {
+  // A handler the component declares (`const handleProfile = () => {…}`), read where it's declared
+  if (handler?.type === "Identifier") return onlyNavigates(localFunction(handler.name, from), from);
+  // A menu's item: `menu.closeMenuAnd(() => navigate(…))`
+  if (handler?.type === "CallExpression" && calleeName(handler) === "closeMenuAnd")
+    return onlyNavigates(handler.arguments[0], from);
+  const isFunction = /^(ArrowFunctionExpression|FunctionExpression|FunctionDeclaration)$/.test(handler?.type ?? "");
+  if (!isFunction || handler.params.length > 0) return false;
+  let calls = [handler.body];
+  if (handler.body.type === "BlockStatement") {
+    if (!handler.body.body.every((statement) => statement.type === "ExpressionStatement")) return false;
+    calls = handler.body.body.map((statement) => statement.expression);
   }
-  const isNavigate = call.type === "CallExpression" && calleeName(call) === "navigate" && call.arguments.length === 1;
-  const [to] = call.arguments ?? [];
-  return isNavigate && !(to.type === "Literal" && typeof to.value === "number") && to.type !== "UnaryExpression";
+  // Closing the menu it sits in first, then navigating
+  const [last] = calls.slice(-1);
+  const closes = calls.slice(0, -1).every((call) => call.type === "CallExpression" && calleeName(call) === "closeMenu");
+  const isNavigate = last?.type === "CallExpression" && calleeName(last) === "navigate" && last.arguments.length === 1;
+  const [to] = last?.arguments ?? [];
+  return (
+    closes && isNavigate && !(to.type === "Literal" && typeof to.value === "number") && to.type !== "UnaryExpression"
+  );
 }
 
 /** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */

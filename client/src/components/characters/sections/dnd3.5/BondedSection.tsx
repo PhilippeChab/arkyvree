@@ -8,6 +8,7 @@ import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
+import { formatSpeed, iterativeAttacks } from "./combatValues.ts";
 import { StatField } from "./StatField.tsx";
 import type { Dnd35BondedSectionProps } from "./types.ts";
 
@@ -76,8 +77,8 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
               <Stack spacing={1.5}>
                 <StatField label="HP" value={combat?.hp?.total ?? 0} />
                 <StatField label="AC" value={combat?.ac?.total ?? 10} />
-                <StatField label="BAB" value={formatSigned(combat?.bab)} />
-                <StatField label="Speed" value={`${combat?.speed?.total ?? 0} ft.`} />
+                <StatField label="BAB" value={iterativeAttacks(combat?.bab ?? 0)} />
+                <StatField label="Speed" value={formatSpeed(combat?.speed?.total)} />
               </Stack>
               <Stack spacing={1.5}>
                 {Object.entries(saves).map(([key, save]) => (
