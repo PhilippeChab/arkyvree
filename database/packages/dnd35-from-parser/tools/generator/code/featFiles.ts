@@ -6,14 +6,11 @@ import { buildReferenceFeats, resolveFamilyChecks } from "@/database/packages/dn
 import TemplateFamilies from "@/database/packages/dnd35-from-parser/tools/seeds/TemplateFamilies.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 
-/** What opens a feats file: the seed type's import. */
-const FEAT_SEED_IMPORT = `import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`;
-
 /** The core rules' favored enemy feats file (favoredEnemy.ts). */
 export function generateFavoredEnemyFeats(): string {
   const file = new FeatsFile();
   file.emitSystemFeats("favoredEnemy.ts");
-  return file.code([FEAT_SEED_IMPORT]);
+  return file.code();
 }
 
 /** A feat reference's FeatSeed[] file. */
@@ -23,11 +20,13 @@ export function generateFeatSeeds(ref: FeatReference): string {
   const file = new FeatsFile();
 
   for (const [type, feats] of byType) {
-    file.lines.push(`export const ${type.toUpperCase().replace(/\s+/g, "_")}_FEATS: FeatSeed[] = [`);
-    for (const feat of feats) {
-      file.lines.push(...file.feat({ ...feat, requirements: resolveFamilyChecks(feat.requirements ?? [], families) }));
-    }
-    file.lines.push(`];`, "");
+    file.list(
+      `${type.toUpperCase().replace(/\s+/g, "_")}_FEATS`,
+      "FeatSeed",
+      feats.flatMap((feat) =>
+        file.feat({ ...feat, requirements: resolveFamilyChecks(feat.requirements ?? [], families) }),
+      ),
+    );
   }
 
   for (const family of templates) file.emitTemplate(family, families);
@@ -36,5 +35,5 @@ export function generateFeatSeeds(ref: FeatReference): string {
   if (ref._meta.book === CORE_BOOK) {
     file.emitSystemFeats("feats.ts");
   }
-  return file.code([FEAT_SEED_IMPORT]);
+  return file.code();
 }

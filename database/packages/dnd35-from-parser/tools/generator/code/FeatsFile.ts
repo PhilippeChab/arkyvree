@@ -1,6 +1,5 @@
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { CORE_SYSTEM_FEATS } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
-import { stringifyProperty } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import {
   type ImportTable,
   REQUIREMENT_IMPORTS,
@@ -50,7 +49,7 @@ export class FeatsFile extends CodeFile {
 
   /** Ends a template: its feats' family. */
   private closeTemplate(familyName: string): void {
-    this.lines.push(`  properties: [${stringifyProperty({ type: FEAT_FAMILY, value: familyName })}],`);
+    this.lines.push(`  properties: [${this.property({ type: FEAT_FAMILY, value: familyName })}],`);
     this.lines.push(`}));`);
     this.lines.push("");
   }
@@ -99,7 +98,7 @@ export class FeatsFile extends CodeFile {
             throw new Error(`${m.target}: a template feat's modifier can't have requirements`);
           const target = retarget(escapeTemplate(m.target));
           if (target.includes("${stripSeparators(")) this.uses.add("stripSeparators");
-          return this.featModifier(m, 2, `\`${target}\``);
+          return this.modifier(m, 2, `\`${target}\``);
         }),
         "  ",
       ),
@@ -186,6 +185,7 @@ export class FeatsFile extends CodeFile {
     description: string,
   ): void {
     this.uses.add(options);
+    this.declare("FeatSeed");
     this.lines.push(`export const ${constName}: FeatSeed[] = ${options}.map((${variable}) => ({`);
     this.lines.push(`  name: \`${escapeTemplate(familyName)}: \${${variable}}\`,`);
     this.lines.push(`  description: \`${description}\`,`);
@@ -209,6 +209,7 @@ export class FeatsFile extends CodeFile {
 
   /** The system feats of the core rules' feat file `fileName`. */
   emitSystemFeats(fileName: string): void {
+    this.declare("FeatSeed");
     for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
       this.lines.push(`/** A system feat list (\`buildCoreSystemFeats\`): no reference lists it. */`);
       this.lines.push(`export const ${name}: FeatSeed[] = ${code};`);

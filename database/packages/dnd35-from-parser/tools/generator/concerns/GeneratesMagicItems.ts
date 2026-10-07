@@ -2,10 +2,6 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import {
-  stringifyModifier,
-  stringifyProperty,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { buildItemSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/items.ts";
@@ -39,14 +35,18 @@ export function GeneratesMagicItems<B extends Constructor<BaseGenerator>>(Base: 
       const proficiency = (item: (typeof items)[number]) =>
         this.armorProficiencyOf(item.properties.find((property) => property.type === ARMOR_PROFICIENCY)?.value);
       const uses = items.filter((item) => item.isTemplate).map(proficiency);
-      this.writeItemFile(path, constName, uses, items, (item) => [
+      this.writeItemFile(path, constName, uses, items, (item, file) => [
         `weight: ${quote(item.weight)}, costGp: ${quote(item.costGp)}, type: ${quote(item.type)},${item.slot ? ` slot: ${quote(item.slot)},` : ""}`,
         ...(item.isTemplate ? [`isTemplate: true,`, `requirements: ${proficiency(item)},`] : []),
         ...(item.sourceItem ? [`sourceItem: ${quote(item.sourceItem)},`] : []),
         ...(item.properties.length > 0
-          ? [`properties: [`, ...item.properties.map((p) => `  ${stringifyProperty(p)},`), `],`]
+          ? [`properties: [`, ...item.properties.map((p) => `  ${file.property(p)},`), `],`]
           : [`properties: [],`]),
-        ...listField("modifiers", (item.modifiers ?? []).map(stringifyModifier), ""),
+        ...listField(
+          "modifiers",
+          (item.modifiers ?? []).map((m) => file.plainModifier(m)),
+          "",
+        ),
       ]);
     }
 

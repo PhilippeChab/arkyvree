@@ -11,7 +11,6 @@ import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { buildCoreSystemFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
-import { stringifyModifier } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { generateFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
 import {
   formatImports,
@@ -103,7 +102,7 @@ describe("A generated requirement check", () => {
   test("of a feat's modifier is imported with it", () => {
     const file = new CodeFile();
     expect(
-      file.featModifier({
+      file.modifier({
         target: "combat.ac.misc",
         operator: "add",
         value: "1",
@@ -118,12 +117,12 @@ describe("A generated requirement check", () => {
 
   test("of another modifier (a domain's, a race's, an item's) can't be", () => {
     const modifier = { target: "combat.ac.misc", operator: "add", value: "1", valueType: "number" };
-    expect(stringifyModifier(modifier)).toBe(
+    expect(new CodeFile().plainModifier(modifier)).toBe(
       `{ target: "combat.ac.misc", operator: "add", value: "1", valueType: "number" }`,
     );
     // A hand-edited reference, which types don't check
     const edited: Modifier = JSON.parse(JSON.stringify({ ...modifier, requirements: [eq(feat("Dodge"))] }));
-    expect(() => stringifyModifier(edited)).toThrow("only a feat's modifier has requirements");
+    expect(() => new CodeFile().plainModifier(edited)).toThrow("only a feat's modifier has requirements");
   });
 
   test("names a builder its file can import", () => {
@@ -136,7 +135,7 @@ describe("A generated requirement check", () => {
         JSON.stringify({ target: "combat.bab", operator: "greater_than_or_equal", value, valueType: "number" }),
       );
     expect(code(hand(4))).toBe(`gte("combat.bab", 4)`);
-    expect(stringifyModifier(hand(2))).toBe(
+    expect(new CodeFile().plainModifier(hand(2))).toBe(
       `{ target: "combat.bab", operator: "greater_than_or_equal", value: "2", valueType: "number" }`,
     );
   });
@@ -168,7 +167,7 @@ describe("Generated strings", () => {
   test("are escaped for a string literal", () => {
     expect(quote(`a "b" \\ c\nd`)).toBe(`"a \\"b\\" \\\\ c\\nd"`);
     for (const text of ["line\r\nbreak", "tab\there", "nul\u0000"]) expect(JSON.parse(quote(text))).toBe(text);
-    expect(stringifyModifier({ target: `x."y"`, operator: "add", value: "1", valueType: "number" })).toBe(
+    expect(new CodeFile().plainModifier({ target: `x."y"`, operator: "add", value: "1", valueType: "number" })).toBe(
       `{ target: "x.\\"y\\"", operator: "add", value: "1", valueType: "number" }`,
     );
   });

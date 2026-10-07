@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { generateClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/classFeatsFile.ts";
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
+import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { buildClassSeed } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/classSeed.ts";
@@ -59,24 +60,18 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
 
       if (entries.length === 0) return;
 
-      const lines = this.indexHead(
-        "FeatSeed",
-        entries.map((e) => ({ constName: e.constName, file: `${e.slug}.ts` })),
-      );
-
+      const file = new CodeFile();
+      for (const e of entries) file.gather(`./${e.slug}.ts`, [e.constName]);
+      file.declare("FeatSeed");
       // Each feat once, its first class's: a feat like "Familiar" may appear in multiple class feat files
-      lines.push(`const _allClassFeats: FeatSeed[] = [`);
-      for (const e of entries) {
-        lines.push(`  ...${e.constName},`);
-      }
-      lines.push(`];`);
-      lines.push(
+      file.lines.push(
+        `const _allClassFeats: FeatSeed[] = [`,
+        ...entries.map((e) => `  ...${e.constName},`),
+        `];`,
         `export const ALL_CLASS_FEATS: FeatSeed[] = [...Map.groupBy(_allClassFeats, (f) => f.name).values()].map(([f]) => f);`,
+        ``,
       );
-      lines.push(``);
-
-      const outPath = join(classFeatDir, "index.ts");
-      this.write(outPath, lines.join("\n"));
+      this.write(join(classFeatDir, "index.ts"), file.code());
     }
 
     /** Regenerate classes/index.ts for a book from class reference JSONs. */
@@ -98,24 +93,15 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
         });
       }
 
-      const names = (list: ClassEntry[]) => list.map((e) => e.constName);
+      const names = (list: ClassEntry[]) => list.map((e) => `  ${e.constName},`);
       const baseEntries = entries.filter((e) => e.isBase);
       const prestigeEntries = entries.filter((e) => !e.isBase);
-      const lines = [
-        ...this.indexHead(
-          "ClassSeed",
-          entries.map((e) => ({ constName: e.constName, file: `${e.slug}.ts` })),
-        ),
-        ...this.listExport("ALL_CLASSES", "ClassSeed", names(entries)),
-        ...(baseEntries.length > 0 ? this.listExport("ALL_BASE_CLASSES", "ClassSeed", names(baseEntries)) : []),
-        ...(prestigeEntries.length > 0
-          ? this.listExport("ALL_PRESTIGE_CLASSES", "ClassSeed", names(prestigeEntries))
-          : []),
-      ];
-
-      const genClassDir = join(this.dir, book, "classes");
-      const outPath = join(genClassDir, "index.ts");
-      this.write(outPath, lines.join("\n"));
+      const file = new CodeFile();
+      for (const e of entries) file.gather(`./${e.slug}.ts`, [e.constName]);
+      file.list("ALL_CLASSES", "ClassSeed", names(entries));
+      if (baseEntries.length > 0) file.list("ALL_BASE_CLASSES", "ClassSeed", names(baseEntries));
+      if (prestigeEntries.length > 0) file.list("ALL_PRESTIGE_CLASSES", "ClassSeed", names(prestigeEntries));
+      this.write(join(this.dir, book, "classes", "index.ts"), file.code());
     }
   }
   return GeneratingClasses;

@@ -9,11 +9,10 @@ import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools
 /** A class's feats file: its own feats (`buildClassFeatSeeds`), and the domains it picks from (`buildClassDomainPickFeats`). */
 export function generateClassFeatSeeds(ref: ClassReference): string {
   const file = new CodeFile();
-  file.lines.push(
-    `export const ${toConstName(ref.raw.name)}_FEATS: FeatSeed[] = [`,
-    ...[...buildClassFeatSeeds(ref), ...buildClassDomainPickFeats(ref)].flatMap((feat) => file.feat(feat)),
-    `];`,
-    "",
+  file.list(
+    `${toConstName(ref.raw.name)}_FEATS`,
+    "FeatSeed",
+    [...buildClassFeatSeeds(ref), ...buildClassDomainPickFeats(ref)].flatMap((feat) => file.feat(feat)),
   );
-  return file.code([`import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`]);
+  return file.code();
 }

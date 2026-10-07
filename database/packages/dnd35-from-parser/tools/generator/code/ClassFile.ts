@@ -56,11 +56,7 @@ export class ClassFile extends CodeFile {
     if (!modifiers) return;
     this.lines.push(`  modifiers: [`);
     for (const m of modifiers) {
-      const requirements = (m.requirements ?? []).map((r) => this.requirement(r, 3));
-      const gate = requirements.length > 0 ? `, requirements: [${requirements.join(", ")}]` : "";
-      this.lines.push(
-        `    { level: ${m.level}, target: ${quote(m.target)}, value: ${quote(m.value)}, valueType: ${quote(m.valueType)}, operator: ${quote(m.operator)}${gate} },`,
-      );
+      this.lines.push(`    { ${[`level: ${m.level}`, ...this.modifierFields(m)].join(", ")} },`);
     }
     this.lines.push(`  ],`);
   }
@@ -129,6 +125,7 @@ export class ClassFile extends CodeFile {
     this.writeAptitudePicks();
     this.lines.push(`};`);
     this.lines.push("");
-    return this.code([`import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";`]);
+    this.declare("ClassSeed");
+    return this.code();
   }
 }

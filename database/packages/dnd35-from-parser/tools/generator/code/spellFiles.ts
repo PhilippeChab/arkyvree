@@ -1,63 +1,20 @@
 /** Generates a spell reference's PowerSeed[] files: one per spell level (cantrips.ts, level1.ts, …, level9.ts). */
 
-import { stringifyProperty } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
-import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
+import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 
-function generateLevelFile(constName: string, spells: SpellSeed[]): string {
-  const lines: string[] = [];
-  lines.push(`import type { PowerSeed } from "@/database/packages/dnd35/content/spells/types.ts";`);
-  lines.push(``);
-  lines.push(`export const ${constName}: PowerSeed[] = [`);
-
-  for (const spell of spells) {
-    lines.push(`  {`);
-    lines.push(`    name: ${quote(spell.name)},`);
-    lines.push(`    description: ${quote(spell.description)},`);
-
-    const aptStrings = spell.aptitudes.map(quote).join(", ");
-    lines.push(`    aptitudes: [${aptStrings}],`);
-
-    if (spell.aptitudeLevels && Object.keys(spell.aptitudeLevels).length > 0) {
-      const entries = Object.entries(spell.aptitudeLevels)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([k, v]) => `${quote(k)}: ${v}`)
-        .join(", ");
-      lines.push(`    aptitudeLevels: { ${entries} },`);
-    }
-
-    if (spell.savingThrow) {
-      lines.push(`    savingThrow: ${quote(spell.savingThrow)},`);
-    }
-
-    lines.push(`    properties: [`);
-    for (const prop of spell.properties) {
-      lines.push(`      ${stringifyProperty(prop)},`);
-    }
-    lines.push(`    ],`);
-    lines.push(`  },`);
-  }
-
-  lines.push(`];`);
-  lines.push(``);
-
-  return lines.join("\n");
-}
-
+/** A spell reference's files, by file name: a list of its spells per spell level, sorted by level. */
 export function generateSpellFiles(spells: SpellSeed[]): Map<string, string> {
-  const byLevel = new Map<number, SpellSeed[]>();
-  for (const spell of spells) {
-    const existing = byLevel.get(spell.level) ?? [];
-    existing.push(spell);
-    byLevel.set(spell.level, existing);
-  }
-
+  const byLevel = Map.groupBy(spells, (spell) => spell.level);
   const files = new Map<string, string>();
   for (const [level, levelSpells] of [...byLevel.entries()].sort((a, b) => a[0] - b[0])) {
-    const filename = level === 0 ? "cantrips.ts" : `level${level}.ts`;
-    const constName = level === 0 ? "CANTRIPS" : `LEVEL_${level}_SPELLS`;
-    files.set(filename, generateLevelFile(constName, levelSpells));
+    const file = new CodeFile();
+    file.list(
+      level === 0 ? "CANTRIPS" : `LEVEL_${level}_SPELLS`,
+      "PowerSeed",
+      levelSpells.flatMap((spell) => file.spell(spell)),
+    );
+    files.set(level === 0 ? "cantrips.ts" : `level${level}.ts`, file.code());
   }
-
   return files;
 }

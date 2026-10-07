@@ -1,10 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 
 import {
-  stringifyModifierFields,
-  stringifyProperty,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
-import {
+  formatImport,
   formatImports,
   type ImportTable,
   REQUIREMENT_IMPORTS,
@@ -12,11 +9,22 @@ import {
 import { indent, listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { eq, eqNum, eqStr, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
+  Modifier,
+  ModifierEffect,
   ModifierSeed,
+  Property,
   RequirementCondition,
   RequirementEntry,
 } from "@/database/packages/dnd35/content/customization/types.ts";
+import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
+import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
+import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";
+import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
+import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
+
+/** A content type a generated file declares its values with. */
+export type DeclaredType = keyof typeof DECLARED_TYPES;
 
 /** The builders of content/customization/requirements.ts the generated code writes checks with. */
 const BUILDERS = { eq, eqNum, gte, eqStr };
@@ -29,9 +37,25 @@ const CHECK_BUILDERS: { name: keyof typeof BUILDERS; takes: "nothing" | "number"
   { name: "eqStr", takes: "string" },
 ];
 
+/** Where each content type a generated file declares its values with comes from. */
+const DECLARED_TYPES = {
+  BookContent: "@/database/packages/dnd35/content/rulesets/types.ts",
+  ClassSeed: "@/database/packages/dnd35/content/classes/types.ts",
+  CowFeatEntry: "@/database/packages/dnd35/content/rulesets/types.ts",
+  CowSpellEntry: "@/database/packages/dnd35/content/rulesets/types.ts",
+  DomainSeed: "@/database/packages/dnd35/content/domains/types.ts",
+  FeatSeed: "@/database/packages/dnd35/content/feats/types.ts",
+  ItemSeed: "@/database/packages/dnd35/content/items/types.ts",
+  PowerSeed: "@/database/packages/dnd35/content/spells/types.ts",
+  RaceSeed: "@/database/packages/dnd35/content/races/types.ts",
+  SpellSeed: "@/database/packages/dnd35/content/spells/types.ts",
+  WizardSchoolSeed: "@/database/packages/dnd35/content/wizardSchools/types.ts",
+};
+
 /**
- * A generated file's code, as it's written: its lines, and the names they use (a requirement's builders…), which its
- * imports are written from, by `importTable`.
+ * A generated file's code, as it's written: its lines, the content types they declare values with, and the names they
+ * use (a requirement's builders…) and the lists they gather (an index's), which its imports are written from. Each
+ * kind of seed is written by a method of its own (`feat`, `race`, `spell`…), a modifier, a check and a property alike.
  */
 export class CodeFile {
   constructor(private readonly importTable: ImportTable = REQUIREMENT_IMPORTS) {}
@@ -39,6 +63,12 @@ export class CodeFile {
   readonly lines: string[] = [];
 
   readonly uses = new Set<string>();
+
+  /** The content types the file declares its values with. */
+  private readonly declared = new Set<DeclaredType>();
+
+  /** The names the file imports from the generated files beside it, by module. */
+  private readonly gathered = new Map<string, string[]>();
 
   /** A check written with its builder: `builder(target, value)`. */
   private builderCall(
@@ -65,9 +95,43 @@ export class CodeFile {
     });
   }
 
-  /** The file's code: `head` (what opens it: its seed type's import…), the imports of what its lines use, its lines. */
-  code(head: string[]): string {
-    return [...head, ...this.imports(), "", ...this.lines].join("\n");
+  /** The file's code: the imports of what its lines declare, use and gather, then its lines. */
+  code(): string {
+    return [...this.imports(), "", ...this.lines].join("\n");
+  }
+
+  /** A feat a book copies from the core rules written as code, a list's item. */
+  cowFeat({ feat, aptitudes }: CowFeatEntry): string {
+    return `  { feat: ${quote(feat)}, requirements: [], aptitudes: [${aptitudes.map(quote).join(", ")}] },`;
+  }
+
+  /** A spell a book copies from the core rules written as code, a list's item. */
+  cowSpell({ spell, aptitudes }: CowSpellEntry): string {
+    const lists = aptitudes.map(({ aptitude, level }) => `{ aptitude: ${quote(aptitude)}, level: ${level} }`);
+    return `  { spell: ${quote(spell)}, aptitudes: [${lists.join(", ")}] },`;
+  }
+
+  /** The file declares a value with the content type `type`, which it imports. */
+  declare(type: DeclaredType): void {
+    this.declared.add(type);
+  }
+
+  /** A domain written as code, a list's item. */
+  domain(domain: DomainSeed): string[] {
+    return [
+      `  {`,
+      `    name: ${quote(domain.name)},`,
+      `    description: ${quote(domain.description)},`,
+      ...listField(
+        "modifiers",
+        (domain.modifiers ?? []).map((m) => this.plainModifier(m)),
+        "    ",
+      ),
+      `    spells: [`,
+      ...domain.spells.map((spell) => `      { name: ${quote(spell.name)}, level: ${spell.level} },`),
+      `    ],`,
+      `  },`,
+    ];
   }
 
   /** A feat written as code, a list's item. */
@@ -87,26 +151,111 @@ export class CodeFile {
       ),
       ...listField(
         "modifiers",
-        (feat.modifiers ?? []).map((m) => this.featModifier(m)),
+        (feat.modifiers ?? []).map((m) => this.modifier(m)),
         "    ",
       ),
-      ...listField("properties", (feat.properties ?? []).map(stringifyProperty), "    "),
+      ...listField(
+        "properties",
+        (feat.properties ?? []).map((p) => this.property(p)),
+        "    ",
+      ),
       `  },`,
     ];
   }
 
-  /**
-   * A feat's modifier written as code, at `indentLevel`, with its requirements. `target` is its target as code (a
-   * template's names each item).
-   */
-  featModifier(mod: ModifierSeed, indentLevel = 3, target = quote(mod.target)): string {
-    const requirements = (mod.requirements ?? []).map((r) => this.requirement(r, indentLevel));
-    return `{ ${[...stringifyModifierFields(mod, target), ...(requirements.length > 0 ? [`requirements: [${requirements.join(", ")}]`] : [])].join(", ")} }`;
+  /** The file gathers `names` from `module`, a generated file beside it (an index's lists). */
+  gather(module: string, names: string[]): void {
+    this.gathered.set(module, [...(this.gathered.get(module) ?? []), ...names]);
   }
 
-  /** The imports of the names the file's code uses. A name its table doesn't list throws. */
+  /**
+   * The file's imports: the content types it declares values with, the names its code uses (from its table, a name
+   * the table doesn't list throws), and the lists it gathers.
+   */
   imports(): string[] {
-    return formatImports(this.uses, this.importTable);
+    const byModule = Map.groupBy([...this.declared], (type) => DECLARED_TYPES[type]);
+    return [
+      ...[...byModule].map(([module, types]) => `import type { ${types.sort().join(", ")} } from "${module}";`),
+      ...formatImports(this.uses, this.importTable),
+      ...[...this.gathered].map(([module, names]) => formatImport(names, module)),
+    ];
+  }
+
+  /** An item written as code, a list's item: its name and description, then its `fields`. */
+  item({ name, description }: { name: string; description: string }, fields: string[]): string[] {
+    return [
+      `  {`,
+      `    name: ${quote(name)},`,
+      `    description: ${quote(description)},`,
+      ...fields.map((line) => `    ${line}`),
+      `  },`,
+    ];
+  }
+
+  /** An exported list of `type` (a content type, or text), `items` its lines. */
+  list(constName: string, type: DeclaredType | "string", items: string[]): void {
+    if (type !== "string") this.declare(type);
+    this.lines.push(`export const ${constName}: ${type}[] = [`, ...items, `];`, ``);
+  }
+
+  /**
+   * A modifier written as code, at `indentLevel`, with its requirements (a feat's, a class level's). `target` is its
+   * target as code (a template's names each item).
+   */
+  modifier(mod: ModifierSeed, indentLevel = 3, target = quote(mod.target)): string {
+    return `{ ${this.modifierFields(mod, indentLevel, target).join(", ")} }`;
+  }
+
+  /** A modifier's fields written as code: its target (as code, `target`), operator, value, type and requirements. */
+  modifierFields(
+    mod: ModifierEffect & Pick<ModifierSeed, "requirements">,
+    indentLevel = 3,
+    target = quote(mod.target),
+  ) {
+    const requirements = (mod.requirements ?? []).map((r) => this.requirement(r, indentLevel));
+    return [
+      `target: ${target}`,
+      `operator: ${quote(mod.operator)}`,
+      `value: ${quote(mod.value)}`,
+      `valueType: ${quote(mod.valueType)}`,
+      ...(requirements.length > 0 ? [`requirements: [${requirements.join(", ")}]`] : []),
+    ];
+  }
+
+  /**
+   * A modifier without requirements written as code: a domain's, a race's or an item's. Only a feat's and a class level's
+   * have requirements: one on another refuses the seed.
+   */
+  plainModifier(mod: Modifier): string {
+    if ("requirements" in mod) throw new Error(`${mod.target}: only a feat's modifier has requirements`);
+    return this.modifier(mod);
+  }
+
+  /** A property written as code. */
+  property({ type, value }: Property): string {
+    return `{ type: ${quote(type)}, value: ${quote(value)} }`;
+  }
+
+  /** A race written as code, a list's item. */
+  race(race: RaceSeed): string[] {
+    return [
+      `  {`,
+      `    name: ${quote(race.name)},`,
+      `    description: ${quote(race.description)},`,
+      `    size: ${quote(race.size)},`,
+      `    baseSpeed: ${race.baseSpeed},`,
+      ...listField(
+        "modifiers",
+        (race.modifiers ?? []).map((m) => this.plainModifier(m)),
+        "    ",
+      ),
+      ...listField(
+        "properties",
+        (race.properties ?? []).map((p) => this.property(p)),
+        "    ",
+      ),
+      `  },`,
+    ];
   }
 
   /** `req` written as code, at `indentLevel`: the builders it's written with are names the file uses. */
@@ -128,5 +277,35 @@ export class CodeFile {
     }
     const { target, operator, value, valueType } = req;
     return `{ target: ${quote(target)}, operator: ${quote(operator)}, value: ${quote(value)}, valueType: ${quote(valueType)} }`;
+  }
+
+  /** A spell written as code, a list's item, without its level: its file is its level's. */
+  spell(spell: SpellSeed): string[] {
+    const levels = Object.entries(spell.aptitudeLevels ?? {})
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([aptitude, level]) => `${quote(aptitude)}: ${level}`);
+    return [
+      `  {`,
+      `    name: ${quote(spell.name)},`,
+      `    description: ${quote(spell.description)},`,
+      `    aptitudes: [${spell.aptitudes.map(quote).join(", ")}],`,
+      ...(levels.length > 0 ? [`    aptitudeLevels: { ${levels.join(", ")} },`] : []),
+      ...(spell.savingThrow ? [`    savingThrow: ${quote(spell.savingThrow)},`] : []),
+      `    properties: [`,
+      ...spell.properties.map((p) => `      ${this.property(p)},`),
+      `    ],`,
+      `  },`,
+    ];
+  }
+
+  /** A wizard school written as code, a list's item. */
+  wizardSchool(school: WizardSchoolSeed): string[] {
+    return [
+      `  {`,
+      `    name: ${quote(school.name)},`,
+      `    description: ${quote(school.description)},`,
+      `    prohibitedSchoolCount: ${school.prohibitedSchoolCount},`,
+      `  },`,
+    ];
   }
 }

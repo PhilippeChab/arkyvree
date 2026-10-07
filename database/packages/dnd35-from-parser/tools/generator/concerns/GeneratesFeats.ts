@@ -2,12 +2,13 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { buildCoreSystemFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
 import {
   generateFavoredEnemyFeats,
   generateFeatSeeds,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
-import { compareNames, formatImport } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
+import { compareNames } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { CORE_BOOK, getReferencePath } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
@@ -34,15 +35,13 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
 
       const aptitudes = collectAptitudes(feats, book);
 
-      const aptLines: string[] = [];
-      aptLines.push(``);
-      aptLines.push(`export const ALL_APTITUDES: string[] = [`);
-      for (const apt of aptitudes) {
-        aptLines.push(`  ${quote(apt)},`);
-      }
-      aptLines.push(`];`);
-      aptLines.push(``);
-      this.write(join(this.dir, book, "aptitudes.ts"), aptLines.join("\n"));
+      const file = new CodeFile();
+      file.list(
+        "ALL_APTITUDES",
+        "string",
+        aptitudes.map((aptitude) => `  ${quote(aptitude)},`),
+      );
+      this.write(join(this.dir, book, "aptitudes.ts"), file.code());
     }
 
     /** The core rules' favored enemy feats file: the core rules' alone. */
@@ -84,21 +83,14 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
       if (allFeatExports.length === 0 && !hasClassFeats) return;
 
       // Each feat file's lists, imported once, and the lists of them all
-      const lines = [
-        `import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`,
-        ...featFiles.map(({ file, exports }) => formatImport(exports, `./${file.replace(".ts", "")}.ts`)),
-        ...(hasClassFeats ? [formatImport(["ALL_CLASS_FEATS"], "./classes/index.ts")] : []),
-        ``,
-      ];
-      const standalone = allFeatExports.map((name) => `...${name}`);
+      const file = new CodeFile();
+      for (const { file: name, exports } of featFiles) file.gather(`./${name.replace(".ts", "")}.ts`, exports);
+      if (hasClassFeats) file.gather("./classes/index.ts", ["ALL_CLASS_FEATS"]);
+      const standalone = allFeatExports.map((name) => `  ...${name},`);
       // ALL_STANDALONE_FEATS: all non-class feats (empty array if none); ALL_FEATS: the class feats too
-      lines.push(...this.listExport("ALL_STANDALONE_FEATS", "FeatSeed", standalone));
-      lines.push(
-        ...this.listExport("ALL_FEATS", "FeatSeed", hasClassFeats ? [...standalone, "...ALL_CLASS_FEATS"] : standalone),
-      );
-
-      const outPath = join(featDir, "index.ts");
-      this.write(outPath, lines.join("\n"));
+      file.list("ALL_STANDALONE_FEATS", "FeatSeed", standalone);
+      file.list("ALL_FEATS", "FeatSeed", hasClassFeats ? [...standalone, "  ...ALL_CLASS_FEATS,"] : standalone);
+      this.write(join(featDir, "index.ts"), file.code());
     }
 
     /** A feat reference's feats file (feats/feats.ts). */

@@ -2,6 +2,7 @@ import { readdirSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { generateSpellFiles } from "@/database/packages/dnd35-from-parser/tools/generator/code/spellFiles.ts";
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/spells.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
@@ -35,17 +36,14 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
 
       if (levelFiles.length === 0) return;
 
-      const lines = [
-        ...this.indexHead("SpellSeed", levelFiles),
-        ...this.listExport(
-          "ALL_SPELLS",
-          "SpellSeed",
-          levelFiles.map((lf) => `...${lf.constName}.map((p) => ({ ...p, level: ${lf.level} }))`),
-        ),
-      ];
-
-      const outPath = join(spellDir, "index.ts");
-      this.write(outPath, lines.join("\n"));
+      const file = new CodeFile();
+      for (const { file: name, constName } of levelFiles) file.gather(`./${name}`, [constName]);
+      file.list(
+        "ALL_SPELLS",
+        "SpellSeed",
+        levelFiles.map((lf) => `  ...${lf.constName}.map((p) => ({ ...p, level: ${lf.level} })),`),
+      );
+      this.write(join(spellDir, "index.ts"), file.code());
     }
 
     /** A spell reference's files, one per spell level, the stale ones removed. */

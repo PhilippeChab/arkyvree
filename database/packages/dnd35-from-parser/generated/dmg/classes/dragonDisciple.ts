@@ -56,11 +56,11 @@ export const DRAGON_DISCIPLE: ClassSeed = {
     [10, "Dragon Apotheosis (Dragon Disciple)"],
   ],
   modifiers: [
-    { level: 2, target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" },
-    { level: 4, target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" },
-    { level: 6, target: "abilities.constitution.misc", value: "2", valueType: "number", operator: "add" },
-    { level: 8, target: "abilities.intelligence.misc", value: "2", valueType: "number", operator: "add" },
-    { level: 10, target: "abilities.strength.misc", value: "4", valueType: "number", operator: "add" },
-    { level: 10, target: "abilities.charisma.misc", value: "2", valueType: "number", operator: "add" },
+    { level: 2, target: "abilities.strength.misc", operator: "add", value: "2", valueType: "number" },
+    { level: 4, target: "abilities.strength.misc", operator: "add", value: "2", valueType: "number" },
+    { level: 6, target: "abilities.constitution.misc", operator: "add", value: "2", valueType: "number" },
+    { level: 8, target: "abilities.intelligence.misc", operator: "add", value: "2", valueType: "number" },
+    { level: 10, target: "abilities.strength.misc", operator: "add", value: "4", valueType: "number" },
+    { level: 10, target: "abilities.charisma.misc", operator: "add", value: "2", valueType: "number" },
   ],
 };

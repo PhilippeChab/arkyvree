@@ -2,8 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { formatImport, type ImportTable } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
-import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
+import { type ImportTable } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 
@@ -48,13 +47,6 @@ const ITEM_IMPORTS: ImportTable = [
   ],
 ];
 
-/** Where the seed type an index file lists comes from. */
-const SEED_TYPE_MODULES = {
-  ClassSeed: "@/database/packages/dnd35/content/classes/types.ts",
-  FeatSeed: "@/database/packages/dnd35/content/feats/types.ts",
-  SpellSeed: "@/database/packages/dnd35/content/spells/types.ts",
-};
-
 /**
  * A generator's core, which its concerns (`concerns/`) build on: the folder it writes to (generated/, or a test's),
  * whether it logs what it does, and what several kinds of files are written with.
@@ -80,24 +72,6 @@ export class BaseGenerator {
     return book !== CORE_BOOK && ReferenceLoader.loadClasses(book).length > 0;
   }
 
-  /** An index file's head: its header, the seed type's import, and the import of each file's list. */
-  protected indexHead(
-    seedType: keyof typeof SEED_TYPE_MODULES,
-    lists: { constName: string; file: string }[],
-  ): string[] {
-    return [
-      `import type { ${seedType} } from "${SEED_TYPE_MODULES[seedType]}";`,
-      ``,
-      ...lists.map(({ constName, file }) => formatImport([constName], `./${file}`)),
-      ``,
-    ];
-  }
-
-  /** An exported list of `seedType`, an item per line. */
-  protected listExport(name: string, seedType: string, items: string[]): string[] {
-    return [`export const ${name}: ${seedType}[] = [`, ...items.map((item) => `  ${item},`), `];`, ``];
-  }
-
   /** Logs what the generator does, unless it's quiet. */
   protected log(message: string) {
     if (!this.quiet) console.log(message);
@@ -118,7 +92,8 @@ export class BaseGenerator {
   }
 
   /**
-   * Writes a file of items, `constName`: each its name and description, then the lines `fields` gives. `uses` are the
+   * Writes a file of items, `constName`: each its name and description, then the lines `fields` gives, written in its
+   * file. `uses` are the
    * builders it takes from content/items/proficiencies.ts and content/items/properties.ts.
    */
   protected writeItemFile<T extends { name: string; description: string }>(
@@ -126,23 +101,16 @@ export class BaseGenerator {
     constName: string,
     uses: string[],
     items: T[],
-    fields: (item: T) => string[],
+    fields: (item: T, file: CodeFile) => string[],
   ) {
     const file = new CodeFile(ITEM_IMPORTS);
     for (const name of uses) file.uses.add(name);
-    file.lines.push(
-      `export const ${constName}: ItemSeed[] = [`,
-      ...items.flatMap((item) => [
-        `  {`,
-        `    name: ${quote(item.name)},`,
-        `    description: ${quote(item.description)},`,
-        ...fields(item).map((line) => `    ${line}`),
-        `  },`,
-      ]),
-      `];`,
-      ``,
+    file.list(
+      constName,
+      "ItemSeed",
+      items.flatMap((item) => file.item(item, fields(item, file))),
     );
-    this.write(path, file.code([`import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";`]));
+    this.write(path, file.code());
   }
 
   /**
@@ -150,12 +118,13 @@ export class BaseGenerator {
    * generated last.
    */
   protected writeItemIndex(outDir: string) {
-    const lines = [
-      ...ITEM_FILES.filter(([file]) => existsSync(join(outDir, file))).map(
-        ([file, name]) => `export { ${name} } from "./${file}";`,
+    const file = new CodeFile();
+    file.lines.push(
+      ...ITEM_FILES.filter(([name]) => existsSync(join(outDir, name))).map(
+        ([name, list]) => `export { ${list} } from "./${name}";`,
       ),
       ``,
-    ];
-    this.write(join(outDir, "index.ts"), lines.join("\n"));
+    );
+    this.write(join(outDir, "index.ts"), file.code());
   }
 }
