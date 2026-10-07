@@ -1,10 +1,11 @@
+import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
+import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
+import type { ProjectedCharacterLevel } from "@/engine/core/types.ts";
 import { include } from "@/server/mixins.ts";
 import TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import DetailedCharacterDataLoader from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
-import ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
-import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
-import type { DetailedCharacterInterface, ProjectedCharacterLevel } from "@/server/rulesets/engine/types.ts";
+import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 import type { Character, KlassLevel, Requirement } from "@/shared/relations.ts";
 
 import CharacterState, { type DataLoader } from "./CharacterState.ts";

@@ -1,9 +1,9 @@
+import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts";
+import type PathTraverser from "@/engine/core/paths/PathTraverser.ts";
+import { readComponent } from "@/engine/core/paths/readComponent.ts";
+import type { Components, TraversePathResult } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
-import type { GetterOf, PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
-import type PathTraverser from "@/server/rulesets/engine/paths/PathTraverser.ts";
-import { readComponent } from "@/server/rulesets/engine/paths/readComponent.ts";
-import type { Components, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import { MODIFIER_OPERATORS, NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { isRecord } from "@/shared/isRecord.ts";

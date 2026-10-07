@@ -1,8 +1,5 @@
-import type { Db } from "@/server/database/index.ts";
-import type { Dnd35LoadedCharacterData } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
-import type ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
-import type { SkillFields } from "@/server/rulesets/engine/module/index.ts";
-import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
+import type ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
+import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type {
   CustomizedFeat,
   CustomizedKlassLevel,
@@ -13,7 +10,10 @@ import type {
   PreloadedRulesetData,
   SkillWithRank,
   TargetPathsTraverser,
-} from "@/server/rulesets/engine/types.ts";
+} from "@/engine/core/types.ts";
+import type { Db } from "@/server/database/index.ts";
+import type { Dnd35LoadedCharacterData } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
+import type { SkillFields } from "@/server/rulesets/engine/module/index.ts";
 import type {
   Aptitude,
   Campaign,

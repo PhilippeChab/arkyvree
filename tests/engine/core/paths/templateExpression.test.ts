@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { evaluateTemplateExpression } from "@/server/rulesets/engine/paths/templateExpression.ts";
-import type { Components, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import { evaluateTemplateExpression } from "@/engine/core/paths/templateExpression.ts";
+import type { Components, TargetPathsTraverser, TraversePathResult } from "@/engine/core/types.ts";
 
 const components = {} as Components;
 

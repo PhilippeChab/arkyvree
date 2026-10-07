@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { hasValueType, parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
+import { hasValueType, parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
 
 describe("parseLiteralValue", () => {
   test.each([

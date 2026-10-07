@@ -1,9 +1,9 @@
+import type { ValidationIssue } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { db, memoizeRequest } from "@/server/database/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
 import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { toVirtualFeat } from "@/server/rulesets/dnd3.5/loading/customizations.ts";
-import type { ValidationIssue } from "@/server/rulesets/engine/types.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 import { type BondedRaceStatBlock, getBondedRaceStats, STAT_BLOCK_FEAT_SKILL_BONUSES } from "./bondedRaceData.ts";

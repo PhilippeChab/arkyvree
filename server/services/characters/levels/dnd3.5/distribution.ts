@@ -6,6 +6,7 @@
  * - distributePoolSelections — distributes pooled user selections (skills, feats, powers) into per-level payloads
  */
 
+import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import {
   ALLOWED_ALL,
@@ -15,7 +16,6 @@ import {
   parseAptitudePool,
   parseAptitudeSpellLevel,
 } from "@/server/rulesets/dnd3.5/index.ts";
-import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Modifier, Skill } from "@/shared/relations.ts";

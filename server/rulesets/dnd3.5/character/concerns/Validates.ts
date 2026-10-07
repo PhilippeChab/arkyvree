@@ -1,8 +1,4 @@
-import type { Constructor } from "@/server/mixins.ts";
-import { ALLOWED_ALL } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
-import type CharacterState from "@/server/rulesets/dnd3.5/character/CharacterState.ts";
-import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
-import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
+import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type {
   CustomizedFeat,
   CustomizedKlassLevel,
@@ -11,7 +7,11 @@ import type {
   RequirementIssue,
   ValidationIssue,
   ValidationResult,
-} from "@/server/rulesets/engine/types.ts";
+} from "@/engine/core/types.ts";
+import type { Constructor } from "@/server/mixins.ts";
+import { ALLOWED_ALL } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
+import type CharacterState from "@/server/rulesets/dnd3.5/character/CharacterState.ts";
+import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Klass, Modifier, Requirement } from "@/shared/relations.ts";

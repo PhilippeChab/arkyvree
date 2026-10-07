@@ -1,4 +1,4 @@
-import type { Component, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import type { Component, TraversePathResult } from "@/engine/core/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { isTraversable } from "./isTraversable.ts";

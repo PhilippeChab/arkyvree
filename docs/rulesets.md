@@ -396,18 +396,30 @@ A working mental model: if a hypothetical 5e or PF2e ruleset were to be added to
 
 ### Directory layout
 
+The engine is moving out of the server into the root `engine/`, which computes over the data it's given and reads nothing itself. What has moved:
+
+```
+engine/
+└── core/                                  ← machinery, no game vocabulary
+    ├── types.ts                           ← universal types (ProjectedCharacterData, LevelUpProjector, LoadedCharacterData, …)
+    ├── view/                              (RulesetData, RulesetComposition, the sibling merge)
+    ├── cow/                               (CowData)
+    ├── modifiers/ModifierEvaluator.ts
+    ├── requirements/RequirementEvaluator.ts
+    └── paths/                             (PathTraverser, CategoryPaths, PathCategory, readComponent, templateExpression, …)
+```
+
+What's still in the server: the module's contract, whose signatures take the database's handle until its reads and writes move out, and the 3.5 ruleset.
+
 ```
 server/
 ├── rulesets/
 │   ├── RulesetFactory.ts                  ← ruleset module loader
-│   ├── engine/                            ← machinery, no game vocabulary
-│   │   ├── types.ts                       ← universal types (ProjectedCharacterData, LevelUpProjector, RulesetModule, …)
-│   │   ├── module/                        ← the rules and effects a ruleset gives the services
-│   │   │   ├── rules.ts                   (LevelsRules, ClassLevelsRules, …)
-│   │   │   └── effects.ts                 (SkillsEffects, PowersEffects, …)
-│   │   ├── modifiers/ModifierEvaluator.ts
-│   │   ├── requirements/RequirementEvaluator.ts
-│   │   └── paths/                         (PathTraverser, CategoryPaths, PathCategory, readComponent, templateExpression, …)
+│   ├── engine/                            ← the module's contract
+│   │   ├── types.ts                       (RulesetModule, DetailedCharacterInterface, DetailedCharacterWithSheet)
+│   │   └── module/                        ← the rules and effects a ruleset gives the services
+│   │       ├── rules.ts                   (LevelsRules, ClassLevelsRules, …)
+│   │       └── effects.ts                 (SkillsEffects, PowersEffects, …)
 │   └── dnd3.5/                            ← 3.5-specific implementation
 │       ├── index.ts                       (the module's entry: createRulesetModule, the response builders)
 │       ├── rulesetModule.ts               (createRulesetModule: the 3.5 module, a Dnd35RulesetModule)
@@ -495,7 +507,7 @@ server/
 Universal types keep the narrowest surface that any level-based system could implement. Ruleset-specific types extend the universal ones with ruleset-flavored fields and methods.
 
 ```ts
-// server/rulesets/engine/types.ts  (universal)
+// engine/core/types.ts  (universal)
 export interface ProjectedCharacterData {
   excludeCharacterLevelIds?: string[];
   characterLevels?: CharacterLevel[];
@@ -670,10 +682,12 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 | `server/services/policies/RulesetsPolicy.ts` | Authorization checks for all ruleset operations: the ruleset's own, plus the concerns in `policies/concerns/` (entities, contributors, extensions, creating campaigns and characters), over the roles in `RulesetRoles.ts` |
 | `server/services/rulesets/*/` | Entity services (feats, powers, classes, etc.) using the COW pattern |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
-| `server/rulesets/engine/types.ts` | The module's contract and the universal types (`RulesetModule`, `DetailedCharacterInterface`, `ProjectedCharacterData`, `LevelUpProjector`, …) |
+| `engine/core/types.ts` | The universal types (`ProjectedCharacterData`, `LevelUpProjector`, `LoadedCharacterData`, the paths' `TargetPathsInterface`, …) |
+| `server/rulesets/engine/types.ts` | The module's contract (`RulesetModule`, `DetailedCharacterInterface`, `DetailedCharacterWithSheet`), until its signatures stop taking the database's handle |
 | `server/rulesets/dnd3.5/types.ts` | 3.5's types (`Dnd35RulesetModule`, `CharacterKind`, `Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`) |
 | `server/rulesets/dnd3.5/character/` | The 3.5 character: its state (`CharacterState`), its concerns (`Builds`, `Validates`, `PossessesVirtually`), its components (`components.ts`), and `DetailedCharacter`, which wires them |
-| `server/rulesets/engine/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the rules and effects a ruleset gives the services (`module/`), the module's contract (`types.ts`) |
+| `engine/core/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the ruleset view (`view/`), copy-on-write's state (`cow/`) |
+| `server/rulesets/engine/` | The rules and effects a ruleset gives the services (`module/`), the module's contract (`types.ts`) |
 | `server/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its loader (`loading/`), its components and path categories by domain (`abilities/`, `skills/`, `combat/`…), with the rules and effects of the areas that have them (`aptitudes/`, `classes/`, `items/`, `levels/`, `powers/`, `skills/`), `Dnd35TargetPaths`, `response/buildCharacterResponse` |
 | `server/rulesets/dnd3.5/character/concerns/Builds.ts` | The build: the loader (`loading/`) gives each entity the modifiers and requirements the compose step merged into `rulesetData`, then the components, the possession pre-pass and the modifier rounds run |
 | `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts` | Seed-time COW: copies the core feats and spells an extension changes |

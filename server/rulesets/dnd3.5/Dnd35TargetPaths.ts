@@ -1,8 +1,8 @@
 /** The paths an entity's modifiers and requirements name, in the 3.5 rules: each category's, and the ruleset's labels. */
 
+import CategoryPaths from "@/engine/core/paths/CategoryPaths.ts";
+import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import CategoryPaths from "@/server/rulesets/engine/paths/CategoryPaths.ts";
-import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";

@@ -1,8 +1,8 @@
+import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
 import { buildSourceChain, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
-import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type {
   PathCompletion,

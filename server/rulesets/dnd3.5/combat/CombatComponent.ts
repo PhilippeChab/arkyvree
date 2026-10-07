@@ -1,8 +1,8 @@
+import type { CustomizedRace } from "@/engine/core/types.ts";
 import { include } from "@/server/mixins.ts";
 import { UNARMED_STRIKE } from "@/server/rulesets/dnd3.5/constants.ts";
 import { NO_WEAPON_FIELDS } from "@/server/rulesets/dnd3.5/items/itemFields.ts";
 import type SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
-import type { CustomizedRace } from "@/server/rulesets/engine/types.ts";
 import { type CharacterLevel } from "@/shared/relations.ts";
 
 import { ArmorClass } from "./ArmorClass.ts";

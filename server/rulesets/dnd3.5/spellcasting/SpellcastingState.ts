@@ -1,3 +1,4 @@
+import type ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import type AptitudesComponent from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
@@ -6,7 +7,6 @@ import { parseAptitudeJoin } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTa
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import type PowerGroupingsComponent from "@/server/rulesets/dnd3.5/powers/PowerGroupingsComponent.ts";
 import type PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts";
-import type ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
 import type { SpellTagLists } from "@/shared/dnd3.5/spellGroups.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
 

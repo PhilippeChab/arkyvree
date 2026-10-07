@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
+import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 /** Evaluates a modifier on a target holding `value`; returns what the target ends with, and what was recorded. */

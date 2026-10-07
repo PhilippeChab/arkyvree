@@ -1,4 +1,4 @@
-import type { Component } from "@/server/rulesets/engine/types.ts";
+import type { Component } from "@/engine/core/types.ts";
 
 /**
  * What a component's method `name` returns, called on it: the getter a path category names for its data (checked

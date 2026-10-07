@@ -1,6 +1,6 @@
 /** The template expression's evaluation: its syntax (`shared/customization/templateExpression.ts`) read on a sheet. */
 
-import type { Components, TargetPathsTraverser } from "@/server/rulesets/engine/types.ts";
+import type { Components, TargetPathsTraverser } from "@/engine/core/types.ts";
 import {
   parseTemplateExpression,
   TEMPLATE_FUNCTIONS,

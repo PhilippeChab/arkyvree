@@ -1,8 +1,8 @@
+import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
+import { collectPropertySlugs } from "@/engine/core/paths/propertySlugs.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import { collectFeatListIds } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
-import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
-import { collectPropertySlugs } from "@/server/rulesets/engine/paths/propertySlugs.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
