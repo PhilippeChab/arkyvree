@@ -2,6 +2,7 @@ export { createRulesetModule } from "./rulesetModule.ts";
 export type { default as AbilitiesComponent } from "./abilities/AbilitiesComponent.ts";
 export { ALLOWED_ALL } from "./aptitudes/AptitudesComponent.ts";
 export type { default as AptitudesComponent } from "./aptitudes/AptitudesComponent.ts";
+export { default as ClassesPaths } from "./classes/ClassesPaths.ts";
 export type { ValidationResult } from "./character/AbstractDetailedCharacter.ts";
 export type { Dnd35Components } from "./character/components.ts";
 export type { default as Dnd35DetailedCharacter } from "./character/DetailedCharacter.ts";

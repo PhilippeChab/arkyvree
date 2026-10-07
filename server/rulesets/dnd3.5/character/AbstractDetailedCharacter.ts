@@ -3,6 +3,8 @@ import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db } from "@/server/database/index.ts";
 import { ALLOWED_ALL } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
+import FeatsPaths from "@/server/rulesets/dnd3.5/feats/FeatsPaths.ts";
+import PowersPaths from "@/server/rulesets/dnd3.5/powers/PowersPaths.ts";
 import ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
 import { isTemplateValue } from "@/server/rulesets/engine/paths/templateExpression.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
@@ -329,11 +331,9 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     for (const mod of this.modifiers) {
       if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
 
-      const parts = mod.target.split(".");
-
-      // feats.<slug>.possessed
-      if (parts.length === 3 && parts[0] === "feats" && parts[2] === "possessed") {
-        const feat = this.components.feats.getFeat(parts[1]);
+      const featSlug = FeatsPaths.parsePossessed(mod.target);
+      if (featSlug !== undefined) {
+        const feat = this.components.feats.getFeat(featSlug);
         if (feat && !feat.possessed) {
           feat.possessed = true;
           feat.count += 1;
@@ -341,9 +341,9 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
         continue;
       }
 
-      // powers.<spellSlug>.<aptSlug>.known
-      if (parts.length === 4 && parts[0] === "powers" && parts[3] === "known") {
-        const spell = this.components.powers.getSpellEntry(parts[1], parts[2]);
+      const known = PowersPaths.parseKnown(mod.target);
+      if (known) {
+        const spell = this.components.powers.getSpellEntry(known.spell, known.list);
         if (spell && !spell.known) {
           spell.known = true;
         }
@@ -592,8 +592,8 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       this.postRequirementProcessing();
 
       // 7. Non-power modifiers, and the requirements that gate them (universal)
-      const powerModifiers = this.modifiers.filter((m) => m.target.startsWith("powers."));
-      const otherModifiers = this.modifiers.filter((m) => !m.target.startsWith("powers."));
+      const powerModifiers = this.modifiers.filter((m) => PowersPaths.isPowerTarget(m.target));
+      const otherModifiers = this.modifiers.filter((m) => !PowersPaths.isPowerTarget(m.target));
       this.applyModifiersInRounds(otherModifiers);
 
       // 8. Ruleset-specific post-modifier processing (subclass)

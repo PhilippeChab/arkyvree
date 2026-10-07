@@ -14,12 +14,12 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
+import { ClassesPaths } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import type { KlassLevel, KlassLevelFeat, Modifier, Property, Session } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
 
 import { ListsSpells } from "./concerns/ListsSpells.ts";
 
@@ -156,12 +156,11 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         }
 
         if (klassLevel.level > 1) {
-          const normalizedKlassName = stripSeparators(klass.name);
           await Requirements.create(tx, {
             entityId: klassLevel.id,
             entityType: "klass_levels",
             level: "1",
-            target: `classes.${normalizedKlassName}.level`,
+            target: ClassesPaths.level(klass.name),
             value: (klassLevel.level - 1).toString(),
             valueType: "number",
             operator: "greater_than",

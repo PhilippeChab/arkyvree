@@ -4,13 +4,13 @@ import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Aptitudes, Feats, FeatsAptitudes, Modifiers, Properties } from "@/server/repositories/index.ts";
 import { NO_SKILL_FLAGS, normalizeSkillFlags, readSkillFlags } from "@/server/rulesets/dnd3.5/skills/skillFlags.ts";
+import SkillsPaths from "@/server/rulesets/dnd3.5/skills/SkillsPaths.ts";
 import type { PropertyRecord, SkillFlags, SkillsHooks } from "@/server/rulesets/engine/hooks/index.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
 } from "@/shared/dnd3.5/properties/index.ts";
-import { stripSeparators } from "@/shared/text.ts";
 
 export class Dnd35SkillsHooks implements SkillsHooks {
   buildProperties(skillId: string, flags: SkillFlags): PropertyRecord[] {
@@ -80,7 +80,7 @@ export class Dnd35SkillsHooks implements SkillsHooks {
       {
         sourceId: feat.id,
         sourceType: "feats",
-        target: `skills.${stripSeparators(skillName)}.misc`,
+        target: SkillsPaths.misc(skillName),
         operator: "add",
         value: "3",
         valueType: "number",

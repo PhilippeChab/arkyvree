@@ -1,5 +1,6 @@
 import type { Db } from "@/server/database/index.ts";
 import { Aptitudes, Feats, FeatsAptitudes, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import FeatsPaths from "@/server/rulesets/dnd3.5/feats/FeatsPaths.ts";
 import {
   FEAT_FAMILY,
   SPELL_AREA_OF_EFFECT,
@@ -117,7 +118,7 @@ export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceC
       entityId: greaterSpellFocus.id,
       entityType: "feats",
       level: "1",
-      target: `feats.spellfocus${strippedSchool}.possessed`,
+      target: FeatsPaths.possessed(`spellfocus${strippedSchool}`),
       operator: "equal",
       value: "true",
       valueType: "boolean",

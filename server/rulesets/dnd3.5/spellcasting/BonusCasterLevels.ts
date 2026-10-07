@@ -1,12 +1,13 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
+import AptitudesPaths from "@/server/rulesets/dnd3.5/aptitudes/AptitudesPaths.ts";
+import ClassesPaths from "@/server/rulesets/dnd3.5/classes/ClassesPaths.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import { SLOT_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import type { Components, FeatWithPMR, KlassLevelWithPMR } from "@/server/rulesets/engine/types.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
 
 /** A character level's key in the index of the class levels the character took. */
 function levelKey(characterLevelId: string, klassLevelId: string) {
@@ -33,7 +34,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
         if (klassData.bonuscasterlevel <= 0) continue;
 
-        const target = `classes.${stripSeparators(className)}.bonuscasterlevel`;
+        const target = ClassesPaths.bonusCasterLevel(className);
         const grantingLevels = this.grantingLevels(target, klassLevels, feats, takenAt, rulesetKlassById);
         const receivingBonusLevels = (bonusLevelsByKlassId.get(klassData.klass.id) ?? []).toSorted(
           (a, b) => a.level - b.level,
@@ -151,7 +152,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     ) {
       const aptitudes = this.aptitudes.getAptitudes();
       for (const [list, { className, modifiers }] of this.featListSlots(feats, featListIds)) {
-        const classLevel = `classes.${stripSeparators(className)}.level`;
+        const classLevel = ClassesPaths.level(className);
         const listLevels = aptitudes[list] as Record<string, unknown> | undefined;
         const classLists = this.spellListsOf(className).flatMap((key) => {
           const classList = aptitudes[key] as Record<string, unknown> | undefined;
@@ -172,7 +173,8 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
             const given = this.slotsGiven(
               modifiers.filter(
                 (modifier) =>
-                  modifier.target.startsWith(`aptitudes.${list}.${level}.`) && isGateMet(modifier, [classLevel]),
+                  modifier.target.startsWith(AptitudesPaths.spellLevelPrefix(list, level)) &&
+                  isGateMet(modifier, [classLevel]),
               ),
             );
             listLevel.uses += given.uses;
@@ -197,7 +199,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
     ) {
       const aptitudeModifiers = this.bonusKlassLevelModifiers.filter(
-        (m) => m.target.startsWith("aptitudes.") && isGateMet(m),
+        (m) => AptitudesPaths.isAptitudeTarget(m.target) && isGateMet(m),
       );
 
       for (const modifier of aptitudeModifiers) {
