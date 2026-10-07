@@ -1,4 +1,4 @@
-import { Alert, Box, Chip, Container, Menu, Typography } from "@mui/material";
+import { Alert, Box, Chip, Container, Menu, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
@@ -150,45 +150,50 @@ export default function CampaignDetailsPage() {
   return (
     <PageTransition>
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <DetailPageHeader
-          title={`⚔️ ${campaign.name}`}
-          onBack={() => navigate("/campaigns")}
-          onMenuOpen={canEdit ? (e) => setAnchorEl(e.currentTarget) : undefined}
-          chips={
-            <>
-              <Chip label={formatCount(campaign.currentPlayers, "player")} color="primary" sx={{ fontWeight: 600 }} />
-              <Chip label={campaign.rulesetName} color="secondary" sx={{ fontWeight: 600 }} />
-            </>
-          }
-          description={campaign.description || "Manage your campaign players, characters, and invitations"}
-        />
+        <Stack spacing={4}>
+          <DetailPageHeader
+            title={`⚔️ ${campaign.name}`}
+            onBack={() => navigate("/campaigns")}
+            onMenuOpen={canEdit ? (e) => setAnchorEl(e.currentTarget) : undefined}
+            chips={
+              <>
+                <Chip label={formatCount(campaign.currentPlayers, "player")} color="primary" sx={{ fontWeight: 600 }} />
+                <Chip label={campaign.rulesetName} color="secondary" sx={{ fontWeight: 600 }} />
+              </>
+            }
+            description={campaign.description || "Manage your campaign players, characters, and invitations"}
+          />
 
-        {campaign.deletedAt && (
-          <Alert severity="info" sx={{ mb: 3 }}>
-            <Typography variant="body2">
-              <strong>This campaign is archived and read-only.</strong> You can view all content but cannot make
-              changes.
-            </Typography>
-          </Alert>
-        )}
+          {/* An archived campaign's notice, above its tabs */}
+          <Stack spacing={3}>
+            {campaign.deletedAt && (
+              <Alert severity="info">
+                <Typography variant="body2">
+                  <strong>This campaign is archived and read-only.</strong> You can view all content but cannot make
+                  changes.
+                </Typography>
+              </Alert>
+            )}
 
-        <SectionTabs
-          tabs={TABS}
-          value={currentTab}
-          // Each tab's search has its own URL param, so switching keeps both.
-          onChange={(key) => navigate({ pathname: `/campaigns/${id}/${key}`, search: location.search })}
-          aria-label="campaign details tabs"
-        />
+            <SectionTabs
+              tabs={TABS}
+              value={currentTab}
+              // Each tab's search has its own URL param, so switching keeps both.
+              onChange={(key) => navigate({ pathname: `/campaigns/${id}/${key}`, search: location.search })}
+              aria-label="campaign details tabs"
+            />
+          </Stack>
 
-        {/* Both tabs stay mounted so switching keeps each one's search and loaded pages. */}
-        {TABS.map(({ key }) => {
-          const Section = SECTION_COMPONENTS[key];
-          return (
-            <Box key={key} role="tabpanel" hidden={key !== currentTab} sx={{ py: 3 }}>
-              <Section campaign={campaign} />
-            </Box>
-          );
-        })}
+          {/* Both tabs stay mounted so switching keeps each one's search and loaded pages. */}
+          {TABS.map(({ key }) => {
+            const Section = SECTION_COMPONENTS[key];
+            return (
+              <Box key={key} role="tabpanel" hidden={key !== currentTab} sx={{ py: 3 }}>
+                <Section campaign={campaign} />
+              </Box>
+            );
+          })}
+        </Stack>
 
         <Menu
           anchorEl={anchorEl}

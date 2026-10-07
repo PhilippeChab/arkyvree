@@ -1,7 +1,7 @@
 import {
-  Box,
   Chip,
   Link as MuiLink,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -41,7 +41,7 @@ export function EquipmentTable<T extends EquipmentTableRow>({
   renderActions,
 }: EquipmentTableProps<T>) {
   return (
-    <>
+    <Stack spacing={2}>
       <TableContainer sx={{ overflowX: "auto" }}>
         <Table size="small" sx={{ minWidth: 640 }}>
           <TableHead>
@@ -69,7 +69,7 @@ export function EquipmentTable<T extends EquipmentTableRow>({
           </TableHead>
           <TableBody>
             {rows.map((entry) => (
-              <TableRow key={entry.id} sx={entry.equipped ? { backgroundColor: "action.hover" } : {}}>
+              <TableRow key={entry.id} sx={{ bgcolor: entry.equipped ? "action.hover" : undefined }}>
                 <TableCell>
                   {rulesetId ? (
                     <MuiLink
@@ -108,10 +108,9 @@ export function EquipmentTable<T extends EquipmentTableRow>({
       </TableContainer>
       {encumbrance && (
         // Each figure wraps as a whole on narrow screens.
-        <Box
+        <Stack
+          direction="row"
           sx={{
-            mt: 2,
-            display: "flex",
             flexWrap: "wrap",
             justifyContent: "flex-end",
             alignItems: "center",
@@ -139,8 +138,8 @@ export function EquipmentTable<T extends EquipmentTableRow>({
               color={encumbrance.load === "overloaded" ? "error" : encumbrance.load === "heavy" ? "warning" : "info"}
             />
           )}
-        </Box>
+        </Stack>
       )}
-    </>
+    </Stack>
   );
 }

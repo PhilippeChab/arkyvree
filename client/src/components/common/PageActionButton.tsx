@@ -17,7 +17,7 @@ export function PageActionButton({ children, sx, ...props }: PageActionButtonPro
           px: 3,
           py: 1.5,
           borderRadius: 2,
-          boxShadow: (theme) => `0 4px 14px 0 ${theme.palette.primary.main}40`,
+          boxShadow: (theme) => theme.boxShadows.action,
         },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}

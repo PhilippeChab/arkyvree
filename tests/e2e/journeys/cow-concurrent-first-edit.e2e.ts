@@ -9,7 +9,7 @@ import { signIn } from "@/tests/e2e/support/signIn.ts";
 test("concurrent first edits preserve every property on one fork copy", async ({ page, ownerUser }) => {
   await signIn(page, ownerUser.email, ownerUser.password);
   await visitCoreRulesetList(page);
-  await page.locator('h6:has-text("Core SRD 3.5")').first().click();
+  await page.getByRole("heading", { name: "Core SRD 3.5" }).first().click();
   const baseId = page.url().match(/\/rulesets\/([a-f0-9-]+)/)?.[1];
   expect(baseId).toBeTruthy();
 

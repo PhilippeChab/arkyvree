@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Chip,
   DialogContent,
@@ -174,20 +173,20 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         }}
       >
         <Toolbar sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: 1 }}>
-            <Typography id="character-modifiers-title" variant="h6" sx={{ fontWeight: 600 }}>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flex: 1 }}>
+            <Typography id="character-modifiers-title" variant="h6" component="h2" sx={{ fontWeight: 600 }}>
               Manage Modifiers
             </Typography>
             <FaqHelpIcon
               text="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc."
               size={18}
             />
-          </Box>
+          </Stack>
           <Stack direction="row" spacing={1}>
             <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleAdd}>
               Add
             </Button>
-            <IconButton edge="end" aria-label="Close" onClick={onClose}>
+            <IconButton aria-label="Close" onClick={onClose}>
               <CloseIcon />
             </IconButton>
           </Stack>
@@ -244,14 +243,11 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                         })()}
                       </TableCell>
                       <TableCell align="right">
-                        <Box
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
                           className="row-actions"
-                          sx={{
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            gap: 0.5,
-                            ...ROW_ACTIONS_SX,
-                          }}
+                          sx={{ justifyContent: "flex-end", ...ROW_ACTIONS_SX }}
                         >
                           <IconButton size="small" aria-label="Edit modifier" onClick={() => handleEdit(mod)}>
                             <EditIcon fontSize="small" />
@@ -267,7 +263,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
-                        </Box>
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   ))}

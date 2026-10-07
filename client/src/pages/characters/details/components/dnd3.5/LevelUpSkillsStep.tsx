@@ -84,7 +84,9 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
       renderName={(label) =>
         skill.description ? (
           <Tooltip describeChild title={skill.description} enterTouchDelay={0} arrow>
-            <span style={{ borderBottom: "1px dashed currentColor", cursor: "help" }}>{label}</span>
+            <Box component="span" sx={{ borderBottom: 1, borderBottomStyle: "dashed", cursor: "help" }}>
+              {label}
+            </Box>
           </Tooltip>
         ) : (
           label
@@ -221,42 +223,47 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
 
   return (
     <Box>
-      <Box sx={{ position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper", pb: 1 }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
-          <Typography variant="h6">Skill Points to Spend: {skillData.skillPointsToSpend}</Typography>
+      <Stack spacing={1} sx={{ position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper", pb: 1 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <Typography variant="h6" component="h3">
+            Skill Points to Spend: {skillData.skillPointsToSpend}
+          </Typography>
           <Button startIcon={<CasinoIcon />} onClick={randomAssign} size="small">
             Auto
           </Button>
         </Stack>
-        <Typography
-          variant="subtitle2"
-          gutterBottom
-          sx={{
-            color:
-              pointsSpent > skillData.skillPointsToSpend
-                ? "error.main"
-                : pointsSpent === skillData.skillPointsToSpend
-                  ? "success.main"
-                  : "text.secondary",
-          }}
-        >
-          Points Spent: {pointsSpent} / {skillData.skillPointsToSpend}
+        <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
+          <Typography
+            variant="subtitle2"
+            component="p"
+            gutterBottom
+            sx={{
+              color:
+                pointsSpent > skillData.skillPointsToSpend
+                  ? "error.main"
+                  : pointsSpent === skillData.skillPointsToSpend
+                    ? "success.main"
+                    : "text.secondary",
+            }}
+          >
+            Points Spent: {pointsSpent} / {skillData.skillPointsToSpend}
+          </Typography>
           {pointsRemaining > 0 && (
-            <Box component="span" sx={{ color: "warning.main", ml: 1 }}>
+            <Typography variant="subtitle2" component="span" sx={{ color: "warning.main" }}>
               ({pointsRemaining} remaining)
-            </Box>
+            </Typography>
           )}
-        </Typography>
-      </Box>
+        </Stack>
+      </Stack>
       <TableContainer sx={{ overflowX: "auto", mx: { xs: -2, sm: 0 }, width: { xs: "calc(100% + 32px)", sm: "100%" } }}>
         <Table size="small" sx={{ minWidth: 420, tableLayout: "fixed" }}>
           <colgroup>
             <col />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 55 }} />
-            <col style={{ width: 55 }} />
-            <col style={{ width: 55 }} />
-            <col style={{ width: 55 }} />
+            <Box component="col" sx={{ width: 80 }} />
+            <Box component="col" sx={{ width: 55 }} />
+            <Box component="col" sx={{ width: 55 }} />
+            <Box component="col" sx={{ width: 55 }} />
+            <Box component="col" sx={{ width: 55 }} />
           </colgroup>
           <TableHead>
             <TableRow>

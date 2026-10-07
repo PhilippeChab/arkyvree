@@ -1,6 +1,7 @@
 import { Avatar, Box, Stack, Typography } from "@mui/material";
 import type { ComponentProps, ReactNode } from "react";
 
+import { lineClampSx } from "@/client/src/theme/text.ts";
 import { getInitial } from "@/shared/text.ts";
 
 import { StyledCard } from "./StyledCard.tsx";
@@ -35,15 +36,23 @@ export function ListCard({
 }: ListCardProps) {
   return (
     <StyledCard {...cardProps}>
-      <Box sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 1.5, sm: 2 }, position: "relative" }}>
+      {/* The header's inner space, down to the description: deeper under the pills */}
+      <Stack
+        spacing={1.5}
+        sx={{
+          p: { xs: 2, sm: 3 },
+          pb: pills ? { xs: 3.5, sm: 4 } : { xs: 3, sm: 3.5 },
+          position: "relative",
+        }}
+      >
         {corner && <Box sx={{ position: "absolute", top: 8, right: 8 }}>{corner}</Box>}
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5, minWidth: 0, pr: corner ? 4 : 0 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0, pr: corner ? 4 : 0 }}>
           <Avatar
             src={avatarSrc}
             sx={{
               width: 36,
               height: 36,
-              border: "2px solid",
+              border: 2,
               borderColor: "secondary.main",
               background: (theme) =>
                 `linear-gradient(135deg, ${theme.palette[avatarTone].light}, ${theme.palette[avatarTone].main})`,
@@ -54,25 +63,27 @@ export function ListCard({
           >
             {avatar ?? getInitial(title)}
           </Avatar>
-          <Typography variant="h6" noWrap sx={{ fontWeight: 600, color: "text.primary", lineHeight: 1.3, flex: 1 }}>
+          <Typography
+            variant="h6"
+            component="h2"
+            noWrap
+            sx={{ fontWeight: 600, color: "text.primary", lineHeight: 1.3, flex: 1 }}
+          >
             {title}
           </Typography>
         </Stack>
         {pills && (
-          <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: 1, mb: 2 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
             {pills}
           </Stack>
         )}
-      </Box>
+      </Stack>
       <Box sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1 }}>
         <Typography
           variant="body2"
           sx={{
+            ...lineClampSx(4),
             color: "text.secondary",
-            display: "-webkit-box",
-            WebkitLineClamp: 4,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
             lineHeight: 1.6,
             minHeight: "6.4em",
           }}
@@ -92,7 +103,6 @@ export function ListCardGrid({ children }: ListCardGridProps) {
         display: "grid",
         gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
         gap: 3,
-        mb: 3,
       }}
     >
       {children}

@@ -66,17 +66,10 @@ export function LevelWizardDialog({
         if (reason !== "backdropClick" && !isSaving) wizard.handleCancel();
       }}
       maxWidth="md"
-      sx={{
-        ...(!isMobile && {
-          "& .MuiDialog-paper": {
-            height: "90vh",
-            maxHeight: "90vh",
-          },
-        }),
-      }}
+      sx={[!isMobile && { "& .MuiDialog-paper": { height: "90vh", maxHeight: "90vh" } }]}
     >
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent sx={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <Stack component={DialogContent} sx={{ height: "100%", overflow: "hidden" }}>
         {/* Cancel confirm */}
         <AnimatedAlert
           in={wizard.showCancelConfirm}
@@ -97,7 +90,7 @@ export function LevelWizardDialog({
               </Button>
             </Stack>
           }
-          sx={{ mb: 2 }}
+          gutter={2}
         >
           Discard all level-up progress?
         </AnimatedAlert>
@@ -119,55 +112,54 @@ export function LevelWizardDialog({
               Proceed Anyway
             </Button>
           }
-          sx={{
-            mb: 2,
-            "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 },
-          }}
+          gutter={2}
+          sx={{ "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 } }}
         >
-          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-            Validation warnings
-          </Typography>
-          <ValidationIssueList issues={wizard.validationErrors} />
+          <Stack spacing={0.5}>
+            <Typography variant="subtitle2" component="h3">
+              Validation warnings
+            </Typography>
+            <ValidationIssueList issues={wizard.validationErrors} />
+          </Stack>
         </AnimatedAlert>
 
-        {/* Stepper */}
-        <Stepper
-          activeStep={wizard.activeStep}
-          alternativeLabel={isMobile}
-          sx={{
-            mb: 3,
-            flexShrink: 0,
-            "& .MuiStepLabel-iconContainer": {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            },
-            "& svg text": {
-              dominantBaseline: "middle",
-              textAnchor: "middle",
-            },
-            ...(isMobile && {
-              "& .MuiStepLabel-label": {
-                fontSize: "0.65rem",
+        <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
+          {/* Stepper */}
+          <Stepper
+            activeStep={wizard.activeStep}
+            alternativeLabel={isMobile}
+            sx={[
+              {
+                flexShrink: 0,
+                "& .MuiStepLabel-iconContainer": {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                },
+                "& svg text": {
+                  dominantBaseline: "middle",
+                  textAnchor: "middle",
+                },
               },
-            }),
-          }}
-        >
-          {stepLabels.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+              isMobile && { "& .MuiStepLabel-label": { fontSize: "0.65rem" } },
+            ]}
+          >
+            {stepLabels.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
 
-        {/* Step content */}
-        <Box sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", minHeight: 0 }}>{children}</Box>
-      </DialogContent>
+          {/* Step content */}
+          <Stack sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>{children}</Stack>
+        </Stack>
+      </Stack>
       <DialogActions sx={{ flexShrink: 0 }}>
         <Button onClick={wizard.handleCancel} disabled={isSaving} variant="outlined" color="inherit">
           Cancel
         </Button>
-        <Box sx={{ flex: "1 1 auto" }} />
+        <Box sx={{ flexGrow: 1 }} />
         {wizard.activeStep !== 0 && (
           <Button onClick={wizard.handleBack} disabled={isSaving}>
             Back

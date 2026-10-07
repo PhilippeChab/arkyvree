@@ -1,4 +1,4 @@
-import { Box, Link as MuiLink, Typography } from "@mui/material";
+import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -36,18 +36,21 @@ export default function ForgotPasswordPage() {
       title="Forgot Password"
       subtitle="Enter your email address and we'll send you a code to reset your password."
     >
-      <form onSubmit={handleSubmit(handleSendCode)} noValidate>
-        <EmailField control={control} name="emailAddress" rules={EMAIL_RULES} />
+      <Stack spacing={4}>
+        {/* The first field's own top, which adds to the gap above the form */}
+        <Stack component="form" onSubmit={handleSubmit(handleSendCode)} noValidate spacing={3} sx={{ pt: 2 }}>
+          <EmailField control={control} name="emailAddress" rules={EMAIL_RULES} />
 
-        <AuthSubmitButton loading={auth.pending}>Send Reset Code</AuthSubmitButton>
-      </form>
-      <Box sx={{ mt: 2, textAlign: "center" }}>
-        <Typography variant="body2">
-          <MuiLink component={Link} to="/sign-in" underline="hover">
-            Back to Sign In
-          </MuiLink>
-        </Typography>
-      </Box>
+          <AuthSubmitButton loading={auth.pending}>Send Reset Code</AuthSubmitButton>
+        </Stack>
+        <Box sx={{ textAlign: "center" }}>
+          <Typography variant="body2">
+            <MuiLink component={Link} to="/sign-in" underline="hover">
+              Back to Sign In
+            </MuiLink>
+          </Typography>
+        </Box>
+      </Stack>
     </AuthPage>
   );
 }

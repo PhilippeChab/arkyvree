@@ -1,5 +1,7 @@
 import { Typography } from "@mui/material";
 
+import { lineClampSx } from "@/client/src/theme/text.ts";
+
 interface DescriptionCellProps {
   text: string | null | undefined;
 }
@@ -10,12 +12,9 @@ export function DescriptionCell({ text }: DescriptionCellProps) {
     <Typography
       variant="body2"
       sx={{
+        ...lineClampSx(2),
         color: "text.secondary",
-        overflow: "hidden",
         textOverflow: "ellipsis",
-        display: "-webkit-box",
-        WebkitLineClamp: 2,
-        WebkitBoxOrient: "vertical",
       }}
     >
       {text || "—"}

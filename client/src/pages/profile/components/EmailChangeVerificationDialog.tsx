@@ -1,4 +1,13 @@
-import { Box, Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Link as MuiLink,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
@@ -73,39 +82,46 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
     <FormDialog open={open} onClose={handleClose} form={form} isLoading={verifyMutation.isPending} maxWidth="xs">
       <DialogTitle>Verify New Email</DialogTitle>
       <form onSubmit={form.handleSubmit(handleVerify)} noValidate>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            We sent an 8-digit code to <strong>{pendingEmail}</strong>
-          </Typography>
-
-          <AnimatedAlert in={!!error} severity="error" sx={{ mb: 2 }}>
-            {error}
-          </AnimatedAlert>
-
-          <AnimatedAlert in={resendSuccess} severity="success" sx={{ mb: 2 }}>
-            A new code has been sent to your email.
-          </AnimatedAlert>
-
-          <Controller
-            control={form.control}
-            name="digits"
-            render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
-          />
-
-          <Box sx={{ textAlign: "center", mb: 1 }}>
+        {/* Deeper at the bottom, under the resend link */}
+        <DialogContent sx={{ pb: 3.5 }}>
+          <Stack spacing={2}>
             <Typography variant="body2">
-              Didn't receive the code?{" "}
-              <MuiLink
-                component="button"
-                type="button"
-                underline="hover"
-                onClick={() => resendMutation.mutate()}
-                disabled={resendMutation.isPending}
-              >
-                Resend
-              </MuiLink>
+              We sent an 8-digit code to <strong>{pendingEmail}</strong>
             </Typography>
-          </Box>
+
+            <Box>
+              <AnimatedAlert in={!!error} severity="error" gutter={2}>
+                {error}
+              </AnimatedAlert>
+
+              <AnimatedAlert in={resendSuccess} severity="success" gutter={2}>
+                A new code has been sent to your email.
+              </AnimatedAlert>
+
+              <Stack spacing={3}>
+                <Controller
+                  control={form.control}
+                  name="digits"
+                  render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
+                />
+
+                <Box sx={{ textAlign: "center" }}>
+                  <Typography variant="body2">
+                    Didn't receive the code?{" "}
+                    <MuiLink
+                      component="button"
+                      type="button"
+                      underline="hover"
+                      onClick={() => resendMutation.mutate()}
+                      disabled={resendMutation.isPending}
+                    >
+                      Resend
+                    </MuiLink>
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} disabled={verifyMutation.isPending} variant="outlined" color="inherit">

@@ -66,6 +66,7 @@
 
 import path from "node:path";
 
+import { calleeName, elementName, hasAttribute, inClient, parentElement } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
 /** What a card renders: a container that opens on click and holds content of its own, so it can't be a link */
@@ -138,14 +139,6 @@ const TEXT_CONTROLS = new Set([
 
 /** The props an input takes its value through. */
 const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
-
-/** A call's name: `setValue` for `setValue(…)`, `form.setValue(…)` and `field.onChange?.(…)`. */
-function calleeName(node) {
-  const callee = node.callee.type === "ChainExpression" ? node.callee.expression : node.callee;
-  if (callee.type === "Identifier") return callee.name;
-  if (callee.type === "MemberExpression" && !callee.computed) return callee.property.name;
-  return null;
-}
 
 /** Whether a spread is `clickableProps(…)`'s, maybe on a condition (`interactive && clickableProps(pick)`) */
 function callsClickableProps(node) {
@@ -970,11 +963,6 @@ function createTooltips(context) {
   };
 }
 
-/** A JSX element's name: `IconButton`, `Dialog`. */
-function elementName(node) {
-  return node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;
-}
-
 /** Whether a member chain starts at `rpc`: `rpc.api.rulesets[":id"].$get`. */
 function fromRpc(node) {
   let object = node;
@@ -1002,15 +990,6 @@ function gatesOnValue(node) {
   if (node.type === "LogicalExpression" && node.operator === "&&")
     return gatesOnValue(node.left) || gatesOnValue(node.right);
   return false;
-}
-
-/** Whether a JSX element has the attribute `name`. */
-function hasAttribute(node, name) {
-  return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
-}
-
-function inClient(context) {
-  return repoPath(context.filename).startsWith("client/src/");
 }
 
 /**
@@ -1080,12 +1059,6 @@ function onlyNavigates(handler) {
   const isNavigate = call.type === "CallExpression" && calleeName(call) === "navigate" && call.arguments.length === 1;
   const [to] = call.arguments ?? [];
   return isNavigate && !(to.type === "Literal" && typeof to.value === "number") && to.type !== "UnaryExpression";
-}
-
-/** The nearest JSX element around `node`. */
-function parentElement(node) {
-  for (let p = node.parent; p; p = p.parent) if (p.type === "JSXElement") return p;
-  return null;
 }
 
 /** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */

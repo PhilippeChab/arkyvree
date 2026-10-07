@@ -6,6 +6,7 @@ import {
   ListItemButton,
   ListItemText,
   Skeleton,
+  Stack,
   TextField,
   Tooltip,
   Typography,
@@ -136,12 +137,12 @@ export function TargetPathBrowser({
   const breadcrumbSegments = segments;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      {/* Breadcrumbs */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.5, minHeight: 32 }}>
+    <Stack spacing={1}>
+      {/* Breadcrumbs: a segment's chevron a quarter unit from its chip, three from the chip before */}
+      <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", alignItems: "center", rowGap: 0.5, minHeight: 32 }}>
         {breadcrumbSegments.map((segment, index) => (
-          <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
-            {index > 0 && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary", mx: 0.25 }} />}
+          <Stack key={index} direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
+            {index > 0 && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
             <Chip
               label={segmentLabels[segment] || formatSegment(segment)}
               size="small"
@@ -150,19 +151,22 @@ export function TargetPathBrowser({
               onClick={disabled ? undefined : () => handleBreadcrumbClick(index)}
               sx={{ cursor: disabled ? "default" : "pointer" }}
             />
-          </Box>
+          </Stack>
         ))}
         {breadcrumbSegments.length > 0 && !disabled && (
-          <IconButton size="small" aria-label="Clear path" onClick={handleClear} sx={{ ml: 0.5 }}>
-            <ClearIcon fontSize="small" />
-          </IconButton>
+          // A unit from the last chip
+          <Stack direction="row" sx={{ pl: 0.25 }}>
+            <IconButton size="small" aria-label="Clear path" onClick={handleClear}>
+              <ClearIcon fontSize="small" />
+            </IconButton>
+          </Stack>
         )}
         {breadcrumbSegments.length === 0 && <Skeleton variant="rounded" width={100} height={24} />}
-      </Box>
+      </Stack>
       {/* Search + List */}
       {!disabled && (
         <>
-          <Box sx={{ position: "relative", display: "flex", gap: 0.5, alignItems: "center" }}>
+          <Stack direction="row" spacing={0.5} sx={{ position: "relative", alignItems: "center" }}>
             <TextField
               size="small"
               placeholder="Search..."
@@ -194,7 +198,7 @@ export function TargetPathBrowser({
                 <DiceSpinner size="small" />
               </Box>
             )}
-          </Box>
+          </Stack>
           <List
             dense
             sx={{
@@ -236,12 +240,12 @@ export function TargetPathBrowser({
                             {flatBreadcrumb}
                           </Typography>
                         ) : (
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                             <Typography variant="body2" sx={{ fontWeight: isGroup || isSelected ? 600 : 400 }}>
                               {segmentLabels[option.label] || formatSegment(option.label)}
                             </Typography>
                             {isGroup && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
-                          </Box>
+                          </Stack>
                         )
                       }
                     />
@@ -255,13 +259,13 @@ export function TargetPathBrowser({
               </Typography>
             )}
             {isFetchingNextPage && (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
+              <Stack direction="row" sx={{ justifyContent: "center", py: 1 }}>
                 <DiceSpinner size="small" />
-              </Box>
+              </Stack>
             )}
           </List>
         </>
       )}
-    </Box>
+    </Stack>
   );
 }

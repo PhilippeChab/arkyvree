@@ -1,4 +1,4 @@
-import { Avatar, Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { alpha, Avatar, Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { type DragEvent, useState } from "react";
 
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAttachment, useDemoTimeRemaining, useDetachAttachment, useDirectUpload } from "@/client/src/hooks/index.ts";
+import { DURATION, transitionOf } from "@/client/src/theme/animations.ts";
 import { ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
 
 import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
@@ -109,36 +110,42 @@ export function AttachmentField({
           onDragLeave={() => setDragOver(false)}
           role={interactive ? "button" : undefined}
           aria-label={canUpload ? (url ? `Change ${label ?? name}` : `Upload ${label ?? name}`) : undefined}
-          sx={{
-            ...CLICKABLE_SX,
-            position: "relative",
-            width: dimension,
-            height: dimension,
-            borderRadius: radius,
-            overflow: "hidden",
-            cursor: interactive && !url ? "pointer" : "default",
-            bgcolor: url ? "transparent" : "action.hover",
-            border: showRing ? "4px solid" : canUpload ? "2px dashed" : "2px solid",
-            borderColor: showRing ? "background.paper" : dragOver ? "primary.main" : url ? "transparent" : "divider",
-            boxShadow: showRing ? "0 6px 24px rgba(0,0,0,0.18)" : "none",
-            transition: "border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease",
-            transform: dragOver ? "scale(1.02)" : "none",
-            outline: "none",
-            "&:focus-visible": {
-              borderColor: "primary.main",
-              borderStyle: "solid",
+          sx={[
+            {
+              ...CLICKABLE_SX,
+              position: "relative",
+              width: dimension,
+              height: dimension,
+              borderRadius: radius,
+              overflow: "hidden",
+              cursor: interactive && !url ? "pointer" : "default",
+              bgcolor: url ? "transparent" : "action.hover",
+              border: showRing ? 4 : 2,
+              borderStyle: !showRing && canUpload ? "dashed" : "solid",
+              borderColor: showRing ? "background.paper" : dragOver ? "primary.main" : url ? "transparent" : "divider",
+              boxShadow: (theme) => (showRing ? theme.boxShadows.attachmentRing : "none"),
+              transition: transitionOf(["border-color", "transform", "box-shadow"], DURATION.quick),
+              transform: dragOver ? "scale(1.02)" : "none",
+              outline: "none",
+              "&:focus-visible": {
+                borderColor: "primary.main",
+                borderStyle: "solid",
+              },
+              // Hover overlay only when image is present and interactive
+              "& .attachment-overlay": {
+                opacity: 0,
+                transition: transitionOf(["opacity"], DURATION.fast),
+              },
             },
-            // Hover overlay only when image is present and interactive
-            "& .attachment-overlay": {
-              opacity: 0,
-              transition: "opacity 150ms ease",
-            },
-            "&:hover .attachment-overlay": interactive && url ? { opacity: 1 } : {},
-            // Keyboard a11y. Not :focus-within — that sticks after a click and
-            // leaves the overlay visible after the user moves the mouse away.
-            // Touch users have the always-visible camera + delete buttons.
-            "&:focus-visible .attachment-overlay": interactive && url ? { opacity: 1 } : {},
-          }}
+            interactive &&
+              !!url && {
+                "&:hover .attachment-overlay": { opacity: 1 },
+                // Keyboard a11y. Not :focus-within — that sticks after a click and
+                // leaves the overlay visible after the user moves the mouse away.
+                // Touch users have the always-visible camera + delete buttons.
+                "&:focus-visible .attachment-overlay": { opacity: 1 },
+              },
+          ]}
         >
           {url ? (
             isAvatar ? (
@@ -185,42 +192,40 @@ export function AttachmentField({
           {/* Hover overlay over an existing image */}
           {url && interactive && (
             // A click on the overlay is the image's: it bubbles to it
-            <Box
+            <Stack
               className="attachment-overlay"
+              spacing={0.75}
               sx={{
                 position: "absolute",
                 inset: 0,
-                display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                bgcolor: "rgba(0,0,0,0.55)",
+                bgcolor: (theme) => alpha(theme.palette.common.black, 0.55),
                 color: "common.white",
                 cursor: "pointer",
-                gap: 0.75,
-                flexDirection: "column",
               }}
             >
               <PhotoCameraOutlinedIcon sx={{ fontSize: dimension * 0.22 }} />
               <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: 0.5 }}>
                 Change
               </Typography>
-            </Box>
+            </Stack>
           )}
 
           {/* Loading spinner — covers everything */}
           {busy && (
-            <Box
+            <Stack
+              direction="row"
               sx={{
                 position: "absolute",
                 inset: 0,
-                display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                bgcolor: "rgba(0,0,0,0.5)",
+                bgcolor: (theme) => alpha(theme.palette.common.black, 0.5),
               }}
             >
               <DiceSpinner size={dimension < 80 ? "small" : dimension < 160 ? "medium" : "large"} />
-            </Box>
+            </Stack>
           )}
         </Box>
 
@@ -242,7 +247,7 @@ export function AttachmentField({
                 bgcolor: "primary.main",
                 color: "primary.contrastText",
                 boxShadow: 2,
-                border: "3px solid",
+                border: 3,
                 borderColor: "background.paper",
                 "&:hover": { bgcolor: "primary.dark" },
               }}
@@ -267,7 +272,7 @@ export function AttachmentField({
                 bgcolor: "background.paper",
                 color: "text.secondary",
                 boxShadow: 2,
-                border: "3px solid",
+                border: 3,
                 borderColor: "background.paper",
                 "&:hover": { bgcolor: "error.main", color: "error.contrastText" },
               }}

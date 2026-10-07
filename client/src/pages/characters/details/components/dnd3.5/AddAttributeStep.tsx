@@ -27,18 +27,21 @@ export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
         const selected = abilityIncreases[index] ?? null;
 
         return (
-          <Box key={index}>
-            <Typography variant="h6" sx={{ mb: 0.25 }}>
+          <Stack key={index} spacing={0.25}>
+            <Typography variant="h6" component="h3">
               {detail ? `${detail.klassName} Level ${detail.level}` : `Level ${index + 1}`}
             </Typography>
-            <AttributeIncreaseField
-              attributes={attributeData.attributes}
-              baseRules={baseRules}
-              name={`attribute-increase-${index}`}
-              value={selected}
-              onChange={(abilityId) => onAbilityIncreaseChange(index, abilityId)}
-            />
-          </Box>
+            {/* The field sits on a line of the block's text, as it did under the title */}
+            <Box>
+              <AttributeIncreaseField
+                attributes={attributeData.attributes}
+                baseRules={baseRules}
+                name={`attribute-increase-${index}`}
+                value={selected}
+                onChange={(abilityId) => onAbilityIncreaseChange(index, abilityId)}
+              />
+            </Box>
+          </Stack>
         );
       })}
     </Stack>

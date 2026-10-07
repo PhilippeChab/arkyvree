@@ -1,7 +1,8 @@
-import { Box, IconButton, Tab, Tabs, Typography, useTheme } from "@mui/material";
+import { Box, IconButton, Stack, Tab, Tabs, Typography } from "@mui/material";
 import { type ElementType, type MouseEvent, type ReactNode, useEffect, useRef } from "react";
 
 import { ArrowBackIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
+import { DURATION } from "@/client/src/theme/animations.ts";
 
 interface DetailPageHeaderProps {
   title: string;
@@ -47,10 +48,9 @@ export function DetailPageHeader({
   const cornerButtonSx = { position: "absolute", "&:hover": { bgcolor: "action.hover" } } as const;
 
   return (
-    <Box
+    <Stack
+      direction="row"
       sx={{
-        mb: 4,
-        display: "flex",
         alignItems: "center",
         py: 2,
         borderBottom: 1,
@@ -67,27 +67,33 @@ export function DetailPageHeader({
         </IconButton>
       )}
       <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, md: 8 } }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 1 }}>
-          <Typography component="h1" sx={{ fontWeight: 700, typography: { xs: "h4", md: "h3" } }}>
-            {title}
-          </Typography>
-          {titleAdornment}
-        </Box>
-        {chips && (
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>{chips}</Box>
-        )}
-        <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>
-          {description}
-        </Typography>
-        {children}
+        <Stack spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center" }}>
+            <Typography component="h1" sx={{ fontWeight: 700, typography: { xs: "h4", md: "h3" } }}>
+              {title}
+            </Typography>
+            {titleAdornment}
+          </Stack>
+          <Stack spacing={2}>
+            {chips && (
+              <Stack direction="row" spacing={1} sx={{ justifyContent: "center", flexWrap: "wrap" }}>
+                {chips}
+              </Stack>
+            )}
+            <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>
+              {description}
+            </Typography>
+          </Stack>
+          {children}
+        </Stack>
       </Box>
-    </Box>
+    </Stack>
   );
 }
 
 /** A detail page tab's content: the page's centered column, up to 1200px. */
 export function SectionContent({ children }: SectionContentProps) {
-  return <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>{children}</Box>;
+  return <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto" }}>{children}</Box>;
 }
 
 /** Scrollable pill tabs switching the sections of a detail page. */
@@ -99,7 +105,7 @@ export function SectionTabs<K extends string>({
   "aria-label": ariaLabel,
 }: SectionTabsProps<K>) {
   const tabsRef = useRef<HTMLDivElement>(null);
-  const settleDelay = useTheme().transitions.duration.standard;
+  const settleDelay = DURATION.moderate;
 
   // Tabs scrolls the selected tab into view before its scroll buttons appear and narrow the strip,
   // which can leave the tab half hidden: bring it back whenever the strip's width changes. Only once
@@ -128,7 +134,7 @@ export function SectionTabs<K extends string>({
   }, [settleDelay]);
 
   return (
-    <Box sx={{ borderRadius: 2, bgcolor: "action.hover", p: 1, mb: 4 }}>
+    <Box sx={{ borderRadius: 2, bgcolor: "action.hover", p: 1 }}>
       <Tabs
         ref={tabsRef}
         value={value}

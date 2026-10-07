@@ -34,32 +34,39 @@ function FeatRow({ name, label, description, extra }: FeatRowProps) {
   const hasExtra = extra != null && extra !== false;
 
   return (
-    <Box sx={{ borderLeft: "4px solid", borderColor: "primary.main", pl: 2 }}>
-      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-        <Typography sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}>
-          {name}
-        </Typography>
-        {hasExtra && (
-          <IconButton
-            size="small"
-            onClick={() => setOpen((p) => !p)}
-            sx={{ p: 0 }}
-            aria-label={open ? `Hide ${label} details` : `Show ${label} details`}
-            aria-expanded={open}
+    // Without details, the bar runs a little past the description
+    <Stack spacing={1} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2, pb: hasExtra ? 0 : 1 }}>
+      <Box>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+          <Typography
+            component="h3"
+            sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}
           >
-            {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-          </IconButton>
-        )}
-      </Stack>
-      <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
-        {description || "—"}
-      </Typography>
+            {name}
+          </Typography>
+          {hasExtra && (
+            <IconButton
+              size="small"
+              onClick={() => setOpen((p) => !p)}
+              sx={{ p: 0 }}
+              aria-label={open ? `Hide ${label} details` : `Show ${label} details`}
+              aria-expanded={open}
+            >
+              {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            </IconButton>
+          )}
+        </Stack>
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          {description || "—"}
+        </Typography>
+      </Box>
       {hasExtra && (
-        <Collapse in={open} timeout="auto" unmountOnExit>
-          {extra}
+        // Mounted while closed: the space above it stays, as the details open and close within it
+        <Collapse in={open} timeout="auto">
+          <Box sx={{ pt: 1.5 }}>{extra}</Box>
         </Collapse>
       )}
-    </Box>
+    </Stack>
   );
 }
 
@@ -67,12 +74,13 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Box>
-      <Box
+    <Stack spacing={2}>
+      <Stack
+        direction="row"
         {...clickableProps(() => setOpen((prev) => !prev))}
-        sx={{ ...CLICKABLE_SX, display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}
+        sx={[CLICKABLE_SX, { alignItems: "center", justifyContent: "space-between" }]}
       >
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+        <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
           Granted ({feats.length})
         </Typography>
         <IconButton
@@ -83,14 +91,18 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
         >
           {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
         </IconButton>
-      </Box>
-      <Collapse in={open} timeout="auto" unmountOnExit>
+      </Stack>
+      {/* Mounted while closed: the space above it stays, as the list opens and closes within it */}
+      <Collapse in={open} timeout="auto">
         <Stack spacing={3}>
           {feats.map((feat) => {
             const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
             return (
-              <Box key={feat.id} sx={{ borderLeft: "4px solid", borderColor: "primary.main", pl: 2 }}>
-                <Typography sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}>
+              <Box key={feat.id} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2, pb: 1 }}>
+                <Typography
+                  component="h4"
+                  sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}
+                >
                   {featLink ? (
                     <MuiLink
                       component={Link}
@@ -105,7 +117,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
                     feat.name
                   )}
                 </Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
                   {feat.description || "—"}
                 </Typography>
               </Box>
@@ -113,7 +125,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
           })}
         </Stack>
       </Collapse>
-    </Box>
+    </Stack>
   );
 }
 

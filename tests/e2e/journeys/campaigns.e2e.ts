@@ -67,7 +67,7 @@ test.describe("Campaigns", () => {
     await createCharacter(page, characterName);
 
     await page.goto("/campaigns");
-    await page.locator(`h6:has-text("${campaignName}")`).first().click();
+    await page.getByRole("heading", { name: campaignName }).first().click();
     await page.getByRole("tab", { name: "Characters", exact: true }).click();
     await page.getByRole("button", { name: "Link Character" }).click();
     const dialog = page.getByRole("dialog", { name: "Link Character to Campaign" });

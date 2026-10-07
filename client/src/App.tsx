@@ -16,8 +16,6 @@ import DashboardPage from "./pages/dashboard/DashboardPage.tsx";
 import { useAuthStore } from "./stores/authStore.ts";
 import { isDemoExpired } from "./stores/demoExpiredFlag.ts";
 
-import "./App.css";
-
 const AbilityDetailsPage = lazy(() => import("./pages/rulesets/details/entities/AbilityDetailsPage.tsx"));
 const ActivitiesPage = lazy(() => import("./pages/activities/ActivitiesPage.tsx"));
 const AptitudeDetailsPage = lazy(() => import("./pages/rulesets/details/entities/AptitudeDetailsPage.tsx"));

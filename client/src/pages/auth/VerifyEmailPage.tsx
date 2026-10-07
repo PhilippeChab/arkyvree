@@ -1,4 +1,4 @@
-import { Box, Link as MuiLink, Typography } from "@mui/material";
+import { Link as MuiLink, Stack, Typography } from "@mui/material";
 import { Controller } from "react-hook-form";
 import { Link, Navigate, useLocation } from "react-router-dom";
 
@@ -55,28 +55,30 @@ export default function VerifyEmailPage() {
         </>
       }
     >
-      <form onSubmit={form.handleSubmit(handleVerify)} noValidate>
-        <Controller
-          control={form.control}
-          name="digits"
-          render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
-        />
+      <Stack spacing={2}>
+        <Stack component="form" onSubmit={form.handleSubmit(handleVerify)} noValidate spacing={5}>
+          <Controller
+            control={form.control}
+            name="digits"
+            render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
+          />
 
-        <AuthSubmitButton loading={auth.pending} disabled={!isComplete}>
-          Verify
-        </AuthSubmitButton>
-      </form>
-      <Box sx={{ textAlign: "center" }}>
-        <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
-          Don't see it? Check your spam or junk folder.
-        </Typography>
-        <ResendCodeLink onResend={handleResend} disabled={auth.pending} />
-        <Typography variant="body2" sx={{ mt: 1 }}>
-          <MuiLink component={Link} to={fromSignIn ? "/sign-in" : "/sign-up"} underline="hover">
-            {fromSignIn ? "Back to Sign In" : "Back to Sign Up"}
-          </MuiLink>
-        </Typography>
-      </Box>
+          <AuthSubmitButton loading={auth.pending} disabled={!isComplete}>
+            Verify
+          </AuthSubmitButton>
+        </Stack>
+        <Stack spacing={1} sx={{ textAlign: "center" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            Don't see it? Check your spam or junk folder.
+          </Typography>
+          <ResendCodeLink onResend={handleResend} disabled={auth.pending} />
+          <Typography variant="body2">
+            <MuiLink component={Link} to={fromSignIn ? "/sign-in" : "/sign-up"} underline="hover">
+              {fromSignIn ? "Back to Sign In" : "Back to Sign Up"}
+            </MuiLink>
+          </Typography>
+        </Stack>
+      </Stack>
     </AuthPage>
   );
 }

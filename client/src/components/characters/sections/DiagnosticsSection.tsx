@@ -2,6 +2,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Box,
   Chip,
   Collapse,
   IconButton,
@@ -91,7 +92,7 @@ function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
   return (
     <Accordion disableGutters sx={ACCORDION_SX}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={SUMMARY_SX}>
-        <Typography variant="subtitle2">
+        <Typography variant="subtitle2" component="h4">
           {label} ({count})
         </Typography>
       </AccordionSummary>
@@ -276,7 +277,9 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
       <Accordion defaultExpanded={false} disableGutters sx={ACCORDION_SX}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={SUMMARY_SX}>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <Typography variant="h6">Diagnostics</Typography>
+            <Typography variant="h6" component="h2">
+              Diagnostics
+            </Typography>
             <Chip
               label={validation.valid ? "Valid" : "Invalid"}
               color={validation.valid ? "success" : "error"}
@@ -288,22 +291,25 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
           <Stack spacing={3}>
             {/* Validation Issues */}
             {validation.issues.length > 0 && (
-              <div>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+              <Stack spacing={1}>
+                <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
                   Issues
                 </Typography>
-                {validation.issues.map((issue, i) => (
-                  <Typography key={i} variant="body2" sx={{ pl: 1, py: 0.25 }}>
-                    {issue.message}
-                  </Typography>
-                ))}
-              </div>
+                <Box>
+                  {validation.issues.map((issue, i) => (
+                    <Typography key={i} variant="body2" sx={{ pl: 1, py: 0.25 }}>
+                      {issue.message}
+                    </Typography>
+                  ))}
+                </Box>
+              </Stack>
             )}
 
             {/* Requirements System Status */}
-            <div>
-              <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            <Box>
+              {/* Its tables follow as one list of accordions, the space above them the title's */}
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center", pb: 1 }}>
+                <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
                   Requirements
                 </Typography>
                 <Stack direction="row" spacing={1}>
@@ -332,15 +338,16 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               <RequirementTable groups={requirements.fulfilledRequirementGroups} label="Fulfilled" />
               <RequirementTable groups={requirements.unmetRequirementGroups} label="Unmet" />
               <InvalidRequirementTable items={requirements.invalidRequirements} />
-            </div>
+            </Box>
 
             {/* Modifier System Status */}
-            <div>
-              <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            <Box>
+              {/* Its tables follow as one list of accordions, the space above them the title's */}
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center", pb: 1 }}>
+                <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
                   Modifiers
                 </Typography>
-                <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 0.5 }}>
+                <Stack direction="row" sx={{ flexWrap: "wrap", columnGap: 1.5, rowGap: 0.5 }}>
                   <Chip
                     label={`Applied: ${modifiers.appliedModifiers.length}`}
                     color="success"
@@ -372,7 +379,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               <ModifierTable modifiers={modifiers.unappliedModifiers} label="Unapplied" />
               <ModifierTable modifiers={modifiers.inactiveModifiers} label="Inactive" />
               <SkippedModifierTable items={modifiers.skippedModifiers} />
-            </div>
+            </Box>
           </Stack>
         </AccordionDetails>
       </Accordion>

@@ -1,3 +1,4 @@
+import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback } from "react";
@@ -77,38 +78,40 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
   return (
     <SectionContent>
-      <SearchBar
-        {...searchTextProps}
-        searchPlaceholder="Search aptitudes..."
-        actions={
-          <SectionActions
-            ruleset={ruleset}
-            childOnly={childOnly}
-            onChildOnlyChange={onChildOnlyChange}
-            addLabel="Add Aptitude"
-            onAdd={handleCreate}
+      <Stack spacing={3}>
+        <SearchBar
+          {...searchTextProps}
+          searchPlaceholder="Search aptitudes..."
+          actions={
+            <SectionActions
+              ruleset={ruleset}
+              childOnly={childOnly}
+              onChildOnlyChange={onChildOnlyChange}
+              addLabel="Add Aptitude"
+              onAdd={handleCreate}
+            />
+          }
+        />
+        <Stack spacing={2}>
+          <RulesetSectionTable
+            data={aptitudes}
+            search={searchQuery}
+            isLoading={isLoading}
+            columns={APTITUDES_COLUMNS}
+            onRowClick={handleRowClick}
+            onRowMouseEnter={handleRowMouseEnter}
+            renderCell={renderCell}
+            emptyIcon={AptitudesIcon}
+            emptyTitle="No aptitudes"
+            emptyDescription="No aptitudes available for this ruleset."
           />
-        }
-      />
-
-      <RulesetSectionTable
-        data={aptitudes}
-        search={searchQuery}
-        isLoading={isLoading}
-        columns={APTITUDES_COLUMNS}
-        onRowClick={handleRowClick}
-        onRowMouseEnter={handleRowMouseEnter}
-        renderCell={renderCell}
-        emptyIcon={AptitudesIcon}
-        emptyTitle="No aptitudes"
-        emptyDescription="No aptitudes available for this ruleset."
-      />
-
-      <LoadMoreButton
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        onClick={() => fetchNextPage()}
-      />
+          <LoadMoreButton
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
+        </Stack>
+      </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Aptitude">
         <AptitudeFormFields form={createForm} />

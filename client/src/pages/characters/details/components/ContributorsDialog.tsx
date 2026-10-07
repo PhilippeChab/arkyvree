@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   DialogActions,
   DialogContent,
@@ -105,7 +104,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
         <DialogTitle>Contributors</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
-            <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", gap: 1 }}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 Contributors can edit this character and download its PDF.
               </Typography>
@@ -126,7 +125,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
               ) : null}
             </Stack>
 
-            <Box sx={{ minHeight: { xs: 280, sm: 360 }, display: "flex", flexDirection: "column" }}>
+            <Stack sx={{ minHeight: { xs: 280, sm: 360 } }}>
               {isLoading ? (
                 <DiceSpinner sx={{ flex: 1 }} />
               ) : error ? (
@@ -149,7 +148,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                   }
                 />
               ) : (
-                <>
+                <Stack spacing={2}>
                   <ContributorsTable
                     owner={owner}
                     contributors={contributors}
@@ -175,9 +174,9 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                     isFetchingNextPage={isFetchingNextPage}
                     onClick={() => fetchNextPage()}
                   />
-                </>
+                </Stack>
               )}
-            </Box>
+            </Stack>
           </Stack>
         </DialogContent>
         <DialogActions>

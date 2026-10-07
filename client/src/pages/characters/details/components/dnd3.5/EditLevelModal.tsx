@@ -1,3 +1,4 @@
+import { Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
@@ -91,7 +92,7 @@ export function EditLevelModal({ open, onClose, characterId, baseRules, editingL
       case "review":
         return <Sections.LevelUpReviewStep wizard={wizard} />;
       default:
-        return <p>Unknown step</p>;
+        return <Typography>Unknown step</Typography>;
     }
   };
 

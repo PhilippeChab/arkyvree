@@ -1,8 +1,8 @@
-import { Box, type SxProps, type Theme, Typography } from "@mui/material";
+import { Box, Stack, type SxProps, type Theme, Typography } from "@mui/material";
 import type { ElementType, ReactNode } from "react";
 
 import { SearchOffIcon } from "@/client/src/components/icons/index.ts";
-import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION } from "@/client/src/lib/animations.ts";
+import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface BlankStateProps {
   /** Icon component, sized and tinted here so every empty state looks alike. */
@@ -20,13 +20,15 @@ interface NoMatchesStateProps {
 
 export function BlankState({ icon: Icon, title, description, action, sx }: BlankStateProps) {
   return (
-    <Box
+    <Stack
+      spacing={2}
       sx={[
         {
           textAlign: "center",
           py: { xs: 4, sm: 8 },
           px: { xs: 2, sm: 4 },
-          border: "2px dashed",
+          border: 2,
+          borderStyle: "dashed",
           borderColor: "secondary.main",
           borderRadius: 2,
           background: (theme) =>
@@ -38,21 +40,22 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
       ]}
     >
       {Icon && (
-        <Box sx={{ filter: (theme) => `drop-shadow(0 2px 4px ${theme.palette.secondary.main}40)` }}>
-          <Icon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2, opacity: 0.5 }} />
+        <Box sx={{ filter: (theme) => theme.dropShadows.blankStateIcon }}>
+          <Icon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", opacity: 0.5 }} />
         </Box>
       )}
-      <Typography variant="h6" gutterBottom sx={{ color: "text.secondary" }}>
-        {title}
-      </Typography>
-      <Typography
-        variant="body2"
-        sx={{ color: "text.secondary", mb: action ? 3 : 0, maxWidth: 400, mx: "auto", fontStyle: "italic" }}
-      >
-        {description}
-      </Typography>
-      {action}
-    </Box>
+      <Stack spacing={3}>
+        <Box>
+          <Typography variant="h6" component="p" gutterBottom sx={{ color: "text.secondary" }}>
+            {title}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", maxWidth: 400, mx: "auto", fontStyle: "italic" }}>
+            {description}
+          </Typography>
+        </Box>
+        {action && <Box>{action}</Box>}
+      </Stack>
+    </Stack>
   );
 }
 

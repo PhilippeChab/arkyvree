@@ -85,7 +85,7 @@ export type ForkRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":i
 function PrivacyToggle({ value, onChange, disabled }: PrivacyToggleProps) {
   return (
     <Box>
-      <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
+      <Typography variant="subtitle2" component="p" gutterBottom sx={{ color: "text.secondary" }}>
         Privacy
       </Typography>
       <ToggleButtonGroup
@@ -116,32 +116,34 @@ function PrivacyToggle({ value, onChange, disabled }: PrivacyToggleProps) {
 function RulesetKindToggle({ value, onChange, disabled }: RulesetKindToggleProps) {
   return (
     <Box>
-      <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
+      <Typography variant="subtitle2" component="p" gutterBottom sx={{ color: "text.secondary" }}>
         Publish as
       </Typography>
-      <ToggleButtonGroup
-        value={value}
-        exclusive
-        onChange={(_, next: PublishKind | null) => next && onChange(next)}
-        disabled={disabled}
-        size="small"
-      >
-        <ToggleButton value="ruleset">
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <RulesetIcon fontSize="small" />
-            <Typography variant="body2">Ruleset</Typography>
-          </Stack>
-        </ToggleButton>
-        <ToggleButton value="extension">
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <ExtensionIcon fontSize="small" />
-            <Typography variant="body2">Extension</Typography>
-          </Stack>
-        </ToggleButton>
-      </ToggleButtonGroup>
-      <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
-        Rulesets are playable directly. Extensions are content packs that other rulesets subscribe to.
-      </Typography>
+      <Stack spacing={1} sx={{ alignItems: "flex-start" }}>
+        <ToggleButtonGroup
+          value={value}
+          exclusive
+          onChange={(_, next: PublishKind | null) => next && onChange(next)}
+          disabled={disabled}
+          size="small"
+        >
+          <ToggleButton value="ruleset">
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <RulesetIcon fontSize="small" />
+              <Typography variant="body2">Ruleset</Typography>
+            </Stack>
+          </ToggleButton>
+          <ToggleButton value="extension">
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <ExtensionIcon fontSize="small" />
+              <Typography variant="body2">Extension</Typography>
+            </Stack>
+          </ToggleButton>
+        </ToggleButtonGroup>
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          Rulesets are playable directly. Extensions are content packs that other rulesets subscribe to.
+        </Typography>
+      </Stack>
     </Box>
   );
 }
@@ -258,7 +260,8 @@ export function PublishRulesetDialog({
       confirmIcon={<PublishIcon />}
     >
       {canBeExtension && (
-        <Box sx={{ mt: 2 }}>
+        // Its room below the dialog's question
+        <Box sx={{ pt: 2 }}>
           <RulesetKindToggle value={kind} onChange={onKindChange} disabled={isLoading} />
         </Box>
       )}

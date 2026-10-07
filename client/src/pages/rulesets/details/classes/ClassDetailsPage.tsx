@@ -1,4 +1,4 @@
-import { Box, Chip, MenuItem, TextField } from "@mui/material";
+import { Box, Chip, MenuItem, Stack, TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
@@ -230,7 +230,6 @@ export default function ClassDetailsPage() {
           <>
             <EntityDetailsCard
               title="Class Overview"
-              sx={{ mb: 4 }}
               description={classData.description}
               chips={
                 <>
@@ -287,21 +286,22 @@ export default function ClassDetailsPage() {
                   : undefined
               }
             />
+            <Stack spacing={4}>
+              <SectionTabs
+                tabs={TABS}
+                value={currentTab}
+                // Keep the Back target the page was opened with.
+                onChange={(key) =>
+                  navigate(`/rulesets/${rulesetId}/classes/${classId}/${key}`, { state: location.state })
+                }
+                onTabHover={(key) => void prefetchClassSection(queryClient, rulesetId, classId, key)}
+                aria-label="class details tabs"
+              />
 
-            <SectionTabs
-              tabs={TABS}
-              value={currentTab}
-              // Keep the Back target the page was opened with.
-              onChange={(key) =>
-                navigate(`/rulesets/${rulesetId}/classes/${classId}/${key}`, { state: location.state })
-              }
-              onTabHover={(key) => void prefetchClassSection(queryClient, rulesetId, classId, key)}
-              aria-label="class details tabs"
-            />
-
-            <Box role="tabpanel">
-              <Section rulesetId={rulesetId} classId={classId} className={classData.name} ruleset={ruleset} />
-            </Box>
+              <Box role="tabpanel">
+                <Section rulesetId={rulesetId} classId={classId} className={classData.name} ruleset={ruleset} />
+              </Box>
+            </Stack>
           </>
         )}
       </EntityDetailLayout>

@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 import { type ElementType, useMemo } from "react";
 
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
@@ -59,10 +59,12 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
   };
 
   return (
-    <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="h6">{title}</Typography>
-      </Box>
+    <Stack spacing={2}>
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+        <Typography variant="h6" component="h2">
+          {title}
+        </Typography>
+      </Stack>
 
       <RulesetSectionTable
         data={keys.length > 0 ? sortedLevels : undefined}
@@ -73,6 +75,6 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
         emptyTitle={emptyTitle}
         emptyDescription={emptyDescription}
       />
-    </Box>
+    </Stack>
   );
 }

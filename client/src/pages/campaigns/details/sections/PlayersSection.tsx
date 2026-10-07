@@ -4,6 +4,7 @@ import {
   Chip,
   IconButton,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -247,206 +248,207 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
 
   return (
     <SectionContent>
-      {/* Header */}
-      <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>Players</Typography>
-      <SearchBar
-        {...searchTextProps}
-        searchPlaceholder="Search players..."
-        actions={
-          canManagePlayers &&
-          !campaign.deletedAt && (
-            <Button variant="contained" startIcon={<AddIcon />} size="medium" onClick={handleAddPlayer}>
-              Add Player
-            </Button>
-          )
-        }
-      />
-      {/* Loading State */}
-      {playersLoading && <DiceSpinner sx={{ py: 4 }} />}
-      {/* Error State */}
-      {playersError && <LoadError what="Players" error={playersError} sx={{ mb: 3 }} />}
-      {/* Table */}
-      {!playersLoading &&
-        !playersError &&
-        (players.length > 0 ? (
-          <>
-            <TableContainer
-              component={Paper}
-              sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflowX: "auto" }}
-            >
-              <Table sx={{ width: "100%" }}>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: "action.hover" }}>
-                    <TableCell sx={{ fontWeight: 600, width: "20%" }}>Player</TableCell>
-                    <TableCell sx={{ fontWeight: 600, width: "20%" }}>Role</TableCell>
-                    <TableCell sx={{ fontWeight: 600, width: "20%" }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 600, width: "20%" }}>Joined</TableCell>
-                    <TableCell sx={{ fontWeight: 600, width: "10%" }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {players.map((player) => {
-                    const slot = getPlayerSlot(player);
-                    const displayInfo = { ...playerDisplay(player, slot), statusChip: STATUS_CHIPS[slot.state] };
-                    const isGameMaster = player.role === "Game Master";
-                    const isCurrentUser = player.userId === currentUserId;
-                    const canRevokeInvite = slot.state === "pending" && canManageInvites && !campaign.deletedAt;
-                    const canEditPlayer =
-                      (!campaign.deletedAt &&
-                        ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser)) ||
-                      canRevokeInvite;
+      <Stack spacing={3}>
+        <Typography component="h2" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
+          Players
+        </Typography>
+        <SearchBar
+          {...searchTextProps}
+          searchPlaceholder="Search players..."
+          actions={
+            canManagePlayers &&
+            !campaign.deletedAt && (
+              <Button variant="contained" startIcon={<AddIcon />} size="medium" onClick={handleAddPlayer}>
+                Add Player
+              </Button>
+            )
+          }
+        />
+        {/* Loading State */}
+        {playersLoading && <DiceSpinner sx={{ py: 4 }} />}
+        {/* Error State */}
+        {playersError && (
+          // The room below the error, at the end of the tab
+          <Box sx={{ pb: 3 }}>
+            <LoadError what="Players" error={playersError} />
+          </Box>
+        )}
+        {/* Table */}
+        {!playersLoading &&
+          !playersError &&
+          (players.length > 0 ? (
+            <Stack spacing={2}>
+              <TableContainer
+                component={Paper}
+                sx={{ borderRadius: 2, border: 1, borderColor: "divider", overflowX: "auto" }}
+              >
+                <Table sx={{ width: "100%" }}>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: "action.hover" }}>
+                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Player</TableCell>
+                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Role</TableCell>
+                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Joined</TableCell>
+                      <TableCell sx={{ fontWeight: 600, width: "10%" }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {players.map((player) => {
+                      const slot = getPlayerSlot(player);
+                      const displayInfo = { ...playerDisplay(player, slot), statusChip: STATUS_CHIPS[slot.state] };
+                      const isGameMaster = player.role === "Game Master";
+                      const isCurrentUser = player.userId === currentUserId;
+                      const canRevokeInvite = slot.state === "pending" && canManageInvites && !campaign.deletedAt;
+                      const canEditPlayer =
+                        (!campaign.deletedAt &&
+                          ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser)) ||
+                        canRevokeInvite;
 
-                    return (
-                      <TableRow
-                        key={player.id}
-                        hover
-                        sx={{
-                          position: "relative",
-                          ...ROW_ACTIONS_HOVER_SX,
-                        }}
-                      >
-                        <TableCell>
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                              {displayInfo.name}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                              {displayInfo.email}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            icon={
-                              isGameMaster ? <GMIcon sx={{ fontSize: 14 }} /> : <PlayerIcon sx={{ fontSize: 14 }} />
-                            }
-                            label={player.role}
-                            size="small"
-                            color={isGameMaster ? "warning" : "primary"}
-                            variant="filled"
-                            sx={{ fontWeight: 500 }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {displayInfo.statusChip ? (
+                      return (
+                        <TableRow
+                          key={player.id}
+                          hover
+                          sx={{
+                            position: "relative",
+                            ...ROW_ACTIONS_HOVER_SX,
+                          }}
+                        >
+                          <TableCell>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {displayInfo.name}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                {displayInfo.email}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
                             <Chip
-                              icon={displayInfo.statusChip.icon}
-                              label={displayInfo.statusChip.label}
+                              icon={
+                                isGameMaster ? <GMIcon sx={{ fontSize: 14 }} /> : <PlayerIcon sx={{ fontSize: 14 }} />
+                              }
+                              label={player.role}
                               size="small"
-                              color={displayInfo.statusChip.color}
-                              variant="outlined"
+                              color={isGameMaster ? "warning" : "primary"}
+                              variant="filled"
                               sx={{ fontWeight: 500 }}
                             />
-                          ) : (
-                            <Chip
-                              icon={<PlayerIcon sx={{ fontSize: 14 }} />}
-                              label="Active"
-                              size="small"
-                              color="success"
-                              variant="outlined"
-                              sx={{ fontWeight: 500 }}
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {slot.state === "assigned" ? (
-                            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                              {formatDate(player.createdAt)}
-                            </Typography>
-                          ) : (
-                            <Typography variant="body2" sx={{ color: "text.disabled" }}>
-                              —
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {canEditPlayer && (
-                            <Box
-                              className="row-actions"
-                              sx={{
-                                ...ROW_ACTIONS_SX,
-                                display: "flex",
-                                gap: 0.5,
-                              }}
-                            >
-                              {canManagePlayers && (
-                                <Tooltip title="Edit">
-                                  <IconButton
-                                    aria-label="Edit"
-                                    size="small"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleEditPlayer(player);
-                                    }}
-                                    sx={{ color: "primary.main" }}
-                                  >
-                                    <EditIcon fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              {slot.state === "pending" && canManageInvites && !campaign.deletedAt && (
-                                <Tooltip title="Revoke Invite">
-                                  <span>
+                          </TableCell>
+                          <TableCell>
+                            {displayInfo.statusChip ? (
+                              <Chip
+                                icon={displayInfo.statusChip.icon}
+                                label={displayInfo.statusChip.label}
+                                size="small"
+                                color={displayInfo.statusChip.color}
+                                variant="outlined"
+                                sx={{ fontWeight: 500 }}
+                              />
+                            ) : (
+                              <Chip
+                                icon={<PlayerIcon sx={{ fontSize: 14 }} />}
+                                label="Active"
+                                size="small"
+                                color="success"
+                                variant="outlined"
+                                sx={{ fontWeight: 500 }}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {slot.state === "assigned" ? (
+                              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                                {formatDate(player.createdAt)}
+                              </Typography>
+                            ) : (
+                              <Typography variant="body2" sx={{ color: "text.disabled" }}>
+                                —
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {canEditPlayer && (
+                              <Stack className="row-actions" direction="row" spacing={0.5} sx={ROW_ACTIONS_SX}>
+                                {canManagePlayers && (
+                                  <Tooltip title="Edit">
                                     <IconButton
-                                      aria-label="Revoke Invite"
+                                      aria-label="Edit"
                                       size="small"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleRevokeInvite(slot.pendingInvite.id);
+                                        handleEditPlayer(player);
                                       }}
-                                      sx={{ color: "warning.main" }}
-                                      disabled={revokeInviteMutation.isPending}
+                                      sx={{ color: "primary.main" }}
                                     >
-                                      <RevokeIcon fontSize="small" />
+                                      <EditIcon fontSize="small" />
                                     </IconButton>
-                                  </span>
+                                  </Tooltip>
+                                )}
+                                {slot.state === "pending" && canManageInvites && !campaign.deletedAt && (
+                                  <Tooltip title="Revoke Invite">
+                                    <span>
+                                      <IconButton
+                                        aria-label="Revoke Invite"
+                                        size="small"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRevokeInvite(slot.pendingInvite.id);
+                                        }}
+                                        sx={{ color: "warning.main" }}
+                                        disabled={revokeInviteMutation.isPending}
+                                      >
+                                        <RevokeIcon fontSize="small" />
+                                      </IconButton>
+                                    </span>
+                                  </Tooltip>
+                                )}
+                                <Tooltip title={isCurrentUser ? "Leave" : "Remove"}>
+                                  <IconButton
+                                    aria-label={isCurrentUser ? "Leave" : "Remove"}
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRemovePlayer(player);
+                                    }}
+                                    sx={{ color: isCurrentUser ? "warning.main" : "error.main" }}
+                                  >
+                                    {isCurrentUser ? <LeaveIcon fontSize="small" /> : <DeleteIcon fontSize="small" />}
+                                  </IconButton>
                                 </Tooltip>
-                              )}
-                              <Tooltip title={isCurrentUser ? "Leave" : "Remove"}>
-                                <IconButton
-                                  aria-label={isCurrentUser ? "Leave" : "Remove"}
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemovePlayer(player);
-                                  }}
-                                  sx={{ color: isCurrentUser ? "warning.main" : "error.main" }}
-                                >
-                                  {isCurrentUser ? <LeaveIcon fontSize="small" /> : <DeleteIcon fontSize="small" />}
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                              </Stack>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
 
-            <LoadMoreButton
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              onClick={() => fetchNextPage()}
+              <LoadMoreButton
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                onClick={() => fetchNextPage()}
+              />
+            </Stack>
+          ) : searchQuery ? (
+            <NoMatchesState search={searchQuery} />
+          ) : (
+            <BlankState
+              icon={PlayerIcon}
+              title="No players in this campaign"
+              description="Add players to start your adventure together"
+              action={
+                canManagePlayers && !campaign.deletedAt ? (
+                  <Button variant="outlined" startIcon={<AddIcon />} size="large" onClick={handleAddPlayer}>
+                    Add Your First Player
+                  </Button>
+                ) : undefined
+              }
             />
-          </>
-        ) : searchQuery ? (
-          <NoMatchesState search={searchQuery} />
-        ) : (
-          <BlankState
-            icon={PlayerIcon}
-            title="No players in this campaign"
-            description="Add players to start your adventure together"
-            action={
-              canManagePlayers && !campaign.deletedAt ? (
-                <Button variant="outlined" startIcon={<AddIcon />} size="large" onClick={handleAddPlayer}>
-                  Add Your First Player
-                </Button>
-              ) : undefined
-            }
-          />
-        ))}
+          ))}
+      </Stack>
       {/* Add Player Dialog */}
       <AddPlayerDialog
         open={addDialogOpen}

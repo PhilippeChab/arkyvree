@@ -1,7 +1,7 @@
 import {
-  Box,
   Chip,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -136,12 +136,14 @@ export function ContributorsTable<T extends ContributorRow>({
               </TableCell>
               {renderActions && (
                 <TableCell align="right">
-                  <Box
+                  <Stack
                     className="row-actions"
-                    sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end", ...ROW_ACTIONS_SX }}
+                    direction="row"
+                    spacing={0.5}
+                    sx={{ justifyContent: "flex-end", ...ROW_ACTIONS_SX }}
                   >
                     {renderActions(contributor)}
-                  </Box>
+                  </Stack>
                 </TableCell>
               )}
             </TableRow>

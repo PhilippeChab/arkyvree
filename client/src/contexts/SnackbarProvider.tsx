@@ -62,7 +62,8 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
         autoHideDuration={current?.persistent ? null : action ? 6000 : 4000}
         onClose={handleClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        sx={{ bottom: "12px !important" }}
+        // MUI sets a snackbar 24px up from `sm` on, in a media query a plain `bottom` loses to: the doubled class wins
+        sx={{ "&&": { bottom: 12 } }}
         slotProps={{
           transition: { onExited: handleExited },
         }}

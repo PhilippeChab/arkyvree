@@ -60,7 +60,7 @@ test.describe("Changes to a fork", () => {
 
     // The core rules keep their Human.
     await visitCoreRulesetList(page);
-    await page.locator('h6:has-text("Core SRD 3.5")').first().click();
+    await page.getByRole("heading", { name: "Core SRD 3.5" }).first().click();
     await page.getByRole("tab", { name: "Races" }).click();
     await expect(page.getByRole("cell", { name: "Human", exact: true }).first()).toBeVisible();
     await expect(page.locator(`text="${renamed}"`)).toHaveCount(0);

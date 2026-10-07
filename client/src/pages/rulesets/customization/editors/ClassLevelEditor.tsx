@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 import { parseResponse } from "hono/client";
 import { useController } from "react-hook-form";
 
@@ -83,7 +83,6 @@ export function ClassLevelEditor({
   return (
     <EntityDetailsCard
       title="Class Level Details"
-      sx={{ mb: 4 }}
       chips={level.saves.map(
         (save) =>
           saveName(save.saveId) && (
@@ -92,11 +91,11 @@ export function ClassLevelEditor({
       )}
       readOnlyBody={
         level.feats.length > 0 ? (
-          <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+          <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
             {sortedFeats(level).map((feat) => (
               <Chip key={featKey(asLevelFeat(feat))} label={featLabel(feat)} size="small" variant="outlined" />
             ))}
-          </Box>
+          </Stack>
         ) : (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             No feats at this level.

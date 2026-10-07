@@ -51,7 +51,6 @@ export function ItemEditor({
   return (
     <EntityDetailsCard
       title="Item Details"
-      sx={{ mb: 4 }}
       description={item.description}
       chips={
         <>

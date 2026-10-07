@@ -1,4 +1,4 @@
-import { Button, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { Button, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
@@ -68,38 +68,39 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
     <FormDialog open={open} onClose={handleClose} form={form} isLoading={deleteMutation.isPending} maxWidth="xs">
       <DialogTitle>Delete Account</DialogTitle>
       <form onSubmit={handleSubmit(handleDelete)} noValidate>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            This action is <strong>permanent</strong> and cannot be undone. All your characters, campaign memberships,
-            and account data will be removed.
-          </Typography>
+        {/* Deeper at the bottom, under the field */}
+        <DialogContent sx={{ pb: 3.5 }}>
+          <Stack spacing={2}>
+            <Typography variant="body2">
+              This action is <strong>permanent</strong> and cannot be undone. All your characters, campaign memberships,
+              and account data will be removed.
+            </Typography>
 
-          <AnimatedAlert in={!!error} severity="error" sx={{ mb: 2 }}>
-            {error}
-          </AnimatedAlert>
+            <AnimatedAlert in={!!error} severity="error" gutter={2}>
+              {error}
+            </AnimatedAlert>
 
-          {hasPassword ? (
-            <FormTextField
-              control={control}
-              name="password"
-              type="password"
-              label="Confirm your password"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              autoComplete="current-password"
-            />
-          ) : (
-            <FormTextField
-              control={control}
-              name="confirmText"
-              label='Type "DELETE" to confirm'
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              autoComplete="off"
-            />
-          )}
+            {hasPassword ? (
+              <FormTextField
+                control={control}
+                name="password"
+                type="password"
+                label="Confirm your password"
+                variant="outlined"
+                fullWidth
+                autoComplete="current-password"
+              />
+            ) : (
+              <FormTextField
+                control={control}
+                name="confirmText"
+                label='Type "DELETE" to confirm'
+                variant="outlined"
+                fullWidth
+                autoComplete="off"
+              />
+            )}
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} disabled={deleteMutation.isPending} variant="outlined" color="inherit">

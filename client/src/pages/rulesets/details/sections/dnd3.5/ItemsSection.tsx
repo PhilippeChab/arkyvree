@@ -1,4 +1,4 @@
-import { Chip, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
@@ -186,42 +186,46 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   return (
     <SectionContent>
-      <SearchBar
-        {...searchTextProps}
-        searchPlaceholder="Search items..."
-        actions={
-          <SectionActions
-            ruleset={ruleset}
-            childOnly={childOnly}
-            onChildOnlyChange={onChildOnlyChange}
-            addLabel="Add Item"
-            onAdd={handleAddItem}
+      <Stack spacing={3}>
+        <SearchBar
+          {...searchTextProps}
+          searchPlaceholder="Search items..."
+          actions={
+            <SectionActions
+              ruleset={ruleset}
+              childOnly={childOnly}
+              onChildOnlyChange={onChildOnlyChange}
+              addLabel="Add Item"
+              onAdd={handleAddItem}
+            />
+          }
+        />
+        <Stack spacing={2}>
+          <RulesetSectionTable
+            data={items}
+            search={searchQuery}
+            isLoading={isLoading}
+            columns={ITEMS_COLUMNS}
+            canEdit={canEdit}
+            onDuplicate={handleDuplicate}
+            onCreateVariants={(item) => {
+              bulkForm.reset({ variants: [variantRow(item, 1)] });
+              setBulkItem(item);
+            }}
+            onRowClick={handleRowClick}
+            onRowMouseEnter={handleRowMouseEnter}
+            renderCell={renderCell}
+            emptyIcon={ItemsIcon}
+            emptyTitle="No items"
+            emptyDescription="No items available for this ruleset."
           />
-        }
-      />
-      <RulesetSectionTable
-        data={items}
-        search={searchQuery}
-        isLoading={isLoading}
-        columns={ITEMS_COLUMNS}
-        canEdit={canEdit}
-        onDuplicate={handleDuplicate}
-        onCreateVariants={(item) => {
-          bulkForm.reset({ variants: [variantRow(item, 1)] });
-          setBulkItem(item);
-        }}
-        onRowClick={handleRowClick}
-        onRowMouseEnter={handleRowMouseEnter}
-        renderCell={renderCell}
-        emptyIcon={ItemsIcon}
-        emptyTitle="No items"
-        emptyDescription="No items available for this ruleset."
-      />
-      <LoadMoreButton
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        onClick={() => fetchNextPage()}
-      />
+          <LoadMoreButton
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
+        </Stack>
+      </Stack>
       <CreateDialog
         open={createDialogOpen}
         // Add and Duplicate set the source when they open it: clearing it here would unlock the type while it fades out.

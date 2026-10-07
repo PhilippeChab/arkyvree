@@ -1,4 +1,4 @@
-import { Box, type CSSObject } from "@mui/material";
+import { Box, type CSSObject, Stack } from "@mui/material";
 import { type ReactNode, Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
@@ -30,7 +30,13 @@ function belowToolbar(toolbar: CSSObject): CSSObject {
 export function AppBrand() {
   return (
     <>
-      <img src="/pwa-192x192.png" alt="" style={{ width: 28, height: 28, marginRight: 8, verticalAlign: "middle" }} />
+      <Box
+        component="img"
+        src="/pwa-192x192.png"
+        alt=""
+        // 28px, then the gap to the wordmark
+        sx={{ boxSizing: "content-box", width: 28, height: 28, pr: 1, verticalAlign: "middle" }}
+      />
       Arkyvree
     </>
   );
@@ -64,31 +70,33 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
   }, [pathname]);
 
   return (
-    <Box
+    <Stack
       ref={mainRef}
       component="main"
-      sx={(theme) => ({
-        position: "fixed",
-        ...belowToolbar(theme.mixins.toolbar),
-        left: railWidth,
-        right: 0,
-        bottom: 0,
-        bgcolor: "background.default",
-        overflow: "auto",
-        scrollbarGutter: "stable",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      })}
+      sx={[
+        (theme) => belowToolbar(theme.mixins.toolbar),
+        {
+          position: "fixed",
+          left: railWidth,
+          right: 0,
+          bottom: 0,
+          bgcolor: "background.default",
+          overflow: "auto",
+          scrollbarGutter: "stable",
+          alignItems: "center",
+        },
+      ]}
     >
       {banner}
-      {/* No side padding here: every page brings its own gutter (Container or padded Box). */}
-      <Box sx={{ width: "100%", maxWidth: "1200px", flex: 1 }}>
-        <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
-          <Outlet />
-        </Suspense>
-      </Box>
-      <Footer />
-    </Box>
+      <Stack spacing={2} sx={{ flex: 1, width: "100%", alignItems: "center" }}>
+        {/* No side padding here: every page brings its own gutter (Container or padded Box). */}
+        <Box sx={{ width: "100%", maxWidth: "1200px", flex: 1 }}>
+          <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
+            <Outlet />
+          </Suspense>
+        </Box>
+        <Footer />
+      </Stack>
+    </Stack>
   );
 }

@@ -1,4 +1,4 @@
-import { Chip, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
@@ -230,24 +230,26 @@ export function ModifiersSection({
 
   return (
     <SectionContent>
-      {canEdit && <SectionAddButton label="Add Modifier" onClick={handleAddModifier} />}
+      <Stack spacing={2}>
+        {canEdit && <SectionAddButton label="Add Modifier" onClick={handleAddModifier} />}
 
-      <RulesetSectionTable
-        data={modifiers}
-        isLoading={isLoading}
-        columns={MODIFIERS_COLUMNS}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        onEdit={handleEditModifier}
-        onDelete={handleDelete}
-        onDuplicate={handleDuplicateModifier}
-        onRowClick={handleRowClick}
-        onRowMouseEnter={handleRowMouseEnter}
-        renderCell={renderCell}
-        emptyIcon={TuneIcon}
-        emptyTitle="No modifiers"
-        emptyDescription="No modifiers defined for this entity."
-      />
+        <RulesetSectionTable
+          data={modifiers}
+          isLoading={isLoading}
+          columns={MODIFIERS_COLUMNS}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          onEdit={handleEditModifier}
+          onDelete={handleDelete}
+          onDuplicate={handleDuplicateModifier}
+          onRowClick={handleRowClick}
+          onRowMouseEnter={handleRowMouseEnter}
+          renderCell={renderCell}
+          emptyIcon={TuneIcon}
+          emptyTitle="No modifiers"
+          emptyDescription="No modifiers defined for this entity."
+        />
+      </Stack>
 
       <CreateDialog
         open={createDialogOpen}

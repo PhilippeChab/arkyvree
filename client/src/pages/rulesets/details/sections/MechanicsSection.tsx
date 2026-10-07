@@ -1,3 +1,4 @@
+import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback } from "react";
@@ -79,38 +80,40 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
   return (
     <SectionContent>
-      <SearchBar
-        {...searchTextProps}
-        searchPlaceholder="Search mechanics..."
-        actions={
-          <SectionActions
-            ruleset={ruleset}
-            childOnly={childOnly}
-            onChildOnlyChange={onChildOnlyChange}
-            addLabel="Add Mechanic"
-            onAdd={handleCreate}
+      <Stack spacing={3}>
+        <SearchBar
+          {...searchTextProps}
+          searchPlaceholder="Search mechanics..."
+          actions={
+            <SectionActions
+              ruleset={ruleset}
+              childOnly={childOnly}
+              onChildOnlyChange={onChildOnlyChange}
+              addLabel="Add Mechanic"
+              onAdd={handleCreate}
+            />
+          }
+        />
+        <Stack spacing={2}>
+          <RulesetSectionTable
+            data={mechanics}
+            search={searchQuery}
+            isLoading={isLoading}
+            columns={MECHANICS_COLUMNS}
+            onRowClick={handleRowClick}
+            onRowMouseEnter={handleRowMouseEnter}
+            renderCell={renderCell}
+            emptyIcon={MechanicsIcon}
+            emptyTitle="No mechanics"
+            emptyDescription="No mechanics documented for this ruleset."
           />
-        }
-      />
-
-      <RulesetSectionTable
-        data={mechanics}
-        search={searchQuery}
-        isLoading={isLoading}
-        columns={MECHANICS_COLUMNS}
-        onRowClick={handleRowClick}
-        onRowMouseEnter={handleRowMouseEnter}
-        renderCell={renderCell}
-        emptyIcon={MechanicsIcon}
-        emptyTitle="No mechanics"
-        emptyDescription="No mechanics documented for this ruleset."
-      />
-
-      <LoadMoreButton
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        onClick={() => fetchNextPage()}
-      />
+          <LoadMoreButton
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
+        </Stack>
+      </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Mechanic" maxWidth="md">
         <MechanicFormFields form={createForm} />

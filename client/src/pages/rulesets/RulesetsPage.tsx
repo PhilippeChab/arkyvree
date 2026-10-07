@@ -99,7 +99,7 @@ function RulesetList({ filters }: RulesetListProps) {
   }
 
   return (
-    <>
+    <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>
       <ListCardGrid>
         {rulesets.map((ruleset, index) => {
           const status = RULESET_STATUS[ruleset.status];
@@ -186,7 +186,7 @@ function RulesetList({ filters }: RulesetListProps) {
           fetchNextPage();
         }}
       />
-    </>
+    </Stack>
   );
 }
 
@@ -202,22 +202,24 @@ export default function RulesetsPage() {
   return (
     <PageTransition>
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageHeader
-          variant="tinted"
-          title="Game Rulesets"
-          subtitle="Choose your adventure system and dive into infinite possibilities"
-        />
+        <Stack spacing={3}>
+          <PageHeader
+            variant="tinted"
+            title="Game Rulesets"
+            subtitle="Choose your adventure system and dive into infinite possibilities"
+          />
 
-        <SearchBar
-          {...searchBarProps}
-          searchPlaceholder="Search rulesets..."
-          filterOptions={RULESET_FILTER_OPTIONS}
-          filterValue={scope}
-          onFilterChange={(value) => updateSearchParams({ scope: value })}
-          sortOptions={RULESET_SORT_OPTIONS}
-        />
+          <SearchBar
+            {...searchBarProps}
+            searchPlaceholder="Search rulesets..."
+            filterOptions={RULESET_FILTER_OPTIONS}
+            filterValue={scope}
+            onFilterChange={(value) => updateSearchParams({ scope: value })}
+            sortOptions={RULESET_SORT_OPTIONS}
+          />
 
-        <RulesetList filters={{ scope, search, orderBy, orderDir }} />
+          <RulesetList filters={{ scope, search, orderBy, orderDir }} />
+        </Stack>
       </Container>
     </PageTransition>
   );

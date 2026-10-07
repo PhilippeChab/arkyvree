@@ -48,14 +48,12 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
   );
 
   return (
-    <Box sx={{ mt: 1.5 }}>
-      <Stack sx={{ mb: 2, minWidth: 0 }}>{nameNode}</Stack>
+    <Stack spacing={2}>
+      <Stack sx={{ minWidth: 0 }}>{nameNode}</Stack>
 
-      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3 }}>
-        <Box sx={{ flex: "0 0 auto" }}>
-          <Typography sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary", typography: "body1" }}>
-            Abilities
-          </Typography>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
+        <Stack spacing={1.5} sx={{ flex: "0 0 auto" }}>
+          <Typography sx={{ color: "text.secondary" }}>Abilities</Typography>
           <Box
             sx={{
               display: "grid",
@@ -69,13 +67,11 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
               return <AbilityScoreBox key={name} ability={name} score={total} modifier={modifier} compact />;
             })}
           </Box>
-        </Box>
+        </Stack>
 
         <Stack spacing={3} sx={{ flex: 1, minWidth: { md: 260 } }}>
-          <Box>
-            <Typography sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary", typography: "body1" }}>
-              Combat &amp; Saves
-            </Typography>
+          <Stack spacing={1.5}>
+            <Typography sx={{ color: "text.secondary" }}>Combat &amp; Saves</Typography>
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1.5 }}>
               <Stack spacing={1.5}>
                 <StatField label="HP" value={combat?.hp?.total ?? 0} />
@@ -89,21 +85,19 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
                 ))}
               </Stack>
             </Box>
-          </Box>
+          </Stack>
 
           {featNames.length > 0 && (
-            <Box>
-              <Typography sx={{ fontWeight: 600, mb: 1, color: "text.secondary", typography: "body1" }}>
-                Features
-              </Typography>
-              <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75 }}>
+            <Stack spacing={1}>
+              <Typography sx={{ color: "text.secondary" }}>Features</Typography>
+              <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
                 {featNames.map((n) => (
                   <Box
                     key={n}
                     sx={{
                       px: 1,
                       py: 0.25,
-                      border: "1px solid",
+                      border: 1,
                       borderColor: "divider",
                       borderRadius: 1,
                       fontSize: "0.85rem",
@@ -113,10 +107,10 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
                   </Box>
                 ))}
               </Stack>
-            </Box>
+            </Stack>
           )}
         </Stack>
-      </Box>
-    </Box>
+      </Stack>
+    </Stack>
   );
 }
