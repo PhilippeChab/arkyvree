@@ -5,15 +5,15 @@ import { AnimatedAlert } from "./AnimatedAlert.tsx";
 import { DiceSpinner } from "./DiceSpinner.tsx";
 
 interface InlineConfirmProps {
-  open: boolean;
-  /** What it asks, and what follows: "Revoke this link? Anyone who has it loses access." */
-  children: ReactNode;
   /** The way out: "Keep Editing", "Keep Link" */
   cancelLabel: string;
+  /** What it asks, and what follows: "Revoke this link? Anyone who has it loses access." */
+  children: ReactNode;
   /** What it does: "Discard", "Revoke" */
   confirmLabel: string;
   onCancel: () => void;
   onConfirm: () => void;
+  open: boolean;
   /** Its action is running: its spinner shows, and neither button takes a click. */
   pending?: boolean;
 }

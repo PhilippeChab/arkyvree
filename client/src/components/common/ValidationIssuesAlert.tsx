@@ -6,20 +6,20 @@ import { AnimatedAlert } from "./AnimatedAlert.tsx";
 import { ValidationIssueList } from "./ValidationIssueList.tsx";
 
 interface ValidationIssuesAlertProps {
-  /** What the server's rules refused; none hides it. */
-  issues: ApiValidationIssue[];
-  /** Its heading: "Validation warnings", "Equipment warnings" */
-  title: string;
-  onClose: () => void;
-  /** Saves anyway (`force`); without it, the warnings only say why. */
-  onProceed?: () => void;
-  /** A save is running: Proceed Anyway waits. */
-  pending?: boolean;
   /**
    * The space under it, which opens and closes with it (`AnimatedAlert`'s), where its container doesn't space it; in a
    * spaced `Stack`, which spaces it even closed, it's mounted only while it shows.
    */
   gutter?: number;
+  /** What the server's rules refused; none hides it. */
+  issues: ApiValidationIssue[];
+  onClose: () => void;
+  /** Saves anyway (`force`); without it, the warnings only say why. */
+  onProceed?: () => void;
+  /** A save is running: Proceed Anyway waits. */
+  pending?: boolean;
+  /** Its heading: "Validation warnings", "Equipment warnings" */
+  title: string;
 }
 
 /** The rules warnings a save came back with (`useValidationIssues`), at the form's top, and its Proceed Anyway. */
