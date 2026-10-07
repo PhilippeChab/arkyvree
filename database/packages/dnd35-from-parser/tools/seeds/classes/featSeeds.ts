@@ -71,8 +71,9 @@ function perLevelFeatSeeds(
 /** A spellcasting class's own list gets a feat other classes advance it with: none for any other class. */
 function spellcastingAdvanceFeats(ref: ClassReference, classSlug: string): FeatSeed[] {
   const { detected } = ref;
-  const { casterType } = ref.mapping;
-  if (!detected.hasOwnSpells || !casterType || detected.casterLevelAdvancement) return [];
+  const { casterType, spells } = ref.mapping;
+  // Spells of its own (not `noSpells`), not an advancement of another class's
+  if (!spells || !casterType || detected.casterLevelAdvancement) return [];
   return [
     {
       name: `Advance ${ref.raw.name} Spellcasting`,

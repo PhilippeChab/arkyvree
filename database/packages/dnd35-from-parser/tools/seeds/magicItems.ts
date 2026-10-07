@@ -66,6 +66,7 @@ export function buildMagicItemSeeds(
 
   for (const { name, det, item, slot } of getSeededMagicItems(ref)) {
     const sourceItem = item.baseItem;
+    // Its mapping's weight (its override's or its text's), else its base item's, else none ("0", as detected)
     const weight = item.weight ?? (sourceItem && baseWeights[sourceItem]) ?? det.weight;
 
     const bucket = categoryBuckets[det.category];
