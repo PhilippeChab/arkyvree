@@ -1,5 +1,4 @@
-import { type CowData } from "@/engine/core/cow/index.ts";
-import type { RulesetSources } from "@/server/cache/rulesetCache/index.ts";
+import { type CowData, type RulesetSources } from "@/engine/core/cow/index.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -46,7 +45,7 @@ const OWNER_TYPES: Record<string, RulesetEntityType> = {
  * One change to a ruleset's entities, made in its scope (`new RulesetEdit(ruleset, rulesetData.cow)`): the rows it
  * writes, the ruleset's own or the copy of an inherited one, made on its first edit (`EntityCopy`), and the names a new
  * entity may take in the ruleset's composed view. Its copy-on-write data gives it the source chain and what the view
- * hides; a copy builds its own, through the transaction (`CowDataBuilder.build(tx, ruleset)`). Every method that queries
+ * hides; a copy builds its own, through the transaction (`readCowData(tx, ruleset)`). Every method that queries
  * takes the transaction; a copy and the ids it copied live for the call that made it.
  */
 export default class RulesetEdit {

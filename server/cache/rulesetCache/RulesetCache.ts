@@ -1,4 +1,4 @@
-import { type CowData } from "@/engine/core/cow/index.ts";
+import { buildSourceChain, type CowData, type RulesetSources } from "@/engine/core/cow/index.ts";
 import { RulesetComposition, type RulesetData, type RulesetRawData } from "@/engine/core/view/index.ts";
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { db, withCowContext } from "@/server/database/index.ts";
@@ -6,7 +6,7 @@ import { Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
 import { sortProperties } from "@/shared/dnd3.5/properties/index.ts";
 
-import CowDataBuilder, { buildSourceChain, type RulesetSources } from "./CowDataBuilder.ts";
+import { readCowData } from "./cowData.ts";
 import { fetchRulesetRawData } from "./rawData.ts";
 
 type TargetPathsAndLabels = { paths: TargetPath[]; segmentLabels: Record<string, string> };
@@ -63,7 +63,7 @@ class RulesetCache {
   async getCowData(ruleset: RulesetSources): Promise<CowData> {
     const dependencies = [ruleset.id, ...buildSourceChain(ruleset)];
     return this.cowData.getOrFetch(JSON.stringify(dependencies), dependencies, async () => ({
-      data: await CowDataBuilder.build(db, ruleset),
+      data: await readCowData(db, ruleset),
     }));
   }
 

@@ -1,11 +1,11 @@
-import { type CowData } from "@/engine/core/cow/index.ts";
+import { type CowData, type RulesetSources } from "@/engine/core/cow/index.ts";
 import {
   mergeSiblingAptitudeLinks,
   mergeSiblingModifiers,
   mergeSiblingProperties,
   mergeSiblingRequirements,
 } from "@/engine/core/view/index.ts";
-import { CowDataBuilder, type RulesetSources } from "@/server/cache/rulesetCache/index.ts";
+import { readCowData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -125,7 +125,7 @@ export default class EntityCopy {
 
     // 4. Copy relationships (aptitudes, klass levels, etc.), remapped by the ruleset's copy-on-write data as the
     // transaction sees it: its own copies included
-    const cow = await CowDataBuilder.build(tx, this.ruleset);
+    const cow = await readCowData(tx, this.ruleset);
     await this.copyRelationships(tx, newEntity.id, cow);
 
     // 4b. Merge sibling data when multiple extensions COW the same base entity

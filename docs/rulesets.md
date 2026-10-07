@@ -150,8 +150,8 @@ The child's own entities are always included. Ancestor entities are included onl
 
 ### Override Map
 
-`CowDataBuilder` builds a ruleset's `CowData`: a mapping of `sourceEntityId → forkedEntityId` across the full snapshot chain, and of each sibling loser to its winner. Used for:
-- **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies (`CowDataBuilder.build` through the copy's transaction, `CowData.resolve`): the same passes as the ruleset's view, so a copy stores what the view shows (a losing copy of a list resolves to the winning one)
+The engine's `CowDataBuilder` builds a ruleset's `CowData` from the rows the server reads (`readCowData`): a mapping of `sourceEntityId → forkedEntityId` across the full snapshot chain, and of each sibling loser to its winner. Used for:
+- **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies (`readCowData` through the copy's transaction, `CowData.resolve`): the same passes as the ruleset's view, so a copy stores what the view shows (a losing copy of a list resolves to the winning one)
 - **Detail views**: `CowData.resolveRows()` remaps ID references in query results
 
 ### Snapshots

@@ -1,7 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { NAME_FALLBACK_ENTITY_TYPES, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { NAME_FALLBACK_ENTITY_TYPES } from "@/engine/core/cow/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { ENTITY_REPOS } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";

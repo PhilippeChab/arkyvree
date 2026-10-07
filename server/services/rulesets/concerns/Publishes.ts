@@ -1,8 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
+import { buildSourceChain } from "@/engine/core/cow/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { buildSourceChain, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Activities, Feats, Klasses, Races, Rulesets, Skills } from "@/server/repositories/index.ts";
