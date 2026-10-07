@@ -46,7 +46,6 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
   const base = useLevelWizardBase(characterId);
   const {
     handleSubmit,
-    getValues,
     setValue,
     watch,
     picked,
@@ -194,10 +193,11 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
     else setActiveStep((prev) => prev + 1);
   }, [isLastStep, handleSubmit, finalizeMutation, setActiveStep]);
 
+  // Through the form, so its own rules still hold on a forced save, as on any other
   const handleForceSubmit = useCallback(() => {
     setValidationErrors([]);
-    finalizeMutation.mutate({ data: getValues(), force: true });
-  }, [finalizeMutation, getValues, setValidationErrors]);
+    handleSubmit((data) => finalizeMutation.mutate({ data, force: true }))();
+  }, [finalizeMutation, handleSubmit, setValidationErrors]);
 
   const handleCancel = useCallback(() => {
     setShowCancelConfirm(true);
@@ -242,7 +242,7 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
     selectedPowers: picked.powers,
     skillPointAllocations: picked.skillPoints,
     selectedAptitude,
-    allSelectedFeatPickString,
+    featPicker: picker,
     selectedClass,
     selectedHP,
     selectedAttribute,

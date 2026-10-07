@@ -118,16 +118,7 @@ export function AddLevelModal({ open, onClose, onExited, characterId, baseRules 
       case "skills":
         return <Sections.LevelUpSkillsStep wizard={wizard} />;
       case "feats":
-        return (
-          <Sections.LevelUpFeatsStep
-            wizard={wizard}
-            characterId={characterId}
-            klassId={wizard.firstClass?.id ?? ""}
-            klassLevel={wizard.lastLevel}
-            pendingLevelKlassLevelIds={wizard.allKlassLevelIds}
-            pendingLevelFeatPicks={wizard.allSelectedFeatPickString}
-          />
-        );
+        return <Sections.LevelUpFeatsStep wizard={wizard} characterId={characterId} />;
       case "powers":
         return <Sections.LevelUpPowersStep wizard={wizard} />;
       case "review":

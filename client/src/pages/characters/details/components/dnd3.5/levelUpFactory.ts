@@ -19,6 +19,7 @@ import type {
   FeatsData,
   GroupedFeatRow,
   LevelUpFormData,
+  PickerLevel,
   PowersData,
   PreviewLevelDetail,
   SelectedFeat,
@@ -70,13 +71,17 @@ interface AddReviewState extends LevelReviewState {
 /** The feat picker state a level wizard hands the Feats step. */
 interface FeatPickerState {
   adjustedFeatPools: Record<string, AptitudePool>;
-  allSelectedFeatPickString?: string;
   /** Why the feats to pick didn't load. */
   availableFeatsError: unknown;
   /** The picks' form: the feats field, which the step changes from `selectedFeats`. */
   control: Control<LevelUpFormData>;
   expandedFeatFamilies: ReadonlySet<string>;
   featData: FeatsData | null | undefined;
+  /**
+   * The level the next pick lands on, and what it's checked against: the feat list's, which a family's variants are
+   * checked at too.
+   */
+  featPicker: PickerLevel;
   featSearch: string;
   featsError: Error | null;
   groupedFeats: GroupedFeatRow[];
@@ -209,12 +214,6 @@ export interface LevelUpAttributeStepProps {
 
 export interface LevelUpFeatsStepProps {
   characterId: string;
-  editingLevelId?: string;
-  /** The class and level the next pick lands on, for the feat detail's prerequisites. */
-  klassId: string;
-  klassLevel: number;
-  pendingLevelFeatPicks?: string;
-  pendingLevelKlassLevelIds?: string;
   wizard: FeatPickerState;
 }
 

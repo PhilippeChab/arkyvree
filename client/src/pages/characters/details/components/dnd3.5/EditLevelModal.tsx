@@ -80,15 +80,7 @@ export function EditLevelModal({ open, onClose, onExited, characterId, baseRules
       case "skills":
         return <Sections.LevelUpSkillsStep wizard={wizard} />;
       case "feats":
-        return (
-          <Sections.LevelUpFeatsStep
-            wizard={wizard}
-            characterId={characterId}
-            klassId={wizard.selectedClass?.id ?? ""}
-            klassLevel={wizard.selectedClass?.nextLevel ?? 1}
-            editingLevelId={editingLevelId}
-          />
-        );
+        return <Sections.LevelUpFeatsStep wizard={wizard} characterId={characterId} />;
       case "powers":
         return <Sections.LevelUpPowersStep wizard={wizard} />;
       case "review":

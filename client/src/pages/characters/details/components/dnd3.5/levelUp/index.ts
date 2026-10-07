@@ -1,5 +1,10 @@
 export { withoutPick } from "./fitPicks.ts";
-export { availableClassesQuery, availableFeatFamilyQuery, characterLevelQuery } from "./levelUpQueries.ts";
+export {
+  availableClassesQuery,
+  availableFeatFamilyQuery,
+  characterLevelQuery,
+  type PickerLevel,
+} from "./levelUpQueries.ts";
 export type {
   AptitudePool,
   AttributesData,

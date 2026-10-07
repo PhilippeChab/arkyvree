@@ -72,108 +72,29 @@ export const QUERY_KEYS = {
       ["characters", "availableRaces", rulesetId, filters] as const,
     rulesetItem: (rulesetId: string, itemId: string) => ["characters", "rulesetItem", rulesetId, itemId] as const,
     itemSearch: (rulesetId: string, search: string) => ["characters", "itemSearch", rulesetId, search] as const,
+    /** A level-up read's cache: its key holds the query (or the body) it sends, so no parameter is left out of it. */
     levelUp: {
       all: (characterId: string) => ["characters", "levelUp", characterId] as const,
-      availableClasses: (
-        characterId: string,
-        search?: string,
-        pendingKlassLevelIds?: string,
-        pendingAbilityIds?: string,
-        pendingFeatPicks?: string,
-        pendingSkillAllocations?: string,
-      ) =>
-        [
-          "characters",
-          "levelUp",
-          characterId,
-          "availableClasses",
-          search,
-          pendingKlassLevelIds,
-          pendingAbilityIds,
-          pendingFeatPicks,
-          pendingSkillAllocations,
-        ] as const,
-      attributes: (characterId: string, editingLevelId?: string, pendingCount?: number) =>
-        ["characters", "levelUp", characterId, "attributes", editingLevelId, pendingCount] as const,
-      skills: (characterId: string, classId?: string, editingLevelId?: string, abilityId?: string | null) =>
-        ["characters", "levelUp", characterId, "skills", classId, editingLevelId, abilityId] as const,
-      feats: (characterId: string, classId?: string, editingLevelId?: string) =>
-        ["characters", "levelUp", characterId, "feats", classId, editingLevelId] as const,
-      availableFeatsGrouped: (
-        characterId: string,
-        aptitudeId: string | null,
-        classId?: string,
-        search?: string,
-        editingLevelId?: string,
-        selectedFeatPicks?: string,
-        pendingKlassLevelIds?: string,
-        pendingFeatPicks?: string,
-      ) =>
-        [
-          "characters",
-          "levelUp",
-          characterId,
-          "availableFeatsGrouped",
-          aptitudeId,
-          classId,
-          search,
-          editingLevelId,
-          selectedFeatPicks,
-          pendingKlassLevelIds,
-          pendingFeatPicks,
-        ] as const,
-      availableFeatFamily: (
-        characterId: string,
-        aptitudeId: string,
-        family: string,
-        classId?: string,
-        editingLevelId?: string,
-        selectedFeatPicks?: string,
-        pendingKlassLevelIds?: string,
-      ) =>
-        [
-          "characters",
-          "levelUp",
-          characterId,
-          "availableFeatFamily",
-          aptitudeId,
-          family,
-          classId,
-          editingLevelId,
-          selectedFeatPicks,
-          pendingKlassLevelIds,
-        ] as const,
-      powers: (characterId: string, classId?: string, editingLevelId?: string) =>
-        ["characters", "levelUp", characterId, "powers", classId, editingLevelId] as const,
-      availablePowers: (
-        characterId: string,
-        aptitudeId: string | null,
-        level: number | null,
-        classId?: string,
-        search?: string,
-        editingLevelId?: string,
-        selectedFeatPicks?: string,
-        pendingKlassLevelIds?: string,
-        pendingFeatPicks?: string,
-      ) =>
-        [
-          "characters",
-          "levelUp",
-          characterId,
-          "availablePowers",
-          aptitudeId,
-          level,
-          classId,
-          search,
-          editingLevelId,
-          selectedFeatPicks,
-          pendingKlassLevelIds,
-          pendingFeatPicks,
-        ] as const,
+      attributes: (characterId: string, query?: Record<string, unknown>) =>
+        ["characters", "levelUp", characterId, "attributes", query] as const,
+      availableClasses: (characterId: string, query?: Record<string, unknown>) =>
+        ["characters", "levelUp", characterId, "availableClasses", query] as const,
+      availableFeatFamily: (characterId: string, query?: Record<string, unknown>) =>
+        ["characters", "levelUp", characterId, "availableFeatFamily", query] as const,
+      availableFeatsGrouped: (characterId: string, query?: Record<string, unknown>) =>
+        ["characters", "levelUp", characterId, "availableFeatsGrouped", query] as const,
+      availablePowers: (characterId: string, query?: Record<string, unknown>) =>
+        ["characters", "levelUp", characterId, "availablePowers", query] as const,
+      feats: (characterId: string, query?: Record<string, unknown>) =>
+        ["characters", "levelUp", characterId, "feats", query] as const,
       levelData: (characterId: string, characterLevelId: string) =>
         ["characters", "levelUp", characterId, "levelData", characterLevelId] as const,
-      preview: (characterId: string, levelsKey: string, abilityKey?: string) =>
-        ["characters", "levelUp", characterId, "preview", levelsKey, abilityKey] as const,
+      powers: (characterId: string, query?: Record<string, unknown>) =>
+        ["characters", "levelUp", characterId, "powers", query] as const,
+      preview: (characterId: string, body: Record<string, unknown>) =>
+        ["characters", "levelUp", characterId, "preview", body] as const,
+      skills: (characterId: string, query?: Record<string, unknown>) =>
+        ["characters", "levelUp", characterId, "skills", query] as const,
     },
   },
   legal: {
