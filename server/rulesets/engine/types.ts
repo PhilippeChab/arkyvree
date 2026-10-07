@@ -46,7 +46,7 @@ type ProjectedFeat = Feat & {
 export type CharacterKind = (typeof CHARACTER_KINDS_DND35)[number];
 
 /**
- * A character component component (abilities, skills, combat, etc.): a class instance whose getters the target paths call
+ * A character component (abilities, skills, combat, etc.): a class instance whose getters the target paths call
  * by name (`readComponent`).
  */
 export type Component = object;
